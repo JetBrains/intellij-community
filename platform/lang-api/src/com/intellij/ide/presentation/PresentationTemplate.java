@@ -15,26 +15,21 @@
  */
 package com.intellij.ide.presentation;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
-public @interface Presentation {
+public interface PresentationTemplate {
 
-  /**
-   * @return Path to image resource, e.g. /foo/bar/MyIcon.png
-   */
-  String icon() default "";
+  @Nullable
+  Icon getIcon(Object o, int flags);
 
-  Class<? extends PresentationIconProvider> iconProviderClass() default PresentationIconProvider.class;
+  @Nullable
+  String getName(Object o);
 
-  Class<? extends PresentationNameProvider> nameProviderClass() default PresentationNameProvider.class;
-
-  String typeName() default "";
+  @Nullable
+  String getTypeName();
 }

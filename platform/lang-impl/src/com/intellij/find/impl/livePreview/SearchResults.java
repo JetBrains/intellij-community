@@ -141,10 +141,10 @@ public class SearchResults {
   }
 
   public void clear() {
-    searchCompleted(new ArrayList<LiveOccurrence>(), 0, getEditor(), null, false, false);
+    searchCompleted(new ArrayList<LiveOccurrence>(), 0, getEditor(), null, false, null);
   }
 
-  public void updateThreadSafe(final FindModel findModel, final boolean toChangeSelection, final boolean justReplaced) {
+  public void updateThreadSafe(final FindModel findModel, final boolean toChangeSelection, final TextRange next) {
     if (myDisposed) return;
     final ArrayList<LiveOccurrence> occurrences = new ArrayList<LiveOccurrence>();
     final Editor editor = getEditor();
@@ -183,7 +183,7 @@ public class SearchResults {
           final Runnable searchCompletedRunnable = new Runnable() {
             @Override
             public void run() {
-              searchCompleted(occurrences, results.size(), editor, findModel, toChangeSelection, justReplaced);
+              searchCompleted(occurrences, results.size(), editor, findModel, toChangeSelection, next);
             }
           };
 
@@ -201,7 +201,8 @@ public class SearchResults {
     myDisposed = true;
   }
 
-  private void searchCompleted(List<LiveOccurrence> occurrences, int size, Editor editor, FindModel findModel, boolean toChangeSelection, boolean justReplaced) {
+  private void searchCompleted(List<LiveOccurrence> occurrences, int size, Editor editor, FindModel findModel,
+                               boolean toChangeSelection, TextRange next) {
     if (editor == getEditor() && !myDisposed) {
       myOccurrences = occurrences;
       final TextRange oldCursorRange = myCursor != null ? myCursor.getPrimaryRange() : null;
@@ -213,7 +214,7 @@ public class SearchResults {
       });
 
       myFindModel = findModel;
-      updateCursor(oldCursorRange, justReplaced);
+      updateCursor(oldCursorRange, next);
       myActualFound = size;
       notifyChanged();
       if (oldCursorRange == null || myCursor == null || !myCursor.getPrimaryRange().equals(oldCursorRange)) {
@@ -222,14 +223,15 @@ public class SearchResults {
     }
   }
 
-  private void updateCursor(TextRange oldCursorRange, boolean justReplaced) {
+  private void updateCursor(TextRange oldCursorRange, TextRange next) {
+    boolean justReplaced = next != null;
     if (justReplaced || !tryToRepairOldCursor(oldCursorRange)) {
       if (myFindModel != null) {
         if(oldCursorRange != null && !myFindModel.isGlobal()) {
           myCursor = firstOccurrenceAfterOffset(oldCursorRange.getEndOffset());
         } else {
           if (justReplaced) {
-            nextOccurrence(false, oldCursorRange, false, justReplaced);
+            nextOccurrence(false, next, false, justReplaced);
           } else {
             LiveOccurrence afterCaret = oldCursorRange == null ? firstOccurrenceAtOrAfterCaret() : firstOccurrenceAfterCaret();
             if (afterCaret != null) {

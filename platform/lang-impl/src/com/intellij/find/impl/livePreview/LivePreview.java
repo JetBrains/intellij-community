@@ -17,6 +17,7 @@ package com.intellij.find.impl.livePreview;
 
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.find.FindModel;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -127,6 +128,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
 
   @Override
   public void cursorMoved(boolean toChangeSelection) {
+    updateInSelectionHighlighters();
     updateCursorHighlighting(toChangeSelection);
   }
 
@@ -186,6 +188,10 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
 
   public void cleanUp() {
     removeFromEditor(mySearchResults.getEditor());
+  }
+
+  public void dispose() {
+    mySearchResults.removeListener(this);
   }
 
   private void removeFromEditor(Editor editor) {
@@ -249,8 +255,8 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     final HashSet<RangeHighlighter> toRemove = new HashSet<RangeHighlighter>();
     Set<RangeHighlighter> toAdd = new HashSet<RangeHighlighter>();
     for (RangeHighlighter highlighter : myHighlighters) {
-      //if (myCursorHighlighter != null && highlighter.getStartOffset() == myCursorHighlighter.getStartOffset() &&
-      //  highlighter.getEndOffset() == myCursorHighlighter.getEndOffset()) continue;
+      if (myCursorHighlighter != null && highlighter.getStartOffset() == myCursorHighlighter.getStartOffset() &&
+        highlighter.getEndOffset() == myCursorHighlighter.getEndOffset()) continue;
       final boolean intersectsWithSelection = selectionRange.intersects(highlighter.getStartOffset(), highlighter.getEndOffset()) &&
                                               selectionRange.getEndOffset() != highlighter.getStartOffset() &&
                                               highlighter.getEndOffset() != selectionRange.getStartOffset();
@@ -281,7 +287,8 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     final Editor editor = mySearchResults.getEditor();
     if (myDelegate != null && cursor != null) {
       String replacementPreviewText = myDelegate.getStringToReplace(editor, cursor);
-      if (replacementPreviewText != null && mySearchResults.getFindModel().isRegularExpressions()) {
+      final FindModel findModel = mySearchResults.getFindModel();
+      if (findModel.isRegularExpressions() && findModel.isReplaceState()) {
 
         ReplacementView replacementView = new ReplacementView(replacementPreviewText, cursor);
         replacementView.setDelegate(this);

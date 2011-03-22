@@ -104,7 +104,7 @@ public abstract class ElementPresentationManager {
 
   /**
    * @deprecated
-   * @see com.intellij.ide.presentation.Presentation#namerClass()
+   * @see com.intellij.ide.presentation.Presentation#nameProviderClass()
    */
   public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
 

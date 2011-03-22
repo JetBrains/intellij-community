@@ -70,9 +70,9 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
   private final boolean myShowJavaCodeInfo;
   private final boolean myShowPreview;
 
-  @NonNls private static final String PROPERTY_KEY_OPTION_KEY = "PROPERTY_KEY";
+  @NonNls public static final String PROPERTY_KEY_OPTION_KEY = "PROPERTY_KEY";
   @NonNls private static final String RESOURCE_BUNDLE_OPTION_KEY = "RESOURCE_BUNDLE";
-  @NonNls private static final String PROPERTY_VALUE_ATTR = "PROPERTY_VALUE";
+  @NonNls public static final String PROPERTY_VALUE_ATTR = "PROPERTY_VALUE";
 
   public JavaI18nizeQuickFixDialog(@NotNull Project project,
                                @NotNull final PsiFile context,
@@ -251,8 +251,8 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     Map<String, String> attributes = new THashMap<String, String>();
     attributes.put(PROPERTY_KEY_OPTION_KEY, propertyKey);
     attributes.put(RESOURCE_BUNDLE_OPTION_KEY, getResourceBundleText());
-    addAdditionalAttributes(attributes);
     attributes.put(PROPERTY_VALUE_ATTR, StringUtil.escapeStringCharacters(myDefaultPropertyValue));
+    addAdditionalAttributes(attributes);
     String text = null;
     try {
       text = template.getText(attributes);

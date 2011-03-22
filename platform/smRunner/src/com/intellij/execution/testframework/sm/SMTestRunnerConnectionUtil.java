@@ -75,21 +75,31 @@ public class SMTestRunnerConnectionUtil {
                                                         final RunnerSettings runnerSettings,
                                                         final ConfigurationPerRunnerSettings configurationSettings
   ) throws ExecutionException {
+    BaseTestsOutputConsoleView console = createConsole(testFrameworkName, consoleProperties, runnerSettings, configurationSettings);
+    console.attachToProcess(processHandler);
+    return console;
+  }
+
+  public static BaseTestsOutputConsoleView createConsole(@NotNull final String testFrameworkName,
+                                                         @NotNull final TestConsoleProperties consoleProperties,
+                                                         final RunnerSettings runnerSettings,
+                                                         final ConfigurationPerRunnerSettings configurationSettings) {
 
     // Console
     final String splitterPropertyName = testFrameworkName + ".Splitter.Proportion";
-    final SMTRunnerConsoleView testRunnerConsole = new SMTRunnerConsoleView(consoleProperties, runnerSettings, configurationSettings, splitterPropertyName);
-    testRunnerConsole.setHelpId("reference.runToolWindow.testResultsTab");
-    testRunnerConsole.initUI();
-    final SMTestRunnerResultsForm resultsViewer = testRunnerConsole.getResultsViewer();
-
-    // attach listeners
-    attachEventsProcessors(consoleProperties, resultsViewer,
-                           resultsViewer.getStatisticsPane(),
-                           processHandler, testFrameworkName);
-    testRunnerConsole.attachToProcess(processHandler);
-
-    return testRunnerConsole;
+    final SMTRunnerConsoleView console =
+      new SMTRunnerConsoleView(consoleProperties, runnerSettings, configurationSettings, splitterPropertyName) {
+        @Override
+        public void attachToProcess(final ProcessHandler processHandler) {
+          // attach listeners
+          attachEventsProcessors(consoleProperties, getResultsViewer(),
+                                 getResultsViewer().getStatisticsPane(),
+                                 processHandler, testFrameworkName);
+        }
+      };
+    console.setHelpId("reference.runToolWindow.testResultsTab");
+    console.initUI();
+    return console;
   }
 
   /**
@@ -165,11 +175,11 @@ public class SMTestRunnerConnectionUtil {
                                                        final SMTestRunnerResultsForm resultsViewer,
                                                        final StatisticsPanel statisticsPane,
                                                        final ProcessHandler processHandler,
-                                                       @NotNull final String testFrameworkName)
-      throws ExecutionException {
-
+                                                       @NotNull final String testFrameworkName) {
     //build messages consumer
-    final OutputToGeneralTestEventsConverter outputConsumer = new OutputToGeneralTestEventsConverter(testFrameworkName);
+    final OutputToGeneralTestEventsConverter outputConsumer = consoleProperties instanceof SMCustomMessagesParsing ?
+                                                              ((SMCustomMessagesParsing)consoleProperties).createTestEventsConverter(testFrameworkName) :
+                                                              new OutputToGeneralTestEventsConverter(testFrameworkName);
 
     //events processor
     final GeneralToSMTRunnerEventsConvertor eventsProcessor = new GeneralToSMTRunnerEventsConvertor(resultsViewer.getTestsRootNode(),

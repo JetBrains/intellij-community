@@ -564,6 +564,11 @@ public class XDebugSessionImpl implements XDebugSession {
     myDispatcher.getMulticaster().sessionPaused();
   }
 
+  @Override
+  public void sessionResumed() {
+    doResume();
+  }
+
   private void enableBreakpoints() {
     if (myBreakpointsDisabled) {
       myBreakpointsDisabled = false;

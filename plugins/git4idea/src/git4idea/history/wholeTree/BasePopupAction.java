@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.tools.SimpleActionGroup;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
@@ -52,7 +51,7 @@ public abstract class BasePopupAction extends DumbAwareAction implements CustomC
     myLabel = new JLabel();
     final JLabel show = new JLabel(labeltext);
     show.setForeground(UIUtil.getInactiveTextColor());
-    show.setBorder(BorderFactory.createEmptyBorder(1, 2, 1, 1));
+    show.setBorder(BorderFactory.createEmptyBorder(1, 2, 1, 2));
     myLabel.setForeground(UIUtil.getInactiveTextColor().darker().darker());
     myPanel.add(show);
     myPanel.add(myLabel);

@@ -99,6 +99,11 @@ public interface XDebugSession extends AbstractDebuggerSession {
    */
   void positionReached(@NotNull XSuspendContext suspendContext);
 
+  /**
+   * Call this method when session resumed because of some external event, e.g. from the debugger console
+   */
+  void sessionResumed();
+
   void stop();
 
   void setBreakpointMuted(boolean muted);

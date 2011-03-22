@@ -12,6 +12,11 @@
       <interface-class>org.jetbrains.android.AndroidPlugin</interface-class>
     </component>
   </application-components>
+  <project-components>
+    <component>
+      <implementation-class>org.jetbrains.android.AndroidProjectComponent</implementation-class>
+    </component>
+  </project-components>
   <actions>
     <!--<group>
       <action id="NewActivity" class="org.jetbrains.android.actions.CreateActivityAction"/>

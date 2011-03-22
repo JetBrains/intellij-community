@@ -115,6 +115,15 @@ public class ChromeSettingsConfigurable implements Configurable {
     }
   }
 
+  public void enableRecommendedOptions() {
+    if (!myUseCustomProfileCheckBox.isSelected()) {
+      myUseCustomProfileCheckBox.doClick(0);
+    }
+    if (!myEnableRemoteDebugCheckBox.isSelected()) {
+      myEnableRemoteDebugCheckBox.doClick(0);
+    }
+  }
+
   private static String getDefaultUserDataPath() {
     File dir = new File(PathManager.getConfigPath(), "chrome-user-data");
     try {
