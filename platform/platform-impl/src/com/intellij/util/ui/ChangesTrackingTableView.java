@@ -40,15 +40,6 @@ public abstract class ChangesTrackingTableView<T> extends TableView<T> {
   protected abstract void onEditingStopped();
 
   @Override
-  public TableCellEditor getCellEditor(int row, int column) {
-    final TableCellEditor editor = super.getCellEditor(row, column);
-    if (column == 0 && editor instanceof DefaultCellEditor) {
-      //((DefaultCellEditor)editor).setClickCountToStart(1);
-    }
-    return editor;
-  }
-
-  @Override
   public boolean editCellAt(final int row, final int column, EventObject e) {
     if (super.editCellAt(row, column, e)) {
       assert myEditorListenerDisposable == null;
@@ -58,14 +49,23 @@ public abstract class ChangesTrackingTableView<T> extends TableView<T> {
         }
       };
       addChangeListener(getEditorComponent(), new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          onCellValueChanged(row, column, getValue(getEditorComponent()));
-        }
-      }, myEditorListenerDisposable);
+          @Override
+          public void stateChanged(ChangeEvent e) {
+            onCellValueChanged(row, column, getValue(getEditorComponent()));
+          }
+        }, myEditorListenerDisposable);
       return true;
     }
     return false;
+  }
+
+  @Override
+  public TableCellEditor getCellEditor(int row, int column) {
+    final TableCellEditor editor = super.getCellEditor(row, column);
+    if (column == 0 && editor instanceof DefaultCellEditor) {
+      //((DefaultCellEditor)editor).setClickCountToStart(1);
+    }
+    return editor;
   }
 
   @Override

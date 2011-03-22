@@ -73,9 +73,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
           KeyEvent keyEvent = (KeyEvent)e;
           if (Character.isDefined(keyEvent.getKeyChar())) {
             try {
-              if (keyEvent.getKeyCode() == KeyEvent.VK_DELETE) {
-                selectAll(focusOwner);
-              }
+              selectAll(focusOwner);
 
               Robot r = new Robot();
               r.keyPress(keyEvent.getKeyCode());
@@ -93,7 +91,7 @@ public class TableView<Item> extends BaseTableView implements ItemsProvider, Sel
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
-          IdeFocusManager.findInstanceByComponent(TableView.this).doWhenFocusSettlesDown(r);
+          r.run();
         }
       });
     }

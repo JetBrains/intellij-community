@@ -73,6 +73,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private boolean myInheritSwingFont = true;
   private Color myEnforcedBgColor = null;
   private boolean myOneLineMode; // use getter to access this field! It is allowed to override getter and change initial behaviour
+  private boolean myCenterByHeight = true;
 
   public EditorTextField() {
     this("");
@@ -100,7 +101,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     setDocument(document);
     myProject = project;
     myFileType = fileType;
-    setLayout(new BorderLayout());
+    setLayout(null);
     enableEvents(AWTEvent.KEY_EVENT_MASK);
     // todo[dsl,max]
     setFocusable(true);
@@ -207,7 +208,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     Editor editor = myEditor;
     myEditor = createEditor();
     releaseEditor(editor);
-    add(myEditor.getComponent(), BorderLayout.CENTER);
+    add(myEditor.getComponent());
 
     validate();
     if (isFocused) {
@@ -310,7 +311,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     final JComponent component = myEditor.getComponent();
     component.setOpaque(isOpaque());
 
-    add(component, BorderLayout.CENTER);
+    add(component);
 
     super.addNotify();
 
@@ -395,6 +396,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     updateBorder(editor);
     editor.setBackgroundColor(getBackgroundColor(!myIsViewer, colorsScheme));
   }
+
+
 
   public void setOneLineMode(boolean oneLineMode) {
     myOneLineMode = oneLineMode;
@@ -530,7 +533,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       Editor editor = myEditor;
       releaseEditor(editor);
       myEditor = createEditor();
-      add(myEditor.getComponent(), BorderLayout.CENTER);
+      add(myEditor.getComponent()
+
+
+      );
       revalidate();
     }
   }
@@ -540,6 +546,21 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return enabled
            ? colorsScheme.getDefaultBackground()
            : UIUtil.getInactiveTextFieldBackgroundColor();
+  }
+
+  @Override
+  public void doLayout() {
+    if (getComponentCount() != 1) return;
+
+    Component c = getComponent(0);
+    Insets insets = getInsets() != null ? getInsets() : new Insets(0, 0, 0, 0);
+    int prefHeight = c.getPreferredSize().height;
+    if (myOneLineMode && getSize().height > prefHeight && myCenterByHeight) {
+      int y = insets.top + getSize().height / 2 - prefHeight / 2;
+      c.setBounds(insets.left, y - 1, getSize().width - insets.left - insets.right, prefHeight);
+    } else {
+      c.setBounds(insets.left, insets.top, getSize().width - insets.left - insets.right, getSize().height - insets.top - insets.bottom);
+    }
   }
 
   public Dimension getPreferredSize() {
@@ -625,6 +646,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   public void setNewDocumentAndFileType(final FileType fileType, Document document) {
     myFileType = fileType;
     setDocument(document);
+  }
+
+  public void setCenterByHeight(boolean centerByHeight) {
+    myCenterByHeight = centerByHeight;
   }
 
   private static class DelegatingToRootTraversalPolicy extends FocusTraversalPolicy {
