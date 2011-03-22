@@ -494,7 +494,6 @@ public class PythonSdkType extends SdkType {
     if (SystemInfo.isLinux) {
       final VirtualFile file = LocalFileSystem.getInstance().findFileByPath("/usr/lib/python-django");
       if (file != null){
-        sdkModificator.addRoot(file, OrderRootType.SOURCES);
         sdkModificator.addRoot(file, OrderRootType.CLASSES);
       }
     }
@@ -510,7 +509,9 @@ public class PythonSdkType extends SdkType {
         child = JarFileSystem.getInstance().getJarRootForLocalFile(child);
       }
       if (child != null) {
-        sdkModificator.addRoot(child, OrderRootType.SOURCES);
+        // NOTE: Files marked as library sources are not considered part of project source. Since the directory of the project the
+        // user is working on is included in PYTHONPATH with many configurations (e.g. virtualenv), we must not mark SDK paths as
+        // library sources, only as classes.
         sdkModificator.addRoot(child, OrderRootType.CLASSES);
       }
     }

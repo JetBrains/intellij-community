@@ -104,6 +104,7 @@ public class PythonSdkUpdater implements ProjectComponent {
 
   private static void updateSdkPath(Sdk sdk, List<String> sysPath) {
     final List<VirtualFile> oldRoots = Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+    final VirtualFile[] sourceRoots = sdk.getRootProvider().getFiles(OrderRootType.SOURCES);
     PythonSdkAdditionalData additionalData = sdk.getSdkAdditionalData() instanceof PythonSdkAdditionalData
       ? (PythonSdkAdditionalData) sdk.getSdkAdditionalData()
       : null;
@@ -116,11 +117,12 @@ public class PythonSdkUpdater implements ProjectComponent {
         newRoots.add(root);
       }
     }
-    if (!newRoots.isEmpty()) {
+    if (!newRoots.isEmpty() || sourceRoots.length > 0) {
       final SdkModificator modificator = sdk.getSdkModificator();
       for (String root : newRoots) {
         PythonSdkType.addSdkRoot(modificator, root);
       }
+      modificator.removeRoots(OrderRootType.SOURCES);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
