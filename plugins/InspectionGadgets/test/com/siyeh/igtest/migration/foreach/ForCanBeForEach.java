@@ -203,4 +203,14 @@ public class ForCanBeForEach {
             if(eqpIter.next() == eqp) return eqpIter;
         throw new AssertionError("equation panel not found");
     }
+
+    int strange() {
+        int total = 0;
+        final List ints = new ArrayList();
+        for (ListIterator l = ints.listIterator(); l.hasNext(); ) {
+            System.out.println(l.next());
+        }
+        return total;
+    }
+
 }

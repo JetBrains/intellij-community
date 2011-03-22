@@ -203,7 +203,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
             myRecentSearchMatcher = recentSearchPattern.matcher(text);
 
             if (NameUtil.isUseMinusculeHumpMatcher()) {
-              myMinusculeMatcher = new NameUtil.MinusculeMatcher(myShouldMatchFromTheBeginning ? pattern : "*" + pattern);
+              myMinusculeMatcher = new NameUtil.MinusculeMatcher(myShouldMatchFromTheBeginning ? pattern : "*" + pattern, false);
               return myMinusculeMatcher.matches(text);
             }
             return myRecentSearchMatcher.find();

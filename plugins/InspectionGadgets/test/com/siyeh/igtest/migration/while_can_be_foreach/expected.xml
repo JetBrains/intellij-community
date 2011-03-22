@@ -23,4 +23,11 @@
     <description>&lt;code&gt;while&lt;/code&gt; loop replaceable with 'for each'</description>
   </problem>
 
+  <problem>
+    <file>WhileCanBeForeachInspection.java</file>
+    <line>73</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'while' loop replaceable with 'for each'</problem_class>
+    <description>&lt;code&gt;while&lt;/code&gt; loop replaceable with 'for each' #loc</description>
+  </problem>
+
 </problems>

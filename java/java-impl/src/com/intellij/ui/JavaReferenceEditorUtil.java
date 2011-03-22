@@ -15,9 +15,10 @@
  */
 package com.intellij.ui;
 
-import com.intellij.psi.*;
 import com.intellij.openapi.editor.Document;
-import com.intellij.util.Function;
+import com.intellij.psi.*;
+import com.intellij.util.NullableFunction;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.ActionListener;
 
@@ -33,23 +34,27 @@ public class JavaReferenceEditorUtil {
                                                                                       final PsiManager manager,
                                                                                       final boolean toAcceptClasses) {
     return new ReferenceEditorWithBrowseButton(browseActionListener, manager.getProject(),
-                                               new Function<String,Document>() {
+                                               new NullableFunction<String,Document>() {
       public Document fun(final String s) {
         return createDocument(s, manager, toAcceptClasses);
       }
     }, text);
   }
 
+  @Nullable
   public static Document createDocument(final String text, PsiManager manager, boolean isClassesAccepted) {
-    PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
-    final JavaCodeFragment fragment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
+    final PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    final JavaCodeFragment fragment = elementFactory.createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
     fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
     return PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
   }
 
+  @Nullable
   public static Document createTypeDocument(final String text, PsiManager manager) {
-    PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
-    final JavaCodeFragment fragment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeCodeFragment(text, defaultPackage, false, true, false);
+    final PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    final JavaCodeFragment fragment = elementFactory.createTypeCodeFragment(text, defaultPackage, true);
     fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
     return PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
   }

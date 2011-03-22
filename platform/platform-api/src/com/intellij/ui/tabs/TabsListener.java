@@ -15,10 +15,8 @@
  */
 package com.intellij.ui.tabs;
 
-import com.intellij.util.messages.Topic;
 
 public interface TabsListener {
-  Topic<TabsListener> TOPIC = Topic.create("TabsListener", TabsListener.class);
 
   void selectionChanged(TabInfo oldSelection, TabInfo newSelection);
 

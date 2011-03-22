@@ -169,9 +169,8 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
     doBasicTest();
   }
 
-  public void testCompletionInParameterListInClosableBlock() throws Throwable {
-    doBasicTest();
-  }
+  public void testCompletionInParameterListInClosableBlock() throws Throwable { doBasicTest(); }
+  public void testCompletionInParameterListInClosableBlock3() throws Throwable { doBasicTest(); }
 
   public void testCompletionInParameterListInClosableBlock2() throws Throwable {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "aDouble");

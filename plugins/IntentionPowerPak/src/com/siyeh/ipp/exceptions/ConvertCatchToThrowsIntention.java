@@ -27,69 +27,72 @@ import java.util.List;
 
 public class ConvertCatchToThrowsIntention extends Intention {
 
-    @Override
-    @NotNull
-    protected PsiElementPredicate getElementPredicate() {
-        return new ConvertCatchtoThrowsPredicate();
-    }
+  @Override
+  @NotNull
+  protected PsiElementPredicate getElementPredicate() {
+    return new ConvertCatchToThrowsPredicate();
+  }
 
-    @Override
-    protected void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        final PsiCatchSection catchSection =
-                (PsiCatchSection) element.getParent();
-        final PsiMethod method =
-                PsiTreeUtil.getParentOfType(catchSection, PsiMethod.class);
-        if (method == null) {
-            return;
-        }
-        // todo warn if method implements or overrides some base method
-        //             Warning
-        // "Method xx() of class XX implements/overrides method of class
-        // YY. Do you want to modify the base method?"
-        //                                             [Yes][No][Cancel]
-        final PsiReferenceList throwsList = method.getThrowsList();
-        final Project project = element.getProject();
-        final PsiElementFactory factory =
-                JavaPsiFacade.getElementFactory(project);
-        final PsiType catchType = catchSection.getCatchType();
-        if (catchType instanceof PsiClassType) {
-            final PsiClassType classType = (PsiClassType) catchType;
-            final PsiJavaCodeReferenceElement referenceElement =
-                    factory.createReferenceElementByType(classType);
-            throwsList.add(referenceElement);
-        } else if (catchType instanceof PsiDisjunctionType) {
-            final PsiDisjunctionType disjunctionType =
-                    (PsiDisjunctionType) catchType;
-            final List<PsiType> disjunctions =
-                    disjunctionType.getDisjunctions();
-            for (PsiType disjunction : disjunctions) {
-                if (!(disjunction instanceof PsiClassType)) {
-                    continue;
-                }
-                final PsiClassType classType = (PsiClassType) disjunction;
-                final PsiJavaCodeReferenceElement referenceElement =
-                        factory.createReferenceElementByType(classType);
-                throwsList.add(referenceElement);
-            }
-        } else {
-            return;
-        }
-        final PsiTryStatement tryStatement = catchSection.getTryStatement();
-        final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
-        if (catchSections.length > 1) {
-            catchSection.delete();
-        } else {
-            final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-            if (tryBlock == null) {
-                return;
-            }
-            final PsiElement parent = tryStatement.getParent();
-            final PsiStatement[] statements = tryBlock.getStatements();
-            for (PsiStatement statement : statements) {
-                parent.addBefore(statement, tryStatement);
-            }
-            tryStatement.delete();
-        }
+  @Override
+  protected void processIntention(@NotNull PsiElement element)
+    throws IncorrectOperationException {
+    final PsiCatchSection catchSection =
+      (PsiCatchSection)element.getParent();
+    final PsiMethod method =
+      PsiTreeUtil.getParentOfType(catchSection, PsiMethod.class);
+    if (method == null) {
+      return;
     }
+    // todo warn if method implements or overrides some base method
+    //             Warning
+    // "Method xx() of class XX implements/overrides method of class
+    // YY. Do you want to modify the base method?"
+    //                                             [Yes][No][Cancel]
+    final PsiReferenceList throwsList = method.getThrowsList();
+    final Project project = element.getProject();
+    final PsiElementFactory factory =
+      JavaPsiFacade.getElementFactory(project);
+    final PsiType catchType = catchSection.getCatchType();
+    if (catchType instanceof PsiClassType) {
+      final PsiClassType classType = (PsiClassType)catchType;
+      final PsiJavaCodeReferenceElement referenceElement =
+        factory.createReferenceElementByType(classType);
+      throwsList.add(referenceElement);
+    }
+    else if (catchType instanceof PsiDisjunctionType) {
+      final PsiDisjunctionType disjunctionType =
+        (PsiDisjunctionType)catchType;
+      final List<PsiType> disjunctions =
+        disjunctionType.getDisjunctions();
+      for (PsiType disjunction : disjunctions) {
+        if (!(disjunction instanceof PsiClassType)) {
+          continue;
+        }
+        final PsiClassType classType = (PsiClassType)disjunction;
+        final PsiJavaCodeReferenceElement referenceElement =
+          factory.createReferenceElementByType(classType);
+        throwsList.add(referenceElement);
+      }
+    }
+    else {
+      return;
+    }
+    final PsiTryStatement tryStatement = catchSection.getTryStatement();
+    final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
+    if (catchSections.length > 1 || tryStatement.getResourceList() != null) {
+      catchSection.delete();
+    }
+    else {
+      final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+      if (tryBlock == null) {
+        return;
+      }
+      final PsiElement parent = tryStatement.getParent();
+      final PsiStatement[] statements = tryBlock.getStatements();
+      for (PsiStatement statement : statements) {
+        parent.addBefore(statement, tryStatement);
+      }
+      tryStatement.delete();
+    }
+  }
 }

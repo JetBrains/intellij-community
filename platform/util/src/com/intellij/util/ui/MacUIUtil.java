@@ -32,6 +32,7 @@ import java.lang.reflect.Field;
 public class MacUIUtil {
 
   public static final boolean USE_QUARTZ = "true".equals(System.getProperty("apple.awt.graphics.UseQuartz"));
+  public static final String MAC_FILL_BORDER = "MAC_FILL_BORDER";
 
   private MacUIUtil() {
   }
@@ -50,8 +51,10 @@ public class MacUIUtil {
       final int width1 = width - 8;
       final int height1 = height - 6;
 
-      g.setColor(UIUtil.getPanelBackground());
-      g.fillRect(x, y, width, height);
+      if (c.isOpaque() || (c instanceof JComponent && ((JComponent)c).getClientProperty(MAC_FILL_BORDER) == Boolean.TRUE)) {
+        g.setColor(UIUtil.getPanelBackground());
+        g.fillRect(x, y, width, height);
+      }
 
       g.setColor(c.getBackground());
       g.fillRect(x1, y1, width1, height1);

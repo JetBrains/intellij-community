@@ -138,5 +138,38 @@ def foo() {
 """, "\b"
   }
 
+  public void testSwitchRParen() {
+    checkReparse """
+def foo() {
+    switch (word w w)<caret> {
+      case 2:
+        def x = (y)
+    }
+  }
+""", "\b"
+  }
+
+  public void testWhileRParen() {
+    checkReparse """
+def foo() {
+  def cl = {
+    while (true<caret> {
+      //
+    }
+  }
+}""", ";"
+  }
+
+  public void testSynchronizedRParen() {
+    checkReparse """
+def foo() {
+  def cl = {
+    synchronized (x<caret> {
+      //
+    }
+  }
+}""", ";"
+  }
+
 
 }

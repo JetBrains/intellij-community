@@ -34,6 +34,7 @@ public class CompletionParameters {
                                   final CompletionType completionType, int offset, final int invocationCount) {
     assert offset >= position.getTextRange().getStartOffset();
     myPosition = position;
+    assert position.isValid();
     myOriginalFile = originalFile;
     myCompletionType = completionType;
     myOffset = offset;

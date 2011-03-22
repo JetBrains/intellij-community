@@ -17,6 +17,7 @@ package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -69,6 +70,12 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
   }
 
   protected boolean invokeImpl(final Project project, final PsiLocalVariable localVariable, final Editor editor) {
+    final PsiElement parent = localVariable.getParent();
+    if (!(parent instanceof PsiDeclarationStatement)) {
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, getHelpID());
+      return false;
+    }
     final LocalToFieldHandler localToFieldHandler = new LocalToFieldHandler(project, true){
       @Override
       protected Settings showRefactoringDialog(PsiClass aClass,
@@ -138,9 +145,18 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       }
     }
 
+    final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences);
+    if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled()) {
+      new InplaceIntroduceConstantPopup(project, editor, parentClass, expr, localVariable, occurences, typeSelectorManager,
+                                        anchorElement, anchorElementIfAll,
+                                        createOccurenceManager(expr, parentClass)).performInplaceIntroduce();
+      return null;
+    }
+
+
     final IntroduceConstantDialog dialog =
-      new IntroduceConstantDialog(project, parentClass, expr, localVariable, false, occurences, getParentClass(),
-                                  new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences));
+      new IntroduceConstantDialog(project, parentClass, expr, localVariable, localVariable != null, occurences, getParentClass(),
+                                  typeSelectorManager);
     dialog.show();
     if (!dialog.isOK()) {
       if (occurences.length > 1) {

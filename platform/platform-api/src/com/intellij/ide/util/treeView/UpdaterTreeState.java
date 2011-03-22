@@ -280,7 +280,7 @@ public class UpdaterTreeState {
 
           processHangByParent(hangByParent).notify(result);
         }
-      }, true, true, true);
+      }, false, true, true);
     } else {
       result.setDone();
     }

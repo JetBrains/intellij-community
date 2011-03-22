@@ -22,7 +22,7 @@ import java.lang.annotation.Target;
 
 /**
  * Marks a {@link GenericValue} getter as documentation text source.
- * Element interface should be annotated with {@link Presentation}
+ * Element interface should be annotated with {@link com.intellij.ide.presentation.Presentation}
  *
  * @author Dmitry Avdeev
  */

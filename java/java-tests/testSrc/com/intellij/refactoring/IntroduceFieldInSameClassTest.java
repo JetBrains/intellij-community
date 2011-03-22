@@ -99,4 +99,10 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
                    "Invalid expression context.", e.getMessage());
     }
   }
+
+  public void testInConstructorEnclosingAnonymous() throws Exception {
+    configureByFile("/refactoring/introduceField/beforeEnclosingAnonymous.java");
+    performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR, false);
+    checkResultByFile("/refactoring/introduceField/afterEnclosingAnonymous.java");
+  }
 }

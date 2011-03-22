@@ -28,8 +28,10 @@ Groovy script
           Command arguments
             Literal
               PsiElement(Gstring)('"bugaga"')
-        PsiWhiteSpace(' ')
         PsiErrorElement:';', '}' or new line expected
+          <empty list>
+        PsiWhiteSpace(' ')
+        Literal
           PsiElement(Integer)('3')
         PsiElement(})('}')
     PsiElement(Gstring content)(' ved')

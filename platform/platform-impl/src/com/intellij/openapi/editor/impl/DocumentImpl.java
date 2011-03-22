@@ -54,11 +54,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.DocumentImpl");
 
-  private final List<DocumentListener> myDocumentListeners = ContainerUtil.createEmptyCOWList();
+  private final CopyOnWriteArrayList<DocumentListener> myDocumentListeners = ContainerUtil.createEmptyCOWList();
   private final RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this);
   private final List<RangeMarker> myGuardedBlocks = new ArrayList<RangeMarker>();
   private ReadonlyFragmentModificationHandler myReadonlyFragmentModificationHandler;
@@ -547,8 +548,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   public void addDocumentListener(@NotNull DocumentListener listener) {
     myCachedDocumentListeners = null;
-    LOG.assertTrue(!myDocumentListeners.contains(listener), listener);
-    myDocumentListeners.add(listener);
+    boolean added = myDocumentListeners.addIfAbsent(listener);
+    LOG.assertTrue(added, listener);
   }
 
   public void addDocumentListener(@NotNull final DocumentListener listener, @NotNull Disposable parentDisposable) {
@@ -609,14 +610,16 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return lineCount;
   }
 
+  @NotNull
   private DocumentListener[] getCachedListeners() {
-    if (myCachedDocumentListeners == null) {
+    DocumentListener[] cachedListeners = myCachedDocumentListeners;
+    if (cachedListeners == null) {
       DocumentListener[] listeners = myDocumentListeners.toArray(new DocumentListener[myDocumentListeners.size()]);
       Arrays.sort(listeners, PrioritizedDocumentListener.COMPARATOR);
-      myCachedDocumentListeners = listeners;
+      myCachedDocumentListeners = cachedListeners = listeners;
     }
 
-    return myCachedDocumentListeners;
+    return cachedListeners;
   }
 
   public void fireReadOnlyModificationAttempt() {

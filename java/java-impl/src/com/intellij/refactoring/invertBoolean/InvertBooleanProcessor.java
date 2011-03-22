@@ -97,6 +97,10 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
               toInvert.add(mySmartPointerManager.createSmartPsiElementPointer(returnValue));
             }
           }
+
+          @Override
+          public void visitClass(PsiClass aClass) {
+          }
         });
       }
     } else if (myElement instanceof PsiParameter && ((PsiParameter)myElement).getDeclarationScope() instanceof PsiMethod) {

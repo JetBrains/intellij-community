@@ -105,7 +105,7 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
     final boolean allowInitInMethodIfAll = (!currentMethodConstructor || !isInSuperOrThis) && anchorElementIfAll instanceof PsiStatement;
     final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, type, containingMethod, expr, occurences);
 
-    if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled() && ApplicationManagerEx.getApplicationEx().isInternal()) {
+    if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled()) {
       myInplaceIntroduceFieldPopup =
         new InplaceIntroduceFieldPopup(localVariable, parentClass, declareStatic, currentMethodConstructor, occurences, expr, typeSelectorManager, editor,
                                        allowInitInMethod, allowInitInMethodIfAll, anchorElement, anchorElementIfAll, createOccurenceManager(expr, parentClass));
@@ -155,6 +155,12 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler {
   }
 
   protected boolean invokeImpl(final Project project, PsiLocalVariable localVariable, final Editor editor) {
+    final PsiElement parent = localVariable.getParent();
+    if (!(parent instanceof PsiDeclarationStatement)) {
+      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, getHelpID());
+      return false;
+    }
     LocalToFieldHandler localToFieldHandler = new LocalToFieldHandler(project, false){
       @Override
       protected Settings showRefactoringDialog(PsiClass aClass,

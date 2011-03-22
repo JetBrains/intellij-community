@@ -121,13 +121,13 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     if (mySearchResults.getProject().isDisposed()) return;
     removeFromEditor(mySearchResults.getEditor());
 
-    updateCursorHighlighting(false);
     highlightUsages();
+    updateCursorHighlighting(false);
   }
 
   @Override
   public void cursorMoved(boolean toChangeSelection) {
-    updateCursorHighlighting(true);
+    updateCursorHighlighting(toChangeSelection);
   }
 
   public void editorChanged(SearchResults sr, Editor oldEditor) {
@@ -209,6 +209,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
           myCursorHighlighter = null;
         }
       }
+      myHighlighters.clear();
       if (myListeningSelection) {
         editor.getSelectionModel().removeSelectionListener(this);
         myListeningSelection = false;
@@ -248,9 +249,11 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     final HashSet<RangeHighlighter> toRemove = new HashSet<RangeHighlighter>();
     Set<RangeHighlighter> toAdd = new HashSet<RangeHighlighter>();
     for (RangeHighlighter highlighter : myHighlighters) {
-      if (myCursorHighlighter != null && highlighter.getStartOffset() == myCursorHighlighter.getStartOffset() &&
-        highlighter.getEndOffset() == myCursorHighlighter.getEndOffset()) continue;
-      final boolean intersectsWithSelection = selectionRange.intersects(highlighter.getStartOffset(), highlighter.getEndOffset());
+      //if (myCursorHighlighter != null && highlighter.getStartOffset() == myCursorHighlighter.getStartOffset() &&
+      //  highlighter.getEndOffset() == myCursorHighlighter.getEndOffset()) continue;
+      final boolean intersectsWithSelection = selectionRange.intersects(highlighter.getStartOffset(), highlighter.getEndOffset()) &&
+                                              selectionRange.getEndOffset() != highlighter.getStartOffset() &&
+                                              highlighter.getEndOffset() != selectionRange.getStartOffset();
       final Object userData = highlighter.getUserData(IN_SELECTION_KEY);
       if (userData != null) {
         if (!intersectsWithSelection) {
@@ -270,13 +273,6 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     }
     myHighlighters.removeAll(toRemove);
     myHighlighters.addAll(toAdd);
-  }
-
-  private static TextAttributes dotted(TextAttributes attrs) {
-    TextAttributes textAttributes = attrs.clone();
-    textAttributes.setEffectColor(Color.WHITE);
-    textAttributes.setEffectType(EffectType.BOXED);
-    return textAttributes;
   }
 
   private void showReplacementPreview() {

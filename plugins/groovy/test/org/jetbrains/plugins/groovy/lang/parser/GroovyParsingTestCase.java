@@ -36,6 +36,7 @@ public abstract class GroovyParsingTestCase extends LightCodeInsightFixtureTestC
   protected void checkParsing(String input, String output) {
     final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(getProject(), input);
     String psiTree = DebugUtil.psiToString(psiFile, false);
-    assertEquals(output.trim(), psiTree.trim());
+    String prefix = input.trim() + "\n-----\n";
+    assertEquals(prefix + output.trim(), prefix + psiTree.trim());
   }
 }

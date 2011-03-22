@@ -15,61 +15,70 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.BitUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.BitUtil.isSet;
 
 /**
  * @author dsl
  */
 public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiTypeCodeFragment {
   private final boolean myAllowEllipsis;
+  private final boolean myAllowDisjunction;
 
-  public PsiTypeCodeFragmentImpl(Project manager,
-                                 boolean isPhysical,
-                                 boolean allowEllipsis,
-                                 @NonNls String name,
-                                 CharSequence text) {
-    super(manager, JavaElementType.TYPE_TEXT, isPhysical, name, text);
-    myAllowEllipsis = allowEllipsis;
+  public PsiTypeCodeFragmentImpl(final Project project,
+                                 final boolean isPhysical,
+                                 final @NonNls String name,
+                                 final CharSequence text,
+                                 final int flags) {
+    super(project, JavaElementType.TYPE_TEXT, isPhysical, name, text);
+
+    myAllowEllipsis = BitUtil.isSet(flags, PsiElementFactory.ALLOW_ELLIPSIS);
+    myAllowDisjunction = BitUtil.isSet(flags, PsiElementFactory.ALLOW_DISJUNCTION);
+
+    if (isSet(flags, PsiElementFactory.ALLOW_VOID)) {
+      putUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT, Boolean.TRUE);
+    }
   }
 
   @NotNull
-  public PsiType getType()
-    throws TypeSyntaxException, NoTypeException {
-    class SyntaxError extends RuntimeException {}
+  public PsiType getType() throws TypeSyntaxException, NoTypeException {
+    class MyTypeSyntaxException extends RuntimeException {
+      MyTypeSyntaxException(final String message) { super(message); }
+    }
+
     try {
       accept(new PsiRecursiveElementWalkingVisitor() {
-        @Override public void visitErrorElement(PsiErrorElement element) {
-          throw new SyntaxError();
+        @Override
+        public void visitErrorElement(PsiErrorElement element) {
+          throw new MyTypeSyntaxException(element.getErrorDescription());
         }
       });
     }
-    catch(SyntaxError e) {
-      throw new TypeSyntaxException();
+    catch (MyTypeSyntaxException e) {
+      throw new TypeSyntaxException(e.getMessage());
     }
-    PsiElement child = getFirstChild();
-    while (child != null && !(child instanceof PsiTypeElement)) {
-      child = child.getNextSibling();
-    }
-    PsiTypeElement typeElement = (PsiTypeElement)child;
+
+    final PsiTypeElement typeElement = PsiTreeUtil.getChildOfType(this, PsiTypeElement.class);
     if (typeElement == null) {
-      throw new NoTypeException();
+      throw new NoTypeException("No type found in '" + getText() + "'");
     }
-    PsiType type = typeElement.getType();
-    PsiElement sibling = typeElement.getNextSibling();
-    while (sibling instanceof PsiWhiteSpace) {
-      sibling = sibling.getNextSibling();
+
+    final PsiType type = typeElement.getType();
+    if (type instanceof PsiEllipsisType && !myAllowEllipsis) {
+      throw new TypeSyntaxException("Ellipsis not allowed: " + type);
     }
-    if (sibling instanceof PsiJavaToken && "...".equals(sibling.getText())) {
-      if (myAllowEllipsis) return new PsiEllipsisType(type);
-      else throw new TypeSyntaxException();
-    } else {
-      return type;
+    else if (type instanceof PsiDisjunctionType && !myAllowDisjunction) {
+      throw new TypeSyntaxException("Disjunction not allowed: " + type);
     }
+    return type;
   }
 
   public boolean isVoidValid() {

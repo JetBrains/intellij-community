@@ -18,9 +18,11 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefiniti
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrReferenceListElementType;
 
 import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.fail;
 import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement.ReferenceElementResult.mayBeType;
@@ -33,6 +35,37 @@ import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDe
 
 public class ReferenceElement implements GroovyElementTypes {
   public static final String DUMMY_IDENTIFIER = CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED; //inserted by completion
+
+  public static IElementType parseReferenceList(PsiBuilder builder,
+                                                final IElementType startElement,
+                                                final GrReferenceListElementType<?> clauseType) {
+    PsiBuilder.Marker isMarker = builder.mark();
+
+    if (!ParserUtils.getToken(builder, startElement)) {
+      isMarker.rollbackTo();
+      return NONE;
+    }
+
+    ParserUtils.getToken(builder, mNLS);
+
+    if (parseReferenceElement(builder)== fail) {
+      isMarker.rollbackTo();
+      return WRONGWAY;
+    }
+
+    while (ParserUtils.getToken(builder, mCOMMA)) {
+      ParserUtils.getToken(builder, mNLS);
+
+      if (parseReferenceElement(builder) == fail) {
+        isMarker.rollbackTo();
+        return WRONGWAY;
+      }
+    }
+
+    ParserUtils.getToken(builder, mNLS);
+    isMarker.done(clauseType);
+    return clauseType;
+  }
 
   public enum ReferenceElementResult {
     mayBeType, mustBeType, fail

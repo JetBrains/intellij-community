@@ -36,12 +36,13 @@ public class VcsHistoryCache {
   private final Object myLock;
   private final SLRUMap<BaseKey, CachedHistory> myHistoryCache;
   private final SLRUMap<WithRevisionKey, VcsAnnotation> myAnnotationCache;
-  //private final SLRUCache<Trinity<VirtualFile, VcsKey, VcsRevisionNumber>, String> myRevisionContentCache;
+  //private final SLRUMap<WithRevisionKey, String> myContentCache;
 
   public VcsHistoryCache() {
     myLock = new Object();
     myHistoryCache = new SLRUMap<BaseKey, CachedHistory>(10, 10);
     myAnnotationCache = new SLRUMap<WithRevisionKey, VcsAnnotation>(10, 5);
+    //myContentCache = new SLRUMap<WithRevisionKey, String>(20, 20);
   }
 
   public <C extends Serializable, T extends VcsAbstractHistorySession> void put(final FilePath filePath,
@@ -97,11 +98,15 @@ public class VcsHistoryCache {
 
   public void put(@NotNull final FilePath filePath, @NotNull final VcsKey vcsKey, @NotNull final VcsRevisionNumber number,
                   @NotNull final VcsAnnotation vcsAnnotation) {
-    myAnnotationCache.put(new WithRevisionKey(filePath, vcsKey, number), vcsAnnotation);
+    synchronized (myLock) {
+      myAnnotationCache.put(new WithRevisionKey(filePath, vcsKey, number), vcsAnnotation);
+    }
   }
 
   public VcsAnnotation get(@NotNull final FilePath filePath, @NotNull final VcsKey vcsKey, @NotNull final VcsRevisionNumber number) {
-    return myAnnotationCache.get(new WithRevisionKey(filePath, vcsKey, number));
+    synchronized (myLock) {
+      return myAnnotationCache.get(new WithRevisionKey(filePath, vcsKey, number));
+    }
   }
 
   private static class WithRevisionKey extends BaseKey {

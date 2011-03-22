@@ -65,4 +65,16 @@ public class WhileCanBeForeachInspection {
             Object o = iter.next();
         }
     }
+
+  int strange() {
+    int total = 0;
+    final List ints = new ArrayList();
+    ListIterator iterator = ints.listIterator();
+    while ( iterator.hasNext()) {
+      final Object next = iterator.next();
+      total += (Integer) next;
+    }
+    return total;
+  }
+
 }

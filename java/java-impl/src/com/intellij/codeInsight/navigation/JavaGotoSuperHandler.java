@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -43,7 +44,11 @@ public class JavaGotoSuperHandler implements CodeInsightActionHandler {
     if (superElements == null || superElements.length == 0) return;
     if (superElements.length == 1) {
       PsiElement superElement = superElements[0].getNavigationElement();
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, superElement.getContainingFile().getVirtualFile(), superElement.getTextOffset());
+      final PsiFile containingFile = superElement.getContainingFile();
+      if (containingFile == null) return;
+      final VirtualFile virtualFile = containingFile.getVirtualFile();
+      if (virtualFile == null) return;
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, virtualFile, superElement.getTextOffset());
       FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
     } else {
       if (superElements[0] instanceof PsiMethod) {

@@ -15,8 +15,12 @@ Groovy script
       PsiElement({)('{')
       Parameter list
         <empty list>
-      PsiErrorElement:';', '}' or new line expected
-        PsiElement(@)('@')
-        PsiElement(wrong token)('#')
+      PsiErrorElement:Wrong statement
+        <empty list>
+      PsiElement(@)('@')
+      PsiErrorElement:Wrong statement
+        <empty list>
+      PsiElement(wrong token)('#')
+      Literal
         PsiElement(Integer)('2')
       PsiElement(})('}')

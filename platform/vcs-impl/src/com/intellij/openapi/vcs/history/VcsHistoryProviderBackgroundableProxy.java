@@ -114,6 +114,7 @@ public class VcsHistoryProviderBackgroundableProxy {
       cachedPartner = new HistoryPartnerProxy(partner, new Consumer<VcsAbstractHistorySession>() {
         @Override
         public void consume(VcsAbstractHistorySession session) {
+          if (session == null) return;
           final FilePath correctedPath =
             ((VcsCacheableHistorySessionFactory<Serializable, VcsAbstractHistorySession>)myDelegate).getUsedFilePath(session);
           myVcsHistoryCache.put(filePath, correctedPath, vcsKey, (VcsAbstractHistorySession)session.copy(),

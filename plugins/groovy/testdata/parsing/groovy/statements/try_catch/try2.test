@@ -28,9 +28,13 @@ Groovy script
           Reference expression
             PsiElement(identifier)('e1')
       PsiErrorElement:';', '}' or new line expected
-        PsiElement())(')')
-        PsiWhiteSpace(' ')
+        <empty list>
+      PsiElement())(')')
+      PsiWhiteSpace(' ')
+      Closable block
         PsiElement({)('{')
+        Parameter list
+          <empty list>
         PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiErrorElement:'catch' without 'try'
@@ -49,9 +53,13 @@ Groovy script
           Reference expression
             PsiElement(identifier)('e2')
       PsiErrorElement:';', '}' or new line expected
-        PsiElement())(')')
-        PsiWhiteSpace(' ')
+        <empty list>
+      PsiElement())(')')
+      PsiWhiteSpace(' ')
+      Closable block
         PsiElement({)('{')
+        Parameter list
+          <empty list>
         PsiElement(})('}')
       PsiElement(new line)('\n')
       PsiErrorElement:'finally' without 'try'

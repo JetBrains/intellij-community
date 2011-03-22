@@ -54,6 +54,12 @@ datafile
 datafiles
 datetime
 deallocate
+decompile
+decompiled
+decompiler
+decompilers
+decompiles
+decompiling
 dedent
 deduplicate
 deferrable
@@ -86,6 +92,7 @@ fulltext
 gdata
 geometrycollection
 getters
+globals
 google
 hardcoded
 holdability
@@ -98,6 +105,7 @@ https
 impl
 inbox
 indextype
+indices
 infile
 init
 initializer
@@ -300,12 +308,14 @@ tinytext
 todo
 tokenize
 tokenizer
+tooltip
 tooltips
-trinary
 twitter
+unboxing
 uncomment
 uncommented
 underwave
+undoable
 undofile
 unhandled
 uninstall
@@ -327,7 +337,9 @@ vertices
 webservice
 whitespace
 whitespaces
+wiki
 wildcard
+wildcards
 workflow
 wsdl
 xmlschema

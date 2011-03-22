@@ -26,6 +26,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -65,11 +66,13 @@ public class JUnitTreeConsoleView extends BaseTestsOutputConsoleView {
     return myConsolePanel.getTreeView();
   }
 
-  public void attachToModel(JUnitRunningModel model) {
-    myConsolePanel.getTreeView().attachToModel(model);
-    model.attachToTree(myConsolePanel.getTreeView());
-    myConsolePanel.setModel(model);
-    model.onUIBuilt();
-    new TreeCollapser().setModel(model);
+  public void attachToModel(@NotNull JUnitRunningModel model) {
+    if (myConsolePanel != null) {
+      myConsolePanel.getTreeView().attachToModel(model);
+      model.attachToTree(myConsolePanel.getTreeView());
+      myConsolePanel.setModel(model);
+      model.onUIBuilt();
+      new TreeCollapser().setModel(model);
+    }
   }
 }

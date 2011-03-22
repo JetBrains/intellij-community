@@ -112,4 +112,35 @@ public class IOResourceInspection {
             in.read();
         }
     }
+
+    void test1() throws IOException {
+        final FileInputStream in = new FileInputStream("");
+        in.close();
+    }
+
+    void test2() throws IOException {
+        final FileInputStream in = new FileInputStream("");
+        if (in != null) {
+            try {
+                in.close();
+            } catch (IOException e) {}
+        }
+    }
+
+    void test3() throws FileNotFoundException {
+        final FileInputStream in = new FileInputStream("");
+        try {
+
+        } finally {
+            silentClose(in);
+        }
+    }
+
+    void silentClose(InputStream in) {
+        if (in != null) {
+            try {
+                in.close();
+            } catch (IOException e) {}
+        }
+    }
 }

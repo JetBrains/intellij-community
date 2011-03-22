@@ -17,6 +17,11 @@ package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -24,6 +29,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -33,6 +39,8 @@ import com.intellij.refactoring.introduceVariable.VariableInplaceIntroducer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -126,9 +134,81 @@ public abstract class AbstractInplaceIntroducer extends VariableInplaceIntroduce
     if (psiVariable == null || !psiVariable.isValid()) return null;
     final PsiElement refVariableElement = containingFile.findElementAt(marker.getStartOffset());
     final PsiExpression expression = PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
-    if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).resolve() == psiVariable) {
+    if (expression instanceof PsiReferenceExpression && (((PsiReferenceExpression)expression).resolve() == psiVariable ||
+                                                         Comparing.strEqual(psiVariable.getName(), ((PsiReferenceExpression)expression).getReferenceName()))) {
       return (PsiExpression)expression.replace(elementFactory.createExpressionFromText(exprText, psiVariable));
     }
     return null;
+  }
+
+  protected abstract class VisibilityListener implements ChangeListener {
+    private Project myProject;
+    private Editor myEditor;
+
+    protected VisibilityListener(Project project, Editor editor) {
+      myProject = project;
+      myEditor = editor;
+    }
+
+    @Override
+    public void stateChanged(ChangeEvent e) {
+      new WriteCommandAction(myProject) {
+        @Override
+        protected void run(Result result) throws Throwable {
+          final Document document = myEditor.getDocument();
+          PsiDocumentManager.getInstance(getProject()).commitDocument(document);
+          final PsiVariable variable = getVariable();
+          LOG.assertTrue(variable != null);
+          final PsiModifierList modifierList = variable.getModifierList();
+          LOG.assertTrue(modifierList != null);
+          int textOffset = modifierList.getTextOffset();
+          final String modifierListText = modifierList.getText();
+
+          int length = PsiModifier.PUBLIC.length();
+          int idx = modifierListText.indexOf(PsiModifier.PUBLIC);
+
+          if (idx == -1) {
+            idx = modifierListText.indexOf(PsiModifier.PROTECTED);
+            length = PsiModifier.PROTECTED.length();
+          }
+
+          if (idx == -1) {
+            idx = modifierListText.indexOf(PsiModifier.PRIVATE);
+            length = PsiModifier.PRIVATE.length();
+          }
+
+          final int startOffset = textOffset + idx;
+          final int endOffset;
+          if (idx == -1) {
+            endOffset = startOffset;
+          }
+          else {
+            endOffset = textOffset + length;
+          }
+
+          String visibility = getVisibility();
+          if (visibility == PsiModifier.PACKAGE_LOCAL) {
+            visibility = "";
+          }
+          final String finalVisibility = visibility;
+
+          Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+              document.replaceString(startOffset, endOffset, finalVisibility);
+            }
+          };
+
+          final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
+          if (lookup != null) {
+            lookup.performGuardedChange(runnable);
+          } else {
+            runnable.run();
+          }
+        }
+      }.execute();
+    }
+
+    protected abstract String getVisibility();
   }
 }

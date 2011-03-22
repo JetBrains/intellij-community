@@ -287,10 +287,10 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
   @NotNull PsiReferenceExpression createReferenceExpression(@NotNull PsiPackage aPackage) throws IncorrectOperationException;
 
   /**
-   * Creates a Java idenitifier with the specified text.
+   * Creates a Java identifier with the specified text.
    *
    * @param text the text of the identifier to create.
-   * @return the idenitifier instance.
+   * @return the identifier instance.
    * @throws IncorrectOperationException if <code>text</code> is not a valid Java identifier.
    */
   @NotNull PsiIdentifier createIdentifier(@NotNull @NonNls String text) throws IncorrectOperationException;
@@ -372,6 +372,19 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
   JavaCodeFragment createCodeBlockCodeFragment(@NotNull String text, PsiElement context, boolean isPhysical);
 
   /**
+   * Flag for {@linkplain #createTypeCodeFragment(String, PsiElement, boolean, int)} - allows void type.
+   */
+  int ALLOW_VOID = 0x01;
+  /**
+   * Flag for {@linkplain #createTypeCodeFragment(String, PsiElement, boolean, int)} - allows type with ellipsis.
+   */
+  int ALLOW_ELLIPSIS = 0x02;
+  /**
+   * Flag for {@linkplain #createTypeCodeFragment(String, PsiElement, boolean, int)} - allows disjunctive type.
+   */
+  int ALLOW_DISJUNCTION = 0x02;
+
+  /**
    * Creates a Java type code fragment from the text of the name of a Java type (the name
    * of a primitive type, array type or class), with <code>void</code> and ellipsis
    * not treated as a valid type.
@@ -386,35 +399,31 @@ public interface PsiElementFactory extends PsiJavaParserFacade {
 
   /**
    * Creates a Java type code fragment from the text of the name of a Java type (the name
-   * of a primitive type, array type or class), with <code>void</code> optionally treated
-   * as a valid type, and ellipsis not treated as a valid type.
+   * of a primitive type, array type or class).<br>
+   * {@code void}, ellipsis and disjunctive types are optionally treated as valid ones.
    *
-   * @param text        the text of the Java type to create.
-   * @param context     the context for resolving references from the code fragment.
-   * @param isVoidValid whether <code>void</code> is a valid type for the fragment.
-   * @param isPhysical  whether the code fragment is created as a physical element
-   *                    (see {@link PsiElement#isPhysical()}).
+   * @param text       the text of the Java type to create.
+   * @param context    the context for resolving references from the code fragment.
+   * @param isPhysical whether the code fragment is created as a physical element
+   *                   (see {@link PsiElement#isPhysical()}).
+   * @param flags      types allowed to present in text.
    * @return the created code fragment.
+   */
+  @NotNull PsiTypeCodeFragment createTypeCodeFragment(@NotNull String text, PsiElement context, boolean isPhysical, int flags);
+
+  /**
+   * @deprecated use {@link #createTypeCodeFragment(String, PsiElement, boolean, int)} (todo[r.sh] to remove in IDEA 11).
    */
   @NotNull PsiTypeCodeFragment createTypeCodeFragment(@NotNull String text, PsiElement context, boolean isVoidValid, boolean isPhysical);
 
   /**
-   * Creates a Java type code fragment from the text of the name of a Java type (the name
-   * of a primitive type, array type or class), with <code>void</code> optionally treated
-   * as a valid type, and ellipsis not treated as a valid type.
-   *
-   * @param text          the text of the Java type to create.
-   * @param context       the context for resolving references from the code fragment.
-   * @param isVoidValid   whether <code>void</code> is a valid type for the fragment.
-   * @param isPhysical    whether the code fragment is created as a physical element
-   *                      (see {@link PsiElement#isPhysical()}).
-   * @param allowEllipsis whether {@link PsiEllipsisType} is a valid type for the element.
-   * @return the created code fragment.
+   * @deprecated use {@link #createTypeCodeFragment(String, PsiElement, boolean, int)} (todo[r.sh] to remove in IDEA 11).
    */
   @NotNull PsiTypeCodeFragment createTypeCodeFragment(@NotNull String text,
-                                             PsiElement context,
-                                             boolean isVoidValid,
-                                             boolean isPhysical, boolean allowEllipsis);
+                                                      PsiElement context,
+                                                      boolean isVoidValid,
+                                                      boolean isPhysical,
+                                                      boolean allowEllipsis);
 
   /**
    * Returns a synthetic Java class containing methods which are defined on Java arrays.

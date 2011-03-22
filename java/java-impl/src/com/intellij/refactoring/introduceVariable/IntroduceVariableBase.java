@@ -364,11 +364,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       LOG.debug("expression:" + expr);
     }
 
-    if (expr == null) {
+    if (expr == null || !expr.isPhysical()) {
       if (ReassignVariableUtil.reassign(editor)) return false;
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.an.expression"));
-      showErrorMessage(project, editor, message);
-      return false;
+      if (expr == null) {
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.an.expression"));
+        showErrorMessage(project, editor, message);
+        return false;
+      }
     }
 
 

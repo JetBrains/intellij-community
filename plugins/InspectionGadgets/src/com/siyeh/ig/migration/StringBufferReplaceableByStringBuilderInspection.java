@@ -38,6 +38,11 @@ public class StringBufferReplaceableByStringBuilderInspection
         extends BaseInspection {
 
     @Override
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
+    @Override
     @NotNull
     public String getID() {
         return "StringBufferMayBeStringBuilder";

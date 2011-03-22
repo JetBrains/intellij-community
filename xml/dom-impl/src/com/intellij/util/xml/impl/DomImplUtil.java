@@ -144,7 +144,12 @@ public class DomImplUtil {
   }
 
   public static List<XmlTag> findSubTags(@NotNull XmlTag tag, final EvaluatedXmlName name, final XmlFile file) {
-    return findSubTags(tag.getSubTags(), name, file);
+    assert tag.isValid();
+    XmlTag[] subTags = tag.getSubTags();
+    for (XmlTag subTag : subTags) {
+      assert subTag.isValid() : "tag.getSubTags() returned invalid, tag=" + tag + ", subTag.parent=" + subTag.getNode().getTreeParent();
+    }
+    return findSubTags(subTags, name, file);
   }
 
   public static List<XmlTag> findSubTags(final XmlTag[] tags, final EvaluatedXmlName name, final XmlFile file) {

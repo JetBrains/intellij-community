@@ -65,7 +65,7 @@ import java.util.Set;
 class IntroduceConstantDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.IntroduceConstantDialog");
   @NonNls private static final String RECENTS_KEY = "IntroduceConstantDialog.RECENTS_KEY";
-  @NonNls private static final String NONNLS_SELECTED_PROPERTY = "INTRODUCE_CONSTANT_NONNLS";
+  @NonNls protected static final String NONNLS_SELECTED_PROPERTY = "INTRODUCE_CONSTANT_NONNLS";
 
   private final Project myProject;
   private final PsiClass myParentClass;
@@ -221,15 +221,8 @@ class IntroduceConstantDialog extends DialogWrapper {
       propertyName = null;
     }
     final NameSuggestionsManager nameSuggestionsManager =
-      new NameSuggestionsManager(myTypeSelector, myNameField, new NameSuggestionsGenerator() {
-        public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
-          final SuggestedNameInfo nameInfo =
-              myCodeStyleManager.suggestVariableName(VariableKind.STATIC_FINAL_FIELD, propertyName, myInitializerExpression, type);
-          final String[] strings = JavaCompletionUtil.completeVariableNameForRefactoring(myCodeStyleManager, type, VariableKind.LOCAL_VARIABLE, nameInfo);
-          return new SuggestedNameInfo.Delegate(strings, nameInfo);
-        }
-
-      });
+      new NameSuggestionsManager(myTypeSelector, myNameField, createNameSuggestionGenerator(propertyName, myInitializerExpression,
+                                                                                            myCodeStyleManager));
 
     nameSuggestionsManager.setLabelsFor(myTypeLabel, myNameSuggestionLabel);
     //////////
@@ -285,6 +278,21 @@ class IntroduceConstantDialog extends DialogWrapper {
 
     enableEnumDependant(introduceEnumConstant());
     return myPanel;
+  }
+
+  protected static NameSuggestionsGenerator createNameSuggestionGenerator(final String propertyName,
+                                                                          final PsiExpression psiExpression,
+                                                                          final JavaCodeStyleManager codeStyleManager) {
+    return new NameSuggestionsGenerator() {
+      public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
+        final SuggestedNameInfo nameInfo =
+            codeStyleManager.suggestVariableName(VariableKind.STATIC_FINAL_FIELD, propertyName, psiExpression, type);
+        final String[] strings = JavaCompletionUtil
+          .completeVariableNameForRefactoring(codeStyleManager, type, VariableKind.LOCAL_VARIABLE, nameInfo);
+        return new SuggestedNameInfo.Delegate(strings, nameInfo);
+      }
+
+    };
   }
 
   private void updateButtons() {

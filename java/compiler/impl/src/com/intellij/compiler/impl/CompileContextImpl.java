@@ -25,7 +25,9 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.make.DependencyCache;
 import com.intellij.compiler.progress.CompilerTask;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -36,9 +38,12 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -67,6 +72,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private String myRebuildReason;
   private final Map<VirtualFile, Module> myRootToModuleMap = new HashMap<VirtualFile, Module>();
   private final Map<Module, Set<VirtualFile>> myModuleToRootsMap = new HashMap<Module, Set<VirtualFile>>();
+  private final Map<VirtualFile, Pair<SourceGeneratingCompiler, Module>> myOutputRootToSourceGeneratorMap = new HashMap<VirtualFile, Pair<SourceGeneratingCompiler, Module>>();
   private final Set<VirtualFile> myGeneratedTestRoots = new java.util.HashSet<VirtualFile>();
   private VirtualFile[] myOutputDirectories;
   private Set<VirtualFile> myTestOutputDirectories;
@@ -250,16 +256,41 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   public void addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {
-    CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, url, lineNum, columnNum, null);
+    CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, findPresentableFileForMessage(url), lineNum, columnNum, null);
     addMessage(msg);
   }
 
   public void addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum,
                          Navigatable navigatable) {
-    CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, url, lineNum, columnNum, navigatable);
+    CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, findPresentableFileForMessage(url), lineNum, columnNum, navigatable);
     addMessage(msg);
   }
 
+  @Nullable
+  private VirtualFile findPresentableFileForMessage(final String url) {
+    if (url == null) {
+      return null;
+    }
+    final VirtualFileManager fileManager = VirtualFileManager.getInstance();
+    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
+      @Override
+      public VirtualFile compute() {
+        final VirtualFile file = fileManager.findFileByUrl(url);
+        if (file != null) {
+          for (final Map.Entry<VirtualFile, Pair<SourceGeneratingCompiler, Module>> entry : myOutputRootToSourceGeneratorMap.entrySet()) {
+            final VirtualFile root = entry.getKey();
+            if (VfsUtil.isAncestor(root, file, false)) {
+              final Pair<SourceGeneratingCompiler, Module> pair = entry.getValue();
+              final VirtualFile presentableFile = pair.getFirst().getPresentableFile(CompileContextImpl.this, pair.getSecond(), root, file);
+              return presentableFile != null? presentableFile : file;
+            }
+          }
+        }
+        return file;
+      }
+    });
+  }
+  
   public void addMessage(CompilerMessage msg) {
     Collection<CompilerMessage> messages = myMessages.get(msg.getCategory());
     if (messages == null) {
@@ -313,7 +344,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return myTask.getIndicator();
   }
 
-  public void assignModule(@NotNull VirtualFile root, @NotNull Module module, final boolean isTestSource) {
+  public void assignModule(@NotNull VirtualFile root, @NotNull Module module, final boolean isTestSource, @Nullable Compiler compiler) {
     try {
       myRootToModuleMap.put(root, module);
       Set<VirtualFile> set = myModuleToRootsMap.get(module);
@@ -324,6 +355,9 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       set.add(root);
       if (isTestSource) {
         myGeneratedTestRoots.add(root);
+      }
+      if (compiler instanceof SourceGeneratingCompiler) {
+        myOutputRootToSourceGeneratorMap.put(root, new Pair<SourceGeneratingCompiler, Module>((SourceGeneratingCompiler)compiler, module));
       }
     }
     finally {

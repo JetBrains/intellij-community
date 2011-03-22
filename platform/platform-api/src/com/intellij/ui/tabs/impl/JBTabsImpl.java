@@ -795,9 +795,6 @@ public class JBTabsImpl extends JComponent
 
   private void fireSelectionChanged(TabInfo oldInfo, TabInfo newInfo) {
     if (oldInfo != newInfo) {
-      if (myProject != null) {
-        myProject.getMessageBus().syncPublisher(TabsListener.TOPIC).selectionChanged(oldInfo, newInfo);
-      }
       for (TabsListener eachListener : myTabListeners) {
         if (eachListener != null) {
           eachListener.selectionChanged(oldInfo, newInfo);

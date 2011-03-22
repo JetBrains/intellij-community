@@ -203,9 +203,10 @@ public class CompileDriver {
 
     for (Map.Entry<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> entry : myGenerationCompilerModuleToOutputDirMap.entrySet()) {
       final Pair<VirtualFile, VirtualFile> outputs = entry.getValue();
-      Module module = entry.getKey().getSecond();
-      compileContext.assignModule(outputs.getFirst(), module, false);
-      compileContext.assignModule(outputs.getSecond(), module, true);
+      final Pair<IntermediateOutputCompiler, Module> key = entry.getKey();
+      final Module module = key.getSecond();
+      compileContext.assignModule(outputs.getFirst(), module, false, key.getFirst());
+      compileContext.assignModule(outputs.getSecond(), module, true, key.getFirst());
     }
 
     final Ref<ExitStatus> status = new Ref<ExitStatus>();
@@ -391,7 +392,7 @@ public class CompileDriver {
         continue;
       }
       context.addScope(new FileSetCompileScope(Collections.singletonList(vFile), new Module[]{module}));
-      context.assignModule(vFile, module, false);
+      context.assignModule(vFile, module, false, null);
     }
   }
 
@@ -422,9 +423,10 @@ public class CompileDriver {
     compileContext.putUserData(COMPILATION_START_TIMESTAMP, LocalTimeCounter.currentTime());
     for (Map.Entry<Pair<IntermediateOutputCompiler, Module>, Pair<VirtualFile, VirtualFile>> entry : myGenerationCompilerModuleToOutputDirMap.entrySet()) {
       final Pair<VirtualFile, VirtualFile> outputs = entry.getValue();
-      final Module module = entry.getKey().getSecond();
-      compileContext.assignModule(outputs.getFirst(), module, false);
-      compileContext.assignModule(outputs.getSecond(), module, true);
+      final Pair<IntermediateOutputCompiler, Module> key = entry.getKey();
+      final Module module = key.getSecond();
+      compileContext.assignModule(outputs.getFirst(), module, false, key.getFirst());
+      compileContext.assignModule(outputs.getSecond(), module, true, key.getFirst());
     }
     attachAnnotationProcessorsOutputDirectories(compileContext);
     
@@ -530,8 +532,8 @@ public class CompileDriver {
       if (compileContext.isRebuildRequested()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            doRebuild(callback, new CompilerMessageImpl(myProject, CompilerMessageCategory.INFORMATION, compileContext.getRebuildReason(),
-                                                        null, -1, -1, null), false, compileContext.getCompileScope());
+            final CompilerMessageImpl msg = new CompilerMessageImpl(myProject, CompilerMessageCategory.INFORMATION, compileContext.getRebuildReason());
+            doRebuild(callback, msg, false, compileContext.getCompileScope());
           }
         }, ModalityState.NON_MODAL);
       }
@@ -675,7 +677,7 @@ public class CompileDriver {
 
         final ProgressIndicator progressIndicator = context.getProgressIndicator();
 
-        final int totalCount = all.length + myGenerationCompilerModuleToOutputDirMap.size() * 2;
+        //final int totalCount = all.length + myGenerationCompilerModuleToOutputDirMap.size() * 2;
         progressIndicator.pushState();
         progressIndicator.setText("Inspecting output directories...");
         try {

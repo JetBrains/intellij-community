@@ -106,7 +106,7 @@ public class NullableNotNullDialog extends DialogWrapper {
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
           final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
           if (Comparing.strEqual((String)value, myDefaultAnn)) {
-            setIcon(Icons.ADVICE_ICON);
+            setIcon(IconLoader.getIcon("/diff/currentLine.png"));
             setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
           }
           else {

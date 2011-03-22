@@ -18,6 +18,7 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -33,7 +34,10 @@ public class HighlightSuppressedWarningsFactory implements HighlightUsagesHandle
     final PsiElement target = file.findElementAt(offset);
     final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(target, PsiAnnotation.class);
     if (annotation != null && Comparing.strEqual(SuppressWarnings.class.getName(), annotation.getQualifiedName())) {
-      return new HighlightSuppressedWarningsHandler(editor, file, annotation, PsiTreeUtil.getParentOfType(target, PsiLiteralExpression.class));
+      final VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null && !virtualFile.getFileType().isBinary()) {
+        return new HighlightSuppressedWarningsHandler(editor, file, annotation, PsiTreeUtil.getParentOfType(target, PsiLiteralExpression.class));
+      }
     }
     return null;
   }

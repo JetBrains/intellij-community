@@ -239,7 +239,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     }
 
     if (type != null) {
-      LOG.assertTrue(element.getElementType() == type);
+      LOG.assertTrue(element.getElementType() == type, element.getElementType() + " != " + type);
     }
 
     element.putUserData(COMPILED_ELEMENT, this);

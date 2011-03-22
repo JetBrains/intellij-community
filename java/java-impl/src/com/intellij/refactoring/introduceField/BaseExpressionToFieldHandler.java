@@ -298,7 +298,10 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     if (element == null) return null;
     final PsiMethod[] constructors = parentClass.getConstructors();
     for (PsiMethod constructor : constructors) {
-      if (PsiTreeUtil.isAncestor(constructor, element, false)) return constructor;
+      if (PsiTreeUtil.isAncestor(constructor, element, false)) {
+        if (PsiTreeUtil.getParentOfType(element, PsiClass.class) != parentClass) return null;
+        return constructor;
+      }
     }
     return null;
   }

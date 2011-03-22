@@ -19,7 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
-public class MulticatchPredicate implements PsiElementPredicate {
+class MulticatchPredicate implements PsiElementPredicate {
 
     public boolean satisfiedBy(PsiElement element) {
         if (!(element instanceof PsiKeyword)) {

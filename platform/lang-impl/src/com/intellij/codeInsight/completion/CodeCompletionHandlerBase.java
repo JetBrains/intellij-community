@@ -189,11 +189,11 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
 
       int offset = editor.getCaretModel().getOffset();
+      int psiOffset = Math.max(0, offset);
 
-      assert offset > 0 : "offset=" + offset;
-      PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, offset - 1);
+      PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, psiOffset);
       if (elementAt == null) {
-        elementAt = psiFile.findElementAt(offset - 1);
+        elementAt = psiFile.findElementAt(psiOffset);
       }
 
       Language language = elementAt != null ? PsiUtilBase.findLanguageFromElement(elementAt):psiFile.getLanguage();

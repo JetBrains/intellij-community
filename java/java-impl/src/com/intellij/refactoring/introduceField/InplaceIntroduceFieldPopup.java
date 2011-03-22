@@ -19,10 +19,7 @@ import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
@@ -39,8 +36,6 @@ import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.ui.TitlePanel;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -73,10 +68,12 @@ public class InplaceIntroduceFieldPopup {
 
   private JPanel myWholePanel;
   private String myExprText;
+  private String myLocalName;
   private RangeMarker myExprMarker;
   private String myFieldName;
 
   private boolean myInitListeners = false;
+  private static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
 
   public InplaceIntroduceFieldPopup(PsiLocalVariable localVariable,
                                     PsiClass parentClass,
@@ -95,6 +92,7 @@ public class InplaceIntroduceFieldPopup {
     myOccurrences = occurrences;
     myInitializerExpression = initializerExpression;
     myExprText = myInitializerExpression != null ? myInitializerExpression.getText() : null;
+    myLocalName = localVariable != null ? localVariable.getName() : null;
     myExprMarker = myInitializerExpression != null ? editor.getDocument().createRangeMarker(myInitializerExpression.getTextRange()) : null;
     myTypeSelectorManager = typeSelectorManager;
     myAnchorElement = anchorElement;
@@ -124,7 +122,7 @@ public class InplaceIntroduceFieldPopup {
     gc.insets.top = 5;
 
     myWholePanel.add(myIntroduceFieldPanel.createCenterPanel(), gc);
-    myIntroduceFieldPanel.initializeControls(initializerExpression);
+    myIntroduceFieldPanel.initializeControls(initializerExpression, ourLastInitializerPlace);
     myIntroduceFieldPanel.addOccurrenceListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -163,7 +161,7 @@ public class InplaceIntroduceFieldPopup {
             IntroduceFieldDialog.createGenerator(myStatic, myLocalVariable, myInitializerExpression, myLocalVariable != null)
               .getSuggestedNameInfo(defaultType);
 
-          final PsiField field = createFieldToStartTemplateOn(suggestedNameInfo.names, defaultType, null);
+          final PsiField field = createFieldToStartTemplateOn(suggestedNameInfo.names, defaultType);
           if (field != null) {
             myEditor.getCaretModel().moveToOffset(field.getTextOffset());
             final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<String>();
@@ -177,14 +175,13 @@ public class InplaceIntroduceFieldPopup {
   }
 
   private PsiField createFieldToStartTemplateOn(final String[] names,
-                                                final PsiType defaultType,
-                                                final PsiElement anchor) {
+                                                final PsiType defaultType) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     return ApplicationManager.getApplication().runWriteAction(new Computable<PsiField>() {
       @Override
       public PsiField compute() {
         PsiField field = elementFactory.createField(myFieldName != null ? myFieldName : names[0], defaultType);
-        field = anchor != null ? (PsiField)myParentClass.addBefore(field, anchor) : (PsiField)myParentClass.add(field);
+        field = (PsiField)myParentClass.add(field);
         PsiUtil.setModifierProperty(field, PsiModifier.FINAL, myIntroduceFieldPanel.isDeclareFinal());
         return field;
       }
@@ -205,6 +202,10 @@ public class InplaceIntroduceFieldPopup {
 
   public void setVisibility(String visibility) {
     myIntroduceFieldPanel.setVisibility(visibility);
+  }
+
+  public static void setInitializationPlace(BaseExpressionToFieldHandler.InitializationPlace place) {
+    ourLastInitializerPlace = place;
   }
 
   class FieldInplaceIntroducer extends AbstractInplaceIntroducer {
@@ -266,7 +267,12 @@ public class InplaceIntroduceFieldPopup {
     protected JComponent getComponent() {
       if (!myInitListeners) {
         myInitListeners = true;
-        myIntroduceFieldPanel.addVisibilityListener(new VisibilityListener());
+        myIntroduceFieldPanel.addVisibilityListener(new VisibilityListener(myProject, myEditor){
+          @Override
+          protected String getVisibility() {
+            return myIntroduceFieldPanel.getFieldVisibility();
+          }
+        });
         final FinalListener finalListener = new FinalListener(myProject);
         myIntroduceFieldPanel.addFinalListener(new ItemListener() {
           @Override
@@ -291,6 +297,7 @@ public class InplaceIntroduceFieldPopup {
     @Override
     protected void moveOffsetAfter(boolean success) {
       if (success) {
+        ourLastInitializerPlace = myIntroduceFieldPanel.getInitializerPlace();
         final BaseExpressionToFieldHandler.Settings settings =
           new BaseExpressionToFieldHandler.Settings(myFieldName, myIntroduceFieldPanel.isReplaceAllOccurrences(), myStatic,
                                                     myIntroduceFieldPanel.isDeclareFinal(),
@@ -340,7 +347,7 @@ public class InplaceIntroduceFieldPopup {
               myOccurrences[i] = myInitializerExpression;
               continue;
             }
-            final PsiExpression psiExpression = restoreExpression(containingFile, psiField, elementFactory, marker, myExprText);
+            final PsiExpression psiExpression = restoreExpression(containingFile, psiField, elementFactory, marker, myLocalVariable != null ? myLocalName : myExprText);
             if (psiExpression != null) {
               myOccurrences[i] = psiExpression;
             }
@@ -353,51 +360,6 @@ public class InplaceIntroduceFieldPopup {
       });
     }
 
-    private class VisibilityListener implements ChangeListener {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        new WriteCommandAction(myProject) {
-          @Override
-          protected void run(Result result) throws Throwable {
-            final Document document = myEditor.getDocument();
-            PsiDocumentManager.getInstance(getProject()).commitDocument(document);
-            final PsiVariable variable = getVariable();
-            LOG.assertTrue(variable != null);
-            final PsiModifierList modifierList = variable.getModifierList();
-            LOG.assertTrue(modifierList != null);
-            int textOffset = modifierList.getTextOffset();
 
-            String visibility = myIntroduceFieldPanel.getFieldVisibility();
-            if (visibility == PsiModifier.PACKAGE_LOCAL) {
-              visibility = "";
-            }
-            final String modifierListText = modifierList.getText();
-
-            int length = PsiModifier.PUBLIC.length();
-            int idx = modifierListText.indexOf(PsiModifier.PUBLIC);
-
-            if (idx == -1) {
-              idx = modifierListText.indexOf(PsiModifier.PROTECTED);
-              length = PsiModifier.PROTECTED.length();
-            }
-
-            if (idx == -1) {
-              idx = modifierListText.indexOf(PsiModifier.PRIVATE);
-              length = PsiModifier.PRIVATE.length();
-            }
-
-            final int startOffset = textOffset + idx;
-            final int endOffset;
-            if (idx == -1) {
-              endOffset = startOffset;
-            } else {
-              endOffset = textOffset + length;
-            }
-
-            document.replaceString(startOffset, endOffset, visibility);
-          }
-        }.execute();
-      }
-    }
   }
 }

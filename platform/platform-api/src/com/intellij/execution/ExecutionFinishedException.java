@@ -6,6 +6,6 @@ public class ExecutionFinishedException extends ExecutionException {
   }
 
   public ExecutionFinishedException(Throwable cause) {
-    super("Execution finished", cause);
+    super("Execution finished" + (cause == null || cause.getMessage() == null ? "" : " because of: " + cause.getMessage()), cause);
   }
 }

@@ -30,6 +30,10 @@ import org.jetbrains.annotations.NonNls;
  */
 public class InstanceOfFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
+    return isInfixOperatorPosition(context);
+  }
+
+  public static boolean isInfixOperatorPosition(PsiElement context) {
     if (context.getParent() != null &&
         context.getParent() instanceof GrReferenceExpression &&
         context.getParent().getParent() != null &&

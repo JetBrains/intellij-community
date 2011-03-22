@@ -735,6 +735,10 @@ public class StringUtil {
     return toUpperCase(s.charAt(0)) + s.substring(1);
   }
 
+  public static boolean isCapitalized(@Nullable String s) {
+    return s != null && s.length() > 0 && Character.isUpperCase(s.charAt(0));
+  }
+
   @NotNull
   public static String capitalizeWithJavaBeanConvention(@NotNull String s) {
     if (s.length() > 1 && Character.isUpperCase(s.charAt(1))) {

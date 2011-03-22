@@ -26,7 +26,11 @@ import java.util.Map;
 public class ExpandMacroToPathMap extends PathMacroMap {
 
   public void addMacroExpand(String macroName, String path) {
-    put("$" + macroName + "$", quotePath(path));
+    String replacement = quotePath(path);
+    String withSlash = StringUtil.trimEnd(replacement, "/") + "/";
+    put("$" + macroName + "$//", withSlash);
+    put("$" + macroName + "$/", withSlash);
+    put("$" + macroName + "$", replacement);
   }
 
   public String substitute(String text, boolean caseSensitive) {

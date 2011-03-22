@@ -96,6 +96,13 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
         if (!isRunning()) return new Dimension(0, 0);
         return super.getPreferredSize();
       }
+
+      @Override
+      public void paint(Graphics g) {
+        g.translate(0, -1);
+        super.paint(g);
+        g.translate(0, 1);
+      }
     };
 
     myRefreshIcon.setPaintPassiveIcon(false);

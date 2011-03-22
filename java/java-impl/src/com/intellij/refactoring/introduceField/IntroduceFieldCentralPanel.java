@@ -42,7 +42,6 @@ public class IntroduceFieldCentralPanel {
    private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.IntroduceFieldDialog");
 
   private static boolean ourLastCbFinalState = false;
-  private static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
 
   private final PsiClass myParentClass;
   private final PsiExpression myInitializerExpression;
@@ -85,7 +84,7 @@ public class IntroduceFieldCentralPanel {
     myTypeSelectorManager = typeSelectorManager;
   }
 
-  void initializeControls(PsiExpression initializerExpression) {
+  void initializeControls(PsiExpression initializerExpression, BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
     if (initializerExpression != null) {
       setEnabledInitializationPlaces(initializerExpression, initializerExpression);
       if (!myAllowInitInMethod) {

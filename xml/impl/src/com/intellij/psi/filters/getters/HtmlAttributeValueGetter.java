@@ -16,7 +16,6 @@
 package com.intellij.psi.filters.getters;
 
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.HtmlUtil;
@@ -43,10 +42,7 @@ public class HtmlAttributeValueGetter extends XmlAttributeValueGetter {
 
   @Nullable
   @NonNls
-  protected String[] addSpecificCompletions(final PsiElement context) {
-    if (!(context instanceof XmlAttribute)) return null;
-
-    XmlAttribute attribute = (XmlAttribute)context;
+  protected String[] addSpecificCompletions(final XmlAttribute attribute) {
     @NonNls String name = attribute.getName();
     final XmlTag tag = attribute.getParent();
     if (tag == null) return null;

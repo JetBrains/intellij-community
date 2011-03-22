@@ -18,6 +18,8 @@ package com.intellij.refactoring.introduceVariable;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -378,6 +380,10 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     }
 
     public void perform(final boolean generateFinal) {
+      perform(generateFinal, PsiModifier.FINAL);
+    }
+
+    public void perform(final boolean generateFinal, final String modifier) {
       new WriteCommandAction(myProject){
         @Override
         protected void run(com.intellij.openapi.application.Result result) throws Throwable {
@@ -388,14 +394,24 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
           final int textOffset = modifierList.getTextOffset();
 
           final Document document = myEditor.getDocument();
-          if (generateFinal) {
-            final PsiTypeElement typeElement = variable.getTypeElement();
-            final int typeOffset = typeElement != null ? typeElement.getTextOffset() : textOffset;
-            document.insertString(typeOffset, PsiModifier.FINAL + " ");
-          }
-          else {
-            final int idx = modifierList.getText().indexOf(PsiModifier.FINAL);
-            document.deleteString(textOffset + idx, textOffset + idx + PsiModifier.FINAL.length() + 1);
+          final Runnable runnable = new Runnable() {
+            public void run() {
+              if (generateFinal) {
+                final PsiTypeElement typeElement = variable.getTypeElement();
+                final int typeOffset = typeElement != null ? typeElement.getTextOffset() : textOffset;
+                document.insertString(typeOffset, modifier + " ");
+              }
+              else {
+                final int idx = modifierList.getText().indexOf(modifier);
+                document.deleteString(textOffset + idx, textOffset + idx + modifier.length() + 1);
+              }
+            }
+          };
+          final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
+          if (lookup != null) {
+            lookup.performGuardedChange(runnable);
+          } else {
+            runnable.run();
           }
         }
       }.execute();

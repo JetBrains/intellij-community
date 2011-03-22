@@ -34,15 +34,14 @@ public class TupleParse {
     builder.advanceLexer();
     do {
       //skip unnecessary commas
-      while (builder.getTokenType() == mCOMMA) {
-        builder.advanceLexer();
+      while (ParserUtils.getToken(builder, mCOMMA)) {
         builder.error(GroovyBundle.message("identifier.expected"));
       }
 
       //parse modifiers for definitions
       PsiBuilder.Marker typeMarker = builder.mark();
       TypeSpec.parse(builder);
-      if (!ParserUtils.lookAhead(builder, mIDENT)) {
+      if (builder.getTokenType() != mIDENT) {
         typeMarker.rollbackTo();
       }
       else {
@@ -57,8 +56,7 @@ public class TupleParse {
       }
     } while (ParserUtils.getToken(builder, mCOMMA));
 
-    if (builder.getTokenType() == mRPAREN) {
-      builder.advanceLexer();
+    if (ParserUtils.getToken(builder, mRPAREN)) {
       marker.done(tupleType);
       return true;
     } else {

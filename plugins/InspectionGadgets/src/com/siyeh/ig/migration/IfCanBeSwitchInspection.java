@@ -56,6 +56,11 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     @SuppressWarnings({"PublicField"})
     public boolean suggestEnumSwitches = false;
 
+    @Override
+    public boolean isEnabledByDefault() {
+        return true;
+    }
+
     @Nls
     @NotNull
     @Override
