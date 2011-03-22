@@ -56,6 +56,10 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
     myCachedDescriptions = null;
   }
 
+  public synchronized boolean containsExcludeEntryDescription(ExcludeEntryDescription description) {
+    return myExcludeEntryDescriptions.contains(description);
+  }
+
   public void readExternal(final Element node) {
     for (final Object o : node.getChildren()) {
       Element element = (Element)o;
