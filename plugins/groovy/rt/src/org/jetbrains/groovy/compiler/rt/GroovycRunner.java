@@ -119,7 +119,7 @@ public class GroovycRunner {
       fillFromArgsFile(argsFile, compilerConfiguration, patchers, compilerMessages, srcFiles, class2File, finalOutput);
       if (srcFiles.isEmpty()) return;
 
-      System.out.println(PRESENTABLE_MESSAGE + "Groovy compiler: loading sources...");
+      System.out.println(PRESENTABLE_MESSAGE + "Groovyc: loading sources...");
       final CompilationUnit unit = createCompilationUnit(forStubs, compilerConfiguration, finalOutput[0]);
       addSources(forStubs, srcFiles, unit);
       runPatchers(patchers, compilerMessages, class2File, unit);
@@ -365,7 +365,7 @@ public class GroovycRunner {
         public void gotoPhase(int phase) throws CompilationFailedException {
           super.gotoPhase(phase);
           if (phase <= Phases.ALL) {
-            System.out.println(PRESENTABLE_MESSAGE + (forStubs ? "Groovy stub generator: " : "Groovy compiler: ") + getPhaseDescription());
+            System.out.println(PRESENTABLE_MESSAGE + (forStubs ? "Groovy stub generator: " : "Groovyc: ") + getPhaseDescription());
           }
         }
       };
@@ -377,7 +377,7 @@ public class GroovycRunner {
         public void gotoPhase(int phase) throws CompilationFailedException {
           super.gotoPhase(phase);
           if (phase <= Phases.ALL) {
-            System.out.println(PRESENTABLE_MESSAGE + (forStubs ? "Groovy stub generator: " : "Groovy compiler: ") + getPhaseDescription());
+            System.out.println(PRESENTABLE_MESSAGE + (forStubs ? "Groovy stub generator: " : "Groovyc: ") + getPhaseDescription());
           }
         }
       };

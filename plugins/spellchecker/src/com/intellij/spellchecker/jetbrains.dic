@@ -310,11 +310,12 @@ tokenize
 tokenizer
 tooltip
 tooltips
-trinary
 twitter
+unboxing
 uncomment
 uncommented
 underwave
+undoable
 undofile
 unhandled
 uninstall
@@ -338,6 +339,7 @@ whitespace
 whitespaces
 wiki
 wildcard
+wildcards
 workflow
 wsdl
 xmlschema

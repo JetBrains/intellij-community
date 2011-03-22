@@ -102,7 +102,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
     return stringLiteral().withParent(psiElement(GrNamedArgument.class));
   }
 
-  public static GroovyElementPattern.Capture<GrArgumentLabel> namedArgumentLabel() {
+  public static GroovyElementPattern.Capture<GrArgumentLabel> namedArgumentLabel(@Nullable final ElementPattern<? extends String> namePattern) {
     return new GroovyElementPattern.Capture<GrArgumentLabel>(new InitialPatternCondition<GrArgumentLabel>(GrArgumentLabel.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         if (o instanceof GrArgumentLabel) {
@@ -111,7 +111,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
             IElementType elementType = ((LeafPsiElement)nameElement).getElementType();
             if (elementType == GroovyElementTypes.mIDENT ||
                 CommonClassNames.JAVA_LANG_STRING.equals(TypesUtil.getPsiTypeName(elementType))) {
-              return true;
+              return namePattern == null || namePattern.accepts(((GrArgumentLabel)o).getName());
             }
           }
         }
@@ -149,7 +149,7 @@ public class GroovyPatterns extends PsiJavaPatterns {
 
         if (!(eMethodCall instanceof GrCall)) return false;
 
-        return methodCall == null || methodCall.accepts(eMethodCall);
+        return methodCall == null || methodCall.accepts(eMethodCall, context);
       }
     });
   }

@@ -135,7 +135,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   private static void rename(PsiElement element, final Project project, PsiElement nameSuggestionContext, Editor editor, String defaultName) {
     RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
     element = processor.substituteElementToRename(element, editor);
-    if (element == null) return;
+    if (element == null || !canRename(project, editor, element)) return;
 
     final RenameDialog dialog = processor.createRenameDialog(project, element, nameSuggestionContext, editor);
 

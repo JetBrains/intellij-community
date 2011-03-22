@@ -1046,8 +1046,8 @@ public class AbstractTreeUi {
     execute(new Runnable() {
       public void run() {
         try {
-          getTreeStructure().commit();
-
+          AbstractTreeStructure treeStructure = getTreeStructure();
+          if (treeStructure.hasSomethingToCommit()) treeStructure.commit();
 
           final NodeDescriptor descriptor = getDescriptorFrom(node);
           if (descriptor == null) {

@@ -744,9 +744,12 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     if (expr.getParent() instanceof PsiExpressionList) {
       PsiExpressionList list = (PsiExpressionList)expr.getParent();
       PsiElement listParent = list.getParent();
+      PsiSubstitutor subst = PsiSubstitutor.EMPTY;
       PsiMethod method = null;
       if (listParent instanceof PsiMethodCallExpression) {
-        method = (PsiMethod)((PsiMethodCallExpression)listParent).getMethodExpression().resolve();
+        final JavaResolveResult resolveResult = ((PsiMethodCallExpression)listParent).getMethodExpression().advancedResolve(false);
+        method = (PsiMethod)resolveResult.getElement();
+        subst = resolveResult.getSubstitutor();
       }
       else {
         if (listParent instanceof PsiAnonymousClass) {
@@ -772,28 +775,23 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         }
         PsiParameter[] parms = method.getParameterList().getParameters();
         if (index < parms.length) {
-          PsiIdentifier identifier = parms[index].getNameIdentifier();
-          if (identifier != null) {
-            String name = identifier.getText();
-            if (name != null) {
-              if (TypeConversionUtil.areTypesAssignmentCompatible(parms[index].getType(), expr)) {
-                name = variableNameToPropertyName(name, VariableKind.PARAMETER);
-                String[] names = getSuggestionsByName(name, variableKind, false);
-                if (expressions.length == 1) {
-                  final String methodName = method.getName();
-                  String[] words = NameUtil.nameToWords(methodName);
-                  if (words.length > 0) {
-                    final String firstWord = words[0];
-                    if (SET_PREFIX.equals(firstWord)) {
-                      final String propertyName = methodName.substring(firstWord.length());
-                      final String[] setterNames = getSuggestionsByName(propertyName, variableKind, false);
-                      names = ArrayUtil.mergeArrays(names, setterNames, String.class);
-                    }
-                  }
+          String name = parms[index].getName();
+          if (name != null && TypeConversionUtil.areTypesAssignmentCompatible(subst.substitute(parms[index].getType()), expr)) {
+            name = variableNameToPropertyName(name, VariableKind.PARAMETER);
+            String[] names = getSuggestionsByName(name, variableKind, false);
+            if (expressions.length == 1) {
+              final String methodName = method.getName();
+              String[] words = NameUtil.nameToWords(methodName);
+              if (words.length > 0) {
+                final String firstWord = words[0];
+                if (SET_PREFIX.equals(firstWord)) {
+                  final String propertyName = methodName.substring(firstWord.length());
+                  final String[] setterNames = getSuggestionsByName(propertyName, variableKind, false);
+                  names = ArrayUtil.mergeArrays(names, setterNames, String.class);
                 }
-                return new NamesByExprInfo(name, names);
               }
             }
+            return new NamesByExprInfo(name, names);
           }
         }
       }

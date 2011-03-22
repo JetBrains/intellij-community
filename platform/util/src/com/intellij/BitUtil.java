@@ -13,20 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xml;
+package com.intellij;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public class BitUtil {
+  private BitUtil() { }
 
-/**
- * Marks a {@link GenericValue} getter as documentation text source.
- * Element interface should be annotated with {@link com.intellij.ide.presentation.Presentation}
- *
- * @author Dmitry Avdeev
- */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
-public @interface Documentation {
+  public static boolean isSet(final int mask, final int flag) {
+    return (mask & flag) != 0;
+  }
 }

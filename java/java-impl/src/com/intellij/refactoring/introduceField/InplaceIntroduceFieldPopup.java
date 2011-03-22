@@ -204,6 +204,10 @@ public class InplaceIntroduceFieldPopup {
     myIntroduceFieldPanel.setVisibility(visibility);
   }
 
+  public static void setInitializationPlace(BaseExpressionToFieldHandler.InitializationPlace place) {
+    ourLastInitializerPlace = place;
+  }
+
   class FieldInplaceIntroducer extends AbstractInplaceIntroducer {
 
     private RangeMarker myFieldRangeStart;

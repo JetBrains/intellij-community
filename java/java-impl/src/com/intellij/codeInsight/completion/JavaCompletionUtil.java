@@ -489,8 +489,10 @@ public class JavaCompletionUtil {
       LookupElement item = createLookupElement(completionElement, qualifierType);
       if (item != null) {
         final Object o = item.getObject();
-        if (o instanceof PsiClass && !isSourceLevelAccessible(element, (PsiClass)o, pkgContext)) {
-          continue;
+        if (o instanceof PsiClass) {
+          if (!isSourceLevelAccessible(element, (PsiClass)o, pkgContext)) {
+            continue;
+          }
         }
         if (o instanceof PsiMember) {
           mentioned.add((PsiMember)o);

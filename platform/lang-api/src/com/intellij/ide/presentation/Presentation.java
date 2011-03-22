@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xml;
+package com.intellij.ide.presentation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -32,14 +32,8 @@ public @interface Presentation {
    */
   String icon() default "";
 
-  /**
-   * @return fqn of a class that implements {@link com.intellij.util.NullableFunction<DomElement, Icon>}
-   */
-  String iconProviderClass() default "";
+  Class<? extends PresentationIconProvider> iconProviderClass() default PresentationIconProvider.class;
 
-  /**
-   * @return fqn of a class that implements {@link com.intellij.util.NullableFunction<DomElement, String>}
-   */
   String namerClass() default "";
 
   String typeName() default "";

@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xml;
+package com.intellij.ide.presentation;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Marks a {@link GenericValue} getter as documentation text source.
- * Element interface should be annotated with {@link com.intellij.ide.presentation.Presentation}
- *
  * @author Dmitry Avdeev
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
-public @interface Documentation {
+public interface PresentationNameProvider {
+
+  @Nullable
+  String getName(Object o);
 }

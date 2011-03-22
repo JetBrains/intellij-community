@@ -47,9 +47,12 @@ public abstract class PsiElementClassMember<T extends PsiDocCommentOwner> extend
   }
 
   public MemberChooserObject getParentNodeDelegate() {
-    final PsiClass psiClass = myPsiMember.getContainingClass();
+    final PsiClass psiClass = getContainingClass();
     final String text = PsiFormatUtil.formatClass(psiClass, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_FQ_NAME);
     return new PsiDocCommentOwnerMemberChooserObject(psiClass, text, psiClass.getIcon(0));
   }
 
+  protected PsiClass getContainingClass() {
+    return myPsiMember.getContainingClass();
+  }
 }

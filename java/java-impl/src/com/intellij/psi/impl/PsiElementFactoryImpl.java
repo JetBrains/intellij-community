@@ -559,16 +559,24 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text, final PsiElement context, final boolean isPhysical) {
-    return createTypeCodeFragment(text, context, false, isPhysical, false);
+    return createTypeCodeFragment(text, context, isPhysical, 0);
   }
 
+  @NotNull
+  public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text, final PsiElement context, final boolean isPhysical, final int flags) {
+    final PsiTypeCodeFragmentImpl result = new PsiTypeCodeFragmentImpl(myManager.getProject(), isPhysical, "fragment.java", text, flags);
+    result.setContext(context);
+    return result;
+  }
 
   @NotNull
   public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text,
                                                     final PsiElement context,
                                                     final boolean isVoidValid,
                                                     final boolean isPhysical) {
-    return createTypeCodeFragment(text, context, true, isPhysical, false);
+    int flags = 0;
+    if (isVoidValid) flags |= ALLOW_VOID;
+    return createTypeCodeFragment(text, context, isPhysical, flags);
   }
 
   @NotNull
@@ -577,12 +585,10 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
                                                     final boolean isVoidValid,
                                                     final boolean isPhysical,
                                                     final boolean allowEllipsis) {
-    final PsiTypeCodeFragmentImpl result = new PsiTypeCodeFragmentImpl(myManager.getProject(), isPhysical, allowEllipsis, "fragment.java", text);
-    result.setContext(context);
-    if (isVoidValid) {
-      result.putUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT, Boolean.TRUE);
-    }
-    return result;
+    int flags = 0;
+    if (isVoidValid) flags |= ALLOW_VOID;
+    if (allowEllipsis) flags |= ALLOW_ELLIPSIS;
+    return createTypeCodeFragment(text, context, isPhysical, flags);
   }
 
   @NotNull

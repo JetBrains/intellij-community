@@ -1656,8 +1656,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private static Rectangle getClipBounds(Graphics g) {
-    return g.getClipBounds();
+  private Rectangle getClipBounds(Graphics g) {
+    Rectangle clipBounds = g.getClipBounds();
+    final JComponent component = getComponent();
+    final Border border = myScrollPane.getBorder();
+    if (isOneLineMode() && border != null && !component.isOpaque()) {
+      final Insets i = border.getBorderInsets(myScrollPane);
+      clipBounds = new Rectangle(clipBounds.x + i.left, clipBounds.y + i.top, clipBounds.width - i.left - i.right, clipBounds.height - i.top - i.bottom);
+    }
+
+    return clipBounds;
   }
 
   private void paintRightMargin(Graphics g, Rectangle clip) {
@@ -3674,7 +3682,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   public void setOneLineMode(boolean isOneLineMode) {
     myIsOneLineMode = isOneLineMode;
-    getScrollPane().setInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, null);
+    final JScrollPane scrollPane = getScrollPane();
+    scrollPane.setInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, null);
+    scrollPane.setOpaque(!isOneLineMode());
     reinitSettings();
   }
 

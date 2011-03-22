@@ -15,6 +15,8 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.ide.presentation.Presentation;
+import com.intellij.ide.presentation.PresentationIconProvider;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.Ref;
@@ -47,10 +49,17 @@ public class ElementPresentationTemplateImpl implements ElementPresentationTempl
     }
   };
 
-  private final NullableLazyValue<NullableFunction<DomElement, Icon>> myIconProvider = new MyLazyValue<Icon>() {
+  private final NullableLazyValue<PresentationIconProvider> myIconProvider = new NullableLazyValue<PresentationIconProvider>() {
     @Override
-    String getClassName() {
-      return myPresentation.iconProviderClass();
+    protected PresentationIconProvider compute() {
+      Class<? extends PresentationIconProvider> aClass = myPresentation.iconProviderClass();
+
+      try {
+        return aClass == PresentationIconProvider.class ? null : aClass.newInstance();
+      }
+      catch (Exception e) {
+        return null;
+      }
     }
   };
 
@@ -76,8 +85,8 @@ public class ElementPresentationTemplateImpl implements ElementPresentationTempl
 
       @Override
       public Icon getIcon() {
-        NullableFunction<DomElement, Icon> iconProvider = myIconProvider.getValue();
-        return iconProvider == null ? myIcon.getValue() : iconProvider.fun(element);
+        PresentationIconProvider iconProvider = myIconProvider.getValue();
+        return iconProvider == null ? myIcon.getValue() : iconProvider.getIcon(element, 0);
       }
 
       @Override

@@ -49,6 +49,11 @@ public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidIncludingCompiler");
 
   @Override
+  public VirtualFile getPresentableFile(CompileContext context, Module module, VirtualFile outputRoot, VirtualFile generatedFile) {
+    return null;
+  }
+
+  @Override
   public GenerationItem[] getGenerationItems(final CompileContext context) {
     return ApplicationManager.getApplication().runReadAction(new Computable<GenerationItem[]>() {
       @Override

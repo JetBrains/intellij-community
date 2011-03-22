@@ -55,6 +55,11 @@ import java.util.Map;
 public class AndroidAptCompiler implements SourceGeneratingCompiler {
   private static final GenerationItem[] EMPTY_GENERATION_ITEM_ARRAY = {};
 
+  @Override
+  public VirtualFile getPresentableFile(CompileContext context, Module module, VirtualFile outputRoot, VirtualFile generatedFile) {
+    return null;
+  }
+
   public static boolean isToCompileModule(Module module, AndroidFacetConfiguration configuration) {
     if (!(configuration.RUN_PROCESS_RESOURCES_MAVEN_TASK && AndroidMavenUtil.isMavenizedModule(module))) {
       return true;

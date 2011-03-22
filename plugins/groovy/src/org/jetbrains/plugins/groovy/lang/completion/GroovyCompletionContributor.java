@@ -29,7 +29,6 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.filters.TrueFilter;
@@ -363,6 +362,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
     final ElementFilter classFilter = getClassFilter(position);
 
+    final boolean showCapitalizedClasses = JavaCompletionContributor.showCapitalizedClasses(result);
     reference.processVariants(new Consumer<Object>() {
       public void consume(Object element) {
         if (element instanceof PsiClass && inheritors.alreadyProcessed((PsiClass)element)) {
@@ -382,6 +382,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
           resolveResult = (GroovyResolveResult)object;
           substitutor = resolveResult.getSubstitutor();
           object = ((GroovyResolveResult)object).getElement();
+        }
+
+        if (!showCapitalizedClasses && object instanceof PsiClass && StringUtil.isCapitalized(((PsiClass)object).getName())) {
+          return;
         }
 
         final boolean autopopup = parameters.getInvocationCount() == 0;
@@ -454,8 +458,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         }
       });
 
-      final String s = result.getPrefixMatcher().getPrefix();
-      if (NameUtil.isUseMinusculeHumpMatcher() || !StringUtil.isEmpty(s) && Character.isUpperCase(s.charAt(0))) {
+      if (StringUtil.isCapitalized(prefix)) {
         addAllClasses(parameters, result, inheritors);
       }
     }

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
@@ -30,9 +31,10 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.*;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PatternCondition;
+import com.intellij.patterns.PsiNameValuePairPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AssignableFromContextFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
@@ -247,6 +249,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         if (reference instanceof PsiJavaReference) {
           final ElementFilter filter = getReferenceFilter(position);
           if (filter != null) {
+            boolean showCapitalizedClasses = showCapitalizedClasses(result);
             final boolean isSwitchLabel = SWITCH_LABEL.accepts(position);
             final PsiFile originalFile = parameters.getOriginalFile();
             for (LookupElement element : JavaCompletionUtil.processJavaReference(position,
@@ -255,6 +258,12 @@ public class JavaCompletionContributor extends CompletionContributor {
                                                                                  checkAccess,
                                                                                  result.getPrefixMatcher(), parameters)) {
               if (inheritors.alreadyProcessed(element)) {
+                continue;
+              }
+
+              if (!showCapitalizedClasses &&
+                  element.getObject() instanceof PsiClass &&
+                  StringUtil.isCapitalized(((PsiClass)element.getObject()).getName())) {
                 continue;
               }
 
@@ -299,6 +308,11 @@ public class JavaCompletionContributor extends CompletionContributor {
     });
   }
 
+  public static boolean showCapitalizedClasses(CompletionResultSet result) {
+    String prefix = result.getPrefixMatcher().getPrefix();
+    return StringUtil.isEmpty(prefix) || StringUtil.isCapitalized(prefix) || CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE == CodeInsightSettings.NONE;
+  }
+
   private static void addKeywords(CompletionParameters parameters, CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
     final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
@@ -330,11 +344,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return false;
     }
 
-    if (NameUtil.isUseMinusculeHumpMatcher()) return true;
-
-    final String s = result.getPrefixMatcher().getPrefix();
-    if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return false;
-    return true;
+    return StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix());
   }
 
   private static void completeAnnotationAttributeName(CompletionResultSet result, PsiElement insertedElement,

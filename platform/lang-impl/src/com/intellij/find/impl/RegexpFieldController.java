@@ -10,12 +10,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.ui.EditorComboBox;
 import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-
-import java.awt.*;
 
 public class RegexpFieldController implements FindModel.FindModelObserver {
 
@@ -24,11 +21,11 @@ public class RegexpFieldController implements FindModel.FindModelObserver {
     void documentWasReplaced(RegexpFieldController controller);
   }
 
-  public EditorComboBox getTextField() {
+  public EditorTextField getTextField() {
     return myTextField;
   }
 
-  private EditorComboBox myTextField;
+  private EditorTextField myTextField;
   private FindModel myFindModel;
 
   public EditorDocumentListener getListener() {
@@ -41,7 +38,7 @@ public class RegexpFieldController implements FindModel.FindModelObserver {
 
   private EditorDocumentListener myListener;
 
-  public RegexpFieldController(EditorComboBox textField, FindModel findModel, @Nullable EditorDocumentListener listener) {
+  public RegexpFieldController(EditorTextField textField, FindModel findModel, @Nullable EditorDocumentListener listener) {
     myTextField = textField;
     myFindModel = findModel;
     myListener = listener;
@@ -65,19 +62,14 @@ public class RegexpFieldController implements FindModel.FindModelObserver {
 
     final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(s, fileType, myTextField.getText(), -1, true);
 
-    Component editorComponent = myTextField.getEditor().getEditorComponent();
-    if (editorComponent instanceof  EditorTextField) {
-      if (myListener != null) {
-        myListener.documentWillBeReplaced(this);
-      }
-      Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-      myTextField.setDocument(document);
-      ((EditorTextField)editorComponent).setNewDocumentAndFileType(fileType, document);
-      if (myListener != null) {
-        myListener.documentWasReplaced(this);
-      }
+    if (myListener != null) {
+      myListener.documentWillBeReplaced(this);
     }
-
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    myTextField.setNewDocumentAndFileType(fileType, document);
+    if (myListener != null) {
+      myListener.documentWasReplaced(this);
+    }
   }
 
   @Override

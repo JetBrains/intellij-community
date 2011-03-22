@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -137,12 +138,15 @@ public class ProblemsHolder {
   }
 
   public void registerProblem(@NotNull PsiReference reference) {
-    assert reference instanceof EmptyResolveMessageProvider;
-    String pattern = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
-    if (pattern.contains("{0}")) {
-      pattern = MessageFormat.format(pattern, reference.getCanonicalText());
+    String message;
+    if (reference instanceof EmptyResolveMessageProvider) {
+      String pattern = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
+      message = pattern.contains("{0}") ? MessageFormat.format(pattern, reference.getCanonicalText()) : pattern;
     }
-    registerProblem(reference, pattern, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+    else {
+      message = CodeInsightBundle.message("error.cannot.resolve.default.message", reference.getCanonicalText());
+    }
+    registerProblem(reference, message, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
   }
 
   public void registerProblem(@NotNull final PsiElement psiElement,
