@@ -156,7 +156,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
         return info != null && myModule.equals(info.module);
       }
       else {
-        if(myExclusionManager.isExcluded(file)) return false;
+        if(myExclusionManager != null && myExclusionManager.isExcluded(file)) return false;
         return !myFileTypeManager.isFileIgnored(file);
       }
     }

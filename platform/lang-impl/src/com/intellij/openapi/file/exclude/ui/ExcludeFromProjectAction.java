@@ -79,6 +79,11 @@ public class ExcludeFromProjectAction extends AnAction {
     }
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
+      ProjectFileExclusionManager fileExManager = ProjectFileExclusionManager.getInstance(project);
+      if (fileExManager == null) {
+        presentation.setVisible(false);
+        return;
+      }
       if (file.equals(project.getBaseDir()) || !file.isWritable()) {
         presentation.setEnabled(false);
       }
