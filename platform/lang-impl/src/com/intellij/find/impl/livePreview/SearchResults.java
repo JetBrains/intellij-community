@@ -346,12 +346,10 @@ public class SearchResults {
 
   @Nullable
   private LiveOccurrence prevOccurrence(TextRange range) {
-    for (int i = 0; i < getOccurrences().size(); ++i) {
+    for (int i = getOccurrences().size() - 1; i >= 0; --i) {
       final LiveOccurrence occurrence = getOccurrences().get(i);
-      if (occurrence.getPrimaryRange().getEndOffset() < range.getStartOffset())  {
-        if (i > 0) {
+      if (occurrence.getPrimaryRange().getEndOffset() <= range.getStartOffset())  {
           return occurrence;
-        }
       }
     }
     return null;
