@@ -192,7 +192,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
   @Nullable
   @Override
   public TextRange performReplace(final LiveOccurrence occurrence, final String replacement, final Editor editor) {
-    LOG.assertTrue(!myReplaceDenied, "Replace denied");
+    if (myReplaceDenied) return null;
     TextRange range = occurrence.getPrimaryRange();
     FindModel findModel = mySearchResults.getFindModel();
     TextRange result = null;
