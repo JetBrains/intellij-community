@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
@@ -85,7 +84,7 @@ public class SearchResults {
 
     void searchResultsUpdated(SearchResults sr);
     void editorChanged(SearchResults sr, Editor oldEditor);
-    void cursorMoved();
+    void cursorMoved(boolean toChangeSelection);
 
   }
   public void addListener(SearchResultsListener srl) {
@@ -141,60 +140,59 @@ public class SearchResults {
   }
 
   public void clear() {
-    searchCompleted(new ArrayList<LiveOccurrence>(), 0, getEditor(), null);
+    searchCompleted(new ArrayList<LiveOccurrence>(), 0, getEditor(), null, false);
   }
 
-  public void updateThreadSafe(final FindModel findModel) {
+  public void updateThreadSafe(final FindModel findModel, final boolean toChangeSelection) {
     if (myDisposed) return;
     final ArrayList<LiveOccurrence> occurrences = new ArrayList<LiveOccurrence>();
     final Editor editor = getEditor();
 
     final ArrayList<FindResult> results = new ArrayList<FindResult>();
     if (findModel != null) {
-      final Ref<TextRange> selectionRef = new Ref<TextRange>();
+
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
         public void run() {
-          selectionRef.set(new TextRange(editor.getSelectionModel().getSelectionStart(),
-                                          editor.getSelectionModel().getSelectionEnd()));
+          TextRange selection = new TextRange(editor.getSelectionModel().getSelectionStart(),
+                                          editor.getSelectionModel().getSelectionEnd());
+          TextRange r = findModel.isGlobal() ? new TextRange(0, Integer.MAX_VALUE) : selection;
+          if (r.getLength() == 0) {
+            r = new TextRange(0, Integer.MAX_VALUE);
+          }
+          int offset = r.getStartOffset();
+          VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
+
+          while (true) {
+            FindManager findManager = FindManager.getInstance(editor.getProject());
+            FindResult result = findManager.findString(editor.getDocument().getCharsSequence(), offset, findModel, virtualFile);
+            if (!result.isStringFound()) break;
+            int newOffset = result.getEndOffset();
+            if (offset == newOffset || result.getEndOffset() > r.getEndOffset()) break;
+            offset = newOffset;
+            results.add(result);
+
+            if (results.size() > myMatchesLimit) break;
+          }
+          if (results.size() < myMatchesLimit) {
+
+            findResultsToOccurrences(results, occurrences);
+          }
+
+          final Runnable searchCompletedRunnable = new Runnable() {
+            @Override
+            public void run() {
+              searchCompleted(occurrences, results.size(), editor, findModel, toChangeSelection);
+            }
+          };
+
+          if (!ApplicationManager.getApplication().isUnitTestMode()) {
+            ApplicationManager.getApplication().invokeLater(searchCompletedRunnable);
+          } else {
+            searchCompletedRunnable.run();
+          }
         }
       });
-      TextRange r = findModel.isGlobal() ? new TextRange(0, Integer.MAX_VALUE) :
-                    selectionRef.get();
-      if (r.getLength() == 0) {
-        r = new TextRange(0, Integer.MAX_VALUE);
-      }
-      int offset = r.getStartOffset();
-      VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
-
-      while (true) {
-        FindManager findManager = FindManager.getInstance(editor.getProject());
-        FindResult result = findManager.findString(editor.getDocument().getCharsSequence(), offset, findModel, virtualFile);
-        if (!result.isStringFound()) break;
-        int newOffset = result.getEndOffset();
-        if (offset == newOffset || result.getEndOffset() > r.getEndOffset()) break;
-        offset = newOffset;
-        results.add(result);
-
-        if (results.size() > myMatchesLimit) break;
-      }
-      if (results.size() < myMatchesLimit) {
-
-        findResultsToOccurrences(results, occurrences);
-      }
-    }
-
-    final Runnable r = new Runnable() {
-      @Override
-      public void run() {
-        searchCompleted(occurrences, results.size(), editor, findModel);
-      }
-    };
-
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().invokeLater(r);
-    } else {
-      r.run();
     }
   }
 
@@ -202,7 +200,7 @@ public class SearchResults {
     myDisposed = true;
   }
 
-  private void searchCompleted(List<LiveOccurrence> occurrences, int size, Editor editor, FindModel findModel) {
+  private void searchCompleted(List<LiveOccurrence> occurrences, int size, Editor editor, FindModel findModel, boolean toChangeSelection) {
     if (editor == getEditor() && !myDisposed) {
       myOccurrences = occurrences;
       final TextRange oldCursorRange = myCursor != null ? myCursor.getPrimaryRange() : null;
@@ -217,8 +215,8 @@ public class SearchResults {
       updateCursor(oldCursorRange);
       myActualFound = size;
       notifyChanged();
-      if (oldCursorRange == null) {
-        notifyCursorMoved();
+      if (oldCursorRange == null || myCursor == null || !myCursor.getPrimaryRange().equals(oldCursorRange)) {
+        notifyCursorMoved(toChangeSelection);
       }
     }
   }
@@ -233,7 +231,6 @@ public class SearchResults {
           if (afterCaret != null) {
             myCursor = afterCaret;
           } else {
-            //setNotFoundState(true);
             myCursor = null;
           }
         }
@@ -417,18 +414,14 @@ public class SearchResults {
 
   public void moveCursorTo(LiveOccurrence next) {
     if (next != null) {
-      setCursor(next);
+      myCursor = next;
+      notifyCursorMoved(true);
     }
   }
 
-  private void setCursor(LiveOccurrence liveOccurrence) {
-    myCursor = liveOccurrence;
-    notifyCursorMoved();
-  }
-
-  private void notifyCursorMoved() {
+  private void notifyCursorMoved(boolean toChangeSelection) {
     for (SearchResultsListener listener : myListeners) {
-      listener.cursorMoved();
+      listener.cursorMoved(toChangeSelection);
     }
   }
 }

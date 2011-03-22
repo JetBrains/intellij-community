@@ -3,13 +3,20 @@ package com.intellij.find.editorHeaderActions;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
+import com.intellij.ui.EditorComboBox;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,9 +27,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class VariantsCompletionAction extends EditorHeaderAction {
-  private JTextField myTextField;
+  private EditorComboBox myTextField;
 
-  public VariantsCompletionAction(EditorSearchComponent editorSearchComponent, JTextField textField) {
+  public VariantsCompletionAction(EditorSearchComponent editorSearchComponent, EditorComboBox textField) {
     super(editorSearchComponent);
     final AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION);
     myTextField = textField;
@@ -33,9 +40,9 @@ public class VariantsCompletionAction extends EditorHeaderAction {
 
   public void actionPerformed(final AnActionEvent e) {
     final String prefix = getPrefix();
-    if (prefix.length() == 0) return;
+    if (StringUtil.isEmpty(prefix)) return;
 
-    Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    Editor editor = getEditorSearchComponent().getEditor();
     if (editor != null) {
       final String[] array = calcWords(prefix, editor);
       if (array.length == 0) {
@@ -58,8 +65,17 @@ public class VariantsCompletionAction extends EditorHeaderAction {
     }
   }
 
+  @Nullable
   private String getPrefix() {
-    return myTextField.getText().substring(0, myTextField.getCaret().getDot());
+    Component editorComponent = myTextField.getEditor().getEditorComponent();
+    if (editorComponent instanceof EditorTextField) {
+      Editor editor = ((EditorTextField)editorComponent).getEditor();
+      if (editor != null){
+        int offset = editor.getCaretModel().getOffset();
+        return myTextField.getText().substring(0, offset);
+      }
+    }
+    return  null;
   }
 
   private static String[] calcWords(final String prefix, Editor editor) {

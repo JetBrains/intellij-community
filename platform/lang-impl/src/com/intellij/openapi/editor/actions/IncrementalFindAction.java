@@ -44,44 +44,53 @@ public class IncrementalFindAction extends EditorAction {
       final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
       if (!editor.isOneLineMode()) {
         final JComponent headerComponent = editor.getHeaderComponent();
-        String selectedText = editor.getSelectionModel().getSelectedText();
         if (headerComponent instanceof EditorSearchComponent) {
           EditorSearchComponent editorSearchComponent = (EditorSearchComponent)headerComponent;
           if (!myReplace) {
-            editorSearchComponent.setInitialText(selectedText);
             headerComponent.requestFocus();
           }
           if (myReplace != editorSearchComponent.getFindModel().isReplaceState()){
             editorSearchComponent.getFindModel().setReplaceState(myReplace);
           }
-        }
-        else {
+          configureFindModel(editor, editorSearchComponent.getFindModel());
+        } else {
           FindManager findManager = FindManager.getInstance(project);
-          FindModel model = null;
+          FindModel model;
           if (myReplace) {
             model = findManager.createReplaceInFileModel();
-            if (!StringUtil.isEmpty(selectedText)) {
-              if (selectedText.indexOf('\n') >= 0) {
-                model.setGlobal(false);
-              }
-              else {
-                model.setStringToFind(selectedText);
-                model.setGlobal(true);
-              }
-            }
-            else {
-              model.setGlobal(true);
-            }
           } else {
             model = new FindModel();
             model.copyFrom(findManager.getFindInFileModel());
           }
-          if (selectedText != null && model.isGlobal()) {
-            model.setStringToFind(selectedText);
-          }
+          configureFindModel(editor, model);
           final EditorSearchComponent header = new EditorSearchComponent(editor, project, model);
           editor.setHeaderComponent(header);
           header.requestFocus();
+        }
+      }
+    }
+
+    private void configureFindModel(Editor editor, FindModel model) {
+      String selectedText = editor.getSelectionModel().getSelectedText();
+      if (selectedText != null) {
+        if (myReplace) {
+          if (!StringUtil.isEmpty(selectedText)) {
+            if (selectedText.indexOf('\n') >= 0) {
+              model.setGlobal(false);
+            }
+            else {
+              model.setStringToFind(selectedText);
+              model.setGlobal(true);
+            }
+          } else {
+            model.setGlobal(true);
+          }
+        } else {
+          model.setStringToFind(selectedText);
+        }
+
+        if (model.isGlobal()) {
+          model.setStringToFind(selectedText);
         }
       }
     }

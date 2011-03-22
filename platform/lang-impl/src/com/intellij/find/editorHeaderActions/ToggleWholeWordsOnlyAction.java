@@ -22,7 +22,7 @@ public class ToggleWholeWordsOnlyAction extends EditorHeaderToggleAction {
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    getEditorSearchComponent().getFindModel().setWholeWordsOnly(state);
     FindSettings.getInstance().setLocalWholeWordsOnly(state);
+    getEditorSearchComponent().getFindModel().setWholeWordsOnly(state);
   }
 }
