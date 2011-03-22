@@ -228,7 +228,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myGutterNeedsUpdate = false;
   private Alarm myAppleRepaintAlarm;
 
-  private Alarm myMouseSelectionStateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myMouseSelectionStateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private Runnable myMouseSelectionStateResetRunnable;
 
   private boolean myEmbeddedIntoDialogWrapper;
@@ -4695,8 +4695,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private boolean processMousePressed(MouseEvent e) {
-      boolean isNavigation = false;
-
       myInitialMouseEvent = e;
 
       if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE && System.currentTimeMillis() - myMouseSelectionChangeTimestamp > Registry.intValue(
@@ -4711,6 +4709,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (y < 0) y = 0;
 
       final EditorMouseEventArea eventArea = getMouseEventArea(e);
+      boolean isNavigation = false;
       if (eventArea == EditorMouseEventArea.FOLDING_OUTLINE_AREA) {
         final FoldRegion range = myGutterComponent.findFoldingAnchorAt(x, y);
         if (range != null) {

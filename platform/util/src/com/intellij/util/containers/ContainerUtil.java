@@ -25,7 +25,6 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -134,15 +133,18 @@ public class ContainerUtil {
     }
   }
 
-  public static <T> ArrayList<T> collect(@NotNull Iterator<T> iterator) {
-    ArrayList<T> list = new ArrayList<T>();
+  @NotNull
+  public static <T> List<T> collect(@NotNull Iterator<T> iterator) {
+    if (!iterator.hasNext()) return Collections.emptyList();
+    List<T> list = new ArrayList<T>();
     addAll(list, iterator);
     return list;
   }
 
   @NotNull
-  public static <T> HashSet<T> collectSet(@NotNull Iterator<T> iterator) {
-    HashSet<T> hashSet = new HashSet<T>();
+  public static <T> Set<T> collectSet(@NotNull Iterator<T> iterator) {
+    if (!iterator.hasNext()) return Collections.emptySet();
+    Set<T> hashSet = new HashSet<T>();
     addAll(hashSet, iterator);
     return hashSet;
   }
@@ -477,7 +479,7 @@ public class ContainerUtil {
   }
 
   @NotNull
-  public static <T> ArrayList<T> collect(@NotNull Iterator<?> iterator, @NotNull FilteringIterator.InstanceOf<T> instanceOf) {
+  public static <T> List<T> collect(@NotNull Iterator<?> iterator, @NotNull FilteringIterator.InstanceOf<T> instanceOf) {
     return collect(FilteringIterator.create((Iterator<T>)iterator, instanceOf));
   }
 
@@ -1087,7 +1089,10 @@ public class ContainerUtil {
     y1.add(newY.toNativeArray());
   }
 
-  private static class EmptyList extends AbstractList<Object> implements RandomAccess, Serializable {
+  /**
+   * has optimized toArray() as opposed to the {@link java.util.Collections#emptyList()}
+   */
+  private static class EmptyList extends AbstractList<Object> implements RandomAccess {
     private static final EmptyList INSTANCE = new EmptyList();
 
     public int size() {
