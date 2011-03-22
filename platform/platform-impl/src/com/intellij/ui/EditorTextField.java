@@ -307,7 +307,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     boolean isFocused = isFocusOwner();
 
     myEditor = createEditor();
-    add(myEditor.getComponent(), BorderLayout.CENTER);
+    final JComponent component = myEditor.getComponent();
+    component.setOpaque(isOpaque());
+
+    add(component, BorderLayout.CENTER);
 
     super.addNotify();
 
