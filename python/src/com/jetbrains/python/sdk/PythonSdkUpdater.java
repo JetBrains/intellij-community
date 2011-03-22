@@ -19,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -101,16 +103,16 @@ public class PythonSdkUpdater implements ProjectComponent {
   }
 
   private static void updateSdkPath(Sdk sdk, List<String> sysPath) {
-    // HACK: SDK roots configured by user are added as roots of type CLASSES only, and roots configured from sys.path
-    // are both classes and sources
-    final VirtualFile[] oldClassesRoots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
-    final VirtualFile[] oldSourcesRoots = sdk.getRootProvider().getFiles(OrderRootType.SOURCES);
+    final List<VirtualFile> oldRoots = Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+    PythonSdkAdditionalData additionalData = sdk.getSdkAdditionalData() instanceof PythonSdkAdditionalData
+      ? (PythonSdkAdditionalData) sdk.getSdkAdditionalData()
+      : null;
     List<String> newRoots = new ArrayList<String>();
     for(String root: sysPath) {
       if (new File(root).exists() &&
           !"egg-info".equals(FileUtil.getExtension(root)) &&
-          !wasOldRoot(root, oldClassesRoots) &&
-          !wasOldRoot(root, oldSourcesRoots)) {
+          (additionalData == null || !wasOldRoot(root, additionalData.getExcludedPaths())) &&
+          !wasOldRoot(root, oldRoots)) {
         newRoots.add(root);
       }
     }
@@ -128,7 +130,7 @@ public class PythonSdkUpdater implements ProjectComponent {
     }
   }
 
-  private static boolean wasOldRoot(String root, VirtualFile[] virtualFiles) {
+  private static boolean wasOldRoot(String root, Collection<VirtualFile> virtualFiles) {
     String rootPath = canonicalize(root);
     for (VirtualFile virtualFile : virtualFiles) {
       if (canonicalize(virtualFile.getPath()).equals(rootPath)) {

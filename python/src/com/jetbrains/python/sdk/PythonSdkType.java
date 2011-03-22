@@ -283,6 +283,7 @@ public class PythonSdkType extends SdkType {
     return name;
   }
 
+  @Nullable
   public AdditionalDataConfigurable createAdditionalDataConfigurable(final SdkModel sdkModel, final SdkModificator sdkModificator) {
     return null;
   }
