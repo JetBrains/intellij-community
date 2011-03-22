@@ -151,7 +151,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
         } else {
           ApplicationManager.getApplication().invokeAndWait(denyReplace, ModalityState.NON_MODAL);
         }
-        mySearchResults.updateThreadSafe(findModel, allowedToChangedEditorSelection, false);
+        mySearchResults.updateThreadSafe(findModel, allowedToChangedEditorSelection, null);
       }
     };
     if (unitTestMode) {
@@ -208,7 +208,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
       myReplaceListener.replacePerformed(occurrence, replacement, editor);
     }
     setReplaceDenied(true);
-    mySearchResults.updateThreadSafe(findModel, true, true);
+    mySearchResults.updateThreadSafe(findModel, true, result);
     return result;
   }
 

@@ -5,6 +5,7 @@ import java.awt.*;
 
 public class ReplacementView extends JPanel {
 
+  private static final String MALFORMED_REPLACEMENT_STRING = "Malformed replacement string";
   private String myReplacement;
   private LiveOccurrence myOccurrence;
   private JButton myStatusButton;
@@ -33,8 +34,12 @@ public class ReplacementView extends JPanel {
 
   public ReplacementView(final String replacement, final LiveOccurrence occurrence) {
     myReplacement = replacement;
-    JLabel jLabel = new JLabel(myReplacement);
-    jLabel.setForeground(Color.WHITE);
+    String textToShow = myReplacement;
+    if (myReplacement == null) {
+      textToShow = MALFORMED_REPLACEMENT_STRING;
+    }
+    JLabel jLabel = new JLabel(textToShow);
+    jLabel.setForeground(myReplacement != null ? Color.WHITE : Color.RED);
     add(jLabel);
   }
 }
