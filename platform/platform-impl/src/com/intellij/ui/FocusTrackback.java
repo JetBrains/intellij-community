@@ -30,7 +30,6 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.util.LocaleServiceProviderPool;
 
 import javax.swing.*;
 import java.awt.*;
