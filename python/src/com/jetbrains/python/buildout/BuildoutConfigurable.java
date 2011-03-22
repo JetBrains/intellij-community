@@ -122,7 +122,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
       if (script_file == null || script_file.isDirectory()) {
         throw new ConfigurationException("Invalid script file '" + script_name + "'");
       }
-      paths_from_script = BuildoutFacet.extractFromScript(script_file);
+      paths_from_script = BuildoutFacet.extractBuildoutPaths(script_file);
       if (paths_from_script == null) {
         throw new ConfigurationException("Failed to extract paths from '" + script_file.getPresentableName() + "'");
       }
