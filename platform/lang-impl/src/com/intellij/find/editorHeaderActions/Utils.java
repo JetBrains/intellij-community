@@ -3,7 +3,6 @@ package com.intellij.find.editorHeaderActions;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.ui.EditorTextField;
 
 import javax.swing.*;
 
@@ -14,7 +13,7 @@ public class Utils {
   public static void showCompletionPopup(JComponent toolbarComponent,
                                           final JList list,
                                           String title,
-                                          final EditorTextField textField) {
+                                          final JTextField textField) {
 
     final Runnable callback = new Runnable() {
       public void run() {

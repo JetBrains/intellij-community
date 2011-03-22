@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -26,9 +25,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class VariantsCompletionAction extends EditorHeaderAction {
-  private EditorTextField myTextField;
+  private JTextField myTextField;
 
-  public VariantsCompletionAction(EditorSearchComponent editorSearchComponent, EditorTextField textField) {
+  public VariantsCompletionAction(EditorSearchComponent editorSearchComponent, JTextField textField) {
     super(editorSearchComponent);
     final AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION);
     myTextField = textField;
@@ -66,12 +65,13 @@ public class VariantsCompletionAction extends EditorHeaderAction {
 
   @Nullable
   private String getPrefix() {
-    Editor editor = myTextField.getEditor();
-    if (editor != null){
-      int offset = editor.getCaretModel().getOffset();
-      return myTextField.getText().substring(0, offset);
-    }
-    return  null;
+    //Editor editor = myTextField.getEditor();
+    //if (editor != null){
+    //  int offset = editor.getCaretModel().getOffset();
+    //  return myTextField.getText().substring(0, offset);
+    //}
+    int offset = myTextField.getCaretPosition();
+    return myTextField.getText().substring(0, offset);
   }
 
   private static String[] calcWords(final String prefix, Editor editor) {
