@@ -207,7 +207,7 @@ public class TypeMigrationLabeler {
       }
     }
     else {
-      TypeMigrationReplacementUtil.migratePsiMemeberType(element, project, getTypeEvaluator().getType(usageInfo));
+      TypeMigrationReplacementUtil.migratePsiMemberType(element, project, getTypeEvaluator().getType(usageInfo));
     }
   }
 
