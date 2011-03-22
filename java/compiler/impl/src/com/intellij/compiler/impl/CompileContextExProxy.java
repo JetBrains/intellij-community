@@ -181,7 +181,7 @@ public class CompileContextExProxy implements CompileContextEx {
     myDelegate.commitZip(outputDir);
   }
 
-  public void assignModule(@NotNull VirtualFile root, @NotNull Module module, boolean isTestSource) {
-    myDelegate.assignModule(root, module, isTestSource);
+  public void assignModule(@NotNull VirtualFile root, @NotNull Module module, boolean isTestSource, com.intellij.openapi.compiler.Compiler compiler) {
+    myDelegate.assignModule(root, module, isTestSource, compiler);
   }
 }

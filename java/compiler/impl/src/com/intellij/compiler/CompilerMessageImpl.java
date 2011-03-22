@@ -15,14 +15,12 @@
  */
 package com.intellij.compiler;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,10 +34,14 @@ public final class CompilerMessageImpl implements CompilerMessage {
   private final int myRow;
   private final int myColumn;
 
+  public CompilerMessageImpl(Project project, CompilerMessageCategory category, String message) {
+    this(project, category, message, null, -1, -1, null);
+  }
+
   public CompilerMessageImpl(Project project,
                              CompilerMessageCategory category,
                              String message,
-                             final String url,
+                             @Nullable final VirtualFile file,
                              int row,
                              int column,
                              @Nullable final Navigatable navigatable) {
@@ -49,11 +51,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
     myMessage = message == null ? "" : message;
     myRow = row;
     myColumn = column;
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        myFile = url == null ? null : VirtualFileManager.getInstance().findFileByUrl(url);
-      }
-    });
+    myFile = file;
   }
 
   public CompilerMessageCategory getCategory() {

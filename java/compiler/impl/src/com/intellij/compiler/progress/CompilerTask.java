@@ -495,10 +495,8 @@ public class CompilerTask extends Task.Backgroundable {
           if (myErrorTreeView != null) {
             final boolean shouldRetainView = myErrorCount > 0 || myWarningCount > 0 && !myErrorTreeView.isHideWarnings();
             if (shouldRetainView) {
-              addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
-                                        CompilerBundle.message("statistics.error.count", myErrorCount), null, -1, -1, null));
-              addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS,
-                                        CompilerBundle.message("statistics.warnings.count", myWarningCount), null, -1, -1, null));
+              addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS, CompilerBundle.message("statistics.error.count", myErrorCount)));
+              addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.STATISTICS, CompilerBundle.message("statistics.warnings.count", myWarningCount)));
               //activateMessageView();
               myErrorTreeView.selectFirstMessage();
             }
