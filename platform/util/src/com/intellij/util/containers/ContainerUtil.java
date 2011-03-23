@@ -1225,4 +1225,14 @@ public class ContainerUtil {
     }
     return result;
   }
+
+  public static <T> boolean processRecursively(final T root, final PairProcessor<T, List<T>> processor) {
+    final LinkedList<T> list = new LinkedList<T>();
+    list.add(root);
+    while (!list.isEmpty()) {
+      final T o = list.removeFirst();
+      if (!processor.process(o, list)) return false;
+    }
+    return true;
+  }
 }

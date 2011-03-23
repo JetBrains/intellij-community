@@ -104,7 +104,7 @@ public abstract class ElementPresentationManager {
 
   /**
    * @deprecated
-   * @see com.intellij.util.xml.Presentation#namerClass()
+   * @see com.intellij.ide.presentation.Presentation#nameProviderClass()
    */
   public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
 
@@ -117,12 +117,12 @@ public abstract class ElementPresentationManager {
 
   /**
    * @deprecated
-   * @see com.intellij.util.xml.Presentation#icon()
+   * @see com.intellij.ide.presentation.Presentation#icon()
    */
   public static void registerIcon(Class aClass, Icon icon) { registerIcons(aClass, icon); }
   /**
    * @deprecated
-   * @see com.intellij.util.xml.Presentation#icon()
+   * @see com.intellij.ide.presentation.Presentation#icon()
    */
   public static void registerIcons(Class aClass, Icon... icon) { ourIcons.put(aClass, icon); }
 

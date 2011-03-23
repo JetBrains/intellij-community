@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
@@ -358,6 +359,16 @@ public class SvnUtil {
     } catch (SVNException e) {
       return null;
     }
+  }
+
+  @NotNull
+  public static SVNURL getRepositoryRootThrow(final SvnVcs vcs, final SVNURL url) throws SVNException, VcsException {
+    final SVNWCClient client = vcs.createWCClient();
+      final SVNInfo info = client.doInfo(url, SVNRevision.WORKING, SVNRevision.WORKING);
+    if (info == null || info.getRepositoryRootURL() == null) {
+      throw new VcsException("Can not get repository root for: " + url);
+    }
+    return info.getRepositoryRootURL();
   }
 
   @Nullable

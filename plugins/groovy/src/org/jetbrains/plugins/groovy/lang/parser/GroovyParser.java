@@ -92,17 +92,13 @@ public class GroovyParser implements PsiParser {
     ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
     if (!ParserUtils.getToken(builder, GroovyTokenTypes.mRPAREN, GroovyBundle.message("rparen.expected"))) {
-      while (!builder.eof() && GroovyTokenTypes.mNLS == builder.getTokenType()){
-        builder.advanceLexer();
-      }
+      while (ParserUtils.getToken(builder, mNLS)) {}
       marker.done(FOR_STATEMENT);
       return true;
     }
 
     PsiBuilder.Marker warn = builder.mark();
-    if (builder.getTokenType() == GroovyTokenTypes.mNLS) {
-      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
-    }
+    ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
     if (parseExtendedStatement(builder)) {
       warn.rollbackTo();
@@ -239,14 +235,8 @@ public class GroovyParser implements PsiParser {
     ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
     if (!ParserUtils.getToken(builder, GroovyTokenTypes.mRPAREN, GroovyBundle.message("rparen.expected"))) {
-      while (!builder.eof() && !GroovyTokenTypes.mNLS.equals(builder.getTokenType()) && !GroovyTokenTypes.mRPAREN.equals(builder.getTokenType())) {
-        builder.advanceLexer();
-        builder.error(GroovyBundle.message("rparen.expected"));
-      }
-      if (!ParserUtils.getToken(builder, GroovyTokenTypes.mRPAREN)) {
-        marker.done(WHILE_STATEMENT);
-        return true;
-      }
+      marker.done(WHILE_STATEMENT);
+      return true;
     }
 
     PsiBuilder.Marker warn = builder.mark();
@@ -255,13 +245,12 @@ public class GroovyParser implements PsiParser {
     if (!parseStatement(builder, true) && !parseExtendedStatement(builder)) {
       warn.rollbackTo();
       builder.error(GroovyBundle.message("expression.expected"));
-      marker.done(WHILE_STATEMENT);
-      return true;
     } else {
       warn.drop();
-      marker.done(WHILE_STATEMENT);
-      return true;
     }
+
+    marker.done(WHILE_STATEMENT);
+    return true;
   }
 
   public void parseBlockBody(PsiBuilder builder) {

@@ -18,10 +18,10 @@ package com.intellij.psi.filters.getters;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ContextGetter;
+import com.intellij.psi.impl.source.xml.XmlTokenImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
@@ -38,39 +38,36 @@ public class XmlAttributeValueGetter implements ContextGetter {
   public XmlAttributeValueGetter() {}
 
   public Object[] get(PsiElement context, CompletionContext completionContext) {
-    return getApplicableAttributeVariants(context, completionContext);
+    return getApplicableAttributeVariants(context);
   }
 
-  private Object[] getApplicableAttributeVariants(PsiElement _context, CompletionContext completionContext) {
-    PsiElement context = _context;
-    if(context != null) {
-      context = PsiTreeUtil.getParentOfType(context, XmlAttribute.class);
-      if (context == null) {
-        context = PsiTreeUtil.getParentOfType(_context, XmlAttributeValue.class);
-      }
-    }
+  private Object[] getApplicableAttributeVariants(PsiElement _context) {
+    if (_context instanceof XmlTokenImpl && ((XmlTokenImpl)_context).getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
+      XmlAttribute attr = PsiTreeUtil.getParentOfType(_context, XmlAttribute.class);
+      if (attr != null) {
+        final XmlAttributeDescriptor descriptor = attr.getDescriptor();
 
-    if(context instanceof XmlAttribute) {
-      final XmlAttributeDescriptor descriptor = ((XmlAttribute)context).getDescriptor();
+        if (descriptor != null) {
+          if (descriptor.isFixed()) {
+            final String defaultValue = descriptor.getDefaultValue();
+            return defaultValue == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : new Object[]{defaultValue};
+          }
 
-      if(descriptor != null) {
-        if (descriptor.isFixed()) {
-          final String defaultValue = descriptor.getDefaultValue();
-          return defaultValue == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : new Object[] { defaultValue };
+          String[] values = descriptor instanceof BasicXmlAttributeDescriptor ?
+                            ((BasicXmlAttributeDescriptor)descriptor).getEnumeratedValues(attr)
+                                                                              : descriptor.getEnumeratedValues();
+
+          final String[] strings = addSpecificCompletions(attr);
+
+          if (values == null || values.length == 0) {
+            values = strings;
+          }
+          else if (strings != null) {
+            values = ArrayUtil.mergeArrays(values, strings);
+          }
+
+          return values == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : values;
         }
-
-        String[] values = descriptor instanceof BasicXmlAttributeDescriptor ?
-                          ((BasicXmlAttributeDescriptor)descriptor).getEnumeratedValues((XmlElement)context):descriptor.getEnumeratedValues();
-
-        final String[] strings = addSpecificCompletions(context);
-
-        if(values == null || values.length==0) {
-          values = strings;
-        } else if (strings != null) {
-          values = ArrayUtil.mergeArrays(values, strings);
-        }
-
-        return values == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : values;
       }
     }
 
@@ -78,7 +75,7 @@ public class XmlAttributeValueGetter implements ContextGetter {
   }
 
   @Nullable
-  protected String[] addSpecificCompletions(final PsiElement context) {
+  protected String[] addSpecificCompletions(final XmlAttribute context) {
     return null;
   }
 

@@ -49,7 +49,7 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
     return consoleView;
   }
 
-  protected ConsoleViewImpl createConsole() {
+  protected ConsoleView createConsole() {
     return new ConsoleViewImpl(myProject, myScope, myViewer, null);
   }
 

@@ -493,6 +493,15 @@ public class StringUtil {
                                                      @NotNull String str,
                                                      @Nullable String additionalChars,
                                                      @NotNull @NonNls StringBuilder buffer) {
+    return escapeStringCharacters(length, str, additionalChars, true, buffer);
+  }
+
+  @NotNull
+  public static StringBuilder escapeStringCharacters(int length,
+                                                     @NotNull String str,
+                                                     @Nullable String additionalChars,
+                                                     boolean escapeSlash,
+                                                     @NotNull @NonNls StringBuilder buffer) {
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
       switch (ch) {
@@ -516,12 +525,11 @@ public class StringUtil {
           buffer.append("\\r");
           break;
 
-        case '\\':
-          buffer.append("\\\\");
-          break;
-
         default:
-          if (additionalChars != null && additionalChars.indexOf(ch) > -1) {
+          if (escapeSlash && ch == '\\') {
+            buffer.append("\\\\");
+          }
+          else if (additionalChars != null && additionalChars.indexOf(ch) > -1) {
             buffer.append("\\").append(ch);
           }
           else if (Character.isISOControl(ch)) {
@@ -733,6 +741,10 @@ public class StringUtil {
     // Optimization
     if (Character.isUpperCase(s.charAt(0))) return s;
     return toUpperCase(s.charAt(0)) + s.substring(1);
+  }
+
+  public static boolean isCapitalized(@Nullable String s) {
+    return s != null && s.length() > 0 && Character.isUpperCase(s.charAt(0));
   }
 
   @NotNull

@@ -224,7 +224,7 @@ public class GitAnnotationProvider implements AnnotationProvider, VcsCacheableAn
   public FileAnnotation restore(VcsAnnotation vcsAnnotation,
                                 VcsAbstractHistorySession session,
                                 String annotatedContent,
-                                boolean forCurrentRevision) {
+                                boolean forCurrentRevision, VcsRevisionNumber revisionNumber) {
     final GitFileAnnotation gitFileAnnotation =
       new GitFileAnnotation(myProject, vcsAnnotation.getFilePath().getVirtualFile(), forCurrentRevision);
     gitFileAnnotation.addLogEntries(session.getRevisionList());

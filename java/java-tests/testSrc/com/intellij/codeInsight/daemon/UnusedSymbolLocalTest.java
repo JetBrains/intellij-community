@@ -21,6 +21,7 @@ public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
   public void testInnerClass() throws Exception { doTest(); }
   public void testInnerUsesSelf() throws Exception { doTest(); }
   public void testLocalClass() throws Exception { doTest(); }
+  public void testInjectedAnno() throws Exception { doTest(); }
 
   public void testChangeInsideCodeBlock() throws Exception {
     doTest();

@@ -16,10 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeCodeFragment;
+import com.intellij.psi.*;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -39,13 +36,14 @@ public class GrTableParameterInfo {
     final Project project = parameter.getProject();
     myName = new GroovyCodeFragment(project, parameter.getName());
     final PsiType type = parameter.getDeclaredType();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     if (type != null) {
       String typeText = type.getCanonicalText();
       if (typeText == null) typeText = type.getPresentableText();
-      myType = JavaPsiFacade.getElementFactory(project).createTypeCodeFragment(typeText, parameter, true, true, true);
+      myType = factory.createTypeCodeFragment(typeText, parameter, true, PsiElementFactory.ALLOW_VOID | PsiElementFactory.ALLOW_ELLIPSIS);
     }
     else {
-      myType = JavaPsiFacade.getElementFactory(project).createTypeCodeFragment("", parameter, true, true, true);
+      myType = factory.createTypeCodeFragment("", parameter, true, PsiElementFactory.ALLOW_VOID | PsiElementFactory.ALLOW_ELLIPSIS);
     }
     final GrExpression defaultInitializer = parameter.getDefaultInitializer();
     if (defaultInitializer != null) {
@@ -61,7 +59,7 @@ public class GrTableParameterInfo {
     this.myPosition = -1;
     myName = new GroovyCodeFragment(project, "");
     myDefaultValue = new GroovyCodeFragment(project, "");
-    myType = JavaPsiFacade.getElementFactory(project).createTypeCodeFragment("", context, true, true);
+    myType = JavaPsiFacade.getElementFactory(project).createTypeCodeFragment("", context, true, PsiElementFactory.ALLOW_VOID);
     myDefaultInitializer = new GroovyCodeFragment(project, "");
   }
 
@@ -74,7 +72,7 @@ public class GrTableParameterInfo {
     this.myPosition = -1;
     myName = new GroovyCodeFragment(project, name);
     myDefaultValue = new GroovyCodeFragment(project, defaultValue);
-    myType = JavaPsiFacade.getElementFactory(project).createTypeCodeFragment(type, context, true, true);
+    myType = JavaPsiFacade.getElementFactory(project).createTypeCodeFragment(type, context, true, PsiElementFactory.ALLOW_VOID);
     myDefaultInitializer = new GroovyCodeFragment(project, defaultInitializer);
   }
 

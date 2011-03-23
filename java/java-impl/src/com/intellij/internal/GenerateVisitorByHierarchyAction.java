@@ -98,7 +98,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
         final JPanel panel = new JPanel(new BorderLayout());
         panel.add(new JLabel("Hierarchy Base Class"), BorderLayout.WEST);
         final PsiElementFactory factory = psiFacade.getElementFactory();
-        final PsiTypeCodeFragment codeFragment = factory.createTypeCodeFragment("", null, true, true);
+        final PsiTypeCodeFragment codeFragment = factory.createTypeCodeFragment("", null, true, PsiElementFactory.ALLOW_VOID);
         final Document document = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
         final EditorTextField editorTextField = new EditorTextField(document, project, StdFileTypes.JAVA);
         editorTextField.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {

@@ -48,6 +48,32 @@ import java.util.Map;
 public class AndroidIncludingCompiler implements SourceGeneratingCompiler {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidIncludingCompiler");
 
+  @Nullable
+  @Override
+  public VirtualFile getPresentableFile(CompileContext context, Module module, VirtualFile outputRoot, VirtualFile generatedFile) {
+    String generatedFileRelativePath = VfsUtil.getRelativePath(generatedFile, outputRoot, '/');
+    if (generatedFileRelativePath == null) {
+      return null;
+    }
+
+    for (AndroidFacet depFacet : AndroidUtils.getAllAndroidDependencies(module, true)) {
+      String genSrcRootPath = depFacet.getAptGenSourceRootPath();
+      VirtualFile genSrcRoot = genSrcRootPath != null ? LocalFileSystem.getInstance().findFileByPath(genSrcRootPath) : null;
+      VirtualFile[] srcRoots = ModuleRootManager.getInstance(depFacet.getModule()).getSourceRoots();
+
+      for (VirtualFile depSourceRoot : srcRoots) {
+        if (depSourceRoot != genSrcRoot) {
+          VirtualFile file = depSourceRoot.findFileByRelativePath(generatedFileRelativePath);
+          if (file != null) {
+            return file;
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
   @Override
   public GenerationItem[] getGenerationItems(final CompileContext context) {
     return ApplicationManager.getApplication().runReadAction(new Computable<GenerationItem[]>() {

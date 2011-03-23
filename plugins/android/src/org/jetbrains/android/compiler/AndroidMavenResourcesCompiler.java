@@ -52,6 +52,11 @@ import java.util.Map;
 public class AndroidMavenResourcesCompiler implements SourceGeneratingCompiler {
   private static final GenerationItem[] EMPTY_GENERATION_ITEM_ARRAY = {};
 
+  @Override
+  public VirtualFile getPresentableFile(CompileContext context, Module module, VirtualFile outputRoot, VirtualFile generatedFile) {
+    return null;
+  }
+
   public GenerationItem[] getGenerationItems(CompileContext context) {
     return ApplicationManager.getApplication().runReadAction(new PrepareAction(context));
   }

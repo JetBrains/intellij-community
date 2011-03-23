@@ -16,13 +16,17 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,6 +34,9 @@ import java.util.Map;
  */
 public class CanonicalTypes {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.CanonicalTypes");
+
+  private CanonicalTypes() { }
+
   public abstract static class Type {
     public abstract PsiType getType(PsiElement context, final PsiManager manager) throws IncorrectOperationException;
 
@@ -41,6 +48,7 @@ public class CanonicalTypes {
 
   private static class Primitive extends Type {
     private final PsiPrimitiveType myType;
+
     private Primitive(PsiPrimitiveType type) {
       myType = type;
     }
@@ -143,7 +151,6 @@ public class CanonicalTypes {
     public void addImportsTo(final JavaCodeFragment codeFragment) {}
   }
 
-
   private static class ClassType extends Type {
     private final String myOriginalText;
     private final String myClassQName;
@@ -163,17 +170,17 @@ public class CanonicalTypes {
       if (aClass == null) {
         return factory.createTypeFromText(myClassQName, context);
       }
-      Map<PsiTypeParameter, PsiType> substMap = new HashMap<PsiTypeParameter,PsiType>();
+      Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter,PsiType>();
       for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
         final String name = typeParameter.getName();
         final Type type = mySubstitutor.get(name);
         if (type != null) {
-          substMap.put(typeParameter, type.getType(context, manager));
+          substitutionMap.put(typeParameter, type.getType(context, manager));
         } else {
-          substMap.put(typeParameter, null);
+          substitutionMap.put(typeParameter, null);
         }
       }
-      return factory.createType(aClass, factory.createSubstitutor(substMap));
+      return factory.createType(aClass, factory.createSubstitutor(substitutionMap));
     }
 
     public String getTypeText() {
@@ -191,27 +198,63 @@ public class CanonicalTypes {
     }
   }
 
+  private static class DisjunctionType extends Type {
+    private final List<Type> myTypes;
+
+    private DisjunctionType(final List<Type> types) {
+      myTypes = types;
+    }
+
+    @Override
+    public PsiType getType(final PsiElement context, final PsiManager manager) throws IncorrectOperationException {
+      final List<PsiType> types = ContainerUtil.map(myTypes, new Function<Type, PsiType>() {
+        @Override public PsiType fun(Type type) { return type.getType(context, manager); }
+      });
+      return new PsiDisjunctionType(types, manager);
+    }
+
+    @Override
+    public String getTypeText() {
+      return StringUtil.join(myTypes, new Function<Type, String>() {
+        @Override public String fun(Type type) { return type.getTypeText(); }
+      }, "|");
+    }
+
+    @Override
+    public void addImportsTo(final JavaCodeFragment codeFragment) {
+      for (Type type : myTypes) {
+        type.addImportsTo(codeFragment);
+      }
+    }
+  }
+
   private static class Creator extends PsiTypeVisitor<Type> {
     public static final Creator INSTANCE = new Creator();
-    public Type visitPrimitiveType(PsiPrimitiveType primitiveType) {
+
+    @Override
+    public Type visitPrimitiveType(final PsiPrimitiveType primitiveType) {
       return new Primitive(primitiveType);
     }
 
-    public Type visitEllipsisType(PsiEllipsisType ellipsisType) {
+    @Override
+    public Type visitEllipsisType(final PsiEllipsisType ellipsisType) {
       return new Ellipsis(ellipsisType.getComponentType().accept(this));
     }
 
-    public Type visitArrayType(PsiArrayType arrayType) {
+    @Override
+    public Type visitArrayType(final PsiArrayType arrayType) {
       return new Array(arrayType.getComponentType().accept(this));
     }
 
-    public Type visitWildcardType(PsiWildcardType wildcardType) {
+    @Override
+    public Type visitWildcardType(final PsiWildcardType wildcardType) {
       final PsiType wildcardBound = wildcardType.getBound();
       final Type bound = wildcardBound == null ? null : wildcardBound.accept(this);
       return new WildcardType(wildcardType.isExtends(), bound);
     }
 
-    public Type visitClassType(PsiClassType classType) {
+    @Override
+    public Type visitClassType(final PsiClassType classType) {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
       if (aClass instanceof PsiAnonymousClass) {
@@ -221,25 +264,33 @@ public class CanonicalTypes {
       if (aClass == null) {
         return new WrongType(originalText);
       } else {
-        Map<String,Type> substMap = new HashMap<String,Type>();
+        final Map<String,Type> substitutionMap = new HashMap<String,Type>();
         final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
         for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
-          final PsiType substType = substitutor.substitute(typeParameter);
+          final PsiType type = substitutor.substitute(typeParameter);
           final String name = typeParameter.getName();
-          if (substType == null) {
-            substMap.put(name, null);
+          if (type == null) {
+            substitutionMap.put(name, null);
           } else {
-            substMap.put(name, substType.accept(this));
+            substitutionMap.put(name, type.accept(this));
           }
         }
         final String qualifiedName = aClass.getQualifiedName();
         LOG.assertTrue(aClass.getName() != null);
-        return new ClassType(originalText, qualifiedName != null ? qualifiedName : aClass.getName(), substMap);
+        return new ClassType(originalText, qualifiedName != null ? qualifiedName : aClass.getName(), substitutionMap);
       }
+    }
+
+    @Override
+    public Type visitDisjunctionType(final PsiDisjunctionType disjunctionType) {
+      final List<Type> types = ContainerUtil.map(disjunctionType.getDisjunctions(), new Function<PsiType, Type>() {
+        @Override public Type fun(PsiType type) { return createTypeWrapper(type); }
+      });
+      return new DisjunctionType(types);
     }
   }
 
-  public static Type createTypeWrapper(PsiType type) {
+  public static Type createTypeWrapper(final PsiType type) {
     return type.accept(Creator.INSTANCE);
   }
 }

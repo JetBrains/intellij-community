@@ -149,5 +149,27 @@ def foo() {
 """, "\b"
   }
 
+  public void testWhileRParen() {
+    checkReparse """
+def foo() {
+  def cl = {
+    while (true<caret> {
+      //
+    }
+  }
+}""", ";"
+  }
+
+  public void testSynchronizedRParen() {
+    checkReparse """
+def foo() {
+  def cl = {
+    synchronized (x<caret> {
+      //
+    }
+  }
+}""", ";"
+  }
+
 
 }

@@ -105,7 +105,7 @@ public class TodoCheckinHandlerWorker {
       ProgressManager.checkCanceled();
       if (change.getAfterRevision() == null) continue;
       final VirtualFile afterFile = change.getAfterRevision().getFile().getVirtualFile();
-      if (afterFile.isDirectory()) continue;
+      if (afterFile.isDirectory() || afterFile.getFileType().isBinary()) continue;
       myPsiFile = null;
 
       if (afterFile.isValid()) {

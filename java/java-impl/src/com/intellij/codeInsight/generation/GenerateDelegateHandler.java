@@ -26,7 +26,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.scope.processor.VariablesProcessor;
+import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -293,7 +296,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
-    PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    final PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (aClass == null) return null;
 
     List<PsiElementClassMember> result = new ArrayList<PsiElementClassMember>();
@@ -314,6 +317,34 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
       if (returnType != null && PropertyUtil.isSimplePropertyGetter(method) && helper.isAccessible(method, aClass, aClass) &&
           returnType instanceof PsiClassType) {
         result.add(new PsiMethodMember(method));
+      }
+    }
+
+    if (aClass instanceof PsiAnonymousClass) {
+      VariablesProcessor proc = new VariablesProcessor(false) {
+        @Override
+        protected boolean check(PsiVariable var, ResolveState state) {
+          return var.hasModifierProperty(PsiModifier.FINAL) && var instanceof PsiLocalVariable || var instanceof PsiParameter;
+        }
+      };
+      PsiElement scope = aClass;
+      while (scope != null) {
+        if (scope instanceof PsiFile || scope instanceof PsiMethod || scope instanceof PsiClassInitializer) break;
+        scope = scope.getParent();
+      }
+      if (scope != null) {
+        PsiScopesUtil.treeWalkUp(proc, aClass, scope);
+
+        for (int i = 0; i < proc.size(); i++) {
+          final PsiVariable psiVariable = proc.getResult(i);
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
+          result.add(new PsiFieldMember(elementFactory.createField(psiVariable.getName(), psiVariable.getType())) {
+            @Override
+            protected PsiClass getContainingClass() {
+              return aClass;
+            }
+          });
+        }
       }
     }
 

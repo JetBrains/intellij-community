@@ -3,17 +3,9 @@ package com.intellij.find.editorHeaderActions;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.ui.EditorComboBox;
 
 import javax.swing.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: zajac
- * Date: 05.03.11
- * Time: 11:09
- * To change this template use File | Settings | File Templates.
- */
 public class Utils {
   private Utils() {
   }
@@ -21,7 +13,7 @@ public class Utils {
   public static void showCompletionPopup(JComponent toolbarComponent,
                                           final JList list,
                                           String title,
-                                          final EditorComboBox textField) {
+                                          final JTextField textField) {
 
     final Runnable callback = new Runnable() {
       public void run() {

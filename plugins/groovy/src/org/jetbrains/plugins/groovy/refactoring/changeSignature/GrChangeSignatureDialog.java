@@ -136,7 +136,8 @@ public class GrChangeSignatureDialog extends RefactoringDialog {
     myNameField = new EditorTextField(PsiDocumentManager.getInstance(myProject).getDocument(myNameCodeFragment), myProject,
                                       myNameCodeFragment.getFileType());
 
-    myReturnTypeCodeFragment = JavaPsiFacade.getInstance(myProject).getElementFactory().createTypeCodeFragment("", myMethod, true, true);
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    myReturnTypeCodeFragment = elementFactory.createTypeCodeFragment("", myMethod, true, PsiElementFactory.ALLOW_VOID);
     final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
     myReturnTypeField = new EditorTextField(document, myProject, myReturnTypeCodeFragment.getFileType());
 

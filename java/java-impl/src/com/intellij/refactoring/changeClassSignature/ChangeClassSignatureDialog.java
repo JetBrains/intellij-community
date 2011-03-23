@@ -72,11 +72,8 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   }
 
   private PsiTypeCodeFragment createValueCodeFragment() {
-    return JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createTypeCodeFragment(
-      "",
-      myClass.getLBrace(),
-      false, true, false
-    );
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
+    return elementFactory.createTypeCodeFragment("", myClass.getLBrace(), true);
   }
 
   protected JComponent createNorthPanel() {

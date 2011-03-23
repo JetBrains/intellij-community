@@ -76,7 +76,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   public boolean isInSet(final VirtualFile file) {
     final ProjectFileIndex index = myRootManager.getFileIndex();
     if (index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file)) {
-      if (myExclusionManager.isExcluded(file)) return false;
+      if (myExclusionManager != null && myExclusionManager.isExcluded(file)) return false;
       return !myFileTypeManager.isFileIgnored(file);
     }
     return false;

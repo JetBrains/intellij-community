@@ -21,18 +21,26 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
   private final boolean myDeclareFinal;
   private final boolean myReplaceLValues;
   private final String myExpectedTypeCanonicalName;
+  private final boolean myLookForType;
 
   public MockIntroduceVariableHandler(@NonNls final String name, final boolean replaceAll,
-                                 final boolean declareFinal, final boolean replaceLValues,
-                                 @NonNls final String expectedTypeCanonicalName) {
+                                      final boolean declareFinal, final boolean replaceLValues,
+                                      @NonNls final String expectedTypeCanonicalName) {
+
+    this(name, replaceAll, declareFinal, replaceLValues, expectedTypeCanonicalName, false);
+  }
+
+  public MockIntroduceVariableHandler(@NonNls final String name, final boolean replaceAll,
+                                      final boolean declareFinal, final boolean replaceLValues,
+                                      @NonNls final String expectedTypeCanonicalName, boolean lookForType) {
 
     myName = name;
     myReplaceAll = replaceAll;
     myDeclareFinal = declareFinal;
     myReplaceLValues = replaceLValues;
     myExpectedTypeCanonicalName = expectedTypeCanonicalName;
+    myLookForType = lookForType;
   }
-
 
   @Override
   public IntroduceVariableSettings getSettings(Project project, Editor editor,
@@ -42,7 +50,8 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
                                                boolean anyAssignmentLHS,
                                                InputValidator validator,
                                                final OccurrencesChooser.ReplaceChoice replaceChoice) {
-    final PsiType type = typeSelectorManager.getDefaultType();
+    final PsiType type = myLookForType ? findType(typeSelectorManager.getTypesForAll(), typeSelectorManager.getDefaultType())
+                                       : typeSelectorManager.getDefaultType();
     Assert.assertTrue(type.getCanonicalText(), type.equalsToText(myExpectedTypeCanonicalName));
     IntroduceVariableSettings introduceVariableSettings = new IntroduceVariableSettings() {
       @Override
@@ -92,5 +101,12 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
   @Override
   protected boolean reportConflicts(final MultiMap<PsiElement,String> conflicts, final Project project, IntroduceVariableSettings dialog) {
     return false;
+  }
+
+  private PsiType findType(final PsiType[] candidates, PsiType defaultType) {
+    for (PsiType candidate : candidates) {
+      if (candidate.equalsToText(myExpectedTypeCanonicalName)) return candidate;
+    }
+    return defaultType;
   }
 }

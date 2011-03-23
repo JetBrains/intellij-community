@@ -242,7 +242,7 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
    * is appropriate for them.
    * @param expression
    */
-  public abstract void visitReferenceExpression(PsiReferenceExpression expression);
+  public void visitReferenceExpression(PsiReferenceExpression expression) {}
 
   public void visitReferenceList(PsiReferenceList list) {
     visitElement(list);

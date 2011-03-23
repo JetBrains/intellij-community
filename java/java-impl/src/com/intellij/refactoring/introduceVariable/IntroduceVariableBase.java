@@ -13,14 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: Nov 15, 2002
- * Time: 5:21:33 PM
- * To change this template use Options | File Templates.
- */
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -72,6 +64,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * @author dsl
+ * Date: Nov 15, 2002
+ */
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceVariable.IntroduceVariableBase");
   @NonNls private static final String PREFER_STATEMENTS_OPTION = "introduce.variable.prefer.statements";
@@ -848,6 +844,4 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       conflicts.putValue(occurence, RefactoringBundle.message("introducing.variable.may.break.code.logic"));
     }
   }
-
-
 }

@@ -45,30 +45,18 @@ public class SynchronizedStatement implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
-      while (!builder.eof() && !mNLS.equals(builder.getTokenType()) && !mRPAREN.equals(builder.getTokenType())) {
-        builder.advanceLexer();
-        builder.error(GroovyBundle.message("rparen.expected"));
-      }
-      if (!ParserUtils.getToken(builder, mRPAREN)) {
-        marker.done(SYNCHRONIZED_STATEMENT);
-        return true;
-      }
+      marker.done(SYNCHRONIZED_STATEMENT);
+      return true;
     }
 
     PsiBuilder.Marker warn = builder.mark();
-    if (builder.getTokenType() == mNLS) {
-      ParserUtils.getToken(builder, mNLS);
-    }
+    ParserUtils.getToken(builder, mNLS);
 
-    if (mLCURLY.equals(builder.getTokenType())) {
-      if (!OpenOrClosableBlock.parseOpenBlock(builder, parser)) {
-        warn.rollbackTo();
-        builder.error(GroovyBundle.message("block.expression.expected"));
-      } else {
-        warn.drop();
-      }
+    if (mLCURLY.equals(builder.getTokenType()) && !OpenOrClosableBlock.parseOpenBlock(builder, parser)) {
+      warn.rollbackTo();
+      builder.error(GroovyBundle.message("block.expression.expected"));
     } else {
-      warn.drop(); 
+      warn.drop();
     }
     marker.done(SYNCHRONIZED_STATEMENT);
 

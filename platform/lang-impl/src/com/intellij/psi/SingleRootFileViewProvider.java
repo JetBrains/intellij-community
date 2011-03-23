@@ -237,7 +237,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   protected boolean isIgnored() {
     final VirtualFile file = getVirtualFile();
     if (file instanceof LightVirtualFile) return false;
-    if (myExclusionManager.isExcluded(file)) return true;
+    if (myExclusionManager != null && myExclusionManager.isExcluded(file)) return true;
     return FileTypeManager.getInstance().isFileIgnored(file);
   }
 

@@ -3,7 +3,6 @@ package com.intellij.find.editorHeaderActions;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.ui.EditorComboBox;
 import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
@@ -20,7 +19,7 @@ import java.util.ArrayList;
 */
 public class PrevOccurrenceAction extends EditorHeaderAction implements DumbAware {
 
-  public PrevOccurrenceAction(EditorSearchComponent editorSearchComponent, EditorComboBox editorComboBox) {
+  public PrevOccurrenceAction(EditorSearchComponent editorSearchComponent, JComponent editorTextField) {
     super(editorSearchComponent);
 
     copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_OCCURENCE));
@@ -31,7 +30,7 @@ public class PrevOccurrenceAction extends EditorHeaderAction implements DumbAwar
                          ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP).getShortcutSet().getShortcuts());
     shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK), null));
 
-    registerShortcutsForComponent(shortcuts, editorComboBox, this);
+    registerShortcutsForComponent(shortcuts, editorTextField, this);
   }
 
   public void actionPerformed(final AnActionEvent e) {

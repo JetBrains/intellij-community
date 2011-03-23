@@ -31,6 +31,7 @@ import java.util.*;
 
 public class SvnFileAnnotation implements FileAnnotation {
   private final String myContents;
+  private final VcsRevisionNumber myBaseRevision;
   private final MyPartiallyCreatedInfos myInfos;
 
   private final SvnVcs myVcs;
@@ -103,6 +104,10 @@ public class SvnFileAnnotation implements FileAnnotation {
   };
   private final SvnEntriesListener myListener = new SvnEntriesListener() {
     public void onEntriesChanged(VirtualFile directory) {
+      if (directory != myFile.getParent()) return;
+      final VcsRevisionNumber currentRevision = myVcs.getDiffProvider().getCurrentRevision(myFile);
+      if (currentRevision != null && currentRevision.equals(myBaseRevision)) return;
+
       final AnnotationListener[] listeners = myListeners.toArray(new AnnotationListener[myListeners.size()]);
       for (int i = 0; i < listeners.length; i++) {
         listeners[i].onAnnotationChanged();
@@ -158,10 +163,11 @@ public class SvnFileAnnotation implements FileAnnotation {
     }
   }
 
-  public SvnFileAnnotation(final SvnVcs vcs, final VirtualFile file, final String contents) {
+  public SvnFileAnnotation(final SvnVcs vcs, final VirtualFile file, final String contents, final VcsRevisionNumber baseRevision) {
     myVcs = vcs;
     myFile = file;
     myContents = contents;
+    myBaseRevision = baseRevision;
     myVcs.getSvnEntriesFileListener().addListener(myListener);
     myConfiguration = SvnConfiguration.getInstance(vcs.getProject());
     myShowMergeSources = myConfiguration.SHOW_MERGE_SOURCES_IN_ANNOTATE;

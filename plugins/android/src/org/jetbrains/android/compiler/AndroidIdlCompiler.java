@@ -60,6 +60,11 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
     myProject = project;
   }
 
+  @Override
+  public VirtualFile getPresentableFile(CompileContext context, Module module, VirtualFile outputRoot, VirtualFile generatedFile) {
+    return null;
+  }
+
   public GenerationItem[] getGenerationItems(CompileContext context) {
     return ApplicationManager.getApplication().runReadAction(new PrepareAction(context));
   }

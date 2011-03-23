@@ -20,6 +20,7 @@
 package com.intellij.concurrency;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.concurrent.PriorityBlockingQueue;
@@ -62,7 +63,13 @@ public class JobSchedulerImpl extends JobScheduler implements Disposable {
     Runnable task = ourQueue.poll();
     if (task == null) return false;
 
-    task.run();
+    boolean wasMarked = ApplicationImpl.setExceptionalThreadWithReadAccessFlag(false);
+    try {
+      task.run();
+    }
+    finally {
+      if (wasMarked) ApplicationImpl.setExceptionalThreadWithReadAccessFlag(true);
+    }
 
     return true;
   }

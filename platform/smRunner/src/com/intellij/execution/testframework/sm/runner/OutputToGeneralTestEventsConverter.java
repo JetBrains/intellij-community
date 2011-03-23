@@ -150,7 +150,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
   private void processConsistentText(final String text, final Key outputType, boolean tcLikeFakeOutput) {
     try {
-      final ServiceMessage serviceMessage = ServiceMessage.parse(text);
+      final ServiceMessage serviceMessage = parseServiceMessage(text, outputType);
       if (serviceMessage != null) {
         serviceMessage.visit(myServiceMessageVisitor);
       } else {
@@ -172,6 +172,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
       LOG.error(getTFrameworkPrefix(myTestFrameworkName) + "Parsing error.", e);
     }
+  }
+
+  @Nullable
+  protected ServiceMessage parseServiceMessage(final String text, final Key outputType) throws ParseException {
+    return ServiceMessage.parse(text);
   }
 
   private void fireOnTestStarted(final String testName, @Nullable  final String locationUrl) {

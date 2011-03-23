@@ -47,7 +47,12 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
   }
 
   public FileAnnotation annotate(final VirtualFile file) throws VcsException {
-    return annotate(file, new SvnFileRevision(myVcs, SVNRevision.WORKING, SVNRevision.WORKING, null, null, null, null, null), true);
+    final SvnRevisionNumber currentRevision = (SvnRevisionNumber)myVcs.getDiffProvider().getCurrentRevision(file);
+    if (currentRevision == null) {
+      throw new VcsException("Can not get current revision for file " + file.getPath());
+    }
+    final SVNRevision svnRevision = currentRevision.getRevision();
+    return annotate(file, new SvnFileRevision(myVcs, svnRevision, svnRevision, null, null, null, null, null), true);
   }
 
   public FileAnnotation annotate(final VirtualFile file, final VcsFileRevision revision) throws VcsException {
@@ -77,7 +82,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
             contents = LoadTextUtil.getTextByBinaryPresentation(bytes, file, false).toString();
           }
 
-          final SvnFileAnnotation result = new SvnFileAnnotation(myVcs, file, contents);
+          final SvnFileAnnotation result = new SvnFileAnnotation(myVcs, file, contents, revision.getRevisionNumber());
 
           SVNWCClient wcClient = myVcs.createWCClient();
           SVNInfo info = wcClient.doInfo(ioFile, SVNRevision.WORKING);
@@ -109,8 +114,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
           final LinkedList<SVNRevision> rp = logGetter.getRevisionPoints();
 
           for (int i = 0; i < rp.size() - 1; i++) {
-            //final SVNRevision rEnd = (i + 1) == rp.size() ? SVNRevision.create(0) : rp.get(i + 1);
-            client.doAnnotate(ioFile, svnRevision, rp.get(i + 1), rp.get(i), true, calculateMergeinfo, annotateHandler, null);
+            client.doAnnotate(ioFile, SVNRevision.UNDEFINED, rp.get(i + 1), rp.get(i), true, calculateMergeinfo, annotateHandler, null);
           }
 
           if (rp.get(1).getNumber() > 0) {
@@ -219,9 +223,9 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
   public FileAnnotation restore(VcsAnnotation vcsAnnotation,
                                 VcsAbstractHistorySession session,
                                 String annotatedContent,
-                                boolean forCurrentRevision) {
+                                boolean forCurrentRevision, VcsRevisionNumber revisionNumber) {
     final SvnFileAnnotation annotation =
-      new SvnFileAnnotation(myVcs, vcsAnnotation.getFilePath().getVirtualFile(), annotatedContent);
+      new SvnFileAnnotation(myVcs, vcsAnnotation.getFilePath().getVirtualFile(), annotatedContent, revisionNumber);
     final VcsLineAnnotationData basicAnnotation = vcsAnnotation.getBasicAnnotation();
     final VcsLineAnnotationData data = vcsAnnotation.getAdditionalAnnotations().get(MERGED_KEY);
     final Map<VcsRevisionNumber,VcsFileRevision> historyAsMap = session.getHistoryAsMap();

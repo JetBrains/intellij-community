@@ -63,7 +63,9 @@ public class InplaceIntroduceConstantPopup {
   private final PsiExpression[] myOccurrences;
   private final TypeSelectorManagerImpl myTypeSelectorManager;
   private final PsiElement myAnchorElement;
+  private int myAnchorIdx = -1;
   private final PsiElement myAnchorElementIfAll;
+  private int myAnchorIdxIfAll = -1;
   private final OccurenceManager myOccurenceManager;
 
   private Editor myEditor;
@@ -102,6 +104,16 @@ public class InplaceIntroduceConstantPopup {
     myTypeSelectorManager = typeSelectorManager;
     myAnchorElement = anchorElement;
     myAnchorElementIfAll = anchorElementIfAll;
+    for (int i = 0, occurrencesLength = occurrences.length; i < occurrencesLength; i++) {
+      PsiExpression occurrence = occurrences[i];
+      PsiElement parent = occurrence.getParent();
+      if (parent == myAnchorElement) {
+        myAnchorIdx = i;
+      }
+      if (parent == myAnchorElementIfAll) {
+        myAnchorIdxIfAll = i;
+      }
+    }
     myOccurenceManager = occurenceManager;
 
     myExprMarker = expr != null ? myEditor.getDocument().createRangeMarker(expr.getTextRange()) : null;
@@ -136,13 +148,10 @@ public class InplaceIntroduceConstantPopup {
     myWholePanel.add(myCbDeleteVariable, gc);
     if (myLocalVariable != null) {
       if (myReplaceAllCb != null) {
-        updateCbDeleteVariable();
-        myReplaceAllCb.addItemListener(
-          new ItemListener() {
-          public void itemStateChanged(ItemEvent e) {
-            updateCbDeleteVariable();
-          }
-        });
+        myReplaceAllCb.setEnabled(false);
+        myReplaceAllCb.setSelected(true);
+        myCbDeleteVariable.setSelected(true);
+        myCbDeleteVariable.setEnabled(false);
       }
     } else {
       myCbDeleteVariable.setVisible(false);
@@ -319,7 +328,8 @@ public class InplaceIntroduceConstantPopup {
           final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
             new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(),
                                                                     myOccurrences, myOccurenceManager,
-                                                                    myAnchorElementIfAll, myAnchorElement, myEditor,
+                                                                    myAnchorIdxIfAll != -1? myOccurrences[myAnchorIdxIfAll].getParent() : myAnchorElementIfAll,
+                                                                    myAnchorIdx != -1 ? myOccurrences[myAnchorIdx].getParent() : myAnchorElement, myEditor,
                                                                     myParentClass);
           convertToFieldRunnable.run();
         }

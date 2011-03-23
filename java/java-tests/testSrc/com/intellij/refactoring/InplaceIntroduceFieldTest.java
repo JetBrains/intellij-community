@@ -39,6 +39,15 @@ public class InplaceIntroduceFieldTest extends LightCodeInsightTestCase {
 
   private static final String BASE_PATH = "/refactoring/inplaceIntroduceField/";
 
+  public void testAnchor() throws Exception {
+
+    doTest(new Pass<InplaceIntroduceFieldPopup>() {
+      @Override
+      public void pass(InplaceIntroduceFieldPopup inplaceIntroduceFieldPopup) {
+      }
+    });
+  }
+
   public void testMakeFinal() throws Exception {
 
     doTest(new Pass<InplaceIntroduceFieldPopup>() {
@@ -113,6 +122,7 @@ public class InplaceIntroduceFieldTest extends LightCodeInsightTestCase {
     finally {
       myEditor.getSettings().setVariableInplaceRenameEnabled(enabled);
       templateManager.setTemplateTesting(false);
+      InplaceIntroduceFieldPopup.setInitializationPlace(null);
     }
   }
 

@@ -38,8 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
 
-import static com.intellij.lang.PsiBuilderUtil.expect;
-
 public interface JavaElementType {
   class JavaCompositeElementType extends IJavaElementType implements ICompositeElementType {
     private final Constructor<? extends ASTNode> myConstructor;
@@ -238,8 +236,8 @@ public interface JavaElementType {
       return JavaParserUtil.parseFragment(chameleon,
                                           new JavaParserUtil.ParserWrapper() {
                                             public void parse(final PsiBuilder builder) {
-                                              ReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
-                                              expect(builder, JavaTokenType.ELLIPSIS);  // todo[r.sh] parse ellipsis and fix PsiTypeCodeFragmentImpl.getType()
+                                              ReferenceParser.parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS |
+                                                                                 ReferenceParser.WILDCARD | ReferenceParser.DISJUNCTIONS);
                                             }
                                           });
     }

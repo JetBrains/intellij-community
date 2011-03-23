@@ -340,7 +340,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         return true;
       }
     }
-    return UnusedSymbolLocalInspection.isInjected(element);
+    return false;
   }
 
   private boolean isImplicitWrite(final PsiVariable element, ProgressIndicator progress) {

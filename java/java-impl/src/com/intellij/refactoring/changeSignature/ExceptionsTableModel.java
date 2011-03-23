@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CanonicalTypes;
@@ -30,9 +29,7 @@ import java.util.List;
  * @author ven
  */
 public class ExceptionsTableModel extends AbstractTableModel implements RowEditableTableModel {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.changeSignature.ParameterTableModel");
-
-  private List<PsiTypeCodeFragment> myTypeCodeFraments;
+  private List<PsiTypeCodeFragment> myTypeCodeFragments;
   private final PsiElement myContext;
   private List<ThrownExceptionInfo> myExceptionInfos;
 
@@ -46,19 +43,19 @@ public class ExceptionsTableModel extends AbstractTableModel implements RowEdita
 
   public void addRow() {
     myExceptionInfos.add(new JavaThrownExceptionInfo());
-    myTypeCodeFraments.add(createParameterTypeCodeFragment("", myContext));
-    fireTableRowsInserted(myTypeCodeFraments.size() - 1, myTypeCodeFraments.size() - 1);
+    myTypeCodeFragments.add(createParameterTypeCodeFragment("", myContext));
+    fireTableRowsInserted(myTypeCodeFragments.size() - 1, myTypeCodeFragments.size() - 1);
   }
 
   public void removeRow(int index) {
     myExceptionInfos.remove(index);
-    myTypeCodeFraments.remove(index);
+    myTypeCodeFragments.remove(index);
     fireTableRowsDeleted(index, index);
   }
 
   public void exchangeRows(int index1, int index2) {
     Collections.swap(myExceptionInfos, index1, index2);
-    Collections.swap(myTypeCodeFraments, index1, index2);
+    Collections.swap(myTypeCodeFragments, index1, index2);
     if (index1 < index2) {
       fireTableRowsUpdated(index1, index2);
     }
@@ -68,7 +65,7 @@ public class ExceptionsTableModel extends AbstractTableModel implements RowEdita
   }
 
   public int getRowCount() {
-    return myTypeCodeFraments.size();
+    return myTypeCodeFragments.size();
   }
 
   public int getColumnCount() {
@@ -77,7 +74,7 @@ public class ExceptionsTableModel extends AbstractTableModel implements RowEdita
 
   public Object getValueAt(int rowIndex, int columnIndex) {
     if (columnIndex == 0) {
-      return myTypeCodeFraments.get(rowIndex);
+      return myTypeCodeFragments.get(rowIndex);
     }
 
     throw new IllegalArgumentException();
@@ -104,25 +101,24 @@ public class ExceptionsTableModel extends AbstractTableModel implements RowEdita
 
   public void setTypeInfos(PsiMethod method) {
     PsiClassType[] referencedTypes = method.getThrowsList().getReferencedTypes();
-    myTypeCodeFraments = new ArrayList<PsiTypeCodeFragment>(referencedTypes.length);
+    myTypeCodeFragments = new ArrayList<PsiTypeCodeFragment>(referencedTypes.length);
     myExceptionInfos = new ArrayList<ThrownExceptionInfo>(referencedTypes.length);
     for (int i = 0; i < referencedTypes.length; i++) {
       CanonicalTypes.Type typeWrapper = CanonicalTypes.createTypeWrapper(referencedTypes[i]);
       final PsiTypeCodeFragment typeCodeFragment = createParameterTypeCodeFragment(typeWrapper.getTypeText(), method.getThrowsList());
       typeWrapper.addImportsTo(typeCodeFragment);
-      myTypeCodeFraments.add(typeCodeFragment);
+      myTypeCodeFragments.add(typeCodeFragment);
       myExceptionInfos.add(new JavaThrownExceptionInfo(i, referencedTypes[i]));
     }
   }
 
   public PsiTypeCodeFragment createParameterTypeCodeFragment(final String typeText, PsiElement context) {
-    return JavaPsiFacade.getInstance(myContext.getProject()).getElementFactory().createTypeCodeFragment(
-        typeText, context, false, true, true
-      );
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myContext.getProject()).getElementFactory();
+    return elementFactory.createTypeCodeFragment(typeText, context, true, PsiElementFactory.ALLOW_ELLIPSIS);
   }
 
   public PsiTypeCodeFragment[] getTypeCodeFragments() {
-    return myTypeCodeFraments.toArray(new PsiTypeCodeFragment[myTypeCodeFraments.size()]);
+    return myTypeCodeFragments.toArray(new PsiTypeCodeFragment[myTypeCodeFragments.size()]);
   }
 
   public void setValueAt(Object aValue, int rowIndex, int columnIndex) {

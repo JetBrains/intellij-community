@@ -17,6 +17,7 @@ package com.intellij.find.impl.livePreview;
 
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.find.FindModel;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -121,13 +122,14 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     if (mySearchResults.getProject().isDisposed()) return;
     removeFromEditor(mySearchResults.getEditor());
 
-    updateCursorHighlighting(false);
     highlightUsages();
+    updateCursorHighlighting(false);
   }
 
   @Override
   public void cursorMoved(boolean toChangeSelection) {
-    updateCursorHighlighting(true);
+    updateInSelectionHighlighters();
+    updateCursorHighlighting(toChangeSelection);
   }
 
   public void editorChanged(SearchResults sr, Editor oldEditor) {
@@ -188,6 +190,10 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     removeFromEditor(mySearchResults.getEditor());
   }
 
+  public void dispose() {
+    mySearchResults.removeListener(this);
+  }
+
   private void removeFromEditor(Editor editor) {
     if (myReplacementBalloon != null) {
       myReplacementBalloon.hide();
@@ -209,6 +215,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
           myCursorHighlighter = null;
         }
       }
+      myHighlighters.clear();
       if (myListeningSelection) {
         editor.getSelectionModel().removeSelectionListener(this);
         myListeningSelection = false;
@@ -250,7 +257,9 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     for (RangeHighlighter highlighter : myHighlighters) {
       if (myCursorHighlighter != null && highlighter.getStartOffset() == myCursorHighlighter.getStartOffset() &&
         highlighter.getEndOffset() == myCursorHighlighter.getEndOffset()) continue;
-      final boolean intersectsWithSelection = selectionRange.intersects(highlighter.getStartOffset(), highlighter.getEndOffset());
+      final boolean intersectsWithSelection = selectionRange.intersects(highlighter.getStartOffset(), highlighter.getEndOffset()) &&
+                                              selectionRange.getEndOffset() != highlighter.getStartOffset() &&
+                                              highlighter.getEndOffset() != selectionRange.getStartOffset();
       final Object userData = highlighter.getUserData(IN_SELECTION_KEY);
       if (userData != null) {
         if (!intersectsWithSelection) {
@@ -272,20 +281,14 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     myHighlighters.addAll(toAdd);
   }
 
-  private static TextAttributes dotted(TextAttributes attrs) {
-    TextAttributes textAttributes = attrs.clone();
-    textAttributes.setEffectColor(Color.WHITE);
-    textAttributes.setEffectType(EffectType.BOXED);
-    return textAttributes;
-  }
-
   private void showReplacementPreview() {
     hideBalloon();
     final LiveOccurrence cursor = mySearchResults.getCursor();
     final Editor editor = mySearchResults.getEditor();
     if (myDelegate != null && cursor != null) {
       String replacementPreviewText = myDelegate.getStringToReplace(editor, cursor);
-      if (replacementPreviewText != null && mySearchResults.getFindModel().isRegularExpressions()) {
+      final FindModel findModel = mySearchResults.getFindModel();
+      if (findModel.isRegularExpressions() && findModel.isReplaceState()) {
 
         ReplacementView replacementView = new ReplacementView(replacementPreviewText, cursor);
         replacementView.setDelegate(this);

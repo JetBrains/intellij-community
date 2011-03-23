@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -214,5 +215,35 @@ public final class SimpleTextAttributes {
   public SimpleTextAttributes derive(int style, @Nullable Color fg, @Nullable Color bg, @Nullable Color wave) {
     return new SimpleTextAttributes(bg != null ? bg : getBgColor(), fg != null ? fg : getFgColor(), wave != null ? wave : getWaveColor(),
                                     style == -1 ? getStyle() : style);
+  }
+
+  // take what differs from REGULAR
+  public static SimpleTextAttributes merge(final SimpleTextAttributes weak, final SimpleTextAttributes strong) {
+    final int style;
+    final Color wave;
+    final Color fg;
+    final Color bg;
+    if (strong.getStyle() != REGULAR_ATTRIBUTES.getStyle()) {
+      style = strong.getStyle();
+    } else {
+      style = weak.getStyle();
+    }
+    if (! Comparing.equal(strong.getWaveColor(), REGULAR_ATTRIBUTES.getWaveColor())) {
+      wave = strong.getWaveColor();
+    } else {
+      wave = weak.getWaveColor();
+    }
+    if (! Comparing.equal(strong.getFgColor(), REGULAR_ATTRIBUTES.getFgColor())) {
+      fg = strong.getFgColor();
+    } else {
+      fg = weak.getFgColor();
+    }
+    if (! Comparing.equal(strong.getBgColor(), REGULAR_ATTRIBUTES.getBgColor())) {
+      bg = strong.getBgColor();
+    } else {
+      bg = weak.getBgColor();
+    }
+
+    return new SimpleTextAttributes(bg, fg, wave, style);
   }
 }

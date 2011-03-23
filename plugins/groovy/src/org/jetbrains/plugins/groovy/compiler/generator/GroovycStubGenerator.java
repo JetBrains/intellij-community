@@ -123,7 +123,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
     assert tempOutput != null;
     cleanDirectory(tempOutput);
 
-    ((CompileContextEx)compileContext).assignModule(tempOutput, module, tests);
+    ((CompileContextEx)compileContext).assignModule(tempOutput, module, tests, this);
 
     if (GroovyCompilerConfiguration.getInstance(myProject).isUseGroovycStubs()) {
       runGroovycCompiler(compileContext, module, toCompile, true, tempOutput, sink, tests);

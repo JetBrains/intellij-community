@@ -38,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
@@ -54,7 +55,7 @@ import java.util.ArrayList;
 /**
  * @author max
  */
-public class EditorTextField extends JPanel implements DocumentListener, TextComponent, DataProvider,
+public class EditorTextField extends NonOpaquePanel implements DocumentListener, TextComponent, DataProvider,
                                                        DocumentBasedComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.EditorTextField");
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");

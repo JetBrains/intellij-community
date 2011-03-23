@@ -91,7 +91,7 @@ public class UnixProcessManager {
     int process_pid = getProcessPid(process);
 
     try {
-      String[] psCmd = getPSCmd();
+      String[] psCmd = getPSCmd(false);
       Process p = Runtime.getRuntime().exec(psCmd);
 
       ProcessInfo processInfo = new ProcessInfo();
@@ -175,12 +175,12 @@ public class UnixProcessManager {
     }
   }
 
-  public static String[] getPSCmd() {
+  public static String[] getPSCmd(boolean commandLineOnly) {
     if (SystemInfo.isLinux) {
-      return new String[]{"ps", "-e", "e", "--format", "%P%p%a"};
+      return new String[]{"ps", "-e", "e", "--format", commandLineOnly ? "%a" : "%P%p%a"};
     }
     else if (SystemInfo.isMac) {
-      return new String[]{"ps", "-ax", "-E", "-o", "ppid,pid,command"};
+      return new String[]{"ps", "-ax", "-E", "-o", commandLineOnly ? "command" : "ppid,pid,command"};
     }
     else {
       throw new IllegalStateException(System.getProperty("os.name") + " is not supported.");

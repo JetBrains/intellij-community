@@ -202,8 +202,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
 
   protected void finishConsole() {
     myRunAction.getTemplatePresentation().setEnabled(false);
-    myConsoleView.getConsole().setPrompt("");
-    myConsoleView.getConsole().getConsoleEditor().setRendererMode(true);
+    myConsoleView.getConsole().setEditable(false);
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         myConsoleView.getConsole().getConsoleEditor().getComponent().updateUI();

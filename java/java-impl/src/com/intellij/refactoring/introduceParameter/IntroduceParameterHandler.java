@@ -127,6 +127,14 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
       return false;
     }
 
+    if (localVar != null) {
+      final PsiElement parent = localVar.getParent();
+      if (!(parent instanceof PsiDeclarationStatement)) {
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
+        showErrorMessage(myProject, message, editor);
+        return false;
+      }
+    }
 
     if (method == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));

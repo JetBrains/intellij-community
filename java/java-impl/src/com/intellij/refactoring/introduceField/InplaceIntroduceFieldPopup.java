@@ -19,10 +19,7 @@ import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
@@ -39,8 +36,6 @@ import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.ui.TitlePanel;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -65,7 +60,9 @@ public class InplaceIntroduceFieldPopup {
 
   private final TypeSelectorManagerImpl myTypeSelectorManager;
   private final PsiElement myAnchorElement;
+  private int myAnchorIdx = -1;
   private final PsiElement myAnchorElementIfAll;
+  private int myAnchorIdxIfAll = -1;
   private final OccurenceManager myOccurenceManager;
   private List<RangeMarker> myOccurrenceMarkers;
 
@@ -78,6 +75,7 @@ public class InplaceIntroduceFieldPopup {
   private String myFieldName;
 
   private boolean myInitListeners = false;
+  private static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
 
   public InplaceIntroduceFieldPopup(PsiLocalVariable localVariable,
                                     PsiClass parentClass,
@@ -101,6 +99,16 @@ public class InplaceIntroduceFieldPopup {
     myTypeSelectorManager = typeSelectorManager;
     myAnchorElement = anchorElement;
     myAnchorElementIfAll = anchorElementIfAll;
+    for (int i = 0, occurrencesLength = occurrences.length; i < occurrencesLength; i++) {
+      PsiExpression occurrence = occurrences[i];
+      PsiElement parent = occurrence.getParent();
+      if (parent == myAnchorElement) {
+        myAnchorIdx = i;
+      }
+      if (parent == myAnchorElementIfAll) {
+        myAnchorIdxIfAll = i;
+      }
+    }
     myOccurenceManager = occurenceManager;
     myProject = myLocalVariable != null ? myLocalVariable.getProject() : myInitializerExpression.getProject();
     myEditor = editor;
@@ -126,7 +134,7 @@ public class InplaceIntroduceFieldPopup {
     gc.insets.top = 5;
 
     myWholePanel.add(myIntroduceFieldPanel.createCenterPanel(), gc);
-    myIntroduceFieldPanel.initializeControls(initializerExpression);
+    myIntroduceFieldPanel.initializeControls(initializerExpression, ourLastInitializerPlace);
     myIntroduceFieldPanel.addOccurrenceListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -206,6 +214,10 @@ public class InplaceIntroduceFieldPopup {
 
   public void setVisibility(String visibility) {
     myIntroduceFieldPanel.setVisibility(visibility);
+  }
+
+  public static void setInitializationPlace(BaseExpressionToFieldHandler.InitializationPlace place) {
+    ourLastInitializerPlace = place;
   }
 
   class FieldInplaceIntroducer extends AbstractInplaceIntroducer {
@@ -297,6 +309,7 @@ public class InplaceIntroduceFieldPopup {
     @Override
     protected void moveOffsetAfter(boolean success) {
       if (success) {
+        ourLastInitializerPlace = myIntroduceFieldPanel.getInitializerPlace();
         final BaseExpressionToFieldHandler.Settings settings =
           new BaseExpressionToFieldHandler.Settings(myFieldName, myIntroduceFieldPanel.isReplaceAllOccurrences(), myStatic,
                                                     myIntroduceFieldPanel.isDeclareFinal(),
@@ -314,7 +327,8 @@ public class InplaceIntroduceFieldPopup {
           final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
             new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myInitializerExpression, settings, settings.getForcedType(),
                                                                     myOccurrences, myOccurenceManager,
-                                                                    myAnchorElementIfAll, myAnchorElement, myEditor,
+                                                                    myAnchorIdxIfAll != -1? myOccurrences[myAnchorIdxIfAll].getParent() : myAnchorElementIfAll,
+                                                                    myAnchorIdx != -1 ? myOccurrences[myAnchorIdx].getParent() : myAnchorElement, myEditor,
                                                                     myParentClass);
           convertToFieldRunnable.run();
         }

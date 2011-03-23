@@ -89,6 +89,7 @@ public abstract class SdkType {
    * @param sdkModel
    * @param sdkModificator
    */
+  @Nullable
   public abstract AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator);
 
   public abstract void saveAdditionalData(SdkAdditionalData additionalData, Element additional);

@@ -29,11 +29,7 @@ public class BasicToClassNameDelegator extends AbstractBasicToClassNameDelegator
 
   @Override
   protected boolean isClassNameCompletionSupported(CompletionResultSet result, PsiFile file, PsiElement position) {
-    if (file.getLanguage() != StdLanguages.XML) return false;
-
-    final String s = result.getPrefixMatcher().getPrefix();
-    if (StringUtil.isEmpty(s) || !Character.isUpperCase(s.charAt(0))) return false;
-    return true;
+    return file.getLanguage() == StdLanguages.XML && StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix());
   }
 
   @Override

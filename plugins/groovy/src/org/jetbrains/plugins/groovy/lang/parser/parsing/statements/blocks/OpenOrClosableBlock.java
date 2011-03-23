@@ -48,11 +48,11 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
     builder.advanceLexer();
     ParserUtils.getToken(builder, mNLS);
     parser.parseBlockBody(builder);
-    while (!builder.eof() &&
-           !mRCURLY.equals(builder.getTokenType())) {
+    if (!builder.eof() && builder.getTokenType() != mRCURLY) {
       builder.error(GroovyBundle.message("expression.expected"));
-      builder.advanceLexer();
+      ParserUtils.skipCountingBraces(builder, GroovyParser.RCURLY_ONLY);
     }
+
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
     marker.done(OPEN_BLOCK);
   }
