@@ -63,8 +63,8 @@ public class TypeMigrationRules {
 
   @NonNls
   @Nullable
-  public TypeConversionDescriptorBase findConversion(final PsiType from, final PsiType to, PsiMember member, final PsiExpression context, final boolean isCovariantPosition,
-                                                     final TypeMigrationLabeler labeler) {
+  public TypeConversionDescriptorBase findConversion(final PsiType from, final PsiType to, final PsiMember member, final PsiExpression context,
+                                                     final boolean isCovariantPosition, final TypeMigrationLabeler labeler) {
     final TypeConversionDescriptorBase conversion = findConversion(from, to, member, context, labeler);
     if (conversion != null) return conversion;
 
@@ -74,12 +74,13 @@ public class TypeMigrationRules {
       }
       if (TypeConversionUtil.isAssignable(to, from)) return new TypeConversionDescriptorBase();
     }
-    if (!isCovariantPosition && TypeConversionUtil.isAssignable(from, to)) return new TypeConversionDescriptorBase();
-    return null;
+
+    return !isCovariantPosition && TypeConversionUtil.isAssignable(from, to) ? new TypeConversionDescriptorBase() : null;
   }
 
   @Nullable
-  public TypeConversionDescriptorBase findConversion(PsiType from, PsiType to, PsiMember member, PsiExpression context, TypeMigrationLabeler labeler) {
+  public TypeConversionDescriptorBase findConversion(final PsiType from, final PsiType to, final PsiMember member,
+                                                     final PsiExpression context, final TypeMigrationLabeler labeler) {
     for (TypeConversionRule descriptor : myConversionRules) {
       final TypeConversionDescriptorBase conversion = descriptor.findConversion(from, to, member, context, labeler);
       if (conversion != null) return conversion;
@@ -96,7 +97,8 @@ public class TypeMigrationRules {
   }
 
   @Nullable
-  public Pair<PsiType, PsiType> bindTypeParameters(final PsiType from, final PsiType to, final PsiMethod method, final PsiExpression context, final TypeMigrationLabeler labeler) {
+  public Pair<PsiType, PsiType> bindTypeParameters(final PsiType from, final PsiType to, final PsiMethod method,
+                                                   final PsiExpression context, final TypeMigrationLabeler labeler) {
     for (TypeConversionRule conversionRule : myConversionRules) {
       final Pair<PsiType, PsiType> typePair = conversionRule.bindTypeParameters(from, to, method, context, labeler);
       if (typePair != null) return typePair;

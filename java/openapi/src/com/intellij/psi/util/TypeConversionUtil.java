@@ -672,10 +672,7 @@ public class TypeConversionUtil {
     }
 
     if (left instanceof PsiDisjunctionType) {
-      for (PsiType type : ((PsiDisjunctionType)left).getDisjunctions()) {
-        if (isAssignable(type, right, allowUncheckedConversion)) return true;
-      }
-      return false;
+      return isAssignable(((PsiDisjunctionType)left).getLeastUpperBound(), right, allowUncheckedConversion);
     }
     if (right instanceof PsiDisjunctionType) {
       return isAssignable(left, ((PsiDisjunctionType)right).getLeastUpperBound(), allowUncheckedConversion);
