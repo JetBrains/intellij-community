@@ -322,4 +322,8 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
     setLanguageLevel(LanguageLevel.PYTHON30);
     doHighlightingTest(PyMissingConstructorInspection.class);
   }
+
+  public void testPyArgumentEqualDefaultInspection() {    //PY-3125
+    doHighlightingTest(PyArgumentEqualDefaultInspection.class);
+  }
 }

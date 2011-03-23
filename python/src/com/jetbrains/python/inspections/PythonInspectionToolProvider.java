@@ -57,6 +57,7 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyUnnecessaryBackslashInspection.class,
       PySingleQuotedDocstringInspection.class,
       PyMissingConstructorInspection.class,
+      PyArgumentEqualDefaultInspection.class,
     };
   }
 }

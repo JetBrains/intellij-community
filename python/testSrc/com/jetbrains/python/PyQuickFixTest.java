@@ -235,6 +235,11 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                      PyBundle.message("QFIX.default.argument"), true, true);
   }
 
+  public void testPyArgumentEqualDefault() {                      //PY-3125
+    doInspectionTest("ArgumentEqualDefault.py", PyArgumentEqualDefaultInspection.class,
+                     PyBundle.message("QFIX.remove.argument.equal.default"), true, true);
+  }
+
   public void testUnnecessaryBackslash() {
     String[] testFiles = new String[]{"UnnecessaryBackslash.py"};
     myFixture.enableInspections(PyUnnecessaryBackslashInspection.class);
