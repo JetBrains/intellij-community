@@ -468,6 +468,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     add(myReplacementPane, BorderLayout.SOUTH);
 
     myReplaceButton = new JButton("Replace");
+    myReplaceButton.setFocusable(false);
     myReplaceButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent actionEvent) {
@@ -477,6 +478,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myReplaceButton.setMnemonic('p');
 
     myReplaceAllButton = new JButton("Replace all");
+    myReplaceAllButton.setFocusable(false);
     myReplaceAllButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent actionEvent) {
@@ -486,7 +488,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myReplaceAllButton.setMnemonic('a');
 
     myExcludeButton = new JButton("");
-
+    myExcludeButton.setFocusable(false);
     myExcludeButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent actionEvent) {
