@@ -138,7 +138,18 @@ class ImportCandidateHolder implements Comparable {
 
   public int compareTo(Object o) {
     ImportCandidateHolder rhs = (ImportCandidateHolder) o;
-    return rhs.getRelevance() - getRelevance();
+    int lRelevance = getRelevance();
+    int rRelevance = rhs.getRelevance();
+    if (rRelevance != lRelevance) {
+      return rRelevance - lRelevance;
+    }
+    // prefer shorter paths
+    if (myPath != null && rhs.myPath != null) {
+      int lDots = StringUtil.isEmpty(myPath) ? -1 : StringUtil.countChars(myPath, '.');
+      int rDots = StringUtil.isEmpty(rhs.myPath) ? -1 : StringUtil.countChars(rhs.myPath, '.');
+      return lDots - rDots;
+    }
+    return 0;
   }
 
   int getRelevance() {
