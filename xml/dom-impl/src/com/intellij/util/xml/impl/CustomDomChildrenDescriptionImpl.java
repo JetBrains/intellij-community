@@ -89,4 +89,14 @@ public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptio
   public TagNameDescriptor getTagNameDescriptor() {
     return myTagNameDescriptor;
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof CustomDomChildrenDescriptionImpl;
+  }
+
+  @Override
+  public int hashCode() {
+    return 239;
+  }
 }
