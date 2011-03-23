@@ -28,10 +28,7 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -193,6 +190,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
           }
         }
         myEditor.getCaretModel().moveToOffset(startOffset);
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
         if (psiVariable.getInitializer() != null) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
