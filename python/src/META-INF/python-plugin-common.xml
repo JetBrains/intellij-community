@@ -91,7 +91,7 @@
     <configurationType implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestRunConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer"/>
 
-    <referenceImporter implementation="com.jetbrains.python.validation.PythonReferenceImporter"/>
+    <referenceImporter implementation="com.jetbrains.python.codeInsight.imports.PythonReferenceImporter"/>
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
     <definitionsSearch implementation="com.jetbrains.python.psi.search.PyDefinitionsSearch"/>
     <gotoTargetRendererProvider implementation="com.jetbrains.python.codeInsight.PyGotoTargetRendererProvider"/>

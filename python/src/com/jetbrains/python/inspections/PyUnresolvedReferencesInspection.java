@@ -21,13 +21,13 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
 import com.jetbrains.python.codeInsight.imports.ImportFromExistingFix;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
+import com.jetbrains.python.codeInsight.imports.PythonReferenceImporter;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.*;
-import com.jetbrains.python.validation.PythonReferenceImporter;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 

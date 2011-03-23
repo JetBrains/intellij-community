@@ -2,7 +2,7 @@
  * User: anna
  * Date: 11-Mar-2008
  */
-package com.jetbrains.python.validation;
+package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
