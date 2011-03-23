@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
@@ -337,6 +338,19 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
                 final int index = findInitialization(tryBlockStatements,
                         variable, hasInitializer);
                 if (index >= 0 ^ hasInitializer) {
+                    final VariableUsedOutsideContextVisitor visitor =
+                            new VariableUsedOutsideContextVisitor(variable,
+                                    tryStatement);
+                    final PsiElement context =
+                            PsiTreeUtil.getParentOfType(variable,
+                                    PsiCodeBlock.class);
+                    if (context == null) {
+                        continue;
+                    }
+                    context.accept(visitor);
+                    if (visitor.variableIsUsed()) {
+                        continue;
+                    }
                     found = true;
                     break;
                 }
@@ -483,7 +497,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         final PsiClassType classType = (PsiClassType) type;
         final PsiClass aClass = classType.resolve();
         return aClass != null && InheritanceUtil.isInheritor(aClass,
-                "java.io.Closeable");
+                "java.lang.AutoCloseable");
     }
 
     static int findInitialization(
@@ -520,5 +534,48 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
             }
         }
         return result;
+    }
+
+    static class VariableUsedOutsideContextVisitor
+            extends JavaRecursiveElementVisitor {
+
+        private boolean used = false;
+        @NotNull private final PsiVariable variable;
+        private final PsiElement skipContext;
+
+        public VariableUsedOutsideContextVisitor(@NotNull PsiVariable variable,
+                                                 PsiElement skipContext){
+            this.variable = variable;
+            this.skipContext = skipContext;
+        }
+
+        @Override public void visitElement(@NotNull PsiElement element){
+            if (element.equals(skipContext)) {
+                return;
+            }
+            if (used) {
+                return;
+            }
+            super.visitElement(element);
+        }
+
+        @Override public void visitReferenceExpression(
+                @NotNull PsiReferenceExpression referenceExpression){
+            if(used){
+                return;
+            }
+            super.visitReferenceExpression(referenceExpression);
+            final PsiElement target = referenceExpression.resolve();
+            if(target == null){
+                return;
+            }
+            if(target.equals(variable)){
+                used = true;
+            }
+        }
+
+        public boolean variableIsUsed(){
+            return used;
+        }
     }
 }
