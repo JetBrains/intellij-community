@@ -102,7 +102,7 @@ public class ImportFromExistingFix implements LocalQuickFix {
     if (myNode == null || !myNode.isValid() || myNode.getName() == null || myImports.size() <= 0) {
       return false; // TODO: also return false if an on-the-fly unambiguous fix is possible?
     }
-    if (AddImportAction.isResolved(myReference)) {
+    if (ImportFromExistingAction.isResolved(myReference)) {
       return false;
     }
     if ((myNode instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)myNode).getQualifier() != null))) return false; // we cannot be qualified

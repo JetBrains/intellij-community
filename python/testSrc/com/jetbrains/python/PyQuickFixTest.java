@@ -18,15 +18,15 @@ import org.jetbrains.annotations.NonNls;
 public class PyQuickFixTest extends PyLightFixtureTestCase {
 
   public void testAddImport() {
-    doInspectionTest(new String[] { "AddImport.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.add.import"), true, true);
+    doInspectionTest(new String[] { "AddImport.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true);
   }
 
   public void testAddImportDoc() {
-    doInspectionTest(new String[] { "AddImportDoc.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.add.import"), true, true);
+    doInspectionTest(new String[] { "AddImportDoc.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true);
   }
 
   public void testAddImportDocComment() {  // PY-728
-    doInspectionTest(new String[] { "AddImportDocComment.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.add.import"), true, true);
+    doInspectionTest(new String[] { "AddImportDocComment.py", "ImportTarget.py" }, PyUnresolvedReferencesInspection.class, PyBundle.message("ACT.NAME.use.import"), true, true);
   }
 
   public void testQualifyByImport() {

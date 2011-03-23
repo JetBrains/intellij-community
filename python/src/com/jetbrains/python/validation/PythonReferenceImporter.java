@@ -10,8 +10,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
@@ -20,7 +18,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.actions.AddImportAction;
 import com.jetbrains.python.actions.ImportFromExistingFix;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
@@ -54,9 +51,6 @@ public class PythonReferenceImporter implements ReferenceImporter {
             ImportFromExistingFix fix = proposeImportFix(refExpr, reference, refExpr.getText());
             if (fix != null && fix.getCandidatesCount() == 1) {
               fix.invoke(file);
-            }
-            else {
-              new AddImportAction(reference).execute();
             }
             return true;
           }
@@ -108,7 +102,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
     GlobalSearchScope scope = PyClassNameIndex.projectWithLibrariesScope(project);
     symbols.addAll(PyFunctionNameIndex.find(ref_text, project, scope));
     symbols.addAll(PyVariableNameIndex.find(ref_text, project, scope));
-    symbols.addAll(findImportableModules(ref_text, project, scope));
+    symbols.addAll(findImportableModules(node.getContainingFile(), ref_text, project, scope));
     if (symbols.size() > 0) {
       for (PsiElement symbol : symbols) {
         if (isTopLevel(symbol)) { // we only want top-level symbols
@@ -134,12 +128,12 @@ public class PythonReferenceImporter implements ReferenceImporter {
     return null;
   }
 
-  private static Collection<PsiElement> findImportableModules(String reftext, Project project, GlobalSearchScope scope) {
+  private static Collection<PsiElement> findImportableModules(PsiFile targetFile, String reftext, Project project, GlobalSearchScope scope) {
     List<PsiElement> result = new ArrayList<PsiElement>();
     PsiFile[] files = FilenameIndex.getFilesByName(project, reftext + ".py", scope);
     for (PsiFile file : files) {
       PsiDirectory parent = file.getParent();
-      if (parent != null && parent.findFile(PyNames.INIT_DOT_PY) != null && !isRoot(project, parent)) {
+      if (parent != null && (parent.findFile(PyNames.INIT_DOT_PY) != null || parent == targetFile.getParent())) {
         result.add(file);
       }
     }
@@ -147,20 +141,11 @@ public class PythonReferenceImporter implements ReferenceImporter {
     PsiFile[] initFiles = FilenameIndex.getFilesByName(project, PyNames.INIT_DOT_PY, scope);
     for (PsiFile initFile : initFiles) {
       PsiDirectory parent = initFile.getParent();
-      if (parent != null && parent.getName().equals(reftext) && !isRoot(project, parent.getParent())) {
+      if (parent != null && parent.getName().equals(reftext)) {
         result.add(parent);
       }
     }
     return result;
-  }
-
-  private static boolean isRoot(Project project, PsiDirectory directory) {
-    if (directory == null) return true;
-    VirtualFile vFile = directory.getVirtualFile();
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    return fileIndex.getClassRootForFile(vFile) == vFile ||
-           fileIndex.getContentRootForFile(vFile) == vFile ||
-           fileIndex.getSourceRootForFile(vFile) == vFile;
   }
 
   private static boolean isTopLevel(PsiElement symbol) {

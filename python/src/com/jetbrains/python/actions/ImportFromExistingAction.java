@@ -8,10 +8,12 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.AsyncResult;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
@@ -126,7 +128,10 @@ public class ImportFromExistingAction implements QuestionAction {
     }
     else { // no existing import, add it then use it
       AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(myTarget, item.getFile());
-      if (myUseQualifiedImport) {
+      if (isRoot(project, item.getFile())) {
+        AddImportHelper.addImportStatement(myTarget.getContainingFile(), myName, null, priority);
+      }
+      else if (myUseQualifiedImport) {
         AddImportHelper.addImportStatement(myTarget.getContainingFile(), item.getPath(), null, priority);
         String qual_name;
         if (item.getAsName() != null) qual_name = item.getAsName();
@@ -150,6 +155,23 @@ public class ImportFromExistingAction implements QuestionAction {
     if (myOnDoneCallback != null) {
       myOnDoneCallback.run();
     }
+  }
+
+  public static boolean isRoot(Project project, PsiFileSystemItem directory) {
+    if (directory == null) return true;
+    VirtualFile vFile = directory.getVirtualFile();
+    if (vFile == null) return true;
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    return fileIndex.getClassRootForFile(vFile) == vFile ||
+           fileIndex.getContentRootForFile(vFile) == vFile ||
+           fileIndex.getSourceRootForFile(vFile) == vFile;
+  }
+
+  public static boolean isResolved(PsiReference reference) {
+    if (reference instanceof PsiPolyVariantReference) {
+      return ((PsiPolyVariantReference)reference).multiResolve(false).length > 0;
+    }
+    return reference.resolve() != null;
   }
 
   // Stolen from FQNameCellRenderer

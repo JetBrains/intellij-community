@@ -307,7 +307,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               if ((isCall(node) || !importFix.hasOnlyFunctions()) && PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP) {
                 final AutoImportHintAction autoImportHintAction = new AutoImportHintAction(importFix);
                 actions.add(autoImportHintAction);
-                hintAction = autoImportHintAction;
               }
               else {
                 actions.add(importFix);
@@ -315,13 +314,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             }
           }
 
-          // add import hint; the rest of action will fend for itself.
-          if (ref_element != null && ref_is_importable && hintAction == null) {
-            final AddImportAction addImportAction = new AddImportAction(reference);
-            if (addImportAction.hasSomethingToImport(ref_element.getContainingFile())) {
-              actions.add(addImportAction);
-            }
-          }
           if (ref_text.length() > 2 && Character.isUpperCase(ref_text.charAt(0)) && !Character.isUpperCase(ref_text.charAt(1)) &&
               PsiTreeUtil.getParentOfType(ref_element, PyImportStatement.class, PyFromImportStatement.class) == null) {
             actions.add(new CreateClassQuickFix(ref_text, reference.getElement()));
