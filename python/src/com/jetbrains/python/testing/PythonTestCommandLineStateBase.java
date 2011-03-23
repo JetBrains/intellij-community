@@ -63,7 +63,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   @Override
   public ExecutionResult execute(Executor executor, CommandLinePatcher... patchers) throws ExecutionException {
     final ProcessHandler processHandler = startProcess(patchers);
-    final ConsoleView console = createAndAttachConsole(getConfig().getProject(), processHandler, executor);
+    final ConsoleView console = createAndAttachConsole(myConfiguration.getProject(), processHandler, executor);
 
     List<AnAction> actions = Lists
       .newArrayList(createActions(console, processHandler));
