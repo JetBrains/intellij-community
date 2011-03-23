@@ -222,9 +222,10 @@ class JetBrainsInstrumentations implements ModuleBuilder {
         src(path: it)
       }
 
-      nestedformdirs {
-        state.moduleDependenciesSourceRoots.each {
-          pathelement(location: it)
+      state.moduleDependenciesSourceRoots.each {String root ->
+        def prefix = project.modules.values().collect { it.sourceRootPrefixes[root] }.find {it != null}
+        nestedformdirs(prefix: prefix?:"") {
+          pathelement(location: root)
         }
       }
 
