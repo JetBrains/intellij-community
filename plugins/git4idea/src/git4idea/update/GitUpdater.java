@@ -130,7 +130,8 @@ public abstract class GitUpdater {
 
   /**
    * Checks the repository if local changes need to be saved before update.
-   * For rebase local changes need to be saved always, for merge - only in the case if merge affects the same files.
+   * For rebase local changes need to be saved always, 
+   * for merge - only in the case if merge affects the same files or there is something in the index.
    * @return true if local changes from this root need to be saved, false if not.
    */
   public abstract boolean isSaveNeeded();
