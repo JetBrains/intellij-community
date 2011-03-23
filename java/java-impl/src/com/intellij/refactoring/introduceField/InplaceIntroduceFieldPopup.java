@@ -95,7 +95,7 @@ public class InplaceIntroduceFieldPopup {
     myInitializerExpression = initializerExpression;
     myExprText = myInitializerExpression != null ? myInitializerExpression.getText() : null;
     myLocalName = localVariable != null ? localVariable.getName() : null;
-    myExprMarker = myInitializerExpression != null ? editor.getDocument().createRangeMarker(myInitializerExpression.getTextRange()) : null;
+    myExprMarker = myInitializerExpression != null && myInitializerExpression.isPhysical() ? editor.getDocument().createRangeMarker(myInitializerExpression.getTextRange()) : null;
     myTypeSelectorManager = typeSelectorManager;
     myAnchorElement = anchorElement;
     myAnchorElementIfAll = anchorElementIfAll;
@@ -233,7 +233,7 @@ public class InplaceIntroduceFieldPopup {
       super(myProject, new TypeExpression(myProject, myTypeSelectorManager.getTypesForAll()),
             myEditor, psiVariable, false,
             myTypeSelectorManager.getTypesForAll().length > 1,
-            myInitializerExpression != null ? myEditor.getDocument().createRangeMarker(myInitializerExpression.getTextRange()) : null, InplaceIntroduceFieldPopup.this.getOccurrenceMarkers());
+            myInitializerExpression != null && myInitializerExpression.isPhysical() ? myEditor.getDocument().createRangeMarker(myInitializerExpression.getTextRange()) : null, InplaceIntroduceFieldPopup.this.getOccurrenceMarkers());
       myDefaultParameterTypePointer =
         SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(myTypeSelectorManager.getDefaultType());
       myFieldRangeStart = myEditor.getDocument().createRangeMarker(psiVariable.getTextRange());
@@ -246,7 +246,7 @@ public class InplaceIntroduceFieldPopup {
 
     @Override
     protected PsiExpression getExpr() {
-      return myInitializerExpression;
+      return myInitializerExpression != null && myInitializerExpression.isValid() && myInitializerExpression.isPhysical() ? myInitializerExpression : null;
     }
 
     @Override
@@ -354,9 +354,11 @@ public class InplaceIntroduceFieldPopup {
         public void run() {
           final PsiFile containingFile = myParentClass.getContainingFile();
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
-          myInitializerExpression = restoreExpression(containingFile, psiField, elementFactory, getExprMarker(), myExprText);
-          if (myInitializerExpression != null) {
-            myExprMarker = myEditor.getDocument().createRangeMarker(myInitializerExpression.getTextRange());
+          if (getExprMarker() != null) {
+            myInitializerExpression = restoreExpression(containingFile, psiField, elementFactory, getExprMarker(), myExprText);
+            if (myInitializerExpression != null) {
+              myExprMarker = myEditor.getDocument().createRangeMarker(myInitializerExpression.getTextRange());
+            }
           }
           final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
           for (int i = 0, occurrenceMarkersSize = occurrenceMarkers.size(); i < occurrenceMarkersSize; i++) {

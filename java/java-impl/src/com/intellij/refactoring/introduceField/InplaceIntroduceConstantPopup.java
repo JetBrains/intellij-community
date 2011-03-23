@@ -116,7 +116,7 @@ public class InplaceIntroduceConstantPopup {
     }
     myOccurenceManager = occurenceManager;
 
-    myExprMarker = expr != null ? myEditor.getDocument().createRangeMarker(expr.getTextRange()) : null;
+    myExprMarker = expr != null && expr.isPhysical() ? myEditor.getDocument().createRangeMarker(expr.getTextRange()) : null;
     myExprText = expr != null ? expr.getText() : null;
     myLocalName = localVariable != null ? localVariable.getName() : null;
 
@@ -255,7 +255,7 @@ public class InplaceIntroduceConstantPopup {
       super(myProject, new TypeExpression(myProject, myTypeSelectorManager.getTypesForAll()),
             myEditor, field, false,
             myTypeSelectorManager.getTypesForAll().length > 1,
-            myExpr != null ? myEditor.getDocument().createRangeMarker(myExpr.getTextRange()) : null, InplaceIntroduceConstantPopup.this.getOccurrenceMarkers());
+            myExpr != null && myExpr.isPhysical() ? myEditor.getDocument().createRangeMarker(myExpr.getTextRange()) : null, InplaceIntroduceConstantPopup.this.getOccurrenceMarkers());
 
       myDefaultParameterTypePointer =
         SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(myTypeSelectorManager.getDefaultType());
@@ -269,7 +269,7 @@ public class InplaceIntroduceConstantPopup {
 
     @Override
     protected PsiExpression getExpr() {
-      return myExpr;
+      return myExpr != null && myExpr.isValid() && myExpr.isPhysical() ? myExpr : null;
     }
 
     @Override
@@ -392,9 +392,12 @@ public class InplaceIntroduceConstantPopup {
         public void run() {
           final PsiFile containingFile = myParentClass.getContainingFile();
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
-          myExpr = restoreExpression(containingFile, psiField, elementFactory, getExprMarker(), myExprText);
-          if (myExpr != null) {
-            myExprMarker = myEditor.getDocument().createRangeMarker(myExpr.getTextRange());
+          final RangeMarker exprMarker = getExprMarker();
+          if (exprMarker != null) {
+            myExpr = restoreExpression(containingFile, psiField, elementFactory, exprMarker, myExprText);
+            if (myExpr != null && myExpr.isPhysical()) {
+              myExprMarker = myEditor.getDocument().createRangeMarker(myExpr.getTextRange());
+            }
           }
           final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
           for (int i = 0, occurrenceMarkersSize = occurrenceMarkers.size(); i < occurrenceMarkersSize; i++) {
