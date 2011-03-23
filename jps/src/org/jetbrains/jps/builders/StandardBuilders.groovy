@@ -65,10 +65,6 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
         compilerarg(line: customArgs)
       }
 
-      sourcepath(path : "")
-
-      include(name : "Main.java")
-
       state.sourceRoots.each {
         src(path: it)
       }
