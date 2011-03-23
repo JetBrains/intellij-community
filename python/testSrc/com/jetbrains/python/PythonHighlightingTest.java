@@ -142,6 +142,10 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
     doTest(true, false);
   }
 
+  public void testEscapedBackslash() {  // PY-2994
+    doTest(true, false);
+  }
+
   public void testUnsupportedFeaturesInPython3() {
     doTest(LanguageLevel.PYTHON30, true, false);
   }

@@ -40,7 +40,8 @@ public class StringConstantAnnotator extends PyAnnotator {
   private boolean checkQuotedString(ASTNode stringNode, String nodeText) {
     char firstQuote = nodeText.charAt(0);
     int lastChar = nodeText.length()-1;
-    if (lastChar == 0 || nodeText.charAt(lastChar) != firstQuote || nodeText.charAt(lastChar-1) == '\\') {
+    if (lastChar == 0 || nodeText.charAt(lastChar) != firstQuote ||
+        (nodeText.charAt(lastChar-1) == '\\' && (lastChar == 1 || nodeText.charAt(lastChar-2) != '\\'))) {
       getHolder().createErrorAnnotation(stringNode, MISSING_Q + " [" + firstQuote + "]");
       return true;
     }
