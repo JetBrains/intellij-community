@@ -50,6 +50,8 @@ public class PyStatementEffectInspection extends PyInspection {
         return;
       }
       final PyExpression expression = node.getExpression();
+      if (PsiTreeUtil.hasErrorElements(expression))
+        return;
       if (hasEffect(expression)) return;
 
       final PyTryPart tryPart = PsiTreeUtil.getParentOfType(node, PyTryPart.class);
@@ -62,7 +64,8 @@ public class PyStatementEffectInspection extends PyInspection {
           return;
         }
       }
-      registerProblem(expression, "Statement seems to have no effect", new StatementEffectIntroduceVariableQuickFix(expression));
+      registerProblem(expression, "Statement seems to have no effect",
+                      new StatementEffectIntroduceVariableQuickFix(expression));
     }
 
     private boolean hasEffect(@Nullable PyExpression expression) {
