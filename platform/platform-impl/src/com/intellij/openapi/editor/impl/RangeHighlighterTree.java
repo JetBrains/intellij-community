@@ -74,7 +74,7 @@ public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
       myLayer = layer;
     }
 
-    // range highlighters are strongly referenced
+    //range highlighters are strongly referenced
     @Override
     protected Getable<RangeHighlighterEx> createGetable(@NotNull RangeHighlighterEx interval) {
       return (Getable)interval;

@@ -82,7 +82,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   @Override
-  public MyNode addInterval(@NotNull T interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
+  public IntervalNode addInterval(@NotNull T interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
     RangeMarkerImpl marker = (RangeMarkerImpl)interval;
     marker.setValid(true);
     RMNode node = (RMNode)super.addInterval(interval, start, end, greedyToLeft, greedyToRight, layer);
@@ -108,11 +108,11 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   @Override
-  protected MyNode lookupNode(@NotNull T key) {
+  protected IntervalNode lookupNode(@NotNull T key) {
     return ((RangeMarkerImpl)key).myNode;
   }
 
-  public class RMNode extends MyNode {
+  public class RMNode extends IntervalNode {
     private final boolean isExpandToLeft;
     private final boolean isExpandToRight;
 
@@ -120,11 +120,6 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       super(key, start, end);
       isExpandToLeft = greedyToLeft;
       isExpandToRight = greedyToRight;
-    }
-
-    @Override
-    public boolean processAliveKeys(@NotNull Processor processor) {
-      return super.processAliveKeys(processor);
     }
 
     public boolean isGreedyToLeft() {
@@ -156,13 +151,15 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   private void updateMarkersOnChange(DocumentEvent e) {
+    long start = System.currentTimeMillis();
     try {
       l.writeLock().lock();
+      if (size() == 0) return;
       checkMax(true);
 
       modCount++;
       List<IntervalNode> affected = new ArrayList<IntervalNode>();
-      normalized &= !collectAffectedMarkers(getRoot(), e, affected);
+      normalized &= collectAffectedMarkers(getRoot(), e, affected);
       checkMax(false);
 
       if (!affected.isEmpty()) {
@@ -180,9 +177,15 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
         }
         checkMax(true);
         for (IntervalNode node : affected) {
-          List<T> aliveKeys = node.getAliveKeys();
-          if (aliveKeys.isEmpty()) continue; // collected
-          RangeMarkerImpl marker = (RangeMarkerImpl)aliveKeys.get(0);
+          List<Getable<T>> keys = node.intervals;
+          if (keys.isEmpty()) continue; // collected away
+
+          RangeMarkerImpl marker = null;
+          for (Getable<T> key : keys) {
+            marker = (RangeMarkerImpl)key.get();
+            if (marker != null) break;
+          }
+          if (marker == null) continue;
           marker.setValid(true);
           //marker.myNode = null;
           marker.documentChanged(e);
@@ -191,7 +194,9 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
             // can change if two range become the one
             if (insertedNode != node) {
               // merge happened
-              for (T interval : aliveKeys) {
+              for (Getable<T> key : keys) {
+                T interval = key.get();
+                if (interval == null) continue;
                 insertedNode.addInterval(interval);
               }
             }
@@ -206,15 +211,14 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     }
     finally {
       l.writeLock().unlock();
+      long finish = System.currentTimeMillis();
     }
   }
 
-  // returns true if some delta was or became not null
-  private boolean collectAffectedMarkers(IntervalNode root,
-                                         @NotNull DocumentEvent e,
-                                         @NotNull List<IntervalNode> affected) {
-    if (root == null) return false;
-    boolean denorm = pushDelta(root);
+  // returns true if all deltas involved are still 0
+  private boolean collectAffectedMarkers(IntervalNode root, @NotNull DocumentEvent e, @NotNull List<IntervalNode> affected) {
+    if (root == null) return true;
+    boolean norm = pushDelta(root);
 
     int maxEnd = root.maxEnd;
     assert root.isValid();
@@ -227,19 +231,19 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       affected.add(root);
     }
     if (offset > maxEnd) {
-
+      // no need to bother
     }
     else if (affectedEndOffset < root.intervalStart()) {
       int lengthDelta = e.getNewLength() - e.getOldLength();
       int newD = root.delta += lengthDelta;
-      denorm |= newD != 0;
+      norm &= newD == 0;
       IntervalNode left = root.getLeft();
       if (left != null) {
         int newL = left.delta -= lengthDelta;
-        denorm |= newL != 0;
+        norm &= newL == 0;
       }
-      denorm |= pushDelta(root);
-      denorm |= collectAffectedMarkers(left, e, affected);
+      norm &= pushDelta(root);
+      norm &= collectAffectedMarkers(left, e, affected);
       correctMax(root, 0);
     }
     else {
@@ -249,11 +253,11 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
         root.setValid(false);  //make invisible
       }
 
-      denorm |= collectAffectedMarkers(root.getLeft(), e, affected);
-      denorm |= collectAffectedMarkers(root.getRight(), e, affected);
+      norm &= collectAffectedMarkers(root.getLeft(), e, affected);
+      norm &= collectAffectedMarkers(root.getRight(), e, affected);
       correctMax(root,0);
     }
-    return denorm;
+    return norm;
   }
 
   public boolean sweep(final int start, final int end, @NotNull final MarkupModelEx.SweepProcessor<T> sweepProcessor) {
