@@ -79,10 +79,9 @@ class ImportCandidateHolder implements Comparable {
    * @return a properly qualified name.
    */
   public static String getQualifiedName(String name, String importPath, PyImportElement source) {
-    StringBuffer sb = new StringBuffer();
-    PsiElement parent = null;
+    StringBuilder sb = new StringBuilder();
     if (source != null) {
-      parent = source.getParent();
+      PsiElement parent = source.getParent();
       if (parent instanceof PyFromImportStatement) {
         sb.append(name);
       }
@@ -91,7 +90,10 @@ class ImportCandidateHolder implements Comparable {
       }
     }
     else {
-      sb.append(importPath).append(".").append(name);
+      if (!StringUtil.isEmpty(importPath)) {
+        sb.append(importPath).append(".");
+      }
+      sb.append(name);
     }
     return sb.toString();
   }
