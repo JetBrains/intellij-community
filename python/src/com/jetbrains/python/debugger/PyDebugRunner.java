@@ -151,7 +151,7 @@ public class PyDebugRunner extends GenericProgramRunner {
         ParamsGroup exe_params = parameters_list.getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
         assert exe_params != null;
 
-        final PythonSdkFlavor flavor = pyState.getConfig().getSdkFlavor();
+        final PythonSdkFlavor flavor = pyState.getSdkFlavor();
         if (flavor != null) {
           for (String option : flavor.getExtraDebugOptions()) exe_params.addParameter(option);
         }

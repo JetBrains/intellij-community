@@ -67,14 +67,15 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return PyDebugRunner.PY_DEBUG_RUNNER.equals(configurationSettings.getRunnerId());
   }
 
-  public AbstractPythonRunConfiguration getConfig() {
-    return myConfig;
-  }
-
   public PythonCommandLineState(AbstractPythonRunConfiguration runConfiguration, ExecutionEnvironment env, List<Filter> filters) {
     super(env);
     myConfig = runConfiguration;
     myFilters = filters;
+  }
+
+  @Nullable
+  public PythonSdkFlavor getSdkFlavor() {
+    return PythonSdkFlavor.getFlavor(myConfig.getSdkHome());
   }
 
   @Override
@@ -84,7 +85,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   public ExecutionResult execute(Executor executor, CommandLinePatcher... patchers) throws ExecutionException {
     final ProcessHandler processHandler = startProcess(patchers);
-    final ConsoleView console = createAndAttachConsole(getConfig().getProject(), processHandler, executor);
+    final ConsoleView console = createAndAttachConsole(myConfig.getProject(), processHandler, executor);
 
     List<AnAction> actions = Lists.newArrayList(createActions(console, processHandler));
 
