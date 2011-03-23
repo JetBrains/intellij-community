@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -32,9 +33,10 @@ import java.util.List;
  */
 public class ImportFromExistingFix implements LocalQuickFix {
 
-  PyElement myNode;
+  private final PyElement myNode;
+  private final PsiReference myReference;
 
-  List<ImportCandidateHolder> myImports; // from where and what to import
+  private final List<ImportCandidateHolder> myImports; // from where and what to import
   String myName;
 
   boolean myUseQualifiedImport;
@@ -46,8 +48,9 @@ public class ImportFromExistingFix implements LocalQuickFix {
    * @param name the unresolved identifier portion of node's text
    * @param qualify if true, add an "import ..." statement and qualify the name; else use "from ... import name" 
    */
-  public ImportFromExistingFix(PyElement node, String name, boolean qualify) {
+  public ImportFromExistingFix(PyElement node, PsiReference reference, String name, boolean qualify) {
     myNode = node;
+    myReference = reference;
     myImports = new ArrayList<ImportCandidateHolder>();
     myName = name;
     myUseQualifiedImport = qualify;
@@ -97,6 +100,9 @@ public class ImportFromExistingFix implements LocalQuickFix {
     }
     if (myNode == null || !myNode.isValid() || myNode.getName() == null || myImports.size() <= 0) {
       return false; // TODO: also return false if an on-the-fly unambiguous fix is possible?
+    }
+    if (AddImportAction.isResolved(myReference)) {
+      return false;
     }
     if ((myNode instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)myNode).getQualifier() != null))) return false; // we cannot be qualified
     final String message = ShowAutoImportPass.getMessage(

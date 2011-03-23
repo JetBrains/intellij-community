@@ -172,17 +172,23 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
     if (!PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP) {
       return false;
     }
+    if (!myReference.getElement().isValid() || isResolved(myReference)) {
+      return false;
+    }
     final String referenceName = getRefName();
-    /*
-    final PsiFile[] files = getRefFiles(referenceName);
-    if (!(files != null && files.length > 0)) return false;
-    */
     final PsiElement element = ResolveImportUtil.resolveInRoots(myReference.getElement(), referenceName);
     if (element == null || element == myReference.getElement().getContainingFile()) return false;
     String hintText = ShowAutoImportPass.getMessage(false, getRefName());
     HintManager.getInstance().showQuestionHint(editor, hintText, myReference.getElement().getTextOffset(),
                                                myReference.getElement().getTextRange().getEndOffset(), this);
     return true;
+  }
+
+  public static boolean isResolved(PsiReference reference) {
+    if (reference instanceof PsiPolyVariantReference) {
+      return ((PsiPolyVariantReference)reference).multiResolve(false).length > 0;
+    }
+    return reference.resolve() != null;
   }
 
   public boolean execute() {

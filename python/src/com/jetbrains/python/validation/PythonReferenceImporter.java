@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
@@ -49,7 +50,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
         if (refExpr.getQualifier() == null) {
           final PsiPolyVariantReference reference = refExpr.getReference();
           if (reference.resolve() == null) {
-            ImportFromExistingFix fix = proposeImportFix(refExpr, refExpr.getText());
+            ImportFromExistingFix fix = proposeImportFix(refExpr, reference, refExpr.getText());
             if (fix != null && fix.getCandidatesCount() == 1) {
               fix.invoke(file.getProject(), editor, file);
             }
@@ -67,9 +68,9 @@ public class PythonReferenceImporter implements ReferenceImporter {
   private static TokenSet IS_IMPORT_STATEMENT = TokenSet.create(PyElementTypes.IMPORT_STATEMENT);
 
   @Nullable
-  public static ImportFromExistingFix proposeImportFix(final PyElement node, String ref_text) {
+  public static ImportFromExistingFix proposeImportFix(final PyElement node, PsiReference reference, String ref_text) {
     PsiFile existing_import_file = null; // if there's a matching existing import, this it the file it imports
-    ImportFromExistingFix fix = new ImportFromExistingFix(node, ref_text, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
+    ImportFromExistingFix fix = new ImportFromExistingFix(node, reference, ref_text, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
     Set<String> seen_file_names = new HashSet<String>(); // true import names
     // maybe the name is importable via some existing 'import foo' statement, and only needs a qualifier.
     // walk up collecting all such statements and analyzing

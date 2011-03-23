@@ -305,7 +305,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
           // look in other imported modules for this whole name
           if (ref_is_importable) {
-            ImportFromExistingFix importFix = PythonReferenceImporter.proposeImportFix(node, ref_text);
+            ImportFromExistingFix importFix = PythonReferenceImporter.proposeImportFix(node, reference, ref_text);
             if (importFix != null) {
               // if the context doesn't look like a function call and we only found imports of functions, suggest auto-import
               // as a quickfix but no popup balloon (PY-2312)
