@@ -255,6 +255,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testGeneratorInArgumentList() {  // PY-3172
+    doTest();
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON25);
   }
