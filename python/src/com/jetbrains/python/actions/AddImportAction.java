@@ -127,7 +127,7 @@ public class AddImportAction implements HintAction, QuestionAction, LocalQuickFi
     if (!(element instanceof PyReferenceExpression)) {
       return false;
     }
-    final PsiElement resolveResult = ResolveImportUtil.resolvePythonImport2((PyReferenceExpression)element, null);
+    final PsiElement resolveResult = ResolveImportUtil.resolveInRoots(element, ((PyReferenceExpression)element).asQualifiedName());
     if (resolveResult == null || resolveResult == element.getContainingFile()) {
       return false;
     }

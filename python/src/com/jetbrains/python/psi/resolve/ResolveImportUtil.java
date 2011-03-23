@@ -369,74 +369,6 @@ public class ResolveImportUtil {
     return visitor.results;
   }
 
-  // TODO: rewrite using resolveImportReference
-
-  /**
-   * Resolves either <tt>import foo</tt> or <tt>from foo import bar</tt>.
-   *
-   * @param importRef      refers to the name of the module being imported (the <tt>foo</tt>).
-   * @param referencedName the name imported from the module (the <tt>bar</tt> in <tt>import from</tt>), or null (for just <tt>import foo</tt>).
-   * @return element the name resolves to, or null.
-   */
-  @Nullable
-  public static PsiElement resolvePythonImport2(final PyReferenceExpression importRef, final String referencedName) {
-    if (!importRef.isValid()) return null; // we often catch a reparse while in a process of resolution
-    final String the_name = referencedName != null ? referencedName : importRef.getName();
-    Set<String> being_imported = ourBeingImported.get();
-    PsiFile containing_file = importRef.getContainingFile();
-    PsiElement last_resolved;
-    List<PyReferenceExpression> ref_path = PyResolveUtil.unwindQualifiers(importRef);
-    if (ref_path == null) return null;
-    // join path to form the FQN: (a, b, c) -> a.b.c.
-    StringBuffer pathbuf = new StringBuffer();
-    for (PyQualifiedExpression pathelt : ref_path) pathbuf.append(pathelt.getName()).append(".");
-    if (referencedName != null) pathbuf.append(referencedName);
-    final String import_fqname = pathbuf.toString();
-    if (being_imported.contains(import_fqname)) return null; // already trying this path, unable to recurse
-    try {
-      being_imported.add(import_fqname); // mark
-      // resolve qualifiers
-      Iterator<PyReferenceExpression> it = ref_path.iterator();
-      if (ref_path.size() > 1) { // it was a qualified name
-        if (it.hasNext()) {
-          last_resolved = it.next().getReference().resolve(); // our topmost qualifier, not ourselves for certain
-        }
-        else {
-          return null;
-        } // topmost qualifier not found
-        while (it.hasNext()) {
-          final String name = it.next().getName();
-          if (name == null) {
-            return null;
-          }
-          last_resolved = resolveChild(last_resolved, name, containing_file, null, true, true);
-          if (last_resolved == null) return null; // anything in the chain unresolved means that the whole chain fails
-        }
-        if (referencedName != null) {
-          return resolveChild(last_resolved, referencedName, containing_file, null, false, true);
-        }
-        else {
-          return last_resolved;
-        }
-      }
-
-      // non-qualified name
-      if (referencedName != null) {
-        return resolveChild(importRef.getReference().resolve(), referencedName, containing_file, null, false, true);
-        // the importRef.resolve() does not recurse infinitely because we're asked to resolve referencedName, not importRef itself
-      }
-      // unqualified import can be found:
-      // in the same dir
-      PsiElement root_elt = resolveInRoots(importRef, the_name);
-      if (root_elt != null) return root_elt;
-    }
-    finally {
-      being_imported.remove(import_fqname); // unmark
-    }
-    return null; // not resolved by any means
-  }
-
-
   public static void visitRoots(@NotNull final PsiElement elt, @NotNull final RootVisitor visitor) {
     // real search
     final Module module = ModuleUtil.findModuleForPsiElement(elt);
@@ -526,6 +458,11 @@ public class ResolveImportUtil {
     return true;
   }
 
+  @Nullable
+  public static PsiElement resolveInRoots(@NotNull final PsiElement context, final String name) {
+    return resolveInRoots(context, PyQualifiedName.fromComponents(name));
+  }
+
   /**
    * Looks for a name among element's module's roots; if there's no module, then among project's roots.
    *
@@ -534,15 +471,15 @@ public class ResolveImportUtil {
    * @return a PsiFile, a child of a root.
    */
   @Nullable
-  public static PsiElement resolveInRoots(@NotNull final PsiElement context, final String refName) {
+  public static PsiElement resolveInRoots(@NotNull final PsiElement context, final PyQualifiedName qualifiedName) {
     // NOTE: a quick and dirty temporary fix for "current dir" root path, which is assumed to be present first (but may be not).
-    PsiElement res = resolveInCurrentDir(context, refName);
-    if (res != null) {
-      return res;
+    if (qualifiedName.getComponentCount() == 1) {
+      PsiElement res = resolveInCurrentDir(context, qualifiedName.getLastComponent());
+      if (res != null) {
+        return res;
+      }
     }
-    else {
-      return resolveModuleInRoots(PyQualifiedName.fromDottedString(refName), context);
-    }
+    return resolveModuleInRoots(qualifiedName, context);
   }
 
   @Nullable
