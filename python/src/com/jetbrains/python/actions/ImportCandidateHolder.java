@@ -8,7 +8,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.psi.*;
+import com.intellij.psi.PsiFileSystemItem;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFromImportStatement;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 class ImportCandidateHolder implements Comparable {
   private final PsiElement myImportable;
   private final PyImportElement myImportElement;
-  private final PsiFile myFile;
+  private final PsiFileSystemItem myFile;
   private final String myPath;
   private final String myAsName;
 
@@ -35,7 +39,7 @@ class ImportCandidateHolder implements Comparable {
    * @param asName name to use in a new import statement for 'as' clause, if an import is added.
    */
   public ImportCandidateHolder(
-    @NotNull PsiElement importable, @NotNull PsiFile file,
+    @NotNull PsiElement importable, @NotNull PsiFileSystemItem file,
     @Nullable PyImportElement importElement, @Nullable String path, @Nullable String asName
   ) {
     myFile = file;
@@ -54,7 +58,7 @@ class ImportCandidateHolder implements Comparable {
     return myImportElement;
   }
 
-  public PsiFile getFile() {
+  public PsiFileSystemItem getFile() {
     return myFile;
   }
 

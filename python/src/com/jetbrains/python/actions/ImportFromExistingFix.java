@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
@@ -74,7 +75,7 @@ public class ImportFromExistingFix implements LocalQuickFix {
    * @param path import path for the file, as a qualified name (a.b.c)
    * @param asName name to use to import the path as: "import path as asName"
    */
-  public void addImport(@NotNull PsiElement importable, @NotNull PsiFile file, @Nullable String path, @Nullable String asName) {
+  public void addImport(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file, @Nullable String path, @Nullable String asName) {
     myImports.add(new ImportCandidateHolder(importable, file, null, path, asName));
   }
 

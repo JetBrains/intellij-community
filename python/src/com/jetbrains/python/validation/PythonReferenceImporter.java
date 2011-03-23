@@ -11,14 +11,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddImportAction;
 import com.jetbrains.python.actions.ImportFromExistingFix;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -107,10 +106,11 @@ public class PythonReferenceImporter implements ReferenceImporter {
     GlobalSearchScope scope = PyClassNameIndex.projectWithLibrariesScope(project);
     symbols.addAll(PyFunctionNameIndex.find(ref_text, project, scope));
     symbols.addAll(PyVariableNameIndex.find(ref_text, project, scope));
+    symbols.addAll(findImportableModules(ref_text, project, scope));
     if (symbols.size() > 0) {
       for (PsiElement symbol : symbols) {
         if (isTopLevel(symbol)) { // we only want top-level symbols
-          PsiFile srcfile = symbol.getContainingFile();
+          PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
           if (srcfile != null && srcfile != existing_import_file && srcfile != node.getContainingFile()) {
             VirtualFile vfile = srcfile.getVirtualFile();
             if (vfile != null) {
@@ -132,12 +132,35 @@ public class PythonReferenceImporter implements ReferenceImporter {
     return null;
   }
 
+  private static Collection<PsiElement> findImportableModules(String reftext, Project project, GlobalSearchScope scope) {
+    List<PsiElement> result = new ArrayList<PsiElement>();
+    PsiFile[] files = FilenameIndex.getFilesByName(project, reftext + ".py", scope);
+    for (PsiFile file : files) {
+      PsiDirectory parent = file.getParent();
+      if (parent != null && parent.findFile(PyNames.INIT_DOT_PY) != null) {
+        result.add(file);
+      }
+    }
+    // perhaps the module is a directory, not a file
+    PsiFile[] initFiles = FilenameIndex.getFilesByName(project, PyNames.INIT_DOT_PY, scope);
+    for (PsiFile initFile : initFiles) {
+      PsiDirectory parent = initFile.getParent();
+      if (parent != null && parent.getName().equals(reftext)) {
+        result.add(parent);
+      }
+    }
+    return result;
+  }
+
   private static boolean isTopLevel(PsiElement symbol) {
+    if (symbol instanceof PsiFileSystemItem) {
+      return true;
+    }
     if (symbol instanceof PyClass) {
-      return ((PyClass) symbol).isTopLevel();
+      return ((PyClass)symbol).isTopLevel();
     }
     if (symbol instanceof PyFunction) {
-      return ((PyFunction) symbol).isTopLevel();
+      return ((PyFunction)symbol).isTopLevel();
     }
     // only top-level target expressions are included in VariableNameIndex
     return symbol instanceof PyTargetExpression;
