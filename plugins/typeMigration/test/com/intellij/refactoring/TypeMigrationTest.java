@@ -17,6 +17,12 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     return "/refactoring/typeMigration/";
   }
 
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.HIGHEST);
+  }
+
   public void testT07() throws Exception {
     doTestFieldType("f",
                     PsiType.INT.createArrayType(),
@@ -755,14 +761,12 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   // test type migration from disjunction type
   public void testT128() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
     doTestCatchParameter(myJavaFacade.getElementFactory().createTypeFromText("Test.E1 | Test.E2", null),
                          myJavaFacade.getElementFactory().createTypeFromText("Test.E", null));
   }
 
   // test type migration to disjunction type
   public void testT129() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
     doTestCatchParameter(myJavaFacade.getElementFactory().createTypeFromText("Test.E", null),
                          myJavaFacade.getElementFactory().createTypeFromText("Test.E1 | Test.E2", null));
   }
