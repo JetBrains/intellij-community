@@ -19,9 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.reference.SoftReference;
 import gnu.trove.TLongArrayList;
@@ -74,9 +72,6 @@ public abstract class CachedValueBase<T> {
 
   public void clear() {
     myData = null;
-  }
-
-  public void setDataLocked(boolean value) {
   }
 
   public boolean hasUpToDateValue() {
@@ -186,10 +181,15 @@ public abstract class CachedValueBase<T> {
       return value == ObjectUtils.NULL ? null : value;
     }
 
+    RecursionGuard.StackStamp stamp = RecursionManager.createGuard("cachedValue").markStack();
+
     // compute outside lock to avoid deadlock
     CachedValueProvider.Result<T> result = doCompute(param);
 
-    return setValue(result);
+    if (stamp.mayCacheNow()) {
+      return setValue(result);
+    }
+    return result == null ? null : result.getValue();
   }
 
   protected abstract <P> CachedValueProvider.Result<T> doCompute(P param);
