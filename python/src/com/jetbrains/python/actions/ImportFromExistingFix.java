@@ -123,26 +123,22 @@ public class ImportFromExistingFix implements LocalQuickFix {
     return true;
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable() {
     return !myExpended && myNode != null && myNode.isValid() && myImports.size() > 0;
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    invoke(project, null, descriptor.getPsiElement().getContainingFile());
+    invoke(descriptor.getPsiElement().getContainingFile());
     myExpended = true;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(PsiFile file) throws IncorrectOperationException {
     // make sure file is committed, writable, etc
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     // act
     ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, myName, myUseQualifiedImport);
     action.execute(); // assume that action runs in WriteAction on its own behalf
     myExpended = true;
-  }
-
-  public boolean startInWriteAction() {
-    return false; // multiple variants may make us show a menu
   }
 
   public void sortCandidates() {

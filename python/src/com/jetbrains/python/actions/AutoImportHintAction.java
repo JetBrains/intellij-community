@@ -32,17 +32,17 @@ public class AutoImportHintAction implements LocalQuickFix, HintAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myDelegate.isAvailable(project, editor, file);
+    return myDelegate.isAvailable();
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    myDelegate.invoke(project, editor, file);
+    myDelegate.invoke(file);
   }
 
   @Override
   public boolean startInWriteAction() {
-    return myDelegate.startInWriteAction();
+    return false;
   }
 
   @NotNull

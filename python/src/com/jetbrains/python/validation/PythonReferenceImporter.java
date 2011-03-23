@@ -53,7 +53,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
           if (reference.resolve() == null) {
             ImportFromExistingFix fix = proposeImportFix(refExpr, reference, refExpr.getText());
             if (fix != null && fix.getCandidatesCount() == 1) {
-              fix.invoke(file.getProject(), editor, file);
+              fix.invoke(file);
             }
             else {
               new AddImportAction(reference).execute();
