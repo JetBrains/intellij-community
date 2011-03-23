@@ -46,6 +46,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.junit.Assert;
 
 import java.util.List;
 
@@ -73,8 +74,9 @@ public class CodeInsightTestUtil {
   public static void doIntentionTest(@NotNull final CodeInsightTestFixture fixture, @NonNls final String action,
                                      @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
-    final IntentionAction intentionAction = findIntentionByText(fixture.getAvailableIntentions(), action);
-    assert intentionAction != null : "Action not found: " + action;
+    List<IntentionAction> availableIntentions = fixture.getAvailableIntentions();
+    final IntentionAction intentionAction = findIntentionByText(availableIntentions, action);
+    Assert.assertTrue("Action not found: " + action + " among " + availableIntentions, intentionAction != null);
     new WriteCommandAction(fixture.getProject()) {
       @Override
       protected void run(Result result) throws Throwable {

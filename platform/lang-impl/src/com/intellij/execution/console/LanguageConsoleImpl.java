@@ -47,6 +47,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -124,8 +125,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     };
     myConsoleEditor.setColorsScheme(scheme);
     myHistoryViewer.setColorsScheme(scheme);
-    myPanel.add(myHistoryViewer.getComponent(), BorderLayout.NORTH);
-    myPanel.add(myConsoleEditor.getComponent(), BorderLayout.CENTER);
+    myPanel.add(myHistoryViewer.getComponent(), BorderLayout.CENTER);
+    myPanel.add(myConsoleEditor.getComponent(), BorderLayout.SOUTH);
     setupComponents();
     myPanel.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new TypeSafeDataProviderAdapter(this));
     myUpdateQueue = new MergingUpdateQueue("ConsoleUpdateQueue", 300, true, null);
@@ -145,6 +146,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         componentResized(e);
       }
     });
+    setPromptInner(myPrompt);
   }
 
   public void setFullEditorMode(boolean fullEditorMode) {
@@ -156,8 +158,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       fileManager.closeFile(virtualFile);
       myFullEditor = null;
       myPanel.removeAll();
-      myPanel.add(myHistoryViewer.getComponent(), BorderLayout.NORTH);
-      myPanel.add(myConsoleEditor.getComponent(), BorderLayout.CENTER);
+      myPanel.add(myHistoryViewer.getComponent(), BorderLayout.CENTER);
+      myPanel.add(myConsoleEditor.getComponent(), BorderLayout.SOUTH);
 
       myHistoryViewer.setHorizontalScrollbarVisible(false);
     }
@@ -191,7 +193,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private void setupComponents() {
     setupEditorDefault(myConsoleEditor);
     setupEditorDefault(myHistoryViewer);
-    setPrompt(myPrompt);
     myConsoleEditor.addEditorMouseListener(EditorActionUtil.createEditorPopupHandler(IdeActions.GROUP_CUT_COPY_PASTE));
     if (SEPARATOR_THICKNESS > 0) {
       myHistoryViewer.getComponent().setBorder(new SideBorder(Color.LIGHT_GRAY, SideBorder.BOTTOM));
@@ -294,7 +295,19 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   public void setPrompt(String prompt) {
     myPrompt = prompt;
-    ((EditorImpl)myConsoleEditor).setPrefixTextAndAttributes(myPrompt, ConsoleViewContentType.USER_INPUT.getAttributes());
+    setPromptInner(myPrompt);
+  }
+
+  private void setPromptInner(final String prompt) {
+    ((EditorImpl)myConsoleEditor).setPrefixTextAndAttributes(prompt, ConsoleViewContentType.USER_INPUT.getAttributes());
+    if (myPanel.isVisible()) {
+      queueUiUpdate(false);
+    }
+  }
+
+  public void setEditable(boolean editable) {
+    myConsoleEditor.setRendererMode(!editable);
+    setPromptInner(editable? myPrompt : "");
   }
 
   public PsiFile getFile() {
@@ -345,26 +358,46 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
                                     HighlighterLayer.SYNTAX,
                                     attributes,
                                     HighlighterTargetArea.EXACT_RANGE);
+    if (scrollToEnd) {
+      scrollHistoryToEnd();
+    }
     queueUiUpdate(scrollToEnd);
   }
 
   public String addCurrentToHistory(final TextRange textRange, final boolean erase, final boolean preserveMarkup) {
     final Ref<String> ref = Ref.create("");
     final boolean scrollToEnd = shouldScrollHistoryToEnd();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    final Runnable action = new Runnable() {
       public void run() {
         ref.set(addTextRangeToHistory(textRange, myConsoleEditor, preserveMarkup));
         if (erase) {
           myConsoleEditor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
         }
       }
-    });
+    };
+    if (erase) {
+      ApplicationManager.getApplication().runWriteAction(action);
+    }
+    else {
+      ApplicationManager.getApplication().runReadAction(action);
+    }
+    if (scrollToEnd) {
+      scrollHistoryToEnd();
+    }
     queueUiUpdate(scrollToEnd);
     return ref.get();
   }
 
   public boolean shouldScrollHistoryToEnd() {
-    return myHistoryViewer.getCaretModel().getOffset() == myHistoryViewer.getDocument().getTextLength();
+    final Rectangle visibleArea = myHistoryViewer.getScrollingModel().getVisibleArea();
+    final LogicalPosition pos = ApplicationManager.getApplication().runReadAction(new Computable<LogicalPosition>() {
+      @Override
+      public LogicalPosition compute() {
+        return myHistoryViewer.xyToLogicalPosition(new Point(visibleArea.x, visibleArea.y + visibleArea.height));
+      }
+    });
+    final int lineCount = myHistoryViewer.getDocument().getLineCount();
+    return pos.line >= lineCount - 1;
   }
 
   private void scrollHistoryToEnd() {
@@ -448,33 +481,60 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private void updateSizes(boolean forceScrollToEnd) {
     if (myFullEditor != null) return;
     final Dimension panelSize = myPanel.getSize();
-    final Dimension historyContentSize = myHistoryViewer.getContentSize();
-    final Dimension contentSize = myConsoleEditor.getContentSize();
+    if (panelSize.getHeight() <= 0) return;
+    final Dimension historySize = myHistoryViewer.getContentSize();
+    final Dimension editorSize = myConsoleEditor.getContentSize();
     final Dimension newEditorSize = new Dimension();
-    final int minHistorySize = historyContentSize.height > 0 ? 2 * myHistoryViewer.getLineHeight() + SEPARATOR_THICKNESS : 0;
-    final int width = Math.max(contentSize.width, historyContentSize.width);
-    newEditorSize.height = Math.min(Math.max(panelSize.height - minHistorySize, 2 * myConsoleEditor.getLineHeight()),
-                                    contentSize.height + myConsoleEditor.getScrollPane().getHorizontalScrollBar().getHeight());
-    newEditorSize.width = width + myConsoleEditor.getScrollPane().getHorizontalScrollBar().getHeight();
-    myConsoleEditor.getSettings()
-      .setAdditionalColumnsCount(2 + (width - contentSize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, myConsoleEditor));
-    myHistoryViewer.getSettings()
-      .setAdditionalColumnsCount(2 + (width - historyContentSize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, myHistoryViewer));
 
-    final Dimension editorSize = myConsoleEditor.getComponent().getSize();
-    if (!editorSize.equals(newEditorSize)) {
+    // deal with width
+    final int width = Math.max(editorSize.width, historySize.width);
+    newEditorSize.width = width + myConsoleEditor.getScrollPane().getHorizontalScrollBar().getHeight();
+    myConsoleEditor.getSettings().setAdditionalColumnsCount(2 + (width - editorSize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, myConsoleEditor));
+    myHistoryViewer.getSettings().setAdditionalColumnsCount(2 + (width - historySize.width) / EditorUtil.getSpaceWidth(Font.PLAIN, myHistoryViewer));
+
+    // deal with height
+    if (historySize.width == 0) historySize.height = 0;
+    final int minHistorySize = historySize.height > 0 ? 2 * myHistoryViewer.getLineHeight() + SEPARATOR_THICKNESS : 0;
+    final int minEditorSize = myConsoleEditor.isViewer()? 0 : myConsoleEditor.getLineHeight();
+    final int editorPreferred = myConsoleEditor.isViewer()? 0 : Math.max(minEditorSize, editorSize.height);
+    final int historyPreferred = Math.max(minHistorySize, historySize.height);
+    if (panelSize.height < minEditorSize) {
+      newEditorSize.height = panelSize.height;
+    }
+    else if (panelSize.height < editorPreferred) {
+      newEditorSize.height = panelSize.height - minHistorySize;
+    }
+    else if (panelSize.height < editorPreferred + historyPreferred) {
+      newEditorSize.height = editorPreferred;
+    }
+    else {
+      newEditorSize.height = editorPreferred == 0? 0 : panelSize.height - historyPreferred;
+    }
+    final Dimension newHistorySize = new Dimension(width, panelSize.height - newEditorSize.height);
+
+    // apply
+    boolean changed = false;
+    final Dimension curEditorSize = myConsoleEditor.getComponent().getPreferredSize();
+    if (!curEditorSize.equals(newEditorSize)) {
       myConsoleEditor.getComponent().setPreferredSize(newEditorSize);
+      changed = true;
     }
-    final boolean scrollToEnd = forceScrollToEnd || shouldScrollHistoryToEnd();
-    final Dimension newHistorySize = new Dimension(
-      width, Math.max(0, Math.min(minHistorySize == 0 ? 0 : historyContentSize.height + SEPARATOR_THICKNESS,
-                                  panelSize.height - newEditorSize.height)));
-    final Dimension historySize = myHistoryViewer.getComponent().getSize();
-    if (!historySize.equals(newHistorySize)) {
+    final boolean scrollToEnd;
+    final Dimension curHistorySize = myHistoryViewer.getComponent().getPreferredSize();
+    if (!curHistorySize.equals(newHistorySize) && (curHistorySize.height != 0 || newHistorySize.height != 0)) {
+      scrollToEnd = forceScrollToEnd || shouldScrollHistoryToEnd();
       myHistoryViewer.getComponent().setPreferredSize(newHistorySize);
+      changed = true;
     }
-    myPanel.validate();
-    if (scrollToEnd) scrollHistoryToEnd();
+    else scrollToEnd = forceScrollToEnd;
+
+    if (changed) {
+      // layout immediately
+      myPanel.doLayout();
+    }
+    if (scrollToEnd) {
+      scrollHistoryToEnd();
+    }
   }
 
   public void dispose() {

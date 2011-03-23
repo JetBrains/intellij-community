@@ -15,8 +15,8 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.ide.TypePresentationServiceImpl;
 import com.intellij.ide.presentation.Presentation;
-import com.intellij.ide.presentation.PresentationTemplateImpl;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.xml.*;
 
@@ -25,7 +25,7 @@ import javax.swing.*;
 /**
  * @author Dmitry Avdeev
  */
-public class ElementPresentationTemplateImpl extends PresentationTemplateImpl implements ElementPresentationTemplate {
+public class ElementPresentationTemplateImpl extends TypePresentationServiceImpl.PresentationTemplateImpl implements ElementPresentationTemplate {
 
   public ElementPresentationTemplateImpl(Presentation presentation, Class<?> aClass) {
     super(presentation, aClass);

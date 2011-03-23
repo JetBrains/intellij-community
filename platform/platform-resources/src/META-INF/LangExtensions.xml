@@ -28,6 +28,9 @@
   <applicationService serviceInterface="com.intellij.ide.PsiCopyPasteManager"
                       serviceImplementation="com.intellij.ide.PsiCopyPasteManager"/>
 
+  <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
+                      serviceImplementation="com.intellij.ide.TypePresentationServiceImpl"/>
+
   <applicationService serviceInterface="com.intellij.usages.UsageViewSettings"
                       serviceImplementation="com.intellij.usages.UsageViewSettings"/>
   <applicationService serviceInterface="com.intellij.refactoring.RefactoringSettings"

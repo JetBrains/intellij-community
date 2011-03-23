@@ -1721,6 +1721,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             if (attributes.getEffectType() == EffectType.WAVE_UNDERSCORE) {
               drawWave(g, end.x, end.x + charWidth - 1, y);
             }
+            else if (attributes.getEffectType() == EffectType.BOLD_DOTTED_LINE) {
+              final int dottedAt = SystemInfo.isMac ? y - 1 : y;
+              UIUtil.drawBoldDottedLine((Graphics2D)g, end.x, end.x + charWidth - 1, dottedAt,
+                                        getBackgroundColor(attributes), attributes.getEffectColor(), false);
+            }
+            else if (attributes.getEffectType() == EffectType.STRIKEOUT) {
+              int y1 = y - getCharHeight() / 2 - 1;
+              UIUtil.drawLine(g, end.x, y1, end.x + charWidth - 1, y1);
+            }
+            else if (attributes.getEffectType() == EffectType.BOLD_LINE_UNDERSCORE) {
+              UIUtil.drawLine(g, end.x, y - 1, end.x + charWidth - 1, y - 1);
+              UIUtil.drawLine(g, end.x, y, end.x + charWidth - 1, y);
+            }
             else if (attributes.getEffectType() != EffectType.BOXED) {
               UIUtil.drawLine(g, end.x, y, end.x + charWidth - 1, y);
             }

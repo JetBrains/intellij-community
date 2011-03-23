@@ -81,7 +81,9 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
         final PsiCatchSection catchSection = catchSections[i];
         final PsiCodeBlock catchBlock = catchSection.getCatchBlock();
         if (catchBlock == null) continue;
-        InputVariables inputVariables = new InputVariables(Collections.singletonList(catchSection.getParameter()),
+        final PsiParameter parameter = catchSection.getParameter();
+        if (parameter == null) continue;
+        InputVariables inputVariables = new InputVariables(Collections.singletonList(parameter),
                                                            statement.getProject(),
                                                            new LocalSearchScope(catchBlock),
                                                            false);
