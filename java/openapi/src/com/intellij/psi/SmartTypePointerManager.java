@@ -29,5 +29,5 @@ public abstract class SmartTypePointerManager {
   }
 
   @NotNull
-  public abstract SmartTypePointer createSmartTypePointer(PsiType type);
+  public abstract SmartTypePointer createSmartTypePointer(@NotNull PsiType type);
 }
