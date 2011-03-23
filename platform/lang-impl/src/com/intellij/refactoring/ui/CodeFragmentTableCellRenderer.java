@@ -24,6 +24,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
@@ -62,7 +63,7 @@ public class CodeFragmentTableCellRenderer implements TableCellRenderer {
         }
       };
     }
-    editorTextField.setBorder(hasFocus ? BorderFactory.createLineBorder(table.getForeground()): null);
+    editorTextField.setBorder(hasFocus ? BorderFactory.createLineBorder(table.getForeground()): new EmptyBorder(1, 1, 1, 1));
     return editorTextField;
   }
 }

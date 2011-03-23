@@ -27,9 +27,10 @@ import org.jetbrains.annotations.Nullable;
  * Generally returned from {@link PsiElement#getReferences()} and {@link com.intellij.psi.PsiReferenceService#getReferences},
  * but may be contributed to some elements by third party plugins via {@link com.intellij.psi.PsiReferenceContributor}
  *
+ * @see PsiPolyVariantReference
  * @see PsiElement#getReference()
  * @see PsiElement#getReferences() 
- * @see com.intellij.psi.PsiReferenceService#getReferences
+ * @see com.intellij.psi.PsiReferenceService#getReferences(PsiElement, com.intellij.psi.PsiReferenceService.Hints)
  * @see com.intellij.psi.PsiReferenceBase
  * @see com.intellij.psi.PsiReferenceContributor
  */

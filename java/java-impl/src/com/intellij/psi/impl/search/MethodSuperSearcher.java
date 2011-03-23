@@ -39,11 +39,11 @@ public class MethodSuperSearcher implements QueryExecutor<MethodSignatureBackedB
   }
 
   private static boolean addSuperMethods(final HierarchicalMethodSignature signature,
-                                  final PsiMethod method,
-                                  final PsiClass parentClass,
-                                  final boolean allowStaticMethod,
-                                  final boolean checkBases,
-                                  final Processor<MethodSignatureBackedByPsiMethod> consumer) {
+                                         final PsiMethod method,
+                                         final PsiClass parentClass,
+                                         final boolean allowStaticMethod,
+                                         final boolean checkBases,
+                                         final Processor<MethodSignatureBackedByPsiMethod> consumer) {
     PsiMethod signatureMethod = signature.getMethod();
     PsiClass hisClass = signatureMethod.getContainingClass();
     if (parentClass == null || InheritanceUtil.isInheritorOrSelf(parentClass, hisClass, true)) {

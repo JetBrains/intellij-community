@@ -323,7 +323,7 @@ public class MethodSignatureUtil {
   }
 
   @NotNull
-  public static PsiMethod[] convertMethodSignaturesToMethods(List<MethodSignatureBackedByPsiMethod> sameNameMethodList) {
+  public static PsiMethod[] convertMethodSignaturesToMethods(List<? extends MethodSignatureBackedByPsiMethod> sameNameMethodList) {
     final PsiMethod[] methods = new PsiMethod[sameNameMethodList.size()];
     for (int i = 0; i < sameNameMethodList.size(); i++) {
       methods[i] = sameNameMethodList.get(i).getMethod();

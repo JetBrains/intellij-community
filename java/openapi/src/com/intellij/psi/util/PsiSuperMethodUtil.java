@@ -18,6 +18,7 @@ package com.intellij.psi.util;
 import com.intellij.psi.*;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
@@ -67,7 +68,7 @@ public class PsiSuperMethodUtil {
     return null;
   }
 
-  public static boolean isSuperMethod(PsiMethod method, PsiMethod superMethod) {
+  public static boolean isSuperMethod(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
     HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
     for (HierarchicalMethodSignature supsig : signature.getSuperSignatures()) {
       PsiMethod supsigme = supsig.getMethod();

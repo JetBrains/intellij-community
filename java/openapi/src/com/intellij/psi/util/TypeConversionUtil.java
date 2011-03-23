@@ -672,10 +672,7 @@ public class TypeConversionUtil {
     }
 
     if (left instanceof PsiDisjunctionType) {
-      for (PsiType type : ((PsiDisjunctionType)left).getDisjunctions()) {
-        if (isAssignable(type, right, allowUncheckedConversion)) return true;
-      }
-      return false;
+      return isAssignable(((PsiDisjunctionType)left).getLeastUpperBound(), right, allowUncheckedConversion);
     }
     if (right instanceof PsiDisjunctionType) {
       return isAssignable(left, ((PsiDisjunctionType)right).getLeastUpperBound(), allowUncheckedConversion);
@@ -900,8 +897,8 @@ public class TypeConversionUtil {
    */
   @NotNull
   public static PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass,
-                                                        PsiClass derivedClass,
-                                                        PsiSubstitutor derivedSubstitutor) {
+                                                        @NotNull PsiClass derivedClass,
+                                                        @NotNull PsiSubstitutor derivedSubstitutor) {
     // [dsl] assertion commented out since we no longer cache isInheritor
     //LOG.assertTrue(derivedClass.isInheritor(superClass, true), "Not inheritor: " + derivedClass + " super: " + superClass);
 
@@ -931,8 +928,8 @@ public class TypeConversionUtil {
     }
     if (substitutor == null) {
       LOG.error(
-        "Not inheritor: " + derivedClass + "(" + derivedClass.getClass().getName() + "; " + PsiUtil.getVirtualFile(derivedClass) + ");" +
-        "\n super: " + superClass + "(" + superClass.getClass().getName() + "; " + PsiUtil.getVirtualFile(superClass) + ")");
+        "Not inheritor: " + derivedClass + "(" + derivedClass.getClass().getName() + "; " + PsiUtilBase.getVirtualFile(derivedClass) + ");" +
+        "\n super: " + superClass + "(" + superClass.getClass().getName() + "; " + PsiUtilBase.getVirtualFile(superClass) + ")");
     }
     return substitutor;
   }

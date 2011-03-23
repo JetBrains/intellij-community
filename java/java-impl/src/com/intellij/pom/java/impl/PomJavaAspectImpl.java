@@ -23,7 +23,6 @@ import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.pom.java.PomJavaAspect;
-import com.intellij.pom.java.events.JavaTreeChanged;
 import com.intellij.pom.java.events.PomJavaAspectChangeSet;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.events.TreeChangeEvent;
@@ -69,7 +68,6 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
     final PsiFile containingFile = changeSet.getRootElement().getPsi().getContainingFile();
     if(!(containingFile.getLanguage() instanceof JavaLanguage)) return;
     final PomJavaAspectChangeSet set = new PomJavaAspectChangeSet(myPomModel);
-    set.addChange(new JavaTreeChanged(containingFile));
     event.registerChangeSet(this, set);
   }
 }

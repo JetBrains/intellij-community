@@ -32,14 +32,11 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.StringTokenizer;
+import java.util.*;
 
 public class Javac2 extends Javac {
     private ArrayList myFormFiles;
-    private Path myNestedFormDirs;
+    private List myNestedFormPathList;
 
     public Javac2() {
     }
@@ -170,34 +167,32 @@ public class Javac2 extends Javac {
     /**
      * Sets the nested form directories that will be used during the
      * compilation.
-     * @param nestedformdirs a path
+     * @param nestedformdirs a list of {@link PrefixedPath}
      */
-    public void setNestedformdirs(Path nestedformdirs) {
-        if (myNestedFormDirs == null) {
-            myNestedFormDirs = nestedformdirs;
-        } else {
-           myNestedFormDirs.append(nestedformdirs);
-        }
+    public void setNestedformdirs(List nestedformdirs) {
+        myNestedFormPathList = nestedformdirs;
     }
 
     /**
      * Gets the nested form directories that will be used during the
      * compilation.
-     * @return the extension directories as a path
+     * @return the extension directories as a list of {@link PrefixedPath}
      */
-    public Path getNestedformdirs() {
-        return myNestedFormDirs;
+    public List getNestedformdirs() {
+        return myNestedFormPathList;
     }
 
     /**
      * Adds a path to nested form directories.
      * @return a path to be configured
      */
-    public Path createNestedformdirs() {
-        if (myNestedFormDirs == null) {
-            myNestedFormDirs = new Path(getProject());
+    public PrefixedPath createNestedformdirs() {
+        PrefixedPath p = new PrefixedPath(getProject());
+        if (myNestedFormPathList == null) {
+            myNestedFormPathList = new ArrayList();
         }
-        return myNestedFormDirs.createPath();
+        myNestedFormPathList.add(p);
+        return p;
     }
 
     /**
@@ -287,8 +282,9 @@ public class Javac2 extends Javac {
                 finally {
                     stream.close();
                 }
-                final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, new AntNestedFormLoader(loader, myNestedFormDirs), false,
-                                                                            new AntClassWriter(getAsmClassWriterFlags(version), loader));
+                AntNestedFormLoader formLoader = new AntNestedFormLoader(loader, myNestedFormPathList);
+                AntClassWriter classWriter = new AntClassWriter(getAsmClassWriterFlags(version), loader);
+                final AsmCodeGenerator codeGenerator = new AsmCodeGenerator(rootContainer, loader, formLoader, false, classWriter);
                 codeGenerator.patchFile(classFile);
                 final FormErrorInfo[] warnings = codeGenerator.getWarnings();
 
@@ -493,52 +489,44 @@ public class Javac2 extends Javac {
 
     private class AntNestedFormLoader implements NestedFormLoader {
         private final ClassLoader myLoader;
-        private final Path myNestedFormDirs;
+        private final List myNestedFormPathList;
         private final HashMap myFormCache = new HashMap();
 
-        public AntNestedFormLoader(final ClassLoader loader, Path nestedFormDirs) {
+        public AntNestedFormLoader(final ClassLoader loader, List nestedFormPathList) {
             myLoader = loader;
-            myNestedFormDirs = nestedFormDirs; 
+            myNestedFormPathList = nestedFormPathList;
         }
 
-        public LwRootContainer loadForm(String formFileName) throws Exception {
-            if (myFormCache.containsKey(formFileName)) {
-                return (LwRootContainer)myFormCache.get(formFileName);
+        public LwRootContainer loadForm(String formFilePath) throws Exception {
+            if (myFormCache.containsKey(formFilePath)) {
+                return (LwRootContainer)myFormCache.get(formFilePath);
             }
-            String formFileFullName = formFileName.toLowerCase();
-            log("Searching for form " + formFileFullName, Project.MSG_VERBOSE);
+
+            String lowerFormFilePath = formFilePath.toLowerCase();
+            log("Searching for form " + lowerFormFilePath, Project.MSG_VERBOSE);
             for (Iterator iterator = myFormFiles.iterator(); iterator.hasNext();) {
                 File file = (File)iterator.next();
                 String name = file.getAbsolutePath().replace(File.separatorChar, '/').toLowerCase();
                 log("Comparing with " + name, Project.MSG_VERBOSE);
-                if (name.endsWith(formFileFullName)) {
-                  return loadForm(formFileName, new FileInputStream(file));
+                if (name.endsWith(lowerFormFilePath)) {
+                  return loadForm(formFilePath, new FileInputStream(file));
                 }
             }
-            if (myNestedFormDirs != null) {
-              String[] list = myNestedFormDirs.list();
-              for (int i = 0, listLength = list.length; i < listLength; i++) {
-                String formPath = list[i];
-                if (!formPath.endsWith("/")) {
-                  formPath += "/";
+
+            if (myNestedFormPathList != null) {
+                for (int i = 0; i < myNestedFormPathList.size(); i++) {
+                    PrefixedPath path = (PrefixedPath)myNestedFormPathList.get(i);
+                    File formFile = path.findFile(formFilePath);
+                    if (formFile != null) {
+                        return loadForm(formFilePath, new FileInputStream(formFile));
+                    }
                 }
-                if (formFileFullName.startsWith("/")) {
-                  formPath += formFileName.substring(1);
-                }
-                else {
-                  formPath += formFileName;
-                }
-                File formFile = new File(formPath.replace('/', File.separatorChar));
-                if (formFile.isFile()) {
-                  return loadForm(formFileName, new FileInputStream(formFile));
-                }
-              }
             }
-            InputStream resourceStream = myLoader.getResourceAsStream(formFileName);
+            InputStream resourceStream = myLoader.getResourceAsStream(formFilePath);
             if (resourceStream != null) {
-              return loadForm(formFileName, resourceStream);
+                return loadForm(formFilePath, resourceStream);
             }
-            throw new Exception("Cannot find nested form file " + formFileName);
+            throw new Exception("Cannot find nested form file " + formFilePath);
         }
 
         private LwRootContainer loadForm(String formFileName, InputStream resourceStream) throws Exception {

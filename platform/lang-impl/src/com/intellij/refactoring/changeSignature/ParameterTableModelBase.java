@@ -100,7 +100,11 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
                                                          int column) {
             Component component = original.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             if (!table.isCellEditable(row, table.convertColumnIndexToModel(column))) {
-              component.setBackground(table.getBackground().darker());
+              Color bg = table.getBackground().darker();
+              component.setBackground(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 230));
+              if (component instanceof EditorTextField) {
+                ((EditorTextField)component).setCenterByHeight(false);
+              }
             }
             return component;
           }

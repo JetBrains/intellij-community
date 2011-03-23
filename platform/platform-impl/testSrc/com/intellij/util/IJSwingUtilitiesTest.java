@@ -20,7 +20,7 @@ import junit.framework.TestCase;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.List;
 
 public class IJSwingUtilitiesTest extends TestCase {
   private final JPanel myPanel = new JPanel();
@@ -52,7 +52,7 @@ public class IJSwingUtilitiesTest extends TestCase {
     CHECK.compareAll(new JComponent[]{label1, subPanel, label2, label3, label4}, getChildren());
   }
 
-  private ArrayList<Component> getChildren() {
+  private List<Component> getChildren() {
     return ContainerUtil.collect(IJSwingUtilities.getChildren(myPanel));
   }
 

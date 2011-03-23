@@ -140,7 +140,38 @@ public class SmartList<E> extends AbstractList<E> {
   }
 
   public Iterator<E> iterator() {
-    return mySize == 0 ? EmptyIterator.<E>getInstance() : super.iterator();
+    if (mySize == 0) {
+      return EmptyIterator.getInstance();
+    }
+    if (mySize == 1) {
+      return new SingletonIterator();
+    }
+    return super.iterator();
+  }
+
+  private class SingletonIterator implements Iterator<E> {
+    private boolean myVisited;
+    private final int myInitialModCount;
+
+    public SingletonIterator() {
+      myInitialModCount = modCount;
+    }
+
+    public boolean hasNext() {
+      return !myVisited;
+    }
+
+    public E next() {
+      if (myVisited) throw new NoSuchElementException();
+      myVisited = true;
+      if (modCount != myInitialModCount) throw new ConcurrentModificationException("ModCount: "+modCount+"; expected: "+myInitialModCount);
+      return (E)myElem;
+    }
+
+    public void remove() {
+      if (modCount != myInitialModCount) throw new ConcurrentModificationException("ModCount: "+modCount+"; expected: "+myInitialModCount);
+      clear();
+    }
   }
 
   public boolean isEmpty() {
@@ -160,6 +191,10 @@ public class SmartList<E> extends AbstractList<E> {
     else {
       ContainerUtil.sort((List<E>)myElem, comparator);
     }
+  }
+
+  public int getModificationCount() {
+    return modCount;
   }
 }
 
