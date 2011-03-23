@@ -18,7 +18,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.imports.ImportFromExistingFix;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.CollectProcessor;
@@ -133,7 +132,9 @@ public class PythonReferenceImporter implements ReferenceImporter {
     PsiFile[] files = FilenameIndex.getFilesByName(project, reftext + ".py", scope);
     for (PsiFile file : files) {
       PsiDirectory parent = file.getParent();
-      if (parent != null && (parent.findFile(PyNames.INIT_DOT_PY) != null || parent == targetFile.getParent())) {
+      if (parent != null && (parent.findFile(PyNames.INIT_DOT_PY) != null ||
+                             ImportFromExistingAction.isRoot(project, parent) ||
+                             parent == targetFile.getParent())) {
         result.add(file);
       }
     }
