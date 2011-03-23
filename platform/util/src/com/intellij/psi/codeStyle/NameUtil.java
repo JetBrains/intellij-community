@@ -82,7 +82,6 @@ public class NameUtil {
         }
         index++;
       }
-      if (upperCaseCount == 0 && lowerCaseCount == 0 && digitCount == 0) continue;
       String word = name.substring(wordStart, index);
       array.add(word);
     }
