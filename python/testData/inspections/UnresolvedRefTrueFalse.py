@@ -1,1 +1,1 @@
-a = <error descr="Unresolved reference 'true'"><caret>true</error>
+a = <warning descr="Unresolved reference 'true'"><caret>true</warning>
