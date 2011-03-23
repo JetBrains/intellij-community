@@ -74,7 +74,7 @@ public class JavaResolveUtil {
     }
 
     int effectiveAccessLevel = PsiUtil.getAccessLevel(modifierList);
-    PsiFile file = FileContextUtil.getContextFile(place); //TODO: implementation method!!!!
+    PsiFile file = FileContextUtil.getContextFile(placeContainingFile); //TODO: implementation method!!!!
     if (JspPsiUtil.isInJspFile(file) && JspPsiUtil.isInJspFile(member.getContainingFile())) return true;
     if (file instanceof XmlFile && !JspPsiUtil.isInJspFile(file)) return true;
     if (effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PUBLIC) {
