@@ -4,9 +4,6 @@
     <scope name="IDEA Test Sources" pattern="test:*..*" />
     <option name="SKIP_IMPORT_STATEMENTS" value="false" />
   </component>
-  <component name="EntryPointsManager">
-    <entry_points version="2.0" />
-  </component>
   <component name="IdProvider" IDEtalkID="88DB5D232B345F18EEFB2825E88EC093" />
   <component name="JavadocGenerationManager">
     <option name="OUTPUT_DIRECTORY" />
@@ -30,9 +27,6 @@
   </component>
   <component name="ProjectKey">
     <option name="state" value="$PROJECT_DIR$/.idea/misc.xml" />
-  </component>
-  <component name="ProjectResources">
-    <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA jdk" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
