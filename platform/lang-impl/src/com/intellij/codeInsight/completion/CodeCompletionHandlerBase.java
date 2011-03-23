@@ -103,7 +103,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     assert psiFile != null : "no PSI file: " + FileDocumentManager.getInstance().getFile(editor.getDocument());
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "Completion should not be invoked inside write action";
+      if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        throw new AssertionError("Completion should not be invoked inside write action");
+      }
     }
 
     if (editor.isViewer()) {
