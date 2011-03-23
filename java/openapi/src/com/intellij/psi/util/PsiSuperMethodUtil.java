@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.List;
 import java.util.Set;
 
 public class PsiSuperMethodUtil {
@@ -69,7 +70,9 @@ public class PsiSuperMethodUtil {
 
   public static boolean isSuperMethod(PsiMethod method, PsiMethod superMethod) {
     HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
-    for (HierarchicalMethodSignature supsig : signature.getSuperSignatures()) {
+    List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
+    for (int i = 0, superSignaturesSize = superSignatures.size(); i < superSignaturesSize; i++) {
+      HierarchicalMethodSignature supsig = superSignatures.get(i);
       PsiMethod supsigme = supsig.getMethod();
       if (superMethod.equals(supsigme) || isSuperMethod(supsigme, superMethod)) return true;
     }
