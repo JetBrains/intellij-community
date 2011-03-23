@@ -24,15 +24,9 @@ public interface RecursionGuard {
   @Nullable
   <T> T doPreventingRecursion(Object key, Computable<T> computation);
 
-  <T> Cacheable<T> doCacheable(Computable<T> computation);
+  StackStamp markStack();
 
-  class Cacheable<T> {
-    public final T result;
-    public final boolean mayCache;
-
-    public Cacheable(T result, boolean mayCache) {
-      this.result = result;
-      this.mayCache = mayCache;
-    }
+  interface StackStamp {
+    boolean mayCacheNow();
   }
 }

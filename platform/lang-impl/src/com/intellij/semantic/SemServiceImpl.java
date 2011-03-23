@@ -188,31 +188,23 @@ public class SemServiceImpl extends SemService{
       return cached;
     }
 
-    final Collection<SemKey> inheritors = myInheritors.get(key);
-    final RecursionGuard.Cacheable<Map<SemKey, List<SemElement>>> cacheable = RecursionManager.createGuard("sem").doCacheable(new Computable<Map<SemKey, List<SemElement>>>() {
-      @Override
-      public Map<SemKey, List<SemElement>> compute() {
-        final Map<SemKey, List<SemElement>> map = new THashMap<SemKey, List<SemElement>>();
-        for (final SemKey each : inheritors) {
-          map.put(each, createSemElements(each, psi));
-        }
-        return map;
-      }
-    });
+    RecursionGuard.StackStamp stamp = RecursionManager.createGuard("semService").markStack();
 
-    Map<SemKey, List<SemElement>> map = cacheable.result;
+    LinkedHashSet<T> result = new LinkedHashSet<T>();
+    final Map<SemKey, List<SemElement>> map = new THashMap<SemKey, List<SemElement>>();
+    for (final SemKey each : myInheritors.get(key)) {
+      List<SemElement> list = createSemElements(each, psi);
+      map.put(each, list);
+      result.addAll((List<T>)list);
+    }
 
-    if (cacheable.mayCache) {
+    if (stamp.mayCacheNow()) {
       final ConcurrentMap<SemKey, List<SemElement>> persistent = cacheOrGetMap(psi, root);
       for (SemKey semKey : map.keySet()) {
         persistent.putIfAbsent(semKey, map.get(semKey));
       }
     }
 
-    LinkedHashSet<T> result = new LinkedHashSet<T>();
-    for (final SemKey each : inheritors) {
-      result.addAll((List<T>)map.get(each));
-    }
     return new ArrayList<T>(result);
   }
 

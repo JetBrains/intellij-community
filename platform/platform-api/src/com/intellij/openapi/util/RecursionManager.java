@@ -60,10 +60,14 @@ public class RecursionManager {
       }
 
       @Override
-      public <T> Cacheable<T> doCacheable(Computable<T> computation) {
-        Integer stamp = ourRecursionsMet.get();
-        final T t = computation.compute();
-        return new Cacheable<T>(t, Comparing.equal(stamp, ourRecursionsMet.get()));
+      public StackStamp markStack() {
+        final Integer stamp = ourRecursionsMet.get();
+        return new StackStamp() {
+          @Override
+          public boolean mayCacheNow() {
+            return Comparing.equal(stamp, ourRecursionsMet.get());
+          }
+        };
       }
     };
   }
