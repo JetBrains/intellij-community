@@ -318,20 +318,25 @@ public class InplaceIntroduceFieldPopup {
                                                     myFieldTypePointer.getType(),
                                                     myIntroduceFieldPanel.isDeleteVariable(),
                                                     myParentClass, false, false);
-        if (myLocalVariable != null) {
-          final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
-            new LocalToFieldHandler.IntroduceFieldRunnable(false, myLocalVariable, myParentClass, settings, myStatic, myOccurrences);
-          fieldRunnable.run();
-        }
-        else {
-          final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
-            new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myInitializerExpression, settings, settings.getForcedType(),
-                                                                    myOccurrences, myOccurenceManager,
-                                                                    myAnchorIdxIfAll != -1? myOccurrences[myAnchorIdxIfAll].getParent() : myAnchorElementIfAll,
-                                                                    myAnchorIdx != -1 ? myOccurrences[myAnchorIdx].getParent() : myAnchorElement, myEditor,
-                                                                    myParentClass);
-          convertToFieldRunnable.run();
-        }
+        final Runnable runnable = new Runnable() {
+          public void run() {
+            if (myLocalVariable != null) {
+              final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
+                new LocalToFieldHandler.IntroduceFieldRunnable(false, myLocalVariable, myParentClass, settings, myStatic, myOccurrences);
+              fieldRunnable.run();
+            }
+            else {
+              final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
+                new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myInitializerExpression, settings, settings.getForcedType(),
+                                                                        myOccurrences, myOccurenceManager,
+                                                                        myAnchorIdxIfAll != -1? myOccurrences[myAnchorIdxIfAll].getParent() : myAnchorElementIfAll,
+                                                                        myAnchorIdx != -1 ? myOccurrences[myAnchorIdx].getParent() : myAnchorElement, myEditor,
+                                                                        myParentClass);
+              convertToFieldRunnable.run();
+            }
+          }
+        };
+        ApplicationManager.getApplication().runWriteAction(runnable);
       }
       super.moveOffsetAfter(success);
     }

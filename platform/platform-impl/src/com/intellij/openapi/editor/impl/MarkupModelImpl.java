@@ -141,7 +141,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     }
   }
 
-  IntervalTreeImpl<RangeHighlighterEx>.IntervalNode addRangeHighlighter(RangeHighlighterEx marker,
+  IntervalTreeImpl.IntervalNode addRangeHighlighter(RangeHighlighterEx marker,
                                                                         int start,
                                                                         int end,
                                                                         boolean greedyToLeft,

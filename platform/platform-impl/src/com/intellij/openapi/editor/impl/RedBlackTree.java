@@ -18,8 +18,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 
 /**
  * User: cdr
@@ -296,9 +294,9 @@ public abstract class RedBlackTree<K> {
   }
 
   public abstract static class Node<K> {
-    private Node<K> left;
-    private Node<K> right;
-    private Node<K> parent = null;
+    protected Node<K> left;
+    protected Node<K> right;
+    protected Node<K> parent = null;
     protected Color color = Color.RED;
 
     public Node() {
@@ -347,8 +345,7 @@ public abstract class RedBlackTree<K> {
     }
 
     public abstract boolean processAliveKeys(@NotNull Processor<? super K> processor);
-    @NotNull
-    public abstract List<K> getAliveKeys();
+
     public abstract boolean hasAliveKey(boolean purgeDead);
   }
 

@@ -62,9 +62,9 @@ public class InplaceIntroduceConstantPopup {
   private final PsiLocalVariable myLocalVariable;
   private final PsiExpression[] myOccurrences;
   private final TypeSelectorManagerImpl myTypeSelectorManager;
-  private final PsiElement myAnchorElement;
+  private PsiElement myAnchorElement;
   private int myAnchorIdx = -1;
-  private final PsiElement myAnchorElementIfAll;
+  private PsiElement myAnchorElementIfAll;
   private int myAnchorIdxIfAll = -1;
   private final OccurenceManager myOccurenceManager;
 
@@ -215,10 +215,10 @@ public class InplaceIntroduceConstantPopup {
     return ApplicationManager.getApplication().runWriteAction(new Computable<PsiField>() {
       @Override
       public PsiField compute() {
-        PsiField field = elementFactory.createField(myConstantName != null ? myConstantName : names[0], psiType);
-        field = (PsiField)myParentClass.add(field);
+        PsiField field = elementFactory.createFieldFromText(psiType.getCanonicalText() + " " + (myConstantName != null ? myConstantName : names[0]) + " = " + myExprText + ";", myParentClass);
         PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
         PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
+        field = BaseExpressionToFieldHandler.ConvertToFieldRunnable.appendField(myExpr, myParentClass, myParentClass, myAnchorElementIfAll, field);
         return field;
       }
     });
@@ -319,20 +319,23 @@ public class InplaceIntroduceConstantPopup {
                                                     myFieldTypePointer.getType(),
                                                     isDeleteVariable(),
                                                     myParentClass, isAnnotateNonNls(), false);
-        if (myLocalVariable != null) {
-          final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
-            new LocalToFieldHandler.IntroduceFieldRunnable(false, myLocalVariable, myParentClass, settings, true, myOccurrences);
-          fieldRunnable.run();
-        }
-        else {
-          final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
-            new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(),
-                                                                    myOccurrences, myOccurenceManager,
-                                                                    myAnchorIdxIfAll != -1? myOccurrences[myAnchorIdxIfAll].getParent() : myAnchorElementIfAll,
-                                                                    myAnchorIdx != -1 ? myOccurrences[myAnchorIdx].getParent() : myAnchorElement, myEditor,
-                                                                    myParentClass);
-          convertToFieldRunnable.run();
-        }
+        final Runnable runnable = new Runnable() {
+          public void run() {
+            if (myLocalVariable != null) {
+              final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
+                new LocalToFieldHandler.IntroduceFieldRunnable(false, myLocalVariable, myParentClass, settings, true, myOccurrences);
+              fieldRunnable.run();
+            }
+            else {
+              final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
+                new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(),
+                                                                        myOccurrences, myOccurenceManager,
+                                                                        myAnchorElementIfAll, myAnchorElement, myEditor, myParentClass);
+              convertToFieldRunnable.run();
+            }
+          }
+        };
+        ApplicationManager.getApplication().runWriteAction(runnable);
       }
       super.moveOffsetAfter(success);
       if (myMoveToAnotherClassCb.isSelected()) {
@@ -404,6 +407,14 @@ public class InplaceIntroduceConstantPopup {
             if (psiExpression != null) {
               myOccurrences[i] = psiExpression;
             }
+          }
+
+          if (myAnchorIdxIfAll != -1) {
+            myAnchorElementIfAll = myOccurrences[myAnchorIdxIfAll].getParent();
+          }
+
+          if (myAnchorIdx != -1) {
+            myAnchorElement = myOccurrences[myAnchorIdx].getParent();
           }
           myOccurrenceMarkers = null;
           if (psiField.isValid()) {

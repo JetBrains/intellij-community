@@ -180,7 +180,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
         }
         saveSettings(psiVariable);
         adjustLine(psiVariable, document);
-        int startOffset = myExprMarker != null ? myExprMarker.getStartOffset() : psiVariable.getTextOffset();
+        int startOffset = myExprMarker != null && myExprMarker.isValid() ? myExprMarker.getStartOffset() : psiVariable.getTextOffset();
         final PsiFile file = psiVariable.getContainingFile();
         final PsiReference referenceAt = file.findReferenceAt(startOffset);
         if (referenceAt != null && referenceAt.resolve() instanceof PsiLocalVariable) {

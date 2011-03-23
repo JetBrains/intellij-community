@@ -35,7 +35,6 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -230,7 +229,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     JavaCodeStyleManager.getInstance(field.getProject()).shortenClassReferences(field);
   }
 
-  private static PsiElement getPhysicalElement(final PsiExpression selectedExpr) {
+  public static PsiElement getPhysicalElement(final PsiExpression selectedExpr) {
     PsiElement element = selectedExpr.getUserData(ElementToWorkOn.PARENT);
     if (element == null) element = selectedExpr;
     return element;
@@ -677,32 +676,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                          createField(myFieldName, myType, initializer, initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null,
                                      myParentClass);
 
-        PsiElement finalAnchorElement = null;
-        if (destClass == myParentClass) {
-          for (finalAnchorElement = myAnchorElement;
-               finalAnchorElement != null && finalAnchorElement.getParent() != destClass;
-               finalAnchorElement = finalAnchorElement.getParent()) {
-
-          }
-        }
-        PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
         setModifiers(myField, mySettings, mySettings.isDeclareStatic());
-        if ((anchorMember instanceof PsiField) &&
-            anchorMember.hasModifierProperty(PsiModifier.STATIC) == myField.hasModifierProperty(PsiModifier.STATIC)) {
-          myField = (PsiField)destClass.addBefore(myField, anchorMember);
-        }
-        else if (anchorMember instanceof PsiClassInitializer) {
-          myField = (PsiField)destClass.addBefore(myField, anchorMember);
-          destClass.addBefore(CodeEditUtil.createLineFeed(myField.getManager()), anchorMember);
-        }
-        else {
-          final PsiField forwardReference = checkForwardRefs(initializer);
-          if (forwardReference != null) {
-            myField = (PsiField)destClass.addAfter(myField, forwardReference);
-          } else {
-            myField = (PsiField)destClass.add(myField);
-          }
-        }
+        myField = appendField(initializer, destClass, myParentClass, myAnchorElement, myField);
         if (!mySettings.isIntroduceEnumConstant()) {
           VisibilityUtil.fixVisibility(myOccurrences, myField, mySettings.getFieldVisibility());
         }
@@ -800,7 +775,42 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       }
     }
 
-    private PsiField checkForwardRefs(PsiExpression initializer) {
+    static PsiField appendField(final PsiExpression initializer,
+                                final PsiClass destClass,
+                                final PsiClass parentClass,
+                                final PsiElement anchorElement,
+                                final PsiField psiField) {
+      PsiElement finalAnchorElement = null;
+      if (destClass == parentClass) {
+        for (finalAnchorElement = anchorElement;
+             finalAnchorElement != null && finalAnchorElement.getParent() != destClass;
+             finalAnchorElement = finalAnchorElement.getParent()) {
+
+        }
+      }
+      PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
+
+      if ((anchorMember instanceof PsiField) &&
+          anchorMember.hasModifierProperty(PsiModifier.STATIC) == psiField.hasModifierProperty(PsiModifier.STATIC)) {
+        return (PsiField)destClass.addBefore(psiField, anchorMember);
+      }
+      else if (anchorMember instanceof PsiClassInitializer) {
+
+        PsiField field = (PsiField)destClass.addBefore(psiField, anchorMember);
+        destClass.addBefore(CodeEditUtil.createLineFeed(field.getManager()), anchorMember);
+        return field;
+      }
+      else {
+        final PsiField forwardReference = checkForwardRefs(initializer, parentClass);
+        if (forwardReference != null) {
+          return (PsiField)destClass.addAfter(psiField, forwardReference);
+        } else {
+          return (PsiField)destClass.add(psiField);
+        }
+      }
+    }
+
+    private static PsiField checkForwardRefs(PsiExpression initializer, final PsiClass parentClass) {
       final PsiField[] refConstantFields = new PsiField[1];
       initializer.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
@@ -809,7 +819,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           final PsiElement resolve = expression.resolve();
           if (resolve instanceof PsiField &&
               ((PsiField)resolve).hasModifierProperty(PsiModifier.FINAL) &&
-              PsiTreeUtil.isAncestor(myParentClass, resolve, false) && ((PsiField)resolve).hasInitializer()) {
+              PsiTreeUtil.isAncestor(parentClass, resolve, false) && ((PsiField)resolve).hasInitializer()) {
             if (refConstantFields[0] == null || refConstantFields[0].getTextOffset() < resolve.getTextOffset()) {
               refConstantFields[0] = (PsiField)resolve;
             }

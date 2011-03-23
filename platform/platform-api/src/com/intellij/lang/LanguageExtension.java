@@ -43,27 +43,21 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     return key.getID();
   }
 
-  public T forLanguage(Language l) {
+  public T forLanguage(@NotNull Language l) {
     T cached = l.getUserData(IN_LANGUAGE_CACHE);
     if (cached != null) return cached;
 
     List<T> extensions = forKey(l);
     T result;
     if (extensions.isEmpty()) {
-
       Language base = l.getBaseLanguage();
-      if (base != null) {
-        result = forLanguage(base);
-      }
-      else {
-        result = myDefaultImplementation;
-      }
+      result = base == null ? myDefaultImplementation : forLanguage(base);
     }
     else {
       result = extensions.get(0);
     }
-
-    l.putUserData(IN_LANGUAGE_CACHE, result);
+    if (result == null) return result;
+    l.putUserDataIfAbsent(IN_LANGUAGE_CACHE, result);
     return result;
   }
 

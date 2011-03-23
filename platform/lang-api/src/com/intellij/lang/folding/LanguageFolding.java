@@ -21,8 +21,8 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -38,7 +38,7 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
   }
 
   @Override
-  public FoldingBuilder forLanguage(Language l) {
+  public FoldingBuilder forLanguage(@NotNull Language l) {
     FoldingBuilder cached = l.getUserData(getLanguageCache());
     if (cached != null) return cached;
 

@@ -406,8 +406,7 @@ public class CodeEditUtil {
 
   public static void setOldIndentation(final TreeElement treeElement, final int oldIndentation) {
     if(treeElement == null) return;
-    if(oldIndentation >= 0) treeElement.putCopyableUserData(INDENT_INFO, oldIndentation);
-    else treeElement.putCopyableUserData(INDENT_INFO, null);
+    treeElement.putCopyableUserData(INDENT_INFO, oldIndentation >= 0 ? oldIndentation : null);
   }
 
   public static boolean isMarkedToReformatBefore(final TreeElement element) {
