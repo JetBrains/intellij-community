@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
  * User: dcheryasov
  * Date: Jul 31, 2008
  */
-public interface ComprhIfComponent {
+public interface ComprhIfComponent extends ComprehensionComponent {
   @Nullable  
   PyExpression getTest();
 }

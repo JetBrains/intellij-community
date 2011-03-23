@@ -5,7 +5,7 @@ package com.jetbrains.python.psi;
  * User: dcheryasov
  * Date: Jul 31, 2008
  */
-public interface ComprhForComponent {
-    PyExpression getIteratorVariable();
-    PyExpression getIteratedList();
+public interface ComprhForComponent extends ComprehensionComponent {
+  PyExpression getIteratorVariable();
+  PyExpression getIteratedList();
 }

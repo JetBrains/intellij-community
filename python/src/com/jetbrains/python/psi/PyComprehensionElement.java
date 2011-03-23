@@ -7,6 +7,7 @@ import java.util.List;
  */
 public interface PyComprehensionElement extends PyExpression, NameDefiner {
   PyExpression getResultExpression();
+  List<ComprehensionComponent> getComponents();
   List<ComprhForComponent> getForComponents();
   List<ComprhIfComponent> getIfComponents();
 }

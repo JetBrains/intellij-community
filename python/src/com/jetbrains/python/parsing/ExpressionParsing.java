@@ -144,9 +144,7 @@ public class ExpressionParsing extends Parsing {
         nextToken();
         break;
       }
-      if (myBuilder.getTokenType() == PyTokenTypes.FOR_KEYWORD) {
-        expr.done(exprType);
-        expr = expr.precede();
+      if (atToken(PyTokenTypes.FOR_KEYWORD)) {
         continue;
       }
       myBuilder.error(message("PARSE.expected.for.or.bracket"));

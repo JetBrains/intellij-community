@@ -37,8 +37,18 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
    * @return all "for components"
    */
   public List<ComprhForComponent> getForComponents() {
+    final List<ComprhForComponent> list = new ArrayList<ComprhForComponent>(5);
+    visitComponents(new ComprehensionElementVisitor() {
+      @Override
+      void visitForComponent(ComprhForComponent component) {
+        list.add(component);
+      }
+    });
+    return list;
+  }
+
+  private void visitComponents(ComprehensionElementVisitor visitor) {
     ASTNode node = getNode().getFirstChildNode();
-    List<ComprhForComponent> list = new ArrayList<ComprhForComponent>(5);
     while (node != null) {
       IElementType type = node.getElementType();
       ASTNode next = getNextExpression(node);
@@ -48,7 +58,7 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
         if (next2 == null) break;
         final PyExpression variable = (PyExpression)next.getPsi();
         final PyExpression iterated = (PyExpression)next2.getPsi();
-        list.add(new ComprhForComponent() {
+        visitor.visitForComponent(new ComprhForComponent() {
           public PyExpression getIteratorVariable() {
             return variable;
           }
@@ -58,21 +68,9 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
           }
         });
       }
-      node = node.getTreeNext();
-    }
-    return list;
-  }
-
-  public List<ComprhIfComponent> getIfComponents() {
-    ASTNode node = getNode().getFirstChildNode();
-    List<ComprhIfComponent> list = new ArrayList<ComprhIfComponent>(5);
-    while (node != null) {
-      IElementType type = node.getElementType();
-      ASTNode next = getNextExpression(node);
-      if (next == null) break;
-      if (type == PyTokenTypes.IF_KEYWORD) {
+      else if (type == PyTokenTypes.IF_KEYWORD) {
         final PyExpression test = (PyExpression)next.getPsi();
-        list.add(new ComprhIfComponent() {
+        visitor.visitIfComponent(new ComprhIfComponent() {
           public PyExpression getTest() {
             return test;
           }
@@ -80,6 +78,32 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
       }
       node = node.getTreeNext();
     }
+  }
+
+  public List<ComprhIfComponent> getIfComponents() {
+    final List<ComprhIfComponent> list = new ArrayList<ComprhIfComponent>(5);
+    visitComponents(new ComprehensionElementVisitor() {
+      @Override
+      void visitIfComponent(ComprhIfComponent component) {
+        list.add(component);
+      }
+    });
+    return list;
+  }
+
+  public List<ComprehensionComponent> getComponents() {
+    final List<ComprehensionComponent> list = new ArrayList<ComprehensionComponent>(5);
+    visitComponents(new ComprehensionElementVisitor() {
+      @Override
+      void visitForComponent(ComprhForComponent component) {
+        list.add(component);
+      }
+
+      @Override
+      void visitIfComponent(ComprhIfComponent component) {
+        list.add(component);
+      }
+    });
     return list;
   }
 
@@ -116,5 +140,13 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
 
   public boolean mustResolveOutside() {
     return false;
+  }
+
+  abstract class ComprehensionElementVisitor {
+    void visitIfComponent(ComprhIfComponent component) {
+    }
+
+    void visitForComponent(ComprhForComponent component) {
+    }
   }
 }
