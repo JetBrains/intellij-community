@@ -424,6 +424,8 @@
     <colorSettingsPage implementation="com.jetbrains.python.buildout.config.BuildoutCfgColorsPage"/>
     <projectService serviceInterface="com.jetbrains.python.testing.TestRunnerService"
                     serviceImplementation="com.jetbrains.python.testing.TestRunnerService"/>
+    <projectService serviceInterface="com.intellij.execution.testframework.autotest.AutoTestManager"
+                serviceImplementation="com.intellij.execution.testframework.autotest.AutoTestManager"/>
 
     <problemFileHighlightFilter implementation="com.jetbrains.python.buildout.config.BuildoutCfgProblemFileHighlightFilter"/>
 
