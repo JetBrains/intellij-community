@@ -1,2 +1,2 @@
 s = 3
-<error descr="Unresolved reference 'ref'"><caret>ref</error>(s, t=1)
+<warning descr="Unresolved reference 'ref'"><caret>ref</warning>(s, t=1)

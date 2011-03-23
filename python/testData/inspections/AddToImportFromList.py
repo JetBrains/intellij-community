@@ -1,3 +1,3 @@
 from AddToImportFromFoo import bar
 
-<caret><error descr="Unresolved reference 'foo'">foo</error> # must get imported
+<caret><warning descr="Unresolved reference 'foo'">foo</warning> # must get imported

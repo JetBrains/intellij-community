@@ -1,4 +1,4 @@
 "Doc comment stays intact"
-<caret><error descr="Unresolved reference 'ImportTarget'">ImportTarget</error>.foo
+<caret><warning descr="Unresolved reference 'ImportTarget'">ImportTarget</warning>.foo
 
 foo = 1

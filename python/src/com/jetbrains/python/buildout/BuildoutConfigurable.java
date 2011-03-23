@@ -2,6 +2,7 @@ package com.jetbrains.python.buildout;
 
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -14,6 +15,7 @@ import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
@@ -26,7 +28,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A silly configurable to add buildout facet configurator to PyCharm
@@ -120,7 +125,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
       if (script_file == null || script_file.isDirectory()) {
         throw new ConfigurationException("Invalid script file '" + script_name + "'");
       }
-      paths_from_script = BuildoutFacet.extractFromScript(script_file);
+      paths_from_script = BuildoutFacet.extractBuildoutPaths(script_file);
       if (paths_from_script == null) {
         throw new ConfigurationException("Failed to extract paths from '" + script_file.getPresentableName() + "'");
       }
@@ -147,7 +152,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
           // update existing
           Library lib = orderEntry.getLibrary();
           if (lib != null) {
-            fillLibrary(lib, paths);
+            fillLibrary(module.getProject(), lib, paths);
             return;
           }
         }
@@ -158,21 +163,38 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
           .getLibraryTable(root_model.getProject())
           .createLibrary(BUILDOUT_LIB_NAME)
         ;
-        fillLibrary(lib, paths);
+        fillLibrary(module.getProject(), lib, paths);
         root_model.addLibraryEntry(lib);
         root_model.commit();
       }
     });
   }
 
-  private static void fillLibrary(Library lib, List<String> paths) {
+  private static void fillLibrary(Project project, Library lib, List<String> paths) {
     Library.ModifiableModel modifiableModel = lib.getModifiableModel();
     for (String root : lib.getUrls(OrderRootType.CLASSES)) {
       modifiableModel.removeRoot(root, OrderRootType.CLASSES);
     }
+    Set<VirtualFile> roots = new HashSet<VirtualFile>();
+    ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
+    Collections.addAll(roots, rootManager.getContentRoots());
+    Collections.addAll(roots, rootManager.getContentSourceRoots());
     if (paths != null) {
       for (String dir : paths) {
-        modifiableModel.addRoot("file://"+dir, OrderRootType.CLASSES);
+        VirtualFile pathEntry = LocalFileSystem.getInstance().findFileByPath(dir);
+        if (pathEntry != null && !pathEntry.isDirectory() && pathEntry.getFileType() instanceof ArchiveFileType) {
+          pathEntry = JarFileSystem.getInstance().getJarRootForLocalFile(pathEntry);
+        }
+        // buildout includes source root of project in paths; don't add it as library home
+        if (pathEntry != null && roots.contains(pathEntry)) {
+          continue;
+        }
+        if (pathEntry != null) {
+          modifiableModel.addRoot(pathEntry, OrderRootType.CLASSES);
+        }
+        else {
+          modifiableModel.addRoot("file://"+dir, OrderRootType.CLASSES);
+        }
       }
     }
     modifiableModel.commit();
