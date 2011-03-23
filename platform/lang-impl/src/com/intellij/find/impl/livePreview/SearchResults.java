@@ -335,7 +335,7 @@ public class SearchResults {
       if (searchResult.getPrimaryRange().intersects(oldCursorRange)) {
         mayBeOldCursor = searchResult;
       }
-      if (searchResult.getPrimaryRange().equals(oldCursorRange)) {
+      if (searchResult.getPrimaryRange().getStartOffset() == oldCursorRange.getStartOffset()) {
         break;
       }
     }
