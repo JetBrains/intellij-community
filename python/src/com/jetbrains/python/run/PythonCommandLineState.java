@@ -41,10 +41,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Leonid Shalupov
@@ -207,32 +204,43 @@ public abstract class PythonCommandLineState extends CommandLineState {
   private void buildPythonPath(GeneralCommandLine commandLine, boolean passParentEnvs) {
     Sdk pythonSdk = PythonSdkType.findSdkByPath(myConfig.getSdkHome());
     if (pythonSdk != null) {
-      List<String> pathList = Lists.newArrayList();
-      final SdkAdditionalData sdkAdditionalData = pythonSdk.getSdkAdditionalData();
-      if (sdkAdditionalData instanceof PythonSdkAdditionalData) {
-        final Set<VirtualFile> addedPaths = ((PythonSdkAdditionalData)sdkAdditionalData).getAddedPaths();
-        for (VirtualFile file : addedPaths) {
-          if (file.getFileSystem() instanceof JarFileSystem) {
-            VirtualFile realFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
-            if (realFile != null) {
-              pathList.add(FileUtil.toSystemDependentName(realFile.getPath()));
-            }
-          }
-          else {
-            pathList.add(FileUtil.toSystemDependentName(file.getPath()));
+      List<String> pathList = Lists.newArrayList(getAddedPaths(pythonSdk));
+      pathList.addAll(collectPythonPath());
+      initPythonPath(commandLine, passParentEnvs, pathList, myConfig.getInterpreterPath());
+    }
+  }
+
+  public static void initPythonPath(GeneralCommandLine commandLine,
+                                    boolean passParentEnvs,
+                                    List<String> pathList,
+                                    final String interpreterPath) {
+    final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(interpreterPath);
+    if (flavor != null) {
+      flavor.initPythonPath(commandLine, pathList);
+    }
+    else {
+      PythonSdkFlavor.initPythonPath(commandLine.getEnvParams(), passParentEnvs, pathList);
+    }
+  }
+
+  public static List<String> getAddedPaths(Sdk pythonSdk) {
+    List<String> pathList = new ArrayList<String>();
+    final SdkAdditionalData sdkAdditionalData = pythonSdk.getSdkAdditionalData();
+    if (sdkAdditionalData instanceof PythonSdkAdditionalData) {
+      final Set<VirtualFile> addedPaths = ((PythonSdkAdditionalData)sdkAdditionalData).getAddedPaths();
+      for (VirtualFile file : addedPaths) {
+        if (file.getFileSystem() instanceof JarFileSystem) {
+          VirtualFile realFile = JarFileSystem.getInstance().getVirtualFileForJar(file);
+          if (realFile != null) {
+            pathList.add(FileUtil.toSystemDependentName(realFile.getPath()));
           }
         }
-      }
-      pathList.addAll(collectPythonPath());
-
-      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(myConfig.getInterpreterPath());
-      if (flavor != null) {
-        flavor.initPythonPath(commandLine, pathList);
-      }
-      else {
-        PythonSdkFlavor.initPythonPath(commandLine.getEnvParams(), passParentEnvs, pathList);
+        else {
+          pathList.add(FileUtil.toSystemDependentName(file.getPath()));
+        }
       }
     }
+    return pathList;
   }
 
   protected Collection<String> collectPythonPath() {
