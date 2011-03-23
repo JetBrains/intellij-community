@@ -15,81 +15,71 @@
  */
 package com.intellij.openapi.util;
 
-import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.Set;
+import java.util.Map;
 
 /**
  * @author peter
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class RecursionManager {
-  private static final ThreadLocal<Integer> ourRecursionsMet = new ThreadLocal<Integer>();
-  private static final ThreadLocal<LinkedHashMap<Object, Set<Object>>> ourProgress = new ThreadLocal<LinkedHashMap<Object, Set<Object>>>();
-  private static final ThreadLocal<Set<Object>> ourNoCache = new ThreadLocal<Set<Object>>();
+  private static final ThreadLocal<Integer> ourStamp = new ThreadLocal<Integer>() {
+    @Override
+    protected Integer initialValue() {
+      return 0;
+    }
+  };
+  private static final ThreadLocal<LinkedHashMap<Object, Integer>> ourProgress = new ThreadLocal<LinkedHashMap<Object, Integer>>() {
+    @Override
+    protected LinkedHashMap<Object, Integer> initialValue() {
+      return new LinkedHashMap<Object, Integer>();
+    }
+  };
 
   public static RecursionGuard createGuard(final String id) {
     return new RecursionGuard() {
       @Override
       public <T> T doPreventingRecursion(Object key, Computable<T> computation) {
         Object realKey = Pair.create(id, key);
-        LinkedHashMap<Object, Set<Object>> progressMap = ourProgress.get();
-        if (progressMap == null) {
-          ourProgress.set(progressMap = new LinkedHashMap<Object, Set<Object>>());
-        }
-        else if (progressMap.containsKey(realKey)) {
-          disableCachingForStackLoop(realKey, progressMap);
+        LinkedHashMap<Object, Integer> progressMap = ourProgress.get();
+        if (progressMap.containsKey(realKey)) {
+          int stamp = ourStamp.get() + 1;
+          ourStamp.set(stamp);
 
-          ourRecursionsMet.set((ourRecursionsMet.get() != null ? ourRecursionsMet.get() : 0) + 1);
+          boolean inLoop = false;
+          for (Map.Entry<Object, Integer> entry: progressMap.entrySet()) {
+            if (inLoop) {
+              entry.setValue(stamp);
+            }
+            else if (entry.getKey().equals(realKey)) {
+              inLoop = true;
+            }
+          }
 
           return null;
         }
 
-        progressMap.put(realKey, null);
+        progressMap.put(realKey, ourStamp.get());
 
         try {
           return computation.compute();
         }
         finally {
-          Set<Object> deps = progressMap.remove(realKey);
-          Set<Object> noCache = ourNoCache.get();
-          if (noCache != null && deps != null) {
-            noCache.removeAll(deps);
-          }
+          ourStamp.set(progressMap.remove(realKey));
         }
       }
 
       @Override
       public StackStamp markStack() {
-        final Integer stamp = ourRecursionsMet.get();
+        final Integer stamp = ourStamp.get();
         return new StackStamp() {
           @Override
           public boolean mayCacheNow() {
-            return Comparing.equal(stamp, ourRecursionsMet.get());
+            return Comparing.equal(stamp, ourStamp.get());
           }
         };
       }
     };
   }
 
-  private static void disableCachingForStackLoop(Object realKey, LinkedHashMap<Object, Set<Object>> progressMap) {
-    Set<Object> noCache = ourNoCache.get();
-    if (noCache == null) {
-      ourNoCache.set(noCache = new HashSet<Object>());
-    }
-
-    Set<Object> deps = progressMap.get(realKey);
-    if (deps == null) {
-      progressMap.put(realKey, deps = new HashSet<Object>());
-    }
-
-    boolean inCycle = false;
-    for (Object o : progressMap.keySet()) {
-      if (inCycle || o.equals(realKey)) {
-        inCycle = true;
-        deps.add(o);
-        noCache.add(o);
-      }
-    }
-  }
 }
