@@ -1,4 +1,4 @@
-package com.jetbrains.python.codeInsight;
+package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.lang.ImportOptimizer;

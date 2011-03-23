@@ -251,7 +251,7 @@
     <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyInheritorRenameFactory"/>
     <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyParametersRenameFactory"/>
 
-    <lang.importOptimizer language="Python" implementationClass="com.jetbrains.python.codeInsight.PyImportOptimizer"/>
+    <lang.importOptimizer language="Python" implementationClass="com.jetbrains.python.codeInsight.imports.PyImportOptimizer"/>
 
     <codeStyleSettingsProvider implementation="com.jetbrains.python.formatter.PyCodeStyleSettingsProvider"/>
     <langCodeStyleSettingsProvider implementation="com.jetbrains.python.formatter.PyLanguageCodeStyleSettingsProvider"/>

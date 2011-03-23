@@ -2,7 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.jetbrains.python.actions.AddImportHelper;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
 /**

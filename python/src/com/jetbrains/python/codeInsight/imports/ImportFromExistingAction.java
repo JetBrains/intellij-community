@@ -1,4 +1,4 @@
-package com.jetbrains.python.actions;
+package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.ide.DataManager;

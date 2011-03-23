@@ -1,4 +1,4 @@
-package com.jetbrains.python.actions;
+package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -8,7 +8,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.codeInsight.PyImportOptimizer;
+import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import org.jetbrains.annotations.NotNull;
 
 /**

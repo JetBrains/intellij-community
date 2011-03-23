@@ -1,4 +1,4 @@
-package com.jetbrains.python.actions;
+package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
