@@ -426,7 +426,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     } else if (resolved instanceof PsiVariable) {
       result = ((PsiVariable) resolved).getType();
     } else
-    if (resolved instanceof PsiMethod && !GroovyPsiManager.isTypeBeingInferred(resolved)) {
+    if (resolved instanceof PsiMethod) {
       if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
         return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, this);
       }

@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.util;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,10 +31,10 @@ public class RecursionManager {
       return 0;
     }
   };
-  private static final ThreadLocal<LinkedHashMap<Object, Integer>> ourProgress = new ThreadLocal<LinkedHashMap<Object, Integer>>() {
+  private static final ThreadLocal<LinkedHashMap<Pair<String, Object>, Integer>> ourProgress = new ThreadLocal<LinkedHashMap<Pair<String, Object>, Integer>>() {
     @Override
-    protected LinkedHashMap<Object, Integer> initialValue() {
-      return new LinkedHashMap<Object, Integer>();
+    protected LinkedHashMap<Pair<String, Object>, Integer> initialValue() {
+      return new LinkedHashMap<Pair<String, Object>, Integer>();
     }
   };
 
@@ -40,21 +42,10 @@ public class RecursionManager {
     return new RecursionGuard() {
       @Override
       public <T> T doPreventingRecursion(Object key, Computable<T> computation) {
-        Object realKey = Pair.create(id, key);
-        LinkedHashMap<Object, Integer> progressMap = ourProgress.get();
+        Pair<String, Object> realKey = Pair.create(id, key);
+        LinkedHashMap<Pair<String, Object>, Integer> progressMap = ourProgress.get();
         if (progressMap.containsKey(realKey)) {
-          int stamp = ourStamp.get() + 1;
-          ourStamp.set(stamp);
-
-          boolean inLoop = false;
-          for (Map.Entry<Object, Integer> entry: progressMap.entrySet()) {
-            if (inLoop) {
-              entry.setValue(stamp);
-            }
-            else if (entry.getKey().equals(realKey)) {
-              inLoop = true;
-            }
-          }
+          prohibitResultCaching(key);
 
           return null;
         }
@@ -78,6 +69,34 @@ public class RecursionManager {
             return Comparing.equal(stamp, ourStamp.get());
           }
         };
+      }
+
+      @Override
+      public List<Object> currentStack() {
+        ArrayList<Object> result = new ArrayList<Object>();
+        LinkedHashMap<Pair<String, Object>, Integer> map = ourProgress.get();
+        for (Pair<String, Object> pair : map.keySet()) {
+          if (pair.first == id) {
+            result.add(pair.second);
+          }
+        }
+        return result;
+      }
+
+      @Override
+      public void prohibitResultCaching(Object since) {
+        int stamp = ourStamp.get() + 1;
+        ourStamp.set(stamp);
+
+        boolean inLoop = false;
+        for (Map.Entry<Pair<String, Object>, Integer> entry: ourProgress.get().entrySet()) {
+          if (inLoop) {
+            entry.setValue(stamp);
+          }
+          else if (entry.getKey().first.equals(id) && entry.getKey().second.equals(since)) {
+            inLoop = true;
+          }
+        }
       }
     };
   }

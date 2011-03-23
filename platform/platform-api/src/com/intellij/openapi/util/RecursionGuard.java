@@ -17,6 +17,8 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
 * @author peter
 */
@@ -25,6 +27,10 @@ public interface RecursionGuard {
   <T> T doPreventingRecursion(Object key, Computable<T> computation);
 
   StackStamp markStack();
+
+  List<Object> currentStack();
+
+  void prohibitResultCaching(Object since);
 
   interface StackStamp {
     boolean mayCacheNow();

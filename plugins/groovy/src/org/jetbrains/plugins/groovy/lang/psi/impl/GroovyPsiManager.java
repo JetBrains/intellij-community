@@ -46,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -74,6 +73,7 @@ public class GroovyPsiManager {
   private final TypeInferenceHelper myTypeInferenceHelper;
 
   private static final String SYNTHETIC_CLASS_TEXT = "class __ARRAY__ { public int length }";
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("groovyPsiManager");
 
   public GroovyPsiManager(Project project) {
     myProject = project;
@@ -160,7 +160,7 @@ public class GroovyPsiManager {
   public <T extends GroovyPsiElement> PsiType getType(T element, Function<T, PsiType> calculator) {
     PsiType type = myCalculatedTypes.get(element);
     if (type == null) {
-      RecursionGuard.StackStamp stamp = RecursionManager.createGuard("groovyPsiManager").markStack();
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
       type = calculator.fun(element);
       if (type == null) {
         type = PsiType.NULL;
@@ -193,30 +193,15 @@ public class GroovyPsiManager {
     return myArrayClass;
   }
 
-  private static final ThreadLocal<List<PsiElement>> myElementsWithTypesBeingInferred = new ThreadLocal<List<PsiElement>>() {
-    protected List<PsiElement> initialValue() {
-      return new ArrayList<PsiElement>();
-    }
-  };
-
   @Nullable
   public static PsiType inferType(PsiElement element, Computable<PsiType> computable) {
-    final List<PsiElement> curr = myElementsWithTypesBeingInferred.get();
-    if (curr.size() > 7) { //don't end up walking the whole project PSI
+    List<Object> stack = ourGuard.currentStack();
+    if (stack.size() > 7) { //don't end up walking the whole project PSI
+      ourGuard.prohibitResultCaching(stack.get(0));
       return null;
     }
 
-    try {
-      curr.add(element);
-      return computable.compute();
-    }
-    finally {
-      curr.remove(element);
-    }
-  }
-
-  public static boolean isTypeBeingInferred(PsiElement element) {
-    return myElementsWithTypesBeingInferred.get().contains(element);
+    return ourGuard.doPreventingRecursion(element, computable);
   }
 
   public GroovyShortNamesCache getNamesCache() {
