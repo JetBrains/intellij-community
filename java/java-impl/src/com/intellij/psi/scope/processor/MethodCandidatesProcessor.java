@@ -50,7 +50,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
 
   public void addMethod(final PsiMethod method, final PsiSubstitutor substitutor, final boolean staticProblem) {
     boolean isAccessible = JavaResolveUtil.isAccessible(method, method.getContainingClass(), method.getModifierList(),
-                                                        myPlace, myAccessClass, myCurrentFileContext);
+                                                        myPlace, myAccessClass, myCurrentFileContext, myPlaceFile);
     myHasAccessibleStaticCorrectCandidate |= isAccessible && !staticProblem;
 
     if (isAccepted(method)) {
