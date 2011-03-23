@@ -897,8 +897,8 @@ public class TypeConversionUtil {
    */
   @NotNull
   public static PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass,
-                                                        PsiClass derivedClass,
-                                                        PsiSubstitutor derivedSubstitutor) {
+                                                        @NotNull PsiClass derivedClass,
+                                                        @NotNull PsiSubstitutor derivedSubstitutor) {
     // [dsl] assertion commented out since we no longer cache isInheritor
     //LOG.assertTrue(derivedClass.isInheritor(superClass, true), "Not inheritor: " + derivedClass + " super: " + superClass);
 
@@ -928,8 +928,8 @@ public class TypeConversionUtil {
     }
     if (substitutor == null) {
       LOG.error(
-        "Not inheritor: " + derivedClass + "(" + derivedClass.getClass().getName() + "; " + PsiUtil.getVirtualFile(derivedClass) + ");" +
-        "\n super: " + superClass + "(" + superClass.getClass().getName() + "; " + PsiUtil.getVirtualFile(superClass) + ")");
+        "Not inheritor: " + derivedClass + "(" + derivedClass.getClass().getName() + "; " + PsiUtilBase.getVirtualFile(derivedClass) + ");" +
+        "\n super: " + superClass + "(" + superClass.getClass().getName() + "; " + PsiUtilBase.getVirtualFile(superClass) + ")");
     }
     return substitutor;
   }
