@@ -2,6 +2,7 @@ package org.jetbrains.jps.builders.javacApi
 
 import org.jetbrains.jps.ModuleBuildState
 import org.jetbrains.jps.ModuleChunk
+import org.jetbrains.ether.dependencyView.Callbacks
 
 /**
  * @author nik

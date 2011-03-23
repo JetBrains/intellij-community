@@ -1,9 +1,13 @@
 package org.jetbrains.jps
 
+import org.jetbrains.ether.dependencyView.Callbacks.Backend
+
 /**
  * @author max
  */
 class ModuleBuildState {
+  Backend callback
+  List<File> sourceFiles
   List<String> sourceRoots
   List<String> excludes
   List<String> classpath

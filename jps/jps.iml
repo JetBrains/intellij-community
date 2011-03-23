@@ -7,13 +7,15 @@
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/build" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="library" name="Javac2" level="project" />
     <orderEntry type="module" module-name="antlayout" />
     <orderEntry type="library" scope="TEST" name="JUnit" level="project" />
-    <orderEntry type="library" exported="" name="Gant" level="application" />
+    <orderEntry type="library" name="Gant" level="application" />
+    <orderEntry type="library" name="asm" level="project" />
   </component>
 </module>
 

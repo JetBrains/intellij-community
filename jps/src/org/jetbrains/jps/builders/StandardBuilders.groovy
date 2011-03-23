@@ -2,11 +2,13 @@ package org.jetbrains.jps.builders
 
 import org.jetbrains.jps.*
 import org.jetbrains.jps.builders.javacApi.Java16ApiCompilerRunner
+import org.jetbrains.ether.dependencyView.Callbacks
 
 /**
  * @author max
  */
 class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
+
   def preprocessModuleCycle(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
     doBuildModule(moduleChunk, state)
   }
@@ -23,7 +25,7 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     String customArgs = module["javac_args"]; // it seems javac_args property is not set, can we drop it?
     if (module.project.builder.useInProcessJavac) {
       String version = System.getProperty("java.version")
-      if (sourceLevel == null || version.startsWith(sourceLevel)) {
+      if ( true ) {
         if (Java16ApiCompilerRunner.compile(module, state, sourceLevel, targetLevel, customArgs)) {
           return
         }
@@ -57,10 +59,15 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     }
 
     def ant = module.project.binding.ant
+
     ant.javac(params) {
       if (customArgs) {
         compilerarg(line: customArgs)
       }
+
+      sourcepath(path : "")
+
+      include(name : "Main.java")
 
       state.sourceRoots.each {
         src(path: it)
@@ -146,7 +153,7 @@ class GroovycBuilder implements ModuleBuilder {
     }
 
     // unfortunately we have to disable fork here because of a bug in Groovyc task: it creates too long command line if classpath is large
-    ant.groovyc(destdir: destDir/*, fork: "true"*/) {
+    ant.groovyc(destdir: destDir /*, fork: "true"*/) {
       state.sourceRoots.each {
         src(path: it)
       }

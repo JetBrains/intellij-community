@@ -2,8 +2,9 @@ package org.jetbrains.jps.idea
 
 import org.jetbrains.jps.artifacts.Artifact
 import org.jetbrains.jps.*
+import org.jetbrains.jps.builders.GroovyStubGenerator
 
- /**
+/**
  * @author max
  */
 public class IdeaProjectLoader {
@@ -28,14 +29,25 @@ public class IdeaProjectLoader {
     return null
   }
 
-  public static ProjectMacroExpander loadFromPath(Project project, String path, Map<String, String> pathVariables) {
+  public static ProjectMacroExpander loadFromPath(Project project, String path, Map<String, String> pathVariables, String script) {
     def loader = new IdeaProjectLoader(project, pathVariables)
+
     loader.doLoadFromPath(path);
+
+    if (script != null) {
+      if (script.startsWith ("@")) {
+        new GroovyShell(new Binding(project:project)).evaluate(new File (script.substring(1)))
+      };
+      else {
+        new GroovyShell(new Binding(project:project)).evaluate(script)
+      }
+    }
+
     return loader.projectMacroExpander;
   }
 
-  public static ProjectMacroExpander loadFromPath(Project project, String path) {
-    return loadFromPath(project, path, [:])
+  public static ProjectMacroExpander loadFromPath(Project project, String path, String script) {
+    return loadFromPath(project, path, [:], script);
   }
 
   private def IdeaProjectLoader(Project project, Map<String, String> pathVariables) {

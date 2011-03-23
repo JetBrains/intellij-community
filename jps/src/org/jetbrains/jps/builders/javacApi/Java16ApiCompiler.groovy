@@ -8,12 +8,14 @@ import org.jetbrains.jps.Sdk
 import org.jetbrains.jps.builders.JavaFileCollector
 import javax.tools.*
 
- /**
+import org.jetbrains.ether.dependencyView.Callbacks
+
+/**
  * @author nik
  */
 class Java16ApiCompiler {
   private static instance
-  private StandardJavaFileManager fileManager
+  private OptimizedFileManager fileManager
   private JavaCompiler compiler
 
   static Java16ApiCompiler getInstance() {
@@ -30,6 +32,11 @@ class Java16ApiCompiler {
 
   def compile(ModuleChunk chunk, ModuleBuildState state, String sourceLevel, String targetLevel, String customArgs) {
     List<String> options = []
+
+    if (customArgs != null) {
+      options << customArgs
+    }
+
     if (sourceLevel != null) {
       options << "-source"
       options << sourceLevel
@@ -40,27 +47,46 @@ class Java16ApiCompiler {
     }
     options << "-g"
     options << "-nowarn"
-//    options << "-verbose"
 
     List<File> filesToCompile = []
-    Set<File> excluded = state.excludes.collect { new File(it.toString()) }
-    state.sourceRoots.each {
-      JavaFileCollector.collectRecursively(new File(it.toString()), filesToCompile, excluded)
+
+    if (state.sourceFiles.size() > 0) {
+      for (File src : state.sourceFiles) {
+        if (src.name.endsWith(".java")) {
+          filesToCompile << src
+        }
+      }
     }
+    else {
+      Set<File> excluded = state.excludes.collect { new File(it.toString()) }
+      state.sourceRoots.each {
+        JavaFileCollector.collectRecursively(new File(it.toString()), filesToCompile, excluded)
+      }
+    }
+
+    fileManager.setCallback(state.callback)
 
     if (filesToCompile.size() > 0) {
       fileManager.setLocation(StandardLocation.CLASS_OUTPUT, [new File(state.targetFolder)])
       List<File> classpath = []
+      List<File> bootclasspath = []
+
       Sdk sdk = chunk.getSdk()
+
       if (sdk != null) {
-        sdk.classpath.each { classpath << new File(String.valueOf(it)) }
+        sdk.classpath.each { bootclasspath << new File(String.valueOf(it)) }
+
+        fileManager.setLocation(StandardLocation.PLATFORM_CLASS_PATH, bootclasspath)
       }
+
       state.classpath.each { classpath << new File(String.valueOf(it)) }
       fileManager.setLocation(StandardLocation.CLASS_PATH, classpath)
+
       Iterable<? extends JavaFileObject> toCompile = fileManager.getJavaFileObjectsFromFiles(filesToCompile)
       Project project = chunk.project
       StringWriter out = new StringWriter()
       CompilationTask task = compiler.getTask(new PrintWriter(out), fileManager, null, options, null, toCompile)
+
       if (!task.call()) {
         project.builder.buildInfoPrinter.printCompilationErrors(project, "javac", out.toString())
         project.error("Compilation failed")

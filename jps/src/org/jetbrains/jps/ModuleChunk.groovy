@@ -14,6 +14,9 @@ class ModuleChunk extends DagNode<Module> {
     elements << module
   }
 
+  ModuleChunk(Set<Module> modules) {
+    elements = modules
+  }
 
   def String getName() {
     if (elements.size() == 1) return elements.iterator().next().getName();
@@ -71,7 +74,12 @@ class ModuleChunk extends DagNode<Module> {
   }
 
   def getSdk() {
-    return representativeModule().sdk
+    Module m = representativeModule()
+
+    if (m.sdk == null)
+      return m.project.projectSdk
+
+    return m.sdk
   }
 
   def getAt(String key) {

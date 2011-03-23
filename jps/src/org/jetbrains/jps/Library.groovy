@@ -12,7 +12,6 @@ class Library extends LazyInitializeableObject implements ClasspathItem {
 
   private Map<String, Object> props = [:]
 
-
   def Library(project, name, initializer) {
     this(project, name, false, initializer)
   }

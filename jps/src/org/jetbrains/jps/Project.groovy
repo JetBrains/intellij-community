@@ -10,6 +10,8 @@ import org.jetbrains.jps.resolvers.PathEntry
 import org.jetbrains.jps.resolvers.Resolver
 import org.jetbrains.jps.builders.BuildUtil
 
+import org.jetbrains.ether.dependencyView.Callbacks
+
 /**
  * @author max
  */
@@ -49,6 +51,14 @@ class Project {
     }
 
     props["compiler.resources.id"] = "default.compiler.resources"
+  }
+
+  def List<ModuleChunk> getChunks (boolean tests) {
+    return builder.getChunks(tests).getChunkList()
+  }
+
+  def ProjectBuilder getBuilder () {
+    return builder;
   }
 
   def Module createModule(String name, Closure initializer) {
@@ -127,6 +137,10 @@ class Project {
     binding.ant.project.log(message, org.apache.tools.ant.Project.MSG_DEBUG)
   }
 
+  def makeSelected (Collection<Module> modules, boolean tests) {
+    builder.buildSelected (modules, tests)
+  }
+
   def makeAll() {
     builder.buildAll()
   }
@@ -153,6 +167,11 @@ class Project {
 
   List<String> testRuntimeClasspath() {
     return builder.projectRuntimeClasspath(true);
+  }
+
+  def cleanModule (Module m) {
+    binding.ant.delete(dir: m.outputPath)
+    binding.ant.delete(dir: m.testOutputPath)
   }
 
   def clean() {
@@ -253,4 +272,8 @@ class Project {
       }
     }
   }
+
+  def ClasspathKind getCompileClasspathKind (final boolean tests) {
+    return builder.getCompileClasspathKind (tests)
+  }                           \
 }

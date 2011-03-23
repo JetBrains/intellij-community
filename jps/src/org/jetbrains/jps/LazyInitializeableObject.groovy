@@ -4,10 +4,17 @@ package org.jetbrains.jps
  * @author max
  */
 class LazyInitializeableObject {
+  private Intializing initializer
+
   def setInitializer(Closure init) {
     def meta = ProxyMetaClass.getInstance(getClass())
-    meta.setInterceptor(new Intializing(initializer: init))
+    initializer = new Intializing(initializer: init)
+    meta.setInterceptor(initializer)
     setMetaClass(meta)
+  }
+
+  def forceInit () {
+    if (initializer != null) initializer.init()
   }
 }
 
