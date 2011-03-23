@@ -10,6 +10,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
@@ -137,7 +139,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
     PsiFile[] files = FilenameIndex.getFilesByName(project, reftext + ".py", scope);
     for (PsiFile file : files) {
       PsiDirectory parent = file.getParent();
-      if (parent != null && parent.findFile(PyNames.INIT_DOT_PY) != null) {
+      if (parent != null && parent.findFile(PyNames.INIT_DOT_PY) != null && !isRoot(project, parent)) {
         result.add(file);
       }
     }
@@ -145,11 +147,20 @@ public class PythonReferenceImporter implements ReferenceImporter {
     PsiFile[] initFiles = FilenameIndex.getFilesByName(project, PyNames.INIT_DOT_PY, scope);
     for (PsiFile initFile : initFiles) {
       PsiDirectory parent = initFile.getParent();
-      if (parent != null && parent.getName().equals(reftext)) {
+      if (parent != null && parent.getName().equals(reftext) && !isRoot(project, parent.getParent())) {
         result.add(parent);
       }
     }
     return result;
+  }
+
+  private static boolean isRoot(Project project, PsiDirectory directory) {
+    if (directory == null) return true;
+    VirtualFile vFile = directory.getVirtualFile();
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    return fileIndex.getClassRootForFile(vFile) == vFile ||
+           fileIndex.getContentRootForFile(vFile) == vFile ||
+           fileIndex.getSourceRootForFile(vFile) == vFile;
   }
 
   private static boolean isTopLevel(PsiElement symbol) {
