@@ -62,7 +62,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
                                                     final boolean staticProblem,
                                                     final boolean accessible) {
     return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, getArgumentList(), myCurrentFileContext,
-                                getArgumentList().getExpressionTypes(), getTypeArguments());
+                                   getArgumentList().getExpressionTypes(), getTypeArguments(), getLanguageLevel());
   }
 
   protected boolean isAccepted(final PsiMethod candidate) {
