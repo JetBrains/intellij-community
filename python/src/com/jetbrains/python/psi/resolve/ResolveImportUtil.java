@@ -347,9 +347,9 @@ public class ResolveImportUtil {
                                                        boolean checkForPackage) {
     PythonPathCache cache = PythonModulePathCache.getInstance(module);
     final List<PsiElement> cachedResults = cache.get(moduleQualifiedName);
-    //if (cachedResults != null) {
-    //  return cachedResults;
-    //}
+    if (cachedResults != null) {
+      return cachedResults;
+    }
     List<PsiElement> results = visitRoots(moduleQualifiedName, PsiManager.getInstance(module.getProject()), module, null, checkForPackage);
     cache.put(moduleQualifiedName, results);
     return results;
