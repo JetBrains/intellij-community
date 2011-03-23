@@ -108,7 +108,8 @@ public class PyUtil {
     return ArrayUtil.toObjectArray(result, aClass);
   }
 
-  public static PyExpression flattenParens(PyExpression expr) {
+  @Nullable
+  public static PyExpression flattenParens(@Nullable PyExpression expr) {
     while (expr instanceof PyParenthesizedExpression) {
       expr = ((PyParenthesizedExpression) expr).getContainedExpression();
     }
