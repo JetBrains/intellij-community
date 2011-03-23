@@ -21,9 +21,6 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.patterns.Matcher;
-import com.jetbrains.python.psi.patterns.ParentMatcher;
-import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.*;
@@ -174,14 +171,12 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
     }
 
-    private static final Matcher IN_GLOBAL = new ParentMatcher(PyGlobalStatement.class).limitBy(PyStatement.class);
-
     private void registerUnresolvedReferenceProblem(PyElement node, PsiReference reference, HighlightSeverity severity) {
       final StringBuilder description_buf = new StringBuilder(""); // TODO: clear description_buf logic. maybe a flag is needed instead.
       final String text = reference.getElement().getText();
       final String ref_text = reference.getRangeInElement().substring(text); // text of the part we're working with
       final PsiElement ref_element = reference.getElement();
-      final boolean ref_is_importable = SyntaxMatchers.IN_IMPORT.search(ref_element) == null && IN_GLOBAL.search(ref_element) == null;
+      final boolean ref_is_importable = PythonReferenceImporter.isImportable(ref_element);
       final List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(2);
       HintAction hintAction = null;
       if (ref_text.length() <= 0) return; // empty text, nothing to highlight

@@ -17,12 +17,12 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.actions.AddImportAction;
 import com.jetbrains.python.actions.ImportFromExistingFix;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.patterns.SyntaxMatchers;
 import com.jetbrains.python.psi.resolve.CollectProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -45,7 +45,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
 
     List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffset);
     for (PsiElement element : elements) {
-      if (element instanceof PyReferenceExpression &&  SyntaxMatchers.IN_IMPORT.search(element) == null) {
+      if (element instanceof PyReferenceExpression && isImportable(element)) {
         final PyReferenceExpression refExpr = (PyReferenceExpression)element;
         if (refExpr.getQualifier() == null) {
           final PsiPolyVariantReference reference = refExpr.getReference();
@@ -182,5 +182,14 @@ public class PythonReferenceImporter implements ReferenceImporter {
       cnt += 1;
     }
     return "SHOOSHPANCHICK"; // no, this cannot happen in a life-size file, just keeps inspections happy
+  }
+
+  public static boolean isImportable(PsiElement ref_element) {
+    PyStatement parentStatement = PsiTreeUtil.getParentOfType(ref_element, PyStatement.class);
+    if (parentStatement instanceof PyGlobalStatement || parentStatement instanceof PyNonlocalStatement ||
+      parentStatement instanceof PyImportStatementBase) {
+      return false;
+    }
+    return PsiTreeUtil.getParentOfType(ref_element, PyStringLiteralExpression.class, false, PyStatement.class) == null;
   }
 }
