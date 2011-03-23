@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.actions.PyDefaultArgumentQuickFix;
 import com.jetbrains.python.psi.PyDictLiteralExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListLiteralExpression;
@@ -38,7 +39,7 @@ public class PyDefaultArgumentInspection extends PyInspection {
       PyExpression defaultValue = node.getDefaultValue();
       if (defaultValue != null) {
         if (defaultValue instanceof PyListLiteralExpression || defaultValue instanceof PyDictLiteralExpression) {
-          registerProblem(defaultValue, "Default argument value is mutable");
+          registerProblem(defaultValue, "Default argument value is mutable", new PyDefaultArgumentQuickFix());
         }
       }
     }
