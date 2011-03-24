@@ -178,9 +178,9 @@ public class SMTestRunnerConnectionUtil {
                                                        final ProcessHandler processHandler,
                                                        @NotNull final String testFrameworkName) {
     //build messages consumer
-    final OutputToGeneralTestEventsConverter outputConsumer = consoleProperties instanceof SMCustomMessagesParsing ?
-                                                              ((SMCustomMessagesParsing)consoleProperties).createTestEventsConverter(testFrameworkName) :
-                                                              new OutputToGeneralTestEventsConverter(testFrameworkName);
+    final OutputToGeneralTestEventsConverter outputConsumer = consoleProperties instanceof SMCustomMessagesParsing
+                                                              ? ((SMCustomMessagesParsing)consoleProperties).createTestEventsConverter(testFrameworkName)
+                                                              : new OutputToGeneralTestEventsConverter(testFrameworkName);
 
     //events processor
     final GeneralToSMTRunnerEventsConvertor eventsProcessor = new GeneralToSMTRunnerEventsConvertor(resultsViewer.getTestsRootNode(),
