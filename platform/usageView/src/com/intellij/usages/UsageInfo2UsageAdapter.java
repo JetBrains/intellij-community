@@ -120,7 +120,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   private TextChunk[] initChunks() {
-    TextChunk[] chunks = ChunkExtractor.extractChunks(getPsiFile(), this);
+    PsiFile file = getPsiFile();
+    TextChunk[] chunks = file == null ? TextChunk.EMPTY_ARRAY : ChunkExtractor.extractChunks(file, this);
     myTextChunks = new SoftReference<TextChunk[]>(chunks);
     return chunks;
   }
