@@ -87,7 +87,7 @@ if [ -z "$PYCHARM_VM_OPTIONS" ]; then
 fi
 
 # isEap
-if [ "@@isEap@@" -eq "true" ]; then
+if [ "@@isEap@@" = "true" ]; then
  AGENT="-agentlib:yjpagent$BITS=disablej2ee,sessionname=pycharm"
 fi
 
