@@ -147,7 +147,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private final DisposedPsiManagerCheck myPsiDisposedCheck;
   private final boolean isViewer;
 
-  private ConsoleState myState = ConsoleState.NOT_STARTED;
+  private ConsoleState myState;
+
   private Computable<ModalityState> myStateForUpdate;
 
   private static int getCycleBufferSize() {
@@ -366,8 +367,20 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   public ConsoleViewImpl(final Project project, GlobalSearchScope searchScope, boolean viewer, FileType fileType) {
+    this(project, searchScope, viewer, fileType,
+         new ConsoleState.NotStartedStated() {
+           @Override
+           public ConsoleState attachTo(ConsoleViewImpl console, ProcessHandler processHandler) {
+             return new ConsoleViewRunningState(console, processHandler, this, true, true);
+           }
+         });
+  }
+
+  protected ConsoleViewImpl(final Project project, GlobalSearchScope searchScope, boolean viewer, FileType fileType,
+                            @NotNull final ConsoleState initialState) {
     super(new BorderLayout());
     isViewer = viewer;
+    myState = initialState;
     myPsiDisposedCheck = new DisposedPsiManagerCheck(project);
     myProject = project;
     myFileType = fileType;
@@ -1061,7 +1074,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     });
 
-    setEditorUpActions(editor);
+    if (!isViewer) {
+      setEditorUpActions(editor);
+    }
+
     return editor;
   }
 
