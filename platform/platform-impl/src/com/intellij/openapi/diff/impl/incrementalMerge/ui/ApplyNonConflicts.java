@@ -28,6 +28,7 @@ import com.intellij.util.containers.FilteringIterator;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class ApplyNonConflicts extends AnAction implements DumbAware {
   public ApplyNonConflicts() {
@@ -36,7 +37,7 @@ public class ApplyNonConflicts extends AnAction implements DumbAware {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    ArrayList<Change> notConflicts = ContainerUtil.collect(getNotConflicts(dataContext));
+    List<Change> notConflicts = ContainerUtil.collect(getNotConflicts(dataContext));
     for (Change change : notConflicts) {
       Change.apply(change, MergeList.BRANCH_SIDE);
     }

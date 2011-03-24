@@ -94,9 +94,13 @@ public class JUnit4TestResultsSender extends RunListener {
       catch (Throwable ignore) {}
     }
 
-    if (assertion.getMessage() != null) {
-      final Matcher matcher =
-        Pattern.compile("\nExpected: \"(.*)\"\n     got: \"(.*)\"\n", Pattern.DOTALL).matcher(assertion.getMessage());
+    final String message = assertion.getMessage();
+    if (message != null) {
+      Matcher matcher =
+        Pattern.compile("\nExpected: (.*)\n\\s*got: (.*)", Pattern.DOTALL).matcher(message);
+      if (!matcher.matches()) {
+        matcher = Pattern.compile("expected same:<(.*)> was not:<(.*)>", Pattern.DOTALL).matcher(message);
+      }
       if (matcher.matches()) {
         return ComparisonDetailsExtractor
           .create(assertion, matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));

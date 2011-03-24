@@ -95,6 +95,11 @@ public class JBScrollPane extends JScrollPane {
     public boolean canBePreprocessed(MouseEvent e) {
       return JBScrollPane.canBePreprocessed(e, this);
     }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return super.getPreferredSize();    //To change body of overridden methods use File | Settings | File Templates.
+    }
   }
 
 

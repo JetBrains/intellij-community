@@ -318,6 +318,7 @@ public class TypesUtil {
     return result;
   }
 
+  @NotNull
   public static PsiClassType createType(String fqName, @NotNull PsiElement context) {
     return createTypeByFQClassName(fqName, context);
   }
@@ -447,6 +448,7 @@ public class TypesUtil {
     return PsiSubstitutorImpl.createSubstitutor(result);
   }
 
+  @NotNull
   public static PsiClassType createTypeByFQClassName(@NotNull String fqName, @NotNull PsiElement context) {
     return GroovyPsiManager.getInstance(context.getProject()).createTypeByFQClassName(fqName, context.getResolveScope());
   }

@@ -47,7 +47,9 @@ commandline
 config
 configs
 configurator
+contravariant
 controlfile
+covariant
 cron
 ctrl
 datafile
@@ -127,6 +129,8 @@ keepduplicates
 ldap
 likec
 linestring
+labeler
+labelers
 localhost
 localtime
 localtimestamp

@@ -15,14 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-
-import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType;
 
 /**
  * @author ven
@@ -30,7 +27,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
 public  class SupertypeConstraint extends TypeConstraint {
   private final PsiType myDefaultType;
 
-  protected SupertypeConstraint(PsiType type, PsiType defaultType) {
+  protected SupertypeConstraint(@NotNull PsiType type, @NotNull PsiType defaultType) {
     super(type);
     myDefaultType = defaultType;
   }
@@ -39,25 +36,17 @@ public  class SupertypeConstraint extends TypeConstraint {
     return TypesUtil.isAssignableByMethodCallConversion(type, getType(), manager, scope);
   }
 
+  @NotNull
   public PsiType getDefaultType() {
     return myDefaultType;
   }
 
-  public static SupertypeConstraint create (PsiType type, PsiType defaultType) {
+  public static SupertypeConstraint create(@NotNull PsiType type, @NotNull PsiType defaultType) {
     return new SupertypeConstraint(type, defaultType);
   }
 
-  public static SupertypeConstraint create (String fqName, String defaultFqName, PsiElement context) {
-    return new SupertypeConstraint(createType(fqName, context),
-                                 createType(defaultFqName, context));
-  }
-
-  public static SupertypeConstraint create (PsiType type) {
+  public static SupertypeConstraint create(@NotNull PsiType type) {
     return new SupertypeConstraint(type, type);
   }
 
-  public static SupertypeConstraint create (String fqName, PsiElement context) {
-    PsiClassType type = createType(fqName, context);
-    return new SupertypeConstraint(type, type);
-  }
 }

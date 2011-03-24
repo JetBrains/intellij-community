@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.DumbService;
@@ -145,7 +146,7 @@ public class DeleteHandler {
       }
 
       if (safeDeleteApplicable && dumb) {
-        warningMessage += "\n\nWarning:\n  Safe delete is not available while IntelliJ IDEA updates indices,\n  no usages will be checked.";
+        warningMessage += "\n\nWarning:\n  Safe delete is not available while " + ApplicationNamesInfo.getInstance().getFullProductName() + " updates indices,\n  no usages will be checked.";
       }
 
       int result = Messages.showDialog(project, warningMessage, IdeBundle.message("title.delete"),

@@ -60,7 +60,8 @@ public class LowLevelSearchUtil {
                                        final PsiElement scope,
                                        final StringSearcher searcher,
                                        final int offset,
-                                       final boolean ignoreInjectedPsi, ProgressIndicator progress) {
+                                       final boolean ignoreInjectedPsi,
+                                       ProgressIndicator progress) {
     final int scopeStartOffset = scope.getTextRange().getStartOffset();
     final int patternLength = searcher.getPatternLength();
     PsiElement leafElement = null;

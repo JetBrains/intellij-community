@@ -48,11 +48,19 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   protected void invokeImpl(PsiClass targetClass) {
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
 
-    PsiNewExpression newExpression = getNewExpression();
+    final PsiNewExpression newExpression = getNewExpression();
 
-    PsiJavaCodeReferenceElement referenceElement = getReferenceElement(newExpression);
-    final PsiClass psiClass = CreateFromUsageUtils.createClass(referenceElement, CreateClassKind.CLASS, null);
-    setupClassFromNewExpression(psiClass, newExpression);
+    final PsiJavaCodeReferenceElement referenceElement = getReferenceElement(newExpression);
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        final PsiClass psiClass = CreateFromUsageUtils.createClass(referenceElement, CreateClassKind.CLASS, null);
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            setupClassFromNewExpression(psiClass, newExpression);
+          }
+        });
+      }
+    });
   }
 
   protected static void setupClassFromNewExpression(final PsiClass psiClass, final PsiNewExpression newExpression) {

@@ -210,6 +210,11 @@ public class AndroidSdkType extends SdkType implements JavaSdkType {
     return AndroidUtils.ANDROID_ICON;
   }
 
+  @Override
+  public Icon getIconForAddAction() {
+    return getIcon();
+  }
+
   @Nullable
   private static Sdk getInternalJavaSdk(Sdk sdk) {
     final SdkAdditionalData data = sdk.getSdkAdditionalData();

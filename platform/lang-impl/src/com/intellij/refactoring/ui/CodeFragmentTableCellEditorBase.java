@@ -23,6 +23,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 
@@ -50,11 +52,13 @@ public class CodeFragmentTableCellEditorBase extends AbstractCellEditor implemen
   }
 
   protected EditorTextField createEditorField(Document document) {
-    return new EditorTextField(document, myProject, myFileType) {
+    EditorTextField field = new EditorTextField(document, myProject, myFileType) {
       protected boolean shouldHaveBorder() {
         return false;
       }
     };
+    field.setBorder(new EmptyBorder(1, 1, 1, 1));
+    return field;
   }
 
   public PsiCodeFragment getCellEditorValue() {

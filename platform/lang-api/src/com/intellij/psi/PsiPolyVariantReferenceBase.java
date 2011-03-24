@@ -28,6 +28,10 @@ public abstract class PsiPolyVariantReferenceBase<T extends PsiElement> extends 
     super(psiElement);
   }
 
+  public PsiPolyVariantReferenceBase(T element, TextRange range) {
+    super(element, range);
+  }
+
   public PsiPolyVariantReferenceBase(final T psiElement, final boolean soft) {
     super(psiElement, soft);
   }

@@ -72,18 +72,18 @@ public class Semaphore {
     sync.acquireSharedInterruptibly(1);
   }
 
-  public boolean waitFor(final long timeout)  {
+  public boolean waitFor(final long msTimeout)  {
     try {
-      return waitForUnsafe(timeout);
+      return waitForUnsafe(msTimeout);
     }
     catch (InterruptedException e) {
       throw new ProcessCanceledException(e);
     }
   }
 
-  public boolean waitForUnsafe(long timeout) throws InterruptedException {
+  public boolean waitForUnsafe(long msTimeout) throws InterruptedException {
     if (sync.tryAcquireShared(1) >= 0) return true;
-    return sync.tryAcquireSharedNanos(1, TimeUnit.MILLISECONDS.toNanos(timeout));
+    return sync.tryAcquireSharedNanos(1, TimeUnit.MILLISECONDS.toNanos(msTimeout));
   }
 
 }

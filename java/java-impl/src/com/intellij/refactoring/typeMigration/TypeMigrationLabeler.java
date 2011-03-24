@@ -40,6 +40,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
@@ -765,28 +766,30 @@ public class TypeMigrationLabeler {
     return refs;
   }
 
+  @TestOnly
   public String getMigrationReport() {
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
 
-    buffer.append("Types:\n" + getTypeEvaluator().getReport() + "\n");
+    buffer.append("Types:\n").append(getTypeEvaluator().getReport()).append("\n");
+
     buffer.append("Conversions:\n");
 
     final String[] conversions = new String[myConversions.size()];
     int k = 0;
 
     for (final PsiElement expr : myConversions.keySet()) {
-      final Object conv = myConversions.get(expr);
+      final Object conversion = myConversions.get(expr);
 
-      if (conv instanceof Pair && ((Pair)conv).first == null) {
-        conversions[k++] = (expr.getText() + " -> " + ((Pair)conv).second + "\n");
+      if (conversion instanceof Pair && ((Pair)conversion).first == null) {
+        conversions[k++] = (expr.getText() + " -> " + ((Pair)conversion).second + "\n");
       } else {
-        conversions[k++] = (expr.getText() + " -> " + conv + "\n");
+        conversions[k++] = (expr.getText() + " -> " + conversion + "\n");
       }
     }
 
-    Arrays.sort(conversions, new Comparator() {
-      public int compare(Object x, Object y) {
-        return ((String)x).compareTo((String)y);
+    Arrays.sort(conversions, new Comparator<String>() {
+      public int compare(String x, String y) {
+        return x.compareTo(y);
       }
     });
 
@@ -796,23 +799,22 @@ public class TypeMigrationLabeler {
 
     buffer.append("\nNew expression type changes:\n");
 
-    final String[] newchanges = new String[myNewExpressionTypeChange.size()];
+    final String[] newChanges = new String[myNewExpressionTypeChange.size()];
     k = 0;
 
     for (final Map.Entry<TypeMigrationUsageInfo, PsiType> entry : myNewExpressionTypeChange.entrySet()) {
-
-
-      newchanges[k++] = entry.getKey().getElement().getText() + " -> " + entry.getValue().getCanonicalText() + "\n";
+      final PsiElement element = entry.getKey().getElement();
+      newChanges[k++] = (element != null ? element.getText() : entry.getKey()) + " -> " + entry.getValue().getCanonicalText() + "\n";
     }
 
-    Arrays.sort(newchanges, new Comparator() {
-      public int compare(Object x, Object y) {
-        return ((String)x).compareTo((String)y);
+    Arrays.sort(newChanges, new Comparator<String>() {
+      public int compare(String x, String y) {
+        return x.compareTo(y);
       }
     });
 
-    for (String newchange : newchanges) {
-      buffer.append(newchange);
+    for (String change : newChanges) {
+      buffer.append(change);
     }
 
     buffer.append("Fails:\n");
@@ -830,13 +832,12 @@ public class TypeMigrationLabeler {
     for (final Pair<PsiAnchor, PsiType> p : failsList) {
       final PsiElement element = p.getFirst().retrieve();
       if (element != null) {
-        buffer.append(element.getText() + "->" + p.getSecond().getCanonicalText() + "\n");
+        buffer.append(element.getText()).append("->").append(p.getSecond().getCanonicalText()).append("\n");
       }
     }
 
     return buffer.toString();
   }
 
-  public static class MigrateException extends RuntimeException {
-  }
+  public static class MigrateException extends RuntimeException { }
 }

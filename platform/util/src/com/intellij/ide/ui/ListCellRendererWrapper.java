@@ -32,6 +32,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
   private Icon myIcon;
   private String myText;
   private String myToolTipText;
+  private Color myForeground;
 
   /**
    * A combo box for which this cell renderer is created should be passed here.
@@ -62,6 +63,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
         final JLabel label = (JLabel)component;
         label.setIcon(myIcon);
         if (myText != null) label.setText(myText);
+        if (myForeground != null) label.setForeground(myForeground);
         label.setToolTipText(myToolTipText);
       }
       return component;
@@ -97,4 +99,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
     myToolTipText = toolTipText;
   }
 
+  public void setForeground(final Color foreground) {
+    myForeground = foreground;
+  }
 }

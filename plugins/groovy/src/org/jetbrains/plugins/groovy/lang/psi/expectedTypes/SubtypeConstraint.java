@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType;
@@ -30,7 +31,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
 public  class SubtypeConstraint extends TypeConstraint {
   private final PsiType myDefaultType;
 
-  protected SubtypeConstraint(PsiType type, PsiType defaultType) {
+  protected SubtypeConstraint(@NotNull PsiType type, @NotNull PsiType defaultType) {
     super(type);
     myDefaultType = defaultType;
   }
@@ -39,24 +40,16 @@ public  class SubtypeConstraint extends TypeConstraint {
     return TypesUtil.isAssignableByMethodCallConversion(getType(), type, manager, scope);
   }
 
+  @NotNull
   public PsiType getDefaultType() {
     return myDefaultType;
   }
 
-  public static SubtypeConstraint create (PsiType type, PsiType defaultType) {
-    return new SubtypeConstraint(type, defaultType);
-  }
-
-  public static SubtypeConstraint create (String fqName, String defaultFqName, PsiElement context) {
-    return new SubtypeConstraint(createType(fqName, context),
-                                 createType(defaultFqName, context));
-  }
-
-  public static SubtypeConstraint create (PsiType type) {
+  public static SubtypeConstraint create(@NotNull PsiType type) {
     return new SubtypeConstraint(type, type);
   }
 
-  public static SubtypeConstraint create (String fqName, PsiElement context) {
+  public static SubtypeConstraint create(String fqName, PsiElement context) {
     PsiClassType type = createType(fqName, context);
     return new SubtypeConstraint(type, type);
   }

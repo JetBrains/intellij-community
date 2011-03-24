@@ -82,7 +82,6 @@ public class NameUtil {
         }
         index++;
       }
-      if (upperCaseCount == 0 && lowerCaseCount == 0 && digitCount == 0) continue;
       String word = name.substring(wordStart, index);
       array.add(word);
     }
@@ -290,7 +289,7 @@ public class NameUtil {
         String prevWord = words[i - 1];
         if (upperCaseStyle) {
           word = word.toUpperCase();
-          if (prevWord.charAt(prevWord.length() - 1) != '_') {
+          if (prevWord.charAt(prevWord.length() - 1) != '_' && word.charAt(0) != '_') {
             word = "_" + word;
           }
         }

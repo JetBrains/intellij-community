@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Computable;
@@ -62,9 +63,9 @@ public class InplaceIntroduceConstantPopup {
   private final PsiLocalVariable myLocalVariable;
   private final PsiExpression[] myOccurrences;
   private final TypeSelectorManagerImpl myTypeSelectorManager;
-  private final PsiElement myAnchorElement;
+  private PsiElement myAnchorElement;
   private int myAnchorIdx = -1;
-  private final PsiElement myAnchorElementIfAll;
+  private PsiElement myAnchorElementIfAll;
   private int myAnchorIdxIfAll = -1;
   private final OccurenceManager myOccurenceManager;
 
@@ -116,7 +117,7 @@ public class InplaceIntroduceConstantPopup {
     }
     myOccurenceManager = occurenceManager;
 
-    myExprMarker = expr != null ? myEditor.getDocument().createRangeMarker(expr.getTextRange()) : null;
+    myExprMarker = expr != null && expr.isPhysical() ? myEditor.getDocument().createRangeMarker(expr.getTextRange()) : null;
     myExprText = expr != null ? expr.getText() : null;
     myLocalName = localVariable != null ? localVariable.getName() : null;
 
@@ -200,6 +201,7 @@ public class InplaceIntroduceConstantPopup {
         final PsiField field = createFieldToStartTemplateOn(names, defaultType);
         if (field != null) {
           myEditor.getCaretModel().moveToOffset(field.getTextOffset());
+          myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
           final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<String>();
           nameSuggestions.add(field.getName());
           nameSuggestions.addAll(Arrays.asList(names));
@@ -215,10 +217,10 @@ public class InplaceIntroduceConstantPopup {
     return ApplicationManager.getApplication().runWriteAction(new Computable<PsiField>() {
       @Override
       public PsiField compute() {
-        PsiField field = elementFactory.createField(myConstantName != null ? myConstantName : names[0], psiType);
-        field = (PsiField)myParentClass.add(field);
+        PsiField field = elementFactory.createFieldFromText(psiType.getCanonicalText() + " " + (myConstantName != null ? myConstantName : names[0]) + " = " + myExprText + ";", myParentClass);
         PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
         PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
+        field = BaseExpressionToFieldHandler.ConvertToFieldRunnable.appendField(myExpr, myParentClass, myParentClass, myAnchorElementIfAll, field);
         return field;
       }
     });
@@ -255,7 +257,7 @@ public class InplaceIntroduceConstantPopup {
       super(myProject, new TypeExpression(myProject, myTypeSelectorManager.getTypesForAll()),
             myEditor, field, false,
             myTypeSelectorManager.getTypesForAll().length > 1,
-            myExpr != null ? myEditor.getDocument().createRangeMarker(myExpr.getTextRange()) : null, InplaceIntroduceConstantPopup.this.getOccurrenceMarkers());
+            myExpr != null && myExpr.isPhysical() ? myEditor.getDocument().createRangeMarker(myExpr.getTextRange()) : null, InplaceIntroduceConstantPopup.this.getOccurrenceMarkers());
 
       myDefaultParameterTypePointer =
         SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(myTypeSelectorManager.getDefaultType());
@@ -269,7 +271,7 @@ public class InplaceIntroduceConstantPopup {
 
     @Override
     protected PsiExpression getExpr() {
-      return myExpr;
+      return myExpr != null && myExpr.isValid() && myExpr.isPhysical() ? myExpr : null;
     }
 
     @Override
@@ -319,20 +321,23 @@ public class InplaceIntroduceConstantPopup {
                                                     myFieldTypePointer.getType(),
                                                     isDeleteVariable(),
                                                     myParentClass, isAnnotateNonNls(), false);
-        if (myLocalVariable != null) {
-          final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
-            new LocalToFieldHandler.IntroduceFieldRunnable(false, myLocalVariable, myParentClass, settings, true, myOccurrences);
-          fieldRunnable.run();
-        }
-        else {
-          final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
-            new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(),
-                                                                    myOccurrences, myOccurenceManager,
-                                                                    myAnchorIdxIfAll != -1? myOccurrences[myAnchorIdxIfAll].getParent() : myAnchorElementIfAll,
-                                                                    myAnchorIdx != -1 ? myOccurrences[myAnchorIdx].getParent() : myAnchorElement, myEditor,
-                                                                    myParentClass);
-          convertToFieldRunnable.run();
-        }
+        final Runnable runnable = new Runnable() {
+          public void run() {
+            if (myLocalVariable != null) {
+              final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
+                new LocalToFieldHandler.IntroduceFieldRunnable(false, myLocalVariable, myParentClass, settings, true, myOccurrences);
+              fieldRunnable.run();
+            }
+            else {
+              final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
+                new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(),
+                                                                        myOccurrences, myOccurenceManager,
+                                                                        myAnchorElementIfAll, myAnchorElement, myEditor, myParentClass);
+              convertToFieldRunnable.run();
+            }
+          }
+        };
+        ApplicationManager.getApplication().runWriteAction(runnable);
       }
       super.moveOffsetAfter(success);
       if (myMoveToAnotherClassCb.isSelected()) {
@@ -389,9 +394,12 @@ public class InplaceIntroduceConstantPopup {
         public void run() {
           final PsiFile containingFile = myParentClass.getContainingFile();
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
-          myExpr = restoreExpression(containingFile, psiField, elementFactory, getExprMarker(), myExprText);
-          if (myExpr != null) {
-            myExprMarker = myEditor.getDocument().createRangeMarker(myExpr.getTextRange());
+          final RangeMarker exprMarker = getExprMarker();
+          if (exprMarker != null) {
+            myExpr = restoreExpression(containingFile, psiField, elementFactory, exprMarker, myExprText);
+            if (myExpr != null && myExpr.isPhysical()) {
+              myExprMarker = myEditor.getDocument().createRangeMarker(myExpr.getTextRange());
+            }
           }
           final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
           for (int i = 0, occurrenceMarkersSize = occurrenceMarkers.size(); i < occurrenceMarkersSize; i++) {
@@ -404,6 +412,14 @@ public class InplaceIntroduceConstantPopup {
             if (psiExpression != null) {
               myOccurrences[i] = psiExpression;
             }
+          }
+
+          if (myAnchorIdxIfAll != -1) {
+            myAnchorElementIfAll = myOccurrences[myAnchorIdxIfAll].getParent();
+          }
+
+          if (myAnchorIdx != -1) {
+            myAnchorElement = myOccurrences[myAnchorIdx].getParent();
           }
           myOccurrenceMarkers = null;
           if (psiField.isValid()) {
