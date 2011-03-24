@@ -29,9 +29,10 @@ public class CompletionParameters {
   private final CompletionType myCompletionType;
   private final int myOffset;
   private final int myInvocationCount;
+  private final boolean myRelaxedMatching;
 
   protected CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
-                                  final CompletionType completionType, int offset, final int invocationCount) {
+                                 final CompletionType completionType, int offset, final int invocationCount, final boolean relaxedMatching) {
     assert offset >= position.getTextRange().getStartOffset();
     myPosition = position;
     assert position.isValid();
@@ -39,14 +40,19 @@ public class CompletionParameters {
     myCompletionType = completionType;
     myOffset = offset;
     myInvocationCount = invocationCount;
+    myRelaxedMatching = relaxedMatching;
   }
 
   public CompletionParameters withType(CompletionType type) {
-    return new CompletionParameters(myPosition, myOriginalFile, type, myOffset, myInvocationCount);
+    return new CompletionParameters(myPosition, myOriginalFile, type, myOffset, myInvocationCount, myRelaxedMatching);
   }
 
   public CompletionParameters withInvocationCount(int newCount) {
-    return new CompletionParameters(myPosition, myOriginalFile, myCompletionType, myOffset, newCount);
+    return new CompletionParameters(myPosition, myOriginalFile, myCompletionType, myOffset, newCount, myRelaxedMatching);
+  }
+
+  public CompletionParameters withRelaxedMatching() {
+    return new CompletionParameters(myPosition, myOriginalFile, myCompletionType, myOffset, myInvocationCount, true);
   }
 
   @NotNull
@@ -81,5 +87,9 @@ public class CompletionParameters {
    */
   public int getInvocationCount() {
     return myInvocationCount;
+  }
+
+  public boolean relaxMatching() {
+    return myRelaxedMatching;
   }
 }

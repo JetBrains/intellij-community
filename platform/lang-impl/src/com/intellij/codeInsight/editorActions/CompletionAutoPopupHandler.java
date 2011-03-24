@@ -76,6 +76,11 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       return Result.CONTINUE;
     }
 
+    scheduleAutoPopup(project, editor, file);
+    return Result.STOP;
+  }
+
+  public static void scheduleAutoPopup(final Project project, final Editor editor, final PsiFile file) {
     final boolean isMainEditor = FileEditorManager.getInstance(project).getSelectedTextEditor() == editor;
 
     final CompletionPhase.AutoPopupAlarm phase = new CompletionPhase.AutoPopupAlarm();
@@ -95,7 +100,6 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
       }
     };
     AutoPopupController.getInstance(project).invokeAutoPopupRunnable(request, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
-    return Result.STOP;
   }
 
   public static void invokeAutoPopupCompletion(Project project, final Editor editor) {

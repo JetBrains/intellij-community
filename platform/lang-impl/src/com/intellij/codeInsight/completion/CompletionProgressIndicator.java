@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
+import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
@@ -399,7 +400,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     Disposer.dispose(myQueue);
 
     CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-    assert currentCompletion == this : currentCompletion + "!=" + this;
+    LOG.assertTrue(currentCompletion == this, currentCompletion + "!=" + this);
     CompletionServiceImpl.getCompletionService().setCurrentCompletion(null);
 
     CompletionServiceImpl.assertPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class, CompletionPhase.Synchronous.class, CompletionPhase.Restarted.class);
@@ -573,6 +574,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
+  public boolean restartOnEmpty = false;
+
   public void prefixUpdated() {
     final CharSequence text = myEditor.getDocument().getCharsSequence();
     final int caretOffset = myEditor.getCaretModel().getOffset();
@@ -585,7 +588,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
     }
 
-    hideAutopopupIfMeaningless();
+    if (hideAutopopupIfMeaningless() && restartOnEmpty) {
+      CompletionAutoPopupHandler.scheduleAutoPopup(getProject(), myEditor, getParameters().getOriginalFile());
+    }
     updateFocus();
   }
 
