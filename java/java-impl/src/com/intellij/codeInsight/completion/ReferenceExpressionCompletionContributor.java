@@ -110,7 +110,7 @@ public class ReferenceExpressionCompletionContributor {
         final PsiElement element = parameters.getPosition();
         if (JavaSmartCompletionContributor.INSIDE_TYPECAST_EXPRESSION.accepts(element)) return;
 
-        final int offset = parameters.getOffset();
+        final int offset = parameters.getParameters().getOffset();
         final PsiReference reference = element.getContainingFile().findReferenceAt(offset);
         if (reference != null) {
           final ElementFilter filter = getReferenceFilter(element, false);
@@ -118,9 +118,9 @@ public class ReferenceExpressionCompletionContributor {
             result.consume(item);
           }
 
-          final boolean secondTime = parameters.getInvocationCount() >= 2;
+          final boolean secondTime = parameters.getParameters().getInvocationCount() >= 2;
 
-          for (final LookupElement item : JavaSmartCompletionContributor.completeReference(element, reference, filter, false, parameters)) {
+          for (final LookupElement item : JavaSmartCompletionContributor.completeReference(element, reference, filter, false, parameters.getParameters())) {
             addSingleArrayElementAccess(element, item, parameters, result);
             
             if (secondTime) {
@@ -164,7 +164,7 @@ public class ReferenceExpressionCompletionContributor {
         public boolean isClassAcceptable(Class hintClass) {
           return true;
         }
-      }), false, parameters);
+      }), false, parameters.getParameters());
     for (LookupElement lookupElement : elements) {
       if (lookupElement.getObject() instanceof PsiMethod) {
         final JavaMethodCallElement item = lookupElement.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
