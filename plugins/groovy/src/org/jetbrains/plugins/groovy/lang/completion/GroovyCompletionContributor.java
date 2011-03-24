@@ -453,7 +453,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         }
       });
 
-      if (StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix()) || parameters.getInvocationCount() >= 2 || parameters.relaxMatching()) {
+      if (StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix()) || parameters.relaxMatching()) {
         addAllClasses(parameters, result, inheritors);
       }
     }

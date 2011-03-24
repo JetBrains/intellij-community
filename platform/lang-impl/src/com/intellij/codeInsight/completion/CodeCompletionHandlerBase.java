@@ -357,7 +357,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       LOG.error("wrong text: copy='" + fileCopy.getText() + "'; element='" + insertedElement.getText() + "'; range=" + range);
     }
 
-    return new CompletionParameters(insertedElement, fileCopy.getOriginalFile(), myCompletionType, offset, invocationCount, false);
+    return new CompletionParameters(insertedElement, fileCopy.getOriginalFile(), myCompletionType, offset, invocationCount, invocationCount >= 2);
   }
 
   private AutoCompletionDecision shouldAutoComplete(

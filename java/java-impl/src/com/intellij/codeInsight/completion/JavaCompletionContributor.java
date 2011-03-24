@@ -331,7 +331,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return false;
     }
 
-    return StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix()) || parameters.getInvocationCount() >= 2 || parameters.relaxMatching();
+    return StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix()) || parameters.relaxMatching();
   }
 
   private static void completeAnnotationAttributeName(CompletionResultSet result, PsiElement insertedElement,
