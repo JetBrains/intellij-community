@@ -19,6 +19,26 @@ import java.util.*;
  */
 
 public class ProjectWrapper {
+    public interface Flags {
+        boolean tests ();
+        boolean incremental ();
+        boolean force ();
+    }
+
+    private final static Flags defaultFlags = new Flags () {
+        public boolean tests () {
+            return true;
+        }
+
+        public boolean incremental () {
+            return false;
+        }
+
+        public boolean force () {
+            return true;
+        }
+    };
+
     // Home directory
     private static final String myHomeDir = System.getProperty("user.home");
 
@@ -878,18 +898,18 @@ public class ProjectWrapper {
     }
 
     public void rebuild() {
-        makeModules(myProject.getModules().values(), true, true);
+        makeModules(myProject.getModules().values(), defaultFlags);
     }
 
-    public void make(final boolean force, final boolean tests) {
+    public void make(final Flags flags) {
         final List<Module> modules = new ArrayList<Module>();
 
         for (Map.Entry<String, ModuleWrapper> entry : myModules.entrySet()) {
-            if (force || entry.getValue().isOutdated(tests, myHistory))
+            if (flags.force() || entry.getValue().isOutdated(flags.tests (), myHistory))
                 modules.add(myProject.getModules().get(entry.getKey()));
         }
 
-        if (modules.isEmpty() && !force) {
+        if (modules.isEmpty() && !flags.force ()) {
             System.out.println("All modules are up-to-date.");
             return;
         }
@@ -899,7 +919,7 @@ public class ProjectWrapper {
         for (Module m : modules)
             System.out.println("  " + m.getName());
 
-        makeModules(modules, tests, force);
+        makeModules(modules, flags);
     }
 
     class BusyBeaver {
@@ -965,9 +985,7 @@ public class ProjectWrapper {
             return true;
         }
 
-        public void build(final Collection<Module> modules, final boolean tests, final boolean force) {
-
-            boolean incremental = !force;
+        public void build(final Collection<Module> modules, final boolean tests, boolean incremental) {
             final List<ModuleChunk> chunks = myProject.getChunks(tests);
 
             for (ModuleChunk c : chunks) {
@@ -1008,8 +1026,8 @@ public class ProjectWrapper {
         }
     }
 
-    private void makeModules(final Collection<Module> initial, final boolean tests, final boolean force) {
-        final ClasspathKind kind = myProject.getCompileClasspathKind(tests);
+    private void makeModules(final Collection<Module> initial, final Flags flags) {
+        final ClasspathKind kind = myProject.getCompileClasspathKind(flags.tests());
 
         final Set<Module> modules = new HashSet<Module>();
         final Set<String> marked = new HashSet<String>();
@@ -1098,7 +1116,7 @@ public class ProjectWrapper {
                     final Boolean property = visited.get(moduleName);
 
                     if (property == null || !property && force) {
-                        if (force || getModule(moduleName).isOutdated(tests, myHistory)) {
+                        if (force || getModule(moduleName).isOutdated(flags.tests(), myHistory)) {
                             visited.put(moduleName, true);
                             modules.add(myProject.getModules().get(moduleName));
                             run(reversedDependencies.get(moduleName), true);
@@ -1111,23 +1129,23 @@ public class ProjectWrapper {
                     }
                 }
             }
-        }.run(frontier, force);
+        }.run(frontier, flags.force ());
 
-        if (modules.size() == 0 && !force) {
+        if (modules.size() == 0 && !flags.force ()) {
             System.out.println("All requested modules are up-to-date.");
             return;
         }
 
         final ProjectBuilder builder = myProject.getBuilder();
-        final BusyBeaver dwarf = new BusyBeaver(builder);
+        final BusyBeaver beaver = new BusyBeaver(builder);
 
         builder.buildStart();
 
         try {
-          dwarf.build(modules, false, force);
+          beaver.build(modules, false, flags.incremental());
 
-          if (tests) {
-              dwarf.build(modules, true, force);
+          if (flags.tests ()) {
+              beaver.build(modules, true, flags.incremental());
           }
 
         }
@@ -1142,9 +1160,9 @@ public class ProjectWrapper {
         }
     }
 
-    public void makeModule(final String modName, final boolean force, final boolean tests) {
+    public void makeModule(final String modName, final Flags flags) {
         if (modName.equals("*")) {
-            makeModules(myProject.getModules().values(), tests, force);
+            makeModules(myProject.getModules().values(), flags);
         } else {
             final Module module = myProject.getModules().get(modName);
             final List<Module> list = new ArrayList<Module>();
@@ -1156,7 +1174,7 @@ public class ProjectWrapper {
 
             list.add(module);
 
-            makeModules(list, tests, force);
+            makeModules(list, flags);
         }
     }
 }

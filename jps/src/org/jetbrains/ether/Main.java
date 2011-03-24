@@ -37,6 +37,7 @@ public class Main {
                 new Options.Descriptor("make", "make", "m", Options.ArgumentSpecifier.OPTIONAL, "make the whole project or specified module"),
                 new Options.Descriptor("tests", "tests", "t", Options.ArgumentSpecifier.NONE, "make tests as well"),
                 new Options.Descriptor("force", "force", "f", Options.ArgumentSpecifier.NONE, "force actions"),
+                new Options.Descriptor("incremental", "incremental", "i", Options.ArgumentSpecifier.NONE, "perform incremental make"),
                 new Options.Descriptor("help", "help", "h", Options.ArgumentSpecifier.NONE, "show help on options"),
                 new Options.Descriptor("debug", "debug", "d", Options.ArgumentSpecifier.NONE, "debug info (for development purposes)")
         };
@@ -64,6 +65,10 @@ public class Main {
         return myOptions.get("force") instanceof Options.Switch;
     }
 
+    private static boolean doIncremental() {
+            return myOptions.get("incremental") instanceof Options.Switch;
+        }
+
     private static boolean doHelp() {
         return myOptions.get("help") instanceof Options.Switch;
     }
@@ -87,6 +92,22 @@ public class Main {
             return ((Options.Value) arg).get();
 
         return null;
+    }
+
+    private static ProjectWrapper.Flags getFlags () {
+        return new ProjectWrapper.Flags() {
+            public boolean tests () {
+                return doTests();
+            }
+
+            public boolean force () {
+                return doForce();
+            }
+
+            public boolean incremental () {
+                return doIncremental();
+            }
+        };
     }
 
     private static void checkConsistency() {
@@ -190,13 +211,13 @@ public class Main {
                         }
 
                         project = ProjectWrapper.load(prj, getScript());
-                        project.makeModule(module, doForce(), doTests());
+                        project.makeModule(module, getFlags ());
                         project.save();
                         saved = true;
                     } else if (make instanceof Options.Switch) {
                         System.out.println("Making outdated modules in project \"" + prj + "\"");
                         project = ProjectWrapper.load(prj, getScript());
-                        project.make(doForce(), doTests());
+                        project.make(getFlags ());
                         project.save();
                         saved = true;
                     }
