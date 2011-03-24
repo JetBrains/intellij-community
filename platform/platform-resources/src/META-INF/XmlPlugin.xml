@@ -47,6 +47,13 @@
     <extensionPoint name="xml.relatedFilesContributor" interface="com.intellij.navigation.RelatedFilesContributor"/>
   </extensionPoints>
 
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.HtmlTagTreeHighlightingPassFactory</implementation-class>
+      <skipForDefaultProject/>
+    </component>
+  </project-components>
+
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.intellij.xml.XmlFileTypeFactory"/>
 
