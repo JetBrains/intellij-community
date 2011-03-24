@@ -92,6 +92,7 @@ public class SMTestRunnerConnectionUtil {
         @Override
         public void attachToProcess(final ProcessHandler processHandler) {
           // attach listeners
+          super.attachToProcess(processHandler);
           attachEventsProcessors(consoleProperties, getResultsViewer(),
                                  getResultsViewer().getStatisticsPane(),
                                  processHandler, testFrameworkName);
