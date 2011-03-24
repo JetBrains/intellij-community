@@ -214,6 +214,13 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     for (PsiElement newElement : oldToNewElementsMapping.values()) {
       ChangeContextUtil.decodeContextInfo(newElement, null, null);
     }
+
+    // fix references in moved files to outer files
+    for (PsiFile movedFile : movedFiles) {
+      MoveFileHandler.forElement(movedFile).updateMovedFile(movedFile);
+      FileReferenceContextUtil.decodeFileReferences(movedFile);
+    }
+
     myNonCodeUsages = MoveClassesOrPackagesProcessor.retargetUsages(usages, oldToNewElementsMapping);
     for (UsageInfo usage : usages) {
       if (usage instanceof RemoveOnDemandImportStatementsUsageInfo) {
@@ -223,12 +230,6 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
         }
       }
     }
-    // fix references in moved files to outer files
-    for (PsiFile movedFile : movedFiles) {
-      MoveFileHandler.forElement(movedFile).updateMovedFile(movedFile);
-      FileReferenceContextUtil.decodeFileReferences(movedFile);
-    }
-
     for (PsiDirectory directory : myDirectories) {
       directory.delete();
     }

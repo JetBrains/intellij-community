@@ -172,13 +172,13 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         }
       });
 
-      retargetUsages(usages, oldToNewMap);
-
       // fix references in moved files to outer files
       for (PsiFile movedFile : movedFiles) {
         MoveFileHandler.forElement(movedFile).updateMovedFile(movedFile);
         FileReferenceContextUtil.decodeFileReferences(movedFile);
       }
+
+      retargetUsages(usages, oldToNewMap);
 
       // Perform CVS "add", "remove" commands on moved files.
 
