@@ -252,7 +252,7 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
     return newElement;
   }
 
-  private static PsiFile copy(PsiFile file, PsiDirectory directory, String name, String relativePath) {
+  private static PsiFile copy(@NotNull PsiFile file, PsiDirectory directory, String name, String relativePath) {
     final String fileName = name != null ? (name +  "." + file.getViewProvider().getVirtualFile().getExtension()) : file.getName();
     if (relativePath != null && !relativePath.isEmpty()) {
       return buildRelativeDir(directory, relativePath).findOrCreateTargetDirectory().copyFileFrom(fileName, file);
