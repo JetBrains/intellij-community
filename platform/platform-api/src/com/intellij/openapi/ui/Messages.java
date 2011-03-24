@@ -234,6 +234,14 @@ public class Messages {
     return showDialog(message, title, new String[]{YES_BUTTON, NO_BUTTON}, 0, icon);
   }
 
+  public static int showYesNoDialog(Component parent, String message, String title, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
+    return showDialog(parent, message, title, new String[]{YES_BUTTON, NO_BUTTON}, defaultOptionIndex, focusedOptionIndex, icon);
+  }
+
+  public static int showYesNoDialog(Project project, String message, String title, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
+    return showDialog(project, message, title, new String[]{YES_BUTTON, NO_BUTTON}, defaultOptionIndex, focusedOptionIndex, icon);
+  }
+
   public static int showOkCancelDialog(Project project, String message, String title, Icon icon) {
     return showDialog(project, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
   }
