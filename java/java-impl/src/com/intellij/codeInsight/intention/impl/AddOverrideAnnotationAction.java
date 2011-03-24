@@ -20,7 +20,7 @@ import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -72,7 +72,8 @@ public class AddOverrideAnnotationAction implements IntentionAction {
     //Not available in method's body
     PsiCodeBlock body = res.getBody();
     if (body == null) return null;
-    if (body.getTextRange().getStartOffset() <= offset) return null;
+    TextRange textRange = body.getTextRange();
+    if (textRange == null || textRange.getStartOffset() <= offset) return null;
 
     return res;
   }
