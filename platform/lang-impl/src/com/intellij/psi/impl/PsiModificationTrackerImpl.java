@@ -23,14 +23,16 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.messages.MessageBus;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * @author mike
  * Date: Jul 18, 2002
  */
 public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTreeChangePreprocessor {
-  private volatile long myModificationCount = 0;
-  private volatile long myOutOfCodeBlockModificationCount = 0;
-  private volatile long myJavaStructureModificationCount = 0;
+  private final AtomicLong myModificationCount = new AtomicLong(0);
+  private final AtomicLong myOutOfCodeBlockModificationCount = new AtomicLong(0);
+  private final AtomicLong myJavaStructureModificationCount = new AtomicLong(0);
   private final Listener myPublisher;
 
   public PsiModificationTrackerImpl(Project project) {
@@ -53,18 +55,18 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
   }
 
   public void incCounter() {
-    myModificationCount++;
-    myJavaStructureModificationCount++;
+    myModificationCount.getAndIncrement();
+    myJavaStructureModificationCount.getAndIncrement();
     incOutOfCodeBlockModificationCounter();
   }
 
   public void incOutOfCodeBlockModificationCounter() {
-    myOutOfCodeBlockModificationCount++;
+    myOutOfCodeBlockModificationCount.getAndIncrement();
     myPublisher.modificationCountChanged();
   }
 
   public void treeChanged(PsiTreeChangeEventImpl event) {
-    myModificationCount++;
+    myModificationCount.getAndIncrement();
     if (event.getParent() instanceof PsiDirectory) {
       incOutOfCodeBlockModificationCounter();
     }
@@ -73,14 +75,14 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
   }
 
   public long getModificationCount() {
-    return myModificationCount;
+    return myModificationCount.get();
   }
 
   public long getOutOfCodeBlockModificationCount() {
-    return myOutOfCodeBlockModificationCount;
+    return myOutOfCodeBlockModificationCount.get();
   }
 
   public long getJavaStructureModificationCount() {
-    return myJavaStructureModificationCount;
+    return myJavaStructureModificationCount.get();
   }
 }
