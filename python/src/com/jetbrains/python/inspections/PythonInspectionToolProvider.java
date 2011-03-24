@@ -58,6 +58,7 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PySingleQuotedDocstringInspection.class,
       PyMissingConstructorInspection.class,
       PyArgumentEqualDefaultInspection.class,
+      PySetFunctionToLiteralInspection.class,
     };
   }
 }

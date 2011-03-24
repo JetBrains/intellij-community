@@ -240,6 +240,12 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                      PyBundle.message("QFIX.remove.argument.equal.default"), true, true);
   }
 
+  public void testSetFunctionToLiteral() {                      //PY-3120
+    setLanguageLevel(LanguageLevel.PYTHON27);
+    doInspectionTest("SetFunctionToLiteral.py", PySetFunctionToLiteralInspection.class,
+                     PyBundle.message("QFIX.replace.function.set.with.literal"), true, true);
+  }
+
   public void testUnnecessaryBackslash() {
     String[] testFiles = new String[]{"UnnecessaryBackslash.py"};
     myFixture.enableInspections(PyUnnecessaryBackslashInspection.class);
