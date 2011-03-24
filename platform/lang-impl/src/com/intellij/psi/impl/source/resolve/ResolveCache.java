@@ -17,7 +17,10 @@
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
@@ -26,13 +29,11 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -48,6 +49,7 @@ public class ResolveCache {
   private final PsiManagerEx myManager;
 
   private final List<Runnable> myRunnablesToRunOnDropCaches = ContainerUtil.createEmptyCOWList();
+  private final RecursionGuard myGuard = RecursionManager.createGuard("resolveCache");
 
   public interface AbstractResolver<TRef extends PsiReference,TResult> {
     TResult resolve(TRef ref, boolean incompleteCode);
@@ -88,8 +90,6 @@ public class ResolveCache {
     for (Runnable r : myRunnablesToRunOnDropCaches) {
       r.run();
     }
-
-    blockedElements.remove();
   }
 
   public void addRunnableToRunOnDropCaches(Runnable r) {
@@ -97,32 +97,33 @@ public class ResolveCache {
   }
 
   @Nullable
-  private <TRef extends PsiReference, TResult> TResult resolve(TRef ref,
-                                        AbstractResolver<TRef, TResult> resolver,
-                                        Map<? super TRef,Reference<TResult>>[] maps,
+  private <TRef extends PsiReference, TResult> TResult resolve(final TRef ref,
+                                        final AbstractResolver<TRef, TResult> resolver,
+                                        final Map<? super TRef,Reference<TResult>>[] maps,
                                         boolean needToPreventRecursion,
-                                        boolean incompleteCode) {
+                                        final boolean incompleteCode) {
     ProgressManager.checkCanceled();
 
-    int clearCountOnStart = myClearCount.intValue();
+    final int clearCountOnStart = myClearCount.intValue();
 
-    boolean physical = ref.getElement().isPhysical();
-    TResult result = getCached(ref, maps, physical, incompleteCode);
+    final boolean physical = ref.getElement().isPhysical();
+    final TResult result = getCached(ref, maps, physical, incompleteCode);
     if (result != null) {
       return result;
     }
 
-    if (needToPreventRecursion && !lockElement(ref)) return null;
-    try {
-      result = resolver.resolve(ref, incompleteCode);
-    }
-    finally {
-      if (needToPreventRecursion) {
-        unlockElement(ref);
+    Computable<TResult> computable = new Computable<TResult>() {
+      @Override
+      public TResult compute() {
+        RecursionGuard.StackStamp stamp = myGuard.markStack();
+        TResult result = resolver.resolve(ref, incompleteCode);
+        if (stamp.mayCacheNow()) {
+          cache(ref, result, maps, physical, incompleteCode, clearCountOnStart);
+        }
+        return result;
       }
-    }
-    cache(ref, result, maps, physical, incompleteCode, clearCountOnStart);
-    return result;
+    };
+    return needToPreventRecursion ? myGuard.doPreventingRecursion(ref, computable) : computable.compute();
   }
 
    public <T extends PsiPolyVariantReference> ResolveResult[] resolveWithCaching(T ref,
@@ -138,23 +139,6 @@ public class ResolveCache {
                                        boolean needToPreventRecursion,
                                        boolean incompleteCode) {
     return resolve(ref, resolver, myResolveMaps, needToPreventRecursion, incompleteCode);
-  }
-
-  private static final ThreadLocal<Set<PsiElement>> blockedElements = new ThreadLocal<Set<PsiElement>>() {
-    @Override
-    protected Set<PsiElement> initialValue() {
-      return new THashSet<PsiElement>();
-    }
-  };
-
-  private static boolean lockElement(PsiReference ref) {
-    Set<PsiElement> blocked = blockedElements.get();
-    return blocked.add(ref.getElement());
-  }
-
-  private static void unlockElement(PsiReference ref) {
-    Set<PsiElement> blocked = blockedElements.get();
-    blocked.remove(ref.getElement());
   }
 
   private static int getIndex(boolean physical, boolean incompleteCode){

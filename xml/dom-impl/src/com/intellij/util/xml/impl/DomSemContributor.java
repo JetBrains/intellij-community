@@ -16,28 +16,30 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.*;
-import com.intellij.semantic.SemContributor;
-import com.intellij.semantic.SemRegistrar;
-import com.intellij.semantic.SemService;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.semantic.*;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.Collection;
-import java.util.Set;
 
 import static com.intellij.patterns.XmlPatterns.*;
 
@@ -142,12 +144,7 @@ public class DomSemContributor extends SemContributor {
     });
 
     registrar.registerSemElementProvider(DomManagerImpl.DOM_CUSTOM_HANDLER_KEY, nonRootTag, new NullableFunction<XmlTag, CollectionElementInvocationHandler>() {
-      private final ThreadLocal<Set<XmlTag>> myCalculating = new ThreadLocal<Set<XmlTag>>() {
-        @Override
-        protected Set<XmlTag> initialValue() {
-          return new THashSet<XmlTag>();
-        }
-      };
+      private final RecursionGuard myGuard = RecursionManager.createGuard("customDomParent");
 
       public CollectionElementInvocationHandler fun(XmlTag tag) {
         if (StringUtil.isEmpty(tag.getName())) return null;
@@ -155,17 +152,12 @@ public class DomSemContributor extends SemContributor {
         final XmlTag parentTag = PhysicalDomParentStrategy.getParentTag(tag);
         assert parentTag != null;
 
-        if (!myCalculating.get().add(tag)) {
-          return null;
-        }
-        DomInvocationHandler parent;
-        try {
-          parent = mySemService.getSemElement(DomManagerImpl.DOM_HANDLER_KEY, parentTag);
-        }
-        finally {
-          myCalculating.get().remove(tag);
-        }
-
+        DomInvocationHandler parent = myGuard.doPreventingRecursion(tag, new NullableComputable<DomInvocationHandler>() {
+          @Override
+          public DomInvocationHandler compute() {
+            return mySemService.getSemElement(DomManagerImpl.DOM_HANDLER_KEY, parentTag);
+          }
+        });
         if (parent == null) return null;
 
         DomGenericInfoEx info = parent.getGenericInfo();

@@ -27,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -49,7 +48,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
       for (GroovyResolveResult resolveResult : resolveResults) {
         PsiElement resolved = resolveResult.getElement();
         PsiType returnType = null;
-        if (resolved instanceof PsiMethod && !GroovyPsiManager.isTypeBeingInferred(resolved)) {
+        if (resolved instanceof PsiMethod) {
           PsiMethod method = (PsiMethod) resolved;
           if (resolveResult.isInvokedOnProperty()) {
             final PsiType propertyType = PsiUtil.getSmartReturnType(method);

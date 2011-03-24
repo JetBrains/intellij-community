@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.resolve;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -25,6 +26,7 @@ import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -45,12 +47,14 @@ public class JavaMethodResolveHelper {
 
   public JavaMethodResolveHelper(final PsiElement argumentList, @Nullable final PsiType[] parameterTypes) {
     myParameterTypes = parameterTypes;
+    final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(argumentList);
     final PsiConflictResolver resolver = parameterTypes == null ? DuplicateConflictResolver.INSTANCE : new JavaMethodsConflictResolver(argumentList, parameterTypes);
     myProcessor = new MethodResolverProcessor(argumentList, new PsiConflictResolver[]{resolver}) {
       protected MethodCandidateInfo createCandidateInfo(final PsiMethod method, final PsiSubstitutor substitutor,
                                                         final boolean staticProblem,
                                                         final boolean accessible) {
-        return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext, parameterTypes, PsiType.EMPTY_ARRAY);
+        return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext, parameterTypes,
+                                       PsiType.EMPTY_ARRAY, languageLevel);
       }
 
       @Override

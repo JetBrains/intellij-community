@@ -977,7 +977,11 @@ public class FileBasedIndex implements ApplicationComponent {
   public <K> void scheduleRebuild(final ID<K, ?> indexId, final Throwable e) {
     LOG.info(e);
     requestRebuild(indexId);
-    checkRebuild(indexId, false);
+    try {
+      checkRebuild(indexId, false);
+    }
+    catch (ProcessCanceledException ignored) {
+    }
   }
 
   private void checkRebuild(final ID<?, ?> indexId, final boolean cleanupOnly) {

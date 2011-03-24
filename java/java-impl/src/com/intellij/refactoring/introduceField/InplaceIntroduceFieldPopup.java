@@ -197,6 +197,10 @@ public class InplaceIntroduceFieldPopup {
         PsiField field = elementFactory.createField(myFieldName != null ? myFieldName : names[0], defaultType);
         field = (PsiField)myParentClass.add(field);
         PsiUtil.setModifierProperty(field, PsiModifier.FINAL, myIntroduceFieldPanel.isDeclareFinal());
+        final String visibility = myIntroduceFieldPanel.getFieldVisibility();
+        if (visibility != null) {
+          PsiUtil.setModifierProperty(field, visibility, true);
+        }
         return field;
       }
     });

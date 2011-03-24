@@ -111,12 +111,13 @@ public class IndexCacheManagerImpl implements CacheManager{
     if (vFiles.isEmpty()) return true;
 
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    final boolean globalScope = scope.isSearchOutsideRootModel();
 
     final Processor<VirtualFile> virtualFileProcessor = new ReadActionProcessor<VirtualFile>() {
       @Override
       public boolean processInReadAction(VirtualFile virtualFile) {
         LOG.assertTrue(virtualFile.isValid());
-        if (virtualFile.isValid() && scope.contains(virtualFile) && shouldBeFound(virtualFile, index)) {
+        if (virtualFile.isValid() && scope.contains(virtualFile) && (globalScope || shouldBeFound(virtualFile, index))) {
           final PsiFile psiFile = myPsiManager.findFile(virtualFile);
           return psiFile == null || psiFileProcessor.process(psiFile);
         }

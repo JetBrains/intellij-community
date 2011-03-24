@@ -849,7 +849,6 @@ public class HighlightMethodUtil {
 
 
   static HighlightInfo checkConstructorCallMustBeFirstStatement(PsiReferenceExpression expression) {
-    String text = expression.getText();
     PsiElement methodCall = expression.getParent();
     if (!HighlightUtil.isSuperOrThisMethodCall(methodCall)) return null;
     PsiElement codeBlock = methodCall.getParent().getParent();
@@ -863,7 +862,7 @@ public class HighlightMethodUtil {
         prevSibling = prevSibling.getPrevSibling();
       }
     }
-    String message = JavaErrorMessages.message("constructor.call.must.be.first.statement", text + "()");
+    String message = JavaErrorMessages.message("constructor.call.must.be.first.statement", expression.getText() + "()");
     return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression.getParent(), message);
   }
 

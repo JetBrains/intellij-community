@@ -29,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SubtypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
-import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeEquals;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -52,9 +51,7 @@ public class ChooseTypeExpression extends Expression {
     Set<LookupElement> result = new LinkedHashSet<LookupElement>();
 
     for (TypeConstraint constraint : constraints) {
-      if (constraint instanceof TypeEquals) {
-        result.add(PsiTypeLookupItem.createLookupItem(constraint.getType(), null));
-      } else if (constraint instanceof SubtypeConstraint) {
+      if (constraint instanceof SubtypeConstraint) {
         result.add(PsiTypeLookupItem.createLookupItem(constraint.getDefaultType(), null));
       } else if (constraint instanceof SupertypeConstraint) {
         processSupertypes(constraint.getType(), result);

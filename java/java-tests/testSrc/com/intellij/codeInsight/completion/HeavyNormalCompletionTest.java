@@ -48,13 +48,6 @@ public class HeavyNormalCompletionTest extends CompletionTestCase{
     checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + "_after.java");
   }
   
-  public void testOnlyUppercaseClassesWhenNothingIsFound() throws Throwable {
-    createClass("package foo.bar; public class aaaxBxCxDxEx {}");
-
-    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-    checkResultByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
-  }
-
   public void testAllClassesOnSecondBasicCompletion() throws Throwable {
     createClass("package foo.bar; public class AxBxCxDxEx {}");
 

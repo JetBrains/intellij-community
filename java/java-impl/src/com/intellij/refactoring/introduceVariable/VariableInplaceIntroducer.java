@@ -177,6 +177,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
         if (psiVariable == null) {
           return;
         }
+        LOG.assertTrue(psiVariable.isValid());
         saveSettings(psiVariable);
         adjustLine(psiVariable, document);
         int startOffset = myExprMarker != null && myExprMarker.isValid() ? myExprMarker.getStartOffset() : psiVariable.getTextOffset();
