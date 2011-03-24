@@ -220,6 +220,10 @@ public class InplaceIntroduceConstantPopup {
         PsiField field = elementFactory.createFieldFromText(psiType.getCanonicalText() + " " + (myConstantName != null ? myConstantName : names[0]) + " = " + myExprText + ";", myParentClass);
         PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
         PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
+        final String visibility = myVisibilityPanel.getVisibility();
+        if (visibility != null) {
+          PsiUtil.setModifierProperty(field, visibility, true);
+        }
         field = BaseExpressionToFieldHandler.ConvertToFieldRunnable.appendField(myExpr, myParentClass, myParentClass, myAnchorElementIfAll, field);
         return field;
       }
