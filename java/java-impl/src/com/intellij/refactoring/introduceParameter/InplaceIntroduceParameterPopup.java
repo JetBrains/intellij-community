@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
@@ -135,6 +136,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
         if (parameter != null) {
           myParameterIndex = myMethod.getParameterList().getParameterIndex(parameter);
           myEditor.getCaretModel().moveToOffset(parameter.getTextOffset());
+          myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
           final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<String>();
           nameSuggestions.add(parameter.getName());
           nameSuggestions.addAll(Arrays.asList(names));
@@ -247,20 +249,25 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
                                               getReplaceFieldsWithGetters(), myMustBeFinal || myFinal, isGenerateDelegate(),
                                               myParameterTypePointer.getType(),
                                               parametersToRemove);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        final Runnable runnable = new Runnable() {
           public void run() {
-            final boolean [] conflictsFound = new boolean[] {true};
-            processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
-              @Override
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
-                conflictsFound[0] = processor.hasConflicts();
+                final boolean [] conflictsFound = new boolean[] {true};
+                processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
+                  @Override
+                  public void run() {
+                    conflictsFound[0] = processor.hasConflicts();
+                  }
+                });
+                processor.run();
+                normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
+                ParameterInplaceIntroducer.super.moveOffsetAfter(!conflictsFound[0]);
               }
             });
-            processor.run();
-            normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
-            ParameterInplaceIntroducer.super.moveOffsetAfter(!conflictsFound[0]);
           }
-        });
+        };
+        CommandProcessor.getInstance().executeCommand(myProject, runnable, IntroduceParameterHandler.REFACTORING_NAME, null);
       } else {
         super.moveOffsetAfter(success);
       }

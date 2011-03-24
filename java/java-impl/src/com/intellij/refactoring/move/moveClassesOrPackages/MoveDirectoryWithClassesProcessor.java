@@ -33,7 +33,10 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.move.FileReferenceContextUtil;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -182,6 +185,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       Messages.showErrorDialog(myProject, e.getMessage(), CommonBundle.getErrorTitle());
       return;
     }
+    final List<PsiFile> movedFiles = new ArrayList<PsiFile>();
     final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
     for (PsiFile psiFile : myFilesToMove.keySet()) {
       ChangeContextUtil.encodeContextInfo(psiFile, true);
@@ -195,7 +199,14 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
         }
       } else {
         if (!moveDestination.equals(psiFile.getContainingDirectory())) {
-          psiFile.getManager().moveFile(psiFile, moveDestination);
+          MoveFileHandler.forElement(psiFile).prepareMovedFile(psiFile, moveDestination, oldToNewElementsMapping);
+
+          PsiFile moving = moveDestination.findFile(psiFile.getName());
+          if (moving == null) {
+            MoveFilesOrDirectoriesUtil.doMoveFile(psiFile, moveDestination);
+          }
+          moving = moveDestination.findFile(psiFile.getName());
+          movedFiles.add(moving);
           listener.elementMoved(psiFile);
         }
       }
@@ -212,6 +223,12 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
         }
       }
     }
+    // fix references in moved files to outer files
+    for (PsiFile movedFile : movedFiles) {
+      MoveFileHandler.forElement(movedFile).updateMovedFile(movedFile);
+      FileReferenceContextUtil.decodeFileReferences(movedFile);
+    }
+
     for (PsiDirectory directory : myDirectories) {
       directory.delete();
     }

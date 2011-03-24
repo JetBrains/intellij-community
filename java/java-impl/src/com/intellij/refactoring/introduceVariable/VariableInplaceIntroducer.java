@@ -28,10 +28,7 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -55,6 +52,7 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.TitlePanel;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -161,8 +159,9 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
 
   @Override
   public boolean performInplaceRename(boolean processTextOccurrences, LinkedHashSet<String> nameSuggestions) {
+    final boolean result = super.performInplaceRename(processTextOccurrences, nameSuggestions);
     showBalloon();
-    return super.performInplaceRename(processTextOccurrences, nameSuggestions);
+    return result;
   }
 
   public RangeMarker getExprMarker() {
@@ -183,7 +182,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
         int startOffset = myExprMarker != null && myExprMarker.isValid() ? myExprMarker.getStartOffset() : psiVariable.getTextOffset();
         final PsiFile file = psiVariable.getContainingFile();
         final PsiReference referenceAt = file.findReferenceAt(startOffset);
-        if (referenceAt != null && referenceAt.resolve() instanceof PsiLocalVariable) {
+        if (referenceAt != null && referenceAt.resolve() instanceof PsiVariable) {
           startOffset = referenceAt.getElement().getTextRange().getEndOffset();
         }
         else {
@@ -193,6 +192,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
           }
         }
         myEditor.getCaretModel().moveToOffset(startOffset);
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
         if (psiVariable.getInitializer() != null) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
@@ -353,7 +353,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(component);
     balloonBuilder.setFadeoutTime(0)
-      .setFillColor(IdeTooltipManager.GRAPHITE_COLOR)
+      .setFillColor(IdeTooltipManager.GRAPHITE_COLOR.brighter().brighter())
       .setAnimationCycle(0)
       .setHideOnClickOutside(false)
       .setHideOnKeyOutside(false)
@@ -363,8 +363,11 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     final RelativePoint target = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
     final Point screenPoint = target.getScreenPoint();
     myBalloon = balloonBuilder.createBalloon();
-    myBalloon
-      .show(new RelativePoint(new Point(screenPoint.x, screenPoint.y - myEditor.getLineHeight())), Balloon.Position.above);
+    int y = screenPoint.y;
+    if (target.getPoint().getY() > myEditor.getLineHeight() + myBalloon.getPreferredSize().getHeight()) {
+      y -= myEditor.getLineHeight();
+    }
+    myBalloon.show(new RelativePoint(new Point(screenPoint.x, y)), Balloon.Position.above);
   }
 
   public class FinalListener implements ActionListener {

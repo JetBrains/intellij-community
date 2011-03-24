@@ -562,6 +562,9 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   }
 
   public Dimension getPreferredSize() {
+    if (super.isPreferredSizeSet()) {
+      return super.getPreferredSize();
+    }
     if (myEditor != null) {
       final Dimension preferredSize = new Dimension(myEditor.getComponent().getPreferredSize());
       final Insets insets = getInsets();

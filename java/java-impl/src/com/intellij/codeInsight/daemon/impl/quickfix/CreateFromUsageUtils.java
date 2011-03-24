@@ -41,6 +41,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -264,6 +265,7 @@ public class CreateFromUsageUtils {
   public static PsiClass createClass(final PsiJavaCodeReferenceElement referenceElement,
                                      final CreateClassKind classKind,
                                      final String superClassName) {
+    assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     final String name = referenceElement.getReferenceName();
 
     final PsiElement qualifierElement;
@@ -274,23 +276,7 @@ public class CreateFromUsageUtils {
         return ApplicationManager.getApplication().runWriteAction(
           new Computable<PsiClass>() {
             public PsiClass compute() {
-              try {
-                PsiClass psiClass = (PsiClass) qualifierElement;
-                if (!CodeInsightUtilBase.preparePsiElementForWrite(psiClass)) return null;
-
-                PsiManager manager = psiClass.getManager();
-                PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-                PsiClass result = classKind == INTERFACE ? elementFactory.createInterface(name) :
-                                  classKind == CLASS ? elementFactory.createClass(name) :
-                                  elementFactory.createEnum(name);
-                CreateFromUsageBaseFix.setupGenericParameters(result, referenceElement);
-                result = (PsiClass)manager.getCodeStyleManager().reformat(result);
-                return (PsiClass) psiClass.add(result);
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
-                return null;
-              }
+              return createClassInQualifier((PsiClass)qualifierElement, classKind, name, referenceElement);
             }
           });
       }
@@ -302,20 +288,7 @@ public class CreateFromUsageUtils {
     final PsiManager manager = referenceElement.getManager();
     final PsiFile sourceFile = referenceElement.getContainingFile();
     final Module module = ModuleUtil.findModuleForPsiElement(sourceFile);
-    PsiPackage aPackage = null;
-    if (qualifierElement instanceof PsiPackage) {
-      aPackage = (PsiPackage)qualifierElement;
-    }
-    else {
-      final PsiDirectory directory = sourceFile.getContainingDirectory();
-      if (directory != null) {
-        aPackage = JavaDirectoryService.getInstance().getPackage(directory);
-      }
-
-      if (aPackage == null) {
-        aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
-      }
-    }
+    PsiPackage aPackage = findTargetPackage(qualifierElement, manager, sourceFile);
     if (aPackage == null) return null;
     final PsiDirectory targetDirectory;
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -333,6 +306,48 @@ public class CreateFromUsageUtils {
       targetDirectory = null;
     }
     return createClass(classKind, targetDirectory, name, manager, referenceElement, sourceFile, superClassName);
+  }
+
+  @Nullable
+  public static PsiPackage findTargetPackage(PsiElement qualifierElement, PsiManager manager, PsiFile sourceFile) {
+    PsiPackage aPackage = null;
+    if (qualifierElement instanceof PsiPackage) {
+      aPackage = (PsiPackage)qualifierElement;
+    }
+    else {
+      final PsiDirectory directory = sourceFile.getContainingDirectory();
+      if (directory != null) {
+        aPackage = JavaDirectoryService.getInstance().getPackage(directory);
+      }
+
+      if (aPackage == null) {
+        aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
+      }
+    }
+    if (aPackage == null) return null;
+    return aPackage;
+  }
+
+  public static PsiClass createClassInQualifier(PsiClass psiClass,
+                                                CreateClassKind classKind,
+                                                String name,
+                                                PsiJavaCodeReferenceElement referenceElement) {
+    try {
+      if (!CodeInsightUtilBase.preparePsiElementForWrite(psiClass)) return null;
+
+      PsiManager manager = psiClass.getManager();
+      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+      PsiClass result = classKind == INTERFACE ? elementFactory.createInterface(name) :
+                        classKind == CLASS ? elementFactory.createClass(name) :
+                        elementFactory.createEnum(name);
+      CreateFromUsageBaseFix.setupGenericParameters(result, referenceElement);
+      result = (PsiClass)manager.getCodeStyleManager().reformat(result);
+      return (PsiClass) psiClass.add(result);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   public static PsiClass createClass(final CreateClassKind classKind,

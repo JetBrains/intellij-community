@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
@@ -176,6 +177,7 @@ public class InplaceIntroduceFieldPopup {
           final PsiField field = createFieldToStartTemplateOn(suggestedNameInfo.names, defaultType);
           if (field != null) {
             myEditor.getCaretModel().moveToOffset(field.getTextOffset());
+            myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
             final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<String>();
             nameSuggestions.add(field.getName());
             nameSuggestions.addAll(Arrays.asList(suggestedNameInfo.names));

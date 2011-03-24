@@ -78,8 +78,8 @@ public class PsiSuperMethodImplUtil {
 
   @NotNull
   private static List<MethodSignatureBackedByPsiMethod> findSuperMethodSignatures(PsiMethod method,
-                                                                                           PsiClass parentClass,
-                                                                                           boolean allowStaticMethod) {
+                                                                                  PsiClass parentClass,
+                                                                                  boolean allowStaticMethod) {
 
     return new ArrayList<MethodSignatureBackedByPsiMethod>(SuperMethodsSearch.search(method, parentClass, true, allowStaticMethod).findAll());
   }
@@ -305,5 +305,59 @@ public class PsiSuperMethodImplUtil {
 
   private static Map<MethodSignature, HierarchicalMethodSignature> getSignaturesMap(final PsiClass aClass) {
     return SIGNATURES_KEY.getValue(aClass);
+  }
+
+
+  // uses hierarchy signature tree if available, traverses class structure by itself otherwise
+  public static boolean isSuperMethodSmart(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
+    //boolean old = PsiSuperMethodUtil.isSuperMethod(method, superMethod);
+
+    if (method == superMethod) return false;
+    PsiClass aClass = method.getContainingClass();
+    PsiClass superClass = superMethod.getContainingClass();
+
+    if (aClass == null || superClass == null || superClass == aClass) return false;
+
+    if (!canHaveSuperMethod(method, true, false)) return false;
+
+    PsiMethod[] superMethods = null;
+    Map<MethodSignature, HierarchicalMethodSignature> cachedMap = SIGNATURES_KEY.getCachedValueOrNull(aClass);
+    if (cachedMap != null) {
+      HierarchicalMethodSignature signature = cachedMap.get(method.getSignature(PsiSubstitutor.EMPTY));
+      if (signature != null) {
+        superMethods = MethodSignatureUtil.convertMethodSignaturesToMethods(signature.getSuperSignatures());
+      }
+    }
+    if (superMethods == null) {
+      PsiClassType[] directSupers = aClass.getSuperTypes();
+      List<PsiMethod> found = null;
+      boolean canceled = false;
+      for (PsiClassType directSuper : directSupers) {
+        PsiClassType.ClassResolveResult resolveResult = directSuper.resolveGenerics();
+        if (resolveResult.getSubstitutor() != PsiSubstitutor.EMPTY) {
+          // generics
+          canceled = true;
+          break;
+        }
+        PsiClass directSuperClass = resolveResult.getElement();
+        if (directSuperClass == null) continue;
+        PsiMethod[] candidates = directSuperClass.findMethodsBySignature(method, false);
+        if (candidates.length != 0) {
+          if (found == null) found = new ArrayList<PsiMethod>();
+          for (PsiMethod candidate : candidates) {
+            if (PsiUtil.canBeOverriden(candidate)) found.add(candidate);
+          }
+        }
+      }
+      superMethods = canceled ? null : found == null ? PsiMethod.EMPTY_ARRAY : found.toArray(new PsiMethod[found.size()]);
+    }
+    if (superMethods == null) {
+      superMethods = MethodSignatureUtil.convertMethodSignaturesToMethods(method.getHierarchicalMethodSignature().getSuperSignatures());
+    }
+
+    for (PsiMethod superCandidate : superMethods) {
+      if (superMethod.equals(superCandidate) || isSuperMethodSmart(superCandidate, superMethod)) return true;
+    }
+    return false;
   }
 }
