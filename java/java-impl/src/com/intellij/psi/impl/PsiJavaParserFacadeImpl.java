@@ -34,6 +34,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -79,6 +80,13 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   };
 
   public static final JavaParserUtil.ParserWrapper REFERENCE = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      ReferenceParser.parseJavaCodeReference(builder, false, true, false, false, false);
+    }
+  };
+
+  public static final JavaParserUtil.ParserWrapper DIAMOND_REF = new JavaParserUtil.ParserWrapper() {
     @Override
     public void parse(final PsiBuilder builder) {
       ReferenceParser.parseJavaCodeReference(builder, false, true, false, false, true);
@@ -293,7 +301,9 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   public PsiJavaCodeReferenceElement createReferenceFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
     final boolean isStaticImport = context instanceof PsiImportStaticStatement &&
                                    !((PsiImportStaticStatement)context).isOnDemand();
-    final JavaParserUtil.ParserWrapper wrapper = isStaticImport ? STATIC_IMPORT_REF : REFERENCE;
+    final boolean mayHaveDiamonds = context instanceof PsiNewExpression &&
+                                    PsiUtil.getLanguageLevel(context).isAtLeast(LanguageLevel.JDK_1_7);
+    final JavaParserUtil.ParserWrapper wrapper = isStaticImport ? STATIC_IMPORT_REF : mayHaveDiamonds ? DIAMOND_REF : REFERENCE;
     final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, wrapper, false), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiJavaCodeReferenceElement)) {
