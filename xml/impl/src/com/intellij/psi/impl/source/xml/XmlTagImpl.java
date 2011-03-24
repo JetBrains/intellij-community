@@ -25,8 +25,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
@@ -39,6 +38,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -96,6 +96,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   @NonNls private static final String XML_NS_PREFIX = "xml";
 
   private final int myHC = ourHC++;
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("xmlTag");
 
   @Override
   public final int hashCode() {
@@ -251,54 +252,51 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   protected final Map<String, CachedValue<XmlNSDescriptor>> initNSDescriptorsMap() {
     Map<String, CachedValue<XmlNSDescriptor>> map = myNSDescriptorsMap;
     if (map == null) {
-      boolean exceptionOccurred = false;
-      try {
-        // XSD aware attributes processing
-
-        final String noNamespaceDeclaration = getAttributeValue("noNamespaceSchemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
-        final String schemaLocationDeclaration = getAttributeValue("schemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
-
-        if (noNamespaceDeclaration != null) {
-          map = initializeSchema(XmlUtil.EMPTY_URI, null, noNamespaceDeclaration, map);
-        }
-        if (schemaLocationDeclaration != null) {
-          final StringTokenizer tokenizer = new StringTokenizer(schemaLocationDeclaration);
-          while (tokenizer.hasMoreTokens()) {
-            final String uri = tokenizer.nextToken();
-            if (tokenizer.hasMoreTokens()) {
-              map = initializeSchema(uri, null, tokenizer.nextToken(), map);
-            }
-          }
-        }
-        // namespace attributes processing (XSD declaration via ExternalResourceManager)
-
-        if (hasNamespaceDeclarations()) {
-          for (final XmlAttribute attribute : getAttributes()) {
-            if (attribute.isNamespaceDeclaration()) {
-              String ns = attribute.getValue();
-              if (ns == null) ns = XmlUtil.EMPTY_URI;
-              ns = getRealNs(ns);
-
-              if (map == null || !map.containsKey(ns)) {
-                map = initializeSchema(ns, getNSVersion(ns, this), getNsLocation(ns), map);
-              }
-            }
-          }
-        }
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      map = computeNsDescriptorMap();
+      if (stamp.mayCacheNow()) {
+        myNSDescriptorsMap = map;
       }
-      catch (RuntimeException e) {
-        myNSDescriptorsMap = null;
-        exceptionOccurred = true;
-        throw e;
-      }
-      finally {
-        if (map == null && !exceptionOccurred) {
-          map = Collections.emptyMap();
-        }
-      }
-      myNSDescriptorsMap = map;
     }
     return map;
+  }
+
+  @NotNull
+  private Map<String, CachedValue<XmlNSDescriptor>> computeNsDescriptorMap() {
+    Map<String, CachedValue<XmlNSDescriptor>> map = null;
+    // XSD aware attributes processing
+
+    final String noNamespaceDeclaration = getAttributeValue("noNamespaceSchemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
+    final String schemaLocationDeclaration = getAttributeValue("schemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
+
+    if (noNamespaceDeclaration != null) {
+      map = initializeSchema(XmlUtil.EMPTY_URI, null, noNamespaceDeclaration, map);
+    }
+    if (schemaLocationDeclaration != null) {
+      final StringTokenizer tokenizer = new StringTokenizer(schemaLocationDeclaration);
+      while (tokenizer.hasMoreTokens()) {
+        final String uri = tokenizer.nextToken();
+        if (tokenizer.hasMoreTokens()) {
+          map = initializeSchema(uri, null, tokenizer.nextToken(), map);
+        }
+      }
+    }
+    // namespace attributes processing (XSD declaration via ExternalResourceManager)
+
+    if (hasNamespaceDeclarations()) {
+      for (final XmlAttribute attribute : getAttributes()) {
+        if (attribute.isNamespaceDeclaration()) {
+          String ns = attribute.getValue();
+          if (ns == null) ns = XmlUtil.EMPTY_URI;
+          ns = getRealNs(ns);
+
+          if (map == null || !map.containsKey(ns)) {
+            map = initializeSchema(ns, getNSVersion(ns, this), getNsLocation(ns), map);
+          }
+        }
+      }
+    }
+    return map == null ? Collections.<String, CachedValue<XmlNSDescriptor>>emptyMap() : map;
   }
 
   @Nullable
@@ -414,7 +412,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
       if (myExtResourcesModCount != curExtResourcesModCount) {
         myNSDescriptorsMap = null;
       }
-      myCachedDescriptor = computeElementDescriptor();
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      XmlElementDescriptor descriptor = computeElementDescriptor();
+      if (!stamp.mayCacheNow()) {
+        return descriptor;
+      }
+
+      myCachedDescriptor = descriptor;
       myDescriptorModCount = curModCount;
       myExtResourcesModCount = curExtResourcesModCount;
     }
@@ -694,8 +698,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     if (cachedNamespace != null && myModCount == curModCount) {
       return cachedNamespace;
     }
-    final String prefix = getNamespacePrefix();
-    cachedNamespace = getNamespaceByPrefix(prefix);
+    RecursionGuard.StackStamp stamp = ourGuard.markStack();
+    cachedNamespace = getNamespaceByPrefix(getNamespacePrefix());
+    if (!stamp.mayCacheNow()) {
+      return cachedNamespace;
+    }
+
     myCachedNamespace = cachedNamespace;
     myModCount = curModCount;
     return cachedNamespace;
@@ -705,8 +713,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   public String getNamespacePrefix() {
     return XmlUtil.findPrefixByQualifiedName(getName());
   }
-
-  private static final ThreadLocal<Boolean> ourGetNsByPrefixRecursionLock = new ThreadLocal<Boolean>();
 
   @NotNull
   public String getNamespaceByPrefix(String prefix) {
@@ -723,22 +729,26 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
     if (prefix.length() > 0 &&
         !hasNamespaceDeclarations() &&
-        getNamespacePrefix().equals(prefix) &&
-        ourGetNsByPrefixRecursionLock.get() == null) {
+        getNamespacePrefix().equals(prefix)) {
       // When there is no namespace declarations then qualified names should be just used in dtds
       // this implies that we may have "" namespace prefix ! (see last paragraph in Namespaces in Xml, Section 5)
-      ourGetNsByPrefixRecursionLock.set(Boolean.TRUE);
 
-      try {
-        final String nsFromEmptyPrefix = getNamespaceByPrefix("");
-        final XmlNSDescriptor nsDescriptor = getNSDescriptor(nsFromEmptyPrefix, false);
-        final XmlElementDescriptor descriptor = nsDescriptor != null ? nsDescriptor.getElementDescriptor(this) : null;
-        final String nameFromRealDescriptor =
-          descriptor != null && descriptor.getDeclaration() != null && descriptor.getDeclaration().isPhysical() ? descriptor.getName() : "";
-        if (nameFromRealDescriptor.equals(getName())) return nsFromEmptyPrefix;
-      }
-      finally {
-        ourGetNsByPrefixRecursionLock.set(null);
+      String result = ourGuard.doPreventingRecursion("getNsByPrefix", new Computable<String>() {
+        @Override
+        public String compute() {
+          final String nsFromEmptyPrefix = getNamespaceByPrefix("");
+          final XmlNSDescriptor nsDescriptor = getNSDescriptor(nsFromEmptyPrefix, false);
+          final XmlElementDescriptor descriptor = nsDescriptor != null ? nsDescriptor.getElementDescriptor(XmlTagImpl.this) : null;
+          final String nameFromRealDescriptor =
+            descriptor != null && descriptor.getDeclaration() != null && descriptor.getDeclaration().isPhysical()
+            ? descriptor.getName()
+            : "";
+          if (nameFromRealDescriptor.equals(getName())) return nsFromEmptyPrefix;
+          return XmlUtil.EMPTY_URI;
+        }
+      });
+      if (result != null) {
+        return result;
       }
     }
     return XmlUtil.EMPTY_URI;
@@ -788,8 +798,23 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   @Nullable
   private BidirectionalMap<String, String> initNamespaceMaps(PsiElement parent) {
     BidirectionalMap<String, String> map = myNamespaceMap;
-    if (map == null && hasNamespaceDeclarations()) {
-      final BidirectionalMap<String, String> namespaceMap = new BidirectionalMap<String, String>();
+
+    if (map == null) {
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      map = computeNamespaceMap(parent);
+      if (stamp.mayCacheNow()) {
+        myNamespaceMap = map;
+      }
+    }
+
+    return map;
+  }
+
+  @Nullable
+  private BidirectionalMap<String, String> computeNamespaceMap(PsiElement parent) {
+    BidirectionalMap<String, String> map = null;
+    if (hasNamespaceDeclarations()) {
+      map = new BidirectionalMap<String, String>();
       final XmlAttribute[] attributes = getAttributes();
 
       for (final XmlAttribute attribute : attributes) {
@@ -800,17 +825,14 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
 
           if (value != null) {
             if (splitIndex < 0) {
-              namespaceMap.put("", value);
+              map.put("", value);
             }
             else {
-              namespaceMap.put(XmlUtil.findLocalNameByQualifiedName(name), value);
+              map.put(XmlUtil.findLocalNameByQualifiedName(name), value);
             }
           }
         }
       }
-
-      myNamespaceMap = map =
-        namespaceMap; // assign to field should be as last statement, to prevent incomplete initialization due to ProcessCancelledException
     }
 
     if (parent instanceof XmlDocument) {
@@ -818,15 +840,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
       if (extension != null) {
         final String[][] defaultNamespace = extension.getNamespacesFromDocument((XmlDocument)parent, map != null);
         if (defaultNamespace != null) {
-          final BidirectionalMap<String, String> namespaceMap = new BidirectionalMap<String, String>();
-          if (map != null) {
-            namespaceMap.putAll(map);
+          if (map == null) {
+            map = new BidirectionalMap<String, String>();
           }
           for (final String[] prefix2ns : defaultNamespace) {
-            namespaceMap.put(prefix2ns[0], getRealNs(prefix2ns[1]));
+            map.put(prefix2ns[0], getRealNs(prefix2ns[1]));
           }
-          myNamespaceMap = map =
-            namespaceMap; // assign to field should be as last statement, to prevent incomplete initialization due to ProcessCancelledException
         }
       }
     }
