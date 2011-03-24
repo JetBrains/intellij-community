@@ -70,7 +70,8 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     if (targetDirectory != null) {
       final List<PsiDirectory> dirs = new ArrayList<PsiDirectory>(Arrays.asList(directories));
       for (Iterator<PsiDirectory> iterator = dirs.iterator(); iterator.hasNext();) {
-        if (targetDirectory.equals(iterator.next().getParentDirectory())) {
+        final PsiDirectory directory = iterator.next();
+        if (targetDirectory.equals(directory.getParentDirectory()) || targetDirectory.equals(directory)) {
           iterator.remove();
         }
       }
