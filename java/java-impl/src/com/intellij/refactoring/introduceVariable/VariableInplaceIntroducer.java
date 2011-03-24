@@ -52,6 +52,7 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.TitlePanel;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -362,8 +363,11 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     final RelativePoint target = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
     final Point screenPoint = target.getScreenPoint();
     myBalloon = balloonBuilder.createBalloon();
-    myBalloon
-      .show(new RelativePoint(new Point(screenPoint.x, screenPoint.y - myEditor.getLineHeight())), Balloon.Position.above);
+    int y = screenPoint.y;
+    if (target.getPoint().getY() > myEditor.getLineHeight() + myBalloon.getPreferredSize().getHeight()) {
+      y -= myEditor.getLineHeight();
+    }
+    myBalloon.show(new RelativePoint(new Point(screenPoint.x, y)), Balloon.Position.above);
   }
 
   public class FinalListener implements ActionListener {
