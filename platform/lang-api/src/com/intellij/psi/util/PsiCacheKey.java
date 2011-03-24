@@ -21,9 +21,11 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiCacheKey<T,H extends PsiElement> extends Key<Pair<Long, T>> {
   private final Function<H,T> myFunction;
@@ -34,10 +36,34 @@ public class PsiCacheKey<T,H extends PsiElement> extends Key<Pair<Long, T>> {
   }
 
   public final T getValue(H h) {
+    while (true) {
+      Pair<Long, T> data = h.getUserData(this);
+
+      final long count = h.getManager().getModificationTracker().getJavaStructureModificationCount();
+      if (data == null) {
+        data = new Pair<Long, T>(count, myFunction.fun(h));
+        data = ((UserDataHolderEx)h).putUserDataIfAbsent(this, data);
+      }
+      else if (data.getFirst() != count) {
+        Pair<Long, T> newData = new Pair<Long, T>(count, myFunction.fun(h));
+        if (((UserDataHolderEx)h).replace(this, data, newData)) {
+          data = newData;
+        }
+        else {
+          continue;
+        }
+      }
+
+      return data.getSecond();
+    }
+  }
+
+  @Nullable
+  public final T getCachedValueOrNull(H h) {
     Pair<Long, T> data = h.getUserData(this);
     final long count = h.getManager().getModificationTracker().getJavaStructureModificationCount();
     if (data == null || data.getFirst() != count) {
-      h.putUserData(this, data = new Pair<Long, T>(count, myFunction.fun(h)));
+      return null;
     }
 
     return data.getSecond();

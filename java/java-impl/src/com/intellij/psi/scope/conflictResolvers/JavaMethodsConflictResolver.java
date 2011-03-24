@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -150,7 +151,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       if (!method.hasModifierProperty(PsiModifier.STATIC)) {
         for (int k=i-1; k>=0; k--) {
           PsiMethod existingMethod = (PsiMethod)conflicts.get(k).getElement();
-          if (PsiSuperMethodUtil.isSuperMethod(existingMethod, method)) {
+          if (PsiSuperMethodImplUtil.isSuperMethodSmart(existingMethod, method)) {
             conflicts.remove(i);
             i--;
             continue nextConflict;
@@ -189,12 +190,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       // filter out methods with incorrect inferred bounds (for unrelated methods only)
       boolean existingTypeParamAgree = areTypeParametersAgree(existing);
       boolean infoTypeParamAgree = areTypeParametersAgree(info);
-      if (existingTypeParamAgree && !infoTypeParamAgree && !PsiSuperMethodUtil.isSuperMethod(method, existingMethod)) {
+      if (existingTypeParamAgree && !infoTypeParamAgree && !PsiSuperMethodImplUtil.isSuperMethodSmart(method, existingMethod)) {
         conflicts.remove(i);
         i--;
         continue;
       }
-      else if (!existingTypeParamAgree && infoTypeParamAgree && !PsiSuperMethodUtil.isSuperMethod(existingMethod, method)) {
+      else if (!existingTypeParamAgree && infoTypeParamAgree && !PsiSuperMethodImplUtil.isSuperMethodSmart(existingMethod, method)) {
         signatures.put(signature, info);
         int index = conflicts.indexOf(existing);
         conflicts.remove(index);
