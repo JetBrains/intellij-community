@@ -19,7 +19,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 
 public interface PsiModificationTracker extends ModificationTracker {
-
   /**
    * This key can be passed as a dependency in a {@link com.intellij.psi.util.CachedValueProvider}.
    * @see #getModificationCount()
@@ -47,12 +46,6 @@ public interface PsiModificationTracker extends ModificationTracker {
   long getOutOfCodeBlockModificationCount();
 
   long getJavaStructureModificationCount();
-
-  /**
-   * Tracks modifications in Java annotations and annotated classes and methods.
-   * @return current counter value.
-   */
-  long getAnnotationModificationCount();
 
   interface Listener {
     void modificationCountChanged();
