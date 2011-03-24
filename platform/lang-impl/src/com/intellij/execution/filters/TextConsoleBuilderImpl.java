@@ -62,4 +62,19 @@ public class TextConsoleBuilderImpl extends TextConsoleBuilder {
     myViewer = isViewer;
   }
 
+  protected Project getProject() {
+    return myProject;
+  }
+
+  protected GlobalSearchScope getScope() {
+    return myScope;
+  }
+
+  protected ArrayList<Filter> getFilters() {
+    return myFilters;
+  }
+
+  protected boolean isViewer() {
+    return myViewer;
+  }
 }
