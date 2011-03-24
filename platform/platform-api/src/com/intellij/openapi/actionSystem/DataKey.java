@@ -43,15 +43,17 @@ public class DataKey<T> {
   }
 
   public static <T> DataKey<T> create(@NotNull @NonNls String name) {
-    if (ourDataKeyIndex.containsKey(name)) {
-      //noinspection unchecked
-      return ourDataKeyIndex.get(name);
+    //noinspection unchecked
+    DataKey<T> key = ourDataKeyIndex.get(name);
+    if (key != null) {
+      return key;
     }
-    DataKey<T> key = new DataKey<T>(name);
+    key = new DataKey<T>(name);
     ourDataKeyIndex.put(name, key);
     return key;
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
@@ -74,7 +76,7 @@ public class DataKey<T> {
   }
 
   @Nullable
-  public T getData(DataProvider dataProvider) {
+  public T getData(@NotNull DataProvider dataProvider) {
     //noinspection unchecked
     return (T) dataProvider.getData(myName);
   }
