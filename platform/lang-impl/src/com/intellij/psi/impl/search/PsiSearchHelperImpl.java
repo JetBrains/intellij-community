@@ -18,7 +18,6 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.codeInsight.CommentUtil;
 import com.intellij.concurrency.JobUtil;
-import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -44,6 +43,7 @@ import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -489,8 +489,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           refProcessor = new Processor<PsiReference>() {
             @Override
             public boolean process(PsiReference psiReference) {
-              if (!myProcessor.process(psiReference)) return false;
-              return another.refProcessor.process(psiReference);
+              return myProcessor.process(psiReference) && another.refProcessor.process(psiReference);
             }
           };
         }
@@ -571,7 +570,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       progress.setText(PsiBundle.message("psi.scanning.files.progress"));
     }
 
-    final MultiMap<VirtualFile, RequestWithProcessor> candidateFiles = collectFiles(singles);
+    final MultiMap<VirtualFile, RequestWithProcessor> candidateFiles = collectFiles(singles, progress);
 
     if (candidateFiles.isEmpty()) {
       return true;
@@ -593,7 +592,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         final VirtualFile vfile = psiRoot.getContainingFile().getVirtualFile();
         for (final RequestWithProcessor singleRequest : candidateFiles.get(vfile)) {
           StringSearcher searcher = searchers.get(singleRequest);
-          if (!LowLevelSearchUtil.processElementsContainingWordInElement(adaptProcessor(singleRequest.request, singleRequest.refProcessor), psiRoot, searcher, false, progress)) {
+          TextOccurenceProcessor adapted = adaptProcessor(singleRequest.request, singleRequest.refProcessor);
+          if (!LowLevelSearchUtil.processElementsContainingWordInElement(adapted, psiRoot, searcher, false, progress)) {
             return false;
           }
         }
@@ -616,9 +616,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     };
   }
 
-  private MultiMap<VirtualFile, RequestWithProcessor> collectFiles(MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles) {
+  private MultiMap<VirtualFile, RequestWithProcessor> collectFiles(MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,
+                                                                   ProgressIndicator progress) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
-    final MultiMap<VirtualFile, RequestWithProcessor> result = new MultiMap<VirtualFile, RequestWithProcessor>();
+    final MultiMap<VirtualFile, RequestWithProcessor> result = createMultiMap();
     for (Set<IdIndexEntry> key : singles.keySet()) {
       if (key.isEmpty()) {
         continue;
@@ -631,7 +632,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       boolean first = true;
       for (IdIndexEntry entry : key) {
-        final MultiMap<VirtualFile, RequestWithProcessor> local = findFilesWithIndexEntry(entry, index, data, commonScope);
+        final MultiMap<VirtualFile, RequestWithProcessor> local = findFilesWithIndexEntry(entry, index, data, commonScope, progress);
         if (first) {
           intersection = local;
           first = false;
@@ -648,6 +649,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return result;
   }
 
+  private static MultiMap<VirtualFile, RequestWithProcessor> createMultiMap() {
+    return new MultiMap<VirtualFile, RequestWithProcessor>(){
+      @Override
+      protected Collection<RequestWithProcessor> createCollection() {
+        return new SmartList<RequestWithProcessor>(); // usually there is just one request
+      }
+    };
+  }
+
   private static GlobalSearchScope uniteScopes(Collection<RequestWithProcessor> requests) {
     GlobalSearchScope commonScope = null;
     for (RequestWithProcessor r : requests) {
@@ -659,29 +669,31 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   private static MultiMap<VirtualFile, RequestWithProcessor> findFilesWithIndexEntry(final IdIndexEntry entry,
-                                              final ProjectFileIndex index,
-                                              final Collection<RequestWithProcessor> data,
-                                              final GlobalSearchScope commonScope) {
-    final MultiMap<VirtualFile, RequestWithProcessor> local = new MultiMap<VirtualFile, RequestWithProcessor>();
+                                                                                     final ProjectFileIndex index,
+                                                                                     final Collection<RequestWithProcessor> data,
+                                                                                     final GlobalSearchScope commonScope,
+                                                                                     final ProgressIndicator progress) {
+    final MultiMap<VirtualFile, RequestWithProcessor> local = createMultiMap();
+    final boolean inRootsOnly = !commonScope.isSearchOutsideRootModel();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        ProgressManager.checkCanceled();
+        if (progress != null) progress.checkCanceled();
         FileBasedIndex.getInstance().processValues(IdIndex.NAME, entry, null, new FileBasedIndex.ValueProcessor<Integer>() {
-          public boolean process(VirtualFile file, Integer value) {
-            ProgressManager.checkCanceled();
-            if (!IndexCacheManagerImpl.shouldBeFound(file, index)) {
+            public boolean process(VirtualFile file, Integer value) {
+              if (progress != null) progress.checkCanceled();
+              if (inRootsOnly && !IndexCacheManagerImpl.shouldBeFound(file, index)) {
+                return true;
+              }
+              int mask = value.intValue();
+              for (RequestWithProcessor single : data) {
+                final PsiSearchRequest request = single.request;
+                if ((mask & request.searchContext) != 0 && ((GlobalSearchScope)request.searchScope).contains(file)) {
+                  local.putValue(file, single);
+                }
+              }
               return true;
             }
-            int mask = value.intValue();
-            for (RequestWithProcessor single : data) {
-              final PsiSearchRequest request = single.request;
-              if ((mask & request.searchContext) != 0 && ((GlobalSearchScope)request.searchScope).contains(file)) {
-                local.putValue(file, single);
-              }
-            }
-            return true;
-          }
-        }, commonScope);
+          }, commonScope);
       }
     });
 

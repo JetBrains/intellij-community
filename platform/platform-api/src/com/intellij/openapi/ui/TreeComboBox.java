@@ -43,6 +43,7 @@ public class TreeComboBox extends JComboBox {
   final static int INDENT = UIUtil.getTreeLeftChildIndent();
   private TreeModel myTreeModel;
   private String myDefaultText;
+  private boolean myShowRootNode;
 
   public TreeComboBox(@NotNull final TreeModel model) {
     this(model, true);
@@ -55,6 +56,7 @@ public class TreeComboBox extends JComboBox {
   public TreeComboBox(@NotNull final TreeModel model, final boolean showRootNode, final String defaultText) {
     myTreeModel = model;
     myDefaultText = defaultText;
+    myShowRootNode = showRootNode;
     setModel(new TreeModelWrapper(myTreeModel, showRootNode));
     setRenderer(new TreeListCellRenderer(this, showRootNode, defaultText));
     if (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel()) setMaximumRowCount(25);
@@ -67,6 +69,12 @@ public class TreeComboBox extends JComboBox {
 
   public TreeModel getTreeModel() {
     return myTreeModel;
+  }
+
+  public JTree createFakeTree() {
+    final JTree tree = new JTree(getTreeModel());
+    tree.setRootVisible(myShowRootNode);
+    return tree;
   }
 
   private static class TreeListCellRenderer extends SimpleColoredRenderer implements ListCellRenderer {

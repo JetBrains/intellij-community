@@ -25,6 +25,7 @@ import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -763,7 +764,9 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
         parentDir = topDir;
       }
       else {
-        if (topDir instanceof NewVirtualFile) {
+        final ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
+        if (topDir instanceof NewVirtualFile && (!app.holdsReadLock() || app.isDispatchThread())) {
+          // need dispatch-thread-check because sync refresh in non-awt thread may cause deadlock
           parentDir = ((NewVirtualFile)topDir).refreshAndFindChild(myDefaultTemplatesDir);
         }
         else {

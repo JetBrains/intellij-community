@@ -25,8 +25,6 @@ package com.theoryinpractice.testng.ui;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
@@ -122,9 +120,6 @@ public class TestNGConsoleView extends BaseTestsOutputConsoleView {
     if (testNGResults != null) {
       currentTest = testNGResults.testStarted(result);
     }
-  }
-
-  public void attachToProcess(ProcessHandler processHandler) {
   }
 
   public TestProxy getCurrentTest() {

@@ -218,9 +218,6 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
   @Nullable
   public PsiType getReturnType() {
-    if (GroovyPsiManager.isTypeBeingInferred(this)) {
-      return null;
-    }
     return GroovyPsiManager.getInstance(getProject()).getType(this, ourTypesCalculator);
   }
 }

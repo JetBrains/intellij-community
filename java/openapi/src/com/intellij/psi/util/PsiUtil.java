@@ -190,26 +190,29 @@ public final class PsiUtil extends PsiUtilBase {
     PsiElement blockSoFar = null;
     while (element != null) {
       // variable can be defined in for loop initializer
-      if (element instanceof PsiCodeBlock || element instanceof PsiForStatement || element instanceof PsiForeachStatement) {
-        blockSoFar = element;
-      }
       PsiElement parent = element.getParent();
-      if (parent instanceof PsiMethod
-          && parent.getParent() instanceof PsiClass
-          && !isLocalOrAnonymousClass((PsiClass)parent.getParent()))
-        break;
-      if (parent instanceof PsiClassInitializer && !(parent.getParent() instanceof PsiAnonymousClass)) break;
-      if (parent instanceof PsiField && ((PsiField) parent).getInitializer() == element) {
-        blockSoFar = element;
-      }
-      if (parent instanceof PsiClassLevelDeclarationStatement) {
-        parent = parent.getParent();
-      }
-      if (element instanceof PsiClass && !isLocalOrAnonymousClass((PsiClass)element)) {
-        break;
-      }
-      if (element instanceof PsiFile && PsiUtilBase.getTemplateLanguageFile(element) != null) {
-        return element;
+      if (!(parent instanceof PsiExpression)) {
+        if (element instanceof PsiCodeBlock || element instanceof PsiForStatement || element instanceof PsiForeachStatement) {
+          blockSoFar = element;
+        }
+
+        if (parent instanceof PsiMethod
+            && parent.getParent() instanceof PsiClass
+            && !isLocalOrAnonymousClass((PsiClass)parent.getParent()))
+          break;
+        if (parent instanceof PsiClassInitializer && !(parent.getParent() instanceof PsiAnonymousClass)) break;
+        if (parent instanceof PsiField && ((PsiField) parent).getInitializer() == element) {
+          blockSoFar = element;
+        }
+        if (parent instanceof PsiClassLevelDeclarationStatement) {
+          parent = parent.getParent();
+        }
+        if (element instanceof PsiClass && !isLocalOrAnonymousClass((PsiClass)element)) {
+          break;
+        }
+        if (element instanceof PsiFile && PsiUtilBase.getTemplateLanguageFile(element) != null) {
+          return element;
+        }
       }
       if (element == scope) break;
       element = parent;

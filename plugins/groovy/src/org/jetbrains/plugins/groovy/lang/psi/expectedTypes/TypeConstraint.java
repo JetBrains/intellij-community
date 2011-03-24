@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -29,12 +30,14 @@ public abstract class TypeConstraint {
 
   public abstract boolean satisfied(PsiType type, PsiManager manager, GlobalSearchScope scope);
 
+  @NotNull
   public abstract PsiType getDefaultType();
 
-  protected TypeConstraint(PsiType type) {
+  protected TypeConstraint(@NotNull PsiType type) {
     myType = type;
   }
 
+  @NotNull
   public PsiType getType() {
     return myType;
   }

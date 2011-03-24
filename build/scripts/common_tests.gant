@@ -38,6 +38,8 @@ target('default': 'The default target') {
       };
     }
 
+    commonJvmArgs().each { jvmarg(value: it) }
+
     if (isDefined("jvm_args")) {
       jvm_args.each { jvmarg(value: it) }
     }

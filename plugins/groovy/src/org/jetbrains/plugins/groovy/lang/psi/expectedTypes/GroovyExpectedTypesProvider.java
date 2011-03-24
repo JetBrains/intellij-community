@@ -272,6 +272,7 @@ public class GroovyExpectedTypesProvider {
                                              expression, PsiType.EMPTY_ARRAY).length > 0;
         }
 
+        @NotNull
         @Override
         public PsiType getDefaultType() {
           return PsiType.INT;

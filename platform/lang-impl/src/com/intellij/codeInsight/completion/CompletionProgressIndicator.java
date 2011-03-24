@@ -320,7 +320,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isOutdated()) return;
 
-    if (!myLookup.isShown()) {
+    if (!myLookup.isShown() && (!isAutopopupCompletion() || !myLookup.isCalculating())) {
       if (hideAutopopupIfMeaningless()) {
         return;
       }

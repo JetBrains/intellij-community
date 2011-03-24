@@ -332,6 +332,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
   public boolean isReferenceTo(PsiElement element) {
     IElementType i = getLastChildNode().getElementType();
+    boolean resolvingToMethod = element instanceof PsiMethod;
     if (i == JavaTokenType.IDENTIFIER) {
       if (!(element instanceof PsiPackage)) {
         if (!(element instanceof PsiNamedElement)) return false;
@@ -341,9 +342,14 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       }
     }
     else if (i == JavaTokenType.SUPER_KEYWORD || i == JavaTokenType.THIS_KEYWORD) {
-      if (!(element instanceof PsiMethod)) return false;
+      if (!resolvingToMethod) return false;
       if (!((PsiMethod)element).isConstructor()) return false;
     }
+
+    PsiElement parent = getParent();
+    boolean parentIsMethodCall = parent instanceof PsiMethodCallExpression;
+    // optimization: methodCallExpression should resolve to a method
+    if (parentIsMethodCall != resolvingToMethod) return false;
 
     return element.getManager().areElementsEquivalent(element, resolve());
   }

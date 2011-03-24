@@ -15,7 +15,10 @@
  */
 package com.intellij.psi.impl.source.resolve;
 
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -32,10 +35,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class PsiResolveHelperImpl implements PsiResolveHelper {
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("typeArgInference");
   private final PsiManager myManager;
 
   public PsiResolveHelperImpl(PsiManager manager) {
@@ -146,7 +147,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     if (parameters.length > 0) {
       for (int j = 0; j < arguments.length; j++) {
         PsiExpression argument = arguments[j];
-        if (argument instanceof PsiMethodCallExpression && myBlockedForInferenceMethodCalls.get().contains(argument)) continue;
+        if (argument instanceof PsiMethodCallExpression && ourGuard.currentStack().contains(argument)) continue;
 
         final PsiParameter parameter = parameters[Math.min(j, parameters.length - 1)];
         if (j >= parameters.length && !parameter.isVarArgs()) break;
@@ -701,12 +702,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return result;
   }
 
-  private static final ThreadLocal<List<PsiCallExpression>> myBlockedForInferenceMethodCalls = new ThreadLocal<List<PsiCallExpression>>() {
-    protected List<PsiCallExpression> initialValue() {
-      return new ArrayList<PsiCallExpression>(2);
-    }
-  };
-
+  @Nullable
   private static Pair<PsiType, ConstraintType> inferTypeForCompletionFromCallContext(final PsiCallExpression innerMethodCall,
                                                                                      final PsiExpressionList expressionList,
                                                                                      final PsiCallExpression contextCall,
@@ -722,7 +718,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       if (owner == null) return null;
 
       final PsiType innerReturnType = owner.getReturnType();
-      for (JavaResolveResult result : results) {
+      for (final JavaResolveResult result : results) {
         final PsiElement element = result.getElement();
         if (element instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod)element;
@@ -735,10 +731,14 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
             parameter = parameters[parameters.length - 1];
           }
           if (parameter != null) {
-            //prevent infinite recursion
-            myBlockedForInferenceMethodCalls.get().add(innerMethodCall);
-            PsiType type = result.getSubstitutor().substitute(parameter.getType());
-            myBlockedForInferenceMethodCalls.get().remove(innerMethodCall);
+            final PsiParameter finalParameter = parameter;
+            PsiType type = ourGuard
+              .doPreventingRecursion(innerMethodCall, new Computable<PsiType>() {
+                @Override
+                public PsiType compute() {
+                  return result.getSubstitutor().substitute(finalParameter.getType());
+                }
+              }) ;
             final Pair<PsiType, ConstraintType> constraint =
               getSubstitutionForTypeParameterConstraint(typeParameter, innerReturnType, type, false, PsiUtil.getLanguageLevel(innerMethodCall));
             if (constraint != null) return constraint;

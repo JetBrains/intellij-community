@@ -82,7 +82,6 @@ public class NameUtil {
         }
         index++;
       }
-      if (upperCaseCount == 0 && lowerCaseCount == 0 && digitCount == 0) continue;
       String word = name.substring(wordStart, index);
       array.add(word);
     }
@@ -290,7 +289,7 @@ public class NameUtil {
         String prevWord = words[i - 1];
         if (upperCaseStyle) {
           word = word.toUpperCase();
-          if (prevWord.charAt(prevWord.length() - 1) != '_') {
+          if (prevWord.charAt(prevWord.length() - 1) != '_' && word.charAt(0) != '_') {
             word = "_" + word;
           }
         }
@@ -380,7 +379,7 @@ public class NameUtil {
   }
 
   public static Matcher buildCompletionMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
-    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false, true), false);
+    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false, true), exactPrefixLen > 0);
   }
 
   public static Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {

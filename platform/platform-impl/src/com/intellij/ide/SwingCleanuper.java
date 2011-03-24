@@ -19,6 +19,8 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Application;
@@ -29,12 +31,20 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.FocusManager;
 import javax.swing.*;
+import javax.swing.event.CaretListener;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentListener;
 import javax.swing.plaf.basic.BasicPopupMenuUI;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.dnd.DragGestureRecognizer;
+import java.awt.event.AWTEventListener;
+import java.awt.event.HierarchyEvent;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.EventListener;
 
 /**
  * This class listens event from ProjectManager and cleanup some
@@ -181,6 +191,60 @@ public final class SwingCleanuper implements ApplicationComponent{
         }
       }
     );
+
+    Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+      @Override
+      public void eventDispatched(AWTEvent event) {
+        if (!SystemInfo.isMac || !Registry.is("jvmbugfix.mac.caccessibleLeak")) return;
+
+        HierarchyEvent he = (HierarchyEvent)event;
+        if ((he.getChangeFlags() & (HierarchyEvent.SHOWING_CHANGED)) > 0) {
+          if (he.getComponent() != null && !he.getComponent().isShowing()) {
+            Component c = he.getComponent();
+            if (c instanceof JTextComponent) {
+              JTextComponent textComponent = (JTextComponent)c;
+
+              CaretListener[] carets = textComponent.getListeners(CaretListener.class);
+              for (CaretListener each : carets) {
+                if (isCAccessibleListener(each)) {
+                  textComponent.removeCaretListener(each);
+                }
+              }
+
+              Document document = textComponent.getDocument();
+              if (document instanceof AbstractDocument) {
+                DocumentListener[] documentListeners = ((AbstractDocument)document).getDocumentListeners();
+                for (DocumentListener each : documentListeners) {
+                  if (isCAccessibleListener(each)) {
+                    document.removeDocumentListener(each);
+                  }
+                }
+              }
+            } else if (c instanceof JProgressBar) {
+              JProgressBar bar = (JProgressBar)c;
+              ChangeListener[] changeListeners = bar.getChangeListeners();
+              for (ChangeListener each : changeListeners) {
+                if (isCAccessibleListener(each)) {
+                  bar.removeChangeListener(each);
+                }
+              }
+            } else if (c instanceof JSlider) {
+              JSlider slider = (JSlider)c;
+              ChangeListener[] changeListeners = slider.getChangeListeners();
+              for (ChangeListener each : changeListeners) {
+                if (isCAccessibleListener(each)) {
+                  slider.removeChangeListener(each);
+                }
+              }
+            }
+          }
+        }
+      }
+    }, HierarchyEvent.HIERARCHY_EVENT_MASK);
+  }
+
+  private boolean isCAccessibleListener(EventListener listener) {
+    return listener != null && listener.toString().contains("AXTextChangeNotifier");
   }
 
   private static void resetField(Object object, Class type, @NonNls String name) {

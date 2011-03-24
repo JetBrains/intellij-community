@@ -383,7 +383,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
         g.fillRect(0, 0, icon.getIconWidth() + myIpad.left + myIconTextGap, getHeight());
       }
 
-      icon.paintIcon(this, g, myIpad.left, (getHeight() - icon.getIconHeight()) / 2);
+      paintIcon(g, icon);
 
       xOffset += myIpad.left + icon.getIconWidth() + myIconTextGap;
     }
@@ -405,6 +405,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     final List<Object[]> searchMatches = new ArrayList<Object[]>();
 
     // Paint text
+    applyAdditionalHints(g);
     UIUtil.applyRenderingHints(g);
     for (int i = 0; i < myFragments.size(); i++) {
       final SimpleTextAttributes attributes = myAttributes.get(i);
@@ -495,6 +496,13 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       g.setColor(new Color(50, 50, 50));
       g.drawString((String) info[3], (Integer) info[0], (Integer) info[2]);
     }
+  }
+
+  protected void paintIcon(Graphics g, Icon icon) {
+    icon.paintIcon(this, g, myIpad.left, (getHeight() - icon.getIconHeight()) / 2);
+  }
+
+  protected void applyAdditionalHints(final Graphics g) {
   }
 
   @Override

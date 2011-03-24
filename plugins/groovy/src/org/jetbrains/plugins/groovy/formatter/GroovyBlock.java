@@ -111,7 +111,7 @@ public class GroovyBlock implements Block, GroovyElementTypes {
   }
 
   /**
-   * Returns spacing between neighrbour elements
+   * Returns spacing between neighbour elements
    *
    * @param child1 left element
    * @param child2 right element
@@ -120,7 +120,7 @@ public class GroovyBlock implements Block, GroovyElementTypes {
   @Nullable
   public Spacing getSpacing(Block child1, Block child2) {
     if ((child1 instanceof GroovyBlock) && (child2 instanceof GroovyBlock)) {
-      Spacing spacing = GroovySpacingProcessor.getSpacing(((GroovyBlock) child1), ((GroovyBlock) child2), mySettings);
+      Spacing spacing = new GroovySpacingProcessor(((GroovyBlock)child2).getNode(), mySettings).getSpacing();
       return spacing != null ? spacing : GroovySpacingProcessorBasic.getSpacing(((GroovyBlock) child1), ((GroovyBlock) child2), mySettings);
     }
     return null;
@@ -188,7 +188,7 @@ public class GroovyBlock implements Block, GroovyElementTypes {
    * @param node Tree node
    * @return true if node is incomplete
    */
-  public boolean isIncomplete(@NotNull final ASTNode node) {
+  public static boolean isIncomplete(@NotNull final ASTNode node) {
     if (node.getElementType() instanceof ILazyParseableElementType) return false;
     ASTNode lastChild = node.getLastChildNode();
     while (lastChild != null &&
