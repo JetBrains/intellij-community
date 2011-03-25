@@ -72,8 +72,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.*;
-
 public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiManagerImpl");
 
@@ -113,7 +111,8 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
                         StartupManager startupManager,
                         FileTypeManager fileTypeManager,
                         FileDocumentManager fileDocumentManager,
-                        PsiBuilderFactory psiBuilderFactory, MessageBus messageBus) {
+                        PsiBuilderFactory psiBuilderFactory,
+                        MessageBus messageBus) {
     myProject = project;
     myMessageBus = messageBus;
 
@@ -208,56 +207,45 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void performActionWithFormatterDisabled(final Runnable r) {
-    final PostprocessReformattingAspect component = getProject().getComponent(PostprocessReformattingAspect.class);
-    try {
-      ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
-      component.disablePostprocessFormattingInside(new Computable<Object>() {
-        public Object compute() {
-          r.run();
-          return null;
-        }
-      });
-    }
-    finally {
-      ((FormatterImpl)FormatterEx.getInstance()).enableFormatting();
-    }
+    performActionWithFormatterDisabled(new Computable<Object>() {
+      @Override
+      public Object compute() {
+        r.run();
+        return null;
+      }
+    });
   }
 
   public <T extends Throwable> void performActionWithFormatterDisabled(final ThrowableRunnable<T> r) throws T {
     final Throwable[] throwable = new Throwable[1];
 
-    final PostprocessReformattingAspect component = getProject().getComponent(PostprocessReformattingAspect.class);
-    try {
-      ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
-      component.disablePostprocessFormattingInside(new Computable<Object>() {
-        public Object compute() {
-          try {
-            r.run();
-          }
-          catch (Throwable t) {
-            throwable[0] = t;
-          }
-          return null;
+    performActionWithFormatterDisabled(new Computable<Object>() {
+      @Override
+      public Object compute() {
+        try {
+          r.run();
         }
-      });
-    }
-    finally {
-      ((FormatterImpl)FormatterEx.getInstance()).enableFormatting();
-    }
+        catch (Throwable t) {
+          throwable[0] = t;
+        }
+        return null;
+      }
+    });
 
-    if (throwable[0] != null) //noinspection unchecked
+    if (throwable[0] != null) {
+      //noinspection unchecked
       throw (T)throwable[0];
+    }
   }
 
-  public <T> T performActionWithFormatterDisabled(Computable<T> r) {
-    try {
-      final PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(getProject());
-      ((FormatterImpl)FormatterEx.getInstance()).disableFormatting();
-      return component.disablePostprocessFormattingInside(r);
-    }
-    finally {
-      ((FormatterImpl)FormatterEx.getInstance()).enableFormatting();
-    }
+  public <T> T performActionWithFormatterDisabled(final Computable<T> r) {
+    return ((FormatterImpl)FormatterEx.getInstance()).runWithFormattingDisabled(new Computable<T>() {
+      @Override
+      public T compute() {
+        final PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(getProject());
+        return component.disablePostprocessFormattingInside(r);
+      }
+    });
   }
 
   @NotNull
@@ -436,7 +424,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void beforeChildAddition(PsiTreeChangeEventImpl event) {
-    event.setCode(BEFORE_CHILD_ADDITION);
+    event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_ADDITION);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
         "beforeChildAddition: parent = " + event.getParent()
@@ -446,7 +434,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void beforeChildRemoval(@NotNull PsiTreeChangeEventImpl event) {
-    event.setCode(BEFORE_CHILD_REMOVAL);
+    event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_REMOVAL);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
         "beforeChildRemoval: child = " + event.getChild()
@@ -457,7 +445,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void beforeChildReplacement(@NotNull PsiTreeChangeEventImpl event) {
-    event.setCode(BEFORE_CHILD_REPLACEMENT);
+    event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_REPLACEMENT);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
         "beforeChildReplacement: oldChild = " + event.getOldChild()
@@ -468,7 +456,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void beforeChildrenChange(PsiTreeChangeEventImpl event) {
-    event.setCode(BEFORE_CHILDREN_CHANGE);
+    event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILDREN_CHANGE);
     if (LOG.isDebugEnabled()) {
       LOG.debug("beforeChildrenChange: parent = " + event.getParent());
     }
@@ -476,7 +464,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void beforeChildMovement(PsiTreeChangeEventImpl event) {
-    event.setCode(BEFORE_CHILD_MOVEMENT);
+    event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_MOVEMENT);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
         "beforeChildMovement: child = " + event.getChild()
@@ -488,7 +476,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void beforePropertyChange(PsiTreeChangeEventImpl event) {
-    event.setCode(BEFORE_PROPERTY_CHANGE);
+    event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_PROPERTY_CHANGE);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
         "beforePropertyChange: element = " + event.getElement()
@@ -501,7 +489,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   public void childAdded(PsiTreeChangeEventImpl event) {
     beforeChange(true);
-    event.setCode(CHILD_ADDED);
+    event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILD_ADDED);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
         "childAdded: child = " + event.getChild()
@@ -514,7 +502,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   public void childRemoved(PsiTreeChangeEventImpl event) {
     beforeChange(true);
-    event.setCode(CHILD_REMOVED);
+    event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILD_REMOVED);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
         "childRemoved: child = " + event.getChild() + ", parent = " + event.getParent()
@@ -526,7 +514,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   public void childReplaced(PsiTreeChangeEventImpl event) {
     beforeChange(true);
-    event.setCode(CHILD_REPLACED);
+    event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILD_REPLACED);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
         "childReplaced: oldChild = " + event.getOldChild()
@@ -540,7 +528,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   public void childMoved(PsiTreeChangeEventImpl event) {
     beforeChange(true);
-    event.setCode(CHILD_MOVED);
+    event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILD_MOVED);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
         "childMoved: child = " + event.getChild()
@@ -554,7 +542,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   public void childrenChanged(PsiTreeChangeEventImpl event) {
     beforeChange(true);
-    event.setCode(CHILDREN_CHANGED);
+    event.setCode(PsiTreeChangeEventImpl.PsiEventType.CHILDREN_CHANGED);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
         "childrenChanged: parent = " + event.getParent()
@@ -566,7 +554,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   public void propertyChanged(PsiTreeChangeEventImpl event) {
     beforeChange(true);
-    event.setCode(PROPERTY_CHANGED);
+    event.setCode(PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGED);
     if (LOG.isDebugEnabled()) {
       LOG.debug(
         "propertyChanged: element = " + event.getElement()
@@ -584,7 +572,8 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   private void fireEvent(PsiTreeChangeEventImpl event) {
-    boolean isRealTreeChange = event.getCode() != PROPERTY_CHANGED && event.getCode() != BEFORE_PROPERTY_CHANGE;
+    boolean isRealTreeChange = event.getCode() != PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGED
+                               && event.getCode() != PsiTreeChangeEventImpl.PsiEventType.BEFORE_PROPERTY_CHANGE;
 
     PsiFile file = event.getFile();
     if (file == null || file.isPhysical()) {
