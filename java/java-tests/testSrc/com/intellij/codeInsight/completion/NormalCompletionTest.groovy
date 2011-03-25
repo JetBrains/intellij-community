@@ -514,6 +514,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testFieldWithCastingCaret() throws Throwable { doTest(); }
 
+  public void testInnerEnumConstant() throws Throwable { doTest('\n'); }
+
   public void testMethodReturnType() throws Throwable {
     doTest();
   }
