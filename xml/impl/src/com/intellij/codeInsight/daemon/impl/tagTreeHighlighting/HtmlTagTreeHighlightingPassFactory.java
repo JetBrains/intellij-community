@@ -20,6 +20,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -39,6 +40,10 @@ public class HtmlTagTreeHighlightingPassFactory extends AbstractProjectComponent
   }
 
   public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return null;
+    }
+
     if (editor.isOneLineMode()) return null;
 
     if (!(file instanceof XmlFile) || !HtmlUtil.hasHtml(file)) {

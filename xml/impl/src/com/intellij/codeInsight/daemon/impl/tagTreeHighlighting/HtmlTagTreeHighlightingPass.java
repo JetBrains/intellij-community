@@ -24,6 +24,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -67,6 +68,10 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(ProgressIndicator progress) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
+
     if (!WebEditorOptions.getInstance().isTagTreeHighlightingEnabled()) {
       return;
     }
