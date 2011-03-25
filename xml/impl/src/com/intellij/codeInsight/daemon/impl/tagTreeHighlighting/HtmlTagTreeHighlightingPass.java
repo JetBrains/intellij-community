@@ -30,8 +30,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
@@ -51,6 +53,8 @@ import java.util.List;
  * @author Eugene.Kudelevsky
  */
 public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
+  private static final Key<List<RangeHighlighter>> TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY");
+
   private static final HighlightInfoType TYPE = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, TextAttributesKey
     .createTextAttributesKey("TAG_TREE_HIGHLIGHTING_KEY"));
 
@@ -149,24 +153,28 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   }
 
   public List<HighlightInfo> getHighlights() {
+    removeOldLineMarkers();
+
     final int count = myPairsToHighlight.size();
     final List<HighlightInfo> highlightInfos = new ArrayList<HighlightInfo>(count * 2);
+    final MarkupModel markupModel = myEditor.getMarkupModel();
 
-    final Color[] colors = getColors();
+    final Color[] baseColors = getBaseColors();
+    final Color[] colorsForEditor = toColorsForEditor(baseColors);
+    final Color[] colorsForLineMarkers = toColorsForLineMarkers(baseColors);
 
-    assert colors.length > 0;
+    final List<RangeHighlighter> newHighlighters = new ArrayList<RangeHighlighter>();
 
-    int colorIndex = 0;
+    assert colorsForEditor.length > 0;
 
-    for (Pair<TextRange, TextRange> pair : myPairsToHighlight) {
+    for (int i = 0, n = myPairsToHighlight.size(); i < n && i < baseColors.length; i++) {
+      Pair<TextRange, TextRange> pair = myPairsToHighlight.get(i);
+
       if (pair == null || (pair.first == null && pair.second == null)) {
         continue;
       }
 
-      if (colorIndex >= colors.length) {
-        colorIndex = 0;
-      }
-      Color color = colors[colorIndex];
+      Color color = colorsForEditor[i];
 
       if (pair.first != null) {
         highlightInfos.add(createHighlightInfo(color, pair.first));
@@ -176,10 +184,31 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
         highlightInfos.add(createHighlightInfo(color, pair.second));
       }
 
-      colorIndex++;
+      final int start = pair.first != null ? pair.first.getStartOffset() : pair.second.getStartOffset();
+      final int end = pair.second != null ? pair.second.getEndOffset() : pair.first.getEndOffset();
+
+      final RangeHighlighter highlighter = createHighlighter(markupModel, new TextRange(start, end), colorsForLineMarkers[i]);
+      newHighlighters.add(highlighter);
     }
 
+    myEditor.putUserData(TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY, newHighlighters);
+
     return highlightInfos;
+  }
+
+  private void removeOldLineMarkers() {
+    final List<RangeHighlighter> oldHighlighters = myEditor.getUserData(TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY);
+
+    if (oldHighlighters != null) {
+      final MarkupModelEx markupModel = (MarkupModelEx)myEditor.getMarkupModel();
+
+      for (RangeHighlighter highlighter : oldHighlighters) {
+        if (markupModel.containsHighlighter(highlighter)) {
+          highlighter.dispose();
+        }
+      }
+      myEditor.putUserData(TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY, null);
+    }
   }
 
   @NotNull
@@ -188,18 +217,67 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
                              range.getEndOffset(), null, null, HighlightSeverity.INFORMATION, false, null, false);
   }
 
-  private Color[] getColors() {
+  @NotNull
+  private static RangeHighlighter createHighlighter(final MarkupModel mm, final @NotNull TextRange range, final Color color) {
+    final RangeHighlighter highlighter =
+      mm.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), 0, null, HighlighterTargetArea.LINES_IN_RANGE);
+
+    highlighter.setLineMarkerRenderer(new LineMarkerRenderer() {
+      public void paint(Editor editor, Graphics g, Rectangle r) {
+        int height = r.height + editor.getLineHeight();
+        g.setColor(color);
+        g.fillRect(r.x, r.y, 2, height);
+      }
+    });
+    return highlighter;
+  }
+
+
+  private static Color[] getBaseColors() {
     final ColorKey[] colorKeys = HtmlTagTreeHighlightingColors.COLOR_KEYS;
     final Color[] colors = new Color[colorKeys.length];
+
+    final EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
+
+    for (int i = 0; i < colors.length; i++) {
+      colors[i] = colorsScheme.getColor(colorKeys[i]);
+    }
+
+    return colors;
+  }
+
+  private static Color[] toColorsForLineMarkers(Color[] baseColors) {
+    final Color[] colors = new Color[baseColors.length];
+    final Color tagBackground = new Color(239, 239, 239);
+    final double transparency = 0.4;
+    final double factor = 0.8;
+
+    for (int i = 0; i < colors.length; i++) {
+      final Color color = baseColors[i];
+
+      int r = (int)(color.getRed() * factor);
+      int g = (int)(color.getGreen() * factor);
+      int b = (int)(color.getBlue() * factor);
+
+      r = (int)(tagBackground.getRed() * (1 - transparency) + r * transparency);
+      g = (int)(tagBackground.getGreen() * (1 - transparency) + g * transparency);
+      b = (int)(tagBackground.getBlue() * (1 - transparency) + b * transparency);
+
+      colors[i] = new Color(r, g, b);
+    }
+
+    return colors;
+  }
+
+  private Color[] toColorsForEditor(Color[] baseColors) {
+    final Color[] colors = new Color[baseColors.length];
     final Color tagBackground = myEditor instanceof EditorEx ? ((EditorEx)myEditor).getBackgroundColor() : null;
 
     // todo: make configurable
     final double transparency = 0.1;
 
-    final EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
-
     for (int i = 0; i < colors.length; i++) {
-      Color color = colorsScheme.getColor(colorKeys[i]);
+      final Color color = baseColors[i];
 
       if (tagBackground == null) {
         colors[i] = color;
