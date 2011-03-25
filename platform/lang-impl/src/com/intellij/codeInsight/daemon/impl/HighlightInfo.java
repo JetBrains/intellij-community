@@ -423,10 +423,12 @@ public class HighlightInfo implements Segment {
   }
 
   public int getActualStartOffset() {
-    return highlighter == null || !highlighter.isValid() ? startOffset : highlighter.getStartOffset();
+    RangeHighlighterEx h = highlighter;
+    return h == null || !h.isValid() ? startOffset : h.getStartOffset();
   }
   public int getActualEndOffset() {
-    return highlighter == null || !highlighter.isValid() ? endOffset : highlighter.getEndOffset();
+    RangeHighlighterEx h = highlighter;
+    return h == null || !h.isValid() ? endOffset : h.getEndOffset();
   }
 
   //public void setCustomColorScheme(@Nullable final EditorColorsScheme customColorScheme) {
