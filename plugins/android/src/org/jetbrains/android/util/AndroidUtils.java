@@ -123,7 +123,7 @@ public class AndroidUtils {
   public static final String EXT_NATIVE_LIB = "so";
   @NonNls public static final String RES_OVERLAY_DIR_NAME = "res-overlay";
 
-  public static final int TIMEOUT = 60000;
+  public static final int TIMEOUT = 300000;
 
   private AndroidUtils() {
   }
