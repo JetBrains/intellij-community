@@ -27,7 +27,7 @@ public class TestUtils {
   }
 
   static String loadFile(String fileName, String dir) throws IOException {
-    return StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(new File(getBasePath()+"/" + dir + "/" + fileName))));
+    return StringUtil.convertLineSeparators(FileUtil.loadFile(new File(getBasePath() + "/" + dir + "/" + fileName)));
   }
 
   static String getBasePath() {
