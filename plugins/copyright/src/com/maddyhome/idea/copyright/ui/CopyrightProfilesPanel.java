@@ -201,7 +201,8 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
             if (files.length != 1) return;
 
             final List<CopyrightProfile> copyrightProfiles = ExternalOptionHelper.loadOptions(VfsUtil.virtualToIoFile(files[0]));
-            if (copyrightProfiles != null) {
+            if (copyrightProfiles == null) return;
+            if (!copyrightProfiles.isEmpty()) {
               if (copyrightProfiles.size() == 1) {
                 importProfile(copyrightProfiles.get(0));
               } else {
@@ -224,7 +225,7 @@ public class CopyrightProfilesPanel extends MasterDetailsComponent implements Se
               }
             }
             else {
-              Messages.showWarningDialog(myProject, "The selected file did not contain any copyright settings.", "Import Failure");
+              Messages.showWarningDialog(myProject, "The selected file does not contain any copyright settings.", "Import Failure");
             }
           }
 
