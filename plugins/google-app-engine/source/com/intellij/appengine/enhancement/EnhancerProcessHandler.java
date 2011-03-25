@@ -89,7 +89,7 @@ public class EnhancerProcessHandler extends OSProcessHandler {
         File logFile = new File(line.substring(PLEASE_SEE_THE_LOGS_PREFIX.length(), i));
         if (logFile.exists()) {
           try {
-            myContext.addMessage(CompilerMessageCategory.ERROR, new String(FileUtil.loadFileText(logFile)), null, -1, -1);
+            myContext.addMessage(CompilerMessageCategory.ERROR, FileUtil.loadFile(logFile), null, -1, -1);
             return true;
           }
           catch (IOException ignored) {
