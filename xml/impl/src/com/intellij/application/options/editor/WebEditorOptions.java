@@ -47,7 +47,9 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   private boolean myAutomaticallyStartAttribute = true;
   private boolean myZenCodingEnabled = true;
   private int myZenCodingExpandShortcut = TemplateSettings.TAB_CHAR;
+
   private boolean myTagTreeHighlightingEnabled = true;
+  private int myTagTreeHighlightingLevelCount = 6;
 
   public static WebEditorOptions getInstance() {
     return ServiceManager.getService(WebEditorOptions.class);
@@ -123,6 +125,14 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public void setAutomaticallyInsertRequiredSubTags(boolean automaticallyInsertRequiredSubTags) {
     myAutomaticallyInsertRequiredSubTags = automaticallyInsertRequiredSubTags;
+  }
+
+  public void setTagTreeHighlightingLevelCount(int tagTreeHighlightingLevelCount) {
+    myTagTreeHighlightingLevelCount = tagTreeHighlightingLevelCount;
+  }
+
+  public int getTagTreeHighlightingLevelCount() {
+    return myTagTreeHighlightingLevelCount;
   }
 
   public void setTagTreeHighlightingEnabled(boolean tagTreeHighlightingEnabled) {

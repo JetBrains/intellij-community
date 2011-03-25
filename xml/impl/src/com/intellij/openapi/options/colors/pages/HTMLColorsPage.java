@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.HtmlTagTreeHighl
 import com.intellij.ide.highlighter.HtmlFileHighlighter;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.XmlHighlighterColors;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -42,19 +43,6 @@ public class HTMLColorsPage implements ColorSettingsPage {
   };
   private static final String FULL_PRODUCT_NAME = ApplicationNamesInfo.getInstance().getFullProductName();
 
-  private static final ColorDescriptor[] COLOR_DESCRIPTORS;
-
-  static {
-    COLOR_DESCRIPTORS = new ColorDescriptor[HtmlTagTreeHighlightingColors.COLOR_KEYS.length];
-
-    for (int i = 0; i < COLOR_DESCRIPTORS.length; i++) {
-      COLOR_DESCRIPTORS[i] = new ColorDescriptor(OptionsBundle.message("options.html.attribute.descriptor.tag.tree", i + 1),
-                                                   HtmlTagTreeHighlightingColors.COLOR_KEYS[i], ColorDescriptor.Kind.BACKGROUND);
-    }
-
-    // todo: make preview for it
-  }
-
   @NotNull
   public String getDisplayName() {
     return OptionsBundle.message("options.html.display.name");
@@ -71,7 +59,17 @@ public class HTMLColorsPage implements ColorSettingsPage {
 
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
-    return COLOR_DESCRIPTORS;
+    // todo: make preview for it
+
+    final ColorKey[] colorKeys = HtmlTagTreeHighlightingColors.getColorKeys();
+    final ColorDescriptor[] colorDescriptors = new ColorDescriptor[colorKeys.length];
+
+    for (int i = 0; i < colorDescriptors.length; i++) {
+      colorDescriptors[i] = new ColorDescriptor(OptionsBundle.message("options.html.attribute.descriptor.tag.tree", i + 1),
+                                                colorKeys[i], ColorDescriptor.Kind.BACKGROUND);
+    }
+
+    return colorDescriptors;
   }
 
   @NotNull

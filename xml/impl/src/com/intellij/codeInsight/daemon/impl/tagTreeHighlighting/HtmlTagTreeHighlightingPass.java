@@ -240,7 +240,7 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
 
   private static Color[] getBaseColors() {
-    final ColorKey[] colorKeys = HtmlTagTreeHighlightingColors.COLOR_KEYS;
+    final ColorKey[] colorKeys = HtmlTagTreeHighlightingColors.getColorKeys();
     final Color[] colors = new Color[colorKeys.length];
 
     final EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
