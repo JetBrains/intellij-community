@@ -249,7 +249,7 @@ public class BrowserUtil {
 
       String previousTimestamp = null;
       if (timestampFile.exists()) {
-        previousTimestamp = new String(FileUtil.loadFileText(timestampFile));
+        previousTimestamp = FileUtil.loadFile(timestampFile);
       }
 
       if (!currentTimestamp.equals(previousTimestamp)) {

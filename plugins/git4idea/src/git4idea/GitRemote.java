@@ -31,9 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -363,7 +361,7 @@ public final class GitRemote {
       // try remotes file
       try {
         //noinspection IOResourceOpenedButNotSafelyClosed
-        String text = FileUtil.loadTextAndClose(new InputStreamReader(new FileInputStream(remotesFile), US_ASCII_ENCODING));
+        String text = FileUtil.loadFile(remotesFile, US_ASCII_ENCODING);
         @NonNls String pullPrefix = "Pull:";
         for (StringScanner s = new StringScanner(text); s.hasMoreData();) {
           String line = s.line();

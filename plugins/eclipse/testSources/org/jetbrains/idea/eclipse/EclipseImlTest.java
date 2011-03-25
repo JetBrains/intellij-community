@@ -73,7 +73,7 @@ public class EclipseImlTest extends IdeaTestCase {
     final String path = project.getBaseDir().getPath() + relativePath;
 
     final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
-    String fileText = new String(FileUtil.loadFileText(classpathFile)).replaceAll("\\$ROOT\\$", project.getBaseDir().getPath());
+    String fileText = FileUtil.loadFile(classpathFile).replaceAll("\\$ROOT\\$", project.getBaseDir().getPath());
     if (!SystemInfo.isWindows) {
       fileText = fileText.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }

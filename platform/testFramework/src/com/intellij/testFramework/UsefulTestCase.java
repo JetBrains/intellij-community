@@ -506,8 +506,7 @@ public abstract class UsefulTestCase extends TestCase {
   protected static void assertSameLinesWithFile(final String filePath, final String actualText) {
     String fileText;
     try {
-      final FileReader reader = new FileReader(filePath);
-      fileText = FileUtil.loadTextAndClose(reader);
+      fileText = FileUtil.loadFile(new File(filePath));
     }
     catch (IOException e) {
       throw new RuntimeException(e);

@@ -198,7 +198,7 @@ public class GitPushRebaseProcess extends GitBaseRebaseProcess {
         }
         try {
           TreeMap<String, String> pickLines = new TreeMap<String, String>();
-          StringScanner s = new StringScanner(new String(FileUtil.loadFileText(new File(path), GitUtil.UTF8_ENCODING)));
+          StringScanner s = new StringScanner(FileUtil.loadFile(new File(path), GitUtil.UTF8_ENCODING));
           while (s.hasMoreData()) {
             if (!s.tryConsume("pick ")) {
               s.line();

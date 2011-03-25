@@ -141,8 +141,8 @@ public class IdeaTestUtil extends PlatformTestUtil {
       jarFile2 = new JarFile(file2);
     }
     catch (IOException e) {
-      String textAfter = String.valueOf(FileUtil.loadFileText(file1));
-      String textBefore = String.valueOf(FileUtil.loadFileText(file2));
+      String textAfter = FileUtil.loadFile(file1);
+      String textBefore = FileUtil.loadFile(file2);
       textAfter = StringUtil.convertLineSeparators(textAfter);
       textBefore = StringUtil.convertLineSeparators(textBefore);
       Assert.assertEquals(file1.getPath(), textAfter, textBefore);

@@ -168,12 +168,20 @@ public class FileUtil {
   }
 
   @NotNull
-  public static char[] loadFileText(File file) throws IOException {
+  public static String loadFile(@NotNull File file) throws IOException {
+    return loadFile(file, null);
+  }
+  @NotNull
+  public static String loadFile(@NotNull File file, String encoding) throws IOException {
+    return new String(loadFileText(file, encoding));
+  }
+  @NotNull
+  public static char[] loadFileText(@NotNull File file) throws IOException {
     return loadFileText(file, null);
   }
 
   @NotNull
-  public static char[] loadFileText(File file, @NonNls String encoding) throws IOException{
+  public static char[] loadFileText(@NotNull File file, @NonNls String encoding) throws IOException{
     InputStream stream = new FileInputStream(file);
     Reader reader = encoding == null ? new InputStreamReader(stream) : new InputStreamReader(stream, encoding);
     try{
