@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.github;
 
 import com.intellij.ide.GeneralSettings;
@@ -72,6 +87,7 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     if (!writeAccessAllowed){
       Messages.showErrorDialog(project, "It seems that you have only read access to the selected repository.\n" +
         "GitHub supports only https protocol for readonly access, which is not supported yet.\n" +
+        "As a workaround, please fork it and clone your forked repository instead.\n" +
         "More details are available here: http://youtrack.jetbrains.net/issue/IDEA-55298", "Cannot clone this repository");
       return;
     }
