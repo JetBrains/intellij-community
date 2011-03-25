@@ -2,6 +2,7 @@ package com.jetbrains.python.console;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.Executor;
@@ -24,8 +25,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.net.NetUtils;
 import com.jetbrains.django.run.Runner;
+import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
@@ -68,10 +71,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
 
   @Nullable
   public static PydevConsoleRunner run(@NotNull final Project project,
-                         @NotNull final Sdk sdk,
-                         final String consoleTitle,
-                         final String projectRoot,
-                         final String... statements2execute) {
+                                       @NotNull final Sdk sdk,
+                                       final String consoleTitle,
+                                       final String projectRoot,
+                                       final String... statements2execute) {
     final int[] ports;
     try {
       // File "pydev/console/pydevconsole.py", line 223, in <module>
@@ -94,7 +97,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     }
     final CommandLineArgumentsProvider provider = new CommandLineArgumentsProvider() {
       public String[] getArguments() {
-        return args.toArray(new String[args.size()]);
+        return ArrayUtil.toStringArray(args);
       }
 
       public boolean passParentEnvs() {
@@ -102,7 +105,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
       }
 
       public Map<String, String> getAdditionalEnvs() {
-        return ImmutableMap.of("PYTHONIOENCODING", "utf-8");
+        return DjangoUtil.addPyCharmManageModule(DjangoUtil.getDjangoModule(project), Maps.newHashMap(
+          ImmutableMap.of("PYTHONIOENCODING", "utf-8")));
       }
     };
 
@@ -291,7 +295,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   }
 
   private void fireConsoleInitializedEvent() {
-    for (ConsoleListener listener: myConsoleListeners) {
+    for (ConsoleListener listener : myConsoleListeners) {
       listener.handleConsoleInitialized();
     }
   }
