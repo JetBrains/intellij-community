@@ -15,8 +15,16 @@
  */
 package com.intellij.application.options.editor;
 
+import com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.HtmlTagTreeHighlightingPass;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.options.BeanConfigurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.xml.XmlBundle;
 
 /**
@@ -29,5 +37,22 @@ public class WebEditorAppearanceConfigurable extends BeanConfigurable<WebEditorO
     checkBox("breadcrumbsEnabledInXml", XmlBundle.message("xml.editor.options.breadcrumbs.for.xml.title"));
     checkBox("showCssColorPreviewInGutter", "Show CSS Color preview icon in gutter");
     checkBox("tagTreeHighlightingEnabled", "Enable HTML tag tree highlighting");
+  }
+
+  @Override
+  public void apply() throws ConfigurationException {
+    super.apply();
+    clearTagTreeHighlighting();
+  }
+
+  private static void clearTagTreeHighlighting() {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
+        if (fileEditor instanceof TextEditor) {
+          final Editor editor = ((TextEditor)fileEditor).getEditor();
+          HtmlTagTreeHighlightingPass.clearHighlightingAndLineMarkers(editor, project);
+        }
+      }
+    }
   }
 }

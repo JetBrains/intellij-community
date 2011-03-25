@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -153,7 +154,7 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   }
 
   public List<HighlightInfo> getHighlights() {
-    removeOldLineMarkers();
+    clearLineMarkers(myEditor);
 
     final int count = myPairsToHighlight.size();
     final List<HighlightInfo> highlightInfos = new ArrayList<HighlightInfo>(count * 2);
@@ -196,18 +197,18 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     return highlightInfos;
   }
 
-  private void removeOldLineMarkers() {
-    final List<RangeHighlighter> oldHighlighters = myEditor.getUserData(TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY);
+  private static void clearLineMarkers(Editor editor) {
+    final List<RangeHighlighter> oldHighlighters = editor.getUserData(TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY);
 
     if (oldHighlighters != null) {
-      final MarkupModelEx markupModel = (MarkupModelEx)myEditor.getMarkupModel();
+      final MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
 
       for (RangeHighlighter highlighter : oldHighlighters) {
         if (markupModel.containsHighlighter(highlighter)) {
           highlighter.dispose();
         }
       }
-      myEditor.putUserData(TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY, null);
+      editor.putUserData(TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY, null);
     }
   }
 
@@ -292,5 +293,23 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     }
 
     return colors;
+  }
+
+  public static void clearHighlightingAndLineMarkers(final Editor editor, @NotNull Project project) {
+    final MarkupModel markupModel = editor.getDocument().getMarkupModel(project);
+
+    for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
+      Object tooltip = highlighter.getErrorStripeTooltip();
+
+      if (!(tooltip instanceof HighlightInfo)) {
+        continue;
+      }
+
+      if (((HighlightInfo)tooltip).type == TYPE) {
+        highlighter.dispose();
+      }
+    }
+
+    clearLineMarkers(editor);
   }
 }
