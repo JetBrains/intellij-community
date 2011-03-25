@@ -81,8 +81,8 @@ public class IndexCacheManagerImpl implements CacheManager{
     return processor.getResults().isEmpty() ? PsiFile.EMPTY_ARRAY : processor.toArray(PsiFile.EMPTY_ARRAY);
   }
 
-  public static boolean shouldBeFound(VirtualFile virtualFile, ProjectFileIndex index) {
-    return (index.isInContent(virtualFile) || index.isInLibrarySource(virtualFile)) && !virtualFile.getFileType().isBinary();
+  public static boolean shouldBeFound(GlobalSearchScope scope, VirtualFile virtualFile, ProjectFileIndex index) {
+    return (scope.isSearchOutsideRootModel() || index.isInContent(virtualFile) || index.isInLibrarySource(virtualFile)) && !virtualFile.getFileType().isBinary();
   }
 
   public boolean processFilesWithWord(@NotNull final Processor<PsiFile> psiFileProcessor, @NotNull final String word, final short occurrenceMask, @NotNull final GlobalSearchScope scope, final boolean caseSensitively) {
@@ -111,13 +111,12 @@ public class IndexCacheManagerImpl implements CacheManager{
     if (vFiles.isEmpty()) return true;
 
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-    final boolean globalScope = scope.isSearchOutsideRootModel();
 
     final Processor<VirtualFile> virtualFileProcessor = new ReadActionProcessor<VirtualFile>() {
       @Override
       public boolean processInReadAction(VirtualFile virtualFile) {
         LOG.assertTrue(virtualFile.isValid());
-        if (virtualFile.isValid() && scope.contains(virtualFile) && (globalScope || shouldBeFound(virtualFile, index))) {
+        if (virtualFile.isValid() && scope.contains(virtualFile) && shouldBeFound(scope, virtualFile, index)) {
           final PsiFile psiFile = myPsiManager.findFile(virtualFile);
           return psiFile == null || psiFileProcessor.process(psiFile);
         }
