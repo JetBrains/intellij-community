@@ -93,7 +93,7 @@ public class AsmCodeGeneratorTest extends TestCase {
   }
 
   private LwRootContainer loadFormData(final String formPath) throws Exception {
-    String formData = new String(FileUtil.loadFileText(new File(formPath)));
+    String formData = FileUtil.loadFile(new File(formPath));
     final CompiledClassPropertiesProvider provider = new CompiledClassPropertiesProvider(getClass().getClassLoader());
     return Utils.getRootContainer(formData, provider);
   }

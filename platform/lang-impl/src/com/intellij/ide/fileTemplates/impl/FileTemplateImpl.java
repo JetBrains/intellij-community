@@ -185,7 +185,7 @@ public class FileTemplateImpl implements FileTemplate, Cloneable{
 
   /** Read template from file. */
   private static String readExternal(File file) throws IOException{
-    return new String(FileUtil.loadFileText(file, ourEncoding));
+    return FileUtil.loadFile(file, ourEncoding);
   }
 
   /** Read template from URL. */

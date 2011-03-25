@@ -80,7 +80,7 @@ public class CustomTypesTest extends ParsingTestCase {
   @Override
   protected String loadFile(String name) throws IOException {
     String fullName = getTestDataPath() + File.separatorChar + name;
-    String text = new String(FileUtil.loadFileText(new File(fullName))).trim();
+    String text = FileUtil.loadFile(new File(fullName)).trim();
     text = StringUtil.convertLineSeparators(text);
     final String root = PathUtil.getJarPathForClass(this.getClass());
     final String placeholder = "<_classpath_>";

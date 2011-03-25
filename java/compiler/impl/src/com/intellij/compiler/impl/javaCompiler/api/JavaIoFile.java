@@ -34,7 +34,7 @@ class JavaIoFile extends SimpleJavaFileObject {
 
   @Override
   public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
-    return new String(FileUtil.loadFileText(myFile));
+    return FileUtil.loadFile(myFile);
   }
 
   @Override

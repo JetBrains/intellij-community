@@ -279,7 +279,7 @@ public class CvsUtil {
     File file = getFileInTheAdminDir(directory, fileName);
     if (!file.isFile()) return null;
     try {
-      String result = new String(FileUtil.loadFileText(file));
+      String result = FileUtil.loadFile(file);
       if (trimContent) {
         return result.trim();
       }

@@ -76,7 +76,7 @@ public class VMOptions {
 
   private static int readOption(Pattern pattern) {
     try {
-      String content = new String(FileUtil.loadFileText(getFile()));
+      String content = FileUtil.loadFile(getFile());
 
       if (isMacOs()) {
         content = extractMacOsVMOptionsSection(content);
@@ -115,7 +115,7 @@ public class VMOptions {
   private static void writeOption(String option, int value, Pattern pattern) {
     try {
       String optionValue = option + value + "m";
-      String content = new String(FileUtil.loadFileText(getFile()));
+      String content = FileUtil.loadFile(getFile());
       String vmOptions;
 
       if (isMacOs()) {

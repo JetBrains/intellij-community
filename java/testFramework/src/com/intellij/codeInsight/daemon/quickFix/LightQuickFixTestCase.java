@@ -65,7 +65,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       @Override
       public void run() {
         try {
-          String contents = StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(testFile, CharsetToolkit.UTF8)));
+          String contents = StringUtil.convertLineSeparators(FileUtil.loadFile(testFile, CharsetToolkit.UTF8));
           quickFixTestCase.configureFromFileText(testFile.getName(), contents);
           quickFixTestCase.bringRealEditorBack();
           final Pair<String, Boolean> pair = quickFixTestCase.parseActionHintImpl(quickFixTestCase.getFile(), contents);

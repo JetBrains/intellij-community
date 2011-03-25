@@ -91,7 +91,7 @@ public class GitRebaseUtils {
     File nextFile = new File(rebaseDir, "next");
     int next;
     try {
-      next = Integer.parseInt(new String(FileUtil.loadFileText(nextFile, GitUtil.UTF8_ENCODING)).trim());
+      next = Integer.parseInt(FileUtil.loadFile(nextFile, GitUtil.UTF8_ENCODING).trim());
     }
     catch (Exception e) {
       if (LOG.isDebugEnabled()) {

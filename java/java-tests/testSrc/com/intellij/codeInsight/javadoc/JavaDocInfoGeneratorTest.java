@@ -57,7 +57,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
 
   private void verifyJavaDoc(final PsiElement field) throws IOException {
     final File htmlPath = new File(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/javadocIG/" + getTestName(true) + ".html");
-    String htmlText = new String(FileUtil.loadFileText(htmlPath));
+    String htmlText = FileUtil.loadFile(htmlPath);
     String docInfo = new JavaDocInfoGenerator(getProject(), field).generateDocInfo(null);
     assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), StringUtil.convertLineSeparators(docInfo.trim()));
   }
@@ -68,7 +68,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     PsiTestUtil.createTestProjectStructure(myProject, myModule, path, myFilesToDelete);
     final String info =
       new JavaDocInfoGenerator(getProject(), JavaPsiFacade.getInstance(getProject()).findPackage(getTestName(true))).generateDocInfo(null);
-    String htmlText = new String(FileUtil.loadFileText(new File(packageInfo + File.separator + "packageInfo.html")));
+    String htmlText = FileUtil.loadFile(new File(packageInfo + File.separator + "packageInfo.html"));
     assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), StringUtil.convertLineSeparators(info.trim()));
   }
 

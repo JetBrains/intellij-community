@@ -74,7 +74,7 @@ public class EclipseClasspathTest extends IdeaTestCase {
 
   static Module setUpModule(final String path, final Project project) throws IOException, JDOMException, ConversionException {
     final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
-    String fileText = new String(FileUtil.loadFileText(classpathFile)).replaceAll("\\$ROOT\\$", project.getBaseDir().getPath());
+    String fileText = FileUtil.loadFile(classpathFile).replaceAll("\\$ROOT\\$", project.getBaseDir().getPath());
     if (!SystemInfo.isWindows) {
       fileText = fileText.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
@@ -104,7 +104,7 @@ public class EclipseClasspathTest extends IdeaTestCase {
   static void checkModule(String path, Module module) throws IOException, JDOMException, ConversionException {
     final File classpathFile1 = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
     if (!classpathFile1.exists()) return;
-    String fileText1 = new String(FileUtil.loadFileText(classpathFile1)).replaceAll("\\$ROOT\\$", module.getProject().getBaseDir().getPath());
+    String fileText1 = FileUtil.loadFile(classpathFile1).replaceAll("\\$ROOT\\$", module.getProject().getBaseDir().getPath());
     if (!SystemInfo.isWindows) {
       fileText1 = fileText1.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
