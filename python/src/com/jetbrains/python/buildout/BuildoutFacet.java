@@ -260,10 +260,10 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
       try {
         // this method is called before the project initialization is complete, so it has to use createFileFromText() instead
         // of PsiManager.findFile()
-        char[] scriptText = FileUtil.loadFileText(cfg);
+        String text = FileUtil.loadFile(cfg);
         final PsiFile configFile = PsiFileFactory
           .getInstance(getModule().getProject()).createFileFromText("buildout.cfg",
-                                                                                  BuildoutCfgLanguage.INSTANCE, new String(scriptText));
+                                                                                  BuildoutCfgLanguage.INSTANCE, text);
         if (configFile != null && configFile instanceof BuildoutCfgFile) {
           return (BuildoutCfgFile)configFile;
         }

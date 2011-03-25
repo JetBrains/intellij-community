@@ -30,8 +30,8 @@ public class PyConsoleIndentTest extends UsefulTestCase{
   private void doTest() {
     String name = getTestName(true);
     try {
-      String fileText = new String(FileUtil.loadFileText(new File(getTestDataPath() + name + ".py")));
-      String expected = new String(FileUtil.loadFileText(new File(getTestDataPath() + name + ".after.py")));
+      String fileText = FileUtil.loadFile(new File(getTestDataPath() + name + ".py"));
+      String expected = FileUtil.loadFile(new File(getTestDataPath() + name + ".after.py"));
       assertEquals(expected, PyConsoleIndentUtil.normalize(fileText));
     }
     catch (IOException e) {
