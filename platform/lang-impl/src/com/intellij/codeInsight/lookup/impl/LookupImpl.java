@@ -669,6 +669,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     finally {
       myChangeGuard = false;
     }
+    if (isVisible()) {
+      updateLookupBounds();
+    }
     LOG.assertTrue(!myDisposed, disposeTrace);
   }
 
@@ -1135,13 +1138,17 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
 
       updateScrollbarVisibility();
-      HintManagerImpl.adjustEditorHintPosition(this, myEditor, calculatePosition(getComponent()));
-      layoutStatusIcons();
+      updateLookupBounds();
 
       if (reused) {
         ensureSelectionVisible();
       }
     }
+  }
+
+  private void updateLookupBounds() {
+    HintManagerImpl.adjustEditorHintPosition(this, myEditor, calculatePosition(getComponent()));
+    layoutStatusIcons();
   }
 
   private void layoutStatusIcons() {
