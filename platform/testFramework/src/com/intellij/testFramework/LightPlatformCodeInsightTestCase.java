@@ -105,7 +105,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     String fullPath = getTestDataPath() + filePath;
 
     final File ioFile = new File(fullPath);
-    String fileText = new String(FileUtil.loadFileText(ioFile, CharsetToolkit.UTF8));
+    String fileText = FileUtil.loadFile(ioFile, CharsetToolkit.UTF8);
     fileText = StringUtil.convertLineSeparators(fileText);
 
     configureFromFileText(ioFile.getName(), fileText);
@@ -280,7 +280,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     assertTrue(getMessage("Cannot find file " + fullPath, message), ioFile.exists());
     String fileText = null;
     try {
-      fileText = new String(FileUtil.loadFileText(ioFile, CharsetToolkit.UTF8));
+      fileText = FileUtil.loadFile(ioFile, CharsetToolkit.UTF8);
     } catch (IOException e) {
       LOG.error(e);
     }

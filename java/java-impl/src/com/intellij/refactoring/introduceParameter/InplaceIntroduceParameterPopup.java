@@ -89,7 +89,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     myMethodToSearchFor = methodToSearchFor;
     myOccurrences = occurrences;
     myMustBeFinal = mustBeFinal;
-    myExprMarker = expr != null ? myEditor.getDocument().createRangeMarker(expr.getTextRange()) : null;
+    myExprMarker = expr != null && expr.isPhysical() ? myEditor.getDocument().createRangeMarker(expr.getTextRange()) : null;
     myExprText = myExpr != null ? myExpr.getText() : null;
 
     myWholePanel = new JPanel(new GridBagLayout());
@@ -202,7 +202,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
 
     @Override
     protected PsiExpression getExpr() {
-      return myExpr;
+      return myExpr != null && myExpr.isValid() && myExpr.isPhysical() ? myExpr : null;
     }
 
     @Override
@@ -301,9 +301,11 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
         public void run() {
           final PsiFile containingFile = myMethod.getContainingFile();
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
-          myExpr = restoreExpression(containingFile, psiParameter, elementFactory, myExprMarker, myExprText);
-          if (myExpr != null) {
-            myExprMarker = myEditor.getDocument().createRangeMarker(myExpr.getTextRange());
+          if (myExprMarker != null) {
+            myExpr = restoreExpression(containingFile, psiParameter, elementFactory, myExprMarker, myExprText);
+            if (myExpr != null) {
+              myExprMarker = myEditor.getDocument().createRangeMarker(myExpr.getTextRange());
+            }
           }
           final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
           for (int i = 0, occurrenceMarkersSize = occurrenceMarkers.size(); i < occurrenceMarkersSize; i++) {

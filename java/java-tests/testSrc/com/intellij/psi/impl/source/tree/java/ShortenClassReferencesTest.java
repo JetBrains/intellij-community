@@ -74,7 +74,7 @@ public class ShortenClassReferencesTest extends PsiTestCase {
 
   private String loadFile(String name) throws Exception {
     String fullName = BASE_PATH + File.separatorChar + name;
-    String text = new String(FileUtil.loadFileText(new File(fullName)));
+    String text = FileUtil.loadFile(new File(fullName));
     text = StringUtil.convertLineSeparators(text);
     return text;
   }

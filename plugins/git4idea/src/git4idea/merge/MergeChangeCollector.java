@@ -116,7 +116,7 @@ public class MergeChangeCollector {
         File mergeHeadsFile = new File(root, ".git/MERGE_HEAD");
         try {
           if (mergeHeadsFile.exists()) {
-            String mergeHeads = new String(FileUtil.loadFileText(mergeHeadsFile, GitUtil.UTF8_ENCODING));
+            String mergeHeads = FileUtil.loadFile(mergeHeadsFile, GitUtil.UTF8_ENCODING);
             for (StringScanner s = new StringScanner(mergeHeads); s.hasMoreData();) {
               String head = s.line();
               if (head.length() == 0) {

@@ -80,7 +80,7 @@ public class ClsBuilderTest extends LightIdeaTestCase {
     final String goldFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + goldFile;
     String expected = "";
     try {
-      expected = new String(FileUtil.loadFileText(new File(goldFilePath)));
+      expected = FileUtil.loadFile(new File(goldFilePath));
       expected = StringUtil.convertLineSeparators(expected);
     }
     catch (FileNotFoundException e) {

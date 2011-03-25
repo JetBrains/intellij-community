@@ -476,7 +476,7 @@ public class GitSwitchBranchesDialog extends DialogWrapper {
     String newRef;
     try {
       final String refText =
-        new String(FileUtil.loadFileText(new File(rootPath, ".git/refs/" + value), GitUtil.UTF8_ENCODING)).trim();
+        FileUtil.loadFile(new File(rootPath, ".git/refs/" + value), GitUtil.UTF8_ENCODING).trim();
       String refsPrefix = "ref: refs/";
       if (refText.endsWith("/HEAD") || !refText.startsWith(refsPrefix)) {
         newRef = null;

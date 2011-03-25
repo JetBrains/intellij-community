@@ -105,7 +105,7 @@ public abstract class TestUtils {
   public static List<String> readInput(String filePath) {
     String content;
     try {
-      content = new String(FileUtil.loadFileText(new File(filePath)));
+      content = FileUtil.loadFile(new File(filePath));
     }
     catch (IOException e) {
       throw new RuntimeException(e);

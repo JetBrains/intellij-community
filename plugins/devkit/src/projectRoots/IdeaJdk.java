@@ -162,7 +162,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
   private static String getBuildNumber(String ideaHome) {
     try {
       @NonNls final String buildTxt = "/build.txt";
-      return new String(FileUtil.loadFileText(new File(ideaHome + buildTxt))).trim();
+      return FileUtil.loadFile(new File(ideaHome + buildTxt)).trim();
     }
     catch (IOException e) {
       return null;

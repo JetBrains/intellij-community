@@ -110,7 +110,7 @@ public abstract class FileSetTestCase extends TestSuite {
 
     @Override
     protected void runTest() throws Throwable {
-      String content = new String(FileUtil.loadFileText(myTestFile));
+      String content = FileUtil.loadFile(myTestFile);
       assertNotNull(content);
 
       List<String> input = new ArrayList<String>();

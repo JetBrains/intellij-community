@@ -338,7 +338,7 @@ public class GitRebaseEditor extends DialogWrapper {
      */
     public void load(final String file) throws IOException {
       String encoding = GitConfigUtil.getLogEncoding(myProject, myGitRoot);
-      final StringScanner s = new StringScanner(new String(FileUtil.loadFileText(new File(file), encoding)));
+      final StringScanner s = new StringScanner(FileUtil.loadFile(new File(file), encoding));
       while (s.hasMoreData()) {
         if (s.isEol() || s.startsWith('#') || s.startsWith("noop")) {
           s.nextLine();

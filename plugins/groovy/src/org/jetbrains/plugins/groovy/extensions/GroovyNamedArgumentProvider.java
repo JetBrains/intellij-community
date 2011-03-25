@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Condition;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -47,6 +48,12 @@ public abstract class GroovyNamedArgumentProvider {
 
     return namedArguments;
   }
+
+  public static final StringTypeCondition TYPE_STRING = new StringTypeCondition(CommonClassNames.JAVA_LANG_STRING);
+  public static final StringTypeCondition TYPE_MAP = new StringTypeCondition(CommonClassNames.JAVA_UTIL_MAP);
+  public static final StringTypeCondition TYPE_BOOL = new StringTypeCondition(CommonClassNames.JAVA_LANG_BOOLEAN);
+  public static final StringTypeCondition TYPE_INTEGER = new StringTypeCondition(CommonClassNames.JAVA_LANG_INTEGER);
+  public static final Condition<PsiType> TYPE_ANY = Condition.TRUE;
 
   protected static class StringTypeCondition implements Condition<PsiType> {
     private final String myTypeName;

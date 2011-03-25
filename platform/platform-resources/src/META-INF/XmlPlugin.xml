@@ -87,6 +87,8 @@
     <editorSmartKeysConfigurable instance="com.intellij.application.options.editor.WebEditorOptionsProvider"/>
     <editorAppearanceConfigurable instance="com.intellij.application.options.editor.WebEditorAppearanceConfigurable"/>
 
+    <editorAppearanceConfigurable instance="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.HtmlTagTreeHighlightingConfigurable"/>
+
     <autoImportOptionsProvider instance="com.intellij.application.options.XmlAutoImportOptionsProvider"/>
 
     <highlightErrorFilter implementation="com.intellij.codeInsight.highlighting.HtmlClosingTagErrorFilter"/>

@@ -757,7 +757,7 @@ public class PluginManager {
             FileUtil.findFirstThatExist(PathManager.getHomePath() + "/build.txt", PathManager.getHomePath() + "/community/build.txt");
 
           if (buildTxtFile != null) {
-            ourBuildNumber = BuildNumber.fromString(new String(FileUtil.loadFileText(buildTxtFile)).trim());
+            ourBuildNumber = BuildNumber.fromString(FileUtil.loadFile(buildTxtFile).trim());
           }
           else {
             ourBuildNumber = BuildNumber.fromString("106.SNAPSHOT");

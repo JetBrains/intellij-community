@@ -76,7 +76,7 @@ public class LoggerFactory implements Logger.Factory {
         throw new RuntimeException("log.xml file does not exist! Path: [ $home/bin/log.xml]");
       }
 
-      String text = new String(FileUtil.loadFileText(logXmlFile));
+      String text = FileUtil.loadFile(logXmlFile);
       text = StringUtil.replace(text, SYSTEM_MACRO, StringUtil.replace(PathManager.getSystemPath(), "\\", "\\\\"));
       text = StringUtil.replace(text, APPLICATION_MACRO, StringUtil.replace(PathManager.getHomePath(), "\\", "\\\\"));
       text = StringUtil.replace(text, LOGDIR_MACRO, StringUtil.replace(PathManager.getLogPath(), "\\", "\\\\"));

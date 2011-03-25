@@ -15,7 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.impl.tagTreeHighlighting;
 
+import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.openapi.editor.colors.ColorKey;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -23,16 +25,25 @@ import java.awt.*;
  * @author Eugene.Kudelevsky
  */
 public class HtmlTagTreeHighlightingColors {
-  public static final ColorKey[] COLOR_KEYS = new ColorKey[20];
+  private static ColorKey[] ourColorKeys = null;
 
-  static {
-    final Color[] baseColors = new Color[]{Color.RED, Color.YELLOW, Color.GREEN, Color.CYAN, Color.BLUE, Color.MAGENTA};
-
-    for (int i = 0; i < COLOR_KEYS.length; i++) {
-      COLOR_KEYS[i] = ColorKey.createColorKey("HTML_TAG_TREE_LEVEL" + i, baseColors[i % baseColors.length]);
-    }
-  }
+  private static final Color[] DEFAULT_COLORS = new Color[]{Color.RED, Color.YELLOW, Color.GREEN, Color.CYAN, Color.BLUE, Color.MAGENTA};
 
   private HtmlTagTreeHighlightingColors() {
+  }
+
+  @NotNull
+  public static ColorKey[] getColorKeys() {
+    final int levelCount = WebEditorOptions.getInstance().getTagTreeHighlightingLevelCount();
+
+    if (ourColorKeys == null || ourColorKeys.length != levelCount) {
+      ourColorKeys = new ColorKey[levelCount];
+
+      for (int i = 0; i < ourColorKeys.length; i++) {
+        ourColorKeys[i] = ColorKey.createColorKey("HTML_TAG_TREE_LEVEL" + i, DEFAULT_COLORS[i % DEFAULT_COLORS.length]);
+      }
+    }
+
+    return ourColorKeys;
   }
 }
