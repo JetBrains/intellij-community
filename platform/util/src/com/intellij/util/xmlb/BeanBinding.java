@@ -279,7 +279,8 @@ class BeanBinding implements Binding {
       return new AccessorBindingWrapper(accessor, binding);
     }
 
-    return new OptionTagBinding(accessor, xmlSerializer);
+    OptionTag optionTag = XmlSerializerImpl.findAnnotation(accessor.getAnnotations(), OptionTag.class);
+    return new OptionTagBinding(accessor, xmlSerializer, optionTag);
   }
 
 }
