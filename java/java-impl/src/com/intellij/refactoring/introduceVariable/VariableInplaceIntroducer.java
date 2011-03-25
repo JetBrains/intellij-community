@@ -75,7 +75,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
   private final SmartPsiElementPointer<PsiDeclarationStatement> myPointer;
   private final RangeMarker myExprMarker;
   private final List<RangeMarker> myOccurrenceMarkers;
-  private final PsiType myDefaultType;
+  private final SmartTypePointer myDefaultType;
 
   protected JCheckBox myCanBeFinal;
   private Balloon myBalloon;
@@ -97,14 +97,15 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     myExprMarker = exprMarker;
     myOccurrenceMarkers = occurrenceMarkers;
 
-    myDefaultType = elementToRename.getType();
+    final PsiType defaultType = elementToRename.getType();
+    myDefaultType = SmartTypePointerManager.getInstance(project).createSmartTypePointer(defaultType);
 
     final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(elementToRename, PsiDeclarationStatement.class);
     myPointer = declarationStatement != null ? SmartPointerManager.getInstance(project).createSmartPsiElementPointer(declarationStatement) : null;
     editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, myPointer);
     editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
                        occurrenceMarkers.toArray(new RangeMarker[occurrenceMarkers.size()]));
-    setAdvertisementText(getAdvertisementText(declarationStatement, myDefaultType, hasTypeSuggestion));
+    setAdvertisementText(getAdvertisementText(declarationStatement, defaultType, hasTypeSuggestion));
     if (!cantChangeFinalModifier) {
       myCanBeFinal = new NonFocusableCheckBox("Declare final");
       myCanBeFinal.setSelected(createFinals());
@@ -221,7 +222,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
 
   protected void saveSettings(PsiVariable psiVariable) {
     JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
-    TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myDefaultType);
+    TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myDefaultType.getType());
   }
 
 
