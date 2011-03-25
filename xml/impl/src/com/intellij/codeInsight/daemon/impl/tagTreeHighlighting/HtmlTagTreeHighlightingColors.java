@@ -23,7 +23,8 @@ import java.awt.*;
  * @author Eugene.Kudelevsky
  */
 public class HtmlTagTreeHighlightingColors {
-  public static final ColorKey[] COLOR_KEYS = new ColorKey[20];
+  // todo: support adding any number of keys
+  public static final ColorKey[] COLOR_KEYS = new ColorKey[6];
 
   static {
     final Color[] baseColors = new Color[]{Color.RED, Color.YELLOW, Color.GREEN, Color.CYAN, Color.BLUE, Color.MAGENTA};
