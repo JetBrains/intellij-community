@@ -16,6 +16,7 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,10 +42,13 @@ import static com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerE
  */
 public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer {
   private static final Logger LOG = Logger.getInstance(OutputToGeneralTestEventsConverter.class.getName());
-  
+
+  private static final String TEAMCITY_SERVICE_MESSAGE_PREFIX = "##teamcity[";
+
   private GeneralTestEventsProcessor myProcessor;
   private final MyServiceMessageVisitor myServiceMessageVisitor;
   private final String myTestFrameworkName;
+  private boolean myStdinSupportEnabled;
 
   private static class OutputChunk {
     private final Key myKey;
@@ -70,10 +74,12 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
   private final List<OutputChunk> myOutputChunks;
 
-  public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName) {
+  public OutputToGeneralTestEventsConverter(@NotNull final String testFrameworkName,
+                                            @NotNull final TestConsoleProperties consoleProperties) {
     myTestFrameworkName = testFrameworkName;
     myServiceMessageVisitor = new MyServiceMessageVisitor();
     myOutputChunks = new ArrayList<OutputChunk>();
+    myStdinSupportEnabled = consoleProperties.isEditable();
   }
 
   public void setProcessor(final GeneralTestEventsProcessor processor) {
@@ -145,7 +151,26 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     if (lastChar == '\n' || lastChar == '\r') {
       // buffer contains consistent string
       flushStdOutputBuffer();
+    } else {
+      // test framework may show some promt and ask user for smth. Question may not
+      // finish with \n or \r thus buffer wont be flushed and user will have to input smth
+      // before question. And question will became visible with next portion of text.
+      // Such behaviour is confusing. So
+      // 1. Let's assume that sevice messages starts with \n if console is editable
+      // 2. Then we can suggest that each service message will start from new line and buffer should
+      //    be flushed before every service message. Thus if chunks list is empty and output doesn't end
+      //    with \n or \r but starts with ##teamcity then it is a service message and should be buffered otherwise
+      //    we can safely flush buffer.
+
+      // TODO if editable:
+      if (myStdinSupportEnabled && !isMostLikelyServiceMessagePart(text)) {
+        flushStdOutputBuffer();
+      }
     }
+  }
+
+  protected boolean isMostLikelyServiceMessagePart(@NotNull final String text) {
+    return text.startsWith(TEAMCITY_SERVICE_MESSAGE_PREFIX);
   }
 
   private void processConsistentText(final String text, final Key outputType, boolean tcLikeFakeOutput) {

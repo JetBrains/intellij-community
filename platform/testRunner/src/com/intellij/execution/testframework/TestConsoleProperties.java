@@ -136,9 +136,13 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
    * Allows to make console editable and disable/enable input sending in process stdin stream.
    * Normally tests shouldn't ask anything in stdin so console is view only by default.
    *
-   * NB: Process input support feature isn't fully implemented. Input text will be lost after
+   * NB1: Process input support feature isn't fully implemented. Input text will be lost after
    * switching to any other test/suite in tests results view. It's highly not recommended to change
    * default behaviour. Please do it only in critical cases and only if you are sure that you need this feature.
+   *
+   *
+   * NB2: If you are using Service Messages based test runner please ensure that before each service message
+   * (e.g. #teamcity[...]) you always send "\n" to the output stream.
    *
    * @return False for view-only mode and true for stdin support.
    */
