@@ -16,6 +16,7 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.*;
@@ -54,8 +55,8 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
     return ServiceManager.getService(WebEditorOptions.class);
   }
 
-  public WebEditorOptions(ApplicationEx application) {
-    setTagTreeHighlightingEnabled(!application.isUnitTestMode());
+  public WebEditorOptions() {
+    setTagTreeHighlightingEnabled(!ApplicationManager.getApplication().isUnitTestMode());
   }
 
   public void setBreadcrumbsEnabled(boolean b) {
