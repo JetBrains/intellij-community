@@ -49,10 +49,11 @@ public class CamelHumpMatcher extends PrefixMatcher {
           ourLastCompletionCaseSetting = currentSetting;
         }
 
-        NameUtil.Matcher pattern = ourPatternCache.get(myRelaxedMatching + myPrefix);
+        String key = myRelaxedMatching + myPrefix;
+        NameUtil.Matcher pattern = ourPatternCache.get(key);
         if (pattern == null) {
           pattern = createCamelHumpsMatcher();
-          ourPatternCache.put(myPrefix, pattern);
+          ourPatternCache.put(key, pattern);
         }
         myMatcher = pattern;
       }
@@ -111,5 +112,9 @@ public class CamelHumpMatcher extends PrefixMatcher {
   @Override
   public String toString() {
     return myPrefix;
+  }
+
+  public boolean isRelaxedMatching() {
+    return myRelaxedMatching;
   }
 }

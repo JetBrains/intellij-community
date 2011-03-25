@@ -148,7 +148,8 @@ public class CompletionServiceImpl extends CompletionService{
 
     @NotNull
     public CompletionResultSet withPrefixMatcher(@NotNull final String prefix) {
-      return withPrefixMatcher(new CamelHumpMatcher(prefix));
+      boolean relaxed = getPrefixMatcher() instanceof CamelHumpMatcher && ((CamelHumpMatcher)getPrefixMatcher()).isRelaxedMatching();
+      return withPrefixMatcher(new CamelHumpMatcher(prefix, true, relaxed));
     }
 
     @NotNull
@@ -160,7 +161,8 @@ public class CompletionServiceImpl extends CompletionService{
     @NotNull
     @Override
     public CompletionResultSet caseInsensitive() {
-      return withPrefixMatcher(new CamelHumpMatcher(getPrefixMatcher().getPrefix(), false, false));
+      boolean relaxed = getPrefixMatcher() instanceof CamelHumpMatcher && ((CamelHumpMatcher)getPrefixMatcher()).isRelaxedMatching();
+      return withPrefixMatcher(new CamelHumpMatcher(getPrefixMatcher().getPrefix(), false, relaxed));
     }
 
     @Override
