@@ -15,13 +15,16 @@
  */
 package com.intellij.execution.testframework.sm;
 
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author gregsh
  */
 public interface SMCustomMessagesParsing {
 
-  OutputToGeneralTestEventsConverter createTestEventsConverter(final String testFrameworkName);
+  OutputToGeneralTestEventsConverter createTestEventsConverter(@NotNull final String testFrameworkName,
+                                                               @NotNull final TestConsoleProperties consoleProperties);
 
 }

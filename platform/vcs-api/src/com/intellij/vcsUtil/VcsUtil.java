@@ -56,14 +56,8 @@ public class VcsUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vcsUtil.VcsUtil");
 
 
-  /**
-   * Call "fileDirty" in the read action.
-   */
   public static void markFileAsDirty(final Project project, final VirtualFile file) {
-    final VcsDirtyScopeManager mgr = VcsDirtyScopeManager.getInstance(project);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {  mgr.fileDirty(file);  }
-    });
+    VcsDirtyScopeManager.getInstance(project).fileDirty(file);
   }
 
   public static void markFileAsDirty(final Project project, final FilePath path) {

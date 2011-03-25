@@ -86,8 +86,12 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
                 return;
             }
             final PsiElement[] tryBlockChildren = tryBlock.getChildren();
-            final Set<PsiLocalVariable> variables =
-                    collectVariables(tryStatement);
+            final Set<PsiLocalVariable> variables = new HashSet();
+            for (PsiLocalVariable variable : collectVariables(tryStatement)) {
+                if (!isVariableUsedOutsideContext(variable, tryStatement)) {
+                    variables.add(variable);
+                }
+            }
             final PsiElementFactory factory =
                     JavaPsiFacade.getElementFactory(project);
             @NonNls final StringBuilder newTryStatementText =
@@ -315,7 +319,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
             if (resourceList != null) {
                 return;
             }
-            final Set<PsiLocalVariable> variables =
+            final List<PsiLocalVariable> variables =
                     collectVariables(tryStatement);
             if (variables.isEmpty()) {
                 return;
@@ -338,17 +342,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
                 final int index = findInitialization(tryBlockStatements,
                         variable, hasInitializer);
                 if (index >= 0 ^ hasInitializer) {
-                    final VariableUsedOutsideContextVisitor visitor =
-                            new VariableUsedOutsideContextVisitor(variable,
-                                    tryStatement);
-                    final PsiElement context =
-                            PsiTreeUtil.getParentOfType(variable,
-                                    PsiCodeBlock.class);
-                    if (context == null) {
-                        continue;
-                    }
-                    context.accept(visitor);
-                    if (visitor.variableIsUsed()) {
+                    if (isVariableUsedOutsideContext(variable, tryStatement)) {
                         continue;
                     }
                     found = true;
@@ -362,17 +356,32 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         }
     }
 
-    static Set<PsiLocalVariable> collectVariables(
+    static boolean isVariableUsedOutsideContext(
+            PsiVariable variable, PsiElement context) {
+        final VariableUsedOutsideContextVisitor visitor =
+                new VariableUsedOutsideContextVisitor(variable,
+                        context);
+        final PsiElement declarationScope =
+                PsiTreeUtil.getParentOfType(variable,
+                        PsiCodeBlock.class);
+        if (declarationScope == null) {
+            return true;
+        }
+        declarationScope.accept(visitor);
+        return visitor.variableIsUsed();
+    }
+
+    static List<PsiLocalVariable> collectVariables(
             PsiTryStatement tryStatement) {
         final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
         if (finallyBlock == null) {
-            return Collections.EMPTY_SET;
+            return Collections.EMPTY_LIST;
         }
         final PsiStatement[] statements = finallyBlock.getStatements();
         if (statements.length == 0) {
-            return Collections.EMPTY_SET;
+            return Collections.EMPTY_LIST;
         }
-        final Set<PsiLocalVariable> variables = new LinkedHashSet();
+        final List<PsiLocalVariable> variables = new ArrayList();
         for (PsiStatement statement : statements) {
             final PsiLocalVariable variable =
                     findAutoCloseableVariable(statement);

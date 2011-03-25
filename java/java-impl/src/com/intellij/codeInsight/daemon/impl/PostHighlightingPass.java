@@ -188,9 +188,10 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   public static void invokeOnTheFlyImportOptimizer(@NotNull final Runnable runnable, @NotNull final PsiFile file, @NotNull final Editor editor) {
+    final long stamp = editor.getDocument().getModificationStamp();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (file.getProject().isDisposed() || editor.isDisposed()) return;
+        if (file.getProject().isDisposed() || editor.isDisposed() || editor.getDocument().getModificationStamp() != stamp) return;
         PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
         String beforeText = file.getText();
         CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {

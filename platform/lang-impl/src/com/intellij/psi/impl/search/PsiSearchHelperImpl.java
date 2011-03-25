@@ -674,21 +674,20 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                                      final GlobalSearchScope commonScope,
                                                                                      final ProgressIndicator progress) {
     final MultiMap<VirtualFile, RequestWithProcessor> local = createMultiMap();
-    final boolean inRootsOnly = !commonScope.isSearchOutsideRootModel();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         if (progress != null) progress.checkCanceled();
         FileBasedIndex.getInstance().processValues(IdIndex.NAME, entry, null, new FileBasedIndex.ValueProcessor<Integer>() {
             public boolean process(VirtualFile file, Integer value) {
               if (progress != null) progress.checkCanceled();
-              if (inRootsOnly && !IndexCacheManagerImpl.shouldBeFound(file, index)) {
-                return true;
-              }
-              int mask = value.intValue();
-              for (RequestWithProcessor single : data) {
-                final PsiSearchRequest request = single.request;
-                if ((mask & request.searchContext) != 0 && ((GlobalSearchScope)request.searchScope).contains(file)) {
-                  local.putValue(file, single);
+
+              if (IndexCacheManagerImpl.shouldBeFound(commonScope, file, index)) {
+                int mask = value.intValue();
+                for (RequestWithProcessor single : data) {
+                  final PsiSearchRequest request = single.request;
+                  if ((mask & request.searchContext) != 0 && ((GlobalSearchScope)request.searchScope).contains(file)) {
+                    local.putValue(file, single);
+                  }
                 }
               }
               return true;

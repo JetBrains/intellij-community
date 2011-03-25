@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.github;
 
+import com.intellij.openapi.util.Comparing;
 import org.jdom.Element;
 
 /**
@@ -27,5 +28,15 @@ public class RepositoryInfo {
 
   public String getParent() {
     return myRepository.getChildText("parent");
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof RepositoryInfo)){
+      return false;
+    }
+    final RepositoryInfo repositoryInfo = (RepositoryInfo)obj;
+    return Comparing.equal(getName(), repositoryInfo.getName()) &&
+           Comparing.equal(getOwner(), repositoryInfo.getOwner());
   }
 }

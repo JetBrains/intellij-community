@@ -17,6 +17,7 @@
 package com.maddyhome.idea.copyright.options;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import org.jdom.Document;
@@ -54,10 +55,11 @@ public class ExternalOptionHelper {
           }
         }
       }
-      return profiles.isEmpty() ? null : profiles;
+      return profiles;
     }
     catch (Exception e) {
-      logger.error(e);
+      logger.info(e);
+      Messages.showErrorDialog(e.getMessage(), "Import Failure");
       return null;
     }
   }

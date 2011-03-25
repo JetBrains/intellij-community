@@ -29,7 +29,9 @@ public class BooleanTableCellRenderer extends JCheckBox implements TableCellRend
 
   public BooleanTableCellRenderer() {
     super();
-    setHorizontalAlignment(JLabel.CENTER);
+    setHorizontalAlignment(CENTER);
+    setVerticalAlignment(CENTER);
+    setBorder(null);
   }
 
   public Component getTableCellRendererComponent(JTable table, Object value,

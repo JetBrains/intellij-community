@@ -82,7 +82,7 @@ public class CompletionServiceImpl extends CompletionService{
     final PsiElement position = parameters.getPosition();
     final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
     final String textBeforePosition = parameters.getPosition().getContainingFile().getText().substring(0, parameters.getOffset());
-    return new CompletionResultSetImpl(consumer, textBeforePosition, new CamelHumpMatcher(prefix), contributor, defaultSorter(parameters), null);
+    return new CompletionResultSetImpl(consumer, textBeforePosition, new CamelHumpMatcher(prefix, true, parameters.relaxMatching()), contributor, defaultSorter(parameters), null);
   }
 
   @Override
@@ -148,7 +148,8 @@ public class CompletionServiceImpl extends CompletionService{
 
     @NotNull
     public CompletionResultSet withPrefixMatcher(@NotNull final String prefix) {
-      return withPrefixMatcher(new CamelHumpMatcher(prefix));
+      boolean relaxed = getPrefixMatcher() instanceof CamelHumpMatcher && ((CamelHumpMatcher)getPrefixMatcher()).isRelaxedMatching();
+      return withPrefixMatcher(new CamelHumpMatcher(prefix, true, relaxed));
     }
 
     @NotNull
@@ -160,7 +161,8 @@ public class CompletionServiceImpl extends CompletionService{
     @NotNull
     @Override
     public CompletionResultSet caseInsensitive() {
-      return withPrefixMatcher(new CamelHumpMatcher(getPrefixMatcher().getPrefix(), false));
+      boolean relaxed = getPrefixMatcher() instanceof CamelHumpMatcher && ((CamelHumpMatcher)getPrefixMatcher()).isRelaxedMatching();
+      return withPrefixMatcher(new CamelHumpMatcher(getPrefixMatcher().getPrefix(), false, relaxed));
     }
 
     @Override

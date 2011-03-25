@@ -48,7 +48,7 @@ public class HintUtil {
     HintHint hintHint = new HintHint().setTextBg(INFORMATION_COLOR).setTextFg(Color.black).setFont(getBoldFont()).setAwtTooltip(true);
 
     HintLabel label = new HintLabel();
-    label.setText(JDOMUtil.escapeText(text, false, false), hintHint);
+    label.setText(text, hintHint);
     label.setIcon(INFORMATION_ICON);
 
     if (!hintHint.isAwtTooltip()) {

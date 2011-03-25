@@ -37,6 +37,7 @@ import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -68,6 +69,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
   private final boolean myChangeAllUsages;
   private final int myMinUsagesNumberToShowDialog;
   private ParameterInfoImpl[] myNewParametersInfo;
+  private static final Logger LOG = Logger.getInstance("#" + ChangeMethodSignatureFromUsageFix.class.getName());
 
   ChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod,
                                     @NotNull PsiExpression[] expressions,
@@ -99,6 +101,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
         if (result.length() != 0) {
           result += ", ";
         }
+        LOG.assertTrue(type != null, "old idx: " + info.getOldIndex() + "; " + info.getClass().getName());
         result += type.getPresentableText();
       }
     }

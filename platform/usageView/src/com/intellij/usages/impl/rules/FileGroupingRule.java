@@ -50,8 +50,9 @@ public class FileGroupingRule implements UsageGroupingRule {
   }
 
   public UsageGroup groupUsage(Usage usage) {
-    if (usage instanceof UsageInFile) {
-      return new FileUsageGroup(myProject, ((UsageInFile)usage).getFile());
+    VirtualFile virtualFile;
+    if (usage instanceof UsageInFile && (virtualFile = ((UsageInFile)usage).getFile()) != null) {
+      return new FileUsageGroup(myProject, virtualFile);
     }
     return null;
   }
@@ -62,7 +63,7 @@ public class FileGroupingRule implements UsageGroupingRule {
     private String myPresentableName;
     private ComputableIcon myIcon;
 
-    public FileUsageGroup(Project project, VirtualFile file) {
+    public FileUsageGroup(@NotNull Project project, @NotNull VirtualFile file) {
       myProject = project;
       myFile = file instanceof VirtualFileWindow ? ((VirtualFileWindow)file).getDelegate() : file;
       myPresentableName = myFile.getName();
@@ -91,13 +92,11 @@ public class FileGroupingRule implements UsageGroupingRule {
 
       final FileUsageGroup fileUsageGroup = (FileUsageGroup)o;
 
-      if (myFile != null ? !myFile.equals(fileUsageGroup.myFile) : fileUsageGroup.myFile != null) return false;
-
-      return true;
+      return myFile.equals(fileUsageGroup.myFile);
     }
 
     public int hashCode() {
-      return myFile != null ? myFile.hashCode() : 0;
+      return myFile.hashCode();
     }
 
     public Icon getIcon(boolean isOpen) {
@@ -145,7 +144,7 @@ public class FileGroupingRule implements UsageGroupingRule {
 
     @Nullable
     public PsiFile getPsiFile() {
-      return myFile != null && myFile.isValid() ? PsiManager.getInstance(myProject).findFile(myFile) : null;
+      return myFile.isValid() ? PsiManager.getInstance(myProject).findFile(myFile) : null;
     }
 
     @NotNull

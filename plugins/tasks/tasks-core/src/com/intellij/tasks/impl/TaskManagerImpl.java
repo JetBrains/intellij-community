@@ -691,7 +691,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
                                                         notification.expire();
                                                       }
                                                     }
-                                                  }));
+                                                  }), myProject);
       }
     }
     return issues;

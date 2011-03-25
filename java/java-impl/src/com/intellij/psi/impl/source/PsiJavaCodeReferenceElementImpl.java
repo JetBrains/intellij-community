@@ -524,7 +524,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
             throw new IncorrectOperationException(aClass.toString());
           }
           final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
-          final PsiJavaCodeReferenceElement ref = parserFacade.createReferenceFromText(name, null);
+          final PsiJavaCodeReferenceElement ref = parserFacade.createReferenceFromText(name, getParent());
           getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
           return ref;
         }
@@ -562,7 +562,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     final PsiManager manager = aClass.getManager();
     final PsiReferenceParameterList parameterList = getParameterList();
     String text = (parameterList != null ? qName + parameterList.getText() : qName);
-    PsiJavaCodeReferenceElement ref = facade.getParserFacade().createReferenceFromText(text, null);
+    PsiJavaCodeReferenceElement ref = facade.getParserFacade().createReferenceFromText(text, getParent());
     getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
     if (!preserveQualification /*&& (TreeUtil.findParent(ref, ElementType.DOC_COMMENT) == null)*/) {
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(aClass.getProject());
@@ -605,7 +605,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       throw new IncorrectOperationException("Cannot bind to default package: "+aPackage);
     }
     final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
-    final PsiJavaCodeReferenceElement ref = parserFacade.createReferenceFromText(qName, null);
+    final PsiJavaCodeReferenceElement ref = parserFacade.createReferenceFromText(qName, getParent());
     getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
     return ref;
   }

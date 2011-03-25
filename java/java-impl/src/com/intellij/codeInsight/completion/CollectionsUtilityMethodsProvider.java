@@ -42,7 +42,7 @@ class CollectionsUtilityMethodsProvider {
     final PsiType type = parameters.getExpectedType();
     final PsiType defaultType = parameters.getDefaultType();
     final PsiElement pparent = parent.getParent();
-    if (parameters.getInvocationCount() > 1 ||
+    if (parameters.getParameters().getInvocationCount() > 1 ||
         pparent instanceof PsiReturnStatement ||
         pparent instanceof PsiConditionalExpression && pparent.getParent() instanceof PsiReturnStatement) {
       addCollectionMethod(result, type, defaultType, JAVA_UTIL_LIST, "emptyList", collectionsClass);
@@ -50,7 +50,7 @@ class CollectionsUtilityMethodsProvider {
       addCollectionMethod(result, type, defaultType, JAVA_UTIL_MAP, "emptyMap", collectionsClass);
     }
 
-    if (parameters.getInvocationCount() > 1) {
+    if (parameters.getParameters().getInvocationCount() > 1) {
       addCollectionMethod(result, type, defaultType, JAVA_UTIL_LIST, "singletonList", collectionsClass);
       addCollectionMethod(result, type, defaultType, JAVA_UTIL_SET, "singleton", collectionsClass);
       addCollectionMethod(result, type, defaultType, JAVA_UTIL_MAP, "singletonMap", collectionsClass);

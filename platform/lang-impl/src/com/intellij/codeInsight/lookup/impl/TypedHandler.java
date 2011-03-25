@@ -126,8 +126,11 @@ public class TypedHandler implements TypedActionHandler {
 
   @Nullable
   private static CharFilter.Result getFiltersDecision(char charTyped, LookupImpl lookup) {
+    LookupElement item = lookup.getCurrentItem();
+    int prefixLength = (item == null ? 0 : item.getPrefixMatcher().getPrefix().length()) + lookup.getAdditionalPrefix().length();
+
     for (final CharFilter extension : getFilters()) {
-      final CharFilter.Result result = extension.acceptChar(charTyped, lookup.getMinPrefixLength() + lookup.getAdditionalPrefix().length(), lookup);
+      final CharFilter.Result result = extension.acceptChar(charTyped, prefixLength, lookup);
       if (result != null) {
         return result;
       }

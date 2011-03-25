@@ -7,6 +7,7 @@ import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -63,37 +65,66 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
       }
     }
 
+    OffsetKey insideRef = context.trackOffset(context.getTailOffset(), false);
+
     insertParentheses(context, delegate, delegate.getObject(), withTail && isAbstract);
 
     DefaultInsertHandler.addImportForItem(context, delegate);
 
 
-    if (withTail) {
-      if (isAbstract) {
-        if (mySmart) {
-          FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.AFTER_NEW_ANONYMOUS);
-        }
+    if (!withTail) {
+      return;
+    }
 
-        PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting(context.getFile().getViewProvider());
 
-        final Editor editor = context.getEditor();
-        final int offset = context.getTailOffset();
-        editor.getDocument().insertString(offset, " {}");
-        editor.getCaretModel().moveToOffset(offset + 2);
-        context.setLaterRunnable(generateAnonymousBody(editor, context.getFile()));
+    if (isAbstract) {
+      if (mySmart) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.AFTER_NEW_ANONYMOUS);
       }
-      else {
-        final PsiNewExpression newExpression =
-          PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiNewExpression.class, false);
-        if (newExpression != null) {
-          final PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
-          if (classReference != null) {
-            CodeStyleManager.getInstance(context.getProject()).reformat(classReference);
+
+      PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting(context.getFile().getViewProvider());
+
+      final Editor editor = context.getEditor();
+      final int offset = context.getTailOffset();
+      editor.getDocument().insertString(offset, " {}");
+      editor.getCaretModel().moveToOffset(offset + 2);
+
+      if (delegate instanceof PsiTypeLookupItem) {
+        PsiType type = JavaCompletionUtil.getLookupElementType(delegate);
+        if (type instanceof PsiClassType) {
+          PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
+          PsiClass psiClass = result.getElement();
+          if (psiClass != null) {
+            for (PsiTypeParameter parameter : psiClass.getTypeParameters()) {
+              PsiType substitution = result.getSubstitutor().substitute(parameter);
+              if (substitution instanceof PsiClassType && parameter.equals(((PsiClassType)substitution).resolve())) {
+                PsiReferenceParameterList paramList = PsiTreeUtil
+                  .findElementOfClassAtOffset(context.getFile(), context.getOffset(insideRef) - 1, PsiReferenceParameterList.class, false);
+                if (paramList != null && paramList.getTextLength() > 0) {
+                  TextRange range = paramList.getTextRange();
+                  context.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "<>");
+                  editor.getCaretModel().moveToOffset(range.getStartOffset() + 1);
+                }
+                return;
+              }
+            }
           }
         }
-        if (mySmart) {
-          FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.AFTER_NEW);
+      }
+
+      context.setLaterRunnable(generateAnonymousBody(editor, context.getFile()));
+    }
+    else {
+      final PsiNewExpression newExpression =
+        PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiNewExpression.class, false);
+      if (newExpression != null) {
+        final PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
+        if (classReference != null) {
+          CodeStyleManager.getInstance(context.getProject()).reformat(classReference);
         }
+      }
+      if (mySmart) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.AFTER_NEW);
       }
     }
   }

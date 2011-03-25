@@ -17,6 +17,7 @@ package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiWhileStatementImpl;
 import com.intellij.util.IncorrectOperationException;
 
 public class JavaWhileUnwrapper extends JavaUnwrapper {
@@ -25,7 +26,9 @@ public class JavaWhileUnwrapper extends JavaUnwrapper {
   }
 
   public boolean isApplicableTo(PsiElement e) {
-    return e instanceof PsiWhileStatement || e instanceof PsiDoWhileStatement;
+    return e instanceof PsiWhileStatementImpl // Don't use "e instanceof PsiWhileStatement" because JspWhileStatement intanceof PsiWhileStatement,
+                                              // but we doesn't support unwrap JspWhileStatement.
+           || e instanceof PsiDoWhileStatement;
   }
 
   @Override

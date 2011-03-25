@@ -22,36 +22,58 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.SmartList;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class XmlUnwrapDescriptor implements UnwrapDescriptor {
   public List<Pair<PsiElement, Unwrapper>> collectUnwrappers(Project project, Editor editor, PsiFile file) {
-    List<Pair<PsiElement, Unwrapper>> result = new SmartList<Pair<PsiElement, Unwrapper>>();
-
     int offset = editor.getCaretModel().getOffset();
+
     PsiElement e1 = file.findElementAt(offset);
     if (e1 != null) {
       Language language = e1.getParent().getLanguage();
       if (language != file.getLanguage()) {
         UnwrapDescriptor unwrapDescriptor = LanguageUnwrappers.INSTANCE.forLanguage(language);
         if (unwrapDescriptor != null && !(unwrapDescriptor instanceof XmlUnwrapDescriptor)) {
-          result.addAll(unwrapDescriptor.collectUnwrappers(project, editor, file));
+          return unwrapDescriptor.collectUnwrappers(project, editor, file);
         }
       }
     }
 
-    PsiElement tag = PsiTreeUtil.getParentOfType(e1, XmlTag.class);
-    while (tag != null) {
-      result.add(new Pair<PsiElement, Unwrapper>(tag, new XmlEnclosingTagUnwrapper()));
-      tag = PsiTreeUtil.getParentOfType(tag, XmlTag.class);
+    List<Pair<PsiElement, Unwrapper>> result = new ArrayList<Pair<PsiElement, Unwrapper>>();
+
+    FileViewProvider viewProvider = file.getViewProvider();
+
+    for (Language language : viewProvider.getLanguages()) {
+      UnwrapDescriptor unwrapDescriptor = LanguageUnwrappers.INSTANCE.forLanguage(language);
+      if (unwrapDescriptor instanceof XmlUnwrapDescriptor) {
+        PsiElement e = viewProvider.findElementAt(offset, language);
+
+        PsiElement tag = PsiTreeUtil.getParentOfType(e, XmlTag.class);
+        while (tag != null) {
+          if (XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode()) != null) { // Exclude implicit tags suck as 'jsp:root'
+            result.add(new Pair<PsiElement, Unwrapper>(tag, new XmlEnclosingTagUnwrapper()));
+          }
+          tag = PsiTreeUtil.getParentOfType(tag, XmlTag.class);
+        }
+      }
     }
+
+    Collections.sort(result, new Comparator<Pair<PsiElement, Unwrapper>>() {
+      @Override
+      public int compare(Pair<PsiElement, Unwrapper> o1, Pair<PsiElement, Unwrapper> o2) {
+        return o2.first.getTextOffset() - o1.first.getTextOffset();
+      }
+    });
 
     return result;
   }

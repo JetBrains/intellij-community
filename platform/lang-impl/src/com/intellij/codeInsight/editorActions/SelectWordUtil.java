@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -102,9 +103,12 @@ public class SelectWordUtil {
     return null;
   }
 
-  public static TextRange getWordSelectionRange(CharSequence editorText, int cursorOffset) {
-    if (editorText.length() == 0) return null;
-    if (cursorOffset > 0 && !Character.isJavaIdentifierPart(editorText.charAt(cursorOffset)) &&
+  @Nullable
+  public static TextRange getWordSelectionRange(@NotNull CharSequence editorText, int cursorOffset) {
+    int length = editorText.length();
+    if (length == 0) return null;
+    if (cursorOffset == length ||
+        cursorOffset > 0 && !Character.isJavaIdentifierPart(editorText.charAt(cursorOffset)) &&
         Character.isJavaIdentifierPart(editorText.charAt(cursorOffset - 1))) {
       cursorOffset--;
     }
@@ -117,7 +121,7 @@ public class SelectWordUtil {
         start--;
       }
 
-      while (end < editorText.length() && Character.isJavaIdentifierPart(editorText.charAt(end))) {
+      while (end < length && Character.isJavaIdentifierPart(editorText.charAt(end))) {
         end++;
       }
 

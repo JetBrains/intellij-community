@@ -102,10 +102,16 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
             if (!table.isCellEditable(row, table.convertColumnIndexToModel(column))) {
               Color bg = table.getBackground().darker();
               component.setBackground(new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 230));
-              if (component instanceof EditorTextField) {
-                ((EditorTextField)component).setCenterByHeight(false);
-              }
             }
+
+            if (component instanceof EditorTextField) {
+              ((EditorTextField)component).setCenterByHeight(false);
+            }
+
+            if (component instanceof SimpleColoredComponent) {
+              ((SimpleColoredComponent)component).setIpad(new Insets(0, 0, 0, 0));
+            }
+
             return component;
           }
         };

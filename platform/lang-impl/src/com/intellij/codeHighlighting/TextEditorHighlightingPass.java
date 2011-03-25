@@ -88,7 +88,8 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public final void applyInformationToEditor() {
     if (!isValid()) return; // Document has changed.
     if (DumbService.getInstance(myProject).isDumb() && !(this instanceof DumbAware)) {
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(getDocument());
+      Document document = getDocument();
+      PsiFile file = document == null ? null : PsiDocumentManager.getInstance(myProject).getPsiFile(document);
       if (file != null) {
         ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap().markFileUpToDate(getDocument(), file, getId());
       }

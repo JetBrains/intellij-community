@@ -166,4 +166,9 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider {
       }
     }
   }
+
+  @Override
+  public String toString() {
+    return "Injected file '"+getVirtualFile().getName()+"' " + (isValid() ? "" : " invalid") + (physical ? "" : " nonphysical");
+  }
 }
