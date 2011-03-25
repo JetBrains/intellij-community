@@ -63,6 +63,12 @@ public class CodeFragmentTableCellRenderer implements TableCellRenderer {
         }
       };
     }
+
+    if (!table.isShowing()) {
+      editorTextField.ensureWillComputePreferredSize();
+    }
+
+    editorTextField.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
     editorTextField.setBorder(hasFocus ? BorderFactory.createLineBorder(table.getForeground()): new EmptyBorder(1, 1, 1, 1));
     return editorTextField;
   }

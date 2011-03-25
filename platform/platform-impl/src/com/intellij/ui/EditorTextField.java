@@ -74,6 +74,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private Color myEnforcedBgColor = null;
   private boolean myOneLineMode; // use getter to access this field! It is allowed to override getter and change initial behaviour
   private boolean myCenterByHeight = true;
+  private boolean myEnsureWillComputePreferredSize;
+  private Dimension myPassivePreferredSize;
 
   public EditorTextField() {
     this("");
@@ -307,9 +309,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
     boolean isFocused = isFocusOwner();
 
-    myEditor = createEditor();
-    final JComponent component = myEditor.getComponent();
-    add(component);
+    initEditor();
 
     super.addNotify();
 
@@ -321,6 +321,12 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     if (isFocused) {
       requestFocus();
     }
+  }
+
+  private void initEditor() {
+    myEditor = createEditor();
+    final JComponent component = myEditor.getComponent();
+    add(component);
   }
 
   public void removeNotify() {
@@ -555,7 +561,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     int prefHeight = c.getPreferredSize().height;
     if (myOneLineMode && getSize().height > prefHeight && myCenterByHeight) {
       int y = insets.top + getSize().height / 2 - prefHeight / 2;
-      c.setBounds(insets.left, y - 1, getSize().width - insets.left - insets.right, prefHeight);
+      c.setBounds(insets.left, y, getSize().width - insets.left - insets.right, prefHeight + 1);
     } else {
       c.setBounds(insets.left, insets.top, getSize().width - insets.left - insets.right, getSize().height - insets.top - insets.bottom);
     }
@@ -565,6 +571,16 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     if (super.isPreferredSizeSet()) {
       return super.getPreferredSize();
     }
+
+    boolean toReleaseEditor = false;
+    if (myEditor == null && myEnsureWillComputePreferredSize) {
+      myEnsureWillComputePreferredSize = false;
+      initEditor();
+      toReleaseEditor = true;
+    }
+
+
+    Dimension size = new Dimension(100, 20);
     if (myEditor != null) {
       final Dimension preferredSize = new Dimension(myEditor.getComponent().getPreferredSize());
       final Insets insets = getInsets();
@@ -574,10 +590,17 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
         preferredSize.height += insets.top;
         preferredSize.height += insets.bottom;
       }
-
-      return preferredSize;
+      size = preferredSize;
+    } else if (myPassivePreferredSize != null) {
+      size = myPassivePreferredSize;
     }
-    return new Dimension(100, 20);
+
+    if (toReleaseEditor) {
+      releaseEditor();
+      myPassivePreferredSize = size;
+    }
+
+    return size;
   }
 
   public Component getNextFocusableComponent() {
@@ -651,6 +674,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   public void setCenterByHeight(boolean centerByHeight) {
     myCenterByHeight = centerByHeight;
+  }
+
+  public void ensureWillComputePreferredSize() {
+    myEnsureWillComputePreferredSize = true;
   }
 
   private static class DelegatingToRootTraversalPolicy extends FocusTraversalPolicy {
