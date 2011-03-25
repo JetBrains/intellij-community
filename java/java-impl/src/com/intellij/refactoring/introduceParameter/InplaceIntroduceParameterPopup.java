@@ -187,7 +187,9 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
 
       final JPanel wrapper = new JPanel(new BorderLayout());
       wrapper.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-      wrapper.add(myCanBeFinal, BorderLayout.NORTH);
+      if (myCanBeFinal != null) {
+        wrapper.add(myCanBeFinal, BorderLayout.NORTH);
+      }
       panel.add(wrapper, BorderLayout.SOUTH);
 
       return panel;
