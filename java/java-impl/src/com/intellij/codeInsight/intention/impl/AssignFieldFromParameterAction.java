@@ -80,17 +80,17 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     try {
       PsiField field = findFieldToAssign(myParameter);
-      addFieldAssignmentStatement(project, field, myParameter, editor);
+      if (field != null) addFieldAssignmentStatement(project, field, myParameter, editor);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
   }
 
-  public static void addFieldAssignmentStatement(final Project project,
-                                                 final PsiField field,
-                                                 final PsiParameter parameter,
-                                                 final Editor editor) throws IncorrectOperationException {
+  public static void addFieldAssignmentStatement(@NotNull Project project,
+                                                 @NotNull PsiField field,
+                                                 @NotNull PsiParameter parameter,
+                                                 @NotNull Editor editor) throws IncorrectOperationException {
     final PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
     PsiCodeBlock methodBody = method.getBody();
     if (methodBody == null) return;

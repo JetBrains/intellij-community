@@ -157,7 +157,8 @@
   <projectService serviceInterface="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"
                       serviceImplementation="com.intellij.execution.testframework.export.ExportTestResultsConfiguration"/>
 
-
+  <projectService serviceInterface="com.intellij.execution.testframework.autotest.AutoTestManager"
+                serviceImplementation="com.intellij.execution.testframework.autotest.AutoTestManager"/>
   <!-- General -->
   <applicationConfigurable instance="com.intellij.ide.GeneralSettingsConfigurable"/>
 

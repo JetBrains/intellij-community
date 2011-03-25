@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -34,14 +35,13 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Properties;
-
-import static com.intellij.openapi.util.text.StringUtil.join;
 
 /**
  * @author max
@@ -79,6 +79,13 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   };
 
   public static final JavaParserUtil.ParserWrapper REFERENCE = new JavaParserUtil.ParserWrapper() {
+    @Override
+    public void parse(final PsiBuilder builder) {
+      ReferenceParser.parseJavaCodeReference(builder, false, true, false, false, false);
+    }
+  };
+
+  public static final JavaParserUtil.ParserWrapper DIAMOND_REF = new JavaParserUtil.ParserWrapper() {
     @Override
     public void parse(final PsiBuilder builder) {
       ReferenceParser.parseJavaCodeReference(builder, false, true, false, false, true);
@@ -174,7 +181,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   @NotNull
   @Override
   public PsiDocTag createDocTagFromText(@NotNull final String text) throws IncorrectOperationException {
-    return createDocCommentFromText(join("/**\n", text, "\n */")).getTags()[0];
+    return createDocCommentFromText(StringUtil.join("/**\n", text, "\n */")).getTags()[0];
   }
 
   @NotNull
@@ -186,7 +193,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   @NotNull
   @Override
   public PsiDocComment createDocCommentFromText(@NotNull final String text) throws IncorrectOperationException {
-    final PsiMethod method = createMethodFromText(join(text, "void m();"), null);
+    final PsiMethod method = createMethodFromText(StringUtil.join(text, "void m();"), null);
     final PsiDocComment comment = method.getDocComment();
     assert comment != null : text;
     return comment;
@@ -201,7 +208,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   @NotNull
   @Override
   public PsiClass createClassFromText(@NotNull final String body, final PsiElement context) throws IncorrectOperationException {
-    final PsiJavaFile aFile = createDummyJavaFile(join("class _Dummy_ { ", body, " }"));
+    final PsiJavaFile aFile = createDummyJavaFile(StringUtil.join("class _Dummy_ { ", body, " }"));
     final PsiClass[] classes = aFile.getClasses();
     if (classes.length != 1) {
       throw new IncorrectOperationException("Incorrect class \"" + body + "\".");
@@ -293,7 +300,9 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   public PsiJavaCodeReferenceElement createReferenceFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
     final boolean isStaticImport = context instanceof PsiImportStaticStatement &&
                                    !((PsiImportStaticStatement)context).isOnDemand();
-    final JavaParserUtil.ParserWrapper wrapper = isStaticImport ? STATIC_IMPORT_REF : REFERENCE;
+    final boolean mayHaveDiamonds = context instanceof PsiNewExpression &&
+                                    PsiUtil.getLanguageLevel(context).isAtLeast(LanguageLevel.JDK_1_7);
+    final JavaParserUtil.ParserWrapper wrapper = isStaticImport ? STATIC_IMPORT_REF : mayHaveDiamonds ? DIAMOND_REF : REFERENCE;
     final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, wrapper, false), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiJavaCodeReferenceElement)) {
@@ -385,11 +394,12 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   @Override
   public PsiCatchSection createCatchSection(@NotNull final PsiClassType exceptionType, @NotNull final String exceptionName,
                                             final PsiElement context) throws IncorrectOperationException {
-    final String text = join("catch (", exceptionType.getCanonicalText(), " ", exceptionName, ") {}");
+    final String text = StringUtil
+      .join("catch (", exceptionType.getCanonicalText(), " ", exceptionName, ") {}");
     final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, CATCH_SECTION, false), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiCatchSection)) {
-      throw new IncorrectOperationException("Incorrect catch section \"" + text + "\".");
+      throw new IncorrectOperationException("Incorrect catch section '" + text + "'. Parsed element: "+element);
     }
     setupCatchBlock(exceptionName, context, (PsiCatchSection)element);
     return (PsiCatchSection)myManager.getCodeStyleManager().reformat(element);

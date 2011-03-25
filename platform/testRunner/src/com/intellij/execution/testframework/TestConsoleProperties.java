@@ -132,6 +132,20 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
 
   public abstract RuntimeConfiguration getConfiguration();
 
+  /**
+   * Allows to make console editable and disable/enable input sending in process stdin stream.
+   * Normally tests shouldn't ask anything in stdin so console is view only by default.
+   *
+   * NB: Process input support feature isn't fully implemented. Input text will be lost after
+   * switching to any other test/suite in tests results view. It's highly not recommended to change
+   * default behaviour. Please do it only in critical cases and only if you are sure that you need this feature.
+   *
+   * @return False for view-only mode and true for stdin support.
+   */
+  public boolean isEditable() {
+    return false;
+  }
+
   protected ExecutionConsole getConsole() {
     return myConsole;
   }

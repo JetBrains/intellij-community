@@ -18,6 +18,7 @@ package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDirectory;
@@ -172,13 +173,13 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         }
       });
 
-      retargetUsages(usages, oldToNewMap);
-
       // fix references in moved files to outer files
       for (PsiFile movedFile : movedFiles) {
         MoveFileHandler.forElement(movedFile).updateMovedFile(movedFile);
         FileReferenceContextUtil.decodeFileReferences(movedFile);
       }
+
+      retargetUsages(usages, oldToNewMap);
 
       // Perform CVS "add", "remove" commands on moved files.
 
@@ -226,7 +227,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
         final MyUsageInfo info = (MyUsageInfo)usageInfo;
         final PsiElement element = myElementsToMove[info.myIndex];
 
-        if (info.getReference() instanceof FileReference) {
+        if (info.getReference() instanceof FileReference || info.getReference() instanceof PsiDynaReference) {
           final PsiElement usageElement = info.getElement();
           if (usageElement != null) {
             final PsiFile usageFile = usageElement.getContainingFile();

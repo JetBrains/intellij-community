@@ -40,9 +40,11 @@ public class LocalHidesRenamedLocalUsageInfo extends UnresolvableCollisionUsageI
 
   public String getDescription() {
 
+    PsiElement element = getElement();
+    String type = element == null ? "element" : UsageViewUtil.getType(element);
     final String descr = RefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.the.renamed.1",
                                                    RefactoringUIUtil.getDescription(myConflictingElement, true),
-                                                   UsageViewUtil.getType(getElement()));
+                                                   type);
     return CommonRefactoringUtil.capitalize(descr);
   }
 }

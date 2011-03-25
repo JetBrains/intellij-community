@@ -211,10 +211,6 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
       if (block == null) return null;
       assert block.isValid() : "invalid code block";
 
-      if (GroovyPsiManager.isTypeBeingInferred(method)) {
-        return null;
-      }
-
       return GroovyPsiManager.inferType(method, new MethodTypeInferencer(block));
     }
   };

@@ -93,7 +93,7 @@ public class ChunkExtractor {
     }
   };
 
-  public static TextChunk[] extractChunks(PsiFile file, UsageInfo2UsageAdapter usageAdapter) {
+  public static TextChunk[] extractChunks(@NotNull PsiFile file, UsageInfo2UsageAdapter usageAdapter) {
     return ourExtractors.get().getValue().get(file).extractChunks(usageAdapter);
   }
 

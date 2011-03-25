@@ -45,7 +45,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   }
 
   public void update(AnActionEvent e) {
-    final boolean enabled = e.getData(PlatformDataKeys.PROJECT) != null && (getUnversionedFiles(e) != null);
+    final boolean enabled = e.getData(PlatformDataKeys.PROJECT) != null && (thereAreUnversionedFiles(e));
     e.getPresentation().setEnabled(enabled);
     final String place = e.getPlace();
     if (ActionPlaces.ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION.equals(place) || ActionPlaces.CHANGES_VIEW_POPUP.equals(place) ) {
@@ -62,8 +62,13 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), unversionedFiles);
   }
 
+  protected boolean thereAreUnversionedFiles(final AnActionEvent e) {
+    final List<VirtualFile> unversionedFiles = getUnversionedFiles(e);
+    return unversionedFiles != null && !(unversionedFiles.isEmpty());
+  }
+
   @Nullable
-  private static List<VirtualFile> getUnversionedFiles(final AnActionEvent e) {
+  protected List<VirtualFile> getUnversionedFiles(final AnActionEvent e) {
     // first get from the ChangeListView
     List<VirtualFile> unversionedFiles = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
     if (unversionedFiles != null && !unversionedFiles.isEmpty()) {

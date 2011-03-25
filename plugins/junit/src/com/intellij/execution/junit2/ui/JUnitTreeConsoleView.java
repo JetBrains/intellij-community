@@ -18,7 +18,6 @@ package com.intellij.execution.junit2.ui;
 
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.model.TreeCollapser;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
@@ -53,6 +52,7 @@ public class JUnitTreeConsoleView extends BaseTestsOutputConsoleView {
   }
 
   public void attachToProcess(final ProcessHandler processHandler) {
+    super.attachToProcess(processHandler);
     myConsolePanel.onProcessStarted(processHandler);
   }
 

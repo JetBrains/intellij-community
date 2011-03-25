@@ -680,14 +680,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         FileBasedIndex.getInstance().processValues(IdIndex.NAME, entry, null, new FileBasedIndex.ValueProcessor<Integer>() {
             public boolean process(VirtualFile file, Integer value) {
               if (progress != null) progress.checkCanceled();
-              if (!IndexCacheManagerImpl.shouldBeFound(file, index)) {
-                return true;
-              }
-              int mask = value.intValue();
-              for (RequestWithProcessor single : data) {
-                final PsiSearchRequest request = single.request;
-                if ((mask & request.searchContext) != 0 && ((GlobalSearchScope)request.searchScope).contains(file)) {
-                  local.putValue(file, single);
+
+              if (IndexCacheManagerImpl.shouldBeFound(commonScope, file, index)) {
+                int mask = value.intValue();
+                for (RequestWithProcessor single : data) {
+                  final PsiSearchRequest request = single.request;
+                  if ((mask & request.searchContext) != 0 && ((GlobalSearchScope)request.searchScope).contains(file)) {
+                    local.putValue(file, single);
+                  }
                 }
               }
               return true;

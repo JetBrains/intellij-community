@@ -139,7 +139,10 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
 
     // do not introduce assignment in chanined constructor
     if (HighlightControlFlowUtil.getChainedConstructors(constructor) == null) {
-      AssignFieldFromParameterAction.addFieldAssignmentStatement(project, getField(), parameter, editor);
+      PsiField field = getField();
+      if (field != null) {
+        AssignFieldFromParameterAction.addFieldAssignmentStatement(project, field, parameter, editor);
+      }
     }
     return true;
   }

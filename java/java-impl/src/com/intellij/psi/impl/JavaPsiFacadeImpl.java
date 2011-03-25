@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl;
 
 import com.intellij.ProjectTopics;
@@ -55,7 +51,6 @@ import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
@@ -65,10 +60,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * @author max
+ */
 public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.JavaPsiFacadeImpl");
 
@@ -90,9 +89,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
                            PsiManagerImpl psiManager,
                            final ProjectRootManagerEx projectRootManagerEx,
                            StartupManager startupManager,
-                           MessageBus bus
-
-  ) {
+                           MessageBus bus) {
     myProject = project;
     myResolveHelper = new PsiResolveHelperImpl(PsiManager.getInstance(project));
     myJavadocManager = new JavadocManagerImpl(project);
@@ -270,7 +267,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
   @NotNull
   public PsiJavaParserFacade getParserFacade() {
-    return getElementFactory(); // TODO: ligter implementation which doesn't mark all the elements as generated.
+    return getElementFactory(); // TODO: lighter implementation which doesn't mark all the elements as generated.
   }
 
   @NotNull
@@ -370,6 +367,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     return false;
   }
 
+  @Nullable
   private PsiPackage findPackageDefault(String qualifiedName) {
     final PsiPackage aPackage = myFileManager.findPackage(qualifiedName);
     if (aPackage == null && myCurrentMigration != null) {
@@ -416,9 +414,9 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       final Map<String, PsiPackage> packagesMap = new HashMap<String, PsiPackage>();
       final String qualifiedName = psiPackage.getQualifiedName();
       for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
-        PsiDirectory[] subdirs = dir.getSubdirectories();
-        for (PsiDirectory subdir : subdirs) {
-          final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(subdir);
+        PsiDirectory[] subDirs = dir.getSubdirectories();
+        for (PsiDirectory subDir : subDirs) {
+          final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(subDir);
           if (aPackage != null) {
             final String subQualifiedName = aPackage.getQualifiedName();
             if (subQualifiedName.startsWith(qualifiedName) && !packagesMap.containsKey(subQualifiedName)) {
@@ -578,16 +576,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
         case BEFORE_CHILD_MOVEMENT:
         case BEFORE_CHILD_REPLACEMENT:
         case BEFORE_CHILD_ADDITION:
-          break;
         case BEFORE_CHILD_REMOVAL:
-          checkAnnotation(event.getChild());
-          checkModifierListOwner(event.getChild());
-          if (event.getChild() instanceof PsiClassOwner) {
-            PsiClass[] classes = ((PsiClassOwner)event.getChild()).getClasses();
-            for (PsiClass psiClass : classes) {
-              checkModifierListOwner(psiClass);              
-            }
-          }
           break;
 
         case CHILD_ADDED:
@@ -611,15 +600,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       }
     }
 
-    private void checkModifierListOwner(PsiElement child) {
-      if (child instanceof PsiClass || child instanceof PsiMethod) {
-        PsiModifierList modifierList = ((PsiModifierListOwner)child).getModifierList();
-        if (modifierList != null && modifierList.getAnnotations().length > 0) {
-          myModificationTracker.incAnnotationModificationCounter();             
-        }
-      }
-    }
-
     private void processChange(final PsiElement parent, final PsiElement child1, final PsiElement child2) {
       try {
         if (!isInsideCodeBlock(parent)) {
@@ -629,8 +609,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
           else {
             myModificationTracker.incOutOfCodeBlockModificationCounter();
           }
-          checkAnnotation(parent);
-          checkModifierListOwner(parent);
           return;
         }
 
@@ -640,12 +618,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       }
       catch (PsiInvalidElementAccessException e) {
         myModificationTracker.incCounter(); // Shall not happen actually, just a pre-release paranoia
-      }
-    }
-
-    private void checkAnnotation(PsiElement parent) {
-      if (PsiTreeUtil.getParentOfType(parent, PsiAnnotation.class, false) != null) {
-        myModificationTracker.incAnnotationModificationCounter();
       }
     }
 

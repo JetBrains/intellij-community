@@ -133,10 +133,11 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     myUserActivityDelay = userActivityDelay;
   }
 
-  public void updateInBackground(final FindModel findModel, final boolean allowedToChangedEditorSelection) {
+  public void updateInBackground(FindModel findModel, final boolean allowedToChangedEditorSelection) {
     myLivePreviewAlarm.cancelAllRequests();
     if (findModel == null) return;
     final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    final FindModel copy = (FindModel)findModel.clone();
     Runnable request = new Runnable() {
       @Override
       public void run() {
@@ -151,7 +152,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
         } else {
           ApplicationManager.getApplication().invokeAndWait(denyReplace, ModalityState.NON_MODAL);
         }
-        mySearchResults.updateThreadSafe(findModel, allowedToChangedEditorSelection, null);
+        mySearchResults.updateThreadSafe(copy, allowedToChangedEditorSelection, null);
       }
     };
     if (unitTestMode) {

@@ -144,7 +144,7 @@ public abstract class RedBlackTree<K> {
 
     Node<K> e = n;
     while (e.getParent() != null) e = e.getParent();
-    assert e == root; // assert the node belongs to our tree
+    assert e == root : e; // assert the node belongs to our tree
 
     if (n.getLeft() != null && n.getRight() != null) {
       // Copy key/value from predecessor and then delete it instead

@@ -81,11 +81,13 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   public int getStartOffset() {
-    return intervalStart() + (myNode == null ? 0 : myNode.computeDeltaUpToRoot());
+    RangeMarkerTree.RMNode node = myNode;
+    return intervalStart() + (node == null ? 0 : node.computeDeltaUpToRoot());
   }
 
   public int getEndOffset() {
-    return intervalEnd() + (myNode == null ? 0 : myNode.computeDeltaUpToRoot());
+    RangeMarkerTree.RMNode node = myNode;
+    return intervalEnd() + (node == null ? 0 : node.computeDeltaUpToRoot());
   }
 
   public void invalidate() {

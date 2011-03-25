@@ -120,7 +120,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   private TextChunk[] initChunks() {
-    TextChunk[] chunks = ChunkExtractor.extractChunks(getPsiFile(), this);
+    PsiFile file = getPsiFile();
+    TextChunk[] chunks = file == null ? TextChunk.EMPTY_ARRAY : ChunkExtractor.extractChunks(file, this);
     myTextChunks = new SoftReference<TextChunk[]>(chunks);
     return chunks;
   }
@@ -328,7 +329,10 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     if (containingFile == null && oContainingFile == null || !Comparing.equal(containingFile, oContainingFile)) {
       return 0;
     }
-    return getFirstSegment().getStartOffset() - o.getFirstSegment().getStartOffset();
+    Segment s1 = getFirstSegment();
+    Segment s2 = o.getFirstSegment();
+    if (s1 == null || s2 == null) return 0;
+    return s1.getStartOffset() - s2.getStartOffset();
   }
 
   public void rename(String newName) throws IncorrectOperationException {

@@ -362,7 +362,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
     final ElementFilter classFilter = getClassFilter(position);
 
-    final boolean showCapitalizedClasses = JavaCompletionContributor.showCapitalizedClasses(result);
     reference.processVariants(new Consumer<Object>() {
       public void consume(Object element) {
         if (element instanceof PsiClass && inheritors.alreadyProcessed((PsiClass)element)) {
@@ -382,10 +381,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
           resolveResult = (GroovyResolveResult)object;
           substitutor = resolveResult.getSubstitutor();
           object = ((GroovyResolveResult)object).getElement();
-        }
-
-        if (!showCapitalizedClasses && object instanceof PsiClass && StringUtil.isCapitalized(((PsiClass)object).getName())) {
-          return;
         }
 
         final boolean autopopup = parameters.getInvocationCount() == 0;
@@ -458,7 +453,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         }
       });
 
-      if (StringUtil.isCapitalized(prefix)) {
+      if (StringUtil.isNotEmpty(result.getPrefixMatcher().getPrefix())) {
         addAllClasses(parameters, result, inheritors);
       }
     }
