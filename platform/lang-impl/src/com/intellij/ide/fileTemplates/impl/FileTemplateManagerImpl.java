@@ -25,6 +25,7 @@ import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +38,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -757,7 +759,20 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     }
     Set<VirtualFile> templatesList = new THashSet<VirtualFile>();
     for (VirtualFile topDir : topDirs) {
-      VirtualFile parentDir = myDefaultTemplatesDir.equals(".") ? topDir : topDir.findChild(myDefaultTemplatesDir);
+      final VirtualFile parentDir;
+      if (myDefaultTemplatesDir.equals(".")) {
+        parentDir = topDir;
+      }
+      else {
+        final ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
+        if (topDir instanceof NewVirtualFile && (!app.holdsReadLock() || app.isDispatchThread())) {
+          // need dispatch-thread-check because sync refresh in non-awt thread may cause deadlock
+          parentDir = ((NewVirtualFile)topDir).refreshAndFindChild(myDefaultTemplatesDir);
+        }
+        else {
+          parentDir = topDir.findChild(myDefaultTemplatesDir);
+        }
+      }
       if (parentDir != null) {
         templatesList.addAll(listDir(parentDir));
       }

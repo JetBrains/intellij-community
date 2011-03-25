@@ -68,14 +68,20 @@ public class GithubCheckoutProvider implements CheckoutProvider {
 
     // All the preliminary work is already done, go and clone the selected repository!
     final RepositoryInfo selectedRepository = checkoutDialog.getSelectedRepository();
+    final boolean writeAccessAllowed = GithubUtil.isWriteAccessAllowed(project, selectedRepository);
+    if (!writeAccessAllowed){
+      Messages.showErrorDialog(project, "It seems that you have only read access to the selected repository.\n" +
+        "GitHub supports only https protocol for readonly access, which is not supported yet.\n" +
+        "More details are available here: http://youtrack.jetbrains.net/issue/IDEA-55298", "Cannot clone this repository");
+      return;
+    }
+    final String host = writeAccessAllowed ? "git@" + settings.getHost() + ":" : "https://github.com" + settings.getHost() + "/";
     final String selectedPath = checkoutDialog.getSelectedPath();
     final VirtualFile selectedPathFile = LocalFileSystem.getInstance().findFileByPath(selectedPath);
     final String projectName = checkoutDialog.getProjectName();
     final String repositoryName = selectedRepository.getName();
     final String repositoryOwner = selectedRepository.getOwner();
-    final String checkoutUrl = settings.getLogin().equals(repositoryOwner)
-                               ? "git@github.com:" + repositoryOwner + "/" + repositoryName + ".git"
-                               : "https://github.com/" + repositoryOwner + "/" + repositoryName + ".git";
+    final String checkoutUrl = host + repositoryOwner + "/" + repositoryName + ".git";
     GitCheckoutProvider.checkout(project, listener, selectedPathFile, checkoutUrl, projectName, "origin", selectedPath);
   }
 

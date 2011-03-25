@@ -54,7 +54,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   private final Map<String, RunnerAndConfigurationSettings> myTemplateConfigurationsMap =
       new HashMap<String, RunnerAndConfigurationSettings>();
-  private RunnerAndConfigurationSettings mySelectedConfiguration = null;
+  private String mySelectedConfiguration = null;
   private String mySelectedConfig = null;
 
   private Map<Integer, Icon> myIdToIcon = new com.intellij.util.containers.HashMap<Integer, Icon>();
@@ -324,14 +324,15 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   public RunnerAndConfigurationSettings getSelectedConfiguration() {
     if (mySelectedConfiguration == null && mySelectedConfig != null) {
-      mySelectedConfiguration = myConfigurations.get(mySelectedConfig);
+      final RunnerAndConfigurationSettings configurationSettings = myConfigurations.get(mySelectedConfig);
+      if (configurationSettings != null) mySelectedConfiguration = getUniqueName(configurationSettings.getConfiguration());
       mySelectedConfig = null;
     }
-    return mySelectedConfiguration;
+    return mySelectedConfiguration == null ? null : myConfigurations.get(mySelectedConfiguration);
   }
 
   public void setSelectedConfiguration(final RunnerAndConfigurationSettings configuration) {
-    mySelectedConfiguration = configuration;
+    mySelectedConfiguration = configuration == null ? null : getUniqueName(configuration.getConfiguration());
     if (configuration != null) invalidateConfigurationIcon(configuration);
     fireRunConfigurationSelected();
   }
@@ -394,7 +395,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
       }
     }
     if (mySelectedConfiguration != null) {
-      parentNode.setAttribute(SELECTED_ATTR, getUniqueName(mySelectedConfiguration.getConfiguration()));
+      parentNode.setAttribute(SELECTED_ATTR, mySelectedConfiguration);
     } else if (mySelectedConfig != null) {
       parentNode.setAttribute(SELECTED_ATTR, mySelectedConfig);
     }

@@ -35,13 +35,19 @@ import java.util.Set;
 public class ParameterInfoUtils {
   public static final String DEFAULT_PARAMETER_CLOSE_CHARS = ",){}";
 
-  public static @Nullable <T extends PsiElement> T findParentOfType (PsiFile file, int offset, Class<T> parentClass) {
+  @Nullable
+  public static <T extends PsiElement> T findParentOfType (PsiFile file, int offset, Class<T> parentClass) {
+    return findParentOfTypeWithStopElements(file, offset, parentClass);
+  }
+
+  @Nullable
+  public static <T extends PsiElement> T findParentOfTypeWithStopElements (PsiFile file, int offset, Class<T> parentClass, @NotNull Class<? extends PsiElement>... stopAt) {
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
 
-    T parentOfType = PsiTreeUtil.getParentOfType(element, parentClass);
+    T parentOfType = PsiTreeUtil.getParentOfType(element, parentClass, true, stopAt);
     if (element instanceof PsiWhiteSpace) {
-      parentOfType = PsiTreeUtil.getParentOfType(PsiTreeUtil.prevLeaf(element), parentClass);
+      parentOfType = PsiTreeUtil.getParentOfType(PsiTreeUtil.prevLeaf(element), parentClass, true, stopAt);
     }
     return parentOfType;
   }

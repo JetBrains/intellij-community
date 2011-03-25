@@ -68,9 +68,13 @@ public abstract class UnwrapTestCase extends LightPlatformCodeInsightTestCase {
   }
 
   protected String indentTwice(String code) {
+    return indent(indent(code));
+  }
+
+  protected String indent(String code) {
     String result = "";
     for (String line : StringUtil.tokenize(code, "\n")) {
-      result += "        " + line + "\n";
+      result += "    " + line + "\n";
     }
     return result;
   }

@@ -82,7 +82,9 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   protected void selectOption(List<AnAction> options, Editor editor, PsiFile file) {
     if (options.isEmpty()) return;
 
-    if (!getUnwrapDescription(file).showOptionsDialog()) {
+    if (!getUnwrapDescription(file).showOptionsDialog() ||
+        ApplicationManager.getApplication().isUnitTestMode()
+       ) {
       options.get(0).actionPerformed(null);
       return;
     }

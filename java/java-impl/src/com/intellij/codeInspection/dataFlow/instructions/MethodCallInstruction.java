@@ -103,6 +103,10 @@ public class MethodCallInstruction extends Instruction {
   }
 
   public String toString() {
-    return myMethodType == MethodType.UNBOXING ? "UNBOX" : myMethodType == MethodType.BOXING ? "BOX" : "CALL_METHOD: " + myCall.getText();
+    return myMethodType == MethodType.UNBOXING
+           ? "UNBOX"
+           : myMethodType == MethodType.BOXING
+             ? "BOX" :
+             "CALL_METHOD: " + (myCall == null ? "null" : myCall.getText());
   }
 }
