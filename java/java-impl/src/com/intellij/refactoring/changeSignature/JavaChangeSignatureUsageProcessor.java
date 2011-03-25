@@ -678,9 +678,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     PsiParameter[] parameters = list.getParameters();
 
     final JavaParameterInfo[] parameterInfos = changeInfo.getNewParameters();
-    PsiParameter[] newParms = new PsiParameter[parameterInfos.length -
-                                               (baseMethod != null ? baseMethod.getParameterList().getParametersCount() -
-                                                                     method.getParameterList().getParametersCount() : 0)];
+    final int delta = baseMethod != null ? baseMethod.getParameterList().getParametersCount() - method.getParameterList().getParametersCount() : 0;
+    PsiParameter[] newParms = new PsiParameter[Math.max(parameterInfos.length - delta, 0)];
     final String[] oldParameterNames = changeInfo.getOldParameterNames();
     final String[] oldParameterTypes = changeInfo.getOldParameterTypes();
     for (int i = 0; i < newParms.length; i++) {
@@ -862,6 +861,20 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
+        }
+      }
+
+      for (UsageInfo usageInfo : usagesSet) {
+        if (usageInfo instanceof OverriderUsageInfo) {
+          final PsiMethod method = (PsiMethod)usageInfo.getElement();
+          final PsiMethod baseMethod = ((OverriderUsageInfo)usageInfo).getBaseMethod();
+          final int delta = baseMethod.getParameterList().getParametersCount() - method.getParameterList().getParametersCount();
+          if (delta > 0) {
+            final boolean[] toRemove = myChangeInfo.toRemoveParm();
+            if (toRemove[toRemove.length - 1]) { //todo check if implicit parameter is not the last one
+              conflictDescriptions.putValue(baseMethod, "Implicit last parameter should not be deleted");
+            }
+          }
         }
       }
 
