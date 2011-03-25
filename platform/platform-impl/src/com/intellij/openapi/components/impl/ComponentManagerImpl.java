@@ -379,7 +379,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myDisposed || temporarilyDisposed;
   }
 
-  private volatile boolean temporarilyDisposed = false;
+  protected volatile boolean temporarilyDisposed = false;
   @TestOnly
   public void setTemporarilyDisposed(boolean disposed) {
     temporarilyDisposed = disposed;
@@ -725,6 +725,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return super.hashCode();
   }
 
+  @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
   public final boolean equals(Object obj) {
     return super.equals(obj);
   }
