@@ -1568,14 +1568,14 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
           // already open
           if (eachWindow.findFileIndex(newFile) != -1) continue;
 
-          closeFile(eachFile, eachWindow);
           try {
             newFile.putUserData(EditorWindow.INITIAL_INDEX_KEY, i);
-            openFile(newFile, eachFile == selected);
+            openFileImpl2(eachWindow, newFile, eachFile == selected);
           }
           finally {
             newFile.putUserData(EditorWindow.INITIAL_INDEX_KEY, null);
           }
+          closeFile(eachFile, eachWindow);
         }
       }
     }

@@ -87,12 +87,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private final Project myProject;
   private final Editor myEditor;
 
-  private int myMinPrefixLength;
   private int myPreferredItemsCount;
   private String myInitialPrefix;
   private LookupArranger myCustomArranger;
 
-  private RangeMarker myLookupStartMarker;
+  private boolean myStableStart;
+  @NotNull private RangeMarker myLookupStartMarker;
   private final JList myList = new JBList(new DefaultListModel());
   private final LookupCellRenderer myCellRenderer;
   private Boolean myPositionedAbove = null;
@@ -153,6 +153,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     myIconPanel.setBackground(Color.LIGHT_GRAY);
     myIconPanel.add(myProcessIcon);
+
+    updateLookupStart(0);
 
     final ListModel model = myList.getModel();
     addEmptyItem((DefaultListModel)model);
@@ -268,10 +270,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public Collection<LookupElementAction> getActionsFor(LookupElement element) {
     return myModel.getActionsFor(element);
-  }
-
-  public int getMinPrefixLength() {
-    return myMinPrefixLength;
   }
 
   public JList getList() {
@@ -421,15 +419,17 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private void checkMinPrefixLengthChanges(Collection<LookupElement> items) {
+    if (myStableStart) return;
+    if (!myCalculating && !items.isEmpty()) {
+      myStableStart = true;
+    }
+
     int minPrefixLength = items.isEmpty() ? 0 : Integer.MAX_VALUE;
     for (final LookupElement item : items) {
       minPrefixLength = Math.min(item.getPrefixMatcher().getPrefix().length(), minPrefixLength);
     }
 
-    if (myMinPrefixLength != minPrefixLength) {
-      myLookupStartMarker = null;
-    }
-    myMinPrefixLength = minPrefixLength;
+    updateLookupStart(minPrefixLength);
   }
 
   private void restoreSelection(@Nullable LookupElement oldSelected, boolean choosePreselectedItem, @Nullable String oldInvariant) {
@@ -568,7 +568,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     Dimension dim = component.getPreferredSize();
     int lookupStart = getLookupStart();
     if (lookupStart < 0) {
-      LOG.error(lookupStart + "; minprefix=" + myMinPrefixLength + "; offset=" + myEditor.getCaretModel().getOffset() + "; element=" +
+      LOG.error(lookupStart + "; offset=" + myEditor.getCaretModel().getOffset() + "; element=" +
                 getPsiElement());
     }
 
@@ -656,12 +656,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public int getLookupStart() {
-    if (myLookupStartMarker == null) {
-      final int start = calcLookupStart();
-      myLookupStartMarker = myEditor.getDocument().createRangeMarker(start, start);
-      myLookupStartMarker.setGreedyToLeft(true);
-    }
-
     return myLookupStartMarker.getStartOffset();
   }
 
@@ -816,11 +810,14 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     }
   }
 
-  private int calcLookupStart() {
+  private int updateLookupStart(int myMinPrefixLength) {
     int offset = myEditor.getSelectionModel().hasSelection()
                  ? myEditor.getSelectionModel().getSelectionStart()
                  : myEditor.getCaretModel().getOffset();
-    return Math.max(offset - myMinPrefixLength - myAdditionalPrefix.length(), 0);
+    int start = Math.max(offset - myMinPrefixLength - myAdditionalPrefix.length(), 0);
+    myLookupStartMarker = myEditor.getDocument().createRangeMarker(start, start);
+    myLookupStartMarker.setGreedyToLeft(true);
+    return start;
   }
 
   @Nullable

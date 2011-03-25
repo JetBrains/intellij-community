@@ -15,6 +15,8 @@
  */
 package com.intellij.util.containers;
 
+import java.util.Arrays;
+
 public class IntArrayList implements Cloneable {
   private int[] myData;
   private int mySize;
@@ -162,5 +164,10 @@ public class IntArrayList implements Cloneable {
       //noinspection HardCodedStringLiteral
       throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + mySize);
     }
+  }
+
+  @Override
+  public String toString() {
+    return Arrays.toString(toArray());
   }
 }

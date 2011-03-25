@@ -220,15 +220,14 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     addKeywords(parameters, result);
 
-    addAllClasses(parameters, result, position, inheritors);
+    addAllClasses(parameters, result, inheritors);
     result.stopHere();
   }
 
   public static void addAllClasses(CompletionParameters parameters,
                                    final CompletionResultSet result,
-                                   PsiElement position,
                                    final InheritorsHolder inheritors) {
-    if (shouldRunClassNameCompletion(result, position)) {
+    if (shouldRunClassNameCompletion(result, parameters)) {
       JavaClassNameCompletionContributor.addAllClasses(parameters, result, new Consumer<LookupElement>() {
         @Override
         public void consume(LookupElement element) {
@@ -314,7 +313,8 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static boolean shouldRunClassNameCompletion(CompletionResultSet result, PsiElement position) {
+  private static boolean shouldRunClassNameCompletion(CompletionResultSet result, CompletionParameters parameters) {
+    PsiElement position = parameters.getPosition();
     final PsiElement parent = position.getParent();
     if (!(parent instanceof PsiJavaCodeReferenceElement)) return false;
     if (((PsiJavaCodeReferenceElement)parent).getQualifier() != null) return false;
@@ -331,7 +331,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return false;
     }
 
-    return StringUtil.isNotEmpty(result.getPrefixMatcher().getPrefix());
+    return StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix()) || parameters.relaxMatching();
   }
 
   private static void completeAnnotationAttributeName(CompletionResultSet result, PsiElement insertedElement,
