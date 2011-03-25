@@ -17,6 +17,7 @@ package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.xml.XmlBundle;
@@ -51,6 +52,10 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public static WebEditorOptions getInstance() {
     return ServiceManager.getService(WebEditorOptions.class);
+  }
+
+  public WebEditorOptions(ApplicationEx application) {
+    setTagTreeHighlightingEnabled(!application.isUnitTestMode());
   }
 
   public void setBreadcrumbsEnabled(boolean b) {
