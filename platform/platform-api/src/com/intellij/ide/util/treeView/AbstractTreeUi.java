@@ -3338,11 +3338,6 @@ public class AbstractTreeUi {
         notified = true;
       }
     }
-
-    if (!notified) {
-      myTreeModel.nodeChanged(node);
-    }
-
   }
 
   public DefaultTreeModel getTreeModel() {
