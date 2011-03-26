@@ -490,18 +490,18 @@ public class MatcherImpl {
                                  MatchOptions options,
                                  boolean filePattern,
                                  FileType sourceFileType,
-                                 String sourceFileExtension,
+                                 String sourceExtension,
                                  boolean physicalSourceFile)
     throws MalformedPatternException, UnsupportedPatternException {
 
     CollectingMatchResultSink sink = new CollectingMatchResultSink();
 
     try {
-      PsiElement[] elements = MatcherImplUtil.createTreeFromText(source,
-                                                                 filePattern ? PatternTreeContext.File : PatternTreeContext.Block,
-                                                                 sourceFileType,
-                                                                 sourceFileExtension,
-                                                                 project, physicalSourceFile);
+      PsiElement[] elements = MatcherImplUtil.createSourceTreeFromText(source,
+                                                                       filePattern ? PatternTreeContext.File : PatternTreeContext.Block,
+                                                                       sourceFileType,
+                                                                       sourceExtension,
+                                                                       project, physicalSourceFile);
 
       options.setSearchPattern(pattern);
       options.setScope(new LocalSearchScope(elements));
@@ -516,7 +516,7 @@ public class MatcherImpl {
   }
 
   protected List testFindMatches(String source, String pattern, MatchOptions options, boolean filePattern) {
-    return testFindMatches(source, pattern, options, filePattern, options.getFileType(), options.getFileType().getDefaultExtension(), false);
+    return testFindMatches(source, pattern, options, filePattern, options.getFileType(), null, false);
   }
 
   class TaskScheduler implements MatchingProcess {

@@ -1,7 +1,7 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.SearchScope;
@@ -9,7 +9,6 @@ import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -28,7 +27,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   private boolean caseSensitiveMatch;
   private boolean resultIsContextMatch = false;
   private FileType myFileType = StructuralSearchUtil.DEFAULT_FILE_TYPE;
-  private String myFileExtension = null;
+  private Language myDialect = null;
   private int maxMatches = DEFAULT_MAX_MATCHES_COUNT;
   public static final int DEFAULT_MAX_MATCHES_COUNT = 1000;
 
@@ -44,7 +43,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
   //private static final String SCOPE_ATTRIBUTE_NAME = "scope";
   @NonNls private static final String CONSTRAINT_TAG_NAME = "constraint";
   @NonNls private static final String FILE_TYPE_ATTR_NAME = "type";
-  @NonNls private static final String FILE_EXTENSION_ATTR_NAME = "extension";
+  @NonNls private static final String DIALECT_ATTR_NAME = "dialect";
   @NonNls public static final String INSTANCE_MODIFIER_NAME = "Instance";
   @NonNls public static final String MODIFIER_ANNOTATION_NAME = "Modifier";
   @NonNls public static final String PACKAGE_LOCAL_MODIFIER_NAME = PsiModifier.PACKAGE_LOCAL;
@@ -186,8 +185,8 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
       element.setAttribute(FILE_TYPE_ATTR_NAME, myFileType.getName());
     //}
 
-    if (myFileExtension != null) {
-      element.setAttribute(FILE_EXTENSION_ATTR_NAME, myFileExtension);
+    if (myDialect != null) {
+      element.setAttribute(DIALECT_ATTR_NAME, myDialect.getID());
     }
 
     if (variableConstraints!=null) {
@@ -236,9 +235,9 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
       myFileType = getFileTypeByName(value);
     }
 
-    attr = element.getAttribute(FILE_EXTENSION_ATTR_NAME);
+    attr = element.getAttribute(DIALECT_ATTR_NAME);
     if (attr != null) {
-      myFileExtension = attr.getValue();
+      myDialect = Language.findLanguageByID(attr.getValue());
     }
 
     // @TODO deserialize scope
@@ -255,7 +254,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
 
   private static FileType getFileTypeByName(String value) {
     if (value != null) {
-      for (FileType type : FileTypeManager.getInstance().getRegisteredFileTypes()) {
+      for (FileType type : StructuralSearchUtil.getSuitableFileTypes()) {
         if (value.equals(type.getName())) {
           return type;
         }
@@ -287,11 +286,11 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     if (myFileType != matchOptions.myFileType) {
       return false;
     }
-    if (myFileExtension == null) {
-      return matchOptions.getFileExtension() == null;
+    if (myDialect == null) {
+      return matchOptions.getDialect() == null;
     }
 
-    return myFileExtension.equals(matchOptions.getFileExtension());
+    return myDialect.equals(matchOptions.getDialect());
   }
 
   public int hashCode() {
@@ -306,7 +305,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     result = 29 * result + (searchCriteria != null ? searchCriteria.hashCode() : 0);
     result = 29 * result + (variableConstraints != null ? variableConstraints.hashCode() : 0);
     if (myFileType != null) result = 29 * result + myFileType.hashCode();
-    if (myFileExtension != null) result = 29 * result + myFileExtension.hashCode();
+    if (myDialect != null) result = 29 * result + myDialect.hashCode();
     return result;
   }
 
@@ -318,19 +317,12 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     return myFileType;
   }
 
-  @Nullable
-  public String getFileExtension() {
-    if (myFileExtension != null) {
-      return myFileExtension;
-    }
-    if (myFileType != null) {
-      return myFileType.getDefaultExtension();
-    }
-    return null;
+  public Language getDialect() {
+    return myDialect;
   }
 
-  public void setFileExtension(String fileExtension) {
-    myFileExtension = fileExtension;
+  public void setDialect(Language dialect) {
+    myDialect = dialect;
   }
 
   public MatchOptions clone() {

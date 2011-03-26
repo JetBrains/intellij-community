@@ -45,10 +45,10 @@ public class Matcher extends MatcherImpl {
                               MatchOptions options,
                               boolean filePattern,
                               FileType sourceFileType,
-                              String sourceFileExtension,
+                              String sourceExtension,
                               boolean physicalSourceFile)
     throws MalformedPatternException, UnsupportedPatternException {
-    return super.testFindMatches(source, pattern, options, filePattern, sourceFileType, sourceFileExtension, physicalSourceFile);
+    return super.testFindMatches(source, pattern, options, filePattern, sourceFileType, sourceExtension, physicalSourceFile);
   }
 
   public List testFindMatches(String source, String pattern, MatchOptions options, boolean filePattern)

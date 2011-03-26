@@ -1,5 +1,7 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.javascript.JavaScriptSupportLoader;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -91,19 +93,19 @@ public class JSStructuralReplaceTest extends StructuralReplaceTestCase {
   public void testUnsupportedPatterns() {
     String s = "someCode()";
     try {
-      replacer.testReplace(s, "123", "", options, false, true, JAVASCRIPT, "js");
+      replacer.testReplace(s, "123", "", options, false, true, JAVASCRIPT, null);
       fail();
     }
     catch (UnsupportedPatternException e) {
     }
     try {
-      replacer.testReplace(s, "doc.method()", "", options, false, true, JAVASCRIPT, "js");
+      replacer.testReplace(s, "doc.method()", "", options, false, true, JAVASCRIPT, null);
       fail();
     }
     catch (UnsupportedPatternException e) {
     }
     try {
-      replacer.testReplace(s, "doc.method()", "", options, false, true, JAVASCRIPT, "as");
+      replacer.testReplace(s, "doc.method()", "", options, false, true, JAVASCRIPT, JavaScriptSupportLoader.ECMA_SCRIPT_L4);
       fail();
     }
     catch (UnsupportedPatternException e) {
@@ -200,18 +202,18 @@ public class JSStructuralReplaceTest extends StructuralReplaceTestCase {
   public void testInHtml() throws IOException {
     //doTestByFile("script.html", "script_replacement1.html", "var $i$ = $val$", "var $i$: int = $val$", JAVASCRIPT, "js");
     try {
-      doTestByFile("script.html", "script.html", "$i$ < $n$", "$i$ > $n$", JAVASCRIPT, "js");
+      doTestByFile("script.html", "script.html", "$i$ < $n$", "$i$ > $n$", JAVASCRIPT, null);
       fail();
     }
     catch (UnsupportedPatternException e) {
     }
     doTestByFile("script.html", "script_replacement2.html", "for (var $i$ = 0; $i$ < $n$; $i$++) {}",
                  "for (var $i$ = $n$ - 1; $i$ >= 0; $i$--) {}",
-                 JAVASCRIPT, "js");
-    doTestByFile("script.html", "script_replacement3.html", "$func$();", ";", JAVASCRIPT, "js");
+                 JAVASCRIPT, null);
+    doTestByFile("script.html", "script_replacement3.html", "$func$();", ";", JAVASCRIPT, null);
 
     try {
-      doTestByFile("script.html", "script_replacement1.html", "$func$()", ";", JAVASCRIPT, "js");
+      doTestByFile("script.html", "script_replacement1.html", "$func$()", ";", JAVASCRIPT, null);
       fail();
     }
     catch (UnsupportedPatternException e) {
@@ -235,17 +237,17 @@ public class JSStructuralReplaceTest extends StructuralReplaceTestCase {
                             String what,
                             String by,
                             FileType patternFileType,
-                            String patternFileExtension) throws IOException {
+                            Language patternFileDialect) throws IOException {
     String extension = FileUtil.getExtension(fileName);
     String source = TestUtils.loadFile(fileName);
     String expected = TestUtils.loadFile(expectedFileName);
-    doTest(source, what, by, expected, patternFileType, patternFileExtension,
-           FileTypeManager.getInstance().getFileTypeByExtension(extension), extension);
+    doTest(source, what, by, expected, patternFileType, patternFileDialect, FileTypeManager.getInstance().getFileTypeByExtension(extension),
+           null);
   }
 
   private void doTest(String s, String what, String by, String expected) {
-    doTest(s, what, by, expected, JAVASCRIPT, "js", JAVASCRIPT, "js");
-    doTest(s, what, by, expected, JAVASCRIPT, "as", JAVASCRIPT, "as");
+    doTest(s, what, by, expected, JAVASCRIPT, null, JAVASCRIPT, null);
+    doTest(s, what, by, expected, JAVASCRIPT, JavaScriptSupportLoader.ECMA_SCRIPT_L4, JAVASCRIPT, JavaScriptSupportLoader.ECMA_SCRIPT_L4);
   }
 
   private void doTest(String s,
@@ -253,12 +255,12 @@ public class JSStructuralReplaceTest extends StructuralReplaceTestCase {
                       String by,
                       String expected,
                       FileType patternFileType,
-                      String patternExtension,
+                      Language patternDialect,
                       FileType sourceFileType,
-                      String sourceExtension) {
+                      Language sourceDialect) {
     options.getMatchOptions().setFileType(patternFileType);
-    options.getMatchOptions().setFileExtension(patternExtension);
-    actualResult = replacer.testReplace(s, what, by, options, true, true, sourceFileType, sourceExtension);
+    options.getMatchOptions().setDialect(patternDialect);
+    actualResult = replacer.testReplace(s, what, by, options, true, true, sourceFileType, sourceDialect);
     assertEquals(expected, actualResult);
   }
 }

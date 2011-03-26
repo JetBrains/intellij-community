@@ -7,6 +7,7 @@ import com.intellij.find.FindSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -16,6 +17,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -23,7 +25,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -41,15 +42,19 @@ import com.intellij.usages.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
 
 // Class to show the user the request for search
 
@@ -71,6 +76,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
   private JCheckBox maxMatchesSwitch;
   private JTextField maxMatches;
   private JComboBox fileTypes;
+  private JComboBox dialects;
   private JLabel status;
   private JLabel statusText;
 
@@ -87,7 +93,10 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
   private static boolean ourOpenInNewTab;
   private static boolean ourUseMaxCount;
+
   @NonNls private static String ourFtSearchVariant = DEFAULT_FILE_TYPE_SEARCH_VARIANT;
+  private static Language ourDialect = null;
+
   private final boolean myShowScopePanel;
   private final boolean myRunFindActionOnClose;
   private boolean myDoingOkAction;
@@ -98,7 +107,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
   public SearchDialog(SearchContext searchContext, boolean showScope, boolean runFindActionOnClose) {
     super(searchContext.getProject(), true);
-    
+
     if (showScope) setModal(false);
     myShowScopePanel = showScope;
     myRunFindActionOnClose = runFindActionOnClose;
@@ -253,19 +262,46 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     maxMatches.setMaximumSize(new Dimension(50, 25));
 
     //noinspection HardCodedStringLiteral
-    List<String> typeNames = new ArrayList<String>();
-    for (StructuralSearchProfile profile : StructuralSearchUtil.getAllProfiles()) {
-      Collections.addAll(typeNames, profile.getFileTypeSearchVariants());
+    Set<String> typeNames = new HashSet<String>();
+
+    for (FileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
+      if (StructuralSearchUtil.getProfileByFileType(fileType) != null) {
+        typeNames.add(StructuralSearchProfile.getTypeName(fileType));
+      }
     }
 
     fileTypes = new JComboBox(ArrayUtil.toStringArray(typeNames));
+    fileTypes.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        updateDialectsCombo();
+      }
+    });
+
+    dialects = new JComboBox(new DefaultComboBoxModel());
+    dialects.setRenderer(new DefaultListCellRenderer() {
+      @Override
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        if (value == null) {
+          value = "<no dialect>";
+        }
+        else if (value instanceof Language) {
+          value = ((Language)value).getDisplayName();
+        }
+        return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      }
+    });
 
     final JLabel jLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
+    final JLabel jLabel2 = new JLabel(SSRBundle.message("search.dialog.file.dialect.label"));
     searchOptions.add(
       UIUtil.createOptionLine(
         new JComponent[]{
           jLabel,
           fileTypes,
+          new Box.Filler(new Dimension(8, 0), new Dimension(8, 0), new Dimension(8, 0)),
+          jLabel2,
+          dialects,
           (JComponent)Box.createHorizontalGlue()
         }
       )
@@ -273,7 +309,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
 
     jLabel.setLabelFor(fileTypes);
 
-    detectFileType();
+    detectFileTypeAndDialect();
 
     fileTypes.setSelectedItem(ourFtSearchVariant);
     fileTypes.addItemListener(new ItemListener() {
@@ -281,13 +317,28 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
         if (e.getStateChange() == ItemEvent.SELECTED) initiateValidation();
       }
     });
+
+    dialects.setSelectedItem(ourDialect);
+
+    updateDialectsCombo();
   }
 
-  private void detectFileType() {
+  private void updateDialectsCombo() {
+    final Object item = fileTypes.getSelectedItem();
+    final FileType fileType = getFileTypeByName((String)item);
+    if (fileType instanceof LanguageFileType) {
+      Language language = ((LanguageFileType)fileType).getLanguage();
+      Language[] languageDialects = LanguageUtil.getLanguageDialects(language);
+      Language[] variants = new Language[languageDialects.length + 1];
+      variants[0] = null;
+      System.arraycopy(languageDialects, 0, variants, 1, languageDialects.length);
+      dialects.setModel(new DefaultComboBoxModel(variants));
+    }
+  }
+
+  private void detectFileTypeAndDialect() {
     final PsiFile file = searchContext.getFile();
     if (file != null) {
-      Language contextLanguage = null;
-
       PsiElement context = null;
 
       if (searchContext.getEditor() != null) {
@@ -300,13 +351,30 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
         context = file;
       }
 
+      FileType detectedFileType = null;
+
       StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(context);
       if (profile != null) {
-        ourFtSearchVariant = profile.detectFileType(context);
+        FileType fileType = profile.detectFileType(context);
+        if (fileType != null) {
+          detectedFileType = fileType;
+        }
       }
-      else {
-        ourFtSearchVariant = DEFAULT_FILE_TYPE_SEARCH_VARIANT;
+
+      if (detectedFileType == null) {
+        for (FileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
+          if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage().equals(context.getLanguage())) {
+            detectedFileType = fileType;
+            break;
+          }
+        }
       }
+
+      ourFtSearchVariant = detectedFileType != null ?
+                           StructuralSearchProfile.getTypeName(detectedFileType) :
+                           DEFAULT_FILE_TYPE_SEARCH_VARIANT;
+
+      // todo: detect dialect
 
       /*if (file.getLanguage() == StdLanguages.HTML ||
           (file.getFileType() == StdFileTypes.JSP &&
@@ -375,8 +443,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     MatchOptions options = configuration.getMatchOptions();
     StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
     assert profile != null;
-    String searchVariant = profile.getSearchVariant(options.getFileType(), options.getFileExtension());
-    fileTypes.setSelectedItem(searchVariant);
+    fileTypes.setSelectedItem(StructuralSearchProfile.getTypeName(options.getFileType()));
+    dialects.setSelectedItem(options.getDialect());
   }
 
   private void setDialogTitle(final Configuration configuration) {
@@ -653,7 +721,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
               searchContext.getProject(),
               model, getVariablesFromListeners(),
               isReplaceDialog(),
-              getFileTypeAndExtension((String)fileTypes.getSelectedItem()).first
+              getFileTypeByName((String)fileTypes.getSelectedItem())
             ).show();
             initiateValidation();
             EditVarConstraintsDialog.setProject(null);
@@ -894,24 +962,23 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     }
 
     ourFtSearchVariant = (String)fileTypes.getSelectedItem();
-    Pair<FileType, String> pair = getFileTypeAndExtension(ourFtSearchVariant);
-    options.setFileType(pair.first);
-    options.setFileExtension(pair.second);
+    ourDialect = (Language)dialects.getSelectedItem();
+    FileType fileType = getFileTypeByName(ourFtSearchVariant);
+    options.setFileType(fileType);
+    options.setDialect(ourDialect);
 
     options.setSearchPattern(searchCriteriaEdit.getDocument().getText());
     options.setCaseSensitiveMatch(caseSensitiveMatch.isSelected());
     config.setSearchOnDemand(isSearchOnDemandEnabled() && searchIncrementally.isSelected());
   }
 
-  private static Pair<FileType, String> getFileTypeAndExtension(String ourFileType) {
-    for (StructuralSearchProfile profile : StructuralSearchUtil.getAllProfiles()) {
-      FileType type = profile.getFileTypeBySearchVariant(ourFileType);
-      String extension = profile.getFileExtensionBySearchVariant(ourFileType);
-      if (type != null && extension != null) {
-        return new Pair<FileType, String>(type, extension);
+  private static FileType getFileTypeByName(String nameInCombo) {
+    for (FileType type : StructuralSearchUtil.getSuitableFileTypes()) {
+      if (StructuralSearchProfile.getTypeName(type).equals(nameInCombo)) {
+        return type;
       }
     }
-    assert false : "unknown file type: " + ourFileType;
+    assert false : "unknown file type: " + nameInCombo;
     return null;
   }
 

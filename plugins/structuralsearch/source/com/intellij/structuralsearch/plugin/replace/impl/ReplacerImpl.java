@@ -2,6 +2,7 @@ package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -44,11 +45,11 @@ public class ReplacerImpl {
 
   protected String testReplace(String in, String what, String by, ReplaceOptions options,boolean filePattern) {
     FileType type = options.getMatchOptions().getFileType();
-    return testReplace(in, what, by, options, filePattern, false, type, type.getDefaultExtension());
+    return testReplace(in, what, by, options, filePattern, false, type, null);
   }
 
   protected String testReplace(String in, String what, String by, ReplaceOptions options,boolean filePattern, boolean createPhysicalFile, 
-                               FileType sourceFileType, String sourceExtension) {
+                               FileType sourceFileType, Language sourceDialect) {
     this.options = options;
     this.options.getMatchOptions().setSearchPattern(what);
     this.options.setReplacement(by);
@@ -69,7 +70,7 @@ public class ReplacerImpl {
         PsiElement[] elements = MatcherImplUtil.createTreeFromText(
           in,
           filePattern ? PatternTreeContext.File : PatternTreeContext.Block,
-          sourceFileType, sourceExtension,
+          sourceFileType, sourceDialect,
           project,
           createPhysicalFile
         );

@@ -8,6 +8,7 @@ import com.intellij.psi.PsiReferenceList;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
+import com.intellij.structuralsearch.impl.matcher.handlers.DelegatingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
@@ -115,8 +116,12 @@ public class GlobalMatchingVisitor {
   }
 
   public final boolean handleTypedElement(final PsiElement typedElement, final PsiElement match) {
-    final SubstitutionHandler handler = (SubstitutionHandler)matchContext.getPattern().getHandler(typedElement);
-    return handler.handle(match, matchContext);
+    MatchingHandler handler = matchContext.getPattern().getHandler(typedElement);
+    if (handler instanceof DelegatingHandler) {
+      handler = ((DelegatingHandler)handler).getDelegate();
+    }
+    assert handler instanceof SubstitutionHandler : handler.getClass();
+    return ((SubstitutionHandler)handler).handle(match, matchContext);
   }
 
   /**

@@ -48,7 +48,6 @@ import java.util.Map;
  */
 public class JSStructuralSearchProfile extends StructuralSearchProfile {
   private static final String TYPED_VAR_PREFIX = "__$_";
-  private static String AS_SEARCH_VARIANT = "actionscript";
 
   @NotNull
   @Override
@@ -155,32 +154,9 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
     return JSMatchingStrategy.getInstance();
   }
 
-  @NotNull
   @Override
-  public String[] getFileTypeSearchVariants() {
-    return new String[]{getTypeName(JavaScriptSupportLoader.JAVASCRIPT), AS_SEARCH_VARIANT};
-  }
-
-  @NotNull
-  @Override
-  public FileType[] getFileTypes() {
-    return new FileType[]{JavaScriptSupportLoader.JAVASCRIPT};
-  }
-
-  @Override
-  public String getFileExtensionBySearchVariant(@NotNull String searchVariant) {
-    if (searchVariant.equals(AS_SEARCH_VARIANT)) {
-      return JavaScriptSupportLoader.ECMA_SCRIPT_L4_FILE_EXTENSION;
-    }
-    return JavaScriptSupportLoader.JAVASCRIPT.getDefaultExtension();
-  }
-
-  @Override
-  public String getSearchVariant(@NotNull FileType fileType, @Nullable String extension) {
-    if (JavaScriptSupportLoader.ECMA_SCRIPT_L4_FILE_EXTENSION.equals(extension)) {
-      return AS_SEARCH_VARIANT;
-    }
-    return super.getSearchVariant(fileType, extension);
+  public boolean canProcess(@NotNull FileType fileType) {
+    return fileType == JavaScriptSupportLoader.JAVASCRIPT;
   }
 
   @Override
@@ -472,6 +448,11 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
           strategy = new MatchingStrategy() {
             public boolean continueMatching(PsiElement start) {
               return true;
+            }
+
+            @Override
+            public boolean shouldSkip(PsiElement element, PsiElement elementToMatchWith) {
+              return false;
             }
           };
         }

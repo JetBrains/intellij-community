@@ -69,7 +69,7 @@ public class GlobalCompilingVisitor {
         (context.getPattern().isRealTypedVar(element)) &&
         context.getPattern().getHandlerSimple(element) == null
       ) {
-      String name = SubstitutionHandler.getTypedVarString(element);
+      String name = context.getPattern().getTypedVarString(element);
       // name is the same for named element (clazz,methods, etc) and token (name of ... itself)
       // @todo need fix this
       final SubstitutionHandler handler;

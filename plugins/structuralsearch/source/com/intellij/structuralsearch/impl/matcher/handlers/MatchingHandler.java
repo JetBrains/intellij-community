@@ -10,6 +10,7 @@ import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.BinaryPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
+import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -54,17 +55,28 @@ public abstract class MatchingHandler extends MatchPredicate {
       if (!filter.accepts(matchedNode)) return false;
       return true;
     } else {
-      return DefaultFilter.accepts(patternNode,matchedNode);
+      return DefaultFilter.accepts(patternNode, matchedNode);
     }
   }
 
   public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
     PsiElement patternElement;
     MatchingHandler handler;
+    MatchingStrategy strategy = context.getPattern().getStrategy();
+
+    skipIfNeccessary(nodes, nodes2, strategy);
+    skipIfNeccessary(nodes2, nodes, strategy);
+
     if (nodes2.hasNext() &&
         (handler = context.getPattern().getHandler(nodes.current())).match(patternElement = nodes.current(),nodes2.current(),context)) {
-      if (shouldAdvanceTheMatchFor(patternElement, nodes2.current())) nodes2.advance();
+
+      if (shouldAdvanceTheMatchFor(patternElement, nodes2.current())) {
+        nodes2.advance();
+        skipIfNeccessary(nodes, nodes2, strategy);
+      }
+
       nodes.advance();
+      skipIfNeccessary(nodes2, nodes, strategy);
 
       if (nodes.hasNext()) {
         final MatchingHandler nextHandler = context.getPattern().getHandler(nodes.current());
@@ -83,6 +95,12 @@ public abstract class MatchingHandler extends MatchPredicate {
       }
     }
     return false;
+  }
+
+  private void skipIfNeccessary(NodeIterator nodes, NodeIterator nodes2, MatchingStrategy strategy) {
+    while (strategy.shouldSkip(nodes2.current(), nodes.current())) {
+      nodes2.advance();
+    }
   }
 
   protected boolean isMatchSequentiallySucceeded(final NodeIterator nodes2) {

@@ -234,7 +234,7 @@ public class PatternCompiler {
 
       try {
         matchStatements = MatcherImplUtil
-          .createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(), options.getFileExtension(), project, false);
+          .createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(), options.getDialect(), project, false);
         if (matchStatements.length==0) throw new MalformedPatternException();
         patternNode = matchStatements[0].getParent();
       } catch (IncorrectOperationException e) {

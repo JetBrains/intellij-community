@@ -15,6 +15,7 @@ import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,9 +44,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return new JavaCompiledPattern();
   }
 
-  @NotNull
-  public FileType[] getFileTypes() {
-    return new FileType[] {StdFileTypes.JAVA};
+  @Override
+  public boolean canProcess(@NotNull FileType fileType) {
+    return fileType == StdFileTypes.JAVA;
   }
 
   public boolean isMyLanguage(@NotNull Language language) {
@@ -62,7 +63,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   public PsiElement[] createPatternTree(@NotNull String text,
                                         @NotNull PatternTreeContext context,
                                         @NotNull FileType fileType,
-                                        @NotNull String extension,
+                                        @Nullable Language language,
+                                        @Nullable String extension,
                                         @NotNull Project project,
                                         boolean physical) {
     if (physical) {

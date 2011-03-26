@@ -4,15 +4,15 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
-import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
+import com.intellij.structuralsearch.impl.matcher.iterators.SiblingNodeIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
 import java.util.List;
 
-public final class TopLevelMatchingHandler extends MatchingHandler {
+public final class TopLevelMatchingHandler extends MatchingHandler implements DelegatingHandler {
   private final MatchingHandler delegate;
 
   public TopLevelMatchingHandler(@NotNull MatchingHandler _delegate) {
@@ -53,7 +53,7 @@ public final class TopLevelMatchingHandler extends MatchingHandler {
        ) {
       matchContext.getMatcher().matchContext(
         new FilteringNodeIterator(
-          new ArrayBackedNodeIterator(matchedNode.getChildren())
+          new SiblingNodeIterator(matchedNode.getFirstChild())
         )
       );
     }
@@ -77,5 +77,9 @@ public final class TopLevelMatchingHandler extends MatchingHandler {
   @Override
   public boolean shouldAdvanceTheMatchFor(final PsiElement patternElement, final PsiElement matchedElement) {
     return delegate.shouldAdvanceTheMatchFor(patternElement, matchedElement);
+  }
+
+  public MatchingHandler getDelegate() {
+    return delegate;
   }
 }

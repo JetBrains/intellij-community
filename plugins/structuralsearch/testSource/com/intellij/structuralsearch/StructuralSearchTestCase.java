@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -18,6 +19,7 @@ abstract class StructuralSearchTestCase extends IdeaTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
+    StructuralSearchUtil.ourUseUniversalMatchingAlgorithm = false;
     testMatcher = new Matcher(myProject);
     options = new MatchOptions();
     options.setLooseMatching(true);
@@ -40,24 +42,23 @@ abstract class StructuralSearchTestCase extends IdeaTestCase {
                                           String pattern,
                                           boolean filePattern,
                                           FileType patternFileType,
-                                          String patternFileExtension,
+                                          Language patternLanugage,
                                           FileType sourceFileType,
-                                          String sourceFileExtension,
+                                          String sourceExtension,
                                           boolean physicalSourceFile) {
     options.clearVariableConstraints();
     options.setSearchPattern(pattern);
     MatcherImplUtil.transform(options);
     pattern = options.getSearchPattern();
     options.setFileType(patternFileType);
-    options.setFileExtension(patternFileExtension);
+    options.setDialect(patternLanugage);
 
     MatcherImpl.validate(myProject, options);
-    return testMatcher.testFindMatches(in, pattern, options, filePattern, sourceFileType, sourceFileExtension, physicalSourceFile);
+    return testMatcher.testFindMatches(in, pattern, options, filePattern, sourceFileType, sourceExtension, physicalSourceFile);
   }
 
   protected List<MatchResult> findMatches(String in, String pattern, boolean filePattern, FileType patternFileType) {
-    String ext = patternFileType.getDefaultExtension();
-    return findMatches(in, pattern, filePattern, patternFileType, ext, patternFileType, ext, false);
+    return findMatches(in, pattern, filePattern, patternFileType, null, patternFileType, null, false);
   }
 
   protected int findMatchesCount(String in, String pattern, boolean filePattern) {

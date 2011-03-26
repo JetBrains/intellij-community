@@ -70,7 +70,7 @@ public abstract class CompiledPattern {
 
   public boolean isRealTypedVar(PsiElement element) {
     if (element!=null && element.getTextLength()>0) {
-      String str = SubstitutionHandler.getTypedVarString(element);
+      String str = getTypedVarString(element);
       if (str.length()==0) {
         return false;
       }
@@ -78,6 +78,10 @@ public abstract class CompiledPattern {
     } else {
       return false;
     }
+  }
+
+  public String getTypedVarString(PsiElement element) {
+    return SubstitutionHandler.getTypedVarString(element);
   }
 
   private final HashMap<Object,MatchingHandler> handlers = new HashMap<Object,MatchingHandler>();

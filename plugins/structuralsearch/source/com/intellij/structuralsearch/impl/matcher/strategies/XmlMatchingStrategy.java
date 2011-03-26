@@ -19,6 +19,11 @@ public class XmlMatchingStrategy extends XmlElementVisitor implements MatchingSt
     return accepts(start);
   }
 
+  @Override
+  public boolean shouldSkip(PsiElement element, PsiElement elementToMatchWith) {
+    return false;
+  }
+
   protected XmlMatchingStrategy() {}
 
   private static class XmlMatchingStrategyHolder {

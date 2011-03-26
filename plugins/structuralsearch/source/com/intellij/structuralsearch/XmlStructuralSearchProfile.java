@@ -25,6 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene.Kudelevsky
@@ -51,9 +52,9 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     return new XmlCompiledPattern();
   }
 
-  @NotNull
-  public FileType[] getFileTypes() {
-    return new FileType[]{StdFileTypes.XML, StdFileTypes.HTML};
+  @Override
+  public boolean canProcess(@NotNull FileType fileType) {
+    return fileType == StdFileTypes.XML || fileType == StdFileTypes.HTML;
   }
 
   public boolean isMyLanguage(@NotNull Language language) {
@@ -65,12 +66,14 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
   public PsiElement[] createPatternTree(@NotNull String text,
                                         @NotNull PatternTreeContext context,
                                         @NotNull FileType fileType,
-                                        @NotNull String extension,
+                                        @Nullable Language language,
+                                        @Nullable String extension,
                                         @NotNull Project project,
                                         boolean physical) {
+    final String ext = extension != null ? extension : fileType.getDefaultExtension();
     String text1 = context == PatternTreeContext.File ? text : "<QQQ>" + text + "</QQQ>";
     final PsiFile fileFromText = PsiFileFactory.getInstance(project)
-      .createFileFromText("dummy." + extension, fileType, text1, LocalTimeCounter.currentTime(), physical, true);
+      .createFileFromText("dummy." + ext, fileType, text1, LocalTimeCounter.currentTime(), physical, true);
 
     final XmlDocument document = HtmlUtil.getRealXmlDocument(((XmlFile)fileFromText).getDocument());
     if (context == PatternTreeContext.File) {
@@ -82,13 +85,13 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   @NotNull
   @Override
-  public String detectFileType(@NotNull PsiElement context) {
+  public FileType detectFileType(@NotNull PsiElement context) {
     PsiFile file = context instanceof PsiFile ? (PsiFile)context : context.getContainingFile();
     Language contextLanguage = context instanceof PsiFile ? null : context.getLanguage();
     if (file.getLanguage() == StdLanguages.HTML || (file.getFileType() == StdFileTypes.JSP && contextLanguage == StdLanguages.HTML)) {
-      return getTypeName(StdFileTypes.HTML);
+      return StdFileTypes.HTML;
     }
-    return getTypeName(StdFileTypes.XML);
+    return StdFileTypes.XML;
   }
 
   @Override

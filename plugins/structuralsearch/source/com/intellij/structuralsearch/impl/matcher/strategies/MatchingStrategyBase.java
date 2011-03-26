@@ -29,6 +29,11 @@ public class MatchingStrategyBase extends JavaElementVisitor implements Matching
     return accepts(start);
   }
 
+  @Override
+  public boolean shouldSkip(PsiElement element, PsiElement elementToMatchWith) {
+    return false;
+  }
+
   protected MatchingStrategyBase() {}
 
   private static class MatchingStrategyBaseHolder {

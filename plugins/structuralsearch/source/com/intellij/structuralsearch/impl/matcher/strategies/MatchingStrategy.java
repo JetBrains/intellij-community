@@ -8,4 +8,6 @@ import com.intellij.psi.PsiElement;
  */
 public interface MatchingStrategy {
   boolean continueMatching(PsiElement start);
+
+  boolean shouldSkip(PsiElement element, PsiElement elementToMatchWith);
 }

@@ -4,7 +4,10 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
@@ -16,9 +19,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
@@ -42,48 +42,7 @@ public abstract class StructuralSearchProfile {
     return fileType.getName().toLowerCase();
   }
 
-  @NotNull
-  public String[] getFileTypeSearchVariants() {
-    List<String> result = new ArrayList<String>();
-    for (FileType fileType : getFileTypes()) {
-      result.add(getTypeName(fileType));
-    }
-    return ArrayUtil.toStringArray(result);
-  }
-
-  @NotNull
-  public abstract FileType[] getFileTypes();
-
-  @Nullable
-  public FileType getFileTypeBySearchVariant(@NotNull String searchVariant) {
-    if (!ArrayUtil.contains(searchVariant, getFileTypeSearchVariants())) {
-      return null;
-    }
-    FileType[] types = getFileTypes();
-    if (types.length == 1) {
-      return types[0];
-    }
-    for (FileType fileType : types) {
-      if (searchVariant.equals(getTypeName(fileType))) {
-        return fileType;
-      }
-    }
-    assert types.length > 0;
-    return types[0];
-  }
-
-  @Nullable
-  public String getFileExtensionBySearchVariant(@NotNull String searchVariant) {
-    FileType fileType = getFileTypeBySearchVariant(searchVariant);
-    if (fileType == null) {
-      return null;
-    }
-    return fileType.getDefaultExtension();
-  }
-
-  public String getSearchVariant(@NotNull FileType fileType, @Nullable String extension) {
-    return getTypeName(fileType);
-  }
+  public abstract boolean canProcess(@NotNull FileType fileType);
 
   public abstract boolean isMyLanguage(@NotNull Language language);
 
@@ -98,13 +57,20 @@ public abstract class StructuralSearchProfile {
   public PsiElement[] createPatternTree(@NotNull String text,
                                         @NotNull PatternTreeContext context,
                                         @NotNull FileType fileType,
-                                        @NotNull String extension,
+                                        @Nullable Language language,
+                                        @Nullable String extension,
                                         @NotNull Project project,
                                         boolean physical) {
-    return PsiFileFactory.getInstance(project)
-      .createFileFromText("__dummy." + extension, fileType, text, LocalTimeCounter.currentTime(), physical, true).getChildren();
-  }
+    final String ext = extension != null ? extension : fileType.getDefaultExtension();
+    final String name = "__dummy." + ext;
+    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
 
+    final PsiFile file = language == null
+                         ? factory.createFileFromText(name, fileType, text, LocalTimeCounter.currentTime(), physical, true)
+                         : factory.createFileFromText(name, language, text, physical, true);
+
+    return file != null ? file.getChildren() : PsiElement.EMPTY_ARRAY;
+  }
 
   @NotNull
   public PsiElement[] createPatternTree(@NotNull String text,
@@ -112,14 +78,12 @@ public abstract class StructuralSearchProfile {
                                         @NotNull FileType fileType,
                                         @NotNull Project project,
                                         boolean physical) {
-    return createPatternTree(text, context, fileType, fileType.getDefaultExtension(), project, physical);
+    return createPatternTree(text, context, fileType, null, null, project, physical);
   }
 
-  @NotNull
-  public String detectFileType(@NotNull PsiElement context) {
-    String[] fileTypes = getFileTypeSearchVariants();
-    assert fileTypes.length > 0 : "getFileTypes() must return at least one element";
-    return fileTypes[0];
+  @Nullable
+  public FileType detectFileType(@NotNull PsiElement context) {
+    return null;
   }
 
   @Nullable

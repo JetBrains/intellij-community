@@ -11,11 +11,21 @@ import java.io.IOException;
 /**
  * @author Eugene.Kudelevsky
  */
-public class JSStructuralSearchTest extends StructuralSearchTestCase {
+public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    StructuralSearchUtil.ourUseUniversalMatchingAlgorithm = true;
+
+    // todo: test all with recursive search
+    options.setRecursiveSearch(false);
+  }
 
   public void test0() {
-    String s = "var a = 10";
-    //doTest(s, "$v$", 1);
+    String s = "var a = 1;";
+    doTest(s, "var $a$ = 1;", 1);
+    doTest(s, "var a = 1;", 1);
   }
 
   public void test1() {
@@ -23,17 +33,17 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
                "host.indexOf(\"name\") ;\n" +
                "object.indexOf( \"text\" );\n";
     doTest(s, "host.indexOf( \"name\" )", 1);
-    doTest(s, "location.host.$method$($arg$) ;", 1);
+    doTest(s, "$var$.indexOf($arg$);$var1$.indexOf($arg$);", 1);
     doTest(s, "$var$.indexOf($arg$);\n$var1$.indexOf($arg1$);", 1);
+    doTest(s, "location.host.$method$($arg$) ;", 1);
     doTest(s, "host.indexOf(\"name\");", 1);
     doTest(s, "location.$var$.indexOf( $arg$ )", 1);
-    doTest(s, "$var$.indexOf($arg$);$var1$.indexOf($arg$);", 1);
   }
 
   public void test2() {
     String s = "location.host.indexOf(\"name\");\n" +
                "host.indexOf(\"name\");\n" +
-               "object.indexOf(\"text\");\n";
+               "obj ect.indexOf(\"text\");\n";
     doTest(s, "$var$.indexOf(\"text\")", 1);
   }
 
@@ -48,8 +58,8 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
   public void test4() {
     String s = "host.func(host);\n" +
                "host.func(o);";
-    doTest(s, "$var$.func( $value$ )", 2);
     doTest(s, "$var$.func($var$)", 1);
+    doTest(s, "$var$.func( $value$ )", 2);
   }
 
   public void test5() {
@@ -84,7 +94,7 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
   public void test8() {
     String s = "var a = 10;\n" +
                "var b = 10;\n";
-    //doTest(s, "a", 1, 2);
+    doTest(s, "a", 1);
     doTest(s, "var a = 10", 1);
   }
 
@@ -101,12 +111,12 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
   public void testInnerExpression1() {
     String s = "a + b + c";
 
+    doTest(s, "$var1$ + $var2$", 1);
+    doTest(s, "a+b", 1);
+
     options.setRecursiveSearch(true);
     doTest(s, "$var1$ + $var2$", 2);
     options.setRecursiveSearch(false);
-    doTest(s, "$var1$ + $var2$", 1);
-
-    doTest(s, "a+b", 1);
   }
 
   public void testInnerExpression2() {
@@ -145,19 +155,25 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
                "    doc.print(\"not zero\");\n" +
                "  }\n" +
                "}";
-    doTest(s, "if ($condition$) $exp$", 0);
-    doTest(s, "if ($condition$)", 1);
+
+    // todo: support this (see canBePatternVariable())
+    /*doTest(s, "if ('condition) {\n" +
+              "  'exp*;\n" +
+              "}", 1);*/
+
     doTest(s, "if ($condition$) {\n" +
               "  $exp$;" +
               "}", 0);
+
+    doTest(s, "if ($condition$) $exp$", 1);
+    doTest(s, "if ($condition$)", 1);
+
     doTest(s, "if ($condition$) {\n" +
               "  $exp1$;\n" +
               "  $exp2$;\n" +
               "}", 1);
-    /*doTest(s, "if ('condition) {\n" +
-              "  'exp*;\n" +
-              "}", 1, 1);*/
   }
+
 
   public void testLoop() {
     String s = "for (var i = 0; i < n ; i++) {\n" +
@@ -171,9 +187,9 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
                "  doc.print(i);\n" +
                "  i++;\n" +
                "}";
+    doTest(s, "var $i$ = $value$", 2);
     doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++)\n" +
               "  $exp$;", 1);
-    doTest(s, "var $i$ = $value$", 2);
     doTest(s, "for each(var $var$ in $list$){\n" +
               "  $exp$;\n" +
               "}", 1);
@@ -187,7 +203,12 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
               "  $exp$;\n" +
               "}", 0);
     doTest(s, "while($condition$)", 1);
+
+    // universal matcher can match pattern variable to BLOCK
+    doTest(s, "while( $var$ < $end$) $exp$", 1);
+
     doTest(s, "while( $var$ < $end$) $exp$;", 0);
+
     doTest(s, "for each(var $var$ in $list$)\n" +
               "  $exp$;", 1);
     doTest(s, "for (var $var$ = $start$; $var$ < $end$; $var$++)", 1);
@@ -241,6 +262,8 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
     doTestByFile("script.html", "for (var $i$ = 0; $i$ < n ; $i$++)", 2);
     doTestByFile("script.html", "for (var i = 0; i < n ; i++)", 1);
     doTestByFile("script.html", "$func$();", 2);
+
+
     /*doTestByFile("script.html", "<script type=\"text/javascript\">\n" +
                                 "   for (var i = 0; i < n; i++) {}\n" +
                                 "   for (var j = 0; j < n; j++) {}\n" +
@@ -266,10 +289,9 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
     doTestByFile("class.as", "private static function sum('_param*)", 0, JavaScriptSupportLoader.JAVASCRIPT, "as");
   }
 
-  // todo: fix it (bug with recursive matching: aba matches as reference-expression and as an identifier)
-  /*public void testAsInterface() throws Exception {
+  public void testAsInterface() throws Exception {
     doTest("interface A { function aba(); }", "aba", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
-  }*/
+  }
 
   public void testStringLiteral() throws Exception {
     String pattern = "\"$str$\"";
@@ -293,7 +315,9 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
            "class MyClass implements mx.messaging.messages.IMessage {\n" +
            "}\n" +
            "}", pattern, 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+  }
 
+  public void testClasses1() throws Exception {
     String c = "package {\n" +
                "public class MyAsClass extends SomeClass {\n" +
                "    function MyAsClass() {}\n" +
@@ -304,23 +328,44 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
                "    }\n" +
                "}\n" +
                "}";
-    doTest(c, "class $name$ { function g() {} }", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
     doTest(c, "class $name$ { function f() }", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest(c, "class $name$ { function g() {} }", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
     doTest(c, "class $name$ { function f() {} }", 0, JavaScriptSupportLoader.JAVASCRIPT, "as");
     doTest(c, "class $name$ { function f() {var a = 1;} }", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
     doTest(c, "class $name$ { function g() function f() }", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
     doTest(c, "class $name$ { function $name$() }", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+  }
 
+  public void testClasses2() throws Exception {
     String c1 = "package {\n" +
-               "class C1 implements I1, I2 {}\n" +
-               "}";
+                "class C1 implements I1, I2 {}\n" +
+                "}";
     doTest(c1, "class $name$ implements $i1$, $i2$ {}", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
     doTest(c1, "class $name$ implements $i1$, $i2$, $i3$ {}", 0, JavaScriptSupportLoader.JAVASCRIPT, "as");
     doTest(c1, "class $name$ implements I2, I1 {}", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
     doTest(c1, "class $name$ implements $i$ {}", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
   }
 
+  public void testStatement2Expression() throws Exception {
+    doTest("var s = func();", "func();", 0);
+    doTest("var s = func();", "func()", 1);
+  }
 
+  public void testParens() {
+    doTest("var s = a + b;", "(a + b)", 1);
+    doTest("var s = a + b*3;", "a + (b * 3)", 1);
+    doTest("var s = a + b*3;", "a + b * 3", 1);
+    doTest("var s = a + b*3;", "(a + b) * 3", 0);
+  }
+
+  public void testTypedVariable() {
+    doTest("var n: int = 2;", "var $n$ = 2", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest("var n: int = 2;", "var $n$:$type$ = 2", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest("var n: int = 2;", "var $n$", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest("var n: int = 2;", "var $n$:$type$", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest("var n: int = 2;", "var $n$:float", 0, JavaScriptSupportLoader.JAVASCRIPT, "as");
+    doTest("var n: int = 2;", "var $n$ = 3", 0, JavaScriptSupportLoader.JAVASCRIPT, "as");
+  }
 
   private void doTestByFile(String fileName, String pattern, int expectedOccurences) throws IOException {
     doTestByFile(fileName, pattern, expectedOccurences, JavaScriptSupportLoader.JAVASCRIPT, "js");
@@ -349,25 +394,25 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
                       String pattern,
                       int expectedOccurences,
                       FileType patternFileType,
-                      String patternExtension,
+                      String patternFileExtension,
                       FileType sourceFileType,
-                      String sourceExtension) {
-    doTest(source, pattern, expectedOccurences, patternFileType, patternExtension, sourceFileType,
-           sourceExtension, false);
+                      String sourceFileExtension) {
+    doTest(source, pattern, expectedOccurences, patternFileType, patternFileExtension, sourceFileType,
+           sourceFileExtension, false);
   }
 
   private void doTest(String source,
                       String pattern,
                       int expectedOccurences,
                       FileType patternFileType,
-                      String patternExtension,
+                      String patternFileExtension,
                       FileType sourceFileType,
-                      String sourceExtension,
+                      String sourceFileExtension,
                       boolean physicalSourceFile) {
-    Language patternDialect = "as".equals(patternExtension) ? JavaScriptSupportLoader.ECMA_SCRIPT_L4 : null;
+    Language patternDialect = "as".equals(patternFileExtension) ? JavaScriptSupportLoader.ECMA_SCRIPT_L4 : null;
 
     assertEquals(expectedOccurences,
-                 findMatches(source, pattern, true, patternFileType, patternDialect, sourceFileType, sourceExtension,
+                 findMatches(source, pattern, true, patternFileType, patternDialect, sourceFileType, sourceFileExtension,
                              physicalSourceFile).size());
   }
 }

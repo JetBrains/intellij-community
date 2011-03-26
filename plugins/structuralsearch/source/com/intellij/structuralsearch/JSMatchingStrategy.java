@@ -114,4 +114,9 @@ public class JSMatchingStrategy extends JSElementVisitor implements MatchingStra
     start.accept(this);
     return result;
   }
+
+  @Override
+  public boolean shouldSkip(PsiElement element, PsiElement elementToMatchWith) {
+    return false;
+  }
 }
