@@ -15,25 +15,29 @@
  */
 package git4idea.checkin;
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Function;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import git4idea.GitBranch;
@@ -45,8 +49,9 @@ import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
+import git4idea.rebase.GitRebaser;
 import git4idea.ui.GitUIUtil;
-import git4idea.update.UpdatePolicyUtils;
+import git4idea.update.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,6 +69,8 @@ import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static git4idea.ui.GitUIUtil.*;
 
 /**
  * The dialog that allows pushing active branches.
@@ -87,6 +94,8 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
   private JRadioButton myShelveRadioButton;
   private GitVcs myVcs;
   private static final Logger LOG = Logger.getInstance(GitPushActiveBranchesDialog.class.getName());
+  private final GeneralSettings myGeneralSettings;
+  private final ProjectManagerEx myProjectManager;
 
   /**
    * A modification of Runnable with the roots-parameter.
@@ -107,18 +116,20 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     myVcs = GitVcs.getInstance(project);
     myProject = project;
     myVcsRoots = vcsRoots;
+    myGeneralSettings = GeneralSettings.getInstance();
+    myProjectManager = ProjectManagerEx.getInstanceEx();
 
     updateTree(roots, null);
     updateUI();
 
     final GitVcsSettings settings = GitVcsSettings.getInstance(project);
     if (settings != null) {
-      UpdatePolicyUtils.updatePolicyItem(settings.getPushActiveBranchesRebaseSavePolicy(), myStashRadioButton, myShelveRadioButton, null);
+      UpdatePolicyUtils.updatePolicyItem(settings.getPushActiveBranchesRebaseSavePolicy(), myStashRadioButton, myShelveRadioButton);
     }
     ChangeListener listener = new ChangeListener() {
       public void stateChanged(ChangeEvent e) {
         if (settings != null) {
-          settings.setPushActiveBranchesRebaseSavePolicy(UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton, null));
+          settings.setPushActiveBranchesRebaseSavePolicy(UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton));
         }
       }
     };
@@ -216,12 +227,12 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
    * will be interrupted.
    */
   private void rebaseAndPush() {
-    final Task.Backgroundable rebaseAndPushTask = new Task.Backgroundable(myProject, GitBundle.getString("push.active.fetching")) {
-      public void run(@NotNull ProgressIndicator indicator) {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override public void run() {
         List<VcsException> exceptions = new ArrayList<VcsException>();
         List<VcsException> pushExceptions = new ArrayList<VcsException>();
         for (int i = 0; i < 3; i++) {
-          final RebaseInfo rebaseInfo = collectRebaseInfo();
+          RebaseInfo rebaseInfo = collectRebaseInfo();
 
           if (rebaseInfo.reorderedCommits.isEmpty()) { // if we have to reorder commits, rebase must pre
             final Collection<Root> rootsToPush = getRootsToPush(); // collect roots from the dialog
@@ -245,41 +256,24 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
 
           final List<Root> roots = loadRoots(myProject, myVcsRoots, exceptions, true); // fetch
           if (!exceptions.isEmpty()) {
-            notifyException("Failed to fetch", exceptions);
+            notifyMessage(myProject, "Failed to fetch", null, NotificationType.ERROR, true, exceptions);
             return;
           }
           updateTree(roots, rebaseInfo.uncheckedCommits);
 
           if (isRebaseNeeded()) {
+            rebaseInfo = collectRebaseInfo();
             executeRebase(exceptions, rebaseInfo);
             if (!exceptions.isEmpty()) {
-              notifyException("Failed to rebase", exceptions);
+              notifyMessage(myProject, "Failed to rebase", null, NotificationType.ERROR, true, exceptions);
               return;
             }
             GitUtil.refreshFiles(myProject, rebaseInfo.roots);
           }
         }
-        notifyException("Failed to push", pushExceptions);
+        notifyMessage(myProject, "Failed to push", "Update project and push again", NotificationType.ERROR, true, pushExceptions);
       }
-    };
-    myVcs.runInBackground(rebaseAndPushTask);
-  }
-
-  /**
-   * Notifies about errors during background rebase & push tasks.
-   */
-  private void notifyException(String title, Collection<VcsException> exceptions) {
-    String content = StringUtil.join(exceptions, new Function<VcsException, String>() {
-      @Override public String fun(VcsException e) {
-        return e.getLocalizedMessage();
-      }
-    }, "<br/>");
-    if (StringUtil.isEmptyOrSpaces(content)) {
-      content = title;
-    }
-    LOG.info(title + " || " + content);
-    Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, title, content, NotificationType.ERROR),
-                             NotificationDisplayType.STICKY_BALLOON, myProject);
+    });
   }
 
   /**
@@ -423,9 +417,104 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     GitUtil.refreshFiles(myProject, rebaseInfo.roots);
   }
 
-  private void executeRebase(final List<VcsException> exceptions, final RebaseInfo rebaseInfo) {
-    GitPushRebaseProcess process = new GitPushRebaseProcess(GitVcs.getInstance(myProject), myProject, exceptions, rebaseInfo.policy, rebaseInfo.reorderedCommits, rebaseInfo.rootsWithMerges);
-    process.doUpdate(ProgressManager.getInstance().getProgressIndicator(), rebaseInfo.roots);
+  private boolean executeRebase(final List<VcsException> exceptions, RebaseInfo rebaseInfo) {
+    // TODO this is a workaround to attach PushActiveBranched to the new update.
+    // at first we update via rebase
+    boolean result = new GitUpdateProcess(myProject, new EmptyProgressIndicator(), rebaseInfo.roots, UpdatedFiles.create()).update(true);
+
+    // then we reorder commits
+    if (result) {
+      // getting new rebase info because commit hashes changed because of rebase
+      final List<Root> roots = loadRoots(myProject, new ArrayList<VirtualFile>(rebaseInfo.roots), exceptions, false);
+      updateTree(roots, rebaseInfo.uncheckedCommits);
+      rebaseInfo = collectRebaseInfo();
+      return reorderCommitsIfNeeded(rebaseInfo);
+    } else {
+      notifyMessage(myProject, "Commits weren't pushed", "Rebase failed.", NotificationType.WARNING, true, null);
+      return false;
+    }
+
+  }
+
+  private boolean reorderCommitsIfNeeded(@NotNull RebaseInfo rebaseInfo) {
+    if (rebaseInfo.reorderedCommits.isEmpty()) {
+      return true;
+    }
+
+    ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    if (progressIndicator == null) {
+      progressIndicator = new EmptyProgressIndicator();
+    }
+    String stashMessage = "Uncommitted changes before rebase operation at " + DateFormatUtil.formatDateTime(Clock.getTime());
+    GitChangesSaver saver = rebaseInfo.policy == GitVcsSettings.UpdateChangesPolicy.SHELVE ? new GitShelveChangesSaver(myProject, progressIndicator, stashMessage) : new GitStashChangesSaver(myProject, progressIndicator, stashMessage);
+
+    final boolean saveOnFrameDeactivation = myGeneralSettings.isSaveOnFrameDeactivation();
+    final boolean syncOnFrameDeactivation = myGeneralSettings.isSyncOnFrameActivation();
+    myProjectManager.blockReloadingProjectOnExternalChanges();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override public void run() {
+            FileDocumentManager.getInstance().saveAllDocuments();
+            myGeneralSettings.setSaveOnFrameDeactivation(false);
+            myGeneralSettings.setSyncOnFrameActivation(false);
+          }
+        });
+      }
+    });
+
+    try {
+      final Set<VirtualFile> rootsToReorder = rebaseInfo.reorderedCommits.keySet();
+      saver.saveLocalChanges(rootsToReorder);
+
+        try {
+          GitRebaser rebaser = new GitRebaser(myProject);
+          for (Map.Entry<VirtualFile, List<String>> rootToCommits: rebaseInfo.reorderedCommits.entrySet()) {
+            final VirtualFile root = rootToCommits.getKey();
+            GitBranch b = GitBranch.current(myProject, root);
+            if (b == null) {
+              LOG.info("executeRebase: current branch is null");
+              continue;
+            }
+            GitBranch t = b.tracked(myProject, root);
+            if (t == null) {
+              LOG.info("executeRebase: tracked branch is null");
+              continue;
+            }
+
+            final GitRevisionNumber mergeBase = b.getMergeBase(myProject, root, t);
+            if (mergeBase == null) {
+              LOG.info("executeRebase: merge base is null for " + b + " and " + t);
+              continue;
+            }
+
+            String parentCommit = mergeBase.getRev();
+            return rebaser.reoderCommitsIfNeeded(root, parentCommit, rootToCommits.getValue());
+          }
+
+        } catch (VcsException e) {
+          notifyMessage(myProject, "Commits weren't pushed", "Failed to reorder commits", NotificationType.WARNING, true,
+                        Collections.singleton(e));
+        } finally {
+          try {
+            saver.restoreLocalChanges();
+          } catch (VcsException e) {
+            LOG.info("Couldn't restore local changes after reordering commits", e);
+            notifyImportantError(myProject, "Couldn't restore local changes after update",
+                                 "Restoring changes saved before update failed with an error.<br/>" + e.getLocalizedMessage());
+          }
+        }
+    } catch (VcsException e) {
+      LOG.info("Couldn't save local changes", e);
+      notifyError(myProject, "Couldn't save local changes",
+                  "Tried to save uncommitted changes in " + saver.getSaverName() + " before update, but failed with an error.<br/>" +
+                  "Update was cancelled.", true, e);
+    } finally {
+      myProjectManager.unblockReloadingProjectOnExternalChanges();
+      myGeneralSettings.setSaveOnFrameDeactivation(saveOnFrameDeactivation);
+      myGeneralSettings.setSyncOnFrameActivation(syncOnFrameDeactivation);
+    }
+    return false;
   }
 
   private static class RebaseInfo {
@@ -513,7 +602,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
         reorderedCommits.put(r.root, reordered);
       }
     }
-    final GitVcsSettings.UpdateChangesPolicy p = UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton, null);
+    final GitVcsSettings.UpdateChangesPolicy p = UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton);
     assert p == GitVcsSettings.UpdateChangesPolicy.STASH || p == GitVcsSettings.UpdateChangesPolicy.SHELVE;
 
     return new RebaseInfo(reorderedCommits, rootsWithMerges, uncheckedCommits, roots, p);
@@ -649,6 +738,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     myPushButton.setEnabled(wasCheckedNode && error == null && !rebaseNeeded);
     setErrorText(error);
     myRebaseButton.setEnabled(rebaseNeeded && !reorderMerges);
+    setOKActionEnabled(myPushButton.isEnabled() || myRebaseButton.isEnabled());
   }
 
   /**

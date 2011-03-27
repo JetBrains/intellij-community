@@ -236,7 +236,9 @@ public class GitFileUtils {
     }
     catch (VcsException e) {
       String m = e.getMessage().trim();
-      if (m.startsWith("fatal: ambiguous argument ") || (m.startsWith("fatal: Path '") && m.contains("' exists on disk, but not in '"))) {
+      if (m.startsWith("fatal: ambiguous argument ")
+          || (m.startsWith("fatal: Path '") && m.contains("' exists on disk, but not in '"))
+          || (m.contains("is in the index, but not at stage "))) {
         result = null;
       }
       else {

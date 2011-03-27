@@ -26,63 +26,17 @@ import javax.swing.event.ChangeListener;
  * Update options panel
  */
 public class GitUpdateOptionsPanel {
-  /**
-   * The root panel
-   */
   private JPanel myPanel;
-  /**
-   * Update strategy option
-   */
   private JRadioButton myBranchDefaultRadioButton;
-  /**
-   * Update strategy option
-   */
   private JRadioButton myForceRebaseRadioButton;
-  /**
-   * Update strategy option
-   */
   private JRadioButton myForceMergeRadioButton;
-  /**
-   * Save files option option
-   */
   private JRadioButton myStashRadioButton;
-  /**
-   * Save files option option
-   */
   private JRadioButton myShelveRadioButton;
-  /**
-   * Save files option option
-   */
-  private JRadioButton myKeepRadioButton;
 
-  /**
-   * The constructor
-   */
-  public GitUpdateOptionsPanel() {
-    myForceRebaseRadioButton.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        boolean keepPossible = !myForceRebaseRadioButton.isSelected();
-        if (!keepPossible && myKeepRadioButton.isSelected()) {
-          myStashRadioButton.setSelected(true);
-        }
-        myKeepRadioButton.setEnabled(keepPossible);
-      }
-    });
-  }
-
-  /**
-   * @return the panel component
-   */
   public JComponent getPanel() {
     return myPanel;
   }
 
-  /**
-   * Check if the panel is modified relatively to settings
-   *
-   * @param settings the settings to compare to
-   * @return true if the UI modified the settings
-   */
   public boolean isModified(GitVcsSettings settings) {
     UpdateType type = getUpdateType();
     return type != settings.getUpdateType() || updateSaveFilesPolicy() != settings.updateChangesPolicy();
@@ -92,7 +46,7 @@ public class GitUpdateOptionsPanel {
    * @return get policy value from selected radio buttons
    */
   private GitVcsSettings.UpdateChangesPolicy updateSaveFilesPolicy() {
-    return UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton, myKeepRadioButton);
+    return UpdatePolicyUtils.getUpdatePolicy(myStashRadioButton, myShelveRadioButton);
   }
 
   /**
@@ -115,8 +69,6 @@ public class GitUpdateOptionsPanel {
 
   /**
    * Save configuration to settings object
-   *
-   * @param settings the settings to save to
    */
   public void applyTo(GitVcsSettings settings) {
     settings.setUpdateType(getUpdateType());
@@ -125,8 +77,6 @@ public class GitUpdateOptionsPanel {
 
   /**
    * Update panel according to settings
-   *
-   * @param settings the settings to use
    */
   public void updateFrom(GitVcsSettings settings) {
     switch (settings.getUpdateType()) {
@@ -142,7 +92,7 @@ public class GitUpdateOptionsPanel {
       default:
         assert false : "Unknown value of update type: " + settings.getUpdateType();
     }
-    UpdatePolicyUtils.updatePolicyItem(settings.updateChangesPolicy(), myStashRadioButton, myShelveRadioButton, myKeepRadioButton);
+    UpdatePolicyUtils.updatePolicyItem(settings.updateChangesPolicy(), myStashRadioButton, myShelveRadioButton);
   }
 
 }

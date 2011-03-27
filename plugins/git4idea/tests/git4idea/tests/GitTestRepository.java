@@ -154,11 +154,11 @@ public class GitTestRepository {
     }
   }
 
-  public void commit(@Nullable String commitMessage) throws IOException {
+  public ProcessOutput commit(@Nullable String commitMessage) throws IOException {
     if (commitMessage == null) {
       commitMessage = "Sample commit message";
     }
-    execute(true, "commit", "-m", commitMessage);
+    return execute(true, "commit", "-m", commitMessage);
   }
 
   /**
@@ -239,9 +239,9 @@ public class GitTestRepository {
   /**
    * Calls add() and then commit(). A shorthand for usual test situations when a file is added and then immediately committed.
    */
-  public void addCommit() throws IOException {
+  public ProcessOutput addCommit() throws IOException {
     add();
-    commit(null);
+    return commit(null);
   }
 
   public void addCommit(String commitMessage) throws IOException {
@@ -310,4 +310,9 @@ public class GitTestRepository {
   public GitTest getTest() {
     return myTest;
   }
+
+  public String lastCommit() throws IOException {
+    return execute(false, "rev-parse", "HEAD").getStdout().trim();
+  }
+
 }

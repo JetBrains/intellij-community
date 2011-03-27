@@ -34,8 +34,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
 import git4idea.actions.GitRepositoryAction;
+import git4idea.changes.GitChangeUtils;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,6 +46,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -159,8 +162,8 @@ public class GitMergeUtil {
                                  final String actionName,
                                  final ActionInfo actionInfo) {
     final UpdatedFiles files = UpdatedFiles.create();
-    MergeChangeCollector collector = new MergeChangeCollector(project, root, currentRev, files);
-    collector.collect(exceptions);
+    MergeChangeCollector collector = new MergeChangeCollector(project, root, currentRev);
+    collector.collect(files, exceptions);
     if (exceptions.size() != 0) {
       return;
     }
@@ -196,7 +199,7 @@ public class GitMergeUtil {
    * @return the path to merge head file
    */
   @Nullable
-  private static File getMergeHead(VirtualFile root) {
+  private static File getMergeHead(@NotNull VirtualFile root) {
     File gitDir = new File(VfsUtil.virtualToIoFile(root), ".git");
     File f = new File(gitDir, "MERGE_HEAD");
     if (f.exists()) {
@@ -206,12 +209,30 @@ public class GitMergeUtil {
   }
 
   /**
-   * Checks if the merge is in the progress for the specified git root
-   *
-   * @param root the git root
-   * @return true if the merge_head file presents in the root
+   * @return true if merge is going on for the given git root, false if there is no merge operation in progress.
    */
-  public static boolean isMergeInTheProgress(VirtualFile root) {
+  public static boolean isMergeInProgress(@NotNull VirtualFile root) {
     return getMergeHead(root) != null;
   }
+
+  /**
+   * @return unmerged files in the given Git roots, all in a single collection.
+   * @see #getUnmergedFiles(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile)
+   */
+  public static Collection<VirtualFile> getUnmergedFiles(@NotNull Project project, @NotNull Collection<VirtualFile> roots) throws VcsException {
+    final Collection<VirtualFile> unmergedFiles = new HashSet<VirtualFile>();
+    for (VirtualFile root : roots) {
+      unmergedFiles.addAll(getUnmergedFiles(project, root));
+    }
+    return unmergedFiles;
+  }
+
+  /**
+   * @return unmerged files in the given Git root.
+   * @see #getUnmergedFiles(com.intellij.openapi.project.Project, java.util.Collection)
+   */
+  public static Collection<VirtualFile> getUnmergedFiles(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+    return GitChangeUtils.unmergedFiles(project, root);
+  }
+
 }
