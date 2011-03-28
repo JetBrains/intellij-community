@@ -65,6 +65,13 @@ public class TextChangesStorageTest {
   }
   
   @Test
+  public void disconnectedInsertsFromTailToStart() {
+    insert("abc", 10);
+    insert("def", 1);
+    checkChanges(c("def", 1), c("abc", 10));
+  }
+  
+  @Test
   public void adjacentInserts() {
     insert("abc", 2);
     insert("def", 5);
