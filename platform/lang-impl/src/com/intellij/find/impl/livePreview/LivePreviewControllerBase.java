@@ -138,6 +138,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     if (findModel == null) return;
     final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     final FindModel copy = (FindModel)findModel.clone();
+    final ModalityState modalityState = ModalityState.current();
     Runnable request = new Runnable() {
       @Override
       public void run() {
@@ -150,7 +151,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
         if (unitTestMode) {
           denyReplace.run();
         } else {
-          ApplicationManager.getApplication().invokeAndWait(denyReplace, ModalityState.NON_MODAL);
+          ApplicationManager.getApplication().invokeAndWait(denyReplace, modalityState);
         }
         mySearchResults.updateThreadSafe(copy, allowedToChangedEditorSelection, null);
       }
