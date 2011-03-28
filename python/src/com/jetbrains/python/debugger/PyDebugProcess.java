@@ -408,7 +408,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     myNewVariableValue.clear();
   }
 
-  @Nullable
+  @NotNull
   public List<PydevCompletionVariant> getCompletions(String prefix) throws Exception {
     if (myDebugger.isConnected()) {
       dropFrameCaches();
@@ -417,7 +417,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       myDebugger.execute(command);
       return command.getCompletions();
     }
-    return null;
+    return Lists.newArrayList();
   }
 
   @Override

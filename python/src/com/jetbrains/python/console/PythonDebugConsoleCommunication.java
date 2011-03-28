@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.console.pydev.*;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -25,6 +26,7 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
     myTextConsoleView = textConsoleView;
   }
 
+  @NotNull
   @Override
   public List<PydevCompletionVariant> getCompletions(String prefix) throws Exception {
     return myDebugProcess.getCompletions(prefix);
@@ -52,20 +54,16 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
       myExpression.append(s);
       Pair<String, Boolean> executed = exec(myExpression.toString());
 
-      String errorContents = executed.first;
-      if ("None".equals(errorContents)) {
-        errorContents = null;
-      }
       boolean more = executed.second;
 
       if (!more) {
         myExpression.setLength(0);
       }
-      callback.call(new InterpreterResponse("", errorContents, more, isWaitingForInput()));
+      callback.call(new InterpreterResponse(more, isWaitingForInput()));
     }
     catch (PyDebuggerException e) {
       myExpression.setLength(0);
-      callback.call(new InterpreterResponse("", "", false, isWaitingForInput()));
+      callback.call(new InterpreterResponse(false, isWaitingForInput()));
     }
   }
 }

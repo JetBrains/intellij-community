@@ -8,6 +8,8 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.CommandLineArgumentsProvider;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
@@ -170,10 +172,17 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
         @Override
         public void run() {
           // Propagate console communication to language console
-          PydevLanguageConsoleView consoleView = (PydevLanguageConsoleView)getConsoleView();
+          final PydevLanguageConsoleView consoleView = (PydevLanguageConsoleView)getConsoleView();
 
           consoleView.setConsoleCommunication(myPydevConsoleCommunication);
           consoleView.setExecutionHandler(getConsoleExecuteActionHandler());
+          myProcessHandler.addProcessListener(new ProcessAdapter() {
+            @Override
+            public void onTextAvailable(ProcessEvent event, Key outputType) {
+              String text = event.getText();
+              PyConsoleHighlightingUtil.processOutput(consoleView.getConsole(), text, outputType);
+            }
+          });
 
           enableConsoleExecuteAction();
 
