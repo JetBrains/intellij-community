@@ -109,7 +109,7 @@ public class PyDebugRunner extends GenericProgramRunner {
       debugProcess.getSession().addSessionListener(consoleExecuteActionHandler);
 
       List<AnAction> actions = AbstractConsoleRunnerWithHistory
-        .createConsoleExecActions(
+        .createConsoleActions(
           pythonDebugConsoleView.getConsole(), processHandler, consoleExecuteActionHandler).getActionsAsList();
 
 

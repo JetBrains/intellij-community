@@ -17,6 +17,8 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -32,10 +34,12 @@ import com.jetbrains.django.run.Runner;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
+import org.apache.commons.lang.StringUtils;
 import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -204,6 +208,44 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
       myProcessHandler.destroyProcess();
       finishConsole();
     }
+  }
+
+  @Override
+  protected ConsoleExecutionActions createConsoleExecutionActions() {
+    ConsoleExecutionActions executionActions = super.createConsoleExecutionActions();
+    executionActions.addAdditionalAction(createBackspaceHandlingAction());
+    return executionActions;
+  }
+
+  private AnAction createBackspaceHandlingAction() {
+    final AnAction upAction = new AnAction() {
+      @Override
+      public void actionPerformed(final AnActionEvent e) {
+        new WriteCommandAction(getLanguageConsole().getProject(), getLanguageConsole().getFile()) {
+          protected void run(final Result result) throws Throwable {
+            String text = getLanguageConsole().getEditorDocument().getText();
+            String newText = text.substring(0, text.length() - myConsoleExecuteActionHandler.getPythonIndent());
+            getLanguageConsole().getEditorDocument().setText(newText);
+            getLanguageConsole().getConsoleEditor().getCaretModel().moveToOffset(newText.length());
+          }
+        }.execute();
+      }
+
+      @Override
+      public void update(final AnActionEvent e) {
+        e.getPresentation()
+          .setEnabled(myConsoleExecuteActionHandler.getCurrentIndentSize() >= myConsoleExecuteActionHandler.getPythonIndent() &&
+                      isIndentSubstring(getLanguageConsole().getEditorDocument().getText()));
+      }
+    };
+    upAction.registerCustomShortcutSet(KeyEvent.VK_BACK_SPACE, 0, null);
+    upAction.getTemplatePresentation().setVisible(false);
+    return upAction;
+  }
+
+  private boolean isIndentSubstring(String text) {
+    int indentSize = myConsoleExecuteActionHandler.getPythonIndent();
+    return text.length() >= indentSize && StringUtils.isWhitespace(text.substring(text.length() - indentSize));
   }
 
   private void enableConsoleExecuteAction() {

@@ -183,11 +183,15 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     //console.setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT);
   }
 
+  public int getCurrentIndentSize() {
+    return myCurrentIndentSize;
+  }
+
   private boolean shouldIndent(String line) {
     return line.endsWith(":");
   }
 
-  private int getPythonIndent() {
+  public int getPythonIndent() {
     return CodeStyleSettingsManager.getSettings(getProject()).getIndentSize(PythonFileType.INSTANCE);
   }
 
