@@ -168,7 +168,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     s.PUSH_ACTIVE_BRANCHES_REBASE_SAVE_POLICY = myPushActiveBranchesRebaseSavePolicy;
     s.SSH_EXECUTABLE = mySshExecutable;
     s.UPDATE_CHANGES_POLICY = myUpdateChangesPolicy;
-    s.UPDATE_STASH = true;
     s.UPDATE_TYPE = myUpdateType;
     return s;
   }
@@ -182,7 +181,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     mySshExecutable = s.SSH_EXECUTABLE;
     myUpdateChangesPolicy = s.UPDATE_CHANGES_POLICY;
     if (myUpdateChangesPolicy == null) {
-      myUpdateChangesPolicy = s.UPDATE_STASH ? UpdateChangesPolicy.STASH : UpdateChangesPolicy.KEEP;
+      myUpdateChangesPolicy = UpdateChangesPolicy.STASH;
     }
     myUpdateType = s.UPDATE_TYPE;
   }
@@ -242,10 +241,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
      */
     public SshExecutable SSH_EXECUTABLE = DEFAULT_SSH;
     /**
-     * True if stash/unstash operation should be performed before update (Obsolete option)
-     */
-    public boolean UPDATE_STASH = true;
-    /**
      * The policy that specifies how files are saved before update or rebase
      */
     public UpdateChangesPolicy UPDATE_CHANGES_POLICY = null;
@@ -271,18 +266,8 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
    * The way the local changes are saved before update if user has selected auto-stash
    */
   public enum UpdateChangesPolicy {
-    /**
-     * Stash changes
-     */
     STASH,
-    /**
-     * Shelve changes
-     */
     SHELVE,
-    /**
-     * Keep files in working tree
-     */
-    KEEP
   }
 
   /**

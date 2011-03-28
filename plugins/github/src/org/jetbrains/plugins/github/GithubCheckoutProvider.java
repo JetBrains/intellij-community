@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.plugins.github;
 
 import com.intellij.ide.GeneralSettings;
@@ -68,14 +83,21 @@ public class GithubCheckoutProvider implements CheckoutProvider {
 
     // All the preliminary work is already done, go and clone the selected repository!
     final RepositoryInfo selectedRepository = checkoutDialog.getSelectedRepository();
+    final boolean writeAccessAllowed = GithubUtil.isWriteAccessAllowed(project, selectedRepository);
+    if (!writeAccessAllowed){
+      Messages.showErrorDialog(project, "It seems that you have only read access to the selected repository.\n" +
+        "GitHub supports only https protocol for readonly access, which is not supported yet.\n" +
+        "As a workaround, please fork it and clone your forked repository instead.\n" +
+        "More details are available here: http://youtrack.jetbrains.net/issue/IDEA-55298", "Cannot clone this repository");
+      return;
+    }
+    final String host = writeAccessAllowed ? "git@" + settings.getHost() + ":" : "https://github.com" + settings.getHost() + "/";
     final String selectedPath = checkoutDialog.getSelectedPath();
     final VirtualFile selectedPathFile = LocalFileSystem.getInstance().findFileByPath(selectedPath);
     final String projectName = checkoutDialog.getProjectName();
     final String repositoryName = selectedRepository.getName();
     final String repositoryOwner = selectedRepository.getOwner();
-    final String checkoutUrl = settings.getLogin().equals(repositoryOwner)
-                               ? "git@github.com:" + repositoryOwner + "/" + repositoryName + ".git"
-                               : "https://github.com/" + repositoryOwner + "/" + repositoryName + ".git";
+    final String checkoutUrl = host + repositoryOwner + "/" + repositoryName + ".git";
     GitCheckoutProvider.checkout(project, listener, selectedPathFile, checkoutUrl, projectName, "origin", selectedPath);
   }
 

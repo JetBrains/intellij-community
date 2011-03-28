@@ -40,7 +40,13 @@ public class CommonProcessors {
     }
 
     public boolean process(T t) {
-      myCollection.add(t);
+      if (accept(t)) {
+        myCollection.add(t);
+      }
+      return true;
+    }
+
+    protected boolean accept(T t) {
       return true;
     }
 

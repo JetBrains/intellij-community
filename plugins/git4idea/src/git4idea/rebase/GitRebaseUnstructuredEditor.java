@@ -66,7 +66,7 @@ public class GitRebaseUnstructuredEditor extends DialogWrapper {
     myGitRootLabel.setText(root.getPresentableUrl());
     encoding = GitConfigUtil.getCommitEncoding(project, root);
     myFile = new File(path);
-    myTextArea.setText(new String(FileUtil.loadFileText(myFile, encoding)));
+    myTextArea.setText(FileUtil.loadFile(myFile, encoding));
     init();
   }
 

@@ -23,6 +23,8 @@ import org.jetbrains.annotations.NotNull;
  * e.g. in java references in static context are resolved to nonstatic methods in case
  * there is no valid candidate. isValidResult() in this case should return false
  * for later analysis by highlighting pass.
+ *
+ * @see PsiPolyVariantReferenceBase
  */
 public interface PsiPolyVariantReference extends PsiReference {
   /**

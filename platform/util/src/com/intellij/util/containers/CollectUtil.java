@@ -17,22 +17,22 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @deprecated use {@link ContainerUtil}
  */
 @Deprecated
 public abstract class CollectUtil<E> {
-  public abstract <T extends E> HashSet<T> toSet(Iterator<T> iterator);
+  public abstract <T extends E> Set<T> toSet(Iterator<T> iterator);
 
-  public <Dom, Rng extends E> HashSet<Rng> toSet(Iterator<Dom> iterator, Convertor<Dom, Rng> convertor) {
+  public <Dom, Rng extends E> Set<Rng> toSet(Iterator<Dom> iterator, Convertor<Dom, Rng> convertor) {
     return toSet(ConvertingIterator.create(iterator, convertor));
   }
 
-  public <Dom, Rng extends E> HashSet<Rng> toSet(Dom[] objects, Convertor<Dom, Rng> convertor) {
+  public <Dom, Rng extends E> Set<Rng> toSet(Dom[] objects, Convertor<Dom, Rng> convertor) {
     return toSet(ContainerUtil.iterate(objects), convertor);
   }
 
@@ -40,14 +40,14 @@ public abstract class CollectUtil<E> {
     return toList(iterator).toArray();
   }
 
-  public abstract <T extends E> ArrayList<T> toList(Iterator<E> iterator);
+  public abstract <T extends E> List<T> toList(Iterator<E> iterator);
 
-  public <Dom, Rng extends E> ArrayList<Rng> toList(Iterator<Dom> iterator, Convertor<Dom, E> convertor) {
+  public <Dom, Rng extends E> List<Rng> toList(Iterator<Dom> iterator, Convertor<Dom, E> convertor) {
     ConvertingIterator<Dom, E> iterator1 = ConvertingIterator.create(iterator, convertor);
     return toList(iterator1);
   }
 
-  public <Dom, Rng extends E> ArrayList<Rng> toList(Dom[] objects, Convertor<Dom, E> convertor) {
+  public <Dom, Rng extends E> List<Rng> toList(Dom[] objects, Convertor<Dom, E> convertor) {
     return toList(ContainerUtil.iterate(objects), convertor);
   }
 
@@ -60,12 +60,12 @@ public abstract class CollectUtil<E> {
   }
 
   public static final CollectUtil<Object> COLLECT = new CollectUtil<Object>() {
-    public <T> HashSet<T> toSet(Iterator<T> iterator) {
+    public <T> Set<T> toSet(Iterator<T> iterator) {
       return ContainerUtil.collectSet(iterator);
     }
 
-    public <T> ArrayList<T> toList(Iterator<Object> iterator) {
-      return (ArrayList<T>)ContainerUtil.collect(iterator);
+    public <T> List<T> toList(Iterator<Object> iterator) {
+      return (List)ContainerUtil.collect(iterator);
     }
   };
 
@@ -78,12 +78,12 @@ public abstract class CollectUtil<E> {
       myCondition = condition;
     }
 
-    public <T extends E> ArrayList<T> toList(Iterator<E> iterator) {
+    public <T extends E> List<T> toList(Iterator<E> iterator) {
       Iterator<T> iterator1 = FilteringIterator.create(iterator, myCondition);
       return COLLECT.toList((Iterator<Object>)(Iterator)iterator1);
     }
 
-    public <T extends E> HashSet<T> toSet(Iterator<T> iterator) {
+    public <T extends E> Set<T> toSet(Iterator<T> iterator) {
       return COLLECT.toSet(FilteringIterator.create(iterator, (Condition<T>)myCondition));
     }
   }

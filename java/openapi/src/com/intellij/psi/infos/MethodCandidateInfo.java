@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.infos;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   private final PsiType[] myArgumentTypes;
   private final PsiType[] myTypeArguments;
   private PsiSubstitutor myCalcedSubstitutor = null;
+  private final LanguageLevel myLanguageLevel;
 
   public MethodCandidateInfo(PsiElement candidate,
                              PsiSubstitutor substitutor,
@@ -37,10 +39,24 @@ public class MethodCandidateInfo extends CandidateInfo{
                              PsiElement currFileContext,
                              @Nullable PsiType[] argumentTypes,
                              PsiType[] typeArguments) {
+    this(candidate, substitutor, accessProblem, staticsProblem, argumentList, currFileContext, argumentTypes, typeArguments,
+         PsiUtil.getLanguageLevel(argumentList));
+  }
+
+  public MethodCandidateInfo(PsiElement candidate,
+                             PsiSubstitutor substitutor,
+                             boolean accessProblem,
+                             boolean staticsProblem,
+                             PsiElement argumentList,
+                             PsiElement currFileContext,
+                             @Nullable PsiType[] argumentTypes,
+                             PsiType[] typeArguments,
+                             final LanguageLevel languageLevel) {
     super(candidate, substitutor, accessProblem, staticsProblem, currFileContext);
     myArgumentList = argumentList;
     myArgumentTypes = argumentTypes;
     myTypeArguments = typeArguments;
+    myLanguageLevel = languageLevel;
   }
 
   public boolean isApplicable(){
@@ -50,7 +66,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   private int getApplicabilityLevelInner() {
     if (myArgumentTypes == null) return ApplicabilityLevel.NOT_APPLICABLE;
 
-    int level = PsiUtil.getApplicabilityLevel(getElement(), getSubstitutor(), myArgumentTypes, PsiUtil.getLanguageLevel(myArgumentList));
+    int level = PsiUtil.getApplicabilityLevel(getElement(), getSubstitutor(), myArgumentTypes, myLanguageLevel);
     if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable()) level = ApplicabilityLevel.NOT_APPLICABLE;
     return level;
   }

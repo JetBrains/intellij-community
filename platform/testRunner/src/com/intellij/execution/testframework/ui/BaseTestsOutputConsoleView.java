@@ -10,14 +10,14 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
+ * See the Lice the specific language governing permissions and
  * limitations under the License.
  */
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -37,7 +37,10 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
 
   public BaseTestsOutputConsoleView(final TestConsoleProperties properties, final AbstractTestProxy unboundOutputRoot) {
     myProperties = properties;
-    myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(properties.getProject(), myProperties.getScope()).getConsole();
+
+    myConsole = new TestsConsoleBuilderImpl(properties.getProject(),
+                                            myProperties.getScope(),
+                                            !properties.isEditable()).getConsole();
     myPrinter = new TestsOutputConsolePrinter(myConsole, properties, unboundOutputRoot);
     myProperties.setConsole(this);
 
@@ -52,6 +55,10 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
   }
 
   protected abstract TestResultsPanel createTestResultsPanel();
+
+  public void attachToProcess(final ProcessHandler processHandler) {
+    myConsole.attachToProcess(processHandler);
+  }
 
   public void print(final String s, final ConsoleViewContentType contentType) {
     printNew(new Printable() {

@@ -47,6 +47,13 @@
     <extensionPoint name="xml.relatedFilesContributor" interface="com.intellij.navigation.RelatedFilesContributor"/>
   </extensionPoints>
 
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.HtmlTagTreeHighlightingPassFactory</implementation-class>
+      <skipForDefaultProject/>
+    </component>
+  </project-components>
+
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.intellij.xml.XmlFileTypeFactory"/>
 
@@ -79,6 +86,8 @@
     <breadcrumbsInfoProvider implementation="com.intellij.xml.breadcrumbs.XmlLanguageBreadcrumbsInfoProvider"/>
     <editorSmartKeysConfigurable instance="com.intellij.application.options.editor.WebEditorOptionsProvider"/>
     <editorAppearanceConfigurable instance="com.intellij.application.options.editor.WebEditorAppearanceConfigurable"/>
+
+    <editorAppearanceConfigurable instance="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.HtmlTagTreeHighlightingConfigurable"/>
 
     <autoImportOptionsProvider instance="com.intellij.application.options.XmlAutoImportOptionsProvider"/>
 

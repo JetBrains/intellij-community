@@ -19,42 +19,57 @@ package com.intellij.util.xmlb;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jdom.Attribute;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Text;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-//todo: use TagBinding
 class OptionTagBinding implements Binding {
-
   private final static Logger LOG = Logger.getInstance("#" + OptionTagBinding.class.getName());
 
   private final Accessor accessor;
   private final String myName;
   private final Binding myBinding;
+  private final String myTagName;
+  private final String myNameAttribute;
+  private final String myValueAttribute;
 
-  public OptionTagBinding(Accessor accessor, XmlSerializerImpl xmlSerializer) {
+  public OptionTagBinding(Accessor accessor, XmlSerializerImpl xmlSerializer, @Nullable OptionTag optionTag) {
     this.accessor = accessor;
-    myName = accessor.getName();
     myBinding = xmlSerializer.getBinding(accessor);
+    if (optionTag != null) {
+      String name = optionTag.value();
+      myName = name.isEmpty() ? accessor.getName() : name;
+      myTagName = optionTag.tag();
+      myNameAttribute = optionTag.nameAttribute();
+      myValueAttribute = optionTag.valueAttribute();
+    }
+    else {
+      myName = accessor.getName();
+      myTagName = Constants.OPTION;
+      myNameAttribute = Constants.NAME;
+      myValueAttribute = Constants.VALUE;
+    }
   }
 
   public Object serialize(Object o, Object context) {
-    Element targetElement = new Element(Constants.OPTION);
+    Element targetElement = new Element(myTagName);
     Object value = accessor.read(o);
 
-    targetElement.setAttribute(Constants.NAME, myName);
+    targetElement.setAttribute(myNameAttribute, myName);
 
     if (value == null) return targetElement;
 
     Object node = myBinding.serialize(value, targetElement);
     if (node instanceof Text) {
       Text text = (Text)node;
-      targetElement.setAttribute(Constants.VALUE, text.getText());
+      targetElement.setAttribute(myValueAttribute, text.getText());
     }
     else {
       if (targetElement != node) {
@@ -72,7 +87,7 @@ class OptionTagBinding implements Binding {
     assert nodes.length != 0 : "Empty nodes passed to: " + this;
 
     Element element = ((Element)nodes[0]);
-    Attribute valueAttr = element.getAttribute(Constants.VALUE);
+    Attribute valueAttr = element.getAttribute(myValueAttribute);
 
     if (valueAttr != null) {
       Object value = myBinding.deserialize(o, valueAttr);
@@ -102,8 +117,8 @@ class OptionTagBinding implements Binding {
   public boolean isBoundTo(Object node) {
     if (!(node instanceof Element)) return false;
     Element e = (Element)node;
-    if (!e.getName().equals(Constants.OPTION)) return false;
-    String name = e.getAttributeValue(Constants.NAME);
+    if (!e.getName().equals(myTagName)) return false;
+    String name = e.getAttributeValue(myNameAttribute);
     return name != null && name.equals(myName);
   }
 

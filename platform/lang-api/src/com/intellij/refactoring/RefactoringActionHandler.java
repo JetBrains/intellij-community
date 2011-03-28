@@ -25,10 +25,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * RefactoringActionHandler is an implementation of IDEA refactoring,
  * with dialogs, UI and all.
- * It is what gets invoked when user choses an item from 'Refactoring' menu.<br>
+ * It is what gets invoked when user chooses an item from 'Refactoring' menu.<br>
  *
  * <code>RefactoringActionHandler</code> is a &quot;one-shot&quot; object: you should not
  * invoke it twice.
+ *
  * @see RefactoringActionHandlerFactory
  */
 public interface RefactoringActionHandler {
@@ -36,8 +37,9 @@ public interface RefactoringActionHandler {
    * Invokes refactoring action from editor. The refactoring obtains
    * all data from editor selection.
    *
-   * @param editor editor that refactoring is invoked in
-   * @param file file should correspond to <code>editor</code>
+   * @param project     the project in which the refactoring is invoked.
+   * @param editor      editor that refactoring is invoked in
+   * @param file        file should correspond to <code>editor</code>
    * @param dataContext can be null for some but not all of refactoring action handlers
    *                    (it is recommended to pass DataManager.getDataContext() instead of null)
    */
@@ -47,8 +49,8 @@ public interface RefactoringActionHandler {
    * Invokes refactoring action from elsewhere (not from editor). Some refactorings
    * do not implement this method.
    *
-   * @param project the project in which the refactoring is invoked.
-   * @param elements list of elements that refactoring should work on. Refactoring-dependent.
+   * @param project     the project in which the refactoring is invoked.
+   * @param elements    list of elements that refactoring should work on. Refactoring-dependent.
    * @param dataContext can be null for some but not all of refactoring action handlers
    *                    (it is recommended to pass DataManager.getDataContext() instead of null)
    */

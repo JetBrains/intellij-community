@@ -53,6 +53,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -103,7 +104,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     assert psiFile != null : "no PSI file: " + FileDocumentManager.getInstance().getFile(editor.getDocument());
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      assert !ApplicationManager.getApplication().isWriteAccessAllowed() : "Completion should not be invoked inside write action";
+      if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        throw new AssertionError("Completion should not be invoked inside write action");
+      }
     }
 
     if (editor.isViewer()) {
@@ -289,11 +292,20 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                   indicator.duringCompletion(initContext);
                   ProgressManager.checkCanceled();
 
-                  data.set(CompletionService.getCompletionService().performCompletion(parameters, new Consumer<LookupElement>() {
+                  Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
                     public void consume(final LookupElement lookupElement) {
                       indicator.addItem(lookupElement);
                     }
-                  }));
+                  };
+                  LookupElement[] result = CompletionService.getCompletionService().performCompletion(parameters, consumer);
+                  if (NameUtil.isUseMinusculeHumpMatcher() && parameters.getInvocationCount() == 0) {
+                    if (result.length == 0) {
+                      result = CompletionService.getCompletionService().performCompletion(parameters.withRelaxedMatching(), consumer);
+                    } else {
+                      indicator.restartOnEmpty = true;
+                    }
+                  }
+                  data.set(result);
                 }
               });
             }
@@ -345,7 +357,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       LOG.error("wrong text: copy='" + fileCopy.getText() + "'; element='" + insertedElement.getText() + "'; range=" + range);
     }
 
-    return new CompletionParameters(insertedElement, fileCopy.getOriginalFile(), myCompletionType, offset, invocationCount);
+    return new CompletionParameters(insertedElement, fileCopy.getOriginalFile(), myCompletionType, offset, invocationCount, invocationCount >= 2);
   }
 
   private AutoCompletionDecision shouldAutoComplete(

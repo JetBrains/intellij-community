@@ -310,8 +310,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     myAuthenticationManager.addListener(savedOnceListener);
 
     final File config = new File(myConfiguration.getConfigurationDirectory(), "config");
-    final char[] chars = FileUtil.loadFileText(config);
-    final String contents = String.valueOf(chars);
+    final String contents = FileUtil.loadFile(config);
     final String auth = "[auth]";
     final int idx = contents.indexOf(auth);
     Assert.assertTrue(idx != -1);
@@ -439,8 +438,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     myAuthenticationManager.addListener(savedOnceListener);
 
     final File config = new File(myConfiguration.getConfigurationDirectory(), "config");
-    final char[] chars = FileUtil.loadFileText(config);
-    final String contents = String.valueOf(chars);
+    final String contents = FileUtil.loadFile(config);
     final String auth = "[auth]";
     final int idx = contents.indexOf(auth);
     Assert.assertTrue(idx != -1);
@@ -572,8 +570,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     myAuthenticationManager.addListener(savedOnceListener);
 
     final File servers = new File(myConfiguration.getConfigurationDirectory(), "servers");
-    final char[] chars = FileUtil.loadFileText(servers);
-    final String contents = String.valueOf(chars);
+    final String contents = FileUtil.loadFile(servers);
     final String groups = "[groups]";
     final int idx = contents.indexOf(groups);
     Assert.assertTrue(idx != -1);

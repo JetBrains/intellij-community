@@ -23,7 +23,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +33,8 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRunConfiguration> {
   private DefaultComboBoxModel myModulesModel;
@@ -84,7 +88,9 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     myDebugCB.setSelected(configuration.isDebugEnabled());
 
     myModulesModel.removeAllElements();
-    for (Module module : configuration.getValidModules()) {
+    List<Module> modules = new ArrayList<Module>(configuration.getValidModules());
+    Collections.sort(modules, ModulesAlphaComparator.INSTANCE);
+    for (Module module : modules) {
       myModulesModel.addElement(module);
     }
     myModulesModel.setSelectedItem(configuration.getModule());
@@ -118,6 +124,12 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
         }
       }
     });
+    new ComboboxSpeedSearch(myModulesBox) {
+      @Override
+      protected String getElementText(Object element) {
+        return element instanceof Module ? ((Module)element).getName() : "";
+      }
+    };
 
     return myMainPanel;
   }

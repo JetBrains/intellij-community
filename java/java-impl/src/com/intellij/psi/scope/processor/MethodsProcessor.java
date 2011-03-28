@@ -16,6 +16,7 @@
 package com.intellij.psi.scope.processor;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
@@ -23,6 +24,7 @@ import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.PsiConflictResolver;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 
 /**
@@ -41,6 +43,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
   protected PsiClass myAccessClass = null;
   private PsiExpressionList myArgumentList;
   private PsiType[] myTypeArguments;
+  private LanguageLevel myLanguageLevel;
 
   public MethodsProcessor(PsiConflictResolver[] resolvers, SmartList<CandidateInfo> container, final PsiElement place) {
     super(null, ourFilter, resolvers, container, place);
@@ -52,6 +55,11 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
 
   public void setArgumentList(PsiExpressionList argList) {
     myArgumentList = argList;
+    myLanguageLevel = PsiUtil.getLanguageLevel(myArgumentList);
+  }
+
+  protected LanguageLevel getLanguageLevel() {
+    return myLanguageLevel;
   }
 
   public void obtainTypeArguments(PsiCallExpression callExpression) {

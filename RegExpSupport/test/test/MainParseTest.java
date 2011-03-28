@@ -35,7 +35,7 @@ public class MainParseTest extends BaseParseTestcase {
     enum Result {
         OK, ERR
     }
-    class Test {
+    static class Test {
         boolean showWarnings = true;
         boolean showInfo = false;
         Result expectedResult;
@@ -158,8 +158,9 @@ public class MainParseTest extends BaseParseTestcase {
     }
 
     private void doTest(String prefix) throws IOException {
-        int n = 0, failed = 0;
-        for (String name : myMap.keySet()) {
+        int n = 0;
+      int failed = 0;
+      for (String name : myMap.keySet()) {
             if (prefix == null && name.contains("/")) {
                 continue;
             }
@@ -174,8 +175,7 @@ public class MainParseTest extends BaseParseTestcase {
                 myFixture.testHighlighting(test.showWarnings, true, test.showInfo, name);
 
                 if (test.expectedResult == Result.ERR) {
-                    System.out.println("  FAILED. Expression incorrectly parsed OK: " + FileUtil.loadTextAndClose(new FileReader(new File(
-                        getTestDataPath(), name))));
+                    System.out.println("  FAILED. Expression incorrectly parsed OK: " + FileUtil.loadFile(new File(getTestDataPath(), name)));
                     failed++;
                 } else {
                     System.out.println("  OK");
@@ -185,7 +185,7 @@ public class MainParseTest extends BaseParseTestcase {
                     System.out.println("  OK");
                 } else {
                     e.printStackTrace();
-                    System.out.println("  FAILED. Expression = " + FileUtil.loadTextAndClose(new FileReader(new File(getTestDataPath(), name))));
+                    System.out.println("  FAILED. Expression = " + FileUtil.loadFile(new File(getTestDataPath(), name)));
                     if (myOut.size() > 0) {
                         String line;
                         final BufferedReader reader = new BufferedReader(new StringReader(myOut.toString()));

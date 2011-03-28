@@ -359,10 +359,10 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
 
   public void testPerformance() throws Exception {
     final String path = PathManagerEx.getTestDataPath() + "/psi/stub/StubPerformanceTest.java";
-    final char[] source = FileUtil.loadFileText(new File(path));
-    final PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", new String(source));
+    String text = FileUtil.loadFile(new File(path));
+    final PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", text);
 
-    IdeaTestUtil.assertTiming("Source file size: " + source.length, 2000, new Runnable() {
+    IdeaTestUtil.assertTiming("Source file size: " + text.length(), 2000, new Runnable() {
       @Override
       public void run() {
         NEW_BUILDER.buildStubTree(file);

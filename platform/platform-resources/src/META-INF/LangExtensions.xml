@@ -28,6 +28,9 @@
   <applicationService serviceInterface="com.intellij.ide.PsiCopyPasteManager"
                       serviceImplementation="com.intellij.ide.PsiCopyPasteManager"/>
 
+  <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
+                      serviceImplementation="com.intellij.ide.TypePresentationServiceImpl"/>
+
   <applicationService serviceInterface="com.intellij.usages.UsageViewSettings"
                       serviceImplementation="com.intellij.usages.UsageViewSettings"/>
   <applicationService serviceInterface="com.intellij.refactoring.RefactoringSettings"
@@ -588,7 +591,6 @@
   <applicationService serviceInterface="com.intellij.codeInsight.template.TemplateBuilderFactory"
                       serviceImplementation="com.intellij.codeInsight.template.TemplateBuilderFactoryImpl"/>
 
-  <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
   <projectViewPane implementation="com.intellij.ide.favoritesTreeView.FavoritesProjectViewPane"/>
   <projectViewPane implementation="com.intellij.ide.scopeView.ScopeViewPane"/>
 

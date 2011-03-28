@@ -463,7 +463,7 @@ public class GitBranchConfigurations implements PersistentStateComponent<GitBran
         if (GitRebaseUtils.isRebaseInTheProgress(root)) {
           return SpecialStatus.REBASING;
         }
-        if (GitMergeUtil.isMergeInTheProgress(root)) {
+        if (GitMergeUtil.isMergeInProgress(root)) {
           return SpecialStatus.MERGING;
         }
       }

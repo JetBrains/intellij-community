@@ -49,7 +49,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
   }
 
   @NotNull
-  public SmartTypePointer createSmartTypePointer(PsiType type) {
+  public SmartTypePointer createSmartTypePointer(@NotNull PsiType type) {
     return type.accept(new SmartTypeCreatingVisitor());
   }
 

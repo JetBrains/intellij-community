@@ -135,7 +135,7 @@ public abstract class ParsingTestCase extends LightPlatformTestCase {
 
   private static String doLoadFile(String myFullDataPath, String name) throws IOException {
     String fullName = myFullDataPath + File.separatorChar + name;
-    String text = new String(FileUtil.loadFileText(new File(fullName))).trim();
+    String text = FileUtil.loadFile(new File(fullName)).trim();
     text = StringUtil.convertLineSeparators(text);
     return text;
   }

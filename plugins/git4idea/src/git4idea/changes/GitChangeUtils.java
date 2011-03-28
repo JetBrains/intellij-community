@@ -80,9 +80,12 @@ public class GitChangeUtils {
       final String relative = s.line();
       String path = rootPath + "/" + GitUtil.unescapePath(relative);
       VirtualFile file = lfs.refreshAndFindFileByPath(path);
-      assert file != null : "The unmerged file is not found " + path;
-      file.refresh(false, false);
-      unmerged.add(file);
+      if (file != null) {
+      // the file name is in the delete- or rename- conflict, so it is shown in the list of unmerged files,
+      // but the file itself doesn't exist. In that case we just ignore the file.
+        file.refresh(false, false);
+        unmerged.add(file);
+      }
     }
     if (unmerged.size() == 0) {
       return Collections.emptyList();

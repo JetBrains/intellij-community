@@ -17,6 +17,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.search.LocalSearchScope;
@@ -55,7 +58,7 @@ import javax.swing.*;
 public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubElementBase<T> implements GrVariable {
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl");
 
-  private final ThreadLocal<Boolean> isInferringType = new ThreadLocal<Boolean>();
+  private final RecursionGuard myGuard = RecursionManager.createGuard("grVariableInitializer");
 
   public GrVariableBaseImpl(ASTNode node) {
     super(node);
@@ -143,7 +146,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
 
   @Nullable
   public PsiType getTypeGroovy() {
-    GrExpression initializer = getInitializerGroovy();
+    final GrExpression initializer = getInitializerGroovy();
     final PsiElement parent = getParent();
 
     if (parent instanceof GrTupleDeclaration && initializer != null){
@@ -159,10 +162,13 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
       }
     }
 
-    if (initializer != null && isInferringType.get() == null) {
-      isInferringType.set(Boolean.TRUE);
-      PsiType initializerType = initializer.getType(); // WARNING may give rise to SOE
-      isInferringType.set(null);
+    if (initializer != null) {
+      PsiType initializerType = myGuard.doPreventingRecursion(this, new NullableComputable<PsiType>() {
+        @Override
+        public PsiType compute() {
+          return initializer.getType();
+        }
+      });
       if (initializerType != null) {
         if (declaredType != null && initializerType instanceof PsiClassType) {
           final PsiClass declaredClass = ((PsiClassType)declaredType).resolve();

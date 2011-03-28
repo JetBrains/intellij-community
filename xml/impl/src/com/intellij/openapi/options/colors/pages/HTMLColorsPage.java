@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.options.colors.pages;
 
+import com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.HtmlTagTreeHighlightingColors;
 import com.intellij.ide.highlighter.HtmlFileHighlighter;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.XmlHighlighterColors;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -57,7 +59,17 @@ public class HTMLColorsPage implements ColorSettingsPage {
 
   @NotNull
   public ColorDescriptor[] getColorDescriptors() {
-    return ColorDescriptor.EMPTY_ARRAY;
+    // todo: make preview for it
+
+    final ColorKey[] colorKeys = HtmlTagTreeHighlightingColors.getColorKeys();
+    final ColorDescriptor[] colorDescriptors = new ColorDescriptor[colorKeys.length];
+
+    for (int i = 0; i < colorDescriptors.length; i++) {
+      colorDescriptors[i] = new ColorDescriptor(OptionsBundle.message("options.html.attribute.descriptor.tag.tree", i + 1),
+                                                colorKeys[i], ColorDescriptor.Kind.BACKGROUND);
+    }
+
+    return colorDescriptors;
   }
 
   @NotNull

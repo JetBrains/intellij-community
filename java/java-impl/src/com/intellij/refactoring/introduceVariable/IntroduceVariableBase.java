@@ -90,7 +90,11 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
       final PsiElement[] statementsInRange = findStatementsAtOffset(editor, file, offset);
 
       //try line selection
-      if (statementsInRange.length == 1 && (PsiUtil.hasErrorElementChild(statementsInRange[0]) || !PsiUtil.isStatement(statementsInRange[0]) || isPreferStatements())) {
+      if (statementsInRange.length == 1 && (PsiUtil.hasErrorElementChild(statementsInRange[0]) ||
+                                            !PsiUtil.isStatement(statementsInRange[0]) ||
+                                            statementsInRange[0].getTextRange().getStartOffset() >= offset ||
+                                            statementsInRange[0].getTextRange().getEndOffset() <= offset ||
+                                            isPreferStatements())) {
         selectionModel.selectLineAtCaret();
         if (findExpressionInRange(project, file, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()) == null) {
           selectionModel.removeSelection();
@@ -474,6 +478,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                   final VariableInplaceRenamer renamer =
                     new VariableInplaceIntroducer(project, expression, editor, elementToRename, cantChangeFinalModifier,
                                                   typeSelectorManager.getTypesForAll().length > 1, exprMarker, occurrenceMarkers);
+                  PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
                   renamer.performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)));
                 }
               }

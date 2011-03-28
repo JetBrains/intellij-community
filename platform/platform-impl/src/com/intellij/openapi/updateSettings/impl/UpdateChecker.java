@@ -521,7 +521,7 @@ public final class UpdateChecker {
         try {
           final File file = new File(PathManager.getConfigPath(), DISABLED_UPDATE);
           if (file.isFile()) {
-            final String[] ids = new String(FileUtil.loadFileText(file)).split("[\\s]");
+            final String[] ids = FileUtil.loadFile(file).split("[\\s]");
             for (String id : ids) {
               if (id != null && id.trim().length() > 0) {
                 ourDisabledToUpdatePlugins.add(id.trim());

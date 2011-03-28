@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
@@ -35,7 +34,7 @@ public class GroovySourceCodeNamedArgumentProvider extends GroovyNamedArgumentPr
   public void getNamedArguments(@Nullable GrCall call, @NotNull PsiMethod method, Map<String, Condition<PsiType>> result) {
     if (method instanceof GrMethod) {
       for (String parameter : ((GrMethod)method).getNamedParametersArray()) {
-        result.put(parameter, Condition.TRUE);
+        result.put(parameter, TYPE_ANY);
       }
     }
   }

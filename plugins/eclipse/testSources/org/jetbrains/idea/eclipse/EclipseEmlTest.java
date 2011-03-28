@@ -80,7 +80,7 @@ public class EclipseEmlTest extends IdeaTestCase {
       new EclipseClasspathStorageProvider.EclipseClasspathConverter(module);
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
 
-    final Element classpathElement = JDOMUtil.loadDocument(new String(FileUtil.loadFileText(new File(path, EclipseXml.DOT_CLASSPATH_EXT)))).getRootElement();
+    final Element classpathElement = JDOMUtil.loadDocument(FileUtil.loadFile(new File(path, EclipseXml.DOT_CLASSPATH_EXT))).getRootElement();
     converter.getClasspath(rootModel, classpathElement);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -103,12 +103,12 @@ public class EclipseEmlTest extends IdeaTestCase {
 
     final File emlFile = new File(path, module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX);
     Assert.assertTrue(resulted.replaceAll(StringUtil.escapeToRegexp(module.getProject().getBaseDir().getPath()), "\\$ROOT\\$"),
-                      JDOMUtil.areElementsEqual(root, JDOMUtil.loadDocument(new String(FileUtil.loadFileText(emlFile))).getRootElement()));
+                      JDOMUtil.areElementsEqual(root, JDOMUtil.loadDocument(FileUtil.loadFile(emlFile)).getRootElement()));
   }
 
   private static void replaceRoot(String path, final String child, final Project project) throws IOException, JDOMException {
     final File emlFile = new File(path, child);
-    String fileText = new String(FileUtil.loadFileText(emlFile)).replaceAll("\\$ROOT\\$", project.getBaseDir().getPath());
+    String fileText = FileUtil.loadFile(emlFile).replaceAll("\\$ROOT\\$", project.getBaseDir().getPath());
     if (!SystemInfo.isWindows) {
       fileText = fileText.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }

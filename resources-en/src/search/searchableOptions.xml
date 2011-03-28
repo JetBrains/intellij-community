@@ -8285,6 +8285,11 @@
     <option name="font" hit="Use antialiased font" />
     <option name="block" hit="Use block caret" />
     <option name="caret" hit="Use block caret" />
+    <option name="enable" hit="Enable HTML tag tree highlighting"/>
+    <option name="html" hit="Enable HTML tag tree highlighting"/>
+    <option name="tag" hit="Enable HTML tag tree highlighting"/>
+    <option name="tree" hit="Enable HTML tag tree highlighting"/>
+    <option name="highlighting" hit="Enable HTML tag tree highlighting"/>
   </configurable>
   <configurable id="reference.settingsdialog.IDE.editor.colors.General" configurable_name="General">
     <option name="background" hit="Background" />

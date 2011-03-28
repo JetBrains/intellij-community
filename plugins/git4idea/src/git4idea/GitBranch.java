@@ -158,7 +158,7 @@ public class GitBranch extends GitReference {
       // the case after git init and before first commit - there is no branch and no output, and we'll take refs/heads/master
       String head;
       try {
-        head = new String(FileUtil.loadFileText(new File(root.getPath(), ".git/HEAD"), GitUtil.UTF8_ENCODING)).trim();
+        head = FileUtil.loadFile(new File(root.getPath(), ".git/HEAD"), GitUtil.UTF8_ENCODING).trim();
         final String prefix = "ref: refs/heads/";
         return head.startsWith(prefix) ? new GitBranch(head.substring(prefix.length()), true, false) : null;
       } catch (IOException e) {

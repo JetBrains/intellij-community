@@ -19,7 +19,9 @@ import com.intellij.util.containers.HashMap;
 import com.sun.jna.Callback;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
@@ -87,6 +89,18 @@ public class Foundation {
 
   public static String fullUserName() {
     return toStringViaUTF8(myFoundationLibrary.NSFullUserName());
+  }
+
+  public static boolean isPackageAtPath(@NotNull final String path) {
+    final ID workspace = invoke("NSWorkspace", "sharedWorkspace");
+    final ID result = invoke(workspace, createSelector("isFilePackageAtPath:"), cfString(path));
+
+    return result.intValue() == 1;
+  }
+
+  public static boolean isPackageAtPath(@NotNull final File file) {
+    if (!file.isDirectory()) return false;
+    return isPackageAtPath(file.getPath());
   }
 
   /**

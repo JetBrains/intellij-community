@@ -91,13 +91,13 @@ public class ReorderJarsMain {
   private static Set<String> loadIgnoredJars(String libPath) throws IOException {
     final File ignoredJarsFile = new File(libPath, "required_for_dist.txt");
     final Set<String> ignoredJars = new HashSet<String>();
-    ContainerUtil.addAll(ignoredJars, new String(FileUtil.loadFileText(ignoredJarsFile)).split("\r\n"));
+    ContainerUtil.addAll(ignoredJars, FileUtil.loadFile(ignoredJarsFile).split("\r\n"));
     return ignoredJars;
   }
 
   private static Map<String, List<String>> getOrder(final File loadingFile) throws IOException {
     final Map<String, List<String>> entriesOrder = new HashMap<String, List<String>>();
-    final String[] lines = new String(FileUtil.loadFileText(loadingFile)).split("\r\n");
+    final String[] lines = FileUtil.loadFile(loadingFile).split("\r\n");
     for (String line : lines) {
       final int i = line.indexOf(":");
       if (i != -1) {

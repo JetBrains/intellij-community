@@ -23,6 +23,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class FormatterImpl extends FormatterEx
   implements ApplicationComponent,
@@ -51,7 +53,7 @@ public class FormatterImpl extends FormatterEx
 
   private FormattingProgressIndicatorImpl myProgressIndicator;
   
-  private int myIsDisabledCount = 0;
+  private final AtomicInteger myIsDisabledCount = new AtomicInteger();
   private final IndentImpl NONE_INDENT = new IndentImpl(Indent.Type.NONE, false, false);
   private final IndentImpl myAbsoluteNoneIndent = new IndentImpl(Indent.Type.NONE, true, false);
   private final IndentImpl myLabelIndent = new IndentImpl(Indent.Type.LABEL, false, false);
@@ -263,10 +265,10 @@ public class FormatterImpl extends FormatterEx
       whiteSpace.setReadOnly(false);
       processor.formatWithoutRealModifications();
       return new IndentInfo(whiteSpace.getLineFeeds(), whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
-    } finally {
+    }
+    finally {
       enableFormatting();
     }
-
   }
 
   public void adjustLineIndentsForRange(final FormattingModel model,
@@ -295,7 +297,6 @@ public class FormatterImpl extends FormatterEx
     finally {
       enableFormatting();
     }
-
   }
 
   public void formatAroundRange(final FormattingModel model,
@@ -329,8 +330,8 @@ public class FormatterImpl extends FormatterEx
       }
       processor.formatWithoutRealModifications();
       processor.performModifications(model);
-
-    } finally{
+    }
+    finally{
       enableFormatting();
     }
   }
@@ -357,12 +358,10 @@ public class FormatterImpl extends FormatterEx
         return offset;
       }
 
-      if (blockAfterOffset != null) {
-        return adjustLineIndent(offset, documentModel, processor, indentOptions, model, blockAfterOffset.getWhiteSpace());
-      } else {
-        return adjustLineIndent(offset, documentModel, processor, indentOptions, model, processor.getLastWhiteSpace());
-      }
-    } finally {
+      WhiteSpace whiteSpace = blockAfterOffset != null ? blockAfterOffset.getWhiteSpace() : processor.getLastWhiteSpace();
+      return adjustLineIndent(offset, documentModel, processor, indentOptions, model, whiteSpace);
+    }
+    finally {
       enableFormatting();
     }
   }
@@ -549,13 +548,16 @@ public class FormatterImpl extends FormatterEx
             if (whiteSpace.containsLineFeeds() && indentInfoStorage != null) {
               whiteSpace.setLineFeedsAreReadOnly(true);
               current.setIndentFromParent(indentInfoStorage.getIndentInfo(current.getStartOffset()));
-            } else {
+            }
+            else {
               whiteSpace.setReadOnly(true);
             }
-          } else {
+          }
+          else {
             if (!changeWSBeforeFirstElement) {
               whiteSpace.setReadOnly(true);
-            } else {
+            }
+            else {
               if (!changeLineFeedsBeforeFirstElement) {
                 whiteSpace.setLineFeedsAreReadOnly(true);
               }
@@ -578,7 +580,8 @@ public class FormatterImpl extends FormatterEx
                   assert !(spaceProperty instanceof DependantSpacingImpl);
                   current.setSpaceProperty(
                     getSpacingImpl(
-                      spaceProperty.getMinSpaces(), spaceProperty.getMaxSpaces(), spaceProperty.getMinLineFeeds(), spaceProperty.isReadOnly(),
+                      spaceProperty.getMinSpaces(), spaceProperty.getMaxSpaces(), spaceProperty.getMinLineFeeds(),
+                      spaceProperty.isReadOnly(),
                       spaceProperty.isSafe(), newKeepLineBreaksFlag, newKeepLineBreaks, false, spaceProperty.getPrefLineFeeds()
                     )
                   );
@@ -590,10 +593,10 @@ public class FormatterImpl extends FormatterEx
         current = current.getNextBlock();
       }
       processor.format(model);
-    } finally {
+    }
+    finally {
       enableFormatting();
     }
-
   }
 
   public void adjustTextRange(final FormattingModel model,
@@ -612,17 +615,18 @@ public class FormatterImpl extends FormatterEx
         if (!whiteSpace.isReadOnly()) {
           if (whiteSpace.getStartOffset() > affectedRange.getStartOffset()) {
             whiteSpace.setReadOnly(true);
-          } else {
+          }
+          else {
             whiteSpace.setReadOnly(false);
           }
         }
         current = current.getNextBlock();
       }
       processor.format(model);
-    } finally {
+    }
+    finally {
       enableFormatting();
     }
-
   }
 
   public void saveIndents(final FormattingModel model, final TextRange affectedRange,
@@ -722,36 +726,37 @@ public class FormatterImpl extends FormatterEx
     return relative ? myContinuationIndentRelativeToDirectParent : myContinuationIndentNotRelativeToDirectParent;
   }
 
-  public Indent getContinuationWithoutFirstIndent(boolean relative)//is default
-  {
+  //is default
+  public Indent getContinuationWithoutFirstIndent(boolean relative) {
     return relative ? myContinuationWithoutFirstIndentRelativeToDirectParent : myContinuationWithoutFirstIndentNotRelativeToDirectParent;
   }
 
-  private final Object DISABLING_LOCK = new Object();
-
   public boolean isDisabled() {
-    synchronized (DISABLING_LOCK) {
-      return myIsDisabledCount > 0;
+    return myIsDisabledCount.get() > 0;
+  }
+
+  private void disableFormatting() {
+    myIsDisabledCount.incrementAndGet();
+  }
+
+  private void enableFormatting() {
+    int old = myIsDisabledCount.getAndDecrement();
+    if (old <= 0) {
+      LOG.error("enableFormatting()/disableFormatting() not paired. DisabledLevel = " + old);
     }
   }
 
-  public void disableFormatting() {
-    synchronized (DISABLING_LOCK) {
-      myIsDisabledCount++;
+  public <T> T runWithFormattingDisabled(@NotNull Computable<T> runnable) {
+    disableFormatting();
+    try {
+      return runnable.compute();
     }
-  }
-
-  public void enableFormatting() {
-    synchronized (DISABLING_LOCK) {
-      if (myIsDisabledCount <= 0) {
-        LOG.error("enableFormatting()/disableFormatting() not paired. DisabledLevel = " + myIsDisabledCount);
-      }
-      myIsDisabledCount--;
+    finally {
+      enableFormatting();
     }
   }
   
   private abstract static class MyFormattingTask implements SequentialTask {
-
     private FormatProcessor myProcessor;
     private boolean         myDone;
     

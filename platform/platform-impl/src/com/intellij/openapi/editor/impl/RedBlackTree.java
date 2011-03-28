@@ -18,8 +18,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 
 /**
  * User: cdr
@@ -146,7 +144,7 @@ public abstract class RedBlackTree<K> {
 
     Node<K> e = n;
     while (e.getParent() != null) e = e.getParent();
-    assert e == root; // assert the node belongs to our tree
+    assert e == root : e; // assert the node belongs to our tree
 
     if (n.getLeft() != null && n.getRight() != null) {
       // Copy key/value from predecessor and then delete it instead
@@ -296,9 +294,9 @@ public abstract class RedBlackTree<K> {
   }
 
   public abstract static class Node<K> {
-    private Node<K> left;
-    private Node<K> right;
-    private Node<K> parent = null;
+    protected Node<K> left;
+    protected Node<K> right;
+    protected Node<K> parent = null;
     protected Color color = Color.RED;
 
     public Node() {
@@ -347,8 +345,7 @@ public abstract class RedBlackTree<K> {
     }
 
     public abstract boolean processAliveKeys(@NotNull Processor<? super K> processor);
-    @NotNull
-    public abstract List<K> getAliveKeys();
+
     public abstract boolean hasAliveKey(boolean purgeDead);
   }
 

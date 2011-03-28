@@ -45,6 +45,10 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private MyCellEditorRemover myEditorRemover;
   private boolean myEnableAntialiasing;
 
+  private int myRowHeight = -1;
+  private boolean myRowHeightIsExplicitlySet;
+  private boolean myRowHeightIsComputing;
+
   public JBTable() {
     this(new DefaultTableModel());
   }
@@ -86,6 +90,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     final TableModelListener modelListener = new TableModelListener() {
       @Override
       public void tableChanged(final TableModelEvent e) {
+        if (!myRowHeightIsExplicitlySet) {
+          myRowHeight = -1;
+        }
         if ((e.getType() == TableModelEvent.DELETE && isEmpty())
             || (e.getType() == TableModelEvent.INSERT && !isEmpty())) {
           repaintViewport();
@@ -111,6 +118,36 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     //noinspection UnusedDeclaration
     boolean marker = Patches.SUN_BUG_ID_4503845; // Don't remove. It's a marker for find usages
+  }
+
+  @Override
+  public int getRowHeight() {
+    if (myRowHeightIsComputing) return super.getRowHeight();
+
+    if (myRowHeight < 0) {
+      try {
+        myRowHeightIsComputing = true;
+        TableModel model = getModel();
+        for (int row = 0; row < model.getRowCount(); row++) {
+          for (int column = 0; column < model.getColumnCount(); column++) {
+            Dimension size =
+              getCellRenderer(row, column).getTableCellRendererComponent(this, model.getValueAt(row, column), true, true, row, column)
+                .getPreferredSize();
+            myRowHeight = Math.max(size.height, myRowHeight);
+          }
+        }
+      }
+      finally {
+        myRowHeightIsComputing = false;
+      }
+    }
+    return myRowHeight;
+  }
+
+  @Override
+  public void setRowHeight(int rowHeight) {
+    myRowHeight = rowHeight;
+    myRowHeightIsExplicitlySet = true;
   }
 
   private void repaintViewport() {

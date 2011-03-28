@@ -38,7 +38,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     void findModelChanged(FindModel findModel);
   }
 
-  private CopyOnWriteArrayList<FindModelObserver> myObservers = new CopyOnWriteArrayList<FindModelObserver>();
+  private final CopyOnWriteArrayList<FindModelObserver> myObservers = new CopyOnWriteArrayList<FindModelObserver>();
 
   public void addObserver(FindModelObserver observer) {
     myObservers.add(observer);
@@ -712,7 +712,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   public void setCustomScope(final SearchScope customScope) {
-    boolean changed = this.customScope != null ? this.customScope.equals(customScope) : (customScope != null);
+    boolean changed = this.customScope != null ? this.customScope.equals(customScope) : customScope != null;
     this.customScope = customScope;
     if (changed) {
       notifyObservers();
@@ -766,7 +766,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
         myPattern = pattern = Pattern.compile(toFind, isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
       }
       catch(PatternSyntaxException e){
-        LOG.error(e);
+        LOG.error("Regexp:'"+toFind+"'", e);
         myPattern = null;
         return null;
       }

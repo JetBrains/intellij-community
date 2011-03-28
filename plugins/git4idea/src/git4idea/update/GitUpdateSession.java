@@ -18,35 +18,29 @@ package git4idea.update;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdateSession;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Git update session implementation
  */
 public class GitUpdateSession implements UpdateSession {
-  private final List<VcsException> exceptions;
+  private final boolean myResult;
 
-  public GitUpdateSession(@Nullable List<VcsException> exceptions) {
-    if (exceptions == null) {
-      this.exceptions = new ArrayList<VcsException>();
-    }
-    else {
-      this.exceptions = exceptions;
-    }
+  public GitUpdateSession(boolean result) {
+    myResult = result;
   }
 
   @NotNull
   public List<VcsException> getExceptions() {
-    return exceptions;
+    return Collections.emptyList();
   }
 
   public void onRefreshFilesCompleted() {
   }
 
   public boolean isCanceled() {
-    return false;
+    return !myResult;
   }
 }

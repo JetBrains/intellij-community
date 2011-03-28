@@ -164,8 +164,9 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     final Introducer introducer = new Introducer(project, expr, localVar, editor);
     final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     if (validEnclosingMethods.size() == 1 || unitTestMode) {
-      if (validEnclosingMethods.get(0).findDeepestSuperMethod() == null || unitTestMode) {
-        introducer.introduceParameter(method, method);
+      final PsiMethod methodToIntroduceParameterTo = validEnclosingMethods.get(0);
+      if (methodToIntroduceParameterTo.findDeepestSuperMethod() == null || unitTestMode) {
+        introducer.introduceParameter(methodToIntroduceParameterTo, methodToIntroduceParameterTo);
         return true;
       }
     }
@@ -176,8 +177,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
   }
 
   private void chooseMethodToIntroduceParameter(final Editor editor,
-                                                       final List<PsiMethod> validEnclosingMethods,
-                                                       final Introducer introducer) {
+                                                final List<PsiMethod> validEnclosingMethods,
+                                                final Introducer introducer) {
     final JPanel panel = new JPanel(new BorderLayout());
     final JCheckBox superMethod = new JCheckBox("Use super method of", true);
     superMethod.setMnemonic('U');

@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
@@ -95,7 +96,7 @@ public class InplaceIntroduceFieldPopup {
     myInitializerExpression = initializerExpression;
     myExprText = myInitializerExpression != null ? myInitializerExpression.getText() : null;
     myLocalName = localVariable != null ? localVariable.getName() : null;
-    myExprMarker = myInitializerExpression != null ? editor.getDocument().createRangeMarker(myInitializerExpression.getTextRange()) : null;
+    myExprMarker = myInitializerExpression != null && myInitializerExpression.isPhysical() ? editor.getDocument().createRangeMarker(myInitializerExpression.getTextRange()) : null;
     myTypeSelectorManager = typeSelectorManager;
     myAnchorElement = anchorElement;
     myAnchorElementIfAll = anchorElementIfAll;
@@ -176,6 +177,7 @@ public class InplaceIntroduceFieldPopup {
           final PsiField field = createFieldToStartTemplateOn(suggestedNameInfo.names, defaultType);
           if (field != null) {
             myEditor.getCaretModel().moveToOffset(field.getTextOffset());
+            myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
             final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<String>();
             nameSuggestions.add(field.getName());
             nameSuggestions.addAll(Arrays.asList(suggestedNameInfo.names));
@@ -195,6 +197,10 @@ public class InplaceIntroduceFieldPopup {
         PsiField field = elementFactory.createField(myFieldName != null ? myFieldName : names[0], defaultType);
         field = (PsiField)myParentClass.add(field);
         PsiUtil.setModifierProperty(field, PsiModifier.FINAL, myIntroduceFieldPanel.isDeclareFinal());
+        final String visibility = myIntroduceFieldPanel.getFieldVisibility();
+        if (visibility != null) {
+          PsiUtil.setModifierProperty(field, visibility, true);
+        }
         return field;
       }
     });
@@ -233,7 +239,7 @@ public class InplaceIntroduceFieldPopup {
       super(myProject, new TypeExpression(myProject, myTypeSelectorManager.getTypesForAll()),
             myEditor, psiVariable, false,
             myTypeSelectorManager.getTypesForAll().length > 1,
-            myInitializerExpression != null ? myEditor.getDocument().createRangeMarker(myInitializerExpression.getTextRange()) : null, InplaceIntroduceFieldPopup.this.getOccurrenceMarkers());
+            myInitializerExpression != null && myInitializerExpression.isPhysical() ? myEditor.getDocument().createRangeMarker(myInitializerExpression.getTextRange()) : null, InplaceIntroduceFieldPopup.this.getOccurrenceMarkers());
       myDefaultParameterTypePointer =
         SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(myTypeSelectorManager.getDefaultType());
       myFieldRangeStart = myEditor.getDocument().createRangeMarker(psiVariable.getTextRange());
@@ -246,7 +252,7 @@ public class InplaceIntroduceFieldPopup {
 
     @Override
     protected PsiExpression getExpr() {
-      return myInitializerExpression;
+      return myInitializerExpression != null && myInitializerExpression.isValid() && myInitializerExpression.isPhysical() ? myInitializerExpression : null;
     }
 
     @Override
@@ -318,20 +324,25 @@ public class InplaceIntroduceFieldPopup {
                                                     myFieldTypePointer.getType(),
                                                     myIntroduceFieldPanel.isDeleteVariable(),
                                                     myParentClass, false, false);
-        if (myLocalVariable != null) {
-          final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
-            new LocalToFieldHandler.IntroduceFieldRunnable(false, myLocalVariable, myParentClass, settings, myStatic, myOccurrences);
-          fieldRunnable.run();
-        }
-        else {
-          final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
-            new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myInitializerExpression, settings, settings.getForcedType(),
-                                                                    myOccurrences, myOccurenceManager,
-                                                                    myAnchorIdxIfAll != -1? myOccurrences[myAnchorIdxIfAll].getParent() : myAnchorElementIfAll,
-                                                                    myAnchorIdx != -1 ? myOccurrences[myAnchorIdx].getParent() : myAnchorElement, myEditor,
-                                                                    myParentClass);
-          convertToFieldRunnable.run();
-        }
+        final Runnable runnable = new Runnable() {
+          public void run() {
+            if (myLocalVariable != null) {
+              final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
+                new LocalToFieldHandler.IntroduceFieldRunnable(false, myLocalVariable, myParentClass, settings, myStatic, myOccurrences);
+              fieldRunnable.run();
+            }
+            else {
+              final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
+                new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myInitializerExpression, settings, settings.getForcedType(),
+                                                                        myOccurrences, myOccurenceManager,
+                                                                        myAnchorIdxIfAll != -1? myOccurrences[myAnchorIdxIfAll].getParent() : myAnchorElementIfAll,
+                                                                        myAnchorIdx != -1 ? myOccurrences[myAnchorIdx].getParent() : myAnchorElement, myEditor,
+                                                                        myParentClass);
+              convertToFieldRunnable.run();
+            }
+          }
+        };
+        ApplicationManager.getApplication().runWriteAction(runnable);
       }
       super.moveOffsetAfter(success);
     }
@@ -349,9 +360,11 @@ public class InplaceIntroduceFieldPopup {
         public void run() {
           final PsiFile containingFile = myParentClass.getContainingFile();
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
-          myInitializerExpression = restoreExpression(containingFile, psiField, elementFactory, getExprMarker(), myExprText);
-          if (myInitializerExpression != null) {
-            myExprMarker = myEditor.getDocument().createRangeMarker(myInitializerExpression.getTextRange());
+          if (getExprMarker() != null) {
+            myInitializerExpression = restoreExpression(containingFile, psiField, elementFactory, getExprMarker(), myExprText);
+            if (myInitializerExpression != null) {
+              myExprMarker = myEditor.getDocument().createRangeMarker(myInitializerExpression.getTextRange());
+            }
           }
           final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
           for (int i = 0, occurrenceMarkersSize = occurrenceMarkers.size(); i < occurrenceMarkersSize; i++) {

@@ -28,10 +28,7 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -55,6 +52,7 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.TitlePanel;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -77,7 +75,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
   private final SmartPsiElementPointer<PsiDeclarationStatement> myPointer;
   private final RangeMarker myExprMarker;
   private final List<RangeMarker> myOccurrenceMarkers;
-  private final PsiType myDefaultType;
+  private final SmartTypePointer myDefaultType;
 
   protected JCheckBox myCanBeFinal;
   private Balloon myBalloon;
@@ -99,14 +97,15 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     myExprMarker = exprMarker;
     myOccurrenceMarkers = occurrenceMarkers;
 
-    myDefaultType = elementToRename.getType();
+    final PsiType defaultType = elementToRename.getType();
+    myDefaultType = SmartTypePointerManager.getInstance(project).createSmartTypePointer(defaultType);
 
     final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(elementToRename, PsiDeclarationStatement.class);
     myPointer = declarationStatement != null ? SmartPointerManager.getInstance(project).createSmartPsiElementPointer(declarationStatement) : null;
     editor.putUserData(ReassignVariableUtil.DECLARATION_KEY, myPointer);
     editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
                        occurrenceMarkers.toArray(new RangeMarker[occurrenceMarkers.size()]));
-    setAdvertisementText(getAdvertisementText(declarationStatement, myDefaultType, hasTypeSuggestion));
+    setAdvertisementText(getAdvertisementText(declarationStatement, defaultType, hasTypeSuggestion));
     if (!cantChangeFinalModifier) {
       myCanBeFinal = new NonFocusableCheckBox("Declare final");
       myCanBeFinal.setSelected(createFinals());
@@ -161,8 +160,9 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
 
   @Override
   public boolean performInplaceRename(boolean processTextOccurrences, LinkedHashSet<String> nameSuggestions) {
+    final boolean result = super.performInplaceRename(processTextOccurrences, nameSuggestions);
     showBalloon();
-    return super.performInplaceRename(processTextOccurrences, nameSuggestions);
+    return result;
   }
 
   public RangeMarker getExprMarker() {
@@ -178,12 +178,13 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
         if (psiVariable == null) {
           return;
         }
+        LOG.assertTrue(psiVariable.isValid());
         saveSettings(psiVariable);
         adjustLine(psiVariable, document);
-        int startOffset = myExprMarker != null ? myExprMarker.getStartOffset() : psiVariable.getTextOffset();
+        int startOffset = myExprMarker != null && myExprMarker.isValid() ? myExprMarker.getStartOffset() : psiVariable.getTextOffset();
         final PsiFile file = psiVariable.getContainingFile();
         final PsiReference referenceAt = file.findReferenceAt(startOffset);
-        if (referenceAt != null && referenceAt.resolve() instanceof PsiLocalVariable) {
+        if (referenceAt != null && referenceAt.resolve() instanceof PsiVariable) {
           startOffset = referenceAt.getElement().getTextRange().getEndOffset();
         }
         else {
@@ -193,6 +194,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
           }
         }
         myEditor.getCaretModel().moveToOffset(startOffset);
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
         if (psiVariable.getInitializer() != null) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
@@ -220,7 +222,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
 
   protected void saveSettings(PsiVariable psiVariable) {
     JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
-    TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myDefaultType);
+    TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myDefaultType.getType());
   }
 
 
@@ -234,7 +236,9 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     titlePanel.setText(IntroduceVariableBase.REFACTORING_NAME);
     panel.add(titlePanel, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 
-    panel.add(myCanBeFinal, new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 0, 0));
+    if (myCanBeFinal != null) {
+      panel.add(myCanBeFinal, new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 0, 0));
+    }
 
     panel.add(Box.createVerticalBox(), new GridBagConstraints(0, 2, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
 
@@ -353,7 +357,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(component);
     balloonBuilder.setFadeoutTime(0)
-      .setFillColor(IdeTooltipManager.GRAPHITE_COLOR)
+      .setFillColor(IdeTooltipManager.GRAPHITE_COLOR.brighter().brighter())
       .setAnimationCycle(0)
       .setHideOnClickOutside(false)
       .setHideOnKeyOutside(false)
@@ -363,8 +367,11 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     final RelativePoint target = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
     final Point screenPoint = target.getScreenPoint();
     myBalloon = balloonBuilder.createBalloon();
-    myBalloon
-      .show(new RelativePoint(new Point(screenPoint.x, screenPoint.y - myEditor.getLineHeight())), Balloon.Position.above);
+    int y = screenPoint.y;
+    if (target.getPoint().getY() > myEditor.getLineHeight() + myBalloon.getPreferredSize().getHeight()) {
+      y -= myEditor.getLineHeight();
+    }
+    myBalloon.show(new RelativePoint(new Point(screenPoint.x, y)), Balloon.Position.above);
   }
 
   public class FinalListener implements ActionListener {

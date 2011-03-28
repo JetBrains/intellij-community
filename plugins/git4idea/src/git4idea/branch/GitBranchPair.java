@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package git4idea.branch;
 
-package com.intellij.psi.impl.source.tree.injected;
-
-import com.intellij.util.SmartList;
+import git4idea.GitBranch;
 
 /**
- * @author cdr
+ * Holder for branch and its tracked branch (if any).
+ *
+ * @author Kirill Likhodedov
  */
-class Places extends SmartList<Place> {
-  public boolean isValid() {
-    for (Place place : this) {
-      if (!place.isValid()) return false;
-    }
-    return true;
+public class GitBranchPair {
+  private GitBranch myBranch;
+  private GitBranch myTrackedName;
+
+  public GitBranchPair(GitBranch branch, GitBranch tracked) {
+    myBranch = branch;
+    myTrackedName = tracked;
   }
+
+  public GitBranch getBranch() {
+    return myBranch;
+  }
+
+  public GitBranch getTracked() {
+    return myTrackedName;
+  }
+
 }

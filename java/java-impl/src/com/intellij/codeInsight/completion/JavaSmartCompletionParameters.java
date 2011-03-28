@@ -15,17 +15,19 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 
 /**
  * @author peter
  */
-public class JavaSmartCompletionParameters extends CompletionParameters{
+public class JavaSmartCompletionParameters {
+  private final CompletionParameters myParameters;
   private final ExpectedTypeInfo myExpectedType;
 
   public JavaSmartCompletionParameters(CompletionParameters parameters, final ExpectedTypeInfo expectedType) {
-    super(parameters.getPosition(), parameters.getOriginalFile(), parameters.getCompletionType(), parameters.getOffset(), parameters.getInvocationCount());
+    myParameters = parameters;
     myExpectedType = expectedType;
   }
 
@@ -35,5 +37,13 @@ public class JavaSmartCompletionParameters extends CompletionParameters{
 
   public PsiType getDefaultType() {
     return myExpectedType.getDefaultType();
+  }
+
+  public PsiElement getPosition() {
+    return myParameters.getPosition();
+  }
+
+  public CompletionParameters getParameters() {
+    return myParameters;
   }
 }

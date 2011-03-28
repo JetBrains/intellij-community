@@ -50,6 +50,11 @@ public class JBViewport extends JViewport {
   }
 
   @Override
+  public Dimension getPreferredSize() {
+    return super.getPreferredSize();    //To change body of overridden methods use File | Settings | File Templates.
+  }
+
+  @Override
   public void paint(Graphics g) {
     super.paint(g);
 

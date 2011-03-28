@@ -170,7 +170,9 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       Disposer.register(Disposer.get("ui"), this);
     }
 
-    addWidget(new ToolWindowsWidget(), Position.LEFT);
+    if (master == null) {
+      addWidget(new ToolWindowsWidget(), Position.LEFT);
+    }
   }
 
 
@@ -762,7 +764,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     return myFrame;
   }
 
-  private static class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusBarWidget.Multiframe, Disposable,
+  private static class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusBarWidget, Disposable,
                                                                    UISettingsListener, PropertyChangeListener {
 
     private static final Icon HIDDEN = IconLoader.getIcon("/general/tbShown.png");
@@ -839,11 +841,6 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
 
     private boolean isActive() {
       return myStatusBar != null && myStatusBar.getFrame() != null && myStatusBar.getFrame().getProject() != null && Registry.is("ide.windowSystem.showTooWindowButtonsSwitcher");
-    }
-
-    @Override
-    public StatusBarWidget copy() {
-      return new ToolWindowsWidget();
     }
 
     @Override

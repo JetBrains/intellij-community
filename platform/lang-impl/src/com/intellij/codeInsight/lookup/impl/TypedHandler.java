@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.extensions.Extensions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -98,26 +99,46 @@ public class TypedHandler implements TypedActionHandler {
   }
 
   static CharFilter.Result getLookupAction(final char charTyped, final LookupImpl lookup) {
+    final CharFilter.Result filtersDecision = getFiltersDecision(charTyped, lookup);
+
     final LookupElement currentItem = lookup.getCurrentItem();
     if (currentItem != null && charTyped != ' ') {
-      String postfix = lookup.getAdditionalPrefix() + charTyped;
-      final PrefixMatcher matcher = currentItem.getPrefixMatcher();
-      if (matcher.cloneWithPrefix(matcher.getPrefix() + postfix).prefixMatches(currentItem)) {
-        return CharFilter.Result.ADD_TO_PREFIX;
-      }
-      for (final LookupElement element : lookup.getItems()) {
-        if (element.isPrefixMatched() && element.getPrefixMatcher().cloneWithPrefix(element.getPrefixMatcher().getPrefix() + postfix).prefixMatches(element)) {
+      if (charTyped != '*' || filtersDecision != CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP) {
+        String postfix = lookup.getAdditionalPrefix() + charTyped;
+        final PrefixMatcher matcher = currentItem.getPrefixMatcher();
+        if (matcher.cloneWithPrefix(matcher.getPrefix() + postfix).prefixMatches(currentItem)) {
           return CharFilter.Result.ADD_TO_PREFIX;
+        }
+        for (final LookupElement element : lookup.getItems()) {
+          if (element.isPrefixMatched() &&
+              element.getPrefixMatcher().cloneWithPrefix(element.getPrefixMatcher().getPrefix() + postfix).prefixMatches(element)) {
+            return CharFilter.Result.ADD_TO_PREFIX;
+          }
         }
       }
     }
-    final CharFilter[] filters = Extensions.getExtensions(CharFilter.EP_NAME);
-    for (final CharFilter extension : filters) {
-      final CharFilter.Result result = extension.acceptChar(charTyped, lookup.getMinPrefixLength() + lookup.getAdditionalPrefix().length(), lookup);
+
+    if (filtersDecision != null) return filtersDecision;
+    throw new AssertionError("Typed char not handler by char filter: c=" + charTyped +
+                             "; prefix=" + currentItem +
+                             "; filters=" + Arrays.toString(getFilters()));
+  }
+
+  @Nullable
+  private static CharFilter.Result getFiltersDecision(char charTyped, LookupImpl lookup) {
+    LookupElement item = lookup.getCurrentItem();
+    int prefixLength = (item == null ? 0 : item.getPrefixMatcher().getPrefix().length()) + lookup.getAdditionalPrefix().length();
+
+    for (final CharFilter extension : getFilters()) {
+      final CharFilter.Result result = extension.acceptChar(charTyped, prefixLength, lookup);
       if (result != null) {
         return result;
       }
     }
-    throw new AssertionError("Typed char not handler by char filter: c=" + charTyped + "; prefix=" + currentItem + "; filters=" + Arrays.toString(filters));
+    return null;
+  }
+
+  private static CharFilter[] getFilters() {
+    return Extensions.getExtensions(CharFilter.EP_NAME);
   }
 }

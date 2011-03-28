@@ -83,7 +83,7 @@ public abstract class LeafElement extends TreeElement {
     return leafTextMatches(text, buffer, start);
   }
 
-  public static int leafTextMatches(CharSequence text, CharSequence buffer, int start) {
+  public static int leafTextMatches(@NotNull CharSequence text, @NotNull CharSequence buffer, int start) {
     final int length = text.length();
     if(buffer.length() - start < length) return -1;
     for(int i = 0; i < length; i++){

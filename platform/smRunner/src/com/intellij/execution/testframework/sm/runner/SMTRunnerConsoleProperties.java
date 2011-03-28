@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.RuntimeConfiguration;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.util.config.Storage;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author: Roman Chernyatchik
@@ -32,11 +33,12 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties {
    * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit"
    * @param executor
    */
-  public SMTRunnerConsoleProperties(final RuntimeConfiguration config, 
-                                    final String testFrameworkName,
-                                    Executor executor)
+  public SMTRunnerConsoleProperties(@NotNull final RuntimeConfiguration config,
+                                    @NotNull final String testFrameworkName,
+                                    @NotNull final Executor executor)
   {
-    super(new Storage.PropertiesComponentStorage(testFrameworkName + "Support.", PropertiesComponent.getInstance()), config.getProject(),
+    super(new Storage.PropertiesComponentStorage(testFrameworkName + "Support.", PropertiesComponent.getInstance()),
+          config.getProject(),
           executor);
     myConfiguration = config;
   }

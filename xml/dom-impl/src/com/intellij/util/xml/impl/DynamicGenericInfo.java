@@ -17,7 +17,10 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,9 +42,9 @@ import java.util.Set;
  * @author peter
  */
 public class DynamicGenericInfo extends DomGenericInfoEx {
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("dynamicGenericInfo");
   private final StaticGenericInfo myStaticGenericInfo;
   @NotNull private final DomInvocationHandler myInvocationHandler;
-  private final ThreadLocal<Boolean> myComputing = new ThreadLocal<Boolean>();
   private volatile boolean myInitialized;
   private volatile ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes;
   private volatile ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixeds;
@@ -65,29 +68,26 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     if (myInitialized) return true;
     myStaticGenericInfo.buildMethodMaps();
 
-    if (myComputing.get() == Boolean.TRUE) return false;
-
     final XmlElement element = myInvocationHandler.getXmlElement();
     if (element == null) return true;
 
-    myComputing.set(Boolean.TRUE);
-    try {
-      DomExtensionsRegistrarImpl registrar = runDomExtenders();
+    return ourGuard.doPreventingRecursion(element, new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        DomExtensionsRegistrarImpl registrar = runDomExtenders();
 
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
-      synchronized (element) {
-        if (myInitialized) return true;
-
-        if (registrar != null) {
-          applyExtensions(registrar);
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (element) {
+          if (!myInitialized) {
+            if (registrar != null) {
+              applyExtensions(registrar);
+            }
+            myInitialized = true;
+          }
         }
-        myInitialized = true;
+        return Boolean.TRUE;
       }
-    }
-    finally {
-      myComputing.set(null);
-    }
-    return true;
+    }) == Boolean.TRUE;
   }
 
   private void applyExtensions(DomExtensionsRegistrarImpl registrar) {

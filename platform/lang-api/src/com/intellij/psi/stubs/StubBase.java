@@ -123,7 +123,9 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
 
   private int countChildren(final IElementType elementType) {
     int count = 0;
-    for (StubElement childStub : getChildrenStubs()) {
+    List<StubElement> childrenStubs = getChildrenStubs();
+    for (int i = 0, childrenStubsSize = childrenStubs.size(); i < childrenStubsSize; i++) {
+      StubElement childStub = childrenStubs.get(i);
       if (childStub.getStubType() == elementType) count++;
     }
 
@@ -132,7 +134,9 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
 
   private int countChildren(final TokenSet types) {
     int count = 0;
-    for (StubElement childStub : getChildrenStubs()) {
+    List<StubElement> childrenStubs = getChildrenStubs();
+    for (int i = 0, childrenStubsSize = childrenStubs.size(); i < childrenStubsSize; i++) {
+      StubElement childStub = childrenStubs.get(i);
       if (types.contains(childStub.getStubType())) count++;
     }
 

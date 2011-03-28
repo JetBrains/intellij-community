@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -93,15 +94,26 @@ public abstract class AbstractVcsHelper {
                                                int maxCount,
                                                final String title);
 
-  @NotNull
-  public abstract List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider);
-
   /**
    * Shows the multiple file merge dialog for resolving conflicts in the specified set of virtual files.
    * Assumes all files are under the same VCS.
    *
    * @param files the files to show in the merge dialog.
-   * @return the files for which the merge was actually performed.
+   * @param provider MergeProvider to be used for merging.
+   * @param mergeDialogCustomizer custom container of titles, descriptions and messages for the merge dialog.
+   * @return changed files for which the merge was actually performed.
+   */
+  public abstract @NotNull List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider, @NotNull MergeDialogCustomizer mergeDialogCustomizer);
+
+  /**
+   * {@link #showMergeDialog(java.util.List, com.intellij.openapi.vcs.merge.MergeProvider)} without description.
+   */
+  @NotNull
+  public abstract List<VirtualFile> showMergeDialog(List<VirtualFile> files, MergeProvider provider);
+
+  /**
+   * {@link #showMergeDialog(java.util.List, com.intellij.openapi.vcs.merge.MergeProvider)} without description and with default merge provider
+   * for the current VCS.
    */
   @NotNull
   public abstract List<VirtualFile> showMergeDialog(List<VirtualFile> files);

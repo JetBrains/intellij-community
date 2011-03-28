@@ -13,23 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.presentation;
+package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.List;
 
 /**
- * @author Dmitry Avdeev
- */
-public interface PresentationTemplate {
-
+* @author peter
+*/
+public interface RecursionGuard {
   @Nullable
-  Icon getIcon(Object o, int flags);
+  <T> T doPreventingRecursion(Object key, Computable<T> computation);
 
-  @Nullable
-  String getName(Object o);
+  StackStamp markStack();
 
-  @Nullable
-  String getTypeName();
+  List<Object> currentStack();
+
+  void prohibitResultCaching(Object since);
+
+  interface StackStamp {
+    boolean mayCacheNow();
+  }
 }

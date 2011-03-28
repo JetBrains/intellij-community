@@ -41,6 +41,7 @@ import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -157,6 +158,13 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     }
     mainPanel.add(splitter, BorderLayout.CENTER);
 
+    final String description = getDescription();
+    if (description != null) {
+      JPanel descPanel = new JPanel();
+      descPanel.add(new JLabel("<html>" + description + "</html>"));
+      descPanel.setBorder(BorderFactory.createEtchedBorder());
+      mainPanel.add(descPanel, BorderLayout.NORTH);
+    }
     return mainPanel;
   }
 
@@ -174,5 +182,12 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myChangesBrowser;
+  }
+
+  /**
+   * @return description that is added to the top of this dialog. May be null - then no description is shown.
+   */
+  protected @Nullable String getDescription() {
+    return null;
   }
 }

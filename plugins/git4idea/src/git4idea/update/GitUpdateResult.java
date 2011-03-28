@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package git4idea.update;
 
-package com.intellij.pom.java.events;
+/**
+ * @author Kirill Likhodedov
+ */
+public enum GitUpdateResult {
+  SUCCESS,
+  /** User cancelled update, everything that has changed was rolled back (git rebase/merge --abort) */
+  CANCEL,
+  /** exception happened during update */
+  ERROR,
+  /** Update introduced a merge conflict that wasn't immediately resolved. */
+  INCOMPLETE;
 
-import com.intellij.psi.PsiFile;
-
-public class JavaTreeChanged implements PomJavaChange {
-  private final PsiFile myFile;
-
-  public JavaTreeChanged(final PsiFile file) {
-    myFile = file;
+  public boolean isSuccess() {
+    return this == SUCCESS || this == INCOMPLETE;
   }
-
-  public PsiFile getFile() {
-    return myFile;
-  }
-
 }

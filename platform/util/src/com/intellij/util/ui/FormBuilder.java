@@ -46,7 +46,7 @@ public class FormBuilder {
     this(false, 5);
   }
 
-  public FormBuilder addLabeledComponent(String labelText, JComponent component) {
+  public FormBuilder addLabeledComponent(String labelText, JComponent component, final int verticalSpace) {
     JLabel label = null;
     if (labelText != null) {
       label = new JLabel(UIUtil.removeMnemonic(labelText));
@@ -55,7 +55,7 @@ public class FormBuilder {
     }
 
     GridBagConstraints c = new GridBagConstraints();
-    int verticalInset = line > 0 ? 10 : 0;
+    int verticalInset = line > 0 ? verticalSpace : 0;
 
     if (vertical) {
       c.gridwidth = 1;
@@ -101,6 +101,10 @@ public class FormBuilder {
     }
 
     return this;
+  }
+
+  public FormBuilder addLabeledComponent(String labelText, JComponent component) {
+    return addLabeledComponent(labelText, component, 10);
   }
 
   public JPanel getPanel() {

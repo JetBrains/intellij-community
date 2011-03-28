@@ -19,10 +19,12 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.ide.FileIconProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.ui.DeferredIconImpl;
+import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.util.Function;
 import com.intellij.util.ui.update.ComparableObject;
 import org.jetbrains.annotations.Nullable;
@@ -43,10 +45,15 @@ public class NativeFileIconProvider implements FileIconProvider {
 
   private static final Ext NO_EXT = new Ext(null);
 
-  public Icon getIcon(VirtualFile file, int flags, @Nullable Project project) {
+  private static final Ext OPEN_DIR = new Ext(null, Iconable.ICON_FLAG_OPEN);
+  private static final Ext CLOSED_DIR = new Ext(null, Iconable.ICON_FLAG_CLOSED);
+
+  private static final Icon DIR_OPEN_ICON = UIManager.getDefaults().getIcon( "Tree.openIcon" );
+
+  public Icon getIcon(VirtualFile file, final int flags, @Nullable Project project) {
     if (!isNativeFileType(file)) return null;
 
-    final Ext ext = file.getExtension() != null ? new Ext(file.getExtension()) : NO_EXT;
+    final Ext ext = getExtension(file, flags);
     final String filePath = file.getPath();
 
     Icon icon;
@@ -70,7 +77,13 @@ public class NativeFileIconProvider implements FileIconProvider {
         Icon icon;
         try { // VM will ensure lock to init -static final field--, note we should have no read access here, to avoid deadlock with EDT needed to init component
           assert SwingComponentHolder.ourFileChooser != null || !ApplicationManager.getApplication().isReadAccessAllowed();
-          icon = SwingComponentHolder.ourFileChooser.getIcon(f);
+
+          if (SystemInfo.isMac && virtualFile.isDirectory() && (flags & Iconable.ICON_FLAG_OPEN) == Iconable.ICON_FLAG_OPEN) {
+            icon = Foundation.isPackageAtPath(f) ? SwingComponentHolder.ourFileChooser.getIcon(f) : DIR_OPEN_ICON;
+          }
+          else {
+            icon = SwingComponentHolder.ourFileChooser.getIcon(f);
+          }
         }
         catch (Exception e) {      // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4854174
           return null;
@@ -90,6 +103,18 @@ public class NativeFileIconProvider implements FileIconProvider {
     });
   }
 
+  private static Ext getExtension(final VirtualFile file, final int flags) {
+    if (file.isDirectory()) {
+      if (file.getExtension() == null) {
+        return flags == Iconable.ICON_FLAG_OPEN ? OPEN_DIR : CLOSED_DIR;
+      } else {
+        return new Ext(file.getExtension(), flags);
+      }
+    }
+
+    return file.getExtension() != null ? new Ext(file.getExtension()) : NO_EXT;
+  }
+
   static class SwingComponentHolder {
     private static final JFileChooser ourFileChooser = new JFileChooser();
   }
@@ -99,11 +124,14 @@ public class NativeFileIconProvider implements FileIconProvider {
   }
 
   private static class Ext extends ComparableObject.Impl {
-
     private final Object[] myText;
 
     private Ext(@Nullable String text) {
       myText = new Object[] {text};
+    }
+
+    private Ext(@Nullable String text, final int flags) {
+      myText = new Object[] {text, flags};
     }
 
     public Object[] getEqualityObjects() {

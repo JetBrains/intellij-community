@@ -23,6 +23,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -135,6 +136,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     }
 
     public void itemSelected(LookupEvent event) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.liveTemplates");
       LookupElement item = event.getItem();
       if (item != null) {
         final TemplateImpl template = (TemplateImpl)item.getObject();

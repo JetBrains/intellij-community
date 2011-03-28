@@ -225,7 +225,7 @@ public class PositionHighlighter {
         }
 
         if (breakpoint instanceof BreakpointWithHighlighter) {
-          if (((BreakpointWithHighlighter)breakpoint).isVisible()) {
+          if (((BreakpointWithHighlighter)breakpoint).isVisible() && breakpoint.isValid()) {
             breakpoint.reload();
             final SourcePosition sourcePosition = ((BreakpointWithHighlighter)breakpoint).getSourcePosition();
             if (sourcePosition == null || sourcePosition.getLine() != lineIndex) {

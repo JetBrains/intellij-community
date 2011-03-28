@@ -21,18 +21,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.*;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -181,7 +177,7 @@ public class SemServiceImpl extends SemService{
   }
 
   @Nullable
-  public <T extends SemElement> List<T> getSemElements(SemKey<T> key, @NotNull PsiElement psi) {
+  public <T extends SemElement> List<T> getSemElements(final SemKey<T> key, @NotNull final PsiElement psi) {
     final PsiElement root = getRootElement(psi);
     if (root == null) {
       return Collections.emptyList();
@@ -192,21 +188,24 @@ public class SemServiceImpl extends SemService{
       return cached;
     }
 
+    RecursionGuard.StackStamp stamp = RecursionManager.createGuard("semService").markStack();
+
+    LinkedHashSet<T> result = new LinkedHashSet<T>();
     final Map<SemKey, List<SemElement>> map = new THashMap<SemKey, List<SemElement>>();
-    LinkedHashSet<T> result = null;
     for (final SemKey each : myInheritors.get(key)) {
       List<SemElement> list = createSemElements(each, psi);
       map.put(each, list);
-      if (!list.isEmpty()) {
-        if (result == null) result = new LinkedHashSet<T>();
-        result.addAll((List<T>)list);
+      result.addAll((List<T>)list);
+    }
+
+    if (stamp.mayCacheNow()) {
+      final ConcurrentMap<SemKey, List<SemElement>> persistent = cacheOrGetMap(psi, root);
+      for (SemKey semKey : map.keySet()) {
+        persistent.putIfAbsent(semKey, map.get(semKey));
       }
     }
-    final ConcurrentMap<SemKey, List<SemElement>> persistent = cacheOrGetMap(psi, root);
-    for (SemKey semKey : map.keySet()) {
-      persistent.putIfAbsent(semKey, map.get(semKey));
-    }
-    return result == null ? Collections.<T>emptyList() : new ArrayList<T>(result);
+
+    return new ArrayList<T>(result);
   }
 
   @Nullable

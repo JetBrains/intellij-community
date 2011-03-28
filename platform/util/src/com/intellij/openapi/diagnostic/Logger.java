@@ -38,6 +38,10 @@ public abstract class Logger {
     return ourFactory.getLoggerInstance(category);
   }
 
+  public static Logger getInstance(Class cl) {
+    return getInstance("#" + cl.getName());
+  }
+
   public abstract boolean isDebugEnabled();
 
   public abstract void debug(@NonNls String message);

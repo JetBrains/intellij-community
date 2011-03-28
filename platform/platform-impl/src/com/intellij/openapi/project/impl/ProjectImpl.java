@@ -454,7 +454,8 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   @Override
    public String toString() {
     return "Project"
-           + (isDisposed() ? " (Disposed)" : isDefault() ? "" : " '" + getLocation()+"'")
+           + (isDisposed() ? " (Disposed" + (temporarilyDisposed ? " temporarily" : "") + ")"
+                           :isDefault() ? "" : " '" + getLocation()+"'")
            + (isDefault() ? " (Default)" : "")
            + " " + myName
       ;

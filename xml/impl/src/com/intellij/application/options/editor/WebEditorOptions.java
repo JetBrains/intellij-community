@@ -16,7 +16,9 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.xml.XmlBundle;
@@ -48,8 +50,15 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   private boolean myZenCodingEnabled = true;
   private int myZenCodingExpandShortcut = TemplateSettings.TAB_CHAR;
 
+  private boolean myTagTreeHighlightingEnabled = true;
+  private int myTagTreeHighlightingLevelCount = 6;
+
   public static WebEditorOptions getInstance() {
     return ServiceManager.getService(WebEditorOptions.class);
+  }
+
+  public WebEditorOptions() {
+    setTagTreeHighlightingEnabled(!ApplicationManager.getApplication().isUnitTestMode());
   }
 
   public void setBreadcrumbsEnabled(boolean b) {
@@ -122,6 +131,22 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public void setAutomaticallyInsertRequiredSubTags(boolean automaticallyInsertRequiredSubTags) {
     myAutomaticallyInsertRequiredSubTags = automaticallyInsertRequiredSubTags;
+  }
+
+  public void setTagTreeHighlightingLevelCount(int tagTreeHighlightingLevelCount) {
+    myTagTreeHighlightingLevelCount = tagTreeHighlightingLevelCount;
+  }
+
+  public int getTagTreeHighlightingLevelCount() {
+    return myTagTreeHighlightingLevelCount;
+  }
+
+  public void setTagTreeHighlightingEnabled(boolean tagTreeHighlightingEnabled) {
+    myTagTreeHighlightingEnabled = tagTreeHighlightingEnabled;
+  }
+
+  public boolean isTagTreeHighlightingEnabled() {
+    return myTagTreeHighlightingEnabled;
   }
 
   @NotNull

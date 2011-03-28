@@ -43,8 +43,8 @@ public class FileTemplatesTest extends IdeaTestCase {
       File propFile = new File(resultFile.getParent(), base + ".prop" + txt);
       File inFile = new File(resultFile.getParent(), base + txt);
 
-      String inputText = new String(FileUtil.loadFileText(inFile, FileTemplate.ourEncoding));
-      String outputText = new String(FileUtil.loadFileText(resultFile, FileTemplate.ourEncoding));
+      String inputText = FileUtil.loadFile(inFile, FileTemplate.ourEncoding);
+      String outputText = FileUtil.loadFile(resultFile, FileTemplate.ourEncoding);
 
       EncodingAwareProperties properties = new EncodingAwareProperties();
 
