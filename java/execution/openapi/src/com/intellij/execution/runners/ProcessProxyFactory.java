@@ -19,14 +19,18 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaCommandLine;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class ProcessProxyFactory {
+  public abstract boolean isBreakGenLibraryAvailable();
+
   public static ProcessProxyFactory getInstance() {
     return ServiceManager.getService(ProcessProxyFactory.class);
   }
 
-
+  @Nullable
   public abstract ProcessProxy createCommandLineProxy(JavaCommandLine javaCmdLine) throws ExecutionException;
 
+  @Nullable
   public abstract ProcessProxy getAttachedProxy(ProcessHandler processHandler);
 }

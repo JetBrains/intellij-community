@@ -22,6 +22,10 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NonNls;
+
+import java.io.File;
 
 public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
   public ProcessProxy createCommandLineProxy(final JavaCommandLine javaCmdLine) throws ExecutionException {
@@ -32,7 +36,7 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
         final JavaParameters javaParameters = javaCmdLine.getJavaParameters();
         JavaSdkUtil.addRtJar(javaParameters.getClassPath());
         final ParametersList vmParametersList = javaParameters.getVMParametersList();
-        vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_PORT_NUMBER, "" + proxy.getPortNumber());
+        vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_PORT_NUMBER, String.valueOf(proxy.getPortNumber()));
         vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_BINPATH, PathManager.getBinPath());
         javaParameters.getProgramParametersList().prepend(javaParameters.getMainClass());
         javaParameters.setMainClass(ProcessProxyImpl.LAUNCH_MAIN_CLASS);
@@ -46,5 +50,11 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
 
   public ProcessProxy getAttachedProxy(final ProcessHandler processHandler) {
     return processHandler != null ? processHandler.getUserData(ProcessProxyImpl.KEY) : null;
+  }
+
+  @Override
+  public boolean isBreakGenLibraryAvailable() {
+    @NonNls final String libName = SystemInfo.isWindows ? "breakgen.dll" : "libbreakgen.so";
+    return new File(PathManager.getBinPath() + File.separator + libName).exists();
   }
 }

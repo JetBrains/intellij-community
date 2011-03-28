@@ -35,9 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -448,8 +446,8 @@ public class EquivalenceChecker {
         final String text2 = expToCompare2.getText();
         return text1.equals(text2);
       case CALL_EXPRESSION:
-        return methodCallExpressionsAreEquivalent((GrMethodCallExpression) expToCompare1,
-            (GrMethodCallExpression) expToCompare2);
+        return methodCallExpressionsAreEquivalent((GrMethodCall) expToCompare1,
+            (GrMethodCall) expToCompare2);
       case NEW_EXPRESSION:
         return newExpressionsAreEquivalent((GrNewExpression) expToCompare1,
             (GrNewExpression) expToCompare2);
@@ -584,8 +582,8 @@ public class EquivalenceChecker {
     return typesAreEquivalent(safe1, safe2);
   }
 
-  private static boolean methodCallExpressionsAreEquivalent(@NotNull GrMethodCallExpression methodExp1,
-                                                            @NotNull GrMethodCallExpression methodExp2) {
+  private static boolean methodCallExpressionsAreEquivalent(@NotNull GrMethodCall methodExp1,
+                                                            @NotNull GrMethodCall methodExp2) {
     final GrExpression methodExpression1 = methodExp1.getInvokedExpression();
     final GrExpression methodExpression2 = methodExp2.getInvokedExpression();
     if (!expressionsAreEquivalent(methodExpression1, methodExpression2)) {
@@ -844,7 +842,7 @@ public class EquivalenceChecker {
     if (exp instanceof GrNewExpression) {
       return NEW_EXPRESSION;
     }
-    if (exp instanceof GrCallExpression) {
+    if (exp instanceof GrMethodCall) {
       return CALL_EXPRESSION;
     }
     if (exp instanceof GrPostfixExpression) {

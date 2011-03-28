@@ -405,7 +405,17 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   public void clear() {
     synchronized (LOCK) {
-      myContentSize = 0;
+      // let's decrease myContentSize by size of deferred output text
+      // then in EDT we will clear already flushed output (editor content)
+      // end it will induce document changed event which will
+      // also decrease myContentSize by flushed output size.
+      //
+      // P.S: We cannot set myContentSize to '0' here because between this
+      // code and alarm clear request (in EDT) my occur print event in non-EDT thread
+      // and unfortunately it is a real usecase and happens when switching active test in
+      // tests console.
+      myContentSize = Math.max(0, myContentSize - myDeferredOutputLength);
+
       myDeferredOutput.clear();
       myDeferredOutput.add(new StringBuilder(CYCLIC_BUFFER_UNIT_SIZE));
       myDeferredOutputLength = 0;
@@ -807,8 +817,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       else {
         for (StringBuilder builder : myDeferredOutput) {
           builder.setLength(0);
+        }
       }
-    }
       myDeferredOutputLength = 0;
     }
     final Document document = myEditor.getDocument();

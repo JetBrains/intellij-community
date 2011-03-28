@@ -227,14 +227,14 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
 
   public void testConstructor() throws Exception {
     PsiReference ref = configureByFile("constructor/A.groovy");
-    PsiMethod resolved = ((GrNewExpression) ref.getElement().getParent()).resolveConstructor();
+    PsiMethod resolved = ((GrNewExpression) ref.getElement().getParent()).resolveMethod();
     assertNotNull(resolved);
     assertTrue(resolved.isConstructor());
   }
 
   public void testConstructor1() throws Exception {
     PsiReference ref = configureByFile("constructor1/A.groovy");
-    PsiMethod method = ((GrNewExpression) ref.getElement().getParent()).resolveConstructor();
+    PsiMethod method = ((GrNewExpression) ref.getElement().getParent()).resolveMethod();
     assertNotNull(method);
     assertTrue(method.isConstructor());
     assertEquals(0, method.getParameterList().getParameters().length);
@@ -242,14 +242,14 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
 
   public void testConstructor2() throws Exception {
     PsiReference ref = configureByFile("constructor2/A.groovy");
-    PsiMethod method = ((GrNewExpression) ref.getElement().getParent()).resolveConstructor();
+    PsiMethod method = ((GrNewExpression) ref.getElement().getParent()).resolveMethod();
     assertNull(method);
   }
 
   //grvy-101
   public void testConstructor3() throws Exception {
     PsiReference ref = configureByFile("constructor3/A.groovy");
-    PsiMethod method = ((GrNewExpression) ref.getElement().getParent()).resolveConstructor();
+    PsiMethod method = ((GrNewExpression) ref.getElement().getParent()).resolveMethod();
     assertNotNull(method);
     assertTrue(method.isConstructor());
     assertEquals(0, method.getParameterList().getParameters().length);
@@ -287,7 +287,7 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
 
   public void testEmptyVsMap() throws Exception {
     PsiReference ref = configureByFile("emptyVsMap/A.groovy");
-    PsiMethod resolved = ((GrNewExpression) ref.getElement().getParent()).resolveConstructor();
+    PsiMethod resolved = ((GrNewExpression) ref.getElement().getParent()).resolveMethod();
     assertNotNull(resolved);
     assertEquals(0, resolved.getParameterList().getParametersCount());
   }
@@ -304,7 +304,7 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
 
   public void testAliasedConstructor() throws Exception {
     PsiReference ref = configureByFile("aliasedConstructor/A.groovy");
-    PsiMethod resolved = ((GrNewExpression) ref.getElement().getParent()).resolveConstructor();
+    PsiMethod resolved = ((GrNewExpression) ref.getElement().getParent()).resolveMethod();
     assertNotNull(resolved);
     assertEquals("JFrame", resolved.getName());
   }
@@ -312,7 +312,7 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
 
   public void testFixedVsVarargs1() throws Exception {
     PsiReference ref = configureByFile("fixedVsVarargs1/A.groovy");
-    PsiMethod resolved = ((GrNewExpression) ref.getElement().getParent()).resolveConstructor();
+    PsiMethod resolved = ((GrNewExpression) ref.getElement().getParent()).resolveMethod();
     assertNotNull(resolved);
     final GrParameter[] parameters = ((GrMethod) resolved).getParameters();
     assertEquals(parameters.length, 1);

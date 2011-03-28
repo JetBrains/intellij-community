@@ -46,6 +46,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
 
   @Nullable
   public PsiElement adjustElementToCopy(final PsiElement element) {
+    if (element instanceof PsiPackage) return element;
     if (element != null && !(element instanceof PsiMember) && element.getParent() instanceof PsiMember) {
       return element.getParent();
     }
@@ -54,6 +55,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
 
   @Nullable
   public String getQualifiedName(PsiElement element) {
+    if (element instanceof PsiPackage) return ((PsiPackage)element).getQualifiedName();
     element = getMember(element);
     if (element instanceof PsiClass) {
       return ((PsiClass)element).getQualifiedName();
