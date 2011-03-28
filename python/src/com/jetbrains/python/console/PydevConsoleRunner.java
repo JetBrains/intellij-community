@@ -2,7 +2,6 @@ package com.jetbrains.python.console;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.Executor;
@@ -28,7 +27,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.net.NetUtils;
 import com.jetbrains.django.run.Runner;
-import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
@@ -75,6 +73,20 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
                                        final String consoleTitle,
                                        final String projectRoot,
                                        final String... statements2execute) {
+    return run(project, sdk, consoleTitle, projectRoot, createDefaultEnvironmentVariables(), statements2execute);
+  }
+
+  public static ImmutableMap<String, String> createDefaultEnvironmentVariables() {
+    return ImmutableMap.of("PYTHONIOENCODING", "utf-8");
+  }
+
+  @Nullable
+  public static PydevConsoleRunner run(@NotNull final Project project,
+                                       @NotNull final Sdk sdk,
+                                       final String consoleTitle,
+                                       final String projectRoot,
+                                       final Map<String, String> environmentVariables,
+                                       final String... statements2execute) {
     final int[] ports;
     try {
       // File "pydev/console/pydevconsole.py", line 223, in <module>
@@ -105,8 +117,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
       }
 
       public Map<String, String> getAdditionalEnvs() {
-        return DjangoUtil.addPyCharmManageModule(DjangoUtil.getDjangoModule(project), Maps.newHashMap(
-          ImmutableMap.of("PYTHONIOENCODING", "utf-8")));
+        return environmentVariables;
       }
     };
 
