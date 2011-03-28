@@ -424,10 +424,9 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
 
     @Nullable
     protected String selectListenerClass() {
-      final GlobalSearchScope searchScope = getSearchScope(config.getModules());
+      GlobalSearchScope searchScope = getSearchScope(config.getModules());
       if (searchScope == null) {
-        Messages.showErrorDialog(panel, "Module is not selected", "Can't Browse Listeners");
-        return null;
+        searchScope = GlobalSearchScope.allScope(project);
       }
       final TestListenerFilter filter = new TestListenerFilter(searchScope, project);
 

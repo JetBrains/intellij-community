@@ -45,6 +45,7 @@ public class BackspaceHandler extends EditorActionHandler {
     lookup.performGuardedChange(new Runnable() {
       @Override
       public void run() {
+        editor.getSelectionModel().removeSelection();
         handler.execute(editor, dataContext);
       }
     });

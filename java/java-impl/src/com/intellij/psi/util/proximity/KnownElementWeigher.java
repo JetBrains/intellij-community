@@ -34,6 +34,8 @@ public class KnownElementWeigher extends ProximityWeigher {
       if (qname != null) {
         if (qname.startsWith("java.")) return 2;
         if (qname.startsWith("javax.")) return 1;
+        if (qname.startsWith("com.")) return -1;
+        if (qname.startsWith("net.")) return -1;
       }
     }
     if (element instanceof PsiMethod) {

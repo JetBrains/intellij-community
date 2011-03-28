@@ -574,8 +574,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  public boolean restartOnEmpty = false;
-
   public void prefixUpdated() {
     final CharSequence text = myEditor.getDocument().getCharsSequence();
     final int caretOffset = myEditor.getCaretModel().getOffset();
@@ -588,13 +586,16 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
     }
 
-    if (hideAutopopupIfMeaningless() && restartOnEmpty) {
-      CompletionAutoPopupHandler.scheduleAutoPopup(getProject(), myEditor, getParameters().getOriginalFile());
-    }
+    hideAutopopupIfMeaningless();
     updateFocus();
   }
 
   public void scheduleRestart() {
+    if (isAutopopupCompletion() && hideAutopopupIfMeaningless()) {
+      CompletionAutoPopupHandler.scheduleAutoPopup(getProject(), myEditor, getParameters().getOriginalFile());
+      return;
+    }
+
     cancel();
 
     ApplicationManager.getApplication().assertIsDispatchThread();

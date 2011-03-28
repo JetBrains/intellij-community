@@ -23,6 +23,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -237,6 +238,19 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole2 == ChildRole.RBRACE && aClass.isEnum()) {
       createParenthSpace(true, false);
+    }
+    else if (aClass instanceof PsiAnonymousClass && ElementType.JAVA_PLAIN_COMMENT_BIT_SET.contains(myChild1.getElementType())) {
+      ASTNode prev = myChild1.getTreePrev();
+      if (prev.getElementType() == JavaTokenType.WHITE_SPACE && !StringUtil.containsLineBreak(prev.getChars())) {
+        prev = prev.getTreePrev();
+      }
+      if (prev.getElementType() == JavaTokenType.LBRACE) {
+        myResult = Spacing.createSpacing(0, 0, mySettings.BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER + 1,
+                                         mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      }
+      else {
+        processClassBody();
+      }
     }
     else processClassBody();
   }

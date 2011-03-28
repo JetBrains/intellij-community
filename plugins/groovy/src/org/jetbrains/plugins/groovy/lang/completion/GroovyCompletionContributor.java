@@ -235,8 +235,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         final PsiElement position = parameters.getPosition();
         if (((GrReferenceElement)position.getParent()).getQualifier() != null) return;
 
-        final String s = result.getPrefixMatcher().getPrefix();
-        if (StringUtil.isEmpty(s) || !Character.isLowerCase(s.charAt(0))) return;
+        if (StringUtil.isEmpty(result.getPrefixMatcher().getPrefix())) return;
 
         completeStaticMembers(position).processStaticMethodsGlobally(result);
       }
@@ -492,6 +491,18 @@ public class GroovyCompletionContributor extends CompletionContributor {
                                                   boolean shouldImport) {
         return new JavaGlobalMemberLookupElement(overloads, containingClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER,
                                                  shouldImport);
+      }
+
+      @Override
+      protected boolean isAccessible(PsiMember member) {
+        boolean result = super.isAccessible(member);
+
+        if (!result && member instanceof GrField) {
+          GrAccessorMethod[] getters = ((GrField)member).getGetters();
+          return getters.length > 0 && super.isAccessible(getters[0]);
+        }
+
+        return result;
       }
     };
     final PsiFile file = position.getContainingFile();

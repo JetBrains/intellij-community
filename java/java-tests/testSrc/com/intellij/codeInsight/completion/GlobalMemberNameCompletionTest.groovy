@@ -24,6 +24,36 @@ public class Foo {
 class Bar {{ abcmethod()<caret> }}"""
   }
 
+  public void testFieldName() throws Exception {
+    myFixture.addClass("""
+package foo;
+
+public class Foo {
+  public static int abcfield = 2
+  static final int fieldThatsNotVisible = 3
+}
+""")
+
+    doTest "class Bar {{ abcf<caret> }}", true, """import static foo.Foo.abcfield;
+
+class Bar {{ abcfield<caret> }}"""
+  }
+
+  public void testFieldNameQualified() throws Exception {
+    myFixture.addClass("""
+package foo;
+
+public class Foo {
+  public static int abcfield = 2
+  static final int fieldThatsNotVisible = 3
+}
+""")
+
+    doTest "class Bar {{ abcf<caret> }}", false, """import foo.Foo;
+
+class Bar {{ Foo.abcfield<caret> }}"""
+  }
+
   public void testQualifiedMethodName() throws Exception {
     myFixture.addClass("""
 package foo;

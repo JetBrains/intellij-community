@@ -53,7 +53,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -297,15 +296,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                       indicator.addItem(lookupElement);
                     }
                   };
-                  LookupElement[] result = CompletionService.getCompletionService().performCompletion(parameters, consumer);
-                  if (NameUtil.isUseMinusculeHumpMatcher() && parameters.getInvocationCount() == 0) {
-                    if (result.length == 0) {
-                      result = CompletionService.getCompletionService().performCompletion(parameters.withRelaxedMatching(), consumer);
-                    } else {
-                      indicator.restartOnEmpty = true;
-                    }
-                  }
-                  data.set(result);
+                  data.set(CompletionService.getCompletionService().performCompletion(parameters, consumer));
                 }
               });
             }
@@ -357,7 +348,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       LOG.error("wrong text: copy='" + fileCopy.getText() + "'; element='" + insertedElement.getText() + "'; range=" + range);
     }
 
-    return new CompletionParameters(insertedElement, fileCopy.getOriginalFile(), myCompletionType, offset, invocationCount, invocationCount >= 2);
+    return new CompletionParameters(insertedElement, fileCopy.getOriginalFile(), myCompletionType, offset, invocationCount, false);
   }
 
   private AutoCompletionDecision shouldAutoComplete(

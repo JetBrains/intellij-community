@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -20,9 +21,7 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
       return;
     }
 
-    final PrefixMatcher matcher = result.getPrefixMatcher();
-    final String prefix = matcher.getPrefix();
-    if (prefix.length() == 0 || !Character.isLowerCase(prefix.charAt(0))) {
+    if (result.getPrefixMatcher().getPrefix().length() == 0) {
       return;
     }
 
@@ -43,24 +42,13 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
     final StaticMemberProcessor processor = new StaticMemberProcessor(position) {
       @NotNull
       @Override
-      protected LookupElement createLookupElement(@NotNull PsiMember member, @NotNull final PsiClass containingClass, boolean shouldImport) {
+      protected LookupElement createLookupElement(@NotNull PsiMember member, @NotNull final PsiClass containingClass, final boolean shouldImport) {
         if (member instanceof PsiMethod) {
           final JavaMethodCallElement element = new JavaMethodCallElement((PsiMethod)member, true, false);
           element.setShouldBeImported(shouldImport);
           return element;
         }
-        return new VariableLookupItem((PsiVariable)member) {
-          @Override
-          public void handleInsert(InsertionContext context) {
-            context.commitDocument();
-            final PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiReferenceExpression.class, false);
-            if (ref != null) {
-              ref.bindToElementViaStaticImport(containingClass);
-              PostprocessReformattingAspect.getInstance(ref.getProject()).doPostponedFormatting();
-            }
-            super.handleInsert(context);
-          }
-        };
+        return new StaticFieldLookupItem((PsiField)member, shouldImport, containingClass);
       }
 
       @Override
@@ -86,4 +74,51 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
     return processor;
   }
 
+  private static class StaticFieldLookupItem extends VariableLookupItem implements StaticallyImportable {
+    private final MemberLookupHelper myHelper;
+    private final PsiClass myContainingClass;
+
+    public StaticFieldLookupItem(PsiField field, boolean shouldImport, PsiClass containingClass) {
+      super(field);
+      myContainingClass = containingClass;
+      myHelper = new MemberLookupHelper(field, containingClass, shouldImport, false);
+    }
+
+    @Override
+    public void setShouldBeImported(boolean shouldImportStatic) {
+      myHelper.setShouldBeImported(shouldImportStatic);
+    }
+
+    @Override
+    public boolean canBeImported() {
+      return true;
+    }
+
+    @Override
+    public boolean willBeImported() {
+      return myHelper.willBeImported();
+    }
+
+    @Override
+    public void renderElement(LookupElementPresentation presentation) {
+      super.renderElement(presentation);
+      myHelper.renderElement(presentation, getAttribute(FORCE_QUALIFY) != null, PsiSubstitutor.EMPTY);
+    }
+
+    @Override
+    public void handleInsert(InsertionContext context) {
+      if (willBeImported()) {
+        context.commitDocument();
+        final PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiReferenceExpression.class, false);
+        if (ref != null) {
+          ref.bindToElementViaStaticImport(myContainingClass);
+          PostprocessReformattingAspect.getInstance(ref.getProject()).doPostponedFormatting();
+        }
+      } else {
+        context.getDocument().insertString(context.getStartOffset(), ".");
+        JavaCompletionUtil.insertClassReference(myContainingClass, context.getFile(), context.getStartOffset());
+      }
+      super.handleInsert(context);
+    }
+  }
 }
