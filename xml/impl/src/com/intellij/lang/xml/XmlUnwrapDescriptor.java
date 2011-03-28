@@ -60,7 +60,7 @@ public class XmlUnwrapDescriptor implements UnwrapDescriptor {
 
         PsiElement tag = PsiTreeUtil.getParentOfType(e, XmlTag.class);
         while (tag != null) {
-          if (XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode()) != null) { // Exclude implicit tags suck as 'jsp:root'
+          if (XmlChildRole.START_TAG_NAME_FINDER.findChild(tag.getNode()) != null) { // Exclude implicit tags suck as 'jsp:root'
             result.add(new Pair<PsiElement, Unwrapper>(tag, new XmlEnclosingTagUnwrapper()));
           }
           tag = PsiTreeUtil.getParentOfType(tag, XmlTag.class);

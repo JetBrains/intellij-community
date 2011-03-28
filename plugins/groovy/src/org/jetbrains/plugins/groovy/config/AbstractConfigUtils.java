@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -83,8 +82,22 @@ public abstract class AbstractConfigUtils {
    */
   @Nullable
   public static String getSDKJarVersion(String jarPath, final String jarRegex, String manifestPath) {
+    return getSDKJarVersion(jarPath, Pattern.compile(jarRegex), manifestPath);
+  }
+
+  /**
+   * Return value of Implementation-Version attribute in jar manifest
+   * <p/>
+   *
+   * @param jarPath      directory containing jar file
+   * @param jarPattern     filename pattern for jar file
+   * @param manifestPath path to manifest file in jar file
+   * @return value of Implementation-Version attribute, null if not found
+   */
+  @Nullable
+  public static String getSDKJarVersion(String jarPath, final Pattern jarPattern, String manifestPath) {
     try {
-      File[] jars = GroovyUtils.getFilesInDirectoryByPattern(jarPath, jarRegex);
+      File[] jars = GroovyUtils.getFilesInDirectoryByPattern(jarPath, jarPattern);
       if (jars.length != 1) {
         return null;
       }
@@ -107,7 +120,7 @@ public abstract class AbstractConfigUtils {
           return version;
         }
 
-        final Matcher matcher = Pattern.compile(jarRegex).matcher(jars[0].getName());
+        final Matcher matcher = jarPattern.matcher(jars[0].getName());
         if (matcher.matches() && matcher.groupCount() == 1) {
           return matcher.group(1);
         }

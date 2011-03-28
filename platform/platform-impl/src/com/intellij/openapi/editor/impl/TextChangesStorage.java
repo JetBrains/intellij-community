@@ -162,7 +162,10 @@ public class TextChangesStorage {
     int newChangeStart = change.getStart();
     int newChangeEnd = change.getEnd();
     int storedChangeStart = getChangeIndex(change.getStart());
-    int clientShift = 0;
+    int clientShift = 0; // 'Client text' shift before the given change to store. I.e. this value can be subtracted from the
+                         // given change's start/end offsets in order to get original document range affected by the given change.
+    int changeDiff = change.getText().length() - (change.getEnd() - change.getStart());
+    boolean updateClientOffsetOnly = false;
     
     if (storedChangeStart < 0) {
       storedChangeStart = -storedChangeStart - 1;
@@ -171,9 +174,6 @@ public class TextChangesStorage {
           ChangeEntry changeEntry = myChanges.get(storedChangeStart - 1);
           clientShift = changeEntry.clientStartOffset - changeEntry.change.getStart() + changeEntry.change.getDiff();
         }
-      }
-
-      if (storedChangeStart >= myChanges.size()) {
         myChanges.add(new ChangeEntry(
           new TextChangeImpl(change.getText(), change.getStart() - clientShift, change.getEnd() - clientShift),
           change.getStart()
@@ -192,6 +192,21 @@ public class TextChangesStorage {
       CharSequence storedText = changeEntry.change.getText();
       int storedClientEnd = storedClientStart + storedText.length();
 
+      // Stored change lays after the new one.
+      if (!updateClientOffsetOnly && storedClientStart > newChangeEnd) {
+        if (changeDiff != 0) {
+          updateClientOffsetOnly = true;
+        }
+        else {
+          break;
+        }
+      }
+
+      if (updateClientOffsetOnly) {
+        changeEntry.clientStartOffset += changeDiff;
+        continue;
+      }
+      
       // Stored change lays before the new one.
       if (storedClientEnd <= newChangeStart) {
         clientShift += changeEntry.change.getDiff();
@@ -199,9 +214,7 @@ public class TextChangesStorage {
         continue;
       }
       
-      // We know that given change and stored change have intersections if control flow reaches this place.
-
-      // Check if given change target sub-range of the stored one
+      // Check if given change targets sub-range of the stored one.
       if (storedClientStart <= newChangeStart && storedClientEnd >= newChangeEnd) {
         StringBuilder adjustedText = new StringBuilder();
         if (storedClientStart < newChangeStart) {
@@ -215,13 +228,15 @@ public class TextChangesStorage {
         if (adjustedText.length() == 0 && changeEntry.change.getStart() == changeEntry.change.getEnd()) {
           myChanges.remove(i);
           insertionIndex = -1;
-          break;
+          updateClientOffsetOnly = true;
+          continue;
         }
 
         TextChangeImpl adjusted = new TextChangeImpl(adjustedText, changeEntry.change.getStart(), changeEntry.change.getEnd());
         myChanges.set(i, new ChangeEntry(adjusted, adjusted.getStart()));
         insertionIndex = -1;
-        break;
+        updateClientOffsetOnly = true;
+        continue;
       }
 
       // Check if given change completely contains stored change range.
@@ -234,7 +249,7 @@ public class TextChangesStorage {
       }
 
       // Check if given change intersects stored change range from the left.
-      if (newChangeStart <= storedClientStart && newChangeEnd < storedClientEnd) {
+      if (newChangeStart <= storedClientStart && newChangeEnd > storedClientStart) {
         int numberOfStoredChangeSymbolsToRemove = newChangeEnd - storedClientStart;
         CharSequence adjustedText = storedText.subSequence(numberOfStoredChangeSymbolsToRemove, storedText.length());
         changeEntry.change = new TextChangeImpl(adjustedText, changeEntry.change.getStart(), changeEntry.change.getEnd());
@@ -244,7 +259,7 @@ public class TextChangesStorage {
       }
 
       // Check if given change intersects stored change range from the right.
-      if (newChangeStart < storedClientEnd && newChangeEnd > storedClientEnd) {
+      if (newChangeStart < storedClientEnd && newChangeEnd >= storedClientEnd) {
         CharSequence adjustedText = storedText.subSequence(0, newChangeStart - storedClientStart);
         TextChangeImpl adjusted = new TextChangeImpl(adjustedText, changeEntry.change.getStart(), changeEntry.change.getEnd());
         myChanges.set(i, new ChangeEntry(adjusted, adjusted.getStart()));

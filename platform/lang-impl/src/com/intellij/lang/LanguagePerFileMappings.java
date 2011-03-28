@@ -145,7 +145,8 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
   }
 
   protected abstract List<T> getAvailableValues();
-  
+
+  @Nullable
   protected abstract String serialize(T t);
 
   public Element getState() {
@@ -161,10 +162,13 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
       });
       for (VirtualFile file : files) {
         final T dialect = myMappings.get(file);
-        final Element child = new Element("file");
-        element.addContent(child);
-        child.setAttribute("url", file == null ? "PROJECT" : file.getUrl());
-        child.setAttribute(getValueAttribute(), serialize(dialect));
+        String value = serialize(dialect);
+        if (value != null) {
+          final Element child = new Element("file");
+          element.addContent(child);
+          child.setAttribute("url", file == null ? "PROJECT" : file.getUrl());
+          child.setAttribute(getValueAttribute(), value);
+        }
       }
       return element;
     }
@@ -184,7 +188,10 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
     synchronized (myMappings) {
       final THashMap<String, T> dialectMap = new THashMap<String, T>();
       for (T dialect : getAvailableValues()) {
-        dialectMap.put(serialize(dialect), dialect);
+        String key = serialize(dialect);
+        if (key != null) {
+          dialectMap.put(key, dialect);
+        }
       }
       final List<Element> files = state.getChildren("file");
       for (Element fileElement : files) {
