@@ -153,6 +153,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
                                                       IconLoader.getIcon("/debugger/console.png"),
                                                       console.getPreferredFocusableComponent());
 
+    consoleContent.setCloseable(false);
     addAdditionalConsoleEditorActions(console, consoleContent);
     ui.addContent(consoleContent, 0, PlaceInGrid.bottom, false);
   }
