@@ -59,8 +59,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   };
   private TIntObjectHashMap<Icon> myBaseIcon;
 
-  private static final Icon VISIBILITY_ICON_PLACHOLDER = new EmptyIcon(Icons.PUBLIC_ICON);
-  public static final Icon ICON_PLACHOLDER = IconLoader.getIcon("/nodes/nodePlaceholder.png");
+  private static final Icon VISIBILITY_ICON_PLACEHOLDER = new EmptyIcon(Icons.PUBLIC_ICON);
+  public static final Icon ICON_PLACEHOLDER = IconLoader.getIcon("/nodes/nodePlaceholder.png");
 
   @Nullable
   public Icon getIcon(int flags) {
@@ -132,7 +132,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
         }
       }
     }
-    return ICON_PLACHOLDER;
+    return ICON_PLACEHOLDER;
   }
 
   public static boolean isNativeFileType(FileType fileType) {
@@ -144,7 +144,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if ((flags & ICON_FLAG_VISIBILITY) > 0) {
       RowIcon rowIcon = new RowIcon(2);
       rowIcon.setIcon(icon, 0);
-      rowIcon.setIcon(VISIBILITY_ICON_PLACHOLDER, 1);
+      rowIcon.setIcon(VISIBILITY_ICON_PLACEHOLDER, 1);
       result = rowIcon;
     }
 
