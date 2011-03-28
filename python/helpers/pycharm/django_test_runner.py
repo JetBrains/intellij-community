@@ -38,7 +38,7 @@ except ImportError:
 class DjangoTeamcityTestRunner(BaseRunner):
   def __init__(self, stream=sys.stdout):
     BaseRunner.__init__(self, stream)
-    self.interactive = False
+    #self.interactive = False
 
   def run_suite(self, suite):
     return TeamcityTestRunner().run(suite)
@@ -126,7 +126,7 @@ def run_tests(test_labels, verbosity=1, interactive=False, extra_tests=[]):
 
     old_name = settings.DATABASE_NAME
     from django.db import connection
-    connection.creation.create_test_db(verbosity, autoclobber=True)
+    connection.creation.create_test_db(verbosity, autoclobber=False)
     TeamcityServiceMessages(sys.stdout).testCount(suite.countTestCases())
     result = DjangoTeamcityTestRunner().run(suite)
     connection.creation.destroy_test_db(old_name, verbosity)
