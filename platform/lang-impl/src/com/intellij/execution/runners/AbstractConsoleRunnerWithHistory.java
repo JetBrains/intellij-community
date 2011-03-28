@@ -307,7 +307,10 @@ public abstract class AbstractConsoleRunnerWithHistory {
       public Boolean compute() {
         final Document document = consoleEditor.getDocument();
         final CaretModel caretModel = consoleEditor.getCaretModel();
-
+        // Check if we have focus
+        if (!IJSwingUtilities.hasFocus(consoleEditor.getComponent())) {
+          return true;
+        }
         // Check if we have active lookup or if we can move in editor
         return LookupManager.getActiveLookup(consoleEditor) != null ||
                document.getLineNumber(caretModel.getOffset()) < document.getLineCount() - 1 &&
