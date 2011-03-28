@@ -330,6 +330,29 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void testAfterAnonymousClassWhereCodeBlockStartsWithComment() throws Exception {
+    // Inspired by IDEA-66583
+    getSettings().BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER = 0;
+    
+    String textWithWhiteSpaceBetweenCommentAndLbrace = 
+      "Object object = new Object() { // comment breaks \"blank line after anonymous class header\"\n" +
+      "    @Override\n" +
+      "    public String toString() {\n" +
+      "        return super.toString();\n" +
+      "    }\n" +
+      "};";
+    doMethodTest(textWithWhiteSpaceBetweenCommentAndLbrace, textWithWhiteSpaceBetweenCommentAndLbrace);
+
+    String textWithoutWhiteSpaceBetweenCommentAndLbrace =
+      "Object object = new Object() {// comment breaks \"blank line after anonymous class header\"\n" +
+      "    @Override\n" +
+      "    public String toString() {\n" +
+      "        return super.toString();\n" +
+      "    }\n" +
+      "};";
+    doMethodTest(textWithoutWhiteSpaceBetweenCommentAndLbrace, textWithoutWhiteSpaceBetweenCommentAndLbrace);
+  }
+  
   public void testBeforeMethodBody() {
     // Inspired by IDEA-54747
     getSettings().BLANK_LINES_BEFORE_METHOD_BODY = 3;
