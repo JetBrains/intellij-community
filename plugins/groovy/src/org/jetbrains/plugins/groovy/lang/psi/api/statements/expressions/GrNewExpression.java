@@ -39,4 +39,7 @@ public interface GrNewExpression extends GrCallExpression, GrConstructorCall {
 
   @Nullable
   GrAnonymousClassDefinition getAnonymousClassDefinition();
+
+  @Nullable
+  GrArrayDeclaration getArrayDeclaration();
 }
