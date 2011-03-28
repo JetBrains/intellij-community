@@ -564,7 +564,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
       myDeferredTypes.add(contentType);
 
-      s = StringUtil.convertLineSeparators(s);
+      s = StringUtil.convertLineSeparators(s, true);
       myContentSize += s.length();
       myDeferredOutputLength += s.length();
       StringBuilder bufferToUse;
@@ -833,7 +833,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           myEditor.getScrollingModel().accumulateViewportChanges();
         }
         try {
-          document.insertString(document.getTextLength(), text);
+          String[] strings = text.split("\\r");
+          for (int i = 0; i < strings.length - 1; i++) {
+            document.insertString(document.getTextLength(), strings[i]);
+            int lastLine = document.getLineCount() - 1;
+            document.deleteString(document.getLineStartOffset(lastLine), document.getTextLength());
+          }
+          document.insertString(document.getTextLength(), strings[strings.length - 1]);
         }
         finally {
           if (preserveCurrentVisualArea) {
