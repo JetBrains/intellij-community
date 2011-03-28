@@ -92,6 +92,10 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
 
     rootModel.setSdk(mySdk);
 
+    if (myProjectType == null) {
+      return;
+    }
+
     VirtualFile[] files = rootModel.getContentRoots();
     if (files.length > 0) {
       final VirtualFile contentRoot = files[0];

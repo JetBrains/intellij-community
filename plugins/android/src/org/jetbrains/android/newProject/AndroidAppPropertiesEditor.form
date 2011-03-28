@@ -60,7 +60,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text value="Create &quot;&amp;Hello, World!&quot; project"/>
+              <text value="Create &quot;&amp;Hello, World!&quot; activity"/>
             </properties>
           </component>
           <grid id="f0788" binding="myActivtiyPanel" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
