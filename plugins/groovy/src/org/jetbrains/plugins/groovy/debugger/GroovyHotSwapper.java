@@ -42,7 +42,7 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
         return true;
       }
     }
-    return true;
+    return false;
   }
 
   private static boolean containsGroovyClasses(Project project) {
