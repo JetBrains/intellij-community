@@ -20,6 +20,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -30,7 +32,11 @@ import java.util.concurrent.*;
 
 public class OSProcessHandler extends ProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandler");
+
+  @NotNull
   private final Process myProcess;
+
+  @Nullable
   private final String myCommandLine;
 
   private final ProcessWaitFor myWaitFor;
@@ -63,7 +69,7 @@ public class OSProcessHandler extends ProcessHandler {
     return ExecutorServiceHolder.ourThreadExecutorsService.submit(task);
   }
 
-  public OSProcessHandler(final Process process, final String commandLine) {
+  public OSProcessHandler(@NotNull final Process process, @Nullable final String commandLine) {
     myProcess = process;
     myCommandLine = commandLine;
     myWaitFor = new ProcessWaitFor(process);
@@ -127,7 +133,9 @@ public class OSProcessHandler extends ProcessHandler {
       }
     };
 
-    notifyTextAvailable(myCommandLine + '\n', ProcessOutputTypes.SYSTEM);
+    if (myCommandLine != null) {
+      notifyTextAvailable(myCommandLine + '\n', ProcessOutputTypes.SYSTEM);
+    }
 
     addProcessListener(new ProcessAdapter() {
       public void startNotified(final ProcessEvent event) {
@@ -218,6 +226,7 @@ public class OSProcessHandler extends ProcessHandler {
   }
 
   // todo: to remove
+  @Nullable
   public String getCommandLine() {
     return myCommandLine;
   }
