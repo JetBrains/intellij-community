@@ -44,7 +44,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     myClosedIcon = presentation.getIcon(false);
     myName = presentation.getPresentableText();
     myColor = presentation.getForcedTextForeground();
-    final boolean updated = presentation.equals(myUpdatedPresentation);
+    boolean updated = !presentation.equals(myUpdatedPresentation);
 
     if (myUpdatedPresentation == null) {
       myUpdatedPresentation = createPresentation();
@@ -55,6 +55,9 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     if (myTemplatePresentation != null) {
       myUpdatedPresentation.applyFrom(myTemplatePresentation);
     }
+
+    updated |= myUpdatedPresentation.isChanged();
+    myUpdatedPresentation.setChanged(false);
 
     return updated;
   }

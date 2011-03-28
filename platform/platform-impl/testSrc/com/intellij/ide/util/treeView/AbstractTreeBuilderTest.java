@@ -44,6 +44,8 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   NodeDescriptor.NodeComparator.Delegate<NodeDescriptor> myComparator;
   Node myIntellij;
 
+  protected final Set<NodeElement> myChanges = new HashSet<NodeElement>();
+
   protected AbstractTreeBuilderTest(boolean passthrougth) {
     super(passthrougth);
   }
@@ -527,6 +529,11 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
           onElementAction("update", (NodeElement)element);
           presentation.clear();
           presentation.addText(new ColoredFragment(getElement().toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES));
+
+          if (myChanges.contains(element)) {
+            myChanges.remove(element);
+            presentation.setChanged(true);
+          }
         }
 
         @Override

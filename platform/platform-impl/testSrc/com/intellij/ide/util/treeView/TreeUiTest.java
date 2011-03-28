@@ -12,9 +12,12 @@ import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 
 public class TreeUiTest extends AbstractTreeBuilderTest {
 
@@ -148,6 +151,71 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertFalse(indicatorRef.get().isCanceled());
   }
 
+
+  public void testNoExtraJTreeModelUpdate() throws Exception {
+    buildStructure(myRoot);
+    expand(getPath("/"));
+
+    assertTree("-/\n" +
+               " +com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+
+    final Ref<StringBuffer> updates = new Ref<StringBuffer>(new StringBuffer());
+    getMyBuilder().getTreeModel().addTreeModelListener(new TreeModelListener() {
+      @Override
+      public void treeNodesChanged(TreeModelEvent e) {
+        updates.get().append("changed parent" + e.getTreePath() + " children=" + Arrays.asList(e.getChildren())+ "\n");
+      }
+
+      @Override
+      public void treeNodesInserted(TreeModelEvent e) {
+        updates.get().append("inserted=" + e.getTreePath() + "\n");
+      }
+
+      @Override
+      public void treeNodesRemoved(TreeModelEvent e) {
+        updates.get().append("removed=" + e.getTreePath() + "\n");
+      }
+
+      @Override
+      public void treeStructureChanged(TreeModelEvent e) {
+        updates.get().append("structureChanged=" + e.getTreePath() + "\n");
+      }
+    });
+
+    assertEquals("", updates.get().toString());
+
+    updateFromRoot();
+    assertEquals("", updates.get().toString());
+
+
+    myChanges.add(new NodeElement("com"));
+    updateFromRoot();
+    assertEquals("changed parent[/] children=[com]\n", updates.get().toString());
+    assertTree("-/\n" +
+               " +com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+    updates.set(new StringBuffer());
+
+
+    updateFrom(new NodeElement("org"));
+    assertEquals("", updates.get().toString());
+
+    myChanges.add(new NodeElement("org"));
+    updateFrom(new NodeElement("org"));
+    assertEquals("changed parent[/] children=[org]\n", updates.get().toString());
+    updates.set(new StringBuffer());
+
+
+    myChanges.add(new NodeElement("intellij"));
+    updateFromRoot();
+    assertEquals("", updates.get().toString());
+  }
 
   public void testCancelUpdateBatch() throws Exception {
     buildStructure(myRoot);
@@ -2114,6 +2182,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public static class SyncUpdate extends TreeUiTest {
     public SyncUpdate() {
       super(false, false);
+    }
+
+    @Override
+    public void testNoExtraJTreeModelUpdate() throws Exception {
+      super.testNoExtraJTreeModelUpdate();    //To change body of overridden methods use File | Settings | File Templates.
     }
   }
 

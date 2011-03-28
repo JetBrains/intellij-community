@@ -784,49 +784,49 @@ public class AbstractTreeUi {
     final AsyncResult<Boolean> result = new AsyncResult<Boolean>();
 
     if (now || isPassthroughMode()) {
-      return new AsyncResult<Boolean>().setDone(_update(nodeDescriptor));
-    }
+      result.setDone(_update(nodeDescriptor));
+    } else {
+      Object element = getElementFromDescriptor(nodeDescriptor);
+      boolean bgLoading = getTreeStructure().isToBuildChildrenInBackground(element);
 
-    Object element = getElementFromDescriptor(nodeDescriptor);
-    boolean bgLoading = getTreeStructure().isToBuildChildrenInBackground(element);
-
-    boolean edt = isEdt();
-    if (bgLoading) {
-      if (edt) {
-        final Ref<Boolean> changes = new Ref<Boolean>(false);
-        queueToBackground(new Runnable() {
-          public void run() {
-            changes.set(_update(nodeDescriptor));
-          }
-        }, new Runnable() {
-          public void run() {
-            result.setDone(changes.get());
-          }
-        }, nodeDescriptor);
+      boolean edt = isEdt();
+      if (bgLoading) {
+        if (edt) {
+          final Ref<Boolean> changes = new Ref<Boolean>(false);
+          queueToBackground(new Runnable() {
+            public void run() {
+              changes.set(_update(nodeDescriptor));
+            }
+          }, new Runnable() {
+            public void run() {
+              result.setDone(changes.get());
+            }
+          }, nodeDescriptor);
+        }
+        else {
+          result.setDone(_update(nodeDescriptor));
+        }
       }
       else {
-        result.setDone(_update(nodeDescriptor));
-      }
-    }
-    else {
-      if (edt || !myWasEverShown) {
-        result.setDone(_update(nodeDescriptor));
-      }
-      else {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          public void run() {
-            execute(new Runnable() {
-              public void run() {
-                result.setDone(_update(nodeDescriptor));
-              }
-            });
-          }
-        });
+        if (edt || !myWasEverShown) {
+          result.setDone(_update(nodeDescriptor));
+        }
+        else {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            public void run() {
+              execute(new Runnable() {
+                public void run() {
+                  result.setDone(_update(nodeDescriptor));
+                }
+              });
+            }
+          });
+        }
       }
     }
 
     result.doWhenDone(new AsyncResult.Handler<Boolean>() {
-      public void run(Boolean changes) {
+      public void run(final Boolean changes) {
         if (changes) {
           final long updateStamp = nodeDescriptor.getUpdateCount();
           UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -836,7 +836,7 @@ public class AbstractTreeUi {
               if (node != null) {
                 TreePath path = getPathFor(node);
                 if (path != null && myTree.isVisible(path)) {
-                  updateNodeImageAndPosition(node, false);
+                  updateNodeImageAndPosition(node, false, changes);
                 }
               }
             }
@@ -1023,7 +1023,7 @@ public class AbstractTreeUi {
           }
         }
         if (changes) {
-          updateNodeImageAndPosition(node, true);
+          updateNodeImageAndPosition(node, false, changes);
         }
       }
     });
@@ -2857,9 +2857,9 @@ public class AbstractTreeUi {
 
         updateIndexDone.doWhenDone(new Runnable() {
           public void run() {
-            if (index != null && changes.get()) {
-              updateNodeImageAndPosition(childNode, false);
-            }
+            //if (index != null && changes.get()) {
+            //  updateNodeImageAndPosition(childNode, false, changes.get());
+            //}
             if (!oldElement.equals(newElement.get()) || forceRemapping.get()) {
               removeMapping(oldElement, childNode, newElement.get());
               if (newElement.get() != null) {
@@ -2898,9 +2898,9 @@ public class AbstractTreeUi {
               updateNodeChildren(childNode, pass, null, false, canSmartExpand, forceUpdate, true, true);
             }
 
-            if (parentNode.equals(getRootNode())) {
-              myTreeModel.nodeChanged(getRootNode());
-            }
+            //if (parentNode.equals(getRootNode())) {
+            //  myTreeModel.nodeChanged(getRootNode());
+            //}
 
             result.setDone();
           }
@@ -3299,12 +3299,11 @@ public class AbstractTreeUi {
     }
   }
 
-  private void updateNodeImageAndPosition(final DefaultMutableTreeNode node, boolean updatePosition) {
+  private void updateNodeImageAndPosition(final DefaultMutableTreeNode node, boolean updatePosition, boolean nodeChanged) {
     if (!(node.getUserObject() instanceof NodeDescriptor)) return;
     NodeDescriptor descriptor = getDescriptorFrom(node);
     if (getElementFromDescriptor(descriptor) == null) return;
 
-    boolean notified = false;
     if (updatePosition) {
       DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode)node.getParent();
       if (parentNode != null) {
@@ -3326,17 +3325,16 @@ public class AbstractTreeUi {
           removeNodeFromParent(node, false);
           myTreeModel.insertNodeInto(node, parentNode, newIndex);
           TreeBuilderUtil.restorePaths(getBuilder(), pathsToExpand, selectionPaths, false);
-          notified = true;
         }
         else {
           myTreeModel.nodeChanged(node);
-          notified = true;
         }
       }
       else {
         myTreeModel.nodeChanged(node);
-        notified = true;
       }
+    } else if (nodeChanged) {
+      myTreeModel.nodeChanged(node);
     }
   }
 
