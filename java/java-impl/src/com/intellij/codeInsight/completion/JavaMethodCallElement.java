@@ -24,9 +24,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,9 +37,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   private static final Key<PsiSubstitutor> INFERENCE_SUBSTITUTOR = Key.create("INFERENCE_SUBSTITUTOR");
   @Nullable private final PsiClass myContainingClass;
   private final PsiMethod myMethod;
-  private final boolean myCanImportStatic;
-  private boolean myShouldImportStatic;
-  private final boolean myMergedOverloads;
+  private final MemberLookupHelper myHelper;
 
   public JavaMethodCallElement(@NotNull PsiMethod method) {
     this(method, false, false);
@@ -50,9 +46,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   public JavaMethodCallElement(PsiMethod method, boolean canImportStatic, boolean mergedOverloads) {
     super(method, method.getName());
     myMethod = method;
-    myMergedOverloads = mergedOverloads;
     myContainingClass = method.getContainingClass();
-    myCanImportStatic = canImportStatic;
+    myHelper = canImportStatic ? new MemberLookupHelper(method, myContainingClass, false, mergedOverloads) : null;
   }
 
   public PsiType getType() {
@@ -77,18 +72,17 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
   @Override
   public void setShouldBeImported(boolean shouldImportStatic) {
-    assert myCanImportStatic;
-    myShouldImportStatic = shouldImportStatic;
+    myHelper.setShouldBeImported(shouldImportStatic);
   }
 
   @Override
   public boolean canBeImported() {
-    return myCanImportStatic;
+    return myHelper != null;
   }
 
   @Override
   public boolean willBeImported() {
-    return myShouldImportStatic;
+    return canBeImported() && myHelper.willBeImported();
   }
 
   @Override
@@ -108,9 +102,9 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       qualifyMethodCall(file, startOffset, document);
       insertExplicitTypeParameters(context, refStart);
     }
-    else if (myCanImportStatic || getAttribute(FORCE_QUALIFY) != null) {
+    else if (myHelper != null || getAttribute(FORCE_QUALIFY) != null) {
       context.commitDocument();
-      if (myCanImportStatic && myShouldImportStatic) {
+      if (myHelper != null && willBeImported()) {
         final PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiReferenceExpression.class, false);
         if (ref != null && myContainingClass != null) {
           ref.bindToElementViaStaticImport(myContainingClass);
@@ -234,38 +228,12 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
   @Override
   public void renderElement(LookupElementPresentation presentation) {
-    final String className = myContainingClass == null ? "???" : myContainingClass.getName();
-
     presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this, presentation.isReal()));
-
-    final String methodName = myMethod.getName();
-    final boolean qualify = myCanImportStatic && !myShouldImportStatic || getAttribute(FORCE_QUALIFY) != null;
-    if (qualify && StringUtil.isNotEmpty(className)) {
-      presentation.setItemText(className + "." + methodName);
-    } else {
-      presentation.setItemText(methodName);
-    }
-
-    final String qname = myContainingClass == null ? "" : myContainingClass.getQualifiedName();
-    String location = !myCanImportStatic || StringUtil.isEmpty(qname) ? "" : " (" + StringUtil.getPackageName(qname) + ")";
 
     presentation.setStrikeout(JavaElementLookupRenderer.isToStrikeout(this));
     presentation.setItemTextBold(getAttribute(HIGHLIGHTED_ATTR) != null);
 
-    final String params = myMergedOverloads
-                          ? "(...)"
-                          : PsiFormatUtil.formatMethod(myMethod, PsiSubstitutor.EMPTY,
-                                                       PsiFormatUtil.SHOW_PARAMETERS,
-                                                       PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE);
-    if (myShouldImportStatic && StringUtil.isNotEmpty(className)) {
-      presentation.setTailText(params + " in " + className + location);
-    } else {
-      presentation.setTailText(params + location);
-    }
-
-    final PsiType type = myMethod.getReturnType();
-    if (type != null) {
-      presentation.setTypeText(getSubstitutor().substitute(type).getPresentableText());
-    }
+    MemberLookupHelper helper = myHelper != null ? myHelper : new MemberLookupHelper(myMethod, myContainingClass, false, false);
+    helper.renderElement(presentation, getAttribute(FORCE_QUALIFY) != null, getSubstitutor());
   }
 }
