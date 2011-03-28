@@ -721,11 +721,7 @@ public class DocumentationManager {
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-              }
-            });
+            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
             if (!element.isValid()) {
               callback.setDone();

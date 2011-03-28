@@ -45,7 +45,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.TitledSeparator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import sun.util.LocaleServiceProviderPool;
 
 import javax.swing.*;
 import java.util.HashSet;
@@ -131,11 +130,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       return;
     }
     if (scope.checkScopeWritable(project)) return;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-      }
-    });
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     final NullityInferrer inferrer = new NullityInferrer(myAnnotateLocalVariablesCb.isSelected(), project);
     final PsiManager psiManager = PsiManager.getInstance(project);
     if (!progressManager.runProcessWithProgressSynchronously(new Runnable() {

@@ -51,11 +51,7 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
   public void performOperation(final Project project, final Set<PsiJavaFile> javaFiles) {
     PsiManager.getInstance(project).performActionWithFormatterDisabled(new Runnable() {
       public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            PsiDocumentManager.getInstance(project).commitAllDocuments();
-          }
-        });
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
       }
     });
 
