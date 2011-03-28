@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -71,6 +72,7 @@ public class AndroidAppPropertiesEditor {
   }
 
   public void updateActivityPanel() {
+    myErrorLabel.setForeground(Color.RED);
     UIUtil.setEnabled(myActivtiyPanel, myHelloAndroidCheckBox.isSelected(), true);
   }
 
