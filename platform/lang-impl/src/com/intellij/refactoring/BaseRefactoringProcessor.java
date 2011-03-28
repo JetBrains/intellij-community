@@ -67,12 +67,12 @@ import java.util.*;
 
 public abstract class BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.BaseRefactoringProcessor");
-  public static final Runnable EMPTY_CALLBACK = EmptyRunnable.getInstance();
+
   protected final Project myProject;
 
   private RefactoringTransaction myTransaction;
   private boolean myIsPreviewUsages;
-  protected Runnable myPrepareSuccessfulSwingThreadCallback = EMPTY_CALLBACK;
+  protected Runnable myPrepareSuccessfulSwingThreadCallback = EmptyRunnable.INSTANCE;
 
 
   protected BaseRefactoringProcessor(Project project) {
@@ -84,6 +84,7 @@ public abstract class BaseRefactoringProcessor {
     myPrepareSuccessfulSwingThreadCallback = prepareSuccessfulCallback;
   }
 
+  @NotNull
   protected abstract UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages);
 
   /**

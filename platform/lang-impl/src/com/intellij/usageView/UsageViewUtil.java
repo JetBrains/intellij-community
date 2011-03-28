@@ -34,6 +34,7 @@ import com.intellij.refactoring.util.NonCodeUsageInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -121,7 +122,9 @@ public class UsageViewUtil {
             if (psiReference == null) continue;
             
             int injectionOffsetInMasterFile = InjectedLanguageManager.getInstance(usageElement.getProject()).injectedToHost(usageElement, usageElement.getTextOffset());
-            TextRange range = usage.getRangeInElement().shiftRight(injectionOffsetInMasterFile);
+            TextRange rangeInElement = usage.getRangeInElement();
+            assert rangeInElement != null : usage;
+            TextRange range = rangeInElement.shiftRight(injectionOffsetInMasterFile);
             set.remove(
               NonCodeUsageInfo.create(
                 context.getContainingFile(), 
@@ -136,5 +139,11 @@ public class UsageViewUtil {
       }
     }
     return set.toArray(new UsageInfo[set.size()]);
+  }
+
+  @NotNull
+  public static UsageInfo[] toUsageInfoArray(@NotNull final Collection<UsageInfo> collection) {
+    final int size = collection.size();
+    return size == 0 ? UsageInfo.EMPTY_ARRAY : collection.toArray(new UsageInfo[size]);
   }
 }
