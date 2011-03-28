@@ -241,7 +241,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
 
 // run and history actions
 
-    ConsoleExecutionActions executionActions = createExecuteAction();
+    ConsoleExecutionActions executionActions = createConsoleExecutionActions();
     actionList.addAll(executionActions.getActionsAsList());
 
 // Help
@@ -254,9 +254,9 @@ public abstract class AbstractConsoleRunnerWithHistory {
     return actions;
   }
 
-  protected ConsoleExecutionActions createExecuteAction() {
+  protected ConsoleExecutionActions createConsoleExecutionActions() {
     ConsoleExecutionActions executionActions =
-      createConsoleExecActions(getLanguageConsole(), myProcessHandler, myConsoleExecuteActionHandler);
+      createConsoleActions(getLanguageConsole(), myProcessHandler, myConsoleExecuteActionHandler);
     myRunAction = executionActions.getRunAction();
     return executionActions;
   }
@@ -273,9 +273,9 @@ public abstract class AbstractConsoleRunnerWithHistory {
     return myConsoleView.getConsole();
   }
 
-  public static ConsoleExecutionActions createConsoleExecActions(final LanguageConsoleImpl languageConsole,
-                                                                 final ProcessHandler processHandler,
-                                                                 final ConsoleExecuteActionHandler consoleExecuteActionHandler) {
+  public static ConsoleExecutionActions createConsoleActions(final LanguageConsoleImpl languageConsole,
+                                                             final ProcessHandler processHandler,
+                                                             final ConsoleExecuteActionHandler consoleExecuteActionHandler) {
     final AnAction runAction = new ConsoleExecuteAction(languageConsole,
                                                         processHandler, consoleExecuteActionHandler);
 
