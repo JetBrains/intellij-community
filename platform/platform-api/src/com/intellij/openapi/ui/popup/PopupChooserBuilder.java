@@ -48,7 +48,7 @@ public class PopupChooserBuilder {
   private JComponent myChooserComponent;
   private String myTitle;
   private final ArrayList<KeyStroke> myAdditionalKeystrokes = new ArrayList<KeyStroke>();
-  private Runnable myItemChoosenRunnable;
+  private Runnable myItemChosenRunnable;
   private JComponent mySouthComponent;
   private JComponent myEastComponent;
 
@@ -103,7 +103,7 @@ public class PopupChooserBuilder {
 
   @NotNull
   public PopupChooserBuilder setItemChoosenCallback(@NotNull Runnable runnable) {
-    myItemChoosenRunnable = runnable;
+    myItemChosenRunnable = runnable;
     return this;
   }
 
@@ -283,7 +283,7 @@ public class PopupChooserBuilder {
 
   private void closePopup(boolean shouldPerformAction, MouseEvent e, boolean isOk) {
     if (shouldPerformAction) {
-      myPopup.setFinalRunnable(myItemChoosenRunnable);
+      myPopup.setFinalRunnable(myItemChosenRunnable);
     }
 
     if (isOk) {
