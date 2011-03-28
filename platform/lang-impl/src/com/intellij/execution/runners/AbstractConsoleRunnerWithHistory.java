@@ -44,6 +44,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.SideBorder;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.ui.UIUtil;
@@ -241,7 +242,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
 
 // run and history actions
 
-    ConsoleExecutionActions executionActions = createExecuteAction();
+    ConsoleExecutionActions executionActions = createConsoleExecutionActions();
     actionList.addAll(executionActions.getActionsAsList());
 
 // Help
@@ -254,9 +255,9 @@ public abstract class AbstractConsoleRunnerWithHistory {
     return actions;
   }
 
-  protected ConsoleExecutionActions createExecuteAction() {
+  protected ConsoleExecutionActions createConsoleExecutionActions() {
     ConsoleExecutionActions executionActions =
-      createConsoleExecActions(getLanguageConsole(), myProcessHandler, myConsoleExecuteActionHandler);
+      createConsoleActions(getLanguageConsole(), myProcessHandler, myConsoleExecuteActionHandler);
     myRunAction = executionActions.getRunAction();
     return executionActions;
   }
@@ -273,9 +274,9 @@ public abstract class AbstractConsoleRunnerWithHistory {
     return myConsoleView.getConsole();
   }
 
-  public static ConsoleExecutionActions createConsoleExecActions(final LanguageConsoleImpl languageConsole,
-                                                                 final ProcessHandler processHandler,
-                                                                 final ConsoleExecuteActionHandler consoleExecuteActionHandler) {
+  public static ConsoleExecutionActions createConsoleActions(final LanguageConsoleImpl languageConsole,
+                                                             final ProcessHandler processHandler,
+                                                             final ConsoleExecuteActionHandler consoleExecuteActionHandler) {
     final AnAction runAction = new ConsoleExecuteAction(languageConsole,
                                                         processHandler, consoleExecuteActionHandler);
 
@@ -309,7 +310,10 @@ public abstract class AbstractConsoleRunnerWithHistory {
       public Boolean compute() {
         final Document document = consoleEditor.getDocument();
         final CaretModel caretModel = consoleEditor.getCaretModel();
-
+        // Check if we have focus
+        if (!IJSwingUtilities.hasFocus(consoleEditor.getComponent())) {
+          return true;
+        }
         // Check if we have active lookup or if we can move in editor
         return LookupManager.getActiveLookup(consoleEditor) != null ||
                document.getLineNumber(caretModel.getOffset()) < document.getLineCount() - 1 &&
@@ -324,6 +328,10 @@ public abstract class AbstractConsoleRunnerWithHistory {
       public Boolean compute() {
         final Document document = consoleEditor.getDocument();
         final CaretModel caretModel = consoleEditor.getCaretModel();
+        // Check if we have focus
+        if (!IJSwingUtilities.hasFocus(consoleEditor.getComponent())) {
+          return true;
+        }
         // Check if we have active lookup or if we can move in editor
         return LookupManager.getActiveLookup(consoleEditor) != null || document.getLineNumber(caretModel.getOffset()) > 0;
       }
