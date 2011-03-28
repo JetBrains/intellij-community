@@ -391,6 +391,9 @@ public class PsiDocumentNavigator extends DefaultNavigator {
     public String getTextStringValue(Object txt) {
         LOG.debug("enter: getTextStringValue");
 
+        if (txt instanceof XmlText) {
+          return ((XmlText)txt).getValue();
+        }
         return txt instanceof PsiElement ? ((PsiElement)txt).getText() : txt.toString();
     }
 
