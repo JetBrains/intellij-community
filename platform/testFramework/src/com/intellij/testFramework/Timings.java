@@ -17,10 +17,7 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.util.io.FileUtil;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.math.BigInteger;
 
 /**
@@ -28,6 +25,9 @@ import java.math.BigInteger;
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class Timings {
+  private static final int CPU_PROBES = 1000000;
+  private static final int IO_PROBES = 42;
+
   public static final long CPU_TIMING;
   public static final long IO_TIMING;
   public static final long MACHINE_TIMING;
@@ -37,13 +37,13 @@ public class Timings {
 
     start = System.currentTimeMillis();
     BigInteger k = new BigInteger("1");
-    for (int i = 0; i < 1000000; i++) {
+    for (int i = 0; i < CPU_PROBES; i++) {
       k = k.add(new BigInteger("1"));
     }
     CPU_TIMING = System.currentTimeMillis() - start;
 
     start = System.currentTimeMillis();
-    for (int i = 0; i < 42; i++) {
+    for (int i = 0; i < IO_PROBES; i++) {
       try {
         final File tempFile = FileUtil.createTempFile("test", "test" + i);
 
@@ -64,6 +64,16 @@ public class Timings {
         }
         finally {
           reader.close();
+        }
+
+        if (i == IO_PROBES - 1) {
+          final FileOutputStream stream = new FileOutputStream(tempFile);
+          try {
+            stream.getFD().sync();
+          }
+          finally {
+            stream.close();
+          }
         }
 
         if (!tempFile.delete()) {
