@@ -45,15 +45,19 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestData;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -680,5 +684,19 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     AnActionEvent event = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
     event.setInjectedContext(true);
     action.actionPerformed(event);
+  }
+
+  @NotNull
+  protected PsiClass findClass(@NotNull @NonNls final String name) {
+    final PsiClass aClass = myJavaFacade.findClass(name, ProjectScope.getProjectScope(getProject()));
+    assertNotNull("Class " + name + " not found", aClass);
+    return aClass;
+  }
+
+  @NotNull
+  protected PsiPackage findPackage(@NotNull @NonNls final String name) {
+    final PsiPackage aPackage = myJavaFacade.findPackage(name);
+    assertNotNull("Package " + name + " not found", aPackage);
+    return aPackage;
   }
 }
