@@ -108,7 +108,6 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
       UncheckedWarningLocalInspection.class,
       SuspiciousNameCombinationInspection.class,
       DuplicateThrowsInspection.class,
-      LossyEncodingInspection.class,
 
       FieldAccessNotGuardedInspection.class,
       InstanceGuardedByStaticInspection.class,

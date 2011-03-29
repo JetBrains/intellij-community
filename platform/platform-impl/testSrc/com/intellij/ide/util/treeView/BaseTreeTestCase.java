@@ -518,6 +518,10 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     public void setForcedParent(NodeElement forcedParent) {
       myForcedParent = forcedParent;
     }
+
+    public void setName(String name) {
+      myName = name;
+    }
   }
 
   protected interface Validator {

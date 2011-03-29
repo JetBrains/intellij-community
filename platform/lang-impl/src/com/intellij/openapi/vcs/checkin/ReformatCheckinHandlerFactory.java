@@ -16,15 +16,15 @@
 
 package com.intellij.openapi.vcs.checkin;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class StandardCheckinHandlerFactory extends CheckinHandlerFactory {
+public class ReformatCheckinHandlerFactory extends CheckinHandlerFactory {
   @NotNull
   public CheckinHandler createHandler(final CheckinProjectPanel panel) {
-    return new StandardBeforeCheckinHandler(panel.getProject(), panel);
+    return new ReformatBeforeCheckinHandler(panel.getProject(), panel);
   }
 }

@@ -61,6 +61,8 @@ public abstract class GitHandler {
 
   private final HashSet<Integer> myIgnoredErrorCodes = new HashSet<Integer>(); // Error codes that are ignored for the handler
   private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<VcsException>());
+  private final List<String> myLastOutput = Collections.synchronizedList(new ArrayList<String>());
+  private final int LAST_OUTPUT_SIZE = 5;
   private static final Logger LOG = Logger.getInstance(GitHandler.class.getName());
   final GeneralCommandLine myCommandLine;
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
@@ -177,6 +179,19 @@ public abstract class GitHandler {
    */
   public void addError(VcsException ex) {
     myErrors.add(ex);
+  }
+
+  public void addLastOutput(String line) {
+    if (myLastOutput.size() < LAST_OUTPUT_SIZE) {
+      myLastOutput.add(line);
+    } else {
+      myLastOutput.add(0, line);
+      Collections.rotate(myLastOutput, -1);
+    }
+  }
+
+  public List<String> getLastOutput() {
+    return myLastOutput;
   }
 
   /**

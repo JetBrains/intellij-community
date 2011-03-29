@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -83,7 +84,9 @@ public class PsiImplUtil {
     }
 
     // Remove unnecessary parentheses
-    if (removeUnnecessaryParentheses && oldParent instanceof GrParenthesizedExpression) {
+    if (removeUnnecessaryParentheses &&
+        oldParent instanceof GrParenthesizedExpression &&
+        !(oldParent.getParent() instanceof GrArgumentLabel)) {
       return ((GrExpression)oldParent).replaceWithExpression(newExpr, removeUnnecessaryParentheses);
     }
 

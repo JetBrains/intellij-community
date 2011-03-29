@@ -16,15 +16,18 @@
 package git4idea.commands;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
-import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,22 +37,29 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A Task to run the given GitHandler with ability to cancel it.
- * Cancellation is implemented with a {@link java.util.Timer} which checks whether the ProgressIndicator was cancelled and kills
+ *
+ * <b>Cancellation</b> is implemented with a {@link java.util.Timer} which checks whether the ProgressIndicator was cancelled and kills
  * the GitHandler in that case.
  *
- * A GitTask may be executed synchronously ({@link #execute()} or asynchronously ({@link #executeAsync(GitTask.ResultHandler)}.
+ * A GitTask may be executed synchronously ({@link #executeModal()} or asynchronously ({@link #executeAsync(GitTask.ResultHandler)}.
  * Result of the execution is encapsulated in {@link GitTaskResult}.
  *
- * @see {@link git4idea.commands.GitHandler#kill()}
+ * <p>
+ * <b>GitTaskResultHandler</b> is called from AWT-thread. Use {@link #setExecuteResultInAwt(boolean) setExecuteResultInAwt(false)}
+ * to execute the result {@link com.intellij.openapi.application.Application#executeOnPooledThread(Runnable) on the pooled thread}.
+ * </p>
+ *
  * @author Kirill Likhodedov
  */
 public class GitTask {
 
+  private static final Logger LOG = Logger.getInstance(GitTask.class);
+
   private final Project myProject;
   private final GitHandler myHandler;
   private final String myTitle;
-  private final AtomicReference<GitTaskResult> myResult = new AtomicReference<GitTaskResult>(GitTaskResult.INITIAL);
   private GitProgressAnalyzer myProgressAnalyzer;
+  private boolean myExecuteResultInAwt = true;
 
   public GitTask(Project project, GitHandler handler, String title) {
     myProject = project;
@@ -61,69 +71,120 @@ public class GitTask {
    * Executes this task synchronously, with a modal progress dialog.
    * @return Result of the task execution.
    */
-  public GitTaskResult execute() {
-    ModalTask task = new ModalTask(myProject, myHandler, myTitle) {
-      public void execute(ProgressIndicator indicator) {
-        addListeners(this, indicator);
-        GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, myTitle);
-      }
-
-      @Override
-      public void onSuccess() {
-        if (!myHandler.errors().isEmpty()) {
-          myResult.set(GitTaskResult.GIT_ERROR);
-        } else {
-          myResult.set(GitTaskResult.OK);
-        }
-      }
-
-      @Override
-      public void onCancel() {
-        myResult.set(GitTaskResult.CANCELLED);
-      }
-    };
-
-    ProgressManager.getInstance().run(task);
-    return myResult.get();
+  public GitTaskResult executeModal() {
+    return execute(true);
   }
 
   /**
    * Executes the task synchronously, with a modal progress dialog.
    * @param resultHandler callback which will be called after task execution.
    */
-  public void execute(GitTaskResultHandler resultHandler) {
-    resultHandler.run(execute());
+  public void executeModal(GitTaskResultHandler resultHandler) {
+    execute(true, true, resultHandler);
   }
 
   /**
-   * Executes this task asynchronously, in backgrond. Calls the resultHandler when finished.
+   * Executes this task asynchronously, in background. Calls the resultHandler when finished.
    * @param resultHandler callback called after the task has finished or was cancelled by user or automatically.
    */
   public void executeAsync(final GitTaskResultHandler resultHandler) {
-    BackgroundableTask task = new BackgroundableTask(myProject, myHandler, myTitle) {
-      public void execute(ProgressIndicator indicator) {
-        addListeners(this, indicator);
-        GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, myTitle);
-      }
+    execute(false, false, resultHandler);
+  }
 
+  public void executeInBackground(boolean sync, final GitTaskResultHandler resultHandler) {
+    execute(sync, false, resultHandler);
+  }
+
+  // this is always sync
+  @NotNull
+  public GitTaskResult execute(boolean modal) {
+    final AtomicReference<GitTaskResult> result = new AtomicReference<GitTaskResult>(GitTaskResult.INITIAL);
+    execute(true, modal, new GitTaskResultHandlerAdapter() {
       @Override
-      public void onSuccess() {
-        if (!myHandler.errors().isEmpty()) { // TODO: handle errors smarter: an error may be not a complete failure.
-          myResult.set(GitTaskResult.GIT_ERROR);
-        } else {
-          myResult.set(GitTaskResult.OK);
+      protected void run(GitTaskResult res) {
+        result.set(res);
+      }
+    });
+    return result.get();
+  }
+
+  /**
+   * The most general execution method.
+   * @param sync  Set to <code>true</code> to make the calling thread wait for the task execution.
+   * @param modal If <code>true</code>, the task will be modal with a modal progress dialog. If false, the task will be executed in
+   * background. <code>modal</code> implies <code>sync</code>, i.e. if modal then sync doesn't matter: you'll wait anyway.
+   * @param resultHandler Handle the result.
+   * @see #execute(boolean)
+   */
+  public void execute(boolean sync, boolean modal, final GitTaskResultHandler resultHandler) {
+    final Object LOCK = new Object();
+
+    if (modal) {
+      ModalTask task = new ModalTask(myProject, myHandler, myTitle) {
+        @Override public void onSuccess() {
+          commonOnSuccess(LOCK, resultHandler);
         }
-        resultHandler.run(myResult.get());
-      }
+        @Override public void onCancel() {
+          commonOnCancel(LOCK, resultHandler);
+        }
+      };
+      ProgressManager.getInstance().run(task);
+    } else {
+      BackgroundableTask task = new BackgroundableTask(myProject, myHandler, myTitle) {
+        @Override public void onSuccess() {
+          commonOnSuccess(LOCK, resultHandler);
+        }
+        @Override public void onCancel() {
+          commonOnCancel(LOCK, resultHandler);
+        }
+      };
+      GitVcs.runInBackground(task);
+    }
 
-      @Override
-      public void onCancel() {
-        myResult.set(GitTaskResult.CANCELLED);
-        resultHandler.run(GitTaskResult.CANCELLED);
+    if (sync) {
+      try {
+        synchronized (LOCK) {
+          LOCK.wait();
+        }
+      } catch (InterruptedException e) {
+        LOG.info(e);
+      }
+    }
+  }
+
+  private void commonOnSuccess(final Object LOCK, final GitTaskResultHandler resultHandler) {
+    final Runnable successRunnable = new Runnable() {
+      @Override public void run() {
+        GitTaskResult res = !myHandler.errors().isEmpty() ? GitTaskResult.GIT_ERROR : GitTaskResult.OK;
+        resultHandler.run(res);
+        synchronized (LOCK) {
+          LOCK.notifyAll();
+        }
       }
     };
+    executeInProperThread(successRunnable);
+  }
 
-    GitVcs.runInBackground(task);
+  private void commonOnCancel(final Object LOCK, final GitTaskResultHandler resultHandler) {
+    final Runnable cancelRunnable = new Runnable() {
+      @Override
+      public void run() {
+        resultHandler.run(GitTaskResult.CANCELLED);
+        synchronized (LOCK) {
+          LOCK.notifyAll();
+        }
+      }
+    };
+    executeInProperThread(cancelRunnable);
+  }
+
+  // executes on a pooled thread or on AWT thread depending on the setting.
+  private void executeInProperThread(Runnable runnable) {
+    if (myExecuteResultInAwt) {
+      UIUtil.invokeAndWaitIfNeeded(runnable);
+    } else {
+      ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    }
   }
 
   private void addListeners(final TaskExecution task, final ProgressIndicator indicator) {
@@ -136,7 +197,7 @@ public class GitTask {
       public void processTerminated(int exitCode) {
         if (exitCode != 0 && !myHandler.isIgnoredErrorCode(exitCode)) {
           if (myHandler.errors().isEmpty()) {
-            myHandler.addError(new VcsException(GitBundle.message("git.error.exit", exitCode)));
+            myHandler.addError(new VcsException(myHandler.getLastOutput()));
           }
         }
       }
@@ -150,6 +211,8 @@ public class GitTask {
       public void onLineAvailable(String line, Key outputType) {
         if (GitHandlerUtil.isErrorLine(line.trim())) {
           myHandler.addError(new VcsException(line));
+        } else if (!StringUtil.isEmptyOrSpaces(line)) {
+          myHandler.addLastOutput(line);
         }
         if (indicator != null) {
           indicator.setText2(line);
@@ -187,6 +250,10 @@ public class GitTask {
     myProgressAnalyzer = progressAnalyzer;
   }
 
+  public void setExecuteResultInAwt(boolean executeResultInAwt) {
+    myExecuteResultInAwt = executeResultInAwt;
+  }
+
   /**
    * We're using this interface here to work with Task, because standard {@link Task#run(com.intellij.openapi.progress.ProgressIndicator)}
    * is busy with timers.
@@ -214,6 +281,12 @@ public class GitTask {
     }
 
     @Override
+    public void execute(ProgressIndicator indicator) {
+      addListeners(this, indicator);
+      GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, myTitle);
+    }
+
+    @Override
     public void dispose() {
       Disposer.dispose(myDelegate);
     }
@@ -230,6 +303,12 @@ public class GitTask {
     @Override
     public final void run(@NotNull ProgressIndicator indicator) {
       myDelegate.run(indicator);
+    }
+
+    @Override
+    public void execute(ProgressIndicator indicator) {
+      addListeners(this, indicator);
+      GitHandlerUtil.runInCurrentThread(myHandler, indicator, false, myTitle);
     }
 
     @Override

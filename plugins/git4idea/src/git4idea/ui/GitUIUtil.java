@@ -37,9 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Utilities for git plugin user interface
@@ -55,6 +53,52 @@ public class GitUIUtil {
    */
   private GitUIUtil() { }
 
+  public static void notifyMessages(Project project, @Nullable String title, @Nullable String description, NotificationType type, boolean important, @Nullable Collection<String> messages) {
+    if (StringUtil.isEmptyOrSpaces(title)) {
+      title = description;
+    }
+    String desc = (description != null ? description.replace("\n", "<br/>") : "");
+    if (messages != null && !messages.isEmpty()) {
+      desc += "<hr/>" + StringUtil.join(messages, "<br/>");
+    }
+    String id = important ? GitVcs.IMPORTANT_ERROR_NOTIFICATION : GitVcs.NOTIFICATION_GROUP_ID;
+    Notifications.Bus.notify(new Notification(id, title, desc, type), project);
+  }
+
+  public static void notifyMessage(Project project, @Nullable String title, @Nullable String description, NotificationType type, boolean important, @Nullable Collection<VcsException> errors) {
+    Collection<String> errorMessages;
+    if (errors == null) {
+      errorMessages = null;
+    } else {
+      errorMessages = new HashSet<String>(errors.size());
+      for (VcsException error : errors) {
+        errorMessages.addAll(Arrays.asList(error.getMessages()));
+      }
+    }
+    notifyMessages(project, title, description, type, important, errorMessages);
+  }
+
+  public static void notifyError(Project project, String title, String description, boolean important, @Nullable VcsException error) {
+    notifyMessage(project, title, description, NotificationType.ERROR, important, Collections.singleton(error));
+  }
+
+  /**
+   * Splits the given VcsExceptions to one string. Exceptions are separated by &lt;br/&gt;
+   * Line separator is also replaced by &lt;br/&gt;
+   */
+  public static @NotNull String stringifyErrors(@Nullable Collection<VcsException> errors) {
+    if (errors == null) {
+      return "";
+    }
+    StringBuilder content = new StringBuilder();
+    for (VcsException e : errors) {
+      for (String message : e.getMessages()) {
+        content.append(message.replace("\n", "<br/>")).append("<br/>");
+      }
+    }
+    return content.toString();
+  }
+
   /**
    * Displays a "success"-notification.
    */
@@ -62,14 +106,12 @@ public class GitUIUtil {
     Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, title, description, NotificationType.INFORMATION), project);
   }
 
-  /**
-   * Displays an error notification.
-   */
   public static void notifyError(Project project, String title, String description) {
-    if (StringUtil.isEmptyOrSpaces(description)) {
-      description = title;
-    }
-    Notifications.Bus.notify(new Notification(GitVcs.NOTIFICATION_GROUP_ID, title, description, NotificationType.ERROR), project);
+    notifyMessage(project, title, description, NotificationType.ERROR, false, null);
+  }
+
+  public static void notifyImportantError(Project project, String title, String description) {
+    notifyMessage(project, title, description, NotificationType.ERROR, true, null);
   }
 
   public static void notifyGitErrors(Project project, String title, String description, Collection<VcsException> gitErrors) {

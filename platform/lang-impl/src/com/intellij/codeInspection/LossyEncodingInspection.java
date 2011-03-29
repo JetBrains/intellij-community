@@ -22,7 +22,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -47,7 +46,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.List;
 
-public class LossyEncodingInspection extends BaseJavaLocalInspectionTool {
+public class LossyEncodingInspection extends LocalInspectionTool {
   private static final LocalQuickFix CHANGE_ENCODING_FIX = new LocalQuickFix() {
     @NotNull
     @Override
@@ -82,7 +81,7 @@ public class LossyEncodingInspection extends BaseJavaLocalInspectionTool {
   @Nls
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
+    return InspectionsBundle.message("group.names.internationalization.issues");
   }
 
   @Nls

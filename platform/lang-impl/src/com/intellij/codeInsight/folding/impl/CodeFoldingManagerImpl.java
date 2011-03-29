@@ -20,10 +20,7 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
@@ -108,14 +105,20 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
           if (psiElementRange == null) return;
 
           int textOffset = psiElementRange.getStartOffset();
-          Point foldStartXY = editor.visualPositionToXY(editor.offsetToVisualPosition(textOffset));
+          // There is a possible case that target PSI element's offset is less than fold region offset (e.g. complete method is
+          // returned as PSI element for fold region that corresponds to java method code block). We don't want to show any hint
+          // if start of the current fold region is displayed.
+          Point foldStartXY = editor.visualPositionToXY(editor.offsetToVisualPosition(Math.max(textOffset, fold.getStartOffset())));
           Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
           if (visibleArea.y > foldStartXY.y) {
             if (myCurrentHint != null) {
               myCurrentHint.hide();
               myCurrentHint = null;
             }
-            TextRange textRange = new TextRange(textOffset, fold.getStartOffset());
+            // Show only the non-displayed top part of the target fold region
+            int visualLine = Math.max(0, editor.xyToVisualPosition(new Point(0, visibleArea.y)).line - 1);
+            int endOffset = editor.logicalPositionToOffset(editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)));
+            TextRange textRange = new TextRange(textOffset, endOffset);
             hint = EditorFragmentComponent.showEditorFragmentHint(editor, textRange, true, true);
             myCurrentFold = fold;
             myCurrentHint = hint;

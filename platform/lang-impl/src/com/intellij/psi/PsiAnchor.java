@@ -180,10 +180,10 @@ public abstract class PsiAnchor {
     }
 
     public int hashCode() {
-      int result = myClass != null ? myClass.getName().hashCode() : 0;
-      result = 31 * result + myStartOffset; //todo
+      int result = myClass.getName().hashCode();
+      result = 31 * result + myStartOffset;
       result = 31 * result + myEndOffset;
-      result = 31 * result + myVirtualFile.getName().hashCode();
+      result = 31 * result + myVirtualFile.hashCode();
 
       return result;
     }
@@ -324,6 +324,17 @@ public abstract class PsiAnchor {
     @Override
     public int hashCode() {
       return ((31 * myVirtualFile.hashCode() + myIndex) * 31 + myElementType.hashCode()) * 31 + myLanguage.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return "StubIndexReference{" +
+             "myVirtualFile=" + myVirtualFile +
+             ", myProject=" + myProject +
+             ", myIndex=" + myIndex +
+             ", myLanguage=" + myLanguage +
+             ", myElementType=" + myElementType +
+             '}';
     }
 
     public int getStartOffset() {

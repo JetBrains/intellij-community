@@ -28,137 +28,133 @@ import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Collect change for merge or pull operations
  */
 public class MergeChangeCollector {
-  /**
-   * Unmerged paths
-   */
   private final HashSet<String> myUnmergedPaths = new HashSet<String>();
-  /**
-   * The context project
-   */
   private final Project myProject;
-  /**
-   * The git root
-   */
   private final VirtualFile myRoot;
-  /**
-   * Updates container
-   */
-  private final UpdatedFiles myUpdates;
-  /**
-   * Revision number before update (used for diff)
-   */
-  private final GitRevisionNumber myStart;
+  private final GitRevisionNumber myStart; // Revision number before update (used for diff)
 
-  /**
-   * A constructor
-   *
-   * @param project the context project
-   * @param root    the git root
-   * @param start   the start revision
-   * @param updates a container for updates
-   */
-  public MergeChangeCollector(final Project project, final VirtualFile root, final GitRevisionNumber start, final UpdatedFiles updates) {
+  public MergeChangeCollector(final Project project, final VirtualFile root, final GitRevisionNumber start) {
     myStart = start;
     myProject = project;
     myRoot = root;
-    myUpdates = updates;
   }
 
   /**
-   * Collect changes
-   *
-   * @param exceptions a list of exceptions
+   * Collects changed files during or after merge operation to the supplied <code>updates</code> container.
    */
-  public void collect(List<VcsException> exceptions) {
-    final VcsKey vcsKey = GitVcs.getKey();
+  public void collect(final UpdatedFiles updates, List<VcsException> exceptions) {
     try {
       // collect unmerged
-      String root = myRoot.getPath();
-      GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.LS_FILES);
-      h.setNoSSH(true);
-      h.setSilent(true);
-      h.addParameters("--unmerged");
-      for (StringScanner s = new StringScanner(h.run()); s.hasMoreData();) {
-        if (s.isEol()) {
-          s.nextLine();
-          continue;
-        }
-        s.boundedToken('\t');
-        final String relative = s.line();
-        if (!myUnmergedPaths.add(relative)) {
-          continue;
-        }
-        String path = root + "/" + GitUtil.unescapePath(relative);
-        myUpdates.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).add(path, vcsKey, null);
-      }
-      GitRevisionNumber currentHead = GitRevisionNumber.resolve(myProject, myRoot, "HEAD");
+      Set<String> paths = getUnmergedPaths();
+      addAll(updates, FileGroup.MERGED_WITH_CONFLICT_ID, paths);
+
       // collect other changes (ignoring unmerged)
       TreeSet<String> updated = new TreeSet<String>();
       TreeSet<String> created = new TreeSet<String>();
       TreeSet<String> removed = new TreeSet<String>();
-      if (currentHead.equals(myStart)) {
-        // The head has not advanced. This means that this is a merge that did not commit.
-        // This could be caused by --no-commit option or by failed two-head merge. The MERGE_HEAD
-        // should be available. In case of --no-commit option, the MERGE_HEAD might contain
-        // multiple heads separated by newline. The changes are collected separately for each head
-        // and they are merged using TreeSet class (that also sorts the changes).
-        File mergeHeadsFile = new File(root, ".git/MERGE_HEAD");
-        try {
-          if (mergeHeadsFile.exists()) {
-            String mergeHeads = FileUtil.loadFile(mergeHeadsFile, GitUtil.UTF8_ENCODING);
-            for (StringScanner s = new StringScanner(mergeHeads); s.hasMoreData();) {
-              String head = s.line();
-              if (head.length() == 0) {
-                continue;
-              }
-              // note that "..." cause the diff to start from common parent between head and merge head
-              processDiff(root, updated, created, removed, myStart.getRev() + "..." + head);
-            }
-          }
-        }
-        catch (IOException e) {
-          //noinspection ThrowableInstanceNeverThrown
-          exceptions.add(new VcsException("Unable to read the file " + mergeHeadsFile + ": " + e.getMessage(), e));
-        }
+
+      String revisionsForDiff = getRevisionsForDiff();
+      if (revisionsForDiff ==  null) {
+        return;
       }
-      else {
-        // Otherwise this is a merge that did created a commit. And because of this the incoming changes
-        // are diffs between old head and new head. The commit could have been multihead commit,
-        // and the expression below considers it as well.
-        processDiff(root, updated, created, removed, myStart.getRev() + "..HEAD");
-      }
-      addAll(FileGroup.UPDATED_ID, updated);
-      addAll(FileGroup.CREATED_ID, created);
-      addAll(FileGroup.REMOVED_FROM_REPOSITORY_ID, removed);
-    }
-    catch (VcsException e) {
+      getChangedFilesExceptUnmerged(updated, created, removed, revisionsForDiff);
+      addAll(updates, FileGroup.UPDATED_ID, updated);
+      addAll(updates, FileGroup.CREATED_ID, created);
+      addAll(updates, FileGroup.REMOVED_FROM_REPOSITORY_ID, removed);
+    } catch (VcsException e) {
       exceptions.add(e);
     }
   }
 
   /**
-   * Process diff
-   *
-   * @param root      the vcs root
-   * @param updated   the set of updated files
-   * @param created   the set of created files
-   * @param removed   the set of removed files
-   * @param revisions the diff expressions
-   * @throws VcsException if there is a problem with running git
+   * Returns absolute paths to files which are currently unmerged, and also populates myUnmergedPaths with relative paths.
    */
-  private void processDiff(String root, TreeSet<String> updated, TreeSet<String> created, TreeSet<String> removed, String revisions)
+  public @NotNull Set<String> getUnmergedPaths() throws VcsException {
+    String root = myRoot.getPath();
+    final GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.LS_FILES);
+    h.setNoSSH(true);
+    h.setSilent(true);
+    h.addParameters("--unmerged");
+    final String result = h.run();
+
+    final Set<String> paths = new HashSet<String>();
+    for (StringScanner s = new StringScanner(result); s.hasMoreData();) {
+      if (s.isEol()) {
+        s.nextLine();
+        continue;
+      }
+      s.boundedToken('\t');
+      final String relative = s.line();
+      if (!myUnmergedPaths.add(relative)) {
+        continue;
+      }
+      String path = root + "/" + GitUtil.unescapePath(relative);
+      paths.add(path);
+    }
+    return paths;
+  }
+
+  /**
+   * @return The revision range which will be used to find merge diff (merge may be just finished, or in progress)
+   * or null in case of error or inconsistency.
+   */
+  @Nullable
+  public String getRevisionsForDiff() throws VcsException {
+    String root = myRoot.getPath();
+    GitRevisionNumber currentHead = GitRevisionNumber.resolve(myProject, myRoot, "HEAD");
+    if (currentHead.equals(myStart)) {
+      // The head has not advanced. This means that this is a merge that did not commit.
+      // This could be caused by --no-commit option or by failed two-head merge. The MERGE_HEAD
+      // should be available. In case of --no-commit option, the MERGE_HEAD might contain
+      // multiple heads separated by newline. The changes are collected separately for each head
+      // and they are merged using TreeSet class (that also sorts the changes).
+      File mergeHeadsFile = new File(root, ".git/MERGE_HEAD");
+      try {
+        if (mergeHeadsFile.exists()) {
+          String mergeHeads = new String(FileUtil.loadFileText(mergeHeadsFile, GitUtil.UTF8_ENCODING));
+          for (StringScanner s = new StringScanner(mergeHeads); s.hasMoreData();) {
+            String head = s.line();
+            if (head.length() == 0) {
+              continue;
+            }
+            // note that "..." cause the diff to start from common parent between head and merge head
+            return myStart.getRev() + "..." + head;
+          }
+        }
+      } catch (IOException e) {
+        //noinspection ThrowableInstanceNeverThrown
+        throw new VcsException("Unable to read the file " + mergeHeadsFile + ": " + e.getMessage(), e);
+      }
+    } else {
+      // Otherwise this is a merge that did created a commit. And because of this the incoming changes
+      // are diffs between old head and new head. The commit could have been multihead commit,
+      // and the expression below considers it as well.
+      return myStart.getRev() + "..HEAD";
+    }
+    return null;
+  }
+
+  /**
+   * Populates the supplied collections of modified, created and removed files returned by 'git diff #revisions' command,
+   * where revisions is the range of revisions to check.
+   */
+  public void getChangedFilesExceptUnmerged(Collection<String> updated, Collection<String> created, Collection<String> removed, String revisions)
     throws VcsException {
+    if (revisions == null) {
+      return;
+    }
+    String root = myRoot.getPath();
     GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.DIFF);
     h.setSilent(true);
     h.setNoSSH(true);
@@ -195,12 +191,9 @@ public class MergeChangeCollector {
 
   /**
    * Add all paths to the group
-   *
-   * @param id    the group identifier
-   * @param paths the set of paths
    */
-  private void addAll(String id, TreeSet<String> paths) {
-    FileGroup fileGroup = myUpdates.getGroupById(id);
+  private static void addAll(final UpdatedFiles updates, String group_id, Set<String> paths) {
+    FileGroup fileGroup = updates.getGroupById(group_id);
     final VcsKey vcsKey = GitVcs.getKey();
     for (String path : paths) {
       fileGroup.add(path, vcsKey, null);

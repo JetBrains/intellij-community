@@ -15,13 +15,13 @@
  */
 package git4idea.update;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.SequentialUpdatesContext;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.update.UpdateSession;
@@ -33,7 +33,9 @@ import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * Git update environment implementation. The environment does
@@ -41,56 +43,29 @@ import java.util.*;
  * and processed as well.
  */
 public class GitUpdateEnvironment implements UpdateEnvironment {
-  /**
-   * The vcs instance
-   */
   private final GitVcs myVcs;
-  /**
-   * The context project
-   */
   private final Project myProject;
-  /**
-   * The project settings
-   */
   private final GitVcsSettings mySettings;
+  private static final Logger LOG = Logger.getInstance(GitUpdateEnvironment.class);
 
-  /**
-   * A constructor from settings
-   *
-   * @param project a project
-   */
   public GitUpdateEnvironment(@NotNull Project project, @NotNull GitVcs vcs, GitVcsSettings settings) {
     myVcs = vcs;
     myProject = project;
     mySettings = settings;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public void fillGroups(UpdatedFiles updatedFiles) {
     //unused, there are no custom categories yet
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @NotNull
-  public UpdateSession updateDirectories(@NotNull FilePath[] filePaths,
-                                         UpdatedFiles updatedFiles,
-                                         ProgressIndicator progressIndicator,
-                                         @NotNull Ref<SequentialUpdatesContext> sequentialUpdatesContextRef)
-    throws ProcessCanceledException {
+  public UpdateSession updateDirectories(@NotNull FilePath[] filePaths, UpdatedFiles updatedFiles, ProgressIndicator progressIndicator, @NotNull Ref<SequentialUpdatesContext> sequentialUpdatesContextRef) throws ProcessCanceledException {
     Set<VirtualFile> roots = GitUtil.gitRoots(Arrays.asList(filePaths));
-    List<VcsException> exceptions = new ArrayList<VcsException>();
-    new GitUpdateProcess(myProject, mySettings, myVcs, updatedFiles, exceptions).doUpdate( progressIndicator, roots);
-    return new GitUpdateSession(exceptions);
+    boolean result = new GitUpdateProcess(myProject, progressIndicator, roots, updatedFiles).update();
+    return new GitUpdateSession(result);
   }
 
 
-  /**
-   * {@inheritDoc}
-   */
   public boolean validateOptions(Collection<FilePath> filePaths) {
     for (FilePath p : filePaths) {
       if (!GitUtil.isUnderGit(p)) {
@@ -100,9 +75,6 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
     return true;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Nullable
   public Configurable createConfigurable(Collection<FilePath> files) {
     return new GitUpdateConfigurable(mySettings);

@@ -68,7 +68,7 @@ public class NativeFileIconProvider implements FileIconProvider {
     if (icon != null) {
       return icon;
     }
-    return new DeferredIconImpl<VirtualFile>(ElementBase.ICON_PLACHOLDER, file, false, new Function<VirtualFile, Icon>() {
+    return new DeferredIconImpl<VirtualFile>(ElementBase.ICON_PLACEHOLDER, file, false, new Function<VirtualFile, Icon>() {
       public Icon fun(VirtualFile virtualFile) {
         final File f = new File(filePath);
         if (!f.exists()) {

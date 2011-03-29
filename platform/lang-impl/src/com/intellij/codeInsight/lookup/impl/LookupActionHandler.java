@@ -207,6 +207,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
       lookup.performGuardedChange(new Runnable() {
         @Override
         public void run() {
+          editor.getSelectionModel().removeSelection();
           editor.getCaretModel().moveToOffset(offset + 1);
         }
       });

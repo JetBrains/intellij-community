@@ -19,6 +19,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
@@ -131,6 +132,8 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
   }
 
   protected boolean hasProblemFileBeneath() {
+    if (!Registry.is("projectView.showHierarchyErrors")) return false;
+
     return WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesBeneath(new Condition<VirtualFile>() {
       public boolean value(final VirtualFile virtualFile) {
         return contains(virtualFile)

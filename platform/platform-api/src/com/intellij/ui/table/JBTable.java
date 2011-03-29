@@ -16,6 +16,7 @@
 package com.intellij.ui.table;
 
 import com.intellij.Patches;
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentWithExpandableItems;
@@ -48,6 +49,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private int myRowHeight = -1;
   private boolean myRowHeightIsExplicitlySet;
   private boolean myRowHeightIsComputing;
+
+  private Integer myMinRowHeight;
 
   public JBTable() {
     this(new DefaultTableModel());
@@ -141,7 +144,18 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         myRowHeightIsComputing = false;
       }
     }
-    return myRowHeight;
+
+    if (myMinRowHeight == null) {
+      myMinRowHeight = getFontMetrics(UIManager.getFont("Label.font")).getHeight();
+    }
+
+    return Math.max(myRowHeight, myMinRowHeight);
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    myMinRowHeight = null;
   }
 
   @Override

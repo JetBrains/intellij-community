@@ -30,7 +30,17 @@
     <testFramework implementation="com.intellij.execution.junit.JUnit3Framework"/>
     <testFramework implementation="com.intellij.execution.junit.JUnit4Framework"/>
     <configurationType implementation="com.intellij.execution.junit.JUnitConfigurationType"/>
+
     <stacktrace.fold substring="at org.junit.internal.runners."/>
+    <stacktrace.fold substring="at org.junit.runners."/>
+    <stacktrace.fold substring="at org.junit.runner.JUnitCore."/>
+    <stacktrace.fold substring="at org.junit.Assert.fail("/>
+    <stacktrace.fold substring="at org.junit.Assert.failNotSame("/>
+    <stacktrace.fold substring="at org.junit.Assert.failSame("/>
+    <stacktrace.fold substring="at org.junit.Assert.internalArrayEquals("/>
+    <stacktrace.fold substring="at org.junit.internal.ComparisonCriteria.arrayEquals("/>
+    <stacktrace.fold substring="at org.junit.Assert.assert"/>
+
   </extensions>
 
   <extensionPoints>

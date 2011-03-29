@@ -295,11 +295,12 @@ class RunConfigurable extends BaseConfigurable {
       public void stateChanged(final SettingsEditor<RunnerAndConfigurationSettings> editor) {
         update();
         final RunConfiguration configuration = info.getConfiguration();
-        if (configuration instanceof RuntimeConfiguration) {
-          final RuntimeConfiguration runtimeConfiguration = (RuntimeConfiguration)configuration;
+        if (configuration instanceof LocatableConfiguration) {
+          final LocatableConfiguration runtimeConfiguration = (LocatableConfiguration)configuration;
           if (runtimeConfiguration.isGeneratedName()) {
             try {
-              final String generatedName = ((RuntimeConfiguration)editor.getSnapshot().getConfiguration()).getGeneratedName();
+              final LocatableConfiguration snapshot = (LocatableConfiguration)editor.getSnapshot().getConfiguration();
+              final String generatedName = snapshot instanceof RuntimeConfiguration? ((RuntimeConfiguration)snapshot).getGeneratedName() : snapshot.suggestedName();
               if (generatedName != null && generatedName.length() > 0) {
                 info.setNameText(generatedName);
               }

@@ -23,6 +23,8 @@ public class PlatformInspectionToolProvider implements InspectionToolProvider {
   public Class[] getInspectionClasses() {
     return new Class[] {
       DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection.class,
-      DefaultHighlightVisitorBasedInspection.SyntaxErrorInspection.class };
+      DefaultHighlightVisitorBasedInspection.SyntaxErrorInspection.class,
+      LossyEncodingInspection.class,
+    };
   }
 }

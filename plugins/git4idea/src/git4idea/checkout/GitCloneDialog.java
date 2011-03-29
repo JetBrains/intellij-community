@@ -175,7 +175,7 @@ public class GitCloneDialog extends DialogWrapper {
         handler.addParameters(myTestURL, "master");
 
         GitTask task = new GitTask(myProject, handler, GitBundle.message("clone.testing", myTestURL));
-        GitTaskResult result = task.execute();
+        GitTaskResult result = task.executeModal();
 
         if (result.isOK()) {
           Messages.showInfoMessage(myTestButton, GitBundle.message("clone.test.success.message", myTestURL),
