@@ -182,9 +182,9 @@ public class GithubUtil {
   }
 
   @Nullable
-  public static RepositoryInfo getDetailedRepoInfo(final String url, final String login, final String password, final String name) {
+  public static RepositoryInfo getDetailedRepoInfo(final String url, final String login, final String password, final String owner, final String name) {
     try {
-      final String request = "/repos/show/" + login + "/" + name;
+      final String request = "/repos/show/" + owner + "/" + name;
       final HttpMethod method = doREST(url, login, password, request, false);
       final InputStream stream = method.getResponseBodyAsStream();
       final Element element = new SAXBuilder(false).build(stream).getRootElement();
@@ -302,7 +302,7 @@ public class GithubUtil {
    * @return
    */
   @Nullable
-  public static RepositoryInfo getDetailedRepositoryInfo(final Project project, final String name) {
+  public static RepositoryInfo getDetailedRepositoryInfo(final Project project, final String owner, final String name) {
     final GithubSettings settings = GithubSettings.getInstance();
     final boolean validCredentials;
     try {
@@ -330,7 +330,7 @@ public class GithubUtil {
         @Override
         public RepositoryInfo compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Extracting detailed info about repository ''" + name + "''");
-          return getDetailedRepoInfo(settings.getHost(), settings.getLogin(), settings.getPassword(), name);
+          return getDetailedRepoInfo(settings.getHost(), settings.getLogin(), settings.getPassword(), owner, name);
         }
       });
     }

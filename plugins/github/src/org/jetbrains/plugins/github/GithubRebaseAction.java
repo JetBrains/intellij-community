@@ -106,7 +106,7 @@ public class GithubRebaseAction extends DumbAwareAction {
         repoName = repoName.substring(0, repoName.length() - 4);
       }
 
-      final RepositoryInfo repositoryInfo = GithubUtil.getDetailedRepositoryInfo(project, repoName);
+      final RepositoryInfo repositoryInfo = GithubUtil.getDetailedRepositoryInfo(project, login, repoName);
       if (repositoryInfo == null) {
         Messages
           .showErrorDialog(project, "Github repository doesn't seem to be your own repository: " + pushUrl, CANNOT_PERFORM_GITHUB_REBASE);
