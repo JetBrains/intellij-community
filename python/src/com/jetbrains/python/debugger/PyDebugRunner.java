@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.process.ConsoleHistoryController;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.List;
 
 /**
  * @author yole
@@ -107,14 +107,10 @@ public class PyDebugRunner extends GenericProgramRunner {
       pythonDebugConsoleView.setExecutionHandler(consoleExecuteActionHandler);
 
       debugProcess.getSession().addSessionListener(consoleExecuteActionHandler);
-
-      List<AnAction> actions = AbstractConsoleRunnerWithHistory
-        .createConsoleActions(
-          pythonDebugConsoleView.getConsole(), processHandler, consoleExecuteActionHandler).getActionsAsList();
-
-
-      AbstractConsoleRunnerWithHistory
-        .registerActionShortcuts(actions.toArray(new AnAction[actions.size()]), pythonDebugConsoleView.getComponent());
+      new ConsoleHistoryController("py", "", pythonDebugConsoleView.getConsole(), consoleExecuteActionHandler.getConsoleHistoryModel()).install();
+      final AnAction execAction = AbstractConsoleRunnerWithHistory
+        .createConsoleExecAction(pythonDebugConsoleView.getConsole(), processHandler, consoleExecuteActionHandler);
+      execAction.registerCustomShortcutSet(execAction.getShortcutSet(), pythonDebugConsoleView.getComponent());
     }
   }
 

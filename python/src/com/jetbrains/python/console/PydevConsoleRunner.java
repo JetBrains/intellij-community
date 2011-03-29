@@ -7,15 +7,13 @@ import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.Executor;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
-import com.intellij.execution.process.CommandLineArgumentsProvider;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -84,6 +82,14 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
 
   public static ImmutableMap<String, String> createDefaultEnvironmentVariables() {
     return ImmutableMap.of("PYTHONIOENCODING", "utf-8");
+  }
+
+  @Override
+  protected AnAction[] fillToolBarActions(final DefaultActionGroup toolbarActions,
+                                          final Executor defaultExecutor,
+                                          final RunContentDescriptor contentDescriptor) {
+    toolbarActions.add(createBackspaceHandlingAction());
+    return super.fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
   }
 
   @Nullable
@@ -210,12 +216,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     }
   }
 
-  @Override
-  protected ConsoleExecutionActions createConsoleExecutionActions() {
-    ConsoleExecutionActions executionActions = super.createConsoleExecutionActions();
-    executionActions.addAdditionalAction(createBackspaceHandlingAction());
-    return executionActions;
-  }
 
   private AnAction createBackspaceHandlingAction() {
     final AnAction upAction = new AnAction() {
@@ -330,6 +330,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     myConsoleExecuteActionHandler =
       new PydevConsoleExecuteActionHandler(getConsoleView(), getProcessHandler(), myPydevConsoleCommunication);
     myConsoleExecuteActionHandler.setEnabled(false);
+    new ConsoleHistoryController("py", "", getLanguageConsole(), myConsoleExecuteActionHandler.getConsoleHistoryModel()).install();
     return myConsoleExecuteActionHandler;
   }
 
