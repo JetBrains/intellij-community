@@ -18,10 +18,15 @@ package com.intellij.uiDesigner.binding;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.navigation.GotoRelatedProvider;
 import com.intellij.navigation.PsiGotoRelatedItem;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.uiDesigner.GuiFormFileType;
+import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +51,24 @@ public class FormRelatedFilesProvider extends GotoRelatedProvider {
           return new PsiGotoRelatedItem(psiFile);
         }
       });
+    }
+    else {
+      PsiFile file = context.getContainingFile();
+      if (file.getFileType() == GuiFormFileType.INSTANCE) {
+        try {
+          String className = Utils.getBoundClassName(file.getText());
+          if (className != null) {
+            Project project = file.getProject();
+            PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
+            if (aClass != null) {
+              return Collections.<GotoRelatedItem>singletonList(new PsiGotoRelatedItem(aClass));
+            }
+          }
+        }
+        catch (Exception ignore) {
+
+        }
+      }
     }
     return Collections.emptyList();
   }

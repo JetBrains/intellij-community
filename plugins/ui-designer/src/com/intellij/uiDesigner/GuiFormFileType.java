@@ -26,6 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class GuiFormFileType implements FileType {
+
+  public static final GuiFormFileType INSTANCE = new GuiFormFileType();
+
   @NonNls public static final String DEFAULT_EXTENSION = "form";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "." + DEFAULT_EXTENSION;
 

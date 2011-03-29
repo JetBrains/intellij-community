@@ -43,7 +43,7 @@ public class GotoRelatedFileAction extends AnAction {
     DataContext context = e.getDataContext();
     Editor editor = PlatformDataKeys.EDITOR.getData(context);
     PsiFile psiFile = LangDataKeys.PSI_FILE.getData(context);
-    if (editor == null || psiFile == null) return;
+    if (psiFile == null) return;
 
     List<GotoRelatedItem> items = getItems(editor, psiFile);
     if (items.isEmpty()) return;
@@ -72,8 +72,11 @@ public class GotoRelatedFileAction extends AnAction {
   }
 
   public static List<GotoRelatedItem> getItems(Editor editor, PsiFile psiFile) {
-    PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
-    if (psiElement == null) psiElement = psiFile;
+
+    PsiElement psiElement = psiFile;
+    if (editor != null) {
+      psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
+    }
 
     List<GotoRelatedItem> items = new ArrayList<GotoRelatedItem>();
 
@@ -85,8 +88,7 @@ public class GotoRelatedFileAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(PlatformDataKeys.EDITOR.getData(e.getDataContext()) != null &&
-                                   LangDataKeys.PSI_FILE.getData(e.getDataContext()) != null);
+    e.getPresentation().setEnabled(LangDataKeys.PSI_FILE.getData(e.getDataContext()) != null);
   }
 
   private static class ItemCellRenderer extends JPanel implements ListCellRenderer {
