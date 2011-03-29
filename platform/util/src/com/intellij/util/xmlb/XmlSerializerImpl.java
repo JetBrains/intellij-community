@@ -101,7 +101,9 @@ class XmlSerializerImpl {
     if (Number.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
     if (Boolean.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
     if (String.class.isAssignableFrom(aClass)) return new PrimitiveValueBinding(aClass);
-    if (Collection.class.isAssignableFrom(aClass)) return new CollectionBinding((ParameterizedType)originalType, this, accessor);
+    if (Collection.class.isAssignableFrom(aClass)) {
+      return new CollectionBinding((ParameterizedType)originalType, this, accessor);
+    }
     if (Map.class.isAssignableFrom(aClass)) return new MapBinding((ParameterizedType)originalType, this, accessor);
     if (Element.class.isAssignableFrom(aClass)) return new JDOMElementBinding(accessor);
     if (Date.class.isAssignableFrom(aClass)) return new DateBinding();
