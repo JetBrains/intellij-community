@@ -98,6 +98,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
 
   public PythonDocumentationMap() {
     addEntry("compiler", "http://docs.python.org/{python.version}/library/compiler.html#{element.qname}");
+    addEntry("multiprocessing", "http://docs.python.org/{python.version}/library/multiprocessing.html#{element.qname}");
     addEntry("PyQt4", "http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/{class.name.lower}.html#{function.name}");
     addEntry("PySide", "http://www.pyside.org/docs/pyside/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}");
     addEntry("gtk", "http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");

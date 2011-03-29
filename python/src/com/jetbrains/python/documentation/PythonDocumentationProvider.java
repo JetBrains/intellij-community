@@ -519,6 +519,10 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
   @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem) element : element.getContainingFile();
+    if (PyNames.INIT_DOT_PY.equals(file.getName())) {
+      file = file.getParent();
+      assert file != null;
+    }
     VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) {
       return null;
@@ -538,7 +542,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
       return Collections.singletonList(url);
     }
     if (isStdLib(vFile, sdk)) {
-      return Collections.singletonList(getStdlibUrlFor(element, pyVersion));
+      return Collections.singletonList(getStdlibUrlFor(element, file, pyVersion));
     }
     return null;
   }
@@ -555,13 +559,12 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     return false;
   }
 
-  private static String getStdlibUrlFor(PsiElement element, String pyVersion) {
+  private static String getStdlibUrlFor(PsiElement element, PsiFileSystemItem file, String pyVersion) {
     StringBuilder urlBuilder = new StringBuilder("http://docs.python.org/");
     if (pyVersion != null) {
       urlBuilder.append(pyVersion).append("/");
     }
     urlBuilder.append("library/");
-    PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem) element : element.getContainingFile();
     urlBuilder.append(FileUtil.getNameWithoutExtension(file.getName()));
     urlBuilder.append(".html");
     if (element instanceof PsiNamedElement && !(element instanceof PyFile)) {
