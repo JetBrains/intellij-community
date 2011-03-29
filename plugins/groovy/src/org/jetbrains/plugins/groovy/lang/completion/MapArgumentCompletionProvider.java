@@ -122,6 +122,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     else if (call instanceof GrCallExpression) {
       GrCallExpression callExpression = (GrCallExpression)call;
       ContainerUtil.addAll(results, callExpression.getCallVariants(null));
+
       final PsiType type = ((GrCallExpression)call).getType();
       if (type instanceof PsiClassType) {
         final PsiClass psiClass = ((PsiClassType)type).resolve();
@@ -169,10 +170,10 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
                                             Set<String> usedNames,
                                             PsiClass containingClass,
                                             GrCall call) {
-    if (usedClasses.contains(containingClass)) return;
-    usedClasses.add(containingClass);
-    final PsiClass eventListener =
-      JavaPsiFacade.getInstance(call.getProject()).findClass("java.util.EventListener", call.getResolveScope());
+    if (!usedClasses.add(containingClass)) return;
+
+    final PsiClass eventListener = JavaPsiFacade.getInstance(call.getProject()).findClass("java.util.EventListener", call.getResolveScope());
+
     Map<String, PsiMethod> writableProperties = new HashMap<String, PsiMethod>();
     for (PsiMethod method : containingClass.getAllMethods()) {
       if (GroovyPropertyUtils.isSimplePropertySetter(method)) {
@@ -207,13 +208,14 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
         final PsiClassType classType = (PsiClassType)type;
         final PsiClass listenerClass = classType.resolve();
         if (listenerClass != null) {
-          final PsiMethod[] listenerMethods = listenerClass.getMethods();
           if (InheritanceUtil.isInheritorOrSelf(listenerClass, eventListenerClass, true)) {
+            PsiMethod[] listenerMethods = listenerClass.getMethods();
             for (PsiMethod listenerMethod : listenerMethods) {
               final String name = listenerMethod.getName();
-              usedNames.add(name);
-              result.addElement(
-                LookupElementBuilder.create(name).setIcon(GroovyIcons.PROPERTY).setInsertHandler(NamedArgumentInsertHandler.INSTANCE));
+              if (usedNames.add(name)) {
+                result.addElement(
+                  LookupElementBuilder.create(name).setIcon(GroovyIcons.PROPERTY).setInsertHandler(NamedArgumentInsertHandler.INSTANCE));
+              }
             }
           }
         }
