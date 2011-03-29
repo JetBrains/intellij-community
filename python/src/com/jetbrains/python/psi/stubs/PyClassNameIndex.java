@@ -52,7 +52,7 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
     final Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
     // TODO cache the scope in project userdata (update when SDK paths change or different project SDK is selected)
     if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
-      VirtualFile libDir = findLibDir(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+      VirtualFile libDir = findLibDir(sdk);
       if (libDir != null) {
         // superset of test dirs found in Python 2.5 to 3.1
         List<VirtualFile> testDirs = findTestDirs(libDir, "test", "bsddb/test", "ctypes/test", "distutils/tests", "email/test",
@@ -87,7 +87,12 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
   }
 
   @Nullable
-  public static VirtualFile findLibDir(VirtualFile[] files) {
+  public static VirtualFile findLibDir(Sdk sdk) {
+    return findLibDir(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+  }
+
+  @Nullable
+  private static VirtualFile findLibDir(VirtualFile[] files) {
     for (VirtualFile file : files) {
       if ((file.findChild("__future__.py") != null || file.findChild("__future__.pyc") != null) && file.findChild("test") != null) {
         return file;

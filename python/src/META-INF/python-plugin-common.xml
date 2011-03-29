@@ -21,7 +21,7 @@
     <lang.surroundDescriptor language="Python"
                              implementationClass="com.jetbrains.python.refactoring.surround.PyExpressionSurroundDescriptor"/>
     <lang.psiStructureViewFactory language="Python" implementationClass="com.jetbrains.python.structureView.PyStructureViewFactory"/>
-    <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.PythonDocumentationProvider"/>
+    <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.documentation.PythonDocumentationProvider"/>
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.console.PydevDocumentationProvider"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDumbAwareAnnotator"/>
@@ -274,6 +274,10 @@
     <editorSmartKeysConfigurable implementation="com.jetbrains.python.codeInsight.PySmartKeysOptions"/>
 
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyStdReferenceContributor"/>
+
+    <applicationService serviceInterface="com.jetbrains.python.documentation.PythonDocumentationMap"
+                        serviceImplementation="com.jetbrains.python.documentation.PythonDocumentationMap"/>
+    <applicationConfigurable implementation="com.jetbrains.python.documentation.PythonDocumentationConfigurable"/>
 
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>

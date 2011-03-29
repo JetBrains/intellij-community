@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -214,7 +213,7 @@ public class AddImportHelper {
     Module module = ModuleUtil.findModuleForPsiElement(importLocation);
     Sdk pythonSdk = module != null ? PythonSdkType.findPythonSdk(module) : projectRootManager.getProjectSdk();
     if (pythonSdk != null) {
-      final VirtualFile libDir = PyClassNameIndex.findLibDir(pythonSdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+      final VirtualFile libDir = PyClassNameIndex.findLibDir(pythonSdk);
       if (libDir != null && VfsUtil.isAncestor(libDir, vFile, false)) {
         final VirtualFile sitePackages = libDir.findChild("site-packages");
         if (sitePackages != null && VfsUtil.isAncestor(sitePackages, vFile, false)) {

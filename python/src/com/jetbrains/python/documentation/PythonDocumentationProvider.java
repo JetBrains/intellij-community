@@ -1,29 +1,39 @@
-package com.jetbrains.python;
+package com.jetbrains.python.documentation;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.QuickDocumentationProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.RootVisitor;
+import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.FP;
 import com.jetbrains.python.toolbox.Maybe;
@@ -32,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -500,6 +511,78 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
           final String parent_name = parent.getClassName();
           if (parent_name != null && parent_name.equals(desired_name)) return parent.getPyClass();
         }
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
+    PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem) element : element.getContainingFile();
+    VirtualFile vFile = file.getVirtualFile();
+    if (vFile == null) {
+      return null;
+    }
+    Sdk sdk = PyBuiltinCache.findSdkForFile(file);
+    if (sdk == null) {
+      return null;
+    }
+    PyQualifiedName qName = ResolveImportUtil.findShortestImportableQName(file);
+    PythonDocumentationMap map = PythonDocumentationMap.getInstance();
+    String pyVersion = pyVersion(sdk.getVersionString());
+    PsiNamedElement namedElement = (element instanceof PsiNamedElement && !(element instanceof PsiFileSystemItem))
+                                   ? (PsiNamedElement) element
+                                   : null;
+    String url = map.urlFor(qName, namedElement, pyVersion);
+    if (url != null) {
+      return Collections.singletonList(url);
+    }
+    if (isStdLib(vFile, sdk)) {
+      return Collections.singletonList(getStdlibUrlFor(element, pyVersion));
+    }
+    return null;
+  }
+
+  private static boolean isStdLib(VirtualFile vFile, Sdk sdk) {
+    VirtualFile libDir = PyClassNameIndex.findLibDir(sdk);
+    if (libDir != null && VfsUtil.isAncestor(libDir, vFile, false)) {
+      return true;
+    }
+    VirtualFile skeletonsDir = PythonSdkType.findSkeletonsDir(sdk);
+    if (skeletonsDir != null && skeletonsDir == vFile.getParent()) {
+      return true;
+    }
+    return false;
+  }
+
+  private static String getStdlibUrlFor(PsiElement element, String pyVersion) {
+    StringBuilder urlBuilder = new StringBuilder("http://docs.python.org/");
+    if (pyVersion != null) {
+      urlBuilder.append(pyVersion).append("/");
+    }
+    urlBuilder.append("library/");
+    PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem) element : element.getContainingFile();
+    urlBuilder.append(FileUtil.getNameWithoutExtension(file.getName()));
+    urlBuilder.append(".html");
+    if (element instanceof PsiNamedElement && !(element instanceof PyFile)) {
+      urlBuilder.append('#').append(FileUtil.getNameWithoutExtension(file.getName())).append(".");
+      urlBuilder.append(((PsiNamedElement)element).getName());
+    }
+    return urlBuilder.toString();
+  }
+
+  @Nullable
+  private static String pyVersion(String versionString) {
+    String prefix = "Python ";
+    if (versionString.startsWith(prefix)) {
+      String version = versionString.substring(prefix.length());
+      int dot = version.indexOf('.');
+      if (dot > 0) {
+        dot = version.indexOf('.', dot+1);
+        if (dot > 0) {
+          return version.substring(0, dot);
+        }
+        return version;
       }
     }
     return null;
