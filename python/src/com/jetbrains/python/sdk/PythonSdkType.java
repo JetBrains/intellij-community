@@ -40,6 +40,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -765,6 +766,24 @@ public class PythonSdkType extends SdkType {
     return type == OrderRootType.CLASSES;
   }
 
+  public static boolean isStdLib(VirtualFile vFile, Sdk pythonSdk) {
+    if (pythonSdk != null) {
+      final VirtualFile libDir = PyClassNameIndex.findLibDir(pythonSdk);
+      if (libDir != null && VfsUtil.isAncestor(libDir, vFile, false)) {
+        final VirtualFile sitePackages = libDir.findChild("site-packages");
+        if (sitePackages != null && VfsUtil.isAncestor(sitePackages, vFile, false)) {
+          return false;
+        }
+        return true;
+      }
+      final VirtualFile skeletonsDir = findSkeletonsDir(pythonSdk);
+      if (skeletonsDir != null &&
+          vFile.getParent() == skeletonsDir) {   // note: this will pick up some of the binary libraries not in packages
+        return true;
+      }
+    }
+    return false;
+  }
 }
 
 class InvalidSdkException extends RuntimeException {

@@ -541,22 +541,10 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     if (url != null) {
       return Collections.singletonList(url);
     }
-    if (isStdLib(vFile, sdk)) {
+    if (PythonSdkType.isStdLib(vFile, sdk)) {
       return Collections.singletonList(getStdlibUrlFor(element, file, pyVersion));
     }
     return null;
-  }
-
-  private static boolean isStdLib(VirtualFile vFile, Sdk sdk) {
-    VirtualFile libDir = PyClassNameIndex.findLibDir(sdk);
-    if (libDir != null && VfsUtil.isAncestor(libDir, vFile, false)) {
-      return true;
-    }
-    VirtualFile skeletonsDir = PythonSdkType.findSkeletonsDir(sdk);
-    if (skeletonsDir != null && skeletonsDir == vFile.getParent()) {
-      return true;
-    }
-    return false;
   }
 
   private static String getStdlibUrlFor(PsiElement element, PsiFileSystemItem file, String pyVersion) {
