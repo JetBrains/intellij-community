@@ -758,7 +758,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Nullable
   public GutterIconRenderer findGutter(final String filePath) {
     assertInitialized();
-    final Ref<GutterIconRenderer> result = new Ref<GutterIconRenderer>();
     configureByFilesInner(filePath);
     int offset = myEditor.getCaretModel().getOffset();
 
@@ -767,12 +766,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       if (info.endOffset >= offset && info.startOffset <= offset) {
         final GutterIconRenderer renderer = info.getGutterIconRenderer();
         if (renderer != null) {
-          result.set(renderer);
-          break;
+          return renderer;
         }
       }
     }
-    return result.get();
+    RangeHighlighter[] highlighters = myEditor.getDocument().getMarkupModel(getProject()).getAllHighlighters();
+    for (RangeHighlighter highlighter : highlighters) {
+      if (highlighter.getEndOffset() >= offset && highlighter.getStartOffset() <= offset) {
+        GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
+        if (renderer != null) {
+          return renderer;
+        }
+      }
+    }
+    return null;
   }
 
   @Override

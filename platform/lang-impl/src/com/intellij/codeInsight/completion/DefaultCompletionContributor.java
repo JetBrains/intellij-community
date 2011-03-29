@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.documentation.actions.ShowJavaDocInfoAction;
+import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction;
 import com.intellij.codeInsight.hint.actions.ShowImplementationsAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.LangBundle;
@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Random;
 
@@ -31,6 +32,7 @@ import java.util.Random;
  */
 public class DefaultCompletionContributor extends CompletionContributor {
 
+  @Nullable
   public static String getDefaultAdvertisementText(@NotNull final CompletionParameters parameters) {
     final Random random = new Random();
     if (random.nextInt(5) < 2 && CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_DOT_ETC)) {
@@ -56,8 +58,8 @@ public class DefaultCompletionContributor extends CompletionContributor {
     }
 
     if (random.nextInt(5) < 2 &&
-        (CompletionUtil.shouldShowFeature(parameters, ShowJavaDocInfoAction.CODEASSISTS_QUICKJAVADOC_FEATURE) ||
-         CompletionUtil.shouldShowFeature(parameters, ShowJavaDocInfoAction.CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE))) {
+        (CompletionUtil.shouldShowFeature(parameters, ShowQuickDocInfoAction.CODEASSISTS_QUICKJAVADOC_FEATURE) ||
+         CompletionUtil.shouldShowFeature(parameters, ShowQuickDocInfoAction.CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE))) {
       final String shortcut = getActionShortcut(IdeActions.ACTION_QUICK_JAVADOC);
       if (shortcut != null) {
         return LangBundle.message("completion.quick.javadoc.ad", shortcut);

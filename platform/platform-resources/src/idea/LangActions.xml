@@ -136,7 +136,7 @@
       <separator/>
       <group id="CodeEditorViewGroup">
         <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
-        <action id="QuickJavaDoc" class="com.intellij.codeInsight.documentation.actions.ShowJavaDocInfoAction"/>
+        <action id="QuickJavaDoc" class="com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction"/>
         <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction"/>
         <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
         <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction"/>
@@ -225,6 +225,9 @@
       <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
       <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
       <action id="GotoTest" class="com.intellij.testIntegration.GotoTestOrCodeAction"/>
+      <action id="GotoRelated" class="com.intellij.ide.actions.GotoRelatedFileAction" text="_Related File">
+        <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift Q"/>
+      </action>
       <separator/>
 
       <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="GoToErrorGroup"/>

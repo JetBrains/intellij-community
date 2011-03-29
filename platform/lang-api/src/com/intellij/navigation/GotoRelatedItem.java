@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.uiDesigner;
+package com.intellij.navigation;
 
-import com.intellij.openapi.fileTypes.FileTypeConsumer;
-import com.intellij.openapi.fileTypes.FileTypeFactory;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
- * @author yole
+ * @author Dmitry Avdeev
  */
-public class FormFileTypeFactory extends FileTypeFactory {
+public abstract class GotoRelatedItem {
 
-  public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-    consumer.consume(GuiFormFileType.INSTANCE);
-  }
+  public abstract void navigate();
+
+  @NotNull
+  public abstract String getText();
+
+  @Nullable
+  public abstract Icon getIcon();
+
+  @Nullable
+  public abstract PsiFile getContainingFile();
 }

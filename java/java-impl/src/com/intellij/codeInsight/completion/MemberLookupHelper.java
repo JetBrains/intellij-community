@@ -45,18 +45,18 @@ public class MemberLookupHelper {
     return myShouldImport;
   }
 
-  public void renderElement(LookupElementPresentation presentation, boolean forceQualify, PsiSubstitutor substitutor) {
+  public void renderElement(LookupElementPresentation presentation, @Nullable Boolean qualify, PsiSubstitutor substitutor) {
     final String className = myContainingClass == null ? "???" : myContainingClass.getName();
 
     final String memberName = myMember.getName();
-    if (!myShouldImport && StringUtil.isNotEmpty(className) || forceQualify) {
+    if (!Boolean.FALSE.equals(qualify) && (!myShouldImport && StringUtil.isNotEmpty(className) || Boolean.TRUE.equals(qualify))) {
       presentation.setItemText(className + "." + memberName);
     } else {
       presentation.setItemText(memberName);
     }
 
     final String qname = myContainingClass == null ? "" : myContainingClass.getQualifiedName();
-    String pkg = StringUtil.getPackageName(qname);
+    String pkg = qname == null ? "" : StringUtil.getPackageName(qname);
     String location = StringUtil.isEmpty(pkg) ? "" : " (" + pkg + ")";
 
     final String params = myMergedOverloads

@@ -234,6 +234,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     presentation.setItemTextBold(getAttribute(HIGHLIGHTED_ATTR) != null);
 
     MemberLookupHelper helper = myHelper != null ? myHelper : new MemberLookupHelper(myMethod, myContainingClass, false, false);
-    helper.renderElement(presentation, getAttribute(FORCE_QUALIFY) != null, getSubstitutor());
+    final Boolean qualify = getAttribute(FORCE_QUALIFY) != null ? Boolean.TRUE : myHelper == null ? Boolean.FALSE : null;
+    helper.renderElement(presentation, qualify, getSubstitutor());
   }
 }

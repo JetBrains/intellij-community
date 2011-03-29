@@ -277,19 +277,23 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
   }
 
   private static boolean activateDdmsIfNeccessary(@NotNull AndroidFacet facet) {
-    Project project = facet.getModule().getProject();
-    boolean ddmsEnabled = AndroidEnableDdmsAction.isDdmsEnabled();
+    final Project project = facet.getModule().getProject();
+    final boolean ddmsEnabled = AndroidEnableDdmsAction.isDdmsEnabled();
+    boolean shouldRestartDdms = !ddmsEnabled;
+
     if (ddmsEnabled && isDdmsCorrupted(facet)) {
-      ddmsEnabled = false;
+      shouldRestartDdms = true;
       AndroidEnableDdmsAction.setDdmsEnabled(project, false);
     }
 
-    if (!ddmsEnabled) {
-      int result = Messages.showYesNoDialog(project, AndroidBundle.message("android.ddms.disabled.error"),
-                                            AndroidBundle.message("android.ddms.disabled.dialog.title"),
-                                            Messages.getQuestionIcon());
-      if (result != 0) {
-        return false;
+    if (shouldRestartDdms) {
+      if (!ddmsEnabled) {
+        int result = Messages.showYesNoDialog(project, AndroidBundle.message("android.ddms.disabled.error"),
+                                              AndroidBundle.message("android.ddms.disabled.dialog.title"),
+                                              Messages.getQuestionIcon());
+        if (result != 0) {
+          return false;
+        }
       }
       AndroidEnableDdmsAction.setDdmsEnabled(project, true);
     }

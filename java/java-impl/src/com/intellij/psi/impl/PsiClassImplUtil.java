@@ -57,7 +57,6 @@ import java.util.*;
  */
 public class PsiClassImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiClassImplUtil");
-  private static final Key<Boolean> NAME_MAPS_BUILT_FLAG = Key.create("NAME_MAPS_BUILT_FLAG");
 
   private static final Key<CachedValue<Map>> MAP_IN_CLASS_KEY = Key.create("MAP_KEY");
 
@@ -102,35 +101,6 @@ public class PsiClassImplUtil {
                                                     final PsiMethod patternMethod,
                                                     final boolean checkBases,
                                                     final boolean stopOnFirst) {
-/*    final MethodSignature patternSignature = MethodSignatureBackedByPsiMethod.create(patternMethod, PsiSubstitutor.EMPTY);
-    if (!checkBases) {
-      final PsiMethod[] methodsByName = aClass.findMethodsByName(patternMethod.getName(), false);
-      if (methodsByName.length == 0) return PsiMethod.EMPTY_ARRAY;
-      List<PsiMethod> result = new ArrayList<PsiMethod>();
-      for (PsiMethod method : methodsByName) {
-        final MethodSignature otherSignature = method.getSignature(PsiSubstitutor.EMPTY);
-        if (otherSignature.equals(patternSignature)) {
-          result.add(method);
-          if (stopOnFirst) break;
-        }
-      }
-
-      return result.toArray(new PsiMethod[result.size()]);
-    }
-    else {
-      final Set<HierarchicalMethodSignature> signatures = getOverrideEquivalentSignatures(aClass);
-      final HierarchicalMethodSignature signatureWithSupers = signatures.get(patternSignature);
-      if (signatureWithSupers == null) return PsiMethod.EMPTY_ARRAY;
-      final List<PsiMethod> result = new ArrayList<PsiMethod>();
-      MethodSignatureUtil.processMethodHierarchy(signatureWithSupers, new Processor<HierarchicalMethodSignature>() {
-        public boolean process(final HierarchicalMethodSignature sig) {
-          result.add(sig.getSignature().getMethod());
-          return !stopOnFirst;
-        }
-      });
-      return result.toArray(new PsiMethod[result.size()]);
-    }*/
-
     final PsiMethod[] methodsByName = aClass.findMethodsByName(patternMethod.getName(), checkBases);
     if (methodsByName.length == 0) return Collections.emptyList();
     final List<PsiMethod> methods = new SmartList<PsiMethod>();
@@ -238,14 +208,12 @@ public class PsiClassImplUtil {
         }
       }
     };
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
-    processDeclarationsInClassNotCached(psiClass, processor, ResolveState.initial(),  new THashSet<PsiClass>(), null, psiClass, false, factory);
+    processDeclarationsInClassNotCached(psiClass, processor, ResolveState.initial(),  new THashSet<PsiClass>(), null, psiClass, false);
 
     Map<Class<? extends PsiMember>, Map<String, List<Pair<PsiMember, PsiSubstitutor>>>> result = new HashMap<Class<? extends PsiMember>, Map<String, List<Pair<PsiMember, PsiSubstitutor>>>>(3);
     result.put(PsiClass.class, generateMapByList(classes));
     result.put(PsiMethod.class, generateMapByList(methods));
     result.put(PsiField.class, generateMapByList(fields));
-    psiClass.putUserData(NAME_MAPS_BUILT_FLAG, Boolean.TRUE);
     return result;
   }
 
@@ -275,6 +243,12 @@ public class PsiClassImplUtil {
         value = ((UserDataHolderEx)aClass).putUserDataIfAbsent(MAP_IN_CLASS_KEY, value);
       }
     }
+    return getCachedMembers(value, memberClazz);
+  }
+
+  private static <T extends PsiMember> Map<String, List<Pair<T, PsiSubstitutor>>> getCachedMembers(CachedValue<Map> value,
+                                                                                                   Class<T> memberClazz) {
+    //noinspection unchecked
     return (Map<String, List<Pair<T, PsiSubstitutor>>>)value.getValue().get(memberClazz);
   }
 
@@ -308,7 +282,7 @@ public class PsiClassImplUtil {
     }
   }
 
-  private static final Function<ClassIconRequest, Icon> FULL_ICON_EVALUATOR = new Function<ClassIconRequest, Icon>() {
+  private static final Function<ClassIconRequest, Icon> FULL_ICON_EVALUATOR = new NullableFunction<ClassIconRequest, Icon>() {
     public Icon fun(ClassIconRequest r) {
       if (!r.psiClass.isValid() || r.psiClass.getProject().isDisposed()) return null;
 
@@ -406,112 +380,140 @@ public class PsiClassImplUtil {
                                                    PsiElement last,
                                                    PsiElement place,
                                                    boolean isRaw) {
+    if (last instanceof PsiTypeParameterList || last instanceof PsiModifierList) return true; //TypeParameterList and ModifierList do not see our declarations
     if (visited != null && visited.contains(aClass)) return true;
+
     PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
     isRaw = isRaw || PsiUtil.isRawSubstitutor(aClass, substitutor);
-    if (last instanceof PsiTypeParameterList || last instanceof PsiModifierList) return true; //TypeParameterList and ModifierList do not see our declarations
-    final Boolean built = aClass.getUserData(NAME_MAPS_BUILT_FLAG);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
-    if (built == null) {
-      return processDeclarationsInClassNotCached(aClass, processor, state, visited, last, place, isRaw, factory);
-    }
 
-    final NameHint nameHint = processor.getHint(NameHint.KEY);
+    CachedValue<Map> cache = aClass.getUserData(MAP_IN_CLASS_KEY);
+    if (cache != null && cache.hasUpToDateValue()) {
+      final NameHint nameHint = processor.getHint(NameHint.KEY);
+      if (nameHint != null) {
+        return processCachedMembersByName(aClass, processor, state, visited, last, place, isRaw, substitutor, cache, nameHint);
+      }
+    }
+    return processDeclarationsInClassNotCached(aClass, processor, state, visited, last, place, isRaw);
+  }
+
+  private static boolean processCachedMembersByName(PsiClass aClass,
+                                                    PsiScopeProcessor processor,
+                                                    ResolveState state,
+                                                    Set<PsiClass> visited,
+                                                    PsiElement last,
+                                                    PsiElement place,
+                                                    boolean isRaw,
+                                                    PsiSubstitutor substitutor,
+                                                    CachedValue<Map> cache, NameHint nameHint) {
     final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
-    if (nameHint != null) {
-      if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.FIELD)) {
-        final PsiField fieldByName = aClass.findFieldByName(nameHint.getName(state), false);
-        if (fieldByName != null) {
-          processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
-          if (!processor.execute(fieldByName, state)) return false;
-        }
-        else {
-          final Map<String, List<Pair<PsiField, PsiSubstitutor>>> allFieldsMap = getMap(aClass, PsiField.class);
+    PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
 
-          final List<Pair<PsiField, PsiSubstitutor>> list = allFieldsMap.get(nameHint.getName(state));
-          if (list != null) {
-            for (final Pair<PsiField, PsiSubstitutor> candidate : list) {
-              PsiField candidateField = candidate.getFirst();
-              PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(candidateField.getContainingClass(), candidate.getSecond(), aClass,
-                                                                       substitutor, place, factory);
+    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.FIELD)) {
+      final PsiField fieldByName = aClass.findFieldByName(nameHint.getName(state), false);
+      if (fieldByName != null) {
+        processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
+        if (!processor.execute(fieldByName, state)) return false;
+      }
+      else {
+        final Map<String, List<Pair<PsiField, PsiSubstitutor>>> allFieldsMap = getCachedMembers(cache, PsiField.class);
 
-              processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, candidateField.getContainingClass());
-              if (!processor.execute(candidateField, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
-            }
+        final List<Pair<PsiField, PsiSubstitutor>> list = allFieldsMap.get(nameHint.getName(state));
+        if (list != null) {
+          for (final Pair<PsiField, PsiSubstitutor> candidate : list) {
+            PsiField candidateField = candidate.getFirst();
+            PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(candidateField.getContainingClass(), candidate.getSecond(), aClass,
+                                                                     substitutor, place, factory);
+
+            processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, candidateField.getContainingClass());
+            if (!processor.execute(candidateField, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
           }
         }
       }
-      if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
-        if (last != null && last.getParent() == aClass) {
-          if (last instanceof PsiClass) {
-            if (!processor.execute(last, state)) return false;
-          }
-          // Parameters
-          final PsiTypeParameterList list = aClass.getTypeParameterList();
-          if (list != null && !list.processDeclarations(processor, state, last, place)) return false;
+    }
+    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
+      if (last != null && last.getParent() == aClass) {
+        if (last instanceof PsiClass) {
+          if (!processor.execute(last, state)) return false;
         }
-        if (!(last instanceof PsiReferenceList)) {
-          final PsiClass classByName = aClass.findInnerClassByName(nameHint.getName(state), false);
-          if (classByName != null) {
-            processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
-            if (!processor.execute(classByName, state)) return false;
-          }
-          else {
-            final Map<String, List<Pair<PsiClass, PsiSubstitutor>>> allClassesMap = getMap(aClass, PsiClass.class);
+        // Parameters
+        final PsiTypeParameterList list = aClass.getTypeParameterList();
+        if (list != null && !list.processDeclarations(processor, state, last, place)) return false;
+      }
+      if (!(last instanceof PsiReferenceList)) {
+        final PsiClass classByName = aClass.findInnerClassByName(nameHint.getName(state), false);
+        if (classByName != null) {
+          processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
+          if (!processor.execute(classByName, state)) return false;
+        }
+        else {
+          final Map<String, List<Pair<PsiClass, PsiSubstitutor>>> allClassesMap = getCachedMembers(cache, PsiClass.class);
 
-            final List<Pair<PsiClass, PsiSubstitutor>> list = allClassesMap.get(nameHint.getName(state));
-            if (list != null) {
-              for (final Pair<PsiClass, PsiSubstitutor> candidate : list) {
-                final PsiClass inner = candidate.getFirst();
-                final PsiClass containingClass = inner.getContainingClass();
-                if (containingClass != null) {
-                  PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(containingClass, candidate.getSecond(), aClass,
-                                                                           substitutor, place, factory);
-                  processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
-                  if (!processor.execute(inner, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
-                }
+          final List<Pair<PsiClass, PsiSubstitutor>> list = allClassesMap.get(nameHint.getName(state));
+          if (list != null) {
+            for (final Pair<PsiClass, PsiSubstitutor> candidate : list) {
+              final PsiClass inner = candidate.getFirst();
+              final PsiClass containingClass = inner.getContainingClass();
+              if (containingClass != null) {
+                PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(containingClass, candidate.getSecond(), aClass,
+                                                                         substitutor, place, factory);
+                processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
+                if (!processor.execute(inner, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
               }
             }
           }
         }
       }
-      if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
-        if (processor instanceof MethodResolverProcessor) {
-          final MethodResolverProcessor methodResolverProcessor = (MethodResolverProcessor)processor;
-          if (methodResolverProcessor.isConstructor()) {
-            final PsiMethod[] constructors = aClass.getConstructors();
-            methodResolverProcessor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
-            for (PsiMethod constructor : constructors) {
-              if (!methodResolverProcessor.execute(constructor, state)) return false;
-            }
-            return true;
+    }
+    if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
+      if (processor instanceof MethodResolverProcessor) {
+        final MethodResolverProcessor methodResolverProcessor = (MethodResolverProcessor)processor;
+        if (methodResolverProcessor.isConstructor()) {
+          final PsiMethod[] constructors = aClass.getConstructors();
+          methodResolverProcessor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
+          for (PsiMethod constructor : constructors) {
+            if (!methodResolverProcessor.execute(constructor, state)) return false;
           }
-        }
-        final Map<String, List<Pair<PsiMethod, PsiSubstitutor>>> allMethodsMap = getMap(aClass, PsiMethod.class);
-        final List<Pair<PsiMethod, PsiSubstitutor>> list = allMethodsMap.get(nameHint.getName(state));
-        if (list != null) {
-          for (final Pair<PsiMethod, PsiSubstitutor> candidate : list) {
-            PsiMethod candidateMethod = candidate.getFirst();
-            if (processor instanceof MethodResolverProcessor) {
-              if (candidateMethod.isConstructor() != ((MethodResolverProcessor)processor).isConstructor()) continue;
-            }
-            final PsiClass containingClass = candidateMethod.getContainingClass();
-            PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(containingClass, candidate.getSecond(), aClass,
-                                                                     substitutor, place, factory);
-            if (isRaw && !candidateMethod.hasModifierProperty(PsiModifier.STATIC)) { //static methods are not erased due to raw overriding
-              PsiTypeParameter[] methodTypeParameters = candidateMethod.getTypeParameters();
-              finalSubstitutor = factory.createRawSubstitutor(finalSubstitutor, methodTypeParameters);
-            }
-            processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
-            if (!processor.execute(candidateMethod, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
-          }
+          return true;
         }
       }
-      return true;
+      final Map<String, List<Pair<PsiMethod, PsiSubstitutor>>> allMethodsMap = getCachedMembers(cache, PsiMethod.class);
+      final List<Pair<PsiMethod, PsiSubstitutor>> list = allMethodsMap.get(nameHint.getName(state));
+      if (list != null) {
+        for (final Pair<PsiMethod, PsiSubstitutor> candidate : list) {
+          PsiMethod candidateMethod = candidate.getFirst();
+          if (processor instanceof MethodResolverProcessor) {
+            if (candidateMethod.isConstructor() != ((MethodResolverProcessor)processor).isConstructor()) continue;
+          }
+          final PsiClass containingClass = candidateMethod.getContainingClass();
+          if (visited != null && visited.contains(candidateMethod.getContainingClass())) {
+            continue;
+          }
+
+          PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(containingClass, candidate.getSecond(), aClass,
+                                                                   substitutor, place, factory);
+          finalSubstitutor = checkRaw(isRaw, factory, candidateMethod, finalSubstitutor);
+          processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
+          if (!processor.execute(candidateMethod, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
+        }
+
+        if (visited != null) {
+          for (Pair<PsiMethod, PsiSubstitutor> aList : list) {
+            visited.add(aList.getFirst().getContainingClass());
+          }
+        }
+
+      }
+    }
+    return true;
     }
 
-    return processDeclarationsInClassNotCached(aClass, processor, state, visited, last, place, isRaw, factory);
+  private static PsiSubstitutor checkRaw(boolean isRaw, PsiElementFactory factory, PsiMethod candidateMethod, PsiSubstitutor substitutor) {
+    if (isRaw && !candidateMethod.hasModifierProperty(PsiModifier.STATIC)) { //static methods are not erased due to raw overriding
+      PsiTypeParameter[] methodTypeParameters = candidateMethod.getTypeParameters();
+      substitutor = factory.createRawSubstitutor(substitutor, methodTypeParameters);
+    }
+    return substitutor;
   }
 
   public static PsiSubstitutor obtainFinalSubstitutor(@NotNull PsiClass candidateClass, PsiSubstitutor candidateSubstitutor, PsiClass aClass,
@@ -531,8 +533,7 @@ public class PsiClassImplUtil {
   private static boolean processDeclarationsInClassNotCached(PsiClass aClass, PsiScopeProcessor processor, ResolveState state, Set<PsiClass> visited,
                                                              PsiElement last,
                                                              PsiElement place,
-                                                             boolean isRaw,
-                                                             PsiElementFactory factory) {
+                                                             boolean isRaw) {
     if (visited == null) visited = new THashSet<PsiClass>();
     if (!visited.add(aClass)) return true;
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
@@ -555,15 +556,15 @@ public class PsiClassImplUtil {
       }
     }
 
+    PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
+      PsiSubstitutor baseSubstitutor = state.get(PsiSubstitutor.KEY);
       final PsiMethod[] methods = nameHint != null ? aClass.findMethodsByName(nameHint.getName(state), false) : aClass.getMethods();
       for (final PsiMethod method : methods) {
-        if (isRaw && !method.hasModifierProperty(PsiModifier.STATIC)) { //static methods are not erased due to raw overriding
-          PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
-          PsiSubstitutor raw = factory.createRawSubstitutor(state.get(PsiSubstitutor.KEY), methodTypeParameters);
-          state = state.put(PsiSubstitutor.KEY, raw);
-        }
-        if (!processor.execute(method, state)) return false;
+        PsiSubstitutor finalSubstitutor = checkRaw(isRaw, factory, method, baseSubstitutor);
+        ResolveState methodState = finalSubstitutor == baseSubstitutor ? state : state.put(PsiSubstitutor.KEY, finalSubstitutor);
+        if (!processor.execute(method, methodState)) return false;
       }
     }
 

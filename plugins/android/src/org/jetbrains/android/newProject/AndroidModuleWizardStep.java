@@ -57,6 +57,8 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
   private JPanel myPropertiesPanel;
 
   private AndroidSdkComboBoxWithBrowseButton mySdkComboBoxWithBrowseButton;
+  private JCheckBox myCreateDefaultStructure;
+  private JPanel myApplicationPanel;
 
   private final WizardContext myWizardContext;
 
@@ -84,31 +86,47 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
     ActionListener listener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if (myApplicationProjectButton.isSelected() || myLibProjectButton.isSelected()) {
-          myAppPropertiesEditor.getContentPanel().setVisible(true);
-          if (myTestPropertiesEditor != null) {
-            myTestPropertiesEditor.getContentPanel().setVisible(false);
-          }
-          boolean app = myApplicationProjectButton.isSelected();
-          myAppPropertiesEditor.getApplicationNameField().setEnabled(app);
-          myAppPropertiesEditor.getHelloAndroidCheckBox().setEnabled(app);
-          if (app) {
-            myAppPropertiesEditor.updateActivityPanel();
-          }
-          else {
-            UIUtil.setEnabled(myAppPropertiesEditor.getActivtiyPanel(), app, true);
-          }
-        }
-        else {
-          myAppPropertiesEditor.getContentPanel().setVisible(false);
-          assert myTestPropertiesEditor != null;
-          myTestPropertiesEditor.getContentPanel().setVisible(true);
-        }
+        updatePropertiesEditor();
       }
     };
     myApplicationProjectButton.addActionListener(listener);
     myLibProjectButton.addActionListener(listener);
     myTestProjectButton.addActionListener(listener);
+
+    myCreateDefaultStructure.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        final boolean enabled = myCreateDefaultStructure.isSelected();
+        UIUtil.setEnabled(myApplicationPanel, enabled, true);
+
+        if (enabled) {
+          updatePropertiesEditor();
+        }
+      }
+    });
+  }
+
+  private void updatePropertiesEditor() {
+    if (myApplicationProjectButton.isSelected() || myLibProjectButton.isSelected()) {
+      myAppPropertiesEditor.getContentPanel().setVisible(true);
+      if (myTestPropertiesEditor != null) {
+        myTestPropertiesEditor.getContentPanel().setVisible(false);
+      }
+      boolean app = myApplicationProjectButton.isSelected();
+      myAppPropertiesEditor.getApplicationNameField().setEnabled(app);
+      myAppPropertiesEditor.getHelloAndroidCheckBox().setEnabled(app);
+      if (app) {
+        myAppPropertiesEditor.updateActivityPanel();
+      }
+      else {
+        UIUtil.setEnabled(myAppPropertiesEditor.getActivtiyPanel(), app, true);
+      }
+    }
+    else {
+      myAppPropertiesEditor.getContentPanel().setVisible(false);
+      assert myTestPropertiesEditor != null;
+      myTestPropertiesEditor.getContentPanel().setVisible(true);
+    }
   }
 
   public JComponent getComponent() {
@@ -135,6 +153,10 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
       throw new ConfigurationException(AndroidBundle.message("select.platform.error"));
     }
 
+    if (!myCreateDefaultStructure.isSelected()) {
+      return true;
+    }
+
     if (myApplicationProjectButton.isSelected() || myLibProjectButton.isSelected()) {
       myAppPropertiesEditor.validate(myTestProjectButton.isSelected());
     }
@@ -152,6 +174,10 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
 
     PropertiesComponent.getInstance().setValue(AndroidSdkUtils.DEFAULT_PLATFORM_NAME_PROPERTY, selectedSdk.getName());
     myModuleBuilder.setSdk(selectedSdk);
+
+    if (!myCreateDefaultStructure.isSelected()) {
+      return;
+    }
 
     if (myApplicationProjectButton.isSelected() || myLibProjectButton.isSelected()) {
       myModuleBuilder.setProjectType(myApplicationProjectButton.isSelected() ? ProjectType.APPLICATION : ProjectType.LIBRARY);

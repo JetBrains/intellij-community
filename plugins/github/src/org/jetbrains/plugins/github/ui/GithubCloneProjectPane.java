@@ -1,11 +1,20 @@
 package org.jetbrains.plugins.github.ui;
 
 import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.EditorComboBoxEditor;
+import com.intellij.ui.EditorComboBoxRenderer;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.StringComboboxEditor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nullable;
@@ -26,31 +35,31 @@ import java.util.List;
  */
 public class GithubCloneProjectPane {
   private JPanel myPanel;
-  private JComboBox mySelectRepositoryComboBox;
   private TextFieldWithBrowseButton myTextFieldWithBrowseButton;
   private JTextField myProjectNameText;
+  private ComboBox myRepositoryComboBox;
   private final GithubCloneProjectDialog myDialog;
 
   public GithubCloneProjectPane(final GithubCloneProjectDialog dialog) {
     myDialog = dialog;
-    mySelectRepositoryComboBox.setRenderer(new ListCellRendererWrapper<RepositoryInfo>(mySelectRepositoryComboBox.getRenderer()){
-      @Override
-      public void customize(final JList list, final RepositoryInfo value, final int index, final boolean selected, final boolean cellHasFocus) {
-        setText(value.getOwner() + "/" + value.getName());
-      }
-    });
-    mySelectRepositoryComboBox.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(final ItemEvent e) {
-        final RepositoryInfo repositoryInfo = (RepositoryInfo)e.getItem();
-        if (repositoryInfo != null) {
-          myProjectNameText.setText(repositoryInfo.getName());
-          myDialog.updateOkButton();
+    final EditorComboBoxEditor comboEditor = new StringComboboxEditor(ProjectManager.getInstance().getDefaultProject(), FileTypes.PLAIN_TEXT, myRepositoryComboBox);
+    myRepositoryComboBox.setEditor(comboEditor);
+    ((EditorTextField) comboEditor.getEditorComponent()).addDocumentListener(
+      new DocumentAdapter() {
+        @Override
+        public void beforeDocumentChange(final com.intellij.openapi.editor.event.DocumentEvent e) {
+          updateControls();
         }
-      }
-    });
 
-    final DocumentListener updateOkButtonListener = new DocumentListener() {
+        @Override
+        public void documentChanged(final com.intellij.openapi.editor.event.DocumentEvent e) {
+          updateControls();
+        }
+      });
+    myRepositoryComboBox.setRenderer(new EditorComboBoxRenderer(comboEditor));
+    myRepositoryComboBox.setEditable(true);
+
+    myProjectNameText.getDocument().addDocumentListener(new DocumentListener() {
       // update Ok button state depending on the current state of the fields
       public void insertUpdate(final DocumentEvent e) {
         myDialog.updateOkButton();
@@ -63,9 +72,21 @@ public class GithubCloneProjectPane {
       public void changedUpdate(final DocumentEvent e) {
         myDialog.updateOkButton();
       }
-    };
-    myProjectNameText.getDocument().addDocumentListener(updateOkButtonListener);
-    myTextFieldWithBrowseButton.getChildComponent().getDocument().addDocumentListener(updateOkButtonListener);
+    });
+    myTextFieldWithBrowseButton.getChildComponent().getDocument().addDocumentListener(new DocumentListener() {
+      // update Ok button state depending on the current state of the fields
+      public void insertUpdate(final DocumentEvent e) {
+        myDialog.updateOkButton();
+      }
+
+      public void removeUpdate(final DocumentEvent e) {
+        myDialog.updateOkButton();
+      }
+
+      public void changedUpdate(final DocumentEvent e) {
+        myDialog.updateOkButton();
+      }
+    });
   }
 
   public JComponent getPanel() {
@@ -73,11 +94,11 @@ public class GithubCloneProjectPane {
   }
 
   public JComponent getPreferrableFocusComponent() {
-    return mySelectRepositoryComboBox;
+    return myRepositoryComboBox;
   }
 
-  public RepositoryInfo getSelectedRepository(){
-    return (RepositoryInfo) mySelectRepositoryComboBox.getModel().getSelectedItem();
+  public String getSelectedRepository(){
+    return (String) myRepositoryComboBox.getEditor().getItem();
   }
 
   public String getSelectedPath(){
@@ -120,12 +141,18 @@ public class GithubCloneProjectPane {
     });
   }
 
-  public void setAvailableRepos(final List<RepositoryInfo> repos) {
-    mySelectRepositoryComboBox.setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(repos)));
-    final RepositoryInfo preselectedRepository = (RepositoryInfo)mySelectRepositoryComboBox.getSelectedItem();
+  public void setAvailableRepos(final List<String> repos) {
+    myRepositoryComboBox.setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(repos)));
+    updateControls();
+  }
+
+  private void updateControls() {
+    final String preselectedRepository = (String)myRepositoryComboBox.getEditor().getItem();
     if (preselectedRepository != null) {
-      myProjectNameText.setText(preselectedRepository.getName());
+      final int i = preselectedRepository.lastIndexOf('/');
+      myProjectNameText.setText(i != -1 ? preselectedRepository.substring(i + 1) : "");
     }
+    myDialog.updateOkButton();
   }
 
   public void setSelectedPath(final String path) {
