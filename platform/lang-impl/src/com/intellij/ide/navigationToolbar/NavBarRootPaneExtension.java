@@ -31,6 +31,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -79,17 +80,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       final AnAction toolbarRunGroup = manager.getAction("NavBarToolBar");
       if (toolbarRunGroup instanceof DefaultActionGroup) {
         final DefaultActionGroup group = (DefaultActionGroup)toolbarRunGroup;
-        boolean needsGap = false;
-        int i = 0;
-        for (final AnAction action : group.getChildActionsOrStubs()) {
-          if (action instanceof ComboBoxAction) {
-            needsGap = i == 0;
-            break;
-          } else if (!(action instanceof Separator)) {
-            i++;
-          }
-        }
-
+        final boolean needGap = isNeedGap(group);
         final ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.UNKNOWN, group, true);
         final JComponent component = actionToolbar.getComponent();
         component.setBackground(Color.WHITE);
@@ -98,7 +89,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         myRunPanel.setBackground(Color.WHITE);
         myRunPanel.add(component);
         myRunPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 1, 1, 0, color),
-                                                                BorderFactory.createEmptyBorder(1, needsGap ? 5 : 1, 0, 0)));
+                                                                BorderFactory.createEmptyBorder(1, needGap ? 5 : 1, 0, 0)));
         myWrapperPanel.add(myRunPanel, BorderLayout.EAST);
       }
     }
@@ -106,6 +97,30 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       myWrapperPanel.remove(myRunPanel);
       myRunPanel = null;
     }
+  }
+
+  private static boolean isNeedGap(final DefaultActionGroup group) {
+    final AnAction firstAction = getFirstAction(group);
+    return firstAction instanceof ComboBoxAction;
+  }
+
+  @Nullable
+  private static AnAction getFirstAction(final DefaultActionGroup group) {
+    AnAction firstAction = null;
+    for (final AnAction action : group.getChildActionsOrStubs()) {
+      if (action instanceof DefaultActionGroup) {
+        firstAction = getFirstAction((DefaultActionGroup)action);
+      } else if (action instanceof Separator || action instanceof ActionGroup) {
+        continue;
+      } else {
+        firstAction = action;
+        break;
+      }
+
+      if (firstAction != null) break;
+    }
+
+    return firstAction;
   }
 
   private JComponent buildNavBarPanel() {
