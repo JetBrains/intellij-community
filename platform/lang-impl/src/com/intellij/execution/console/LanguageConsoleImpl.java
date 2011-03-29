@@ -297,7 +297,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   private void setPromptInner(final String prompt) {
     ((EditorImpl)myConsoleEditor).setPrefixTextAndAttributes(prompt, ConsoleViewContentType.USER_INPUT.getAttributes());
-    myConsoleEditor.getCaretModel().moveToOffset(myConsoleEditor.getDocument().getTextLength());
     if (myPanel.isVisible()) {
       queueUiUpdate(false);
     }
