@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.Executor;
+import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.*;
