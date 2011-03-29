@@ -111,6 +111,7 @@
     <paletteItemProvider implementation="com.intellij.uiDesigner.palette.UIDesignerPaletteProvider"/>
 
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.uiDesigner.binding.GeneratedCodeFoldingBuilder"/>
+    <gotoRelatedProvider implementation="com.intellij.uiDesigner.binding.FormRelatedFilesProvider"/>
   </extensions>
 
   <project-components>
