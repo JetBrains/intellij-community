@@ -319,7 +319,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     return myAvdManager;
   }
 
-  public void launchEmulator(@Nullable final String avdName, @NotNull final String commands, @Nullable final ProcessHandler handler) {
+  public void launchEmulator(@Nullable final String avdName, @NotNull final String commands) {
     AndroidPlatform platform = getConfiguration().getAndroidPlatform();
     if (platform != null) {
       final String emulatorPath = platform.getSdk().getLocation() + File.separator + AndroidUtils.toolPath(EMULATOR);
@@ -335,7 +335,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
           commandLine.addParameter(s);
         }
       }
-      AndroidUtils.runExternalToolInSeparateThread(getModule().getProject(), commandLine, handler);
+      AndroidUtils.runExternalToolInSeparateThread(getModule().getProject(), commandLine);
     }
   }
 

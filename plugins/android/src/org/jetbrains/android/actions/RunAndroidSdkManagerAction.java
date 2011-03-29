@@ -79,6 +79,6 @@ public class RunAndroidSdkManagerAction extends AnAction {
     }
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(sdkPath + File.separator + AndroidUtils.toolPath(SdkConstants.androidCmdName()));
-    AndroidUtils.runExternalToolInSeparateThread(project, commandLine, null);
+    AndroidUtils.runExternalToolInSeparateThread(project, commandLine);
   }
 }
