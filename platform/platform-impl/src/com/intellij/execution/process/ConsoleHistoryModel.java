@@ -1,13 +1,8 @@
 package com.intellij.execution.process;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.EmptyAction;
-import com.intellij.openapi.util.Computable;
-import com.intellij.util.PairProcessor;
+import com.intellij.openapi.util.ModificationTracker;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,17 +10,19 @@ import java.util.List;
 /**
  * @author Gregory.Shrago
  */
-public class ConsoleHistoryModel {
+public class ConsoleHistoryModel implements ModificationTracker {
 
   public static final int DEFAULT_MAX_SIZE = 20;
 
   private int myHistoryCursor;
   private int myMaxHistorySize = DEFAULT_MAX_SIZE;
   private final LinkedList<String> myHistory = new LinkedList<String>();
+  private volatile long myModificationTracker;
 
 
   public void addToHistory(final String statement) {
     synchronized (myHistory) {
+      myModificationTracker ++;
       myHistoryCursor = -1;
       myHistory.remove(statement);
       if (myHistory.size() >= myMaxHistorySize) {
@@ -85,70 +82,8 @@ public class ConsoleHistoryModel {
     }
   }
 
-  public static AnAction createConsoleHistoryUpAction(final Computable<Boolean> canMoveUpInEditor,
-                                                      final ConsoleHistoryModel model,
-                                                      final PairProcessor<AnActionEvent, String> processor) {
-    final AnAction upAction = new AnAction() {
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
-        processor.process(e, model.getHistoryNext());
-      }
-
-      @Override
-      public void update(final AnActionEvent e) {
-        // Check if we have anything in history
-        final boolean hasHistory = model.hasHistory(true);
-        if (!hasHistory){
-          e.getPresentation().setEnabled(false);
-          return;
-        }
-        e.getPresentation().setEnabled(!canMoveUpInEditor.compute());
-      }
-    };
-    upAction.registerCustomShortcutSet(KeyEvent.VK_UP, 0, null);
-    upAction.getTemplatePresentation().setVisible(false);
-    return upAction;
-  }
-
-  public static AnAction createConsoleHistoryDownAction(final Computable<Boolean> canMoveDownInEditor,
-                                                        final ConsoleHistoryModel model,
-                                                        final PairProcessor<AnActionEvent, String> processor) {
-    final AnAction downAction = new AnAction() {
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
-        processor.process(e, model.getHistoryPrev());
-      }
-
-      @Override
-      public void update(final AnActionEvent e) {
-        // Check if we have anything in history
-        final boolean hasHistory = model.hasHistory(false);
-        if (!hasHistory){
-          e.getPresentation().setEnabled(false);
-          return;
-        }
-        e.getPresentation().setEnabled(!canMoveDownInEditor.compute());
-      }
-    };
-
-    downAction.registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, null);
-    downAction.getTemplatePresentation().setVisible(false);
-    return downAction;
-  }
-
-  public static AnAction createHistoryAction(final ConsoleHistoryModel model, final boolean next, final PairProcessor<AnActionEvent,String> processor) {
-    final AnAction action = new AnAction(null, null, null) {
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
-        processor.process(e, next ? model.getHistoryNext() : model.getHistoryPrev());
-      }
-
-      @Override
-      public void update(final AnActionEvent e) {
-        e.getPresentation().setEnabled(model.hasHistory(next));
-      }
-    };
-    EmptyAction.setupAction(action, next? "Console.History.Next" : "Console.History.Previous", null);
-    return action;
+  @Override
+  public long getModificationCount() {
+    return myModificationTracker;
   }
 }

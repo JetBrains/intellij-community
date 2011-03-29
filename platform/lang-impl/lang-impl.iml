@@ -21,6 +21,7 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="module" module-name="xdebugger-api" />
+    <orderEntry type="library" name="xpp3-1.1.4-min" level="project" />
   </component>
 </module>
 
