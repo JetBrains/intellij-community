@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
  * User: Dmitry.Krasilschikov
  * Date: 23.05.2007
  */
-public class GroovyWithIfSurrounder extends GroovyManyStatementsSurrounder {
+public class IfSurrounder extends GroovyManyStatementsSurrounder {
   protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
     GrIfStatement ifStatement = (GrIfStatement) factory.createTopElementFromText("if (a) {\n}");

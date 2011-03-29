@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.surroundWith;
 
+import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -28,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * User: Dmitry.Krasilschikov
  * Date: 22.05.2007
  */
-public abstract class GroovyExpressionSurrounder extends GroovySingleElementSurrounder {
+public abstract class GroovyExpressionSurrounder implements Surrounder {
   protected boolean isApplicable(PsiElement element) {
     return element instanceof GrExpression;
   }
@@ -43,6 +44,10 @@ public abstract class GroovyExpressionSurrounder extends GroovySingleElementSurr
   }
 
   protected abstract TextRange surroundExpression(GrExpression expression);
+
+  public boolean isApplicable(@NotNull PsiElement[] elements) {
+    return elements.length == 1 &&  isApplicable(elements[0]);
+  }
 
   protected static void replaceToOldExpression(GrExpression oldExpr, GrExpression replacement) {
     oldExpr.replaceWithExpression(replacement, false);

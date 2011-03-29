@@ -20,7 +20,7 @@ package org.jetbrains.plugins.groovy.lang.surroundWith;
  * @author Hamlet D'Arcy
  * @since 03.02.2009
  */
-public class GroovyWithShouldFailWithTypeStatementsSurrounder extends GroovySimpleManyStatementsSurrounder {
+public class ShouldFailWithTypeStatementsSurrounder extends GroovySimpleManyStatementsSurrounder {
 
   protected String getReplacementTokens() {
     return "shouldFail(a){\n}";

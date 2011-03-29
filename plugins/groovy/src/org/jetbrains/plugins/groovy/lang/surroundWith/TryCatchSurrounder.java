@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
  * User: Dmitry.Krasilschikov
  * Date: 22.05.2007
  */
-public class GroovyWithTryCatchSurrounder extends GroovyWithTrySurrounder {
+public class TryCatchSurrounder extends TrySurrounder {
   public String getTemplateDescription() {
     return super.getTemplateDescription() + " / catch";
   }

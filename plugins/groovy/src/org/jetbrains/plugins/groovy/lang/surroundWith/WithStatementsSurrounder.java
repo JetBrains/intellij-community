@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.lang.surroundWith;
  * User: Dmitry.Krasilschikov
  * Date: 25.05.2007
  */
-public class GroovyWithWithStatementsSurrounder extends GroovySimpleManyStatementsSurrounder {
+public class WithStatementsSurrounder extends GroovySimpleManyStatementsSurrounder {
 
   protected String getReplacementTokens() {
     return "with(a){\n}";

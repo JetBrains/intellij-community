@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  * User: Dmitry.Krasilschikov
  * Date: 22.05.2007
  */
-public abstract class GroovyWithTrySurrounder extends GroovyManyStatementsSurrounder {
+public abstract class TrySurrounder extends GroovyManyStatementsSurrounder {
   protected TextRange getSurroundSelectionRange(GroovyPsiElement element) {
     assert element instanceof GrTryCatchStatement;
     int endOffset = element.getTextRange().getEndOffset();

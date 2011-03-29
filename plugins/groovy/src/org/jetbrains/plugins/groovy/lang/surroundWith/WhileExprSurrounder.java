@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * User: Dmitry.Krasilschikov
  * Date: 25.05.2007
  */
-public class GroovyWithWhileExprSurrounder extends GroovyConditionSurrounder {
+public class WhileExprSurrounder extends GroovyConditionSurrounder {
   protected TextRange surroundExpression(GrExpression expression) {
     GrWhileStatement whileStatement = (GrWhileStatement) GroovyPsiElementFactory.getInstance(expression.getProject()).createTopElementFromText("while(a){4\n}");
     replaceToOldExpression((GrExpression)whileStatement.getCondition(), expression);

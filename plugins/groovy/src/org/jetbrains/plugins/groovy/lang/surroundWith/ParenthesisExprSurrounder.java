@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParent
  * User: Dmitry.Krasilschikov
  * Date: 22.05.2007
  */
-public class GroovyWithParenthesisExprSurrounder extends GroovyExpressionSurrounder {
+public class ParenthesisExprSurrounder extends GroovyExpressionSurrounder {
   protected TextRange surroundExpression(GrExpression expression) {
     GrParenthesizedExpression result = (GrParenthesizedExpression) GroovyPsiElementFactory.getInstance(expression.getProject()).createExpressionFromText("(a)");
     replaceToOldExpression(result.getOperand(), expression);

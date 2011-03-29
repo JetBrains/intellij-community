@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * User: Dmitry.Krasilschikov
  * Date: 25.05.2007
  */
-public class GroovyWithIfElseExprSurrounder extends GroovyConditionSurrounder {
+public class IfElseExprSurrounder extends GroovyConditionSurrounder {
   protected TextRange surroundExpression(GrExpression expression) {
     GrIfStatement ifStatement = (GrIfStatement) GroovyPsiElementFactory.getInstance(expression.getProject()).createTopElementFromText("if(a){4\n} else{\n}");
     replaceToOldExpression((GrExpression) ifStatement.getCondition(), expression);

@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
  * User: Dmitry.Krasilschikov
  * Date: 22.05.2007
  */
-public class GroovyWithTryCatchFinallySurrounder extends GroovyWithTryCatchSurrounder {
+public class TryCatchFinallySurrounder extends TryCatchSurrounder {
 
   public String getTemplateDescription() {
     return super.getTemplateDescription() + " / finally";

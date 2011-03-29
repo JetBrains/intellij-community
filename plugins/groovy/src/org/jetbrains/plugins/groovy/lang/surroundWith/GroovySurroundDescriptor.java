@@ -27,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.surroundWith.*;
-import org.jetbrains.plugins.groovy.lang.surroundWith.GroovySurrounderByClosure;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,29 +38,29 @@ import java.util.List;
 public class GroovySurroundDescriptor implements SurroundDescriptor {
   private static final Surrounder[] ourSurrounders = new Surrounder[]{
     //statements: like in java
-    new GroovyWithIfSurrounder(),
-    new GroovyWithIfElseSurrounder(),
-    new GroovyWithWhileSurrounder(),
+    new IfSurrounder(),
+    new IfElseSurrounder(),
+    new WhileSurrounder(),
     //there's no do-while in Groovy
-    new GroovySurrounderByClosure(),
+    new SurrounderByClosure(),
     //like in Java
-    new GroovyWithForSurrounder(),
-    new GroovyWithTryCatchSurrounder(),
-    new GroovyWithTryFinallySurrounder(),
-    new GroovyWithTryCatchFinallySurrounder(),
+    new ForSurrounder(),
+    new TryCatchSurrounder(),
+    new TryFinallySurrounder(),
+    new TryCatchFinallySurrounder(),
     //groovy-specific statements
-    new GroovyWithShouldFailWithTypeStatementsSurrounder(),
+    new ShouldFailWithTypeStatementsSurrounder(),
     //expressions: like in java
-    new GroovyWithParenthesisExprSurrounder(),
-    new GroovyWithTypeCastSurrounder(),
+    new ParenthesisExprSurrounder(),
+    new TypeCastSurrounder(),
 
     //groovy-specific
-    new GroovyWithWithStatementsSurrounder(),
+    new WithStatementsSurrounder(),
 
-    new GroovyWithIfExprSurrounder(),
-    new GroovyWithIfElseExprSurrounder(),
-    new GroovyWithWhileExprSurrounder(),
-    new GroovyWithWithExprSurrounder(),
+    new IfExprSurrounder(),
+    new IfElseExprSurrounder(),
+    new WhileExprSurrounder(),
+    new WithExprSurrounder(),
   };
 
   @NotNull

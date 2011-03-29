@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
  * User: Dmitry.Krasilschikov
  * Date: 22.05.2007
  */
-public class GroovySurrounderByClosure extends GroovyManyStatementsSurrounder {
+public class SurrounderByClosure extends GroovyManyStatementsSurrounder {
   private static final Key<GroovyResolveResult> REF_RESOLVE_RESULT_KEY = Key.create("REF_RESOLVE_RESULT");
 
   public String getTemplateDescription() {

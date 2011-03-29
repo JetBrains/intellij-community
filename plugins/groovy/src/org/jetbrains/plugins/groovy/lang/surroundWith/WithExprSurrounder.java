@@ -17,34 +17,32 @@ package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.surroundWith.GroovyConditionSurrounder;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 25.05.2007
  */
-public class GroovyWithIfExprSurrounder extends GroovyConditionSurrounder {
+public class WithExprSurrounder extends GroovyConditionSurrounder {
   protected TextRange surroundExpression(GrExpression expression) {
-    GrIfStatement ifStatement = (GrIfStatement) GroovyPsiElementFactory.getInstance(expression.getProject()).createTopElementFromText("if(a){4\n}");
-    replaceToOldExpression((GrExpression)ifStatement.getCondition(), expression);
-    ifStatement = expression.replaceWithStatement(ifStatement);
-    GrStatement thenBranch = ifStatement.getThenBranch();
+    GrMethodCallExpression call = (GrMethodCallExpression) GroovyPsiElementFactory.getInstance(expression.getProject()).createTopElementFromText("with(a){4\n}");
+    replaceToOldExpression(call.getExpressionArguments()[0], expression);
+    call = expression.replaceWithStatement(call);
+    GrClosableBlock block = call.getClosureArguments()[0];
 
-    assert thenBranch instanceof GrBlockStatement;
-    GrStatement[] statements = ((GrBlockStatement) thenBranch).getBlock().getStatements();
-    assert statements.length > 0;
+    GrStatement statementInBody = block.getStatements()[0];
+    int offset = statementInBody.getTextRange().getStartOffset();
 
-    GrStatement statement = statements[0];
-    int endOffset = statement.getTextRange().getStartOffset();
-    statement.getNode().getTreeParent().removeChild(statement.getNode());
+    statementInBody.getParent().getNode().removeChild(statementInBody.getNode());
 
-    return new TextRange(endOffset, endOffset);
+    return new TextRange(offset, offset);
   }
 
   public String getTemplateDescription() {
-    return "if (expr)";
+    return "with (expr)";
   }
 }

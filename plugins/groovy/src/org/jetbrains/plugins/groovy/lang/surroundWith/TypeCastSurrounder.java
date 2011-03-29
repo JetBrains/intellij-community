@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  * User: Dmitry.Krasilschikov
  * Date: 25.05.2007
  */
-public class GroovyWithTypeCastSurrounder extends GroovyExpressionSurrounder {
+public class TypeCastSurrounder extends GroovyExpressionSurrounder {
   protected TextRange surroundExpression(GrExpression expression) {
     GrParenthesizedExpression parenthesized = (GrParenthesizedExpression) GroovyPsiElementFactory.getInstance(expression.getProject()).createTopElementFromText("((Type)a)");
     GrTypeCastExpression typeCast = (GrTypeCastExpression) parenthesized.getOperand();

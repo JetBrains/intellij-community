@@ -17,26 +17,23 @@ package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 
 /**
  * User: Dmitry.Krasilschikov
- * Date: 25.05.2007
+ * Date: 22.05.2007
  */
-public class GroovyWithIfElseSurrounder extends GroovyWithIfSurrounder {
-  @Override
+public class TryFinallySurrounder extends TrySurrounder {
   protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
-    GrIfStatement ifStatement = (GrIfStatement) factory.createTopElementFromText("if (a) {\n} else {\n}");
-    addStatements(((GrBlockStatement)ifStatement.getThenBranch()).getBlock(), elements);
-    return ifStatement;
+    GrTryCatchStatement tryStatement = (GrTryCatchStatement) factory.createTopElementFromText("try {\n} finally{\n}");
+    addStatements(tryStatement.getTryBlock(), elements);
+    return tryStatement;
   }
 
-  @Override
   public String getTemplateDescription() {
-    return "if / else";
+    return super.getTemplateDescription() + " / finally";
   }
 }
