@@ -24,6 +24,7 @@ public class SurroundStatementsTest extends SurroundTestCase {
   public void testTry_catch1() throws Exception { doTest(new TryCatchSurrounder()); }
   public void testTry_catch_finally() throws Exception { doTest(new TryCatchFinallySurrounder()); }
   public void testTry_finally1() throws Exception { doTest(new TryFinallySurrounder()); }
+  public void testTry_finallyFormatting() throws Exception { doTest(new TryFinallySurrounder()); }
   public void testWhile1() throws Exception { doTest(new WhileSurrounder()); }
   public void testWith2() throws Exception { doTest(new WithStatementsSurrounder()); }
   public void testFor1() throws Exception { doTest(new ForSurrounder()); }

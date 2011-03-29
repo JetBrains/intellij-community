@@ -21,11 +21,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -72,31 +70,10 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
     assert newStmt != null;
 
     ASTNode parentNode = element1.getParent().getNode();
-
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
-
-      if (i == 0) {
-        parentNode.replaceChild(element1.getNode(), newStmt.getNode());
-      } else {
-        if (parentNode != element.getParent().getNode()) return null;
-
-        final int endOffset = element.getTextRange().getEndOffset();
-        final PsiElement semicolon = PsiTreeUtil.findElementOfClassAtOffset(element.getContainingFile(), endOffset, PsiElement.class, false);
-        if (semicolon != null && ";".equals(semicolon.getText())) {
-          assert parentNode == semicolon.getParent().getNode();
-          parentNode.removeChild(semicolon.getNode());
-        }
-
-        final PsiElement newLine = PsiTreeUtil.findElementOfClassAtOffset(element.getContainingFile(), endOffset, PsiElement.class, false);
-        if (newLine != null && GroovyElementTypes.mNLS.equals(newLine.getNode().getElementType())) {
-          assert parentNode == newLine.getParent().getNode();
-          parentNode.removeChild(newLine.getNode());
-        }
-
-        parentNode.removeChild(element.getNode());
-      }
+    if (elements.length > 1) {
+      parentNode.removeRange(element1.getNode().getTreeNext(), elements[elements.length - 1].getNode().getTreeNext());
     }
+    parentNode.replaceChild(element1.getNode(), newStmt.getNode());
 
     return getSurroundSelectionRange(newStmt);
   }
