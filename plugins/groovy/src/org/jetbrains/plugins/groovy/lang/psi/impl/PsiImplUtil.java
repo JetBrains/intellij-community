@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExpressionImpl;
@@ -109,19 +110,10 @@ public class PsiImplUtil {
     //we should add the expression in arg list
     if (oldExpr instanceof GrClosableBlock &&
         !(newExpr instanceof GrClosableBlock) &&
-        oldParent instanceof GrCall &&
-        ArrayUtil.contains(oldExpr, ((GrCall)oldParent).getClosureArguments())) {
-      final GrClosableBlock[] closureArguments = ((GrCall)oldParent).getClosureArguments();
-      final int i = ArrayUtil.find(closureArguments, oldExpr);
-      GrArgumentList argList = ((GrCall)oldParent).getArgumentList();
-      if (argList.getText().length() == 0) argList = (GrArgumentList)argList.replace(factory.createArgumentList());
-      for (int j = 0; j < i; j++) {
-        argList.add(closureArguments[j]);
-        closureArguments[j].delete();
-      }
-      final GrExpression result = (GrExpression)argList.add(newExpr);
-      oldExpr.delete();
-      return result;
+        oldParent instanceof GrMethodCallExpression &&
+        ArrayUtil.contains(oldExpr, ((GrMethodCallExpression)oldParent).getClosureArguments())) {
+      return ((GrMethodCallExpression)oldParent).replaceClosureArgument((GrClosableBlock)oldExpr, newExpr);
+
     }
     else {
       return (GrExpression)oldExpr.replace(newExpr);

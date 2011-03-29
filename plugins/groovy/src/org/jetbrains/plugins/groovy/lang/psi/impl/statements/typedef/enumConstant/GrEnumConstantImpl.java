@@ -135,11 +135,6 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant, P
     return null;
   }
 
-  public GrExpression removeArgument(final int number) {
-    final GrArgumentList list = getArgumentList();
-    return list != null ? list.removeArgument(number) : null;
-  }
-
   public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) throws IncorrectOperationException {
     GrArgumentList list = getArgumentList();
     assert list != null;
