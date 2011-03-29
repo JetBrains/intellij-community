@@ -79,18 +79,16 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
         if (parentNode != element.getParent().getNode()) return null;
 
         final int endOffset = element.getTextRange().getEndOffset();
-        final PsiElement semicolon = PsiTreeUtil.findElementOfClassAtRange(element.getContainingFile(), endOffset, endOffset + 1, PsiElement.class);
+        final PsiElement semicolon = PsiTreeUtil.findElementOfClassAtOffset(element.getContainingFile(), endOffset, PsiElement.class, false);
         if (semicolon != null && ";".equals(semicolon.getText())) {
           assert parentNode == semicolon.getParent().getNode();
           parentNode.removeChild(semicolon.getNode());
         }
 
-        if (i < elements.length - 1) {
-          final PsiElement newLine = PsiTreeUtil.findElementOfClassAtRange(element.getContainingFile(), endOffset, elements[i + 1].getTextRange().getStartOffset(), PsiElement.class);
-          if (newLine != null && GroovyElementTypes.mNLS.equals(newLine.getNode().getElementType())) {
-            assert parentNode == newLine.getParent().getNode();
-            parentNode.removeChild(newLine.getNode());
-          }
+        final PsiElement newLine = PsiTreeUtil.findElementOfClassAtOffset(element.getContainingFile(), endOffset, PsiElement.class, false);
+        if (newLine != null && GroovyElementTypes.mNLS.equals(newLine.getNode().getElementType())) {
+          assert parentNode == newLine.getParent().getNode();
+          parentNode.removeChild(newLine.getNode());
         }
 
         parentNode.removeChild(element.getNode());

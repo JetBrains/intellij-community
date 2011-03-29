@@ -32,7 +32,7 @@ public class GroovyWithTypeCastSurrounder extends GroovyExpressionSurrounder {
     GrTypeCastExpression typeCast = (GrTypeCastExpression) parenthesized.getOperand();
     replaceToOldExpression(typeCast.getOperand(), expression);
     GrTypeElement typeElement = typeCast.getCastTypeElement();
-    int endOffset = typeElement.getTextRange().getStartOffset();
+    int endOffset = typeElement.getTextRange().getStartOffset() + expression.getTextRange().getStartOffset();
     parenthesized = (GrParenthesizedExpression) expression.replaceWithExpression(parenthesized, false);
 
     final GrTypeCastExpression newTypeCast = (GrTypeCastExpression)parenthesized.getOperand();
