@@ -128,6 +128,46 @@ def foo() {
 
   }
 
+  public void testImportedStaticField() throws Exception {
+    myFixture.addFileToProject("b.groovy", """
+class Foo {
+  static def abcfield1
+  static def abcfield2
+}""")
+    myFixture.configureByText("a.groovy", """def foo() {
+  abcfi<caret>
+}""")
+    def item = myFixture.complete(CompletionType.CLASS_NAME)[0]
+    ((StaticallyImportable) item).shouldBeImported = true
+    myFixture.type('\n')
+    myFixture.checkResult """import static Foo.abcfield1
+
+def foo() {
+  abcfield1<caret>
+}"""
+
+  }
+
+  public void testImportedInterfaceConstant() throws Exception {
+    myFixture.addFileToProject("b.groovy", """
+interface Foo {
+  static def abcfield1 = 2
+  static def abcfield2 = 3
+}""")
+    myFixture.configureByText("a.groovy", """def foo() {
+  abcfi<caret>
+}""")
+    def item = myFixture.complete(CompletionType.CLASS_NAME)[0]
+    ((StaticallyImportable) item).shouldBeImported = true
+    myFixture.type('\n')
+    myFixture.checkResult """import static Foo.abcfield1
+
+def foo() {
+  abcfield1<caret>
+}"""
+
+  }
+
   public void testQualifiedStaticMethod() throws Exception {
     myFixture.addFileToProject("foo/b.groovy", """package foo
 class Foo {

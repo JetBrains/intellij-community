@@ -431,9 +431,15 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testPrivateOverloads() throws Throwable { doTest(); }
 
-  public void testCastAutoboxing() throws Throwable { doActionItemTest(); }
-  public void testCastAutoboxing2() throws Throwable { doActionItemTest(); }
-  public void testCastAutoboxing3() throws Throwable { doActionItemTest(); }
+  public void testCastAutoboxing() throws Throwable {
+    doItemTest();
+  }
+  public void testCastAutoboxing2() throws Throwable {
+    doItemTest();
+  }
+  public void testCastAutoboxing3() throws Throwable {
+    doItemTest();
+  }
   public void testCastWildcards() throws Throwable { doTest(); }
 
   public void testNoSecondMethodTypeArguments() throws Throwable { doTest(Lookup.REPLACE_SELECT_CHAR); }
@@ -772,17 +778,17 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testClassLiteralInAnno2() throws Throwable {
-    doActionItemTest();
+    doItemTest();
   }
 
   public void testClassLiteralInheritors() throws Throwable {
-    doActionItemTest();
+    doItemTest();
   }
 
   public void testInsertOverride() throws Exception {
     CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(getProject());
     styleSettings.INSERT_OVERRIDE_ANNOTATION = true;
-    doActionItemTest();
+    doItemTest();
   }
 
   public void testForeach() throws Exception {
@@ -952,7 +958,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testCastToParameterizedType() throws Throwable { doActionTest(); }
 
   public void testInnerEnumInMethod() throws Throwable {
-    doActionItemTest();
+    doItemTest();
   }
 
   public void testEnumAsDefaultAnnotationParam() throws Throwable { doTest(); }
@@ -1023,27 +1029,13 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doFirstItemTest('\t');
   }
 
-  private void doTest(boolean performAction, boolean selectItem) throws Exception {
+  private void doActionTest() throws Exception {
     configureByTestName();
-    if (performAction) {
-      performAction();
-    }
-    if (selectItem) {
-      selectItem(myFixture.getLookupElements()[0]);
-    }
     checkResultByTestName();
   }
 
-  private void doActionTest() throws Exception {
-    doTest(true, false);
-  }
-
   private void doItemTest() throws Exception {
-    doTest(false, true);
-  }
-
-  private void doActionItemTest() throws Exception {
-    doTest(true, true);
+    doFirstItemTest('\n');
   }
 
   private void performAction() {

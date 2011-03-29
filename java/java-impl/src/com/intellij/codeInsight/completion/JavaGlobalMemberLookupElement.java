@@ -3,9 +3,10 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -16,92 +17,54 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
  * @author peter
  */
 public class JavaGlobalMemberLookupElement extends LookupElement implements StaticallyImportable {
-  private final PsiMember myMember;
-  private final boolean myMergedOverloads;
-  private final PsiClass myContainingClass;
+  private final MemberLookupHelper myHelper;
   private final InsertHandler<JavaGlobalMemberLookupElement> myQualifiedInsertion;
   private final InsertHandler<JavaGlobalMemberLookupElement> myImportInsertion;
-  private boolean myShouldImport = false;
 
   public JavaGlobalMemberLookupElement(List<PsiMethod> overloads,
                                        PsiClass containingClass,
                                        InsertHandler<JavaGlobalMemberLookupElement> qualifiedInsertion,
                                        InsertHandler<JavaGlobalMemberLookupElement> importInsertion, boolean shouldImport) {
-    myMember = overloads.get(0);
-    myContainingClass = containingClass;
+    myHelper = new MemberLookupHelper(overloads, containingClass, shouldImport);
     myQualifiedInsertion = qualifiedInsertion;
     myImportInsertion = importInsertion;
-    myShouldImport = shouldImport;
-    myMergedOverloads = true;
   }
 
   public JavaGlobalMemberLookupElement(PsiMember member,
                                        PsiClass containingClass,
                                        InsertHandler<JavaGlobalMemberLookupElement> qualifiedInsertion,
                                        InsertHandler<JavaGlobalMemberLookupElement> importInsertion, boolean shouldImport) {
-    myMember = member;
-    myContainingClass = containingClass;
+    myHelper = new MemberLookupHelper(member, containingClass, shouldImport, false);
     myQualifiedInsertion = qualifiedInsertion;
     myImportInsertion = importInsertion;
-    myShouldImport = shouldImport;
-    myMergedOverloads = false;
   }
 
   @NotNull
   @Override
   public PsiMember getObject() {
-    return myMember;
+    return myHelper.getMember();
   }
 
   @NotNull
   public PsiClass getContainingClass() {
-    return myContainingClass;
+    return assertNotNull(myHelper.getContainingClass());
   }
 
   @NotNull
   @Override
   public String getLookupString() {
-    return assertNotNull(myMember.getName());
+    return assertNotNull(getObject().getName());
   }
 
   @Override
   public void renderElement(LookupElementPresentation presentation) {
-    final String className = myContainingClass.getName();
-
     presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this, presentation.isReal()));
-
-    final String methodName = myMember.getName();
-    if (Boolean.FALSE.equals(myShouldImport) && StringUtil.isNotEmpty(className)) {
-      presentation.setItemText(className + "." + methodName);
-    } else {
-      presentation.setItemText(methodName);
-    }
-
-    final String qname = myContainingClass.getQualifiedName();
-    String location = StringUtil.isEmpty(qname) ? "" : " (" + StringUtil.getPackageName(qname) + ")";
-
-    final String params = myMergedOverloads
-                          ? "(...)"
-                          : myMember instanceof PsiMethod
-                            ? PsiFormatUtil.formatMethod((PsiMethod)myMember, PsiSubstitutor.EMPTY,
-                                                         PsiFormatUtil.SHOW_PARAMETERS,
-                                                         PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE)
-                            : "";
-    if (Boolean.TRUE.equals(myShouldImport) && StringUtil.isNotEmpty(className)) {
-      presentation.setTailText(params + " in " + className + location);
-    } else {
-      presentation.setTailText(params + location);
-    }
-
-    final PsiType type = myMember instanceof PsiMethod ? ((PsiMethod)myMember).getReturnType() : ((PsiField) myMember).getType();
-    if (type != null) {
-      presentation.setTypeText(type.getPresentableText());
-    }
+    myHelper.renderElement(presentation, false, PsiSubstitutor.EMPTY);
   }
 
   @Override
   public void setShouldBeImported(boolean shouldImportStatic) {
-    myShouldImport = shouldImportStatic;
+    myHelper.setShouldBeImported(shouldImportStatic);
   }
 
   @Override
@@ -111,11 +74,12 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
 
   @Override
   public boolean willBeImported() {
-    return myShouldImport;
+    return myHelper.willBeImported();
   }
 
   @Override
   public void handleInsert(InsertionContext context) {
-    (myShouldImport ? myImportInsertion : myQualifiedInsertion).handleInsert(context, this);
+    (willBeImported() ? myImportInsertion : myQualifiedInsertion).handleInsert(context, this);
   }
+
 }

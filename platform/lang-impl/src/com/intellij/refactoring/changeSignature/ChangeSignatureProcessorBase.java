@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
@@ -103,6 +104,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
+    final RefactoringElementListener elementListener = getTransaction().getElementListener(myChangeInfo.getMethod());
     try {
       final ChangeSignatureUsageProcessor[] processors = ChangeSignatureUsageProcessor.EP_NAME.getExtensions();
 
@@ -123,7 +125,11 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
         }
       }
 
-      LOG.assertTrue(myChangeInfo.getMethod().isValid());
+      final PsiElement method = myChangeInfo.getMethod();
+      LOG.assertTrue(method.isValid());
+      if (myChangeInfo.isNameChanged()) {
+        elementListener.elementRenamed(method);
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

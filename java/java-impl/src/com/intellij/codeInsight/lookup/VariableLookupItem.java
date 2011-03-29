@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +36,12 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
   public void handleInsert(InsertionContext context) {
     super.handleInsert(context);
 
+    PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getDocument());
+    PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getTailOffset() - 1, PsiReferenceExpression.class, false);
+    if (ref != null) {
+      JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(ref);
+    }
+
     final char completionChar = context.getCompletionChar();
     if (completionChar == '=') {
       context.setAddCompletionChar(false);
@@ -53,7 +60,6 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     }
     else if (completionChar == '!' && PsiType.BOOLEAN.isAssignableFrom(getObject().getType())) {
       context.setAddCompletionChar(false);
-      final PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getTailOffset() - 1, PsiReferenceExpression.class, false);
       if (ref != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EXCLAMATION_FINISH);
         context.getDocument().insertString(ref.getTextRange().getStartOffset(), "!");

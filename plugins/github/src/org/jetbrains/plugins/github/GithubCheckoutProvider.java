@@ -19,6 +19,7 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -82,21 +83,32 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     }
 
     // All the preliminary work is already done, go and clone the selected repository!
-    final RepositoryInfo selectedRepository = checkoutDialog.getSelectedRepository();
+    RepositoryInfo selectedRepository = checkoutDialog.getSelectedRepository();
+    // Check if selected repository exists
+    final String owner = selectedRepository.getOwner();
+    final String name = selectedRepository.getName();
+    if (selectedRepository instanceof UnknownRepositoryInfo) {
+      selectedRepository = GithubUtil.getDetailedRepositoryInfo(project, owner, name);
+    }
+    if (selectedRepository == null){
+      Messages.showErrorDialog(project, "Selected repository ''" + owner +"/" + name + "'' doesn't exist.", "Cannot clone repository");
+      return;
+    }
+
     final boolean writeAccessAllowed = GithubUtil.isWriteAccessAllowed(project, selectedRepository);
     if (!writeAccessAllowed){
       Messages.showErrorDialog(project, "It seems that you have only read access to the selected repository.\n" +
         "GitHub supports only https protocol for readonly access, which is not supported yet.\n" +
         "As a workaround, please fork it and clone your forked repository instead.\n" +
-        "More details are available here: http://youtrack.jetbrains.net/issue/IDEA-55298", "Cannot clone this repository");
+        "More details are available here: http://youtrack.jetbrains.net/issue/IDEA-55298", "Cannot clone repository");
       return;
     }
     final String host = writeAccessAllowed ? "git@" + settings.getHost() + ":" : "https://github.com" + settings.getHost() + "/";
     final String selectedPath = checkoutDialog.getSelectedPath();
     final VirtualFile selectedPathFile = LocalFileSystem.getInstance().findFileByPath(selectedPath);
     final String projectName = checkoutDialog.getProjectName();
-    final String repositoryName = selectedRepository.getName();
-    final String repositoryOwner = selectedRepository.getOwner();
+    final String repositoryName = name;
+    final String repositoryOwner = owner;
     final String checkoutUrl = host + repositoryOwner + "/" + repositoryName + ".git";
     GitCheckoutProvider.checkout(project, listener, selectedPathFile, checkoutUrl, projectName, "origin", selectedPath);
   }

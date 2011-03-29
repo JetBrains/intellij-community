@@ -1538,7 +1538,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     GrPackageDefinition packageDefinition = PsiTreeUtil.getParentOfType(refElement, GrPackageDefinition.class);
     if (packageDefinition == null && refElement.getQualifier() == null) {
       PsiElement parent = refElement.getParent();
-      if (parent instanceof GrNewExpression) {
+      if (parent instanceof GrNewExpression &&
+          refElement.getManager().areElementsEquivalent(((GrNewExpression)parent).getReferenceElement(), refElement)) {
         annotation.registerFix(CreateClassFix.createClassFromNewAction((GrNewExpression)parent));
       }
       else {

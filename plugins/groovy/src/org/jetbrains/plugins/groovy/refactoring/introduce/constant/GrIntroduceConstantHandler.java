@@ -207,7 +207,7 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
       if (resolved instanceof PsiVariable) {
         if (!isStaticFinalField((PsiVariable)resolved)) {
           if (expr instanceof GrClosableBlock) {
-            if (!PsiTreeUtil.isAncestor(scope, resolved, true)) {
+            if (!PsiTreeUtil.isContextAncestor(scope, resolved, true)) {
               throw new GrIntroduceRefactoringError(GroovyRefactoringBundle.message("closure.uses.external.variables"));
             }
           }

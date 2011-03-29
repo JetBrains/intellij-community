@@ -21,6 +21,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.MethodImplementor;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -455,12 +456,12 @@ public class OverrideImplementUtil {
   }
 
   public static void chooseAndOverrideMethods(Project project, Editor editor, PsiClass aClass){
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.overrideimplement");
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_OVERRIDE_IMPLEMENT);
     chooseAndOverrideOrImplementMethods(project, editor, aClass, false);
   }
 
   public static void chooseAndImplementMethods(Project project, Editor editor, PsiClass aClass){
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.overrideimplement");
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_OVERRIDE_IMPLEMENT);
     chooseAndOverrideOrImplementMethods(project, editor, aClass, true);
   }
 

@@ -32,10 +32,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -50,14 +48,6 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     return executorId.equals(DefaultRunExecutor.EXECUTOR_ID) &&
            profile instanceof ModuleRunProfile &&
            !(profile instanceof RunConfigurationWithSuppressedDefaultRunAction);
-  }
-
-  public JDOMExternalizable createConfigurationData(ConfigurationInfoProvider settingsProvider) {
-    return null;
-  }
-
-  public SettingsEditor<JDOMExternalizable> getSettingsEditor(final Executor executor, RunConfiguration configuration) {
-    return null;
   }
 
   public void patch(JavaParameters javaParameters, RunnerSettings settings, final boolean beforeExecution) throws ExecutionException {
@@ -151,13 +141,17 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
     public void update(final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
-      if (ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler) == null) {
+      if (!isVisible()) {
         presentation.setVisible(false);
         presentation.setEnabled(false);
         return;
       }
       presentation.setVisible(true);
       presentation.setEnabled(!myProcessHandler.isProcessTerminated());
+    }
+
+    protected boolean isVisible() {
+      return ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler) != null;
     }
   }
 
@@ -168,8 +162,16 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_CANCEL, InputEvent.CTRL_DOWN_MASK)));
     }
 
+    @Override
+    protected boolean isVisible() {
+      return super.isVisible() && ProcessProxyFactory.getInstance().isBreakGenLibraryAvailable();
+    }
+
     public void actionPerformed(final AnActionEvent e) {
-      ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler).sendBreak();
+      ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
+      if (proxy != null) {
+        proxy.sendBreak();
+      }
     }
   }
 
@@ -179,7 +181,10 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler).sendStop();
+      ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
+      if (proxy != null) {
+        proxy.sendStop();
+      }
     }
   }
 

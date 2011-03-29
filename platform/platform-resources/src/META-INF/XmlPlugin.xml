@@ -44,7 +44,7 @@
     <extensionPoint name="xml.zenCodingGenerator" interface="com.intellij.codeInsight.template.zencoding.generators.ZenCodingGenerator"/>
     <extensionPoint name="xml.zenCodingFilter" interface="com.intellij.codeInsight.template.zencoding.filters.ZenCodingFilter"/>
 
-    <extensionPoint name="xml.relatedFilesContributor" interface="com.intellij.navigation.RelatedFilesContributor"/>
+    <extensionPoint name="xml.relatedToHtmlFilesContributor" interface="com.intellij.navigation.RelatedToHtmlFilesContributor"/>
   </extensionPoints>
 
   <project-components>
@@ -302,7 +302,8 @@
 
     <multiHostInjector implementation="com.intellij.psi.impl.source.html.HtmlConditionalCommentInjector"/>
 
-    <xml.relatedFilesContributor implementation="com.intellij.navigation.LinkedToHtmlFilesContributor"/>
+    <gotoRelatedProvider implementation="com.intellij.navigation.HtmlGotoRelatedProvider"/>
+    <xml.relatedToHtmlFilesContributor implementation="com.intellij.navigation.LinkedToHtmlFilesContributor"/>
 
     <intentionAction>
       <category>XML</category>

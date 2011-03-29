@@ -49,10 +49,12 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.AndroidFileTemplateProvider;
 import org.jetbrains.android.dom.manifest.Manifest;
+import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.ResourceValue;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
+import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.run.testing.AndroidTestRunConfiguration;
 import org.jetbrains.android.run.testing.AndroidTestRunConfigurationType;
 import org.jetbrains.android.sdk.AndroidPlatform;
@@ -89,6 +91,10 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     super.setupRootModel(rootModel);
 
     rootModel.setSdk(mySdk);
+
+    if (myProjectType == null) {
+      return;
+    }
 
     VirtualFile[] files = rootModel.getContentRoots();
     if (files.length > 0) {
@@ -253,10 +259,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
                       return;
                     }
                     if (myProjectType == ProjectType.APPLICATION) {
-                      Manifest manifest = facet.getManifest();
-                      if (manifest != null && myApplicationName.length() > 0) {
-                        manifest.getApplication().getLabel().setValue(ResourceValue.literal(myApplicationName));
-                      }
+                      assignApplicationName(facet);
                       createChildDirectoryIfNotExist(project, contentRoot, SdkConstants.FD_ASSETS);
                       createChildDirectoryIfNotExist(project, contentRoot, SdkConstants.FD_NATIVE_LIBS);
                     }
@@ -282,6 +285,35 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       });
     }
     return true;
+  }
+
+  private void assignApplicationName(AndroidFacet facet) {
+    if (myApplicationName == null || myApplicationName.length() == 0) {
+      return;
+    }
+
+    final LocalResourceManager manager = facet.getLocalResourceManager();
+    ResourceElement appNameResElement = null;
+    final String appNameResource = "app_name";
+
+    for (ResourceElement resElement : manager.getValueResources("string")) {
+      if (appNameResource.equals(resElement.getName().getValue())) {
+        appNameResElement = resElement;
+      }
+    }
+
+    if (appNameResElement == null) {
+      manager.addValueResource("string", appNameResource, myApplicationName);
+    }
+    else {
+      appNameResElement.setStringValue(myApplicationName);
+    }
+
+    final Manifest manifest = facet.getManifest();
+
+    if (manifest != null) {
+      manifest.getApplication().getLabel().setValue(ResourceValue.referenceTo('@', null, "string", appNameResource));
+    }
   }
 
   private static void moveContentAndRemoveDir(Project project, @NotNull VirtualFile from, @NotNull VirtualFile to) throws IOException {
@@ -386,9 +418,8 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
                     FileDocumentManager.getInstance().saveAllDocuments();
                   }
                 });
-                if (myApplicationName.length() > 0) {
-                  manifest.getApplication().getLabel().setValue(ResourceValue.literal(myApplicationName));
-                }
+
+                assignApplicationName(facet);
               }
             }
           };

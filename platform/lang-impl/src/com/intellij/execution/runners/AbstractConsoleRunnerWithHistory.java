@@ -29,30 +29,21 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -69,8 +60,6 @@ public abstract class AbstractConsoleRunnerWithHistory {
   private final String myWorkingDir;
 
   private LanguageConsoleViewImpl myConsoleView;
-
-  private AnAction myRunAction;
 
   private ConsoleExecuteActionHandler myConsoleExecuteActionHandler;
 
@@ -140,6 +129,8 @@ public abstract class AbstractConsoleRunnerWithHistory {
     panel.add(actionToolbar.getComponent(), BorderLayout.WEST);
     panel.add(myConsoleView.getComponent(), BorderLayout.CENTER);
 
+    actionToolbar.setTargetComponent(panel);
+
     final RunContentDescriptor contentDescriptor =
       new RunContentDescriptor(myConsoleView, myProcessHandler, panel, constructConsoleTitle(myConsoleTitle));
 
@@ -201,13 +192,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
   }
 
   protected void finishConsole() {
-    myRunAction.getTemplatePresentation().setEnabled(false);
     myConsoleView.getConsole().setEditable(false);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        myConsoleView.getConsole().getConsoleEditor().getComponent().updateUI();
-      }
-    });
   }
 
   protected abstract LanguageConsoleViewImpl createConsoleView();
@@ -239,10 +224,8 @@ public abstract class AbstractConsoleRunnerWithHistory {
     final AnAction closeAction = createCloseAction(defaultExecutor, contentDescriptor);
     actionList.add(closeAction);
 
-// run and history actions
-
-    ConsoleExecutionActions executionActions = createExecuteAction();
-    actionList.addAll(executionActions.getActionsAsList());
+// run action
+    actionList.add(createConsoleExecAction(getLanguageConsole(), myProcessHandler, myConsoleExecuteActionHandler));
 
 // Help
     actionList.add(CommonActionsManager.getInstance().createHelpAction("interactive_console"));
@@ -252,13 +235,6 @@ public abstract class AbstractConsoleRunnerWithHistory {
     toolbarActions.addAll(actions);
 
     return actions;
-  }
-
-  protected ConsoleExecutionActions createExecuteAction() {
-    ConsoleExecutionActions executionActions =
-      createConsoleExecActions(getLanguageConsole(), myProcessHandler, myConsoleExecuteActionHandler);
-    myRunAction = executionActions.getRunAction();
-    return executionActions;
   }
 
   protected AnAction createCloseAction(final Executor defaultExecutor, final RunContentDescriptor myDescriptor) {
@@ -273,96 +249,14 @@ public abstract class AbstractConsoleRunnerWithHistory {
     return myConsoleView.getConsole();
   }
 
-  public static ConsoleExecutionActions createConsoleExecActions(final LanguageConsoleImpl languageConsole,
-                                                                 final ProcessHandler processHandler,
-                                                                 final ConsoleExecuteActionHandler consoleExecuteActionHandler) {
-    final AnAction runAction = new ConsoleExecuteAction(languageConsole,
-                                                        processHandler, consoleExecuteActionHandler);
-
-    final PairProcessor<AnActionEvent, String> historyProcessor = new PairProcessor<AnActionEvent, String>() {
-      public boolean process(final AnActionEvent e, final String s) {
-        new WriteCommandAction(languageConsole.getProject(), languageConsole.getFile()) {
-          protected void run(final Result result) throws Throwable {
-            String text = s == null ? "" : s;
-            languageConsole.getEditorDocument().setText(text);
-            languageConsole.getConsoleEditor().getCaretModel().moveToOffset(text.length());
-          }
-        }.execute();
-        return true;
-      }
-    };
-
-    final EditorEx consoleEditor = languageConsole.getConsoleEditor();
-    final AnAction upAction = ConsoleHistoryModel.createConsoleHistoryUpAction(createCanMoveUpComputable(consoleEditor),
-                                                                               consoleExecuteActionHandler.getConsoleHistoryModel(),
-                                                                               historyProcessor);
-    final AnAction downAction = ConsoleHistoryModel.createConsoleHistoryDownAction(createCanMoveDownComputable(consoleEditor),
-                                                                                   consoleExecuteActionHandler.getConsoleHistoryModel(),
-                                                                                   historyProcessor);
-
-    return new ConsoleExecutionActions(runAction, downAction, upAction);
-  }
-
-  public static Computable<Boolean> createCanMoveDownComputable(final Editor consoleEditor) {
-    return new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        final Document document = consoleEditor.getDocument();
-        final CaretModel caretModel = consoleEditor.getCaretModel();
-
-        // Check if we have active lookup or if we can move in editor
-        return LookupManager.getActiveLookup(consoleEditor) != null ||
-               document.getLineNumber(caretModel.getOffset()) < document.getLineCount() - 1 &&
-               !StringUtil.isEmptyOrSpaces(document.getText().substring(caretModel.getOffset()));
-      }
-    };
-  }
-
-  public static Computable<Boolean> createCanMoveUpComputable(final Editor consoleEditor) {
-    return new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        final Document document = consoleEditor.getDocument();
-        final CaretModel caretModel = consoleEditor.getCaretModel();
-        // Check if we have active lookup or if we can move in editor
-        return LookupManager.getActiveLookup(consoleEditor) != null || document.getLineNumber(caretModel.getOffset()) > 0;
-      }
-    };
+  public static AnAction createConsoleExecAction(final LanguageConsoleImpl languageConsole,
+                                                       final ProcessHandler processHandler,
+                                                       final ConsoleExecuteActionHandler consoleExecuteActionHandler) {
+    return new ConsoleExecuteAction(languageConsole, processHandler, consoleExecuteActionHandler);
   }
 
   @NotNull
   protected abstract ConsoleExecuteActionHandler createConsoleExecuteActionHandler();
-
-  public static class ConsoleExecutionActions {
-    private final AnAction myRunAction;
-    private final AnAction myNextAction;
-    private final AnAction myPrevAction;
-    private final List<AnAction> myAdditionalActions = Lists.newArrayList();
-
-    public ConsoleExecutionActions(AnAction runAction, AnAction nextAction, AnAction prevAction) {
-      myRunAction = runAction;
-      myNextAction = nextAction;
-      myPrevAction = prevAction;
-    }
-
-    public AnAction[] getActions() {
-      return getActionsAsList().toArray(new AnAction[getActionsAsList().size()]);
-    }
-
-    public List<AnAction> getActionsAsList() {
-      ArrayList<AnAction> list = Lists.newArrayList(myRunAction, myNextAction, myPrevAction);
-      list.addAll(myAdditionalActions);
-      return list;
-    }
-
-    public boolean addAdditionalAction(AnAction action) {
-      return myAdditionalActions.add(action);
-    }
-
-    public AnAction getRunAction() {
-      return myRunAction;
-    }
-  }
 
 
   public static class ConsoleExecuteAction extends DumbAwareAction {
@@ -392,7 +286,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
     public void update(final AnActionEvent e) {
       final EditorEx editor = myLanguageConsole.getConsoleEditor();
       final Lookup lookup = LookupManager.getActiveLookup(editor);
-      e.getPresentation().setEnabled(!myProcessHandler.isProcessTerminated() &&
+      e.getPresentation().setEnabled(!editor.isRendererMode() && !myProcessHandler.isProcessTerminated() &&
                                      (lookup == null || !(lookup.isCompletion() && lookup.isFocused())));
     }
   }

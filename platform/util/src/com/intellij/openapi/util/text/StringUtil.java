@@ -254,7 +254,12 @@ public class StringUtil {
    */
   @NotNull
   public static String convertLineSeparators(@NotNull String text) {
-    return convertLineSeparators(text, "\n", null);
+    return convertLineSeparators(text, false);
+  }
+
+  @NotNull
+  public static String convertLineSeparators(@NotNull String text, boolean keepCarriageReturn) {
+    return convertLineSeparators(text, "\n", null, keepCarriageReturn);
   }
 
   @NotNull
@@ -264,6 +269,13 @@ public class StringUtil {
 
   @NotNull
   public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, @Nullable int[] offsetsToKeep) {
+    return convertLineSeparators(text, newSeparator, offsetsToKeep, false);
+  }
+
+  @NotNull
+  public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, @Nullable int[] offsetsToKeep,
+                                             boolean keepCarriageReturn)
+  {
     StringBuilder buffer = null;
     int intactLength = 0;
     final boolean newSeparatorIsSlashN = "\n".equals(newSeparator);
@@ -286,12 +298,22 @@ public class StringUtil {
         }
       }
       else if (c == '\r') {
+        boolean followedByLineFeed = i < text.length() - 1 && text.charAt(i + 1) == '\n';
+        if (!followedByLineFeed && keepCarriageReturn) {
+          if (buffer == null) {
+            intactLength++;
+          }
+          else {
+            buffer.append(c);
+          }
+          continue;
+        }
         if (buffer == null) {
           buffer = new StringBuilder(text.length());
           buffer.append(text, 0, intactLength);
         }
         buffer.append(newSeparator);
-        if (i < text.length() - 1 && text.charAt(i + 1) == '\n') {
+        if (followedByLineFeed) {
           i++;
           shiftOffsets(offsetsToKeep, buffer.length(), 2, newSeparator.length());
         }

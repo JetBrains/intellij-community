@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ShowAllAffectedGenericAction extends AnAction {
   public ShowAllAffectedGenericAction() {
-    super("Show all affected files", null, IconLoader.getIcon("/icons/allRevisions.png"));
+    super("Show all affected files", null, IconLoader.getIcon("/vcs/allRevisions.png"));
   }
 
   @Override

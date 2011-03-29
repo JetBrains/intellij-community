@@ -23,7 +23,8 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class FormFileTypeFactory extends FileTypeFactory {
+
   public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-    consumer.consume(new GuiFormFileType(), GuiFormFileType.DEFAULT_EXTENSION);
+    consumer.consume(GuiFormFileType.INSTANCE);
   }
 }

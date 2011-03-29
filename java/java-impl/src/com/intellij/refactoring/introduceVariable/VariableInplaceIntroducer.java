@@ -394,13 +394,14 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
       new WriteCommandAction(myProject){
         @Override
         protected void run(com.intellij.openapi.application.Result result) throws Throwable {
+          final Document document = myEditor.getDocument();
+          PsiDocumentManager.getInstance(getProject()).commitDocument(document);
           final PsiVariable variable = getVariable();
           LOG.assertTrue(variable != null);
           final PsiModifierList modifierList = variable.getModifierList();
           LOG.assertTrue(modifierList != null);
           final int textOffset = modifierList.getTextOffset();
 
-          final Document document = myEditor.getDocument();
           final Runnable runnable = new Runnable() {
             public void run() {
               if (generateFinal) {

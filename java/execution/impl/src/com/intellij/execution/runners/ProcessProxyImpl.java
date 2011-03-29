@@ -16,16 +16,16 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NonNls;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
@@ -112,18 +112,6 @@ class ProcessProxyImpl implements ProcessProxy {
   }
 
   public static boolean useLauncher() {
-    if (Boolean.valueOf(System.getProperty(DONT_USE_LAUNCHER_PROPERTY))) {
-      return false;
-    }
-
-    if (!SystemInfo.isWindows && !SystemInfo.isLinux) {
-      return false;
-    }
-    return new File(getLaunchertLibName()).exists();
-  }
-
-  public static String getLaunchertLibName() {
-    @NonNls final String libName = SystemInfo.isWindows ? "breakgen.dll" : "libbreakgen.so";
-    return PathManager.getBinPath() + File.separator + libName;
+    return !Boolean.valueOf(System.getProperty(DONT_USE_LAUNCHER_PROPERTY));
   }
 }

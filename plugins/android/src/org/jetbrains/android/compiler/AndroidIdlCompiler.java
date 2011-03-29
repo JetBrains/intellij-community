@@ -162,7 +162,7 @@ public class AndroidIdlCompiler implements SourceGeneratingCompiler {
       if (myContext.getProject().isDisposed()) {
         return EMPTY_GENERATION_ITEM_ARRAY;
       }
-      VirtualFile[] files = myContext.getProjectCompileScope().getFiles(AndroidIdlFileType.ourFileType, false);
+      VirtualFile[] files = myContext.getProjectCompileScope().getFiles(AndroidIdlFileType.ourFileType, true);
       List<GenerationItem> items = new ArrayList<GenerationItem>(files.length);
       for (VirtualFile file : files) {
         Module module = myContext.getModuleByFile(file);

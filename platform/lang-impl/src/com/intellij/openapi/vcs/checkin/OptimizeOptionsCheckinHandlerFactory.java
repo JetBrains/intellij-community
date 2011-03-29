@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,15 @@
 
 package com.intellij.openapi.vcs.checkin;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yole
+ * @author oleg
  */
-public class StandardCheckinHandlerFactory extends CheckinHandlerFactory {
+public class OptimizeOptionsCheckinHandlerFactory extends CheckinHandlerFactory {
   @NotNull
   public CheckinHandler createHandler(final CheckinProjectPanel panel) {
-    return new StandardBeforeCheckinHandler(panel.getProject(), panel);
+    return new OptimizeImportsBeforeCheckinHandler(panel.getProject(), panel);
   }
 }

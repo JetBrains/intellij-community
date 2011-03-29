@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.navigation;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiFile;
+package com.intellij.openapi.vcs.checkin;
+
+import com.intellij.openapi.vcs.CheckinProjectPanel;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
 /**
- * @author Eugene.Kudelevsky
+ * @author yole
  */
-public interface RelatedFilesContributor {
-  ExtensionPointName<RelatedFilesContributor> EP_NAME = ExtensionPointName.create("com.intellij.xml.relatedFilesContributor");
-
-  void fillRelatedFiles(@NotNull PsiFile file, @NotNull Set<PsiFile> resultSet);
-
-  boolean isAvailable(@NotNull PsiFile file);
+public class ReformatCheckinHandlerFactory extends CheckinHandlerFactory {
+  @NotNull
+  public CheckinHandler createHandler(final CheckinProjectPanel panel) {
+    return new ReformatBeforeCheckinHandler(panel.getProject(), panel);
+  }
 }

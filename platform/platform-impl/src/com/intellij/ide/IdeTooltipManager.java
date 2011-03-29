@@ -445,10 +445,15 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
 
+
   public static JEditorPane initPane(@NonNls String text, final HintHint hintHint, @Nullable final JLayeredPane layeredPane) {
+    return initPane(new Html(text), hintHint, layeredPane);
+  }
+
+  public static JEditorPane initPane(@NonNls Html html, final HintHint hintHint, @Nullable final JLayeredPane layeredPane) {
     final Ref<Dimension> prefSize = new Ref<Dimension>(null);
-    String htmlBody = getHtmlBody(text);
-    text = "<html><head>" +
+    String htmlBody = getHtmlBody(html);
+    String text = "<html><head>" +
            UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(), hintHint.getUlImg()) +
            "</head><body>" +
            htmlBody +
@@ -568,7 +573,12 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), BorderFactory.createEmptyBorder(0, 5, 0, 5)));
   }
 
-  public static String getHtmlBody(@NonNls String text) {
+  public static String getHtmlBody(String text) {
+    return getHtmlBody(new Html(text));
+  }
+
+  public static String getHtmlBody(Html html) {
+    String text = html.getText();
     String result = text;
     if (!text.startsWith("<html>")) {
       result = text.replaceAll("\n", "<br>");
@@ -590,7 +600,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
 
 
-    return result.replaceAll("<font(.*?)>", "").replaceAll("</font>", "");
+    return html.isKeepFont() ? result : result.replaceAll("<font(.*?)>", "").replaceAll("</font>", "");
   }
 
   @NotNull

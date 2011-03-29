@@ -142,8 +142,8 @@ public class StaticImportMethodFix implements IntentionAction {
     return result;
   }
 
-  public static boolean isExcluded(PsiMethod method) {
-    String name = getMethodQualifiedName(method);
+  public static boolean isExcluded(PsiMember method) {
+    String name = getMemberQualifiedName(method);
     if (name == null) return false;
     CodeInsightSettings cis = CodeInsightSettings.getInstance();
     for (String excluded : cis.EXCLUDED_PACKAGES) {
@@ -204,7 +204,7 @@ public class StaticImportMethodFix implements IntentionAction {
             return FINAL_CHOICE;
           }
 
-          String qname = getMethodQualifiedName(selectedValue);
+          String qname = getMemberQualifiedName(selectedValue);
           if (qname == null) return FINAL_CHOICE;
           List<String> excludableStrings = AddImportAction.getAllExcludableStrings(qname);
           return new BaseListPopupStep<String>(null, excludableStrings) {
@@ -270,7 +270,7 @@ public class StaticImportMethodFix implements IntentionAction {
   }
 
   @Nullable
-  public static String getMethodQualifiedName(PsiMethod method) {
+  public static String getMemberQualifiedName(PsiMember method) {
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return null;
     String className = containingClass.getQualifiedName();

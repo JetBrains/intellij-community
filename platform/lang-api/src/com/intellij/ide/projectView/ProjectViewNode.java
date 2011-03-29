@@ -19,19 +19,20 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * A node in the project view tree.
@@ -39,7 +40,7 @@ import java.util.List;
  * @see TreeStructureProvider#modify(com.intellij.ide.util.treeView.AbstractTreeNode, java.util.Collection, com.intellij.ide.projectView.ViewSettings)
  */
 
-public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
+public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> implements RootsProvider {
 
   protected static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.ProjectViewNode");
 
@@ -122,6 +123,22 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
   }
 
   public boolean someChildContainsFile(final VirtualFile file) {
+    VirtualFile parent = file.getParent();
+    if (parent == null) return false;
+
+    boolean mayContain = false;
+    Collection<VirtualFile> roots = getRoots();
+    for (VirtualFile eachRoot : roots) {
+      if (parent.equals(eachRoot.getParent())) {
+        mayContain = true;
+        break;
+      }
+    }
+
+    if (!mayContain) {
+      return false;
+    }
+
     Collection<? extends AbstractTreeNode> kids = getChildren();
     for (final AbstractTreeNode kid : kids) {
       ProjectViewNode node = (ProjectViewNode)kid;
@@ -130,7 +147,27 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
     return false;
   }
 
+  public Collection<VirtualFile> getRoots() {
+    Value value = getValue();
+
+    if (value instanceof RootsProvider) {
+      return ((RootsProvider)value).getRoots();
+    } else if (value instanceof PsiFile) {
+      PsiFile vFile = ((PsiFile)value).getContainingFile();
+      if (vFile != null && vFile.getVirtualFile() != null) {
+        return Collections.singleton(vFile.getVirtualFile());
+      }
+    } else if (value instanceof VirtualFile) {
+      return Collections.singleton(((VirtualFile)value));
+    }
+
+    return EMPTY_ROOTS;
+  }
+
+
   protected boolean hasProblemFileBeneath() {
+    if (!Registry.is("projectView.showHierarchyErrors")) return false;
+
     return WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesBeneath(new Condition<VirtualFile>() {
       public boolean value(final VirtualFile virtualFile) {
         return contains(virtualFile)

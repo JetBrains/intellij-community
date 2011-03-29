@@ -262,4 +262,14 @@ public class ResolveMethodTest extends ResolveTestCase {
     PsiMethod method = (PsiMethod) target;
     assertEquals("PublicCloneable", method.getContainingClass().getName());
   }
+
+  public void testMultipleInheritancePathsToMethod() throws Exception {
+    PsiReference ref = configureByFile("method/" + getTestName(false) + ".java");
+
+    // just assume this is called by some highlighting inspection/intention/pass before the resolve
+    JavaPsiFacade.getInstance(getProject()).findClass("NN").getAllMethods();
+
+    PsiElement target = ref.resolve();
+    assertInstanceOf(target, PsiMethod.class);
+  }
 }

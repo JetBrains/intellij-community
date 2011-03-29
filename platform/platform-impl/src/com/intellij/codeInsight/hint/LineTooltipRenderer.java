@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.Html;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -75,7 +76,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     final JComponent editorComponent = editor.getComponent();
     final JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
 
-    final JEditorPane pane = IdeTooltipManager.initPane(myText, hintHint, layeredPane);
+    final JEditorPane pane = IdeTooltipManager.initPane(new Html(myText).setKeepFont(true), hintHint, layeredPane);
     hintHint.setContentActive(isActiveHtml(myText));
     if (!hintHint.isAwtTooltip()) {
       correctLocation(editor, pane, p, alignToRight, expanded, myCurrentWidth);

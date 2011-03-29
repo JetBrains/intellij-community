@@ -36,9 +36,6 @@ public interface GrCall extends GroovyPsiElement {
 
   GrExpression[] getExpressionArguments();
 
-  @Nullable
-  GrExpression removeArgument(int number);
-
   GrNamedArgument addNamedArgument(GrNamedArgument namedArgument) throws IncorrectOperationException;
 
   @NotNull

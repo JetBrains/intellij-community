@@ -20,6 +20,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.containers.HashMap;
+import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,10 +35,13 @@ import java.util.*;
 public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
 
   private Map<Language, CommonCodeStyleSettings> myCommonSettingsMap = null;
+  private Map<String, Content> myUnknownSettingsMap;
+
   private final CodeStyleSettings myParentSettings;
 
   private static final String COMMON_SETTINGS_TAG = "codeStyleSettings";
   private static final String LANGUAGE_ATTR = "language";
+
 
   public CommonCodeStyleSettingsManager(CodeStyleSettings parentSettings) {
     myParentSettings = parentSettings;
@@ -101,6 +106,7 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
 
   private void initCommonSettingsMap() {
     myCommonSettingsMap = new LinkedHashMap<Language, CommonCodeStyleSettings>();
+    myUnknownSettingsMap = new LinkedHashMap<String, Content>();
   }
 
   private void registerCommonSettings(@NotNull Language lang, @NotNull CommonCodeStyleSettings settings) {
@@ -136,6 +142,8 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
               final CommonCodeStyleSettings settings = defaultSettings != null ? defaultSettings : new CommonCodeStyleSettings(target);
               settings.readExternal(commonSettingsElement);
               registerCommonSettings(target, settings);
+            } else {
+              myUnknownSettingsMap.put(languageId, (Content)commonSettingsElement.clone());
             }
           }
         }
@@ -147,20 +155,36 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     if (myCommonSettingsMap == null) return;
-    final Language[] languages = myCommonSettingsMap.keySet().toArray(new Language[myCommonSettingsMap.keySet().size()]);
-    Arrays.sort(languages, new Comparator<Language>() {
-      public int compare(final Language o1, final Language o2) {
-        return o1.getDisplayName().compareTo(o2.getDisplayName());
+
+    final Map<String, Language> id2lang = new HashMap<String, Language>();
+    for (final Language language : myCommonSettingsMap.keySet()) {
+      id2lang.put(language.getID(), language);
+    }
+
+    final Set<String> langIdList = new HashSet<String>();
+    langIdList.addAll(myUnknownSettingsMap.keySet());
+    langIdList.addAll(id2lang.keySet());
+
+    final String[] languages = langIdList.toArray(new String[langIdList.size()]);
+    Arrays.sort(languages, new Comparator<String>() {
+      public int compare(final String o1, final String o2) {
+        return o1.compareTo(o2);
       }
     });
 
-    for (Language language : languages) {
-      final CommonCodeStyleSettings commonSettings = myCommonSettingsMap.get(language);
-      Element commonSettingsElement = new Element(COMMON_SETTINGS_TAG);
-      commonSettings.writeExternal(commonSettingsElement);
-      commonSettingsElement.setAttribute(LANGUAGE_ATTR, language.getID());
-      if (!commonSettingsElement.getChildren().isEmpty()) {
-        element.addContent(commonSettingsElement);
+    for (final String id : languages) {
+      final Language language = id2lang.get(id);
+      if (language != null) {
+        final CommonCodeStyleSettings commonSettings = myCommonSettingsMap.get(language);
+        Element commonSettingsElement = new Element(COMMON_SETTINGS_TAG);
+        commonSettings.writeExternal(commonSettingsElement);
+        commonSettingsElement.setAttribute(LANGUAGE_ATTR, language.getID());
+        if (!commonSettingsElement.getChildren().isEmpty()) {
+          element.addContent(commonSettingsElement);
+        }
+      } else {
+        final Content unknown = myUnknownSettingsMap.get(id);
+        if (unknown != null) element.addContent(unknown.detach());
       }
     }
   }

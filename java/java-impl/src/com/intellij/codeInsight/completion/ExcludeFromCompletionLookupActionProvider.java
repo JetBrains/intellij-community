@@ -41,7 +41,7 @@ public class ExcludeFromCompletionLookupActionProvider implements LookupActionPr
     } else if (o instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)o;
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
-        addExcludes(consumer, method, StaticImportMethodFix.getMethodQualifiedName(method));
+        addExcludes(consumer, method, StaticImportMethodFix.getMemberQualifiedName(method));
       }
     }
   }

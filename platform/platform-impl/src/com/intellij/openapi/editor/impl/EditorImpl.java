@@ -4947,7 +4947,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (event.getArea() == EditorMouseEventArea.EDITING_AREA) {
         FoldRegion fold = myFoldingModel.getFoldingPlaceholderAt(e.getPoint());
         TooltipController controller = TooltipController.getInstance();
-        if (fold != null) {
+        if (fold != null && !fold.shouldNeverExpand()) {
           DocumentFragment range = createDocumentFragment(fold);
           final Point p =
             SwingUtilities.convertPoint((Component)e.getSource(), e.getPoint(), getComponent().getRootPane().getLayeredPane());

@@ -92,8 +92,10 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
       final GrArgumentList newList = factory.createExpressionArgumentList();
       PsiElement last = getLastChild();
+      assert last != null;
       while (last.getPrevSibling() instanceof PsiWhiteSpace || last.getPrevSibling() instanceof PsiErrorElement) {
         last = last.getPrevSibling();
+        assert last != null;
       }
       ASTNode astNode = last.getNode();
       assert astNode != null;
@@ -133,12 +135,16 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     final GroovyResolveResult[] classResults = ref.multiResolve(false);
     if (classResults.length == 0) return GroovyResolveResult.EMPTY_ARRAY;
 
-    if (getNamedArguments().length > 0 && getArgumentList().getExpressionArguments().length == 0) {
+    final GrArgumentList argumentList = getArgumentList();
+    if (argumentList == null) return GroovyResolveResult.EMPTY_ARRAY;
+
+    if (argumentList.getNamedArguments().length > 0 && argumentList.getExpressionArguments().length == 0) {
       GroovyResolveResult[] constructorResults = PsiUtil.getConstructorCandidates(ref, classResults, new PsiType[]{PsiUtil.createMapType(
         getResolveScope())}); //one Map parameter, actually
       for (GroovyResolveResult result : constructorResults) {
-        if (result.getElement() instanceof PsiMethod) {
-          PsiMethod constructor = (PsiMethod)result.getElement();
+        final PsiElement resolved = result.getElement();
+        if (resolved instanceof PsiMethod) {
+          PsiMethod constructor = (PsiMethod)resolved;
           final PsiParameter[] parameters = constructor.getParameterList().getParameters();
           if (parameters.length == 1 && InheritanceUtil.isInheritor(parameters[0].getType(), CommonClassNames.JAVA_UTIL_MAP)) {
             return constructorResults;
@@ -155,11 +161,11 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   }
 
   public GroovyResolveResult[] multiResolveClass() {
-    return getReferenceElement().multiResolve(false);
-  }
-
-  public PsiMethod resolveConstructor() {
-    return PsiImplUtil.extractUniqueElement(multiResolveConstructor());
+    final GrCodeReferenceElement referenceElement = getReferenceElement();
+    if (referenceElement != null) {
+      return referenceElement.multiResolve(false);
+    }
+    return GroovyResolveResult.EMPTY_ARRAY;
   }
 
   @NotNull
@@ -168,7 +174,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   }
 
   public int getArrayCount() {
-    final GrArrayDeclaration arrayDeclaration = findChildByClass(GrArrayDeclaration.class);
+    final GrArrayDeclaration arrayDeclaration = getArrayDeclaration();
     if (arrayDeclaration == null) return 0;
     return arrayDeclaration.getArrayCount();
   }
@@ -178,8 +184,14 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   }
 
   @Nullable
+  @Override
+  public GrArrayDeclaration getArrayDeclaration() {
+    return findChildByClass(GrArrayDeclaration.class);
+  }
+
+  @Nullable
   public PsiMethod resolveMethod() {
-    return resolveConstructor();
+    return PsiImplUtil.extractUniqueElement(multiResolveConstructor());
   }
 
   @NotNull

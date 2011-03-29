@@ -15,19 +15,24 @@
  */
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.ide.projectView.RootsProvider;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.search.GlobalSearchScope;
 
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
  * Date: Sep 19, 2003
  * Time: 3:51:02 PM
  */
-public final class PackageElement implements Queryable {
+public final class PackageElement implements Queryable, RootsProvider {
   public static final DataKey<PackageElement> DATA_KEY =  DataKey.create("package.element");
 
   private final Module myModule;
@@ -46,6 +51,17 @@ public final class PackageElement implements Queryable {
 
   public PsiPackage getPackage() {
     return myElement;
+  }
+
+  @Override
+  public Collection<VirtualFile> getRoots() {
+    Set<VirtualFile> roots= new HashSet<VirtualFile>();
+    final GlobalSearchScope scopeToShow = PackageUtil.getScopeToShow(myModule.getProject(), myModule, isLibraryElement());
+    final PsiDirectory[] dirs = getPackage().getDirectories(scopeToShow);
+    for (PsiDirectory each : dirs) {
+      roots.add(each.getVirtualFile());
+    }
+    return roots;
   }
 
   public boolean equals(Object o) {
@@ -72,6 +88,8 @@ public final class PackageElement implements Queryable {
   public boolean isLibraryElement() {
     return myIsLibraryElement;
   }
+
+
 
   public void putInfo(Map<String, String> info) {
     PsiPackage pkg = getPackage();

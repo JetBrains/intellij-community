@@ -96,6 +96,7 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
   public void testFieldAsParameter() throws Throwable { doTest(); }
   public void testWritableVariable() throws Throwable { doTest(); }
   public void testSingleExpression() {doTest();}
+  public void testNamedArg() {doTest();}
   public void _testInlineInGString() throws Throwable {doTest(); }
 
   public void testInlineAll() throws Throwable {

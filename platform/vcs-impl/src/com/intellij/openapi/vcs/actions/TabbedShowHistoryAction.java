@@ -22,16 +22,16 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
 
 
 public class TabbedShowHistoryAction extends AbstractVcsAction {
   protected void update(VcsContext context, Presentation presentation) {
     presentation.setEnabled(isEnabled(context));
     final Project project = context.getProject();
-    presentation.setVisible(project != null && ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().length > 0);
+    presentation.setVisible(project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss());
   }
 
   protected VcsHistoryProvider getProvider(AbstractVcs activeVcs) {
@@ -39,50 +39,51 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
   }
 
   protected boolean isEnabled(VcsContext context) {
-    FilePath[] selectedFiles = getSelectedFiles(context);
-    if (selectedFiles == null) return false;
-    if (selectedFiles.length != 1) return false;
-    FilePath path = selectedFiles[0];
+    FilePath selectedFile = getSelectedFileOrNull(context);
+    if (selectedFile == null) return false;
     Project project = context.getProject();
     if (project == null) return false;
-    VirtualFile someVFile = path.getVirtualFile() != null ? path.getVirtualFile() : path.getVirtualFileParent();
+    VirtualFile someVFile = selectedFile.getVirtualFile() != null ?
+                            selectedFile.getVirtualFile() : selectedFile.getVirtualFileParent();
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(someVFile);
     if (vcs == null) return false;
     VcsHistoryProvider vcsHistoryProvider = getProvider(vcs);
     if (vcsHistoryProvider == null) return false;
-    if (selectedFiles[0].isDirectory() && (! vcsHistoryProvider.supportsHistoryForDirectories())) return false;
+    if (selectedFile.isDirectory() && (! vcsHistoryProvider.supportsHistoryForDirectories())) return false;
     final FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(someVFile);
     return fileStatus != FileStatus.ADDED && fileStatus != FileStatus.UNKNOWN && fileStatus != FileStatus.IGNORED;
   }
 
-  protected static FilePath[] getSelectedFiles(VcsContext context) {
-    ArrayList<FilePath> result = new ArrayList<FilePath>();
+  @Nullable
+  protected static FilePath getSelectedFileOrNull(VcsContext context) {
+    FilePath result = null;
     VirtualFile[] virtualFileArray = context.getSelectedFiles();
     if (virtualFileArray != null) {
-      for (VirtualFile virtualFile : virtualFileArray) {
-        result.add(new FilePathImpl(virtualFile));
+      if (virtualFileArray.length > 1) return null;
+      if (virtualFileArray.length > 0) {
+        result = new FilePathImpl(virtualFileArray[0]);
       }
     }
 
     File[] fileArray = context.getSelectedIOFiles();
-    if (fileArray != null) {
+    if (fileArray != null && fileArray.length > 0) {
       for (File file : fileArray) {
         final File parentIoFile = file.getParentFile();
         if (parentIoFile == null) continue;
         final VirtualFile parent = LocalFileSystem.getInstance().findFileByIoFile(parentIoFile);
         if (parent != null) {
           final FilePathImpl child = new FilePathImpl(parent, file.getName(), false);
-          if (! result.contains(child)) {
-            result.add(child);
-          }
+          if (result != null) return null;
+          result = child;
         }
       }
     }
-    return result.toArray(new FilePath[result.size()]);
+    return result;
   }
 
   protected void actionPerformed(VcsContext context) {
-    FilePath path = getSelectedFiles(context)[0];
+    FilePath path = getSelectedFileOrNull(context);
+    if (path == null) return;
     Project project = context.getProject();
     VirtualFile someVFile = path.getVirtualFile() != null ? path.getVirtualFile() : path.getVirtualFileParent();
     AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(someVFile);

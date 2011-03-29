@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil
 import org.jetbrains.plugins.groovy.util.TestUtils
 import com.intellij.psi.*
 
@@ -639,5 +640,11 @@ set<caret>Foo(2)
 
   public void testF1property() {
     assertInstanceOf resolve("A.groovy"), GrAccessorMethod
+  }
+
+  public void testAnonymousClassFieldAndLocalVar() {
+    final PsiElement resolved = resolve("A.groovy")
+    assertInstanceOf resolved, PsiVariable
+    assertTrue GroovyRefactoringUtil.isLocalVariable(resolved)
   }
 }

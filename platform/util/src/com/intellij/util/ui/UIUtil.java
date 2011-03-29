@@ -435,8 +435,16 @@ public class UIUtil {
     return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("List.background");
   }
 
+  public static Color getListBackground(boolean isSelected) {
+    return isSelected ? getListSelectionBackground() : getListBackground();
+  }
+
   public static Color getListForeground() {
     return UIManager.getColor("List.foreground");
+  }
+
+  public static Color getListForeground(boolean isSelected) {
+    return isSelected ? getListSelectionForeground() : getListForeground();
   }
 
   public static Color getPanelBackground() {
