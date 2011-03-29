@@ -33,11 +33,13 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmlpull.v1.XmlSerializer;
 
@@ -63,12 +65,12 @@ public class ConsoleHistoryController {
   private long myLastSaveStamp;
 
 
-  public ConsoleHistoryController(final String type,
-                                  final String persistenceId,
-                                  final LanguageConsoleImpl console,
-                                  final ConsoleHistoryModel model) {
+  public ConsoleHistoryController(@NotNull final String type,
+                                  @Nullable final String persistenceId,
+                                  @NotNull final LanguageConsoleImpl console,
+                                  @NotNull final ConsoleHistoryModel model) {
     myType = type;
-    myId = "".equals(persistenceId)? console.getProject().getLocation() : persistenceId;
+    myId = StringUtil.isEmpty(persistenceId)? console.getProject().getLocation() : persistenceId;
     myConsole = console;
     myModel = model;
   }
@@ -167,7 +169,7 @@ public class ConsoleHistoryController {
       serializer.setOutput(new PrintWriter(os = new FileOutputStream(tmpFile)));
       saveHistory(serializer);
       file.delete();
-      tmpFile.renameTo(file);
+      FileUtil.rename(tmpFile, file);
       myLastSaveStamp = myModel.getModificationCount();
     }
     catch (Exception ex) {
