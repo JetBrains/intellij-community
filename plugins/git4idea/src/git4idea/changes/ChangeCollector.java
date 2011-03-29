@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
@@ -190,6 +191,10 @@ class ChangeCollector {
    */
   private static boolean isAncestor(FilePath parentCandidate, FilePath childCandidate, boolean strict) {
     try {
+      if (childCandidate.getPath().length() < parentCandidate.getPath().length()) return false;
+      if (childCandidate.getVirtualFile() != null && parentCandidate.getVirtualFile() != null) {
+        return VfsUtil.isAncestor(parentCandidate.getVirtualFile(), childCandidate.getVirtualFile(), strict);
+      }
       return FileUtil.isAncestor(parentCandidate.getIOFile(), childCandidate.getIOFile(), strict);
     }
     catch (IOException e) {
