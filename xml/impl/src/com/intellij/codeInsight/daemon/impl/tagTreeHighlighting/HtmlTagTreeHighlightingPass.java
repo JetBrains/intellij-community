@@ -44,12 +44,14 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
@@ -99,12 +101,32 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
       return;
     }
 
+    if (!containsParentTagsWithSameName(element)) {
+      return;
+    }
+
     while (element != null) {
       if (element instanceof XmlTag) {
         myPairsToHighlight.add(getTagRanges((XmlTag)element));
       }
       element = element.getParent();
     }
+  }
+
+  private static boolean containsParentTagsWithSameName(PsiElement element) {
+    final Set<String> names = new HashSet<String>();
+
+    while (element != null) {
+      if (element instanceof XmlTag) {
+        final String name = ((XmlTag)element).getName();
+        if (!names.add(name)) {
+          return true;
+        }
+      }
+      element = element.getParent();
+    }
+
+    return false;
   }
 
   @Nullable
@@ -173,7 +195,7 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
     assert colorsForEditor.length > 0;
 
-    for (int i = 0, n = myPairsToHighlight.size(); i < n && i < baseColors.length; i++) {
+    for (int i = 0; i < count && i < baseColors.length; i++) {
       Pair<TextRange, TextRange> pair = myPairsToHighlight.get(i);
 
       if (pair == null || (pair.first == null && pair.second == null)) {
