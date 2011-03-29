@@ -2,6 +2,7 @@ package com.jetbrains.python.codeInsight.override;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -63,7 +64,7 @@ public class PyOverrideImplementUtil {
   }
 
   public static void chooseAndOverrideMethods(final Project project, @NotNull final Editor editor, @NotNull final PyClass pyClass) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.overrideimplement");
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_OVERRIDE_IMPLEMENT);
     chooseAndOverrideOrImplementMethods(project, editor, pyClass);
   }
 
