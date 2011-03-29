@@ -73,6 +73,9 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     if (myInputBuffer == null) {
       myInputBuffer = new StringBuilder();
     }
+    if (myConsoleCommunication.isWaitingForInput()) {
+      myInputBuffer.setLength(0);
+    }
     myInputBuffer.append(line).append("\n");
 
     // multiline strings handling
