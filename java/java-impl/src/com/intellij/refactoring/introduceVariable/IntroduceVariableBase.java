@@ -21,6 +21,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
@@ -187,7 +188,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
   }
 
   private boolean invoke(final Project project, final Editor editor, PsiFile file, int startOffset, int endOffset) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.introduceVariable");
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.REFACTORING_INTRODUCE_VARIABLE);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
 

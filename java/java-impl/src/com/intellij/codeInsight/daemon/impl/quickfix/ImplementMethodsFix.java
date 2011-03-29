@@ -22,11 +22,10 @@ import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.impl.ImplementAbstractMethodHandler;
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.util.MemberChooser;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -36,7 +35,6 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
@@ -64,7 +62,7 @@ public class ImplementMethodsFix extends IntentionAndQuickFixAction {
   public void applyFix(final Project project, final PsiFile file, @Nullable final Editor editor) {
     if (editor == null || !CodeInsightUtilBase.prepareFileForWrite(myPsiElement.getContainingFile())) return;
     if (myPsiElement instanceof PsiEnumConstant) {
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.overrideimplement");
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_OVERRIDE_IMPLEMENT);
       final TreeMap<MethodSignature, CandidateInfo> result =
         new TreeMap<MethodSignature, CandidateInfo>(new OverrideImplementUtil.MethodSignatureComparator());
       final HashMap<MethodSignature, PsiMethod> abstracts = new HashMap<MethodSignature, PsiMethod>();
