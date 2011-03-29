@@ -50,6 +50,6 @@ public class PsiGotoRelatedItem extends GotoRelatedItem {
 
   @Override
   public PsiFile getContainingFile() {
-    return myElement.getContainingFile();
+    return myElement instanceof PsiFile ? null : myElement.getContainingFile();
   }
 }
