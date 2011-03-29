@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions;
+package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -26,16 +26,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * User: Dmitry.Krasilschikov
  * Date: 25.05.2007
  */
-public class GroovyWithIfElseExprSurrounder extends GroovyConditionSurrounder {
+public class GroovyWithIfExprSurrounder extends GroovyConditionSurrounder {
   protected TextRange surroundExpression(GrExpression expression) {
-    GrIfStatement ifStatement = (GrIfStatement) GroovyPsiElementFactory.getInstance(expression.getProject()).createTopElementFromText("if(a){4\n} else{\n}");
-    replaceToOldExpression((GrExpression) ifStatement.getCondition(), expression);
+    GrIfStatement ifStatement = (GrIfStatement) GroovyPsiElementFactory.getInstance(expression.getProject()).createTopElementFromText("if(a){4\n}");
+    replaceToOldExpression((GrExpression)ifStatement.getCondition(), expression);
     ifStatement = expression.replaceWithStatement(ifStatement);
-    GrStatement psiElement = ifStatement.getThenBranch();
+    GrStatement thenBranch = ifStatement.getThenBranch();
 
-
-    assert psiElement instanceof GrBlockStatement;
-    GrStatement[] statements = ((GrBlockStatement) psiElement).getBlock().getStatements();
+    assert thenBranch instanceof GrBlockStatement;
+    GrStatement[] statements = ((GrBlockStatement) thenBranch).getBlock().getStatements();
     assert statements.length > 0;
 
     GrStatement statement = statements[0];
@@ -46,6 +45,6 @@ public class GroovyWithIfElseExprSurrounder extends GroovyConditionSurrounder {
   }
 
   public String getTemplateDescription() {
-    return "if (expr) / else";
+    return "if (expr)";
   }
 }

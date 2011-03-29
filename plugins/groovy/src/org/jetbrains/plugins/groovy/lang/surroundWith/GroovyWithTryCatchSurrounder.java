@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open;
+package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;

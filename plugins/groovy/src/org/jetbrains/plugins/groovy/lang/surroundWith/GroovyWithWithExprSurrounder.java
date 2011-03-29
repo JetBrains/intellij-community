@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions;
+package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyConditionSurrounder;
+import org.jetbrains.plugins.groovy.lang.surroundWith.GroovyConditionSurrounder;
 
 /**
  * User: Dmitry.Krasilschikov

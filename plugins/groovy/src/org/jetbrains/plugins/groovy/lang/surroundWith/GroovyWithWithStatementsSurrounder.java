@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders;
-
-import com.intellij.lang.surroundWith.Surrounder;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
+package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 /**
  * User: Dmitry.Krasilschikov
- * Date: 22.05.2007
+ * Date: 25.05.2007
  */
-abstract public class GroovySingleElementSurrounder implements Surrounder {
-  public boolean isApplicable(@NotNull PsiElement[] elements) {
-    return elements.length == 1 &&  isApplicable(elements[0]);
+public class GroovyWithWithStatementsSurrounder extends GroovySimpleManyStatementsSurrounder {
+
+  protected String getReplacementTokens() {
+    return "with(a){\n}";
   }
 
-  protected abstract boolean isApplicable(PsiElement element);
+  public String getTemplateDescription() {
+    return "with () {...}";
+  }
 }

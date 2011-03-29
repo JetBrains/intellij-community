@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions;
+package org.jetbrains.plugins.groovy.lang.surroundWith;
 
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovyManyStatementsSurrounder;
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.GroovyExpressionSurrounder;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import com.intellij.psi.*;
 

@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith;
 
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovySurrounderByClosure;
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open.*;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**

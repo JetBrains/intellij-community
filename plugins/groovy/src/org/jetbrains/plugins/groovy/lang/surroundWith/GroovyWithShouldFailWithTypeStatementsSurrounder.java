@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open;
+package org.jetbrains.plugins.groovy.lang.surroundWith;
 
 /**
- * User: Dmitry.Krasilschikov
- * Date: 25.05.2007
+ * Provides the shouldFail() { ... }  surround with. It follows a Template Method pattern. 
+ * @author Hamlet D'Arcy
+ * @since 03.02.2009
  */
-public class GroovyWithWithStatementsSurrounder extends GroovySimpleManyStatementsSurrounder {
+public class GroovyWithShouldFailWithTypeStatementsSurrounder extends GroovySimpleManyStatementsSurrounder {
 
   protected String getReplacementTokens() {
-    return "with(a){\n}";
+    return "shouldFail(a){\n}";
   }
 
   public String getTemplateDescription() {
-    return "with () {...}";
+    return "shouldFail () {...}";
   }
 }
