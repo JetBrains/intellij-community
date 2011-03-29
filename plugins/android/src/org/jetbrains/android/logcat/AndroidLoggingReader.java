@@ -33,10 +33,11 @@ public abstract class AndroidLoggingReader extends Reader {
 
   @Override
   public int read(char[] cbuf, int off, int len) throws IOException {
+    Reader reader;
     synchronized (getLock()) {
-      Reader reader = getReader();
-      return reader != null ? reader.read(cbuf, off, len) : -1;
+      reader = getReader();
     }
+    return reader != null ? reader.read(cbuf, off, len) : -1;
   }
 
   @Override
