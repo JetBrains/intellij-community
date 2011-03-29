@@ -37,7 +37,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   /**
    * Returns the annotator which will receive callbacks while the reference graph
    * is being built. The annotator can be used to add additional markers to reference
-   * graph nodes, through calls to {@link RefEntity#putUserData}.
+   * graph nodes, through calls to {@link RefEntity#putUserData(com.intellij.openapi.util.Key, Object)}.
    *
    * @param refManager the reference graph manager instance
    * @return the annotator instance, or null if the inspection does not need any
@@ -53,7 +53,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * Runs the global inspection. If building of the reference graph was requested by one of the
    * global inspection tools, this method is called after the graph has been built and before the
    * external usages are processed. The default implementation of the method passes each node
-   * of the graph for processing to {@link #checkElement}.
+   * of the graph for processing to {@link #checkElement(RefEntity, AnalysisScope, InspectionManager, GlobalInspectionContext)}.
    *
    * @param scope                        the scope on which the inspection was run.
    * @param manager                      the inspection manager instance for the project on which the inspection was run.
@@ -127,13 +127,15 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   /**
    * Allows the inspection to process usages of analyzed classes outside the analysis scope.
    * This method is called after the reference graph has been built and after
-   * the {@link #runInspection} method has collected the list of problems for the current scope.
+   * the {@link #runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)}
+   * method has collected the list of problems for the current scope.
    * In order to save time when multiple inspections need to process
    * usages of the same classes and methods, usage searches are not performed directly, but
    * instead are queued for batch processing through
    * {@link GlobalJavaInspectionContext#enqueueClassUsagesProcessor} and similar methods. The method
    * can add new problems to <code>problemDescriptionsProcessor</code> or remove some of the problems
-   * collected by {@link #runInspection} by calling {@link ProblemDescriptionsProcessor#ignoreElement}.
+   * collected by {@link #runInspection(AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)}
+   * by calling {@link ProblemDescriptionsProcessor#ignoreElement(RefEntity)}.
    *
    * @param manager                      the inspection manager instance for the project on which the inspection was run.
    * @param globalContext                the context for the current global inspection run.
