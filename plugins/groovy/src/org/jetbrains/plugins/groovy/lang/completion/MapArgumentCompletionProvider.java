@@ -151,10 +151,10 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
         Map<String, Condition<PsiType>> namedArguments = GroovyNamedArgumentProvider.getNamedArguments(call, method);
 
         for (String namedArgumentName : namedArguments.keySet()) {
-          if (!usedNames.contains(namedArgumentName)) {
-            final LookupElementBuilder lookup =
-              LookupElementBuilder.create(namedArgumentName).setIcon(GroovyIcons.DYNAMIC)
-                .setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
+          if (usedNames.add(namedArgumentName)) {
+            final LookupElementBuilder lookup = LookupElementBuilder.create(namedArgumentName)
+              .setIcon(GroovyIcons.DYNAMIC)
+              .setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
             result.addElement(lookup);
           }
         }
@@ -176,12 +176,10 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
 
     Map<String, PsiMethod> writableProperties = new HashMap<String, PsiMethod>();
     for (PsiMethod method : containingClass.getAllMethods()) {
-      if (GroovyPropertyUtils.isSimplePropertySetter(method)) {
-        if (PsiUtil.isStaticsOK(method, call)) {
-          final String name = GroovyPropertyUtils.getPropertyNameBySetter(method);
-          if (name != null && !writableProperties.containsKey(name)) {
-            writableProperties.put(name, method);
-          }
+      if (GroovyPropertyUtils.isSimplePropertySetter(method) && !method.hasModifierProperty(PsiModifier.STATIC)) {
+        final String name = GroovyPropertyUtils.getPropertyNameBySetter(method);
+        if (name != null && !writableProperties.containsKey(name)) {
+          writableProperties.put(name, method);
         }
       }
       else if (eventListener != null) {
