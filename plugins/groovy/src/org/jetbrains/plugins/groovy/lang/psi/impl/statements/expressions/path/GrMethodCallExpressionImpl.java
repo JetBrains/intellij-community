@@ -17,8 +17,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -28,8 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrMethodCallImpl;
-
-import java.util.ArrayList;
 
 /**
  * @author ilyas
@@ -48,37 +46,28 @@ public class GrMethodCallExpressionImpl extends GrMethodCallImpl implements GrMe
     visitor.visitMethodCallExpression(this);
   }
 
-  public GrExpression replaceClosureArgument(@NotNull GrClosableBlock closure, @NotNull GrExpression newExpr) throws IncorrectOperationException {
-
-    ASTNode parentNode = this.getParent().getNode();
-    if (!(newExpr instanceof GrClosableBlock)) {
-      ArrayList<GrExpression> allArgs = new ArrayList<GrExpression>();
-      // Collecting all arguments
-      ContainerUtil.addAll(allArgs, getExpressionArguments());
-      ArrayList<GrExpression> closureArgs = new ArrayList<GrExpression>();
-      for (GrExpression closArg : getClosureArguments()) {
-        if (closArg.equals(closure)) break;
-        closureArgs.add(closArg);
-      }
-      allArgs.addAll(closureArgs);
-      allArgs.add(newExpr);
-      int refIndex = allArgs.size() - 1;
-
-      // New argument list
-      GrArgumentList newArgList =
-        GroovyPsiElementFactory.getInstance(getProject()).createExpressionArgumentList(allArgs.toArray(new GrExpression[allArgs.size()]));
-      while (closure.getNode().getTreePrev() != null &&
-             !(closure.getNode().getTreePrev().getPsi() instanceof GrArgumentList)) {
-        parentNode.removeChild(closure.getNode().getTreePrev());
-      }
-      parentNode.removeChild(closure.getNode());
-      getArgumentList().replaceWithArgumentList(newArgList);
-      GrExpression[] arguments = getArgumentList().getExpressionArguments();
-      assert arguments.length == refIndex + 1;
-      return arguments[refIndex];
-    } else {
+  public GrExpression replaceClosureArgument(@NotNull GrClosableBlock closure, @NotNull GrExpression newExpr)
+    throws IncorrectOperationException {
+    if (newExpr instanceof GrClosableBlock) {
       return closure.replaceWithExpression(newExpr, true);
     }
+
+    final GrClosableBlock[] closureArguments = getClosureArguments();
+    final int i = ArrayUtil.find(closureArguments, closure);
+    GrArgumentList argList = getArgumentList();
+    assert argList!=null;
+
+    if (argList.getText().length() == 0) {
+      argList = (GrArgumentList)argList.replace(GroovyPsiElementFactory.getInstance(getProject()).createArgumentList());
+    }
+
+    for (int j = 0; j < i; j++) {
+      argList.add(closureArguments[j]);
+      closureArguments[j].delete();
+    }
+    final GrExpression result = (GrExpression)argList.add(newExpr);
+    closure.delete();
+    return result;
   }
 
   @NotNull
@@ -86,23 +75,4 @@ public class GrMethodCallExpressionImpl extends GrMethodCallImpl implements GrMe
     return findChildrenByClass(GrClosableBlock.class);
   }
 
-  public GrExpression removeArgument(int number) {
-    final GrArgumentList list = getArgumentList();
-    final int exprLength = list.getExpressionArguments().length;
-    if (exprLength > number) {
-      return list.removeArgument(number);
-    }
-    else {
-      number -= exprLength;
-      for (int i = 0; i < getClosureArguments().length; i++) {
-        GrClosableBlock block = getClosureArguments()[i];
-        if (i == number) {
-          final ASTNode node = block.getNode();
-          getNode().removeChild(node);
-          return block;
-        }
-      }
-    }
-    return null;
-  }
 }

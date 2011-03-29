@@ -58,4 +58,9 @@ public class StructureViewModuleNode extends AbstractModuleNode {
   public boolean contains(@NotNull VirtualFile file) {
     return false;
   }
+
+  @Override
+  public boolean someChildContainsFile(VirtualFile file) {
+    return true;
+  }
 }

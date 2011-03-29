@@ -43,7 +43,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -83,10 +82,14 @@ import java.util.*;
 import java.util.List;
 
 public class DocumentationManager {
+
+  @NonNls public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
+  public static final DataKey<String> SELECTED_QUICK_DOC_TEXT = DataKey.create("QUICK_DOC.SELECTED_TEXT");
+
   private static final Logger LOG = Logger.getInstance("#" + DocumentationManager.class.getName());
   private static final String SHOW_DOCUMENTATION_IN_TOOL_WINDOW = "ShowDocumentationInToolWindow";
   private static final String DOCUMENTATION_AUTO_UPDATE_ENABLED = "DocumentationAutoUpdateEnabled";
-  @NonNls public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
+  
   private final Project myProject;
   private Editor myEditor = null;
   private ParameterInfoController myParameterInfoController;
@@ -203,14 +206,11 @@ public class DocumentationManager {
 
         DocumentationProvider documentationProvider = getProviderFromElement(file);
 
-        PsiElement element = null;
-        if (documentationProvider!=null) {
-          element = documentationProvider.getDocumentationElementForLookupItem(
-            PsiManager.getInstance(myProject),
-            lookupIteObject,
-            originalElement
-          );
-        }
+        PsiElement element = documentationProvider.getDocumentationElementForLookupItem(
+          PsiManager.getInstance(myProject),
+          lookupIteObject,
+          originalElement
+        );
 
         if (element == null) return;
 
@@ -235,7 +235,7 @@ public class DocumentationManager {
     Project project = getProject(element);
 
     if (myToolWindow == null && PropertiesComponent.getInstance().isTrueValue(SHOW_DOCUMENTATION_IN_TOOL_WINDOW)) {
-      createToolWindow(element, originalElement, true);
+      createToolWindow(element, originalElement);
       return;
     }
     else if (myToolWindow != null) {
@@ -270,7 +270,7 @@ public class DocumentationManager {
     });
     Processor<JBPopup> pinCallback = new Processor<JBPopup>() {
       public boolean process(JBPopup popup) {
-        createToolWindow(element, originalElement, true);
+        createToolWindow(element, originalElement);
         popup.cancel();
         return false;
       }
@@ -279,7 +279,7 @@ public class DocumentationManager {
     final KeyboardShortcut keyboardShortcut = ActionManagerEx.getInstanceEx().getKeyboardShortcut("QuickJavaDoc");
     final List<Pair<ActionListener, KeyStroke>> actions = Collections.singletonList(Pair.<ActionListener, KeyStroke>create(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          createToolWindow(element, originalElement, false);
+          createToolWindow(element, originalElement);
           final JBPopup hint = getDocInfoHint();
           if (hint != null && hint.isVisible()) hint.cancel();
         }
@@ -344,7 +344,7 @@ public class DocumentationManager {
       }
   }
 
-  private void createToolWindow(final PsiElement element, PsiElement originalElement, final boolean automatic) {
+  private void createToolWindow(final PsiElement element, PsiElement originalElement) {
     assert myToolWindow == null;
 
     final DocumentationComponent component = new DocumentationComponent(this, new AnAction[]{
@@ -423,23 +423,29 @@ public class DocumentationManager {
           public void run() {
             if (myProject.isDisposed()) return;
 
-            final DataContext dataContext = DataManager.getInstance().getDataContext();
+            AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
+            DataContext dataContext = asyncResult.getResult();
+            if (dataContext == null) {
+              return;
+            }
             final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-            if (editor != null) {
-              final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
+            if (editor == null) {
+              return;
+            }
 
-              final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file);
-              if (injectedEditor != null) {
-                final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(injectedEditor, myProject);
-                if (psiFile != null) {
-                  showJavaDocInfo(injectedEditor, psiFile, false, true);
-                  return;
-                }
-              }
+            final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
 
-              if (file != null) {
-                showJavaDocInfo(editor, file, false, true);
+            final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file);
+            if (injectedEditor != null) {
+              final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(injectedEditor, myProject);
+              if (psiFile != null) {
+                showJavaDocInfo(injectedEditor, psiFile, false, true);
+                return;
               }
+            }
+
+            if (file != null) {
+              showJavaDocInfo(editor, file, false, true);
             }
           }
         };

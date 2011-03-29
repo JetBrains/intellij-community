@@ -43,10 +43,12 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.move.MoveHandler;
@@ -74,7 +76,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject  {
+public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject {
   public static ExtensionPointName<AbstractProjectViewPane> EP_NAME = ExtensionPointName.create("com.intellij.projectViewPane");
 
   protected final Project myProject;
@@ -92,8 +94,34 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   private DnDSource myDragSource;
   private DnDManager myDndManager;
 
+  private WolfTheProblemSolver.ProblemListener myProblemListener = new WolfTheProblemSolver.ProblemListener() {
+    @Override
+    public void problemsAppeared(VirtualFile file) {
+      queueUpdateByProblem();
+    }
+
+    @Override
+    public void problemsChanged(VirtualFile file) {
+      queueUpdateByProblem();
+    }
+
+    @Override
+    public void problemsDisappeared(VirtualFile file) {
+      queueUpdateByProblem();
+    }
+  };
+
+  private void queueUpdateByProblem() {
+    if (Registry.is("projectView.showHierarchyErrors")) {
+      if (myTreeBuilder != null) {
+        myTreeBuilder.queueUpdate();
+      }
+    }
+  }
+
   protected AbstractProjectViewPane(Project project) {
     myProject = project;
+    WolfTheProblemSolver.getInstance(project).addProblemListener(myProblemListener, this);
   }
 
   protected final void fireTreeChangeListener() {

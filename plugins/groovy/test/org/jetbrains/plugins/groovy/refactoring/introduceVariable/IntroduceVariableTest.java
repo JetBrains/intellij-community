@@ -159,7 +159,7 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
 
   public void doTest(boolean explicitType) {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
-    assertEquals(data.get(1), processFile(data.get(0), explicitType));
+    assertEquals(data.get(1).trim(), processFile(data.get(0), explicitType).trim());
   }
 
   public void doTest() {

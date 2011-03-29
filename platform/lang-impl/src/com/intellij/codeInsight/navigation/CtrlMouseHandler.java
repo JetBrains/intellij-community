@@ -541,15 +541,10 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         JComponent label = HintUtil.createInformationLabel(text);
         final LightweightHint hint = new LightweightHint(label);
         final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-        label.addMouseMotionListener(new MouseMotionAdapter() {
-          public void mouseMoved(MouseEvent e) {
-            hintManager.hideAllHints();
-          }
-        });
         Point p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, HintManager.ABOVE);
         hintManager.showEditorHint(hint, myEditor, p,
                                    HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING,
-                                   0, false);
+                                   0, false, HintManagerImpl.createHintHint(myEditor, p,  hint, HintManager.ABOVE).setContentActive(false));
       }
     }
 

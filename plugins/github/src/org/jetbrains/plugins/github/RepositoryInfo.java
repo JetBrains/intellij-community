@@ -30,6 +30,10 @@ public class RepositoryInfo {
     return myRepository.getChildText("parent");
   }
 
+  public String getId() {
+    return getOwner() + "/" + getName();
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof RepositoryInfo)){

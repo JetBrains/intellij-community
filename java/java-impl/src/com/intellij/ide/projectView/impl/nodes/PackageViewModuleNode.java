@@ -51,4 +51,9 @@ public class PackageViewModuleNode extends AbstractModuleNode{
     return module != null && !module.isDisposed() &&
            (ModuleUtil.moduleContainsFile(module, file, false) || ModuleUtil.moduleContainsFile(module, file, true));
   }
+
+  @Override
+  public boolean someChildContainsFile(VirtualFile file) {
+    return true;
+  }
 }

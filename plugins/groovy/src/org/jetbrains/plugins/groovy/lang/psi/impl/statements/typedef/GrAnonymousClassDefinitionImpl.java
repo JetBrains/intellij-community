@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NonNls;
@@ -130,6 +131,15 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   public PsiElement getNameIdentifierGroovy() {
     //noinspection ConstantConditions
     return getBaseClassReferenceGroovy().getReferenceNameElement();
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     @Nullable PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    if (lastParent instanceof GrArgumentList) return true;
+    return super.processDeclarations(processor, state, lastParent, place);
   }
 
   @Override

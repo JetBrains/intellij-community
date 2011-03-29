@@ -29,6 +29,9 @@ import com.intellij.pom.NavigatableWithText;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 public abstract class AbstractModuleNode extends ProjectViewNode<Module> implements NavigatableWithText {
   protected AbstractModuleNode(Project project, Module module, ViewSettings viewSettings) {
     super(project, module, viewSettings);
@@ -55,6 +58,11 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
 
   public String getTestPresentation() {
     return "Module";
+  }
+
+  @Override
+  public Collection<VirtualFile> getRoots() {
+    return Arrays.asList(ModuleRootManager.getInstance(getValue()).getContentRoots());
   }
 
   @Override

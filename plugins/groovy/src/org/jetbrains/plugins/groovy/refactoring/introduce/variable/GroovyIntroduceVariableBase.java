@@ -31,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
@@ -161,12 +160,7 @@ public abstract class GroovyIntroduceVariableBase extends GrIntroduceHandlerBase
           if (!(alreadyDefined && firstOccurrence.equals(occurrence))) {
             if (occurrence instanceof GrExpression) {
               GrExpression element = (GrExpression)occurrence;
-              if (element instanceof GrClosableBlock && element.getParent() instanceof GrMethodCallExpression) {
-                replaced.add(((GrMethodCallExpression)element.getParent()).replaceClosureArgument(((GrClosableBlock)element), refExpr));
-              }
-              else {
-                replaced.add(element.replaceWithExpression(refExpr, true));
-              }
+              replaced.add(element.replaceWithExpression(refExpr, true));
               // For caret position
               if (occurrence.equals(context.expression)) {
                 refreshPositionMarker(replaced.get(replaced.size() - 1));
@@ -186,13 +180,7 @@ public abstract class GroovyIntroduceVariableBase extends GrIntroduceHandlerBase
       }
       else {
         if (!alreadyDefined) {
-          if (context.expression instanceof GrClosableBlock && context.expression.getParent() instanceof GrMethodCallExpression) {
-            refreshPositionMarker(((GrMethodCallExpression)context.expression.getParent())
-                                    .replaceClosureArgument(((GrClosableBlock)context.expression), refExpr));
-          }
-          else {
-            refreshPositionMarker(context.expression.replaceWithExpression(refExpr, true));
-          }
+          refreshPositionMarker(context.expression.replaceWithExpression(refExpr, true));
         }
       }
       // Setting caret to logical position
