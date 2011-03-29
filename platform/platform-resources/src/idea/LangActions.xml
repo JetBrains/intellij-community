@@ -225,6 +225,7 @@
       <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
       <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
       <action id="GotoTest" class="com.intellij.testIntegration.GotoTestOrCodeAction"/>
+      <action id="GotoRelated" class="com.intellij.ide.actions.GoToRelatedAction" text="_Related..."/>
       <separator/>
 
       <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="GoToErrorGroup"/>
