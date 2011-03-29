@@ -273,7 +273,7 @@ public abstract class AndroidSdk {
     private volatile boolean myCanceled;
 
     public MyInitializeDdmlibTask(Project project) {
-      super(project, "Connecting to ADB process", true);
+      super(project, "Waiting for ADB", true);
     }
 
     public boolean isFinished() {
