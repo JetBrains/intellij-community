@@ -33,7 +33,6 @@ public class GithubCloneProjectDialog extends DialogWrapper {
       myRepositoryInfoHashMap.put(repo.getId(), repo);
     }
     final ArrayList<String> ids = new ArrayList<String>(myRepositoryInfoHashMap.keySet());
-    Collections.sort(ids);
     myGithubCloneProjectPane.setAvailableRepos(ids);
     init();
     setOKActionEnabled(false);
