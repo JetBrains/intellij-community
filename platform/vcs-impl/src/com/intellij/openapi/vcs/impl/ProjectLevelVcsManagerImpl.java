@@ -406,18 +406,19 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
   }
 
   public void showProjectOperationInfo(final UpdatedFiles updatedFiles, String displayActionName) {
-    showUpdateProjectInfo(updatedFiles, displayActionName, ActionInfo.STATUS);
+    showUpdateProjectInfo(updatedFiles, displayActionName, ActionInfo.STATUS, false);
   }
 
-  public UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles, String displayActionName, ActionInfo actionInfo) {
+  public UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles, String displayActionName, ActionInfo actionInfo, boolean canceled) {
     if (! myProject.isOpen() || myProject.isDisposed()) return null;
     ContentManager contentManager = getContentManager();
     if (contentManager == null) {
       return null;  // content manager is made null during dispose; flag is set later
     }
     final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, myProject, updatedFiles, displayActionName, actionInfo);
-    Content content = ContentFactory.SERVICE.getInstance().createContent(updateInfoTree, VcsBundle.message(
-      "toolwindow.title.update.action.info", displayActionName), true);
+    Content content = ContentFactory.SERVICE.getInstance().createContent(updateInfoTree, canceled ?
+      VcsBundle.message("toolwindow.title.update.action.canceled.info", displayActionName) :
+      VcsBundle.message("toolwindow.title.update.action.info", displayActionName), true);
     Disposer.register(content, updateInfoTree);
     ContentsUtil.addContent(contentManager, content, true);
     ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS).activate(null);
