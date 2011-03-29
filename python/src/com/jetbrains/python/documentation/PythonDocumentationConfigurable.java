@@ -5,9 +5,13 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.AddEditRemovePanel;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -82,6 +86,25 @@ public class PythonDocumentationConfigurable implements Configurable {
   private static class PythonDocumentationPanel extends AddEditRemovePanel<PythonDocumentationMap.Entry> {
     public PythonDocumentationPanel() {
       super(ourModel, new ArrayList<PythonDocumentationMap.Entry>());
+      setRenderer(1, new ColoredTableCellRenderer() {
+        @Override
+        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+          String text = (String) value;
+          int pos = 0;
+          while(pos < text.length()) {
+            int openBrace = text.indexOf('{', pos);
+            if (openBrace == -1) openBrace = text.length();
+            append(text.substring(pos, openBrace));
+            int closeBrace = text.indexOf('}', openBrace);
+            if (closeBrace == -1)
+              closeBrace = text.length();
+            else
+              closeBrace++;
+            append(text.substring(openBrace, closeBrace), new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, Color.blue.darker()));
+            pos = closeBrace;
+          }
+        }
+      });
     }
 
     @Override
@@ -89,6 +112,7 @@ public class PythonDocumentationConfigurable implements Configurable {
       return showEditor(null);
     }
 
+    @Nullable
     private PythonDocumentationMap.Entry showEditor(PythonDocumentationMap.Entry entry) {
       PythonDocumentationEntryEditor editor = new PythonDocumentationEntryEditor(this);
       if (entry != null) {
