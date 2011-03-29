@@ -164,4 +164,15 @@ public interface EditorEx extends Editor {
    * @param place   soft wraps appliance appliance use-case
    */
   void setSoftWrapAppliancePlace(@NotNull SoftWrapAppliancePlaces place);
+
+  /**
+   * Allows to define <code>'placeholder text'</code> for the current editor, i.e. virtual text that will be represented until
+   * any user data is entered and current editor is not focused.
+   * <p/>
+   * Feel free to see the detailed feature
+   * definition <a href="http://dev.w3.org/html5/spec/Overview.html#the-placeholder-attribute">here</a>.
+   * 
+   * @param text    virtual text to show until user data is entered or the editor is focused
+   */
+  void setPlaceholder(@Nullable CharSequence text);
 }
