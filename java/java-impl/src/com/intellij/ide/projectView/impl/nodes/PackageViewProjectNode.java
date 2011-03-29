@@ -110,4 +110,9 @@ public class PackageViewProjectNode extends AbstractProjectNode {
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
     return createTreeNode(PackageViewModuleGroupNode.class, getProject(),  moduleGroup, getSettings());
   }
+
+  @Override
+  public boolean someChildContainsFile(VirtualFile file) {
+    return true;
+  }
 }
