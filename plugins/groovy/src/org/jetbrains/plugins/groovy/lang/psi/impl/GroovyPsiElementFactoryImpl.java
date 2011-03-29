@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
@@ -176,16 +177,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       text.append(')');
     }
 
-    GrExpression expr;
-
     if (initializer != null) {
-      if (initializer instanceof GrApplicationStatement) {
-        expr = createMethodCallByAppCall(((GrApplicationStatement)initializer));
+      if (initializer instanceof GrApplicationStatement &&
+          !GroovyConfigUtils.getInstance().isVersionAtLeast(initializer, GroovyConfigUtils.GROOVY1_8)) {
+        initializer = createMethodCallByAppCall((GrApplicationStatement)initializer);
       }
-      else {
-        expr = initializer;
-      }
-      text.append(" = ").append(expr.getText());
+      text.append(" = ").append(initializer.getText());
     }
 
     PsiFile file = createGroovyFile(text.toString());
