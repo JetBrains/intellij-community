@@ -356,4 +356,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testDuplicatedNamedArgs() {doTest();}
+
+  public void testAnonymousClassArgList() {
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
 }
