@@ -35,7 +35,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class GoToRelatedAction extends AnAction {
+public class GotoRelatedFileAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -45,14 +45,7 @@ public class GoToRelatedAction extends AnAction {
     PsiFile psiFile = LangDataKeys.PSI_FILE.getData(context);
     if (editor == null || psiFile == null) return;
 
-    PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
-    if (psiElement == null) psiElement = psiFile;
-
-    List<GotoRelatedItem> items = new ArrayList<GotoRelatedItem>();
-
-    for (GotoRelatedProvider provider : Extensions.getExtensions(GotoRelatedProvider.EP_NAME)) {
-      items.addAll(provider.getItems(psiElement));
-    }
+    List<GotoRelatedItem> items = getItems(editor, psiFile);
     if (items.isEmpty()) return;
     if (items.size() == 1) {
       items.get(0).navigate();
@@ -76,6 +69,18 @@ public class GoToRelatedAction extends AnAction {
       })
       .createPopup()
       .showInBestPositionFor(context);
+  }
+
+  public static List<GotoRelatedItem> getItems(Editor editor, PsiFile psiFile) {
+    PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
+    if (psiElement == null) psiElement = psiFile;
+
+    List<GotoRelatedItem> items = new ArrayList<GotoRelatedItem>();
+
+    for (GotoRelatedProvider provider : Extensions.getExtensions(GotoRelatedProvider.EP_NAME)) {
+      items.addAll(provider.getItems(psiElement));
+    }
+    return items;
   }
 
   @Override
