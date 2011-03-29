@@ -42,6 +42,6 @@ public class GroovyWithTypeCastSurrounder extends GroovyExpressionSurrounder {
   }
 
   public String getTemplateDescription() {
-    return "((Type) ...)";
+    return "((Type) expr)";
   }
 }

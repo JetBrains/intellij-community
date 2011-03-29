@@ -34,6 +34,6 @@ public class GroovyWithParenthesisExprSurrounder extends GroovyExpressionSurroun
   }
 
   public String getTemplateDescription() {
-    return "(...)";
+    return "(expr)";
   }
 }

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.surroundWith.descriptors;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
+import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -26,6 +27,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovySurrounderByClosure;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open.*;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.GroovyWithParenthesisExprSurrounder;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.GroovyWithTypeCastSurrounder;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.GroovyWithWithExprSurrounder;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithIfElseExprSurrounder;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithIfExprSurrounder;
+import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.conditions.GroovyWithWhileExprSurrounder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +43,40 @@ import java.util.List;
  * User: Dmitry.Krasilschikov
  * Date: 22.05.2007
  */
-public abstract class GroovySurroundDescriptor implements SurroundDescriptor {
+public class GroovySurroundDescriptor implements SurroundDescriptor {
+  private static final Surrounder[] ourSurrounders = new Surrounder[]{
+    //statements: like in java
+    new GroovyWithIfSurrounder(),
+    new GroovyWithIfElseSurrounder(),
+    new GroovyWithWhileSurrounder(),
+    //there's no do-while in Groovy
+    new GroovySurrounderByClosure(),
+    //like in Java
+    new GroovyWithForSurrounder(),
+    new GroovyWithTryCatchSurrounder(),
+    new GroovyWithTryFinallySurrounder(),
+    new GroovyWithTryCatchFinallySurrounder(),
+    //groovy-specific statements
+    new GroovyWithShouldFailWithTypeStatementsSurrounder(),
+    //expressions: like in java
+    new GroovyWithParenthesisExprSurrounder(),
+    new GroovyWithTypeCastSurrounder(),
+
+    //groovy-specific
+    new GroovyWithWithExprSurrounder(),
+    new GroovyWithWithStatementsSurrounder(),
+
+    new GroovyWithIfExprSurrounder(),
+    new GroovyWithIfElseExprSurrounder(),
+
+    new GroovyWithWhileExprSurrounder()
+  };
+
+  @NotNull
+  public Surrounder[] getSurrounders() {
+    return ourSurrounders;
+  }
+
   @NotNull
   public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     GrStatement[] statements = findStatementsInRange(file, startOffset, endOffset);
@@ -44,7 +86,7 @@ public abstract class GroovySurroundDescriptor implements SurroundDescriptor {
   }
 
   @Nullable
-  private GrStatement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
+  private static GrStatement[] findStatementsInRange(PsiFile file, int startOffset, int endOffset) {
 
     GrStatement statement;
     int endOffsetLocal = endOffset;

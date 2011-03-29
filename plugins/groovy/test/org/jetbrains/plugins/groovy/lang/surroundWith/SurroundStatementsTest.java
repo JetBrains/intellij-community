@@ -28,5 +28,6 @@ public class SurroundStatementsTest extends SurroundTestCase {
   public void testTry_finally1() throws Exception { doTest(new GroovyWithTryFinallySurrounder()); }
   public void testWhile1() throws Exception { doTest(new GroovyWithWhileSurrounder()); }
   public void testWith2() throws Exception { doTest(new GroovyWithWithStatementsSurrounder()); }
+  public void testFor1() throws Exception { doTest(new GroovyWithForSurrounder()); }
 
 }

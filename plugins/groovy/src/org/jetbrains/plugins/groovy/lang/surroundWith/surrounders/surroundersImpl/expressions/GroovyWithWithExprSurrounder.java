@@ -42,6 +42,6 @@ public class GroovyWithWithExprSurrounder extends GroovyExpressionSurrounder {
   }
 
   public String getTemplateDescription() {
-    return "with (...)";
+    return "with (expr)";
   }
 }
