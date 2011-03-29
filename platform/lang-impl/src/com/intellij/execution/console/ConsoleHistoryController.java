@@ -29,6 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actions.ContentChooser;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -46,6 +47,7 @@ import org.xmlpull.v1.XmlSerializer;
 import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.ListIterator;
 
 /**
@@ -61,6 +63,7 @@ public class ConsoleHistoryController {
   private final ConsoleHistoryModel myModel;
   private final AnAction myHistoryNext = new MyAction(true);
   private final AnAction myHistoryPrev = new MyAction(false);
+  private final AnAction myBrowseHistory = new MyBrowseAction();
   private boolean myMultiline;
   private long myLastSaveStamp;
 
@@ -110,15 +113,16 @@ public class ConsoleHistoryController {
   }
 
   private void configureActions() {
-    // todo add clipboard-like history viewer/selector action
     EmptyAction.setupAction(myHistoryNext, "Console.History.Next", null);
     EmptyAction.setupAction(myHistoryPrev, "Console.History.Previous", null);
+    EmptyAction.setupAction(myBrowseHistory, "Console.History.Browse", null);
     if (!myMultiline) {
       myHistoryNext.registerCustomShortcutSet(KeyEvent.VK_UP, 0, null);
       myHistoryPrev.registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, null);
     }
     myHistoryNext.registerCustomShortcutSet(myHistoryNext.getShortcutSet(), myConsole.getConsoleEditor().getComponent());
     myHistoryPrev.registerCustomShortcutSet(myHistoryPrev.getShortcutSet(), myConsole.getConsoleEditor().getComponent());
+    myBrowseHistory.registerCustomShortcutSet(myBrowseHistory.getShortcutSet(), myConsole.getConsoleEditor().getComponent());
   }
 
   private File getFile() {
@@ -205,6 +209,9 @@ public class ConsoleHistoryController {
     return myHistoryPrev;
   }
 
+  public AnAction getBrowseHistory() {
+    return myBrowseHistory;
+  }
 
   protected void actionTriggered(final String command) {
     final Editor editor = myConsole.getConsoleEditor();
@@ -286,5 +293,38 @@ public class ConsoleHistoryController {
     }
     out.endTag(null, "console-history");
     out.endDocument();
+  }
+
+  private class MyBrowseAction extends AnAction {
+
+    @Override
+    public void update(final AnActionEvent e) {
+      e.getPresentation().setEnabled(myModel.getHistorySize() > 0);
+    }
+
+    @Override
+    public void actionPerformed(final AnActionEvent e) {
+      final ContentChooser<String> chooser = new ContentChooser<String>(myConsole.getProject(), myConsole.getTitle(), true) {
+
+        @Override
+        protected void removeContentAt(final String content) {
+          myModel.removeFromHistory(content);
+        }
+
+        @Override
+        protected String getStringRepresentationFor(final String content) {
+          return content;
+        }
+
+        @Override
+        protected List<String> getContents() {
+          return myModel.getHistory();
+        }
+      };
+      chooser.show();
+      if (chooser.isOK()) {
+        actionTriggered(myModel.getHistory().get(chooser.getSelectedIndex()));
+      }
+    }
   }
 }

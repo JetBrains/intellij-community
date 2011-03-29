@@ -426,6 +426,7 @@
     <group id="Console.HistoryActions">
       <action id="Console.History.Previous" class="com.intellij.openapi.actionSystem.EmptyAction" text="Previous"/>
       <action id="Console.History.Next" class="com.intellij.openapi.actionSystem.EmptyAction" text="Next"/>
+      <action id="Console.History.Browse" class="com.intellij.openapi.actionSystem.EmptyAction" text="Browse" use-shortcut-of="RecentFiles"/>
     </group>
 
     <group id="Internal" text="Internal Actions" internal="true" popup="true">
