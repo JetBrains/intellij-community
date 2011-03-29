@@ -136,7 +136,7 @@
       <separator/>
       <group id="CodeEditorViewGroup">
         <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
-        <action id="QuickJavaDoc" class="com.intellij.codeInsight.documentation.actions.ShowJavaDocInfoAction"/>
+        <action id="QuickJavaDoc" class="com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction"/>
         <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction"/>
         <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
         <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction"/>

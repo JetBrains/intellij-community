@@ -62,8 +62,8 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.Stack;
 
-public class DocumentationComponent extends JPanel implements Disposable {
-
+public class DocumentationComponent extends JPanel implements Disposable, DataProvider {
+  
   private static final DataContext EMPTY_DATA_CONTEXT = new DataContext() {
     @Override
     public Object getData(@NonNls String dataId) {
@@ -316,6 +316,15 @@ public class DocumentationComponent extends JPanel implements Disposable {
 
   public DocumentationComponent(final DocumentationManager manager) {
     this(manager, null);
+  }
+
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if (DocumentationManager.SELECTED_QUICK_DOC_TEXT.getName().equals(dataId)) {
+      return myEditorPane.getSelectedText();
+    }
+     
+    return null;
   }
 
   private JComponent createSettingsPanel() {
