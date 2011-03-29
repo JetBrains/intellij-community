@@ -30,34 +30,37 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 22.05.2007
  */
 public abstract class GroovyManyStatementsSurrounder implements Surrounder {
-  public boolean isStatements(@NotNull PsiElement[] elements) {
-    for (PsiElement element : elements) {
-      if (!(element instanceof GrStatement)) {
-        return false;
-      }
-    }
-    return true;
-  }
 
   public boolean isApplicable(@NotNull PsiElement[] elements) {
     if (elements.length == 0) return false;
-    if (elements.length == 1) return elements[0] instanceof GrStatement && !(elements[0] instanceof GrBlockStatement);
-    return isStatements(elements);
+
+    for (PsiElement element : elements) {
+      if (!isStatement(element)) return false;
+    }
+
+    if (elements[0] instanceof GrBlockStatement) {
+      return false;
+    }
+
+    return true;
   }
 
-  protected String getListElementsTemplateAsString(PsiElement... elements) {
-    StringBuffer result = new StringBuffer();
-    for (PsiElement element : elements) {
-      result.append(element.getText());
-      result.append("\n");
+  public static boolean isStatement(PsiElement element) {
+    if (!(element instanceof GrStatement)) {
+      return false;
     }
-    return result.toString();
+    PsiElement parent = element.getParent();
+    if (!(parent instanceof GrStatementOwner)) {
+      return false;
+    }
+    return true;
   }
 
   @Nullable
@@ -98,10 +101,9 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
     return getSurroundSelectionRange(newStmt);
   }
 
-  protected void addStatements(GrCodeBlock block, PsiElement[] elements) throws IncorrectOperationException {
-    for (int i = 0; i < elements.length; i++) {
-      PsiElement element = elements[i];
-      final GrStatement statement = (GrStatement) element;
+  protected static void addStatements(GrCodeBlock block, PsiElement[] elements) throws IncorrectOperationException {
+    for (PsiElement element : elements) {
+      final GrStatement statement = (GrStatement)element;
       block.addStatementBefore(statement, null);
     }
   }

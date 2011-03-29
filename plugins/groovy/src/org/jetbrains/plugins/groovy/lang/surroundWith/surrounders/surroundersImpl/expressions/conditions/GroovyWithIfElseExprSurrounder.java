@@ -46,6 +46,6 @@ public class GroovyWithIfElseExprSurrounder extends GroovyConditionSurrounder {
   }
 
   public String getTemplateDescription() {
-    return "if (...) / else";
+    return "if (expr) / else";
   }
 }

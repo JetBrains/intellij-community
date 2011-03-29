@@ -53,17 +53,6 @@ public class GroovyWithWhileSurrounder extends GroovyManyStatementsSurrounder {
     return new TextRange(endOffset, endOffset);
   }
 
-  public boolean isApplicable(@NotNull PsiElement[] elements) {
-    if (!super.isApplicable(elements)) return false;
-    if (elements.length == 1 && elements[0] instanceof GrStatement) {
-      if (elements[0] instanceof GrExpression) {
-        PsiType type = ((GrExpression) elements[0]).getType();
-        return type == null || !PsiType.BOOLEAN.getBoxedTypeName().equals(type.getCanonicalText());
-      }
-    }
-    return true;
-  }
-
   public String getTemplateDescription() {
     return "while";
   }

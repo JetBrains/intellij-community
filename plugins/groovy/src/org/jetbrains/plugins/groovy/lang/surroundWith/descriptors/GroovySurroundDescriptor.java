@@ -63,13 +63,12 @@ public class GroovySurroundDescriptor implements SurroundDescriptor {
     new GroovyWithTypeCastSurrounder(),
 
     //groovy-specific
-    new GroovyWithWithExprSurrounder(),
     new GroovyWithWithStatementsSurrounder(),
 
     new GroovyWithIfExprSurrounder(),
     new GroovyWithIfElseExprSurrounder(),
-
-    new GroovyWithWhileExprSurrounder()
+    new GroovyWithWhileExprSurrounder(),
+    new GroovyWithWithExprSurrounder(),
   };
 
   @NotNull

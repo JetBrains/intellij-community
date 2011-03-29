@@ -25,7 +25,35 @@ import com.intellij.openapi.actionSystem.Separator
 class SurrounderOrderTest extends LightCodeInsightFixtureTestCase {
 
   public void testStatementSurrounders() {
-    myFixture.configureByText("a.groovy", "<selection>println a</selection>")
+    def names = getSurrounders("<selection>println a</selection>")
+    assertOrderedEquals names,
+                        "if", "if / else", "while",
+                        "{ -> ... }.call()",
+                        "for", "try / catch", "try / finally", "try / catch / finally",
+                        "shouldFail () {...}",
+                        "(expr)", "((Type) expr)",
+                        "with () {...}"
+  }
+
+  public void testInnerExpressionSurrounders() {
+    def names = getSurrounders("boolean a; println <selection>a</selection>")
+    assertOrderedEquals names, "(expr)", "((Type) expr)"
+  }
+
+  public void testOuterExpressionSurrounders() {
+    def names = getSurrounders("boolean a; <selection>a</selection>")
+    assertOrderedEquals names,
+                        "if", "if / else", "while",
+                        "{ -> ... }.call()",
+                        "for", "try / catch", "try / finally", "try / catch / finally",
+                        "shouldFail () {...}",
+                        "(expr)", "((Type) expr)",
+                        "with () {...}",
+                        "if (expr)", "if (expr) / else", "while (expr)", "with (expr)"
+  }
+
+  private List<String> getSurrounders(final String fileText) {
+    myFixture.configureByText("a.groovy", fileText)
 
     def actions = SurroundWithHandler.buildSurroundActions(project, myFixture.editor, myFixture.file, null)
     def names = []
@@ -37,13 +65,6 @@ class SurrounderOrderTest extends LightCodeInsightFixtureTestCase {
       def text = action.templatePresentation.text
       names << text.substring(text.indexOf('. ') + 2)
     }
-    assertOrderedEquals names,
-                        "if", "if / else", "while",
-                        "{ -> ... }.call()",
-                        "for", "try / catch", "try / finally", "try / catch / finally",
-                        "shouldFail () {...}",
-                        "(expr)", "((Type) expr)", "with (expr)",
-                        "with () {...}"
+    return names
   }
-
 }

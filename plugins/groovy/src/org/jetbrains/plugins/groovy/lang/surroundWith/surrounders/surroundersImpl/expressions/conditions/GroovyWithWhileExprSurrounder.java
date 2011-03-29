@@ -45,6 +45,6 @@ public class GroovyWithWhileExprSurrounder extends GroovyConditionSurrounder {
   }
 
   public String getTemplateDescription() {
-    return "while (...) {}";
+    return "while (expr)";
   }
 }
