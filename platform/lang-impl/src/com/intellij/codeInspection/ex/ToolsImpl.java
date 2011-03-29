@@ -23,7 +23,6 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -45,7 +44,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class ToolsImpl implements Tools {
-  private static final Logger LOG = Logger.getInstance("#" + ToolsImpl.class.getName());
   public static final String ENABLED_TAG = "enabled_by_default";
 
   private final String myShortName;

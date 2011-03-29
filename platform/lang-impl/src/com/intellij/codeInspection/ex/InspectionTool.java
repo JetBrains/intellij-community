@@ -66,9 +66,9 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     return myContext.getRefManager();
   }
 
-  public abstract void runInspection(AnalysisScope scope, final InspectionManager manager);
+  public abstract void runInspection(@NotNull AnalysisScope scope, @NotNull InspectionManager manager);
 
-  public abstract void exportResults(Element parentNode);
+  public abstract void exportResults(@NotNull Element parentNode);
 
   public abstract boolean isGraphNeeded();
   @Nullable
@@ -81,11 +81,6 @@ public abstract class InspectionTool extends InspectionProfileEntry {
 
   public boolean queryExternalUsagesRequests(final InspectionManager manager) {
     return false;
-  }
-
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.WARNING;
   }
 
   public boolean isEnabledByDefault() {

@@ -22,7 +22,9 @@ package com.intellij.codeInspection.inconsistentLanguageLevel;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.RefModule;
@@ -30,7 +32,6 @@ import com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModule
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
@@ -38,7 +39,6 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +49,7 @@ import java.util.Set;
 public class InconsistentLanguageLevelInspection extends DescriptorProviderInspection{
   private static final Logger LOGGER = Logger.getInstance("#" + InconsistentLanguageLevelInspection.class.getName());
 
-  public void runInspection(AnalysisScope scope, InspectionManager manager) {
+  public void runInspection(@NotNull AnalysisScope scope, @NotNull InspectionManager manager) {
     final Set<Module> modules = new HashSet<Module>();
     scope.accept(new PsiElementVisitor(){
       public void visitElement(PsiElement element) {
@@ -92,10 +92,6 @@ public class InconsistentLanguageLevelInspection extends DescriptorProviderInspe
         }
       }
     }
-  }
-
-  public boolean isGraphNeeded() {
-    return false;
   }
 
   @NotNull
