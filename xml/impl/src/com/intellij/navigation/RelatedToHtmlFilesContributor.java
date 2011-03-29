@@ -15,9 +15,7 @@
  */
 package com.intellij.navigation;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
@@ -27,26 +25,9 @@ import java.util.Set;
 /**
  * @author Eugene.Kudelevsky
  */
-public abstract class RelatedToHtmlFilesContributor implements RelatedFilesContributor {
-  @Override
-  public boolean isAvailable(@NotNull PsiFile psiFile) {
-    for (PsiFile file : psiFile.getViewProvider().getAllFiles()) {
-      Language language = file.getLanguage();
-      if (language.isKindOf(HTMLLanguage.INSTANCE) || language.isKindOf(XHTMLLanguage.INSTANCE)) {
-        return true;
-      }
-    }
-    return false;
-  }
+public abstract class RelatedToHtmlFilesContributor {
+  public static final ExtensionPointName<RelatedToHtmlFilesContributor> EP_NAME =
+    ExtensionPointName.create("com.intellij.xml.relatedToHtmlFilesContributor");
 
-  @Override
-  public void fillRelatedFiles(@NotNull PsiFile file, @NotNull Set<PsiFile> resultSet) {
-    for (PsiFile psiFile : file.getViewProvider().getAllFiles()) {
-      if (psiFile instanceof XmlFile) {
-        doFindRelatedFiles((XmlFile)psiFile, resultSet);
-      }
-    }
-  }
-
-  protected abstract void doFindRelatedFiles(@NotNull XmlFile xmlFile, @NotNull Set<PsiFile> resultSet);
+  public abstract void fillRelatedFiles(@NotNull XmlFile xmlFile, @NotNull Set<PsiFile> resultSet);
 }

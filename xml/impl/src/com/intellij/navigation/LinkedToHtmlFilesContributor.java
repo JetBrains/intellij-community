@@ -35,7 +35,7 @@ import java.util.Set;
  */
 public class LinkedToHtmlFilesContributor extends RelatedToHtmlFilesContributor {
   @Override
-  protected void doFindRelatedFiles(@NotNull final XmlFile xmlFile, @NotNull final Set<PsiFile> resultSet) {
+  public void fillRelatedFiles(@NotNull final XmlFile xmlFile, @NotNull final Set<PsiFile> resultSet) {
     HtmlUtil.processLinks(xmlFile, new Processor<XmlTag>() {
       @Override
       public boolean process(XmlTag tag) {
