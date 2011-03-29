@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.process;
+package com.intellij.execution.console;
 
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.process.ConsoleHistoryModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -53,7 +53,7 @@ import java.util.ListIterator;
  */
 public class ConsoleHistoryController {
 
-  private static final Logger LOG = Logger.getInstance("com.intellij.execution.process.ConsoleHistoryController");
+  private static final Logger LOG = Logger.getInstance("com.intellij.execution.console.ConsoleHistoryController");
 
   private final String myType;
   private final String myId;
