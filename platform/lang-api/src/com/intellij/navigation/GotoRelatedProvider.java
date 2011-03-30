@@ -15,7 +15,6 @@
  */
 package com.intellij.navigation;
 
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -30,5 +29,5 @@ public abstract class GotoRelatedProvider {
   public static final ExtensionPointName<GotoRelatedProvider> EP_NAME = ExtensionPointName.create("com.intellij.gotoRelatedProvider");
 
   @NotNull
-  public abstract List<GotoRelatedItem> getItems(PsiElement context);
+  public abstract List<GotoRelatedItem> getItems(@NotNull PsiElement context);
 }
