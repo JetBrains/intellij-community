@@ -40,10 +40,7 @@ import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -74,8 +71,8 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
     final Ref<PsiExpression> refInitializer = new Ref<PsiExpression>();
     final Ref<PsiExpression> refConstantInitializer = new Ref<PsiExpression>();
     final Ref<PsiCallExpression> refMethodCall = new Ref<PsiCallExpression>();
-    final List<PsiReference> occurrences = new ArrayList<PsiReference>();
-    final Collection<PsiFile> containingFiles = new HashSet<PsiFile>();
+    final List<PsiReference> occurrences = Collections.synchronizedList(new ArrayList<PsiReference>());
+    final Collection<PsiFile> containingFiles = Collections.synchronizedSet(new HashSet<PsiFile>());
     containingFiles.add(psiParameter.getContainingFile());
     boolean result = ReferencesSearch.search(method).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference psiReference) {
