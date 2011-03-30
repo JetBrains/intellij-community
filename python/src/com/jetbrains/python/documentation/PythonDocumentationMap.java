@@ -95,6 +95,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
       addEntry("gtk", "http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");
       addEntry("wx", "http://www.wxpython.org/docs/api/{module.name}.{class.name}-class.html#{function.name}");
       addEntry("numpy", "http://docs.scipy.org/doc/numpy/reference/generated/{module.name}.{element.name}.html");
+      addEntry("scipy", "http://docs.scipy.org/doc/scipy/reference/generated/{module.name}.{element.name}.html");
     }
 
     public List<Entry> getEntries() {
