@@ -72,7 +72,6 @@
                   <model>
                     <item value="{module.name} - name of module containing element under caret"/>
                     <item value="{class.name} - name of class containing element under caret"/>
-                    <item value="{class.qname} - qualified name of class containing element under caret"/>
                     <item value="{function.name} - name of function under caret"/>
                     <item value="{element.qname} - full-qualified name of element under caret"/>
                     <item value="{python.version} - version of selected Python interpreter"/>
