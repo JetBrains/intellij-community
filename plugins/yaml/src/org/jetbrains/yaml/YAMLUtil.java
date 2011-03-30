@@ -157,8 +157,16 @@ public class YAMLUtil {
       YAMLPsiElement record = root;
       final int keyLength = key.length;
       int i;
-      for (i=0;i<keyLength;i++){
-        final YAMLKeyValue nextRecord = findByName(record, key[i]);
+      for (i=0;i<keyLength;i++) {
+        YAMLKeyValue nextRecord = findByName(record, key[i]);
+        if (i == 0 && nextRecord == null) {
+          final YAMLFile yamlFile =
+            (YAMLFile) PsiFileFactory.getInstance(file.getProject())
+              .createFileFromText("temp." + YAMLFileType.YML.getDefaultExtension(), YAMLFileType.YML,
+                                  key[i] + ":", LocalTimeCounter.currentTime(), true);
+          final YAMLKeyValue topKeyValue = (YAMLKeyValue) yamlFile.getDocuments().get(0).getYAMLElements().get(0);
+          nextRecord = (YAMLKeyValue) root.add(topKeyValue);
+        }
         if (nextRecord != null){
           record = nextRecord;
         } else
