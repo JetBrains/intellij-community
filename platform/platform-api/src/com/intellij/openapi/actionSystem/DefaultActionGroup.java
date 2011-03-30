@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -287,6 +288,12 @@ public class DefaultActionGroup extends ActionGroup {
 
   public final void addAll(ActionGroup group) {
     for (AnAction each : group.getChildren(null)) {
+      add(each);
+    }
+  }
+
+  public final void addAll(Collection<AnAction> actionList) {
+    for (AnAction each : actionList) {
       add(each);
     }
   }
