@@ -47,7 +47,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Block implementation for Groovy formatter
@@ -61,15 +63,23 @@ public class GroovyBlock implements Block, GroovyElementTypes {
   final protected Indent myIndent;
   final protected Wrap myWrap;
   final protected CodeStyleSettings mySettings;
+  final protected Map<GrBinaryExpression, Alignment> myInnerAlignments;
+
 
   protected List<Block> mySubBlocks = null;
 
   public GroovyBlock(@NotNull final ASTNode node, @Nullable final Alignment alignment, @NotNull final Indent indent, @Nullable final Wrap wrap, final CodeStyleSettings settings) {
+    this(node, alignment, indent, wrap, settings, Collections.<GrBinaryExpression, Alignment>emptyMap());
+  }
+
+  public GroovyBlock(@NotNull final ASTNode node, @Nullable final Alignment alignment, @NotNull final Indent indent, @Nullable final Wrap wrap, final CodeStyleSettings settings,
+                     @NotNull Map<GrBinaryExpression, Alignment> innerAlignments) {
     myNode = node;
     myAlignment = alignment;
     myIndent = indent;
     myWrap = wrap;
     mySettings = settings;
+    myInnerAlignments = innerAlignments;
   }
 
   @NotNull
