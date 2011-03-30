@@ -18,6 +18,7 @@ package com.intellij.openapi.fileEditor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,9 @@ import javax.swing.*;
 import java.util.List;
 
 public abstract class FileEditorManager {
+
+  public static final Key<Boolean> USE_CURRENT_WINDOW = Key.create("OpenFile.searchForOpen");
+
   public static FileEditorManager getInstance(Project project) {
     return project.getComponent(FileEditorManager.class);
   }
@@ -41,14 +45,13 @@ public abstract class FileEditorManager {
   /**
    * Opens a file
    *
+   *
    * @param file file to open
    * @param focusEditor <code>true</code> if need to focus
-   * @param searchForSplitter if <code>false</code> then manager will search
-   * the file through all splitters
-   *
+   * @param searchForOpen
    * @return array of opened editors
    */
-  @NotNull public FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForSplitter) {
+  @NotNull public FileEditor[] openFile(@NotNull VirtualFile file, boolean focusEditor, boolean searchForOpen) {
     throw new UnsupportedOperationException("Not implemented");
   }
 

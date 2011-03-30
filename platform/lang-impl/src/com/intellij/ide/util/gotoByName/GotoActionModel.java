@@ -377,4 +377,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel {
     }
     return true;
   }
+
+  @Override
+  public boolean willOpenEditor() {
+    return false;
+  }
 }

@@ -18,6 +18,7 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,9 +48,10 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");
   private Component myOldFocusOwner = null;
   private boolean myShowListForEmptyPattern = false;
+  private boolean myMayRequestCurrentWindow;
 
   protected ChooseByNamePopup(final Project project, final ChooseByNameModel model, final ChooseByNamePopup oldPopup,
-                            final PsiElement context, @Nullable final String predefinedText) {
+                            final PsiElement context, @Nullable final String predefinedText, boolean mayRequestOpenInCurrentWundow) {
     super(project, model, oldPopup != null ? oldPopup.getEnteredText() : predefinedText, context);
     if (oldPopup == null && predefinedText != null) {
       setPreselectInitialText(true);
@@ -56,6 +59,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     if (oldPopup != null) { //inherit old focus owner
       myOldFocusOwner = oldPopup.myPreviouslyFocusedComponent;
     }
+    myMayRequestCurrentWindow = mayRequestOpenInCurrentWundow;
   }
 
   public String getEnteredText() {
@@ -72,6 +76,11 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       myPreviouslyFocusedComponent = myOldFocusOwner;
       myOldFocusOwner = null;
     }
+  }
+
+  @Override
+  public boolean isOpenInCurrentWindowRequested() {
+    return super.isOpenInCurrentWindowRequested() && myMayRequestCurrentWindow;
   }
 
   protected boolean isCheckboxVisible() {
@@ -104,9 +113,11 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     myListScrollPane.setVisible(true);
     myListScrollPane.setBorder(null);
+    String adText = myMayRequestCurrentWindow ? "Press " + KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_MASK)) + " to open in current window" : null;
     if (myDropdownPopup == null) {
       ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myListScrollPane, myListScrollPane);
-      builder.setFocusable(false).setRequestFocus(false).setCancelKeyEnabled(false).setFocusOwners(new JComponent[] {myTextField}).setBelongsToGlobalPopupStack(false).setForceHeavyweight(true).setModalContext(false);
+      builder.setFocusable(false).setRequestFocus(false).setCancelKeyEnabled(false).setFocusOwners(new JComponent[] {myTextField}).setBelongsToGlobalPopupStack(false)
+        .setForceHeavyweight(true).setModalContext(false).setAdText(adText);
       builder.setCancelCallback(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
@@ -183,7 +194,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     //LaterInvocator.leaveModal(myTextFieldPanel);
 
-    cleanupUI();
+    cleanupUI(isOk);
     myActionListener.onClose ();
   }
 
@@ -192,14 +203,22 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY.get(project);
   }
 
-  private void cleanupUI() {
+  private void cleanupUI(boolean ok) {
     if (myTextPopup != null) {
-      myTextPopup.cancel();
+      if (ok) {
+        myTextPopup.closeOk(null);
+      } else {
+        myTextPopup.cancel();
+      }
       myTextPopup = null;
     }
 
     if (myDropdownPopup != null) {
-      myDropdownPopup.cancel();
+      if (ok) {
+        myDropdownPopup.closeOk(null);
+      } else {
+        myDropdownPopup.cancel();
+      }
       myDropdownPopup = null;
     }
   }
@@ -209,11 +228,18 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
                                               @Nullable final String predefinedText) {
+    return createPopup(project, model, context, predefinedText, false);
+
+  }
+
+  public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
+                                              @Nullable final String predefinedText,
+                                              boolean mayRequestOpenInCurrentWindow) {
     final ChooseByNamePopup oldPopup = project.getUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
     if (oldPopup != null) {
       oldPopup.close(false);
     }
-    ChooseByNamePopup newPopup = new ChooseByNamePopup(project, model, oldPopup, context, predefinedText);
+    ChooseByNamePopup newPopup = new ChooseByNamePopup(project, model, oldPopup, context, predefinedText, mayRequestOpenInCurrentWindow);
 
     project.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, newPopup);
     return newPopup;

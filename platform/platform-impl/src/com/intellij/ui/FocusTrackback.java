@@ -29,16 +29,21 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.util.LocaleServiceProviderPool;
 
 import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
 public class FocusTrackback {
+
+  private static Logger LOG = Logger.getInstance("FocusTrackback");
+
   private Window myParentWindow;
 
   private Window myRoot;
@@ -390,6 +395,25 @@ public class FocusTrackback {
 
   public void setForcedRestore(boolean forcedRestore) {
     myForcedRestore = forcedRestore;
+  }
+
+  public void cleanParentWindow() {
+    if (myParentWindow != null) {
+      try {
+        Method tmpLost = Window.class.getDeclaredMethod("setTemporaryLostComponent", Component.class);
+        tmpLost.setAccessible(true);
+        tmpLost.invoke(myParentWindow, new Object[] {null});
+
+        Method owner =
+          KeyboardFocusManager.class.getDeclaredMethod("setMostRecentFocusOwner", new Class[]{Window.class, Component.class});
+        owner.setAccessible(true);
+        owner.invoke(null, myParentWindow, null);
+
+      }
+      catch (Exception e) {
+        LOG.debug(e);
+      }
+    }
   }
 
   public interface Provider {

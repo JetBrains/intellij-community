@@ -191,7 +191,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   public void navigate(boolean requestFocus) {
     if (canNavigate()) {
       if (requestFocus) {
-        NavigationUtil.activateFileWithPsiElement(extractPsiFromValue());
+        NavigationUtil.activateFileWithPsiElement(extractPsiFromValue(), true);
       }
       else {
         getNavigationItem().navigate(requestFocus);
