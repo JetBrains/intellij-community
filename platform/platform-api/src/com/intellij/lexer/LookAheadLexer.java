@@ -75,6 +75,17 @@ public abstract class LookAheadLexer extends LexerBase{
     return myBaseLexer.getBufferEnd();
   }
 
+  protected int getCacheSize() {
+    return myTypeCache.size();
+  }
+
+  protected void resetCacheSize(int size) {
+    while (myTypeCache.size() > size) {
+      myTypeCache.removeLast();
+      myEndOffsetCache.removeLast();
+    }
+  }
+
   public int getState() {
     int offset = myTokenStart - myLastOffset;
     return myLastState | (offset << 16);
