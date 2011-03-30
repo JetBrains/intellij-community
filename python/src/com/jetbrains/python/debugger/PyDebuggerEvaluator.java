@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.jetbrains.python.console.PyConsoleIndentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,5 +53,11 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
   @Override
   public TextRange getExpressionRangeAtOffset(final Project project, final Document document, final int offset, boolean sideEffectsAllowed) {
     return PyDebugSupportUtils.getExpressionRangeAtOffset(project, document, offset);
+  }
+
+  @NotNull
+  @Override
+  public String formatTextForEvaluation(@NotNull String text) {
+    return PyConsoleIndentUtil.normalize(text);
   }
 }
