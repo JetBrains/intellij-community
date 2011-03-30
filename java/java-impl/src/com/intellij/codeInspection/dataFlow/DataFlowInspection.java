@@ -33,7 +33,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFi
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
-import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -119,8 +118,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         !(qualifier instanceof PsiLiteralExpression && ((PsiLiteralExpression)qualifier).getValue() == null)) {
       try {
         PsiBinaryExpression binary = (PsiBinaryExpression)JavaPsiFacade.getInstance(qualifier.getProject()).getElementFactory()
-          .createExpressionFromText("a != null",
-                                                                                                                              null);
+          .createExpressionFromText("a != null", null);
         binary.getLOperand().replace(qualifier);
         List<LocalQuickFix> fixes = new SmartList<LocalQuickFix>();
 
