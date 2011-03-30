@@ -810,6 +810,37 @@ public class ResolveImportUtil {
     return result == null ? null : result.toString();
   }
 
+  /**
+   * Returns the name through which the specified symbol should be imported. This can be different from the qualified name of the
+   * symbol (the place where a symbol is defined). For example, Python 2.7 unittest defines TestCase in unittest.case module
+   * but it should be imported directly from unittest.
+   *
+   * @param symbol   the symbol to be imported
+   * @param foothold the location where the import statement would be added
+   * @return the qualified name, or null if it wasn't possible to calculate one
+   */
+  @Nullable
+  public static PyQualifiedName findCanonicalImportPath(PsiElement symbol, PyElement foothold) {
+    PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
+    if (srcfile == null) {
+      return null;
+    }
+    if (srcfile instanceof PsiFile && symbol instanceof PsiNamedElement && !(symbol instanceof PsiFileSystemItem)) {
+      PsiDirectory dir = ((PsiFile) srcfile).getContainingDirectory();
+      if (dir != null) {
+        PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
+        if (initPy instanceof PyFile && symbol.equals(((PyFile)initPy).findExportedName(((PsiNamedElement)symbol).getName()))) {
+          return findShortestImportableQName(foothold, dir.getVirtualFile());
+        }
+      }
+    }
+    VirtualFile virtualFile = srcfile.getVirtualFile();
+    if (virtualFile != null) {
+      return findShortestImportableQName(foothold, virtualFile);
+    }
+    return null;
+  }
+
   public static class SdkRootVisitingPolicy extends RootPolicy<PsiElement> {
     private final RootVisitor myVisitor;
 
