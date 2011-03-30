@@ -13,9 +13,9 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class AutoImportHintAction implements LocalQuickFix, HintAction {
-  private final ImportFromExistingFix myDelegate;
+  private final AutoImportQuickFix myDelegate;
 
-  public AutoImportHintAction(ImportFromExistingFix delegate) {
+  public AutoImportHintAction(AutoImportQuickFix delegate) {
     myDelegate = delegate;
   }
 

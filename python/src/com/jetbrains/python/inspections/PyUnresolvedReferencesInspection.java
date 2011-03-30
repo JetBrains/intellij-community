@@ -18,8 +18,8 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.*;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
-import com.jetbrains.python.codeInsight.imports.ImportFromExistingFix;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.codeInsight.imports.PythonReferenceImporter;
 import com.jetbrains.python.console.PydevConsoleRunner;
@@ -303,7 +303,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
           // look in other imported modules for this whole name
           if (ref_is_importable) {
-            ImportFromExistingFix importFix = PythonReferenceImporter.proposeImportFix(node, reference, ref_text);
+            AutoImportQuickFix importFix = PythonReferenceImporter.proposeImportFix(node, reference, ref_text);
             if (importFix != null) {
               // if the context doesn't look like a function call and we only found imports of functions, suggest auto-import
               // as a quickfix but no popup balloon (PY-2312)

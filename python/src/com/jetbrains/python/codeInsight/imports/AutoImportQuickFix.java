@@ -26,13 +26,12 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Handles cases when an unresolved name may be imported from one of existing imported modules.
  * The object contains a list of import candidates and serves only to show the initial hint;
  * the actual work is done in ImportFromExistingAction..
  *
  * @author dcheryasov
  */
-public class ImportFromExistingFix implements LocalQuickFix {
+public class AutoImportQuickFix implements LocalQuickFix {
 
   private final PyElement myNode;
   private final PsiReference myReference;
@@ -49,7 +48,7 @@ public class ImportFromExistingFix implements LocalQuickFix {
    * @param name the unresolved identifier portion of node's text
    * @param qualify if true, add an "import ..." statement and qualify the name; else use "from ... import name" 
    */
-  public ImportFromExistingFix(PyElement node, PsiReference reference, String name, boolean qualify) {
+  public AutoImportQuickFix(PyElement node, PsiReference reference, String name, boolean qualify) {
     myNode = node;
     myReference = reference;
     myImports = new ArrayList<ImportCandidateHolder>();

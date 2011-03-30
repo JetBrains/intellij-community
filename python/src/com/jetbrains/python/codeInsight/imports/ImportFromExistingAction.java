@@ -111,36 +111,45 @@ public class ImportFromExistingAction implements QuestionAction {
 
   private void doIt(final ImportCandidateHolder item) {
     PyImportElement src = item.getImportElement();
-    final Project project = myTarget.getProject();
-    final PyElementGenerator gen = PyElementGenerator.getInstance(project);
-    if (src != null) { // use existing import
-      // did user choose 'import' or 'from import'?
-      PsiElement parent = src.getParent();
-      if (parent instanceof PyFromImportStatement) {
-        // add another import element right after the one we got
-        PsiElement new_elt = gen.createImportElement(myName);
-        PyUtil.addListNode(parent, new_elt, null, false, true);
-      }
-      else { // just 'import'
-        // all we need is to qualify our target
-        myTarget.replace(gen.createExpressionFromText(src.getVisibleName() + "." + myName));
-      }
+    if (src != null) {
+      addToExistingImport(src);
     }
     else { // no existing import, add it then use it
-      AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(myTarget, item.getFile());
-      if (isRoot(project, item.getFile())) {
-        AddImportHelper.addImportStatement(myTarget.getContainingFile(), myName, null, priority);
-      }
-      else if (myUseQualifiedImport) {
-        AddImportHelper.addImportStatement(myTarget.getContainingFile(), item.getPath(), null, priority);
-        String qual_name;
-        if (item.getAsName() != null) qual_name = item.getAsName();
-        else qual_name = item.getPath();
-        myTarget.replace(gen.createExpressionFromText(qual_name + "." + myName));
-      }
-      else {
-        AddImportHelper.addImportFrom(myTarget.getContainingFile(), item.getPath(), myName, priority);
-      }
+      addImportStatement(item);
+    }
+  }
+
+  private void addImportStatement(ImportCandidateHolder item) {
+    final Project project = myTarget.getProject();
+    final PyElementGenerator gen = PyElementGenerator.getInstance(project);
+    AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(myTarget, item.getFile());
+    if (isRoot(project, item.getFile())) {
+      AddImportHelper.addImportStatement(myTarget.getContainingFile(), myName, null, priority);
+    }
+    else if (myUseQualifiedImport) {
+      AddImportHelper.addImportStatement(myTarget.getContainingFile(), item.getPath(), null, priority);
+      String qual_name;
+      if (item.getAsName() != null) qual_name = item.getAsName();
+      else qual_name = item.getPath();
+      myTarget.replace(gen.createExpressionFromText(qual_name + "." + myName));
+    }
+    else {
+      AddImportHelper.addImportFrom(myTarget.getContainingFile(), item.getPath(), myName, priority);
+    }
+  }
+
+  private void addToExistingImport(PyImportElement src) {
+    final PyElementGenerator gen = PyElementGenerator.getInstance(myTarget.getProject());
+    // did user choose 'import' or 'from import'?
+    PsiElement parent = src.getParent();
+    if (parent instanceof PyFromImportStatement) {
+      // add another import element right after the one we got
+      PsiElement new_elt = gen.createImportElement(myName);
+      PyUtil.addListNode(parent, new_elt, null, false, true);
+    }
+    else { // just 'import'
+      // all we need is to qualify our target
+      myTarget.replace(gen.createExpressionFromText(src.getVisibleName() + "." + myName));
     }
   }
 
