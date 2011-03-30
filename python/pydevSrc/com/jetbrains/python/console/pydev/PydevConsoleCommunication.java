@@ -35,14 +35,6 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   private WebServer webServer;
 
   private static final Logger LOG = Logger.getInstance(PydevConsoleCommunication.class.getName());
-  /**
-   * Responsible for getting the stdout of the process.
-   */
-  protected final ThreadStreamReader stdOutReader;
-  /**
-   * Responsible for getting the stderr of the process.
-   */
-  protected final ThreadStreamReader stdErrReader;
 
   /**
    * Input that should be sent to the server (waiting for raw_input)
@@ -63,7 +55,6 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    */
   private volatile boolean firstCommWorked = false;
 
-
   /**
    * Initializes the xml-rpc communication.
    *
@@ -74,18 +65,12 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   public PydevConsoleCommunication(Project project, int port, Process process, int clientPort) throws Exception {
     super(project);
 
-    stdErrReader = new ThreadStreamReader(process.getErrorStream());
-    stdOutReader = new ThreadStreamReader(process.getInputStream());
-
-    stdOutReader.start();
-    stdErrReader.start();
-
     //start the server that'll handle input requests
     webServer = new WebServer(clientPort);
     webServer.addHandler("$default", this);
     this.webServer.start();
 
-    IPydevXmlRpcClient client = new PydevXmlRpcClient(process, stdErrReader, stdOutReader, port);
+    IPydevXmlRpcClient client = new PydevXmlRpcClient(process, port);
     this.client = client;
   }
 
@@ -144,8 +129,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
     //let the busy loop from execInterpreter free and enter a busy loop
     //in this function until execInterpreter gives us an input
-    nextResponse = new InterpreterResponse(stdOutReader.getAndClearContents(),
-                                           stdErrReader.getAndClearContents(), false, needInput);
+    nextResponse = new InterpreterResponse(false, needInput);
 
     //busy loop until we have an input
     while (inputReceived == null) {
@@ -191,6 +175,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * @return completions from the client
    */
+  @NotNull
   public List<PydevCompletionVariant> getCompletions(final String prefix) throws Exception {
     if (waitingForInput) {
       return Collections.emptyList();
@@ -261,8 +246,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
                   if (commAttempts < MAX_ATTEMPTS) {
                     commAttempts += 1;
                     Thread.sleep(250);
-                    executed = new Pair<String, Boolean>(stdErrReader.getAndClearContents(), executed.second);
-                    continue;
+                    executed = new Pair<String, Boolean>("", executed.second);
                   }
                   else {
                     break;
@@ -279,16 +263,12 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
             firstCommWorked = true;
 
-            String errorContents = executed.first;
             boolean more = executed.second;
 
-            if (errorContents == null) {
-              errorContents = stdErrReader.getAndClearContents();
-            }
-            nextResponse = new InterpreterResponse(stdOutReader.getAndClearContents(), errorContents, more, needInput);
+            nextResponse = new InterpreterResponse(more, needInput);
           }
           catch (Exception e) {
-            nextResponse = new InterpreterResponse("", "Exception while pushing line to console:" + e.getMessage(), false, needInput);
+            nextResponse = new InterpreterResponse(false, needInput);
           }
         }
       }.queue();
@@ -304,14 +284,14 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
           while (nextResponse == null) {
             if (progressIndicator.isCanceled()) {
               LOG.debug("Canceled");
-              nextResponse = new InterpreterResponse("", "Canceled", false, false);
+              nextResponse = new InterpreterResponse(false, false);
             }
 
             final long time = System.nanoTime() - startTime;
             progressIndicator.setFraction(((double)time) / TIMEOUT);
             if (time > TIMEOUT) {
               LOG.debug("Timeout exceeded");
-              nextResponse = new InterpreterResponse("", "Timeout exceeded", false, false);
+              nextResponse = new InterpreterResponse(false, false);
             }
             synchronized (lock2) {
               try {

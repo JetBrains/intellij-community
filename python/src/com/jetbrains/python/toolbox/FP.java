@@ -1,7 +1,6 @@
 package com.jetbrains.python.toolbox;
 
 import com.intellij.openapi.util.Pair;
-import com.jetbrains.python.PythonDocumentationProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

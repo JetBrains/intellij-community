@@ -4,7 +4,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -73,6 +72,9 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
 
     if (myInputBuffer == null) {
       myInputBuffer = new StringBuilder();
+    }
+    if (myConsoleCommunication.isWaitingForInput()) {
+      myInputBuffer.setLength(0);
     }
     myInputBuffer.append(line).append("\n");
 
@@ -160,14 +162,6 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
             myCurrentIndentSize = -1;
           }
 
-          // Handle output
-          if (!StringUtil.isEmpty(interpreterResponse.err)) {
-            PyConsoleHighlightingUtil.processOutput(console, interpreterResponse.err, ProcessOutputTypes.STDERR);
-          }
-          else if (!StringUtil.isEmpty(interpreterResponse.out)) {
-            PyConsoleHighlightingUtil.processOutput(console, interpreterResponse.out, ProcessOutputTypes.STDOUT);
-          }
-          scrollDown(currentEditor);
           return null;
         }
       });
@@ -192,11 +186,15 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     //console.setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT);
   }
 
+  public int getCurrentIndentSize() {
+    return myCurrentIndentSize;
+  }
+
   private boolean shouldIndent(String line) {
     return line.endsWith(":");
   }
 
-  private int getPythonIndent() {
+  public int getPythonIndent() {
     return CodeStyleSettingsManager.getSettings(getProject()).getIndentSize(PythonFileType.INSTANCE);
   }
 
@@ -222,7 +220,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     return myConsoleView.getConsole().getProject();
   }
 
-  private void scrollDown(final Editor currentEditor) {
+  private static void scrollDown(final Editor currentEditor) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {

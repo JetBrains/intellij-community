@@ -2,20 +2,22 @@ package com.jetbrains.python.console;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.Executor;
+import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
-import com.intellij.execution.process.CommandLineArgumentsProvider;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -28,14 +30,15 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.net.NetUtils;
 import com.jetbrains.django.run.Runner;
-import com.jetbrains.django.util.DjangoUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
+import org.apache.commons.lang.StringUtils;
 import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -75,6 +78,28 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
                                        final String consoleTitle,
                                        final String projectRoot,
                                        final String... statements2execute) {
+    return run(project, sdk, consoleTitle, projectRoot, createDefaultEnvironmentVariables(), statements2execute);
+  }
+
+  public static ImmutableMap<String, String> createDefaultEnvironmentVariables() {
+    return ImmutableMap.of("PYTHONIOENCODING", "utf-8");
+  }
+
+  @Override
+  protected AnAction[] fillToolBarActions(final DefaultActionGroup toolbarActions,
+                                          final Executor defaultExecutor,
+                                          final RunContentDescriptor contentDescriptor) {
+    toolbarActions.add(createBackspaceHandlingAction());
+    return super.fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
+  }
+
+  @Nullable
+  public static PydevConsoleRunner run(@NotNull final Project project,
+                                       @NotNull final Sdk sdk,
+                                       final String consoleTitle,
+                                       final String projectRoot,
+                                       final Map<String, String> environmentVariables,
+                                       final String... statements2execute) {
     final int[] ports;
     try {
       // File "pydev/console/pydevconsole.py", line 223, in <module>
@@ -105,8 +130,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
       }
 
       public Map<String, String> getAdditionalEnvs() {
-        return DjangoUtil.addPyCharmManageModule(DjangoUtil.getDjangoModule(project), Maps.newHashMap(
-          ImmutableMap.of("PYTHONIOENCODING", "utf-8")));
+        return environmentVariables;
       }
     };
 
@@ -159,10 +183,17 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
         @Override
         public void run() {
           // Propagate console communication to language console
-          PydevLanguageConsoleView consoleView = (PydevLanguageConsoleView)getConsoleView();
+          final PydevLanguageConsoleView consoleView = (PydevLanguageConsoleView)getConsoleView();
 
           consoleView.setConsoleCommunication(myPydevConsoleCommunication);
           consoleView.setExecutionHandler(getConsoleExecuteActionHandler());
+          myProcessHandler.addProcessListener(new ProcessAdapter() {
+            @Override
+            public void onTextAvailable(ProcessEvent event, Key outputType) {
+              String text = event.getText();
+              PyConsoleHighlightingUtil.processOutput(consoleView.getConsole(), text, outputType);
+            }
+          });
 
           enableConsoleExecuteAction();
 
@@ -184,6 +215,38 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
       myProcessHandler.destroyProcess();
       finishConsole();
     }
+  }
+
+
+  private AnAction createBackspaceHandlingAction() {
+    final AnAction upAction = new AnAction() {
+      @Override
+      public void actionPerformed(final AnActionEvent e) {
+        new WriteCommandAction(getLanguageConsole().getProject(), getLanguageConsole().getFile()) {
+          protected void run(final Result result) throws Throwable {
+            String text = getLanguageConsole().getEditorDocument().getText();
+            String newText = text.substring(0, text.length() - myConsoleExecuteActionHandler.getPythonIndent());
+            getLanguageConsole().getEditorDocument().setText(newText);
+            getLanguageConsole().getConsoleEditor().getCaretModel().moveToOffset(newText.length());
+          }
+        }.execute();
+      }
+
+      @Override
+      public void update(final AnActionEvent e) {
+        e.getPresentation()
+          .setEnabled(myConsoleExecuteActionHandler.getCurrentIndentSize() >= myConsoleExecuteActionHandler.getPythonIndent() &&
+                      isIndentSubstring(getLanguageConsole().getEditorDocument().getText()));
+      }
+    };
+    upAction.registerCustomShortcutSet(KeyEvent.VK_BACK_SPACE, 0, null);
+    upAction.getTemplatePresentation().setVisible(false);
+    return upAction;
+  }
+
+  private boolean isIndentSubstring(String text) {
+    int indentSize = myConsoleExecuteActionHandler.getPythonIndent();
+    return text.length() >= indentSize && StringUtils.isWhitespace(text.substring(text.length() - indentSize));
   }
 
   private void enableConsoleExecuteAction() {
@@ -268,6 +331,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     myConsoleExecuteActionHandler =
       new PydevConsoleExecuteActionHandler(getConsoleView(), getProcessHandler(), myPydevConsoleCommunication);
     myConsoleExecuteActionHandler.setEnabled(false);
+    new ConsoleHistoryController("py", "", getLanguageConsole(), myConsoleExecuteActionHandler.getConsoleHistoryModel()).install();
     return myConsoleExecuteActionHandler;
   }
 

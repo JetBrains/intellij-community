@@ -6,6 +6,7 @@ import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -41,7 +42,7 @@ public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<Psi
   }
 
   public void computeUsages(final List<PsiElement> targets) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.return");
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_HIGHLIGHT_RETURN);
 
     final PsiElement parent = myTarget.getParent();
     if (!(parent instanceof PyReturnStatement)) {

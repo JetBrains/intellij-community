@@ -31,16 +31,6 @@ public class PydevXmlRpcClient implements IPydevXmlRpcClient {
   private Process process;
 
   /**
-   * This is the thread that's reading the error stream from the process.
-   */
-  private ThreadStreamReader stdErrReader;
-
-  /**
-   * This is the thread that's reading the output stream from the process.
-   */
-  private ThreadStreamReader stdOutReader;
-
-  /**
    * ItelliJ Logging
    */
   private static final Logger LOG = Logger.getInstance(PydevXmlRpcClient.class.getName());
@@ -51,7 +41,7 @@ public class PydevXmlRpcClient implements IPydevXmlRpcClient {
   /**
    * Constructor (see fields description)
    */
-  public PydevXmlRpcClient(Process process, ThreadStreamReader stdErrReader, ThreadStreamReader stdOutReader, int port)
+  public PydevXmlRpcClient(Process process, int port)
     throws MalformedURLException {
 
     String hostname = NetUtils.getLocalHostString();
@@ -59,8 +49,6 @@ public class PydevXmlRpcClient implements IPydevXmlRpcClient {
 
     this.impl = new XmlRpcClient(url, new CommonsXmlRpcTransportFactory(url));
     this.process = process;
-    this.stdErrReader = stdErrReader;
-    this.stdOutReader = stdOutReader;
   }
 
   /**
@@ -91,20 +79,8 @@ public class PydevXmlRpcClient implements IPydevXmlRpcClient {
     while (result[0] == null && System.currentTimeMillis() - started < TIME_LIMIT) {
       try {
         if (process != null) {
-          final String errStream = stdErrReader.getContents();
-          if (errStream.indexOf("sys.exit called. Interactive console finishing.") != -1) {
-            result[0] = new Object[]{errStream};
-            break;
-          }
-
           int exitValue = process.exitValue();
-          result[0] = new Object[]{String.format("Console already exited with value: %s while waiting for an answer.\n" +
-                                                 "Error stream: " +
-                                                 errStream +
-                                                 "\n" +
-                                                 "Output stream: " +
-                                                 stdOutReader.getContents(), exitValue)};
-
+          result[0] = new Object[]{String.format("Console already exited with value: %s while waiting for an answer.\n", exitValue)};
           //ok, we have an exit value!
           break;
         }

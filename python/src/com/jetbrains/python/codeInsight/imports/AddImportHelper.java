@@ -4,9 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -15,7 +13,6 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -213,21 +210,7 @@ public class AddImportHelper {
     }
     Module module = ModuleUtil.findModuleForPsiElement(importLocation);
     Sdk pythonSdk = module != null ? PythonSdkType.findPythonSdk(module) : projectRootManager.getProjectSdk();
-    if (pythonSdk != null) {
-      final VirtualFile libDir = PyClassNameIndex.findLibDir(pythonSdk.getRootProvider().getFiles(OrderRootType.CLASSES));
-      if (libDir != null && VfsUtil.isAncestor(libDir, vFile, false)) {
-        final VirtualFile sitePackages = libDir.findChild("site-packages");
-        if (sitePackages != null && VfsUtil.isAncestor(sitePackages, vFile, false)) {
-          return ImportPriority.THIRD_PARTY;
-        }
-        return ImportPriority.BUILTIN;
-      }
-      final VirtualFile skeletonsDir = PythonSdkType.findSkeletonsDir(pythonSdk);
-      if (skeletonsDir != null &&
-          vFile.getParent() == skeletonsDir) {   // note: this will pick up some of the binary libraries not in packages
-        return ImportPriority.BUILTIN;
-      }
-    }
-    return ImportPriority.THIRD_PARTY;
+
+    return PythonSdkType.isStdLib(vFile, pythonSdk) ? ImportPriority.BUILTIN : ImportPriority.THIRD_PARTY;
   }
 }

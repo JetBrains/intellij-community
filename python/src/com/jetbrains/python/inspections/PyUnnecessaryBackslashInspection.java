@@ -11,10 +11,11 @@ import com.jetbrains.python.actions.RemoveUnnecessaryBackslashQuickFix;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: catherine
- *
+ * <p/>
  * Inspection to highlight backslashes in places where line continuation is implicit (inside (), [], {}).
  */
 public class PyUnnecessaryBackslashInspection extends PyInspection {
@@ -54,8 +55,10 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
       while (!stack.isEmpty()) {
         PsiElement element = stack.pop();
         findProblem(element);
-        for (PsiElement psiElement : element.getChildren()) {
-          stack.push(psiElement);
+        if (element != null) {
+          for (PsiElement psiElement : element.getChildren()) {
+            stack.push(psiElement);
+          }
         }
       }
     }
@@ -79,11 +82,12 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
     public void visitPyStringLiteralExpression(final PyStringLiteralExpression stringLiteralExpression) {
       PsiElement parent = stringLiteralExpression.getParent();
       if (parent instanceof PyListLiteralExpression || parent instanceof PyParenthesizedExpression ||
-          parent instanceof PySetLiteralExpression || parent instanceof PyKeyValueExpression)
+          parent instanceof PySetLiteralExpression || parent instanceof PyKeyValueExpression) {
         findProblem(stringLiteralExpression);
+      }
     }
 
-    private void findProblem (final PsiElement expression) {
+    private void findProblem(@Nullable final PsiElement expression) {
       PsiWhiteSpace[] children = PsiTreeUtil.getChildrenOfType(expression, PsiWhiteSpace.class);
       if (children != null) {
         for (PsiWhiteSpace ws : children) {
