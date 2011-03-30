@@ -33,6 +33,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
 
 /**
  * @author ilyas
@@ -47,7 +50,8 @@ public abstract class CreateClassActionBase implements IntentionAction {
 
   @NotNull
   public String getText() {
-    return GroovyBundle.message("create.class.text", myRefElement.getReferenceName());
+    String referenceName = myRefElement.getReferenceName();
+    return shouldCreateInterface() ? GroovyBundle.message("create.interface.text", referenceName) : GroovyBundle.message("create.class.text", referenceName);
   }
 
   @NotNull
@@ -61,6 +65,11 @@ public abstract class CreateClassActionBase implements IntentionAction {
 
   public boolean startInWriteAction() {
     return true;
+  }
+
+  protected boolean shouldCreateInterface() {
+    PsiElement parent = myRefElement.getParent();
+    return parent instanceof GrImplementsClause || parent instanceof GrExtendsClause && parent.getParent() instanceof GrInterfaceDefinition;
   }
 
   public static PsiClass createClassByType(final PsiDirectory directory,

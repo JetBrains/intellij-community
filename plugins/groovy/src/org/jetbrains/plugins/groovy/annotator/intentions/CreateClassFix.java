@@ -35,7 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
@@ -111,7 +110,7 @@ public abstract class CreateClassFix {
         PsiDirectory targetDirectory = getTargetDirectory(project, qualifier, name, module);
         if (targetDirectory == null) return;
 
-        String templateName = myRefElement.getParent() instanceof GrImplementsClause ? NewGroovyClassAction.GROOVY_INTERFACE : NewGroovyClassAction.GROOVY_CLASS;
+        String templateName = shouldCreateInterface() ? NewGroovyClassAction.GROOVY_INTERFACE : NewGroovyClassAction.GROOVY_CLASS;
         PsiClass targetClass = createClassByType(targetDirectory, name, manager, myRefElement, templateName);
         if (targetClass != null) {
           addImportForClass(groovyFile, qualifier, targetClass);
