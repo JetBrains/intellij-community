@@ -18,9 +18,10 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -33,8 +34,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.HashSet;
+import java.util.List;
 
 public class ExternalJavaDocAction extends AnAction {
 
@@ -100,8 +101,14 @@ public class ExternalJavaDocAction extends AnAction {
     final PsiElement originalElement = getOriginalElement(LangDataKeys.PSI_FILE.getData(dataContext), editor);
     DocumentationManager.storeOriginalElement(PlatformDataKeys.PROJECT.getData(dataContext), originalElement, element);
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
-    final List<String> urls = provider.getUrlFor(element, originalElement);
-    boolean enabled = urls != null && !urls.isEmpty();
+    boolean enabled;
+    if (provider instanceof ExternalDocumentationProvider) {
+      enabled = ((ExternalDocumentationProvider) provider).hasDocumentationFor(element, originalElement);
+    }
+    else {
+      final List<String> urls = provider.getUrlFor(element, originalElement);
+      enabled = urls != null && !urls.isEmpty();
+    }
     if (editor != null) {
       presentation.setEnabled(enabled);
       if (event.getPlace().equals(ActionPlaces.MAIN_MENU)) {

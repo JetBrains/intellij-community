@@ -18,6 +18,7 @@ package org.jetbrains.android;
 import com.android.sdklib.SdkConstants;
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.facet.ProjectFacetManager;
+import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.lang.java.JavaDocumentationProvider;
@@ -77,6 +78,11 @@ public class AndroidDocumentationProvider implements DocumentationProvider, Exte
     return isMyContext(element, project) ?
            JavaDocumentationProvider.fetchExternalJavadoc(element, docUrls, new MyDocExternalFilter(project)) :
            null;
+  }
+
+  @Override
+  public boolean hasDocumentationFor(PsiElement element, PsiElement originalElement) {
+    return false;
   }
 
   private static boolean isMyContext(@NotNull final PsiElement element, @NotNull final Project project) {

@@ -26,6 +26,7 @@ import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
+import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -673,6 +674,11 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
   public String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls) {
     return fetchExternalJavadoc(element, project, docUrls);
+  }
+
+  @Override
+  public boolean hasDocumentationFor(PsiElement element, PsiElement originalElement) {
+    return CompositeDocumentationProvider.hasUrlsFor(this, element, originalElement);
   }
 
   public static String fetchExternalJavadoc(PsiElement element, final Project project, final List<String> docURLs) {
