@@ -551,6 +551,9 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
                                    : null;
     String url = map.urlFor(qName, namedElement, pyVersion);
     if (url != null) {
+      if (checkExistence && !pageExists(url)) {
+        return map.rootUrlFor(qName);
+      }
       return url;
     }
     if (PythonSdkType.isStdLib(vFile, sdk)) {

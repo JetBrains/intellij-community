@@ -94,8 +94,8 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
       addEntry("PySide", "http://www.pyside.org/docs/pyside/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}");
       addEntry("gtk", "http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");
       addEntry("wx", "http://www.wxpython.org/docs/api/{module.name}.{class.name}-class.html#{function.name}");
-      addEntry("numpy", "http://docs.scipy.org/doc/numpy/reference/generated/{module.name}.{element.name}.html");
-      addEntry("scipy", "http://docs.scipy.org/doc/scipy/reference/generated/{module.name}.{element.name}.html");
+      addEntry("numpy", "http://docs.scipy.org/doc/numpy/reference/{}generated/{module.name}.{element.name}.html");
+      addEntry("scipy", "http://docs.scipy.org/doc/scipy/reference/{}generated/{module.name}.{element.name}.html");
     }
 
     public List<Entry> getEntries() {
@@ -156,6 +156,21 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   }
 
   @Nullable
+  public String rootUrlFor(PyQualifiedName moduleQName) {
+    for (Entry entry : myState.myEntries) {
+      if (moduleQName.matchesPrefix(PyQualifiedName.fromDottedString(entry.myPrefix))) {
+        return rootForPattern(entry.myUrlPattern);
+      }
+    }
+    return null;
+  }
+
+  private static String rootForPattern(String urlPattern) {
+    int pos = urlPattern.indexOf('{');
+    return pos >= 0 ? urlPattern.substring(0, pos) : urlPattern;
+  }
+
+  @Nullable
   private static String transformPattern(@NotNull String urlPattern, PyQualifiedName moduleQName, @Nullable PsiNamedElement element, String pyVersion) {
     Map<String, String> macros = new HashMap<String, String>();
     macros.put("element.name", element == null ? null : element.getName());
@@ -194,6 +209,6 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
         .replace("{" + entry.getKey() + ".dashes}", entry.getValue().replace("_", "-"));
 
     }
-    return urlPattern;
+    return urlPattern.replace("{}", "");
   }
 }
