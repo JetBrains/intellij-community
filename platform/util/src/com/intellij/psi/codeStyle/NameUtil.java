@@ -317,6 +317,10 @@ public class NameUtil {
 
   private enum WordState { NO_WORD, PREV_UC, WORD }
 
+  private static boolean isWordStart(char p) {
+    return Character.isUpperCase(p) || Character.isDigit(p);
+  }
+
   private static void addAllWords(String word, List<String> result) {
     CharacterIterator it = new StringCharacterIterator(word);
     StringBuffer b = new StringBuffer();
@@ -325,7 +329,7 @@ public class NameUtil {
     for (char c = it.first(); c != CharacterIterator.DONE; c = it.next()) {
       switch (state) {
         case NO_WORD:
-          if (!Character.isUpperCase(c)) {
+          if (!isWordStart(c)) {
             b.append(c);
             state = WordState.WORD;
           }
@@ -335,7 +339,7 @@ public class NameUtil {
           }
           break;
         case PREV_UC:
-          if (!Character.isUpperCase(c)) {
+          if (!isWordStart(c)) {
             b = startNewWord(result, b, curPrevUC);
             b.append(c);
             state = WordState.WORD;
@@ -347,7 +351,7 @@ public class NameUtil {
           }
           break;
         case WORD:
-          if (Character.isUpperCase(c)) {
+          if (isWordStart(c)) {
             startNewWord(result, b, c);
             b.setLength(0);
             state = WordState.PREV_UC;
@@ -475,14 +479,13 @@ public class NameUtil {
     }
   }
 
-
   public static class MinusculeMatcher implements Matcher {
     private final char[] myPattern;
     private final boolean myFirstLetterCaseMatters;
 
     public MinusculeMatcher(String pattern, boolean firstLetterCaseMatters) {
       myFirstLetterCaseMatters = firstLetterCaseMatters;
-      myPattern = pattern.replaceAll(":", "\\*:").replaceAll("\\.", "\\*\\.").toCharArray();
+      myPattern = StringUtil.trimEnd(pattern, "* ").replaceAll(":", "\\*:").replaceAll("\\.", "\\*\\.").toCharArray();
     }
 
     private boolean matches(int patternIndex, List<String> words, int wordIndex) {
@@ -501,7 +504,14 @@ public class NameUtil {
 
       if (isWordSeparator(w.charAt(0))) {
         assert w.length() == 1 : "'" + w + "'";
-        return matches(isWordSeparator(myPattern[patternIndex]) ? patternIndex + 1 : patternIndex, words, wordIndex + 1);
+        if (isWordSeparator(myPattern[patternIndex])) {
+          return matches(patternIndex + 1, words, wordIndex + 1);
+        }
+        if (patternIndex == 0 && myFirstLetterCaseMatters) {
+          return false;
+        }
+
+        return matches(patternIndex, words, wordIndex + 1);
       }
 
       if (patternIndex == 0 && myFirstLetterCaseMatters && w.charAt(0) != myPattern[0]) {
@@ -512,7 +522,7 @@ public class NameUtil {
         return false;
       }
 
-      boolean uppers = Character.isUpperCase(myPattern[patternIndex]);
+      boolean uppers = isWordStart(myPattern[patternIndex]);
 
       int i = 1;
       while (true) {
@@ -523,7 +533,7 @@ public class NameUtil {
           break;
         }
         char p = myPattern[patternIndex + i];
-        if (uppers && Character.isUpperCase(p)) {
+        if (uppers && isWordStart(p)) {
           p = StringUtil.toLowerCase(p);
         } else {
           uppers = false;
@@ -570,7 +580,7 @@ public class NameUtil {
             break;
           }
           List<String> newWords = new ArrayList<String>();
-          newWords.add(s.substring(fromIndex));
+          newWords.add(s.substring(next));
           newWords.addAll(words.subList(i + 1, words.size()));
           if (matches(patternIndex, newWords, 0)) {
             return true;
@@ -587,7 +597,7 @@ public class NameUtil {
 
     @Override
     public boolean matches(String name) {
-      StringTokenizer tokenizer = new StringTokenizer(name, " -_.:", true);
+      StringTokenizer tokenizer = new StringTokenizer(name, " -_.:/", true);
       List<String> words = new ArrayList<String>();
       while (tokenizer.hasMoreTokens()) {
         String token = tokenizer.nextToken();

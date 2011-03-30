@@ -142,11 +142,4 @@ public class VariablesCompletionTest extends CompletionTestCase {
 
     assertStringItems(LineTokenizer.tokenize(FileDocumentManager.getInstance().getDocument(result).getCharsSequence(), false));
   }
-
-  private void assertStringItems(String... strings) {
-    assertNotNull(myItems);
-    for (int i = 0; i < myItems.length; i++) {
-      assertEquals(strings[i], myItems[i].toString());
-    }
-  }
 }

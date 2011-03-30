@@ -49,10 +49,10 @@ public class CamelHumpMatcher extends PrefixMatcher {
           ourLastCompletionCaseSetting = currentSetting;
         }
 
-        myMatcher = obtainMatcher(myRelaxedMatching);
+        myMatcher = obtainMatcher(myRelaxedMatching, myCaseSensitive);
       }
       if (myMatcher.matches(name)) {
-        if (myRelaxedMatching && obtainMatcher(false).matches(name)) {
+        if (myRelaxedMatching && obtainMatcher(false, myCaseSensitive).matches(name)) {
           return false;
         }
 
@@ -62,11 +62,11 @@ public class CamelHumpMatcher extends PrefixMatcher {
     }
   }
 
-  private NameUtil.Matcher obtainMatcher(final boolean relax) {
-    String key = relax + myPrefix;
+  private NameUtil.Matcher obtainMatcher(final boolean relax, final boolean caseSensitive) {
+    String key = relax + myPrefix + caseSensitive;
     NameUtil.Matcher pattern = ourPatternCache.get(key);
     if (pattern == null) {
-      pattern = createCamelHumpsMatcher(relax);
+      pattern = createCamelHumpsMatcher(relax, caseSensitive);
       ourPatternCache.put(key, pattern);
     }
     return pattern;
@@ -86,12 +86,8 @@ public class CamelHumpMatcher extends PrefixMatcher {
       if (itemCaseInsensitive && StringUtil.startsWithIgnoreCase(name, myPrefix) || prefixMatches(name)) {
         return true;
       }
-      if (itemCaseInsensitive &&
-          CodeInsightSettings.ALL != CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE &&
-          name.length() > 0) {
-        final char c = name.charAt(0);
-        String swappedCase = (Character.isUpperCase(c) ? Character.toLowerCase(c) : Character.toUpperCase(c)) + name.substring(1);
-        if (prefixMatches(swappedCase)) {
+      if (itemCaseInsensitive && CodeInsightSettings.ALL != CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE) {
+        if (obtainMatcher(false, false).matches(name)) {
           return true;
         }
       }
@@ -104,8 +100,8 @@ public class CamelHumpMatcher extends PrefixMatcher {
     return new CamelHumpMatcher(prefix, myCaseSensitive, myRelaxedMatching);
   }
 
-  private NameUtil.Matcher createCamelHumpsMatcher(final boolean relaxedMatching) {
-    if (!myCaseSensitive) {
+  private NameUtil.Matcher createCamelHumpsMatcher(final boolean relaxedMatching, final boolean caseSensitive) {
+    if (!caseSensitive) {
       return NameUtil.buildCompletionMatcher(myPrefix, 0, true, true);
     }
 

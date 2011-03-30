@@ -1,1 +1,1 @@
-public enum Foo { private Fo<caret> }
+public enum Foooooo { private Fooo<caret> }
