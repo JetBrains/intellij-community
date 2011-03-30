@@ -708,9 +708,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     }
     myLivePreview.cleanUp();
     myLivePreview.dispose();
-    if (myListeningSelection) {
-      myEditor.getSelectionModel().removeSelectionListener(this);
-    }
+    setTrackingSelection(false);
     addTextToRecents(mySearchField);
     if (myReplaceField != null) {
       addTextToRecents(myReplaceField);
