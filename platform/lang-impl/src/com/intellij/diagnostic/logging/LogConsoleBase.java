@@ -511,6 +511,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
               return;
             }
           }
+          if (myAlarm.isDisposed()) return;
           myAlarm.addRequest(this, 100);
         }
       };
