@@ -20,6 +20,7 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
+//import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Stack;
@@ -82,7 +83,7 @@ public class LeakHunter {
   }
 
   private static final Stack<BackLink> toVisit = new Stack<BackLink>();
-  private static void walkObjects(Processor<BackLink> processor, Class lookFor) throws Exception {
+  private static void walkObjects(Processor<BackLink> leakProcessor, Class lookFor) {
     while (true) {
       if (toVisit.isEmpty()) return;
       BackLink backLink = toVisit.pop();
@@ -93,15 +94,24 @@ public class LeakHunter {
       for (Field field : fields) {
         String fieldName = field.getName();
         if (root instanceof Reference && "referent".equals(fieldName)) continue; // do not follow weak/soft refs
-        Object value = field.get(root);
+        Object value;
+        try {
+          value = field.get(root);
+        }
+        catch (IllegalArgumentException e) {
+          throw new RuntimeException(e);
+        }
+        catch (IllegalAccessException e) {
+          throw new RuntimeException(e);
+        }
         if (value == null) continue;
         if (value instanceof PsiElement || value instanceof TreeElement)  {
           int i = 0;
         }
         Class valueClass = value.getClass();
-        if (lookFor.isAssignableFrom(valueClass)) {
+        if (lookFor.isAssignableFrom(valueClass) && isReallyLeak(field, fieldName, value, valueClass)) {
           BackLink newBackLink = new BackLink(valueClass, value, field, backLink);
-          processor.process(newBackLink);
+          leakProcessor.process(newBackLink);
         }
         else {
           BackLink newBackLink = new BackLink(valueClass, value, field, backLink);
@@ -124,6 +134,18 @@ public class LeakHunter {
         }
       }
     }
+  }
+
+  private static final Key<Boolean> IS_NOT_A_LEAK = Key.create("IS_NOT_A_LEAK");
+  public static void markAsNotALeak(UserDataHolder object) {
+    object.putUserData(IS_NOT_A_LEAK, Boolean.TRUE);
+  }
+  //static {
+  //  markAsNotALeak(DocumentCommitThread.THE_POISON_PILL);
+  //}
+  private static boolean isReallyLeak(Field field, String fieldName, Object value, Class valueClass) {
+    if (value instanceof UserDataHolder && ((UserDataHolder)value).getUserData(IS_NOT_A_LEAK) != null) return false;
+    return true;
   }
 
   private static final Set<String> noFollowClasses = new THashSet<String>();
@@ -152,7 +174,7 @@ public class LeakHunter {
     checkLeak(root, ProjectImpl.class);
   }
   @TestOnly
-  public static void checkLeak(@NotNull Object root, @NotNull Class suspectClass) throws Exception {
+  public static void checkLeak(@NotNull Object root, @NotNull Class suspectClass) {
     if (SwingUtilities.isEventDispatchThread()) {
       UIUtil.dispatchAllInvocationEvents();
     }
