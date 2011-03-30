@@ -86,11 +86,14 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   }
 
   @Override
-  protected AnAction[] fillToolBarActions(final DefaultActionGroup toolbarActions,
+  protected List<AnAction> fillToolBarActions(final DefaultActionGroup toolbarActions,
                                           final Executor defaultExecutor,
                                           final RunContentDescriptor contentDescriptor) {
-    toolbarActions.add(createBackspaceHandlingAction());
-    return super.fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
+    AnAction backspaceHandlingAction = createBackspaceHandlingAction();
+    toolbarActions.add(backspaceHandlingAction);
+    List<AnAction> actions = super.fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
+    actions.add(backspaceHandlingAction);
+    return actions;
   }
 
   @Nullable
