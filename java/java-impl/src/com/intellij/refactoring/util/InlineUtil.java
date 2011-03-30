@@ -196,6 +196,12 @@ public class InlineUtil {
           if (nextSibling.getNode().getElementType() == JavaTokenType.RBRACE) break;
           lastInitializerSibling = nextSibling;
         }
+        if (lastInitializerSibling instanceof PsiWhiteSpace) {
+          lastInitializerSibling = PsiTreeUtil.skipSiblingsBackward(lastInitializerSibling, PsiWhiteSpace.class);
+        }
+        if (lastInitializerSibling.getNode().getElementType() == JavaTokenType.COMMA) {
+          lastInitializerSibling = lastInitializerSibling.getPrevSibling();
+        }
         argumentList.addRange(initializers[0], lastInitializerSibling);
       }
       args[args.length - 1].delete();
