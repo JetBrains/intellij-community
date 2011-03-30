@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -93,6 +94,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
       addEntry("PySide", "http://www.pyside.org/docs/pyside/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}");
       addEntry("gtk", "http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");
       addEntry("wx", "http://www.wxpython.org/docs/api/{module.name}.{class.name}-class.html#{function.name}");
+      addEntry("numpy", "http://docs.scipy.org/doc/numpy/reference/generated/{module.name}.{element.name}.html");
     }
 
     public List<Entry> getEntries() {
@@ -153,8 +155,9 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   }
 
   @Nullable
-  private static String transformPattern(String urlPattern, PyQualifiedName moduleQName, @Nullable PsiNamedElement element, String pyVersion) {
+  private static String transformPattern(@NotNull String urlPattern, PyQualifiedName moduleQName, @Nullable PsiNamedElement element, String pyVersion) {
     Map<String, String> macros = new HashMap<String, String>();
+    macros.put("element.name", element == null ? null : element.getName());
     PyClass pyClass = element == null ? null : PsiTreeUtil.getParentOfType(element, PyClass.class, false);
     macros.put("class.name", pyClass == null ? null : pyClass.getName());
     if (element != null) {
@@ -175,10 +178,13 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   }
 
   @Nullable
-  private static String transformPattern(String urlPattern, Map<String, String> macroValues) {
+  private static String transformPattern(@NotNull String urlPattern, Map<String, String> macroValues) {
     for (Map.Entry<String, String> entry : macroValues.entrySet()) {
-      if (entry.getValue() == null && urlPattern.contains("{" + entry.getKey())) {
-        return null;
+      if (entry.getValue() == null) {
+        if (urlPattern.contains("{" + entry.getKey())) {
+          return null;
+        }
+        continue;
       }
       urlPattern = urlPattern
         .replace("{" + entry.getKey() + "}", entry.getValue())
