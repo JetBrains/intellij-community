@@ -89,6 +89,9 @@ public final class NavigationUtil {
     return builder.setItemChoosenCallback(runnable).createPopup();
   }
 
+  public static void activateFileWithPsiElement(@NotNull PsiElement elt) {
+    activateFileWithPsiElement(elt, true);
+  }
 
   public static void activateFileWithPsiElement(@NotNull PsiElement elt, boolean searchForOpen) {
     boolean openAsNative = false;
