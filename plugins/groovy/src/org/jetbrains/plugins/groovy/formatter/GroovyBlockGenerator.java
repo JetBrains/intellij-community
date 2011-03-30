@@ -119,31 +119,35 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     // For Parameter lists
     if (isListLikeClause(blockPsi)) {
       final ArrayList<Block> subBlocks = new ArrayList<Block>();
-      ASTNode[] children = node.getChildren(null);
       ASTNode prevChildNode = null;
-      final Alignment alignment = mustAlign(blockPsi, mySettings, children) ? Alignment.createAlignment() : null;
-      for (ASTNode childNode : children) {
-        if (canBeCorrectBlock(childNode)) {
-          final Indent indent = GroovyIndentProcessor.getChildIndent(block, prevChildNode, childNode);
-          subBlocks.add(new GroovyBlock(childNode, isKeyword(childNode) ? null : alignment, indent, myWrap, mySettings));
-          prevChildNode = childNode;
-        }
+      final Alignment alignment = mustAlign(blockPsi, mySettings, node.getChildren(null)) ? Alignment.createAlignment() : null;
+      for (ASTNode childNode : visibleChildren(node)) {
+        final Indent indent = GroovyIndentProcessor.getChildIndent(block, prevChildNode, childNode);
+        subBlocks.add(new GroovyBlock(childNode, isKeyword(childNode) ? null : alignment, indent, myWrap, mySettings));
+        prevChildNode = childNode;
       }
       return subBlocks;
     }
 
     // For other cases
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
-    ASTNode[] children = getGroovyChildren(node);
     ASTNode prevChildNode = null;
-    for (ASTNode childNode : children) {
-      if (canBeCorrectBlock(childNode)) {
-        final Indent indent = GroovyIndentProcessor.getChildIndent(block, prevChildNode, childNode);
-        subBlocks.add(new GroovyBlock(childNode, blockPsi instanceof GrCodeBlock ? null : myAlignment, indent, myWrap, mySettings));
-        prevChildNode = childNode;
-      }
+    for (ASTNode childNode : visibleChildren(node)) {
+      final Indent indent = GroovyIndentProcessor.getChildIndent(block, prevChildNode, childNode);
+      subBlocks.add(new GroovyBlock(childNode, blockPsi instanceof GrCodeBlock ? null : myAlignment, indent, myWrap, mySettings));
+      prevChildNode = childNode;
     }
     return subBlocks;
+  }
+
+  private static List<ASTNode> visibleChildren(ASTNode node) {
+    ArrayList<ASTNode> list = new ArrayList<ASTNode>();
+    for (ASTNode astNode : getGroovyChildren(node)) {
+      if (canBeCorrectBlock(astNode)) {
+        list.add(astNode);
+      }
+    }
+    return list;
   }
 
   private static boolean mustAlign(PsiElement blockPsi, CodeStyleSettings mySettings, ASTNode[] children) {
@@ -280,13 +284,11 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     Alignment alignment = mySettings.ALIGN_MULTILINE_BINARY_OPERATION ? Alignment.createAlignment() : null;
     GrBinaryExpression myExpr = (GrBinaryExpression) node.getPsi();
-    ASTNode[] children = node.getChildren(null);
     if (myExpr.getLeftOperand() instanceof GrBinaryExpression) {
       addBinaryChildrenRecursively(myExpr.getLeftOperand(), subBlocks, Indent.getContinuationWithoutFirstIndent(), alignment, myWrap, mySettings);
     }
-    for (ASTNode childNode : children) {
-      if (canBeCorrectBlock(childNode) &&
-          !(childNode.getPsi() instanceof GrBinaryExpression)) {
+    for (ASTNode childNode : visibleChildren(node)) {
+      if (!(childNode.getPsi() instanceof GrBinaryExpression)) {
         subBlocks.add(new GroovyBlock(childNode, alignment, Indent.getContinuationWithoutFirstIndent(), myWrap, mySettings));
       }
     }
@@ -309,16 +311,14 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
                                                    Indent indent,
                                                    Alignment alignment, Wrap myWrap, CodeStyleSettings mySettings) {
     if (elem == null) return;
-    ASTNode[] children = elem.getNode().getChildren(null);
     // For binary expressions
     if ((elem instanceof GrBinaryExpression)) {
       GrBinaryExpression myExpr = ((GrBinaryExpression) elem);
       if (myExpr.getLeftOperand() instanceof GrBinaryExpression) {
         addBinaryChildrenRecursively(myExpr.getLeftOperand(), list, Indent.getContinuationWithoutFirstIndent(), alignment, myWrap, mySettings);
       }
-      for (ASTNode childNode : children) {
-        if (canBeCorrectBlock(childNode) &&
-            !(childNode.getPsi() instanceof GrBinaryExpression)) {
+      for (ASTNode childNode : visibleChildren(elem.getNode())) {
+        if (!(childNode.getPsi() instanceof GrBinaryExpression)) {
           list.add(new GroovyBlock(childNode, alignment, indent, myWrap, mySettings));
         }
       }
