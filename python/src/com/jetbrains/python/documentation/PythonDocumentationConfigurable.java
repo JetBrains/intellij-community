@@ -3,11 +3,13 @@ package com.jetbrains.python.documentation;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.AddEditRemovePanel;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -18,8 +20,19 @@ import java.util.HashSet;
 /**
  * @author yole
  */
-public class PythonDocumentationConfigurable implements Configurable {
+public class PythonDocumentationConfigurable implements SearchableConfigurable {
   private PythonDocumentationPanel myPanel = new PythonDocumentationPanel();
+
+  @NotNull
+  @Override
+  public String getId() {
+    return "com.jetbrains.python.documentation.PythonDocumentationConfigurable";
+  }
+
+  @Override
+  public Runnable enableSearch(String option) {
+    return null;
+  }
 
   @Nls
   @Override
