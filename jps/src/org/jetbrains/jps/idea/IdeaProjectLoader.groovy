@@ -367,8 +367,8 @@ public class IdeaProjectLoader {
             if (projectOutputPath == null) {
               project.error("Module '$currentModuleName' uses output path inherited from project but project output path is not specified")
             }
-            currentModule.outputPath = new File(new File(projectOutputPath, "production"), currentModuleName).absolutePath
-            currentModule.testOutputPath = new File(new File(projectOutputPath, "test"), currentModuleName).absolutePath
+            currentModule.outputPath = PathUtil.toSystemIndependentPath(new File(new File(projectOutputPath, "production"), currentModuleName).absolutePath)
+            currentModule.testOutputPath = PathUtil.toSystemIndependentPath(new File(new File(projectOutputPath, "test"), currentModuleName).absolutePath)
           }
           else {
             currentModule.outputPath = moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag.output[0]?.@url))
