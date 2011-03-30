@@ -549,6 +549,12 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
     PsiNamedElement namedElement = (element instanceof PsiNamedElement && !(element instanceof PsiFileSystemItem))
                                    ? (PsiNamedElement) element
                                    : null;
+    if (namedElement instanceof PyFunction && PyNames.INIT.equals(namedElement.getName())) {
+      final PyClass containingClass = ((PyFunction)namedElement).getContainingClass();
+      if (containingClass != null) {
+        namedElement = containingClass;
+      }
+    }
     String url = map.urlFor(qName, namedElement, pyVersion);
     if (url != null) {
       if (checkExistence && !pageExists(url)) {
