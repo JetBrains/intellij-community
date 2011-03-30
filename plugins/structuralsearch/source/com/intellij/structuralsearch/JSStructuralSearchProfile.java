@@ -7,6 +7,7 @@ import com.intellij.lang.javascript.JSTokenTypes;
 import com.intellij.lang.javascript.JavaScriptSupportLoader;
 import com.intellij.lang.javascript.JavascriptLanguage;
 import com.intellij.lang.javascript.psi.*;
+import com.intellij.lang.javascript.psi.ecmal4.JSAttribute;
 import com.intellij.lang.javascript.psi.ecmal4.JSAttributeList;
 import com.intellij.lang.javascript.psi.ecmal4.JSClass;
 import com.intellij.openapi.fileTypes.FileType;
@@ -26,6 +27,7 @@ import com.intellij.structuralsearch.impl.matcher.compiler.OptimizingSearchHelpe
 import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
+import com.intellij.structuralsearch.impl.matcher.handlers.SimpleHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
@@ -397,6 +399,11 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
           return;
         }
       }
+      else if (element instanceof JSAttributeList) {
+        if (visitJsAttributeList((JSAttributeList)element)) {
+          return;
+        }
+      }
       if (element instanceof JSLiteralExpression) {
         visitJsLiteralExpression((JSLiteralExpression)element);
       }
@@ -431,13 +438,8 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
     }
 
     private boolean visitJsReferenceExpression(JSExpressionStatement element) {
-      PsiElement parent = element.getParent();
-      if (!(parent instanceof JSFile)) {
-        return false;
-      }
-      if (parent.getChildren().length != 1) {
-        return false;
-      }
+      if (!isOnlyTopElement(element)) return false;
+
       JSExpression expression = element.getExpression();
       String expText = expression.getText();
       if (expText == null || !expText.equals(element.getText())) {
@@ -460,6 +462,49 @@ public class JSStructuralSearchProfile extends TokenBasedProfile {
                  (element instanceof LeafElement && ((LeafElement)element).getElementType() == JSTokenTypes.IDENTIFIER);
         }
       });
+      return true;
+    }
+
+    private boolean visitJsAttributeList(JSAttributeList attrList) {
+      if (!isOnlyTopElement(attrList)) return false;
+
+      final JSAttribute[] attributes = attrList.getAttributes();
+      if (attributes.length != 1) {
+        return false;
+      }
+
+      final JSAttribute attribute = attributes[0];
+      if (!attribute.getText().equals(attrList.getText())) {
+        return false;
+      }
+
+      MatchingHandler handler = new MatchingHandler() {
+        public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
+          if (!super.match(patternNode, matchedNode, context)) {
+            return false;
+          }
+          JSAttribute jsAttr = ((JSAttributeList)patternNode).getAttributes()[0];
+          return context.getMatcher().match(jsAttr, matchedNode);
+        }
+      };
+      myGlobalVisitor.setHandler(attrList, handler);
+
+      handler.setFilter(new NodeFilter() {
+        public boolean accepts(PsiElement element) {
+          return element instanceof JSAttribute;
+        }
+      });
+      return true;
+    }
+
+    private boolean isOnlyTopElement(PsiElement element) {
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof JSFile)) {
+        return false;
+      }
+      if (parent.getChildren().length != 1) {
+        return false;
+      }
       return true;
     }
   }
