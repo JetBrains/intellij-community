@@ -19,18 +19,9 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yole
+ * {@linkplain com.intellij.refactoring.listeners.RefactoringElementListenerProvider} receives a notification on undo.
+ * @author dsl
  */
-public abstract class RefactoringElementAdapter implements RefactoringElementListener, UndoRefactoringElementListener {
-  @Override
-  public final void elementMoved(@NotNull PsiElement newElement) {
-    elementRenamedOrMoved(newElement);
-  }
-
-  protected abstract void elementRenamedOrMoved(@NotNull PsiElement newElement);
-
-  @Override
-  public final void elementRenamed(@NotNull PsiElement newElement) {
-    elementRenamedOrMoved(newElement);
-  }
+public interface UndoRefactoringElementListener {
+  void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName);
 }

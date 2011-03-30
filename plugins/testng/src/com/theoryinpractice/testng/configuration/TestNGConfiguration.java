@@ -41,6 +41,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
 import org.jdom.Element;
@@ -396,14 +397,23 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       final PsiMethod method = (PsiMethod)element;
       if (!method.getName().equals(data.getMethodName())) return null;
       if (!method.getContainingClass().equals(myClass.getPsiElement())) return null;
-      final RefactoringElementListener listener = new RefactoringElementAdapter() {
+      class Listener extends RefactoringElementAdapter implements UndoRefactoringElementListener {
         public void elementRenamedOrMoved(@NotNull final PsiElement newElement) {
           final boolean generatedName = isGeneratedName();
           data.setTestMethod(PsiLocation.fromPsiElement((PsiMethod)newElement));
           if (generatedName) setGeneratedName();
         }
-      };
-      return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
+
+        @Override
+        public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
+          final int methodIdx = oldQualifiedName.indexOf("#") + 1;
+          if (methodIdx <= 0 || methodIdx >= oldQualifiedName.length()) return;
+          final boolean generatedName = isGeneratedName();
+          data.METHOD_NAME = oldQualifiedName.substring(methodIdx);
+          if (generatedName) setGeneratedName();
+        }
+      }
+      return RunConfigurationExtension.wrapRefactoringElementListener(element, this, new Listener());
     }
     return null;
   }

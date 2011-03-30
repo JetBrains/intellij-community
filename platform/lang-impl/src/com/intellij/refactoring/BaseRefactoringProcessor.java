@@ -23,8 +23,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -483,8 +485,9 @@ public abstract class BaseRefactoringProcessor {
     UsageViewDescriptor descriptor = createUsageViewDescriptor(usages);
     if (!ensureElementsWritable(usages, descriptor)) return;
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
+    new WriteCommandAction(myProject){
+      @Override
+      protected void run(Result result) throws Throwable {
         RefactoringListenerManagerImpl listenerManager = (RefactoringListenerManagerImpl)RefactoringListenerManager.getInstance(myProject);
         myTransaction = listenerManager.startTransaction();
         Map<RefactoringHelper, Object> preparedData = new HashMap<RefactoringHelper, Object>();
@@ -499,7 +502,7 @@ public abstract class BaseRefactoringProcessor {
         myTransaction.commit();
         performPsiSpoilingRefactoring();
       }
-    });
+    }.execute();
   }
 
   public static class ConflictsInTestsException extends RuntimeException {

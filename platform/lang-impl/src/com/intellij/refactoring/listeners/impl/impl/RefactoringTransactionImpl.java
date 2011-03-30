@@ -19,6 +19,7 @@ package com.intellij.refactoring.listeners.impl.impl;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
+import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
 import com.intellij.util.containers.HashMap;
 import com.intellij.openapi.diagnostic.Logger;
@@ -74,7 +75,7 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
     return listener;
   }
 
-  private class MyRefactoringElementListener implements RefactoringElementListener {
+  private class MyRefactoringElementListener implements RefactoringElementListener, UndoRefactoringElementListener {
     private final ArrayList<RefactoringElementListener> myListenerList;
     private MyRefactoringElementListener(PsiElement oldElement) {
       addAffectedElement(oldElement);
@@ -109,6 +110,15 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
           }
         }
       });
+    }
+
+    @Override
+    public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
+      for (RefactoringElementListener listener : myListenerList) {
+        if (listener instanceof UndoRefactoringElementListener) {
+          ((UndoRefactoringElementListener)listener).undoElementMovedOrRenamed(newElement, oldQualifiedName);
+        }
+      }
     }
   }
 

@@ -3,7 +3,7 @@ public class A {
     bar();
   }
 
-  }
+}
 
 class B extends A {
-  }
+}

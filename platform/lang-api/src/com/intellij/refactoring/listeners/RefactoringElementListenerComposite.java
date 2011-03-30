@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class RefactoringElementListenerComposite implements RefactoringElementListener {
+public class RefactoringElementListenerComposite implements RefactoringElementListener, UndoRefactoringElementListener {
   private final ArrayList<RefactoringElementListener> myListeners = new ArrayList<RefactoringElementListener>();
 
   public void addListener(final RefactoringElementListener listener){
@@ -37,6 +37,15 @@ public class RefactoringElementListenerComposite implements RefactoringElementLi
   public void elementRenamed(@NotNull final PsiElement newElement){
     for (RefactoringElementListener myListener : myListeners) {
       myListener.elementRenamed(newElement);
+    }
+  }
+
+  @Override
+  public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
+    for (RefactoringElementListener listener : myListeners) {
+      if (listener instanceof UndoRefactoringElementListener) {
+        ((UndoRefactoringElementListener)listener).undoElementMovedOrRenamed(newElement, oldQualifiedName);
+      }
     }
   }
 }
