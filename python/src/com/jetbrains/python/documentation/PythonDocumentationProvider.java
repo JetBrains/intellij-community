@@ -1,6 +1,7 @@
 package com.jetbrains.python.documentation;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.lang.documentation.QuickDocumentationProvider;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -36,10 +37,13 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.FP;
 import com.jetbrains.python.toolbox.Maybe;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.HeadMethod;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -50,7 +54,7 @@ import java.util.regex.Pattern;
 /**
  * Provides quick docs for classes, methods, and functions.
  */
-public class PythonDocumentationProvider extends QuickDocumentationProvider {
+public class PythonDocumentationProvider extends QuickDocumentationProvider implements ExternalDocumentationProvider {
 
   @NonNls private static final String LINK_TYPE_CLASS = "#class#";
   @NonNls private static final String LINK_TYPE_PARENT = "#parent#";
@@ -517,6 +521,12 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
 
   @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
+    final String url = getUrlFor(element, originalElement, true);
+    return url == null ? null : Collections.singletonList(url);
+  }
+
+  @Nullable
+  private static String getUrlFor(PsiElement element, PsiElement originalElement, boolean checkExistence) {
     PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem) element : element.getContainingFile();
     if (PyNames.INIT_DOT_PY.equals(file.getName())) {
       file = file.getParent();
@@ -541,18 +551,37 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
                                    : null;
     String url = map.urlFor(qName, namedElement, pyVersion);
     if (url != null) {
-      return Collections.singletonList(url);
+      return url;
     }
     if (PythonSdkType.isStdLib(vFile, sdk)) {
-      return Collections.singletonList(getStdlibUrlFor(element, qName.getLastComponent(), pyVersion));
+      return getStdlibUrlFor(element, qName.getLastComponent(), pyVersion);
     }
     for (PythonDocumentationLinkProvider provider : Extensions.getExtensions(PythonDocumentationLinkProvider.EP_NAME)) {
       final String providerUrl = provider.getExternalDocumentationUrl(element, originalElement);
       if (providerUrl != null) {
-        return Collections.singletonList(providerUrl);
+        if (checkExistence && !pageExists(providerUrl)) {
+          return provider.getExternalDocumentationRoot();
+        }
+        return providerUrl;
       }
     }
     return null;
+  }
+
+  private static boolean pageExists(String url) {
+    HttpClient client = new HttpClient();
+    client.setTimeout(5 * 1000);
+    client.setConnectionTimeout(5 * 1000);
+    HeadMethod method = new HeadMethod(url);
+    try {
+      int rc = client.executeMethod(method);
+      if (rc == 404) {
+        return false;
+      }
+    }
+    catch (IOException ignored) {
+    }
+    return true;
   }
 
   private static String getStdlibUrlFor(PsiElement element, String moduleName, String pyVersion) {
@@ -591,6 +620,16 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
       }
     }
     return null;
+  }
+
+  @Override
+  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls) {
+    return null;
+  }
+
+  @Override
+  public boolean hasDocumentationFor(PsiElement element, PsiElement originalElement) {
+    return getUrlFor(element, originalElement, false) != null;
   }
 
   @Nullable
