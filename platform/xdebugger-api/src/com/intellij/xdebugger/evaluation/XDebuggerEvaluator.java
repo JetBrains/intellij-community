@@ -116,6 +116,7 @@ public abstract class XDebuggerEvaluator {
    * Override this method to format selected text before it is shown in 'Evaluate' dialog
    */
   @NotNull
+  @SuppressWarnings({"MethodMayBeStatic"})
   public String formatTextForEvaluation(@NotNull String text) {
     return text;
   }
