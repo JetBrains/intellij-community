@@ -116,7 +116,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
         int exactPrefixLen = myPrefix.startsWith("*") ? 0 : 1;
         return NameUtil.buildCompletionMatcher(myPrefix, exactPrefixLen, true, true);
       case CodeInsightSettings.ALL:
-        return NameUtil.buildCompletionMatcher(myPrefix, 0, false, false);
+        return NameUtil.buildCompletionMatcher(myPrefix, 1, false, false);
       default:
         return NameUtil.buildCompletionMatcher(myPrefix, 0, true, false);
     }

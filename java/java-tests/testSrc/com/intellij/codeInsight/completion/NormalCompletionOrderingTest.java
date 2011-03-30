@@ -5,6 +5,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.psi.PsiClass;
@@ -57,6 +58,17 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "p", "param", "pre");
     incUseCount(lookup, 2);
     assertPreferredItems(0, "p", "pre", "param");
+  }
+
+  public void testUppercaseMatters2() throws Throwable {
+    final int old = CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE;
+    try {
+      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.ALL;
+      checkPreferredItems(0, "classLoader", "classLoader2");
+    }
+    finally {
+      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = old;
+    }
   }
 
   public void testShorterShouldBePreselected() throws Throwable {

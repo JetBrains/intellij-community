@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NameUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.codeStyle.NameUtil");
   private static final Function<String,String> LOWERCASE_MAPPING = new Function<String, String>() {
     public String fun(final String s) {
       return s.toLowerCase();
@@ -383,23 +385,23 @@ public class NameUtil {
   }
 
   public static Matcher buildCompletionMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
-    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false, true), exactPrefixLen > 0);
+    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false, true), exactPrefixLen > 0, !allowToLower && !allowToUpper);
   }
 
   public static Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
-    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower), exactPrefixLen > 0);
+    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower), exactPrefixLen > 0, !allowToLower && !allowToUpper);
   }
 
   public static Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, boolean lowerCaseWords) {
-    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, lowerCaseWords, false), exactPrefixLen > 0);
+    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, lowerCaseWords, false), exactPrefixLen > 0, !allowToLower && !allowToUpper);
   }
 
   public static boolean isUseMinusculeHumpMatcher() {
     return Registry.is("minuscule.humps.matching");
   }
 
-  private static Matcher buildMatcher(final String pattern, String regexp, boolean firstLetterMatters) {
-    return isUseMinusculeHumpMatcher() ? new MinusculeMatcher(pattern, firstLetterMatters) : new OptimizedMatcher(pattern, regexp);
+  private static Matcher buildMatcher(final String pattern, String regexp, boolean firstLetterMatters, boolean caseMatters) {
+    return isUseMinusculeHumpMatcher() ? new MinusculeMatcher(pattern, firstLetterMatters, caseMatters) : new OptimizedMatcher(pattern, regexp);
   }
 
   private static class OptimizedMatcher implements Matcher {
@@ -482,9 +484,14 @@ public class NameUtil {
   public static class MinusculeMatcher implements Matcher {
     private final char[] myPattern;
     private final boolean myFirstLetterCaseMatters;
+    private final boolean myCaseMatters;
 
-    public MinusculeMatcher(String pattern, boolean firstLetterCaseMatters) {
+    public MinusculeMatcher(String pattern, boolean firstLetterCaseMatters, boolean caseMatters) {
       myFirstLetterCaseMatters = firstLetterCaseMatters;
+      myCaseMatters = caseMatters;
+      if (caseMatters) {
+        LOG.assertTrue(firstLetterCaseMatters);
+      }
       myPattern = StringUtil.trimEnd(pattern, "* ").replaceAll(":", "\\*:").replaceAll("\\.", "\\*\\.").toCharArray();
     }
 
@@ -496,14 +503,14 @@ public class NameUtil {
         return false;
       }
 
-      String w = words.get(wordIndex);
+      String word = words.get(wordIndex);
 
       if ('*' == myPattern[patternIndex]) {
         return handleAsterisk(patternIndex, words, wordIndex);
       }
 
-      if (isWordSeparator(w.charAt(0))) {
-        assert w.length() == 1 : "'" + w + "'";
+      if (isWordSeparator(word.charAt(0))) {
+        assert word.length() == 1 : "'" + word + "'";
         if (isWordSeparator(myPattern[patternIndex])) {
           return matches(patternIndex + 1, words, wordIndex + 1);
         }
@@ -514,11 +521,11 @@ public class NameUtil {
         return matches(patternIndex, words, wordIndex + 1);
       }
 
-      if (patternIndex == 0 && myFirstLetterCaseMatters && w.charAt(0) != myPattern[0]) {
+      if (patternIndex == 0 && myFirstLetterCaseMatters && word.charAt(0) != myPattern[0]) {
         return false;
       }
 
-      if (StringUtil.toLowerCase(w.charAt(0)) != StringUtil.toLowerCase(myPattern[patternIndex])) {
+      if (StringUtil.toLowerCase(word.charAt(0)) != StringUtil.toLowerCase(myPattern[patternIndex])) {
         return false;
       }
 
@@ -529,17 +536,21 @@ public class NameUtil {
         if (patternIndex + i == myPattern.length) {
           return true;
         }
-        if (i == w.length()) {
+        if (i == word.length()) {
           break;
         }
         char p = myPattern[patternIndex + i];
-        if (uppers && isWordStart(p)) {
+        if (uppers && isWordStart(p) && !myCaseMatters) {
           p = StringUtil.toLowerCase(p);
         } else {
           uppers = false;
         }
 
-        if (StringUtil.toLowerCase(w.charAt(i)) != p) {
+        char w = word.charAt(i);
+        if (!myCaseMatters) {
+          w = StringUtil.toLowerCase(w);
+        }
+        if (w != p) {
           break;
         }
         i++;
@@ -547,7 +558,7 @@ public class NameUtil {
       // there's more in the pattern, but no more words
       if (wordIndex == words.size() - 1) {
         if (patternIndex + i == myPattern.length - 1 && ' ' == myPattern[patternIndex + i]) {
-          return i == w.length();
+          return i == word.length();
         }
 
         return false;
