@@ -88,10 +88,14 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
       )
     ));
 
-    contributor.extend(CompletionType.BASIC, inArgumentListOfCall, instance);
+    ElementPattern<PsiElement> inLabel = psiElement(GroovyTokenTypes.mIDENT).withParent(psiElement(GrArgumentLabel.class).withParent(
+      GroovyPatterns.methodNamedParameter(null)));
 
-    contributor.extend(CompletionType.BASIC, psiElement(GroovyTokenTypes.mIDENT).withParent(psiElement(GrArgumentLabel.class).withParent(
-      GroovyPatterns.methodNamedParameter(null))), instance);
+    contributor.extend(CompletionType.BASIC, inArgumentListOfCall, instance);
+    contributor.extend(CompletionType.BASIC, inLabel, instance);
+
+    contributor.extend(CompletionType.SMART, inArgumentListOfCall, instance);
+    contributor.extend(CompletionType.SMART, inLabel, instance);
   }
 
   @Override
@@ -188,11 +192,11 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     }
 
     for (String name : writableProperties.keySet()) {
-      if (usedNames.contains(name)) continue;
-      usedNames.add(name);
-      final LookupElementBuilder builder =
-        LookupElementBuilder.create(writableProperties.get(name), name).setIcon(GroovyIcons.PROPERTY)
-          .setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
+      if ("metaClass".equals(name) || !usedNames.add(name)) continue;
+
+      final LookupElementBuilder builder = LookupElementBuilder.create(writableProperties.get(name), name)
+        .setIcon(GroovyIcons.PROPERTY)
+        .setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
       result.addElement(builder);
     }
   }
