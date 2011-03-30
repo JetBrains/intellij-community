@@ -213,7 +213,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   PsiFile configureByFile(@TestDataFile @NonNls String file);
 
-  void configureByFiles(@TestDataFile @NonNls String... files);
+  PsiFile[] configureByFiles(@TestDataFile @NonNls String... files);
 
   PsiFile configureByText(FileType fileType, @NonNls String text);
 
