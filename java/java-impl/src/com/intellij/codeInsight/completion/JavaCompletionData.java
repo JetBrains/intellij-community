@@ -526,9 +526,12 @@ public class JavaCompletionData extends JavaAwareCompletionData{
       return;
     }
 
-    final PsiExpressionStatement expressionStatement = PsiTreeUtil.getParentOfType(position, PsiExpressionStatement.class);
-    if (expressionStatement != null && expressionStatement.getTextRange().getStartOffset() == position.getTextRange().getStartOffset()) {
-      if (!psiElement().withSuperParent(2, PsiSwitchStatement.class).accepts(expressionStatement)) {
+    PsiStatement statement = PsiTreeUtil.getParentOfType(position, PsiExpressionStatement.class);
+    if (statement == null) {
+      statement = PsiTreeUtil.getParentOfType(position, PsiDeclarationStatement.class);
+    }
+    if (statement != null && statement.getTextRange().getStartOffset() == position.getTextRange().getStartOffset()) {
+      if (!psiElement().withSuperParent(2, PsiSwitchStatement.class).accepts(statement)) {
         result.addElement(createKeyword(position, PsiKeyword.FINAL));
       }
     }
