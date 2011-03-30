@@ -29,7 +29,10 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.*;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -53,12 +56,20 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManagerAdapter;
+import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -124,6 +135,8 @@ public class AndroidUtils {
   @NonNls public static final String RES_OVERLAY_DIR_NAME = "res-overlay";
 
   public static final int TIMEOUT = 300000;
+
+  private static final Key<ConsoleView> CONSOLE_VIEW_KEY = new Key<ConsoleView>("AndroidConsoleView");
 
   private AndroidUtils() {
   }
@@ -432,25 +445,19 @@ public class AndroidUtils {
   }
 
   public static void runExternalToolInSeparateThread(@NotNull final Project project,
-                                                     @NotNull final GeneralCommandLine commandLine,
-                                                     @Nullable final ProcessHandler processHandler) {
+                                                     @NotNull final GeneralCommandLine commandLine) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        runExternalTool(project, commandLine, processHandler);
+        runExternalTool(project, commandLine, false);
       }
     });
   }
 
-  @Nullable
-  public static String runExternalTool(final Project project,
-                                       GeneralCommandLine commandLine,
-                                       ProcessHandler processHandler) {
+  public static void runExternalTool(final Project project, GeneralCommandLine commandLine, boolean printOutputToConsole) {
     String[] commands = commandLine.getCommands();
     String command = StringUtil.join(commands, " ");
     LOG.info("Execute: " + command);
-    if (processHandler != null && !processHandler.isProcessTerminated()) {
-      processHandler.notifyTextAvailable(command + '\n', ProcessOutputTypes.STDOUT);
-    }
+
     StringBuilder messageBuilder = new StringBuilder();
     String result;
     boolean success = false;
@@ -461,21 +468,19 @@ public class AndroidUtils {
     catch (ExecutionException e) {
       result = e.getMessage();
     }
-    if (result != null && !success) {
-      final String errorMessage = result;
-      if (processHandler != null) {
-        processHandler.notifyTextAvailable(errorMessage + '\n', ProcessOutputTypes.STDERR);
-        processHandler.destroyProcess();
-      }
-      else {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          public void run() {
-            Messages.showErrorDialog(project, errorMessage, AndroidBundle.message("emulator.error.dialog.title"));
-          }
-        });
-      }
+
+    if (result != null && printOutputToConsole) {
+      final ConsoleViewContentType contentType = success ?
+                                                 ConsoleViewContentType.NORMAL_OUTPUT :
+                                                 ConsoleViewContentType.ERROR_OUTPUT;
+      final String finalResult = result;
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          printMessageToConsole(project, finalResult, contentType);
+        }
+      });
     }
-    return result;
   }
 
   public static String getSimpleNameByRelativePath(String relativePath) {
@@ -588,5 +593,51 @@ public class AndroidUtils {
         collectModulesDependingOn(mod, result);
       }
     }
+  }
+
+  public static void printMessageToConsole(@NotNull Project project, @NotNull String s, @NotNull ConsoleViewContentType contentType) {
+    activateConsoleToolWindow(project);
+    final ConsoleView consoleView = project.getUserData(CONSOLE_VIEW_KEY);
+
+    if (consoleView != null) {
+      consoleView .print(s + '\n', contentType);
+    }
+  }
+
+  private static void activateConsoleToolWindow(@NotNull Project project) {
+    final ToolWindowManager manager = ToolWindowManager.getInstance(project);
+    final String toolWindowId = AndroidBundle.message("android.console.tool.window.title");
+
+    ToolWindow toolWindow = manager.getToolWindow(toolWindowId);
+    if (toolWindow != null) {
+      return;
+    }
+
+    toolWindow = manager.registerToolWindow(toolWindowId, true, ToolWindowAnchor.BOTTOM);
+    final ConsoleView console = new ConsoleViewImpl(project, false);
+    project.putUserData(CONSOLE_VIEW_KEY, console);
+    toolWindow.getContentManager().addContent(new ContentImpl(console.getComponent(), "", false));
+
+    final ToolWindowManagerListener listener = new ToolWindowManagerListener() {
+      @Override
+      public void toolWindowRegistered(@NotNull String id) {
+      }
+
+      @Override
+      public void stateChanged() {
+        ToolWindow window = manager.getToolWindow(toolWindowId);
+        if (window != null && !window.isVisible()) {
+          manager.unregisterToolWindow(toolWindowId);
+          ((ToolWindowManagerEx)manager).removeToolWindowManagerListener(this);
+        }
+      }
+    };
+
+    toolWindow.show(new Runnable() {
+      @Override
+      public void run() {
+        ((ToolWindowManagerEx)manager).addToolWindowManagerListener(listener);
+      }
+    });
   }
 }

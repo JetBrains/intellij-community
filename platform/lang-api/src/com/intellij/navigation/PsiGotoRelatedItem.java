@@ -18,6 +18,7 @@ package com.intellij.navigation;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 
@@ -51,5 +52,10 @@ public class PsiGotoRelatedItem extends GotoRelatedItem {
   @Override
   public PsiFile getContainingFile() {
     return myElement instanceof PsiFile ? null : myElement.getContainingFile();
+  }
+
+  @TestOnly
+  public NavigatablePsiElement getElement() {
+    return myElement;
   }
 }

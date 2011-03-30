@@ -41,7 +41,7 @@ public class FormRelatedFilesProvider extends GotoRelatedProvider {
 
   @NotNull
   @Override
-  public List<GotoRelatedItem> getItems(PsiElement context) {
+  public List<? extends GotoRelatedItem> getItems(@NotNull PsiElement context) {
     PsiClass psiClass = PsiTreeUtil.getParentOfType(context, PsiClass.class, false);
     if (psiClass != null) {
       List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(psiClass);

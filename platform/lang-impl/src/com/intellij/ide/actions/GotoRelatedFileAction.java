@@ -26,6 +26,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,7 +47,7 @@ public class GotoRelatedFileAction extends AnAction {
     PsiFile psiFile = LangDataKeys.PSI_FILE.getData(context);
     if (psiFile == null) return;
 
-    List<GotoRelatedItem> items = getItems(editor, psiFile);
+    List<GotoRelatedItem> items = getItems(psiFile, editor);
     if (items.isEmpty()) return;
     if (items.size() == 1) {
       items.get(0).navigate();
@@ -71,17 +73,20 @@ public class GotoRelatedFileAction extends AnAction {
       .showInBestPositionFor(context);
   }
 
-  public static List<GotoRelatedItem> getItems(Editor editor, PsiFile psiFile) {
-
-    PsiElement psiElement = psiFile;
+  @NotNull
+  public static List<GotoRelatedItem> getItems(@NotNull PsiFile psiFile, @Nullable Editor editor) {
+    PsiElement context = psiFile;
     if (editor != null) {
-      psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
+      PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
+      if (element != null) {
+        context = element;
+      }
     }
 
     List<GotoRelatedItem> items = new ArrayList<GotoRelatedItem>();
 
     for (GotoRelatedProvider provider : Extensions.getExtensions(GotoRelatedProvider.EP_NAME)) {
-      items.addAll(provider.getItems(psiElement));
+      items.addAll(provider.getItems(context));
     }
     return items;
   }

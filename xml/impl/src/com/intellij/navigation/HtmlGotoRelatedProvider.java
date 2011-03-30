@@ -39,11 +39,7 @@ import java.util.Set;
 public class HtmlGotoRelatedProvider extends GotoRelatedProvider {
   @NotNull
   @Override
-  public List<GotoRelatedItem> getItems(PsiElement context) {
-    if (context == null) {
-      return Collections.emptyList();
-    }
-
+  public List<? extends GotoRelatedItem> getItems(@NotNull PsiElement context) {
     final PsiFile file = context.getContainingFile();
     if (file == null || !isAvailable(file)) {
       return Collections.emptyList();

@@ -64,16 +64,16 @@ public abstract class CreateClassActionBase implements IntentionAction {
   }
 
   public static PsiClass createClassByType(final PsiDirectory directory,
-                                    final String name,
-                                    final PsiManager manager,
-                                    final PsiElement contextElement) {
+                                           final String name,
+                                           final PsiManager manager,
+                                           final PsiElement contextElement, final String templateName) {
     return ApplicationManager.getApplication().runWriteAction(
         new Computable<PsiClass>() {
           public PsiClass compute() {
             try {
               PsiClass targetClass = null;
               try {
-                PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, name, name + ".groovy", "GroovyClass.groovy");
+                PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, name, name + ".groovy", templateName);
                 for (PsiElement element : file.getChildren()) {
                   if (element instanceof PsiClass) {
                     targetClass = ((PsiClass) element);

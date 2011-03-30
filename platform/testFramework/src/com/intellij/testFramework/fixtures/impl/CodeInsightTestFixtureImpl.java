@@ -1107,13 +1107,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     InspectionProjectProfileManager.getInstance(getProject()).setProjectProfile(profile.getName());
   }
 
-  private void configureByFilesInner(@NonNls String... filePaths) {
+  private PsiFile[] configureByFilesInner(@NonNls String... filePaths) {
     assertInitialized();
     myFile = null;
     myEditor = null;
+    PsiFile[] psiFiles = new PsiFile[filePaths.length];
     for (int i = filePaths.length - 1; i >= 0; i--) {
-      configureByFileInner(filePaths[i]);
+      psiFiles[i] = configureByFileInner(filePaths[i]);
     }
+    return psiFiles;
   }
 
   @Override
@@ -1124,8 +1126,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void configureByFiles(@NonNls final String... files) {
-    configureByFilesInner(files);
+  public PsiFile[] configureByFiles(@NonNls final String... files) {
+    return configureByFilesInner(files);
   }
 
   @Override

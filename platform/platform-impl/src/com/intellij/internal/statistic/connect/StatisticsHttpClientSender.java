@@ -18,6 +18,7 @@ package com.intellij.internal.statistic.connect;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.net.HttpConfigurable;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
@@ -31,6 +32,8 @@ public class StatisticsHttpClientSender implements StatisticsDataSender {
     PostMethod post = null;
 
     try {
+      HttpConfigurable.getInstance().prepareURL(url);
+
       HttpClient httpclient = new HttpClient();
       post = new PostMethod(url);
 

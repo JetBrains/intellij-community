@@ -42,6 +42,7 @@ public abstract class BaseCodeCompletionAction extends AnAction implements HintM
   protected BaseCodeCompletionAction(CompletionType completionType) {
     myCompletionType = completionType;
     setEnabledInModalContext(true);
+    setInjectedContext(true);
   }
 
   public void actionPerformed(AnActionEvent e) {

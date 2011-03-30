@@ -43,6 +43,7 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
   private final CodeStyleSettingsPanelFactory myFactory;
   private final CodeStyleSchemesPanel mySchemesPanel;
   private final LanguageSelector myLangSelector;
+  private boolean myIsDisposed = false;
 
   @NonNls
   private static final String WAIT_CARD = "CodeStyleSchemesConfigurable.$$$.Wait.placeholder.$$$";
@@ -113,8 +114,10 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
     myLayout.show(mySettingsPanel, WAIT_CARD);
     final Runnable replaceLayout = new Runnable() {
       public void run() {
-        ensureCurrentPanel().onSomethingChanged();
-        myLayout.show(mySettingsPanel, myModel.getSelectedScheme().getName());
+        if (!myIsDisposed) {
+          ensureCurrentPanel().onSomethingChanged();
+          myLayout.show(mySettingsPanel, myModel.getSelectedScheme().getName());
+        }
       }
     };
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
@@ -206,6 +209,7 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
     myAlarm.cancelAllRequests();
     clearPanels();
     myLangSelector.removeListener(this);
+    myIsDisposed = true;
   }
 
   public boolean isModified(final CodeStyleScheme scheme) {

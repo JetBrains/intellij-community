@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.groovy.lang.surroundWith;
 
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovySurrounderByClosure;
-import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.blocks.open.*;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 /**
@@ -17,16 +15,18 @@ public class SurroundStatementsTest extends SurroundTestCase {
     return TestUtils.getTestDataPath() + "groovy/surround/statements/";
   }
 
-  public void testClosure1() throws Exception { doTest(new GroovySurrounderByClosure()); }
-  public void testClosure2() throws Exception { doTest(new GroovySurrounderByClosure()); }
-  public void testClosure3() throws Exception { doTest(new GroovySurrounderByClosure()); }
-  public void testIf1() throws Exception { doTest(new GroovyWithIfSurrounder()); }
-  public void testIf_else1() throws Exception { doTest(new GroovyWithIfElseSurrounder()); }
-  public void testShouldFailWithType() throws Exception { doTest(new GroovyWithShouldFailWithTypeStatementsSurrounder()); }
-  public void testTry_catch1() throws Exception { doTest(new GroovyWithTryCatchSurrounder()); }
-  public void testTry_catch_finally() throws Exception { doTest(new GroovyWithTryCatchFinallySurrounder()); }
-  public void testTry_finally1() throws Exception { doTest(new GroovyWithTryFinallySurrounder()); }
-  public void testWhile1() throws Exception { doTest(new GroovyWithWhileSurrounder()); }
-  public void testWith2() throws Exception { doTest(new GroovyWithWithStatementsSurrounder()); }
+  public void testClosure1() throws Exception { doTest(new SurrounderByClosure()); }
+  public void testClosure2() throws Exception { doTest(new SurrounderByClosure()); }
+  public void testClosure3() throws Exception { doTest(new SurrounderByClosure()); }
+  public void testIf1() throws Exception { doTest(new IfSurrounder()); }
+  public void testIf_else1() throws Exception { doTest(new IfElseSurrounder()); }
+  public void testShouldFailWithType() throws Exception { doTest(new ShouldFailWithTypeStatementsSurrounder()); }
+  public void testTry_catch1() throws Exception { doTest(new TryCatchSurrounder()); }
+  public void testTry_catch_finally() throws Exception { doTest(new TryCatchFinallySurrounder()); }
+  public void testTry_finally1() throws Exception { doTest(new TryFinallySurrounder()); }
+  public void testTry_finallyFormatting() throws Exception { doTest(new TryFinallySurrounder()); }
+  public void testWhile1() throws Exception { doTest(new WhileSurrounder()); }
+  public void testWith2() throws Exception { doTest(new WithStatementsSurrounder()); }
+  public void testFor1() throws Exception { doTest(new ForSurrounder()); }
 
 }

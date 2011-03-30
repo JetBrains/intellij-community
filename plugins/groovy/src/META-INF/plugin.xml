@@ -174,7 +174,7 @@
     <lang.refactoringSupport language="Groovy"
                              implementationClass="org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSupportProvider"/>
     <lang.surroundDescriptor language="Groovy"
-                             implementationClass="org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor"/>
+                             implementationClass="org.jetbrains.plugins.groovy.lang.surroundWith.GroovySurroundDescriptor"/>
     <lang.findUsagesProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesProvider"/>
     <readWriteAccessDetector implementation="org.jetbrains.plugins.groovy.findUsages.GroovyReadWriteAccessDetector" order="before java"/>
     <findUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesHandlerFactory"/>

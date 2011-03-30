@@ -21,7 +21,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -29,14 +28,28 @@ import java.util.Comparator;
 /**
  * @author mike
  */
-@NonNls public abstract class IdeaTestCase extends PlatformTestCase {
+public abstract class IdeaTestCase extends PlatformTestCase {
+  protected JavaPsiFacadeEx myJavaFacade;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myJavaFacade = JavaPsiFacadeEx.getInstanceEx(myProject);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myJavaFacade = null;
+    super.tearDown();
+  }
+
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
   protected IdeaTestCase() {
     initPlatformPrefix();
   }
 
   public final JavaPsiFacadeEx getJavaFacade() {
-    return JavaPsiFacadeEx.getInstanceEx(myProject);
+    return myJavaFacade;
   }
 
   @Override

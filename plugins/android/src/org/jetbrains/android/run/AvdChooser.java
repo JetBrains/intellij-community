@@ -116,7 +116,7 @@ public class AvdChooser extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         GeneralCommandLine commandLine = new GeneralCommandLine();
         commandLine.setExePath(androidToolPath);
-        AndroidUtils.runExternalToolInSeparateThread(project, commandLine, null);
+        AndroidUtils.runExternalToolInSeparateThread(project, commandLine);
       }
     });
     updateTable();

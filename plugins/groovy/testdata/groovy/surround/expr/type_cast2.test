@@ -1,0 +1,7 @@
+println foo
+
+<selection>expr</selection>
+-----
+println foo
+
+((<caret>) expr)

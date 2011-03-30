@@ -25,6 +25,6 @@ public abstract class SurroundTestCase extends LightGroovyTestCase {
       }
     });
 
-    assertEquals(data.get(1), myFixture.getFile().getText().trim());
+    myFixture.checkResult(data.get(1));
   }
 }

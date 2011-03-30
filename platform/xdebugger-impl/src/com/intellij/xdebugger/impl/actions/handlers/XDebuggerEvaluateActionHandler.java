@@ -46,24 +46,28 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
     @Nullable Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     @Nullable Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
 
-    String expression = editor != null ? editor.getSelectionModel().getSelectedText() : null;
+    String selectedText = editor != null ? editor.getSelectionModel().getSelectedText() : null;
+    if (selectedText != null) {
+      selectedText = evaluator.formatTextForEvaluation(selectedText);
+    }
+    String text = selectedText;
 
-    if (expression == null && editor != null) {
+    if (text == null && editor != null) {
       Document document = editor.getDocument();
       TextRange range = evaluator.getExpressionRangeAtOffset(project, document, editor.getCaretModel().getOffset(), true);
-      expression = range == null ? null : document.getText(range);
+      text = range == null ? null : document.getText(range);
     }
 
-    if (expression == null) {
+    if (text == null) {
       XValue value = XDebuggerTreeActionBase.getSelectedValue(dataContext);
       if (value != null) {
-        expression = value.getEvaluationExpression();
+        text = value.getEvaluationExpression();
       }
     }
-    if (expression == null) {
-      expression = "";
+    if (text == null) {
+      text = "";
     }
-    final XDebuggerEvaluationDialog dialog = new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, expression,
+    final XDebuggerEvaluationDialog dialog = new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, text,
                                                                            stackFrame.getSourcePosition());
     dialog.show();
   }

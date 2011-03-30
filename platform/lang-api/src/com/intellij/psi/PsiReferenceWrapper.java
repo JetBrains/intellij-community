@@ -1,15 +1,13 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author traff
  */
-public class PsiReferenceWrapper implements PsiReference{
+public class PsiReferenceWrapper implements PsiReference {
   private final PsiReference myOriginalPsiReference;
 
   public PsiReferenceWrapper(PsiReference originalPsiReference) {
@@ -61,5 +59,19 @@ public class PsiReferenceWrapper implements PsiReference{
   @Override
   public boolean isSoft() {
     return myOriginalPsiReference.isSoft();
+  }
+
+  public <T extends PsiReference> boolean isInstance(Class<T> clazz) {
+    if (myOriginalPsiReference instanceof PsiReferenceWrapper) {
+      return ((PsiReferenceWrapper)myOriginalPsiReference).isInstance(clazz);
+    }
+    return clazz.isInstance(myOriginalPsiReference);
+  }
+
+  public <T extends PsiReference> T cast(Class<T> clazz) {
+    if (myOriginalPsiReference instanceof PsiReferenceWrapper) {
+      return ((PsiReferenceWrapper)myOriginalPsiReference).cast(clazz);
+    }
+    return clazz.cast(myOriginalPsiReference);
   }
 }
