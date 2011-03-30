@@ -7,9 +7,12 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author mike
@@ -94,5 +97,16 @@ public abstract class CompletionTestCase extends DaemonAnalyzerTestCase {
   @Nullable
   protected LookupImpl getActiveLookup() {
     return (LookupImpl)LookupManager.getActiveLookup(myEditor);
+  }
+
+  protected void assertStringItems(String... strings) {
+    assertNotNull(myItems);
+    List<String> actual = ContainerUtil.map(myItems, new Function<LookupElement, String>() {
+      @Override
+      public String fun(LookupElement element) {
+        return element.getLookupString();
+      }
+    });
+    assertOrderedEquals(actual, strings);
   }
 }

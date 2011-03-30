@@ -5,7 +5,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.psi.PsiClass;
@@ -66,32 +65,6 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testGenericMethodsWithBoundParametersAreStillBetterThanClassLiteral() throws Throwable {
     checkPreferredItems(0, "getService", "getService", "class");
-  }
-
-  public void testUppercaseMatters() throws Throwable {
-    final int old = CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE;
-    try {
-      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;
-      checkPreferredItems(0, "classLoader", "class", "classBeforeLoader", "clone");
-    }
-    finally {
-      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = old;
-    }
-  }
-
-  public void testUppercaseMatters2() throws Throwable {
-    final int old = CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE;
-    try {
-      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.ALL;
-      checkPreferredItems(0, "classLoader", "classLoader2");
-    }
-    finally {
-      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = old;
-    }
-  }
-
-  public void testHonorUppercaseLetters() throws Throwable {
-    checkPreferredItems(0, "clsLoader", "clone", "class");
   }
 
   public void testClassStaticMembersInVoidContext() throws Throwable {
