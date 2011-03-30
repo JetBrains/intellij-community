@@ -100,7 +100,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
   }
 
   @Nullable
-  private RefactoringActionHandler getHandler(@NotNull Language language, PsiElement element) {
+  protected RefactoringActionHandler getHandler(@NotNull Language language, PsiElement element) {
     List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
     if (providers.isEmpty()) return null;
     if (element == null && !providers.isEmpty()) return getRefactoringHandler(providers.get(0));

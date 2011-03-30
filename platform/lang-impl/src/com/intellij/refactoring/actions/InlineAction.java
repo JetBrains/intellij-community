@@ -23,6 +23,7 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.refactoring.InlineActionHandler;
+import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.lang.refactoring.InlineHandlers;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -35,6 +36,9 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.inline.InlineRefactoringActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 public class InlineAction extends BasePlatformRefactoringAction {
 
@@ -69,6 +73,14 @@ public class InlineAction extends BasePlatformRefactoringAction {
   @Override
   protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider) {
     return new InlineRefactoringActionHandler();
+  }
+
+  @Override
+  protected RefactoringActionHandler getHandler(@NotNull Language language, PsiElement element) {
+    RefactoringActionHandler handler = super.getHandler(language, element);
+    if (handler != null) return handler;
+    List<InlineHandler> handlers = InlineHandlers.getInlineHandlers(language);
+    return handlers.isEmpty() ? null : new InlineRefactoringActionHandler();
   }
 
   protected boolean isAvailableForLanguage(Language language) {
