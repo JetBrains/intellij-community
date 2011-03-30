@@ -222,7 +222,7 @@ target('default': "Build artifacts") {
   build_searchable_options()
   wire_build_date(buildName)
   LayoutInfo layoutInfo = layoutFull(paths.distAll, usedJars)
-  checkLibLicensesAndGenerateTable("$paths.artifacts/third-party-libraries.txt", layoutInfo.usedModules);
+  generateLicensesTable("$paths.artifacts/third-party-libraries.txt", layoutInfo.usedModules);
   buildDebuggerEgg(paths, buildName)
   scramble()
 
