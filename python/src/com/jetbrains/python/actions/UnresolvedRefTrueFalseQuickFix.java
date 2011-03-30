@@ -24,6 +24,7 @@ public class UnresolvedRefTrueFalseQuickFix implements LocalQuickFix {
     newName = new String(charArray);
   }
 
+  @NotNull
   public String getName() {
     return PyBundle.message("QFIX.unresolved.reference.replace.$0", newName);
   }

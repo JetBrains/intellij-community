@@ -40,7 +40,7 @@ public class CreateClassQuickFix implements LocalQuickFix {
     while(!(anchor.getParent() instanceof PyFile)) {
       anchor = anchor.getParent();
     }
-    PyClass pyClass = PyElementGenerator.getInstance(myAnchor.getProject()).createFromText(LanguageLevel.getDefault(), PyClass.class,
+    PyClass pyClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class,
                                                                                            "class " + myClassName + "(object):\n    pass");
     pyClass = (PyClass) anchor.getParent().addBefore(pyClass, anchor);
     pyClass = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(pyClass);
