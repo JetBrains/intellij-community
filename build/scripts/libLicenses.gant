@@ -109,7 +109,7 @@ binding.setVariable("generateLicensesTable", {String filePath, Set<String> usedM
     def name = lib.url != null ? "[$lib.name|$lib.url]" : lib.name
     def license = lib.licenseUrl != null ? "[$lib.license|$lib.licenseUrl]" : lib.license
     project.info(" $lib.name (in module $moduleName)")
-    lines << "|$name| $lib.version|$license|".toString()
+    lines << "|$name| ${lib.version?:""}|$license|".toString()
   }
   //project.info("Unused libraries:")
   //licensesList.findAll {!licenses.containsKey(it)}.each {LibraryLicense lib ->
