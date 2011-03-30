@@ -309,6 +309,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     setPromptInner(editable? myPrompt : "");
   }
 
+  public boolean isEditable() {
+    return !myConsoleEditor.isRendererMode();
+  }
+
   public PsiFile getFile() {
     return myFile;
   }

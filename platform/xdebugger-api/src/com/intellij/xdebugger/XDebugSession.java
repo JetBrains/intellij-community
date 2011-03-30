@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -113,7 +114,8 @@ public interface XDebugSession extends AbstractDebuggerSession {
   void addSessionListener(@NotNull XDebugSessionListener listener);
   void removeSessionListener(@NotNull XDebugSessionListener listener);
 
-  void reportError(String message);
+  void reportError(@NotNull String message);
+  void reportMessage(@NotNull String message, @NotNull MessageType type);
 
   @NotNull
   String getSessionName();

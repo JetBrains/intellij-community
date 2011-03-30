@@ -76,16 +76,22 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   private Content createConsoleContent() {
-    return myUi.createContent(DebuggerContentInfo.CONSOLE_CONTENT, myConsole.getComponent(),
-                              XDebuggerBundle.message("debugger.session.tab.console.content.name"), XDebuggerUIConstants.CONSOLE_TAB_ICON,
-                              myConsole.getPreferredFocusableComponent());
+    Content result = myUi.createContent(DebuggerContentInfo.CONSOLE_CONTENT, myConsole.getComponent(),
+                                        XDebuggerBundle.message("debugger.session.tab.console.content.name"),
+                                        XDebuggerUIConstants.CONSOLE_TAB_ICON,
+                                        myConsole.getPreferredFocusableComponent());
+    result.setCloseable(false);
+    return result;
   }
 
   private Content createVariablesContent(final XDebugSession session) {
     final XVariablesView variablesView = new XVariablesView(session, this);
     myViews.add(variablesView);
-    return myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, variablesView.getPanel(),
-                              XDebuggerBundle.message("debugger.session.tab.variables.title"), XDebuggerUIConstants.VARIABLES_TAB_ICON, null);
+    Content result = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, variablesView.getPanel(),
+                                        XDebuggerBundle.message("debugger.session.tab.variables.title"),
+                                        XDebuggerUIConstants.VARIABLES_TAB_ICON, null);
+    result.setCloseable(false);
+    return result;
   }
 
   private Content createWatchesContent(final XDebugSession session, final XDebugSessionData sessionData) {
@@ -93,6 +99,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myViews.add(myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getMainPanel(),
                                          XDebuggerBundle.message("debugger.session.tab.watches.title"), XDebuggerUIConstants.WATCHES_TAB_ICON, null);
+    watchesContent.setCloseable(false);
 
     ActionGroup group = getActionGroup(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP);
     watchesContent.setActions(group, ActionPlaces.DEBUGGER_TOOLBAR, myWatchesView.getTree());
@@ -104,6 +111,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myViews.add(framesView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
                                                XDebuggerBundle.message("debugger.session.tab.frames.title"), XDebuggerUIConstants.FRAMES_TAB_ICON, null);
+    framesContent.setCloseable(false);
+
     final DefaultActionGroup framesGroup = new DefaultActionGroup();
 
     CommonActionsManager actionsManager = CommonActionsManager.getInstance();

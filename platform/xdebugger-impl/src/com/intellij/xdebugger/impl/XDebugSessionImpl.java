@@ -617,11 +617,16 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   @Override
-  public void reportError(final String message) {
+  public void reportError(@NotNull final String message) {
+    reportMessage(message, MessageType.ERROR);
+  }
+
+  @Override
+  public void reportMessage(@NotNull final String message, @NotNull final MessageType type) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.DEBUG, MessageType.ERROR, message, null, null);
+        ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.DEBUG, type, message, null, null);
       }
     });
   }
