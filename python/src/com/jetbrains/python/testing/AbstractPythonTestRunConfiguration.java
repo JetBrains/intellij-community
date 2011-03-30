@@ -217,6 +217,15 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
               myFolderName = newPath;
             }
           }
+
+          @Override
+          public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
+            final String systemDependant = FileUtil.toSystemDependentName(oldQualifiedName);
+            setWorkingDirectory(systemDependant);
+            if (myTestType == TestType.TEST_FOLDER) {
+              myFolderName = systemDependant;
+            }
+          }
         };
       }
       return null;
@@ -240,6 +249,11 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
               myScriptName = FileUtil.toSystemDependentName(virtualFile.getPath());
             }
           }
+
+          @Override
+          public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
+            myScriptName = FileUtil.toSystemDependentName(oldQualifiedName);
+          }
         };
       }
       if (element instanceof PyClass && (myTestType == TestType.TEST_CLASS || myTestType == TestType.TEST_METHOD) &&
@@ -248,6 +262,11 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
           @Override
           protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
             myClassName = ((PyClass) newElement).getName();
+          }
+
+          @Override
+          public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
+            myClassName = oldQualifiedName;
           }
         };
       }
@@ -260,6 +279,14 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
             @Override
             protected void elementRenamedOrMoved(@NotNull PsiElement newElement) {
               myMethodName = ((PyFunction) newElement).getName();
+            }
+
+            @Override
+            public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
+              final int methodIdx = oldQualifiedName.indexOf("#") + 1;
+              if (methodIdx > 0 && methodIdx < oldQualifiedName.length()) {
+                myMethodName = oldQualifiedName.substring(methodIdx);
+              }
             }
           };
         }
