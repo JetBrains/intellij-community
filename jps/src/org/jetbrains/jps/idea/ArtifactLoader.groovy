@@ -48,7 +48,7 @@ class ArtifactLoader {
         def jarPath = macroExpander.expandMacros(tag."@path")
         String pathInJar = tag."@path-in-jar"
         if (pathInJar == null) pathInJar = "/"
-        if (!new File(pathInJar).exists()) {
+        if (!new File(jarPath).exists()) {
           project.warning("Error in '$artifactName' artifact: file '$jarPath' doesn't exist")
         }
         return new ExtractedDirectoryElement(jarPath: jarPath, pathInJar: pathInJar)
