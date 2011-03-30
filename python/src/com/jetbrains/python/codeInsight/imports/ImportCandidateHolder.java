@@ -127,12 +127,8 @@ class ImportCandidateHolder implements Comparable {
 
   @Nullable
   public String getTailText() {
-    if (myImportElement == null) {
-     String text = "add import";
-      if (myAsName != null) {
-        text += " as " + myAsName;
-      }
-      return text;
+    if (myAsName != null) {
+      return "import as " + myAsName;
     }
     return null;
   }
