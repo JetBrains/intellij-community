@@ -6,8 +6,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 
 public class ConvertToThreadLocalIntentionTest extends LightQuickFixTestCase {
 

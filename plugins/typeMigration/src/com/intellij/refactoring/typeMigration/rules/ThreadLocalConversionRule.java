@@ -65,6 +65,9 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
     final PsiClass toTypeClass = PsiUtil.resolveClassInType(to);
     LOG.assertTrue(toTypeClass != null);
 
+    if (context instanceof PsiArrayAccessExpression) {
+      return new TypeConversionDescriptor("$qualifier$[$val$]", "$qualifier$.get()[$val$]");
+    }
     final PsiElement parent = context.getParent();
     if (parent instanceof PsiAssignmentExpression) {
       final IElementType operationSign = ((PsiAssignmentExpression)parent).getOperationTokenType();
