@@ -16,8 +16,8 @@
 package com.intellij.refactoring.openapi.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.SafeDeleteRefactoring;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class SafeDeleteRefactoringImpl extends RefactoringImpl<SafeDeleteProcessor> implements SafeDeleteRefactoring {
   SafeDeleteRefactoringImpl(Project project, PsiElement[] elements) {
-    super(SafeDeleteProcessor.createInstance(project, BaseRefactoringProcessor.EMPTY_CALLBACK, elements, true, true));
+    super(SafeDeleteProcessor.createInstance(project, EmptyRunnable.INSTANCE, elements, true, true));
   }
 
   public List<PsiElement> getElements() {

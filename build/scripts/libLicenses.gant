@@ -62,17 +62,16 @@ binding.setVariable("checkLibLicenses", {
   }
 
   if (!withoutLicenses.isEmpty()) {
-    project.warning("Licenses aren't specified for ${withoutLicenses.size()} libraries:")
+    def errorMessage = []
+    errorMessage << "Licenses aren't specified for ${withoutLicenses.size()} libraries:"
     withoutLicenses.sort(String.CASE_INSENSITIVE_ORDER)
-    withoutLicenses.each { project.warning(it); }
+    withoutLicenses.each { errorMessage << it}
+    errorMessage << "If a library is packaged into IDEA installation information about its license must be added to libLicenses.gant file"
+    errorMessage << "If a library is used in tests only change its scope to 'Test'"
+    errorMessage << "If a library is used for compilation only change its scope to 'Provided'"
+    project.error(errorMessage.join("\n"))
   }
 });
-
-binding.setVariable("checkLibLicensesAndGenerateTable", {String filePath, Set<String> usedModules ->
-  checkLibLicenses();
-  generateLicensesTable(filePath, usedModules)
-  notifyArtifactBuilt(filePath)
-})
 
 binding.setVariable("generateLicensesTable", {String filePath, Set<String> usedModulesNames ->
   project.info("Generating licenses table")
@@ -130,6 +129,7 @@ binding.setVariable("generateLicensesTable", {String filePath, Set<String> usedM
   finally {
     out.close()
   }
+  notifyArtifactBuilt(filePath)
 })
 
 libraryLicense(name: "Alloy L&F", libraryName: "alloy.jar", version: "1.4.4", license: "link (company license)", url: "http://www.incors.com/lookandfeel/", licenseUrl: "http://lookandfeel.incors.com/display_licence.php?back=purchase.php&selMenu=Purchase")

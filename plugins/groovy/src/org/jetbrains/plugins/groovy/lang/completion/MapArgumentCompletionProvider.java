@@ -122,6 +122,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
     else if (call instanceof GrCallExpression) {
       GrCallExpression callExpression = (GrCallExpression)call;
       ContainerUtil.addAll(results, callExpression.getCallVariants(null));
+
       final PsiType type = ((GrCallExpression)call).getType();
       if (type instanceof PsiClassType) {
         final PsiClass psiClass = ((PsiClassType)type).resolve();
@@ -150,10 +151,10 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
         Map<String, Condition<PsiType>> namedArguments = GroovyNamedArgumentProvider.getNamedArguments(call, method);
 
         for (String namedArgumentName : namedArguments.keySet()) {
-          if (!usedNames.contains(namedArgumentName)) {
-            final LookupElementBuilder lookup =
-              LookupElementBuilder.create(namedArgumentName).setIcon(GroovyIcons.DYNAMIC)
-                .setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
+          if (usedNames.add(namedArgumentName)) {
+            final LookupElementBuilder lookup = LookupElementBuilder.create(namedArgumentName)
+              .setIcon(GroovyIcons.DYNAMIC)
+              .setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
             result.addElement(lookup);
           }
         }
@@ -169,18 +170,16 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
                                             Set<String> usedNames,
                                             PsiClass containingClass,
                                             GrCall call) {
-    if (usedClasses.contains(containingClass)) return;
-    usedClasses.add(containingClass);
-    final PsiClass eventListener =
-      JavaPsiFacade.getInstance(call.getProject()).findClass("java.util.EventListener", call.getResolveScope());
+    if (!usedClasses.add(containingClass)) return;
+
+    final PsiClass eventListener = JavaPsiFacade.getInstance(call.getProject()).findClass("java.util.EventListener", call.getResolveScope());
+
     Map<String, PsiMethod> writableProperties = new HashMap<String, PsiMethod>();
     for (PsiMethod method : containingClass.getAllMethods()) {
-      if (GroovyPropertyUtils.isSimplePropertySetter(method)) {
-        if (PsiUtil.isStaticsOK(method, call)) {
-          final String name = GroovyPropertyUtils.getPropertyNameBySetter(method);
-          if (name != null && !writableProperties.containsKey(name)) {
-            writableProperties.put(name, method);
-          }
+      if (GroovyPropertyUtils.isSimplePropertySetter(method) && !method.hasModifierProperty(PsiModifier.STATIC)) {
+        final String name = GroovyPropertyUtils.getPropertyNameBySetter(method);
+        if (name != null && !writableProperties.containsKey(name)) {
+          writableProperties.put(name, method);
         }
       }
       else if (eventListener != null) {
@@ -207,13 +206,14 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
         final PsiClassType classType = (PsiClassType)type;
         final PsiClass listenerClass = classType.resolve();
         if (listenerClass != null) {
-          final PsiMethod[] listenerMethods = listenerClass.getMethods();
           if (InheritanceUtil.isInheritorOrSelf(listenerClass, eventListenerClass, true)) {
+            PsiMethod[] listenerMethods = listenerClass.getMethods();
             for (PsiMethod listenerMethod : listenerMethods) {
               final String name = listenerMethod.getName();
-              usedNames.add(name);
-              result.addElement(
-                LookupElementBuilder.create(name).setIcon(GroovyIcons.PROPERTY).setInsertHandler(NamedArgumentInsertHandler.INSTANCE));
+              if (usedNames.add(name)) {
+                result.addElement(
+                  LookupElementBuilder.create(name).setIcon(GroovyIcons.PROPERTY).setInsertHandler(NamedArgumentInsertHandler.INSTANCE));
+              }
             }
           }
         }

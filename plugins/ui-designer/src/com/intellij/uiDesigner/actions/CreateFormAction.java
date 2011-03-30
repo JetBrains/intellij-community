@@ -18,15 +18,14 @@ package com.intellij.uiDesigner.actions;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
-import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.radComponents.LayoutManagerRegistry;
@@ -176,9 +175,10 @@ public class CreateFormAction extends AbstractCreateFormAction {
       });
 
       myBaseLayoutManagerCombo.setModel(new DefaultComboBoxModel(LayoutManagerRegistry.getNonDeprecatedLayoutManagerNames()));
-      myBaseLayoutManagerCombo.setRenderer(new ColoredListCellRenderer() {
-        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          append(LayoutManagerRegistry.getLayoutManagerDisplayName((String) value), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      myBaseLayoutManagerCombo.setRenderer(new ListCellRendererWrapper<String>(myBaseLayoutManagerCombo.getRenderer()) {
+        @Override
+        public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
+          setText(LayoutManagerRegistry.getLayoutManagerDisplayName(value));
         }
       });
       myBaseLayoutManagerCombo.setSelectedItem(GuiDesignerConfiguration.getInstance(project).DEFAULT_LAYOUT_MANAGER);

@@ -20,6 +20,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
  * Interface that contains all tokens returned by GroovyLexer
@@ -228,7 +229,7 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes {
 
   TokenSet BINARY_OP_SET =
     TokenSet.create(mBAND, mBOR, mBXOR, mDIV, mEQUAL, mGE, mGT, mLAND, mLOR, mLT, mLE, mMINUS, mMOD, mPLUS, mSTAR, mSTAR_STAR, mNOT_EQUAL,
-                    mCOMPARE_TO);
+                    mCOMPARE_TO, GroovyElementTypes.COMPOSITE_SHIFT_SIGN);
 
   TokenSet DOTS = TokenSet.create(mSPREAD_DOT, mOPTIONAL_DOT, mMEMBER_POINTER, mDOT);
 

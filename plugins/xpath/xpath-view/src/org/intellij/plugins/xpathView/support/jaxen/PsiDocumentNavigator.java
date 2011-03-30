@@ -17,11 +17,13 @@ package org.intellij.plugins.xpathView.support.jaxen;
 
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.*;
+import com.intellij.xml.XmlAttributeDescriptor;
 import org.intellij.plugins.xpathView.util.MyPsiUtil;
 import org.jaxen.DefaultNavigator;
 import org.jaxen.FunctionCallException;
@@ -389,6 +391,9 @@ public class PsiDocumentNavigator extends DefaultNavigator {
     public String getTextStringValue(Object txt) {
         LOG.debug("enter: getTextStringValue");
 
+        if (txt instanceof XmlText) {
+          return ((XmlText)txt).getValue();
+        }
         return txt instanceof PsiElement ? ((PsiElement)txt).getText() : txt.toString();
     }
 
@@ -396,12 +401,38 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         return new PsiXPath(file, xpath);
     }
 
-    public Object getElementById(Object object, String elementId) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("enter: getElementById: " + object + " -- " + elementId);
+    public Object getElementById(Object object, final String elementId) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("enter: getElementById: " + object + " -- " + elementId);
+      }
+
+      final XmlTag rootTag = ((XmlFile)((XmlElement)object).getContainingFile()).getRootTag();
+      if (rootTag == null) {
+        return null;
+      }
+
+      final Ref<XmlTag> ref = new Ref<XmlTag>();
+      rootTag.accept(new XmlRecursiveElementVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          if (ref.get() == null) {
+            super.visitElement(element);
+          }
         }
-        // TODO
-        return super.getElementById(object, elementId);
+
+        @Override
+        public void visitXmlAttribute(XmlAttribute attribute) {
+          final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
+          final String value = attribute.getValue();
+          if ((value != null &&
+               (descriptor != null && descriptor.hasIdType()))) {
+            if (elementId.equals(value)) {
+              ref.set(attribute.getParent());
+            }
+          }
+        }
+      });
+      return ref.get();
     }
 
     static class TextCollector extends XmlRecursiveElementVisitor {

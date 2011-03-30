@@ -334,6 +334,10 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest(new UnassignedVariableAccessInspection());
   }
 
+  public void testMultipleVarNotAssigned() {
+    doTest(new UnassignedVariableAccessInspection());
+  }
+
   public void testTestMarkupStubs() {
     doTest();
   }

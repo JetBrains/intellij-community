@@ -149,7 +149,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
     //Should be overriden to add additional tabs for run/debug toolwindow
     @Override
     public void createAdditionalTabComponents(final AdditionalTabComponentManager manager, ProcessHandler startedProcess) {
-        if (myOutputType == OutputType.CONSOLE && myFileType != null) {
+        if (myOutputType == OutputType.CONSOLE) {
             final HighlightingOutputConsole console = new HighlightingOutputConsole(getProject(), myFileType);
 
             final List<XsltRunnerExtension> extensions = XsltRunnerExtension.getExtensions(this, manager instanceof DebuggerLogConsoleManager);
@@ -272,6 +272,8 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
 
     @Nullable
     private static FileType getFileType(String value) {
+        if (value == null) return null;
+
         final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
         for (FileType fileType : fileTypes) {
             if (fileType.getName().equals(value)) {
@@ -314,12 +316,11 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         type.setAttribute("save-to-file", String.valueOf(mySaveToFile));
         element.addContent(type);
 
+        final Element fileType = new Element("FileType");
         if (myFileType != null) {
-            final String name = myFileType.getName();
-            final Element fileType = new Element("FileType");
-            fileType.setAttribute("name", name);
-            element.addContent(fileType);
+          fileType.setAttribute("name", myFileType.getName());
         }
+        element.addContent(fileType);
 
         final Element choice = new Element("JdkChoice");
         choice.setAttribute("value", myJdkChoice.name());

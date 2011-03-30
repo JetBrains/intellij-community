@@ -259,6 +259,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private char[] myPrefixText;
   private TextAttributes myPrefixAttributes;
   private final IndentsModel myIndentsModel;
+  
+  @Nullable
+  private CharSequence myPlaceholderText;
+  private int myLastPaintedPlaceholderWidth;
 
   static {
     ourCaretBlinkingCommand = new RepaintCursorCommand();
@@ -1549,6 +1553,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     paintLineMarkersSeparators(g, clip, docMarkup);
     paintLineMarkersSeparators(g, clip, myMarkupModel);
     paintText(g, clip);
+    paintPlaceholderText(g, clip);
     paintSegmentHighlightersBorderAndAfterEndOfLine(g, clip);
     BorderEffect borderEffect = new BorderEffect(this, g);
     borderEffect.paintHighlighters(getHighlighter());
@@ -1623,6 +1628,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public TextDrawingCallback getTextDrawingCallback() {
     return myTextDrawingCallback;
+  }
+
+  @Override
+  public void setPlaceholder(@Nullable CharSequence text) {
+    myPlaceholderText = text;
   }
 
   private Color getBackgroundColor(final TextAttributes attributes) {
@@ -2331,6 +2341,29 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     flushCachedChars(g);
   }
 
+  private void paintPlaceholderText(Graphics g, Rectangle clip) {
+    CharSequence hintText = myPlaceholderText;
+    if (myDocument.getTextLength() > 0 || hintText == null || hintText.length() == 0) {
+      return;
+    }
+
+    if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myEditorComponent) {
+      // There is a possible case that placeholder text was painted and the editor gets focus now. We want to over-paint previuosly
+      // used placeholder text then.
+      myLastBackgroundColor = getBackgroundColor();
+      myLastBackgroundPosition = new Point(0, 0);
+      myLastBackgroundWidth = myLastPaintedPlaceholderWidth;
+      flushBackground(g, clip);
+    }
+    else {
+      myLastPaintedPlaceholderWidth = drawString(
+        g, CharArrayUtil.fromSequence(hintText), 0, hintText.length(), new Point(0, 0), clip, null, null, Font.PLAIN,
+        myFoldingModel.getPlaceholderAttributes().getForegroundColor()
+      );
+      flushCachedChars(g);
+    }
+  }
+  
   private boolean paintSelection() {
     return !isOneLineMode() || IJSwingUtilities.hasFocus(getContentComponent());
   }

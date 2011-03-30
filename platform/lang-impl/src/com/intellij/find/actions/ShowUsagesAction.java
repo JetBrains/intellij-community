@@ -74,7 +74,7 @@ import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
-public class ShowUsagesAction extends AnAction {
+public class ShowUsagesAction extends AnAction implements PopupAction {
   private final boolean showSettingsDialogBefore;
 
   private static final int USAGES_PAGE_SIZE = 100;

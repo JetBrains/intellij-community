@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.JavaPsiFacadeImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Document;
@@ -49,8 +48,6 @@ import java.util.StringTokenizer;
  */
 public abstract class PsiTestCase extends ModuleTestCase {
   protected PsiManagerImpl myPsiManager;
-  protected JavaPsiFacadeImpl myJavaFacade;
-
   protected PsiFile myFile;
   protected PsiTestData myTestDataBefore;
   protected PsiTestData myTestDataAfter;
@@ -60,12 +57,10 @@ public abstract class PsiTestCase extends ModuleTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myPsiManager = (PsiManagerImpl) PsiManager.getInstance(myProject);
-    myJavaFacade = (JavaPsiFacadeImpl) JavaPsiFacade.getInstance(myProject);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    myJavaFacade = null;
     myPsiManager = null;
     myFile = null;
     myTestDataBefore = null;

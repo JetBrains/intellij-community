@@ -133,7 +133,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     return mySplitter;
   }
 
-  protected abstract void removeContentAt(final Data Content);
+  protected abstract void removeContentAt(final Data content);
 
   protected String getDimensionServiceKey() {
     return "#com.intellij.openapi.editor.actions.MultiplePasteAction.Chooser";

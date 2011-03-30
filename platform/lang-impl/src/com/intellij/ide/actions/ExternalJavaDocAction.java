@@ -75,7 +75,7 @@ public class ExternalJavaDocAction extends AnAction {
   public static void showExternalJavadoc(List<String> urls) {
     final HashSet<String> set = new HashSet<String>(urls);
     if (set.size() > 1) {
-      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Choose javadoc root", ArrayUtil.toStringArray(set)) {
+      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Choose external documentation root", ArrayUtil.toStringArray(set)) {
         public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
           BrowserUtil.launchBrowser(selectedValue);
           return FINAL_CHOICE;

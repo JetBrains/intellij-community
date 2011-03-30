@@ -15,20 +15,16 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class DeleteCatchFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix");
-
   private final PsiParameter myCatchParameter;
 
   public DeleteCatchFix(PsiParameter myCatchParameter) {
@@ -53,50 +49,55 @@ public class DeleteCatchFix implements IntentionAction {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myCatchParameter.getContainingFile())) return;
-    try {
-      PsiTryStatement tryStatement = ((PsiCatchSection)myCatchParameter.getDeclarationScope()).getTryStatement();
-      PsiElement tryParent = tryStatement.getParent();
-      if (tryStatement.getCatchBlocks().length == 1 && tryStatement.getFinallyBlock() == null) {
-        PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-        PsiElement firstElement = tryBlock.getFirstBodyElement();
-        PsiElement lastAddedStatement = null;
+
+    final PsiTryStatement tryStatement = ((PsiCatchSection)myCatchParameter.getDeclarationScope()).getTryStatement();
+    if (tryStatement.getCatchBlocks().length == 1 && tryStatement.getFinallyBlock() == null) {
+      // unwrap entire try statement
+      final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+      PsiElement lastAddedStatement = null;
+      if (tryBlock != null) {
+        final PsiElement firstElement = tryBlock.getFirstBodyElement();
         if (firstElement != null) {
-          PsiElement endElement = tryBlock.getLastBodyElement();
-
-          tryParent.addRangeBefore(firstElement, endElement, tryStatement);
-          lastAddedStatement = tryStatement.getPrevSibling();
-          while (lastAddedStatement != null && (lastAddedStatement instanceof PsiWhiteSpace || lastAddedStatement.getTextLength() == 0)) {
-            lastAddedStatement = lastAddedStatement.getPrevSibling();
-          }          
+          final PsiElement tryParent = tryStatement.getParent();
+          if (tryParent instanceof PsiCodeBlock) {
+            final PsiElement lastBodyElement = tryBlock.getLastBodyElement();
+            assert lastBodyElement != null : tryBlock.getText();
+            tryParent.addRangeBefore(firstElement, lastBodyElement, tryStatement);
+            lastAddedStatement = tryStatement.getPrevSibling();
+            while (lastAddedStatement != null && (lastAddedStatement instanceof PsiWhiteSpace || lastAddedStatement.getTextLength() == 0)) {
+              lastAddedStatement = lastAddedStatement.getPrevSibling();
+            }
+          }
+          else {
+            tryParent.addBefore(tryBlock, tryStatement);
+            lastAddedStatement = tryBlock;
+          }
         }
-        tryStatement.delete();
-        if (lastAddedStatement != null) {
-          editor.getCaretModel().moveToOffset(lastAddedStatement.getTextRange().getEndOffset());
-        }
-
-        return;
+      }
+      tryStatement.delete();
+      if (lastAddedStatement != null) {
+        editor.getCaretModel().moveToOffset(lastAddedStatement.getTextRange().getEndOffset());
       }
 
-      // delete catch section
-      LOG.assertTrue(myCatchParameter.getParent() instanceof PsiCatchSection);
-      final PsiElement catchSection = myCatchParameter.getParent();
-      //save previous element to move caret to
-      PsiElement previousElement = catchSection.getPrevSibling();
-      while (previousElement instanceof PsiWhiteSpace) {
-        previousElement = previousElement.getPrevSibling();
-      }
-      catchSection.delete();
-      if (previousElement != null) {
-        //move caret to previous catch section
-        editor.getCaretModel().moveToOffset(previousElement.getTextRange().getEndOffset());
-      }
-    } catch (IncorrectOperationException e) {
-      LOG.error(e);
+      return;
+    }
+
+    // delete catch section
+    final PsiElement catchSection = myCatchParameter.getParent();
+    assert catchSection instanceof PsiCatchSection : catchSection;
+    //save previous element to move caret to
+    PsiElement previousElement = catchSection.getPrevSibling();
+    while (previousElement instanceof PsiWhiteSpace) {
+      previousElement = previousElement.getPrevSibling();
+    }
+    catchSection.delete();
+    if (previousElement != null) {
+      //move caret to previous catch section
+      editor.getCaretModel().moveToOffset(previousElement.getTextRange().getEndOffset());
     }
   }
 
   public boolean startInWriteAction() {
     return true;
   }
-
 }

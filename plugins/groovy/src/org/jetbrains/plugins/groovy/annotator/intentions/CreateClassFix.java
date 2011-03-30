@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.actions.NewGroovyClassAction;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -34,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
@@ -61,7 +63,7 @@ public abstract class CreateClassFix {
         PsiDirectory targetDirectory = getTargetDirectory(project, qualifier, name, module);
         if (targetDirectory == null) return;
 
-        PsiClass targetClass = createClassByType(targetDirectory, name, manager, myRefElement);
+        PsiClass targetClass = createClassByType(targetDirectory, name, manager, myRefElement, NewGroovyClassAction.GROOVY_CLASS);
 
         GrArgumentList argList = expression.getArgumentList();
         if (argList != null &&
@@ -109,7 +111,8 @@ public abstract class CreateClassFix {
         PsiDirectory targetDirectory = getTargetDirectory(project, qualifier, name, module);
         if (targetDirectory == null) return;
 
-        PsiClass targetClass = createClassByType(targetDirectory, name, manager, myRefElement);
+        String templateName = myRefElement.getParent() instanceof GrImplementsClause ? NewGroovyClassAction.GROOVY_INTERFACE : NewGroovyClassAction.GROOVY_CLASS;
+        PsiClass targetClass = createClassByType(targetDirectory, name, manager, myRefElement, templateName);
         if (targetClass != null) {
           addImportForClass(groovyFile, qualifier, targetClass);
           putCursor(project, targetClass.getContainingFile(), targetClass);

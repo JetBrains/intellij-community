@@ -76,6 +76,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private boolean myCenterByHeight = true;
   private boolean myEnsureWillComputePreferredSize;
   private Dimension myPassivePreferredSize;
+  private CharSequence myHintText;
 
   public EditorTextField() {
     this("");
@@ -250,6 +251,20 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     });
   }
 
+  /**
+   * Allows to define {@link EditorEx#setPlaceholder(CharSequence) editor's placeholder}. The trick here is that the editor
+   * is instantiated lazily by the editor text field and provided placeholder text is applied to the editor during its
+   * actual construction then.
+   *
+   * @param text    {@link EditorEx#setPlaceholder(CharSequence) editor's placeholder} text to use
+   */
+  public void setPlaceholder(@Nullable CharSequence text) {
+    myHintText = text;
+    if (myEditor != null) {
+      myEditor.setPlaceholder(text);
+    }
+  }
+  
   public void selectAll() {
     if (myEditor != null) {
       myEditor.getSelectionModel().setSelection(0, myDocument.getTextLength());
@@ -485,6 +500,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
     editor.putUserData(SUPPLEMENTARY_KEY, myIsSupplementary);
     editor.getContentComponent().setFocusCycleRoot(false);
+    
+    editor.setPlaceholder(myHintText);
 
     initOneLineMode(editor);
 

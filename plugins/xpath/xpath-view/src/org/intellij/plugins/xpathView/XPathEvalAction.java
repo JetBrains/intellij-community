@@ -489,7 +489,6 @@ public class XPathEvalAction extends XPathAction {
                     final List<?> list;
                     if (myResult.size() == 0) {
                         try {
-                            PsiDocumentManager.getInstance(myContextNode.getProject()).commitAllDocuments();
                             list = (List<?>)myXPath.selectNodes(myContextNode);
                         } catch (JaxenException e) {
                             LOG.debug(e);

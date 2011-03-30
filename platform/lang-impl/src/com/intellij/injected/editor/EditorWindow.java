@@ -625,4 +625,9 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   public void setSoftWrapAppliancePlace(@NotNull SoftWrapAppliancePlaces place) {
     myDelegate.setSoftWrapAppliancePlace(place);
   }
+
+  @Override
+  public void setPlaceholder(@Nullable CharSequence text) {
+    myDelegate.setPlaceholder(text);
+  }
 }

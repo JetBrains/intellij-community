@@ -159,6 +159,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       myPanel.add(myConsoleEditor.getComponent());
 
       myHistoryViewer.setHorizontalScrollbarVisible(false);
+      myCurrentEditor = myConsoleEditor;
     }
     else {
       myPanel.removeAll();
@@ -168,6 +169,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       setConsoleFilePinned(fileManager);
 
       myHistoryViewer.setHorizontalScrollbarVisible(true);
+      myCurrentEditor = myFullEditor;
     }
   }
 
@@ -513,14 +515,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
             editor.getCaretModel().addCaretListener(new CaretListener() {
               public void caretPositionChanged(CaretEvent e) {
                 queueUiUpdate(false);
-              }
-            });
-            editor.getContentComponent().addFocusListener(new FocusListener() {
-              public void focusGained(final FocusEvent e) {
-                myCurrentEditor = editor;
-              }
-
-              public void focusLost(final FocusEvent e) {
               }
             });
           }

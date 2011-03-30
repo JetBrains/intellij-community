@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 17-Jan-2008
- */
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.module.Module;
@@ -26,14 +21,29 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 
+/**
+ * @author anna
+ * Date: 17-Jan-2008
+ */
 public class ProjectRootsUtil {
-  private ProjectRootsUtil() {
-  }
+  private ProjectRootsUtil() { }
 
   public static boolean isSourceRoot(final PsiDirectory psiDirectory) {
-    return psiDirectory.getVirtualFile().equals(
-      ProjectRootManager.getInstance(psiDirectory.getProject()).getFileIndex()
-        .getSourceRootForFile(psiDirectory.getVirtualFile()));
+    return isSourceRoot(psiDirectory.getVirtualFile(), psiDirectory.getProject());
+  }
+
+  public static boolean isSourceRoot(final VirtualFile directoryFile, final Project project) {
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    return directoryFile.equals(fileIndex.getSourceRootForFile(directoryFile));
+  }
+
+  public static boolean isInSource(final PsiDirectory directory) {
+    return isInSource(directory.getVirtualFile(), directory.getProject());
+  }
+
+  public static boolean isInSource(final VirtualFile directoryFile, final Project project) {
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    return projectFileIndex.isInSourceContent(directoryFile);
   }
 
   public static boolean isInTestSource(final VirtualFile directoryFile, final Project project) {
@@ -43,11 +53,11 @@ public class ProjectRootsUtil {
 
   public static boolean isSourceOrTestRoot(final VirtualFile virtualFile, final Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    Module module = projectFileIndex.getModuleForFile(virtualFile);
+    final Module module = projectFileIndex.getModuleForFile(virtualFile);
     if (module == null) return false;
-    ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
+    final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
     for (ContentEntry contentEntry : contentEntries) {
-      SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
+      final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
       for (SourceFolder sourceFolder : sourceFolders) {
         if (virtualFile == sourceFolder.getFile()) return true;
       }
@@ -55,7 +65,7 @@ public class ProjectRootsUtil {
     return false;
   }
 
-  public static boolean isLibraryRoot(VirtualFile directoryFile, Project project) {
+  public static boolean isLibraryRoot(final VirtualFile directoryFile, final Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (projectFileIndex.isInLibraryClasses(directoryFile)) {
       final VirtualFile parent = directoryFile.getParent();
@@ -64,7 +74,11 @@ public class ProjectRootsUtil {
     return false;
   }
 
-  public static boolean isModuleContentRoot(VirtualFile directoryFile, Project project) {
+  public static boolean isModuleContentRoot(final PsiDirectory directory) {
+    return isModuleContentRoot(directory.getVirtualFile(), directory.getProject());
+  }
+
+  public static boolean isModuleContentRoot(final VirtualFile directoryFile, final Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile contentRootForFile = projectFileIndex.getContentRootForFile(directoryFile);
     return directoryFile.equals(contentRootForFile);

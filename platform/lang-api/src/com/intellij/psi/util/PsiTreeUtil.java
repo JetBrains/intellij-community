@@ -522,7 +522,8 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static <T extends PsiElement> T getParentOfType(PsiElement element, @NotNull Class<? extends T>... classes) {
+  public static <T extends PsiElement> T getParentOfType(@Nullable final PsiElement element,
+                                                         @NotNull final Class<? extends T>... classes) {
     if (element == null) return null;
     PsiElement parent = element.getParent();
     if (parent == null) return null;
@@ -530,7 +531,8 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static <T extends PsiElement> T getNonStrictParentOfType(@NotNull PsiElement element, @NotNull Class<? extends T>... classes) {
+  public static <T extends PsiElement> T getNonStrictParentOfType(@Nullable final PsiElement element,
+                                                                  @NotNull final Class<? extends T>... classes) {
     PsiElement run = element;
     while (run != null) {
       if (instanceOf(run, classes)) {
@@ -552,8 +554,8 @@ public class PsiTreeUtil {
   }
 
   @NotNull
-  public static <T extends PsiElement> Collection<T> collectElementsOfType(@Nullable PsiElement element,
-                                                                           final @NotNull Class<T>... classes) {
+  public static <T extends PsiElement> Collection<T> collectElementsOfType(@Nullable final PsiElement element,
+                                                                           @NotNull final Class<T>... classes) {
     PsiElementProcessor.CollectFilteredElements<T> processor = new PsiElementProcessor.CollectFilteredElements<T>(new PsiElementFilter() {
 
       @Override

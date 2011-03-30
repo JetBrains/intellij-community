@@ -32,6 +32,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.actions.NewGroovyClassAction;
 import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
@@ -93,7 +94,7 @@ public class ConvertMapToClassIntention extends Intention {
 
     final GrTypeDefinition typeDefinition = createClass(project, namedArguments, selectedPackageName, shortName);
     final PsiClass generatedClass = CreateClassActionBase.createClassByType(
-      dialog.getTargetDirectory(), typeDefinition.getName(), PsiManager.getInstance(project), map);
+      dialog.getTargetDirectory(), typeDefinition.getName(), PsiManager.getInstance(project), map, NewGroovyClassAction.GROOVY_CLASS);
     final PsiClass replaced = (PsiClass)generatedClass.replace(typeDefinition);
     replaceMapWithClass(project, map, replaced, replaceReturnType, variableDeclaration, methodParameter);
   }
