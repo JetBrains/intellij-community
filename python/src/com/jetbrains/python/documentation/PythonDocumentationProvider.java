@@ -2,6 +2,7 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.QuickDocumentationProvider;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
@@ -544,6 +545,12 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     }
     if (PythonSdkType.isStdLib(vFile, sdk)) {
       return Collections.singletonList(getStdlibUrlFor(element, qName.getLastComponent(), pyVersion));
+    }
+    for (PythonDocumentationLinkProvider provider : Extensions.getExtensions(PythonDocumentationLinkProvider.EP_NAME)) {
+      final String providerUrl = provider.getExternalDocumentationUrl(element, originalElement);
+      if (providerUrl != null) {
+        return Collections.singletonList(providerUrl);
+      }
     }
     return null;
   }
