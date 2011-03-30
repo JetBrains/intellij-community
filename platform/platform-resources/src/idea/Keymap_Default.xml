@@ -205,6 +205,9 @@
   <action id="GotoTest">
     <keyboard-shortcut first-keystroke="control shift T"/>
   </action>
+  <action id="GotoRelated">
+    <keyboard-shortcut first-keystroke="control shift Q"/>
+  </action>
   <action id="CloseActiveTab">
     <keyboard-shortcut first-keystroke="control shift F4"/>
   </action>

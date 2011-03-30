@@ -29,5 +29,5 @@ public abstract class GotoRelatedProvider {
   public static final ExtensionPointName<GotoRelatedProvider> EP_NAME = ExtensionPointName.create("com.intellij.gotoRelatedProvider");
 
   @NotNull
-  public abstract List<GotoRelatedItem> getItems(@NotNull PsiElement context);
+  public abstract List<? extends GotoRelatedItem> getItems(@NotNull PsiElement context);
 }
