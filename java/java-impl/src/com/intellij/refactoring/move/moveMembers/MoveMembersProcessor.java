@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * created at Sep 11, 2001
- * @author Jeka
- */
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -52,6 +47,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+/**
+ * created at Sep 11, 2001
+ * @author Jeka
+ */
 public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveMembers.MoveMembersProcessor");
 
@@ -60,7 +59,6 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private final MoveCallback myMoveCallback;
   private String myNewVisibility; // "null" means "as is"
   private String myCommandName = MoveMembersImpl.REFACTORING_NAME;
-  private boolean myMakeEnumConstant;
   private MoveMembersOptions myOptions;
 
   public MoveMembersProcessor(Project project, MoveCallback moveCallback, MoveMembersOptions options) {
@@ -79,17 +77,15 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   private void setOptions(MoveMembersOptions dialog) {
     myOptions = dialog;
+
     PsiMember[] members = dialog.getSelectedMembers();
     myMembersToMove.clear();
     ContainerUtil.addAll(myMembersToMove, members);
 
     setCommandName(members);
 
-    final PsiManager manager = PsiManager.getInstance(myProject);
-    myTargetClass =
-      JavaPsiFacade.getInstance(manager.getProject()).findClass(dialog.getTargetClassName(), GlobalSearchScope.projectScope(myProject));
+    myTargetClass = JavaPsiFacade.getInstance(myProject).findClass(dialog.getTargetClassName(), GlobalSearchScope.projectScope(myProject));
     myNewVisibility = dialog.getMemberVisibility();
-    myMakeEnumConstant = dialog.makeEnumConstant();
   }
 
   private void setCommandName(final PsiMember[] members) {
@@ -108,6 +104,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     myCommandName = commandName.toString();
   }
 
+  @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new MoveMemberViewDescriptor(PsiUtilBase.toPsiElementArray(myMembersToMove));
   }
@@ -156,8 +153,8 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(final UsageInfo[] usages) {
     try {
       // correct references to moved members from the outside
-      PsiClass targetClass = JavaPsiFacade.getInstance(myProject)
-      .findClass(myOptions.getTargetClassName(), GlobalSearchScope.projectScope(myProject));
+      PsiClass targetClass = JavaPsiFacade.getInstance(myProject).findClass(myOptions.getTargetClassName(),
+                                                                            GlobalSearchScope.projectScope(myProject));
       if (targetClass == null) return;
       final Map<PsiMember, PsiElement> anchors = new HashMap<PsiMember, PsiElement>();
       for (PsiMember member : myMembersToMove) {
@@ -221,7 +218,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private void fixModifierList(PsiMember newMember, final UsageInfo[] usages) throws IncorrectOperationException {
     PsiModifierList modifierList = newMember.getModifierList();
 
-    if(myTargetClass.isInterface()) {
+    if (modifierList != null && myTargetClass.isInterface()) {
       modifierList.setModifierProperty(PsiModifier.PUBLIC, false);
       modifierList.setModifierProperty(PsiModifier.PROTECTED, false);
       modifierList.setModifierProperty(PsiModifier.PRIVATE, false);
@@ -231,7 +228,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       return;
     }
 
-    if(myNewVisibility == null) return;
+    if (myNewVisibility == null) return;
 
     VisibilityUtil.fixVisibility(usages, newMember, myNewVisibility);
   }
@@ -240,7 +237,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
     final UsageInfo[] usages = refUsages.get();
     try {
-      addInaccessiblleConflicts(conflicts, usages);
+      addInaccessibleConflicts(conflicts, usages);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -250,7 +247,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     return showConflicts(conflicts, usages);
   }
 
-  private void addInaccessiblleConflicts(final MultiMap<PsiElement, String> conflicts, final UsageInfo[] usages) throws IncorrectOperationException {
+  private void addInaccessibleConflicts(final MultiMap<PsiElement, String> conflicts, final UsageInfo[] usages) throws IncorrectOperationException {
     String newVisibility = myNewVisibility;
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(newVisibility)) { //Still need to check for access object
       newVisibility = PsiModifier.PUBLIC;
@@ -259,9 +256,9 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     Map<PsiMember, PsiModifierList> modifierListCopies = new HashMap<PsiMember, PsiModifierList>();
     for (PsiMember member : myMembersToMove) {
       PsiModifierList copy = member.getModifierList();
-      if (copy!=null) copy= (PsiModifierList)copy.copy();
+      if (copy != null) copy = (PsiModifierList)copy.copy();
       if (newVisibility != null) {
-        if (copy!=null) VisibilityUtil.setVisibility(copy, newVisibility);
+        if (copy != null) VisibilityUtil.setVisibility(copy, newVisibility);
       }
       modifierListCopies.put(member, copy);
     }
@@ -336,9 +333,10 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   private static boolean hasMethod(PsiClass targetClass, PsiMethod method) {
     PsiMethod[] targetClassMethods = targetClass.getMethods();
-    for (PsiMethod method1 : targetClassMethods) {
-      if (MethodSignatureUtil.areSignaturesEqual(method.getSignature(PsiSubstitutor.EMPTY),
-                                                 method1.getSignature(PsiSubstitutor.EMPTY))) {
+    for (PsiMethod candidate : targetClassMethods) {
+      if (candidate != method &&
+          MethodSignatureUtil.areSignaturesEqual(method.getSignature(PsiSubstitutor.EMPTY),
+                                                 candidate.getSignature(PsiSubstitutor.EMPTY))) {
         return true;
       }
     }
@@ -348,8 +346,9 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private static boolean hasField(PsiClass targetClass, PsiField field) {
     String fieldName = field.getName();
     PsiField[] targetClassFields = targetClass.getFields();
-    for (PsiField targetClassField : targetClassFields) {
-      if (fieldName.equals(targetClassField.getName())) {
+    for (PsiField candidate : targetClassFields) {
+      if (candidate != field &&
+          fieldName.equals(candidate.getName())) {
         return true;
       }
     }
@@ -377,5 +376,4 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       reference = element;
     }
   }
-
 }
