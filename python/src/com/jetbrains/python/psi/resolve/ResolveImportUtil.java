@@ -820,16 +820,23 @@ public class ResolveImportUtil {
    * @return the qualified name, or null if it wasn't possible to calculate one
    */
   @Nullable
-  public static PyQualifiedName findCanonicalImportPath(PsiElement symbol, PyElement foothold) {
+  public static PyQualifiedName findCanonicalImportPath(PsiElement symbol, PsiElement foothold) {
     PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
     if (srcfile == null) {
       return null;
     }
     if (srcfile instanceof PsiFile && symbol instanceof PsiNamedElement && !(symbol instanceof PsiFileSystemItem)) {
+      PsiElement toplevel = symbol;
+      if (symbol instanceof PyFunction) {
+        final PyClass containingClass = ((PyFunction)symbol).getContainingClass();
+        if (containingClass != null) {
+          toplevel = containingClass;
+        }
+      }
       PsiDirectory dir = ((PsiFile) srcfile).getContainingDirectory();
       if (dir != null) {
         PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
-        if (initPy instanceof PyFile && symbol.equals(((PyFile)initPy).findExportedName(((PsiNamedElement)symbol).getName()))) {
+        if (initPy instanceof PyFile && toplevel.equals(((PyFile)initPy).findExportedName(((PsiNamedElement)toplevel).getName()))) {
           return findShortestImportableQName(foothold, dir.getVirtualFile());
         }
       }

@@ -5,7 +5,6 @@ import com.intellij.lang.documentation.QuickDocumentationProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -29,7 +28,6 @@ import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.RootVisitor;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -531,7 +529,10 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     if (sdk == null) {
       return null;
     }
-    PyQualifiedName qName = ResolveImportUtil.findShortestImportableQName(file);
+    PyQualifiedName qName = ResolveImportUtil.findCanonicalImportPath(element, originalElement);
+    if (qName == null) {
+      return null;
+    }
     PythonDocumentationMap map = PythonDocumentationMap.getInstance();
     String pyVersion = pyVersion(sdk.getVersionString());
     PsiNamedElement namedElement = (element instanceof PsiNamedElement && !(element instanceof PsiFileSystemItem))
@@ -542,21 +543,27 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
       return Collections.singletonList(url);
     }
     if (PythonSdkType.isStdLib(vFile, sdk)) {
-      return Collections.singletonList(getStdlibUrlFor(element, file, pyVersion));
+      return Collections.singletonList(getStdlibUrlFor(element, qName.getLastComponent(), pyVersion));
     }
     return null;
   }
 
-  private static String getStdlibUrlFor(PsiElement element, PsiFileSystemItem file, String pyVersion) {
+  private static String getStdlibUrlFor(PsiElement element, String moduleName, String pyVersion) {
     StringBuilder urlBuilder = new StringBuilder("http://docs.python.org/");
     if (pyVersion != null) {
       urlBuilder.append(pyVersion).append("/");
     }
     urlBuilder.append("library/");
-    urlBuilder.append(FileUtil.getNameWithoutExtension(file.getName()));
+    urlBuilder.append(moduleName);
     urlBuilder.append(".html");
     if (element instanceof PsiNamedElement && !(element instanceof PyFile)) {
-      urlBuilder.append('#').append(FileUtil.getNameWithoutExtension(file.getName())).append(".");
+      urlBuilder.append('#').append(moduleName).append(".");
+      if (element instanceof PyFunction) {
+        final PyClass containingClass = ((PyFunction)element).getContainingClass();
+        if (containingClass != null) {
+          urlBuilder.append(containingClass.getName()).append('.');
+        }
+      }
       urlBuilder.append(((PsiNamedElement)element).getName());
     }
     return urlBuilder.toString();
