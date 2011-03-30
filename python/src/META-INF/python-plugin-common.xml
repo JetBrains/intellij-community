@@ -492,6 +492,7 @@
     <!-- App Engine -->
     <typeProvider implementation="com.jetbrains.appengine.model.AppEngineTypeProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.appengine.model.AppEngineModuleMembersProvider"/>
+    <documentationLinkProvider implementation="com.jetbrains.appengine.AppEngineDocumentationLinkProvider"/>
   </extensions>
 
   <project-components>
