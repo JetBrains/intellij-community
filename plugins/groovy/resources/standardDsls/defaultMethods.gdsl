@@ -25,6 +25,7 @@ import static standardDsls.Constants.STRING
 interface Constants {
   String NUMBER = "java.lang.Number"
   String STRING = "java.lang.String"
+  String WILDCARD_PREFIX = "? extends "
 }
 
 def extractTypeParameter(def typeText) {
@@ -32,8 +33,13 @@ def extractTypeParameter(def typeText) {
   final int end = typeText.lastIndexOf('>')
 
   if (start < 0) return null
-  if (end < 0) return typeText.substring(start + 1)
-  return typeText.substring(start + 1, end);
+
+  String componentType = end < 0 ? typeText.substring(start + 1) : typeText.substring(start + 1, end)
+  if (componentType.startsWith(Constants.WILDCARD_PREFIX)) {
+    componentType = componentType.substring(Constants.WILDCARD_PREFIX.size())
+  }
+
+  return componentType;
 }
 
 def constructElementTypeArg(def psiType) {

@@ -346,6 +346,10 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest(new GroovyResultOfAssignmentUsedInspection());
   }
 
+  public void testGdslWildcardTypes() {
+    myFixture.configureByText("a.groovy", "List<? extends String> l = []; l.get(1)");
+    myFixture.checkHighlighting(true, false, false);
+  }
 
   public void testThisTypeInStaticContext() {
     doTest(new GroovyAssignabilityCheckInspection());
