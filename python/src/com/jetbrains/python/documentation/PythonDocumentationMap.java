@@ -1,6 +1,7 @@
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -92,6 +93,20 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     public void setEntries(List<Entry> entries) {
       myEntries = entries;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      State state = (State)o;
+      return Sets.newHashSet(myEntries).equals(Sets.newHashSet(state.getEntries()));
+    }
+
+    @Override
+    public int hashCode() {
+      return myEntries != null ? myEntries.hashCode() : 0;
+    }
   }
 
   private State myState = new State();
@@ -102,6 +117,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     addEntry("PyQt4", "http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/{class.name.lower}.html#{function.name}");
     addEntry("PySide", "http://www.pyside.org/docs/pyside/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}");
     addEntry("gtk", "http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");
+    addEntry("wx", "http://www.wxpython.org/docs/api/{class.qname}-class.html#{function.name}");
   }
 
   private void addEntry(String qName, String pattern) {
@@ -141,6 +157,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     Map<String, String> macros = new HashMap<String, String>();
     PyClass pyClass = element == null ? null : PsiTreeUtil.getParentOfType(element, PyClass.class, false);
     macros.put("class.name", pyClass == null ? null : pyClass.getName());
+    macros.put("class.qname", pyClass == null ? null : pyClass.getQualifiedName());
     if (element != null) {
       StringBuilder qName = new StringBuilder(moduleQName.toString()).append(".");
       if (element instanceof PyFunction && ((PyFunction)element).getContainingClass() != null) {
