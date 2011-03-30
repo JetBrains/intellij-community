@@ -86,6 +86,15 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   public static class State {
     private List<Entry> myEntries = new ArrayList<Entry>();
 
+    public State() {
+      addEntry("compiler", "http://docs.python.org/{python.version}/library/compiler.html#{element.qname}");
+      addEntry("multiprocessing", "http://docs.python.org/{python.version}/library/multiprocessing.html#{element.qname}");
+      addEntry("PyQt4", "http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/{class.name.lower}.html#{function.name}");
+      addEntry("PySide", "http://www.pyside.org/docs/pyside/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}");
+      addEntry("gtk", "http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");
+      addEntry("wx", "http://www.wxpython.org/docs/api/{module.name}.{class.name}-class.html#{function.name}");
+    }
+
     public List<Entry> getEntries() {
       return myEntries;
     }
@@ -107,22 +116,13 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     public int hashCode() {
       return myEntries != null ? myEntries.hashCode() : 0;
     }
+
+    private void addEntry(String qName, String pattern) {
+      myEntries.add(new Entry(qName, pattern));
+    }
   }
 
   private State myState = new State();
-
-  public PythonDocumentationMap() {
-    addEntry("compiler", "http://docs.python.org/{python.version}/library/compiler.html#{element.qname}");
-    addEntry("multiprocessing", "http://docs.python.org/{python.version}/library/multiprocessing.html#{element.qname}");
-    addEntry("PyQt4", "http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/{class.name.lower}.html#{function.name}");
-    addEntry("PySide", "http://www.pyside.org/docs/pyside/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}");
-    addEntry("gtk", "http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");
-    addEntry("wx", "http://www.wxpython.org/docs/api/{module.name}.{class.name}-class.html#{function.name}");
-  }
-
-  private void addEntry(String qName, String pattern) {
-    myState.myEntries.add(new Entry(qName, pattern));
-  }
 
   @Override
   public State getState() {
