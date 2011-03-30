@@ -20,6 +20,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.CollectProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -109,11 +110,11 @@ public class PythonReferenceImporter implements ReferenceImporter {
           if (srcfile != null && srcfile != existing_import_file && srcfile != node.getContainingFile()) {
             VirtualFile vfile = srcfile.getVirtualFile();
             if (vfile != null) {
-              String import_path = ResolveImportUtil.findShortestImportableName(node, vfile);
-              if (import_path != null && !seen_file_names.contains(import_path)) {
+              PyQualifiedName import_path = ResolveImportUtil.findShortestImportableQName(node, vfile);
+              if (import_path != null && !seen_file_names.contains(import_path.toString())) {
                 // a new, valid hit
                 fix.addImport(symbol, srcfile, import_path, proposeAsName(node.getContainingFile(), ref_text, import_path));
-                seen_file_names.add(import_path); // just in case, again
+                seen_file_names.add(import_path.toString()); // just in case, again
               }
             }
           }
@@ -180,14 +181,14 @@ public class PythonReferenceImporter implements ReferenceImporter {
   }
 
   // find an unique name that does not clash with anything in the file, using ref_name and import_path as hints
-  private static String proposeAsName(PsiFile file, String ref_name, String import_path) {
+  private static String proposeAsName(PsiFile file, String ref_name, PyQualifiedName import_path) {
     // a somehow brute-force approach: collect all identifiers wholesale and avoid clashes with any of them
     Set<String> ident_set = new HashSet<String>();
     collectIdentifiers(file, ident_set);
     // try the default, 'normal' name first; if it does not clash, propose no sustitute!
     if (! ident_set.contains(ref_name)) return null;
     // try flattened import path
-    String path_name = import_path.replace('.', '_');
+    String path_name = import_path.join("_");
     if (! ident_set.contains(path_name)) return path_name;
     // ...with prefixes: a highly improbable situation already
     for (String prefix : AS_PREFIXES) {

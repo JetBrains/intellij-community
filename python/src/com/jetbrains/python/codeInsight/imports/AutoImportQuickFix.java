@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +75,7 @@ public class AutoImportQuickFix implements LocalQuickFix {
    * @param path import path for the file, as a qualified name (a.b.c)
    * @param asName name to use to import the path as: "import path as asName"
    */
-  public void addImport(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file, @Nullable String path, @Nullable String asName) {
+  public void addImport(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file, @Nullable PyQualifiedName path, @Nullable String asName) {
     myImports.add(new ImportCandidateHolder(importable, file, null, path, asName));
   }
 

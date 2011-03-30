@@ -126,15 +126,18 @@ public class ImportFromExistingAction implements QuestionAction {
     if (isRoot(project, item.getFile())) {
       AddImportHelper.addImportStatement(myTarget.getContainingFile(), myName, null, priority);
     }
-    else if (myUseQualifiedImport) {
-      AddImportHelper.addImportStatement(myTarget.getContainingFile(), item.getPath(), null, priority);
-      String qual_name;
-      if (item.getAsName() != null) qual_name = item.getAsName();
-      else qual_name = item.getPath();
-      myTarget.replace(gen.createExpressionFromText(qual_name + "." + myName));
-    }
     else {
-      AddImportHelper.addImportFrom(myTarget.getContainingFile(), item.getPath(), myName, priority);
+      String qualifiedName = item.getPath().toString();
+      if (myUseQualifiedImport) {
+        AddImportHelper.addImportStatement(myTarget.getContainingFile(), qualifiedName, null, priority);
+        String qual_name;
+        if (item.getAsName() != null) qual_name = item.getAsName();
+        else qual_name = qualifiedName;
+        myTarget.replace(gen.createExpressionFromText(qual_name + "." + myName));
+      }
+      else {
+        AddImportHelper.addImportFrom(myTarget.getContainingFile(), qualifiedName, myName, priority);
+      }
     }
   }
 
