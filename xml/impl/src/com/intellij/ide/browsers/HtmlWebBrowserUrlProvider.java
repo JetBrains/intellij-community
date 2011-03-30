@@ -41,14 +41,10 @@ public class HtmlWebBrowserUrlProvider extends WebBrowserUrlProvider {
   @Override
   public boolean canHandleElement(@NotNull final PsiElement element) {
     final PsiFile file = element instanceof PsiFile ? (PsiFile) element : element.getContainingFile();
-    if (file == null){
-      return false;
-    }
-    final Language language = file.getViewProvider().getBaseLanguage();
-    return HTMLLanguage.INSTANCE == language || XHTMLLanguage.INSTANCE == language;
+    return file != null && isHtmlFile(file);
   }
 
-  public static boolean isAvailableFor(@NotNull final PsiFile file) {
+  protected static boolean isHtmlFile(@NotNull final PsiFile file) {
     final Language language = file.getLanguage();
     return language instanceof HTMLLanguage || language instanceof XHTMLLanguage;
   }
