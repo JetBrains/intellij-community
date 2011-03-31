@@ -613,6 +613,7 @@ public class NameUtil {
           }
           fromIndex = next + 1;
         }
+        wordStart += s.length();
       }
       return null;
     }
