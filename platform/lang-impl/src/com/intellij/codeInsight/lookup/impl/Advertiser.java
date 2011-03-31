@@ -54,8 +54,9 @@ public class Advertiser implements Disposable {
     protected void paintComponent(Graphics g) {
       super.paintComponent(g);
 
+      int currentItem = myCurrentItem;
       List<String> texts = getTexts();
-      if (texts.isEmpty()) return;
+      if (texts.isEmpty() || currentItem >= texts.size()) return;
 
       Font font = adFont();
       FontMetrics metrics = g.getFontMetrics(font);
@@ -65,11 +66,11 @@ public class Advertiser implements Disposable {
       int y = (height - metrics.getHeight()) / 2 + metrics.getAscent() - (myScrollingOffset * height / ourScrollingResolution);
       int x = getBorder().getBorderInsets(this).left;
 
-      if (myCurrentItem >= 0) {
-        g.drawString(texts.get(myCurrentItem), x, y);
+      if (currentItem >= 0) {
+        g.drawString(texts.get(currentItem), x, y);
       }
       if (myScrollingOffset != 0) {
-        g.drawString(texts.get((myCurrentItem + 1) % texts.size()), x, y + height);
+        g.drawString(texts.get((currentItem + 1) % texts.size()), x, y + height);
       }
     }
   };
