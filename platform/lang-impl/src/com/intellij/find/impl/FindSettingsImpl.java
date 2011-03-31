@@ -110,6 +110,8 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
       RECENT_FILE_MASKS.add("*.as");
       RECENT_FILE_MASKS.add("*.css");
       RECENT_FILE_MASKS.add("*.mxml");
+      RECENT_FILE_MASKS.add("*.py");
+      RECENT_FILE_MASKS.add("*.rb");
     }
   }
 
