@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import org.jetbrains.annotations.NotNull;
@@ -284,7 +285,7 @@ public class ConsoleHistoryController {
   }
 
   private void saveHistory(final XmlSerializer out) throws IOException {
-    out.startDocument(System.getProperty("file.encoding"), null);
+    out.startDocument(System.getProperty(CharsetToolkit.FILE_ENCODING_PROPERTY), null);
     out.startTag(null, "console-history");
     out.attribute(null, "id", myId);
     for (String s : myModel.getHistory()) {
