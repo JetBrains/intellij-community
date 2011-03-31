@@ -22,7 +22,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,46 +44,43 @@ public final class SpeedSearchUtil {
     if (speedSearch != null) {
       final Iterable<TextRange> fragments = speedSearch.matchingFragments(text);
       if (fragments != null) {
-        final List<Pair<String, Integer>> searchTerms = new ArrayList<Pair<String, Integer>>();
-        for (TextRange fragment : fragments) {
-          searchTerms.add(Pair.create(fragment.substring(text), fragment.getStartOffset()));
-        }
-        appendFragmentsStrict(text, searchTerms, attributes.getStyle(), attributes.getFgColor(),
-                              selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground(), simpleColoredComponent);
+        final Color fg = attributes.getFgColor();
+        final Color bg = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+        final int style = attributes.getStyle();
+        final SimpleTextAttributes plain = new SimpleTextAttributes(style, fg);
+        final SimpleTextAttributes highlighted = new SimpleTextAttributes(bg, fg, null, style | SimpleTextAttributes.STYLE_SEARCH_MATCH);
+        appendColoredFragments(simpleColoredComponent, text, fragments, plain, highlighted);
+        return;
       }
-      else {
-        simpleColoredComponent.append(text, attributes);
-      }
-    } else {
-      simpleColoredComponent.append(text, attributes);
     }
+    simpleColoredComponent.append(text, attributes);
   }
 
-  public static void appendFragmentsStrict(@NonNls final String text, @NotNull final List<Pair<String, Integer>> toHighlight,
-                                           final int style, final Color foreground,
-                                           final Color background, final SimpleColoredComponent c) {
-    if (text == null) return;
-    final SimpleTextAttributes plainAttributes = new SimpleTextAttributes(style, foreground);
+  public static void appendColoredFragments(final SimpleColoredComponent simpleColoredComponent,
+                                            final String text,
+                                            Iterable<TextRange> colored,
+                                            final SimpleTextAttributes plain, final SimpleTextAttributes highlighted) {
+    final List<Pair<String, Integer>> searchTerms = new ArrayList<Pair<String, Integer>>();
+    for (TextRange fragment : colored) {
+      searchTerms.add(Pair.create(fragment.substring(text), fragment.getStartOffset()));
+    }
 
     final int[] lastOffset = {0};
-    ContainerUtil.process(toHighlight, new Processor<Pair<String, Integer>>() {
+    ContainerUtil.process(searchTerms, new Processor<Pair<String, Integer>>() {
       @Override
       public boolean process(Pair<String, Integer> pair) {
         if (pair.second > lastOffset[0]) {
-          c.append(text.substring(lastOffset[0], pair.second), new SimpleTextAttributes(style, foreground));
+          simpleColoredComponent.append(text.substring(lastOffset[0], pair.second), plain);
         }
 
-        c.append(text.substring(pair.second, pair.second + pair.first.length()), new SimpleTextAttributes(background,
-                                                                                                          foreground, null,
-                                                                                                          style |
-                                                                                                          SimpleTextAttributes.STYLE_SEARCH_MATCH));
+        simpleColoredComponent.append(text.substring(pair.second, pair.second + pair.first.length()), highlighted);
         lastOffset[0] = pair.second + pair.first.length();
         return true;
       }
     });
 
     if (lastOffset[0] < text.length()) {
-      c.append(text.substring(lastOffset[0]), plainAttributes);
+      simpleColoredComponent.append(text.substring(lastOffset[0]), plain);
     }
   }
 }
