@@ -509,20 +509,24 @@ public class NameUtil {
         return handleAsterisk(patternIndex, words, wordIndex);
       }
 
+      if (patternIndex == 0 && myFirstLetterCaseMatters && word.charAt(0) != myPattern[0]) {
+        return false;
+      }
+
       if (isWordSeparator(word.charAt(0))) {
         assert word.length() == 1 : "'" + word + "'";
-        if (isWordSeparator(myPattern[patternIndex])) {
+        char p = myPattern[patternIndex];
+        if (isWordSeparator(p)) {
+          if (myFirstLetterCaseMatters &&
+              wordIndex == 0 && words.size() > 1 && patternIndex + 1 < myPattern.length &&
+              isWordSeparator(words.get(1).charAt(0)) && !isWordSeparator(myPattern[patternIndex + 1])) {
+            return false;
+          }
+
           return matches(patternIndex + 1, words, wordIndex + 1);
-        }
-        if (patternIndex == 0 && myFirstLetterCaseMatters) {
-          return false;
         }
 
         return matches(patternIndex, words, wordIndex + 1);
-      }
-
-      if (patternIndex == 0 && myFirstLetterCaseMatters && word.charAt(0) != myPattern[0]) {
-        return false;
       }
 
       if (StringUtil.toLowerCase(word.charAt(0)) != StringUtil.toLowerCase(myPattern[patternIndex])) {
