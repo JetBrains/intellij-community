@@ -452,9 +452,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         final Processor<PsiReference> consumer = new Processor<PsiReference>() {
           @Override
           public boolean process(PsiReference psiReference) {
-            synchronized (references) {
-              references.add(psiReference);
-            }
+            references.add(psiReference);
             return true;
           }
         };
