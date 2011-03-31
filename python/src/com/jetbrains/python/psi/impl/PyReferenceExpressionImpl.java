@@ -46,6 +46,12 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   public PsiPolyVariantReference getReference(PyResolveContext context) {
     final PsiFile file = getContainingFile();
     final PyExpression qualifier = getQualifier();
+
+    // Handle import reference
+    if (PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class) != null) {
+      return new PyImportReferenceImpl(this, context);
+    }
+
     if (file != null) {
       // Return special reference
       final ConsoleCommunication communication = file.getCopyableUserData(PydevConsoleRunner.CONSOLE_KEY);
@@ -55,11 +61,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         }
         return new PydevConsoleReference(this, communication, "");
       }
-    }
-
-    // Handle import reference
-    if (PsiTreeUtil.getParentOfType(this, PyImportElement.class, PyFromImportStatement.class) != null) {
-      return new PyImportReferenceImpl(this, context);
     }
 
     if (qualifier != null) {

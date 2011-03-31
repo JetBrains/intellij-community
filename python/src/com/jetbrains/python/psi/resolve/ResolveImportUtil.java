@@ -790,8 +790,8 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  public static PyQualifiedName findShortestImportableQName(PsiFileSystemItem fsItem) {
-    VirtualFile vFile = fsItem.getVirtualFile();
+  public static PyQualifiedName findShortestImportableQName(@Nullable PsiFileSystemItem fsItem) {
+    VirtualFile vFile = fsItem != null ? fsItem.getVirtualFile() : null;
     return vFile != null ? findShortestImportableQName(fsItem, vFile) : null;
   }
 
