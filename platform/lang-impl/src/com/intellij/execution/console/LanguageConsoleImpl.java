@@ -293,7 +293,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public void setPrompt(String prompt) {
-    myPrompt = prompt;
+    // always add space to the prompt otherwise it may look ugly
+    myPrompt = prompt != null && !prompt.endsWith(" ")? prompt + " " : prompt;
     setPromptInner(myPrompt);
   }
 
