@@ -17,9 +17,7 @@ package git4idea.update;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -27,8 +25,9 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
+import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.UIUtil;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchPair;
 import git4idea.merge.GitMergeConflictResolver;
@@ -81,7 +80,7 @@ public class GitUpdateProcess {
    * In case of error shows notification and returns false. If update completes without errors, returns true.
    */
   public boolean update() {
-    return update(false);
+    return update(false, true);
   }
 
   /**
@@ -96,28 +95,25 @@ public class GitUpdateProcess {
    * @param forceRebase
    * @return
    */
-  public boolean update(boolean forceRebase) {
+  public boolean update(final boolean forceRebase, final boolean restoreChangesRightNow) {
     LOG.info("update started|" + (forceRebase ? " force rebase" : ""));
 
     if (!fetchAndNotify()) {
       return false;
     }
 
-    final boolean saveOnFrameDeactivation = myGeneralSettings.isSaveOnFrameDeactivation();
-    final boolean syncOnFrameDeactivation = myGeneralSettings.isSyncOnFrameActivation();
-    myProjectManager.blockReloadingProjectOnExternalChanges();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override public void run() {
-            FileDocumentManager.getInstance().saveAllDocuments();
-            myGeneralSettings.setSaveOnFrameDeactivation(false);
-            myGeneralSettings.setSyncOnFrameActivation(false);
-          }
-        });
+    final Boolean[] result = new Boolean[1];
+    result[0] = false;
+    new GitUpdateLikeProcess(myProject) {
+      @Override
+      protected void runImpl(ContinuationContext context) {
+        result[0] = updateImpl(forceRebase, context);
       }
-    });
+    }.execute();
+    return result[0];
+  }
 
+  private boolean updateImpl(boolean forceRebase, ContinuationContext context) {
     try {
       // check if update is possible
       if (checkRebaseInProgress() || checkMergeInProgress() || checkUnmergedFiles()) { return false; }
@@ -148,7 +144,6 @@ public class GitUpdateProcess {
       mySaver.saveLocalChanges(rootsToSave);
 
       // update each root
-      boolean incomplete = false;
       boolean success = true;
       VirtualFile currentlyUpdatedRoot = null;
       try {
@@ -157,9 +152,6 @@ public class GitUpdateProcess {
           GitUpdater updater = entry.getValue();
           GitUpdateResult res = updater.update();
           LOG.info("updating root " + currentlyUpdatedRoot + " finished: " + res);
-          if (res == GitUpdateResult.INCOMPLETE) {
-            incomplete = true;
-          }
           success &= res.isSuccess();
         }
       } catch (VcsException e) {
@@ -168,17 +160,7 @@ public class GitUpdateProcess {
         notifyImportantError(myProject, "Error updating " + rootName,
                              "Updating " + rootName + " failed with an error: " + e.getLocalizedMessage());
       } finally {
-        try {
-          if (!incomplete) {
-            mySaver.restoreLocalChanges();
-          } else {
-            mySaver.notifyLocalChangesAreNotRestored();
-          }
-        } catch (VcsException e) {
-          LOG.info("Couldn't restore local changes after update", e);
-          notifyImportantError(myProject, "Couldn't restore local changes after update",
-                               "Restoring changes saved before update failed with an error.<br/>" + e.getLocalizedMessage());
-        }
+        restoreLocalChanges(context);
       }
       return success;
     } catch (VcsException e) {
@@ -186,12 +168,20 @@ public class GitUpdateProcess {
       notifyError(myProject, "Couldn't save local changes",
                   "Tried to save uncommitted changes in " + mySaver.getSaverName() + " before update, but failed with an error.<br/>" +
                   "Update was cancelled.", true, e);
-    } finally {
-      myProjectManager.unblockReloadingProjectOnExternalChanges();
-      myGeneralSettings.setSaveOnFrameDeactivation(saveOnFrameDeactivation);
-      myGeneralSettings.setSyncOnFrameActivation(syncOnFrameDeactivation);
+      return false;
     }
-    return false;
+  }
+
+  public void restoreLocalChanges(ContinuationContext context) {
+    context.addExceptionHandler(VcsException.class, new Consumer<VcsException>() {
+      @Override
+      public void consume(VcsException e) {
+        LOG.info("Couldn't restore local changes after reordering commits", e);
+        notifyImportantError(myProject, "Couldn't restore local changes after update",
+                             "Restoring changes saved before update failed with an error.<br/>" + e.getLocalizedMessage());
+      }
+    });
+    mySaver.restoreLocalChanges(context);
   }
 
   // fetch all roots. If an error happens, return false and notify about errors.

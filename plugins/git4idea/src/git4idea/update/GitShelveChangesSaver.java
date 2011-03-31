@@ -26,6 +26,8 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.continuation.Continuation;
+import com.intellij.util.continuation.ContinuationContext;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
@@ -68,17 +70,12 @@ public class GitShelveChangesSaver extends GitChangesSaver {
     }
   }
 
-  protected void load() throws VcsException {
+  protected void load(Runnable restoreListsRunnable, ContinuationContext context) {
     if (myShelvedChangeList != null) {
       LOG.info("load ");
       myProgressIndicator.setText(GitBundle.getString("update.unshelving.changes"));
       if (myShelvedChangeList != null) {
-        List<VcsException> exceptions = new ArrayList<VcsException>(1);
-        GitStashUtils.doSystemUnshelve(myProject, myShelvedChangeList, myShelveManager, myChangeManager, exceptions);
-        if (!exceptions.isEmpty()) {
-          LOG.info("load " + exceptions, exceptions.get(0));
-          throw exceptions.get(0);
-        }
+        GitStashUtils.doSystemUnshelve(myProject, myShelvedChangeList, myShelveManager, restoreListsRunnable, context);
       }
     }
   }

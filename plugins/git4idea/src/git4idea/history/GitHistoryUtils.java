@@ -36,7 +36,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
-import git4idea.*;
+import git4idea.GitBranch;
+import git4idea.GitFileRevision;
+import git4idea.GitRevisionNumber;
+import git4idea.GitUtil;
 import git4idea.commands.*;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.browser.GitCommit;
@@ -659,9 +662,9 @@ public class GitHistoryUtils {
     final ChangeListManager changeManager = ChangeListManager.getInstance(project);
     final Change change = changeManager.getChange(path);
     if (change != null && change.getType() == Change.Type.MOVED) {
-      GitContentRevision r = (GitContentRevision)change.getBeforeRevision();
-      assert r != null : "Move change always have beforeRevision";
-      path = r.getFile();
+     // GitContentRevision r = (GitContentRevision)change.getBeforeRevision();
+      assert change.getBeforeRevision() != null : "Move change always have beforeRevision";
+      path = change.getBeforeRevision().getFile();
     }
     return path;
   }
