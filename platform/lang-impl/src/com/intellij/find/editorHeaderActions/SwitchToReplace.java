@@ -1,6 +1,8 @@
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.EditorSearchComponent;
+import com.intellij.find.FindModel;
+import com.intellij.find.FindUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -23,6 +25,7 @@ public class SwitchToReplace extends EditorHeaderAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    getEditorSearchComponent().getFindModel().setReplaceState(true);
+    final FindModel findModel = getEditorSearchComponent().getFindModel();
+    FindUtil.configureFindModel(true, getEditorSearchComponent().getEditor(), findModel);
   }
 }
