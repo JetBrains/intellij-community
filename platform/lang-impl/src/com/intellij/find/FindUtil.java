@@ -95,6 +95,34 @@ public class FindUtil {
     }
   }
 
+  public static void configureFindModel(boolean replace, Editor editor, FindModel model) {
+    String selectedText = editor.getSelectionModel().getSelectedText();
+    model.setReplaceState(replace);
+    if (selectedText != null) {
+      if (replace) {
+        if (!StringUtil.isEmpty(selectedText)) {
+          if (selectedText.indexOf('\n') >= 0) {
+            model.setGlobal(false);
+          }
+          else {
+            model.setStringToFind(selectedText);
+            model.setGlobal(true);
+          }
+        } else {
+          model.setGlobal(true);
+        }
+      } else {
+        model.setStringToFind(selectedText);
+        model.setGlobal(true);
+      }
+
+      if (model.isGlobal()) {
+        model.setStringToFind(selectedText);
+      }
+    }
+    model.setPromptOnReplace(false);
+  }
+
   private enum Direction {
     UP, DOWN
   }
