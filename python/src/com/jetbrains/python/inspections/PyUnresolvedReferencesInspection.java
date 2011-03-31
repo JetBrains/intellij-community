@@ -326,8 +326,13 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               if (type instanceof PyModuleType) {
                 anchor = ((PyModuleType) type).getModule();
               }
+              else {
+                anchor = null;
+              }
             }
-            actions.add(new CreateClassQuickFix(ref_text, anchor));
+            if (anchor != null) {
+              actions.add(new CreateClassQuickFix(ref_text, anchor));
+            }
           }
         }
       }
