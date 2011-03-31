@@ -83,7 +83,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       setup_fragment = new String[]{self_path_append};
     }
 
-    return PydevConsoleRunner.run(project, sdk, PyBundle.message("python.console"), workingDir, setup_fragment);
+    return PydevConsoleRunner.run(project, sdk, PyConsoleType.PYTHON, workingDir, setup_fragment);
   }
 
   public static String constructPythonPathCommand(Collection<String> pythonPath) {
