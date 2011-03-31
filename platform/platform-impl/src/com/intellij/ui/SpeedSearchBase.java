@@ -180,51 +180,14 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     public Iterable<TextRange> matchingFragments(String pattern, String text) {
       if (myRecentSearchText == null || !myRecentSearchText.equals(pattern)) {
         myRecentSearchText = pattern;
-        @NonNls final StringBuilder buf = new StringBuilder();
-        translatePattern(buf, pattern);
         myMinusculeMatcher = new NameUtil.MinusculeMatcher(myShouldMatchFromTheBeginning ? pattern : "*" + pattern, false, false);
       }
       return myMinusculeMatcher.matchingFragments(text);
     }
 
-    public void translatePattern(final StringBuilder buf, final String pattern) {
-      if (myShouldMatchFromTheBeginning) buf.append('^'); // match from the line start
-      final int len = pattern.length();
-      for (int i = 0; i < len; ++i) {
-        translateCharacter(buf, pattern.charAt(i));
-      }
-
-      if (buf.length() > 0 && "*^".indexOf(buf.charAt(buf.length() - 1)) == -1) buf.append(')');
-    }
 
     public String getRecentSearchText() {
       return myRecentSearchText;
-    }
-
-    public NameUtil.MinusculeMatcher getRecentSearchMatcher() {
-      return myMinusculeMatcher;
-    }
-
-    public void translateCharacter(final StringBuilder buf, final char ch) {
-      if (ch == '*' ) {
-        buf.append("(\\w|:)"); // ':' for xml tags
-      }
-      else if ("{}[].+^$()?".indexOf(ch) != -1) {
-        // do not bother with other metachars
-        buf.append('\\');
-      }
-
-      if (Character.isUpperCase(ch)) {
-        if (buf.length() > 0 && "*^".indexOf(buf.charAt(buf.length() - 1)) == -1) buf.append(')');
-        // for camel humps
-        buf.append("[A-Za-z_]*");
-        buf.append('(');
-      } else {
-        if (buf.length() > 0 && "*^".indexOf(buf.charAt(buf.length() - 1)) != -1) buf.append('(');
-      }
-
-      if (buf.length() == 0 || buf.length() > 0 && "^".indexOf(buf.charAt(buf.length() - 1)) != -1) buf.append('(');
-      buf.append(ch);
     }
   }
 

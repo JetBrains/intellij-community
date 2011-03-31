@@ -342,7 +342,6 @@ public class FileStructureDialog extends DialogWrapper {
           myList.repaint(); // to update match highlighting
         }
       });
-      myListSpeedSearch.setComparator(createSpeedSearchComparator());
     }
 
     private boolean hasPrefixShortened(final PropertyChangeEvent evt) {
@@ -413,7 +412,7 @@ public class FileStructureDialog extends DialogWrapper {
       }
 
       ArrayList<Object> filteredElements = new ArrayList<Object>(childElements.length);
-      SpeedSearchBase.SpeedSearchComparator speedSearchComparator = createSpeedSearchComparator();
+      SpeedSearchBase.SpeedSearchComparator speedSearchComparator = new SpeedSearchBase.SpeedSearchComparator();
 
       for (Object child : childElements) {
         if (child instanceof AbstractTreeNode) {
@@ -437,25 +436,6 @@ public class FileStructureDialog extends DialogWrapper {
       getChildElements(getRootElement());   // for some reason necessary to rebuild tree correctly
       super.rebuildTree();
     }
-  }
-
-  private static SpeedSearchBase.SpeedSearchComparator createSpeedSearchComparator() {
-    return new SpeedSearchBase.SpeedSearchComparator() {
-      public void translateCharacter(final StringBuilder buf, final char ch) {
-        if (ch == '*') {
-          if (buf.length() > 0 && "^*)(".indexOf(buf.charAt(buf.length() - 1)) == -1) buf.append(')');
-          buf.append(".*"); // overrides '*' handling to skip (,) in parameter lists
-        }
-        else {
-          if (ch == ':') {
-            if (buf.length() > 0 && "^*)(".indexOf(buf.charAt(buf.length() - 1)) == -1) buf.append(')');
-            buf.append(".*"); //    get:int should match any getter returning int
-            buf.append('(');
-          }
-          super.translateCharacter(buf, ch);
-        }
-      }
-    };
   }
 
   private class MyTreeActionsOwner implements TreeActionsOwner {
