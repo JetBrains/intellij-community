@@ -131,6 +131,13 @@ public abstract class XDebugProcess {
    */
   public abstract void runToPosition(@NotNull XSourcePosition position);
 
+  /**
+   * @return true if session should automatically be resumed on step/continue commands, false if DebugProcess should control it manually
+   */
+  public boolean isAutoResume() {
+    return true;
+  }
+
   @Nullable
   protected ProcessHandler doGetProcessHandler() {
     return null;

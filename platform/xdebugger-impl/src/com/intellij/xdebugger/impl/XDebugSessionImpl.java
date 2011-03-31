@@ -334,23 +334,28 @@ public class XDebugSessionImpl implements XDebugSession {
   public void stepOver(final boolean ignoreBreakpoints) {
     if (ignoreBreakpoints) {
       disableBreakpoints();
+    } else {
+      enableBreakpoints();
     }
-    doResume();
+    autoResume();
     myDebugProcess.startStepOver();
   }
 
   public void stepInto() {
-    doResume();
+    enableBreakpoints();
+    autoResume();
     myDebugProcess.startStepInto();
   }
 
   public void stepOut() {
-    doResume();
+    enableBreakpoints();
+    autoResume();
     myDebugProcess.startStepOut();
   }
 
   public <V extends XSmartStepIntoVariant> void smartStepInto(XSmartStepIntoHandler<V> handler, V variant) {
-    doResume();
+    enableBreakpoints();
+    autoResume();
     handler.startStepInto(variant);
   }
 
@@ -361,8 +366,10 @@ public class XDebugSessionImpl implements XDebugSession {
   public void runToPosition(@NotNull final XSourcePosition position, final boolean ignoreBreakpoints) {
     if (ignoreBreakpoints) {
       disableBreakpoints();
+    } else {
+      enableBreakpoints();
     }
-    doResume();
+    autoResume();
     myDebugProcess.runToPosition(position);
   }
 
@@ -382,8 +389,13 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public void resume() {
-    doResume();
+    enableBreakpoints();
+    autoResume();
     myDebugProcess.resume();
+  }
+
+  private void autoResume() {
+    if (myDebugProcess.isAutoResume()) doResume();
   }
 
   private void doResume() {
