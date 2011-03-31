@@ -16,8 +16,6 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.navigation.GotoRelatedItem;
-import com.intellij.psi.DelegatePsiTarget;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,32 +25,21 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  */
 public class DomGotoRelatedItem extends GotoRelatedItem {
-
   private final DomElement myElement;
 
   public DomGotoRelatedItem(DomElement element) {
-
+    super(element.getXmlElement());
     myElement = element;
-  }
-
-  @Override
-  public void navigate() {
-    new DelegatePsiTarget(myElement.getXmlElement()).navigate(true);
   }
 
   @NotNull
   @Override
-  public String getText() {
+  public String getCustomName() {
     return myElement.getPresentation().getElementName();
   }
 
   @Override
-  public Icon getIcon() {
+  public Icon getCustomIcon() {
     return myElement.getPresentation().getIcon();
-  }
-
-  @Override
-  public PsiFile getContainingFile() {
-    return myElement.getXmlElement().getContainingFile();
   }
 }

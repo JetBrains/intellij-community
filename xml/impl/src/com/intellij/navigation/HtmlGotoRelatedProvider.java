@@ -47,7 +47,7 @@ public class HtmlGotoRelatedProvider extends GotoRelatedProvider {
     HashSet<PsiFile> resultSet = new HashSet<PsiFile>();
     fillRelatedFiles(file, resultSet);
 
-    return PsiGotoRelatedItem.createItems(resultSet);
+    return GotoRelatedItem.createItems(resultSet);
   }
 
   private static boolean isAvailable(@NotNull PsiFile psiFile) {

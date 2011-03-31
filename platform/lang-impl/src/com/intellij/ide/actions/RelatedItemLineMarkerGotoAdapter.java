@@ -21,8 +21,6 @@ import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider;
 import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.navigation.GotoRelatedProvider;
-import com.intellij.navigation.PsiGotoRelatedItem;
-import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -69,16 +67,14 @@ public class RelatedItemLineMarkerGotoAdapter extends GotoRelatedProvider {
     for (RelatedItemLineMarkerInfo<?> marker : markers) {
       Collection<? extends GotoRelatedItem> items = marker.createGotoRelatedItems();
       for (GotoRelatedItem item : items) {
-        if (item instanceof PsiGotoRelatedItem) {
-          NavigatablePsiElement element = ((PsiGotoRelatedItem)item).getElement();
-          if (element instanceof PsiFile) {
-            PsiFile file = (PsiFile)element;
-            if (addedFiles.contains(file)) {
-              continue;
-            }
+        PsiElement element = item.getElement();
+        if (element instanceof PsiFile) {
+          PsiFile file = (PsiFile)element;
+          if (addedFiles.contains(file)) {
+            continue;
           }
-          ContainerUtil.addIfNotNull(element.getContainingFile(), addedFiles);
         }
+        ContainerUtil.addIfNotNull(element.getContainingFile(), addedFiles);
         result.add(item);
       }
     }
