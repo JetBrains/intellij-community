@@ -1324,10 +1324,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       return;
     }
     ConsoleFolding current = foldingForLine(getLineText(document, line, false));
-    //TODO den remove
-    if (System.currentTimeMillis() > 1) {
-      current = null;
-    }
     if (current != null) {
       myFolding.put(line, current);
     }
