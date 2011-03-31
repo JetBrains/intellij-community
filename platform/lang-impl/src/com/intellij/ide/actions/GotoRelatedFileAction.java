@@ -20,11 +20,13 @@ import com.intellij.navigation.GotoRelatedProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,23 +56,32 @@ public class GotoRelatedFileAction extends AnAction {
       return;
     }
 
+    createPopup(items, "Goto Related").showInBestPositionFor(context);
+  }
+
+  public static JBPopup createPopup(List<? extends GotoRelatedItem> items, final String title) {
     final JBList list = new JBList(new CollectionListModel(items));
     list.setCellRenderer(new ItemCellRenderer());
 
-    JBPopupFactory.getInstance()
+    Function<Object, String> toString = new Function<Object, String>() {
+      @Override
+      public String fun(Object o) {
+        return ((GotoRelatedItem)o).getText();
+      }
+    };
+
+    return JBPopupFactory.getInstance()
       .createListPopupBuilder(list)
-      .setTitle("Goto Related")
+      .setTitle(title)
+      .setFilteringEnabled(toString)
       .setItemChoosenCallback(new Runnable() {
         @Override
         public void run() {
           Object value = list.getSelectedValue();
-          if (value instanceof GotoRelatedItem) {
-            ((GotoRelatedItem)value).navigate();
-          }
+          ((GotoRelatedItem)value).navigate();
         }
       })
-      .createPopup()
-      .showInBestPositionFor(context);
+      .createPopup();
   }
 
   @NotNull
@@ -97,10 +108,8 @@ public class GotoRelatedFileAction extends AnAction {
   }
 
   private static class ItemCellRenderer extends JPanel implements ListCellRenderer {
-
     private final JLabel myLeft = new JLabel();
     private final JLabel myRight = new JLabel();
-    private final JPanel mySpacer = new JPanel();
 
     private ItemCellRenderer() {
       super(new BorderLayout());
@@ -108,9 +117,10 @@ public class GotoRelatedFileAction extends AnAction {
       add(myLeft, BorderLayout.WEST);
       add(myRight, BorderLayout.EAST);
 
-      mySpacer.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
-      mySpacer.setOpaque(false);
-      add(mySpacer, BorderLayout.CENTER);
+      JPanel spacer = new JPanel();
+      spacer.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
+      spacer.setOpaque(false);
+      add(spacer, BorderLayout.CENTER);
     }
 
     @Override

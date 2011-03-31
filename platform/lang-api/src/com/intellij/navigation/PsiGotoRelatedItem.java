@@ -18,19 +18,39 @@ package com.intellij.navigation;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
 public class PsiGotoRelatedItem extends GotoRelatedItem {
-
   private final NavigatablePsiElement myElement;
+  private boolean myShowIcon;
+
+  public static List<PsiGotoRelatedItem> createItems(@NotNull Collection<? extends NavigatablePsiElement> elements) {
+    return createItems(elements, true);
+  }
+
+  public static List<PsiGotoRelatedItem> createItems(@NotNull Collection<? extends NavigatablePsiElement> elements,
+                                                     final boolean showIcon) {
+    List<PsiGotoRelatedItem> items = new ArrayList<PsiGotoRelatedItem>(elements.size());
+    for (NavigatablePsiElement element : elements) {
+      items.add(new PsiGotoRelatedItem(element, showIcon));
+    }
+    return items;
+  }
 
   public PsiGotoRelatedItem(@NotNull NavigatablePsiElement element) {
+    this(element, true);
+  }
+
+  public PsiGotoRelatedItem(@NotNull NavigatablePsiElement element, final boolean showIcon) {
     myElement = element;
+    myShowIcon = showIcon;
   }
 
   @Override
@@ -46,7 +66,7 @@ public class PsiGotoRelatedItem extends GotoRelatedItem {
 
   @Override
   public Icon getIcon() {
-    return myElement.getIcon(0);
+    return myShowIcon ? myElement.getIcon(0) : null;
   }
 
   @Override
@@ -54,7 +74,6 @@ public class PsiGotoRelatedItem extends GotoRelatedItem {
     return myElement instanceof PsiFile ? null : myElement.getContainingFile();
   }
 
-  @TestOnly
   public NavigatablePsiElement getElement() {
     return myElement;
   }
