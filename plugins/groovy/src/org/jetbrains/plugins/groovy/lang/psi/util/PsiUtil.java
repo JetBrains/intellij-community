@@ -1109,4 +1109,31 @@ public class PsiUtil {
     return true;
   }
 
+  @Nullable
+  public static GrCall getMethodByNamedParameter(GrNamedArgument namedArgument) {
+    PsiElement parent = namedArgument.getParent();
+
+    PsiElement eMethodCall;
+
+    if (parent instanceof GrArgumentList) {
+      eMethodCall = parent.getParent();
+    }
+    else {
+      if (!(parent instanceof GrListOrMap)) return null;
+
+      PsiElement eArgumentList = parent.getParent();
+      if (!(eArgumentList instanceof GrArgumentList)) return null;
+
+      GrArgumentList argumentList = (GrArgumentList)eArgumentList;
+
+      if (argumentList.getNamedArguments().length > 0) return null;
+      if (argumentList.getExpressionArgumentIndex((GrListOrMap)parent) != 0) return null;
+
+      eMethodCall = eArgumentList.getParent();
+    }
+
+    if (!(eMethodCall instanceof GrCall)) return null;
+
+    return (GrCall)eMethodCall;
+  }
 }
