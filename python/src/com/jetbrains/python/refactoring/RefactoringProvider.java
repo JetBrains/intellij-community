@@ -4,6 +4,7 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyTargetExpression;
@@ -58,7 +59,7 @@ public class RefactoringProvider extends RefactoringSupportProvider {
   public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) {
     PyFunction containingFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     if (containingFunction != null) {
-      if (element instanceof PyTargetExpression) {
+      if (element instanceof PyTargetExpression || element instanceof PyFunction || element instanceof PyClass) {
         return true;
       }
       if (element instanceof PyNamedParameter) {
