@@ -209,7 +209,9 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
         public boolean process(PsiReference psiReference) {
           final PsiElement element = psiReference.getElement();
           if (element != null) {
-            list.add(element);
+            synchronized (list) {
+              list.add(element);
+            }
           }
           return true;
         }

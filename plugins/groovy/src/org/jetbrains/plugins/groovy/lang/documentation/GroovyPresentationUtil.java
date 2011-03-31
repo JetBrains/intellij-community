@@ -52,11 +52,12 @@ public class GroovyPresentationUtil {
           PsiElement parent = ref.getElement().getParent();
           if (parent instanceof GrReferenceExpression) {
 
-            if (structural.size() >= CONSTRAINTS_NUMBER) { //handle too many constraints
-              structural.add("...");
-              return false;
+            synchronized (structural) {
+              if (structural.size() >= CONSTRAINTS_NUMBER) { //handle too many constraints
+                structural.add("...");
+                return false;
+              }
             }
-
             StringBuilder builder1 = new StringBuilder();
             builder1.append(((GrReferenceElement) parent).getReferenceName());
             PsiType[] argTypes = PsiUtil.getArgumentTypes(parent, true);
@@ -73,7 +74,9 @@ public class GroovyPresentationUtil {
               builder1.append(")");
             }
 
-            structural.add(builder1.toString());
+            synchronized (structural) {
+              structural.add(builder1.toString());
+            }
           }
 
           return true;
