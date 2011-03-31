@@ -21,12 +21,18 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class UnimplementInterfaceAction implements IntentionAction {
@@ -55,7 +61,10 @@ public class UnimplementInterfaceAction implements IntentionAction {
 
     if (psiClass.getExtendsList() != referenceList && psiClass.getImplementsList() != referenceList) return false;
 
-    final PsiElement target = psiReference.resolve();
+    PsiJavaCodeReferenceElement referenceElement = getTopLevelRef(psiReference, referenceList);
+    if (referenceElement == null) return false;
+
+    final PsiElement target = referenceElement.resolve();
     if (target == null || !(target instanceof PsiClass)) return false;
 
     PsiClass targetClass = (PsiClass)target;
@@ -67,6 +76,18 @@ public class UnimplementInterfaceAction implements IntentionAction {
     }
     
     return true;
+  }
+
+  @Nullable
+  private static PsiJavaCodeReferenceElement getTopLevelRef(PsiReference psiReference, PsiReferenceList referenceList) {
+    PsiElement element = psiReference.getElement();
+    while (element.getParent() != referenceList) {
+      element = element.getParent();
+      if (element == null) return null;
+    }
+
+    if (!(element instanceof PsiJavaCodeReferenceElement)) return null;
+    return (PsiJavaCodeReferenceElement)element;
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
@@ -83,12 +104,22 @@ public class UnimplementInterfaceAction implements IntentionAction {
 
     if (psiClass.getExtendsList() != referenceList && psiClass.getImplementsList() != referenceList) return;
 
-    final PsiElement target = psiReference.resolve();
+    PsiJavaCodeReferenceElement element = getTopLevelRef(psiReference, referenceList);
+    if (element == null) return;
+
+    final PsiElement target = element.resolve();
     if (target == null || !(target instanceof PsiClass)) return;
 
     PsiClass targetClass = (PsiClass)target;
 
-    psiReference.getElement().delete();
+    final Map<PsiMethod, PsiMethod> implementations = new HashMap<PsiMethod, PsiMethod>();
+    for (PsiMethod psiMethod : targetClass.getAllMethods()) {
+      final PsiMethod implementingMethod = MethodSignatureUtil.findMethodBySuperMethod(psiClass, psiMethod, false);
+      if (implementingMethod != null) {
+        implementations.put(psiMethod, implementingMethod);
+      }
+    }
+    element.delete();
 
     final Set<PsiMethod> superMethods = new HashSet<PsiMethod>();
     for (PsiClass aClass : psiClass.getSupers()) {
@@ -97,10 +128,8 @@ public class UnimplementInterfaceAction implements IntentionAction {
     final PsiMethod[] psiMethods = targetClass.getAllMethods();
     for (PsiMethod psiMethod : psiMethods) {
       if (superMethods.contains(psiMethod)) continue;
-      final PsiMethod[] implementingMethods = psiClass.findMethodsBySignature(psiMethod, false);
-      for (PsiMethod implementingMethod : implementingMethods) {
-        implementingMethod.delete();
-      }
+      final PsiMethod impl = implementations.get(psiMethod);
+      if (impl != null) impl.delete();
     }
   }
 
