@@ -300,7 +300,7 @@ public class StringUtil {
       }
       else if (c == '\r') {
         boolean followedByLineFeed = i < text.length() - 1 && text.charAt(i + 1) == '\n';
-        if (!followedByLineFeed && keepCarriageReturn && !SystemInfo.isMac) {
+        if (!followedByLineFeed && keepCarriageReturn) {
           if (buffer == null) {
             intactLength++;
           }

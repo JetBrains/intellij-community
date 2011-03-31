@@ -67,6 +67,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
@@ -564,7 +565,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
       myDeferredTypes.add(contentType);
 
-      s = StringUtil.convertLineSeparators(s, true);
+      s = StringUtil.convertLineSeparators(s, !SystemInfo.isMac);
       myContentSize += s.length();
       myDeferredOutputLength += s.length();
       StringBuilder bufferToUse;
@@ -1323,6 +1324,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       return;
     }
     ConsoleFolding current = foldingForLine(getLineText(document, line, false));
+    //TODO den remove
+    if (System.currentTimeMillis() > 1) {
+      current = null;
+    }
     if (current != null) {
       myFolding.put(line, current);
     }
