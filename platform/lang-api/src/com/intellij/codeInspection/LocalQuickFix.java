@@ -21,6 +21,11 @@ package com.intellij.codeInspection;
  * Implement {@link com.intellij.openapi.util.Iconable Iconable} interface to
  * change icon in quick fix popup menu
  *
+ * N.B. Please DO NOT store PSI elements inside the LocalQuickFix instance, to avoid holding too much PSI files during inspection.
+ * Instead, use the {@link ProblemDescriptor#getPsiElement()}
+ * in {@link QuickFix#applyFix(com.intellij.openapi.project.Project, CommonProblemDescriptor)}
+ * to retrieve the PSI context the fix will work on.
+ *
  * @author max
  * @see com.intellij.codeInspection.ProblemDescriptor
  * @see com.intellij.openapi.util.Iconable
