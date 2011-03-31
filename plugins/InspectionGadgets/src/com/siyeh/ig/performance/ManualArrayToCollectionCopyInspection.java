@@ -120,11 +120,12 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
                 return null;
             }
             final String arrayText = iteratedValue.getText();
-            @NonNls final StringBuilder buffer = new StringBuilder(60);
+            @NonNls final StringBuilder buffer =
+                    new StringBuilder("java.util.Collections.addAll(");
             buffer.append(collectionText);
-            buffer.append(".addAll(java.util.Arrays.asList(");
+            buffer.append(',');
             buffer.append(arrayText);
-            buffer.append("));");
+            buffer.append(");");
             return buffer.toString();
         }
 
@@ -189,24 +190,33 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
             if (toOffsetText == null) {
                 return null;
             }
-            @NonNls final StringBuilder buffer = new StringBuilder();
-            if (collectionText.length() > 0) {
+            if (fromOffsetText.equals("0") &&
+                    toOffsetText.equals(arrayText + ".length")) {
+                @NonNls final StringBuilder buffer =
+                        new StringBuilder("java.util.Collections.addAll(");
+                buffer.append(collectionText);
+                buffer.append(',');
+                buffer.append(arrayText);
+                buffer.append(");");
+                return buffer.toString();
+            } else {
+                @NonNls final StringBuilder buffer = new StringBuilder();
                 buffer.append(collectionText);
                 buffer.append('.');
-            }
-            buffer.append("addAll(java.util.Arrays.asList(");
-            buffer.append(arrayText);
-            buffer.append(')');
-            if (!fromOffsetText.equals("0") ||
-                    !toOffsetText.equals(arrayText + ".length")) {
-                buffer.append(".subList(");
-                buffer.append(fromOffsetText);
-                buffer.append(", ");
-                buffer.append(toOffsetText);
+                buffer.append("addAll(java.util.Arrays.asList(");
+                buffer.append(arrayText);
                 buffer.append(')');
+                if (!fromOffsetText.equals("0") ||
+                        !toOffsetText.equals(arrayText + ".length")) {
+                    buffer.append(".subList(");
+                    buffer.append(fromOffsetText);
+                    buffer.append(", ");
+                    buffer.append(toOffsetText);
+                    buffer.append(')');
+                }
+                buffer.append(");");
+                return buffer.toString();
             }
-            buffer.append(");");
-            return buffer.toString();
         }
 
         private static PsiArrayAccessExpression getArrayAccessExpression(
