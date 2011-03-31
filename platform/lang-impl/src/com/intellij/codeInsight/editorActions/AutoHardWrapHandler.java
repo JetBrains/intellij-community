@@ -150,7 +150,11 @@ public class AutoHardWrapHandler {
       new VisualPosition(caretModel.getVisualPosition().line, margin - FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
     ));
 
-    int wrapOffset = strategy.calculateWrapPosition(document.getCharsSequence(), startOffset, endOffset, maxPreferredOffset, true);
+    int wrapOffset = strategy.calculateWrapPosition(document, startOffset, endOffset, maxPreferredOffset, true);
+    if (wrapOffset < 0) {
+      return;
+    }
+    
     WhiteSpaceFormattingStrategy formattingStrategy = WhiteSpaceFormattingStrategyFactory.getStrategy(editor);
     if (wrapOffset <= startOffset || wrapOffset > maxPreferredOffset
         || formattingStrategy.check(document.getCharsSequence(), startOffset, wrapOffset) >= wrapOffset)

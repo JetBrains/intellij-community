@@ -15,6 +15,11 @@
  */
 package com.intellij.openapi.editor;
 
+import org.jetbrains.annotations.NotNull;
+import org.jmock.Expectations;
+import org.jmock.Mockery;
+import org.jmock.integration.junit4.JUnit4Mockery;
+import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -29,11 +34,16 @@ public class DefaultLineWrapPositionStrategyTest {
   private static final String EDGE_MARKER = "<EDGE>";
   private static final String WRAP_MARKER          = "<WRAP>";
 
+  private Mockery                         myMockery;
   private DefaultLineWrapPositionStrategy myStrategy;
 
   @Before
   public void setUp() {
     myStrategy = new DefaultLineWrapPositionStrategy();
+
+    myMockery = new JUnit4Mockery() {{
+      setImposteriser(ClassImposteriser.INSTANCE);
+    }};
   }
 
   @Test
@@ -65,11 +75,19 @@ public class DefaultLineWrapPositionStrategyTest {
     final Context context = new Context(document);
     context.init();
     int actual = myStrategy.calculateWrapPosition(
-      context.document, 0, context.document.length(), context.edgeIndex, allowToBeyondMaxPreferredOffset
+      createMockDocument(context.document), 0, context.document.length(), context.edgeIndex, allowToBeyondMaxPreferredOffset
     );
     assertSame(context.wrapIndex, actual);
   }
 
+  private Document createMockDocument(@NotNull final String text) {
+    final Document result = myMockery.mock(Document.class);
+    myMockery.checking(new Expectations() {{
+      allowing(result).getCharsSequence(); will(returnValue(text));
+    }});
+    return result;
+  }
+  
   /**
    * Utility class for parsing and initialising test data.
    * <p/>

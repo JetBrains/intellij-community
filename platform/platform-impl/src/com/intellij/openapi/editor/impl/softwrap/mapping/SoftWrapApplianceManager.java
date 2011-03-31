@@ -517,12 +517,10 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
         myLineWrapPositionStrategy = LanguageLineWrapPositionStrategy.INSTANCE.forEditor(myEditor);
       }
 
-      softWrapOffset = myLineWrapPositionStrategy.calculateWrapPosition(
-        document.getCharsSequence(), minOffset, maxOffset, preferredOffset, true
-      );
+      softWrapOffset = myLineWrapPositionStrategy.calculateWrapPosition(document, minOffset, maxOffset, preferredOffset, true);
     }
     
-    if (softWrapOffset >= lineData.endLineOffset) {
+    if (softWrapOffset >= lineData.endLineOffset || softWrapOffset < 0) {
       return null;
     }
 
