@@ -21,9 +21,11 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -133,5 +135,9 @@ public class MoveJavaClassHandler implements MoveClassHandler {
     final PsiFile file = clazz.getContainingFile();
     if (!(file instanceof PsiJavaFile)) return null;
     return ((PsiJavaFile)file).getClasses().length > 1 ? clazz.getName() + "." + StdFileTypes.JAVA.getDefaultExtension() : file.getName();
+  }
+
+  @Override
+  public void preprocessUsages(Collection<UsageInfo> results) {
   }
 }

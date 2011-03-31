@@ -18,9 +18,12 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author Maxim.Medvedev
@@ -43,5 +46,7 @@ public interface MoveClassHandler {
    * @param clazz psiClass
    * @return null, if this instance of FileNameForPsiProvider cannot provide name for clazz
    */
-  String getName(PsiClass clazz); 
+  String getName(PsiClass clazz);
+
+  void preprocessUsages(Collection<UsageInfo> results);
 }
