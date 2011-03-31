@@ -48,8 +48,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final GotoClassModel2 model = new GotoClassModel2(project);
-    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e),
-                                                                  getInitialText(e.getData(PlatformDataKeys.EDITOR)));
+    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e));
     final ChooseByNameFilter filterUI = new ChooseByNameLanguageFilter(popup, model, GotoClassSymbolConfiguration.getInstance(project), project);
 
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
