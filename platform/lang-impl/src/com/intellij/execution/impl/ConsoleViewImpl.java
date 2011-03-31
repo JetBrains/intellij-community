@@ -1317,7 +1317,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private void addFolding(Document document, CharSequence chars, int line, List<FoldRegion> toAdd) {
     String commandLinePlaceholder = myCommandLineFolding.getPlaceholder(line);
     if (commandLinePlaceholder != null) {
-      FoldRegion region = ((FoldingModelEx)myEditor.getFoldingModel()).createFoldRegion(
+      FoldRegion region = myEditor.getFoldingModel().createFoldRegion(
         document.getLineStartOffset(line), document.getLineEndOffset(line), commandLinePlaceholder, null, false
       );
       toAdd.add(region);
