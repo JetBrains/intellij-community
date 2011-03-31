@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.codeStyle;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,7 +38,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class NameUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.codeStyle.NameUtil");
   private static final Function<String,String> LOWERCASE_MAPPING = new Function<String, String>() {
     public String fun(final String s) {
       return s.toLowerCase();
@@ -389,23 +387,26 @@ public class NameUtil {
   }
 
   public static Matcher buildCompletionMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
-    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false, true), exactPrefixLen > 0, !allowToLower && !allowToUpper);
+    MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
+    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false, true), options);
   }
 
   public static Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
-    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower), exactPrefixLen > 0, !allowToLower && !allowToUpper);
+    MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
+    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower), options);
   }
 
   public static Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, boolean lowerCaseWords) {
-    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, lowerCaseWords, false), exactPrefixLen > 0, !allowToLower && !allowToUpper);
+    MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
+    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, lowerCaseWords, false), options);
   }
 
   public static boolean isUseMinusculeHumpMatcher() {
     return Registry.is("minuscule.humps.matching");
   }
 
-  private static Matcher buildMatcher(final String pattern, String regexp, boolean firstLetterMatters, boolean caseMatters) {
-    return isUseMinusculeHumpMatcher() ? new MinusculeMatcher(pattern, firstLetterMatters, caseMatters) : new OptimizedMatcher(pattern, regexp);
+  private static Matcher buildMatcher(final String pattern, String regexp, MatchingCaseSensitivity options) {
+    return isUseMinusculeHumpMatcher() ? new MinusculeMatcher(pattern, options) : new OptimizedMatcher(pattern, regexp);
   }
 
   private static class OptimizedMatcher implements Matcher {
@@ -485,17 +486,16 @@ public class NameUtil {
     }
   }
 
+  public enum MatchingCaseSensitivity {
+    NONE, FIRST_LETTER, ALL
+  }
+
   public static class MinusculeMatcher implements Matcher {
     private final char[] myPattern;
-    private final boolean myFirstLetterCaseMatters;
-    private final boolean myCaseMatters;
+    private final MatchingCaseSensitivity myOptions;
 
-    public MinusculeMatcher(String pattern, boolean firstLetterCaseMatters, boolean caseMatters) {
-      myFirstLetterCaseMatters = firstLetterCaseMatters;
-      myCaseMatters = caseMatters;
-      if (caseMatters) {
-        LOG.assertTrue(firstLetterCaseMatters);
-      }
+    public MinusculeMatcher(String pattern, MatchingCaseSensitivity options) {
+      myOptions = options;
       myPattern = StringUtil.trimEnd(pattern, "* ").replaceAll(":", "\\*:").replaceAll("\\.", "\\*\\.").toCharArray();
     }
 
@@ -514,7 +514,7 @@ public class NameUtil {
         return handleAsterisk(patternIndex, words, wordIndex, insideWord, wordStart);
       }
 
-      if (patternIndex == 0 && myFirstLetterCaseMatters && word.charAt(insideWord) != myPattern[0]) {
+      if (patternIndex == 0 && myOptions != MatchingCaseSensitivity.NONE && word.charAt(insideWord) != myPattern[0]) {
         return null;
       }
 
@@ -523,7 +523,7 @@ public class NameUtil {
         char p = myPattern[patternIndex];
         int nextStart = wordStart + word.length();
         if (isWordSeparator(p)) {
-          if (myFirstLetterCaseMatters &&
+          if (myOptions != MatchingCaseSensitivity.NONE &&
               wordIndex == 0 && words.size() > 1 && patternIndex + 1 < myPattern.length &&
               isWordSeparator(words.get(1).charAt(0)) && !isWordSeparator(myPattern[patternIndex + 1])) {
             return null;
@@ -550,14 +550,14 @@ public class NameUtil {
           break;
         }
         char p = myPattern[patternIndex + i];
-        if (uppers && isWordStart(p) && !myCaseMatters) {
+        if (uppers && isWordStart(p) && myOptions != MatchingCaseSensitivity.ALL) {
           p = StringUtil.toLowerCase(p);
         } else {
           uppers = false;
         }
 
         char w = word.charAt(insideWord + i);
-        if (!myCaseMatters) {
+        if (myOptions != MatchingCaseSensitivity.ALL) {
           w = StringUtil.toLowerCase(w);
         }
         if (w != p) {

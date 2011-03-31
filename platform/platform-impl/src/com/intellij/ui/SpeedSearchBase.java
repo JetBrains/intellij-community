@@ -180,7 +180,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     public Iterable<TextRange> matchingFragments(String pattern, String text) {
       if (myRecentSearchText == null || !myRecentSearchText.equals(pattern)) {
         myRecentSearchText = pattern;
-        myMinusculeMatcher = new NameUtil.MinusculeMatcher(myShouldMatchFromTheBeginning ? pattern : "*" + pattern, false, false);
+        myMinusculeMatcher = new NameUtil.MinusculeMatcher(myShouldMatchFromTheBeginning ? pattern : "*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
       }
       return myMinusculeMatcher.matchingFragments(text);
     }

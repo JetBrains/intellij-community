@@ -249,7 +249,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     final String prefix = myLookup.itemPrefix(item);
     if (prefix.length() > 0) {
-      Iterable<TextRange> ranges = new NameUtil.MinusculeMatcher("*" + prefix, false, false).matchingFragments(name);
+      Iterable<TextRange> ranges = new NameUtil.MinusculeMatcher("*" + prefix, NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(name);
       if (ranges != null) {
         SimpleTextAttributes highlighted =
           new SimpleTextAttributes(style, selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR);
