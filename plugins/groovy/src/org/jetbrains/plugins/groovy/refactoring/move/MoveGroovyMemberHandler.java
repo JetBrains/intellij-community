@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.move;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -87,7 +88,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
     return null;
   }
 
-  private boolean isInMovedElement(PsiElement element, Set<PsiMember> membersToMove) {
+  private static boolean isInMovedElement(PsiElement element, Set<PsiMember> membersToMove) {
     for (PsiMember member : membersToMove) {
       if (PsiTreeUtil.isAncestor(member, element, false)) return true;
     }
@@ -102,7 +103,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
       GrExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier != null) {
         if (usage.qualifierClass != null) {
-          changeQualifier(refExpr, usage.qualifierClass);
+          changeQualifier(refExpr, usage.qualifierClass, usage.member);
         }
         else {
           refExpr.setQualifier(null);
@@ -110,7 +111,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
       }
       else { // no qualifier
         if (usage.qualifierClass != null) {
-          changeQualifier(refExpr, usage.qualifierClass);
+          changeQualifier(refExpr, usage.qualifierClass, usage.member);
         }
       }
       return true;
@@ -189,23 +190,36 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
     GroovyChangeContextUtil.decodeContextInfo(scope, null, null);
   }
 
-  private int findMemberNumber(PsiMember[] members, GrMember member) {
+  private static int findMemberNumber(PsiMember[] members, GrMember member) {
     for (int i = 0; i < members.length; i++) {
       if (members[i].equals(member)) return i;
     }
     return -1;
   }
 
-  private void changeQualifier(GrReferenceExpression refExpr, PsiClass aClass) throws IncorrectOperationException {
+  private static void changeQualifier(GrReferenceExpression refExpr, PsiClass aClass, PsiMember member) throws IncorrectOperationException {
     if (hasOnDemandStaticImport(refExpr, aClass)) {
       refExpr.setQualifier(null);
     }
-    else {
+    else if (!hasStaticImport(refExpr, member)) {
       GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(refExpr.getProject());
 
       refExpr.setQualifier(factory.createReferenceExpressionFromText(aClass.getName()));
       ((GrReferenceExpression)refExpr.getQualifierExpression()).bindToElement(aClass);
     }
+  }
+
+  private static boolean hasStaticImport(GrReferenceExpression refExpr, PsiMember member) {
+    if (!(refExpr.getContainingFile() instanceof GroovyFile)) return false;
+
+    final GrImportStatement[] imports = ((GroovyFile)refExpr.getContainingFile()).getImportStatements();
+    for (GrImportStatement stmt : imports) {
+      if (!stmt.isOnDemand() && stmt.resolveTargetClass() == member.getContainingClass() &&
+          Comparing.strEqual(stmt.getImportReference().getReferenceName(), member.getName())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean hasOnDemandStaticImport(final PsiElement element, final PsiClass aClass) {
