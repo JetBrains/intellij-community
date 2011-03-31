@@ -33,6 +33,7 @@ import com.intellij.ui.FieldPanel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -326,7 +327,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
           final PsiDocTag tag = factory.createDocTagFromText("@" + myTag + " " + myValue);
           if (docComment != null) {
             PsiElement addedTag;
-            final PsiElement anchor = getAnchor();
+            final PsiElement anchor = getAnchor(descriptor);
             if (anchor != null) {
               addedTag = docComment.addBefore(tag, anchor);
             }
@@ -343,7 +344,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
 
     @Nullable
-    protected PsiElement getAnchor() {
+    protected PsiElement getAnchor(ProblemDescriptor descriptor) {
       return null;
     }
 
@@ -742,24 +743,36 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
                                                                    PsiParameter param,
                                                                    final InspectionManager manager, boolean isOnTheFly) {
     String message = InspectionsBundle.message("inspection.javadoc.method.problem.missing.param.tag", "<code>@param</code>", "<code>" + param.getName() + "</code>");
-    return createDescriptor(elementToHighlight, message, new AddMissingParamTagFix(param), manager, isOnTheFly);
+    return createDescriptor(elementToHighlight, message, new AddMissingParamTagFix(param.getName()), manager, isOnTheFly);
   }
 
   private static class AddMissingParamTagFix extends AddMissingTagFix {
-    private final PsiParameter myParam;
+    private final String myName;
 
-    public AddMissingParamTagFix(final PsiParameter param) {
-      super("param", param.getName());
-      myParam = param;
+    public AddMissingParamTagFix(String name) {
+      super("param", name);
+      myName = name;
     }
 
     @NotNull
     public String getName() {
-      return InspectionsBundle.message("inspection.javadoc.problem.add.param.tag", myParam.getName());
+      return InspectionsBundle.message("inspection.javadoc.problem.add.param.tag", myName);
     }
 
     @Nullable
-    protected PsiElement getAnchor() {
+    protected PsiElement getAnchor(ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      PsiElement parent = element == null ? null : element.getParent();
+      if (!(parent instanceof PsiMethod)) return null;
+      PsiParameter[] parameters = ((PsiMethod)parent).getParameterList().getParameters();
+      PsiParameter myParam = ContainerUtil.find(parameters, new Condition<PsiParameter>() {
+        @Override
+        public boolean value(PsiParameter psiParameter) {
+          return myName.equals(psiParameter.getName());
+        }
+      });
+      if (myParam == null) return null;
+
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(myParam, PsiMethod.class);
       LOG.assertTrue(psiMethod != null);
       final PsiDocComment docComment = psiMethod.getDocComment();
@@ -938,12 +951,12 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       if (tagInfo == null) {
         problems.add(
           createDescriptor(nameElement, InspectionsBundle.message("inspection.javadoc.problem.wrong.tag", "<code>" + tagName + "</code>"),
-                           new AddUnknownTagToCustoms(tag), inspectionManager, isOnTheFly));
+                           new AddUnknownTagToCustoms(tag.getName()), inspectionManager, isOnTheFly));
       }
       else {
         problems.add(createDescriptor(nameElement, InspectionsBundle.message("inspection.javadoc.problem.disallowed.tag",
                                                                              "<code>" + tagName + "</code>"),
-                                      new AddUnknownTagToCustoms(tag), inspectionManager, isOnTheFly));
+                                      new AddUnknownTagToCustoms(tag.getName()), inspectionManager, isOnTheFly));
       }
     }
     return false;
@@ -1129,15 +1142,15 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   }
 
   private class AddUnknownTagToCustoms implements LocalQuickFix {
-    PsiDocTag myTag;
+    private final String myTag;
 
-    public AddUnknownTagToCustoms(PsiDocTag tag) {
+    public AddUnknownTagToCustoms(String tag) {
       myTag = tag;
     }
 
     @NotNull
     public String getName() {
-      return QuickFixBundle.message("add.doctag.to.custom.tags", myTag.getName());
+      return QuickFixBundle.message("add.doctag.to.custom.tags", myTag);
     }
 
     @NotNull
@@ -1146,12 +1159,12 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
    }
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (myTag == null || !myTag.isValid()) return;
+      if (myTag == null) return;
       if (myAdditionalJavadocTags.length() > 0) {
-        myAdditionalJavadocTags += "," + myTag.getName();
+        myAdditionalJavadocTags += "," + myTag;
       }
       else {
-        myAdditionalJavadocTags = myTag.getName();
+        myAdditionalJavadocTags = myTag;
       }
       final InspectionProfile inspectionProfile =
         InspectionProjectProfileManager.getInstance(project).getInspectionProfile();

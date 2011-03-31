@@ -25,21 +25,22 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.actions.TypeCookAction;
 import org.jetbrains.annotations.NotNull;
 
 public class GenerifyFileFix implements IntentionAction, LocalQuickFix {
-  private final PsiFile myFile;
+  private final String myFileName;
 
-  public GenerifyFileFix(PsiFile file) {
-    myFile = file;
+  public GenerifyFileFix(String fileName) {
+    myFileName = fileName;
   }
 
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("generify.text", myFile.getName());
+    return QuickFixBundle.message("generify.text", myFileName);
   }
 
   @NotNull
@@ -55,21 +56,23 @@ public class GenerifyFileFix implements IntentionAction, LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    if (isAvailable(project, null, null)) {
+    final PsiElement element = descriptor.getPsiElement();
+    if (element == null) return;
+    if (isAvailable(project, null, element.getContainingFile())) {
       new WriteCommandAction(project) {
         protected void run(Result result) throws Throwable {
-          invoke(project, FileEditorManager.getInstance(project).getSelectedTextEditor(), descriptor.getPsiElement().getContainingFile());
+          invoke(project, FileEditorManager.getInstance(project).getSelectedTextEditor(), element.getContainingFile());
         }
       }.execute();
     }
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myFile.isValid() && PsiManager.getInstance(project).isInProject(myFile);
+    return file != null && file.isValid() && PsiManager.getInstance(project).isInProject(file);
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(myFile)) return;
+    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     new TypeCookAction().getHandler().invoke(project, editor, file, null);
   }
 
