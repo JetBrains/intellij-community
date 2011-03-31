@@ -537,12 +537,12 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   }
 
   protected void checkBelongsToTheTree(T interval, boolean assertInvalid) {
-    if (!VERIFY) return;
     IntervalNode root = lookupNode(interval);
     if (root == null) return;
     assert !root.intervals.isEmpty();
 
-    assert root.getTree() == this;
+    assert root.getTree() == this : root.getTree() +"; this: "+this;
+    if (!VERIFY) return;
     boolean contains = false;
     for (int i = root.intervals.size() - 1; i >= 0; i--) {
       T key = root.intervals.get(i).get();
