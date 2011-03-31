@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
+import com.intellij.util.TripleFunction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,26 +85,45 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
   }
 
   public void addProblemDescriptors(List<ProblemDescriptor> descriptors, final boolean filterSuppressed) {
+    addProblemDescriptors(descriptors, filterSuppressed, getContext(), myTool, CONVERT, this);
+  }
+  private static final TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext,RefElement> CONVERT = new TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext,RefElement>() {
+    @Override
+    public RefElement fun(LocalInspectionTool tool, PsiElement elt, GlobalInspectionContext context) {
+      final PsiNamedElement problemElement = tool.getProblemElement(elt);
+
+      RefElement refElement = context.getRefManager().getReference(problemElement);
+      if (refElement == null && problemElement != null) {  // no need to lose collected results
+        refElement = GlobalInspectionUtil.retrieveRefElement(elt, context);
+      }
+      return refElement;
+    }
+  };
+
+  public static void addProblemDescriptors(List<ProblemDescriptor> descriptors,
+                                           boolean filterSuppressed,
+                                           @NotNull GlobalInspectionContextImpl context,
+                                           LocalInspectionTool tool,
+                                           @NotNull TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext, RefElement> getProblemElementFunction,
+                                           @NotNull DescriptorProviderInspection dpi) {
     if (descriptors == null || descriptors.isEmpty()) return;
 
     Map<RefElement, List<ProblemDescriptor>> problems = new HashMap<RefElement, List<ProblemDescriptor>>();
-    final RefManagerImpl refManager = (RefManagerImpl)getContext().getRefManager();
+    final RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
     for (ProblemDescriptor descriptor : descriptors) {
       final PsiElement elt = descriptor.getPsiElement();
       if (elt == null) continue;
       if (filterSuppressed) {
-        if (refManager.isDeclarationsFound() && (getContext().isSuppressed(elt, myTool.getID()) || getContext().isSuppressed(elt, myTool.getAlternativeID()))) {
+        if (refManager.isDeclarationsFound()
+            && (context.isSuppressed(elt, tool.getID()) || tool.getAlternativeID() != null && context.isSuppressed(elt, tool.getAlternativeID()))) {
           continue;
         }
-        if (InspectionManagerEx.inspectionResultSuppressed(elt, myTool)) continue;
+        if (InspectionManagerEx.inspectionResultSuppressed(elt, tool)) continue;
       }
 
-      final PsiNamedElement problemElement =  myTool.getProblemElement(elt);
 
-      RefElement refElement = refManager.getReference(problemElement);
-      if (refElement == null && problemElement != null) {  // no need to loose collected results
-        refElement = GlobalInspectionUtil.retrieveRefElement(elt, getContext());
-      }
+      RefElement refElement = getProblemElementFunction.fun(tool, elt, context);
+
       List<ProblemDescriptor> elementProblems = problems.get(refElement);
       if (elementProblems == null) {
         elementProblems = new ArrayList<ProblemDescriptor>();
@@ -114,13 +134,13 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
 
     for (Map.Entry<RefElement, List<ProblemDescriptor>> entry : problems.entrySet()) {
       final List<ProblemDescriptor> problemDescriptors = entry.getValue();
-      addProblemElement(entry.getKey(),
-                        filterSuppressed,
-                        problemDescriptors.toArray(new CommonProblemDescriptor[problemDescriptors.size()]));
+      dpi.addProblemElement(entry.getKey(),
+                            filterSuppressed,
+                            problemDescriptors.toArray(new CommonProblemDescriptor[problemDescriptors.size()]));
     }
   }
 
-  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
+  public void runInspection(@NotNull AnalysisScope scope, @NotNull final InspectionManager manager) {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
     scope.accept(new PsiRecursiveElementVisitor() {
       @Override public void visitFile(PsiFile file) {

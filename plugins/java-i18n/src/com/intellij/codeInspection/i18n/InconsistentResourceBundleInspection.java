@@ -15,11 +15,9 @@
  */
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.DescriptorProviderInspection;
-import com.intellij.codeInspection.ex.JobDescriptor;
+import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.RemovePropertyLocalFix;
@@ -28,7 +26,6 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.util.containers.BidirectionalMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -45,7 +42,7 @@ import java.util.Set;
 /**
  * @author max
  */
-public class InconsistentResourceBundleInspection extends DescriptorProviderInspection {
+public class InconsistentResourceBundleInspection extends GlobalSimpleInspectionTool {
   private JCheckBox myReportMissingTranslationsCheckBox;
   private JCheckBox myReportInconsistentPropertiesCheckBox;
   private JPanel myOptionsPanel;
@@ -88,10 +85,6 @@ public class InconsistentResourceBundleInspection extends DescriptorProviderInsp
     return HighlightDisplayLevel.ERROR;
   }
 
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   @Nullable
   public JComponent createOptionsPanel() {
     myReportInconsistentPropertiesCheckBox.setSelected(REPORT_INCONSISTENT_PROPERTIES);
@@ -101,21 +94,19 @@ public class InconsistentResourceBundleInspection extends DescriptorProviderInsp
   }
 
 
-  public void runInspection(@NotNull AnalysisScope scope, @NotNull final InspectionManager manager) {
-    final Set<ResourceBundle> visitedBundles = new THashSet<ResourceBundle>();
-    scope.accept(new PsiRecursiveElementVisitor() {
-      @Override public void visitFile(PsiFile file) {
-        checkFile(file, manager, visitedBundles);
-      }
-    });
+  @Override
+  public void checkFile(@NotNull PsiFile file,
+                        @NotNull InspectionManager manager,
+                        @NotNull ProblemsHolder problemsHolder,
+                        @NotNull GlobalInspectionContext globalContext,
+                        @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    checkFile(file, manager, new THashSet<ResourceBundle>(), globalContext.getRefManager(), problemDescriptionsProcessor);
   }
 
-  @NotNull
-  public JobDescriptor[] getJobDescriptors() {
-    return JobDescriptor.EMPTY_ARRAY;
-  }
-
-  private void checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, final Set<ResourceBundle> visitedBundles) {
+  private void checkFile(@NotNull final PsiFile file,
+                         @NotNull final InspectionManager manager,
+                         final Set<ResourceBundle> visitedBundles,
+                         RefManager refManager, ProblemDescriptionsProcessor processor) {
     if (!(file instanceof PropertiesFile)) return;
     final PropertiesFile propertiesFile = (PropertiesFile)file;
     ResourceBundle resourceBundle = propertiesFile.getResourceBundle();
@@ -140,18 +131,22 @@ public class InconsistentResourceBundleInspection extends DescriptorProviderInsp
       keysUpToParent.put(f, keys);
     }
     if (REPORT_MISSING_TRANSLATIONS) {
-      checkMissingTranslations(parents, files, keysUpToParent, manager);
+      checkMissingTranslations(parents, files, keysUpToParent, manager, refManager, processor);
     }
     if (REPORT_INCONSISTENT_PROPERTIES) {
-      checkConsistency(parents, files, keysUpToParent, manager);
+      checkConsistency(parents, files, keysUpToParent, manager, refManager, processor);
     }
     if (REPORT_DUPLICATED_PROPERTIES) {
-      checkDuplicatedProperties(parents, files, keysUpToParent, manager);
+      checkDuplicatedProperties(parents, files, keysUpToParent, manager, refManager, processor);
     }
   }
 
-  private void checkDuplicatedProperties(final BidirectionalMap<PropertiesFile, PropertiesFile> parents, final List<PropertiesFile> files,
-                                         final Map<PropertiesFile, Set<String>> keysUpToParent, final InspectionManager manager) {
+  private static void checkDuplicatedProperties(final BidirectionalMap<PropertiesFile, PropertiesFile> parents,
+                                                final List<PropertiesFile> files,
+                                                final Map<PropertiesFile, Set<String>> keysUpToParent,
+                                                final InspectionManager manager,
+                                                RefManager refManager,
+                                                ProblemDescriptionsProcessor processor) {
     for (PropertiesFile file : files) {
       PropertiesFile parent = parents.get(file);
       if (parent == null) continue;
@@ -168,7 +163,7 @@ public class InconsistentResourceBundleInspection extends DescriptorProviderInsp
             ProblemDescriptor descriptor = manager.createProblemDescriptor(property, message,
                                                                            RemovePropertyLocalFix.INSTANCE,
                                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
-            addProblemElement(getRefManager().getReference(file), descriptor);
+            processor.addProblemElement(refManager.getReference(file), descriptor);
           }
           parent = parents.get(parent);
         }
@@ -176,8 +171,10 @@ public class InconsistentResourceBundleInspection extends DescriptorProviderInsp
     }
   }
 
-  private void checkConsistency(final BidirectionalMap<PropertiesFile, PropertiesFile> parents, final List<PropertiesFile> files,
-                                final Map<PropertiesFile, Set<String>> keysUpToParent, final InspectionManager manager) {
+  private static void checkConsistency(final BidirectionalMap<PropertiesFile, PropertiesFile> parents, final List<PropertiesFile> files,
+                                       final Map<PropertiesFile, Set<String>> keysUpToParent,
+                                       final InspectionManager manager,
+                                       RefManager refManager, ProblemDescriptionsProcessor processor) {
     for (PropertiesFile file : files) {
       PropertiesFile parent = parents.get(file);
       Set<String> parentKeys = keysUpToParent.get(parent);
@@ -199,13 +196,17 @@ public class InconsistentResourceBundleInspection extends DescriptorProviderInsp
         String message = InspectionsBundle.message("inconsistent.bundle.property.error", inconsistentKey, parent.getName());
         ProblemDescriptor descriptor = manager.createProblemDescriptor(property, message, false, LocalQuickFix.EMPTY_ARRAY,
                                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-        addProblemElement(getRefManager().getReference(file), descriptor);
+        processor.addProblemElement(refManager.getReference(file), descriptor);
       }
     }
   }
 
-  private void checkMissingTranslations(final BidirectionalMap<PropertiesFile, PropertiesFile> parents, final List<PropertiesFile> files,
-                                        final Map<PropertiesFile, Set<String>> keysUpToParent, final InspectionManager manager) {
+  private static void checkMissingTranslations(final BidirectionalMap<PropertiesFile, PropertiesFile> parents,
+                                               final List<PropertiesFile> files,
+                                               final Map<PropertiesFile, Set<String>> keysUpToParent,
+                                               final InspectionManager manager,
+                                               RefManager refManager,
+                                               ProblemDescriptionsProcessor processor) {
     for (PropertiesFile file : files) {
       PropertiesFile parent = parents.get(file);
       if (parent == null) continue;
@@ -235,7 +236,7 @@ public class InconsistentResourceBundleInspection extends DescriptorProviderInsp
         String message = InspectionsBundle.message("inconsistent.bundle.untranslated.property.error", untranslatedKey, file.getName());
         ProblemDescriptor descriptor = manager.createProblemDescriptor(untranslatedProperty, message, false, LocalQuickFix.EMPTY_ARRAY,
                                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-        addProblemElement(getRefManager().getReference(untranslatedFile), descriptor);
+        processor.addProblemElement(refManager.getReference(untranslatedFile), descriptor);
       }
     }
   }

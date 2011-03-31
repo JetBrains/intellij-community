@@ -193,7 +193,7 @@ public class InspectionApplication {
             if (myErrorCodeRequired) System.exit(1);
             return;
           }
-          inspectionContext.launchInspectionsOffline(scope, myOutPath, myRunWithEditorSettings, myRunGlobalToolsOnly, im);
+          inspectionContext.launchInspectionsOffline(scope, myOutPath, myRunGlobalToolsOnly, im);
           logMessageLn(1, "\n" +
                           InspectionsBundle.message("inspection.capitalized.done") +
                           "\n");
@@ -238,7 +238,8 @@ public class InspectionApplication {
           logMessageLn(2, text);
         }
       });
-      describeInspections(myOutPath + File.separatorChar + DESCRIPTIONS + XML_EXTENSION, !myRunWithEditorSettings ? inspectionProfile.getName() : null);
+      describeInspections(myOutPath + File.separatorChar + DESCRIPTIONS + XML_EXTENSION,
+                          myRunWithEditorSettings ? null : inspectionProfile.getName());
     }
     catch (IOException e) {
       LOG.error(e);

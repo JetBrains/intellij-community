@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
@@ -34,14 +33,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class XmlHighlightVisitorBasedInspection extends GlobalInspectionTool {
+public class XmlHighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
   private static final JobDescriptor XML_HIGHLIGHTER =
     new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor2"));
-
-  @Override
-  public boolean isGraphNeeded() {
-    return false;
-  }
 
   @NotNull
   @Override
@@ -55,12 +49,13 @@ public class XmlHighlightVisitorBasedInspection extends GlobalInspectionTool {
   }
 
   @Override
-  public void runInspection(AnalysisScope scope,
-                            final InspectionManager manager,
-                            final GlobalInspectionContext globalContext,
-                            final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    XML_HIGHLIGHTER.setTotalAmount(scope.getFileCount());
-    scope.accept(new XmlRecursiveElementVisitor() {
+  public void checkFile(@NotNull PsiFile file,
+                        @NotNull final InspectionManager manager,
+                        @NotNull ProblemsHolder problemsHolder,
+                        @NotNull final GlobalInspectionContext globalContext,
+                        @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    //XML_HIGHLIGHTER.setTotalAmount(scope.getFileCount());
+    file.accept(new XmlRecursiveElementVisitor() {
       final XmlHighlightVisitor highlightVisitor = new XmlHighlightVisitor();
 
       HighlightInfoHolder myHolder;

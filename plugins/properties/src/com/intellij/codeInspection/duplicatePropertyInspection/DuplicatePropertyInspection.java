@@ -15,13 +15,10 @@
  */
 package com.intellij.codeInspection.duplicatePropertyInspection;
 
-import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.DescriptorComposer;
-import com.intellij.codeInspection.ex.DescriptorProviderInspection;
-import com.intellij.codeInspection.ex.HTMLComposerImpl;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.JobDescriptor;
-import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.concurrency.JobUtil;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -40,7 +37,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.impl.search.LowLevelSearchUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -49,7 +45,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -59,7 +54,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
-public class DuplicatePropertyInspection extends DescriptorProviderInspection {
+public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.DuplicatePropertyInspection");
 
   public boolean CURRENT_FILE = true;
@@ -69,25 +64,24 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
   public boolean CHECK_DUPLICATE_KEYS = true;
   public boolean CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES = true;
 
-
-  public void runInspection(@NotNull AnalysisScope scope, @NotNull final InspectionManager manager) {
-    scope.accept(new PsiRecursiveElementVisitor() {
-      @Override
-      public void visitFile(PsiFile file) {
-        checkFile(file, manager);
-      }
-    });
+  @Override
+  public void checkFile(@NotNull PsiFile file,
+                        @NotNull InspectionManager manager,
+                        @NotNull ProblemsHolder problemsHolder,
+                        @NotNull GlobalInspectionContext globalContext,
+                        @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    checkFile(file, manager, (GlobalInspectionContextImpl)globalContext, globalContext.getRefManager(), problemDescriptionsProcessor);
   }
 
-  public HTMLComposerImpl getComposer() {
-    return new DescriptorComposer(this) {
-      protected void composeDescription(final CommonProblemDescriptor description, int i, StringBuffer buf, final RefEntity refElement) {
-        @NonNls String descriptionTemplate = description.getDescriptionTemplate();
-        descriptionTemplate = descriptionTemplate.replaceAll("#end", " ");
-        buf.append(descriptionTemplate);
-      }
-    };
-  }
+  //public HTMLComposerImpl getComposer() {
+  //  return new DescriptorComposer(this) {
+  //    protected void composeDescription(final CommonProblemDescriptor description, int i, StringBuffer buf, final RefEntity refElement) {
+  //      @NonNls String descriptionTemplate = description.getDescriptionTemplate();
+  //      descriptionTemplate = descriptionTemplate.replaceAll("#end", " ");
+  //      buf.append(descriptionTemplate);
+  //    }
+  //  };
+  //}
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static void surroundWithHref(StringBuffer anchor, PsiElement element, final boolean isValue) {
@@ -154,9 +148,9 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
     return JobDescriptor.EMPTY_ARRAY;
   }
 
-  private void checkFile(final PsiFile file, final InspectionManager manager) {
+  private void checkFile(final PsiFile file, final InspectionManager manager, GlobalInspectionContextImpl context, final RefManager refManager, final ProblemDescriptionsProcessor processor) {
     if (!(file instanceof PropertiesFile)) return;
-    if (!getContext().isToCheckMember(file, this)) return;
+    if (!context.isToCheckMember(file, this)) return;
     final PsiSearchHelper searchHelper = file.getManager().getSearchHelper();
     final PropertiesFile propertiesFile = (PropertiesFile)file;
     final List<Property> properties = propertiesFile.getProperties();
@@ -195,8 +189,8 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
           processDuplicateKeysWithDifferentValues(keyToDifferentValues, processedKeyToFiles, problemDescriptors, manager, file, original);
         }
         if (!problemDescriptors.isEmpty()) {
-          addProblemElement(getRefManager().getReference(file),
-                            problemDescriptors.toArray(new ProblemDescriptor[problemDescriptors.size()]));
+          processor.addProblemElement(refManager.getReference(file),
+                                      problemDescriptors.toArray(new ProblemDescriptor[problemDescriptors.size()]));
         }
       }
     }, progress);

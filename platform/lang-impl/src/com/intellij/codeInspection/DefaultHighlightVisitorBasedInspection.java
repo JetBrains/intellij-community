@@ -16,7 +16,6 @@
 
 package com.intellij.codeInspection;
 
-import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
@@ -35,7 +34,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class DefaultHighlightVisitorBasedInspection extends GlobalInspectionTool {
+public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
   private static final JobDescriptor ANNOTATOR = new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor2"));
   private final boolean highlightErrorElements;
   private final boolean runAnnotators;
@@ -82,11 +81,6 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalInspe
   }
 
   @Override
-  public boolean isGraphNeeded() {
-    return false;
-  }
-
-  @Override
   public JobDescriptor[] getAdditionalJobs() {
     return new JobDescriptor[]{ANNOTATOR};
   }
@@ -98,13 +92,13 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalInspe
   }
 
   @Override
-  public void runInspection(AnalysisScope scope,
-                            InspectionManager manager,
-                            GlobalInspectionContext globalContext,
-                            ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    ANNOTATOR.setTotalAmount(scope.getFileCount());
+  public void checkFile(@NotNull PsiFile file,
+                        @NotNull InspectionManager manager,
+                        @NotNull ProblemsHolder problemsHolder,
+                        @NotNull GlobalInspectionContext globalContext,
+                        @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     PsiElementVisitor visitor = new MyPsiElementVisitor(manager, globalContext, problemDescriptionsProcessor, highlightErrorElements,runAnnotators);
-    scope.accept(visitor);
+    file.accept(visitor);
   }
 
   @Nls
