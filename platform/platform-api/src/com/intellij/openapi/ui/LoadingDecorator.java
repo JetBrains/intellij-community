@@ -75,7 +75,7 @@ public class LoadingDecorator {
   }
 
   public void startLoading(final boolean takeSnapshot) {
-    if (isLoading() || myStartRequest) return;
+    if (isLoading() || myStartRequest || myStartAlarm.isDisposed()) return;
 
     myStartRequest = true;
     if (myDelay > 0) {
