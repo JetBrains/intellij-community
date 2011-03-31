@@ -99,9 +99,13 @@ public class PythonReferenceImporter implements ReferenceImporter {
     List<PsiElement> symbols = new ArrayList<PsiElement>();
     symbols.addAll(PyClassNameIndex.find(ref_text, project, true));
     GlobalSearchScope scope = PyClassNameIndex.projectWithLibrariesScope(project);
-    symbols.addAll(PyFunctionNameIndex.find(ref_text, project, scope));
+    if (!isQualifier(node)) {
+      symbols.addAll(PyFunctionNameIndex.find(ref_text, project, scope));
+    }
     symbols.addAll(PyVariableNameIndex.find(ref_text, project, scope));
-    symbols.addAll(findImportableModules(node.getContainingFile(), ref_text, project, scope));
+    if (!isCall(node)) {
+      symbols.addAll(findImportableModules(node.getContainingFile(), ref_text, project, scope));
+    }
     if (symbols.size() > 0) {
       for (PsiElement symbol : symbols) {
         if (isTopLevel(symbol)) { // we only want top-level symbols
@@ -122,6 +126,20 @@ public class PythonReferenceImporter implements ReferenceImporter {
       return fix;
     }
     return null;
+  }
+
+  private static boolean isQualifier(PyElement node) {
+    if (node.getParent() instanceof PyReferenceExpression) {
+      return node == ((PyReferenceExpression) node.getParent()).getQualifier();
+    }
+    return false;
+  }
+
+  private static boolean isCall(PyElement node) {
+    if (node.getParent() instanceof PyCallExpression) {
+      return node == ((PyCallExpression) node.getParent()).getCallee();
+    }
+    return false;
   }
 
   private static Collection<PsiElement> findImportableModules(PsiFile targetFile, String reftext, Project project, GlobalSearchScope scope) {
