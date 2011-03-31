@@ -16,6 +16,7 @@
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Processor;
@@ -28,7 +29,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 
 /**
  * User: spLeaner
@@ -43,23 +43,12 @@ public final class SpeedSearchUtil {
                                                    @NotNull final SimpleColoredComponent simpleColoredComponent) {
     final SpeedSearchSupply speedSearch = SpeedSearchSupply.getSupply(speedSearchEnabledComponent);
     if (speedSearch != null) {
-      final Matcher matcher = speedSearch.compareAndGetMatcher(text);
-      if (matcher != null) {
+      final Iterable<TextRange> fragments = speedSearch.matchingFragments(text);
+      if (fragments != null) {
         final List<Pair<String, Integer>> searchTerms = new ArrayList<Pair<String, Integer>>();
-        for (int i = 0; i < matcher.groupCount(); i++) {
-          final int start = matcher.start(i + 1);
-          if (searchTerms.size() > 0) {
-            final Pair<String, Integer> recent = searchTerms.get(searchTerms.size() - 1);
-            if (start == recent.second + recent.first.length()) {
-              searchTerms.set(searchTerms.size() - 1, Pair.create(recent.first + matcher.group(i + 1), recent.second));
-              continue;
-            }
-          }
-
-          final String group = matcher.group(i + 1);
-          if (group != null) searchTerms.add(Pair.create(group, start));
+        for (TextRange fragment : fragments) {
+          searchTerms.add(Pair.create(fragment.substring(text), fragment.getStartOffset()));
         }
-
         appendFragmentsStrict(text, searchTerms, attributes.getStyle(), attributes.getFgColor(),
                               selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground(), simpleColoredComponent);
       }

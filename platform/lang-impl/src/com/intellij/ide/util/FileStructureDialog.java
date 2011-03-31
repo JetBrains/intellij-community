@@ -423,7 +423,7 @@ public class FileStructureDialog extends DialogWrapper {
             if (name == null) {
               continue;
             }
-            if (!speedSearchComparator.doCompare(enteredPrefix, name)) {
+            if (speedSearchComparator.matchingFragments(enteredPrefix, name) == null) {
               continue;
             }
           }

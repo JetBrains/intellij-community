@@ -16,11 +16,13 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FList;
 import com.intellij.util.text.StringTokenizer;
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
@@ -28,10 +30,12 @@ import org.apache.oro.text.regex.Perl5Compiler;
 import org.apache.oro.text.regex.Perl5Matcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class NameUtil {
@@ -495,42 +499,44 @@ public class NameUtil {
       myPattern = StringUtil.trimEnd(pattern, "* ").replaceAll(":", "\\*:").replaceAll("\\.", "\\*\\.").toCharArray();
     }
 
-    private boolean matches(int patternIndex, List<String> words, int wordIndex) {
+    @Nullable
+    private FList<TextRange> matchName(int patternIndex, List<String> words, int wordIndex, int wordStart) {
       if (patternIndex == myPattern.length) {
-        return true;
+        return FList.emptyList();
       }
       if (wordIndex == words.size()) {
-        return false;
+        return null;
       }
 
       String word = words.get(wordIndex);
 
       if ('*' == myPattern[patternIndex]) {
-        return handleAsterisk(patternIndex, words, wordIndex);
+        return handleAsterisk(patternIndex, words, wordIndex, wordStart);
       }
 
       if (patternIndex == 0 && myFirstLetterCaseMatters && word.charAt(0) != myPattern[0]) {
-        return false;
+        return null;
       }
 
       if (isWordSeparator(word.charAt(0))) {
         assert word.length() == 1 : "'" + word + "'";
         char p = myPattern[patternIndex];
+        int nextStart = wordStart + word.length();
         if (isWordSeparator(p)) {
           if (myFirstLetterCaseMatters &&
               wordIndex == 0 && words.size() > 1 && patternIndex + 1 < myPattern.length &&
               isWordSeparator(words.get(1).charAt(0)) && !isWordSeparator(myPattern[patternIndex + 1])) {
-            return false;
+            return null;
           }
 
-          return matches(patternIndex + 1, words, wordIndex + 1);
+          return matchName(patternIndex + 1, words, wordIndex + 1, nextStart);
         }
 
-        return matches(patternIndex, words, wordIndex + 1);
+        return matchName(patternIndex, words, wordIndex + 1, nextStart);
       }
 
       if (StringUtil.toLowerCase(word.charAt(0)) != StringUtil.toLowerCase(myPattern[patternIndex])) {
-        return false;
+        return null;
       }
 
       boolean uppers = isWordStart(myPattern[patternIndex]);
@@ -538,7 +544,7 @@ public class NameUtil {
       int i = 1;
       while (true) {
         if (patternIndex + i == myPattern.length) {
-          return true;
+          return FList.<TextRange>emptyList().prepend(TextRange.from(wordStart, i));
         }
         if (i == word.length()) {
           break;
@@ -561,26 +567,30 @@ public class NameUtil {
       }
       // there's more in the pattern, but no more words
       if (wordIndex == words.size() - 1) {
-        if (patternIndex + i == myPattern.length - 1 && ' ' == myPattern[patternIndex + i]) {
-          return i == word.length();
+        if (patternIndex + i == myPattern.length - 1 && ' ' == myPattern[patternIndex + i] && i == word.length()) {
+          return FList.<TextRange>emptyList().prepend(TextRange.from(wordStart, i));
         }
 
-        return false;
+        return null;
       }
+
+      int nextWord = wordStart + word.length();
       while (i > 0) {
-        if (matches(patternIndex + i, words, wordIndex + 1)) {
-          return true;
+        FList<TextRange> ranges = matchName(patternIndex + i, words, wordIndex + 1, nextWord);
+        if (ranges != null) {
+          return ranges.prepend(TextRange.from(wordStart, i));
         }
         i--;
       }
-      return false;
+      return null;
     }
 
-    private boolean handleAsterisk(int patternIndex, List<String> words, int wordIndex) {
+    @Nullable
+    private FList<TextRange> handleAsterisk(int patternIndex, List<String> words, int wordIndex, int wordStart) {
       while ('*' == myPattern[patternIndex]) {
         patternIndex++;
         if (patternIndex == myPattern.length) {
-          return true;
+          return FList.emptyList();
         }
       }
 
@@ -597,13 +607,14 @@ public class NameUtil {
           List<String> newWords = new ArrayList<String>();
           newWords.add(s.substring(next));
           newWords.addAll(words.subList(i + 1, words.size()));
-          if (matches(patternIndex, newWords, 0)) {
-            return true;
+          FList<TextRange> ranges = matchName(patternIndex, newWords, 0, wordStart + next);
+          if (ranges != null) {
+            return ranges;
           }
           fromIndex = next + 1;
         }
       }
-      return false;
+      return null;
     }
 
     private static boolean isWordSeparator(char c) {
@@ -612,6 +623,11 @@ public class NameUtil {
 
     @Override
     public boolean matches(String name) {
+      return matchingFragments(name) != null;
+    }
+
+    @Nullable
+    public Iterable<TextRange> matchingFragments(String name) {
       StringTokenizer tokenizer = new StringTokenizer(name, " -_.:/", true);
       List<String> words = new ArrayList<String>();
       while (tokenizer.hasMoreTokens()) {
@@ -620,10 +636,10 @@ public class NameUtil {
       }
 
       if (words.isEmpty()) {
-        return myPattern.length == 0;
+        return myPattern.length == 0 ? Collections.<TextRange>emptyList() : null;
       }
 
-      return matches(0, words, 0);
+      return matchName(0, words, 0, 0);
     }
   }
 }
