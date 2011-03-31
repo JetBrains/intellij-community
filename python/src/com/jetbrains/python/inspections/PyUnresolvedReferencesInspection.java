@@ -318,8 +318,16 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           }
 
           if (ref_text.length() > 2 && Character.isUpperCase(ref_text.charAt(0)) && !Character.isUpperCase(ref_text.charAt(1)) &&
-              PsiTreeUtil.getParentOfType(ref_element, PyImportStatement.class, PyFromImportStatement.class) == null) {
-            actions.add(new CreateClassQuickFix(ref_text, reference.getElement()));
+              PsiTreeUtil.getParentOfType(ref_element, PyImportStatementBase.class) == null) {
+            PsiElement anchor = reference.getElement();
+            final PyExpression qexpr = ((PyQualifiedExpression)reference.getElement()).getQualifier();
+            if (qexpr != null) {
+              final PyType type = myTypeEvalContext.getType(qexpr);
+              if (type instanceof PyModuleType) {
+                anchor = ((PyModuleType) type).getModule();
+              }
+            }
+            actions.add(new CreateClassQuickFix(ref_text, anchor));
           }
         }
       }
