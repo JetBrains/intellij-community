@@ -543,6 +543,10 @@ public class NameUtil {
       while (i > 0) {
         FList<TextRange> ranges = matchName(name, patternIndex + i, nextStart);
         if (ranges != null) {
+          TextRange head = ranges.getHead();
+          if (head != null && head.getStartOffset() == nameIndex + i) {
+            return ranges.getTail().prepend(new TextRange(nameIndex, head.getEndOffset()));
+          }
           return ranges.prepend(TextRange.from(nameIndex, i));
         }
         i--;
