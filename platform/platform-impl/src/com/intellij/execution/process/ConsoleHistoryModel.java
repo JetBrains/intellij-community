@@ -1,5 +1,6 @@
 package com.intellij.execution.process;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.ModificationTracker;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,22 +13,24 @@ import java.util.List;
  */
 public class ConsoleHistoryModel implements ModificationTracker {
 
-  public static final int DEFAULT_MAX_SIZE = 20;
-
   private int myHistoryCursor;
-  private int myMaxHistorySize = DEFAULT_MAX_SIZE;
   private final LinkedList<String> myHistory = new LinkedList<String>();
   private volatile long myModificationTracker;
 
 
   public void addToHistory(final String statement) {
+    final int maxHistorySize = getMaxHistorySize();
     synchronized (myHistory) {
       removeFromHistory(statement);
-      if (myHistory.size() >= myMaxHistorySize) {
+      if (myHistory.size() >= maxHistorySize) {
         myHistory.removeLast();
       }
       myHistory.addFirst(statement);
     }
+  }
+
+  public int getMaxHistorySize() {
+    return UISettings.getInstance().CONSOLE_COMMAND_HISTORY_LIMIT;
   }
 
   public void removeFromHistory(final String statement) {
@@ -44,21 +47,9 @@ public class ConsoleHistoryModel implements ModificationTracker {
     }
   }
 
-  public int getMaxHistorySize() {
-    synchronized (myHistory) {
-      return myMaxHistorySize;
-    }
-  }
-
   public int getHistorySize() {
     synchronized (myHistory) {
       return myHistory.size();
-    }
-  }
-
-  public void setMaxHistorySize(final int maxHistorySize) {
-    synchronized (myHistory) {
-      myMaxHistorySize = maxHistorySize;
     }
   }
 
