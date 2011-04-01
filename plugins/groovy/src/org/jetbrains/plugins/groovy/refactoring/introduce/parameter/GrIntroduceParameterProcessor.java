@@ -56,7 +56,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -353,7 +352,9 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     for (GrParameter parameter : parameters) {
       call.append(parameter.getName()).append(", ");
     }
-    call.delete(call.length() - 2, call.length());
+    if (parameters.length > 0) {
+      call.delete(call.length() - 2, call.length());
+    }
     call.append(myParameterInitializer.getText());
     call.append(");\n}");
     final GrOpenBlock block = factory.createMethodFromText(call.toString()).getBlock();

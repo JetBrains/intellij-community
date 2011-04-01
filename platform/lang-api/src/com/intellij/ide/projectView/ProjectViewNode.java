@@ -133,6 +133,11 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
         mayContain = true;
         break;
       }
+
+      if (VfsUtil.isAncestor(eachRoot, file, true)) {
+        mayContain = true;
+        break;
+      }
     }
 
     if (!mayContain) {

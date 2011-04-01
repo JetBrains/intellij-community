@@ -306,8 +306,12 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
    */
   public boolean addSubtreeToUpdateByElement(Object element, boolean forceResort) {
     DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(element);
-    myTreeBuilder.queueUpdateFrom(element, forceResort);
-    return node != null;
+    if (node != null) {
+      myTreeBuilder.queueUpdateFrom(element, forceResort);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   public void cancelAllRequests() {

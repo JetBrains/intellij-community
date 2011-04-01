@@ -180,7 +180,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
   }
 
   private void createUIComponents() {
-    myTypeComboBox = new GrTypeComboBox(myContext.var != null ? myContext.var.getDeclaredType() : myContext.expression.getType());
+    myTypeComboBox = new GrTypeComboBox(myContext.var != null ? myContext.var.getDeclaredType() : myContext.expression.getType(), true);
 
     String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myContext.expression, new GroovyFieldValidator(myContext), true);
     if (myContext.var != null) {

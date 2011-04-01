@@ -52,13 +52,20 @@ public class BackgroundTaskQueue {
 
   public BackgroundTaskQueue(@Nullable final Project project, @NotNull String title, final Boolean forcedHeadlessMode) {
     final boolean headless = forcedHeadlessMode != null ? forcedHeadlessMode : ApplicationManager.getApplication().isHeadlessEnvironment();
-    myProcessor = new QueueProcessor<Pair<Task.Backgroundable, Getter<ProgressIndicator>>>(headless ?
-      new BackgroundableHeadlessRunner() : new BackgroundableUnderProgressRunner(title, project), true,
-      headless ? QueueProcessor.ThreadToUse.POOLED : QueueProcessor.ThreadToUse.AWT, new Condition<Object>() {
-        @Override
-        public boolean value(Object o) {
+
+    final QueueProcessor.ThreadToUse threadToUse = headless ? QueueProcessor.ThreadToUse.POOLED : QueueProcessor.ThreadToUse.AWT;
+    final PairConsumer<Pair<Task.Backgroundable, Getter<ProgressIndicator>>, Runnable> consumer
+      = headless ? new BackgroundableHeadlessRunner() : new BackgroundableUnderProgressRunner(title, project);
+
+    myProcessor = new QueueProcessor<Pair<Task.Backgroundable, Getter<ProgressIndicator>>>(consumer, true,
+                                                                                           threadToUse, new Condition<Object>() {
+        @Override public boolean value(Object o) {
           if (project == null) return ApplicationManager.getApplication().isDisposed();
-          return !ApplicationManager.getApplication().isUnitTestMode() && !project.isOpen() || project.isDisposed();
+          if (project.isDefault()) {
+            return project.isDisposed();
+          } else {
+            return !ApplicationManager.getApplication().isUnitTestMode() && !project.isOpen() || project.isDisposed();
+          }
         }
       });
   }

@@ -31,8 +31,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.text.CharacterIterator;
-import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -325,61 +323,45 @@ public class NameUtil {
     return Character.isUpperCase(p) || Character.isDigit(p);
   }
 
-  private static void addAllWords(String word, List<String> result) {
-    CharacterIterator it = new StringCharacterIterator(word);
-    StringBuffer b = new StringBuffer();
+  private static void addAllWords(String text, List<String> result) {
+    int start = 0;
     WordState state = WordState.NO_WORD;
-    char curPrevUC = '\0';
-    for (char c = it.first(); c != CharacterIterator.DONE; c = it.next()) {
+    for (int i = 0; i < text.length(); i++) {
+      char c = text.charAt(i);
       switch (state) {
         case NO_WORD:
           if (!isWordStart(c)) {
-            b.append(c);
             state = WordState.WORD;
           }
           else {
             state = WordState.PREV_UC;
-            curPrevUC = c;
           }
           break;
         case PREV_UC:
           if (!isWordStart(c)) {
-            b = startNewWord(result, b, curPrevUC);
-            b.append(c);
+            start = startNewWord(text, result, start, i - 1);
             state = WordState.WORD;
           }
           else {
-            b.append(curPrevUC);
             state = WordState.PREV_UC;
-            curPrevUC = c;
           }
           break;
         case WORD:
           if (isWordStart(c)) {
-            startNewWord(result, b, c);
-            b.setLength(0);
+            start = startNewWord(text, result, start, i);
             state = WordState.PREV_UC;
-            curPrevUC = c;
-          }
-          else {
-            b.append(c);
           }
           break;
       }
     }
-    if (state == WordState.PREV_UC) {
-      b.append(curPrevUC);
-    }
-    result.add(b.toString());
+    startNewWord(text, result, start, text.length());
   }
 
-  private static StringBuffer startNewWord(List<String> result, StringBuffer b, char c) {
-    if (b.length() > 0) {
-      result.add(b.toString());
+  private static int startNewWord(String word, List<String> result, int start, int end) {
+    if (end > start) {
+      result.add(word.substring(start, end));
     }
-    b = new StringBuffer();
-    b.append(c);
-    return b;
+    return end;
   }
 
   public interface Matcher {

@@ -918,11 +918,18 @@ public class AbstractTreeUi {
       }
 
       final ActionCallback result = new ActionCallback();
-      DefaultMutableTreeNode node = getNodeForElement(element, false);
-      if (node != null) {
-        addSubtreeToUpdate(node);
+      Object eachParent = element;
+      while(eachParent != null) {
+        DefaultMutableTreeNode node = getNodeForElement(element, false);
+        if (node != null) {
+          addSubtreeToUpdate(node);
+          break;
+        }
+
+        eachParent = getTreeStructure().getParentElement(eachParent);
       }
-      else {
+
+      if (eachParent == null) {
         addSubtreeToUpdate(getRootNode());
       }
 

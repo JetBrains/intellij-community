@@ -22,9 +22,11 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -32,7 +34,9 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class MoveFilesOrDirectoriesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil");
@@ -102,11 +106,25 @@ public class MoveFilesOrDirectoriesUtil {
 
             PsiManager manager = PsiManager.getInstance(project);
             try {
-              for (PsiElement psiElement : newElements) {
+              final int[] choice = elements.length > 1 ? new int[]{-1} : null;
+              final List<PsiElement> els = new ArrayList<PsiElement>();
+              for (int i = 0, newElementsLength = newElements.length; i < newElementsLength; i++) {
+                final PsiElement psiElement = newElements[i];
+                if (psiElement instanceof PsiFile) {
+                  final PsiFile file = (PsiFile)psiElement;
+                  final boolean fileExist = ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
+                    @Override
+                    public Boolean compute() {
+                     return CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory, choice, file, file.getName());
+                    }
+                  });
+                  if (fileExist) continue;
+                }
                 manager.checkMove(psiElement, targetDirectory);
+                els.add(psiElement);
               }
 
-              new MoveFilesOrDirectoriesProcessor(project, newElements, targetDirectory,
+              new MoveFilesOrDirectoriesProcessor(project, els.toArray(new PsiElement[els.size()]), targetDirectory,
                                                   RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE,
                                                   false, false, moveCallback, new Runnable() {
                 public void run() {
