@@ -16,7 +16,6 @@
 
 package com.intellij.psi.impl.file;
 
-import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
@@ -546,10 +545,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   public ASTNode getNode() {
     return null;
-  }
-
-  public boolean canNavigate() {
-    return EditSourceUtil.canNavigate(this);
   }
 
   public boolean canNavigateToSource() {

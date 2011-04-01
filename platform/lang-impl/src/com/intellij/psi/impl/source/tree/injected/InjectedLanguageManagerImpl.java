@@ -299,9 +299,9 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     boolean process(PsiElement element, MultiHostInjector injector);
   }
   public void processInPlaceInjectorsFor(@NotNull PsiElement element, @NotNull InjProcessor processor) {
-    final boolean dumb = myDumbService.isDumb();
     MultiHostInjector[] infos = cachedInjectors.get(element.getClass());
     if (infos != null) {
+      final boolean dumb = myDumbService.isDumb();
       for (MultiHostInjector injector : infos) {
         if (dumb && !DumbService.isDumbAware(injector)) {
           continue;

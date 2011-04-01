@@ -285,7 +285,7 @@ public class RenameUtil {
 
   public static void renameNonCodeUsages(@NotNull Project project, @NotNull NonCodeUsageInfo[] usages) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    Map<Document, ArrayList<UsageOffset>> docsToOffsetsMap = new HashMap<Document, ArrayList<UsageOffset>>();
+    Map<Document, List<UsageOffset>> docsToOffsetsMap = new HashMap<Document, List<UsageOffset>>();
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     for (NonCodeUsageInfo usage : usages) {
       PsiElement element = usage.getElement();
@@ -297,7 +297,7 @@ public class RenameUtil {
       final Document document = psiDocumentManager.getDocument(containingFile);
       int fileOffset = usage.getSegment().getStartOffset();
 
-      ArrayList<UsageOffset> list = docsToOffsetsMap.get(document);
+      List<UsageOffset> list = docsToOffsetsMap.get(document);
       if (list == null) {
         list = new ArrayList<UsageOffset>();
         docsToOffsetsMap.put(document, list);
@@ -306,7 +306,7 @@ public class RenameUtil {
     }
 
     for (Document document : docsToOffsetsMap.keySet()) {
-      ArrayList<UsageOffset> list = docsToOffsetsMap.get(document);
+      List<UsageOffset> list = docsToOffsetsMap.get(document);
       UsageOffset[] offsets = list.toArray(new UsageOffset[list.size()]);
       Arrays.sort(offsets);
 

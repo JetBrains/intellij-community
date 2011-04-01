@@ -31,7 +31,7 @@ public class NonCodeUsageInfo extends MoveRenameUsageInfo{
   }
 
   @Nullable
-  public static NonCodeUsageInfo create(PsiFile file,
+  public static NonCodeUsageInfo create(@NotNull PsiFile file,
                                         int startOffset,
                                         int endOffset,
                                         PsiElement referencedElement,
