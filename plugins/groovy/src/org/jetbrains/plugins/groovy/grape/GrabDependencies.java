@@ -167,7 +167,7 @@ public class GrabDependencies implements IntentionAction {
   }
 
   static Map<String, String> prepareQueries(PsiFile file) {
-    final Set<GrAnnotation> grabs = new THashSet<GrAnnotation>();
+    final Set<GrAnnotation> grabs = new LinkedHashSet<GrAnnotation>();
     final Set<GrAnnotation> excludes = new THashSet<GrAnnotation>();
     final Set<GrAnnotation> resolvers = new THashSet<GrAnnotation>();
     file.acceptChildren(new PsiRecursiveElementWalkingVisitor() {
