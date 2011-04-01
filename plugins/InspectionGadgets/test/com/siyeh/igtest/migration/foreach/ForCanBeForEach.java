@@ -213,4 +213,17 @@ public class ForCanBeForEach {
         return total;
     }
 
+    private static void printIntList(boolean print50) {
+        List<Integer> intList = new ArrayList<Integer>(100);
+        for (int i = 0; i < 100; i++) {
+            intList.add(i);
+        }
+        int size = intList.size();
+        if (print50) {
+            size = 50; // size variable is modified here, so foreach not applicable
+        }
+        for (int i = 0; i < size; i++) {
+            System.out.println(intList.get(i));
+        }
+    }
 }

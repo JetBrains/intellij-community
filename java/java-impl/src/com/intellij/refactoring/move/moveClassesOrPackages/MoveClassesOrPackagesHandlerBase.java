@@ -173,14 +173,14 @@ public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
       @Override
       public void visitElement(PsiElement element) {
         if (containsJava[0]) return;
-        if (element instanceof PsiFile || element instanceof PsiDirectory) {
+        if (element instanceof PsiDirectory) {
           super.visitElement(element);
         }
       }
 
       @Override
-      public void visitJavaFile(PsiJavaFile file) {
-        containsJava[0] = true;
+      public void visitFile(PsiFile file) {
+        containsJava[0] = file instanceof PsiJavaFile;
       }
     });
     return containsJava[0];

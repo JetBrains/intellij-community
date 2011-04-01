@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public interface XLineBreakpoint<P extends XBreakpointProperties> extends XBreakpoint<P> {
+  XLineBreakpoint<?>[] EMPTY_ARRAY = new XLineBreakpoint[0];
 
   int getLine();
 

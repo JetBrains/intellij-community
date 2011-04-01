@@ -197,11 +197,11 @@ public class AnnotationUtil {
     return null;
   }
 
-  public static boolean isAnnotated(PsiModifierListOwner listOwner, Collection<String> annotations) {
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, Collection<String> annotations) {
     return isAnnotated(listOwner, annotations, false);
   }
 
-  public static boolean isAnnotated(PsiModifierListOwner listOwner,
+  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
                                     Collection<String> annotations,
                                     final boolean checkHierarchy) {
     for (String annotation : annotations) {
