@@ -353,6 +353,23 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
     else if (browseMode == BrowseMode.Declaration) {
+      final PsiElement[] targetElements = GotoDeclarationAction.findTargetElementsNoVS(myProject, editor, offset);
+      final PsiElement elementAtPointer = file.findElementAt(offset);
+
+      if (targetElements != null) {
+        if (targetElements.length == 0) {
+          return null;
+        }
+        else if (targetElements.length == 1) {
+          if (elementAtPointer != null && targetElements[0].isPhysical()) {
+            return new InfoSingle(elementAtPointer, targetElements[0]);
+          }
+        }
+        else {
+          return elementAtPointer != null ? new InfoMultiple(elementAtPointer) : null;
+        }
+      }
+
       PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
       if (ref != null) {
         PsiElement resolvedElement = resolve(ref);
@@ -360,7 +377,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
           return new InfoSingle(ref, resolvedElement);
         }
       }
-      targetElement = GotoDeclarationAction.findTargetElementNoVS(myProject, editor, offset);
     }
     else if (browseMode == BrowseMode.Implementation) {
       final PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);

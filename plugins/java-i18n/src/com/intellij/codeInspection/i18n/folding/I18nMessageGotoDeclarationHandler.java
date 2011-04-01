@@ -16,10 +16,10 @@
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.folding.impl.EditorFoldingInfo;
-import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandlerBase;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.CompositeFoldingBuilder;
 import com.intellij.lang.folding.FoldingBuilder;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
-public class I18nMessageGotoDeclarationHandler implements GotoDeclarationHandler {
+public class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBase {
   private static final Key<FoldingBuilder> KEY = CompositeFoldingBuilder.FOLDING_BUILDER;
 
   public PsiElement getGotoDeclarationTarget(PsiElement element) {

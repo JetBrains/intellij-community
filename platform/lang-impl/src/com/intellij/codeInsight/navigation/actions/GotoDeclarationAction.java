@@ -76,12 +76,15 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
     try {
       int offset = editor.getCaretModel().getOffset();
-      PsiElement element = findTargetElement(project, editor, offset);
+      PsiElement[] elements = findAllTargetElements(project, editor, offset);
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
-      if (element == null) {
-        chooseAmbiguousTarget(editor, offset);
+
+      if (elements.length != 1) {
+        chooseAmbiguousTarget(editor, offset, elements);
         return;
       }
+
+      final PsiElement element = elements[0];
 
       PsiElement navElement = element.getNavigationElement();
       navElement = TargetElementUtilBase.getInstance().getGotoDeclarationTarget(element, navElement);
@@ -104,7 +107,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
   }
 
-  private static void chooseAmbiguousTarget(final Editor editor, int offset) {
+  private static void chooseAmbiguousTarget(final Editor editor, int offset, PsiElement[] elements) {
     PsiElementProcessor<PsiElement> navigateProcessor = new PsiElementProcessor<PsiElement>() {
       public boolean execute(final PsiElement element) {
         Navigatable navigatable = EditSourceUtil.getDescriptor(element);
@@ -114,28 +117,37 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
         return true;
       }
     };
-    boolean found = chooseAmbiguousTarget(editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"));
+    boolean found =
+      chooseAmbiguousTarget(editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"), elements);
     if (!found) {
       HintManager.getInstance().showErrorHint(editor, "Cannot find declaration to go to");
     }
   }
 
   // returns true if processor is run or is going to be run after showing popup
-  public static boolean chooseAmbiguousTarget(final Editor editor, int offset, PsiElementProcessor<PsiElement> processor, String titlePattern) {
+  public static boolean chooseAmbiguousTarget(final Editor editor,
+                                              int offset,
+                                              PsiElementProcessor<PsiElement> processor,
+                                              String titlePattern,
+                                              PsiElement[] elements) {
     if (TargetElementUtilBase.inVirtualSpace(editor, offset)) {
       return false;
     }
 
     final PsiReference reference = TargetElementUtilBase.findReference(editor, offset);
-    final Collection<PsiElement> candidates = suggestCandidates(reference);
-    if (candidates.size() == 1) {
-      PsiElement element = candidates.iterator().next();
+
+    if (elements == null) {
+      final Collection<PsiElement> candidates = suggestCandidates(reference);
+      elements = PsiUtilBase.toPsiElementArray(candidates);
+    }
+
+    if (elements.length == 1) {
+      PsiElement element = elements[0];
       LOG.assertTrue(element != null);
       processor.execute(element);
       return true;
     }
-    if (candidates.size() > 1) {
-      PsiElement[] elements = PsiUtilBase.toPsiElementArray(candidates);
+    if (elements.length > 1) {
       final TextRange range = reference.getRangeInElement();
       final String refText = range.substring(reference.getElement().getText());
       String title = MessageFormat.format(titlePattern, refText);
@@ -158,15 +170,22 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   @Nullable
   public static PsiElement findTargetElement(Project project, Editor editor, int offset) {
+    final PsiElement[] targets = findAllTargetElements(project, editor, offset);
+    return targets.length == 1 ? targets[0] : null;
+  }
+
+  @NotNull
+  public static PsiElement[] findAllTargetElements(Project project, Editor editor, int offset) {
     if (TargetElementUtilBase.inVirtualSpace(editor, offset)) {
-      return null;
+      return PsiElement.EMPTY_ARRAY;
     }
 
-    return findTargetElementNoVS(project, editor, offset);
+    final PsiElement[] targets = findTargetElementsNoVS(project, editor, offset);
+    return targets != null ? targets : PsiElement.EMPTY_ARRAY;
   }
 
   @Nullable
-  public static PsiElement findTargetElementNoVS(Project project, Editor editor, int offset) {
+  public static PsiElement[] findTargetElementsNoVS(Project project, Editor editor, int offset) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) {
       return null;
@@ -174,7 +193,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     PsiElement elementAt = file.findElementAt(offset);
 
     for (GotoDeclarationHandler handler : Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {
-      PsiElement result = handler.getGotoDeclarationTarget(elementAt);
+      PsiElement[] result = handler.getGotoDeclarationTargets(elementAt);
       if (result != null) {
         return result;
       }
@@ -182,12 +201,14 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
     int flags = TargetElementUtilBase.getInstance().getAllAccepted() & ~TargetElementUtilBase.ELEMENT_NAME_ACCEPTED;
     PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, flags, offset);
-    if (element != null) return element;
+    if (element != null) {
+      return new PsiElement[] {element};
+    }
 
     // if no references found in injected fragment, try outer document
     if (editor instanceof EditorWindow) {
       EditorWindow window = (EditorWindow)editor;
-      return findTargetElementNoVS(project, window.getDelegate(), window.getDocument().injectedToHost(offset));
+      return findTargetElementsNoVS(project, window.getDelegate(), window.getDocument().injectedToHost(offset));
     }
     return null;
   }

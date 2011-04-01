@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.navigation.actions;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author yole
+ * @author Eugene.Kudelevsky
  */
-public interface GotoDeclarationHandler {
-  ExtensionPointName<GotoDeclarationHandler> EP_NAME = ExtensionPointName.create("com.intellij.gotoDeclarationHandler");
+public abstract class GotoDeclarationHandlerBase implements GotoDeclarationHandler {
+  @Nullable
+  @Override
+  public PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement) {
+    final PsiElement target = getGotoDeclarationTarget(sourceElement);
+    return target != null ? new PsiElement[] {target} : null;
+  }
 
   @Nullable
-  PsiElement[] getGotoDeclarationTargets(PsiElement sourceElement);
+  public abstract PsiElement getGotoDeclarationTarget(PsiElement sourceElement);
 }
