@@ -442,6 +442,14 @@
     <quoteHandler fileType="Locale" className="com.jetbrains.django.localization.editor.LocaleQuoteHandler"/>
     <problemFileHighlightFilter implementation="com.jetbrains.django.localization.LocaleProblemFileHighlightFilter"/>
     <!--<fileEditorProvider implementation="com.jetbrains.django.localization.editor.LocaleFileEditorProvider"/>-->
+
+    <qualifiedNameProvider implementation="com.jetbrains.python.actions.PyQualifiedNameProvider"/>
+
+    <!-- ReST files -->
+
+    <fileTypeFactory implementation="com.jetbrains.rest.RestFileTypeFactory"/>
+    <lang.syntaxHighlighterFactory key="ReST"
+                                   implementationClass="com.jetbrains.rest.RestHighlighterFactory"/>
   </extensions>
 
   <extensionPoints>
@@ -461,6 +469,7 @@
     <extensionPoint qualifiedName="Pythonid.customTargetExpressionStubType"
                     interface="com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStubType"/>
     <extensionPoint qualifiedName="Pythonid.knownDecoratorProvider" interface="com.jetbrains.python.psi.PyKnownDecoratorProvider"/>
+    <extensionPoint qualifiedName="Pythonid.documentationLinkProvider" interface="com.jetbrains.python.documentation.PythonDocumentationLinkProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -485,10 +494,12 @@
     <unusedLocalFilter implementation="com.jetbrains.django.codeInsight.DjangoUnusedLocalFilter"/>
     <customTargetExpressionStubType implementation="com.jetbrains.django.model.stubs.DjangoForeignKeyStubType"/>
     <knownDecoratorProvider implementation="com.jetbrains.django.codeInsight.DjangoKnownDecoratorProvider"/>
+    <documentationLinkProvider implementation="com.jetbrains.django.codeInsight.DjangoDocumentationLinkProvider"/>
 
     <!-- App Engine -->
     <typeProvider implementation="com.jetbrains.appengine.model.AppEngineTypeProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.appengine.model.AppEngineModuleMembersProvider"/>
+    <documentationLinkProvider implementation="com.jetbrains.appengine.AppEngineDocumentationLinkProvider"/>
   </extensions>
 
   <project-components>
