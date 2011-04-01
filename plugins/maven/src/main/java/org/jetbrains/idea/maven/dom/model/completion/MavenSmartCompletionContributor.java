@@ -36,6 +36,7 @@ import com.intellij.util.xml.impl.GenericDomValueReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.converters.MavenSmartConverter;
+import org.jetbrains.idea.maven.dom.references.MavenPropertyCompletionContributor;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -51,23 +52,7 @@ public class MavenSmartCompletionContributor extends CompletionContributor {
         return getVariants(parameters);
       }
     });
-
-    for (Object each : variants) {
-      LookupElement e;
-      if (each instanceof LookupElement) {
-        e = (LookupElement)each;
-      }
-      else if (each instanceof String) {
-        e = LookupElementBuilder.create((String)each);
-      }
-      else if (each instanceof PsiNamedElement) {
-        e = LookupElementBuilder.create((PsiNamedElement)each);
-      }
-      else {
-        e = LookupElementBuilder.create(each, String.valueOf(each));
-      }
-      result.addElement(e);
-    }
+    MavenPropertyCompletionContributor.addVariants(variants, result);
   }
 
   @NotNull

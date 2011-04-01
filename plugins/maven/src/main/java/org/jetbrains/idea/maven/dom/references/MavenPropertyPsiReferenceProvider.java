@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 
 public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
+  public static final boolean SOFT_DEFAULT = false;
   private final boolean myFiltered;
 
   public MavenPropertyPsiReferenceProvider(boolean filtered) {
@@ -43,9 +44,9 @@ public class MavenPropertyPsiReferenceProvider extends PsiReferenceProvider {
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     if (myFiltered) {
       if (!MavenDomUtil.isFilteredResourceFile(element)) return PsiReference.EMPTY_ARRAY;
-      return getReferences(element, element.getText(), 0, true, false);
+      return getReferences(element, element.getText(), 0, true, SOFT_DEFAULT);
     }
-    return getReferences(element, false);
+    return getReferences(element, SOFT_DEFAULT);
   }
 
   public static PsiReference[] getReferences(PsiElement element, boolean isSoft) {

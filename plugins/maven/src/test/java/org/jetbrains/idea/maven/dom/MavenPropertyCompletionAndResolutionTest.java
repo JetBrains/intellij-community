@@ -873,7 +873,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
 
     List<String> variants = getCompletionVariants(myProjectPom);
     assertContain(variants, "project.groupId");
-    assertDoNotContain(variants, "groupId", "project.name");
+    assertDoNotContain(variants, "project.name");
   }
 
   public void testDoNotCompleteAfterNonWordCharacter() throws Exception {
