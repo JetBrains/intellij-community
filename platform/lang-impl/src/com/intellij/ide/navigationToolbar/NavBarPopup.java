@@ -91,7 +91,10 @@ public class NavBarPopup extends LightweightHint {
       });
     } else {
       show(myPanel, p.x, p.y, myPanel, new HintHint(myPanel, p));
-      ListScrollingUtil.selectItem(getList(), myIndex);
+      final JBList list = getList();
+      if (0 <= myIndex && myIndex < list.getItemsCount()) {
+       ListScrollingUtil.selectItem(list, myIndex);
+      }
     }
   }
 
