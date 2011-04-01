@@ -53,7 +53,6 @@ import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -95,7 +94,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private ITokenTypeRemapper myRemapper;
   private WhitespaceSkippedCallback myWhitespaceSkippedCallback;
 
-
   private ASTNode myOriginalTree = null;
   private MyTreeStructure myParentLightTree = null;
 
@@ -135,9 +133,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   };
 
-  @NonNls private static final String UNBALANCED_MESSAGE =
+  private static final String UNBALANCED_MESSAGE =
     "Unbalanced tree. Most probably caused by unbalanced markers. " +
-    "Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem";
+    "Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem.";
 
   public static void registerWhitespaceToken(IElementType type) {
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
@@ -829,12 +827,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "SuspiciousMethodCalls"})
   private void doValidityChecks(final Marker marker, @Nullable final Marker before) {
-    if (!myDebugMode) return;
-
     final DoneMarker doneMarker = ((StartMarker)marker).myDoneMarker;
     if (doneMarker != null) {
       LOG.error("Marker already done.");
     }
+
+    if (!myDebugMode) return;
+
     int idx = myProduction.lastIndexOf(marker);
     if (idx < 0) {
       LOG.error("Marker has never been added.");
@@ -1004,7 +1003,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
       item.myParent = curNode;
       if (item instanceof StartMarker) {
-        StartMarker marker = (StartMarker)item;
+        final StartMarker marker = (StartMarker)item;
         marker.myFirstChild = marker.myLastChild = marker.myNext = null;
         curNode.addChild(marker);
         nodes.push(curNode);
@@ -1013,6 +1012,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         if (curDepth > maxDepth) maxDepth = curDepth;
       }
       else if (item instanceof DoneMarker) {
+        if (((DoneMarker)item).myStart != curNode) LOG.error(UNBALANCED_MESSAGE);
         curNode = nodes.pop();
         curDepth--;
       }
