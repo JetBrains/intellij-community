@@ -407,7 +407,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
       myConflicts = conflicts;
     }
 
-    public void addConflict(final PsiElement targetElement, final PsiElement sourceElement) {
+    public synchronized void addConflict(final PsiElement targetElement, final PsiElement sourceElement) {
       PsiElement container = ConflictsUtil.getContainer(sourceElement);
       if (!myReportedContainers.contains(container)) {
         myReportedContainers.add(container);

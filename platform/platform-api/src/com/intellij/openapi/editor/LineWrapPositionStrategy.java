@@ -32,7 +32,7 @@ public interface LineWrapPositionStrategy {
   /**
    * Allows to calculate the most appropriate position to wrap target line.
    *
-   * @param text                              target text holder
+   * @param document                          target document which text is being processed
    * @param startOffset                       start offset to use with the given text holder (inclusive)
    * @param endOffset                         end offset to use with the given text holder (exclusive)
    * @param maxPreferredOffset                this method is expected to do its best to return offset that belongs to
@@ -43,9 +43,10 @@ public interface LineWrapPositionStrategy {
    *                                          <code>(maxPreferredOffset; endOffset]</code> interval in case of inability to
    *                                          find appropriate offset from <code>(startOffset; maxPreferredOffset]</code> interval
    * @return                                  offset from <code>(startOffset; endOffset]</code> interval where
-   *                                          target line should be wrapped
+   *                                          target line should be wrapped OR <code>-1</code> if no wrapping should be performed
    */
   int calculateWrapPosition(
-    @NotNull CharSequence text, int startOffset, int endOffset, int maxPreferredOffset, boolean allowToBeyondMaxPreferredOffset
+    @NotNull Document document, int startOffset, int endOffset, int maxPreferredOffset,
+    boolean allowToBeyondMaxPreferredOffset
   );
 }

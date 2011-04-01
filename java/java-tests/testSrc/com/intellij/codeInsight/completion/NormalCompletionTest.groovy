@@ -709,8 +709,12 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testFinalInForLoop() throws Throwable {
     configure()
-    checkResultByFile(getTestName(false) + ".java")
-    assertOrderedEquals myFixture.lookupElementStrings, 'final'
+    assertStringItems 'final'
+  }
+
+  public void testFinalInForLoop2() throws Throwable {
+    configure()
+    assertStringItems 'final', 'finalize'
   }
 
   public void testPrimitiveTypesInForLoop() throws Throwable { doPrimitiveTypeTest() }

@@ -61,15 +61,19 @@ public class MoveClassesOrPackagesUtil {
     for (PsiReference reference : ReferencesSearch.search(element, projectScope, false)) {
       TextRange range = reference.getRangeInElement();
       if (foundReferences.contains(reference)) continue;
-      results.add(
-        new MoveRenameUsageInfo(reference.getElement(), reference, range.getStartOffset(), range.getEndOffset(),
-                                element, false));
+      results.add(new MoveRenameUsageInfo(reference.getElement(), reference, range.getStartOffset(), range.getEndOffset(), element, false));
       foundReferences.add(reference);
     }
 
     findNonCodeUsages(searchInStringsAndComments, searchInNonJavaFiles, element, newQName, results);
-
+    preprocessUsages(results);
     return results.toArray(new UsageInfo[results.size()]);
+  }
+
+  private static void preprocessUsages(ArrayList<UsageInfo> results) {
+    for (MoveClassHandler handler : MoveClassHandler.EP_NAME.getExtensions()) {
+      handler.preprocessUsages(results);
+    }
   }
 
   private static String getQualfiedName(final PsiElement element) {

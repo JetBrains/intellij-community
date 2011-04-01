@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class PsiSuperMethodImplUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiSuperMethodImplUtil");
   private static final PsiCacheKey<Map<MethodSignature, HierarchicalMethodSignature>, PsiClass> SIGNATURES_KEY = PsiCacheKey
     .create("SIGNATURES_KEY", new NotNullFunction<PsiClass, Map<MethodSignature, HierarchicalMethodSignature>>() {
       @NotNull
@@ -134,6 +136,7 @@ public class PsiSuperMethodImplUtil {
     });
 
     for (PsiMethod method : aClass.getMethods()) {
+      LOG.assertTrue(method.isValid());
       if (!includePrivates && method.hasModifierProperty(PsiModifier.PRIVATE)) continue;
       final MethodSignatureBackedByPsiMethod signature = MethodSignatureBackedByPsiMethod.create(method, substitutor, isInRawContext);
       HierarchicalMethodSignatureImpl newH = new HierarchicalMethodSignatureImpl(signature);
@@ -145,6 +148,7 @@ public class PsiSuperMethodImplUtil {
       }
       list.add(method);
 
+      LOG.assertTrue(newH.getMethod().isValid());
       result.put(signature, newH);
       map.put(signature, newH);
     }
@@ -188,6 +192,7 @@ public class PsiSuperMethodImplUtil {
       HierarchicalMethodSignatureImpl hierarchicalMethodSignature = entry.getValue();
       MethodSignature methodSignature = entry.getKey();
       if (result.get(methodSignature) == null && PsiUtil.isAccessible(hierarchicalMethodSignature.getMethod(), aClass, aClass)) {
+        LOG.assertTrue(hierarchicalMethodSignature.getMethod().isValid());
         result.put(methodSignature, hierarchicalMethodSignature);
       }
     }
@@ -213,6 +218,7 @@ public class PsiSuperMethodImplUtil {
     }
     // just drop an invalid method declaration there - to highlight accordingly
     else if (!result.containsKey(signature)) {
+      LOG.assertTrue(hierarchicalMethodSignature.getMethod().isValid());
       result.put(signature, hierarchicalMethodSignature);
     }
   }

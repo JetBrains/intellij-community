@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -195,6 +196,12 @@ public class InlineUtil {
           if (nextSibling.getNode().getElementType() == JavaTokenType.RBRACE) break;
           lastInitializerSibling = nextSibling;
         }
+        if (lastInitializerSibling instanceof PsiWhiteSpace) {
+          lastInitializerSibling = PsiTreeUtil.skipSiblingsBackward(lastInitializerSibling, PsiWhiteSpace.class);
+        }
+        if (lastInitializerSibling.getNode().getElementType() == JavaTokenType.COMMA) {
+          lastInitializerSibling = lastInitializerSibling.getPrevSibling();
+        }
         argumentList.addRange(initializers[0], lastInitializerSibling);
       }
       args[args.length - 1].delete();
@@ -254,7 +261,7 @@ public class InlineUtil {
   }
 
   public static boolean allUsagesAreTailCalls(final PsiMethod method) {
-    final List<PsiReference> nonTailCallUsages = new ArrayList<PsiReference>();
+    final List<PsiReference> nonTailCallUsages = Collections.synchronizedList(new ArrayList<PsiReference>());
     boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         ReferencesSearch.search(method).forEach(new Processor<PsiReference>() {

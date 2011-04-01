@@ -35,9 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> implements DropTargetNode {
   public ModuleGroupNode(final Project project, final ModuleGroup value, final ViewSettings viewSettings) {
@@ -66,6 +64,19 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     }
     catch (Exception e) {
       LOG.error(e);
+    }
+
+    return result;
+  }
+
+  @Override
+  public Collection<VirtualFile> getRoots() {
+    Collection<AbstractTreeNode> children = getChildren();
+    Set<VirtualFile> result = new HashSet<VirtualFile>();
+    for (AbstractTreeNode each : children) {
+      if (each instanceof ProjectViewNode) {
+        result.addAll(((ProjectViewNode)each).getRoots());
+      }
     }
 
     return result;

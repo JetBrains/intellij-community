@@ -19,12 +19,13 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import org.jetbrains.annotations.NotNull;
 
 public class FileIndexImplUtil {
   private FileIndexImplUtil() {
   }
 
-  public static boolean iterateRecursively(VirtualFile root, VirtualFileFilter filter, ContentIterator iterator){
+  public static boolean iterateRecursively(@NotNull VirtualFile root, @NotNull VirtualFileFilter filter, @NotNull ContentIterator iterator){
     if (!root.isValid() || !filter.accept(root)) return true;
 
     if (!iterator.processFile(root)) return false;

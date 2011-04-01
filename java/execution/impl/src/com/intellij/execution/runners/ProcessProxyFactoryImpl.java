@@ -54,7 +54,16 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
 
   @Override
   public boolean isBreakGenLibraryAvailable() {
-    @NonNls final String libName = SystemInfo.isWindows ? "breakgen.dll" : "libbreakgen.so";
+    @NonNls final String libName;
+    if (SystemInfo.isWindows) {
+      libName = "breakgen.dll";
+    }
+    else if (SystemInfo.isMac) {
+      libName = "libbreakgen.jnilib";
+    }
+    else {
+      libName = "libbreakgen.so";
+    }
     return new File(PathManager.getBinPath() + File.separator + libName).exists();
   }
 }

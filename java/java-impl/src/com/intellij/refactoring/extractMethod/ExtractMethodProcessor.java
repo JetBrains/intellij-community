@@ -404,8 +404,8 @@ public class ExtractMethodProcessor implements MatchProvider {
     });
     for(PsiClass localClass: localClasses) {
       final boolean classExtracted = isExtractedElement(localClass);
-      final List<PsiElement> extractedReferences = new ArrayList<PsiElement>();
-      final List<PsiElement> remainingReferences = new ArrayList<PsiElement>();
+      final List<PsiElement> extractedReferences = Collections.synchronizedList(new ArrayList<PsiElement>());
+      final List<PsiElement> remainingReferences = Collections.synchronizedList(new ArrayList<PsiElement>());
       ReferencesSearch.search(localClass).forEach(new Processor<PsiReference>() {
         public boolean process(final PsiReference psiReference) {
           final PsiElement element = psiReference.getElement();

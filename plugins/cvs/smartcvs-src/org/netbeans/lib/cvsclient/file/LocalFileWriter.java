@@ -53,23 +53,8 @@ public final class LocalFileWriter implements ILocalFileWriter {
       FileUtil.createIfDoesntExist(localFile);
     }
 
-    // For CRLF conversion, we have to read the file
-    // into a temp file, then do the conversion. This is because we cannot
-    // perform a sequence of readLines() until we've read the file from
-    // the server - the file transmission is not followed by a newline.
-    // Bah.
-    final File tempFile = FileUtil.createTempFile(RECEIVING_TMP_FILE_NAME, null);
-    try {
-      writeFile(tempFile, length, inputStream);
-
-      receiveTextFilePreprocessor.copyTextFileToLocation(tempFile, localFile, readerFactory, charSet);
-
-      setModifiedDateAndMode(localFile, fileReadOnlyHandler);
-    }
-    finally {
-      FileUtil.delete(tempFile);
-    }
-
+    receiveTextFilePreprocessor.copyTextFileToLocation(inputStream, length, localFile, readerFactory, charSet);
+    setModifiedDateAndMode(localFile, fileReadOnlyHandler);
     fileReadOnlyHandler.setFileReadOnly(localFile, readOnly);
   }
 

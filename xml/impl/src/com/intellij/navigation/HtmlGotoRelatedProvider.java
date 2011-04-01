@@ -24,7 +24,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -48,11 +47,7 @@ public class HtmlGotoRelatedProvider extends GotoRelatedProvider {
     HashSet<PsiFile> resultSet = new HashSet<PsiFile>();
     fillRelatedFiles(file, resultSet);
 
-    List<GotoRelatedItem> items = new ArrayList<GotoRelatedItem>(resultSet.size());
-    for (PsiFile relatedFile : resultSet) {
-      items.add(new PsiGotoRelatedItem(relatedFile));
-    }
-    return items;
+    return GotoRelatedItem.createItems(resultSet);
   }
 
   private static boolean isAvailable(@NotNull PsiFile psiFile) {

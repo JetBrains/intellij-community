@@ -48,6 +48,19 @@ public abstract class ProgressManager {
     }
   }
 
+  public static void progress(final String text) throws ProcessCanceledException {
+    progress(text, "");
+  }
+
+  public static void progress(final String text, @Nullable String text2) throws ProcessCanceledException {
+    final ProgressIndicator pi = getInstance().getProgressIndicator();
+    if (pi != null) {
+      pi.checkCanceled();
+      pi.setText(text);
+      pi.setText2(text2 == null ? "" : text2);
+    }
+  }
+
   protected abstract void doCheckCanceled() throws ProcessCanceledException;
 
   @Deprecated

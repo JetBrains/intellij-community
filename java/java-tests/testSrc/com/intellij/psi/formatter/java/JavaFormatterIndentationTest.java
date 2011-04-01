@@ -332,4 +332,16 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       ");                                                       "
     );
   }
+  
+  public void testPackagePrivateAnnotation() {
+    // Inspired by IDEA-67294
+    
+    String text = 
+      "@Retention(RUNTIME)\n" +
+      "@Target({FIELD, PARAMETER, METHOD})\n" +
+      "@interface MyAnnotation {\n" +
+      "\n" +
+      "}";
+    doTextTest(text, text);
+  }
 }

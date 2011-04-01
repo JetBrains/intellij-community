@@ -29,9 +29,16 @@ public class GrTypeComboBox extends JComboBox {
   private final PsiType myType;
 
   public GrTypeComboBox(PsiType type) {
+    this(type, false);
+  }
+
+  public GrTypeComboBox(PsiType type, boolean selectType) {
     super();
     myType = type;
     initialize();
+    if (selectType && getItemCount() > 1) {
+      setSelectedIndex(1);
+    }
   }
 
   private void initialize() {

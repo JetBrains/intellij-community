@@ -10,6 +10,11 @@ public class FutureResult<T> implements Future<T> {
   private final Semaphore mySema = new Semaphore(0);
   private volatile Ref<Pair<Object, Boolean>> myValue;
 
+  public void reset() {
+    mySema.drainPermits();
+    myValue = null;
+  }
+
   public boolean cancel(boolean mayInterruptIfRunning) {
     return false;
   }

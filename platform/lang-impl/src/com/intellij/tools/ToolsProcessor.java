@@ -16,11 +16,11 @@
 
 package com.intellij.tools;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -62,6 +62,8 @@ class ToolsProcessor extends BaseSchemeProcessor<ToolsGroup> {
     String groupName = root.getAttributeValue(ATTRIBUTE_NAME);
     ToolsGroup result = new ToolsGroup(groupName);
 
+    final PathMacroManager macroManager = PathMacroManager.getInstance(ApplicationManager.getApplication());
+
     for (final Object o : root.getChildren(TOOL)) {
       Element element = (Element)o;
 
@@ -86,15 +88,15 @@ class ToolsProcessor extends BaseSchemeProcessor<ToolsGroup> {
 
           if (WORKING_DIRECTORY.equals(name)) {
             if (value != null) {
-              String appHome = PathManager.getHomePath().replace(File.separatorChar, '/');
-              tool.setWorkingDirectory(StringUtil.replace(value, APPLICATION_HOME_MACRO, appHome));
+              final String replace = macroManager.expandPath(value).replace('/', File.separatorChar);
+              tool.setWorkingDirectory(replace);
             }
           }
           if (COMMAND.equals(name)) {
-            tool.setProgram(ToolManager.convertString(value));
+            tool.setProgram(macroManager.expandPath(ToolManager.convertString(value)));
           }
           if (PARAMETERS.equals(name)) {
-            tool.setParameters(ToolManager.convertString(value));
+            tool.setParameters(macroManager.expandPath(ToolManager.convertString(value)));
           }
         }
       }
@@ -152,26 +154,27 @@ class ToolsProcessor extends BaseSchemeProcessor<ToolsGroup> {
 
     Element taskElement = new Element(EXEC);
 
+    final PathMacroManager macroManager = PathMacroManager.getInstance(ApplicationManager.getApplication());
+
     Element option = new Element(ELEMENT_OPTION);
     taskElement.addContent(option);
     option.setAttribute(ATTRIBUTE_NAME, COMMAND);
     if (tool.getProgram() != null ) {
-      option.setAttribute(ATTRIBUTE_VALUE, tool.getProgram());
+      option.setAttribute(ATTRIBUTE_VALUE, macroManager.collapsePath(tool.getProgram()));
     }
 
     option = new Element(ELEMENT_OPTION);
     taskElement.addContent(option);
     option.setAttribute(ATTRIBUTE_NAME, PARAMETERS);
     if (tool.getParameters() != null ) {
-      option.setAttribute(ATTRIBUTE_VALUE, tool.getParameters());
+      option.setAttribute(ATTRIBUTE_VALUE, macroManager.collapsePath(tool.getParameters()));
     }
 
     option = new Element(ELEMENT_OPTION);
     taskElement.addContent(option);
     option.setAttribute(ATTRIBUTE_NAME, WORKING_DIRECTORY);
     if (tool.getWorkingDirectory() != null ) {
-      String appHome = PathManager.getHomePath().replace(File.separatorChar, '/');
-      option.setAttribute(ATTRIBUTE_VALUE, StringUtil.replace(tool.getWorkingDirectory(), appHome, APPLICATION_HOME_MACRO));
+      option.setAttribute(ATTRIBUTE_VALUE, macroManager.collapsePath(tool.getWorkingDirectory()).replace(File.separatorChar, '/'));
     }
 
     element.addContent(taskElement);

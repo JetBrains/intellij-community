@@ -7,7 +7,7 @@ class Foo {
         this(s, 5);
     }
 
-  def Foo() {
+    def Foo() {
     this("a")
 
     print new Foo("b");

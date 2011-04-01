@@ -552,7 +552,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private class ClearFatalsAction extends AnAction {
+  private class ClearFatalsAction extends AnAction implements DumbAware {
     public ClearFatalsAction() {
       super("Clear all fatal errors", "Clear all fatal errors",
             IconLoader.getIcon("/general/reset.png"));

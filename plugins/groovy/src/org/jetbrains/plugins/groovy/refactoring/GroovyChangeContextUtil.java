@@ -36,7 +36,14 @@ public class GroovyChangeContextUtil {
   private static final Key<PsiMember> REF_TO_MEMBER = Key.create("REF_TO_MEMBER");
   private static final Key<Object> KEY_ENCODED = Key.create("KEY_ENCODED");
 
+  private GroovyChangeContextUtil() {
+  }
+
   public static void encodeContextInfo(PsiElement element) {
+    encodeContextInfo(element, element);
+  }
+
+  public static void encodeContextInfo(PsiElement element, PsiElement scope) {
     if (!(element instanceof GroovyPsiElement)) return;
     if (element instanceof GrThisReferenceExpression) {
       GrThisReferenceExpression thisExpr = (GrThisReferenceExpression)element;
@@ -49,14 +56,15 @@ public class GroovyChangeContextUtil {
       final GrExpression qualifier = refExpr.getQualifierExpression();
       if (qualifier == null) {
         PsiElement refElement = refExpr.resolve();
-        if (refElement instanceof GrAccessorMethod) refElement = ((GrAccessorMethod)refElement).getProperty();
-        if (refElement instanceof PsiClass) {
-          refExpr.putCopyableUserData(REF_TO_CLASS, (PsiClass)refElement);
-          element.putCopyableUserData(KEY_ENCODED, KEY_ENCODED);
-        }
-        else if (refElement instanceof PsiMember) {
-          refExpr.putCopyableUserData(REF_TO_MEMBER, (PsiMember)refElement);
-          element.putCopyableUserData(KEY_ENCODED, KEY_ENCODED);
+        element.putCopyableUserData(KEY_ENCODED, KEY_ENCODED);
+        if (refElement != null && !PsiTreeUtil.isContextAncestor(scope, refElement, false)) {
+          if (refElement instanceof GrAccessorMethod) refElement = ((GrAccessorMethod)refElement).getProperty();
+          if (refElement instanceof PsiClass) {
+            refExpr.putCopyableUserData(REF_TO_CLASS, (PsiClass)refElement);
+          }
+          else if (refElement instanceof PsiMember) {
+            refExpr.putCopyableUserData(REF_TO_MEMBER, (PsiMember)refElement);
+          }
         }
       }
     }
@@ -65,15 +73,15 @@ public class GroovyChangeContextUtil {
       final PsiReference ref = element.getReference();
       if (ref != null) {
         final PsiElement resolvedElement = ref.resolve();
-        if (resolvedElement instanceof PsiClass) {
+        element.putCopyableUserData(KEY_ENCODED, KEY_ENCODED);
+        if (resolvedElement instanceof PsiClass && !PsiTreeUtil.isContextAncestor(scope, resolvedElement, false)) {
           element.putCopyableUserData(REF_TO_CLASS, (PsiClass)resolvedElement);
-          element.putCopyableUserData(KEY_ENCODED, KEY_ENCODED);
         }
       }
     }
 
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      encodeContextInfo(child);
+      encodeContextInfo(child, scope);
     }
 
   }
@@ -116,7 +124,7 @@ public class GroovyChangeContextUtil {
             else if (thisAccessExpr instanceof GrReferenceExpression) {
               final PsiElement qualifier = refExpr.getQualifier();
               if (!(qualifier instanceof GrReferenceExpression)) {
-                refExpr.setQualifier((GrReferenceExpression)thisAccessExpr);
+                refExpr.setQualifier(thisAccessExpr);
                 return;
               }
             }

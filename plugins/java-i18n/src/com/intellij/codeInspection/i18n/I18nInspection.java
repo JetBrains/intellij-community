@@ -361,33 +361,24 @@ public class I18nInspection extends BaseLocalInspectionTool {
     return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 
-  private static LocalQuickFix createIntroduceConstantFix(final PsiExpression... expressions) {
-    //noinspection unchecked
-    final SmartPsiElementPointer<PsiExpression>[] pointers = new SmartPsiElementPointer[expressions.length];
-    for(int i=0; i<expressions.length; i++) {
-      pointers [i] = SmartPointerManager.getInstance(expressions [i].getProject()).createSmartPsiElementPointer(expressions [i]);
-    }
+  private static LocalQuickFix createIntroduceConstantFix() {
     return new LocalQuickFix() {
       @NotNull
       public String getName() {
         return IntroduceConstantHandler.REFACTORING_NAME;
       }
 
-      public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-        final Runnable runnable = new Runnable() {
-          public void run() {
-            List<PsiExpression> exprList = new ArrayList<PsiExpression>();
-            for (SmartPsiElementPointer<PsiExpression> ptr : pointers) {
-              PsiExpression expr = ptr.getElement();
-              if (expr != null && expr.isValid()) {
-                exprList.add(expr);
-              }
-            }
-            new IntroduceConstantHandler().invoke(project, exprList.toArray(new PsiExpression[exprList.size()]));
-          }
-        };
+      public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
         //do it later because it is invoked from write action
-        ApplicationManager.getApplication().invokeLater(runnable);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            PsiElement element = descriptor.getPsiElement();
+            if (!(element instanceof PsiExpression)) return;
+
+            PsiExpression[] expressions = {(PsiExpression)element};
+            new IntroduceConstantHandler().invoke(project, expressions);
+          }
+        }, project.getDisposed());
       }
 
       @NotNull
@@ -439,7 +430,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
         fixes.add(I18N_QUICK_FIX);
 
         if (!isNotConstantFieldInitializer(expression)) {
-          fixes.add(createIntroduceConstantFix(expression));
+          fixes.add(createIntroduceConstantFix());
         }
 
         final Project project = expression.getManager().getProject();
@@ -454,9 +445,10 @@ public class I18nInspection extends BaseLocalInspectionTool {
           }
         }
 
-        final ProblemDescriptor problem = myManager
-          .createProblemDescriptor(expression,
-                                   description, myOnTheFly, fixes.toArray(new LocalQuickFix[fixes.size()]), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        LocalQuickFix[] farr = fixes.toArray(new LocalQuickFix[fixes.size()]);
+        final ProblemDescriptor problem = myManager.createProblemDescriptor(expression,
+                                                                            description, myOnTheFly, farr,
+                                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         myProblems.add(problem);
       }
     }

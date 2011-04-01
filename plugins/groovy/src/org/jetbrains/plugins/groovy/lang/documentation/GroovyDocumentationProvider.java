@@ -21,6 +21,7 @@ import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
+import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.project.Project;
@@ -290,6 +291,11 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
   public String fetchExternalDocumentation(final Project project, PsiElement element, final List<String> docUrls) {
     return JavaDocumentationProvider.fetchExternalJavadoc(element, project, docUrls);
+  }
+
+  @Override
+  public boolean hasDocumentationFor(PsiElement element, PsiElement originalElement) {
+    return CompositeDocumentationProvider.hasUrlsFor(this, element, originalElement);
   }
 
   private static String getMethodCandidateInfo(GrReferenceExpression expr) {

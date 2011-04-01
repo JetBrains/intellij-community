@@ -38,21 +38,29 @@ public class AppMain {
   static {
     String binPath = System.getProperty(PROPERTY_BINPATH) + File.separator;
     final String osName = System.getProperty("os.name").toLowerCase();
+    String arch = System.getProperty("os.arch").toLowerCase();
     String libPath = null;
     if (osName.startsWith("windows")) {
-      if (System.getProperty("os.arch").equals("amd64")) {
+      if (arch.equals("amd64")) {
         libPath = binPath + "breakgen64.dll";
       }
       else {
         libPath = binPath + "breakgen.dll";
       }
     } else if (osName.startsWith("linux")) {
-      if (System.getProperty("os.arch").toLowerCase().equals("amd64")) {
+      if (arch.equals("amd64")) {
         libPath = binPath + "libbreakgen64.so";
       } else {
         libPath = binPath + "libbreakgen.so";
       }
+    } else if (osName.startsWith("mac")) {
+      if (arch.endsWith("64")) {
+        libPath = binPath + "libbreakgen64.jnilib";
+      } else {
+        libPath = binPath + "libbreakgen.jnilib";
+      }
     }
+
     try {
       if (libPath != null) {
         System.load(libPath);
@@ -86,19 +94,16 @@ public class AppMain {
                 System.exit(1);
               }
             }
-          } catch (IOException e) {
-            return;
-          } catch (IllegalArgumentException iae) {
-            return;
-          } catch (SecurityException se) {
-            return;
+          } catch (IOException ignored) {
+          } catch (IllegalArgumentException ignored) {
+          } catch (SecurityException ignored) {
           }
         }
       }, "Monitor Ctrl-Break");
     try {
       t.setDaemon(true);
       t.start();
-    } catch (Exception e) {}
+    } catch (Exception ignored) {}
 
     String mainClass = args[0];
     String[] parms = new String[args.length - 1];

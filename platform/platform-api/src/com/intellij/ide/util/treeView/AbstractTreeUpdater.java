@@ -116,7 +116,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
       for (Iterator<TreeUpdatePass> iterator = myNodeQueue.iterator(); iterator.hasNext();) {
         final TreeUpdatePass passInQueue = iterator.next();
 
-        if (toAdd.isUpdateChildren()) {
+        if (toAdd.isUpdateChildren() && toAdd.isUpdateStructure()) {
           if (passInQueue == toAdd) {
             toAdd.expire();
             break;
@@ -134,7 +134,6 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
             passInQueue.expire();
           }
         } else {
-
           if (passInQueue.getNode().isNodeAncestor(toAdd.getNode())) {
             iterator.remove();
             passInQueue.expire();
@@ -306,8 +305,12 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
    */
   public boolean addSubtreeToUpdateByElement(Object element, boolean forceResort) {
     DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(element);
-    myTreeBuilder.queueUpdateFrom(element, forceResort);
-    return node != null;
+    if (node != null) {
+      myTreeBuilder.queueUpdateFrom(element, forceResort);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   public void cancelAllRequests() {

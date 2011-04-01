@@ -37,6 +37,8 @@ import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Consumer;
+import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -420,7 +422,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
   private boolean executeRebase(final List<VcsException> exceptions, RebaseInfo rebaseInfo) {
     // TODO this is a workaround to attach PushActiveBranched to the new update.
     // at first we update via rebase
-    boolean result = new GitUpdateProcess(myProject, new EmptyProgressIndicator(), rebaseInfo.roots, UpdatedFiles.create()).update(true);
+    boolean result = new GitUpdateProcess(myProject, new EmptyProgressIndicator(), rebaseInfo.roots, UpdatedFiles.create()).update(true, true);
 
     // then we reorder commits
     if (result) {
@@ -436,7 +438,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
 
   }
 
-  private boolean reorderCommitsIfNeeded(@NotNull RebaseInfo rebaseInfo) {
+  private boolean reorderCommitsIfNeeded(@NotNull final RebaseInfo rebaseInfo) {
     if (rebaseInfo.reorderedCommits.isEmpty()) {
       return true;
     }
@@ -446,75 +448,57 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       progressIndicator = new EmptyProgressIndicator();
     }
     String stashMessage = "Uncommitted changes before rebase operation at " + DateFormatUtil.formatDateTime(Clock.getTime());
-    GitChangesSaver saver = rebaseInfo.policy == GitVcsSettings.UpdateChangesPolicy.SHELVE ? new GitShelveChangesSaver(myProject, progressIndicator, stashMessage) : new GitStashChangesSaver(myProject, progressIndicator, stashMessage);
+    final GitChangesSaver saver = rebaseInfo.policy == GitVcsSettings.UpdateChangesPolicy.SHELVE ? new GitShelveChangesSaver(myProject, progressIndicator, stashMessage) : new GitStashChangesSaver(myProject, progressIndicator, stashMessage);
 
-    final boolean saveOnFrameDeactivation = myGeneralSettings.isSaveOnFrameDeactivation();
-    final boolean syncOnFrameDeactivation = myGeneralSettings.isSyncOnFrameActivation();
-    myProjectManager.blockReloadingProjectOnExternalChanges();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override public void run() {
-            FileDocumentManager.getInstance().saveAllDocuments();
-            myGeneralSettings.setSaveOnFrameDeactivation(false);
-            myGeneralSettings.setSyncOnFrameActivation(false);
-          }
-        });
-      }
-    });
-
-    try {
-      final Set<VirtualFile> rootsToReorder = rebaseInfo.reorderedCommits.keySet();
-      saver.saveLocalChanges(rootsToReorder);
-
+    final Boolean[] result = new Boolean[1];
+    result[0] = false;
+    new GitUpdateLikeProcess(myProject) {
+      @Override
+      protected void runImpl(ContinuationContext context) {
         try {
-          GitRebaser rebaser = new GitRebaser(myProject);
-          for (Map.Entry<VirtualFile, List<String>> rootToCommits: rebaseInfo.reorderedCommits.entrySet()) {
-            final VirtualFile root = rootToCommits.getKey();
-            GitBranch b = GitBranch.current(myProject, root);
-            if (b == null) {
-              LOG.info("executeRebase: current branch is null");
-              continue;
-            }
-            GitBranch t = b.tracked(myProject, root);
-            if (t == null) {
-              LOG.info("executeRebase: tracked branch is null");
-              continue;
-            }
+          final Set<VirtualFile> rootsToReorder = rebaseInfo.reorderedCommits.keySet();
+          saver.saveLocalChanges(rootsToReorder);
 
-            final GitRevisionNumber mergeBase = b.getMergeBase(myProject, root, t);
-            if (mergeBase == null) {
-              LOG.info("executeRebase: merge base is null for " + b + " and " + t);
-              continue;
-            }
-
-            String parentCommit = mergeBase.getRev();
-            return rebaser.reoderCommitsIfNeeded(root, parentCommit, rootToCommits.getValue());
-          }
-
-        } catch (VcsException e) {
-          notifyMessage(myProject, "Commits weren't pushed", "Failed to reorder commits", NotificationType.WARNING, true,
-                        Collections.singleton(e));
-        } finally {
           try {
-            saver.restoreLocalChanges();
+            GitRebaser rebaser = new GitRebaser(myProject);
+            for (Map.Entry<VirtualFile, List<String>> rootToCommits: rebaseInfo.reorderedCommits.entrySet()) {
+              final VirtualFile root = rootToCommits.getKey();
+              GitBranch b = GitBranch.current(myProject, root);
+              if (b == null) {
+                LOG.info("executeRebase: current branch is null");
+                continue;
+              }
+              GitBranch t = b.tracked(myProject, root);
+              if (t == null) {
+                LOG.info("executeRebase: tracked branch is null");
+                continue;
+              }
+
+              final GitRevisionNumber mergeBase = b.getMergeBase(myProject, root, t);
+              if (mergeBase == null) {
+                LOG.info("executeRebase: merge base is null for " + b + " and " + t);
+                continue;
+              }
+
+              String parentCommit = mergeBase.getRev();
+              result[0] = rebaser.reoderCommitsIfNeeded(root, parentCommit, rootToCommits.getValue());
+            }
+
           } catch (VcsException e) {
-            LOG.info("Couldn't restore local changes after reordering commits", e);
-            notifyImportantError(myProject, "Couldn't restore local changes after update",
-                                 "Restoring changes saved before update failed with an error.<br/>" + e.getLocalizedMessage());
+            notifyMessage(myProject, "Commits weren't pushed", "Failed to reorder commits", NotificationType.WARNING, true,
+                          Collections.singleton(e));
+          } finally {
+            saver.restoreLocalChanges(context);
           }
+        } catch (VcsException e) {
+          LOG.info("Couldn't save local changes", e);
+          notifyError(myProject, "Couldn't save local changes",
+                      "Tried to save uncommitted changes in " + saver.getSaverName() + " before update, but failed with an error.<br/>" +
+                      "Update was cancelled.", true, e);
         }
-    } catch (VcsException e) {
-      LOG.info("Couldn't save local changes", e);
-      notifyError(myProject, "Couldn't save local changes",
-                  "Tried to save uncommitted changes in " + saver.getSaverName() + " before update, but failed with an error.<br/>" +
-                  "Update was cancelled.", true, e);
-    } finally {
-      myProjectManager.unblockReloadingProjectOnExternalChanges();
-      myGeneralSettings.setSaveOnFrameDeactivation(saveOnFrameDeactivation);
-      myGeneralSettings.setSyncOnFrameActivation(syncOnFrameDeactivation);
-    }
-    return false;
+      }
+    }.execute();
+    return result[0];
   }
 
   private static class RebaseInfo {

@@ -67,4 +67,15 @@ class Three {
         return three;
     }
 }
-
+class Four {
+    @Override
+    public boolean equals(Object obj) {
+        return false;
+    }
+}
+class Five {
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
+    }
+}

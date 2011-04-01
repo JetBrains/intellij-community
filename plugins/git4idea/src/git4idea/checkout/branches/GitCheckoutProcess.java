@@ -22,23 +22,29 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.Consumer;
+import com.intellij.util.continuation.Continuation;
+import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.checkout.branches.GitBranchConfigurations.BranchChanges;
 import git4idea.checkout.branches.GitBranchConfigurations.ChangeInfo;
 import git4idea.checkout.branches.GitBranchConfigurations.ChangeListInfo;
 import git4idea.commands.*;
+import git4idea.ui.GitUIUtil;
 import git4idea.update.GitStashUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -553,77 +559,86 @@ public class GitCheckoutProcess {
    * @param changes  the changes to restore, null means no changes to restore
    * @return true if changes has been restored successfully
    */
-  private boolean restoreChanges(ProgressIndicator progress,
-                                 final BranchChanges changes) {
+  private void restoreChanges(ProgressIndicator progress, final BranchChanges changes) {
     if (changes == null) {
-      return true;
+      return;
     }
     ShelvedChangeList shelve = null;
     for (ShelvedChangeList changeList : myShelveManager.getShelvedChangeLists()) {
       if (changeList.PATH.equals(changes.SHELVE_PATH)) {
+        // todo - why hadn't it interrupted?
         shelve = changeList;
       }
     }
     if (shelve == null) {
       //noinspection ThrowableInstanceNeverThrown
       myExceptions.add(new VcsException("Failed to find shelve with path" + changes.SHELVE_PATH));
-      return false;
+      return;
     }
     progress.setText("Refreshing files before restoring shelve: " + shelve.DESCRIPTION);
-    GitStashUtils.doSystemUnshelve(myProject, shelve, myShelveManager, myChangeManager, myExceptions);
-    // dirty files and parse changes
-    final HashMap<Pair<String, String>, String> parsedChanges = new HashMap<Pair<String, String>, String>();
-    for (ChangeInfo changeInfo : changes.CHANGES) {
-      String before = changeInfo.BEFORE_PATH;
-      String after = changeInfo.AFTER_PATH;
-      parsedChanges.put(Pair.create(before, after), changeInfo.CHANGE_LIST_NAME);
-      if (after != null) {
-        myDirtyScopeManager.fileDirty(VcsUtil.getFilePath(after));
-      }
-      if (before != null) {
-        myDirtyScopeManager.fileDirty(VcsUtil.getFilePath(before));
-      }
-    }
     final ShelvedChangeList finalShelve = shelve;
-    try {
-      waitForChanges();
-      HashMap<String, LocalChangeList> lists = new HashMap<String, LocalChangeList>();
-      for (LocalChangeList localChangeList : myChangeManager.getChangeLists()) {
-        lists.put(localChangeList.getName(), localChangeList);
+
+    final Continuation continuation = new Continuation(myProject, true);
+    final Consumer<VcsException> exceptionConsumer = new Consumer<VcsException>() {
+      @Override
+      public void consume(VcsException e) {
+        GitUIUtil.showTabErrors(myProject, "Failed to restore shelved lists", Collections.singletonList(e));
+        ToolWindowManager.getInstance(myProject).notifyByBalloon(ChangesViewContentManager.TOOLWINDOW_ID, MessageType.ERROR,
+                                                                 "Failed to process restore shelved change list: " +
+                                                                 finalShelve.DESCRIPTION +
+                                                                 ". Please restore it manually.");
       }
-      LocalChangeList defaultList = myChangeManager.getDefaultChangeList();
-      for (ChangeListInfo changeListInfo : changes.CHANGE_LISTS) {
-        LocalChangeList changeList = lists.get(changeListInfo.NAME);
-        if (changeList == null) {
-          changeList = myChangeManager.addChangeList(changeListInfo.NAME, changeListInfo.COMMENT);
-          lists.put(changeListInfo.NAME, changeList);
+    };
+    continuation.addExceptionHandler(VcsException.class, exceptionConsumer);
+    final ContinuationContext.GatheringContinuationContext initContext =
+      new ContinuationContext.GatheringContinuationContext();
+    GitStashUtils.doSystemUnshelve(myProject, shelve, myShelveManager, new Runnable() {
+      @Override
+      public void run() {
+        final HashMap<Pair<String, String>, String> parsedChanges = new HashMap<Pair<String, String>, String>();
+        for (ChangeInfo changeInfo : changes.CHANGES) {
+          String before = changeInfo.BEFORE_PATH;
+          String after = changeInfo.AFTER_PATH;
+          parsedChanges.put(Pair.create(before, after), changeInfo.CHANGE_LIST_NAME);
         }
-        if (changeListInfo.IS_DEFAULT) {
-          myChangeManager.setDefaultChangeList(changeList);
+        try {
+          HashMap<String, LocalChangeList> lists = new HashMap<String, LocalChangeList>();
+          final List<LocalChangeList> existedChangeLists = myChangeManager.getChangeLists();
+          for (LocalChangeList localChangeList : existedChangeLists) {
+            lists.put(localChangeList.getName(), localChangeList);
+          }
+          LocalChangeList defaultList = myChangeManager.getDefaultChangeList();
+          for (ChangeListInfo changeListInfo : changes.CHANGE_LISTS) {
+            LocalChangeList changeList = lists.get(changeListInfo.NAME);
+            if (changeList == null) {
+              changeList = myChangeManager.addChangeList(changeListInfo.NAME, changeListInfo.COMMENT);
+              lists.put(changeListInfo.NAME, changeList);
+            }
+            if (changeListInfo.IS_DEFAULT) {
+              myChangeManager.setDefaultChangeList(changeList);
+            }
+          }
+          for (Change change : defaultList.getChanges()) {
+            ContentRevision beforeRevision = change.getBeforeRevision();
+            String before = beforeRevision == null ? null : beforeRevision.getFile().getPath();
+            ContentRevision afterRevision = change.getAfterRevision();
+            String after = afterRevision == null ? null : afterRevision.getFile().getPath();
+            Pair<String, String> key = Pair.create(before, after);
+            String listName = parsedChanges.get(key);
+            assert listName != null : "List name should be found: " + key;
+            if (!listName.equals(defaultList.getName())) {
+              LocalChangeList changeList = lists.get(listName);
+              assert changeList != null : "Change List should be found: " + listName;
+              myChangeManager.moveChangesTo(changeList, new Change[]{change});
+            }
+          }
+        }
+        catch (Throwable t) {
+         exceptionConsumer.consume(new VcsException(t));
         }
       }
-      for (Change change : defaultList.getChanges()) {
-        ContentRevision beforeRevision = change.getBeforeRevision();
-        String before = beforeRevision == null ? null : beforeRevision.getFile().getPath();
-        ContentRevision afterRevision = change.getAfterRevision();
-        String after = afterRevision == null ? null : afterRevision.getFile().getPath();
-        Pair<String, String> key = Pair.create(before, after);
-        String listName = parsedChanges.get(key);
-        assert listName != null : "List name should be found: " + key;
-        if (!listName.equals(defaultList.getName())) {
-          LocalChangeList changeList = lists.get(listName);
-          assert changeList != null : "Change List should be found: " + listName;
-          myChangeManager.moveChangesTo(changeList, new Change[]{change});
-        }
-      }
-      return true;
-    }
-    catch (Throwable t) {
-      //noinspection ThrowableInstanceNeverThrown
-      myExceptions.add(
-        new VcsException("Failed to process restore shelved change list: " + finalShelve.DESCRIPTION + ". Please restore it manually.", t));
-      return false;
-    }
+    }, initContext);
+    continuation.run(initContext.getList());
   }
 
   /**

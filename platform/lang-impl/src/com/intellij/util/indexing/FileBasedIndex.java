@@ -276,7 +276,7 @@ public class FileBasedIndex implements ApplicationComponent {
       FileUtil.delete(corruptionMarker);
       String rebuildNotification = null;
       if (currentVersionCorrupted) {
-        rebuildNotification = "Index files on disk are corrupted, global index rebuild scheduled.";
+        rebuildNotification = "Index files on disk are corrupted. Indices will be rebuilt.";
       }
       else if (versionChanged) {
         rebuildNotification = "Index file format has changed for some indices. These indices will be rebuilt.";

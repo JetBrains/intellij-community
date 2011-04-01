@@ -213,7 +213,7 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
       if (GenericsHighlightUtil.isUncheckedCast(castType, exprType)) {
         final String description =
           JavaErrorMessages.message("generics.unchecked.cast", HighlightUtil.formatType(exprType), HighlightUtil.formatType(castType));
-        registerProblem(description, expression, myOnTheFly ? new GenerifyFileFix(operand.getContainingFile()) : null);
+        registerProblem(description, expression, myOnTheFly ? new GenerifyFileFix(operand.getContainingFile().getName()) : null);
       }
     }
 
@@ -227,7 +227,7 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
         if (IGNORE_UNCHECKED_CALL) return;
         registerProblem(description, callExpression instanceof PsiMethodCallExpression
                                      ? ((PsiMethodCallExpression)callExpression).getMethodExpression()
-                                     : callExpression, myOnTheFly ? new GenerifyFileFix(callExpression.getContainingFile()) : null);
+                                     : callExpression, myOnTheFly ? new GenerifyFileFix(callExpression.getContainingFile().getName()) : null);
       }
       else {
         if (IGNORE_UNCHECKED_ASSIGNMENT) return;
@@ -245,7 +245,7 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
                 final PsiType parameterType = substitutor.substitute(parameter.getType());
                 final PsiType expressionType = substitutor.substitute(expression.getType());
                 if (expressionType != null) {
-                  checkRawToGenericsAssignment(expression, parameterType, expressionType, true, myOnTheFly ? new GenerifyFileFix(expression.getContainingFile()) : null);
+                  checkRawToGenericsAssignment(expression, parameterType, expressionType, true, myOnTheFly ? new GenerifyFileFix(expression.getContainingFile().getName()) : null);
                 }
               }
             }

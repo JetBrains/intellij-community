@@ -38,7 +38,6 @@ import com.intellij.codeInspection.ui.EntryPointsNode;
 import com.intellij.codeInspection.ui.InspectionNode;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefFilter;
-import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -63,7 +62,6 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -329,7 +327,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     return serializableClass != null && aClass.isInheritor(serializableClass, true);
   }
 
-  public void runInspection(final AnalysisScope scope, final InspectionManager manager) {
+  public void runInspection(@NotNull final AnalysisScope scope, @NotNull final InspectionManager manager) {
     getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(final RefEntity refEntity) {
         if (refEntity instanceof RefJavaElement) {
@@ -643,7 +641,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     return myComposer;
   }
 
-  public void exportResults(final Element parentNode) {
+  public void exportResults(@NotNull final Element parentNode) {
     final WeakUnreferencedFilter filter = new WeakUnreferencedFilter(this);
     getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(RefEntity refEntity) {

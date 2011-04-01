@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports;
 
+import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
@@ -40,4 +41,7 @@ public interface GrImportStatement extends GrTopStatement {
 
   @Nullable
   GrModifierList getAnnotationList();
+
+  @Nullable
+  PsiClass resolveTargetClass();
 }

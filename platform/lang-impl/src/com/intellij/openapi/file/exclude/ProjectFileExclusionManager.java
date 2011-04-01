@@ -76,7 +76,7 @@ public class ProjectFileExclusionManager implements PersistentStateComponent<Ele
   }
 
   public boolean isExcluded(VirtualFile file) {
-    return myExcludedFiles.contains(file);
+    return false; //myExcludedFiles.contains(file);
   }
 
   public Collection<VirtualFile> getExcludedFiles() {

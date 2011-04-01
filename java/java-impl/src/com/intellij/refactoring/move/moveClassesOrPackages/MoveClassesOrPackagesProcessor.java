@@ -560,7 +560,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    private void visitMemberReference(final PsiModifierListOwner member, PsiReferenceExpression qualified, final RefactoringUtil.IsDescendantOf descendantOf) {
+    private synchronized void visitMemberReference(final PsiModifierListOwner member, PsiReferenceExpression qualified, final RefactoringUtil.IsDescendantOf descendantOf) {
       if (member.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
         visitPackageLocalMemberReference(qualified, member);
       } else if (member.hasModifierProperty(PsiModifier.PROTECTED)) {

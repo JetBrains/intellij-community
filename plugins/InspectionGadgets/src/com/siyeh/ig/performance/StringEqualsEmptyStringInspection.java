@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -48,16 +49,39 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
 
     @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
-        return new StringEqualsEmptyStringFix();
+        return new StringEqualsEmptyStringFix((PsiMethodCallExpression)infos[0]);
     }
 
     private static class StringEqualsEmptyStringFix
             extends InspectionGadgetsFix {
 
+        private final boolean useIsEmpty;
+
+        public StringEqualsEmptyStringFix(PsiMethodCallExpression call) {
+            final Project project = call.getProject();
+            final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+            final GlobalSearchScope scope = call.getResolveScope();
+            final PsiClass stringClass =
+                    psiFacade.findClass(CommonClassNames.JAVA_LANG_STRING,
+                            scope);
+            if (stringClass != null) {
+                final PsiMethod[] methods =
+                        stringClass.findMethodsByName("isEmpty", false);
+                useIsEmpty = methods.length > 0;
+            } else {
+                useIsEmpty = false;
+            }
+        }
+
         @NotNull
         public String getName() {
-            return InspectionGadgetsBundle.message(
-                    "string.equals.empty.string.replace.quickfix");
+            if (useIsEmpty) {
+                return InspectionGadgetsBundle.message(
+                        "string.equals.empty.string.replace.quickfix2");
+            } else {
+                return InspectionGadgetsBundle.message(
+                        "string.equals.empty.string.replace.quickfix");
+            }
         }
 
         @Override
@@ -72,7 +96,8 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
             }
             final PsiExpression call = (PsiExpression)expression.getParent();
             final PsiExpression qualifier = expression.getQualifierExpression();
-            final String qualifierText = getRemainingText(qualifier);
+            final String qualifierText =
+                    getRemainingText(qualifier, useIsEmpty);
             if (call == null) {
                 return;
             }
@@ -80,19 +105,33 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
             if (parent instanceof PsiExpression) {
                 final PsiExpression parentExpression = (PsiExpression) parent;
                 if(BoolUtils.isNegation(parentExpression)) {
-                    replaceExpression(parentExpression,
-                            qualifierText + ".length()!=0");
+                    if (useIsEmpty) {
+                        replaceExpression(parentExpression,
+                                '!' + qualifierText + ".isEmpty()");
+                    } else {
+                        replaceExpression(parentExpression,
+                                qualifierText + ".length()!=0");
+                    }
+                } else {
+                    if (useIsEmpty) {
+                        replaceExpression(call, qualifier + ".isEmpty()");
+                    } else {
+                        replaceExpression(call, qualifierText + ".length()==0");
+                    }
+                }
+            } else {
+                if (useIsEmpty) {
+                    replaceExpression(call, qualifierText + ".isEmpty()");
                 } else {
                     replaceExpression(call, qualifierText + ".length()==0");
                 }
-            } else {
-                replaceExpression(call, qualifierText + ".length()==0");
             }
         }
 
-        private static String getRemainingText(PsiExpression qualifier) {
+        private static String getRemainingText(PsiExpression qualifier,
+                                               boolean useIsEmpty) {
             final String qualifierText;
-            if (qualifier instanceof PsiMethodCallExpression) {
+            if (!useIsEmpty && qualifier instanceof PsiMethodCallExpression) {
                 // to replace stringBuffer.toString().equals("") with
                 // stringBuffer.length() == 0
                 final PsiMethodCallExpression callExpression =
@@ -163,7 +202,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
                 // produce uncompilable code (out of merely incorrect code).
                 return;
             }
-            registerMethodCallError(call);
+            registerMethodCallError(call, call);
         }
     }
 }

@@ -115,7 +115,11 @@ public abstract class GrVariableDeclarationBase extends GrStubElementBase<EmptyS
 
   @Override
   public boolean isTuple() {
-    return findChildByClass(GrTupleDeclaration.class) != null;
+    return getTupleDeclaration() != null;
+  }
+
+  public GrTupleDeclaration getTupleDeclaration() {
+    return findChildByClass(GrTupleDeclaration.class);
   }
 
   @Override
@@ -173,18 +177,13 @@ public abstract class GrVariableDeclarationBase extends GrStubElementBase<EmptyS
       return "Multiple variable definitions";
     }
 
-    @NotNull
-    public GrTupleDeclaration getTuple(){
-      return findChildByClass(GrTupleDeclaration.class);
-    }
-
     @Nullable
     public GrExpression getInitializerGroovy(){
       return findChildByClass(GrExpression.class);
     }
 
     public GrVariable[] getVariables() {
-      return getTuple().getVariables();
+      return getTupleDeclaration().getVariables();
     }
 
     public GrMember[] getMembers() {

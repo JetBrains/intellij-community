@@ -24,6 +24,7 @@ import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.copy.JavaCopyFilesOrDirectoriesHandler;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesHandlerBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -41,6 +42,9 @@ public class JavaMoveFilesOrDirectoriesHandler extends MoveFilesOrDirectoriesHan
     for (PsiElement element : srcElements) {
       if (element instanceof PsiDirectory) {
         allJava &= JavaCopyFilesOrDirectoriesHandler.hasPackages((PsiDirectory)element);
+        if (allJava) {
+          allJava = MoveClassesOrPackagesHandlerBase.hasJavaFiles((PsiDirectory)element);
+        }
       }
       else if (element instanceof PsiFile) {
         allJava &= element instanceof PsiJavaFile && !JspPsiUtil.isInJspFile(element) &&

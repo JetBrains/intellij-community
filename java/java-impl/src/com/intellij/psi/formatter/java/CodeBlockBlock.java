@@ -235,7 +235,7 @@ public class CodeBlockBlock extends AbstractJavaBlock {
   }
 
   private Indent calcCurrentIndent(final ASTNode child, final int state) {
-    if (isRBrace(child)) {
+    if (isRBrace(child) || child.getElementType() == JavaTokenType.AT) {
       return Indent.getNoneIndent();
     }
 

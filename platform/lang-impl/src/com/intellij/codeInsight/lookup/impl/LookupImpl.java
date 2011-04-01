@@ -50,15 +50,16 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.plaf.beg.BegPopupMenuBorder;
 import com.intellij.util.Alarm;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -122,10 +123,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private Alarm myHintAlarm = new Alarm();
   private JLabel mySortingLabel;
   private final JScrollPane myScrollPane;
+  private JButton myScrollBarIncreaseButton;
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger){
     super(new JPanel(new BorderLayout()));
     setForceShowAsPopup(true);
+    setCancelOnClickOutside(false);
     myProject = project;
     myEditor = editor;
 
@@ -138,10 +141,21 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
 
-    myScrollPane = ScrollPaneFactory.createScrollPane(myList);
+    myScrollBarIncreaseButton = new JButton();
+    myScrollBarIncreaseButton.setFocusable(false);
+    myScrollBarIncreaseButton.setRequestFocusEnabled(false);
+
+    myScrollPane = new JBScrollPane(myList);
     myScrollPane.setViewportBorder(new EmptyBorder(0, 0, 0, 0));
     myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     myScrollPane.getVerticalScrollBar().setPreferredSize(new Dimension(13, -1));
+    myScrollPane.getVerticalScrollBar().setUI(new ButtonlessScrollBarUI() {
+      @Override
+      protected JButton createIncreaseButton(int orientation) {
+        return myScrollBarIncreaseButton;
+      }
+    });
+
     getComponent().add(myScrollPane, BorderLayout.NORTH);
     myScrollPane.setBorder(null);
 
@@ -1160,9 +1174,16 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     final Dimension sortSize = mySortingLabel.getPreferredSize();
     final Point sbLocation = SwingUtilities.convertPoint(myScrollPane.getVerticalScrollBar(), 0, 0, layeredPane);
 
-    final int sortHeight = (StringUtil.isNotEmpty(myAdText) ? myAdComponent.getAdComponent() : mySortingLabel).getPreferredSize().height;
+    int adHeight = myAdComponent.getAdComponent().getPreferredSize().height;
+    final int sortHeight = Math.max(adHeight, mySortingLabel.getPreferredSize().height);
     mySortingLabel.setBounds(sbLocation.x, layeredPane.getHeight() - sortHeight, sortSize.width, sortHeight);
 
+    Dimension buttonSize = adHeight > 0 ? new Dimension(0, 0) : new Dimension(relevanceSortIcon.getIconWidth(), relevanceSortIcon.getIconHeight());
+    myScrollBarIncreaseButton.setPreferredSize(buttonSize);
+    myScrollBarIncreaseButton.setMinimumSize(buttonSize);
+    myScrollBarIncreaseButton.setMaximumSize(buttonSize);
+    myScrollPane.getVerticalScrollBar().revalidate();
+    myScrollPane.getVerticalScrollBar().repaint();
   }
 
   private void updateScrollbarVisibility() {

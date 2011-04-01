@@ -57,6 +57,7 @@ import org.jetbrains.plugins.groovy.refactoring.NameValidator;
 import org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceFieldHandler;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -202,7 +203,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
     }
     else {
-      final List<PsiElement> list = new ArrayList<PsiElement>();
+      final List<PsiElement> list = Collections.synchronizedList(new ArrayList<PsiElement>());
       ReferencesSearch.search(variable, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
         @Override
         public boolean process(PsiReference psiReference) {

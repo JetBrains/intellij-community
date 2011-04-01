@@ -63,10 +63,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Anton Katilin
@@ -208,7 +205,7 @@ public final class StringEditorDialog extends DialogWrapper{
   }
 
   private static Collection<PsiReference> findPropertyReferences(final Property pproperty, final Module module) {
-    final Collection<PsiReference> references = new ArrayList<PsiReference>();
+    final Collection<PsiReference> references = Collections.synchronizedList(new ArrayList<PsiReference>());
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
           new Runnable() {
         public void run() {

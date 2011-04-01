@@ -293,7 +293,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public void setPrompt(String prompt) {
-    myPrompt = prompt;
+    // always add space to the prompt otherwise it may look ugly
+    myPrompt = prompt != null && !prompt.endsWith(" ")? prompt + " " : prompt;
     setPromptInner(myPrompt);
   }
 
@@ -307,6 +308,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   public void setEditable(boolean editable) {
     myConsoleEditor.setRendererMode(!editable);
     setPromptInner(editable? myPrompt : "");
+  }
+
+  public boolean isEditable() {
+    return !myConsoleEditor.isRendererMode();
   }
 
   public PsiFile getFile() {
@@ -365,7 +370,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   public String addCurrentToHistory(final TextRange textRange, final boolean erase, final boolean preserveMarkup) {
     final Ref<String> ref = Ref.create("");
-    final boolean scrollToEnd = shouldScrollHistoryToEnd();
     final Runnable action = new Runnable() {
       public void run() {
         ref.set(addTextRangeToHistory(textRange, myConsoleEditor, preserveMarkup));
@@ -380,10 +384,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     else {
       ApplicationManager.getApplication().runReadAction(action);
     }
-    if (scrollToEnd) {
-      scrollHistoryToEnd();
-    }
-    queueUiUpdate(scrollToEnd);
+    // always scroll to end on user input
+    scrollHistoryToEnd();
+    queueUiUpdate(true);
     return ref.get();
   }
 

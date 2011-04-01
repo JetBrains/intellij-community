@@ -19,6 +19,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -27,20 +28,25 @@ import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.continuation.ContinuationContext;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.convert.GitFileSeparatorConverter;
+import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeConflictResolver;
 import git4idea.ui.GitUIUtil;
 import git4idea.ui.GitUnstashDialog;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
@@ -70,15 +76,28 @@ public class GitStashChangesSaver extends GitChangesSaver {
   }
 
   @Override
-  protected void load() throws VcsException {
+  protected void load(@Nullable final Runnable restoreListsRunnable, ContinuationContext context) {
     for (VirtualFile root : myStashedRoots) {
-      loadRoot(root);
+      try {
+        loadRoot(root);
+      }
+      catch (VcsException e) {
+        context.handleException(e);
+      }
     }
     final List<File> files = ObjectsConvertor.fp2jiof(getChangedFiles());
     LocalFileSystem.getInstance().refreshIoFiles(files);
+    if (restoreListsRunnable != null) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        public void run() {
+          myChangeManager.invokeAfterUpdate(restoreListsRunnable, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE,
+                                            GitBundle.getString("update.restoring.change.lists"), ModalityState.NON_MODAL);
+        }
+      });
+    }
   }
 
-  @Override
+    @Override
   protected boolean wereChangesSaved() {
     return !myStashedRoots.isEmpty();
   }

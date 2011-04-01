@@ -1,6 +1,6 @@
 public enum UserFlags {
-    Root("Has super administrative powers" ),
-    Blacklisted("Probably a spammer" );
+    Root("Has super administrative powers"),
+    Blacklisted("Probably a spammer");
 
     public final String description;
     public final int mask;

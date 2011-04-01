@@ -23,6 +23,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassHandler;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,9 +34,8 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 /**
  * @author Maxim.Medvedev
@@ -199,6 +200,28 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
   }
 
   @Override
+  public void preprocessUsages(Collection<UsageInfo> results) {
+    //remove all alias-imported usages from collection
+    for (Iterator<UsageInfo> iterator = results.iterator(); iterator.hasNext(); ) {
+      UsageInfo info = iterator.next();
+      final PsiReference ref = info.getReference();
+      if (ref==null) continue;
+
+      final PsiElement element = ref.getElement();
+      if (!(element instanceof GrReferenceElement)) continue;
+
+      final GroovyResolveResult resolveResult = ((GrReferenceElement)element).advancedResolve();
+      final GroovyPsiElement context = resolveResult.getCurrentFileResolveContext();
+      if (!(context instanceof GrImportStatement)) continue;
+
+      final String importedName = ((GrImportStatement)context).getImportedName();
+      if (importedName == null) continue;
+
+      iterator.remove();
+    }
+  }
+
+  @Override
   public void prepareMove(@NotNull PsiClass aClass) {
     if (aClass.getContainingFile() instanceof GroovyFileBase) {
       GroovyChangeContextUtil.encodeContextInfo(getRealElement(aClass));
@@ -220,8 +243,9 @@ public class MoveGroovyClassHandler implements MoveClassHandler {
     final Collection<PsiReference> all = ReferencesSearch.search(oldClass, new LocalSearchScope(newClass.getContainingFile())).findAll();
     for (PsiReference reference : all) {
       final PsiElement element = reference.getElement();
-      if (element.getParent() instanceof GrImportStatement) {
-        element.getParent().delete();
+      final PsiElement parent = element.getParent();
+      if (parent instanceof GrImportStatement && !((GrImportStatement)parent).isStatic()) {
+        parent.delete();
       }
       reference.bindToElement(newClass);
     }

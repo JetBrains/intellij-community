@@ -449,8 +449,6 @@
       <reference ref="ExternalToolsGroup"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuSettingsGroup"/>
-      <separator/>
-      <reference ref="RemoveBom"/>
     </group>
 
     <group id="NavbarPopupMenu">

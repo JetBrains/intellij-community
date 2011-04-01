@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -188,11 +189,16 @@ public final class IdeMouseEventDispatcher {
   private static boolean doHorizontalScrolling(Component c, MouseWheelEvent me) {
     final JScrollBar scrollBar = findHorizontalScrollBar(c);
     if (scrollBar != null) {
-      int totalScrollAmount = me.getUnitsToScroll() * scrollBar.getUnitIncrement() * 3;
-      scrollBar.setValue(scrollBar.getValue() + totalScrollAmount);
+      scrollBar.setValue(scrollBar.getValue() + getScrollAmount(c, me, scrollBar));
       return true;
     }
     return false;
+  }
+
+  private static int getScrollAmount(Component c, MouseWheelEvent me, JScrollBar scrollBar) {
+    final int ratio = Registry.is("ide.smart.horizontal.scrolling")
+                      ? Math.max((int)Math.pow(c.getWidth() / scrollBar.getWidth() , 2), 10) : 10; // do annoying scrolling faster if smart scrolling is on
+    return me.getUnitsToScroll() * scrollBar.getUnitIncrement() * ratio;
   }
 
   private static boolean isHorizontalScrolling(Component c, MouseEvent e) {

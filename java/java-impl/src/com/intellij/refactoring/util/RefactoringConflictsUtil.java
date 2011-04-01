@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 05-Oct-2009
- */
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.module.Module;
@@ -45,11 +40,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Set;
 
+/**
+ * @author anna
+ * Date: 05-Oct-2009
+ */
 public class RefactoringConflictsUtil {
+  private RefactoringConflictsUtil() { }
 
   public static void analyzeAccessibilityConflicts(@NotNull Set<PsiMember> membersToMove,
-                                                @NotNull final PsiClass targetClass,
-                                                final MultiMap<PsiElement, String> conflicts, String newVisibility) {
+                                                   @NotNull final PsiClass targetClass,
+                                                   final MultiMap<PsiElement, String> conflicts, String newVisibility) {
     analyzeAccessibilityConflicts(membersToMove, targetClass, conflicts, newVisibility, targetClass, null);
   }
 
@@ -65,11 +65,11 @@ public class RefactoringConflictsUtil {
       checkUsedElements(member, member, membersToMove, abstractMethods, targetClass, context, conflicts);
 
       PsiModifierList modifierList = member.getModifierList();
-      if (modifierList!=null) modifierList= (PsiModifierList)modifierList.copy();
+      if (modifierList != null) modifierList = (PsiModifierList)modifierList.copy();
 
       if (newVisibility != null) {
         try {
-          if (modifierList!=null)    VisibilityUtil.setVisibility(modifierList, newVisibility);
+          if (modifierList != null) VisibilityUtil.setVisibility(modifierList, newVisibility);
         }
         catch (IncorrectOperationException ex) {
           /* do nothing and hope for the best */
@@ -110,7 +110,7 @@ public class RefactoringConflictsUtil {
     if (abstractMethods != null) {
       moving.addAll(abstractMethods);
     }
-    if(scope instanceof PsiReferenceExpression) {
+    if (scope instanceof PsiReferenceExpression) {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)scope;
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
@@ -147,19 +147,17 @@ public class RefactoringConflictsUtil {
       }
     }
 
-    PsiElement[] children = scope.getChildren();
-    for (PsiElement child : children) {
-      if (!(child instanceof PsiWhiteSpace)) {
-        checkUsedElements(member, child, membersToMove, abstractMethods, targetClass, context, conflicts);
-      }
+    for (PsiElement child : scope.getChildren()) {
+      if (child instanceof PsiWhiteSpace || child instanceof PsiComment) continue;
+      checkUsedElements(member, child, membersToMove, abstractMethods, targetClass, context, conflicts);
     }
   }
 
   public static void checkAccessibility(PsiMember refMember,
                                         @NotNull PsiElement newContext,
-                                         PsiClass accessClass,
-                                         PsiMember member,
-                                         MultiMap<PsiElement, String> conflicts) {
+                                        PsiClass accessClass,
+                                        PsiMember member,
+                                        MultiMap<PsiElement, String> conflicts) {
     if (!PsiUtil.isAccessible(refMember, newContext, accessClass)) {
       String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
                                                  RefactoringUIUtil.getDescription(refMember, true),
@@ -167,7 +165,8 @@ public class RefactoringConflictsUtil {
                                                  RefactoringUIUtil.getDescription(member, false));
       message = CommonRefactoringUtil.capitalize(message);
       conflicts.putValue(refMember, message);
-    } else if (newContext instanceof PsiClass && refMember instanceof PsiField && refMember.getContainingClass() == member.getContainingClass()) {
+    }
+    else if (newContext instanceof PsiClass && refMember instanceof PsiField && refMember.getContainingClass() == member.getContainingClass()) {
       final PsiField fieldInSubClass = ((PsiClass)newContext).findFieldByName(refMember.getName(), false);
       if (fieldInSubClass != null) {
         conflicts.putValue(refMember, CommonRefactoringUtil.capitalize(RefactoringUIUtil.getDescription(fieldInSubClass, true) +
@@ -253,6 +252,7 @@ public class RefactoringConflictsUtil {
               if (module != null) {
                 final String message;
                 final PsiElement referencedElement = moveRenameUsageInfo.getReferencedElement();
+                assert referencedElement != null : moveRenameUsageInfo;
                 if (module == targetModule && isInTestSources) {
                   message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.from.production.of.module.2",
                                                       CommonRefactoringUtil.capitalize(

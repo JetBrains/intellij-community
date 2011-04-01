@@ -66,12 +66,13 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
   private static final Logger LOG = Logger.getInstance("#" + UnusedLibrariesInspection.class.getName());
   private static final JobDescriptor BACKWARD_ANALYSIS = new JobDescriptor(InspectionsBundle.message("unused.library.backward.analysis.job.description"));
 
-  public void runInspection(final AnalysisScope scope, final InspectionManager manager) {
+  public void runInspection(@NotNull final AnalysisScope scope, @NotNull final InspectionManager manager) {
     final Project project = getContext().getProject();
     final ArrayList<VirtualFile> libraryRoots = new ArrayList<VirtualFile>();
     if (scope.getScopeType() == AnalysisScope.PROJECT) {
       ContainerUtil.addAll(libraryRoots, LibraryUtil.getLibraryRoots(project, false, false));
-    } else {
+    }
+    else {
       final Set<Module> modules = new HashSet<Module>();
       scope.accept(new PsiRecursiveElementVisitor() {
         @Override
@@ -89,6 +90,10 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
       });
       ContainerUtil.addAll(libraryRoots, LibraryUtil.getLibraryRoots(modules.toArray(new Module[modules.size()]), false, false));
     }
+    if (libraryRoots.isEmpty()) {
+      return;
+    }
+
     GlobalSearchScope searchScope;
     try {
       @NonNls final String libsName = "libs";
@@ -113,7 +118,7 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
     }, new ProgressIndicatorBase() {
       public void setFraction(final double fraction) {
         super.setFraction(fraction);
-        BACKWARD_ANALYSIS.setDoneAmount(((int)fraction * BACKWARD_ANALYSIS.getTotalAmount()));
+        BACKWARD_ANALYSIS.setDoneAmount((int)fraction * BACKWARD_ANALYSIS.getTotalAmount());
         getContext().incrementJobDoneAmount(BACKWARD_ANALYSIS, getText2());
       }
 
@@ -131,45 +136,42 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
         }
       }
     }
-    if (libraryRoots.size() > 0) {
-      ProjectFileIndex projectIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      Map<OrderEntry, Set<VirtualFile>> unusedLibs = new HashMap<OrderEntry, Set<VirtualFile>>();
-      for (VirtualFile libraryRoot : libraryRoots) {
-        final List<OrderEntry> orderEntries = projectIndex.getOrderEntriesForFile(libraryRoot);
-        for (OrderEntry orderEntry : orderEntries) {
-          Set<VirtualFile> files = unusedLibs.get(orderEntry);
-          if (files == null) {
-            files = new HashSet<VirtualFile>();
-            unusedLibs.put(orderEntry, files);
-          }
-          files.add(libraryRoot);
+    if (libraryRoots.isEmpty()) {
+      return;
+    }
+    ProjectFileIndex projectIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    Map<OrderEntry, Set<VirtualFile>> unusedLibs = new HashMap<OrderEntry, Set<VirtualFile>>();
+    for (VirtualFile libraryRoot : libraryRoots) {
+      final List<OrderEntry> orderEntries = projectIndex.getOrderEntriesForFile(libraryRoot);
+      for (OrderEntry orderEntry : orderEntries) {
+        Set<VirtualFile> files = unusedLibs.get(orderEntry);
+        if (files == null) {
+          files = new HashSet<VirtualFile>();
+          unusedLibs.put(orderEntry, files);
         }
-      }
-      final RefManager refManager = getRefManager();
-      for (OrderEntry orderEntry : unusedLibs.keySet()) {
-        if (orderEntry instanceof LibraryOrderEntry) {
-          final RefModule refModule = refManager.getRefModule(orderEntry.getOwnerModule());
-          final Set<VirtualFile> files = unusedLibs.get(orderEntry);
-          final VirtualFile[] roots = ((LibraryOrderEntry)orderEntry).getRootFiles(OrderRootType.CLASSES);
-          if (files.size() < roots.length) {
-            final String unusedLibraryRoots = StringUtil.join(files, new Function<VirtualFile, String>() {
-              public String fun(final VirtualFile file) {
-                return file.getPresentableName();
-              }
-            }, ",");
-            addProblemElement(refModule, manager.createProblemDescriptor(InspectionsBundle.message(
-              "unused.library.roots.problem.descriptor", unusedLibraryRoots, orderEntry.getPresentableName()), new RemoveUnusedLibrary(refModule, orderEntry, files)));
-          } else {
-            addProblemElement(refModule, manager.createProblemDescriptor(InspectionsBundle.message("unused.library.problem.descriptor",
-                                                                                                       orderEntry.getPresentableName()), new RemoveUnusedLibrary(refModule, orderEntry, null)));
-          }
-        }
+        files.add(libraryRoot);
       }
     }
-  }
-
-  public boolean isGraphNeeded() {
-    return false;
+    final RefManager refManager = getRefManager();
+    for (OrderEntry orderEntry : unusedLibs.keySet()) {
+      if (!(orderEntry instanceof LibraryOrderEntry)) continue;
+      final RefModule refModule = refManager.getRefModule(orderEntry.getOwnerModule());
+      final Set<VirtualFile> files = unusedLibs.get(orderEntry);
+      final VirtualFile[] roots = ((LibraryOrderEntry)orderEntry).getRootFiles(OrderRootType.CLASSES);
+      if (files.size() < roots.length) {
+        final String unusedLibraryRoots = StringUtil.join(files, new Function<VirtualFile, String>() {
+            public String fun(final VirtualFile file) {
+              return file.getPresentableName();
+            }
+          }, ",");
+        String message = InspectionsBundle.message("unused.library.roots.problem.descriptor", unusedLibraryRoots, orderEntry.getPresentableName());
+        addProblemElement(refModule, manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, orderEntry, files)));
+      }
+      else {
+        String message = InspectionsBundle.message("unused.library.problem.descriptor", orderEntry.getPresentableName());
+        addProblemElement(refModule, manager.createProblemDescriptor(message, new RemoveUnusedLibrary(refModule, orderEntry, null)));
+      }
+    }
   }
 
   @NotNull

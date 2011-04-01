@@ -378,14 +378,18 @@ public class HighlightUtil {
     if (opSign == null) return null;
     HighlightInfo errorResult = null;
     final PsiType lType = assignment.getLExpression().getType();
-    if (!TypeConversionUtil.isBinaryOperatorApplicable(opSign, assignment.getLExpression(), assignment.getRExpression(), true) ||
+    final PsiExpression rExpression = assignment.getRExpression();
+    if (rExpression == null) return null;
+    final PsiType rType = rExpression.getType();
+    if (!TypeConversionUtil.isBinaryOperatorApplicable(opSign, lType, rType, true) ||
         PsiType.getJavaLangObject(assignment.getManager(), assignment.getResolveScope()).equals(lType)) {
       String operatorText = operationSign.getText().substring(0, operationSign.getText().length() - 1);
       String message = JavaErrorMessages.message("binary.operator.not.applicable", operatorText,
                                                  formatType(lType),
-                                                 formatType(assignment.getRExpression().getType()));
+                                                 formatType(rType));
 
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, assignment, message);
+      QuickFixAction.registerQuickFixAction(errorResult, new ChangeToAppendFix(eqOpSign, lType, rType, assignment));
     }
     return errorResult;
   }

@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author oleg
@@ -46,7 +47,6 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   private static final String GITHUB_SETTINGS_PASSWORD_KEY = "GITHUB_SETTINGS_PASSWORD_KEY";
 
   private String myLogin;
-  private String myPassword;
   private String myHost;
   private static final Logger LOG = Logger.getInstance(GithubSettings.class.getName());
 
@@ -55,14 +55,8 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   }
 
   public Element getState() {
-    if (StringUtil.isEmptyOrSpaces(myLogin) && StringUtil.isEmptyOrSpaces(myPassword) && StringUtil.isEmptyOrSpaces(myHost)) {
+    if (StringUtil.isEmptyOrSpaces(myLogin) && StringUtil.isEmptyOrSpaces(myHost)) {
       return null;
-    }
-    try {
-      PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, myPassword);
-    }
-    catch (PasswordSafeException e) {
-      LOG.error(e);
     }
     final Element element = new Element(GITHUB_SETTINGS_TAG);
     element.setAttribute(LOGIN, getLogin());
@@ -74,7 +68,6 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     try {
       setLogin(element.getAttributeValue(LOGIN));
       setHost(element.getAttributeValue(HOST));
-      setPassword(PasswordSafe.getInstance().getPassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY));
     }
     catch (Exception e) {
       // ignore
@@ -86,9 +79,14 @@ public class GithubSettings implements PersistentStateComponent<Element> {
     return myLogin != null ? myLogin : "";
   }
 
-  @NotNull
+  @Nullable
   public String getPassword() {
-    return myPassword != null ? myPassword : "";
+    try {
+      return PasswordSafe.getInstance().getPassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY);
+    }
+    catch (PasswordSafeException e) {
+      return "";
+    }
   }
 
   public String getHost() {
@@ -100,7 +98,12 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   }
 
   public void setPassword(final String password) {
-    myPassword = password != null ? password : "";
+    try {
+      PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password);
+    }
+    catch (PasswordSafeException e) {
+      LOG.error(e);
+    }
   }
 
   public void setHost(final String host) {

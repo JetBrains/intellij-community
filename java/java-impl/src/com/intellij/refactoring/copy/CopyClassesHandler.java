@@ -24,6 +24,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -79,6 +80,27 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
     return result.isEmpty() ? null : result;
   }
 
+  @Nullable
+  private static String normalizeRelativeMap(Map<PsiFile, String> relativeMap) {
+    String vector = null;
+    for (String relativePath : relativeMap.values()) {
+      if (vector == null) {
+        vector = relativePath;
+      } else if (vector.startsWith(relativePath + "/")) {
+        vector = relativePath;
+      } else if (!relativePath.startsWith(vector + "/") && !relativePath.equals(vector)) {
+        return null;
+      }
+    }
+    if (vector != null) {
+      for (PsiFile psiFile : relativeMap.keySet()) {
+        final String path = relativeMap.get(psiFile);
+        relativeMap.put(psiFile, path.equals(vector) ? "" : path.substring(vector.length() + 1));
+      }
+    }
+    return vector;
+  }
+
   private static void fillResultsMap(Map<PsiFile, PsiClass[]> result, PsiFile containingFile, PsiClass[] topLevelClasses) {
     PsiClass[] classes = result.get(containingFile);
     if (classes != null) {
@@ -99,7 +121,16 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
     PsiDirectory targetDirectory = null;
     String className = null;
     if (classes.size() == 1 && classes.values().iterator().next().length == 1) {
-      CopyClassDialog dialog = new CopyClassDialog(classes.values().iterator().next()[0], defaultTargetDirectory, project, false);
+      final String commonPath = ArrayUtil.find(elements, classes.values().iterator().next()) == -1 ? normalizeRelativeMap(relativePathsMap) : null;
+      CopyClassDialog dialog = new CopyClassDialog(classes.values().iterator().next()[0], defaultTargetDirectory, project, false){
+        @Override
+        protected String getQualifiedName() {
+          if (commonPath != null && !commonPath.isEmpty()) {
+            return StringUtil.getQualifiedName(super.getQualifiedName(), commonPath.replaceAll("/", "."));
+          }
+          return super.getQualifiedName();
+        }
+      };
       dialog.setTitle(RefactoringBundle.message("copy.handler.copy.class"));
       dialog.show();
       if (dialog.isOK()) {

@@ -34,6 +34,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -131,8 +132,13 @@ public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
           processor.run();
         }
         else {
+          final boolean containsJava = hasJavaFiles(directories[0]);
+          if (!containsJava) {
+            MoveFilesOrDirectoriesUtil.doMove(project, new PsiElement[] {directories[0]}, new PsiElement[]{targetContainer}, callback);
+            return;
+          }
           final MoveClassesOrPackagesToNewDirectoryDialog dlg =
-            new MoveClassesOrPackagesToNewDirectoryDialog(directories[0], new PsiElement[2], false, callback) {
+            new MoveClassesOrPackagesToNewDirectoryDialog(directories[0], new PsiElement[0], false, callback) {
               @Override
               protected void performRefactoring(Project project,
                                                 final PsiDirectory targetDirectory,
@@ -159,6 +165,25 @@ public class MoveClassesOrPackagesHandlerBase extends MoveHandlerDelegate {
       return;
     }
     MoveClassesOrPackagesImpl.doMove(project, elements, targetContainer, callback);
+  }
+
+  public static boolean hasJavaFiles(PsiDirectory directory) {
+    final boolean [] containsJava = new boolean[]{false};
+    directory.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        if (containsJava[0]) return;
+        if (element instanceof PsiDirectory) {
+          super.visitElement(element);
+        }
+      }
+
+      @Override
+      public void visitFile(PsiFile file) {
+        containsJava[0] = file instanceof PsiJavaFile;
+      }
+    });
+    return containsJava[0];
   }
 
   @Override

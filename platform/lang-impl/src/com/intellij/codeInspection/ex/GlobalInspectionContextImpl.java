@@ -404,11 +404,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
 
   private void launchInspections(final AnalysisScope scope, final InspectionManager manager) {
     myUIOptions = AnalysisUIOptions.getInstance(myProject).copy();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      }
-    });
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     LOG.info("Code inspection started");
 

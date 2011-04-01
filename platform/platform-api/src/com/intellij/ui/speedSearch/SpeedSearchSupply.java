@@ -16,11 +16,11 @@
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.regex.Matcher;
 
 /**
  * User: spLeaner
@@ -39,5 +39,5 @@ public abstract class SpeedSearchSupply {
   public abstract boolean isPopupActive();
 
   @Nullable
-  public abstract Matcher compareAndGetMatcher(@NotNull final String text);
+  public abstract Iterable<TextRange> matchingFragments(@NotNull final String text);
 }

@@ -34,4 +34,6 @@ public interface GrVariableDeclaration extends GrStatement, GrMembersDeclaration
 
   @Nullable
   GrTypeElement getTypeElementGroovyForVariable(GrVariable var);
+
+  GrTupleDeclaration getTupleDeclaration();
 }

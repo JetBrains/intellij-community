@@ -49,7 +49,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -255,8 +254,8 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @NonNls
-  public static String toString(Collection<?> collection) {
-    if (collection.isEmpty()) {
+  public static String toString(Iterable<?> collection) {
+    if (!collection.iterator().hasNext()) {
       return "<empty>";
     }
 
@@ -277,24 +276,28 @@ public abstract class UsefulTestCase extends TestCase {
     assertOrderedEquals(Arrays.asList(actual), expected);
   }
 
-  public static <T> void assertOrderedEquals(Collection<T> actual, T... expected) {
+  public static <T> void assertOrderedEquals(Iterable<T> actual, T... expected) {
     assertOrderedEquals(null, actual, expected);
   }
 
-  public static <T> void assertOrderedEquals(final String errorMsg, Collection<T> actual, T... expected) {
+  public static <T> void assertOrderedEquals(final String errorMsg, Iterable<T> actual, T... expected) {
     Assert.assertNotNull(actual);
     Assert.assertNotNull(expected);
     assertOrderedEquals(errorMsg, actual, Arrays.asList(expected));
   }
 
-  public static <T> void assertOrderedEquals(final Collection<? extends T> actual, final Collection<? extends T> expected) {
+  public static <T> void assertOrderedEquals(final Iterable<? extends T> actual, final Collection<? extends T> expected) {
     assertOrderedEquals(null, actual, expected);
   }
 
   public static <T> void assertOrderedEquals(final String erroMsg,
-                                             final Collection<? extends T> actual,
+                                             final Iterable<? extends T> actual,
                                              final Collection<? extends T> expected) {
-    if (!new ArrayList<T>(actual).equals(new ArrayList<T>(expected))) {
+    ArrayList<T> list = new ArrayList<T>();
+    for (T t : actual) {
+      list.add(t);
+    }
+    if (!list.equals(new ArrayList<T>(expected))) {
       Assert.assertEquals(erroMsg, toString(expected), toString(actual));
       Assert.fail();
     }

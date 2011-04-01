@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.patterns;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.*;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
@@ -31,19 +30,14 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
-
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mGSTRING_LITERAL;
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mSTRING_LITERAL;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovyPatterns extends PsiJavaPatterns {
 
@@ -126,30 +120,9 @@ public class GroovyPatterns extends PsiJavaPatterns {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         if (!(o instanceof GrNamedArgument)) return false;
 
-        PsiElement parent = ((GrNamedArgument)o).getParent();
+        GrCall call = PsiUtil.getMethodByNamedParameter((GrNamedArgument)o);
 
-        PsiElement eMethodCall;
-
-        if (parent instanceof GrArgumentList) {
-          eMethodCall = parent.getParent();
-        }
-        else {
-          if (!(parent instanceof GrListOrMap)) return false;
-
-          PsiElement eArgumentList = parent.getParent();
-          if (!(eArgumentList instanceof GrArgumentList)) return false;
-
-          GrArgumentList argumentList = (GrArgumentList)eArgumentList;
-
-          if (argumentList.getNamedArguments().length > 0) return false;
-          if (argumentList.getExpressionArgumentIndex((GrListOrMap)parent) != 0) return false;
-
-          eMethodCall = eArgumentList.getParent();
-        }
-
-        if (!(eMethodCall instanceof GrCall)) return false;
-
-        return methodCall == null || methodCall.accepts(eMethodCall, context);
+        return call != null && (methodCall == null || methodCall.accepts(call, context));
       }
     });
   }

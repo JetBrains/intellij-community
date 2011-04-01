@@ -92,7 +92,10 @@ public class GitVcsPanel {
     }
 
     if (version.isSupported()) {
-      Messages.showInfoMessage(myProject, version.toString(), GitBundle.getString("find.git.success.title"));
+      Messages.showInfoMessage(myProject,
+                               String.format("<html>%s<br>Git version is %s</html>", GitBundle.getString("find.git.success.title"),
+                                             version.toString()),
+                               GitBundle.getString("find.git.success.title"));
     } else {
       Messages.showWarningDialog(myProject, GitBundle.message("find.git.unsupported.message", version.toString(), GitVersion.MIN),
                                  GitBundle.getString("find.git.success.title"));

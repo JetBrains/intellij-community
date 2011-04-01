@@ -201,4 +201,23 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
   public GrModifierList getAnnotationList() {
     return findChildByClass(GrModifierList.class);
   }
+
+  @Nullable
+  @Override
+  public PsiClass resolveTargetClass() {
+    final GrCodeReferenceElement ref = getImportReference();
+    if (ref == null) return null;
+
+    final PsiElement resolved;
+    if (!isStatic() || isOnDemand()) {
+      resolved = ref.resolve();
+    }
+    else {
+      final GrCodeReferenceElement qualifier = ref.getQualifier();
+      if (qualifier == null) return null;
+      resolved = qualifier.resolve();
+    }
+
+    return resolved instanceof PsiClass ? (PsiClass)resolved : null;
+  }
 }

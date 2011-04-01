@@ -284,10 +284,11 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       if (hasClassInfo || hasMethodInfo) {
         final StringBuilder info = StringBuilderSpinAllocator.alloc();
         try {
+          boolean isFile = getSourcePosition().getFile().getName().equals(className);
           String packageName = null;
           if (hasClassInfo) {
             final int dotIndex = className.lastIndexOf(".");
-            if (dotIndex >= 0) {
+            if (dotIndex >= 0 && !isFile) {
               info.append(className.substring(dotIndex + 1));
               packageName = className.substring(0, dotIndex);
             }
@@ -296,7 +297,10 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
             }
           }
           if(hasMethodInfo) {
-            if (hasClassInfo) {
+            if (isFile) {
+              info.append(":");
+            }
+            else if (hasClassInfo) {
               info.append(".");
             }
             info.append(myMethodName);
@@ -319,7 +323,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     if (file instanceof JspFile) {
       return null;
     }
-    if (file instanceof PsiJavaFile) {
+    if (file instanceof PsiClassOwner) {
       return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
         public String compute() {
           final PsiMethod method = DebuggerUtilsEx.findPsiMethod(file, offset);

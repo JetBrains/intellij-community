@@ -165,7 +165,8 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     }
 
     final PsiJavaFile aFile = createDummyJavaFile(join("class _Dummy_ { private ", type.getCanonicalText(), " ", name, "; }"));
-    final PsiField field = aFile.getClasses()[0].getFields()[0];
+    final PsiClass psiClass = aFile.getClasses()[0];
+    final PsiField field = psiClass.getFields()[0];
     JavaCodeStyleManager.getInstance(myManager.getProject()).shortenClassReferences(field);
     return (PsiField)CodeStyleManager.getInstance(myManager.getProject()).reformat(field);
   }

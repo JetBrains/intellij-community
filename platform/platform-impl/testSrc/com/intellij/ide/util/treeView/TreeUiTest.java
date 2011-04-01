@@ -1422,6 +1422,27 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
   }
 
+  public void testQueryWhenUpdatingPresentation() throws Exception {
+    buildStructure(myRoot);
+    expand(getPath("/"));
+    assertTree("-/\n" +
+               " +com\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+    myElementUpdate.clear();
+
+
+    updateFromRoot(false);
+
+    assertUpdates("/: update\n" +
+                  "com: update\n" +
+                  "jetbrains: update\n" +
+                  "org: update\n" +
+                  "xunit: update");
+  }
+
   public void testQueryStructureWhenExpand() throws Exception {
     buildStructure(myRoot);
 
@@ -2185,8 +2206,13 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
 
     @Override
-    public void testNoExtraJTreeModelUpdate() throws Exception {
-      super.testNoExtraJTreeModelUpdate();    //To change body of overridden methods use File | Settings | File Templates.
+    public void testQueryWhenUpdatingPresentation() throws Exception {
+      super.testQueryWhenUpdatingPresentation();    //To change body of overridden methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void testElementMove1() throws Exception {
+      super.testElementMove1();    //To change body of overridden methods use File | Settings | File Templates.
     }
   }
 

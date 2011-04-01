@@ -64,5 +64,11 @@ public class PaletteRefactoringListenerProvider implements RefactoringElementLis
         myUiDesignerPaletteProvider.fireGroupsChanged();
       }
     }
+
+    @Override
+    public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
+      myItem.setClassName(oldQualifiedName);
+      myUiDesignerPaletteProvider.fireGroupsChanged();
+    }
   }
 }

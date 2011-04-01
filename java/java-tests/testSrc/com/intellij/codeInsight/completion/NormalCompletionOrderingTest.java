@@ -60,25 +60,6 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertPreferredItems(0, "p", "pre", "param");
   }
 
-  public void testShorterShouldBePreselected() throws Throwable {
-    checkPreferredItems(0, "foo", "fooLongButOfDefaultType");
-  }
-
-  public void testGenericMethodsWithBoundParametersAreStillBetterThanClassLiteral() throws Throwable {
-    checkPreferredItems(0, "getService", "getService", "class");
-  }
-
-  public void testUppercaseMatters() throws Throwable {
-    final int old = CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE;
-    try {
-      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER;
-      checkPreferredItems(0, "classLoader", "class", "classBeforeLoader", "clone");
-    }
-    finally {
-      CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = old;
-    }
-  }
-
   public void testUppercaseMatters2() throws Throwable {
     final int old = CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE;
     try {
@@ -90,8 +71,12 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     }
   }
 
-  public void testHonorUppercaseLetters() throws Throwable {
-    checkPreferredItems(0, "clsLoader", "clone", "class");
+  public void testShorterShouldBePreselected() throws Throwable {
+    checkPreferredItems(0, "foo", "fooLongButOfDefaultType");
+  }
+
+  public void testGenericMethodsWithBoundParametersAreStillBetterThanClassLiteral() throws Throwable {
+    checkPreferredItems(0, "getService", "getService", "class");
   }
 
   public void testClassStaticMembersInVoidContext() throws Throwable {

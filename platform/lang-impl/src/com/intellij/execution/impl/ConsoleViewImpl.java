@@ -26,6 +26,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -67,6 +68,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
@@ -309,7 +311,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   protected final CompositeFilter myCustomFilter;
 
   private final ArrayList<String> myHistory = new ArrayList<String>();
-  private int myHistorySize = 20;
 
   private final ArrayList<ConsoleInputListener> myConsoleInputListeners = new ArrayList<ConsoleInputListener>();
 
@@ -329,7 +330,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   public void importHistory(Collection<String> history) {
     myHistory.clear();
     myHistory.addAll(history);
-    while (myHistory.size() > myHistorySize) {
+    final int maxSize = UISettings.getInstance().CONSOLE_COMMAND_HISTORY_LIMIT;
+    while (myHistory.size() > maxSize) {
       myHistory.remove(0);
     }
   }
@@ -339,11 +341,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   public void setHistorySize(int historySize) {
-    myHistorySize = historySize;
+    // todo remove all history code
   }
 
   public int getHistorySize() {
-    return myHistorySize;
+    return UISettings.getInstance().CONSOLE_COMMAND_HISTORY_LIMIT;
   }
 
   private FileType myFileType;
@@ -564,7 +566,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
       myDeferredTypes.add(contentType);
 
-      s = StringUtil.convertLineSeparators(s, true);
+      s = StringUtil.convertLineSeparators(s, !SystemInfo.isMac);
       myContentSize += s.length();
       myDeferredOutputLength += s.length();
       StringBuilder bufferToUse;
@@ -837,7 +839,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           for (int i = 0; i < strings.length - 1; i++) {
             document.insertString(document.getTextLength(), strings[i]);
             int lastLine = document.getLineCount() - 1;
-            document.deleteString(document.getLineStartOffset(lastLine), document.getTextLength());
+            if (lastLine >= 0) {
+              document.deleteString(document.getLineStartOffset(lastLine), document.getTextLength());
+            }
           }
           document.insertString(document.getTextLength(), strings[strings.length - 1]);
         }
@@ -1316,7 +1320,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private void addFolding(Document document, CharSequence chars, int line, List<FoldRegion> toAdd) {
     String commandLinePlaceholder = myCommandLineFolding.getPlaceholder(line);
     if (commandLinePlaceholder != null) {
-      FoldRegion region = ((FoldingModelEx)myEditor.getFoldingModel()).createFoldRegion(
+      FoldRegion region = myEditor.getFoldingModel().createFoldRegion(
         document.getLineStartOffset(line), document.getLineEndOffset(line), commandLinePlaceholder, null, false
       );
       toAdd.add(region);
@@ -1583,12 +1587,13 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private static class EnterHandler extends ConsoleAction {
     public void execute(final ConsoleViewImpl consoleView, final DataContext context) {
+      final int maxSize = UISettings.getInstance().CONSOLE_COMMAND_HISTORY_LIMIT;
       synchronized (consoleView.LOCK) {
         String str = consoleView.myDeferredUserInput.toString();
         if (StringUtil.isNotEmpty(str)) {
           consoleView.myHistory.remove(str);
           consoleView.myHistory.add(str);
-          if (consoleView.myHistory.size() > consoleView.myHistorySize) consoleView.myHistory.remove(0);
+          if (consoleView.myHistory.size() > maxSize) consoleView.myHistory.remove(0);
         }
         for (ConsoleInputListener listener : consoleView.myConsoleInputListeners) {
           listener.textEntered(str);

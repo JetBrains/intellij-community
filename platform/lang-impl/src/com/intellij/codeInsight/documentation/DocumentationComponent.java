@@ -247,6 +247,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           }
         }
       }
+
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension editorPaneSize = myEditorPane.getPreferredScrollableViewportSize();
+        Dimension controlPanelSize = myControlPanel.getPreferredSize();
+        return new Dimension(Math.max(editorPaneSize.width, controlPanelSize.width), editorPaneSize.height + controlPanelSize.height);
+      }
     };
     layeredPane.add(myScrollPane);
     layeredPane.setLayer(myScrollPane, 0);

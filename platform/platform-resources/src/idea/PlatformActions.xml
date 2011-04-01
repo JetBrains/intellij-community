@@ -20,6 +20,7 @@
     <action id="TextComponent.ClearAction" class="com.intellij.ui.ClearTextAction"/>
     <action id="Switcher" class="com.intellij.ide.actions.Switcher" text="Switcher"/>
     <action id="QuickDocCopy" class="com.intellij.codeInsight.documentation.actions.CopyQuickDocAction" use-shortcut-of="$Copy"/>
+    <action id="RemoveBom" class="com.intellij.openapi.editor.actions.RemoveBomAction"/>
 
     <group id="EditorActions">
       <action id="EditorPageUp" class="com.intellij.openapi.editor.actions.PageUpAction"/>
@@ -143,7 +144,6 @@
         <group id="ChangeFileEncodingGroup" popup="true" class="com.intellij.openapi.vfs.encoding.ChangeEncodingUpdateGroup">
           <action id="ChangeFileEncodingGroupAction" class="com.intellij.openapi.vfs.encoding.ChangeFileEncodingGroup" text=""/>
         </group>
-        <action id="RemoveBom" class="com.intellij.openapi.editor.actions.RemoveBomAction"/>
         <action id="ToggleReadOnlyAttribute" class="com.intellij.ide.actions.ToggleReadOnlyAttributeAction"/>
         <separator/>
         <action id="Exit" class="com.intellij.ide.actions.ExitAction"/>
@@ -338,8 +338,6 @@
       <separator/>
       <action id="CompareClipboardWithSelection" class="com.intellij.openapi.diff.actions.CompareClipboardWithSelection"/>
       <reference ref="ChangeFileEncodingGroup"/>
-      <separator/>
-      <reference ref="RemoveBom"/>
     </group>
 
     <group id="EditorTabPopupMenu">
@@ -454,6 +452,7 @@
 
       <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction" text="UI Inspector"/>
       <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction" text="Show Splash" />
+      <action id="ShowDirDiff" internal="true" class="com.intellij.openapi.diff.impl.dir.TestDirDiffAction" text="Show Dir Diff" />
       <action id="ValidationTest" internal="true" class="com.intellij.internal.validation.TestDialogWithValidationAction" text="Validation Dialog Test" />
       <separator/>
       <reference ref="MaintenanceGroup"/>

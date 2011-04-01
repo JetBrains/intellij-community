@@ -33,7 +33,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFi
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
-import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -119,8 +118,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         !(qualifier instanceof PsiLiteralExpression && ((PsiLiteralExpression)qualifier).getValue() == null)) {
       try {
         PsiBinaryExpression binary = (PsiBinaryExpression)JavaPsiFacade.getInstance(qualifier.getProject()).getElementFactory()
-          .createExpressionFromText("a != null",
-                                                                                                                              null);
+          .createExpressionFromText("a != null", null);
         binary.getLOperand().replace(qualifier);
         List<LocalQuickFix> fixes = new SmartList<LocalQuickFix>();
 
@@ -317,24 +315,20 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
 
   @Nullable
   private static LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
-    if (!(element instanceof PsiExpression)) return null;
-    final PsiExpression expression = (PsiExpression)element;
-    while (element.getParent() instanceof PsiExpression) {
-      element = element.getParent();
-    }
-    final SimplifyBooleanExpressionFix fix = new SimplifyBooleanExpressionFix(expression, value);
-    // simplify intention already active
-    if (!fix.isAvailable(element.getProject(), null, element.getContainingFile()) ||
-        SimplifyBooleanExpressionFix.canBeSimplified((PsiExpression)element)) {
-      return null;
-    }
+    SimplifyBooleanExpressionFix fix = createIntention(element, value);
+    if (fix == null) return null;
+    final String text = fix.getText();
     return new LocalQuickFix() {
-      @NotNull public String getName() {
-        return fix.getText();
+      @NotNull
+      public String getName() {
+        return text;
       }
 
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final PsiElement psiElement = descriptor.getPsiElement();
+        if (psiElement == null) return;
+        final SimplifyBooleanExpressionFix fix = createIntention(psiElement, value);
+        if (fix==null) return;
         try {
           LOG.assertTrue(psiElement.isValid());
           fix.invoke(project, null, psiElement.getContainingFile());
@@ -349,6 +343,21 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         return InspectionsBundle.message("inspection.data.flow.simplify.boolean.expression.quickfix");
       }
     };
+  }
+
+  private static SimplifyBooleanExpressionFix createIntention(PsiElement element, boolean value) {
+    if (!(element instanceof PsiExpression)) return null;
+    final PsiExpression expression = (PsiExpression)element;
+    while (element.getParent() instanceof PsiExpression) {
+      element = element.getParent();
+    }
+    final SimplifyBooleanExpressionFix fix = new SimplifyBooleanExpressionFix(expression, value);
+    // simplify intention already active
+    if (!fix.isAvailable(element.getProject(), null, element.getContainingFile()) ||
+        SimplifyBooleanExpressionFix.canBeSimplified((PsiExpression)element)) {
+      return null;
+    }
+    return fix;
   }
 
   private static class RedundantInstanceofFix implements LocalQuickFix {

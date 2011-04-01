@@ -1320,7 +1320,15 @@ public class ForCanBeForeachInspection extends BaseInspection{
             final PsiElement target = referenceExpression.resolve();
             if(target instanceof PsiVariable){
                 final PsiVariable variable = (PsiVariable) target;
-                expression = variable.getInitializer();
+                final PsiCodeBlock context =
+                        PsiTreeUtil.getParentOfType(variable,
+                                PsiCodeBlock.class);
+                if (context != null) {
+                    if (!VariableAccessUtils.variableIsAssigned(variable,
+                            context)) {
+                        expression = variable.getInitializer();
+                    }
+                }
             }
         }
         if(!(expression instanceof PsiMethodCallExpression)){

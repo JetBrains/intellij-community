@@ -21,14 +21,11 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.text.LineReader;
 import org.netbeans.lib.cvsclient.file.IReaderFactory;
 import org.netbeans.lib.cvsclient.file.IReceiveTextFilePreprocessor;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -42,7 +39,7 @@ public class ReceiveTextFilePreprocessor implements IReceiveTextFilePreprocessor
     myReceivedFileProcessor = receivedFileProcessor;
   }
 
-  public void copyTextFileToLocation(File textFileSource, File targetFile, IReaderFactory readerFactory, Charset charSet) throws IOException {
+  public void copyTextFileToLocation(InputStream textFileSource, int length, File targetFile, IReaderFactory readerFactory, Charset charSet) throws IOException {
     VirtualFile virtualFile = CvsVfsUtil.findFileByIoFile(targetFile);
     if (myReceivedFileProcessor.shouldProcess(virtualFile, targetFile)) {
       PrintStream target = new PrintStream(new BufferedOutputStream(new FileOutputStream(targetFile)));
@@ -52,27 +49,23 @@ public class ReceiveTextFilePreprocessor implements IReceiveTextFilePreprocessor
         if (charSet != null) {
           lineSeparatorBytes = charSet.encode(lineSeparator).array();
         }
-        final BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(textFileSource));
-        try {
-          Collection<byte[]> lines = new LineReader(inputStream).readLines();
-          for (Iterator<byte[]> each = lines.iterator(); each.hasNext();) {
-            final byte[] bytes = each.next();
-            if (charSet == null) {
-              target.write(bytes);
-            }
-            else {
-              target.write(charSet.encode(CharsetToolkit.bytesToString(bytes, CharsetToolkit.UTF8_CHARSET)).array());
-            }
-            if (each.hasNext()) {
-              if (charSet == null)
-                target.print(lineSeparator);
-              else
-                target.write(lineSeparatorBytes);
-            }
+        final LineReader lineReader = new LineReader(textFileSource, length);
+        boolean first = true;
+        for (byte[] line = lineReader.readLine(); line != null; line = lineReader.readLine()) {
+          if (!first) {
+            if (charSet == null)
+              target.print(lineSeparator);
+            else
+              target.write(lineSeparatorBytes);
+          } else {
+            first = false;
           }
-        }
-        finally {
-          inputStream.close();
+          if (charSet == null) {
+            target.write(line);
+          }
+          else {
+            target.write(charSet.encode(CharsetToolkit.bytesToString(line, CharsetToolkit.UTF8_CHARSET)).array());
+          }
         }
       }
       finally {

@@ -308,7 +308,9 @@ public class CompletionData {
     }
     else{
       final Object[] completions = reference.getVariants();
-
+      if (completions == null) {
+        LOG.error(reference);
+      }
       for (Object completion : completions) {
         if (completion == null) {
           LOG.error("Position=" + position + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(completions));

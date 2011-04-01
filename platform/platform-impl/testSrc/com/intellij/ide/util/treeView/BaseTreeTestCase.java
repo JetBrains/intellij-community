@@ -376,10 +376,14 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
 
   void updateFromRoot() throws Exception {
+    updateFromRoot(true);
+  }
+
+  void updateFromRoot(final boolean withStructure) throws Exception {
     doAndWaitForBuilder(new Runnable() {
       @Override
       public void run() {
-        getBuilder().updateFromRoot();
+        getBuilder().queueUpdate(withStructure);
       }
     });
   }

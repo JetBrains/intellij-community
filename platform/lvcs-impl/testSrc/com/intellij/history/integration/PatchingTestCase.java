@@ -21,6 +21,7 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.PatchVirtualFileReader;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -55,6 +56,6 @@ public abstract class PatchingTestCase extends IntegrationTestCase {
       patches.add(p);
     }
 
-    new PatchApplier<BinaryFilePatch>(myProject, myRoot, patches, null, null).execute();
+    new PatchApplier<BinaryFilePatch>(myProject, myRoot, patches, (LocalChangeList) null, null).execute();
   }
 }

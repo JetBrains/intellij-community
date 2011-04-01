@@ -148,7 +148,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     result.clear();
   }
 
-  public void doInspectInBatch(final InspectionManagerEx iManager, List<InspectionProfileEntry> toolWrappers) {
+  public void doInspectInBatch(@NotNull InspectionManagerEx iManager, @NotNull List<InspectionProfileEntry> toolWrappers) {
     Map<LocalInspectionTool, LocalInspectionToolWrapper> tool2Wrapper = new THashMap<LocalInspectionTool, LocalInspectionToolWrapper>(toolWrappers.size());
     for (InspectionProfileEntry toolWrapper : toolWrappers) {
       tool2Wrapper.put(((LocalInspectionToolWrapper)toolWrapper).getTool(), (LocalInspectionToolWrapper)toolWrapper);
@@ -214,8 +214,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  private void inspect(final List<LocalInspectionTool> tools,
-                       final InspectionManagerEx iManager,
+  private void inspect(@NotNull final List<LocalInspectionTool> tools,
+                       @NotNull final InspectionManagerEx iManager,
                        final boolean isOnTheFly,
                        boolean failFastOnAcquireReadAction,
                        @NotNull final ProgressIndicator indicator) {

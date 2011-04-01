@@ -21,13 +21,14 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,9 +47,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSearchSupply {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SpeedSearchBase");
@@ -100,11 +98,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
 
   @Override
-  public Matcher compareAndGetMatcher(@NotNull String text) {
+  public Iterable<TextRange> matchingFragments(@NotNull String text) {
     if (!isPopupActive()) return null;
     final SpeedSearchComparator comparator = getComparator();
     final String recentSearchText = comparator.getRecentSearchText();
-    return recentSearchText != null && recentSearchText.length() > 0 && comparator.doCompare(recentSearchText, text) && !NameUtil.isUseMinusculeHumpMatcher() ? comparator.getRecentSearchMatcher() : null;
+    return StringUtil.isNotEmpty(recentSearchText) ? comparator.matchingFragments(recentSearchText, text) : null;
   }
 
   /**
@@ -154,7 +152,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   protected boolean compare(String text, String pattern) {
-    return myComparator.doCompare(pattern, text);
+    return myComparator.matchingFragments(pattern, text) != null;
   }
 
   public SpeedSearchComparator getComparator() {
@@ -167,7 +165,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   public static class SpeedSearchComparator {
     private NameUtil.MinusculeMatcher myMinusculeMatcher;
-    private Matcher myRecentSearchMatcher;
     private String myRecentSearchText;
     private boolean myShouldMatchFromTheBeginning;
 
@@ -179,85 +176,18 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       myShouldMatchFromTheBeginning = shouldMatchFromTheBeginning;
     }
 
-    public boolean doCompare(String pattern, String text) {
-      if (myRecentSearchText != null &&
-          myRecentSearchText.equals(pattern)
-        ) {
-        if (NameUtil.isUseMinusculeHumpMatcher()) {
-          return myMinusculeMatcher.matches(text);
-        }
-
-        myRecentSearchMatcher.reset(text);
-        return myRecentSearchMatcher.find();
-      }
-      else {
+    @Nullable
+    public Iterable<TextRange> matchingFragments(String pattern, String text) {
+      if (myRecentSearchText == null || !myRecentSearchText.equals(pattern)) {
         myRecentSearchText = pattern;
-        @NonNls final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-
-        try {
-          translatePattern(buf, pattern);
-
-          try {
-            boolean allLowercase = pattern.equals(pattern.toLowerCase());
-            final Pattern recentSearchPattern = Pattern.compile(buf.toString(), allLowercase ? Pattern.CASE_INSENSITIVE : 0);
-            myRecentSearchMatcher = recentSearchPattern.matcher(text);
-
-            if (NameUtil.isUseMinusculeHumpMatcher()) {
-              myMinusculeMatcher = new NameUtil.MinusculeMatcher(myShouldMatchFromTheBeginning ? pattern : "*" + pattern, false);
-              return myMinusculeMatcher.matches(text);
-            }
-            return myRecentSearchMatcher.find();
-          }
-          catch (PatternSyntaxException ex) {
-            myRecentSearchText = null;
-          }
-        }
-        finally {
-          StringBuilderSpinAllocator.dispose(buf);
-        }
-
-        return false;
+        myMinusculeMatcher = new NameUtil.MinusculeMatcher(myShouldMatchFromTheBeginning ? pattern : "*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
       }
+      return myMinusculeMatcher.matchingFragments(text);
     }
 
-    public void translatePattern(final StringBuilder buf, final String pattern) {
-      if (myShouldMatchFromTheBeginning) buf.append('^'); // match from the line start
-      final int len = pattern.length();
-      for (int i = 0; i < len; ++i) {
-        translateCharacter(buf, pattern.charAt(i));
-      }
-
-      if (buf.length() > 0 && "*^".indexOf(buf.charAt(buf.length() - 1)) == -1) buf.append(')');
-    }
 
     public String getRecentSearchText() {
       return myRecentSearchText;
-    }
-
-    public Matcher getRecentSearchMatcher() {
-      return myRecentSearchMatcher;
-    }
-
-    public void translateCharacter(final StringBuilder buf, final char ch) {
-      if (ch == '*' ) {
-        buf.append("(\\w|:)"); // ':' for xml tags
-      }
-      else if ("{}[].+^$()?".indexOf(ch) != -1) {
-        // do not bother with other metachars
-        buf.append('\\');
-      }
-
-      if (Character.isUpperCase(ch)) {
-        if (buf.length() > 0 && "*^".indexOf(buf.charAt(buf.length() - 1)) == -1) buf.append(')');
-        // for camel humps
-        buf.append("[A-Za-z_]*");
-        buf.append('(');
-      } else {
-        if (buf.length() > 0 && "*^".indexOf(buf.charAt(buf.length() - 1)) != -1) buf.append('(');
-      }
-
-      if (buf.length() == 0 || buf.length() > 0 && "^".indexOf(buf.charAt(buf.length() - 1)) != -1) buf.append('(');
-      buf.append(ch);
     }
   }
 

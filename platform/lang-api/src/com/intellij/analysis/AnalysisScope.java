@@ -237,12 +237,13 @@ public class AnalysisScope {
   protected void accept(final PsiElementVisitor visitor, final boolean needReadAction) {
     if (myType == VIRTUAL_FILES) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
-       final FileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+      final FileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
       for (final VirtualFile file : myFilesSet) {
         if (!myIncludeTestSource && index.isInTestSourceContent(file)) continue;
         if (!processFile(file, visitor, psiManager, needReadAction)) return;
       }
-    } else if (myScope instanceof GlobalSearchScope) {
+    }
+    else if (myScope instanceof GlobalSearchScope) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
       final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       final ContentIterator contentIterator = new ContentIterator() {
@@ -253,10 +254,7 @@ public class AnalysisScope {
               return ((GlobalSearchScope)myScope).contains(fileOrDir);
             }
           }).booleanValue();
-          if (isInScope) {
-            return AnalysisScope.processFile(fileOrDir, visitor, psiManager, needReadAction);
-          }
-          return true;
+          return !isInScope || AnalysisScope.processFile(fileOrDir, visitor, psiManager, needReadAction);
         }
       };
       projectFileIndex.iterateContent(contentIterator);
@@ -266,7 +264,8 @@ public class AnalysisScope {
           FileIndexImplUtil.iterateRecursively(libraryRoot, VirtualFileFilter.ALL, contentIterator);
         }
       }
-    } else if (myScope instanceof LocalSearchScope) {
+    }
+    else if (myScope instanceof LocalSearchScope) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           final PsiElement[] psiElements = ((LocalSearchScope)myScope).getScope();
@@ -299,13 +298,14 @@ public class AnalysisScope {
     else if (myElement instanceof PsiDirectory) {
       accept((PsiDirectory)myElement, visitor, needReadAction);
     }
-    else if (myElement != null){
+    else if (myElement != null) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           myElement.accept(visitor);
         }
       });
-    } else if (myProject != null) {
+    }
+    else if (myProject != null) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
       final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       projectFileIndex.iterateContent(new ContentIterator() {

@@ -102,6 +102,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
     setTreeBuilder(myViewPanel.getBuilder());
     myTreeStructure = myViewPanel.getFavoritesTreeStructure();
     installComparator();
+    enableDnD();
     return myViewPanel;
   }
 

@@ -16,8 +16,8 @@
 package com.intellij.ui.table;
 
 import com.intellij.Patches;
-import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
@@ -125,7 +125,10 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @Override
   public int getRowHeight() {
-    if (myRowHeightIsComputing) return super.getRowHeight();
+    if (myRowHeightIsComputing
+        || !SystemInfo.isMac) { //todo[kirillk]: looks weird on Win/Linux
+      return super.getRowHeight();
+    }
 
     if (myRowHeight < 0) {
       try {
@@ -160,8 +163,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @Override
   public void setRowHeight(int rowHeight) {
-    myRowHeight = rowHeight;
-    myRowHeightIsExplicitlySet = true;
+    //todo[kirillk]: looks weird on Win/Linux
+    if (SystemInfo.isMac) {
+      myRowHeight = rowHeight;
+      myRowHeightIsExplicitlySet = true;
+    } else {
+      super.setRowHeight(rowHeight);
+    }
   }
 
   private void repaintViewport() {

@@ -103,11 +103,12 @@ public class OverrideImplementUtil {
     Map<MethodSignature, PsiMethod> finals = new LinkedHashMap<MethodSignature,PsiMethod>();
     Map<MethodSignature, PsiMethod> concretes = new LinkedHashMap<MethodSignature,PsiMethod>();
 
+    LOG.assertTrue(aClass.isValid());
     Collection<HierarchicalMethodSignature> allMethodSigs = aClass.getVisibleSignatures();
     PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
     for (HierarchicalMethodSignature signature : allMethodSigs) {
       PsiMethod method = signature.getMethod();
-      LOG.assertTrue(method.isValid());
+      LOG.assertTrue(method.isValid(), aClass);
 
       if (method.hasModifierProperty(PsiModifier.STATIC) || !resolveHelper.isAccessible(method, aClass, aClass)) continue;
       PsiClass hisClass = method.getContainingClass();
