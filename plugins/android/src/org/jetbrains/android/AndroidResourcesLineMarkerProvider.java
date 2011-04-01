@@ -161,7 +161,7 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
       else if (element instanceof XmlAttributeValue) {
         annotateXmlAttributeValue((XmlAttributeValue)element, result);
       }
-      else if (element instanceof PsiReferenceExpression) {
+      /*else if (element instanceof PsiReferenceExpression) {
         PsiElement targetElement = ((PsiReferenceExpression)element).resolve();
         if (targetElement instanceof PsiField) {
           PsiField targetField = (PsiField)targetElement;
@@ -170,7 +170,7 @@ public class AndroidResourcesLineMarkerProvider implements LineMarkerProvider {
             annotateElementNavToResource(element, targetField, LocalResourceManager.getInstance(containingFile), result, null, true);
           }
         }
-      }
+      }*/
     }
   }
 
