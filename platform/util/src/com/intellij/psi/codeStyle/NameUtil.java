@@ -464,7 +464,7 @@ public class NameUtil {
 
     public MinusculeMatcher(String pattern, MatchingCaseSensitivity options) {
       myOptions = options;
-      myPattern = StringUtil.trimEnd(pattern, "* ").replaceAll(":", "\\*:").replaceAll("\\.", "\\*\\.").toCharArray();
+      myPattern = StringUtil.trimEnd(pattern, "* ").replaceAll(":", "\\*:").toCharArray();
     }
 
     @Nullable
@@ -476,8 +476,11 @@ public class NameUtil {
         return null;
       }
 
+      if ('.' == myPattern[patternIndex] && name.charAt(nameIndex) != '.') {
+        return skipChars(name, patternIndex, nameIndex, false);
+      }
       if ('*' == myPattern[patternIndex]) {
-        return handleAsterisk(name, patternIndex, nameIndex);
+        return skipChars(name, patternIndex, nameIndex, true);
       }
 
       if (patternIndex == 0 && myOptions != MatchingCaseSensitivity.NONE && name.charAt(nameIndex) != myPattern[0]) {
@@ -543,6 +546,10 @@ public class NameUtil {
       while (i > 0) {
         FList<TextRange> ranges = matchName(name, patternIndex + i, nextStart);
         if (ranges != null) {
+          TextRange head = ranges.getHead();
+          if (head != null && head.getStartOffset() == nameIndex + i) {
+            return ranges.getTail().prepend(new TextRange(nameIndex, head.getEndOffset()));
+          }
           return ranges.prepend(TextRange.from(nameIndex, i));
         }
         i--;
@@ -551,7 +558,7 @@ public class NameUtil {
     }
 
     @Nullable
-    private FList<TextRange> handleAsterisk(String name, int patternIndex, int nameIndex) {
+    private FList<TextRange> skipChars(String name, int patternIndex, int nameIndex, boolean maySkipNextChar) {
       while ('*' == myPattern[patternIndex]) {
         patternIndex++;
         if (patternIndex == myPattern.length) {
@@ -570,6 +577,9 @@ public class NameUtil {
         FList<TextRange> ranges = matchName(name, patternIndex, next);
         if (ranges != null) {
           return ranges;
+        }
+        if (!maySkipNextChar) {
+          return null;
         }
         fromIndex = next + 1;
       }
