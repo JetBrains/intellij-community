@@ -36,6 +36,7 @@ public class TreeUpdatePass {
   private long myAllocation;
 
   private boolean myUpdateChildren = true;
+  private boolean myUpdateStructure = true;
 
   public TreeUpdatePass(@NotNull final DefaultMutableTreeNode node, @Nullable final ActiveRunnable before, @Nullable final ActiveRunnable after) {
     myNode = node;
@@ -88,11 +89,20 @@ public class TreeUpdatePass {
 
   @Override
   public String toString() {
-    return "TreUpdatePass node=" + myNode + " stamp=" + myUpdateStamp + " expired=" + myExpired + " currentNode=" + myCurrentNode + " allocation=" + myAllocation;
+    return "TreUpdatePass node=" + myNode + " structure=" + myUpdateStructure + " stamp=" + myUpdateStamp + " expired=" + myExpired + " currentNode=" + myCurrentNode + " allocation=" + myAllocation;
   }
 
   public boolean willUpdate(@NotNull DefaultMutableTreeNode node) {
     @NotNull DefaultMutableTreeNode currentNode = myCurrentNode != null ? myCurrentNode : myNode;
     return node.isNodeAncestor(currentNode);
+  }
+
+  public TreeUpdatePass setUpdateStructure(boolean update) {
+    myUpdateStructure = update;
+    return this;
+  }
+
+  public boolean isUpdateStructure() {
+    return myUpdateStructure;
   }
 }

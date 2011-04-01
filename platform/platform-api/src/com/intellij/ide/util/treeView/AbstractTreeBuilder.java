@@ -205,15 +205,27 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   public final ActionCallback queueUpdate() {
-    return queueUpdateFrom(getTreeStructure().getRootElement(), true);
+    return queueUpdate(true);
+  }
+
+  public final ActionCallback queueUpdate(boolean withStructure) {
+    return queueUpdateFrom(getTreeStructure().getRootElement(), true, withStructure);
   }
 
   public final ActionCallback queueUpdateFrom(final Object element, final boolean forceResort) {
-    if (forceResort) {
-      getUi().incComparatorStamp();
-    }
+    return queueUpdateFrom(element, forceResort, true);
+  }
 
-    return getUi().queueUpdate(element);
+  public ActionCallback queueUpdateFrom(final Object element, final boolean forceResort, boolean updateStructure) {
+    if (!updateStructure) {
+      return getUi().queueUpdate(element, false);
+    } else {
+      if (forceResort) {
+        getUi().incComparatorStamp();
+      }
+
+      return getUi().queueUpdate(element, true);
+    }
   }
 
   /**

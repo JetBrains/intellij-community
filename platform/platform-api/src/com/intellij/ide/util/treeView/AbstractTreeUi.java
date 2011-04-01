@@ -37,6 +37,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import com.intellij.util.xmlb.DefaultSerializationFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -479,8 +480,12 @@ public class AbstractTreeUi {
   }
 
   @Nullable
-  private static NodeDescriptor getDescriptorFrom(DefaultMutableTreeNode node) {
-    return (NodeDescriptor)node.getUserObject();
+  private static NodeDescriptor getDescriptorFrom(Object node) {
+    if (node instanceof DefaultMutableTreeNode) {
+      return (NodeDescriptor)((DefaultMutableTreeNode)node).getUserObject();
+    } else {
+      return null;
+    }
   }
 
   @Nullable
@@ -911,6 +916,10 @@ public class AbstractTreeUi {
 
   //todo: to make real callback
   public ActionCallback queueUpdate(Object element) {
+    return queueUpdate(element, true);
+  }
+
+  public ActionCallback queueUpdate(Object element, boolean updateStructure) {
     try {
       AbstractTreeUpdater updater = getUpdater();
       if (updater == null) {
@@ -922,7 +931,7 @@ public class AbstractTreeUi {
       while(eachParent != null) {
         DefaultMutableTreeNode node = getNodeForElement(element, false);
         if (node != null) {
-          addSubtreeToUpdate(node);
+          addSubtreeToUpdate(node, updateStructure);
           break;
         }
 
@@ -930,7 +939,7 @@ public class AbstractTreeUi {
       }
 
       if (eachParent == null) {
-        addSubtreeToUpdate(getRootNode());
+        addSubtreeToUpdate(getRootNode(), updateStructure);
       }
 
       updater.runAfterUpdate(new Runnable() {
@@ -984,17 +993,51 @@ public class AbstractTreeUi {
 
     if (!(node.getUserObject() instanceof NodeDescriptor)) return;
 
-    setUpdaterState(new UpdaterTreeState(this)).beforeSubtreeUpdate();
+    if (pass.isUpdateStructure()) {
+      setUpdaterState(new UpdaterTreeState(this)).beforeSubtreeUpdate();
 
-    boolean forceUpdate = true;
-    TreePath path = getPathFor(node);
-    boolean invisible = !myTree.isExpanded(path) && (path.getParentPath() == null || !myTree.isExpanded(path.getParentPath()));
+      boolean forceUpdate = true;
+      TreePath path = getPathFor(node);
+      boolean invisible = !myTree.isExpanded(path) && (path.getParentPath() == null || !myTree.isExpanded(path.getParentPath()));
 
-    if (invisible && myUnbuiltNodes.contains(node)) {
-      forceUpdate = false;
+      if (invisible && myUnbuiltNodes.contains(node)) {
+        forceUpdate = false;
+      }
+
+      updateNodeChildren(node, pass, null, false, canSmartExpand, forceUpdate, false, pass.isUpdateChildren());
+    } else {
+      updateRow(0, pass);
     }
+  }
 
-    updateNodeChildren(node, pass, null, false, canSmartExpand, forceUpdate, false, pass.isUpdateChildren());
+  private void updateRow(final int row, final TreeUpdatePass pass) {
+    invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (row >= getTree().getVisibleRowCount()) return;
+
+        TreePath path = getTree().getPathForRow(row);
+        if (path != null) {
+          final NodeDescriptor descriptor = getDescriptorFrom(path.getLastPathComponent());
+          if (descriptor != null) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+            maybeYeild(new ActiveRunnable() {
+                @Override
+                public ActionCallback run() {
+                  ActionCallback result = new ActionCallback();
+                  update(descriptor, false).doWhenDone(new Runnable() {
+                    @Override
+                    public void run() {
+                      updateRow(row + 1, pass);
+                    }
+                  }).notify(result);
+                  return result;
+                }
+              }, pass, node);
+          }
+        }
+      }
+    });
   }
 
   private boolean isToBuildInBackground(NodeDescriptor descriptor) {
@@ -3454,11 +3497,19 @@ public class AbstractTreeUi {
   }
 
   public boolean addSubtreeToUpdate(final DefaultMutableTreeNode root) {
-    return addSubtreeToUpdate(root, null);
+    return addSubtreeToUpdate(root, true);
+  }
+
+  public boolean addSubtreeToUpdate(final DefaultMutableTreeNode root, boolean updateStructure) {
+    return addSubtreeToUpdate(root, null, updateStructure);
   }
 
   public boolean addSubtreeToUpdate(final DefaultMutableTreeNode root, final Runnable runAfterUpdate) {
-    Object element = getElementFor(root);
+    return addSubtreeToUpdate(root, runAfterUpdate, true);
+  }
+
+  public boolean addSubtreeToUpdate(final DefaultMutableTreeNode root, final Runnable runAfterUpdate, final boolean updateStructure) {
+  Object element = getElementFor(root);
     if (getTreeStructure().isAlwaysLeaf(element)) {
       removeFromUnbuilt(root);
       removeLoading(root, true);
@@ -3482,13 +3533,12 @@ public class AbstractTreeUi {
       execute(new Runnable() {
         public void run() {
           getUpdater().runAfterUpdate(runAfterUpdate);
-          getUpdater().addSubtreeToUpdate(root);
+          getUpdater().addSubtreeToUpdate(new TreeUpdatePass(root, null, null).setUpdateStructure(updateStructure).setUpdateStamp(-1));
         }
       });
 
       return true;
-    }
-  }
+    }  }
 
   public boolean wasRootNodeInitialized() {
     return myRootNodeWasQueuedToInitialize && myRootNodeInitialized;
