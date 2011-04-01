@@ -30,7 +30,10 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
@@ -49,7 +52,7 @@ public class ConvertGStringToStringIntention extends Intention {
     IntentionUtils.replaceExpression(convertGStringLiteralToStringLiteral(exp), exp);
   }
 
-  private static String convertGStringLiteralToStringLiteral(GrLiteral literal) {
+  public static String convertGStringLiteralToStringLiteral(GrLiteral literal) {
     PsiElement child = literal.getFirstChild();
     if (child == null) return literal.getText();
     String text;

@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -149,7 +150,15 @@ public class GroovyToJavaGenerator {
     try {
       writeTypeDefinition(text, typeDefinition, packageDefinition, true);
 
-      output.put(getPackageDirectory(packageDefinition) + typeDefinition.getName() + "." + "java", text.toString());
+
+      final String fileName;
+      if (fullConversion) {
+        fileName = typeDefinition.getName() + ".java";
+      }
+      else {
+        fileName = getPackageDirectory(packageDefinition) + typeDefinition.getName() + ".java";
+      }
+      output.put(fileName, text.toString());
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -159,18 +168,20 @@ public class GroovyToJavaGenerator {
     }
   }
 
-  private static GrTopStatement[] getTopStatementsInReadAction(final GroovyFileBase myPsiFile) {
-    if (myPsiFile == null) return new GrTopStatement[0];
+  private static GrTopStatement[] getTopStatementsInReadAction(final GroovyFileBase file) {
+    if (file == null) return new GrTopStatement[0];
 
     return ApplicationManager.getApplication().runReadAction(new Computable<GrTopStatement[]>() {
       public GrTopStatement[] compute() {
-        return myPsiFile.getTopStatements();
+        return file.getTopStatements();
       }
     });
   }
 
-  private void writeTypeDefinition(StringBuffer text, @NotNull final PsiClass typeDefinition,
-                                   @Nullable GrPackageDefinition packageDefinition, boolean toplevel) {
+  private void writeTypeDefinition(StringBuffer text,
+                                   @NotNull final PsiClass typeDefinition,
+                                   @Nullable GrPackageDefinition packageDefinition,
+                                   boolean toplevel) {
     final boolean isScript = typeDefinition instanceof GroovyScriptClass;
 
     writePackageStatement(text, packageDefinition);
@@ -180,12 +191,20 @@ public class GroovyToJavaGenerator {
     boolean isInterface = !isAnnotationType && typeDefinition.isInterface();
     boolean isClassDef = !isInterface && !isEnum && !isAnnotationType && !isScript;
 
-    writeClassModifiers(text, typeDefinition.getModifierList(), typeDefinition.isInterface(), toplevel);
+    GenerationUtil.writeClassModifiers(text, typeDefinition.getModifierList(), typeDefinition.isInterface(), toplevel);
 
-    if (isInterface) text.append("interface");
-    else if (isEnum) text.append("enum");
-    else if (isAnnotationType) text.append("@interface");
-    else text.append("class");
+    if (isInterface) {
+      text.append("interface");
+    }
+    else if (isEnum) {
+      text.append("enum");
+    }
+    else if (isAnnotationType) {
+      text.append("@interface");
+    }
+    else {
+      text.append("class");
+    }
 
     text.append(" ").append(typeDefinition.getName());
 
@@ -216,11 +235,11 @@ public class GroovyToJavaGenerator {
       if (!implementsTypes.isEmpty()) {
         text.append(isInterface ? "extends " : "implements ");
         text.append(StringUtil.join(implementsTypes, new Function<PsiClassType, String>() {
-          @Override
-          public String fun(PsiClassType psiClassType) {
-            return getTypeText(psiClassType, typeDefinition, false);
-          }
-        }, ", "));
+            @Override
+            public String fun(PsiClassType psiClassType) {
+              return getTypeText(psiClassType, typeDefinition, false);
+            }
+          }, ", "));
         text.append(" ");
       }
     }
@@ -266,7 +285,7 @@ public class GroovyToJavaGenerator {
         PsiType[] parameterTypes = new PsiType[parameters.length];
         for (int i = 0; i < parameterTypes.length; i++) {
           parametersCopy[i] = parameters[i];
-          parameterTypes[i] = parameters[i].getType();
+          parameterTypes[i] = findOutParameterType(parameters[i]);
         }
 
         for (int i = parameters.length - 1; i >= 0; i--) {
@@ -344,7 +363,7 @@ public class GroovyToJavaGenerator {
     final LightMethodBuilder builder = new LightMethodBuilder(method.getManager(), method.getName());
     substitutor = substitutor.putAll(TypeConversionUtil.getSuperClassSubstitutor(baseClass, typeDefinition, PsiSubstitutor.EMPTY));
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      builder.addParameter(StringUtil.notNullize(parameter.getName()), substitutor.substitute(parameter.getType()));
+      builder.addParameter(StringUtil.notNullize(parameter.getName()), substitutor.substitute(findOutParameterType(parameter)));
     }
     builder.setReturnType(substitutor.substitute(method.getReturnType()));
     for (String modifier : modifierFilter) {
@@ -415,7 +434,7 @@ public class GroovyToJavaGenerator {
     final PsiParameter[] superParams = constructor.getParameterList().getParameters();
     for (int j = 0; j < superParams.length; j++) {
       if (j > 0) text.append(", ");
-      String typeText = getTypeText(substitutor.substitute(superParams[j].getType()), null, false);
+      String typeText = getTypeText(substitutor.substitute(findOutParameterType(superParams[j])), null, false);
       text.append("(").append(typeText).append(")").append(getDefaultValueText(typeText));
     }
   }
@@ -437,7 +456,7 @@ public class GroovyToJavaGenerator {
     }
     if (!isEnum) {
       text.append("public ");
-      //writeMethodModifiers(text, constructor.getModifierList(), JAVA_MODIFIERS);
+      //writeModifiers(text, constructor.getModifierList(), JAVA_MODIFIERS);
     }
 
     /************* name **********/
@@ -486,7 +505,7 @@ public class GroovyToJavaGenerator {
       return Collections.emptySet();
     }
 
-    final Set<String> result = CollectionFactory.newTroveSet();
+    final Set<String> result = CollectionFactory.newTroveSet(ArrayUtil.EMPTY_STRING_ARRAY);
     for (PsiClassType type : chainedConstructor.getThrowsList().getReferencedTypes()) {
       result.add(getTypeText(substitutor.substitute(type), null, false));
     }
@@ -545,7 +564,7 @@ public class GroovyToJavaGenerator {
       }
 
       text.append("\n  ");
-      writeFieldModifiers(text, modifierList, JAVA_MODIFIERS);
+      GenerationUtil.writeModifiers(text, modifierList, JAVA_MODIFIERS);
 
       //type
       text.append(type).append(" ").append(name).append(" = ").append(initializer).append(";\n");
@@ -582,15 +601,15 @@ public class GroovyToJavaGenerator {
       text.append("\n");
       text.append("  ");
     }
-    writeMethodModifiers(text, modifierList, JAVA_MODIFIERS);
+    GenerationUtil.writeModifiers(text, modifierList, JAVA_MODIFIERS);
     if (method.hasTypeParameters()) {
       appendTypeParameters(text, method);
       text.append(" ");
     }
 
     //append return type
-    PsiType retType = method.getReturnType();
-    if (retType == null) retType = TypesUtil.getJavaLangObject(method);
+    PsiType retType = findOutReturnTypeOfMethod(method);
+
     if (!method.hasModifierProperty(PsiModifier.STATIC)) {
       final List<MethodSignatureBackedByPsiMethod> superSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
       for (MethodSignatureBackedByPsiMethod superSignature : superSignatures) {
@@ -608,6 +627,34 @@ public class GroovyToJavaGenerator {
 
     writeParameterList(text, parameters);
 
+    writeThrowsList(text, method);
+
+    if (!isAbstract) {
+      /************* body **********/
+      generateMethodBody(text, method, retType);
+    }
+    else {
+      text.append(";");
+    }
+    text.append("\n");
+  }
+
+  private void generateMethodBody(StringBuffer text, PsiMethod method, PsiType retType) {
+    if (!fullConversion) {
+      text.append("{\n    return ");
+      text.append(getDefaultValueText(getTypeText(retType, method, false)));
+      text.append(";\n  }");
+      return;
+    }
+    //todo
+    if (method instanceof GrMethod) {
+      final CodeBlockGenerator blockGenerator = new CodeBlockGenerator(new StringBuilder(), myProject);
+      //blockGenerator.generate();
+      //todo
+    }
+  }
+
+  private void writeThrowsList(StringBuffer text, PsiMethod method) {
     final PsiReferenceList throwsList = method.getThrowsList();
     final PsiClassType[] exceptions = throwsList.getReferencedTypes();
     if (exceptions.length > 0) {
@@ -620,22 +667,23 @@ public class GroovyToJavaGenerator {
         text.append(getTypeText(exception, method, false));
         text.append(" ");
       }
+
+      //todo search for all thrown exceptions from this file methods
     }
+  }
 
-    if (!isAbstract) {
-      /************* body **********/
-      text.append("{\n");
-      text.append("    return ");
+  private PsiType findOutReturnTypeOfMethod(PsiMethod method) {
+    final PsiType returnType = method.getReturnType();
+    if (returnType != null) return returnType;
 
-      text.append(getDefaultValueText(getTypeText(retType, method, false)));
+    if (!fullConversion) return TypesUtil.getJavaLangObject(method);
 
-      text.append(";");
+    final PsiType smartReturnType = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType(method);
+    if (smartReturnType != null) return smartReturnType;
 
-      text.append("\n  }");
-    } else {
-      text.append(";");
-    }
-    text.append("\n");
+    //todo make smarter. search for usages and infer type from them
+    return TypesUtil.getJavaLangObject(method);
+    //final Collection<PsiReference> collection = MethodReferencesSearch.search(method).findAll();
   }
 
   private void writeParameterList(StringBuffer text, PsiParameter[] parameters) {
@@ -649,7 +697,7 @@ public class GroovyToJavaGenerator {
 
       if (i > 0) text.append(", ");  //append ','
 
-      text.append(getTypeText(parameter.getType(), parameter, i == parameters.length - 1));
+      text.append(getTypeText(findOutParameterType(parameter), parameter, i == parameters.length - 1));
       text.append(" ");
       text.append(parameter.getName());
 
@@ -659,49 +707,8 @@ public class GroovyToJavaGenerator {
     text.append(" ");
   }
 
-  private static boolean writeMethodModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {
-    boolean wasAddedModifiers = false;
-    for (String modifierType : modifiers) {
-      if (modifierList.hasModifierProperty(modifierType)) {
-        text.append(modifierType);
-        text.append(" ");
-        wasAddedModifiers = true;
-      }
-    }
-    return wasAddedModifiers;
-  }
-
-  private static void writeFieldModifiers(StringBuffer text, GrModifierList modifierList, String[] modifiers) {
-    for (String modifierType : modifiers) {
-      if (modifierList.hasModifierProperty(modifierType)) {
-        text.append(modifierType);
-        text.append(" ");
-      }
-    }
-  }
-
-  private static void writeClassModifiers(StringBuffer text,
-                                             @Nullable PsiModifierList modifierList, boolean isInterface, boolean toplevel) {
-    if (modifierList == null || modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
-      text.append("public ");
-    }
-
-    if (modifierList != null) {
-      List<String> allowedModifiers = new ArrayList<String>();
-      allowedModifiers.add(PsiModifier.FINAL);
-      if (!toplevel) {
-        allowedModifiers.addAll(Arrays.asList(PsiModifier.PROTECTED, PsiModifier.PRIVATE, PsiModifier.STATIC));
-      }
-      if (!isInterface) {
-        allowedModifiers.add(PsiModifier.ABSTRACT);
-      }
-
-      for (String modifierType : allowedModifiers) {
-        if (modifierList.hasModifierProperty(modifierType)) {
-          text.append(modifierType).append(" ");
-        }
-      }
-    }
+  private static PsiType findOutParameterType(PsiParameter parameter) {
+    return parameter.getType(); //todo make smarter
   }
 
   private String getTypeText(@Nullable PsiType type, @Nullable final PsiElement context, boolean allowVarargs) {

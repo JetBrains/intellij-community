@@ -556,6 +556,13 @@
       <add-to-group group-id="NewGroup" anchor="last"/>
     </action>
 
+    <action id="ConvertGroovyToJava"
+            class="org.jetbrains.plugins.groovy.actions.ConvertToJavaAction"
+            text="Convert to Java"
+            description="Convert Groovy files to Java"
+            internal = "true">
+      <add-to-group group-id="Internal"/>
+    </action>
 
     <action id="GetPsiTypeAction" class="org.jetbrains.plugins.groovy.actions.GrGetPsiTypeAction" text="get PsiType" description="" internal = "true">
       <add-to-group group-id="Internal" anchor="last"/>
