@@ -110,6 +110,13 @@ public class TextChangesStorageTest {
   }
 
   @Test
+  public void adjacentDeletesFromEndToStart() {
+    delete(5, 6);
+    delete(4, 5);
+    checkChanges(c("", 4, 6));
+  }
+  
+  @Test
   public void singleReplace() {
     replace("abc", 3, 4);
     checkChanges(c("abc", 3, 4));

@@ -39,10 +39,10 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.StringBufferInputStream;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -57,7 +57,7 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     e.getPresentation().setEnabled(enabled);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       e.getPresentation().setVisible(enabled);
-    }    
+    }
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -113,12 +113,12 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
         (XmlFile) PsiManager.getInstance(project).findFile(relativeFile),
         new THashMap<String, String>(),
         new Xsd2InstanceUtils.SchemaReferenceProcessor() {
-          public void processSchema(String schemaFileName, String schemaContent) {
+          public void processSchema(String schemaFileName, byte[] schemaContent) {
             try {
               final String fullFileName = tempDir.getPath() + File.separatorChar + schemaFileName;
               FileUtils.saveStreamContentAsFile(
                 fullFileName,
-                new StringBufferInputStream(schemaContent)
+                new ByteArrayInputStream(schemaContent)
               );
             } catch (IOException e) {
               throw new RuntimeException(e);
@@ -147,26 +147,30 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
 
     final VirtualFile baseDirForCreatedInstanceDocument1 = relativeFileDir;
     String xmlFileName = baseDirForCreatedInstanceDocument1.getPath() + File.separatorChar + dialog.getOutputFileName();
-    FileOutputStream fileOutputStream = null;
 
+    FileOutputStream fileOutputStream;
     try {
       fileOutputStream = new FileOutputStream(xmlFileName);
-      fileOutputStream.write(xml.getBytes());
-      fileOutputStream.close();
-      fileOutputStream = null;
+      try {
+        // the generated XML doesn't have any XML declaration -> utf-8
+        fileOutputStream.write(xml.getBytes("utf-8"));
+      }
+      finally {
+        fileOutputStream.close();
+      }
+
+      final File xmlFile = new File(xmlFileName);
+      VirtualFile virtualFile = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+        @Nullable
+        public VirtualFile compute() {
+          return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(xmlFile);
+        }
+      });
+      FileEditorManager.getInstance(project).openFile(virtualFile, true);
     }
     catch (IOException e) {
-      e.printStackTrace();
+      Messages.showErrorDialog(project, "Could not save generated XML document: " + StringUtil.getMessage(e), XmlBundle.message("error"));
     }
-
-              final File xmlFile = new File(xmlFileName);
-    VirtualFile virtualFile = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-                @Nullable
-                public VirtualFile compute() {
-                  return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(xmlFile);
-                }
-              });
-              FileEditorManager.getInstance(project).openFile(virtualFile, true);
   }
 
   static boolean isAcceptableFileForGenerateSchemaFromInstanceDocument(VirtualFile virtualFile) {

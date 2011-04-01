@@ -93,6 +93,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     SmartExpander.installOn(this);
     myCopyProvider = new TreeCopyProvider(this);
     new TreeLinkMouseListener(new ChangesBrowserNodeRenderer(myProject, false, false)).install(this);
+    setCellRenderer(new ChangesBrowserNodeRenderer(myProject, isShowFlatten(), true));
   }
 
   public DefaultTreeModel getModel() {
@@ -142,16 +143,13 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
                           @Nullable List<VirtualFile> ignoredFiles,
                           final List<VirtualFile> lockedFolders,
                           @Nullable final Map<VirtualFile, LogicalLock> logicallyLockedFiles) {
-    storeState();
-
     TreeModelBuilder builder = new TreeModelBuilder(myProject, isShowFlatten());
-    final DefaultTreeModel model = builder.buildModel(changeLists, unversionedFiles, locallyDeletedFiles, modifiedWithoutEditing, 
+    final DefaultTreeModel model = builder.buildModel(changeLists, unversionedFiles, locallyDeletedFiles, modifiedWithoutEditing,
                                                       switchedFiles, switchedRoots, ignoredFiles, lockedFolders, logicallyLockedFiles);
+
+    storeState();
     setModel(model);
-    setCellRenderer(new ChangesBrowserNodeRenderer(myProject, isShowFlatten(), true));
-
     expandPath(new TreePath(((ChangesBrowserNode)model.getRoot()).getPath()));
-
     restoreState();
   }
 

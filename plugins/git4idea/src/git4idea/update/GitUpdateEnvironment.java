@@ -27,6 +27,10 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.update.UpdateSession;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.continuation.Continuation;
+import com.intellij.util.continuation.ContinuationContext;
+import com.intellij.util.continuation.TaskDescriptor;
+import com.intellij.util.continuation.Where;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
@@ -61,7 +65,8 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
   @NotNull
   public UpdateSession updateDirectories(@NotNull FilePath[] filePaths, UpdatedFiles updatedFiles, ProgressIndicator progressIndicator, @NotNull Ref<SequentialUpdatesContext> sequentialUpdatesContextRef) throws ProcessCanceledException {
     Set<VirtualFile> roots = GitUtil.gitRoots(Arrays.asList(filePaths));
-    boolean result = new GitUpdateProcess(myProject, progressIndicator, roots, updatedFiles).update();
+    final GitUpdateProcess gitUpdateProcess = new GitUpdateProcess(myProject, progressIndicator, roots, updatedFiles);
+    boolean result = gitUpdateProcess.update(false, false);
     return new GitUpdateSession(result);
   }
 

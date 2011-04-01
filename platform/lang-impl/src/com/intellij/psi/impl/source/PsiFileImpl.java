@@ -443,6 +443,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return getContainingDirectory();
   }
 
+  @Nullable
   public PsiDirectory getContainingDirectory() {
     final VirtualFile parentFile = getViewProvider().getVirtualFile().getParent();
     if (parentFile == null) return null;

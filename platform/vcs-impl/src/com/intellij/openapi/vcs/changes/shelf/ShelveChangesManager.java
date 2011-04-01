@@ -32,6 +32,7 @@ import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.formove.CustomBinaryPatchApplier;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.options.StreamProvider;
+import com.intellij.openapi.progress.AsynchronousExecution;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -47,6 +48,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.continuation.Continuation;
+import com.intellij.util.continuation.ContinuationContext;
+import com.intellij.util.continuation.TaskDescriptor;
+import com.intellij.util.continuation.Where;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -301,48 +306,75 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     unshelveChangeList(changeList, changes, binaryFiles, targetChangeList, true);
   }
 
+  @AsynchronousExecution
   public void unshelveChangeList(final ShelvedChangeList changeList,
                                  @Nullable final List<ShelvedChange> changes,
                                  @Nullable final List<ShelvedBinaryFile> binaryFiles,
-                                 final LocalChangeList targetChangeList,
+                                 @Nullable final LocalChangeList targetChangeList,
                                  boolean showSuccessNotification) {
-    List<FilePatch> remainingPatches = new ArrayList<FilePatch>();
+    final Continuation continuation = new Continuation(myProject, true);
+    final ContinuationContext.GatheringContinuationContext initContext = new ContinuationContext.GatheringContinuationContext();
+    scheduleUnshelveChangeList(changeList, changes, binaryFiles, targetChangeList, showSuccessNotification, initContext);
+    continuation.run(initContext.getList());
+  }
 
-    final List<TextFilePatch> textFilePatches;
-    try {
-      textFilePatches = loadTextPatches(changeList, changes, remainingPatches);
-    }
-    catch (IOException e) {
-      LOG.info(e);
-      PatchApplier.showError(myProject, "Cannot load patch(es): " + e.getMessage(), true);
-      return;
-    }
-    catch (PatchSyntaxException e) {
-      PatchApplier.showError(myProject, "Cannot load patch(es): " + e.getMessage(), true);
-      LOG.info(e);
-      return;
-    }
+  @AsynchronousExecution
+  public void scheduleUnshelveChangeList(final ShelvedChangeList changeList,
+                                 @Nullable final List<ShelvedChange> changes,
+                                 @Nullable final List<ShelvedBinaryFile> binaryFiles,
+                                 @Nullable final LocalChangeList targetChangeList,
+                                 final boolean showSuccessNotification, final ContinuationContext context) {
+    context.next(new TaskDescriptor("", Where.AWT) {
+      @Override
+      public void run(ContinuationContext context) {
+        final List<FilePatch> remainingPatches = new ArrayList<FilePatch>();
 
-    final List<FilePatch> patches = new ArrayList<FilePatch>(textFilePatches);
+        final List<TextFilePatch> textFilePatches;
+        try {
+          textFilePatches = loadTextPatches(changeList, changes, remainingPatches);
+        }
+        catch (IOException e) {
+          LOG.info(e);
+          PatchApplier.showError(myProject, "Cannot load patch(es): " + e.getMessage(), true);
+          return;
+        }
+        catch (PatchSyntaxException e) {
+          PatchApplier.showError(myProject, "Cannot load patch(es): " + e.getMessage(), true);
+          LOG.info(e);
+          return;
+        }
 
-    final List<ShelvedBinaryFile> remainingBinaries = new ArrayList<ShelvedBinaryFile>();
-    final List<ShelvedBinaryFile> binaryFilesToUnshelve = getBinaryFilesToUnshelve(changeList, binaryFiles, remainingBinaries);
+        final List<FilePatch> patches = new ArrayList<FilePatch>(textFilePatches);
 
-    for (final ShelvedBinaryFile shelvedBinaryFile : binaryFilesToUnshelve) {
-      patches.add(new ShelvedBinaryFilePatch(shelvedBinaryFile));
-    }
+        final List<ShelvedBinaryFile> remainingBinaries = new ArrayList<ShelvedBinaryFile>();
+        final List<ShelvedBinaryFile> binaryFilesToUnshelve = getBinaryFilesToUnshelve(changeList, binaryFiles, remainingBinaries);
 
-    final BinaryPatchApplier binaryPatchApplier = new BinaryPatchApplier(binaryFilesToUnshelve.size());
-    final PatchApplier<ShelvedBinaryFilePatch> patchApplier = new PatchApplier<ShelvedBinaryFilePatch>(myProject, myProject.getBaseDir(), patches, targetChangeList, binaryPatchApplier);
-    patchApplier.execute(showSuccessNotification);
-    remainingPatches.addAll(patchApplier.getRemainingPatches());
+        for (final ShelvedBinaryFile shelvedBinaryFile : binaryFilesToUnshelve) {
+          patches.add(new ShelvedBinaryFilePatch(shelvedBinaryFile));
+        }
 
-    if ((remainingPatches.size() == 0) && remainingBinaries.isEmpty()) {
-      recycleChangeList(changeList);
-    }
-    else {
-      saveRemainingPatches(changeList, remainingPatches, remainingBinaries);
-    }
+        final BinaryPatchApplier binaryPatchApplier = new BinaryPatchApplier(binaryFilesToUnshelve.size());
+        final PatchApplier<ShelvedBinaryFilePatch> patchApplier = new PatchApplier<ShelvedBinaryFilePatch>(myProject, myProject.getBaseDir(),
+            patches, targetChangeList, binaryPatchApplier);
+
+        // after patch applier part
+        context.next(new TaskDescriptor("", Where.AWT) {
+          @Override
+          public void run(ContinuationContext context) {
+            remainingPatches.addAll(patchApplier.getRemainingPatches());
+
+            if ((remainingPatches.size() == 0) && remainingBinaries.isEmpty()) {
+              recycleChangeList(changeList);
+            }
+            else {
+              saveRemainingPatches(changeList, remainingPatches, remainingBinaries);
+            }
+          }
+        });
+
+        patchApplier.scheduleSelf(showSuccessNotification, context);
+      }
+    });
   }
 
   private static List<TextFilePatch> loadTextPatches(final ShelvedChangeList changeList, final List<ShelvedChange> changes, final List<FilePatch> remainingPatches)

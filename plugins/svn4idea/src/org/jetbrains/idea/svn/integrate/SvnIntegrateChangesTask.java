@@ -248,7 +248,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(myProject);
     // action info is actually NOT used
     restoreUpdateTree.registerUpdateInformation(myAccomulatedFiles.getUpdatedFiles(), ActionInfo.INTEGRATE);
-    myProjectLevelVcsManager.showUpdateProjectInfo(myAccomulatedFiles.getUpdatedFiles(), myTitle, ActionInfo.INTEGRATE);
+    myProjectLevelVcsManager.showUpdateProjectInfo(myAccomulatedFiles.getUpdatedFiles(), myTitle, ActionInfo.INTEGRATE, false);
   }
 
   private void doStatus(final Consumer<UpdatedFiles> afterStatus) {

@@ -18,18 +18,32 @@ package com.intellij.util.continuation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public abstract class TaskDescriptor {
+  private boolean myHaveMagicCure;
   private final String myName;
   @NotNull
   private final Where myWhere;
+  private final Map<Object, Object> mySurviveKit;
 
   public TaskDescriptor(final String name, @NotNull final Where where) {
     myName = name;
     myWhere = where;
+    mySurviveKit = new HashMap<Object, Object>();
   }
 
   @Nullable
   public abstract void run(final ContinuationContext context);
+
+  public final void addCure(final Object disaster, final Object cure) {
+    mySurviveKit.put(disaster, cure);
+  }
+  @Nullable
+  public final Object hasCure(final Object disaster) {
+    return mySurviveKit.get(disaster);
+  }
 
   public String getName() {
     return myName;
@@ -38,5 +52,13 @@ public abstract class TaskDescriptor {
   @NotNull
   public Where getWhere() {
     return myWhere;
+  }
+
+  public boolean isHaveMagicCure() {
+    return myHaveMagicCure;
+  }
+
+  public void setHaveMagicCure(boolean haveMagicCure) {
+    myHaveMagicCure = haveMagicCure;
   }
 }

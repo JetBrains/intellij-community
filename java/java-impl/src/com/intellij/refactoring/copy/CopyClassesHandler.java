@@ -125,7 +125,7 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
       CopyClassDialog dialog = new CopyClassDialog(classes.values().iterator().next()[0], defaultTargetDirectory, project, false){
         @Override
         protected String getQualifiedName() {
-          if (commonPath != null) {
+          if (commonPath != null && !commonPath.isEmpty()) {
             return StringUtil.getQualifiedName(super.getQualifiedName(), commonPath.replaceAll("/", "."));
           }
           return super.getQualifiedName();

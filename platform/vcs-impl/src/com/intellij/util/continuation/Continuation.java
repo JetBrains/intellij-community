@@ -16,6 +16,7 @@
 package com.intellij.util.continuation;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
@@ -25,14 +26,14 @@ import com.intellij.openapi.vcs.CalledInAny;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.util.Consumer;
+import com.intellij.util.Processor;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.concurrency.Semaphore;
+import com.sun.tools.javac.code.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class Continuation {
   private GeneralRunner myGeneralRunner;
@@ -53,6 +54,27 @@ public class Continuation {
     myGeneralRunner.next(tasks);
 
     pingRunnerInCorrectThread();
+  }
+
+  public void runAndWait(final TaskDescriptor... tasks) {
+    runAndWait(Arrays.asList(tasks));
+  }
+
+  public void runAndWait(final List<TaskDescriptor> tasks) {
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    tasks.add(new TaskDescriptor("", Where.AWT) {
+      @Override
+      public void run(ContinuationContext context) {
+        semaphore.up();
+      }
+    });
+    run(tasks);
+    semaphore.waitFor();
+  }
+
+  public <T extends Exception> void addExceptionHandler(final Class<T> clazz, final Consumer<T> consumer) {
+    myGeneralRunner.addExceptionHandler(clazz, consumer);
   }
 
   public void runIndirect(final Consumer<ContinuationContext> consumer) {
@@ -90,6 +112,10 @@ public class Continuation {
     myGeneralRunner.next(list);
   }
 
+  public boolean isEmpty() {
+    return myGeneralRunner.isEmpty();
+  }
+
   private static class TaskWrapper extends Task.Backgroundable {
     private final TaskDescriptor myTaskDescriptor;
     private final GeneralRunner myGeneralRunner;
@@ -119,22 +145,69 @@ public class Continuation {
     private final Project myProject;
     private final boolean myCancellable;
     private final List<TaskDescriptor> myQueue;
-    private boolean myTriggerSuspend;
-    private BackgroundableProcessIndicator myIndicator;
+    private final Object myQueueLock;
+    private volatile boolean myTriggerSuspend;
+    private ProgressIndicator myIndicator;
+    private final Map<Object, Object> myDisasters;
+    private final Map<Class<? extends Exception>, Consumer<Exception>> myHandlersMap;
 
     private GeneralRunner(final Project project, boolean cancellable) {
       myProject = project;
       myCancellable = cancellable;
-      myQueue = Collections.synchronizedList(new LinkedList<TaskDescriptor>());
+      myQueueLock = new Object();
+      myQueue = new LinkedList<TaskDescriptor>();
+      myDisasters = new HashMap<Object, Object>();
+      myHandlersMap = new HashMap<Class<? extends Exception>, Consumer<Exception>>();
+    }
+
+    public <T extends Exception> void addExceptionHandler(final Class<T> clazz, final Consumer<T> consumer) {
+      synchronized (myQueueLock) {
+        myHandlersMap.put(clazz, new Consumer<Exception>() {
+          @Override
+          public void consume(Exception e) {
+            if (! clazz.isAssignableFrom(e.getClass())) {
+              throw new RuntimeException(e);
+            }
+            consumer.consume((T) e);
+          }
+        });
+      }
     }
 
     public Project getProject() {
       return myProject;
     }
 
+    public void clearDisasters() {
+      synchronized (myQueueLock) {
+        myDisasters.clear();
+      }
+    }
+
+    @Override
+    public boolean handleException(Exception e) {
+      synchronized (myQueueLock) {
+        final Class<? extends Exception> aClass = e.getClass();
+        Consumer<Exception> consumer = myHandlersMap.get(e.getClass());
+        if (consumer != null) {
+          consumer.consume(e);
+          return true;
+        }
+        for (Map.Entry<Class<? extends Exception>, Consumer<Exception>> entry : myHandlersMap.entrySet()) {
+          if (entry.getKey().isAssignableFrom(aClass)) {
+            entry.getValue().consume(e);
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
     @CalledInAny
     public void cancelEverything() {
-      myQueue.clear();
+      synchronized (myQueueLock) {
+        myQueue.clear();
+      }
     }
 
     public void cancelCurrent() {
@@ -147,27 +220,79 @@ public class Continuation {
       myTriggerSuspend = true;
     }
 
+    @Override
+    public void keepExisting(Object disaster, Object cure) {
+      synchronized (myQueueLock) {
+        for (TaskDescriptor taskDescriptor : myQueue) {
+          taskDescriptor.addCure(disaster, cure);
+        }
+      }
+    }
+
+    @Override
+    public void throwDisaster(@NotNull Object disaster, @NotNull final Object cure) {
+      synchronized (myQueueLock) {
+        final Iterator<TaskDescriptor> iterator = myQueue.iterator();
+        while (iterator.hasNext()) {
+          final TaskDescriptor taskDescriptor = iterator.next();
+          if (taskDescriptor.isHaveMagicCure()) continue;
+          final Object taskCure = taskDescriptor.hasCure(disaster);
+          if (! cure.equals(taskCure)) {
+            iterator.remove();
+          }
+        }
+        myDisasters.put(disaster, cure);
+      }
+    }
+
+    @Override
+    public void after(@NotNull TaskDescriptor inQueue, TaskDescriptor... next) {
+      synchronized (myQueueLock) {
+        int idx = -1;
+        int i = 0;
+        for (TaskDescriptor descriptor : myQueue) {
+          if (descriptor == inQueue) {
+            idx = i;
+            break;
+          }
+          ++ i;
+        }
+        assert idx != -1;
+        myQueue.addAll(idx + 1, Arrays.asList(next));
+      }
+    }
+
     @CalledInAny
     public void next(TaskDescriptor... next) {
-      myQueue.addAll(0, Arrays.asList(next));
+      synchronized (myQueueLock) {
+        myQueue.addAll(0, Arrays.asList(next));
+      }
     }
 
     public void next(List<TaskDescriptor> next) {
-      myQueue.addAll(0, next);
+      synchronized (myQueueLock) {
+        myQueue.addAll(0, next);
+      }
     }
 
     @Override
     public void last(List<TaskDescriptor> next) {
-      myQueue.addAll(next);
+      synchronized (myQueueLock) {
+        myQueue.addAll(next);
+      }
     }
 
     @Override
     public void last(TaskDescriptor... next) {
-      myQueue.addAll(Arrays.asList(next));
+      synchronized (myQueueLock) {
+        myQueue.addAll(Arrays.asList(next));
+      }
     }
 
     public boolean isEmpty() {
-      return myQueue.isEmpty();
+      synchronized (myQueueLock) {
+        return myQueue.isEmpty();
+      }
     }
 
     @CalledInAwt
@@ -177,19 +302,34 @@ public class Continuation {
       while (true) {
       // stop if project is being disposed
         if (! myProject.isOpen()) return;
-        if (myQueue.isEmpty()) return;
-        if (myTriggerSuspend) {
-          myTriggerSuspend = false;
-          return;
+
+        TaskDescriptor current;
+        synchronized (myQueueLock) {
+          if (myQueue.isEmpty()) return;
+          if (myTriggerSuspend) {
+            myTriggerSuspend = false;
+            return;
+          }
+          current = myQueue.remove(0);
+          // check if some tasks were scheduled after disaster was thrown, anyway, they should also be checked for cure
+          if (! current.isHaveMagicCure()) {
+            for (Map.Entry<Object, Object> entry : myDisasters.entrySet()) {
+              if (! entry.getValue().equals(current.hasCure(entry.getKey()))) {
+                current = null;
+                break;
+              }
+            }
+          }
+          if (current == null) continue;
         }
-        TaskDescriptor current = myQueue.remove(0);
 
         if (Where.AWT.equals(current.getWhere())) {
           myIndicator = null;
           current.run(this);
         } else {
           final TaskWrapper task = new TaskWrapper(myProject, current.getName(), myCancellable, current, this);
-          myIndicator = new BackgroundableProcessIndicator(task);
+          myIndicator = ApplicationManager.getApplication().isUnitTestMode() ? new EmptyProgressIndicator() :
+                        new BackgroundableProcessIndicator(task);
           ProgressManagerImpl.runProcessWithProgressAsynchronously(task, myIndicator);
           return;
         }

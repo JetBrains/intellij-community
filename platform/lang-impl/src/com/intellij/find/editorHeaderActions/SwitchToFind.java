@@ -1,6 +1,8 @@
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.EditorSearchComponent;
+import com.intellij.find.FindModel;
+import com.intellij.find.FindUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,6 +26,7 @@ public class SwitchToFind extends EditorHeaderAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    getEditorSearchComponent().getFindModel().setReplaceState(false);
+    final FindModel findModel = getEditorSearchComponent().getFindModel();
+    FindUtil.configureFindModel(false, getEditorSearchComponent().getEditor(), findModel);
   }
 }

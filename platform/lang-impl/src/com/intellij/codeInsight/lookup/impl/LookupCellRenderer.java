@@ -24,10 +24,13 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -236,26 +239,25 @@ public class LookupCellRenderer implements ListCellRenderer {
     return used;
   }
 
-  void renderItemName(LookupElement item,
+  private void renderItemName(LookupElement item,
                       Color foreground,
                       boolean selected,
                       int style,
                       String name,
                       final SimpleColoredComponent nameComponent) {
-    final SimpleTextAttributes baseAttrs = new SimpleTextAttributes(style, foreground);
+    final SimpleTextAttributes base = new SimpleTextAttributes(style, foreground);
 
     final String prefix = myLookup.itemPrefix(item);
-    if (prefix.length() > 0){
-      final int i = StringUtil.indexOfIgnoreCase(name, prefix, 0);
-      if (i >= 0 && !(item instanceof EmptyLookupItem)) {
-        nameComponent.append(name.substring(0, i), baseAttrs);
-        nameComponent.append(name.substring(i, i + prefix.length()),
-                             new SimpleTextAttributes(style, selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR));
-        nameComponent.append(name.substring(i + prefix.length()), baseAttrs);
+    if (prefix.length() > 0) {
+      Iterable<TextRange> ranges = new NameUtil.MinusculeMatcher("*" + prefix, NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(name);
+      if (ranges != null) {
+        SimpleTextAttributes highlighted =
+          new SimpleTextAttributes(style, selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR);
+        SpeedSearchUtil.appendColoredFragments(nameComponent, name, ranges, base, highlighted);
         return;
       }
     }
-    nameComponent.append(name, baseAttrs);
+    nameComponent.append(name, base);
   }
 
   private int setTypeTextLabel(LookupElement item,

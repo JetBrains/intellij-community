@@ -26,6 +26,7 @@ import com.intellij.openapi.diff.impl.patch.apply.ApplyTextFilePatch;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
+import com.intellij.openapi.progress.AsynchronousExecution;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -46,6 +47,11 @@ import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.continuation.Continuation;
+import com.intellij.util.continuation.ContinuationContext;
+import com.intellij.util.continuation.TaskDescriptor;
+import com.intellij.util.continuation.Where;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -61,17 +67,16 @@ public class PatchApplier<BinaryType extends FilePatch> {
   private final VirtualFile myBaseDirectory;
   private final List<FilePatch> myPatches;
   private final CustomBinaryPatchApplier<BinaryType> myCustomForBinaries;
-  private final LocalChangeList myTargetChangeList;
-
+  private final Consumer<List<FilePath>> myToTargetListsMover;
   private final List<FilePatch> myRemainingPatches;
   private final PathsVerifier<BinaryType> myVerifier;
 
   public PatchApplier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches,
-                      final LocalChangeList targetChangeList, final CustomBinaryPatchApplier<BinaryType> customForBinaries) {
+                      @Nullable final Consumer<List<FilePath>> toTargetListsMover, final CustomBinaryPatchApplier<BinaryType> customForBinaries) {
     myProject = project;
     myBaseDirectory = baseDirectory;
     myPatches = patches;
-    myTargetChangeList = targetChangeList;
+    myToTargetListsMover = toTargetListsMover;
     myCustomForBinaries = customForBinaries;
     myRemainingPatches = new ArrayList<FilePatch>();
     myVerifier = new PathsVerifier<BinaryType>(myProject, myBaseDirectory, myPatches, new PathsVerifier.BaseMapper() {
@@ -87,38 +92,89 @@ public class PatchApplier<BinaryType extends FilePatch> {
     });
   }
 
-  public ApplyPatchStatus execute() {
-    return execute(true);
+  public PatchApplier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches,
+                        final LocalChangeList targetChangeList, final CustomBinaryPatchApplier<BinaryType> customForBinaries) {
+    this(project, baseDirectory, patches, createMover(project, targetChangeList), customForBinaries);
   }
 
-  public ApplyPatchStatus execute(boolean showSuccessNotification) {
-    myRemainingPatches.addAll(myPatches);
+  @Nullable
+  private static Consumer<List<FilePath>> createMover(final Project project, final LocalChangeList targetChangeList) {
+    final ChangeListManager clm = ChangeListManager.getInstance(project);
+    if (targetChangeList == null || clm.getDefaultListName().equals(targetChangeList.getName())) return null;
+    return new FilesMover(clm, targetChangeList);
+  }
 
-    final ApplyPatchStatus patchStatus = nonWriteActionPreCheck();
-    if (ApplyPatchStatus.FAILURE.equals(patchStatus)) return patchStatus;
+  @AsynchronousExecution
+  public void execute() {
+    execute(true);
+  }
 
-    final ApplyPatchStatus applyStatus = ApplicationManager.getApplication().runReadAction(new Computable<ApplyPatchStatus>() {
-      public ApplyPatchStatus compute() {
-        final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(ApplyPatchStatus.FAILURE);
-        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-          public void run() {
-            refStatus.set(executeWritable());
-          }
-        }, VcsBundle.message("patch.apply.command"), null);
-        return refStatus.get();
-      }
-    });
-    final ApplyPatchStatus status = ApplyPatchStatus.SUCCESS.equals(patchStatus) ? applyStatus :
-                                    ApplyPatchStatus.and(patchStatus, applyStatus);
-    // listeners finished, all 'legal' file additions/deletions with VCS are done
-    final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(myProject);
-    addSkippedItems(trigger);
-    trigger.process();
-    if(showSuccessNotification || !ApplyPatchStatus.SUCCESS.equals(status)) {
-      showApplyStatus(myProject, status);
+  @AsynchronousExecution
+  public void execute(boolean showSuccessNotification) {
+    final Continuation continuation = new Continuation(myProject, true);
+    final ContinuationContext.GatheringContinuationContext initContext =
+      new ContinuationContext.GatheringContinuationContext();
+    scheduleSelf(showSuccessNotification, initContext);
+    continuation.run(initContext.getList());
+  }
+
+  public class ApplyPatchTask extends TaskDescriptor {
+    private ApplyPatchStatus myStatus;
+    private final boolean myShowNotification;
+
+    public ApplyPatchTask(final boolean showNotification) {
+      super("", Where.AWT);
+      myShowNotification = showNotification;
     }
-    refreshFiles(trigger.getAffected());
-    return status;
+
+    @Override
+    public void run(ContinuationContext context) {
+      myRemainingPatches.addAll(myPatches);
+
+      final ApplyPatchStatus patchStatus = nonWriteActionPreCheck();
+      if (ApplyPatchStatus.FAILURE.equals(patchStatus)) {
+        if (myShowNotification) {
+          showApplyStatus(myProject, patchStatus);
+        }
+        myStatus = patchStatus;
+        return;
+      }
+
+      final ApplyPatchStatus applyStatus = ApplicationManager.getApplication().runReadAction(new Computable<ApplyPatchStatus>() {
+        public ApplyPatchStatus compute() {
+          final Ref<ApplyPatchStatus> refStatus = new Ref<ApplyPatchStatus>(ApplyPatchStatus.FAILURE);
+          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+            public void run() {
+              refStatus.set(executeWritable());
+            }
+          }, VcsBundle.message("patch.apply.command"), null);
+          return refStatus.get();
+        }
+      });
+      myStatus = ApplyPatchStatus.SUCCESS.equals(patchStatus) ? applyStatus :
+                                      ApplyPatchStatus.and(patchStatus, applyStatus);
+      // listeners finished, all 'legal' file additions/deletions with VCS are done
+      final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(myProject);
+      addSkippedItems(trigger);
+      trigger.process();
+      if(myShowNotification || !ApplyPatchStatus.SUCCESS.equals(myStatus)) {
+        showApplyStatus(myProject, myStatus);
+      }
+      refreshFiles(trigger.getAffected(), context);
+    }
+
+    public ApplyPatchStatus getStatus() {
+      return myStatus;
+    }
+  }
+
+  public ApplyPatchTask createApplyPart(final boolean showSuccessNotification) {
+    return new ApplyPatchTask(showSuccessNotification);
+  }
+
+  @AsynchronousExecution
+  public void scheduleSelf(boolean showSuccessNotification, @NotNull final ContinuationContext context) {
+    context.next(createApplyPart(showSuccessNotification));
   }
 
   public static ApplyPatchStatus executePatchGroup(final Collection<PatchApplier> group) {
@@ -151,7 +207,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     trigger.process();
 
     for (PatchApplier applier : group) {
-      applier.refreshFiles(trigger.getAffected());
+      applier.refreshFiles(trigger.getAffected(), null);
     }
     showApplyStatus(project, result);
     return result;
@@ -223,19 +279,31 @@ public class PatchApplier<BinaryType extends FilePatch> {
     }
   }
 
-  protected void refreshFiles(final Collection<FilePath> additionalDirectly) {
+  protected void refreshFiles(final Collection<FilePath> additionalDirectly, @Nullable final ContinuationContext context) {
     final List<FilePath> directlyAffected = myVerifier.getDirectlyAffected();
     final List<VirtualFile> indirectlyAffected = myVerifier.getAllAffected();
     directlyAffected.addAll(additionalDirectly);
 
+    if (context != null) {
+      context.suspend();
+    }
     final RefreshSession session = RefreshQueue.getInstance().createSession(false, true, new Runnable() {
       public void run() {
         if (myProject.isDisposed()) return;
 
         final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-        if ((myTargetChangeList != null) && (! directlyAffected.isEmpty()) &&
-            (! myTargetChangeList.getName().equals(changeListManager.getDefaultListName()))) {
-          changeListManager.invokeAfterUpdate(new FilesMover(changeListManager, directlyAffected), InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE,
+        if (! directlyAffected.isEmpty() && myToTargetListsMover != null) {
+          changeListManager.invokeAfterUpdate(new Runnable() {
+              @Override
+              public void run() {
+                if (myToTargetListsMover != null) {
+                  myToTargetListsMover.consume(directlyAffected);
+                }
+                if (context != null) {
+                  context.ping();
+                }
+              }
+            }, InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE,
           VcsBundle.message("change.lists.manager.move.changes.to.list"),
           new Consumer<VcsDirtyScopeManager>() {
             public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
@@ -246,6 +314,9 @@ public class PatchApplier<BinaryType extends FilePatch> {
           final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
           // will schedule update
           vcsDirtyScopeManager.filePathsDirty(directlyAffected, null);
+          if (context != null) {
+            context.ping();
+          }
         }
       }
     });
@@ -373,18 +444,19 @@ public class PatchApplier<BinaryType extends FilePatch> {
       }, null, project);
   }
 
-  private class FilesMover implements Runnable {
+  private static class FilesMover implements Consumer<List<FilePath>> {
     private final ChangeListManager myChangeListManager;
-    private final List<FilePath> myDirectlyAffected;
+    private final LocalChangeList myTargetChangeList;
 
-    public FilesMover(final ChangeListManager changeListManager, final List<FilePath> directlyAffected) {
+    public FilesMover(final ChangeListManager changeListManager, final LocalChangeList targetChangeList) {
       myChangeListManager = changeListManager;
-      myDirectlyAffected = directlyAffected;
+      myTargetChangeList = targetChangeList;
     }
 
-    public void run() {
+    @Override
+    public void consume(List<FilePath> directlyAffected) {
       List<Change> changes = new ArrayList<Change>();
-      for(FilePath file: myDirectlyAffected) {
+      for(FilePath file: directlyAffected) {
         final Change change = myChangeListManager.getChange(file);
         if (change != null) {
           changes.add(change);

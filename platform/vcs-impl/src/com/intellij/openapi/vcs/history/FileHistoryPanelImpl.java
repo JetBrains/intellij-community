@@ -256,9 +256,11 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
     protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
       setOpaque(selected);
-      String message = (String) value;
-      myIssueLinkRenderer.appendTextWithLinks(message);
-      setToolTipText(message);
+      if (value instanceof String) {
+        String message = (String) value;
+        myIssueLinkRenderer.appendTextWithLinks(message);
+        setToolTipText(message);
+      }
     }
 
     @Override
