@@ -49,7 +49,9 @@ public class FaultyState extends ReadableState {
     printer.mark();
     for (int i = 0; i < myMessages.size(); i++) {
       printExceptionHeader(printer, myMessages.get(i));
-      printer.print(myStackTraces.get(i) + CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+      if (i < myStackTraces.size()) {
+        printer.print(myStackTraces.get(i) + CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
+      }
     }
   }
 
