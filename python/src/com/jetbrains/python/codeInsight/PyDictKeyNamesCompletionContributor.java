@@ -193,9 +193,12 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
     PyStringLiteralExpression str = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(),
                                                                            PyStringLiteralExpression.class, false);
     if (str != null) {
-      if (str.getText().startsWith("'") && str.getText().endsWith("'") ||
-          str.getText().startsWith("\"") && str.getText().endsWith("\""))
-        context.setReplacementOffset(context.getStartOffset()+1);
+      boolean isDictKeys = PsiTreeUtil.getParentOfType(str, PySubscriptionExpression.class) != null;
+      if (isDictKeys) {
+        if (str.getText().startsWith("'") && str.getText().endsWith("'") ||
+            str.getText().startsWith("\"") && str.getText().endsWith("\""))
+          context.setReplacementOffset(context.getSelectionEndOffset()+1);
+      }
     }
   }
 }
