@@ -1172,9 +1172,11 @@
     <xmlRpcHandler name="fileOpener" implementation="com.intellij.ide.OpenFileXmlRpcHandler"/>
 
     <!-- File Exclusions -->
+    <!--
     <projectService serviceInterface="com.intellij.openapi.file.exclude.ProjectFileExclusionManager"
                     serviceImplementation="com.intellij.openapi.file.exclude.ProjectFileExclusionManager"/>
     <projectConfigurable instance="com.intellij.openapi.file.exclude.ui.ExcludedFilesConfigurable"/>
+    -->
 
   </extensions>
 
