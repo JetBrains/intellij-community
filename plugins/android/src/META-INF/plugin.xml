@@ -129,6 +129,7 @@
     <lang.documentationProvider language="JAVA" implementationClass="org.jetbrains.android.AndroidDocumentationProvider" order="first"/>
 
     <sdkType implementation="org.jetbrains.android.sdk.AndroidSdkType"/>
+    <gotoDeclarationHandler implementation="org.jetbrains.android.AndroidGotoDeclarationHandler"/>
   </extensions>
 
   <extensionPoints>

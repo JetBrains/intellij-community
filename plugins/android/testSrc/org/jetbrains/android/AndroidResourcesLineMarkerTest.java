@@ -3,6 +3,7 @@ package org.jetbrains.android;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -11,7 +12,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import org.jetbrains.android.actions.GotoResourceAction;
@@ -98,8 +98,11 @@ public class AndroidResourcesLineMarkerTest extends AndroidTestCase {
   public void testJavaFileMarkers() throws Exception {
     copyRJava();
     List<LineMarkerInfo> markers = collectMarkers("src/p1/p2/Java.java");
-    assertEquals(7, markers.size());
-    for (LineMarkerInfo marker : markers) {
+
+    // do not draw line markers on usages of a resource: AndroidGotoDeclarationHandler provides navigation instead
+    assertEquals(0, markers.size());
+
+    /*for (LineMarkerInfo marker : markers) {
       PsiReferenceExpression expression = (PsiReferenceExpression)marker.getElement();
       PsiField field = (PsiField)expression.resolve();
       GutterIconNavigationHandler handler = marker.getNavigationHandler();
@@ -107,7 +110,7 @@ public class AndroidResourcesLineMarkerTest extends AndroidTestCase {
       Computable<PsiElement[]> targetProvider = ((AndroidResourcesLineMarkerProvider.MyLazyNavigationHandler)handler).getTargetProvider();
       PsiElement[] targets = targetProvider.compute();
       checkTargets(field, targets);
-    }
+    }*/
   }
 
   public void testJavaFileNavigation1() throws Exception {
@@ -153,22 +156,32 @@ public class AndroidResourcesLineMarkerTest extends AndroidTestCase {
   public void testValueResourcesNavigation() throws Exception {
     copyRJava();
     String fileName = getTestName(false) + ".xml";
-    doJavaFileNavigationTest(fileName, "res/values/" + fileName, 1, true);
+    doJavaFileNavigationTest(fileName, "res/values/" + fileName, 1, true, false);
   }
 
   private void doJavaFileNavigationTest(int expectedTargets, boolean expectedEnabled) throws IOException {
     copyRJava();
     String path = "src/p1/p2/" + getTestName(false) + ".java";
-    doJavaFileNavigationTest(path, path, expectedTargets, expectedEnabled);
+    doJavaFileNavigationTest(path, path, expectedTargets, expectedEnabled, true);
   }
 
   private void doRJavaFileNavigationTest(int expectedTargets) throws IOException {
-    doJavaFileNavigationTest("src/p1/p2/" + getTestName(false) + ".java", "src/p1/p2/R.java", expectedTargets, true);
+    doJavaFileNavigationTest("src/p1/p2/" + getTestName(false) + ".java", "src/p1/p2/R.java", expectedTargets, true, false);
   }
 
-  private void doJavaFileNavigationTest(String srcPath, String destPath, int expectedTargets, boolean expectedEnabled) throws IOException {
+  private void doJavaFileNavigationTest(String srcPath, String destPath, int expectedTargets, boolean expectedEnabled,
+                                        boolean testGotoDeclaration) throws IOException {
     VirtualFile file = myFixture.copyFileToProject(BASE_PATH + srcPath, destPath);
     myFixture.configureFromExistingVirtualFile(file);
+
+    // test Ctrl+B
+    if (testGotoDeclaration) {
+      PsiElement[] targets = GotoDeclarationAction.findAllTargetElements(getProject(), myFixture.getEditor(), myFixture.getCaretOffset());
+      assertNotNull(targets);
+      assertEquals(expectedTargets, targets.length);
+    }
+
+    // test Ctrl+Alt+Shift+R
     GotoResourceAction action = new GotoResourceAction();
     DataContext dataContext = DataManager.getInstance().getDataContextFromFocus().getResult();
     AnActionEvent event = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);

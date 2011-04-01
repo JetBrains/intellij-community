@@ -4,6 +4,7 @@ import com.android.sdklib.SdkConstants;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -12,7 +13,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.UsefulTestCase;
@@ -163,8 +163,8 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     myFixture.copyFileToProject(BASE_PATH + "RJavaFileMarkers.java", "app/src/p1/p2/R.java");
     List<LineMarkerInfo> markers =
       AndroidResourcesLineMarkerTest.collectMarkers(myFixture, BASE_PATH + getTestName(false) + ".java", "/app/src/p1/p2/Java.java");
-    assertEquals(3, markers.size());
-    for (LineMarkerInfo marker : markers) {
+    assertEquals(0, markers.size());
+    /*for (LineMarkerInfo marker : markers) {
       PsiReferenceExpression expression = (PsiReferenceExpression)marker.getElement();
       PsiField field = (PsiField)expression.resolve();
       GutterIconNavigationHandler handler = marker.getNavigationHandler();
@@ -172,7 +172,21 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
       Computable<PsiElement[]> targetProvider = ((AndroidResourcesLineMarkerProvider.MyLazyNavigationHandler)handler).getTargetProvider();
       PsiElement[] targets = targetProvider.compute();
       checkTargets(field, targets);
-    }
+    }*/
+  }
+
+  public void testJavaNavigation() throws Exception {
+    myFixture.copyFileToProject(BASE_PATH + "RJavaFileMarkers.java", "app/src/p1/p2/R.java");
+    VirtualFile file = myFixture.copyFileToProject(BASE_PATH + getTestName(false) + ".java", "/app/src/p1/p2/Java.java");
+    myFixture.configureFromExistingVirtualFile(file);
+
+    PsiElement[] targets =
+      GotoDeclarationAction.findAllTargetElements(myFixture.getProject(), myFixture.getEditor(), myFixture.getCaretOffset());
+    assertNotNull(targets);
+    assertEquals(1, targets.length);
+    PsiElement targetElement = targets[0];
+    assertInstanceOf(targetElement, XmlFile.class);
+    assertEquals("main.xml", ((XmlFile)targetElement).getName());
   }
 
   public void testLayoutFileMarkers() throws Exception {
