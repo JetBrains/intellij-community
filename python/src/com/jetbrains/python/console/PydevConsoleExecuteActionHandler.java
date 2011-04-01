@@ -52,17 +52,26 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
 
   @Override
   public void processLine(final String text) {
-    Scanner s = new Scanner(text);
-    while (s.hasNextLine()) {
-      String line = s.nextLine();
-      int indentSize = myIndentHelper.getIndent(line, false);
-      if (indentSize == 0 && indentSize < myCurrentIndentSize &&!shouldIndent(line)) {
-        doProcessLine("\n");
-        doProcessLine(line);
+    if ("".equals(text)) {
+      processOneLine(text);
+    }
+    else {
+      Scanner s = new Scanner(text);
+      while (s.hasNextLine()) {
+        String line = s.nextLine();
+        processOneLine(line);
       }
-      else {
-        doProcessLine(line);
-      }
+    }
+  }
+
+  private void processOneLine(String line) {
+    int indentSize = myIndentHelper.getIndent(line, false);
+    if (indentSize == 0 && indentSize < myCurrentIndentSize && !shouldIndent(line)) {
+      doProcessLine("\n");
+      doProcessLine(line);
+    }
+    else {
+      doProcessLine(line);
     }
   }
 

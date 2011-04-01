@@ -185,14 +185,16 @@ public class AddImportHelper {
     final boolean useQualified = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
     final PsiFileSystemItem toImport = target instanceof PsiFileSystemItem ? (PsiFileSystemItem)target : target.getContainingFile();
     final ImportPriority priority = getImportPriority(file, toImport);
-    final String path = ResolveImportUtil.findShortestImportableName(element, toImport.getVirtualFile());
+    final PyQualifiedName qName = ResolveImportUtil.findCanonicalImportPath(target, element);
+    if (qName == null) return;
+    String path = qName.toString();
     if (target instanceof PsiFileSystemItem) {
       addImportStatement(file, path, null, priority);
     }
     else if (useQualified) {
       addImportStatement(file, path, null, priority);
       final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
-      element.replace(elementGenerator.createExpressionFromText(path + "." + target.getName()));
+      element.replace(elementGenerator.createExpressionFromText(qName + "." + target.getName()));
     }
     else {
       addImportFrom(file, path, target.getName(), priority);

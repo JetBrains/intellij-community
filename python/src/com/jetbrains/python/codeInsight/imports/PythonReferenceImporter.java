@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -20,6 +19,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.CollectProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -47,7 +47,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
         if (refExpr.getQualifier() == null) {
           final PsiPolyVariantReference reference = refExpr.getReference();
           if (reference.resolve() == null) {
-            ImportFromExistingFix fix = proposeImportFix(refExpr, reference, refExpr.getText());
+            AutoImportQuickFix fix = proposeImportFix(refExpr, reference, refExpr.getText());
             if (fix != null && fix.getCandidatesCount() == 1) {
               fix.invoke(file);
             }
@@ -62,9 +62,9 @@ public class PythonReferenceImporter implements ReferenceImporter {
   private static TokenSet IS_IMPORT_STATEMENT = TokenSet.create(PyElementTypes.IMPORT_STATEMENT);
 
   @Nullable
-  public static ImportFromExistingFix proposeImportFix(final PyElement node, PsiReference reference, String ref_text) {
+  public static AutoImportQuickFix proposeImportFix(final PyElement node, PsiReference reference, String ref_text) {
     PsiFile existing_import_file = null; // if there's a matching existing import, this it the file it imports
-    ImportFromExistingFix fix = new ImportFromExistingFix(node, reference, ref_text, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
+    AutoImportQuickFix fix = new AutoImportQuickFix(node, reference, ref_text, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
     Set<String> seen_file_names = new HashSet<String>(); // true import names
     // maybe the name is importable via some existing 'import foo' statement, and only needs a qualifier.
     // walk up collecting all such statements and analyzing
@@ -99,22 +99,23 @@ public class PythonReferenceImporter implements ReferenceImporter {
     List<PsiElement> symbols = new ArrayList<PsiElement>();
     symbols.addAll(PyClassNameIndex.find(ref_text, project, true));
     GlobalSearchScope scope = PyClassNameIndex.projectWithLibrariesScope(project);
-    symbols.addAll(PyFunctionNameIndex.find(ref_text, project, scope));
+    if (!isQualifier(node)) {
+      symbols.addAll(PyFunctionNameIndex.find(ref_text, project, scope));
+    }
     symbols.addAll(PyVariableNameIndex.find(ref_text, project, scope));
-    symbols.addAll(findImportableModules(node.getContainingFile(), ref_text, project, scope));
+    if (!isCall(node)) {
+      symbols.addAll(findImportableModules(node.getContainingFile(), ref_text, project, scope));
+    }
     if (symbols.size() > 0) {
       for (PsiElement symbol : symbols) {
         if (isTopLevel(symbol)) { // we only want top-level symbols
           PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
           if (srcfile != null && srcfile != existing_import_file && srcfile != node.getContainingFile()) {
-            VirtualFile vfile = srcfile.getVirtualFile();
-            if (vfile != null) {
-              String import_path = ResolveImportUtil.findShortestImportableName(node, vfile);
-              if (import_path != null && !seen_file_names.contains(import_path)) {
-                // a new, valid hit
-                fix.addImport(symbol, srcfile, import_path, proposeAsName(node.getContainingFile(), ref_text, import_path));
-                seen_file_names.add(import_path); // just in case, again
-              }
+            PyQualifiedName import_path = ResolveImportUtil.findCanonicalImportPath(symbol, node);
+            if (import_path != null && !seen_file_names.contains(import_path.toString())) {
+              // a new, valid hit
+              fix.addImport(symbol, srcfile, import_path, proposeAsName(node.getContainingFile(), ref_text, import_path));
+              seen_file_names.add(import_path.toString()); // just in case, again
             }
           }
         }
@@ -125,6 +126,20 @@ public class PythonReferenceImporter implements ReferenceImporter {
       return fix;
     }
     return null;
+  }
+
+  private static boolean isQualifier(PyElement node) {
+    if (node.getParent() instanceof PyReferenceExpression) {
+      return node == ((PyReferenceExpression) node.getParent()).getQualifier();
+    }
+    return false;
+  }
+
+  private static boolean isCall(PyElement node) {
+    if (node.getParent() instanceof PyCallExpression) {
+      return node == ((PyCallExpression) node.getParent()).getCallee();
+    }
+    return false;
   }
 
   private static Collection<PsiElement> findImportableModules(PsiFile targetFile, String reftext, Project project, GlobalSearchScope scope) {
@@ -180,14 +195,14 @@ public class PythonReferenceImporter implements ReferenceImporter {
   }
 
   // find an unique name that does not clash with anything in the file, using ref_name and import_path as hints
-  private static String proposeAsName(PsiFile file, String ref_name, String import_path) {
+  private static String proposeAsName(PsiFile file, String ref_name, PyQualifiedName import_path) {
     // a somehow brute-force approach: collect all identifiers wholesale and avoid clashes with any of them
     Set<String> ident_set = new HashSet<String>();
     collectIdentifiers(file, ident_set);
     // try the default, 'normal' name first; if it does not clash, propose no sustitute!
     if (! ident_set.contains(ref_name)) return null;
     // try flattened import path
-    String path_name = import_path.replace('.', '_');
+    String path_name = import_path.join("_");
     if (! ident_set.contains(path_name)) return path_name;
     // ...with prefixes: a highly improbable situation already
     for (String prefix : AS_PREFIXES) {

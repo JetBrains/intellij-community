@@ -10,7 +10,7 @@
   <depends>com.intellij.modules.ultimate</depends>
   <depends>com.intellij.modules.java</depends>
   <depends>org.jetbrains.plugins.yaml</depends>
-  <vendor url="http://www.jetbrains.com/idea/" logo="/com/jetbrains/python/python.png">JetBrains, Keith Lea</vendor>
+  <vendor url="http://www.jetbrains.com/pycharm/" logo="/com/jetbrains/python/python.png">JetBrains, Keith Lea</vendor>
 
   <xi:include href="/META-INF/python-plugin-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
 

@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.impl.ParamHelper;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,7 @@ class ImportCandidateHolder implements Comparable {
   private final PsiElement myImportable;
   private final PyImportElement myImportElement;
   private final PsiFileSystemItem myFile;
-  private final String myPath;
+  private final PyQualifiedName myPath;
   private final String myAsName;
 
   /**
@@ -40,7 +41,7 @@ class ImportCandidateHolder implements Comparable {
    */
   public ImportCandidateHolder(
     @NotNull PsiElement importable, @NotNull PsiFileSystemItem file,
-    @Nullable PyImportElement importElement, @Nullable String path, @Nullable String asName
+    @Nullable PyImportElement importElement, @Nullable PyQualifiedName path, @Nullable String asName
   ) {
     myFile = file;
     myImportable = importable;
@@ -62,7 +63,7 @@ class ImportCandidateHolder implements Comparable {
     return myFile;
   }
 
-  public String getPath() {
+  public PyQualifiedName getPath() {
     return myPath;
   }
 
@@ -78,7 +79,7 @@ class ImportCandidateHolder implements Comparable {
    * @param source known ImportElement to import the name; its 'as' clause is used if present.
    * @return a properly qualified name.
    */
-  public static String getQualifiedName(String name, String importPath, PyImportElement source) {
+  public static String getQualifiedName(String name, PyQualifiedName importPath, PyImportElement source) {
     StringBuilder sb = new StringBuilder();
     if (source != null) {
       PsiElement parent = source.getParent();
@@ -90,7 +91,7 @@ class ImportCandidateHolder implements Comparable {
       }
     }
     else {
-      if (!StringUtil.isEmpty(importPath)) {
+      if (importPath.getComponentCount() > 0) {
         sb.append(importPath).append(".");
       }
       sb.append(name);
@@ -126,12 +127,8 @@ class ImportCandidateHolder implements Comparable {
 
   @Nullable
   public String getTailText() {
-    if (myImportElement == null) {
-     String text = "add import";
-      if (myAsName != null) {
-        text += " as " + myAsName;
-      }
-      return text;
+    if (myAsName != null) {
+      return "import as " + myAsName;
     }
     return null;
   }
@@ -145,9 +142,7 @@ class ImportCandidateHolder implements Comparable {
     }
     // prefer shorter paths
     if (myPath != null && rhs.myPath != null) {
-      int lDots = StringUtil.isEmpty(myPath) ? -1 : StringUtil.countChars(myPath, '.');
-      int rDots = StringUtil.isEmpty(rhs.myPath) ? -1 : StringUtil.countChars(rhs.myPath, '.');
-      return lDots - rDots;
+      return myPath.getComponentCount() - rhs.myPath.getComponentCount();
     }
     return 0;
   }

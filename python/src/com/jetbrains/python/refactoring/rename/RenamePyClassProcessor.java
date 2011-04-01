@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -49,7 +50,7 @@ public class RenamePyClassProcessor extends RenamePyElementProcessor {
     if (element instanceof PyClass) {
       final PyFunction initMethod = ((PyClass)element).findMethodByName(PyNames.INIT, true);
       if (initMethod != null) {
-        final List<PsiReference> allRefs = new ArrayList<PsiReference>();
+        final List<PsiReference> allRefs = Collections.synchronizedList(new ArrayList<PsiReference>());
         allRefs.addAll(super.findReferences(element));
         ReferencesSearch.search(initMethod).forEach(new Processor<PsiReference>() {
           @Override

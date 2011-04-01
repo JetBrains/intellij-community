@@ -1,11 +1,12 @@
 package com.jetbrains.python.documentation;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.lang.documentation.QuickDocumentationProvider;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -29,7 +30,6 @@ import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.RootVisitor;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -37,10 +37,13 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.FP;
 import com.jetbrains.python.toolbox.Maybe;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.HeadMethod;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -51,7 +54,7 @@ import java.util.regex.Pattern;
 /**
  * Provides quick docs for classes, methods, and functions.
  */
-public class PythonDocumentationProvider extends QuickDocumentationProvider {
+public class PythonDocumentationProvider extends QuickDocumentationProvider implements ExternalDocumentationProvider {
 
   @NonNls private static final String LINK_TYPE_CLASS = "#class#";
   @NonNls private static final String LINK_TYPE_PARENT = "#parent#";
@@ -518,6 +521,12 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
 
   @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
+    final String url = getUrlFor(element, originalElement, true);
+    return url == null ? null : Collections.singletonList(url);
+  }
+
+  @Nullable
+  private static String getUrlFor(PsiElement element, PsiElement originalElement, boolean checkExistence) {
     PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem) element : element.getContainingFile();
     if (PyNames.INIT_DOT_PY.equals(file.getName())) {
       file = file.getParent();
@@ -531,32 +540,75 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
     if (sdk == null) {
       return null;
     }
-    PyQualifiedName qName = ResolveImportUtil.findShortestImportableQName(file);
+    PyQualifiedName qName = ResolveImportUtil.findCanonicalImportPath(element, originalElement);
+    if (qName == null) {
+      return null;
+    }
     PythonDocumentationMap map = PythonDocumentationMap.getInstance();
     String pyVersion = pyVersion(sdk.getVersionString());
     PsiNamedElement namedElement = (element instanceof PsiNamedElement && !(element instanceof PsiFileSystemItem))
                                    ? (PsiNamedElement) element
                                    : null;
+    if (namedElement instanceof PyFunction && PyNames.INIT.equals(namedElement.getName())) {
+      final PyClass containingClass = ((PyFunction)namedElement).getContainingClass();
+      if (containingClass != null) {
+        namedElement = containingClass;
+      }
+    }
     String url = map.urlFor(qName, namedElement, pyVersion);
     if (url != null) {
-      return Collections.singletonList(url);
+      if (checkExistence && !pageExists(url)) {
+        return map.rootUrlFor(qName);
+      }
+      return url;
     }
     if (PythonSdkType.isStdLib(vFile, sdk)) {
-      return Collections.singletonList(getStdlibUrlFor(element, file, pyVersion));
+      return getStdlibUrlFor(element, qName.getLastComponent(), pyVersion);
+    }
+    for (PythonDocumentationLinkProvider provider : Extensions.getExtensions(PythonDocumentationLinkProvider.EP_NAME)) {
+      final String providerUrl = provider.getExternalDocumentationUrl(element, originalElement);
+      if (providerUrl != null) {
+        if (checkExistence && !pageExists(providerUrl)) {
+          return provider.getExternalDocumentationRoot();
+        }
+        return providerUrl;
+      }
     }
     return null;
   }
 
-  private static String getStdlibUrlFor(PsiElement element, PsiFileSystemItem file, String pyVersion) {
+  private static boolean pageExists(String url) {
+    HttpClient client = new HttpClient();
+    client.setTimeout(5 * 1000);
+    client.setConnectionTimeout(5 * 1000);
+    HeadMethod method = new HeadMethod(url);
+    try {
+      int rc = client.executeMethod(method);
+      if (rc == 404) {
+        return false;
+      }
+    }
+    catch (IOException ignored) {
+    }
+    return true;
+  }
+
+  private static String getStdlibUrlFor(PsiElement element, String moduleName, String pyVersion) {
     StringBuilder urlBuilder = new StringBuilder("http://docs.python.org/");
     if (pyVersion != null) {
       urlBuilder.append(pyVersion).append("/");
     }
     urlBuilder.append("library/");
-    urlBuilder.append(FileUtil.getNameWithoutExtension(file.getName()));
+    urlBuilder.append(moduleName);
     urlBuilder.append(".html");
     if (element instanceof PsiNamedElement && !(element instanceof PyFile)) {
-      urlBuilder.append('#').append(FileUtil.getNameWithoutExtension(file.getName())).append(".");
+      urlBuilder.append('#').append(moduleName).append(".");
+      if (element instanceof PyFunction) {
+        final PyClass containingClass = ((PyFunction)element).getContainingClass();
+        if (containingClass != null) {
+          urlBuilder.append(containingClass.getName()).append('.');
+        }
+      }
       urlBuilder.append(((PsiNamedElement)element).getName());
     }
     return urlBuilder.toString();
@@ -577,6 +629,16 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider {
       }
     }
     return null;
+  }
+
+  @Override
+  public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls) {
+    return null;
+  }
+
+  @Override
+  public boolean hasDocumentationFor(PsiElement element, PsiElement originalElement) {
+    return getUrlFor(element, originalElement, false) != null;
   }
 
   @Nullable

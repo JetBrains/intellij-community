@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,13 +27,12 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Handles cases when an unresolved name may be imported from one of existing imported modules.
  * The object contains a list of import candidates and serves only to show the initial hint;
  * the actual work is done in ImportFromExistingAction..
  *
  * @author dcheryasov
  */
-public class ImportFromExistingFix implements LocalQuickFix {
+public class AutoImportQuickFix implements LocalQuickFix {
 
   private final PyElement myNode;
   private final PsiReference myReference;
@@ -49,7 +49,7 @@ public class ImportFromExistingFix implements LocalQuickFix {
    * @param name the unresolved identifier portion of node's text
    * @param qualify if true, add an "import ..." statement and qualify the name; else use "from ... import name" 
    */
-  public ImportFromExistingFix(PyElement node, PsiReference reference, String name, boolean qualify) {
+  public AutoImportQuickFix(PyElement node, PsiReference reference, String name, boolean qualify) {
     myNode = node;
     myReference = reference;
     myImports = new ArrayList<ImportCandidateHolder>();
@@ -75,7 +75,7 @@ public class ImportFromExistingFix implements LocalQuickFix {
    * @param path import path for the file, as a qualified name (a.b.c)
    * @param asName name to use to import the path as: "import path as asName"
    */
-  public void addImport(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file, @Nullable String path, @Nullable String asName) {
+  public void addImport(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file, @Nullable PyQualifiedName path, @Nullable String asName) {
     myImports.add(new ImportCandidateHolder(importable, file, null, path, asName));
   }
 

@@ -140,7 +140,9 @@ public class PyCallExpressionHelper {
     if (resolved instanceof Callable) {
       EnumSet<PyFunction.Flag> flags = EnumSet.noneOf(PyFunction.Flag.class);
       List<PyExpression> qualifiers = resolveResult != null ? resolveResult.getQualifiers() : Collections.<PyExpression>emptyList();
-      boolean is_by_instance = isConstructorCall || isQualifiedByInstance((Callable)resolved, qualifiers, context);
+      boolean is_by_instance = isConstructorCall ||
+                               isQualifiedByInstance((Callable)resolved, qualifiers, context)
+                               || resolved instanceof PyBoundFunction;
       PyExpression lastQualifier = qualifiers != null && qualifiers.isEmpty() ? null : qualifiers.get(qualifiers.size()-1);
       boolean isByClass = lastQualifier == null ? false : isQualifiedByClass((Callable)resolved, lastQualifier, context);
       final Callable callable = (Callable)resolved;
