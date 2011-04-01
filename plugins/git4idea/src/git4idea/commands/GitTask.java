@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -118,14 +119,17 @@ public class GitTask {
    */
   public void execute(boolean sync, boolean modal, final GitTaskResultHandler resultHandler) {
     final Object LOCK = new Object();
+    final AtomicBoolean completed = new AtomicBoolean();
 
     if (modal) {
       ModalTask task = new ModalTask(myProject, myHandler, myTitle) {
         @Override public void onSuccess() {
           commonOnSuccess(LOCK, resultHandler);
+          completed.set(true);
         }
         @Override public void onCancel() {
           commonOnCancel(LOCK, resultHandler);
+          completed.set(true);
         }
       };
       ProgressManager.getInstance().run(task);
@@ -133,21 +137,25 @@ public class GitTask {
       BackgroundableTask task = new BackgroundableTask(myProject, myHandler, myTitle) {
         @Override public void onSuccess() {
           commonOnSuccess(LOCK, resultHandler);
+          completed.set(true);
         }
         @Override public void onCancel() {
           commonOnCancel(LOCK, resultHandler);
+          completed.set(true);
         }
       };
       GitVcs.runInBackground(task);
     }
 
     if (sync) {
-      try {
-        synchronized (LOCK) {
-          LOCK.wait();
+      while (!completed.get()) {
+        try {
+          synchronized (LOCK) {
+            LOCK.wait(50);
+          }
+        } catch (InterruptedException e) {
+          LOG.info(e);
         }
-      } catch (InterruptedException e) {
-        LOG.info(e);
       }
     }
   }
