@@ -21,6 +21,7 @@ package com.intellij.concurrency;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
@@ -123,8 +124,17 @@ public class JobImpl<T> implements Job<T> {
     //  task.run();
     //}
     //
-    while (!isDone() && JobSchedulerImpl.stealAndRunTask()) {
-      int i = 0;
+    while (!isDone()) {
+      Runnable task = JobSchedulerImpl.stealTask();
+      if (task == null) break;
+
+      boolean wasMarked = ApplicationImpl.setExceptionalThreadWithReadAccessFlag(false);
+      try {
+        task.run();
+      }
+      finally {
+        if (wasMarked) ApplicationImpl.setExceptionalThreadWithReadAccessFlag(true);
+      }
     }
 
     waitForTermination();
