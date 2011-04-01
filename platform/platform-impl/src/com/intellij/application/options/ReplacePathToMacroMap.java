@@ -76,6 +76,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   }
 
   public String substitute(String text, boolean caseSensitive) {
+    if (text == null) return null;
     for (final String path : getPathIndex()) {
       final String macro = get(path);
       text = replacePathMacro(text, path, macro, caseSensitive);

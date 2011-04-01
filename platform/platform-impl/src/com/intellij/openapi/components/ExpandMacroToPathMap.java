@@ -34,6 +34,7 @@ public class ExpandMacroToPathMap extends PathMacroMap {
   }
 
   public String substitute(String text, boolean caseSensitive) {
+    if (text == null) return null;
     for (Map.Entry<String, String> entry : entries()) {
       // when replacing macros with actual paths the replace utility may be used as always 'case-sensitive'
       // for case-insensitive file systems there will be no unnecesary toLowerCase() transforms. 
