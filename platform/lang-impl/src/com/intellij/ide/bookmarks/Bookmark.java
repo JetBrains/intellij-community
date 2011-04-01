@@ -68,15 +68,21 @@ public class Bookmark {
     myDescription = description;
 
     if (line >= 0) {
-      MarkupModelEx markup = (MarkupModelEx)getDocument().getMarkupModel(myProject);
-      myHighlighter = markup.addPersistentLineHighlighter(line, HighlighterLayer.ERROR + 1, null);
+      Document document = getDocument();
+      if (document == null) {
+        myHighlighter = null;
+      }
+      else {
+        MarkupModelEx markup = (MarkupModelEx)document.getMarkupModel(myProject);
+        myHighlighter = markup.addPersistentLineHighlighter(line, HighlighterLayer.ERROR + 1, null);
 
 
-      if (myHighlighter != null) {
-        myHighlighter.setGutterIconRenderer(new MyGutterIconRenderer());
+        if (myHighlighter != null) {
+          myHighlighter.setGutterIconRenderer(new MyGutterIconRenderer());
 
-        myHighlighter.setErrorStripeMarkColor(Color.black);
-        myHighlighter.setErrorStripeTooltip(StringUtil.escapeXml(getNotEmptyDescription()));
+          myHighlighter.setErrorStripeMarkColor(Color.black);
+          myHighlighter.setErrorStripeTooltip(StringUtil.escapeXml(getNotEmptyDescription()));
+        }
       }
     }
     else {
