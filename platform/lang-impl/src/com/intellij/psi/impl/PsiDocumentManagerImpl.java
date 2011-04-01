@@ -480,20 +480,32 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     return true;
   }
 
-  private void assertAfterCommit(Document document, PsiFile file, String oldPsiText) {
+  private void assertAfterCommit(final Document document, final PsiFile file, final String oldPsiText) {
     if (myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() != document.getTextLength()) {
+      final String documentText = document.getText();
       if (ApplicationManagerEx.getApplicationEx().isInternal()) {
         String fileText = file.getText();
-        String documentText = document.getText();
-        throw new AssertionError("commitDocument left PSI inconsistent; file len=" + myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() +
-                                 "; doc len=" + document.getTextLength() +
-                                 "; doc.getText() == file.getText(): " + Comparing.equal(fileText, documentText) +
-                                 ";\n file psi text=" + fileText +
-                                 ";\n doc text=" + documentText +
-                                 ";\n old psi file text=" + oldPsiText);
+        LOG.error("commitDocument left PSI inconsistent; file len=" + myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() +
+                  "; doc len=" + document.getTextLength() +
+                  "; doc.getText() == file.getText(): " + Comparing.equal(fileText, documentText) +
+                  ";\n file psi text=" + fileText +
+                  ";\n doc text=" + documentText +
+                  ";\n old psi file text=" + oldPsiText);
+      }
+      else {
+        LOG.error("commitDocument left PSI inconsistent: " + file);
       }
 
-      throw new AssertionError("commitDocument left PSI inconsistent: " + file);
+      file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
+      try {
+        myBlockSupport.reparseRange(file, 0, documentText.length(), 0, documentText);
+        if (myTreeElementBeingReparsedSoItWontBeCollected.getTextLength() != document.getTextLength()) {
+          LOG.error("PSI is broken beyond repair in: " + file);
+        }
+      }
+      finally {
+        file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, null);
+      }
     }
   }
 
