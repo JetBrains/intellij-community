@@ -45,8 +45,8 @@ public class ProperTextRange extends TextRange {
 
   @NotNull
   @Override
-  public TextRange shiftRight(int offset) {
-    TextRange range = super.shiftRight(offset);
+  public TextRange shiftRight(int delta) {
+    TextRange range = super.shiftRight(delta);
     assertProperRange(range);
     return range;
   }

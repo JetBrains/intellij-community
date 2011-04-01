@@ -83,9 +83,9 @@ public class TextRange implements Segment{
   }
 
   @NotNull
-  public TextRange shiftRight(int offset) {
-    if (offset == 0) return this;
-    return new TextRange(myStartOffset + offset, myEndOffset + offset);
+  public TextRange shiftRight(int delta) {
+    if (delta == 0) return this;
+    return new TextRange(myStartOffset + delta, myEndOffset + delta);
   }
 
   @NotNull
