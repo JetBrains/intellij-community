@@ -442,6 +442,13 @@
     <quoteHandler fileType="Locale" className="com.jetbrains.django.localization.editor.LocaleQuoteHandler"/>
     <problemFileHighlightFilter implementation="com.jetbrains.django.localization.LocaleProblemFileHighlightFilter"/>
     <!--<fileEditorProvider implementation="com.jetbrains.django.localization.editor.LocaleFileEditorProvider"/>-->
+
+    <!-- ReST files -->
+
+    <fileTypeFactory implementation="com.jetbrains.rest.RestFileTypeFactory"/>
+    <lang.syntaxHighlighterFactory key="ReST"
+                                   implementationClass="com.jetbrains.rest.RestHighlighterFactory"/>
+    <!--<lang.parserDefinition language="ReST" implementationClass="com.jetbrains.rest.RestParserDefinition"/>-->
   </extensions>
 
   <extensionPoints>
