@@ -60,9 +60,8 @@ public class ConsoleExecuteActionHandler {
       languageConsole.addCurrentToHistory(range, false, myPreserveMarkup);
     }
     languageConsole.setInputText("");
-    if (!StringUtil.isEmptyOrSpaces(text)) {
-      myConsoleHistoryModel.addToHistory(text);
-    }
+
+    myConsoleHistoryModel.addToHistory(text);
     // Send to interpreter / server
 
     processLine(text);
