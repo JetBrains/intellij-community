@@ -16,7 +16,6 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
@@ -384,7 +383,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     final Matcher matcher = MACRO_PATTERN.matcher(file);
     while (matcher.find()) {
       String m = matcher.group(1);
-      if (!myMacros.containsKey(m) || !ApplicationManager.getApplication().isUnitTestMode() && myMacros.get(m) == null) {
+      if (!myMacros.containsKey(m) || myMacros.get(m) == null) {
         throw new IllegalArgumentException("Unknown macro: " + m + " in storage spec: " + file);
       }
     }
