@@ -22,7 +22,9 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Function;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ConcurrentHashSet;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -107,7 +109,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   private final List<TaskRepository> myRepositories = new ArrayList<TaskRepository>();
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
-  private Set<TaskRepository> myBadRepositories = new HashSet<TaskRepository>();
+  private Set<TaskRepository> myBadRepositories = new ConcurrentHashSet<TaskRepository>();
 
   public TaskManagerImpl(Project project,
                          WorkingContextManager contextManager,
@@ -223,7 +225,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public List<Task> getIssues(String query) {
-    List<Task> tasks = getIssuesFromRepositories(query, 50, 0);
+    List<Task> tasks = getIssuesFromRepositories(query, 50, 0, true);
     synchronized (myIssueCache) {
       myTemporaryCache.clear();
       myTemporaryCache.putAll(ContainerUtil.assignKeys(tasks.iterator(), KEY_CONVERTOR));
@@ -387,6 +389,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     ProgressManager.getInstance().run(task);
     Exception e = task.myException;
     if (e == null) {
+      myBadRepositories.remove(repository);
       Messages.showMessageDialog(myProject, "Connection is successful", "Connection", Messages.getInformationIcon());
     } else {
       Messages.showErrorDialog(myProject, e.getMessage(), "Error");
@@ -604,7 +607,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         try {
-          List<Task> issues = getIssuesFromRepositories(null, myConfig.updateIssuesCount, 0);
+          List<Task> issues = getIssuesFromRepositories(null, myConfig.updateIssuesCount, 0, false);
 
           synchronized (myIssueCache) {
             myIssueCache.clear();
@@ -635,14 +638,15 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     });
   }
 
-  private List<Task> getIssuesFromRepositories(String request, int max, long since) {
+  private List<Task> getIssuesFromRepositories(String request, int max, long since, boolean forceRequest) {
     List<Task> issues = new ArrayList<Task>();
     for (final TaskRepository repository : getAllRepositories()) {
-      if (!repository.isConfigured() || myBadRepositories.contains(repository)) {
+      if (!repository.isConfigured() || (!forceRequest && myBadRepositories.contains(repository))) {
         continue;
       }
       try {
         Task[] tasks = repository.getIssues(request, max, since);
+        myBadRepositories.remove(repository);
         ContainerUtil.addAll(issues, tasks);
       }
       catch (Exception e) {
