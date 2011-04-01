@@ -14,6 +14,13 @@ import org.jetbrains.annotations.NotNull;
  * set literal if applicable
  */
 public class ReplaceFunctionWithSetLiteralQuickFix implements LocalQuickFix {
+  PyElement[] myElements;
+  String myString;
+  public ReplaceFunctionWithSetLiteralQuickFix(PyElement[] elements, String string) {
+    myElements = elements;
+    myString = string;
+  }
+
   @Override
   @NotNull
   public String getName() {
@@ -31,28 +38,25 @@ public class ReplaceFunctionWithSetLiteralQuickFix implements LocalQuickFix {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     PsiElement functionCall = descriptor.getPsiElement();
     StringBuilder str = new StringBuilder("{");
-    if (functionCall instanceof PyCallExpression) {
-      PyExpression[] arguments = ((PyCallExpression)functionCall).getArguments();
-      if (arguments.length > 0) {
-        PyExpression argument= arguments[0];
-        PyElement[] elements = {};
-        if (argument instanceof PySequenceExpression)
-          elements = ((PySequenceExpression)argument).getElements();
-        if (argument instanceof PyParenthesizedExpression) {
-          PyExpression tuple = ((PyParenthesizedExpression)argument).getContainedExpression();
-          if (tuple instanceof PyTupleExpression)
-            elements = ((PyTupleExpression)(tuple)).getElements();
-        }
-        for (int i = 0; i != elements.length; ++i) {
-          PyElement e = elements[i];
-          str.append(e.getText());
-          if (i != elements.length-1)
-            str.append(", ");
-        }
+    if (!myString.isEmpty()) {
+      int i = 0;
+      for (char ch : myString.toCharArray()) {
+        str.append("'").append(ch).append("'");
+        if (i != myString.length()-1)
+          str.append(", ");
+        ++i;
       }
-      str.append("}");
-      functionCall.replace(elementGenerator.createFromText(LanguageLevel.forElement(functionCall), PyExpressionStatement.class,
-                                                             str.toString()).getExpression());
     }
+    else {
+      for (int i = 0; i != myElements.length; ++i) {
+        PyElement e = myElements[i];
+        str.append(e.getText());
+        if (i != myElements.length-1)
+          str.append(", ");
+      }
+    }
+    str.append("}");
+    functionCall.replace(elementGenerator.createFromText(LanguageLevel.forElement(functionCall), PyExpressionStatement.class,
+                                                             str.toString()).getExpression());
   }
 }
