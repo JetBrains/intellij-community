@@ -247,7 +247,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
     private final FileChooserDescriptor myDescriptor;
 
     public AddPathActionListener() {
-      myDescriptor = new FileChooserDescriptor(false, true, true, false, true, true);
+      myDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
       myDescriptor.setTitle(ProjectBundle.message("add.external.annotations.path.title"));
       myDescriptor.setDescription(ProjectBundle.message("add.external.annotations.path.description"));
     }
