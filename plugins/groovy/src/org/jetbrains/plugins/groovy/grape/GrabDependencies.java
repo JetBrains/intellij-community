@@ -7,7 +7,6 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.process.DefaultJavaProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
@@ -108,30 +107,7 @@ public class GrabDependencies implements IntentionAction {
       return;
     }
 
-    final Set<GrAnnotation> grabs = new THashSet<GrAnnotation>();
-    final Set<GrAnnotation> excludes = new THashSet<GrAnnotation>();
-    final Set<GrAnnotation> resolvers = new THashSet<GrAnnotation>();
-    file.acceptChildren(new PsiRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        if (element instanceof GrAnnotation) {
-          GrAnnotation anno = (GrAnnotation)element;
-          String qname = anno.getQualifiedName();
-          if (GRAB_ANNO.equals(qname)) grabs.add(anno);
-          else if (GRAB_EXCLUDE_ANNO.equals(qname)) excludes.add(anno);
-          else if (GRAB_RESOLVER_ANNO.equals(qname)) resolvers.add(anno);
-        }
-        super.visitElement(element);
-      }
-    });
-
-    Function<GrAnnotation, String> mapper = new Function<GrAnnotation, String>() {
-      @Override
-      public String fun(GrAnnotation grAnnotation) {
-        return grAnnotation.getText();
-      }
-    };
-    String common = StringUtil.join(excludes, mapper, " ") + " " + StringUtil.join(resolvers, mapper, " ");
+    Map<String, String> queries = prepareQueries(file);
 
     final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
     assert sdk != null;
@@ -140,10 +116,7 @@ public class GrabDependencies implements IntentionAction {
     final String exePath = ((JavaSdkType)sdkType).getVMExecutablePath(sdk);
 
     final Map<String, GeneralCommandLine> lines = new HashMap<String, GeneralCommandLine>();
-    for (GrAnnotation grab : grabs) {
-      String grabText = grab.getText();
-      String query = grabText + " " + common;
-
+    for (String grabText : queries.keySet()) {
       final JavaParameters javaParameters = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
       //debug
       //javaParameters.getVMParametersList().add("-Xdebug"); javaParameters.getVMParametersList().add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
@@ -152,7 +125,7 @@ public class GrabDependencies implements IntentionAction {
 
       javaParameters.getProgramParametersList().add("--classpath");
       javaParameters.getProgramParametersList().add(PathUtil.getJarPathForClass(GrapeRunner.class));
-      javaParameters.getProgramParametersList().add(query);
+      javaParameters.getProgramParametersList().add(queries.get(grabText));
 
       lines.put(grabText, JdkUtil.setupJVMCommandLine(exePath, javaParameters, true));
     }
@@ -184,13 +157,46 @@ public class GrabDependencies implements IntentionAction {
           @Override
           public void run() {
             if (project.isDisposed()) return;
-            Notifications.Bus.notify(new Notification("Grape", title, finalMessages, NotificationType.INFORMATION), NotificationDisplayType.BALLOON, project);
+            Notifications.Bus.notify(new Notification("Grape", title, finalMessages, NotificationType.INFORMATION), project);
           }
         });
       }
     });
 
 
+  }
+
+  static Map<String, String> prepareQueries(PsiFile file) {
+    final Set<GrAnnotation> grabs = new THashSet<GrAnnotation>();
+    final Set<GrAnnotation> excludes = new THashSet<GrAnnotation>();
+    final Set<GrAnnotation> resolvers = new THashSet<GrAnnotation>();
+    file.acceptChildren(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        if (element instanceof GrAnnotation) {
+          GrAnnotation anno = (GrAnnotation)element;
+          String qname = anno.getQualifiedName();
+          if (GRAB_ANNO.equals(qname)) grabs.add(anno);
+          else if (GRAB_EXCLUDE_ANNO.equals(qname)) excludes.add(anno);
+          else if (GRAB_RESOLVER_ANNO.equals(qname)) resolvers.add(anno);
+        }
+        super.visitElement(element);
+      }
+    });
+
+    Function<GrAnnotation, String> mapper = new Function<GrAnnotation, String>() {
+      @Override
+      public String fun(GrAnnotation grAnnotation) {
+        return grAnnotation.getText();
+      }
+    };
+    String common = StringUtil.join(excludes, mapper, " ") + " " + StringUtil.join(resolvers, mapper, " ");
+    LinkedHashMap<String, String> result = new LinkedHashMap<String, String>();
+    for (GrAnnotation grab : grabs) {
+      String grabText = grab.getText();
+      result.put(grabText, (grabText + " " + common).trim());
+    }
+    return result;
   }
 
   public boolean startInWriteAction() {
