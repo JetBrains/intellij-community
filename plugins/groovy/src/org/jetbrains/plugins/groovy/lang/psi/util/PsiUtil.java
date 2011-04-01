@@ -217,7 +217,7 @@ public class PsiUtil {
                             stopAt);
   }
 
-  private static PsiType[] getArgumentTypes(GrNamedArgument[] namedArgs,
+  public static PsiType[] getArgumentTypes(GrNamedArgument[] namedArgs,
                                             GrExpression[] expressions,
                                             GrClosableBlock[] closures,
                                             boolean nullAsBottom, GrExpression stopAt) {

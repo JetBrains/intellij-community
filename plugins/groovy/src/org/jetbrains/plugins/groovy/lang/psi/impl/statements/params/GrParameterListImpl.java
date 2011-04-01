@@ -113,7 +113,7 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
     GrParameter[] params = getParameters();
 
     if (params.length == 0) {
-      add(element);
+      element = add(element);
     }
     else {
       element = super.addAfter(element, anchor);
@@ -135,7 +135,7 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
     GrParameter[] params = getParameters();
 
     if (params.length == 0) {
-      add(element);
+      element = add(element);
     }
     else {
       element = super.addBefore(element, anchor);

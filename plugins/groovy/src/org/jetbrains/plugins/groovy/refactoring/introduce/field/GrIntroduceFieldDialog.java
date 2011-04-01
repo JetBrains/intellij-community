@@ -232,6 +232,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   }
 
   private static boolean allOccurrencesInOneMethod(PsiElement[] occurrences, GrTypeDefinition clazz) {
+    if (occurrences.length == 0) return true;
     GrMethod method = GrIntroduceFieldHandler.getContainingMethod(occurrences[0], clazz);
     if (method == null) return false;
     for (int i = 1; i < occurrences.length; i++) {
@@ -254,7 +255,14 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   }
 
   private void createUIComponents() {
-    String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myContext.expression, new GroovyFieldValidator(myContext), true);
+    String[] possibleNames;
+    final GroovyFieldValidator validator = new GroovyFieldValidator(myContext);
+    if (myContext.expression != null) {
+      possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myContext.expression, validator, true);
+    }
+    else {
+      possibleNames = GroovyNameSuggestionUtil.suggestVariableNameByType(myContext.var.getType(), validator);
+    }
     if (myContext.var != null) {
       String[] arr = new String[possibleNames.length + 1];
       arr[0] = myContext.var.getName();

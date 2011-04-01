@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -93,8 +94,13 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
   }
 
   private void initReplaceFieldsWithGetters(JavaRefactoringSettings settings) {
-    final GrExpression expression = myContext.expression;
-    GroovyIntroduceParameterUtil.findUsedFieldsWithGetters(expression, myContext.methodToReplaceIn.getContainingClass());
+    if (myContext.expression == null) {
+      myGetterPanel.setVisible(false);
+      return;
+    }
+    final PsiField[] usedFields =
+      GroovyIntroduceParameterUtil.findUsedFieldsWithGetters(myContext.expression, myContext.methodToReplaceIn.getContainingClass());
+    myGetterPanel.setVisible(usedFields.length > 0);
     switch (settings.INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS) {
       case REPLACE_FIELDS_WITH_GETTERS_ALL:
         myReplaceAllFieldsRadioButton.setSelected(true);
@@ -182,7 +188,14 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
   private void createUIComponents() {
     myTypeComboBox = new GrTypeComboBox(myContext.var != null ? myContext.var.getDeclaredType() : myContext.expression.getType(), true);
 
-    String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myContext.expression, new GroovyFieldValidator(myContext), true);
+    String[] possibleNames;
+    final GroovyFieldValidator validator = new GroovyFieldValidator(myContext);
+    if (myContext.expression != null) {
+      possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myContext.expression, validator, true);
+    }
+    else {
+      possibleNames = GroovyNameSuggestionUtil.suggestVariableNameByType(myContext.var.getType(), validator);
+    }
     if (myContext.var != null) {
       String[] arr = new String[possibleNames.length + 1];
       arr[0] = myContext.var.getName();

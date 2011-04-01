@@ -65,6 +65,7 @@ public class GroovyNameSuggestionUtil {
   }
 
   public static String[] suggestVariableNameByType(PsiType type, NameValidator validator) {
+    if (type == null) return ArrayUtil.EMPTY_STRING_ARRAY;
     Set<String> possibleNames = new LinkedHashSet<String>();
     generateVariableNameByTypeInner(type, possibleNames, validator);
     return ArrayUtil.toStringArray(possibleNames);

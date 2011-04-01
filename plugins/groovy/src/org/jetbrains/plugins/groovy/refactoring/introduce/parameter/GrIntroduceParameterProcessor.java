@@ -300,6 +300,8 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
       IntroduceParameterUtil.changeMethodSignatureAndResolveFieldConflicts(new UsageInfo(myContext.methodToSearchFor), usages, this);
     }
 
+    if (myContext.var != null) myContext.var.delete();
+
     // Replacing expression occurences
     for (UsageInfo usage : usages) {
       if (usage instanceof ChangedMethodCallInfo) {
