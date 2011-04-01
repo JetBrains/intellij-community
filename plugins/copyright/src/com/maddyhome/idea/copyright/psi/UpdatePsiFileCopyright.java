@@ -232,7 +232,16 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
           }
         }
 
-        addAction(new CommentAction(point == null ? 0 : point.getTextRange().getStartOffset(), prefix, suffix));
+        final int pos;
+        if (point == null) {
+          pos = 0;
+        }
+        else {
+          final TextRange textRange = point.getTextRange();
+          assert textRange != null : point.getClass();
+          pos = textRange.getStartOffset();
+        }
+        addAction(new CommentAction(pos, prefix, suffix));
       }
     }
     catch (Exception e) {
