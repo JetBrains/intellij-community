@@ -199,6 +199,9 @@ abstract class FoldRegionsTree {
 
     final int[] starts = myCachedStartOffsets;
     final int[] ends = myCachedEndOffsets;
+    if (starts == null || ends == null) {
+      return null;
+    }
 
     int start = 0;
     int end = ends.length - 1;
