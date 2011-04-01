@@ -450,6 +450,7 @@
     <fileTypeFactory implementation="com.jetbrains.rest.RestFileTypeFactory"/>
     <lang.syntaxHighlighterFactory key="ReST"
                                    implementationClass="com.jetbrains.rest.RestHighlighterFactory"/>
+    <colorSettingsPage implementation="com.jetbrains.rest.RestColorsPage"/>
   </extensions>
 
   <extensionPoints>
