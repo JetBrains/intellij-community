@@ -22,7 +22,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
-import com.intellij.util.text.StringTokenizer;
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Compiler;
@@ -317,51 +316,38 @@ public class NameUtil {
     return answer;
   }
 
-  private enum WordState { NO_WORD, PREV_UC, WORD }
-
   private static boolean isWordStart(char p) {
     return Character.isUpperCase(p) || Character.isDigit(p);
   }
 
-  private static void addAllWords(String text, List<String> result) {
-    int start = 0;
-    WordState state = WordState.NO_WORD;
-    for (int i = 0; i < text.length(); i++) {
-      char c = text.charAt(i);
-      switch (state) {
-        case NO_WORD:
-          if (!isWordStart(c)) {
-            state = WordState.WORD;
-          }
-          else {
-            state = WordState.PREV_UC;
-          }
-          break;
-        case PREV_UC:
-          if (!isWordStart(c)) {
-            start = startNewWord(text, result, start, i - 1);
-            state = WordState.WORD;
-          }
-          else {
-            state = WordState.PREV_UC;
-          }
-          break;
-        case WORD:
-          if (isWordStart(c)) {
-            start = startNewWord(text, result, start, i);
-            state = WordState.PREV_UC;
-          }
-          break;
-      }
+  private static int nextWord(String text, int start) {
+    if (!Character.isLetterOrDigit(text.charAt(start))) {
+      return start + 1;
     }
-    startNewWord(text, result, start, text.length());
+
+    int i = start;
+    while (i < text.length() && isWordStart(text.charAt(i))) {
+      i++;
+    }
+    if (i > start + 1) {
+      if (i == text.length() || !Character.isLetterOrDigit(text.charAt(i))) {
+        return i;
+      }
+      return i - 1;
+    }
+    while (i < text.length() && !isWordStart(text.charAt(i)) && !!Character.isLetterOrDigit(text.charAt(i))) {
+      i++;
+    }
+    return i;
   }
 
-  private static int startNewWord(String word, List<String> result, int start, int end) {
-    if (end > start) {
-      result.add(word.substring(start, end));
+  private static void addAllWords(String text, List<String> result) {
+    int start = 0;
+    while (start < text.length()) {
+      int next = nextWord(text, start);
+      result.add(text.substring(start, next));
+      start = next;
     }
-    return end;
   }
 
   public interface Matcher {
@@ -482,42 +468,40 @@ public class NameUtil {
     }
 
     @Nullable
-    private FList<TextRange> matchName(int patternIndex, List<String> words, int wordIndex, int insideWord, int wordStart) {
+    private FList<TextRange> matchName(String name, int patternIndex, int nameIndex) {
       if (patternIndex == myPattern.length) {
         return FList.emptyList();
       }
-      if (wordIndex == words.size()) {
+      if (nameIndex == name.length()) {
         return null;
       }
-
-      String word = words.get(wordIndex);
 
       if ('*' == myPattern[patternIndex]) {
-        return handleAsterisk(patternIndex, words, wordIndex, insideWord, wordStart);
+        return handleAsterisk(name, patternIndex, nameIndex);
       }
 
-      if (patternIndex == 0 && myOptions != MatchingCaseSensitivity.NONE && word.charAt(insideWord) != myPattern[0]) {
+      if (patternIndex == 0 && myOptions != MatchingCaseSensitivity.NONE && name.charAt(nameIndex) != myPattern[0]) {
         return null;
       }
 
-      if (isWordSeparator(word.charAt(insideWord))) {
-        assert word.length() == 1 : "'" + word + "'";
+      int nextStart = NameUtil.nextWord(name, nameIndex);
+      if (isWordSeparator(name.charAt(nameIndex))) {
+        assert nextStart - nameIndex == 1 : "'" + name + "'" + nameIndex + " " + nextStart;
         char p = myPattern[patternIndex];
-        int nextStart = wordStart + word.length();
         if (isWordSeparator(p)) {
           if (myOptions != MatchingCaseSensitivity.NONE &&
-              wordIndex == 0 && words.size() > 1 && patternIndex + 1 < myPattern.length &&
-              isWordSeparator(words.get(1).charAt(0)) && !isWordSeparator(myPattern[patternIndex + 1])) {
+              nameIndex == 0 && name.length() > 1 && patternIndex + 1 < myPattern.length &&
+              isWordSeparator(name.charAt(1)) && !isWordSeparator(myPattern[patternIndex + 1])) {
             return null;
           }
 
-          return matchName(patternIndex + 1, words, wordIndex + 1, 0, nextStart);
+          return matchName(name, patternIndex + 1, nextStart);
         }
 
-        return matchName(patternIndex, words, wordIndex + 1, 0, nextStart);
+        return matchName(name, patternIndex, nextStart);
       }
 
-      if (StringUtil.toLowerCase(word.charAt(insideWord)) != StringUtil.toLowerCase(myPattern[patternIndex])) {
+      if (StringUtil.toLowerCase(name.charAt(nameIndex)) != StringUtil.toLowerCase(myPattern[patternIndex])) {
         return null;
       }
 
@@ -526,9 +510,9 @@ public class NameUtil {
       int i = 1;
       while (true) {
         if (patternIndex + i == myPattern.length) {
-          return FList.<TextRange>emptyList().prepend(TextRange.from(wordStart + insideWord, i));
+          return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
         }
-        if (i == word.length() - insideWord) {
+        if (i + nameIndex == nextStart) {
           break;
         }
         char p = myPattern[patternIndex + i];
@@ -538,7 +522,7 @@ public class NameUtil {
           uppers = false;
         }
 
-        char w = word.charAt(insideWord + i);
+        char w = name.charAt(i + nameIndex);
         if (myOptions != MatchingCaseSensitivity.ALL) {
           w = StringUtil.toLowerCase(w);
         }
@@ -548,19 +532,18 @@ public class NameUtil {
         i++;
       }
       // there's more in the pattern, but no more words
-      if (wordIndex == words.size() - 1) {
-        if (patternIndex + i == myPattern.length - 1 && ' ' == myPattern[patternIndex + i] && i == word.length() - insideWord) {
-          return FList.<TextRange>emptyList().prepend(TextRange.from(wordStart + insideWord, i));
+      if (nextStart == name.length()) {
+        if (patternIndex + i == myPattern.length - 1 && ' ' == myPattern[patternIndex + i] && i + nameIndex == name.length()) {
+          return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
         }
 
         return null;
       }
 
-      int nextWord = wordStart + word.length();
       while (i > 0) {
-        FList<TextRange> ranges = matchName(patternIndex + i, words, wordIndex + 1, 0, nextWord);
+        FList<TextRange> ranges = matchName(name, patternIndex + i, nextStart);
         if (ranges != null) {
-          return ranges.prepend(TextRange.from(wordStart + insideWord, i));
+          return ranges.prepend(TextRange.from(nameIndex, i));
         }
         i--;
       }
@@ -568,7 +551,7 @@ public class NameUtil {
     }
 
     @Nullable
-    private FList<TextRange> handleAsterisk(int patternIndex, List<String> words, int wordIndex, int insideWord, int wordStart) {
+    private FList<TextRange> handleAsterisk(String name, int patternIndex, int nameIndex) {
       while ('*' == myPattern[patternIndex]) {
         patternIndex++;
         if (patternIndex == myPattern.length) {
@@ -578,22 +561,17 @@ public class NameUtil {
 
       String nextChar = String.valueOf(myPattern[patternIndex]);
 
-      int fromIndex = insideWord;
-      for (int i = wordIndex; i < words.size(); i++) {
-        String s = words.get(i);
-        while (true) {
-          int next = StringUtil.indexOfIgnoreCase(s, nextChar, fromIndex);
-          if (next < 0) {
-            break;
-          }
-          FList<TextRange> ranges = matchName(patternIndex, words, i, next, wordStart);
-          if (ranges != null) {
-            return ranges;
-          }
-          fromIndex = next + 1;
+      int fromIndex = nameIndex;
+      while (true) {
+        int next = StringUtil.indexOfIgnoreCase(name, nextChar, fromIndex);
+        if (next < 0) {
+          break;
         }
-        fromIndex = 0;
-        wordStart += s.length();
+        FList<TextRange> ranges = matchName(name, patternIndex, next);
+        if (ranges != null) {
+          return ranges;
+        }
+        fromIndex = next + 1;
       }
       return null;
     }
@@ -609,18 +587,11 @@ public class NameUtil {
 
     @Nullable
     public Iterable<TextRange> matchingFragments(String name) {
-      StringTokenizer tokenizer = new StringTokenizer(name, " -_.:/", true);
-      List<String> words = new ArrayList<String>();
-      while (tokenizer.hasMoreTokens()) {
-        String token = tokenizer.nextToken();
-        addAllWords(token, words);
-      }
-
-      if (words.isEmpty()) {
+      if (name.isEmpty()) {
         return myPattern.length == 0 ? Collections.<TextRange>emptyList() : null;
       }
 
-      return matchName(0, words, 0, 0, 0);
+      return matchName(name, 0, 0);
     }
   }
 }
