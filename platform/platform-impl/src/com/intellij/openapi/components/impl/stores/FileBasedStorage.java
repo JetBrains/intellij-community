@@ -166,6 +166,10 @@ public class FileBasedStorage extends XmlElementStorage {
 
     protected void doSave() throws StateStorageException {
       if (!myBlockSavingTheContent) {
+        if (ApplicationManager.getApplication().isUnitTestMode() && myFile != null && myFile.getPath().startsWith("$")) {
+          throw new StateStorageException("It seems like some macros were not expanded for path: " + myFile.getPath());
+        }
+
         StorageUtil.save(myFile, getDocumentToSave(), this);
       }
     }
