@@ -1,6 +1,6 @@
 package com.jetbrains.python.codeInsight;
 
-import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandlerBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -19,7 +19,7 @@ import java.util.List;
  * User: dcheryasov
  * Date: Nov 5, 2009 4:58:54 AM
  */
-public class PyBreakContinueGotoProvider implements GotoDeclarationHandler {
+public class PyBreakContinueGotoProvider extends GotoDeclarationHandlerBase {
 
   public PsiElement getGotoDeclarationTarget(PsiElement source) {
     if (source != null && source.getLanguage() instanceof PythonLanguage) {
