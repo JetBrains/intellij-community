@@ -38,6 +38,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -58,6 +59,7 @@ public class EditorOptionsPanel {
   private JCheckBox myCbCaretInsideTabs;
 
   private JTextField myRecentFilesLimitField;
+  private JTextField myCommandsHistoryLimitField;
 
   private JCheckBox myCbHighlightScope;
 
@@ -81,6 +83,7 @@ public class EditorOptionsPanel {
   private JCheckBox myCbUseCustomSoftWrapIndent;
   private JTextField myCustomSoftWrapIndent;
   private JCheckBox myCbShowAllSoftWraps;
+
   private final ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
   private final MyConfigurable myConfigurable;
 
@@ -164,6 +167,7 @@ public class EditorOptionsPanel {
 
 
     myRecentFilesLimitField.setText(Integer.toString(uiSettings.RECENT_FILES_LIMIT));
+    myCommandsHistoryLimitField.setText(Integer.toString(uiSettings.CONSOLE_COMMAND_HISTORY_LIMIT));
 
     myCbRenameLocalVariablesInplace.setSelected(editorSettings.isVariableInplaceRenameEnabled());
 
@@ -256,6 +260,8 @@ public class EditorOptionsPanel {
     if(uiSettingsChanged){
       uiSettings.fireUISettingsChanged();
     }
+    uiSettings.CONSOLE_COMMAND_HISTORY_LIMIT = StringUtil.parseInt(myCommandsHistoryLimitField.getText(), uiSettings.CONSOLE_COMMAND_HISTORY_LIMIT);
+
     myErrorHighlightingPanel.apply();
     restartDaemons();
   }
@@ -343,6 +349,7 @@ public class EditorOptionsPanel {
 
 
     isModified |= isModified(myRecentFilesLimitField, UISettings.getInstance().RECENT_FILES_LIMIT);
+    isModified |= isModified(myCommandsHistoryLimitField, UISettings.getInstance().CONSOLE_COMMAND_HISTORY_LIMIT);
     isModified |= isModified(myCbRenameLocalVariablesInplace, editorSettings.isVariableInplaceRenameEnabled());
 
     isModified |= isModified(myShowReformatCodeDialogCheckBox, editorSettings.getOptions().SHOW_REFORMAT_DIALOG);

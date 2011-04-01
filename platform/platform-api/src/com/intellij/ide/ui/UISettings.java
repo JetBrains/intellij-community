@@ -57,6 +57,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public int FONT_SIZE;
 
   public int RECENT_FILES_LIMIT = 15;
+  public int CONSOLE_COMMAND_HISTORY_LIMIT = 20;
   public int EDITOR_TAB_LIMIT = 10;
   public boolean ANIMATE_WINDOWS = true;
   public int ANIMATION_SPEED = 2000; // Pixels per second

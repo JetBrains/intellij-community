@@ -7,7 +7,7 @@
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="b689b" binding="myBehaviourPanel" layout-manager="GridLayoutManager" row-count="7" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="b689b" binding="myBehaviourPanel" layout-manager="GridLayoutManager" row-count="8" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <tabbedpane title-resource-bundle="messages/ApplicationBundle" title-key="tab.editor.settings.behavior"/>
@@ -17,7 +17,7 @@
         <children>
           <vspacer id="b6665">
             <constraints>
-              <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
+              <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
                 <preferred-size width="334" height="14"/>
               </grid>
             </constraints>
@@ -253,10 +253,10 @@
               </component>
             </children>
           </grid>
-          <grid id="7fdc1" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="7fdc1" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+              <grid row="2" column="0" row-span="2" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
                 <preferred-size width="334" height="75"/>
               </grid>
             </constraints>
@@ -293,6 +293,16 @@
                   <text resource-bundle="messages/ApplicationBundle" key="editbox.recent.files.limit"/>
                 </properties>
               </component>
+              <component id="f8fa5" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="1" use-parent-layout="false">
+                    <preferred-size width="247" height="14"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text resource-bundle="messages/ApplicationBundle" key="editbox.console.history.limit"/>
+                </properties>
+              </component>
               <component id="695ab" class="javax.swing.JTextField" binding="myRecentFilesLimitField">
                 <constraints>
                   <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
@@ -303,12 +313,22 @@
                   <text value="10"/>
                 </properties>
               </component>
+              <component id="8f324" class="javax.swing.JTextField" binding="myCommandsHistoryLimitField">
+                <constraints>
+                  <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                    <preferred-size width="35" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text value="20"/>
+                </properties>
+              </component>
             </children>
           </grid>
           <grid id="7f3f5" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="10" bottom="0" right="0"/>
             <constraints>
-              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
+              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
                 <preferred-size width="334" height="80"/>
               </grid>
             </constraints>
@@ -350,20 +370,10 @@
               </vspacer>
             </children>
           </grid>
-          <component id="c0a29" class="javax.swing.JCheckBox" binding="myCbRenameLocalVariablesInplace">
-            <constraints>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
-                <preferred-size width="248" height="22"/>
-              </grid>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/ApplicationBundle" key="checkbox.rename.local.variables.inplace"/>
-            </properties>
-          </component>
           <grid id="358be" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none" title="Formatting"/>
@@ -394,12 +404,22 @@
           <grid id="1ecbd" binding="myHighlightSettingsPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <grid row="4" column="1" row-span="2" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <grid row="5" column="1" row-span="2" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children/>
           </grid>
+          <component id="c0a29" class="javax.swing.JCheckBox" binding="myCbRenameLocalVariablesInplace">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
+                <preferred-size width="248" height="22"/>
+              </grid>
+            </constraints>
+            <properties>
+              <text resource-bundle="messages/ApplicationBundle" key="checkbox.rename.local.variables.inplace"/>
+            </properties>
+          </component>
         </children>
       </grid>
     </children>
