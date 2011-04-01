@@ -27,6 +27,9 @@ public class CreateClassQuickFix implements LocalQuickFix {
 
   @NotNull
   public String getName() {
+    if (myAnchor instanceof PyFile) {
+      return "Create class '" + myClassName + "' in module " + ((PyFile)myAnchor).getName();
+    }
     return "Create class '" + myClassName + "'";
   }
 
@@ -37,12 +40,19 @@ public class CreateClassQuickFix implements LocalQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement anchor = myAnchor;
-    while(!(anchor.getParent() instanceof PyFile)) {
-      anchor = anchor.getParent();
+    if (!(anchor instanceof PyFile)) {
+      while(!(anchor.getParent() instanceof PyFile)) {
+        anchor = anchor.getParent();
+      }
     }
     PyClass pyClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class,
                                                                                            "class " + myClassName + "(object):\n    pass");
-    pyClass = (PyClass) anchor.getParent().addBefore(pyClass, anchor);
+    if (anchor instanceof PyFile) {
+      pyClass = (PyClass) anchor.add(pyClass);
+    }
+    else {
+      pyClass = (PyClass) anchor.getParent().addBefore(pyClass, anchor);
+    }
     pyClass = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(pyClass);
     TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(pyClass);
     builder.replaceElement(pyClass.getSuperClassExpressions() [0], "object");

@@ -790,8 +790,8 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  public static PyQualifiedName findShortestImportableQName(PsiFileSystemItem fsItem) {
-    VirtualFile vFile = fsItem.getVirtualFile();
+  public static PyQualifiedName findShortestImportableQName(@Nullable PsiFileSystemItem fsItem) {
+    VirtualFile vFile = fsItem != null ? fsItem.getVirtualFile() : null;
     return vFile != null ? findShortestImportableQName(fsItem, vFile) : null;
   }
 
@@ -825,6 +825,10 @@ public class ResolveImportUtil {
     if (srcfile == null) {
       return null;
     }
+    VirtualFile virtualFile = srcfile.getVirtualFile();
+    if (virtualFile == null) {
+      return null;
+    }
     if (srcfile instanceof PsiFile && symbol instanceof PsiNamedElement && !(symbol instanceof PsiFileSystemItem)) {
       PsiElement toplevel = symbol;
       if (symbol instanceof PyFunction) {
@@ -834,18 +838,18 @@ public class ResolveImportUtil {
         }
       }
       PsiDirectory dir = ((PsiFile) srcfile).getContainingDirectory();
-      if (dir != null) {
+      while (dir != null) {
         PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
-        if (initPy instanceof PyFile && toplevel.equals(((PyFile)initPy).findExportedName(((PsiNamedElement)toplevel).getName()))) {
-          return findShortestImportableQName(foothold, dir.getVirtualFile());
+        if (initPy == null) {
+          break;
         }
+        if (initPy instanceof PyFile && toplevel.equals(((PyFile)initPy).findExportedName(((PsiNamedElement)toplevel).getName()))) {
+          virtualFile = dir.getVirtualFile();
+        }
+        dir = dir.getParentDirectory();
       }
     }
-    VirtualFile virtualFile = srcfile.getVirtualFile();
-    if (virtualFile != null) {
-      return findShortestImportableQName(foothold, virtualFile);
-    }
-    return null;
+    return findShortestImportableQName(foothold, virtualFile);
   }
 
   public static class SdkRootVisitingPolicy extends RootPolicy<PsiElement> {

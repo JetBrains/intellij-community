@@ -1,0 +1,1 @@
+my_set = <warning descr="Function call can be replaced with set literal">set("strin<caret>g")</warning>

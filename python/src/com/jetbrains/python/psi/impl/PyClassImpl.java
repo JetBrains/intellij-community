@@ -8,6 +8,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -18,6 +20,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import com.jetbrains.python.psi.*;
@@ -899,6 +902,16 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (myInstanceAttributes != null) {
       myInstanceAttributes = null;
     }
+  }
+
+  @NotNull
+  @Override
+  public SearchScope getUseScope() {
+    final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(this, ScopeOwner.class);
+    if (scopeOwner instanceof PyFunction) {
+      return new LocalSearchScope(scopeOwner);
+    }
+    return super.getUseScope();
   }
 
   private static class AncestorsIterable implements Iterable<PyClassRef> {

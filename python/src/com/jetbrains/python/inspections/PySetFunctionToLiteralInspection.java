@@ -46,12 +46,28 @@ public class PySetFunctionToLiteralInspection extends PyInspection {
         if (callee != null) {
           if (isBuiltinSet(callee)) {
             PyExpression[] arguments = node.getArguments();
-            if (arguments.length == 0 ||(arguments.length == 1) &&
-                                        (arguments[0] instanceof PySequenceExpression ||
-                                        (arguments[0] instanceof PyParenthesizedExpression &&
-                                        ((PyParenthesizedExpression)arguments[0]).getContainedExpression() instanceof PyTupleExpression)))
-                registerProblem(node, "Function call can be replaced with set literal",
-                                                 new ReplaceFunctionWithSetLiteralQuickFix());
+            if (arguments.length == 1) {
+              PyExpression argument= arguments[0];
+              String string = "";
+              PyElement[] elements = {};
+              if (argument instanceof PyStringLiteralExpression) {
+                string = ((PyStringLiteralExpression)argument).getStringValue();
+              }
+              if ((argument instanceof PySequenceExpression || (argument instanceof PyParenthesizedExpression &&
+                            ((PyParenthesizedExpression)argument).getContainedExpression() instanceof PyTupleExpression))) {
+
+                if (argument instanceof PySequenceExpression)
+                  elements = ((PySequenceExpression)argument).getElements();
+                if (argument instanceof PyParenthesizedExpression) {
+                  PyExpression tuple = ((PyParenthesizedExpression)argument).getContainedExpression();
+                  if (tuple instanceof PyTupleExpression)
+                    elements = ((PyTupleExpression)(tuple)).getElements();
+                }
+              }
+              if (elements.length != 0 || !string.isEmpty())
+                  registerProblem(node, "Function call can be replaced with set literal",
+                                                   new ReplaceFunctionWithSetLiteralQuickFix(elements, string));
+            }
           }
         }
       }

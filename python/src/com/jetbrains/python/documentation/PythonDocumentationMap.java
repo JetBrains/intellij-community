@@ -1,6 +1,7 @@
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -10,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -85,6 +87,17 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   public static class State {
     private List<Entry> myEntries = new ArrayList<Entry>();
 
+    public State() {
+      addEntry("compiler", "http://docs.python.org/{python.version}/library/compiler.html#{element.qname}");
+      addEntry("multiprocessing", "http://docs.python.org/{python.version}/library/multiprocessing.html#{element.qname}");
+      addEntry("PyQt4", "http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/{class.name.lower}.html#{function.name}");
+      addEntry("PySide", "http://www.pyside.org/docs/pyside/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}");
+      addEntry("gtk", "http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");
+      addEntry("wx", "http://www.wxpython.org/docs/api/{module.name}.{class.name}-class.html#{function.name}");
+      addEntry("numpy", "http://docs.scipy.org/doc/numpy/reference/{}generated/{module.name}.{element.name}.html");
+      addEntry("scipy", "http://docs.scipy.org/doc/scipy/reference/{}generated/{module.name}.{element.name}.html");
+    }
+
     public List<Entry> getEntries() {
       return myEntries;
     }
@@ -92,21 +105,27 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     public void setEntries(List<Entry> entries) {
       myEntries = entries;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      State state = (State)o;
+      return Sets.newHashSet(myEntries).equals(Sets.newHashSet(state.getEntries()));
+    }
+
+    @Override
+    public int hashCode() {
+      return myEntries != null ? myEntries.hashCode() : 0;
+    }
+
+    private void addEntry(String qName, String pattern) {
+      myEntries.add(new Entry(qName, pattern));
+    }
   }
 
   private State myState = new State();
-
-  public PythonDocumentationMap() {
-    addEntry("compiler", "http://docs.python.org/{python.version}/library/compiler.html#{element.qname}");
-    addEntry("multiprocessing", "http://docs.python.org/{python.version}/library/multiprocessing.html#{element.qname}");
-    addEntry("PyQt4", "http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/{class.name.lower}.html#{function.name}");
-    addEntry("PySide", "http://www.pyside.org/docs/pyside/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}");
-    addEntry("gtk", "http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");
-  }
-
-  private void addEntry(String qName, String pattern) {
-    myState.myEntries.add(new Entry(qName, pattern));
-  }
 
   @Override
   public State getState() {
@@ -137,8 +156,24 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   }
 
   @Nullable
-  private static String transformPattern(String urlPattern, PyQualifiedName moduleQName, @Nullable PsiNamedElement element, String pyVersion) {
+  public String rootUrlFor(PyQualifiedName moduleQName) {
+    for (Entry entry : myState.myEntries) {
+      if (moduleQName.matchesPrefix(PyQualifiedName.fromDottedString(entry.myPrefix))) {
+        return rootForPattern(entry.myUrlPattern);
+      }
+    }
+    return null;
+  }
+
+  private static String rootForPattern(String urlPattern) {
+    int pos = urlPattern.indexOf('{');
+    return pos >= 0 ? urlPattern.substring(0, pos) : urlPattern;
+  }
+
+  @Nullable
+  private static String transformPattern(@NotNull String urlPattern, PyQualifiedName moduleQName, @Nullable PsiNamedElement element, String pyVersion) {
     Map<String, String> macros = new HashMap<String, String>();
+    macros.put("element.name", element == null ? null : element.getName());
     PyClass pyClass = element == null ? null : PsiTreeUtil.getParentOfType(element, PyClass.class, false);
     macros.put("class.name", pyClass == null ? null : pyClass.getName());
     if (element != null) {
@@ -159,10 +194,13 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   }
 
   @Nullable
-  private static String transformPattern(String urlPattern, Map<String, String> macroValues) {
+  private static String transformPattern(@NotNull String urlPattern, Map<String, String> macroValues) {
     for (Map.Entry<String, String> entry : macroValues.entrySet()) {
-      if (entry.getValue() == null && urlPattern.contains("{" + entry.getKey())) {
-        return null;
+      if (entry.getValue() == null) {
+        if (urlPattern.contains("{" + entry.getKey())) {
+          return null;
+        }
+        continue;
       }
       urlPattern = urlPattern
         .replace("{" + entry.getKey() + "}", entry.getValue())
@@ -171,6 +209,6 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
         .replace("{" + entry.getKey() + ".dashes}", entry.getValue().replace("_", "-"));
 
     }
-    return urlPattern;
+    return urlPattern.replace("{}", "");
   }
 }

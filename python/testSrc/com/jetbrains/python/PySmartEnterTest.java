@@ -11,17 +11,14 @@ import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * Author: Alexey.Ivanov
- * Date:   22.04.2010
- * Time:   17:00:16
+ * @author Alexey.Ivanov
  */
 public class PySmartEnterTest extends PyLightFixtureTestCase {
   protected static List<SmartEnterProcessor> getSmartProcessors(Language language) {
     return SmartEnterProcessors.INSTANCE.forKey(language);
   }
 
-  public void doTest() throws Exception {
+  public void doTest() {
     myFixture.configureByFile("codeInsight/smartEnter/" + getTestName(true) + ".py");
     final List<SmartEnterProcessor> processors = getSmartProcessors(PythonLanguage.getInstance());
     new WriteCommandAction(myFixture.getProject()) {
@@ -36,67 +33,71 @@ public class PySmartEnterTest extends PyLightFixtureTestCase {
     myFixture.checkResultByFile("codeInsight/smartEnter/" + getTestName(true) + "_after.py", true);
   }
 
-  public void testIf() throws Exception {
+  public void testIf() {
     doTest();
   }
 
-  public void testWhile() throws Exception {
+  public void testWhile() {
     doTest();
   }
 
-  public void testElif() throws Exception {
+  public void testElif() {
     doTest();
   }
 
-  public void testForFirst() throws Exception {
+  public void testForFirst() {
     doTest();
   }
 
-  public void testForSecond() throws Exception {
+  public void testForSecond() {
     doTest();
   }
 
-  public void testTry() throws Exception {
+  public void testTry() {
     doTest();
   }
 
-  public void testString() throws Exception {
+  public void testString() {
     doTest();
   }
 
-  public void testDocstring() throws Exception {
+  public void testDocstring() {
     doTest();
   }
 
-  public void testDict() throws Exception {
+  public void testDict() {
     doTest();
   }
 
-  public void testParenthesized() throws Exception {
+  public void testParenthesized() {
     doTest();
   }
 
-  public void testArgumentsFirst() throws Exception {
+  public void testArgumentsFirst() {
     doTest();
   }
 
-  public void testArgumentsSecond() throws Exception {
+  public void testArgumentsSecond() {
     doTest();
   }
 
-  public void testFunc() throws Exception {
+  public void testFunc() {
     doTest();
   }
 
-  public void testClass() throws Exception {
+  public void testClass() {
     doTest();
   }
 
-  public void testComment() throws Exception {
+  public void testComment() {
     doTest();
   }
 
-  public void testPy891() throws Exception {
+  public void testPy891() {
+    doTest();
+  }
+
+  public void testPy3209() {
     doTest();
   }
 }

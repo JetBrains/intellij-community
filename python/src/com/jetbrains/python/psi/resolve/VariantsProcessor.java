@@ -4,11 +4,13 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Function;
 import com.intellij.util.Icons;
 import com.jetbrains.python.codeInsight.PyClassInsertHandler;
 import com.jetbrains.python.codeInsight.PyFunctionInsertHandler;
@@ -60,7 +62,14 @@ public class VariantsProcessor implements PsiScopeProcessor {
       if (item.getObject() instanceof PyFunction && ((PyFunction) item.getObject()).getProperty() == null &&
           !isSingleArgDecoratorCall(myContext, (PyFunction)item.getObject())) {
         item = item.setInsertHandler(PyFunctionInsertHandler.INSTANCE);
-        item = item.setTailText(((PyFunction) item.getObject()).getParameterList().getText());
+        final PyParameterList parameterList = ((PyFunction)item.getObject()).getParameterList();
+        final String params = StringUtil.join(parameterList.getParameters(), new Function<PyParameter, String>() {
+            @Override
+            public String fun(PyParameter pyParameter) {
+              return pyParameter.getText();
+            }
+          }, ", ");
+        item = item.setTailText("(" + params + ")");
       }
       else if (item.getObject() instanceof PyClass) {
         item = item.setInsertHandler(PyClassInsertHandler.INSTANCE);
