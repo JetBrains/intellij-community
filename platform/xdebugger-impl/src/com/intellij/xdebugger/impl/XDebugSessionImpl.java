@@ -34,6 +34,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -332,30 +333,33 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public void stepOver(final boolean ignoreBreakpoints) {
+    if (!myDebugProcess.checkCanPerformCommands()) return;
+
     if (ignoreBreakpoints) {
       disableBreakpoints();
-    } else {
-      enableBreakpoints();
     }
-    autoResume();
+    doResume();
     myDebugProcess.startStepOver();
   }
 
   public void stepInto() {
-    enableBreakpoints();
-    autoResume();
+    if (!myDebugProcess.checkCanPerformCommands()) return;
+
+    doResume();
     myDebugProcess.startStepInto();
   }
 
   public void stepOut() {
-    enableBreakpoints();
-    autoResume();
+    if (!myDebugProcess.checkCanPerformCommands()) return;
+
+    doResume();
     myDebugProcess.startStepOut();
   }
 
   public <V extends XSmartStepIntoVariant> void smartStepInto(XSmartStepIntoHandler<V> handler, V variant) {
-    enableBreakpoints();
-    autoResume();
+    if (!myDebugProcess.checkCanPerformCommands()) return;
+
+    doResume();
     handler.startStepInto(variant);
   }
 
@@ -364,16 +368,18 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public void runToPosition(@NotNull final XSourcePosition position, final boolean ignoreBreakpoints) {
+    if (!myDebugProcess.checkCanPerformCommands()) return;
+
     if (ignoreBreakpoints) {
       disableBreakpoints();
-    } else {
-      enableBreakpoints();
     }
-    autoResume();
+    doResume();
     myDebugProcess.runToPosition(position);
   }
 
   public void pause() {
+    if (!myDebugProcess.checkCanPerformCommands()) return;
+
     myDebugProcess.startPausing();
   }
 
@@ -389,13 +395,10 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public void resume() {
-    enableBreakpoints();
-    autoResume();
-    myDebugProcess.resume();
-  }
+    if (!myDebugProcess.checkCanPerformCommands()) return;
 
-  private void autoResume() {
-    if (myDebugProcess.isAutoResume()) doResume();
+    doResume();
+    myDebugProcess.resume();
   }
 
   private void doResume() {
