@@ -59,17 +59,15 @@ public class AppMain {
       } else {
         libPath = binPath + "libbreakgen.jnilib";
       }
-
     }
+
     try {
       if (libPath != null) {
         System.load(libPath);
       }
     }
     catch (UnsatisfiedLinkError e) {
-      if (new File(libPath).exists() && osName.startsWith("mac")) {
-        e.printStackTrace();
-      }
+      //Do nothing, unknown os or some other error => no ctrl-break is available
     }
   }
 
