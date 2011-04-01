@@ -21,6 +21,7 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ICallback;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.Scanner;
 
@@ -89,7 +90,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
 
     // multiline strings handling
     if (myInMultilineStringState != null) {
-      if (line.contains(myInMultilineStringState)) {
+      if (isMultilineStarts(line, DOUBLE_QUOTE_MULTILINE)) {
         myInMultilineStringState = null;
         // restore language
         console.setLanguage(PythonLanguage.getInstance());
@@ -100,10 +101,10 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
       }
     }
     else {
-      if (line.contains(DOUBLE_QUOTE_MULTILINE)) {
+      if (isMultilineStarts(line, DOUBLE_QUOTE_MULTILINE)) {
         myInMultilineStringState = DOUBLE_QUOTE_MULTILINE;
       }
-      else if (line.contains(SINGLE_QUOTE_MULTILINE)) {
+      else if (isMultilineStarts(line, SINGLE_QUOTE_MULTILINE)) {
         myInMultilineStringState = SINGLE_QUOTE_MULTILINE;
       }
       if (myInMultilineStringState != null) {
@@ -180,6 +181,10 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         scrollDown(currentEditor);
       }
     }
+  }
+
+  private static boolean isMultilineStarts(String line, String substring) {
+    return StringUtils.countMatches(line, substring) % 2 == 1;
   }
 
   @Override
