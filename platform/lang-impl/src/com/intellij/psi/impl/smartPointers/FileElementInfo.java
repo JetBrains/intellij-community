@@ -29,12 +29,15 @@ import org.jetbrains.annotations.NotNull;
 * User: cdr
 */
 class FileElementInfo implements SmartPointerElementInfo {
-  private final VirtualFile myVirtualFile;
-  private final Project myProject;
+  protected final VirtualFile myVirtualFile;
+  protected final Project myProject;
 
   public FileElementInfo(@NotNull PsiFile file) {
-    myVirtualFile = file.getVirtualFile();
-    myProject = file.getProject();
+    this(file.getProject(), file.getVirtualFile());
+  }
+  protected FileElementInfo(@NotNull Project project, VirtualFile virtualFile) {
+    myVirtualFile = virtualFile;
+    myProject = project;
   }
 
   public Document getDocumentToSynchronize() {

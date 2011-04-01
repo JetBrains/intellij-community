@@ -15,43 +15,26 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.openapi.editor.Document;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
 * User: cdr
 */
 class InjectedSelfElementInfo extends SelfElementInfo {
-  private DocumentWindow myDocument;
-
-  InjectedSelfElementInfo(@NotNull Project project, @NotNull PsiElement anchor, @NotNull PsiFile containingFile) {
-    super(project, anchor.getTextRange(), anchor.getClass(), containingFile);
+  InjectedSelfElementInfo(@NotNull Project project,
+                          @NotNull PsiElement anchor,
+                          @NotNull PsiFile containingFile) {
+    super(project, InjectedLanguageManager.getInstance(project).injectedToHost(anchor, anchor.getTextRange()), anchor.getClass(), InjectedLanguageUtil.getTopLevelFile(containingFile));
     assert containingFile.getContext() != null;
   }
 
-  protected TextRange getPersistentAnchorRange(final TextRange anchor, PsiFile containingFile) {
-    final TextRange textRange = super.getPersistentAnchorRange(anchor, containingFile);
-    Document document = PsiDocumentManager.getInstance(containingFile.getProject()).getDocument(containingFile);
-    // must be non-text file
-
-    if (!(document instanceof DocumentWindow)) return textRange;
-    myDocument = (DocumentWindow)document;
-    return myDocument.injectedToHost(textRange);
-  }
-
-  protected int getSyncEndOffset() {
-    int syncEndOffset = super.getSyncEndOffset();
-    return myDocument == null ? syncEndOffset : myDocument.hostToInjected(syncEndOffset);
-  }
-
-  protected int getSyncStartOffset() {
-    int syncStartOffset = super.getSyncStartOffset();
-    return myDocument == null ? syncStartOffset : myDocument.hostToInjected(syncStartOffset);
+  @Override
+  protected PsiElement findAnchorAt(@NotNull PsiFile file, int syncStartOffset) {
+    return InjectedLanguageUtil.findInjectedElementNoCommitWithOffset(file, syncStartOffset);
   }
 }

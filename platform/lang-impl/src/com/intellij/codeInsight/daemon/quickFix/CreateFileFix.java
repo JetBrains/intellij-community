@@ -16,14 +16,11 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -45,25 +42,24 @@ import java.io.IOException;
 /**
  * @author peter
 */
-public class CreateFileFix implements IntentionAction, LocalQuickFix {
+public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final boolean myIsDirectory;
   private final String myNewFileName;
-  private final PsiDirectory myDirectory;
   private final String myText;
   @NotNull private String myKey;
   private boolean myIsAvailable;
   private long myIsAvailableTimeStamp;
   private static final int REFRESH_INTERVAL = 1000;
 
-  public CreateFileFix(final boolean isDirectory,
-                       final String newFileName,
-                       @NotNull
-                       final PsiDirectory directory,
+  public CreateFileFix(boolean isDirectory,
+                       @NotNull String newFileName,
+                       @NotNull PsiDirectory directory,
                        @Nullable String text,
                        @NotNull String key) {
+    super(directory);
+
     myIsDirectory = isDirectory;
     myNewFileName = newFileName;
-    myDirectory = directory;
     myText = text;
     myKey = key;
     myIsAvailable = isDirectory || !FileTypeManager.getInstance().getFileTypeByFileName(newFileName).isBinary();
@@ -101,17 +97,24 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
     return CodeInsightBundle.message("create.file.family");
   }
 
-  public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+  @Override
+  public void invoke(@NotNull final Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+    final PsiDirectory myDirectory = (PsiDirectory)startElement;
     if (isAvailable(project, null, null)) {
       new WriteCommandAction(project) {
         protected void run(Result result) throws Throwable {
-          invoke(project, null, null);
+          invoke(project, myDirectory);
         }
       }.execute();
     }
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  @Override
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    final PsiDirectory myDirectory = (PsiDirectory)startElement;
     long current = System.currentTimeMillis();
 
     if (ApplicationManager.getApplication().isUnitTestMode() || current - myIsAvailableTimeStamp > REFRESH_INTERVAL) {
@@ -122,7 +125,7 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
     return myIsAvailable;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  private void invoke(@NotNull Project project, PsiDirectory myDirectory) throws IncorrectOperationException {
     myIsAvailableTimeStamp = 0; // to revalidate applicability
 
     try {

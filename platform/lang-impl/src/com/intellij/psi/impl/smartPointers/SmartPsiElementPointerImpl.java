@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,7 +132,13 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   @NotNull
   private static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull Project project, @NotNull E element, PsiFile containingFile) {
-    if (element instanceof PsiCompiledElement || !element.isPhysical() || containingFile == null) {
+    if (element instanceof PsiCompiledElement || !element.isPhysical()) {
+      return new HardElementInfo(project, element);
+    }
+    if (element instanceof PsiDirectory) {
+      return new DirElementInfo((PsiDirectory)element);
+    }
+    if (containingFile == null) {
       return new HardElementInfo(project, element);
     }
 
@@ -144,12 +151,13 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       return new HardElementInfo(project, element);
     }
 
-    if (element instanceof PsiFile) {
-      return new FileElementInfo((PsiFile)element);
+    FileViewProvider viewProvider = containingFile.getViewProvider();
+    if (viewProvider instanceof InjectedFileViewProvider) {
+      return new InjectedSelfElementInfo(project, element, containingFile);
     }
 
-    if (containingFile.getContext() != null) {
-      return new InjectedSelfElementInfo(project, element, containingFile);
+    if (element instanceof PsiFile) {
+      return new FileElementInfo((PsiFile)element);
     }
 
     LOG.assertTrue(element.isPhysical());

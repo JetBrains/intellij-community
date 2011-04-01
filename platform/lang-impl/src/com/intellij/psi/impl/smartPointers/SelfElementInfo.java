@@ -23,10 +23,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +47,6 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   public SelfElementInfo(@NotNull Project project, @NotNull TextRange anchor, @NotNull Class anchorClass, @NotNull PsiFile containingFile) {
     myVirtualFile = containingFile.getVirtualFile();
     myType = anchorClass;
-    TextRange range = getPersistentAnchorRange(anchor, containingFile);
 
     myProject = project;
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
@@ -78,16 +74,12 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     //}
 
     mySyncMarkerIsValid = true;
-    setRange(range);
+    setRange(anchor);
   }
 
   protected void setRange(TextRange range) {
     mySyncStartOffset = range.getStartOffset();
     mySyncEndOffset = range.getEndOffset();
-  }
-
-  protected TextRange getPersistentAnchorRange(final TextRange anchor, PsiFile containingFile) {
-    return anchor;
   }
 
   public Document getDocumentToSynchronize() {
@@ -162,7 +154,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     final int syncStartOffset = getSyncStartOffset();
     final int syncEndOffset = getSyncEndOffset();
 
-    PsiElement anchor = file.getViewProvider().findElementAt(syncStartOffset, file.getLanguage());
+    PsiElement anchor = findAnchorAt(file, syncStartOffset);
     if (anchor == null) return null;
 
     TextRange range = anchor.getTextRange();
@@ -182,6 +174,10 @@ public class SelfElementInfo implements SmartPointerElementInfo {
 
     if (range.getEndOffset() == syncEndOffset) return anchor;
     return null;
+  }
+
+  protected PsiElement findAnchorAt(@NotNull PsiFile file, int syncStartOffset) {
+    return file.getViewProvider().findElementAt(syncStartOffset, file.getLanguage());
   }
 
   @Override
@@ -218,6 +214,25 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     }
     if (child == null || !child.isValid()) return null;
     PsiFile file = PsiManager.getInstance(project).findFile(child);
+    if (file == null || !file.isValid()) return null;
+    return file;
+  }
+  @Nullable
+  public static PsiDirectory restoreDirectoryFromVirtual(VirtualFile virtualFile, @NotNull Project project) {
+    if (virtualFile == null) return null;
+
+    VirtualFile child;
+    if (virtualFile.isValid()) {
+      child = virtualFile;
+    }
+    else {
+      VirtualFile vParent = virtualFile.getParent();
+      if (vParent == null || !vParent.isDirectory()) return null;
+      String name = virtualFile.getName();
+      child = vParent.findChild(name);
+    }
+    if (child == null || !child.isValid()) return null;
+    PsiDirectory file = PsiManager.getInstance(project).findDirectory(child);
     if (file == null || !file.isValid()) return null;
     return file;
   }

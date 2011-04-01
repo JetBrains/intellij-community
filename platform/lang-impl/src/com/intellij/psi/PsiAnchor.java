@@ -56,7 +56,13 @@ public abstract class PsiAnchor {
     LOG.assertTrue(element.isValid());
 
     if (element instanceof PsiFile) {
+      VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
+      if (virtualFile != null) return new PsiFileReference(virtualFile, element.getProject());
       return new HardReference(element);
+    }
+    if (element instanceof PsiDirectory) {
+      VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
+      return new PsiDirectoryReference(virtualFile, element.getProject());
     }
 
     PsiFile file = element.getContainingFile();
@@ -235,6 +241,69 @@ public abstract class PsiAnchor {
     @Override
     public boolean pointsToTheSameElementAs(PsiAnchor other) {
       return myElement == other.retrieve();
+    }
+  }
+
+  private static class PsiFileReference extends PsiAnchor {
+    protected final VirtualFile myFile;
+    protected final Project myProject;
+
+    private PsiFileReference(@NotNull VirtualFile file, @NotNull Project project) {
+      myFile = file;
+      myProject = project;
+    }
+
+    public PsiElement retrieve() {
+      return getFile();
+    }
+
+    public PsiFile getFile() {
+      return SelfElementInfo.restoreFileFromVirtual(myFile, myProject);
+    }
+
+    public int getStartOffset() {
+      return 0;
+    }
+
+    public int getEndOffset() {
+      return (int)myFile.getLength();
+    }
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (!(o instanceof PsiFileReference)) return false;
+
+      final PsiFileReference that = (PsiFileReference)o;
+
+      return myFile.equals(that.myFile);
+    }
+
+    public int hashCode() {
+      return myFile.hashCode();
+    }
+
+    @Override
+    public boolean pointsToTheSameElementAs(PsiAnchor other) {
+      if (other instanceof PsiFileReference) return myFile == ((PsiFileReference)other).myFile;
+      return Comparing.equal(retrieve(), other.retrieve());
+    }
+  }
+  private static class PsiDirectoryReference extends PsiFileReference {
+    private PsiDirectoryReference(@NotNull VirtualFile file, @NotNull Project project) {
+      super(file, project);
+      assert file.isDirectory() : file;
+    }
+
+    public PsiElement retrieve() {
+      return SelfElementInfo.restoreDirectoryFromVirtual(myFile, myProject);
+    }
+
+    public PsiFile getFile() {
+      return null;
+    }
+
+    public int getEndOffset() {
+      return -1;
     }
   }
 
