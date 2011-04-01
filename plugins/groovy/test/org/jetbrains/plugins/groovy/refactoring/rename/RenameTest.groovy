@@ -425,6 +425,21 @@ class Foo {
     assertTrue false
   }
 
+  public void testRenameJavaPrivateField() {
+    myFixture.addFileToProject "Foo.java", """
+public class Foo {
+  private int field;
+}"""
+    myFixture.configureByText "Bar.groovy", """
+print new Foo(field: 2)
+"""
+    myFixture.renameElement myFixture.findClass("Foo").fields[0], "anotherOneName"
+
+    myFixture.checkResult """
+print new Foo(anotherOneName: 2)
+"""
+  }
+
   private def doInplaceRenameTest() {
     String prefix = TestUtils.getTestDataPath() + "groovy/refactoring/rename/" + getTestName(false)
     myFixture.configureByFile prefix + ".groovy";

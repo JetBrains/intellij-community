@@ -214,6 +214,8 @@
     <debuggerClassFilterProvider implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>
     <stackFrameFilter implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>
 
+    <useScopeEnlarger implementation="org.jetbrains.plugins.groovy.lang.psi.impl.search.GrPrivateFieldScopeEnlarger"/>
+
     <debuggerEditorTextProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.debugger.GroovyEditorTextProvider"/>
 
     <xdebugger.settings implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerSettings"/>
