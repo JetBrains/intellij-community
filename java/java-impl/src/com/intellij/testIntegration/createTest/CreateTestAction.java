@@ -50,7 +50,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
 
     assert psiClass != null;
     PsiJavaToken leftBrace = psiClass.getLBrace();
-    if (leftBrace == null) return false;
+    if (leftBrace == null) return true;
     if (element.getTextOffset() >= leftBrace.getTextOffset()) return false;
 
     //TextRange declarationRange = HighlightNamesUtil.getClassDeclarationTextRange(psiClass);
