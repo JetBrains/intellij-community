@@ -134,4 +134,23 @@ public class CompositeDocumentationProvider implements DocumentationProvider, Ex
     }
     return null;
   }
+
+  @Override
+  public boolean hasDocumentationFor(PsiElement element, PsiElement originalElement) {
+    for (DocumentationProvider provider : myProviders) {
+      if (provider instanceof ExternalDocumentationProvider) {
+        if (((ExternalDocumentationProvider) provider).hasDocumentationFor(element, originalElement)) return true;
+      }
+      else {
+        if (hasUrlsFor(provider, element, originalElement)) return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean hasUrlsFor(DocumentationProvider provider, PsiElement element, PsiElement originalElement) {
+    final List<String> urls = provider.getUrlFor(element, originalElement);
+    if (urls != null && !urls.isEmpty()) return true;
+    return false;
+  }
 }

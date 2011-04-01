@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger;
 
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -27,7 +26,11 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * User: lex
@@ -164,17 +167,63 @@ public abstract class SourcePosition implements Navigatable{
       return -1;
     }
 
+    @Nullable
     protected PsiElement calcPsiElement() {
-      final int offset = getOffset();
-      if (offset < 0) {
+      PsiFile psiFile = getFile();
+      int lineNumber = getLine();
+      if(lineNumber < 0) {
+        return psiFile;
+      }
+
+      final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
+      if (document == null) {
         return null;
       }
-      final PsiFile psiFile = getFile();
-      if (psiFile instanceof PsiCompiledElement) {
-        return psiFile.findElementAt(offset);
+      if (lineNumber >= document.getLineCount()) {
+        return psiFile;
       }
-      final FileViewProvider viewProvider = psiFile.getViewProvider();
-      return viewProvider.findElementAt(offset, StdLanguages.JAVA);
+      int startOffset = document.getLineStartOffset(lineNumber);
+      if(startOffset == -1) {
+        return null;
+      }
+
+      PsiElement element;
+
+      PsiElement rootElement = psiFile;
+
+      List<PsiFile> allFiles = psiFile.getViewProvider().getAllFiles();
+      if (allFiles.size() > 1) { // jsp & gsp
+        PsiClassOwner owner = ContainerUtil.findInstance(allFiles, PsiClassOwner.class);
+        if (owner != null) {
+          PsiClass[] classes = owner.getClasses();
+          if (classes.length == 1 && classes[0]  instanceof SyntheticElement) {
+            rootElement = classes[0];
+          }
+        }
+      }
+
+      while(true) {
+        final CharSequence charsSequence = document.getCharsSequence();
+        for (; startOffset < charsSequence.length(); startOffset++) {
+          char c = charsSequence.charAt(startOffset);
+          if (c != ' ' && c != '\t') {
+            break;
+          }
+        }
+        element = rootElement.findElementAt(startOffset);
+
+        if(element instanceof PsiComment) {
+          startOffset = element.getTextRange().getEndOffset() + 1;
+        }
+        else{
+          break;
+        }
+      }
+
+      if (element != null && element.getParent() instanceof PsiForStatement) {
+        return ((PsiForStatement)element.getParent()).getInitialization();
+      }
+      return element;
     }
   }
 

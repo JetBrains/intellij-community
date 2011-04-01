@@ -113,6 +113,15 @@ public abstract class XDebuggerEvaluator {
   }
 
   /**
+   * Override this method to format selected text before it is shown in 'Evaluate' dialog
+   */
+  @NotNull
+  @SuppressWarnings({"MethodMayBeStatic"})
+  public String formatTextForEvaluation(@NotNull String text) {
+    return text;
+  }
+
+  /**
    * @return delay before showing value tooltip (in ms)
    */
   public int getValuePopupDelay() {

@@ -59,7 +59,9 @@ public class IgnoreUnversionedAction extends AnAction {
 
   public void update(AnActionEvent e) {
     List<VirtualFile> files = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
-    removeNullFiles(files);
+    if (files != null) {
+      removeNullFiles(files);
+    }
     boolean enabled = files != null && !files.isEmpty();
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled);

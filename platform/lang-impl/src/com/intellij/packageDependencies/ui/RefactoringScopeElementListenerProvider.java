@@ -96,6 +96,22 @@ public class RefactoringScopeElementListenerProvider implements RefactoringEleme
           catch (ParsingException ignore) {
           }
         }
+
+        @Override
+        public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
+          LOG.assertTrue(newElement instanceof PsiQualifiedNamedElement);
+          try {
+            final NamedScope[] currentScopes = descriptor.getHolder().getEditableScopes();
+            final String oldPattern = ((PatternBasedPackageSet)currentScopes[descriptor.getIdx()].getValue()).getPattern()
+              .replace(((PsiQualifiedNamedElement)newElement).getQualifiedName(), oldQualifiedName);
+            final PackageSet newSet = PackageSetFactory.getInstance().compile(oldPattern);
+            NamedScope newScope = new NamedScope(descriptor.getScope().getName(), newSet);
+            currentScopes[descriptor.getIdx()] = newScope;
+            descriptor.getHolder().setScopes(currentScopes);
+          }
+          catch (ParsingException ignore) {
+          }
+        }
       });
     }
     return composite;

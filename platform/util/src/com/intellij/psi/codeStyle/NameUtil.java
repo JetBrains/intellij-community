@@ -15,11 +15,13 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FList;
 import com.intellij.util.text.StringTokenizer;
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
@@ -27,10 +29,10 @@ import org.apache.oro.text.regex.Perl5Compiler;
 import org.apache.oro.text.regex.Perl5Matcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.text.CharacterIterator;
-import java.text.StringCharacterIterator;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class NameUtil {
@@ -317,61 +319,49 @@ public class NameUtil {
 
   private enum WordState { NO_WORD, PREV_UC, WORD }
 
-  private static void addAllWords(String word, List<String> result) {
-    CharacterIterator it = new StringCharacterIterator(word);
-    StringBuffer b = new StringBuffer();
+  private static boolean isWordStart(char p) {
+    return Character.isUpperCase(p) || Character.isDigit(p);
+  }
+
+  private static void addAllWords(String text, List<String> result) {
+    int start = 0;
     WordState state = WordState.NO_WORD;
-    char curPrevUC = '\0';
-    for (char c = it.first(); c != CharacterIterator.DONE; c = it.next()) {
+    for (int i = 0; i < text.length(); i++) {
+      char c = text.charAt(i);
       switch (state) {
         case NO_WORD:
-          if (!Character.isUpperCase(c)) {
-            b.append(c);
+          if (!isWordStart(c)) {
             state = WordState.WORD;
           }
           else {
             state = WordState.PREV_UC;
-            curPrevUC = c;
           }
           break;
         case PREV_UC:
-          if (!Character.isUpperCase(c)) {
-            b = startNewWord(result, b, curPrevUC);
-            b.append(c);
+          if (!isWordStart(c)) {
+            start = startNewWord(text, result, start, i - 1);
             state = WordState.WORD;
           }
           else {
-            b.append(curPrevUC);
             state = WordState.PREV_UC;
-            curPrevUC = c;
           }
           break;
         case WORD:
-          if (Character.isUpperCase(c)) {
-            startNewWord(result, b, c);
-            b.setLength(0);
+          if (isWordStart(c)) {
+            start = startNewWord(text, result, start, i);
             state = WordState.PREV_UC;
-            curPrevUC = c;
-          }
-          else {
-            b.append(c);
           }
           break;
       }
     }
-    if (state == WordState.PREV_UC) {
-      b.append(curPrevUC);
-    }
-    result.add(b.toString());
+    startNewWord(text, result, start, text.length());
   }
 
-  private static StringBuffer startNewWord(List<String> result, StringBuffer b, char c) {
-    if (b.length() > 0) {
-      result.add(b.toString());
+  private static int startNewWord(String word, List<String> result, int start, int end) {
+    if (end > start) {
+      result.add(word.substring(start, end));
     }
-    b = new StringBuffer();
-    b.append(c);
-    return b;
+    return end;
   }
 
   public interface Matcher {
@@ -379,23 +369,26 @@ public class NameUtil {
   }
 
   public static Matcher buildCompletionMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
-    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false, true), exactPrefixLen > 0);
+    MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
+    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, false, true), options);
   }
 
   public static Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
-    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower), exactPrefixLen > 0);
+    MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
+    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower), options);
   }
 
   public static Matcher buildMatcher(String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, boolean lowerCaseWords) {
-    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, lowerCaseWords, false), exactPrefixLen > 0);
+    MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
+    return buildMatcher(pattern, buildRegexp(pattern, exactPrefixLen, allowToUpper, allowToLower, lowerCaseWords, false), options);
   }
 
   public static boolean isUseMinusculeHumpMatcher() {
     return Registry.is("minuscule.humps.matching");
   }
 
-  private static Matcher buildMatcher(final String pattern, String regexp, boolean firstLetterMatters) {
-    return isUseMinusculeHumpMatcher() ? new MinusculeMatcher(pattern, firstLetterMatters) : new OptimizedMatcher(pattern, regexp);
+  private static Matcher buildMatcher(final String pattern, String regexp, MatchingCaseSensitivity options) {
+    return isUseMinusculeHumpMatcher() ? new MinusculeMatcher(pattern, options) : new OptimizedMatcher(pattern, regexp);
   }
 
   private static class OptimizedMatcher implements Matcher {
@@ -475,110 +468,134 @@ public class NameUtil {
     }
   }
 
+  public enum MatchingCaseSensitivity {
+    NONE, FIRST_LETTER, ALL
+  }
 
   public static class MinusculeMatcher implements Matcher {
     private final char[] myPattern;
-    private final boolean myFirstLetterCaseMatters;
+    private final MatchingCaseSensitivity myOptions;
 
-    public MinusculeMatcher(String pattern, boolean firstLetterCaseMatters) {
-      myFirstLetterCaseMatters = firstLetterCaseMatters;
-      myPattern = pattern.replaceAll(":", "\\*:").replaceAll("\\.", "\\*\\.").toCharArray();
+    public MinusculeMatcher(String pattern, MatchingCaseSensitivity options) {
+      myOptions = options;
+      myPattern = StringUtil.trimEnd(pattern, "* ").replaceAll(":", "\\*:").replaceAll("\\.", "\\*\\.").toCharArray();
     }
 
-    private boolean matches(int patternIndex, List<String> words, int wordIndex) {
+    @Nullable
+    private FList<TextRange> matchName(int patternIndex, List<String> words, int wordIndex, int insideWord, int wordStart) {
       if (patternIndex == myPattern.length) {
-        return true;
+        return FList.emptyList();
       }
       if (wordIndex == words.size()) {
-        return false;
+        return null;
       }
 
-      String w = words.get(wordIndex);
+      String word = words.get(wordIndex);
 
       if ('*' == myPattern[patternIndex]) {
-        return handleAsterisk(patternIndex, words, wordIndex);
+        return handleAsterisk(patternIndex, words, wordIndex, insideWord, wordStart);
       }
 
-      if (isWordSeparator(w.charAt(0))) {
-        assert w.length() == 1 : "'" + w + "'";
-        return matches(isWordSeparator(myPattern[patternIndex]) ? patternIndex + 1 : patternIndex, words, wordIndex + 1);
+      if (patternIndex == 0 && myOptions != MatchingCaseSensitivity.NONE && word.charAt(insideWord) != myPattern[0]) {
+        return null;
       }
 
-      if (patternIndex == 0 && myFirstLetterCaseMatters && w.charAt(0) != myPattern[0]) {
-        return false;
+      if (isWordSeparator(word.charAt(insideWord))) {
+        assert word.length() == 1 : "'" + word + "'";
+        char p = myPattern[patternIndex];
+        int nextStart = wordStart + word.length();
+        if (isWordSeparator(p)) {
+          if (myOptions != MatchingCaseSensitivity.NONE &&
+              wordIndex == 0 && words.size() > 1 && patternIndex + 1 < myPattern.length &&
+              isWordSeparator(words.get(1).charAt(0)) && !isWordSeparator(myPattern[patternIndex + 1])) {
+            return null;
+          }
+
+          return matchName(patternIndex + 1, words, wordIndex + 1, 0, nextStart);
+        }
+
+        return matchName(patternIndex, words, wordIndex + 1, 0, nextStart);
       }
 
-      if (StringUtil.toLowerCase(w.charAt(0)) != StringUtil.toLowerCase(myPattern[patternIndex])) {
-        return false;
+      if (StringUtil.toLowerCase(word.charAt(insideWord)) != StringUtil.toLowerCase(myPattern[patternIndex])) {
+        return null;
       }
 
-      boolean uppers = Character.isUpperCase(myPattern[patternIndex]);
+      boolean uppers = isWordStart(myPattern[patternIndex]);
 
       int i = 1;
       while (true) {
         if (patternIndex + i == myPattern.length) {
-          return true;
+          return FList.<TextRange>emptyList().prepend(TextRange.from(wordStart + insideWord, i));
         }
-        if (i == w.length()) {
+        if (i == word.length() - insideWord) {
           break;
         }
         char p = myPattern[patternIndex + i];
-        if (uppers && Character.isUpperCase(p)) {
+        if (uppers && isWordStart(p) && myOptions != MatchingCaseSensitivity.ALL) {
           p = StringUtil.toLowerCase(p);
         } else {
           uppers = false;
         }
 
-        if (StringUtil.toLowerCase(w.charAt(i)) != p) {
+        char w = word.charAt(insideWord + i);
+        if (myOptions != MatchingCaseSensitivity.ALL) {
+          w = StringUtil.toLowerCase(w);
+        }
+        if (w != p) {
           break;
         }
         i++;
       }
       // there's more in the pattern, but no more words
       if (wordIndex == words.size() - 1) {
-        if (patternIndex + i == myPattern.length - 1 && ' ' == myPattern[patternIndex + i]) {
-          return i == w.length();
+        if (patternIndex + i == myPattern.length - 1 && ' ' == myPattern[patternIndex + i] && i == word.length() - insideWord) {
+          return FList.<TextRange>emptyList().prepend(TextRange.from(wordStart + insideWord, i));
         }
 
-        return false;
+        return null;
       }
+
+      int nextWord = wordStart + word.length();
       while (i > 0) {
-        if (matches(patternIndex + i, words, wordIndex + 1)) {
-          return true;
+        FList<TextRange> ranges = matchName(patternIndex + i, words, wordIndex + 1, 0, nextWord);
+        if (ranges != null) {
+          return ranges.prepend(TextRange.from(wordStart + insideWord, i));
         }
         i--;
       }
-      return false;
+      return null;
     }
 
-    private boolean handleAsterisk(int patternIndex, List<String> words, int wordIndex) {
+    @Nullable
+    private FList<TextRange> handleAsterisk(int patternIndex, List<String> words, int wordIndex, int insideWord, int wordStart) {
       while ('*' == myPattern[patternIndex]) {
         patternIndex++;
         if (patternIndex == myPattern.length) {
-          return true;
+          return FList.emptyList();
         }
       }
 
       String nextChar = String.valueOf(myPattern[patternIndex]);
 
+      int fromIndex = insideWord;
       for (int i = wordIndex; i < words.size(); i++) {
         String s = words.get(i);
-        int fromIndex = 0;
         while (true) {
           int next = StringUtil.indexOfIgnoreCase(s, nextChar, fromIndex);
           if (next < 0) {
             break;
           }
-          List<String> newWords = new ArrayList<String>();
-          newWords.add(s.substring(fromIndex));
-          newWords.addAll(words.subList(i + 1, words.size()));
-          if (matches(patternIndex, newWords, 0)) {
-            return true;
+          FList<TextRange> ranges = matchName(patternIndex, words, i, next, wordStart);
+          if (ranges != null) {
+            return ranges;
           }
           fromIndex = next + 1;
         }
+        fromIndex = 0;
+        wordStart += s.length();
       }
-      return false;
+      return null;
     }
 
     private static boolean isWordSeparator(char c) {
@@ -587,7 +604,12 @@ public class NameUtil {
 
     @Override
     public boolean matches(String name) {
-      StringTokenizer tokenizer = new StringTokenizer(name, " -_.:", true);
+      return matchingFragments(name) != null;
+    }
+
+    @Nullable
+    public Iterable<TextRange> matchingFragments(String name) {
+      StringTokenizer tokenizer = new StringTokenizer(name, " -_.:/", true);
       List<String> words = new ArrayList<String>();
       while (tokenizer.hasMoreTokens()) {
         String token = tokenizer.nextToken();
@@ -595,10 +617,10 @@ public class NameUtil {
       }
 
       if (words.isEmpty()) {
-        return myPattern.length == 0;
+        return myPattern.length == 0 ? Collections.<TextRange>emptyList() : null;
       }
 
-      return matches(0, words, 0);
+      return matchName(0, words, 0, 0, 0);
     }
   }
 }

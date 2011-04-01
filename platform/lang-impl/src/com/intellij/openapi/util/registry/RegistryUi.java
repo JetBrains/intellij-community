@@ -193,7 +193,7 @@ public class RegistryUi implements Disposable {
     private final List<RegistryValue> myAll;
 
     private MyTableModel() {
-      myAll = Registry.getInstance().getAll();
+      myAll = Registry.getAll();
       Collections.sort(myAll, new Comparator<RegistryValue>() {
         public int compare(RegistryValue o1, RegistryValue o2) {
           return o1.getKey().compareTo(o2.getKey());
@@ -276,8 +276,17 @@ public class RegistryUi implements Disposable {
           }
         }};
       }
-    };
 
+      @Override
+      public void doCancelAction() {
+        final TableCellEditor cellEditor = myTable.getCellEditor();
+        if (cellEditor != null) {
+          cellEditor.stopCellEditing();
+        }
+        processClose();
+        super.doCancelAction();
+      }
+    };
 
     dialog.show();
   }

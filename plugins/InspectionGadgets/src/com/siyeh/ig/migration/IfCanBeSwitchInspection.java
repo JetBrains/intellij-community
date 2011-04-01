@@ -77,7 +77,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
     @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
-        return new IfCanBeSwitchFix((PsiExpression) infos[0]);
+        return new IfCanBeSwitchFix(minimumBranches);
     }
 
     @Override
@@ -146,12 +146,11 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     }
 
     private static class IfCanBeSwitchFix extends InspectionGadgetsFix {
+      private final int myMinimumBranches;
 
-        private final PsiExpression switchExpression;
-
-        public IfCanBeSwitchFix(PsiExpression switchExpression) {
-            this.switchExpression = switchExpression;
-        }
+      public IfCanBeSwitchFix(int minimumBranches) {
+        myMinimumBranches = minimumBranches;
+      }
 
         @NotNull
         public String getName() {
@@ -193,8 +192,12 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
             final List<IfStatementBranch> branches =
                     new ArrayList<IfStatementBranch>(20);
-            while (true) {
-                final PsiExpression condition = ifStatement.getCondition();
+          final PsiExpression switchExpression =
+            SwitchUtils.getSwitchExpression(ifStatement, myMinimumBranches);
+          if (switchExpression == null) return;
+          while (true) {
+              final PsiExpression condition = ifStatement.getCondition();
+
                 final List<PsiExpression> labels =
                         getValuesFromExpression(condition, switchExpression,
                                 new ArrayList());

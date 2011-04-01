@@ -112,6 +112,8 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testClosureAfterLineComment() throws Throwable { doTest(); }
   public void testAnnotationOnSeparateLine() throws Throwable { doTest(); }
 
+  public void testSpockTable() throws Throwable { doTest(); }
+
   public void testElseIfs() throws Throwable {
     myTempSettings.SPECIAL_ELSE_IF_TREATMENT = false;
     doTest();

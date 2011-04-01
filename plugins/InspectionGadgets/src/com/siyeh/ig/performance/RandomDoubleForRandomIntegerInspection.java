@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,23 +32,27 @@ import org.jetbrains.annotations.Nullable;
 public class RandomDoubleForRandomIntegerInspection
         extends BaseInspection {
 
+    @Override
     @NotNull
     public String getID() {
         return "UsingRandomNextDoubleForRandomInteger";
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "random.double.for.random.integer.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "random.double.for.random.integer.problem.descriptor");
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
         return new RandomDoubleForRandomIntegerFix();
     }
@@ -62,6 +66,7 @@ public class RandomDoubleForRandomIntegerInspection
                     "random.double.for.random.integer.replace.quickfix");
         }
 
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiIdentifier name =
@@ -103,11 +108,12 @@ public class RandomDoubleForRandomIntegerInspection
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new StringEqualsEmptyStringVisitor();
+        return new RandomDoubleForRandomIntegerVisitor();
     }
 
-    private static class StringEqualsEmptyStringVisitor
+    private static class RandomDoubleForRandomIntegerVisitor
             extends BaseInspectionVisitor {
 
         @Override public void visitMethodCallExpression(

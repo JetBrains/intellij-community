@@ -44,9 +44,9 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
     return myFilter;
   }
 
-  public void runInspection(AnalysisScope scope, final InspectionManager manager) {}
+  public void runInspection(@NotNull AnalysisScope scope, @NotNull final InspectionManager manager) {}
 
-  public void exportResults(Element parentNode) {}
+  public void exportResults(@NotNull Element parentNode) {}
 
   @NotNull
   public JobDescriptor[] getJobDescriptors() {

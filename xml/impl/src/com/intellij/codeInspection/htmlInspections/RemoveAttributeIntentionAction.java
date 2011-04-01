@@ -24,6 +24,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,11 +33,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RemoveAttributeIntentionAction implements LocalQuickFix {
   private final String myLocalName;
-  private final XmlAttribute myAttribute;
 
-  public RemoveAttributeIntentionAction(final String localName, final XmlAttribute attribute) {
+  public RemoveAttributeIntentionAction(final String localName) {
     myLocalName = localName;
-    myAttribute = attribute;
   }
 
   @NotNull
@@ -50,28 +49,18 @@ public class RemoveAttributeIntentionAction implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    PsiElement e = descriptor.getPsiElement();
+    final XmlAttribute myAttribute = PsiTreeUtil.getParentOfType(e, XmlAttribute.class);
+    if (myAttribute == null) return;
+
     if (!CodeInsightUtilBase.prepareFileForWrite(myAttribute.getContainingFile())) {
       return;
     }
 
-    PsiElement next = findNextAttribute(myAttribute);
     new WriteCommandAction(project) {
       protected void run(final Result result) throws Throwable {
         myAttribute.delete();
       }
     }.execute();
-
-    //if (next != null) {
-    //  editor.getCaretModel().moveToOffset(next.getTextRange().getStartOffset());
-    //}
-  }
-
-  private static PsiElement findNextAttribute(final XmlAttribute attribute) {
-    PsiElement nextSibling = attribute.getNextSibling();
-    while (nextSibling != null) {
-      if (nextSibling instanceof XmlAttribute) return nextSibling;
-      nextSibling =  nextSibling.getNextSibling();
-    }
-    return null;
   }
 }

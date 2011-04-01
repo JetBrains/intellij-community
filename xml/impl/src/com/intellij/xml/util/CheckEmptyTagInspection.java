@@ -68,41 +68,7 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
           return;
         }
 
-        final LocalQuickFix fix = new LocalQuickFix() {
-          @NotNull
-          public String getName() {
-            return XmlBundle.message("html.inspections.check.empty.script.tag.fix.message");
-          }
-
-          public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-            final XmlTag tag = (XmlTag)descriptor.getPsiElement();
-            if (tag == null) return;
-            final PsiFile psiFile = tag.getContainingFile();
-
-            if (psiFile == null) return;
-            ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(psiFile.getVirtualFile());
-
-            final StringBuilder builder = new StringBuilder(tag.getText());
-            builder.replace(builder.length() - 2, builder.length(), "></" + tag.getLocalName() + ">");
-
-            try {
-              final FileType fileType = psiFile.getFileType();
-              PsiFile file = PsiFileFactory.getInstance(tag.getProject()).createFileFromText(
-                "dummy." + (fileType == StdFileTypes.JSP || tag.getContainingFile().getLanguage() == HTMLLanguage.INSTANCE ? "html" : "xml"), builder.toString());
-
-              tag.replace(((XmlFile)file).getDocument().getRootTag());
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-
-          //to appear in "Apply Fix" statement when multiple Quick Fixes exist
-          @NotNull
-          public String getFamilyName() {
-            return getName();
-          }
-        };
+        final LocalQuickFix fix = new MyLocalQuickFix();
 
         holder.registerProblem(tag,
                                XmlBundle.message("html.inspections.check.empty.script.message"),
@@ -137,5 +103,41 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
   @NonNls
   public String getShortName() {
     return "CheckEmptyScriptTag";
+  }
+
+  private static class MyLocalQuickFix implements LocalQuickFix {
+    @NotNull
+    public String getName() {
+      return XmlBundle.message("html.inspections.check.empty.script.tag.fix.message");
+    }
+
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final XmlTag tag = (XmlTag)descriptor.getPsiElement();
+      if (tag == null) return;
+      final PsiFile psiFile = tag.getContainingFile();
+
+      if (psiFile == null) return;
+      ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(psiFile.getVirtualFile());
+
+      final StringBuilder builder = new StringBuilder(tag.getText());
+      builder.replace(builder.length() - 2, builder.length(), "></" + tag.getLocalName() + ">");
+
+      try {
+        final FileType fileType = psiFile.getFileType();
+        PsiFile file = PsiFileFactory.getInstance(tag.getProject()).createFileFromText(
+          "dummy." + (fileType == StdFileTypes.JSP || tag.getContainingFile().getLanguage() == HTMLLanguage.INSTANCE ? "html" : "xml"), builder.toString());
+
+        tag.replace(((XmlFile)file).getDocument().getRootTag());
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
+
+    //to appear in "Apply Fix" statement when multiple Quick Fixes exist
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
   }
 }

@@ -55,6 +55,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Set;
@@ -74,9 +76,11 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   private final Alarm updateEncodingFromContent = new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
   private static final Key<Charset> CACHED_CHARSET_FROM_CONTENT = Key.create("CACHED_CHARSET_FROM_CONTENT");
 
-  private final TransferToPooledThreadQueue<Document> myChangedDocuments = new TransferToPooledThreadQueue<Document>(new Processor<Document>() {
+  private final TransferToPooledThreadQueue<Reference<Document>> myChangedDocuments = new TransferToPooledThreadQueue<Reference<Document>>(new Processor<Reference<Document>>() {
     @Override
-    public boolean process(Document document) {
+    public boolean process(Reference<Document> ref) {
+      Document document = ref.get();
+      if (document == null) return true; // document gced, don't bother
       handleDocument(document);
       return true;
     }
@@ -122,7 +126,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   public void queueUpdateEncodingFromContent(@NotNull Document document) {
-    myChangedDocuments.offer(document);
+    myChangedDocuments.offer(new WeakReference<Document>(document));
   }
 
   public Charset getCachedCharsetFromContent(@NotNull Document document) {

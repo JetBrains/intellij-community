@@ -70,7 +70,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
   public boolean CHECK_DUPLICATE_KEYS_WITH_DIFFERENT_VALUES = true;
 
 
-  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
+  public void runInspection(@NotNull AnalysisScope scope, @NotNull final InspectionManager manager) {
     scope.accept(new PsiRecursiveElementVisitor() {
       @Override
       public void visitFile(PsiFile file) {

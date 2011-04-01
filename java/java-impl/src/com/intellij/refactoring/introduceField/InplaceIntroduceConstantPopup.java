@@ -132,7 +132,7 @@ public class InplaceIntroduceConstantPopup {
 
     gc.insets = new Insets(5, 5, 5, 5);
 
-    myVisibilityPanel = new JavaVisibilityPanel(false, true);
+    myVisibilityPanel = new JavaVisibilityPanel(false, false);
     myVisibilityPanel.setVisibility(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY);
     myWholePanel.add(myVisibilityPanel, gc);
 

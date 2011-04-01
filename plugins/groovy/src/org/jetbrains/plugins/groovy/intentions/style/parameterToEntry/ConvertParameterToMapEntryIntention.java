@@ -69,6 +69,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyValidationUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import static org.jetbrains.plugins.groovy.intentions.style.parameterToEntry.ConvertParameterToMapEntryIntention.FIRST_PARAMETER_KIND.*;
 
@@ -447,7 +448,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
       .message("find.method.ro.closure.usages.0", owner instanceof GrClosableBlock ? CLOSURE_CAPTION : METHOD_CAPTION), true) {
       public void run(@NotNull final ProgressIndicator indicator) {
         final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(getProject());
-        final Collection<PsiReference> references = new ArrayList<PsiReference>();
+        final Collection<PsiReference> references = Collections.synchronizedList(new ArrayList<PsiReference>());
         final Processor<PsiReference> consumer = new Processor<PsiReference>() {
           @Override
           public boolean process(PsiReference psiReference) {

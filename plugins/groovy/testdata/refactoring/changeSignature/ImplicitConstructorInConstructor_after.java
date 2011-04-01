@@ -1,5 +1,6 @@
 class Z extends Foo{
   Z(){
 
-  super(5);}
+      super(5);
+  }
 }

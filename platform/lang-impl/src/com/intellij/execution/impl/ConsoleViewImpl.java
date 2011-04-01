@@ -67,6 +67,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
@@ -564,7 +565,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
       myDeferredTypes.add(contentType);
 
-      s = StringUtil.convertLineSeparators(s, true);
+      s = StringUtil.convertLineSeparators(s, !SystemInfo.isMac);
       myContentSize += s.length();
       myDeferredOutputLength += s.length();
       StringBuilder bufferToUse;
@@ -837,7 +838,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           for (int i = 0; i < strings.length - 1; i++) {
             document.insertString(document.getTextLength(), strings[i]);
             int lastLine = document.getLineCount() - 1;
-            document.deleteString(document.getLineStartOffset(lastLine), document.getTextLength());
+            if (lastLine >= 0) {
+              document.deleteString(document.getLineStartOffset(lastLine), document.getTextLength());
+            }
           }
           document.insertString(document.getTextLength(), strings[strings.length - 1]);
         }
@@ -1316,7 +1319,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private void addFolding(Document document, CharSequence chars, int line, List<FoldRegion> toAdd) {
     String commandLinePlaceholder = myCommandLineFolding.getPlaceholder(line);
     if (commandLinePlaceholder != null) {
-      FoldRegion region = ((FoldingModelEx)myEditor.getFoldingModel()).createFoldRegion(
+      FoldRegion region = myEditor.getFoldingModel().createFoldRegion(
         document.getLineStartOffset(line), document.getLineEndOffset(line), commandLinePlaceholder, null, false
       );
       toAdd.add(region);

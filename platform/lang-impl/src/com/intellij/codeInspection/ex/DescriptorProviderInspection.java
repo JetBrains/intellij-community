@@ -38,6 +38,7 @@ import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jdom.IllegalDataException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -249,7 +250,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     return myComposer;
   }
 
-  public void exportResults(final Element parentNode) {
+  public void exportResults(@NotNull final Element parentNode) {
     getRefManager().iterate(new RefVisitor() {
       @Override public void visitElement(final RefEntity refEntity) {
         if (getProblemElements().containsKey(refEntity)) {

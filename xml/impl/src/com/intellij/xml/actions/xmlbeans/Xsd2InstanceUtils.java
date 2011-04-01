@@ -15,6 +15,7 @@
  */
 package com.intellij.xml.actions.xmlbeans;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlRecursiveElementVisitor;
@@ -28,12 +29,14 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.xml.util.XmlUtil;
 import org.apache.xmlbeans.*;
 import org.apache.xmlbeans.impl.tool.CommandLine;
 import org.apache.xmlbeans.impl.xsd2inst.SampleXmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 
@@ -85,7 +88,7 @@ public class Xsd2InstanceUtils {
             }
             catch (Exception e)
             {
-                throw new IllegalArgumentException("Can not load schema file: " + schemaFiles[i] + ": ");
+                throw new IllegalArgumentException("Can not load schema file: " + schemaFiles[i] + ": " + e.getLocalizedMessage());
             }
         }
 
@@ -145,7 +148,7 @@ public class Xsd2InstanceUtils {
 
     return null;
   }
-  
+
   public static List<String> addVariantsFromRootTag(XmlTag rootTag) {
     PsiMetaData metaData = rootTag.getMetaData();
     if (metaData instanceof XmlNSDescriptorImpl) {
@@ -217,11 +220,26 @@ public class Xsd2InstanceUtils {
       }
     });
 
-    schemaReferenceProcessor.processSchema(fileName, result.toString());
+    final VirtualFile virtualFile = file.getVirtualFile();
+    final String content = result.toString();
+
+    byte[] bytes;
+    if (virtualFile != null) {
+      bytes = content.getBytes(virtualFile.getCharset());
+    } else {
+      try {
+        final String charsetName = XmlUtil.extractXmlEncodingFromProlog(content.getBytes());
+        bytes = charsetName != null ? content.getBytes(charsetName) : content.getBytes();
+      } catch (UnsupportedEncodingException e) {
+        bytes = content.getBytes();
+      }
+    }
+
+    schemaReferenceProcessor.processSchema(fileName, bytes);
     return fileName;
   }
 
   public interface SchemaReferenceProcessor {
-    void processSchema(String schemaFileName, String schemaContent);
+    void processSchema(String schemaFileName, byte[] schemaContent);
   }
 }

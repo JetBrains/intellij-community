@@ -102,6 +102,14 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       public void run(@NotNull ProgressIndicator indicator) {
         final ArrayList<String> roots = new ArrayList<String>();
         EclipseProjectFinder.findModuleRoots(roots, path);
+        Collections.sort(roots, new Comparator<String>() {
+          @Override
+          public int compare(String path1, String path2) {
+            final String projectName1 = EclipseProjectFinder.findProjectName(path1);
+            final String projectName2 = EclipseProjectFinder.findProjectName(path2);
+            return projectName1 != null && projectName2 != null ? projectName1.compareToIgnoreCase(projectName2) : 0;
+          }
+        });
         getParameters().workspace = roots;
         getParameters().root = path;
       }

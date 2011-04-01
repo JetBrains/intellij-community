@@ -179,7 +179,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
         }
       }
     }
-    fixes.add(new RemoveTagFix(tagName, paramName, tag));
+    fixes.add(new RemoveTagFix(tagName, paramName));
 
     problems.add(inspectionManager.createProblemDescriptor(valueElement, reference.getRangeInElement(), cannotResolveSymbolMessage(params),
                                                            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, onTheFly,
@@ -300,12 +300,10 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
   private static class RemoveTagFix implements LocalQuickFix {
     private final String myTagName;
     private final CharSequence myParamName;
-    private final PsiDocTag myTag;
 
-    public RemoveTagFix(String tagName, CharSequence paramName, PsiDocTag tag) {
+    public RemoveTagFix(String tagName, CharSequence paramName) {
       myTagName = tagName;
       myParamName = paramName;
-      myTag = tag;
     }
 
     @NotNull
@@ -319,6 +317,8 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
     }
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiDocTag myTag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiDocTag.class);
+      if (myTag == null) return;
       myTag.delete();
     }
   }

@@ -225,9 +225,7 @@
       <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
       <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
       <action id="GotoTest" class="com.intellij.testIntegration.GotoTestOrCodeAction"/>
-      <action id="GotoRelated" class="com.intellij.ide.actions.GotoRelatedFileAction" text="_Related File">
-        <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift Q"/>
-      </action>
+      <action id="GotoRelated" class="com.intellij.ide.actions.GotoRelatedFileAction" text="_Related File"/>
       <separator/>
 
       <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="GoToErrorGroup"/>

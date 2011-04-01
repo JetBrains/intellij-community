@@ -7,7 +7,7 @@ class X {
         return foo(s, 2);
     }
 
-  def main() {
+    def main() {
     foo("a")
   }
 }

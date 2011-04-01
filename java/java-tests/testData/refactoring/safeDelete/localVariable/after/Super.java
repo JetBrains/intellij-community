@@ -1,5 +1,5 @@
 class Super {
     void foo() {
-        }
+    }
 
 }

@@ -331,7 +331,7 @@ public class JVMNameUtil {
     }
     final PsiFile positionFile = position.getFile();
     if (positionFile instanceof JspFile) {
-      return positionFile.getName() + ":" + position.getLine();
+      return positionFile.getName();
     }
 
     final PsiClass psiClass = getClassAt(position);
@@ -350,6 +350,10 @@ public class JVMNameUtil {
       }
     }
     if (psiClass == null) {
+      if (positionFile instanceof PsiClassOwner) {
+        return positionFile.getName();
+      }
+
       return DebuggerBundle.message("string.file.line.position", positionFile.getName(), position.getLine());
     }
     return calcClassDisplayName(psiClass);

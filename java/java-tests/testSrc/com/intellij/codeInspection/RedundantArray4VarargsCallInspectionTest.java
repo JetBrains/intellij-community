@@ -55,6 +55,10 @@ public class RedundantArray4VarargsCallInspectionTest extends UsefulTestCase {
     doTest();
   }
 
+  public void testRemoveTailingCommas() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.launchAction(assertOneElement(myFixture.filterAvailableIntentions(InspectionsBundle.message("inspection.redundant.array.creation.quickfix"))));

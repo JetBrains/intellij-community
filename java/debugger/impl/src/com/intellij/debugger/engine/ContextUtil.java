@@ -21,14 +21,12 @@ import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Location;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,72 +137,7 @@ public class ContextUtil {
 
   @Nullable
   public static PsiElement getContextElement(final SourcePosition position) {
-    if(position == null) {
-      return null;
-    }
-
-    return getContextElementInText(position.getFile(), position.getLine());
-  }
-
-  @Nullable
-  private static PsiElement getContextElementInText(PsiFile psiFile, int lineNumber) {
-    if(lineNumber < 0) {
-      return psiFile;
-    }
-
-    final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
-    if (document == null) {
-      return null;
-    }
-    if (lineNumber >= document.getLineCount()) {
-      return psiFile;
-    }
-    int startOffset = document.getLineStartOffset(lineNumber);
-    if(startOffset == -1) {
-      return null;
-    }
-
-    PsiElement element;
-
-    PsiElement rootElement = psiFile;
-
-    List<PsiFile> allFiles = psiFile.getViewProvider().getAllFiles();
-    if (allFiles.size() > 1) { // jsp & gsp
-      PsiClassOwner owner = ContainerUtil.findInstance(allFiles, PsiClassOwner.class);
-      if (owner != null) {
-        PsiClass[] classes = owner.getClasses();
-        if (classes.length == 1 && classes[0]  instanceof SyntheticElement) {
-          rootElement = classes[0];
-        }
-      }
-    }
-
-    //final PsiElement rootElement = JspPsiUtil.isInJspFile(psiFile) ? (JspPsiUtil.getJspFile(psiFile)).getJavaClass() : psiFile;
-
-    while(true) {
-      final CharSequence charsSequence = document.getCharsSequence();
-      for (; startOffset < charsSequence.length(); startOffset++) {
-        char c = charsSequence.charAt(startOffset);
-        if (c != ' ' && c != '\t') {
-          break;
-        }
-      }
-      element = rootElement.findElementAt(startOffset);
-
-      if(element instanceof PsiComment) {
-        startOffset = element.getTextRange().getEndOffset() + 1;
-      }
-      else{
-        break;
-      }
-    }
-
-    if (element != null && element.getParent() instanceof PsiForStatement) {
-      return ((PsiForStatement)element.getParent()).getInitialization();
-    }
-    else {
-      return element;
-    }
+    return position == null ? null :position.getElementAt();
   }
 
   public static boolean isJspImplicit(PsiElement element) {

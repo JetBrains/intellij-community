@@ -21,15 +21,16 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.*;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -107,29 +108,7 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
           if (tag instanceof HtmlTag) {
             return; // it is legal to have html / head / body omitted
           }
-          final LocalQuickFix localQuickFix = new LocalQuickFix() {
-            @NotNull
-            public String getName() {
-              return XmlBundle.message("change.root.element.to", doctype.getNameElement().getText());
-            }
-
-            @NotNull
-            public String getFamilyName() {
-              return getName();
-            }
-
-            public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-              if (!CodeInsightUtilBase.prepareFileForWrite(tag.getContainingFile())) {
-                return;
-              }
-
-              new WriteCommandAction(project) {
-                protected void run(final Result result) throws Throwable {
-                  tag.setName(doctype.getNameElement().getText());
-                }
-              }.execute();
-            }
-          };
+          final LocalQuickFix localQuickFix = new MyLocalQuickFix(doctype.getNameElement().getText());
 
           holder.registerProblem(XmlChildRole.START_TAG_NAME_FINDER.findChild(tag.getNode()).getPsi(),
             XmlErrorMessages.message("wrong.root.element"),
@@ -145,6 +124,38 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
           }
         }
       }
+    }
+  }
+
+  private static class MyLocalQuickFix implements LocalQuickFix {
+    private final String myText;
+
+    public MyLocalQuickFix(String text) {
+      myText = text;
+    }
+
+    @NotNull
+    public String getName() {
+      return XmlBundle.message("change.root.element.to", myText);
+    }
+
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
+
+    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+      final XmlTag myTag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), XmlTag.class);
+
+      if (!CodeInsightUtilBase.prepareFileForWrite(myTag.getContainingFile())) {
+        return;
+      }
+
+      new WriteCommandAction(project) {
+        protected void run(final Result result) throws Throwable {
+          myTag.setName(myText);
+        }
+      }.execute();
     }
   }
 }

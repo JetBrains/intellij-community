@@ -44,7 +44,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   private final ContentFilter myContentFilter;
   private final ProjectFileExclusionManager myFileExclusionManager;
 
-  public ProjectFileIndexImpl(Project project, DirectoryIndex directoryIndex, FileTypeManager fileTypeManager) {
+  public ProjectFileIndexImpl(@NotNull Project project, @NotNull DirectoryIndex directoryIndex, @NotNull FileTypeManager fileTypeManager) {
     myProject = project;
 
     myDirectoryIndex = directoryIndex;
@@ -157,10 +157,10 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   }
 
   public boolean isContentJavaSourceFile(@NotNull VirtualFile file) {
-    if (file.isDirectory()) return false;
-    if (myFileTypeManager.getFileTypeByFile(file) != StdFileTypes.JAVA) return false;
-    if (myFileTypeManager.isFileIgnored(file)) return false;
-    return isInSourceContent(file);
+    return !file.isDirectory() &&
+           myFileTypeManager.getFileTypeByFile(file) == StdFileTypes.JAVA &&
+           !myFileTypeManager.isFileIgnored(file) &&
+           isInSourceContent(file);
   }
 
   public boolean isLibraryClassFile(@NotNull VirtualFile file) {
@@ -175,8 +175,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   public boolean isInSource(@NotNull VirtualFile fileOrDir) {
     if (fileOrDir.isDirectory()) {
       DirectoryInfo info = getInfoForDirectory(fileOrDir);
-      if (info == null) return false;
-      return info.isInModuleSource || info.isInLibrarySource;
+      return info != null && (info.isInModuleSource || info.isInLibrarySource);
     }
     else {
       VirtualFile parent = fileOrDir.getParent();
@@ -246,8 +245,8 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
         return info != null && info.module != null;
       }
       else {
-        if (myFileExclusionManager != null && myFileExclusionManager.isExcluded(file)) return false;
-        return !myFileTypeManager.isFileIgnored(file);
+        return (myFileExclusionManager == null || !myFileExclusionManager.isExcluded(file))
+               && !myFileTypeManager.isFileIgnored(file);
       }
     }
   }

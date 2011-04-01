@@ -138,7 +138,7 @@ public abstract class AbstractInplaceIntroducer extends VariableInplaceIntroduce
                                                          Comparing.strEqual(psiVariable.getName(), ((PsiReferenceExpression)expression).getReferenceName()))) {
       return (PsiExpression)expression.replace(elementFactory.createExpressionFromText(exprText, psiVariable));
     }
-    return null;
+    return expression != null && expression.isValid() && expression.getText().equals(exprText) ? expression : null;
   }
 
   protected abstract class VisibilityListener implements ChangeListener {

@@ -41,7 +41,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
   private final Storage myOffset2weight = new Storage();
 
   @Override
-  public int calculateWrapPosition(@NotNull CharSequence text,
+  public int calculateWrapPosition(@NotNull Document document,
                                    int startOffset,
                                    int endOffset,
                                    int maxPreferredOffset,
@@ -53,6 +53,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
 
     myOffset2weight.clear();
     myOffset2weight.anchor = startOffset;
+    CharSequence text = document.getCharsSequence();
 
     // Normalization.
     int maxPreferredOffsetToUse = maxPreferredOffset >= endOffset ? endOffset - 1 : maxPreferredOffset;

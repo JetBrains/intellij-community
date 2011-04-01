@@ -89,8 +89,8 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       }
     });
     for (FilePath contentRoot : contentRoots) {
-      if (progressIndicator != null && progressIndicator.isCanceled()) {
-        throw new ProcessCanceledException();
+      if (progressIndicator != null) {
+        progressIndicator.checkCanceled();
       }
       final File ioRoot = contentRoot.getIOFile();
       if (! ((SvnUpdateContext)context.get()).shouldRunFor(ioRoot)) continue; 

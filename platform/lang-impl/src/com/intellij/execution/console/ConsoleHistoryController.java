@@ -29,8 +29,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actions.ContentChooser;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Disposer;
@@ -120,9 +120,9 @@ public class ConsoleHistoryController {
       myHistoryNext.registerCustomShortcutSet(KeyEvent.VK_UP, 0, null);
       myHistoryPrev.registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, null);
     }
-    myHistoryNext.registerCustomShortcutSet(myHistoryNext.getShortcutSet(), myConsole.getConsoleEditor().getComponent());
-    myHistoryPrev.registerCustomShortcutSet(myHistoryPrev.getShortcutSet(), myConsole.getConsoleEditor().getComponent());
-    myBrowseHistory.registerCustomShortcutSet(myBrowseHistory.getShortcutSet(), myConsole.getConsoleEditor().getComponent());
+    myHistoryNext.registerCustomShortcutSet(myHistoryNext.getShortcutSet(), myConsole.getCurrentEditor().getComponent());
+    myHistoryPrev.registerCustomShortcutSet(myHistoryPrev.getShortcutSet(), myConsole.getCurrentEditor().getComponent());
+    myBrowseHistory.registerCustomShortcutSet(myBrowseHistory.getShortcutSet(), myConsole.getCurrentEditor().getComponent());
   }
 
   private File getFile() {
@@ -214,12 +214,13 @@ public class ConsoleHistoryController {
   }
 
   protected void actionTriggered(final String command) {
-    final Editor editor = myConsole.getConsoleEditor();
+    final Editor editor = myConsole.getCurrentEditor();
     final Document document = editor.getDocument();
     new WriteCommandAction(myConsole.getProject(), myConsole.getFile()) {
       protected void run(final Result result) throws Throwable {
         document.setText(StringUtil.notNullize(command));
         editor.getCaretModel().moveToOffset(document.getTextLength());
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
     }.execute();
   }
@@ -247,7 +248,7 @@ public class ConsoleHistoryController {
   }
 
   private boolean canMoveInEditor(final boolean next) {
-    final EditorEx consoleEditor = myConsole.getConsoleEditor();
+    final Editor consoleEditor = myConsole.getCurrentEditor();
     final Document document = consoleEditor.getDocument();
     final CaretModel caretModel = consoleEditor.getCaretModel();
 
@@ -283,7 +284,7 @@ public class ConsoleHistoryController {
   }
 
   private void saveHistory(final XmlSerializer out) throws IOException {
-    out.startDocument(null, null);
+    out.startDocument(System.getProperty("file.encoding"), null);
     out.startTag(null, "console-history");
     out.attribute(null, "id", myId);
     for (String s : myModel.getHistory()) {

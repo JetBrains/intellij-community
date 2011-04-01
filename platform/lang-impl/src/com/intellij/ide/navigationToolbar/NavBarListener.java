@@ -16,6 +16,8 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ProjectTopics;
+import com.intellij.ide.actions.CopyAction;
+import com.intellij.ide.actions.CutAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.project.Project;
@@ -238,13 +240,19 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
   }
   @Override
   public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-    if (!(action instanceof PopupAction)) {
-      if (myPanel.isInFloatingMode()) {
-        myPanel.hideHint();
-      } else {
-        myPanel.cancelPopup();
-      }
+    if (shouldSkipAction(action)) return;
+
+    if (myPanel.isInFloatingMode()) {
+      myPanel.hideHint();
+    } else {
+      myPanel.cancelPopup();
     }
+  }
+
+  private static boolean shouldSkipAction(AnAction action) {
+    return action instanceof PopupAction
+           || action instanceof CopyAction
+           || action instanceof CutAction;
   }
 
   //---- Ignored

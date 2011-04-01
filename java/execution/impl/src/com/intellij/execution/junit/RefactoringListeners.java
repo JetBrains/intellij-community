@@ -24,6 +24,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import org.jetbrains.annotations.NotNull;
 
 public class RefactoringListeners {
@@ -86,7 +87,8 @@ public class RefactoringListeners {
     }
   }
 
-  private static abstract class RenameElement<T extends PsiElement> extends RefactoringElementAdapter {
+  private static abstract class RenameElement<T extends PsiElement> extends RefactoringElementAdapter
+                                                                    implements UndoRefactoringElementListener{
     private final Accessor<T> myAccessor;
     private final String myPath;
 
@@ -113,6 +115,11 @@ public class RefactoringListeners {
     protected abstract T findNewElement(T newParent, String qualifiedName);
 
     protected abstract String getQualifiedName(T element);
+
+    @Override
+    public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
+      myAccessor.setName(oldQualifiedName);
+    }
   }
 
   private static class RefactorPackage extends RenameElement<PsiPackage> {

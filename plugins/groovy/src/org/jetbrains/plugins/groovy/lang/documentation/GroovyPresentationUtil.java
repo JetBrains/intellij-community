@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -45,7 +46,7 @@ public class GroovyPresentationUtil {
       return builder.append(type.getPresentableText()).append(" ").append(parameter.getName()).toString();
     } else {
       builder.append(parameter.getName());
-      final Set<String> structural = new LinkedHashSet<String>();
+      final Set<String> structural = Collections.synchronizedSet(new LinkedHashSet<String>());
       ReferencesSearch.search(parameter).forEach(new Processor<PsiReference>() {
         public boolean process(PsiReference ref) {
           PsiElement parent = ref.getElement().getParent();

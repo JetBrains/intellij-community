@@ -101,7 +101,7 @@ public class InconsistentResourceBundleInspection extends DescriptorProviderInsp
   }
 
 
-  public void runInspection(AnalysisScope scope, final InspectionManager manager) {
+  public void runInspection(@NotNull AnalysisScope scope, @NotNull final InspectionManager manager) {
     final Set<ResourceBundle> visitedBundles = new THashSet<ResourceBundle>();
     scope.accept(new PsiRecursiveElementVisitor() {
       @Override public void visitFile(PsiFile file) {

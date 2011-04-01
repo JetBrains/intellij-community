@@ -50,7 +50,7 @@ public class CreateFileFix implements IntentionAction, LocalQuickFix {
   private final String myNewFileName;
   private final PsiDirectory myDirectory;
   private final String myText;
-  private @NotNull String myKey;
+  @NotNull private String myKey;
   private boolean myIsAvailable;
   private long myIsAvailableTimeStamp;
   private static final int REFRESH_INTERVAL = 1000;

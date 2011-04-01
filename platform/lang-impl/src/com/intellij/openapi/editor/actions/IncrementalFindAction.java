@@ -19,6 +19,7 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
+import com.intellij.find.FindUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -26,7 +27,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
 
@@ -49,10 +49,7 @@ public class IncrementalFindAction extends EditorAction {
           if (!myReplace) {
             headerComponent.requestFocus();
           }
-          if (myReplace != editorSearchComponent.getFindModel().isReplaceState()){
-            editorSearchComponent.getFindModel().setReplaceState(myReplace);
-          }
-          configureFindModel(editor, editorSearchComponent.getFindModel());
+          FindUtil.configureFindModel(myReplace, editor, editorSearchComponent.getFindModel());
         } else {
           FindManager findManager = FindManager.getInstance(project);
           FindModel model;
@@ -62,38 +59,12 @@ public class IncrementalFindAction extends EditorAction {
             model = new FindModel();
             model.copyFrom(findManager.getFindInFileModel());
           }
-          configureFindModel(editor, model);
+          FindUtil.configureFindModel(myReplace, editor, model);
           final EditorSearchComponent header = new EditorSearchComponent(editor, project, model);
           editor.setHeaderComponent(header);
           header.requestFocus();
         }
       }
-    }
-
-    private void configureFindModel(Editor editor, FindModel model) {
-      String selectedText = editor.getSelectionModel().getSelectedText();
-      if (selectedText != null) {
-        if (myReplace) {
-          if (!StringUtil.isEmpty(selectedText)) {
-            if (selectedText.indexOf('\n') >= 0) {
-              model.setGlobal(false);
-            }
-            else {
-              model.setStringToFind(selectedText);
-              model.setGlobal(true);
-            }
-          } else {
-            model.setGlobal(true);
-          }
-        } else {
-          model.setStringToFind(selectedText);
-        }
-
-        if (model.isGlobal()) {
-          model.setStringToFind(selectedText);
-        }
-      }
-      model.setPromptOnReplace(false);
     }
 
     public boolean isEnabled(Editor editor, DataContext dataContext) {

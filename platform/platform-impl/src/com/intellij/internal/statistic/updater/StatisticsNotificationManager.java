@@ -1,10 +1,12 @@
 package com.intellij.internal.statistic.updater;
 
+import com.apple.eawt.Application;
 import com.intellij.internal.statistic.connect.RemotelyConfigurableStatisticsService;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.configurable.StatisticsConfigurable;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -57,7 +59,12 @@ public class StatisticsNotificationManager {
           mySettings.setShowNotification(false);
           notification.expire();
 
-          myStatisticsService.send();
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            @Override
+            public void run() {
+               myStatisticsService.send();
+            }
+          });
         }
         else if ("decline".equals(description)) {
           mySettings.setAllowed(false);

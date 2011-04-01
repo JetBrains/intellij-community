@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
@@ -119,13 +120,7 @@ class CopyClassDialog extends DialogWrapper{
 
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
-    String qualifiedName = "";
-    if (myDefaultTargetDirectory != null) {
-      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(myDefaultTargetDirectory);
-      if (aPackage != null) {
-        qualifiedName = aPackage.getQualifiedName();
-      }
-    }
+    String qualifiedName = getQualifiedName();
 
     myTfPackage = new PackageNameReferenceEditorCombo(qualifiedName, myProject, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
     if (qualifiedName.length() > 0) {
@@ -155,6 +150,17 @@ class CopyClassDialog extends DialogWrapper{
     panel.add(myCbMoveToAnotherSourceFolder, gbConstraints);
 
     return panel;
+  }
+
+  protected String getQualifiedName() {
+    String qualifiedName = "";
+    if (myDefaultTargetDirectory != null) {
+      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(myDefaultTargetDirectory);
+      if (aPackage != null) {
+        qualifiedName = aPackage.getQualifiedName();
+      }
+    }
+    return qualifiedName;
   }
 
   public PsiDirectory getTargetDirectory() {

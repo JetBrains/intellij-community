@@ -17,9 +17,14 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoableAction;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -36,6 +41,7 @@ import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -166,8 +172,23 @@ public class RenameUtil {
   }
 
   public static void doRename(final PsiElement element, String newName, UsageInfo[] usages, final Project project,
-                              RefactoringElementListener listener) {
+                              final RefactoringElementListener listener) {
     final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
+    final String fqn = element instanceof PsiFile ? ((PsiFile)element).getVirtualFile().getPath() : CopyReferenceAction.elementToFqn(element);
+    if (fqn != null) {
+      UndoableAction action = new BasicUndoableAction() {
+        public void undo() throws UnexpectedUndoException {
+          if (listener instanceof UndoRefactoringElementListener) {
+            ((UndoRefactoringElementListener)listener).undoElementMovedOrRenamed(element, fqn);
+          }
+        }
+
+        @Override
+        public void redo() throws UnexpectedUndoException {
+        }
+      };
+      UndoManager.getInstance(project).undoableActionPerformed(action);
+    }
     try {
       processor.renameElement(element, newName, usages, listener);
     }

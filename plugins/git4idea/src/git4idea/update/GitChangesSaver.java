@@ -17,20 +17,19 @@ package git4idea.update;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
-import git4idea.GitVcs;
+import com.intellij.util.Consumer;
+import com.intellij.util.continuation.ContinuationContext;
 import git4idea.config.GitVcsSettings;
-import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,22 +99,10 @@ public abstract class GitChangesSaver {
 
   /**
    * Loads local changes from stash or shelf, and sorts the changes back to the change lists they were before update.
+   * @param context
    */
-  public void restoreLocalChanges() throws VcsException {
-    load();
-    myDirtyScopeManager.filePathsDirty(getChangedFiles(), null);
-    restoreChangeLists();
-  }
-
-  public void notifyLocalChangesAreNotRestored() {
-    if (wereChangesSaved()) {
-      LOG.info("Update is incomplete, changes are not restored");
-      Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Local changes were not restored",
-                                                "Before update your uncommitted changes were saved to <a href='saver'>" + getSaverName() + "</a><br/>" +
-                                                "Update is not complete, you have unresolved merges in your working tree<br/>" +
-                                                "Resolve conflicts, complete update and restore changes manually.", NotificationType.WARNING,
-                                                new ShowSavedChangesNotificationListener()));
-    }
+  public void restoreLocalChanges(ContinuationContext context) {
+    load(getRestoreListsRunnable(), context);
   }
 
   public List<LocalChangeList> getChangeLists() {
@@ -148,8 +135,10 @@ public abstract class GitChangesSaver {
 
   /**
    * Loads the changes - specific for chosen save strategy.
+   * @param restoreListsRunnable
+   * @param exceptionConsumer
    */
-  protected abstract void load() throws VcsException;
+  protected abstract void load(@Nullable Runnable restoreListsRunnable, ContinuationContext exceptionConsumer);
 
   /**
    * @return true if there were local changes to save.
@@ -166,28 +155,23 @@ public abstract class GitChangesSaver {
    */
   protected abstract void showSavedChanges();
 
-  // Move files back to theirs change lists
-  private void restoreChangeLists() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+  private Runnable getRestoreListsRunnable() {
+    return new Runnable() {
       public void run() {
-        myChangeManager.invokeAfterUpdate(new Runnable() {
-          public void run() {
-            if (myChangeLists == null) {
-              return;
-            }
-            LOG.info("restoreChangeLists " + myChangeLists);
-            for (LocalChangeList changeList : myChangeLists) {
-              final Collection<Change> changes = changeList.getChanges();
-              LOG.debug( "restoreProjectChangesAfterUpdate.invokeAfterUpdate changeList: " + changeList.getName() + " changes: " + changes.size());
-              if (!changes.isEmpty()) {
-                LOG.debug("After restoring files: moving " + changes.size() + " changes to '" + changeList.getName() + "'");
-                myChangeManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
-              }
-            }
+        if (myChangeLists == null) {
+          return;
+        }
+        LOG.info("restoreChangeLists " + myChangeLists);
+        for (LocalChangeList changeList : myChangeLists) {
+          final Collection<Change> changes = changeList.getChanges();
+          LOG.debug( "restoreProjectChangesAfterUpdate.invokeAfterUpdate changeList: " + changeList.getName() + " changes: " + changes.size());
+          if (!changes.isEmpty()) {
+            LOG.debug("After restoring files: moving " + changes.size() + " changes to '" + changeList.getName() + "'");
+            myChangeManager.moveChangesTo(changeList, changes.toArray(new Change[changes.size()]));
           }
-        }, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, GitBundle.getString("update.restoring.change.lists"), ModalityState.NON_MODAL);
+        }
       }
-    });
+    };
   }
 
   protected class ShowSavedChangesNotificationListener implements NotificationListener {

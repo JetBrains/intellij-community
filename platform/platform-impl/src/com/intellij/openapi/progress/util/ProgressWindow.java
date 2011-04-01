@@ -154,7 +154,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        // We know at least about one use-case the requires special treatment here: many short (in terms of time) progress tasks are
+        // We know at least about one use-case that requires special treatment here: many short (in terms of time) progress tasks are
         // executed in a small amount of time. Problem: UI blinks and looks ugly if we show progress dialog that disappears shortly
         // for each of them. Solution is to postpone the tasks of showing progress dialog. Hence, it will not be shown at all
         // if the task is already finished when the time comes.

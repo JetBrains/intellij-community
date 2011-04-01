@@ -243,7 +243,7 @@ public class TextChangesStorage {
       if (newChangeStart <= storedClientStart && newChangeEnd >= storedClientEnd) {
         myChanges.remove(i);
         insertionIndex = i;
-        newChangeEnd -= changeEntry.change.getText().length();
+        newChangeEnd -= changeEntry.change.getDiff();
         i--;
         continue;
       }

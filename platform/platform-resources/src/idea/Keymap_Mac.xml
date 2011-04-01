@@ -382,6 +382,9 @@
     <action id="GotoLine">
       <keyboard-shortcut first-keystroke="meta L"/>
     </action>
+    <action id="GotoRelated">
+      <keyboard-shortcut first-keystroke="control meta UP"/>
+    </action>
     <action id="QuickImplementations">
       <keyboard-shortcut first-keystroke="alt SPACE"/>
       <keyboard-shortcut first-keystroke="meta Y"/>

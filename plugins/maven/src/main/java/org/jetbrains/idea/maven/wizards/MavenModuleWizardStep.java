@@ -157,17 +157,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
         MavenArchetype info = getArchetypeInfoFromPathComponent(path.getLastPathComponent());
         return info.groupId + ":" + info.artifactId + ":" + info.version;
       }
-    }).setComparator(new SpeedSearchBase.SpeedSearchComparator(false) {
-      @Override
-      public void translateCharacter(StringBuilder buf, char ch) {
-        if (ch == '*') {
-          buf.append("(.)*");
-        }
-        else {
-          super.translateCharacter(buf, ch);
-        }
-      }
-    });
+    }).setComparator(new SpeedSearchBase.SpeedSearchComparator(false));
 
     myArchetypeDescriptionField.setEditable(false);
     myArchetypeDescriptionField.setBackground(UIUtil.getPanelBackground());

@@ -170,7 +170,7 @@ public class GitMergeUtil {
     action.delayTask(new TransactionRunnable() {
       public void run(List<VcsException> exceptionList) {
         ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
-        UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, actionInfo);
+        UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, actionInfo, false);
         tree.setBefore(beforeLabel);
         tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
       }

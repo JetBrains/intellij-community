@@ -55,7 +55,7 @@ public class ScopeToolState {
     myLevel = level;
   }
 
-  public ScopeToolState(String scopeName, InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
+  public ScopeToolState(String scopeName, @NotNull InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
     myScopeName = scopeName;
     myTool = tool;
     myEnabled = enabled;

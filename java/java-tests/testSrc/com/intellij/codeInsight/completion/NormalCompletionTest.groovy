@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 
 public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   @Override
@@ -115,6 +116,18 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testSimpleVariable() throws Exception { doTest() }
+
+  public void testMethodItemPresentation() {
+    configure()
+    def presentation = new LookupElementPresentation()
+    myItems[0].renderElement(presentation)
+    assert "equals" == presentation.itemText
+    assert "(Object anObject)" == presentation.tailText
+    assert "boolean" == presentation.typeText
+
+    assert !presentation.tailGrayed
+    assert presentation.itemTextBold
+  }
 
   public void testPreferLongerNamesOption() throws Exception {
     configureByFile("PreferLongerNamesOption.java");
@@ -696,8 +709,12 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testFinalInForLoop() throws Throwable {
     configure()
-    checkResultByFile(getTestName(false) + ".java")
-    assertOrderedEquals myFixture.lookupElementStrings, 'final'
+    assertStringItems 'final'
+  }
+
+  public void testFinalInForLoop2() throws Throwable {
+    configure()
+    assertStringItems 'final', 'finalize'
   }
 
   public void testPrimitiveTypesInForLoop() throws Throwable { doPrimitiveTypeTest() }

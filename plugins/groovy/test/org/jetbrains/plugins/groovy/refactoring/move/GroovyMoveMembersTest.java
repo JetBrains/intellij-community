@@ -103,7 +103,11 @@ public class GroovyMoveMembersTest extends LightCodeInsightFixtureTestCase {
     doTest("B", "A", 0);
   }
 
-  private void doTest(final String sourceClassName, final String targetClassName, final int... memberIndices) throws Exception {
+  public void testAliasedImported() {
+    doTest("A", "B", 0);
+  }
+
+  private void doTest(final String sourceClassName, final String targetClassName, final int... memberIndices) {
     final VirtualFile actualDir = myFixture.copyDirectoryToProject(getTestName(true) + "/before", "");
     //final VirtualFile expectedDir = LocalFileSystem.getInstance().findFileByPath(getTestDataPath() + getTestName(true) + "/after");
     final File expectedDir = new File(getTestDataPath() + getTestName(true) + "/after");
@@ -111,7 +115,7 @@ public class GroovyMoveMembersTest extends LightCodeInsightFixtureTestCase {
     GroovyMoveClassTest.assertDirsEquals(expectedDir, actualDir);
   }
 
-  private void performAction(String sourceClassName, String targetClassName, int[] memberIndices) throws Exception {
+  private void performAction(String sourceClassName, String targetClassName, int[] memberIndices) {
     GrTypeDefinition sourceClass = (GrTypeDefinition)myFixture.getJavaFacade().findClass(sourceClassName, ProjectScope.getProjectScope(myFixture.getProject()));
     assertNotNull("Class " + sourceClassName + " not found", sourceClass);
     GrTypeDefinition targetClass = (GrTypeDefinition)myFixture.getJavaFacade().findClass(targetClassName, ProjectScope.getProjectScope(myFixture.getProject()));

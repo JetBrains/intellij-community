@@ -26,15 +26,13 @@ public class ConsoleHistoryModel implements ModificationTracker {
       if (myHistory.size() >= myMaxHistorySize) {
         myHistory.removeLast();
       }
-      else {
-        myHistory.addFirst(statement);
-      }
+      myHistory.addFirst(statement);
     }
   }
 
   public void removeFromHistory(final String statement) {
     synchronized (myHistory) {
-      myModificationTracker ++;
+      myModificationTracker++;
       myHistoryCursor = -1;
       myHistory.remove(statement);
     }
@@ -67,7 +65,7 @@ public class ConsoleHistoryModel implements ModificationTracker {
   @Nullable
   public String getHistoryNext() {
     synchronized (myHistory) {
-      if (myHistoryCursor < myHistory.size()-1) {
+      if (myHistoryCursor < myHistory.size() - 1) {
         return myHistory.get(++myHistoryCursor);
       }
       else {
@@ -92,7 +90,7 @@ public class ConsoleHistoryModel implements ModificationTracker {
 
   public boolean hasHistory(final boolean next) {
     synchronized (myHistory) {
-      return next? myHistoryCursor <= myHistory.size() - 1 : myHistoryCursor >= 0;
+      return next ? myHistoryCursor <= myHistory.size() - 1 : myHistoryCursor >= 0;
     }
   }
 

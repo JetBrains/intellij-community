@@ -135,7 +135,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
       new RunContentDescriptor(myConsoleView, myProcessHandler, panel, constructConsoleTitle(myConsoleTitle));
 
 // tool bar actions
-    final AnAction[] actions = fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
+    final List<AnAction> actions = fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
     registerActionShortcuts(actions, getLanguageConsole().getConsoleEditor().getComponent());
     registerActionShortcuts(actions, panel);
     panel.updateUI();
@@ -202,7 +202,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
 
   protected abstract OSProcessHandler createProcessHandler(final Process process, final String commandLine);
 
-  public static void registerActionShortcuts(final AnAction[] actions, final JComponent component) {
+  public static void registerActionShortcuts(final List<AnAction> actions, final JComponent component) {
     for (AnAction action : actions) {
       if (action.getShortcutSet() != null) {
         action.registerCustomShortcutSet(action.getShortcutSet(), component);
@@ -210,9 +210,9 @@ public abstract class AbstractConsoleRunnerWithHistory {
     }
   }
 
-  protected AnAction[] fillToolBarActions(final DefaultActionGroup toolbarActions,
-                                          final Executor defaultExecutor,
-                                          final RunContentDescriptor contentDescriptor) {
+  protected List<AnAction> fillToolBarActions(final DefaultActionGroup toolbarActions,
+                                              final Executor defaultExecutor,
+                                              final RunContentDescriptor contentDescriptor) {
 
     List<AnAction> actionList = Lists.newArrayList();
 
@@ -230,11 +230,9 @@ public abstract class AbstractConsoleRunnerWithHistory {
 // Help
     actionList.add(CommonActionsManager.getInstance().createHelpAction("interactive_console"));
 
-    AnAction[] actions = actionList.toArray(new AnAction[actionList.size()]);
+    toolbarActions.addAll(actionList);
 
-    toolbarActions.addAll(actions);
-
-    return actions;
+    return actionList;
   }
 
   protected AnAction createCloseAction(final Executor defaultExecutor, final RunContentDescriptor myDescriptor) {
@@ -250,8 +248,8 @@ public abstract class AbstractConsoleRunnerWithHistory {
   }
 
   public static AnAction createConsoleExecAction(final LanguageConsoleImpl languageConsole,
-                                                       final ProcessHandler processHandler,
-                                                       final ConsoleExecuteActionHandler consoleExecuteActionHandler) {
+                                                 final ProcessHandler processHandler,
+                                                 final ConsoleExecuteActionHandler consoleExecuteActionHandler) {
     return new ConsoleExecuteAction(languageConsole, processHandler, consoleExecuteActionHandler);
   }
 

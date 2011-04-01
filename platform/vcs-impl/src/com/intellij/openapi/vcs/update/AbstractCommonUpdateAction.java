@@ -42,13 +42,12 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesAdapter;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.changes.committed.IntoSelfVirtualFileConvertor;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsDialog;
@@ -388,10 +387,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         }
       } finally {
         try {
-          if (progressIndicator != null) {
-            progressIndicator.setText(VcsBundle.message("progress.text.synchronizing.files"));
-            progressIndicator.setText2("");
-          }
+          ProgressManager.progress(VcsBundle.message("progress.text.synchronizing.files"));
           doVfsRefresh();
         } finally {
           if (myProject.isOpen() && (! myProject.isDisposed())) { // not sure
@@ -468,13 +464,13 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     public void onSuccess() {
       try {
-        onSuccessImpl();
+        onSuccessImpl(false);
       } finally {
         releaseIfNeeded();
       }
     }
 
-    private void onSuccessImpl() {
+    private void onSuccessImpl(final boolean wasCanceled) {
       if ((! myProject.isOpen()) || myProject.isDisposed()) {
         ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
         return;
@@ -485,11 +481,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
       final boolean continueChainFinal = continueChain;
 
-      final boolean someSessionWasCancelled = someSessionWasCanceled(myUpdateSessions);
-      if (! someSessionWasCancelled) {
-        for (final UpdateSession updateSession : myUpdateSessions) {
-          updateSession.onRefreshFilesCompleted();
-        }
+      final boolean someSessionWasCancelled = wasCanceled || someSessionWasCanceled(myUpdateSessions);
+      for (final UpdateSession updateSession : myUpdateSessions) {
+        updateSession.onRefreshFilesCompleted();
       }
 
       if (myActionInfo.canChangeFileStatus()) {
@@ -510,8 +504,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
       final boolean updateSuccess = (! someSessionWasCancelled) && (myGroupedExceptions.isEmpty());
 
-      if (! someSessionWasCancelled) {
-        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
           public void run() {
             if (myProject.isDisposed()) {
               ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
@@ -522,22 +515,23 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
                 gatherContextInterruptedMessages();
               }
               AbstractVcsHelper.getInstance(myProject).showErrors(myGroupedExceptions, VcsBundle.message("message.title.vcs.update.errors",
-                                                                                                     getTemplatePresentation().getText()));
-            }
-            else {
-              final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-              if (indicator != null) {
-                indicator.setText(VcsBundle.message("progress.text.updating.done"));
-              }
+                                                                                                         getTemplatePresentation().getText()));
+            } else if (someSessionWasCancelled) {
+              ProgressManager.progress(VcsBundle.message("progress.text.updating.canceled"));
+            } else {
+              ProgressManager.progress(VcsBundle.message("progress.text.updating.done"));
             }
 
             final boolean noMerged = myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_CONFLICT_ID).isEmpty();
             if (myUpdatedFiles.isEmpty() && myGroupedExceptions.isEmpty()) {
-              ToolWindowManager.getInstance(myProject).notifyByBalloon(
-                ChangesViewContentManager.TOOLWINDOW_ID, MessageType.INFO, getAllFilesAreUpToDateMessage(myRoots));
+              if (someSessionWasCancelled) {
+                VcsBalloonProblemNotifier.showOverChangesView(myProject, VcsBundle.message("progress.text.updating.canceled"), MessageType.WARNING);
+              } else {
+                VcsBalloonProblemNotifier.showOverChangesView(myProject, getAllFilesAreUpToDateMessage(myRoots), MessageType.INFO);
+              }
             }
             else if (! myUpdatedFiles.isEmpty()) {
-              showUpdateTree(continueChainFinal && updateSuccess && noMerged);
+              showUpdateTree(continueChainFinal && updateSuccess && noMerged, someSessionWasCancelled);
 
               final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
               cache.processUpdatedFiles(myUpdatedFiles);
@@ -556,11 +550,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
             }
           }
         }, null, myProject);
-      } else if (continueChain) {
-        // since error
-        showContextInterruptedError();
-        ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
-      }
     }
 
     private void showContextInterruptedError() {
@@ -578,11 +567,11 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
     }
 
-    private void showUpdateTree(final boolean willBeContinued) {
+    private void showUpdateTree(final boolean willBeContinued, final boolean wasCanceled) {
       RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(myProject);
       restoreUpdateTree.registerUpdateInformation(myUpdatedFiles, myActionInfo);
       final String text = getTemplatePresentation().getText() + ((willBeContinued || (myUpdateNumber > 1)) ? ("#" + myUpdateNumber) : "");
-      final UpdateInfoTree updateInfoTree = myProjectLevelVcsManager.showUpdateProjectInfo(myUpdatedFiles, text, myActionInfo);
+      final UpdateInfoTree updateInfoTree = myProjectLevelVcsManager.showUpdateProjectInfo(myUpdatedFiles, text, myActionInfo, wasCanceled);
 
       updateInfoTree.setBefore(myBefore);
       updateInfoTree.setAfter(myAfter);
@@ -603,7 +592,11 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
 
     public void onCancel() {
-      onSuccess();
+      try {
+        onSuccessImpl(true);
+      } finally {
+        releaseIfNeeded();
+      }
     }
   }
 }

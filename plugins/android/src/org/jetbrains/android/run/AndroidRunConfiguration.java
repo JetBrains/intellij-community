@@ -119,6 +119,11 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
         public void elementRenamedOrMoved(@NotNull PsiElement newElement) {
           ACTIVITY_CLASS = ((PsiClass)newElement).getQualifiedName();
         }
+
+        @Override
+        public void undoElementMovedOrRenamed(@NotNull PsiElement newElement, @NotNull String oldQualifiedName) {
+          ACTIVITY_CLASS = oldQualifiedName;
+        }
       };
     }
     return null;

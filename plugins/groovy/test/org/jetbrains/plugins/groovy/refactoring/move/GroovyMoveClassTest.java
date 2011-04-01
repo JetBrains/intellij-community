@@ -126,6 +126,14 @@ public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
     doTest("twoClasses", new String[] {"p1.C1", "p1.C2"}, "p2");
   }
 
+  public void testStaticImport() {
+    doTest("staticImport", new String[] {"p1.C1"}, "p2");
+  }
+
+  public void testAliasImported() {
+    doTest("aliasImported", new String[]{"p1.C1"}, "p2");
+  }
+
   private void performAction(String[] classNames, String newPackageName) {
     final PsiClass[] classes = new PsiClass[classNames.length];
     for (int i = 0; i < classes.length; i++) {

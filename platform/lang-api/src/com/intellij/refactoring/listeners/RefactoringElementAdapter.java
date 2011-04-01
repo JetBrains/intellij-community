@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public abstract class RefactoringElementAdapter implements RefactoringElementListener {
+public abstract class RefactoringElementAdapter implements RefactoringElementListener, UndoRefactoringElementListener {
   @Override
   public final void elementMoved(@NotNull PsiElement newElement) {
     elementRenamedOrMoved(newElement);

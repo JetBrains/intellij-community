@@ -226,9 +226,13 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
   @Override
   @Nullable
   public XDebugSession getDebugSession(@NotNull ExecutionConsole executionConsole) {
-    for (final XDebugSession debuggerSession : getDebugSessions()) {
-      if (executionConsole == debuggerSession.getRunContentDescriptor().getExecutionConsole()) {
-        return debuggerSession;
+    for (final XDebugSessionImpl debuggerSession : mySessions.values()) {
+      XDebugSessionTab sessionTab = debuggerSession.getSessionTab();
+      if (sessionTab != null) {
+        RunContentDescriptor contentDescriptor = sessionTab.getRunContentDescriptor();
+        if (contentDescriptor != null && executionConsole == contentDescriptor.getExecutionConsole()) {
+          return debuggerSession;
+        }
       }
     }
     return null;

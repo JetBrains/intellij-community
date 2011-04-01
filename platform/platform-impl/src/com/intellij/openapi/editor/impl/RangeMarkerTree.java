@@ -101,9 +101,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
 
   @Override
   protected void checkBelongsToTheTree(T interval, boolean assertInvalid) {
-    if (!VERIFY) return;
     assert ((RangeMarkerImpl)interval).myDocument == myDocument;
-
     super.checkBelongsToTheTree(interval, assertInvalid);
   }
 

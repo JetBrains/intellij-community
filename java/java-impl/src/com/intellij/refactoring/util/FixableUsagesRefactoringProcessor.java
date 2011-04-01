@@ -27,6 +27,7 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringProcessor {
@@ -56,7 +57,7 @@ public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringP
 
   @NotNull
   protected final UsageInfo[] findUsages() {
-    final List<FixableUsageInfo> usages = new ArrayList<FixableUsageInfo>();
+    final List<FixableUsageInfo> usages = Collections.synchronizedList(new ArrayList<FixableUsageInfo>());
     findUsages(usages);
     final int numUsages = usages.size();
     final FixableUsageInfo[] usageArray = usages.toArray(new FixableUsageInfo[numUsages]);

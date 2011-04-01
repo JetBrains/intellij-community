@@ -19,11 +19,9 @@ package org.jetbrains.plugins.groovy.codeInspection.assignment;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.MultiMapBasedOnSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +34,6 @@ import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -59,9 +56,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -221,22 +216,32 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
       GrCodeReferenceElement refElement = newExpression.getReferenceElement();
       if (refElement == null) return;
-      final PsiElement element = refElement.resolve();
-      if (element instanceof PsiClass) {
-        PsiClass clazz = (PsiClass)element;
-        if (clazz.hasModifierProperty(GrModifier.ABSTRACT)) {
-          return;
-        }
-      }
+
+      final GrArgumentList argList = newExpression.getArgumentList();
 
       final GroovyResolveResult constructorResolveResult = newExpression.resolveConstructorGenerics();
       final PsiElement constructor = constructorResolveResult.getElement();
       if (constructor != null) {
-        final GrArgumentList argList = newExpression.getArgumentList();
         if (argList == null ||
             argList.getExpressionArguments().length != 0 ||
             ((PsiMethod)constructor).getParameterList().getParametersCount() != 0) {
           checkMethodApplicability(constructorResolveResult, refElement);
+        }
+      }
+      else {
+        final GroovyResolveResult[] results = newExpression.multiResolveConstructor();
+        if (results.length > 0) {
+          for (GroovyResolveResult result : results) {
+            PsiElement resolved = result.getElement();
+            if (resolved instanceof PsiMethod) {
+              if (!checkMethodApplicability(result, refElement)) return;
+            }
+          }
+
+          String message = GroovyBundle.message("method.call.is.ambiguous");
+          PsiElement elementToHighlight = argList;
+          if (elementToHighlight == null || elementToHighlight.getTextLength() == 0) elementToHighlight = refElement;
+          registerError(elementToHighlight, message);
         }
       }
     }

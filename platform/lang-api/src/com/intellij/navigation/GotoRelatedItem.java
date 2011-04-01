@@ -15,25 +15,51 @@
  */
 package com.intellij.navigation;
 
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.NavigatablePsiElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.PsiNavigateUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
-public abstract class GotoRelatedItem {
+public class GotoRelatedItem {
+  private final PsiElement myElement;
 
-  public abstract void navigate();
+  public GotoRelatedItem(@NotNull PsiElement element) {
+    myElement = element;
+  }
+
+  public void navigate() {
+    PsiNavigateUtil.navigate(myElement);
+  }
+
+  @Nullable
+  public String getCustomName() {
+    return null;
+  }
+
+  @Nullable
+  public Icon getCustomIcon() {
+    return null;
+  }
 
   @NotNull
-  public abstract String getText();
+  public PsiElement getElement() {
+    return myElement;
+  }
 
-  @Nullable
-  public abstract Icon getIcon();
-
-  @Nullable
-  public abstract PsiFile getContainingFile();
+  public static List<GotoRelatedItem> createItems(@NotNull Collection<? extends NavigatablePsiElement> elements) {
+    List<GotoRelatedItem> items = new ArrayList<GotoRelatedItem>(elements.size());
+    for (NavigatablePsiElement element : elements) {
+      items.add(new GotoRelatedItem(element));
+    }
+    return items;
+  }
 }

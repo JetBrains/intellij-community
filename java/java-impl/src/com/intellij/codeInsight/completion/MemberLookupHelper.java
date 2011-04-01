@@ -57,7 +57,7 @@ public class MemberLookupHelper {
 
     final String qname = myContainingClass == null ? "" : myContainingClass.getQualifiedName();
     String pkg = qname == null ? "" : StringUtil.getPackageName(qname);
-    String location = StringUtil.isEmpty(pkg) ? "" : " (" + pkg + ")";
+    String location = Boolean.FALSE.equals(qualify) || StringUtil.isEmpty(pkg) ? "" : " (" + pkg + ")";
 
     final String params = myMergedOverloads
                           ? "(...)"

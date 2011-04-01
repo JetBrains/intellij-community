@@ -84,13 +84,15 @@ class AnchorElementInfo extends SelfElementInfo {
 
   @Override
   public void fastenBelt(int offset) {
-    PsiElement element = restoreElement();
-    if (element != null) {
-      // switch to tree
-      stubId = -1;
-      myStubElementType = null;
-      PsiElement anchor = AnchorElementInfoFactory.getAnchor(element);
-      setRange((anchor == null ? element : anchor).getTextRange());
+    if (stubId != -1) {
+      PsiElement element = restoreElement();
+      if (element != null) {
+        // switch to tree
+        stubId = -1;
+        myStubElementType = null;
+        PsiElement anchor = AnchorElementInfoFactory.getAnchor(element);
+        setRange((anchor == null ? element : anchor).getTextRange());
+      }
     }
     super.fastenBelt(offset);
   }
