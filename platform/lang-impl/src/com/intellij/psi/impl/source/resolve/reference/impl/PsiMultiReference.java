@@ -141,7 +141,12 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   }
 
   public boolean isSoft(){
-    return false;
+    for (PsiReference reference : getReferences()) {
+      if (!reference.isSoft()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @NotNull
