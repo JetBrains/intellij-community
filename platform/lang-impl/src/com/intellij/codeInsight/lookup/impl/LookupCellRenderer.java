@@ -21,7 +21,6 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
 import com.intellij.codeInsight.lookup.RealLookupElementPresentation;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.TextRange;
@@ -42,8 +41,8 @@ import java.awt.*;
 
 public class LookupCellRenderer implements ListCellRenderer {
   private Icon myEmptyIcon = EmptyIcon.create(5);
-  private final Font NORMAL_FONT;
-  private final Font BOLD_FONT;
+  private final Font myNormalFont;
+  private final Font myBoldFont;
   private final FontMetrics myNormalMetrics;
   private final FontMetrics myBoldMetrics;
   private final int myMaxWidth;
@@ -73,9 +72,9 @@ public class LookupCellRenderer implements ListCellRenderer {
   private static final String ELLIPSIS = "\u2026";
 
   public LookupCellRenderer(LookupImpl lookup) {
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    NORMAL_FONT = scheme.getFont(EditorFontType.PLAIN);
-    BOLD_FONT = scheme.getFont(EditorFontType.BOLD);
+    EditorColorsScheme scheme = lookup.getEditor().getColorsScheme();
+    myNormalFont = scheme.getFont(EditorFontType.PLAIN);
+    myBoldFont = scheme.getFont(EditorFontType.BOLD);
 
     myLookup = lookup;
     myNameComponent = new MySimpleColoredComponent();
@@ -83,11 +82,11 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     myTailComponent = new MySimpleColoredComponent();
     myTailComponent.setIpad(new Insets(0, 0, 0, 0));
-    myTailComponent.setFont(NORMAL_FONT);
+    myTailComponent.setFont(myNormalFont);
 
     myTypeLabel = new MySimpleColoredComponent();
     myTypeLabel.setIpad(new Insets(0, 0, 0, 0));
-    myTypeLabel.setFont(NORMAL_FONT);
+    myTypeLabel.setFont(myNormalFont);
 
     myPanel = new LookupPanel();
     myPanel.add(myNameComponent, BorderLayout.WEST);
@@ -97,8 +96,8 @@ public class LookupCellRenderer implements ListCellRenderer {
     myPanel.add(myTypeLabel, BorderLayout.EAST);
     myTypeLabel.setBorder(new EmptyBorder(0, 0, 0, 6));
 
-    myNormalMetrics = myLookup.getEditor().getComponent().getFontMetrics(NORMAL_FONT);
-    myBoldMetrics = myLookup.getEditor().getComponent().getFontMetrics(BOLD_FONT);
+    myNormalMetrics = myLookup.getEditor().getComponent().getFontMetrics(myNormalFont);
+    myBoldMetrics = myLookup.getEditor().getComponent().getFontMetrics(myBoldFont);
     myMaxWidth = myNormalMetrics.stringWidth(StringUtil.repeatSymbol('W', MAX_LENGTH));
 
     UIUtil.removeQuaquaVisualMarginsIn(myPanel);
@@ -221,7 +220,7 @@ public class LookupCellRenderer implements ListCellRenderer {
   private int setItemTextLabel(LookupElement item, final Color foreground, final boolean selected, LookupElementPresentation presentation, int allowedWidth) {
     boolean bold = presentation.isItemTextBold();
 
-    myNameComponent.setFont(bold ? BOLD_FONT : NORMAL_FONT);
+    myNameComponent.setFont(bold ? myBoldFont : myNormalFont);
 
     int style = bold ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN;
     if (presentation.isStrikeout()) {
