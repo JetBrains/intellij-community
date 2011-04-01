@@ -218,10 +218,12 @@ public class TypesUtil {
       return false;
     }
 
+    if (rType == PsiType.NULL && lType instanceof PsiPrimitiveType) return false;
+
     if (allowConversion) {
       //all numeric types are assignable
       if (isNumericType(lType)) {
-        return isNumericType(rType) || rType.equals(PsiType.NULL);
+        return isNumericType(rType) || rType == PsiType.NULL;
       }
       else if (typeEqualsToText(lType, JAVA_LANG_STRING)) {
         return true;
@@ -278,6 +280,8 @@ public class TypesUtil {
       if (typeEqualsToText(rType, JAVA_MATH_BIG_DECIMAL)) rType = PsiType.DOUBLE;
     }
     else {
+      if (rType == PsiType.NULL && lType instanceof PsiPrimitiveType) return false;
+
       rType = boxPrimitiveType(rType, manager, scope);
       lType = boxPrimitiveType(lType, manager, scope);
     }

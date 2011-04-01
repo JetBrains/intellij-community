@@ -20,3 +20,5 @@ y.y="abc";
 String s=y.y;
 print y;
 
+int xxx = <warning descr="Cannot assign 'null' to 'int'">null</warning>
+char ccc = <warning descr="Cannot assign 'null' to 'char'">null</warning>
