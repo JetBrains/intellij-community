@@ -113,6 +113,7 @@ public class MavenModuleImporter {
       MavenProject depProject = myMavenTree.findProject(artifact.getMavenId());
 
       if (depProject != null) {
+        if (depProject == myMavenProject) continue;
         myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(depProject), scope);
       }
       else {

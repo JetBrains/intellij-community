@@ -682,6 +682,23 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("project");
   }
 
+  public void testDependencyOnSelfWithPomPackaging() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>test</groupId>" +
+                  "    <artifactId>project</artifactId>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertModuleModuleDeps("project");
+  }
+
   public void testIntermoduleDependencyOnTheSameModuleWithDifferentTypes() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
