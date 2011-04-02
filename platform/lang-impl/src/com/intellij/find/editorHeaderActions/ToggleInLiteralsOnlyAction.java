@@ -3,7 +3,7 @@ package com.intellij.find.editorHeaderActions;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
-public class ToggleInLiteralsOnlyAction extends EditorHeaderToggleAction {
+public class ToggleInLiteralsOnlyAction extends EditorHeaderToggleAction  implements SecondaryHeaderAction {
   private static final String TEXT = "In Literals Only";
 
   public ToggleInLiteralsOnlyAction(EditorSearchComponent editorSearchComponent) {

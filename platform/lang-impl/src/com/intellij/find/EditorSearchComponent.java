@@ -60,6 +60,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private final JLabel myMatchInfoLabel;
   private final LinkLabel myClickToHighlightLabel;
   private final Project myProject;
+  private DefaultActionGroup myActionsGroup;
+  private ActionToolbar myActionsToolbar;
 
   public Editor getEditor() {
     return myEditor;
@@ -212,25 +214,25 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
 
     myDefaultBackground = new JTextField().getBackground();
 
-    DefaultActionGroup actionsGroup = new DefaultActionGroup("search bar", false);
-    actionsGroup.add(new ShowHistoryAction(mySearchField, this));
-    actionsGroup.add(new PrevOccurrenceAction(this, mySearchField));
-    actionsGroup.add(new NextOccurrenceAction(this, mySearchField));
-    actionsGroup.add(new ToggleMatchCase(this));
-    actionsGroup.add(new ToggleRegex(this));
-    actionsGroup.add(new FindAllAction(this));
+    myActionsGroup = new DefaultActionGroup("search bar", false);
+    myActionsGroup.add(new ShowHistoryAction(mySearchField, this));
+    myActionsGroup.add(new PrevOccurrenceAction(this, mySearchField));
+    myActionsGroup.add(new NextOccurrenceAction(this, mySearchField));
+    myActionsGroup.add(new FindAllAction(this));
+    myActionsGroup.add(new ToggleMatchCase(this));
+    myActionsGroup.add(new ToggleRegex(this));
 
-    actionsGroup.addAction(new ToggleWholeWordsOnlyAction(this));//.setAsSecondary(true);
+    myActionsGroup.addAction(new ToggleWholeWordsOnlyAction(this));
     if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
-      actionsGroup.addAction(new ToggleInCommentsAction(this)).setAsSecondary(true);
-      actionsGroup.addAction(new ToggleInLiteralsOnlyAction(this)).setAsSecondary(true);
+      myActionsGroup.addAction(new ToggleInCommentsAction(this)).setAsSecondary(true);
+      myActionsGroup.addAction(new ToggleInLiteralsOnlyAction(this)).setAsSecondary(true);
     }
-    actionsGroup.addAction(new TogglePreserveCaseAction(this));//.setAsSecondary(true);
-    actionsGroup.addAction(new ToggleSelectionOnlyAction(this));//.setAsSecondary(true);
+    myActionsGroup.addAction(new TogglePreserveCaseAction(this)).setAsSecondary(true);
+    myActionsGroup.addAction(new ToggleSelectionOnlyAction(this));
 
-    final ActionToolbar tb = ActionManager.getInstance().createActionToolbar("SearchBar", actionsGroup, true);
-    tb.setLayoutPolicy(ActionToolbar.AUTO_LAYOUT_POLICY);
-    myToolbarComponent = tb.getComponent();
+    myActionsToolbar = ActionManager.getInstance().createActionToolbar("SearchBar", myActionsGroup, true);
+    myActionsToolbar.setLayoutPolicy(ActionToolbar.AUTO_LAYOUT_POLICY);
+    myToolbarComponent = myActionsToolbar.getComponent();
     myToolbarComponent.setBorder(null);
     myToolbarComponent.setOpaque(false);
     leadPanel.add(myToolbarComponent);
@@ -369,6 +371,9 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   }
 
   private void updateUIWithFindModel() {
+
+    myActionsToolbar.updateActionsImmediately();
+
     String stringToFind = myFindModel.getStringToFind();
 
     if (!StringUtil.equals(stringToFind, mySearchField.getText())) {

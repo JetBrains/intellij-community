@@ -4,7 +4,7 @@ import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.FindModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
-public class TogglePreserveCaseAction extends EditorHeaderToggleAction {
+public class TogglePreserveCaseAction extends EditorHeaderToggleAction  implements SecondaryHeaderAction {
   private static final String TEXT = "Preserve Case";
 
   public TogglePreserveCaseAction(EditorSearchComponent editorSearchComponent) {

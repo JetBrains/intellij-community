@@ -3,7 +3,7 @@ package com.intellij.find.editorHeaderActions;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
-public class ToggleInCommentsAction extends EditorHeaderToggleAction {
+public class ToggleInCommentsAction extends EditorHeaderToggleAction implements SecondaryHeaderAction {
   private static final String TEXT = "In Comments Only";
 
   public ToggleInCommentsAction(EditorSearchComponent editorSearchComponent) {

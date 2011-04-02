@@ -4,7 +4,6 @@ import com.intellij.find.EditorSearchComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.ui.EditorTextField;
 import com.intellij.util.containers.ContainerUtil;
 
 import javax.swing.*;
@@ -35,6 +34,7 @@ public class ShowHistoryAction extends EditorHeaderAction implements DumbAware {
       //ContainerUtil.addAll(shortcuts, ActionManager.getInstance().getAction(IdeActions.ACTION_FIND).getShortcutSet().getShortcuts());
       ContainerUtil.addAll(shortcuts, ActionManager.getInstance().getAction("IncrementalSearch").getShortcutSet().getShortcuts());
     }
+    shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), null));
     shortcuts.add(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK), null));
 
     registerCustomShortcutSet(
