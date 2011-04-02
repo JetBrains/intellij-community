@@ -1,0 +1,2 @@
+def fa(a=):
+   pass

@@ -1,0 +1,18 @@
+PyFile:MissingDefaultValue.py
+  PyFunction('fa')
+    PsiElement(Py:DEF_KEYWORD)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:IDENTIFIER)('fa')
+    PyParameterList
+      PsiElement(Py:LPAR)('(')
+      PyNamedParameter('a')
+        PsiElement(Py:IDENTIFIER)('a')
+        PsiElement(Py:EQ)('=')
+        PsiErrorElement:expression expected
+          <empty list>
+      PsiElement(Py:RPAR)(')')
+    PsiElement(Py:COLON)(':')
+    PsiWhiteSpace('\n   ')
+    PyStatementList
+      PyPassStatement
+        PsiElement(Py:PASS_KEYWORD)('pass')

@@ -263,6 +263,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testMissingDefaultValue() {  // PY-3253
+    doTest();
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON25);
   }

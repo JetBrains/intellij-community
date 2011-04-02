@@ -148,7 +148,9 @@ public class FunctionParsing extends Parsing {
           annotationMarker.done(PyElementTypes.ANNOTATION);
         }
         if (!isStarParameter && matchToken(PyTokenTypes.EQ)) {
-          getExpressionParser().parseSingleExpression(false);
+          if (!getExpressionParser().parseSingleExpression(false)) {
+            myBuilder.error(message("PARSE.expected.expression"));
+          }
         }
         parameter.done(PyElementTypes.NAMED_PARAMETER);
       }
