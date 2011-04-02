@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2006 Your Corporation. All Rights Reserved.
- */
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;

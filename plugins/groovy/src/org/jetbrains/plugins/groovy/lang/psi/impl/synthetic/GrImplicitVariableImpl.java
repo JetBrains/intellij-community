@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2008, Your Corporation. All Rights Reserved.
- */
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 

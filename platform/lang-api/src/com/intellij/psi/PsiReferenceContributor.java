@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2008 Your Corporation. All Rights Reserved.
- */
 package com.intellij.psi;
 
 import com.intellij.openapi.Disposable;

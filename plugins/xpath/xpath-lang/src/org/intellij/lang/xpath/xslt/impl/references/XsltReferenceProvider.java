@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2008, Your Corporation. All Rights Reserved.
- */
 
 package org.intellij.lang.xpath.xslt.impl.references;
 

@@ -1,6 +1,3 @@
-/*
-* Copyright (c) 2008 Your Corporation. All Rights Reserved.
-*/
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.AnnotationUtil;

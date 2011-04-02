@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2008 Your Corporation. All Rights Reserved.
- */
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;

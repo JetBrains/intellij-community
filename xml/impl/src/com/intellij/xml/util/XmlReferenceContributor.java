@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2008 Your Corporation. All Rights Reserved.
- */
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.encoding.XmlEncodingReferenceProvider;

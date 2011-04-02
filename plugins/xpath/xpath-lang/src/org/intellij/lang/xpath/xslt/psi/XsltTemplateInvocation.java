@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2005, Your Corporation. All Rights Reserved.
- */
 
 /*
  * Created by IntelliJ IDEA.

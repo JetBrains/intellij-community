@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2005 Your Corporation. All Rights Reserved.
- */
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Document;

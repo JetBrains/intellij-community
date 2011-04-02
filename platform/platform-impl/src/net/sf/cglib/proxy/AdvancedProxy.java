@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2005 Your Corporation. All Rights Reserved.
- */
 package net.sf.cglib.proxy;
 
 import com.intellij.openapi.diagnostic.Logger;

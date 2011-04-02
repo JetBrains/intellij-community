@@ -1,7 +1,4 @@
 
-/*
- * Copyright (c) 2008 Your Corporation. All Rights Reserved.
- */
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;

@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2006 Your Corporation. All Rights Reserved.
- */
 package com.intellij.codeInspection.ui;
 
 import com.intellij.openapi.module.Module;

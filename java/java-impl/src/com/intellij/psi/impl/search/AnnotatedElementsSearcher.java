@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2005 Your Corporation. All Rights Reserved.
- */
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.diagnostic.Logger;

@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2007, Your Corporation. All Rights Reserved.
- */
 package com.intellij.uiDesigner.lw;
 
 import org.jdom.Element;

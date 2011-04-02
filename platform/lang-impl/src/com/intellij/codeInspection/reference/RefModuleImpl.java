@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2006 Your Corporation. All Rights Reserved.
- */
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;

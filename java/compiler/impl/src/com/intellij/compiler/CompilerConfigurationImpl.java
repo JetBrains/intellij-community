@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2007, Your Corporation. All Rights Reserved.
- */
 
 /**
  * created at Jan 3, 2002
