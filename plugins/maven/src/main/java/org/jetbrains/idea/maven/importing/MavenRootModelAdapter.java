@@ -138,7 +138,7 @@ public class MavenRootModelAdapter {
     return false;
   }
 
-  private boolean isEqualOrAncestor(String ancestor, String child) {
+  public static boolean isEqualOrAncestor(String ancestor, String child) {
     return ancestor.equals(child) || StringUtil.startsWithConcatenationOf(child, ancestor, "/");
   }
 
@@ -199,7 +199,7 @@ public class MavenRootModelAdapter {
     return toPath(path).toUrl();
   }
 
-  private Path toPath(String path) {
+  public Path toPath(String path) {
     if (!FileUtil.isAbsolute(path)) {
       path = new File(myMavenProject.getDirectory(), path).getPath();
     }

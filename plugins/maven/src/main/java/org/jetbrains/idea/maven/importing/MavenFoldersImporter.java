@@ -21,11 +21,15 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Pair;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.Path;
+import org.jetbrains.idea.maven.utils.Url;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -93,7 +97,14 @@ public class MavenFoldersImporter {
     List<String> sourceFolders = new ArrayList<String>();
     List<String> testFolders = new ArrayList<String>();
 
-    // resources go first
+    sourceFolders.addAll(myMavenProject.getSources());
+    testFolders.addAll(myMavenProject.getTestSources());
+
+    for (MavenImporter each : MavenImporter.getSuitableImporters(myMavenProject)) {
+      each.collectSourceFolders(myMavenProject, sourceFolders);
+      each.collectTestFolders(myMavenProject, testFolders);
+    }
+
     for (MavenResource each : myMavenProject.getResources()) {
       sourceFolders.add(each.getDirectory());
     }
@@ -101,24 +112,37 @@ public class MavenFoldersImporter {
       testFolders.add(each.getDirectory());
     }
 
-    // then plugin-provided sources (can override resources )
-    for (MavenImporter each : MavenImporter.getSuitableImporters(myMavenProject)) {
-      each.collectSourceFolders(myMavenProject, sourceFolders);
-      each.collectTestFolders(myMavenProject, testFolders);
-    }
 
-    // and sources (can override resources and plugin-defined sources)
-    sourceFolders.addAll(myMavenProject.getSources());
-    testFolders.addAll(myMavenProject.getTestSources());
-
-    // first add test folders
-    for (String each : testFolders) {
-      myModel.addSourceFolder(each, true);
-    }
-    // when source folders (can override test folders)
+    List<Pair<Path, Boolean>> allFolders = new ArrayList<Pair<Path, Boolean>>(sourceFolders.size() + testFolders.size());
     for (String each : sourceFolders) {
-      myModel.addSourceFolder(each, false);
+      allFolders.add(Pair.create(myModel.toPath(each), false));
     }
+    for (String each : testFolders) {
+      allFolders.add(Pair.create(myModel.toPath(each), true));
+    }
+
+    for (Pair<Path, Boolean> each : normalize(allFolders)) {
+      myModel.addSourceFolder(each.first.getPath(), each.second);
+    }
+  }
+
+  @NotNull
+  private List<Pair<Path, Boolean>> normalize(@NotNull List<Pair<Path, Boolean>> folders) {
+    List<Pair<Path, Boolean>> result = new ArrayList<Pair<Path, Boolean>>(folders.size());
+    for (Pair<Path, Boolean> eachToAdd : folders) {
+      addSourceFolder(eachToAdd, result);
+    }
+    return result;
+  }
+
+  private void addSourceFolder(Pair<Path, Boolean> folder, List<Pair<Path, Boolean>> result) {
+    for (Pair<Path, Boolean> eachExisting : result) {
+      if (MavenRootModelAdapter.isEqualOrAncestor(eachExisting.first.getPath(), folder.first.getPath())
+          || MavenRootModelAdapter.isEqualOrAncestor(folder.first.getPath(), eachExisting.first.getPath())) {
+        return;
+      }
+    }
+    result.add(folder);
   }
 
   private void configOutputFolders() {

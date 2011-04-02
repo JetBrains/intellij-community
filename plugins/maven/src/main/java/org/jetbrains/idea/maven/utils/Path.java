@@ -37,6 +37,11 @@ public class Path {
   }
 
   @Override
+  public String toString() {
+    return path;
+  }
+
+  @Override
   public int hashCode() {
     return path.hashCode();
   }
