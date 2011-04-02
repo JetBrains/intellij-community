@@ -1,7 +1,8 @@
-package com.jetbrains.python.codeInsight;
+package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.application.options.editor.AutoImportOptionsProvider;
 import com.intellij.openapi.options.ConfigurationException;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 
 import javax.swing.*;
 
