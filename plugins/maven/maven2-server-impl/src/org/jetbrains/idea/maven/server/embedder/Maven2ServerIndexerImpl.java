@@ -44,6 +44,7 @@ import org.sonatype.nexus.index.updater.IndexUpdateRequest;
 import org.sonatype.nexus.index.updater.IndexUpdater;
 
 import java.io.File;
+import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.util.*;
 
@@ -218,6 +219,10 @@ public class Maven2ServerIndexerImpl extends MavenRemoteObject implements MavenS
       if (artifactContext == null) return null;
 
       myIndexer.addArtifactToIndex(artifactContext, index);
+      // this hack is necessary to invalidate searcher's and reader's cache (may not be required then lucene or nexus library change
+      Method m = index.getClass().getDeclaredMethod("closeReaders");
+      m.setAccessible(true);
+      m.invoke(index);
 
       org.sonatype.nexus.index.ArtifactInfo a = artifactContext.getArtifactInfo();
       return new MavenId(a.groupId, a.artifactId, a.version);
