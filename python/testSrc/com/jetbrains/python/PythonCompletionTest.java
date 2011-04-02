@@ -21,6 +21,13 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
     myFixture.checkResultByFile(testName + ".after.py");
   }
 
+  private void doMultiFileTest() {
+    myFixture.copyDirectoryToProject("completion/" + getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile("completion/" + getTestName(true) + "/a.after.py");
+  }
+
   public void testLocalVar() {
     doTest();
   }
@@ -295,17 +302,11 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   }
 
   public void testDuplicateImportKeyword() {  // PY-3034
-    myFixture.copyDirectoryToProject("completion/duplicateImportKeyword", "");
-    myFixture.configureByFile("a.py");
-    myFixture.completeBasic();
-    myFixture.checkResultByFile("completion/duplicateImportKeyword/a.after.py");
+    doMultiFileTest();
   }
 
   public void testImportInMiddleOfHierarchy() {  // PY-3016
-    myFixture.copyDirectoryToProject("completion/importInMiddleOfHierarchy", "");
-    myFixture.configureByFile("a.py");
-    myFixture.completeBasic();
-    myFixture.checkResultByFile("completion/importInMiddleOfHierarchy/a.after.py");
+    doMultiFileTest();
   }
 
   public void testLambdaInExpression() {  // PY-3150
@@ -314,5 +315,9 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
 
   public void testVeryPrivate() {  // PY-3246
     doTest();
+  }
+
+  public void testReexportModules() {  // PY-2385
+    doMultiFileTest();
   }
 }

@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
@@ -14,6 +15,7 @@ import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
@@ -111,7 +113,12 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     }
 
     if (point == ResolveImportUtil.PointInImport.NONE || point == ResolveImportUtil.PointInImport.AS_NAME) { // when not imported from, add regular attributes
-      final VariantsProcessor processor = new VariantsProcessor(location);
+      final VariantsProcessor processor = new VariantsProcessor(location, new Condition<PsiElement>() {
+        @Override
+        public boolean value(PsiElement psiElement) {
+          return !(psiElement instanceof PyImportElement);
+        }
+      }, null);
       processor.setPlainNamesOnly(point  == ResolveImportUtil.PointInImport.AS_NAME); // no parens after imported function names
       myModule.processDeclarations(processor, ResolveState.initial(), null, location);
       if (names_already != null) {
