@@ -135,6 +135,7 @@ public class AutoImportQuickFix implements LocalQuickFix {
   public void invoke(PsiFile file) throws IncorrectOperationException {
     // make sure file is committed, writable, etc
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (ImportFromExistingAction.isResolved(myReference)) return;
     // act
     ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, myName, myUseQualifiedImport);
     action.execute(); // assume that action runs in WriteAction on its own behalf
