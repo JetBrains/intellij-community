@@ -231,10 +231,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myActionsGroup.addAction(new ToggleSelectionOnlyAction(this));
 
     myActionsToolbar = ActionManager.getInstance().createActionToolbar("SearchBar", myActionsGroup, true);
+
     myActionsToolbar.setLayoutPolicy(ActionToolbar.AUTO_LAYOUT_POLICY);
     myToolbarComponent = myActionsToolbar.getComponent();
     myToolbarComponent.setBorder(null);
     myToolbarComponent.setOpaque(false);
+    Utils.setSmallerFontForChildren(myToolbarComponent);
     leadPanel.add(myToolbarComponent);
 
     myFindModel.addObserver(new FindModel.FindModelObserver() {

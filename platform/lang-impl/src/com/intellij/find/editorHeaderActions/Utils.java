@@ -53,4 +53,12 @@ public class Utils {
   static Font smaller(Font f) {
     return f.deriveFont(f.getStyle(), f.getSize() - 2);
   }
+
+  public static void setSmallerFontForChildren(JComponent component) {
+    for (Component c : component.getComponents()) {
+      if (c instanceof JComponent) {
+        setSmallerFont((JComponent)c);
+      }
+    }
+  }
 }
