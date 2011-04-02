@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -34,18 +35,28 @@ class HgCurrentBranchStatusUpdater implements HgUpdater {
     this.hgCurrentBranchStatus = hgCurrentBranchStatus;
   }
 
-  public void update(Project project) {
+  public void update(final Project project) {
     Editor textEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (textEditor != null) {
       Document document = textEditor.getDocument();
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
 
-      VirtualFile repo = VcsUtil.getVcsRootFor(project, file);
+      final VirtualFile repo = VcsUtil.getVcsRootFor(project, file);
       if (repo != null) {
-        HgTagBranchCommand hgTagBranchCommand = new HgTagBranchCommand(project, repo);
-        String branch = hgTagBranchCommand.getCurrentBranch();
-        List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(project).parents(repo);
-        hgCurrentBranchStatus.updateFor(branch, parents);
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            HgTagBranchCommand hgTagBranchCommand = new HgTagBranchCommand(project, repo);
+            final String branch = hgTagBranchCommand.getCurrentBranch();
+            final List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(project).parents(repo);
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                hgCurrentBranchStatus.updateFor(branch, parents);
+              }
+            });
+          }
+        });
         return;
       }
     }
