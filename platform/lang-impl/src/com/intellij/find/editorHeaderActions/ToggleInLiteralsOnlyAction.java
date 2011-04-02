@@ -7,7 +7,7 @@ public class ToggleInLiteralsOnlyAction extends EditorHeaderToggleAction {
   private static final String TEXT = "In Literals Only";
 
   public ToggleInLiteralsOnlyAction(EditorSearchComponent editorSearchComponent) {
-    super(editorSearchComponent, TEXT);
+    super(editorSearchComponent, TEXT, null);
   }
 
   @Override

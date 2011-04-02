@@ -7,7 +7,7 @@ public class ToggleSelectionOnlyAction extends EditorHeaderToggleAction {
   private static final String SELECTION_ONLY = "Selection Only";
 
   public ToggleSelectionOnlyAction(EditorSearchComponent editorSearchComponent) {
-    super(editorSearchComponent, SELECTION_ONLY);
+    super(editorSearchComponent, SELECTION_ONLY, "e");
   }
 
   @Override

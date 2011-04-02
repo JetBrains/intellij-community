@@ -7,7 +7,7 @@ public class ToggleInCommentsAction extends EditorHeaderToggleAction {
   private static final String TEXT = "In Comments Only";
 
   public ToggleInCommentsAction(EditorSearchComponent editorSearchComponent) {
-    super(editorSearchComponent, TEXT);
+    super(editorSearchComponent, TEXT, null);
   }
 
   @Override

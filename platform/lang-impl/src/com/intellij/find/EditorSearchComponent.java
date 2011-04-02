@@ -39,7 +39,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.LightColors;
-import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
@@ -58,8 +57,6 @@ import java.util.regex.Pattern;
 public class EditorSearchComponent extends JPanel implements DataProvider, SelectionListener, SearchResults.SearchResultsListener,
                                                              LivePreviewControllerBase.ReplaceListener {
   private static final int MATCHES_LIMIT = 10000;
-  private static final String CASE_SENSITIVE = "Case Sensitive";
-  private static final String REGEX = "Regex";
   private final JLabel myMatchInfoLabel;
   private final LinkLabel myClickToHighlightLabel;
   private final Project myProject;
@@ -90,7 +87,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private static final Color FOCUS_CATCHER_COLOR = new Color(0x9999ff);
   private final JComponent myToolbarComponent;
   private DocumentAdapter myDocumentListener;
-  private final JCheckBox myCbRegexp;
 
   private MyLivePreviewController myLivePreviewController;
   private LivePreview myLivePreview;
@@ -100,7 +96,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   private SearchResults mySearchResults;
 
   private final FindModel myFindModel;
-  private JCheckBox myCbMatchCase;
   private JPanel myReplacementPane;
 
   public JComponent getToolbarComponent() {
@@ -221,15 +216,17 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     actionsGroup.add(new ShowHistoryAction(mySearchField, this));
     actionsGroup.add(new PrevOccurrenceAction(this, mySearchField));
     actionsGroup.add(new NextOccurrenceAction(this, mySearchField));
+    actionsGroup.add(new ToggleMatchCase(this));
+    actionsGroup.add(new ToggleRegex(this));
     actionsGroup.add(new FindAllAction(this));
 
-    actionsGroup.addAction(new ToggleWholeWordsOnlyAction(this)).setAsSecondary(true);
+    actionsGroup.addAction(new ToggleWholeWordsOnlyAction(this));//.setAsSecondary(true);
     if (FindManagerImpl.ourHasSearchInCommentsAndLiterals) {
       actionsGroup.addAction(new ToggleInCommentsAction(this)).setAsSecondary(true);
       actionsGroup.addAction(new ToggleInLiteralsOnlyAction(this)).setAsSecondary(true);
     }
-    actionsGroup.addAction(new TogglePreserveCaseAction(this)).setAsSecondary(true);
-    actionsGroup.addAction(new ToggleSelectionOnlyAction(this)).setAsSecondary(true);
+    actionsGroup.addAction(new TogglePreserveCaseAction(this));//.setAsSecondary(true);
+    actionsGroup.addAction(new ToggleSelectionOnlyAction(this));//.setAsSecondary(true);
 
     final ActionToolbar tb = ActionManager.getInstance().createActionToolbar("SearchBar", actionsGroup, true);
     tb.setLayoutPolicy(ActionToolbar.AUTO_LAYOUT_POLICY);
@@ -237,12 +234,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myToolbarComponent.setBorder(null);
     myToolbarComponent.setOpaque(false);
     leadPanel.add(myToolbarComponent);
-
-    myCbMatchCase = new NonFocusableCheckBox(CASE_SENSITIVE);
-    myCbRegexp = new NonFocusableCheckBox(REGEX);
-
-    leadPanel.add(myCbMatchCase);
-    leadPanel.add(myCbRegexp);
 
     myFindModel.addObserver(new FindModel.FindModelObserver() {
       @Override
@@ -258,28 +249,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     });
 
     updateUIWithFindModel();
-
-    myCbMatchCase.setMnemonic('C');
-    myCbRegexp.setMnemonic('e');
-
-    setSmallerFontAndOpaque(myCbMatchCase);
-    setSmallerFontAndOpaque(myCbRegexp);
-
-
-    myCbMatchCase.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        final boolean b = myCbMatchCase.isSelected();
-        FindSettings.getInstance().setLocalCaseSensitive(b);
-        myFindModel.setCaseSensitive(b);
-      }
-    });
-
-    myCbRegexp.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        final boolean b = myCbRegexp.isSelected();
-        myFindModel.setRegularExpressions(b);
-      }
-    });
 
     JPanel tailPanel = new NonOpaquePanel(new BorderLayout(5, 0));
     JPanel tailContainer = new NonOpaquePanel(new BorderLayout(5, 0));
@@ -315,7 +284,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     tailPanel.add(labelsPanel, BorderLayout.CENTER);
     tailPanel.add(closeLabel, BorderLayout.EAST);
 
-    setSmallerFont(mySearchField);
+    Utils.setSmallerFont(mySearchField);
     mySearchField.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         if ("".equals(mySearchField.getText())) {
@@ -400,9 +369,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   }
 
   private void updateUIWithFindModel() {
-    myCbMatchCase.setSelected(myFindModel.isCaseSensitive());
-    myCbRegexp.setSelected(myFindModel.isRegularExpressions());
-
     String stringToFind = myFindModel.getStringToFind();
 
     if (!StringUtil.equals(stringToFind, mySearchField.getText())) {
@@ -515,7 +481,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     setSmallerFontAndOpaque(myReplaceAllButton);
     setSmallerFontAndOpaque(myExcludeButton);
     
-    setSmallerFont(myReplaceField);
+    Utils.setSmallerFont(myReplaceField);
     myReplaceField.putClientProperty("AuxEditorComponent", Boolean.TRUE);
     new VariantsCompletionAction(this, myReplaceField);
     new NextOccurrenceAction(this, myReplaceField);
@@ -646,15 +612,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   }
 
   private static void setSmallerFontAndOpaque(final JComponent component) {
-    setSmallerFont(component);
+    Utils.setSmallerFont(component);
     component.setOpaque(false);
-  }
-
-  private static void setSmallerFont(final JComponent component) {
-    if (SystemInfo.isMac) {
-      Font f = component.getFont();
-      component.setFont(f.deriveFont(f.getStyle(), f.getSize() - 2));
-    }
   }
 
   public void requestFocus() {
