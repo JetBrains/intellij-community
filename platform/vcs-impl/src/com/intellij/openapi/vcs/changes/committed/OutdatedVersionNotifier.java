@@ -113,7 +113,7 @@ public class OutdatedVersionNotifier implements ProjectComponent {
       public void run() {
         updateAllEditors();
       }
-    });
+    }, myProject.getDisposed());
   }
 
   private void updateAllEditors() {
