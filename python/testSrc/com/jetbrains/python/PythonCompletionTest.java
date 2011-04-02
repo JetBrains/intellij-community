@@ -311,4 +311,8 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   public void testLambdaInExpression() {  // PY-3150
     doTest();
   }
+
+  public void testVeryPrivate() {  // PY-3246
+    doTest();
+  }
 }

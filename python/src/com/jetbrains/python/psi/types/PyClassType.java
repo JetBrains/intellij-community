@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
@@ -17,7 +18,6 @@ import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyClassImpl;
-import com.jetbrains.python.psi.patterns.ParentMatcher;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
@@ -200,8 +200,11 @@ public class PyClassType extends UserDataHolderBase implements PyType {
   }
 
   private void addOwnClassMembers(PyExpression expressionHook, Set<String> namesAlready, List<Object> ret) {
-    List<? extends PsiElement> classList = new ParentMatcher(PyClass.class).search(expressionHook);
-    boolean withinOurClass = classList != null && classList.get(0) == this;
+    PyClass containingClass = PsiTreeUtil.getParentOfType(expressionHook, PyClass.class);
+    if (containingClass != null) {
+      containingClass = PsiUtilBase.getOriginalElement(containingClass, PyClass.class);
+    }
+    boolean withinOurClass = containingClass == getPyClass();
 
     final VariantsProcessor processor = new VariantsProcessor(
       expressionHook, new PyResolveUtil.FilterNotInstance(myClass), null
