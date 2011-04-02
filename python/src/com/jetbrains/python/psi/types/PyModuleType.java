@@ -12,10 +12,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
-import com.jetbrains.python.psi.AccessDirection;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
@@ -118,7 +115,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         public boolean value(PsiElement psiElement) {
           return !(psiElement instanceof PyImportElement);
         }
-      }, null);
+      }, new PyUtil.UnderscoreFilter(0));
       processor.setPlainNamesOnly(point  == ResolveImportUtil.PointInImport.AS_NAME); // no parens after imported function names
       myModule.processDeclarations(processor, ResolveState.initial(), null, location);
       if (names_already != null) {
