@@ -26,11 +26,13 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +60,11 @@ public class PyExtractMethodUtil {
       return;
     }
 
+    PyFunction function = PsiTreeUtil.getParentOfType(statement1, PyFunction.class);
+    final PyUtil.MethodFlags flags = function == null ? null : PyUtil.MethodFlags.of(function);
+    final boolean isClassMethod = flags != null && flags.isClassMethod();
+    final boolean isStaticMethod = flags != null && flags.isStaticMethod();
+
     // collect statements
     final List<PsiElement> elementsRange = PyPsiUtils.collectElements(statement1, statement2);
     if (elementsRange.isEmpty()) {
@@ -78,20 +85,21 @@ public class PyExtractMethodUtil {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               // Generate method
-              PyFunction generatedMethod = generateMethodFromElements(project, methodName, variableData, elementsRange);
+              PyFunction generatedMethod = generateMethodFromElements(project, methodName, variableData, elementsRange, flags);
               generatedMethod = insertGeneratedMethod(statement1, generatedMethod);
 
               // Process parameters
-              final boolean isMethod = PyPsiUtils.isMethodContext(elementsRange.get(0));
-              processParameters(project, generatedMethod, variableData, isMethod);
+              final PsiElement firstElement = elementsRange.get(0);
+              final boolean isMethod = PyPsiUtils.isMethodContext(firstElement);
+              processParameters(project, generatedMethod, variableData, isMethod, isClassMethod, isStaticMethod);
 
               // Generating call element
               final StringBuilder builder = new StringBuilder();
               if (fragment.isReturnInstructionInside()) {
                 builder.append("return ");
               }
-              if (isMethod){
-                appendSelf(elementsRange.get(0), builder);
+              if (isMethod) {
+                appendSelf(firstElement, builder, isStaticMethod);
               }
               builder.append(methodName);
               builder.append("(").append(createCallArgsString(variableData)).append(")");
@@ -125,18 +133,18 @@ public class PyExtractMethodUtil {
               newMethodElements.add(returnStatement);
 
               // Generate method
-              PyFunction generatedMethod = generateMethodFromElements(project, methodName, variableData, newMethodElements);
+              PyFunction generatedMethod = generateMethodFromElements(project, methodName, variableData, newMethodElements, flags);
               generatedMethod = (PyFunction) CodeStyleManager.getInstance(project).reformat(generatedMethod);
               generatedMethod = insertGeneratedMethod(statement1, generatedMethod);
 
               // Process parameters
               final boolean isMethod = PyPsiUtils.isMethodContext(elementsRange.get(0));
-              processParameters(project, generatedMethod, variableData, isMethod);
+              processParameters(project, generatedMethod, variableData, isMethod, isClassMethod, isStaticMethod);
 
               // Generate call element
               builder.append(" = ");
               if (isMethod){
-                appendSelf(elementsRange.get(0), builder);
+                appendSelf(elementsRange.get(0), builder, isStaticMethod);
               }
               builder.append(methodName).append("(");
               builder.append(createCallArgsString(variableData)).append(")");
@@ -154,8 +162,16 @@ public class PyExtractMethodUtil {
     }
   }
 
-  private static void appendSelf(PsiElement firstElement, StringBuilder builder) {
-    builder.append(PyUtil.getFirstParameterName(PsiTreeUtil.getParentOfType(firstElement, PyFunction.class))).append(".");
+  private static void appendSelf(PsiElement firstElement, StringBuilder builder, boolean staticMethod) {
+    if (staticMethod) {
+      final PyClass containingClass = PsiTreeUtil.getParentOfType(firstElement, PyClass.class);
+      assert containingClass != null;
+      builder.append(containingClass.getName());
+    }
+    else {
+      builder.append(PyUtil.getFirstParameterName(PsiTreeUtil.getParentOfType(firstElement, PyFunction.class)));
+    }
+    builder.append(".");
   }
 
   public static void extractFromExpression(final Project project,
@@ -183,24 +199,29 @@ public class PyExtractMethodUtil {
     final String methodName = data.first;
     final AbstractVariableData[] variableData = data.second;
 
+    PyFunction function = PsiTreeUtil.getParentOfType(expression, PyFunction.class);
+    final PyUtil.MethodFlags flags = function == null ? null : PyUtil.MethodFlags.of(function);
+    final boolean isClassMethod = flags != null && flags.isClassMethod();
+    final boolean isStaticMethod = flags != null && flags.isClassMethod();
+
     if (fragment.getOutputVariables().isEmpty()) {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               // Generate method
-              PyFunction generatedMethod = generateMethodFromExpression(project, methodName, variableData, expression);
+              PyFunction generatedMethod = generateMethodFromExpression(project, methodName, variableData, expression, flags);
               generatedMethod = insertGeneratedMethod(expression, generatedMethod);
 
               // Process parameters
               final boolean isMethod = PyPsiUtils.isMethodContext(expression);
-              processParameters(project, generatedMethod, variableData, isMethod);
+              processParameters(project, generatedMethod, variableData, isMethod, isClassMethod, isStaticMethod);
 
               // Generating call element
               final StringBuilder builder = new StringBuilder();
               builder.append("return ");
               if (isMethod){
-                appendSelf(expression, builder);
+                appendSelf(expression, builder, isStaticMethod);
               }
               builder.append(methodName);
               builder.append("(").append(createCallArgsString(variableData)).append(")");
@@ -250,7 +271,9 @@ public class PyExtractMethodUtil {
   private static void processParameters(final Project project,
                                         final PyFunction generatedMethod,
                                         final AbstractVariableData[] variableData,
-                                        final boolean isMethod) {
+                                        final boolean isMethod,
+                                        final boolean isClassMethod,
+                                        final boolean isStaticMethod) {
     final Map<String, String> map = createMap(variableData);
     // Rename parameters
     for (PyParameter parameter : generatedMethod.getParameterList().getParameters()) {
@@ -262,7 +285,10 @@ public class PyExtractMethodUtil {
     }
     // Change signature according to pass settings and
     PyFunctionBuilder builder = new PyFunctionBuilder("foo");
-    if (isMethod) {
+    if (isClassMethod) {
+      builder.parameter("cls");
+    }
+    else if (isMethod && !isStaticMethod) {
       builder.parameter("self");
     }
     for (AbstractVariableData data : variableData) {
@@ -312,8 +338,10 @@ public class PyExtractMethodUtil {
   private static PyFunction generateMethodFromExpression(final Project project,
                                                          final String methodName,
                                                          final AbstractVariableData[] variableData,
-                                                         final PsiElement expression) {
+                                                         final PsiElement expression,
+                                                         @Nullable final PyUtil.MethodFlags flags) {
     final PyFunctionBuilder builder = new PyFunctionBuilder(methodName);
+    addDecorators(builder, flags);
     addFakeParameters(builder, variableData);
     builder.statement("return " + expression.getText());
     return builder.buildFunction(project, LanguageLevel.getDefault());
@@ -322,10 +350,12 @@ public class PyExtractMethodUtil {
   private static PyFunction generateMethodFromElements(final Project project,
                                                        final String methodName,
                                                        final AbstractVariableData[] variableData,
-                                                       final List<PsiElement> elementsRange) {
+                                                       final List<PsiElement> elementsRange,
+                                                       @Nullable final PyUtil.MethodFlags flags) {
     assert !elementsRange.isEmpty() : "Empty statements list was selected!";
 
     final PyFunctionBuilder builder = new PyFunctionBuilder(methodName);
+    addDecorators(builder, flags);
     addFakeParameters(builder, variableData);
     final PyFunction method = builder.buildFunction(project, LanguageLevel.getDefault());
     final PyStatementList statementList = method.getStatementList();
@@ -339,6 +369,17 @@ public class PyExtractMethodUtil {
     // remove last instruction
     statementList.getFirstChild().delete();
     return method;
+  }
+
+  private static void addDecorators(PyFunctionBuilder builder, PyUtil.MethodFlags flags) {
+    if (flags != null) {
+      if (flags.isClassMethod()) {
+        builder.decorate(PyNames.CLASSMETHOD);
+      }
+      else if (flags.isStaticMethod()) {
+        builder.decorate(PyNames.STATICMETHOD);
+      }
+    }
   }
 
   private static void addFakeParameters(PyFunctionBuilder builder, AbstractVariableData[] variableData) {

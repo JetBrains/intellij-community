@@ -1,7 +1,6 @@
 package com.jetbrains.python.refactoring;
 
 import com.intellij.lang.LanguageRefactoringSupport;
-import com.intellij.openapi.util.Pair;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
@@ -13,13 +12,8 @@ import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodUtil;
 public class PyExtractMethodTest extends LightMarkedTestCase {
   private void doTest(final String testPath,
                       final String name,
-                      final String result,
-                      final Pair<String, String>... files2Create) {
+                      final String result) {
 
-    // Create additional files
-    for (Pair<String, String> pair : files2Create) {
-      myFixture.addFileToProject(pair.first, pair.second);
-    }
     myFixture.configureByFile("/refactoring/extractmethod/" + testPath);
     final RefactoringActionHandler handler = LanguageRefactoringSupport.INSTANCE.forLanguage(PythonLanguage.getInstance()).getExtractMethodHandler();
     try {
@@ -145,4 +139,11 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doTest("elsebody.before.py", "baz", "elsebody.after.py");
   }
 
+  public void testClassMethod() {
+    doTest("classmethod.before.py", "baz", "classmethod.after.py");
+  }
+
+  public void testStaticMethod() {
+    doTest("staticmethod.before.py", "baz", "staticmethod.after.py");
+  }
 }
