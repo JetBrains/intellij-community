@@ -1,6 +1,3 @@
-/*
- * Copyright (c) 2005, Your Corporation. All Rights Reserved.
- */
 package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
