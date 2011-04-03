@@ -42,11 +42,11 @@ public abstract class GenerationInfo {
       element = element.getParent();
     }
 
-    PsiJavaToken lBrace = aClass.getLBrace();
+    PsiElement lBrace = aClass.getLBrace();
     if (lBrace == null) {
       return null;
     }
-    PsiJavaToken rBrace = aClass.getRBrace();
+    PsiElement rBrace = aClass.getRBrace();
     if (!GenerateMembersUtil.isChildInRange(element, lBrace.getNextSibling(), rBrace)) {
       return null;
     }

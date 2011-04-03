@@ -284,9 +284,9 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
     }
     if (element instanceof PsiClass) {
       PsiClass aClass = (PsiClass)element;
-      PsiJavaToken lBrace = aClass.getLBrace();
+      PsiElement lBrace = aClass.getLBrace();
       if (lBrace == null) return null;
-      PsiJavaToken rBrace = aClass.getRBrace();
+      PsiElement rBrace = aClass.getRBrace();
       if (rBrace == null) return null;
       return new TextRange(lBrace.getTextOffset(), rBrace.getTextOffset() + 1);
     }
@@ -579,7 +579,7 @@ public class JavaFoldingBuilder extends FoldingBuilderEx implements DumbAware {
               if (rbrace != null) rangeEnd = rbrace.getTextRange().getStartOffset();
 
               final CharSequence seq = document.getCharsSequence();
-              final PsiJavaToken classRBrace = anonymousClass.getRBrace();
+              final PsiElement classRBrace = anonymousClass.getRBrace();
               if (classRBrace != null && rbrace != null) {
                 final int methodEndLine = document.getLineNumber(rangeEnd);
                 final int methodEndLineStart = document.getLineStartOffset(methodEndLine);

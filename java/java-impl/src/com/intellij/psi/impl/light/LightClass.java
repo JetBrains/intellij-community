@@ -216,12 +216,12 @@ public class LightClass extends LightElement implements PsiClass {
   }
 
   @Nullable
-  public PsiJavaToken getLBrace() {
+  public PsiElement getLBrace() {
     return myDelegate.getLBrace();
   }
 
   @Nullable
-  public PsiJavaToken getRBrace() {
+  public PsiElement getRBrace() {
     return myDelegate.getRBrace();
   }
 

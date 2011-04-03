@@ -279,7 +279,7 @@ public interface PsiClass
    * @return the token instance, or null if the token is missing in the source code file.
    */
   @Nullable
-  PsiJavaToken getLBrace();
+  PsiElement getLBrace();
 
   /**
    * Returns the token representing the closing curly brace of the class.
@@ -287,7 +287,7 @@ public interface PsiClass
    * @return the token instance, or null if the token is missing in the source code file.
    */
   @Nullable
-  PsiJavaToken getRBrace();
+  PsiElement getRBrace();
 
   /**
    * Returns the name identifier of the class.

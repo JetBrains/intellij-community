@@ -85,7 +85,7 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
       }
       if (!hasNonPrivateConstructor) return false;
     }
-    PsiJavaToken lBrace = psiClass.getLBrace();
+    PsiElement lBrace = psiClass.getLBrace();
     if (lBrace == null) return false;
     if (element.getTextOffset() >= lBrace.getTextOffset()) return false;
 

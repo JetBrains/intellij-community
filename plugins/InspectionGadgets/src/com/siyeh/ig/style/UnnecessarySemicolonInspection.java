@@ -123,7 +123,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection {
                 }
                 element = skipForwardWhiteSpacesAndComments(lastField);
             } else {
-                final PsiJavaToken lBrace = aClass.getLBrace();
+                final PsiElement lBrace = aClass.getLBrace();
                 element = skipForwardWhiteSpacesAndComments(lBrace);
             }
             if(!(element instanceof PsiJavaToken)){

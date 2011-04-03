@@ -124,7 +124,7 @@ class InlineToAnonymousConstructorProcessor {
 
     int fieldCount = myClass.getFields().length;
     int processedFields = 0;
-    PsiJavaToken token = anonymousClass.getRBrace();
+    PsiElement token = anonymousClass.getRBrace();
     if (initializerBlock.getBody().getStatements().length > 0 && fieldCount == 0) {
       insertInitializerBefore(initializerBlock, anonymousClass, token);
     }
@@ -159,7 +159,7 @@ class InlineToAnonymousConstructorProcessor {
     JavaCodeStyleManager.getInstance(superNewExpression.getProject()).shortenClassReferences(superNewExpression);
   }
 
-  private void insertInitializerBefore(final PsiClassInitializer initializerBlock, final PsiClass anonymousClass, final PsiJavaToken token)
+  private void insertInitializerBefore(final PsiClassInitializer initializerBlock, final PsiClass anonymousClass, final PsiElement token)
       throws IncorrectOperationException {
     anonymousClass.addBefore(CodeEditUtil.createLineFeed(token.getManager()), token);
     anonymousClass.addBefore(initializerBlock, token);

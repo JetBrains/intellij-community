@@ -49,12 +49,12 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
     }
 
     final GrTypeDefinition typeDefinition = (GrTypeDefinition)aClass;
-    PsiElement lBrace = typeDefinition.getLBraceGroovy();
+    PsiElement lBrace = typeDefinition.getLBrace();
     if (lBrace == null) {
       return null;
     }
     else {
-      PsiElement rBrace = typeDefinition.getRBraceGroovy();
+      PsiElement rBrace = typeDefinition.getRBrace();
       if (!GenerateMembersUtil.isChildInRange(element, lBrace.getNextSibling(), rBrace)) {
         return null;
       }

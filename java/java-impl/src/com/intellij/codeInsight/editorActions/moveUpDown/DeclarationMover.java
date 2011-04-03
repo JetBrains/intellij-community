@@ -214,7 +214,7 @@ class DeclarationMover extends LineMover {
                              editor.getDocument());
       }
       else {
-        PsiJavaToken rBrace = aClass.getRBrace();
+        PsiElement rBrace = aClass.getRBrace();
         if (rBrace == null) throw new IllegalMoveException();
         return new LineRange(rBrace, rBrace, editor.getDocument());
       }

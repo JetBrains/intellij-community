@@ -29,7 +29,7 @@ public class ConvertJUnit3TestCaseToJUnit4Predicate
             return false;
         }
         final PsiClass aClass = (PsiClass) parent;
-        final PsiJavaToken leftBrace = aClass.getLBrace();
+        final PsiElement leftBrace = aClass.getLBrace();
         final int offsetInParent = element.getStartOffsetInParent();
         if (leftBrace == null ||
             offsetInParent >= leftBrace.getStartOffsetInParent()) {

@@ -457,27 +457,15 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   @Nullable
-  public PsiJavaToken getLBrace() {
-    return null;
+  public PsiElement getLBrace() {
+    final GrTypeDefinitionBody body = getBody();
+    return body == null ? null : body.getLBrace();
   }
 
   @Nullable
-  public PsiJavaToken getRBrace() {
-    return null;
-  }
-
-  @Nullable
-  public PsiElement getLBraceGroovy() {
-    GrTypeDefinitionBody body = getBody();
-    if (body == null) return null;
-    return body.getLBrace();
-  }
-
-  @Nullable
-  public PsiElement getRBraceGroovy() {
-    GrTypeDefinitionBody body = getBody();
-    if (body == null) return null;
-    return body.getRBrace();
+  public PsiElement getRBrace() {
+    final GrTypeDefinitionBody body = getBody();
+    return body == null ? null : body.getRBrace();
   }
 
   public boolean isAnonymous() {

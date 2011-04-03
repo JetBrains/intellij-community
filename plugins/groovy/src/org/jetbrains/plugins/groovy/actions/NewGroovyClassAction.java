@@ -67,7 +67,7 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
 
   @Override
   protected PsiElement getNavigationElement(@NotNull GrTypeDefinition createdElement) {
-    return createdElement.getLBraceGroovy();
+    return createdElement.getLBrace();
   }
 
   @Override

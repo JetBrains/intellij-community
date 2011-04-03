@@ -51,7 +51,7 @@ public class ClassNameMacro implements Macro {
       if (place instanceof PsiClass && !(place instanceof PsiAnonymousClass) && !(place instanceof PsiTypeParameter)){
         aClass = (PsiClass)place;
         // if className() is evaluated outside of the body of inner class, return name of its outer class instead (IDEADEV-19865)
-        final PsiJavaToken lBrace = aClass.getLBrace();
+        final PsiElement lBrace = aClass.getLBrace();
         if (lBrace != null && offset < lBrace.getTextOffset() && aClass.getContainingClass() != null) {
           aClass = aClass.getContainingClass();
         }

@@ -33,7 +33,7 @@ class ConvertInterfaceToClassPredicate implements PsiElementPredicate {
         if (!aClass.isInterface() || aClass.isAnnotationType()) {
             return false;
         }
-        final PsiJavaToken leftBrace = aClass.getLBrace();
+        final PsiElement leftBrace = aClass.getLBrace();
         final int offsetInParent = element.getStartOffsetInParent();
         if (leftBrace == null ||
                 offsetInParent >= leftBrace.getStartOffsetInParent()) {
