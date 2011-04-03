@@ -102,13 +102,14 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   private SearchTextField createSearchBox(JPanel root) {
-    final SearchTextField field = new SearchTextFieldWithStoredHistory(getPropertiesKey() + ".searchHistory");
+    final SearchTextFieldWithStoredHistory field = new SearchTextFieldWithStoredHistory(getPropertiesKey() + ".searchHistory");
     field.addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
         scheduleRevisionsUpdate(new Consumer<DirectoryHistoryDialogModel>() {
           public void consume(DirectoryHistoryDialogModel m) {
             m.setFilter(field.getText());
+            field.addCurrentTextToHistory();
           }
         });
       }
