@@ -138,30 +138,6 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   @NotNull
-  public String getOverriddenLocalRepository() {
-    return overriddenLocalRepository;
-  }
-
-  public File getEffectiveLocalRepository() {
-    File result = myEffectiveLocalRepositoryCache;
-    if (result != null) return result;
-
-    result = MavenUtil.resolveLocalRepository(overriddenLocalRepository, mavenHome, mavenSettingsFile);
-    myEffectiveLocalRepositoryCache = result;
-    return result;
-  }
-
-  public void setOverriddenLocalRepository(final @Nullable String overridenLocalRepository) {
-    if (overridenLocalRepository == null) return;
-
-    if (!Comparing.equal(this.overriddenLocalRepository, overridenLocalRepository)) {
-      this.overriddenLocalRepository = overridenLocalRepository;
-
-      changed();
-    }
-  }
-
-  @NotNull
   public String getMavenHome() {
     return mavenHome;
   }
@@ -181,11 +157,11 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   @NotNull
-  public String getMavenSettingsFile() {
+  public String getUserSettingsFile() {
     return mavenSettingsFile;
   }
 
-  public void setMavenSettingsFile(@Nullable String mavenSettingsFile) {
+  public void setUserSettingsFile(@Nullable String mavenSettingsFile) {
     if (mavenSettingsFile == null) return;
 
     if (!Comparing.equal(this.mavenSettingsFile, mavenSettingsFile)) {
@@ -196,7 +172,7 @@ public class MavenGeneralSettings implements Cloneable {
 
   @Nullable
   public File getEffectiveUserSettingsIoFile() {
-    return MavenUtil.resolveUserSettingsFile(getMavenSettingsFile());
+    return MavenUtil.resolveUserSettingsFile(getUserSettingsFile());
   }
 
   @Nullable
@@ -223,6 +199,29 @@ public class MavenGeneralSettings implements Cloneable {
   public VirtualFile getEffectiveGlobalSettingsFile() {
     File file = getEffectiveGlobalSettingsIoFile();
     return file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file);
+  }
+
+  @NotNull
+  public String getLocalRepository() {
+    return overriddenLocalRepository;
+  }
+
+  public void setLocalRepository(final @Nullable String overridenLocalRepository) {
+    if (overridenLocalRepository == null) return;
+
+    if (!Comparing.equal(this.overriddenLocalRepository, overridenLocalRepository)) {
+      this.overriddenLocalRepository = overridenLocalRepository;
+      changed();
+    }
+  }
+
+  public File getEffectiveLocalRepository() {
+    File result = myEffectiveLocalRepositoryCache;
+    if (result != null) return result;
+
+    result = MavenUtil.resolveLocalRepository(overriddenLocalRepository, mavenHome, mavenSettingsFile);
+    myEffectiveLocalRepositoryCache = result;
+    return result;
   }
 
   @NotNull

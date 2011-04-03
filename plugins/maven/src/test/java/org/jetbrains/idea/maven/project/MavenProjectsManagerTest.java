@@ -461,13 +461,13 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
     assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value1"));
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/value1"));
 
-    getMavenGeneralSettings().setMavenSettingsFile("");
+    getMavenGeneralSettings().setUserSettingsFile("");
     waitForReadingCompletion();
 
     assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/${prop}"));
     assertUnorderedElementsAreEqual(childNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/m/${prop}"));
 
-    getMavenGeneralSettings().setMavenSettingsFile(new File(myDir, "settings.xml").getPath());
+    getMavenGeneralSettings().setUserSettingsFile(new File(myDir, "settings.xml").getPath());
     waitForReadingCompletion();
 
     assertUnorderedElementsAreEqual(parentNode.getSources(), FileUtil.toSystemDependentName(getProjectPath() + "/value1"));

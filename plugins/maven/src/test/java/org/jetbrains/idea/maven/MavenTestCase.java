@@ -259,7 +259,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected void setRepositoryPath(String path) {
-    getMavenGeneralSettings().setOverriddenLocalRepository(path);
+    getMavenGeneralSettings().setLocalRepository(path);
   }
 
   protected String getProjectPath() {
@@ -287,7 +287,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     ioFile.createNewFile();
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
     setFileContent(f, content);
-    getMavenGeneralSettings().setMavenSettingsFile(f.getPath());
+    getMavenGeneralSettings().setUserSettingsFile(f.getPath());
     return f;
   }
 

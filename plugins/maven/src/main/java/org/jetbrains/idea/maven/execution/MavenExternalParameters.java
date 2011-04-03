@@ -237,7 +237,10 @@ public class MavenExternalParameters {
     cmdList.add(coreSettings.getChecksumPolicy().getCommandLineOption());
     cmdList.add(coreSettings.getSnapshotUpdatePolicy().getCommandLineOption());
 
-    addOption(cmdList, "s", coreSettings.getMavenSettingsFile());
+    addOption(cmdList, "s", coreSettings.getUserSettingsFile());
+    if (!StringUtil.isEmptyOrSpaces(coreSettings.getLocalRepository())) {
+      addProperty(cmdList, "maven.repo.local", coreSettings.getLocalRepository());
+    }
   }
 
   private static String encodeProfiles(final Collection<String> profiles) {

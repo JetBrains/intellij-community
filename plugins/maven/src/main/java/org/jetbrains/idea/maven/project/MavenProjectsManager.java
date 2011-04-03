@@ -59,9 +59,6 @@ public class MavenProjectsManager extends SimpleProjectComponent
   implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponent {
   private static final int IMPORT_DELAY = 1000;
 
-  static final Object SCHEDULE_IMPORT_MESSAGE = "SCHEDULE_IMPORT_MESSAGE";
-  static final Object FORCE_IMPORT_MESSAGE = "FORCE_IMPORT_MESSAGE";
-
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
   private MavenProjectsManagerState myState = new MavenProjectsManagerState();

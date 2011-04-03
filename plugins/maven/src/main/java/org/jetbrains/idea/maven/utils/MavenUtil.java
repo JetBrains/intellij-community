@@ -497,14 +497,14 @@ public class MavenUtil {
   }
 
   @NotNull
-  public static File resolveLocalRepository(@Nullable String overridenLocalRepository,
-                                            @Nullable String overridenMavenHome,
+  public static File resolveLocalRepository(@Nullable String overriddenLocalRepository,
+                                            @Nullable String overriddenMavenHome,
                                             @Nullable String overriddenUserSettingsFile) {
     File result = null;
-    if (!isEmptyOrSpaces(overridenLocalRepository)) result = new File(overridenLocalRepository);
+    if (!isEmptyOrSpaces(overriddenLocalRepository)) result = new File(overriddenLocalRepository);
     if (result == null) {
       result = doResolveLocalRepository(resolveUserSettingsFile(overriddenUserSettingsFile),
-                                        resolveGlobalSettingsFile(overridenMavenHome));
+                                        resolveGlobalSettingsFile(overriddenMavenHome));
     }
     try {
       return result.getCanonicalFile();
