@@ -49,13 +49,25 @@ public class DirDiffTableModel extends AbstractTableModel {
         final boolean b2 = o2.endsWith("/");
         final String[] dirs1 = o1.split("/");
         final String[] dirs2 = o2.split("/");
-        for (int i = 0; i < Math.min(dirs1.length, dirs2.length); i++) {
+        final int len1 = dirs1.length;
+        final int len2 = dirs2.length;
+
+        if ((!b1 && len1 == 1) || (!b2 && len2 == 1)) {
+          if ((!b1 && len1 == 1) && (!b2 && len2 == 1)) {
+            return dirs1[0].toLowerCase().compareTo(dirs2[0].toLowerCase());
+          } else {
+            return len1 == 1 ? -1 : 1;
+          }
+        }
+        for (int i = 0; i < Math.min(len1, len2); i++) {
           final int cmp = dirs1[i].toLowerCase().compareTo(dirs2[i].toLowerCase());
           if (cmp != 0) return cmp;
         }
-        return dirs1.length - dirs2.length;
+
+        return len1 - len2;
       }
     });
+
     for (String path : pathes) {
       final VirtualFile srcFile = src.findFileByRelativePath(path);
       final VirtualFile trgFile = trg.findFileByRelativePath(path);
@@ -76,6 +88,23 @@ public class DirDiffTableModel extends AbstractTableModel {
         } else if (!isEqual(srcFile, trgFile)) {
             myElements.add(DirDiffElement.createChange(srcFile, trgFile));
         }
+      }
+    }
+    removeEmptyDirs(myElements);
+  }
+
+  private static void removeEmptyDirs(List<DirDiffElement> elements) {
+    final DirDiffElement[] tmp = elements.toArray(new DirDiffElement[elements.size()]);
+    boolean prevItemIsSeparator = true;
+    for (int i = tmp.length - 1; i >= 0; i--) {
+      final boolean isSeparator = tmp[i].isSeparator();
+      if (isSeparator) {
+        if (prevItemIsSeparator) {
+          elements.remove(i);
+        }
+        prevItemIsSeparator = true;
+      } else {
+        prevItemIsSeparator = false;
       }
     }
   }
@@ -113,7 +142,7 @@ public class DirDiffTableModel extends AbstractTableModel {
 
   @Override
   public int getColumnCount() {
-    return 5;
+    return 7;
   }
 
   @Nullable
@@ -126,10 +155,23 @@ public class DirDiffTableModel extends AbstractTableModel {
     switch (columnIndex) {
       case 0: return element.getSourceName();
       case 1: return element.getSourceSize();
-      case 2: return "";
-      case 3: return element.getTargetSize();
-      case 4: return element.getTargetName();
+      case 2: return element.getSourceModificationDate();
+      case 3: return "";
+      case 4: return element.getTargetModificationDate();
+      case 5: return element.getTargetSize();
+      case 6: return element.getTargetName();
     }
     return null;
+  }
+
+  @Override
+  public String getColumnName(int column) {
+    switch (column) {
+      case 0: case 6: return "Name";
+      case 1: case 5: return "Size";
+      case 2: case 4: return "Date";
+      case 3: return "<=>";
+    }
+    return "";
   }
 }
