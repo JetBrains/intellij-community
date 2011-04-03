@@ -39,6 +39,14 @@ public class DirDiffElement {
     myName = name;
   }
 
+  public String getSourceModificationDate() {
+    return null;
+  }
+
+  public String getTargetModificationDate() {
+    return null;
+  }
+
   public static DirDiffElement createChange(@NotNull VirtualFile source, @NotNull VirtualFile target) {
     return new DirDiffElement(source, target, ElementType.CHANGED, source.getName());
   }

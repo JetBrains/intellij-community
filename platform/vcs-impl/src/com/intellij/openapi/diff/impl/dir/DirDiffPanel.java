@@ -32,10 +32,14 @@ public class DirDiffPanel {
 
   public DirDiffPanel(TableModel model) {
     myModel = model;
+    myTable.setModel(myModel);
+    final DirDiffTableCellRenderer renderer = new DirDiffTableCellRenderer(myTable);
+    myTable.setDefaultRenderer(Object.class, renderer);
+    myTable.setDefaultRenderer(String.class, renderer);
+    myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
   }
 
   private void createUIComponents() {
-    myTable = new JBTable(myModel);
   }
 
   public JComponent getPanel() {
