@@ -123,12 +123,16 @@ public class GitLineHandler extends GitTextHandler {
       }
     }
     while (true) {
-      String line = lines.next();
+      String line = null;
+      if (lines.hasNext()) {
+        line = lines.next();
+      }
+
       if (lines.hasNext()) {
         notifyLine(line, outputType);
       }
       else {
-        if (line.length() > 0) {
+        if (line != null && line.length() > 0) {
           lineBuilder.append(line);
         }
         break;
