@@ -131,6 +131,14 @@ public class TextChangesStorageTest {
   }
   
   @Test
+  public void disconnectedUnorderedReplaces() {
+    replace("abc", 1, 4);
+    replace("def", 10, 13);
+    replace("ghi", 6, 9);
+    checkChanges(c("abc", 1, 4), c("ghi", 6, 9), c("def", 10, 13));
+  }
+  
+  @Test
   public void adjacentReplaces() {
     replace("abc", 3, 4);
     replace("de", 6, 9);

@@ -158,35 +158,38 @@ public class TextChangesStorage {
    */
   @SuppressWarnings({"AssignmentToForLoopParameter"})
   private int doStore(@NotNull TextChange change) {
-    int insertionIndex = 0;
     int newChangeStart = change.getStart();
     int newChangeEnd = change.getEnd();
-    int storedChangeStart = getChangeIndex(change.getStart());
+    int insertionIndex = getChangeIndex(change.getStart());
     int clientShift = 0; // 'Client text' shift before the given change to store. I.e. this value can be subtracted from the
                          // given change's start/end offsets in order to get original document range affected by the given change.
     int changeDiff = change.getText().length() - (change.getEnd() - change.getStart());
     boolean updateClientOffsetOnly = false;
     
-    if (storedChangeStart < 0) {
-      storedChangeStart = -storedChangeStart - 1;
-      if (storedChangeStart >= myChanges.size()) {
-        if (storedChangeStart > 0 && storedChangeStart <= myChanges.size()) {
-          ChangeEntry changeEntry = myChanges.get(storedChangeStart - 1);
+    if (insertionIndex < 0) {
+      insertionIndex = -insertionIndex - 1;
+      if (insertionIndex >= myChanges.size()) {
+        if (!myChanges.isEmpty()) {
+          ChangeEntry changeEntry = myChanges.get(myChanges.size() - 1);
           clientShift = changeEntry.clientStartOffset - changeEntry.change.getStart() + changeEntry.change.getDiff();
         }
         myChanges.add(new ChangeEntry(
           new TextChangeImpl(change.getText(), change.getStart() - clientShift, change.getEnd() - clientShift),
           change.getStart()
         ));
-        return storedChangeStart;
+        return insertionIndex;
+      }
+      else if (insertionIndex > 0 && !myChanges.isEmpty()) {
+        ChangeEntry changeEntry = myChanges.get(insertionIndex - 1);
+        clientShift = changeEntry.clientStartOffset - changeEntry.change.getStart() + changeEntry.change.getDiff();
       }
     }
     else {
-      ChangeEntry changeEntry = myChanges.get(storedChangeStart);
+      ChangeEntry changeEntry = myChanges.get(insertionIndex);
       clientShift = changeEntry.clientStartOffset - changeEntry.change.getStart();
     }
     
-    for (int i = storedChangeStart; i < myChanges.size(); i++) {
+    for (int i = insertionIndex; i < myChanges.size(); i++) {
       ChangeEntry changeEntry = myChanges.get(i);
       int storedClientStart = changeEntry.change.getStart() + clientShift;
       CharSequence storedText = changeEntry.change.getText();
