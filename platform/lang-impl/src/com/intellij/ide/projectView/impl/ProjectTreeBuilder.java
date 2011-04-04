@@ -40,6 +40,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.xmlb.DefaultSerializationFilter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
