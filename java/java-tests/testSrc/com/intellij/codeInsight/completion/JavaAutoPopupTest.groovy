@@ -631,4 +631,24 @@ public interface Test {
     assert !lookup
   }
 
+  public void testTemplateSelection() {
+    myFixture.configureByText("a.java", """
+class Foo {
+    int ITER = 2;
+    int itea = 2;
+
+    {
+        it<caret>
+    }
+}
+""")
+    type 'e'
+    assertOrderedEquals myFixture.lookupElementStrings, "itea"
+    type 'r'
+    assertOrderedEquals myFixture.lookupElementStrings, "iter", "ITER", "Iterable", "Iterator"
+    type ','
+    assert !lookup
+    assert myFixture.editor.document.text.contains('iter,')
+  }
+
 }

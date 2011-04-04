@@ -16,9 +16,6 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiFile;
@@ -48,14 +45,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         final String prefix = result.getPrefixMatcher().getPrefix();
         final TemplateImpl template = findApplicableTemplate(file, offset, prefix);
         if (template != null) {
-          result.addElement(LookupElementBuilder.create(prefix).setTypeText(template.getDescription()).setInsertHandler(new InsertHandler<LookupElement>() {
-            @Override
-            public void handleInsert(InsertionContext context, LookupElement item) {
-              context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
-              context.setAddCompletionChar(false);
-              TemplateManager.getInstance(context.getProject()).startTemplate(context.getEditor(), template);
-            }
-          }));
+          result.addElement(new LiveTemplateLookupElement(prefix, template));
         } else {
           for (final TemplateImpl possible : listApplicableTemplates(file, offset)) {
             result.restartCompletionOnPrefixChange(possible.getKey());
