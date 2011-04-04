@@ -62,6 +62,7 @@ public class GitMergeUpdater extends GitUpdater {
   }
 
   @Override
+  @NotNull
   protected GitUpdateResult doUpdate() {
     LOG.info("doUpdate ");
     final GitMerger merger = new GitMerger(myProject);
@@ -98,6 +99,7 @@ public class GitMergeUpdater extends GitUpdater {
     return updateResult.get();
   }
 
+  @NotNull
   private GitUpdateResult handleMergeFailure(MergeLineListener mergeLineListener, final GitMerger merger, GitLineHandler mergeHandler) {
     final MergeError error = mergeLineListener.getMergeError();
     LOG.info("doUpdate merge error: " + error);

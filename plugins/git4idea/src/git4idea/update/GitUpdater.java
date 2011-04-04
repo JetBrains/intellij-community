@@ -174,10 +174,10 @@ public abstract class GitUpdater {
 
   /**
    * Returns paths which have changed remotely comparing to the current branch, i.e. performs
-   * <code>git log --name-status master..origin/master</code>
+   * <code>git diff --name-only master..origin/master</code>
    */
   protected @NotNull Collection<String> getRemotelyChangedPaths(@NotNull String currentBranch, @NotNull String remoteBranch) throws VcsException {
-    final GitSimpleHandler toPull = new GitSimpleHandler(myProject, myRoot, GitCommand.LOG);
+    final GitSimpleHandler toPull = new GitSimpleHandler(myProject, myRoot, GitCommand.DIFF);
     toPull.addParameters("--name-only", "--pretty=format:");
     toPull.addParameters(currentBranch + ".." + remoteBranch);
     toPull.setNoSSH(true);
