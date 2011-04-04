@@ -29,11 +29,9 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.Weigher;
-import com.intellij.psi.WeighingService;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +80,7 @@ public class CompletionServiceImpl extends CompletionService{
     final PsiElement position = parameters.getPosition();
     final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
     final String textBeforePosition = parameters.getPosition().getContainingFile().getText().substring(0, parameters.getOffset());
-    return new CompletionResultSetImpl(consumer, textBeforePosition, new CamelHumpMatcher(prefix, true, parameters.relaxMatching()), contributor, defaultSorter(parameters), null);
+    return new CompletionResultSetImpl(consumer, textBeforePosition, new CamelHumpMatcher(prefix, true, parameters.relaxMatching()), contributor, parameters, defaultSorter(parameters), null);
   }
 
   @Override
@@ -108,16 +106,19 @@ public class CompletionServiceImpl extends CompletionService{
 
   private static class CompletionResultSetImpl extends CompletionResultSet {
     private final String myTextBeforePosition;
+    private final CompletionParameters myParameters;
     private final CompletionSorterImpl mySorter;
     @Nullable private final CompletionResultSetImpl myOriginal;
 
     public CompletionResultSetImpl(final Consumer<LookupElement> consumer, final String textBeforePosition,
                                    final PrefixMatcher prefixMatcher,
                                    CompletionContributor contributor,
+                                   CompletionParameters parameters,
                                    @NotNull CompletionSorterImpl sorter,
                                    CompletionResultSetImpl original) {
       super(prefixMatcher, consumer, contributor);
       myTextBeforePosition = textBeforePosition;
+      myParameters = parameters;
       mySorter = sorter;
       myOriginal = original;
     }
@@ -133,9 +134,13 @@ public class CompletionServiceImpl extends CompletionService{
       if (!myTextBeforePosition.endsWith(matcher.getPrefix())) {
         final int len = myTextBeforePosition.length();
         final String fragment = len > 100 ? myTextBeforePosition.substring(len - 100) : myTextBeforePosition;
-        LOG.error("prefix should be some actual file string just before caret: " + matcher.getPrefix() + "\n text=" + fragment);
+        PsiFile positionFile = myParameters.getPosition().getContainingFile();
+        LOG.error("prefix should be some actual file string just before caret: " + matcher.getPrefix() +
+                  "\n text=" + fragment +
+                  "\ninjected=" + (InjectedLanguageUtil.getTopLevelFile(positionFile) != positionFile) +
+                  "\nlang=" + positionFile.getLanguage());
       }
-      return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, matcher, myContributor, mySorter, this);
+      return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, matcher, myContributor, myParameters, mySorter, this);
     }
 
     @Override
@@ -155,7 +160,7 @@ public class CompletionServiceImpl extends CompletionService{
     @NotNull
     @Override
     public CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter) {
-      return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, getPrefixMatcher(), myContributor, (CompletionSorterImpl)sorter, this);
+      return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, getPrefixMatcher(), myContributor, myParameters, (CompletionSorterImpl)sorter, this);
     }
 
     @NotNull
