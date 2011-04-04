@@ -32,7 +32,10 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.event.EditorFactoryAdapter;
+import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -260,7 +263,9 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     return new Point(location.x, location.y);
   }
 
-  private IntentionHintComponent(@NotNull Project project, @NotNull PsiFile file, @NotNull final Editor editor,
+  private IntentionHintComponent(@NotNull Project project,
+                                 @NotNull PsiFile file,
+                                 @NotNull final Editor editor,
                                  @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myFile = file;
@@ -317,6 +322,15 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     myComponentHint = new MyComponentHint(this);
     IntentionListStep step = new IntentionListStep(this, intentions, myEditor, myFile, project);
     recreateMyPopup(step);
+    // dispose myself when editor closed
+    EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
+      @Override
+      public void editorReleased(EditorFactoryEvent event) {
+        if (event.getEditor() == myEditor) {
+          hide();
+        }
+      }
+    }, this);
   }
 
   public void hide() {

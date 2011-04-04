@@ -150,7 +150,7 @@ public class InjectedLanguageUtil {
 
   @NotNull
   public static Editor getInjectedEditorForInjectedFile(@NotNull Editor hostEditor, final PsiFile injectedFile) {
-    if (injectedFile == null || hostEditor instanceof EditorWindow) return hostEditor;
+    if (injectedFile == null || hostEditor instanceof EditorWindow || hostEditor.isDisposed()) return hostEditor;
     Document document = PsiDocumentManager.getInstance(hostEditor.getProject()).getDocument(injectedFile);
     if (!(document instanceof DocumentWindowImpl)) return hostEditor;
     DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
@@ -370,7 +370,7 @@ public class InjectedLanguageUtil {
       virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
     }
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile, -1), false);
-    if (editor == null || editor instanceof EditorWindow) return editor;
+    if (editor == null || editor instanceof EditorWindow || editor.isDisposed()) return editor;
     if (document instanceof DocumentWindowImpl) {
       return EditorWindow.create((DocumentWindowImpl)document, (EditorImpl)editor, file);
     }

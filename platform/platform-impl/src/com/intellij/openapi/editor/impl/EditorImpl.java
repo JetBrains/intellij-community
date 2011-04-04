@@ -628,7 +628,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (myConnection != null) {
       myConnection.disconnect();
-  }
+    }
   }
 
   private void clearCaretThread() {
