@@ -42,10 +42,10 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement implements Loc
     }
     LOG.assertTrue(startElement.isValid());
     LOG.assertTrue(endElement == startElement || endElement.isValid());
-    PsiFile containingFile = startElement.getContainingFile();
-    LOG.assertTrue(endElement == startElement || containingFile == endElement.getContainingFile());
-    myStartElement = SmartPointerManager.getInstance(containingFile.getProject()).createSmartPsiElementPointer(startElement);
-    myEndElement = endElement == startElement ? null : SmartPointerManager.getInstance(containingFile.getProject()).createSmartPsiElementPointer(endElement);
+    LOG.assertTrue(endElement == startElement || startElement.getContainingFile() == endElement.getContainingFile(), "Both elements must be from the same file");
+    Project project = startElement.getProject(); // containingFile can be null for a directory
+    myStartElement = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(startElement);
+    myEndElement = endElement == startElement ? null : SmartPointerManager.getInstance(project).createSmartPsiElementPointer(endElement);
   }
 
   @Override
@@ -86,7 +86,7 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement implements Loc
   }
 
   public PsiElement getStartElement() {
-    return myStartElement.getElement();
+    return myStartElement == null ? null : myStartElement.getElement();
   }
 
   public abstract void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement);
