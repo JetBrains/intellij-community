@@ -144,13 +144,12 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       }
     }
 
-    // IMPORTANT! VFS refresh is a MUST here, because otherwise VirlualFile objects will be leaked in the
-    // components listening to VFS and relying on VFS contract
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        refresh(false);
-      }
-    });
+    // grand VFS refresh significantly slows down local tests and generally not needed
+    //ApplicationManager.getApplication().runWriteAction(new Runnable() {
+    //  public void run() {
+    //    refresh(false);
+    //  }
+    //});
 
     myRootsToWatch.clear();
 
