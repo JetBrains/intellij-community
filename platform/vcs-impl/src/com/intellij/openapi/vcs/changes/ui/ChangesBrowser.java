@@ -41,6 +41,8 @@ import java.util.List;
  * @author max
  */
 public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
+  // for backgroundable rollback to mark
+  private boolean myDataIsDirty;
   protected final ChangesTreeList<Change> myViewer;
   protected ChangeList mySelectedChangeList;
   protected Collection<Change> myChangesToDisplay;
@@ -67,7 +69,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
                         ChangeList initialListSelection, final boolean capableOfExcludingChanges, final boolean highlightProblems,
                         @Nullable final Runnable inclusionListener, final MyUseCase useCase) {
     super(new BorderLayout());
-
+    myDataIsDirty = false;
     myProject = project;
     myCapableOfExcludingChanges = capableOfExcludingChanges;
 
@@ -345,4 +347,11 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     COMMITTED_CHANGES
   }
 
+  public boolean isDataIsDirty() {
+    return myDataIsDirty;
+  }
+
+  public void setDataIsDirty(boolean dataIsDirty) {
+    myDataIsDirty = dataIsDirty;
+  }
 }

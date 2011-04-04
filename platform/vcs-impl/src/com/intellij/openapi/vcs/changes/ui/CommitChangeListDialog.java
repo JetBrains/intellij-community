@@ -674,15 +674,15 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     saveComments(true);
     final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
 
-    ensureDataIsActual(new Runnable() {
+    final Runnable callCommit = new Runnable() {
       public void run() {
         try {
           runBeforeCommitHandlers(new Runnable() {
-            public void run() {
-              CommitChangeListDialog.super.doOKAction();
-              doCommit();
-            }
-          }, null);
+              public void run() {
+                CommitChangeListDialog.super.doOKAction();
+                doCommit();
+              }
+            }, null);
 
           defaultListCleaner.clean();
         }
@@ -690,7 +690,12 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           ex.show();
         }
       }
-    });
+    };
+    if (myBrowser.isDataIsDirty()) {
+      ensureDataIsActual(callCommit);
+    } else {
+      callCommit.run();
+    }
   }
 
   private boolean saveDialogState() {
@@ -1009,11 +1014,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
 
     public void actionPerformed(ActionEvent e) {
-      ensureDataIsActual(new Runnable() {
+      final Runnable callExecutor = new Runnable() {
         public void run() {
           execute(myCommitExecutor);
         }
-      });
+      };
+      if (myBrowser.isDataIsDirty()) {
+        ensureDataIsActual(callExecutor);
+      } else {
+        callExecutor.run();
+      }
     }
   }
 

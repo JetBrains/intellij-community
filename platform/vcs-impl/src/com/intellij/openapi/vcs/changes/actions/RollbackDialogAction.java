@@ -44,10 +44,14 @@ public class RollbackDialogAction extends AnAction implements DumbAware {
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
     Project project = e.getData(PlatformDataKeys.PROJECT);
     final ChangesBrowser browser = e.getData(ChangesBrowser.DATA_KEY);
+    if (browser != null) {
+      browser.setDataIsDirty(true);
+    }
     RollbackChangesDialog.rollbackChanges(project, Arrays.asList(changes), true, new Runnable() {
       public void run() {
         if (browser != null) {
           browser.rebuildList();
+          browser.setDataIsDirty(false);
         }
       }
     });
