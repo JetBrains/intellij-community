@@ -15,6 +15,9 @@ public abstract class StructuredDocString {
   protected final Map<String, Map<String, String>> myArgTagValues = Maps.newHashMap();
 
   public static StructuredDocString parse(String text) {
+    if (text.contains(":param ") || text.contains(":rtype ") || text.contains(":type ")) {
+      return new SphinxDocString(text);
+    }
     return new EpydocString(text);
   }
 
@@ -32,7 +35,7 @@ public abstract class StructuredDocString {
 
   private int parseTag(String[] lines, int index, String tagPrefix) {
     String line = lines[index].trim();
-    int tagEnd = StringUtil.indexOfAny(line, " \t:");
+    int tagEnd = StringUtil.indexOfAny(line, " \t:", 1, line.length());
     if (tagEnd < 0) return index;
     String tagName = line.substring(1, tagEnd);
     String tagValue = line.substring(tagEnd).trim();
