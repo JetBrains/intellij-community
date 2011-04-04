@@ -120,6 +120,10 @@ public class DirDiffTableModel extends AbstractTableModel {
     }
   }
 
+  public DirDiffElement getElementAt(int index) {
+    return myElements.get(index);
+  }
+
   private static void scan(String prefix, VirtualFile file, HashSet<String> files, ProgressIndicator indicator, boolean isRoot) {
     if (file.isDirectory()) {
       indicator.setText2(file.getPath());
@@ -173,5 +177,9 @@ public class DirDiffTableModel extends AbstractTableModel {
       case 3: return "<=>";
     }
     return "";
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 }
