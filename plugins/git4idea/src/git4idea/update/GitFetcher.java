@@ -16,6 +16,7 @@
 package git4idea.update;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,10 +33,12 @@ public class GitFetcher {
 
   private static final Logger LOG = Logger.getInstance(GitFetcher.class);
   private final Project myProject;
+  private final ProgressIndicator myProgressIndicator;
   private final Collection<VcsException> myErrors = new HashSet<VcsException>();
 
-  public GitFetcher(Project project) {
+  public GitFetcher(Project project, ProgressIndicator progressIndicator) {
     myProject = project;
+    myProgressIndicator = progressIndicator;
   }
 
   /**
@@ -47,6 +50,7 @@ public class GitFetcher {
     final GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.FETCH);
 
     final GitTask fetchTask = new GitTask(myProject, h, "Fetching changes...");
+    fetchTask.setProgressIndicator(myProgressIndicator);
     fetchTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     final AtomicBoolean success = new AtomicBoolean();
     fetchTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {

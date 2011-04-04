@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.continuation.Continuation;
 import com.intellij.util.continuation.ContinuationContext;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
@@ -60,9 +59,11 @@ public class GitShelveChangesSaver extends GitChangesSaver {
       changes.addAll(filterChangesByRoots(l.getChanges(), rootsToSave)); // adding only changes from roots which are to be saved
     }
     if (!changes.isEmpty()) {
+      String oldProgressTitle = myProgressIndicator.getText();
       myProgressIndicator.setText(GitBundle.getString("update.shelving.changes"));
       List<VcsException> exceptions = new ArrayList<VcsException>(1);
       myShelvedChangeList = GitStashUtils.shelveChanges(myProject, myShelveManager, changes, myStashMessage, exceptions);
+      myProgressIndicator.setText(oldProgressTitle);
       if (!exceptions.isEmpty()) {
         LOG.info("save " + exceptions, exceptions.get(0));
         throw exceptions.get(0);
@@ -73,10 +74,12 @@ public class GitShelveChangesSaver extends GitChangesSaver {
   protected void load(Runnable restoreListsRunnable, ContinuationContext context) {
     if (myShelvedChangeList != null) {
       LOG.info("load ");
+      String oldProgressTitle = myProgressIndicator.getText();
       myProgressIndicator.setText(GitBundle.getString("update.unshelving.changes"));
       if (myShelvedChangeList != null) {
         GitStashUtils.doSystemUnshelve(myProject, myShelvedChangeList, myShelveManager, restoreListsRunnable, context);
       }
+      myProgressIndicator.setText(oldProgressTitle);
     }
   }
 
