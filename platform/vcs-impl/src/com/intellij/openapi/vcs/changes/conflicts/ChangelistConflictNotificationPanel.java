@@ -17,13 +17,11 @@ package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.InplaceButton;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -36,18 +34,24 @@ import java.util.List;
 public class ChangelistConflictNotificationPanel extends EditorNotificationPanel {
 
   private final ChangeList myChangeList;
-  private final Change myChange;
   private final VirtualFile myFile;
   private final ChangelistConflictTracker myTracker;
 
-  public ChangelistConflictNotificationPanel(ChangelistConflictTracker tracker, VirtualFile file) {
+  @Nullable
+  public static ChangelistConflictNotificationPanel create(ChangelistConflictTracker tracker, VirtualFile file) {
+    final ChangeListManager manager = tracker.getChangeListManager();
+    final Change change = manager.getChange(file);
+    if (change == null) return null;
+    final LocalChangeList changeList = manager.getChangeList(change);
+    if (changeList == null) return null;
+    return new ChangelistConflictNotificationPanel(tracker, file, changeList);
+  }
 
+  private ChangelistConflictNotificationPanel(ChangelistConflictTracker tracker, VirtualFile file, LocalChangeList changeList) {
     myTracker = tracker;
     myFile = file;
     final ChangeListManager manager = tracker.getChangeListManager();
-    myChange = manager.getChange(file);
-    myChangeList = manager.getChangeList(myChange);
-    assert myChangeList != null;
+    myChangeList = changeList;
     myLabel.setText("File from non-active changelist is modified");
     createActionLabel("Move changes", new Runnable() {
       public void run() {
