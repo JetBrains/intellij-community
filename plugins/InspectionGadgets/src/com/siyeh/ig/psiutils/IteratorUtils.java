@@ -116,7 +116,7 @@ public class IteratorUtils {
                     final PsiReferenceExpression referenceExpression =
                             (PsiReferenceExpression) qualifier;
                     final PsiElement element = referenceExpression.resolve();
-                    if (!target.equals(element)) {
+                    if (target == null || !target.equals(element)) {
                         return;
                     }
                 }
