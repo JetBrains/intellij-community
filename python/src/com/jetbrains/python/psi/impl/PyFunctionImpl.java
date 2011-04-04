@@ -175,7 +175,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     else {
       typeName = extractDocStringReturnType();
     }
-    return getTypeByName(typeName);
+    return PyTypeParser.getTypeByName(this, typeName);
   }
 
   @Nullable
@@ -217,35 +217,6 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
     EpydocString epydocString = new EpydocString(docString);
     return epydocString.getReturnType();
-  }
-
-  @Nullable
-  private PyType getTypeByName(String returnType) {
-    if (returnType == null) {
-      return null;
-    }
-    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(this);
-
-    if (returnType.equals("string")) {
-      return builtinCache.getStrType();
-    }
-    if (returnType.equals("file object")) {
-      return builtinCache.getObjectType("file");
-    }
-    if (returnType.equals("dictionary")) {
-      return builtinCache.getObjectType("dict");
-    }
-    if (returnType.startsWith("list of")) {
-      return builtinCache.getObjectType("list");
-    }
-    if (returnType.equals("integer")) {
-      return builtinCache.getIntType();
-    }
-    final PyClassType type = builtinCache.getObjectType(returnType);
-    if (type != null) {
-      return type;
-    }
-    return null;
   }
 
   private static class ReturnVisitor extends PyRecursiveElementVisitor {

@@ -68,13 +68,18 @@ public class EpydocString {
   @Nullable
   public String getReturnType() {
     String value = getTagValue("rtype");
-    if (value != null) {
-      return removeInlineMarkup(value);
-    }
-    return null;
+    return removeInlineMarkup(value);
   }
 
+  @Nullable
+  public String getParamType(String paramName) {
+    String value = getTagValue("type", paramName);
+    return removeInlineMarkup(value);
+  }
+
+  @Nullable
   public static String removeInlineMarkup(String s) {
+    if (s == null) return null;
     StringBuilder resultBuilder = new StringBuilder();
     int pos = 0;
     while(true) {
