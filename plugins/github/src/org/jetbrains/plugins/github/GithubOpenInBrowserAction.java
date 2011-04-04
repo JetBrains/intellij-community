@@ -23,11 +23,14 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitBranch;
 import git4idea.GitRemote;
 import git4idea.GitUtil;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -122,7 +125,29 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     if (repoInfo.endsWith(".git")) {
       repoInfo = repoInfo.substring(0, repoInfo.length() - 4);
     }
-    // TODO[oleg] support custom branches here
-    BrowserUtil.launchBrowser("https://github.com/" + repoInfo + "/blob/master" + path.substring(rootPath.length()));
+
+    // Get current tracked branch
+    final GitBranch tracked;
+    try {
+      final GitBranch current = GitBranch.current(project, root);
+      if (current == null){
+        Messages.showErrorDialog(project, "Cannot find local branch", CANNOT_OPEN_IN_BROWSER);
+        return;
+      }
+      tracked = current.tracked(project, root);
+      if (tracked == null || !tracked.isRemote()){
+        Messages.showErrorDialog(project, "Cannot find tracked branch for branch: " + current.getFullName(), CANNOT_OPEN_IN_BROWSER);
+        return;
+      }
+    }
+    catch (VcsException e1) {
+      Messages.showErrorDialog(project, "Error occured while inspecting branches: " + e1, CANNOT_OPEN_IN_BROWSER);
+      return;
+    }
+    String branch = tracked.getName();
+    if (branch.startsWith("origin/")){
+      branch = branch.substring(7);
+    }
+    BrowserUtil.launchBrowser("https://github.com/" + repoInfo + "/blob/" + branch + path.substring(rootPath.length()));
   }
 }
