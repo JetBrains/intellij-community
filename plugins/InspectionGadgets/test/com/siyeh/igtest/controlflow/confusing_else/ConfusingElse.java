@@ -40,4 +40,15 @@ public class ConfusingElse {
             case 3:
         }
     }
+
+    public int foo(int o) {
+        if (o == 1) {
+            o = 2;
+        } else if (o == 2) {
+            return 1;
+        } else {
+            o = 4;
+        }
+        return o;
+    }
 }

@@ -138,10 +138,7 @@ public class ConfusingElseInspection extends BaseInspection {
                 return;
             }
             final PsiStatement elseBranch = statement.getElseBranch();
-            if (elseBranch == null) {
-                return;
-            }
-            if (elseBranch instanceof PsiIfStatement) {
+            if (elseBranch == null || elseBranch instanceof PsiIfStatement) {
                 return;
             }
             if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
@@ -163,7 +160,28 @@ public class ConfusingElseInspection extends BaseInspection {
             if (elseToken == null) {
                 return;
             }
+            if (parentCompletesNormally(statement)) {
+                return;
+            }
             registerError(elseToken);
+        }
+
+        private boolean parentCompletesNormally(PsiElement element) {
+            PsiElement parent = element.getParent();
+            while (parent instanceof PsiIfStatement) {
+                final PsiIfStatement ifStatement = (PsiIfStatement) parent;
+                final PsiStatement elseBranch = ifStatement.getElseBranch();
+                if (elseBranch != element) {
+                    return true;
+                }
+                final PsiStatement thenBranch = ifStatement.getThenBranch();
+                if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
+                    return true;
+                }
+                element = parent;
+                parent = element.getParent();
+            }
+            return !(parent instanceof PsiCodeBlock);
         }
 
         private PsiStatement getNextStatement(PsiIfStatement statement) {
