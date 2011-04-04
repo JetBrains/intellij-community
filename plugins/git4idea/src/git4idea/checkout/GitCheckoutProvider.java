@@ -41,9 +41,6 @@ public class GitCheckoutProvider implements CheckoutProvider {
   // TODO check if they will actually support the switch in the released 1.6.0.5
   private static final GitVersion VERBOSE_CLONE_SUPPORTED = new GitVersion(1, 6, 0, 5);
 
-  /**
-   * {@inheritDoc}
-   */
   public void doCheckout(@NotNull final Project project, @Nullable final Listener listener) {
     BasicAction.saveAll();
     GitCloneDialog dialog = new GitCloneDialog(project);
@@ -58,9 +55,8 @@ public class GitCheckoutProvider implements CheckoutProvider {
     }
     final String sourceRepositoryURL = dialog.getSourceRepositoryURL();
     final String directoryName = dialog.getDirectoryName();
-    final String originName = dialog.getOriginName();
     final String parentDirectory = dialog.getParentDirectory();
-    checkout(project, listener, destinationParent, sourceRepositoryURL, directoryName, originName, parentDirectory);
+    checkout(project, listener, destinationParent, sourceRepositoryURL, directoryName, parentDirectory);
   }
 
   public static void checkout(final Project project,
@@ -68,9 +64,8 @@ public class GitCheckoutProvider implements CheckoutProvider {
                               final VirtualFile destinationParent,
                               final String sourceRepositoryURL,
                               final String directoryName,
-                              final String originName,
                               final String parentDirectory) {
-    final GitLineHandler handler = clone(project, sourceRepositoryURL, new File(parentDirectory), directoryName, originName);
+    final GitLineHandler handler = getCloneHandler(project, sourceRepositoryURL, new File(parentDirectory), directoryName);
     GitTask task = new GitTask(project, handler, GitBundle.message("cloning.repository", sourceRepositoryURL));
     task.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     task.executeAsync(new GitTaskResultHandlerAdapter() {
@@ -112,13 +107,10 @@ public class GitCheckoutProvider implements CheckoutProvider {
    * @param originName origin name (ignored if null or empty string)
    * @return a handler for clone operation
    */
-  public static GitLineHandler clone(Project project, final String url, final File directory, final String name, final String originName) {
+  public static GitLineHandler getCloneHandler(Project project, final String url, final File directory, final String name) {
     GitLineHandler handler = new GitLineHandler(project, directory, GitCommand.CLONE);
     if (VERBOSE_CLONE_SUPPORTED.isOlderOrEqual(GitVcs.getInstance(project).getVersion())) {
       handler.addParameters("-v");
-    }
-    if (originName != null && originName.length() > 0) {
-      handler.addParameters("-o", originName);
     }
     handler.addParameters(url, name);
     handler.addProgressParameter();

@@ -19,7 +19,6 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -110,7 +109,7 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     final String repositoryName = name;
     final String repositoryOwner = owner;
     final String checkoutUrl = host + repositoryOwner + "/" + repositoryName + ".git";
-    GitCheckoutProvider.checkout(project, listener, selectedPathFile, checkoutUrl, projectName, "origin", selectedPath);
+    GitCheckoutProvider.checkout(project, listener, selectedPathFile, checkoutUrl, projectName, selectedPath);
   }
 
   @Override

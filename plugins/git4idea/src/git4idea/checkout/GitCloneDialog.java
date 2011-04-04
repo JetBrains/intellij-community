@@ -28,7 +28,6 @@ import git4idea.commands.GitTask;
 import git4idea.commands.GitTaskResult;
 import git4idea.i18n.GitBundle;
 import git4idea.remote.GitRememberedInputs;
-import git4idea.validators.GitBranchNameValidator;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -67,7 +66,6 @@ public class GitCloneDialog extends DialogWrapper {
   private JButton myTestButton; // test repository
   private JTextField myDirectoryName;
 
-  private JTextField myOriginName; // origin name for cloned repository (-o option)
   private String myTestURL; // the repository URL at the time of the last test
   private Boolean myTestResult; // the test result of the last test or null if not tested
   private String myDefaultDirectoryName = "";
@@ -92,10 +90,6 @@ public class GitCloneDialog extends DialogWrapper {
 
   public String getDirectoryName() {
     return myDirectoryName.getText();
-  }
-
-  public String getOriginName() {
-    return myOriginName.getText();
   }
 
   /**
@@ -133,7 +127,6 @@ public class GitCloneDialog extends DialogWrapper {
     myParentDirectory.setText(GitRememberedInputs.getInstance().getCloneParentDir());
 
     myDirectoryName.getDocument().addDocumentListener(updateOkButtonListener);
-    myOriginName.getDocument().addDocumentListener(updateOkButtonListener);
 
     myTestButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -169,28 +162,9 @@ public class GitCloneDialog extends DialogWrapper {
     if (!checkDestination()) {
       return;
     }
-    if (!checkOrigin()) {
-      return;
-    }
     setErrorText(null);
     setOKActionEnabled(true);
   }
-
-  /**
-   * Check origin and set appropriate error text if there are problems
-   *
-   * @return true if origin name is OK.
-   */
-  private boolean checkOrigin() {
-    String origin = myOriginName.getText();
-    if (origin.length() != 0 && !GitBranchNameValidator.INSTANCE.checkInput(origin)) {
-      setErrorText(GitBundle.getString("clone.invalid.origin"));
-      setOKActionEnabled(false);
-      return false;
-    }
-    return true;
-  }
-
 
   /**
    * Check destination directory and set appropriate error text if there are problems
