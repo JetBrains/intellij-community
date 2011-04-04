@@ -16,9 +16,7 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * TODO: Add description
- * User: dcheryasov
- * Date: Jun 7, 2009 12:31:07 PM
+ * @author dcheryasov
  */
 public class PyQuickDocTest extends LightMarkedTestCase {
   private PythonDocumentationProvider myProvider;
@@ -76,7 +74,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     Map<String, PsiElement> marks = loadTest();
     final PsiElement original_elt = marks.get("<the_ref>");
     PsiElement ref_elt = original_elt.getParent(); // ident -> expr
-    final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)ref_elt).getReference().resolve();
+    final PsiElement doc_owner = ((PyReferenceExpression)ref_elt).getReference().resolve();
     checkByHTML(myProvider.generateDoc(doc_owner, original_elt));
   }
 
@@ -182,6 +180,10 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testPropOldDeleter() {
+    checkHTMLOnly();
+  }
+
+  public void testParam() {
     checkHTMLOnly();
   }
 

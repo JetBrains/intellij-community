@@ -44,7 +44,7 @@ public class EpydocString {
     }
     else {
       String arg = tagValue.substring(0, pos).trim();
-      Map<String, String> argValues = myArgTagValues.get(arg);
+      Map<String, String> argValues = myArgTagValues.get(tagName);
       if (argValues == null) {
         argValues = Maps.newHashMap();
         myArgTagValues.put(tagName, argValues);
@@ -75,6 +75,18 @@ public class EpydocString {
   public String getParamType(String paramName) {
     String value = getTagValue("type", paramName);
     return removeInlineMarkup(value);
+  }
+
+  @Nullable
+  public String getParamDescription(String paramName) {
+    String value = getTagValue("param", paramName);
+    if (value == null) {
+      value = getTagValue("param", "*" + paramName);
+    }
+    if (value == null) {
+      value = getTagValue("param", "**" + paramName);
+    }
+    return value;
   }
 
   @Nullable

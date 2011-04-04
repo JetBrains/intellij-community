@@ -372,6 +372,24 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
         doc_cat.add(combUp(PyUtil.getReadableRepr(followed, false)));
       }
     }
+    if (followed instanceof PyNamedParameter) {
+      PyFunction function = PsiTreeUtil.getParentOfType(followed, PyFunction.class);
+      if (function != null) {
+        final String docString = PyUtil.strValue(function.getDocStringExpression());
+        EpydocString epydocString = new EpydocString(docString);
+        if (epydocString != null) {
+          final String name = ((PyNamedParameter)followed).getName();
+          final String type = epydocString.getParamType(name);
+          if (type != null) {
+            doc_cat.add(": ").add(type);
+          }
+          final String desc = epydocString.getParamDescription(name);
+          if (desc != null) {
+            epilog_cat.add(BR).add(desc);
+          }
+        }
+      }
+    }
     if (doc_cat.isEmpty() && epilog_cat.isEmpty()) return null; // got nothing substantial to say!
     else return cat.toString();
   }
