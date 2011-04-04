@@ -29,10 +29,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.NonFocusableCheckBox;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Icons;
 import com.intellij.util.SmartList;
@@ -306,6 +303,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
         return delegate.getText();
       }
     });
+    treeSpeedSearch.setComparator(new SpeedSearchBase.SpeedSearchComparator(false));
 
     treeSpeedSearch.addChangeListener(new PropertyChangeListener() {
       @Override
