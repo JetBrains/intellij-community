@@ -3,18 +3,20 @@ package com.jetbrains.python.documentation;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.lang.documentation.QuickDocumentationProvider;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -520,7 +522,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
   }
 
   @Override
-  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
+  public List<String> getUrlFor(final PsiElement element, PsiElement originalElement) {
     final String url = getUrlFor(element, originalElement, true);
     return url == null ? null : Collections.singletonList(url);
   }
@@ -639,6 +641,43 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
   @Override
   public boolean hasDocumentationFor(PsiElement element, PsiElement originalElement) {
     return getUrlFor(element, originalElement, false) != null;
+  }
+
+  @Override
+  public boolean canPromptToConfigureDocumentation(PsiElement element) {
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile instanceof PyFile) {
+      final Project project = element.getProject();
+      final VirtualFile vFile = containingFile.getVirtualFile();
+      if (vFile != null && ProjectRootManager.getInstance(project).getFileIndex().isInLibraryClasses(vFile)) {
+        final PyQualifiedName qName = ResolveImportUtil.findCanonicalImportPath(element, element);
+        if (qName != null && qName.getComponentCount() > 0) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public void promptToConfigureDocumentation(PsiElement element) {
+    final Project project = element.getProject();
+    final PyQualifiedName qName = ResolveImportUtil.findCanonicalImportPath(element, element);
+    if (qName != null && qName.getComponentCount() > 0) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            int rc = Messages.showOkCancelDialog(project,
+                                                 "No external documentation URL configured for module " + qName.getComponents().get(0) +
+                                                 ".\nWould you like to configure it now?",
+                                                 "Python External Documentation",
+                                                 Messages.getQuestionIcon());
+            if (rc == 0) {
+              ShowSettingsUtil.getInstance().showSettingsDialog(project, PythonDocumentationConfigurable.class);
+            }
+          }
+        }, ModalityState.NON_MODAL);
+    }
   }
 
   @Nullable
