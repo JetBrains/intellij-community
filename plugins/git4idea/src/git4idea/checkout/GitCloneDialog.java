@@ -17,24 +17,21 @@ package git4idea.checkout;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextComponentAccessor;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.EditorComboBox;
+import com.intellij.util.ArrayUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.GitTask;
 import git4idea.commands.GitTaskResult;
 import git4idea.i18n.GitBundle;
+import git4idea.remote.GitRememberedInputs;
 import git4idea.validators.GitBranchNameValidator;
 import org.jetbrains.annotations.NonNls;
 
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.event.ActionEvent;
@@ -65,7 +62,7 @@ public class GitCloneDialog extends DialogWrapper {
   }
 
   private JPanel myRootPanel;
-  private JTextField myRepositoryURL;
+  private EditorComboBox myRepositoryURL;
   private TextFieldWithBrowseButton myParentDirectory;
   private JButton myTestButton; // test repository
   private JTextField myDirectoryName;
@@ -125,49 +122,19 @@ public class GitCloneDialog extends DialogWrapper {
           }
           return super.getInitialFile();
         }
-      });
-    final DocumentListener updateOkButtonListener = new DocumentListener() {
-      // update Ok button state depending on the current state of the fields
-      public void insertUpdate(final DocumentEvent e) {
-        updateOkButton();
-      }
+    });
 
-      public void removeUpdate(final DocumentEvent e) {
-        updateOkButton();
-      }
-
-      public void changedUpdate(final DocumentEvent e) {
-        updateOkButton();
+    final DocumentListener updateOkButtonListener = new DocumentAdapter() {
+      @Override protected void textChanged(DocumentEvent e) {
+        updateButtons();
       }
     };
     myParentDirectory.getChildComponent().getDocument().addDocumentListener(updateOkButtonListener);
+    myParentDirectory.setText(GitRememberedInputs.getInstance().getCloneParentDir());
+
     myDirectoryName.getDocument().addDocumentListener(updateOkButtonListener);
     myOriginName.getDocument().addDocumentListener(updateOkButtonListener);
-    myRepositoryURL.getDocument().addDocumentListener(new DocumentListener() {
-      // enable test button only if something is entered in repository URL
-      public void insertUpdate(final DocumentEvent e) {
-        changed();
-      }
 
-      public void removeUpdate(final DocumentEvent e) {
-        changed();
-      }
-
-      public void changedUpdate(final DocumentEvent e) {
-        changed();
-      }
-
-      private void changed() {
-        final String url = myRepositoryURL.getText();
-        myTestButton.setEnabled(url.length() != 0);
-        if (myDefaultDirectoryName.equals(myDirectoryName.getText()) || myDirectoryName.getText().length() == 0) {
-          // modify field if it was unmodified or blank
-          myDefaultDirectoryName = defaultDirectoryName(url);
-          myDirectoryName.setText(myDefaultDirectoryName);
-        }
-        updateOkButton();
-      }
-    });
     myTestButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         myTestURL = myRepositoryURL.getText();
@@ -184,16 +151,18 @@ public class GitCloneDialog extends DialogWrapper {
         } else {
           myTestResult = Boolean.FALSE;
         }
-        updateOkButton();
+        updateButtons();
       }
     });
+
     setOKActionEnabled(false);
+    myTestButton.setEnabled(false);
   }
 
   /**
    * Check fields and display error in the wrapper if there is a problem
    */
-  private void updateOkButton() {
+  private void updateButtons() {
     if (!checkRepositoryURL()) {
       return;
     }
@@ -300,6 +269,32 @@ public class GitCloneDialog extends DialogWrapper {
     return false;
   }
 
+  private void createUIComponents() {
+    myRepositoryURL = new EditorComboBox("");
+    final GitRememberedInputs rememberedInputs = GitRememberedInputs.getInstance();
+    myRepositoryURL.setHistory(ArrayUtil.toObjectArray(rememberedInputs.getVisitedUrls(), String.class));
+    myRepositoryURL.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+      @Override
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+        // enable test button only if something is entered in repository URL
+        final String url = myRepositoryURL.getText();
+        myTestButton.setEnabled(url.length() != 0);
+        if (myDefaultDirectoryName.equals(myDirectoryName.getText()) || myDirectoryName.getText().length() == 0) {
+          // modify field if it was unmodified or blank
+          myDefaultDirectoryName = defaultDirectoryName(url);
+          myDirectoryName.setText(myDefaultDirectoryName);
+        }
+        updateButtons();
+      }
+    });
+  }
+
+  public void rememberSettings() {
+    final GitRememberedInputs rememberedInputs = GitRememberedInputs.getInstance();
+    rememberedInputs.addUrl(getSourceRepositoryURL());
+    rememberedInputs.setCloneParentDir(getParentDirectory());
+  }
+
   /**
    * Get default name for checked out directory
    *
@@ -328,16 +323,10 @@ public class GitCloneDialog extends DialogWrapper {
     return i >= 0 ? nonSystemName.substring(i + 1) : "";
   }
 
-  /**
-   * {@inheritDoc}
-   */
   protected JComponent createCenterPanel() {
     return myRootPanel;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected String getDimensionServiceKey() {
     return "GitCloneDialog";
@@ -348,9 +337,6 @@ public class GitCloneDialog extends DialogWrapper {
     return myRepositoryURL;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected String getHelpId() {
     return "reference.VersionControl.Git.CloneRepository";

@@ -125,6 +125,9 @@
     <applicationService
         serviceInterface="git4idea.config.SSHConnectionSettings"
         serviceImplementation="git4idea.config.SSHConnectionSettings"/>
+    <applicationService
+        serviceInterface="git4idea.remote.GitRememberedInputs"
+        serviceImplementation="git4idea.remote.GitRememberedInputs"/>
 
     <ComponentRoamingType component="Git.Settings" type="DISABLED"/>
     <fileTypeFactory implementation="git4idea.vfs.GitFileTypeFactory"/>

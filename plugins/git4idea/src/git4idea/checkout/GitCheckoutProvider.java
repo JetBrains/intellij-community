@@ -22,11 +22,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
 import git4idea.actions.BasicAction;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitStandardProgressAnalyzer;
-import git4idea.commands.GitTask;
-import git4idea.commands.GitTaskResultHandlerAdapter;
+import git4idea.commands.*;
 import git4idea.config.GitVersion;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitUIUtil;
@@ -55,6 +51,7 @@ public class GitCheckoutProvider implements CheckoutProvider {
     if (!dialog.isOK()) {
       return;
     }
+    dialog.rememberSettings();
     final VirtualFile destinationParent = LocalFileSystem.getInstance().findFileByIoFile(new File(dialog.getParentDirectory()));
     if (destinationParent == null) {
       return;
