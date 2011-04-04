@@ -173,11 +173,11 @@ public abstract class ChooseByNameFilter<T> {
         chooser.setElementMarked(type, false);
       }
     }
-    updateModel(model, chooser);
+    updateModel(model, chooser, true);
     chooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<T>() {
       public void elementMarkChanged(final T element, final boolean isMarked) {
         filterConfiguration.setVisible(element, isMarked);
-        updateModel(model, chooser);
+        updateModel(model, chooser, false);
       }
     });
     return chooser;
@@ -197,10 +197,10 @@ public abstract class ChooseByNameFilter<T> {
    * @param gotoFileModel a model
    * @param chooser       a file type chooser
    */
-  protected void updateModel(final FilteringGotoByModel<T> gotoFileModel, ElementsChooser<T> chooser) {
+  protected void updateModel(final FilteringGotoByModel<T> gotoFileModel, ElementsChooser<T> chooser, boolean initial) {
     final List<T> markedElements = chooser.getMarkedElements();
     gotoFileModel.setFilterItems(markedElements);
-    myParentPopup.rebuildList();
+    myParentPopup.rebuildList(initial);
   }
 
   /**
