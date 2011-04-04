@@ -121,7 +121,7 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
         .setIcon(GroovyIcons.DYNAMIC)
         .setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
 
-      result.addElement(lookup);
+      result.addElement(PrioritizedLookupElement.withPriority(lookup, 1));
     }
   }
 }
