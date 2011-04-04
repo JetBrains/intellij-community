@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.connections;
 
+import com.intellij.CvsBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,9 +61,7 @@ public final class CvsRootParser {
     CvsRootParser result = new CvsRootParser();
 
     if (!StringUtil.startsWithChar(str, ':')) {
-      result.METHOD = CvsMethod.LOCAL_METHOD;
-      result.REPOSITORY = str;
-      return result;
+      throw new CvsRootException(CvsBundle.message("message.error.invalid.cvs.root", str));
     }
 
     @NonNls String local2 = ":local:";
@@ -93,7 +92,7 @@ public final class CvsRootParser {
         }
         else {
           if (check) {
-            throw new IllegalArgumentException(com.intellij.CvsBundle.message("error.message.wrong.remote.repository", str));
+            throw new IllegalArgumentException(CvsBundle.message("error.message.wrong.remote.repository", str));
           }
           else {
             result.REPOSITORY = suffix;
@@ -217,7 +216,7 @@ public final class CvsRootParser {
       }
     }
     if (check) {
-      throw new IllegalArgumentException(com.intellij.CvsBundle.message("error.mesage.wrong.method", str));
+      throw new CvsRootException(CvsBundle.message("message.error.invalid.cvs.root", str));
     }
     cvsRoot.METHOD = CvsMethod.AVAILABLE_METHODS[0];
     if (!StringUtil.startsWithChar(str, ':')) return str;
