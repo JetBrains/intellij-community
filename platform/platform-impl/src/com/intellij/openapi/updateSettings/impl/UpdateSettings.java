@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -59,6 +60,12 @@ public class UpdateSettings implements PersistentStateComponent<Element>, UserUp
 
   public static UpdateSettings getInstance() {
     return ServiceManager.getService(UpdateSettings.class);
+  }
+
+  public UpdateSettings() {
+    if (ApplicationInfoImpl.getShadowInstance().isEAP()) {
+      UPDATE_CHANNEL_TYPE = ChannelStatus.EAP_CODE;
+    }
   }
 
   public Element getState() {

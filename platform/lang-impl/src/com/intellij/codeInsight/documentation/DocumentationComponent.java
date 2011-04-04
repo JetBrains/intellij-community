@@ -25,6 +25,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationHandler;
+import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -616,8 +617,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       if (myElement != null) {
         final PsiElement element = myElement.getElement();
         final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
-        final List<String> urls = provider.getUrlFor(element, DocumentationManager.getOriginalElement(element));
-        presentation.setEnabled(element != null && urls != null && !urls.isEmpty());
+        final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
+        if (provider instanceof ExternalDocumentationProvider) {
+          presentation.setEnabled(element != null && ((ExternalDocumentationProvider)provider).hasDocumentationFor(element, originalElement));
+        }
+        else {
+          final List<String> urls = provider.getUrlFor(element, originalElement);
+          presentation.setEnabled(element != null && urls != null && !urls.isEmpty());
+        }
       }
     }
   }

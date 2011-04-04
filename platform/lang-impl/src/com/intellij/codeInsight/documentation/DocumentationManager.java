@@ -580,10 +580,14 @@ public class DocumentationManager {
         }
         if (provider instanceof ExternalDocumentationProvider) {
           final List<String> urls = ApplicationManager.getApplication().runReadAction(
-              new Computable<List<String>>() {
+              new NullableComputable<List<String>>() {
                 public List<String> compute() {
-                  final SmartPsiElementPointer originalElement = element.getUserData(ORIGINAL_ELEMENT_KEY);
-                  return provider.getUrlFor(element, originalElement != null ? originalElement.getElement() : null);
+                  final SmartPsiElementPointer originalElementPtr = element.getUserData(ORIGINAL_ELEMENT_KEY);
+                  final PsiElement originalElement = originalElementPtr != null ? originalElementPtr.getElement() : null;
+                  if (((ExternalDocumentationProvider)provider).hasDocumentationFor(element, originalElement)) {
+                    return provider.getUrlFor(element, originalElement);
+                  }
+                  return null;
                 }
               }
           );
@@ -950,7 +954,7 @@ public class DocumentationManager {
     buffer.append("</a>");
   }
 
-  private static interface DocumentationCollector {
+  private interface DocumentationCollector {
     @Nullable
     String getDocumentation() throws Exception;
     @Nullable

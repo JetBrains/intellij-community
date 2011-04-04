@@ -681,6 +681,15 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return CompositeDocumentationProvider.hasUrlsFor(this, element, originalElement);
   }
 
+  @Override
+  public boolean canPromptToConfigureDocumentation(PsiElement element) {
+    return false;
+  }
+
+  @Override
+  public void promptToConfigureDocumentation(PsiElement element) {
+  }
+
   public static String fetchExternalJavadoc(PsiElement element, final Project project, final List<String> docURLs) {
     final JavaDocExternalFilter docFilter = new JavaDocExternalFilter(project);
 

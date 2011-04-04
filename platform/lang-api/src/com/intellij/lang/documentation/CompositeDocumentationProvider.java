@@ -148,6 +148,28 @@ public class CompositeDocumentationProvider implements DocumentationProvider, Ex
     return false;
   }
 
+  @Override
+  public boolean canPromptToConfigureDocumentation(PsiElement element) {
+    for (DocumentationProvider provider : myProviders) {
+      if (provider instanceof ExternalDocumentationProvider &&
+          ((ExternalDocumentationProvider)provider).canPromptToConfigureDocumentation(element)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public void promptToConfigureDocumentation(PsiElement element) {
+    for (DocumentationProvider provider : myProviders) {
+      if (provider instanceof ExternalDocumentationProvider &&
+          ((ExternalDocumentationProvider)provider).canPromptToConfigureDocumentation(element)) {
+        ((ExternalDocumentationProvider)provider).promptToConfigureDocumentation(element);
+        break;
+      }
+    }
+  }
+
   public static boolean hasUrlsFor(DocumentationProvider provider, PsiElement element, PsiElement originalElement) {
     final List<String> urls = provider.getUrlFor(element, originalElement);
     if (urls != null && !urls.isEmpty()) return true;
