@@ -188,6 +188,7 @@ public class GitMergeUpdater extends GitUpdater {
   private void cancel() {
     try {
       GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.RESET);
+      h.setNoSSH(true);
       h.addParameters("-v", "--merge");
       h.run();
     } catch (VcsException e) {
