@@ -16,6 +16,7 @@
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.EditorSearchComponent;
+import com.intellij.find.FindModel;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
 public class ToggleRegex extends EditorHeaderToggleAction {
@@ -29,7 +30,11 @@ public class ToggleRegex extends EditorHeaderToggleAction {
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    getEditorSearchComponent().getFindModel().setRegularExpressions(state);
+    final FindModel findModel = getEditorSearchComponent().getFindModel();
+    findModel.setRegularExpressions(state);
+    if (state) {
+      findModel.setWholeWordsOnly(false);
+    }
   }
 
   public ToggleRegex(EditorSearchComponent editorSearchComponent) {
