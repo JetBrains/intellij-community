@@ -20,6 +20,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.documentation.EpydocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -213,7 +214,9 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
         return firstLine.substring(pos + 2).trim();
       }
     }
-    return null;
+
+    EpydocString epydocString = new EpydocString(docString);
+    return epydocString.getReturnType();
   }
 
   @Nullable
