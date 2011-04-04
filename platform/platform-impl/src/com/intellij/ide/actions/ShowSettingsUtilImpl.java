@@ -16,7 +16,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -64,14 +63,24 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     assert Configurable.class.isAssignableFrom(configurableClass) : "Not a configurable: " + configurableClass.getName();
 
     Project actualProject = project != null ? project  : ProjectManager.getInstance().getDefaultProject();
-    Configurable config = (Configurable)actualProject.getComponent(configurableClass);
+    Configurable config = findByClass(new IdeConfigurablesGroup().getConfigurables(), configurableClass);
     if (config == null) {
-      config = (Configurable)ApplicationManager.getApplication().getComponent(configurableClass);
+      config = findByClass(new ProjectConfigurablesGroup(project).getConfigurables(), configurableClass);
     }
 
     assert config != null : "Cannot find configurable: " + configurableClass.getName();
 
     showSettingsDialog(actualProject, config);
+  }
+
+  @Nullable
+  private static Configurable findByClass(Configurable[] configurables, Class configurableClass) {
+    for (Configurable configurable : configurables) {
+      if (configurableClass.isInstance(configurable)) {
+        return configurable;
+      }
+    }
+    return null;
   }
 
   public void showSettingsDialog(@Nullable final Project project, final @NotNull String nameToSelect) {
