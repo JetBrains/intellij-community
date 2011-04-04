@@ -807,6 +807,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
       myElementHint = null;
     }
+    if (!isFocused()) {
+      return;
+    }
+
     final Collection<LookupElementAction> actions = myModel.getActionsFor(item);
     if (!actions.isEmpty()) {
       myHintAlarm.addRequest(new Runnable() {
