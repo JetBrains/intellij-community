@@ -20,61 +20,48 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.FileBasedIndex;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.*;
 
 /**
  * @author Rustam Vishnyakov
  */
-@State(name = "ProjectFileExclusionManager", storages = {@Storage(id = "default", file = "$PROJECT_FILE$")})
-public class ProjectFileExclusionManager extends PersistentFileSetManager {
-
+@State(name = "EnforcedPlainTextFileTypeManager", storages = {@Storage(id = "default", file = "$APP_CONFIG$/plainTextFiles.xml")})
+public class EnforcedPlainTextFileTypeManager extends PersistentFileSetManager {
   
-  private final Project myProject;
-
-  public ProjectFileExclusionManager(Project project) {
-    myProject = project;
+  public boolean isMarkedAsPlainText(VirtualFile file) {
+    return containsFile(file);
   }
 
-  public void addExclusion(VirtualFile file) {
+  public void markAsPlainText(VirtualFile file) {
     if (addFile(file)) {
-      FileBasedIndex.getInstance().requestReindexExcluded(file);
-      fireRootsChange(myProject);
+      updateIndex(file);
     }
   }
-
-  public void removeExclusion(VirtualFile file) {
+  
+  public void unmarkPlainText(VirtualFile file) {
     if (removeFile(file)) {
-      FileBasedIndex.getInstance().requestReindex(file);
-      fireRootsChange(myProject);
+      updateIndex(file);
     }
   }
 
-  private static void fireRootsChange(final Project project) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable(){
+  private static void updateIndex(VirtualFile file) {
+    FileBasedIndex.getInstance().requestReindex(file);
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true);
+        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+          ProjectRootManagerEx.getInstanceEx(project).makeRootsChange(EmptyRunnable.getInstance(), false, true);
+        }
       }
     });
   }
 
-  public boolean isExcluded(VirtualFile file) {
-    return containsFile(file);
-  }
-
-  public Collection<VirtualFile> getExcludedFiles() {
-    return getFiles();
-  }
-
-
-  public static ProjectFileExclusionManager getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ProjectFileExclusionManager.class);
+  public static EnforcedPlainTextFileTypeManager getInstance() {
+    return ServiceManager.getService(EnforcedPlainTextFileTypeManager.class);
   }
 
 }

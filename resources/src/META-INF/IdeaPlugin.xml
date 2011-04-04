@@ -1177,6 +1177,9 @@
                     serviceImplementation="com.intellij.openapi.file.exclude.ProjectFileExclusionManager"/>
     <projectConfigurable instance="com.intellij.openapi.file.exclude.ui.ExcludedFilesConfigurable"/>
     -->
+    <fileTypeFactory implementation="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeFactory"/>
+    <applicationService serviceInterface="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager"
+                    serviceImplementation="com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager"/> 
 
   </extensions>
 
