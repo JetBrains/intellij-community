@@ -1,6 +1,6 @@
 class A{
   void foo() throws MyException{
-    throw new Erro<caret>
+    throw new Error(<caret>);
   }
 
   class MyException extends Exception{}
