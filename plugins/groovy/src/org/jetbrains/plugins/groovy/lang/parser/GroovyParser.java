@@ -455,7 +455,7 @@ public class GroovyParser implements PsiParser {
 
     ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
-    parseStatement(builder, false);
+    parseStatement(builder, true);
 
     marker.done(LABELED_STATEMENT);
     return true;
