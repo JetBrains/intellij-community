@@ -26,9 +26,10 @@ import java.util.Collection;
 import java.util.List;
 
 public class ChannelStatus implements Comparable<ChannelStatus> {
+  @NonNls public static final String EAP_CODE = "eap";
   @NonNls public static final String RELEASE_CODE = "release";
 
-  public static final ChannelStatus EAP = new ChannelStatus(0, "eap", "Early Access Program");
+  public static final ChannelStatus EAP = new ChannelStatus(0, EAP_CODE, "Early Access Program");
   public static final ChannelStatus MILESTONE = new ChannelStatus(1, "milestone", "Milestone Releases");
   public static final ChannelStatus BETA = new ChannelStatus(2, "beta", "Beta Releases or Public Previews");
   public static final ChannelStatus RELEASE = new ChannelStatus(3, RELEASE_CODE, "New Major Version Releases");
@@ -46,7 +47,7 @@ public class ChannelStatus implements Comparable<ChannelStatus> {
   }
 
   public static ChannelStatus fromCode(String code) {
-    if ("eap".equalsIgnoreCase(code)) return EAP;
+    if (EAP_CODE.equalsIgnoreCase(code)) return EAP;
     if ("milestone".equalsIgnoreCase(code)) return MILESTONE;
     if ("beta".equalsIgnoreCase(code)) return BETA;
 
