@@ -108,8 +108,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final VcsHistoryCache myVcsHistoryCache;
   private MessageBusConnection myConnect;
   private VcsListener myVcsListener;
+  private final ExcludedFileIndex myExcludedIndex;
 
-  public ProjectLevelVcsManagerImpl(Project project, final FileStatusManager manager, MessageBus messageBus) {
+  public ProjectLevelVcsManagerImpl(Project project, final FileStatusManager manager, MessageBus messageBus, final ExcludedFileIndex excludedFileIndex) {
     myProject = project;
     myMessageBus = messageBus;
     mySerialization = new ProjectLevelVcsManagerSerialization();
@@ -135,6 +136,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       }
     };
     myConnect.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
+    myExcludedIndex = excludedFileIndex;
   }
 
   public void initComponent() {
@@ -719,9 +721,8 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
   }
 
   public boolean isFileInContent(final VirtualFile vf) {
-    final ExcludedFileIndex excludedIndex = ExcludedFileIndex.getInstance(myProject);
-    return vf != null && (excludedIndex.isInContent(vf) || isFileInBaseDir(vf) || vf.equals(myProject.getBaseDir()) ||
-                            hasExplicitMapping(vf) || isInDirectoryBasedRoot(vf)) && ! excludedIndex.isExcludedFile(vf);
+    return vf != null && (myExcludedIndex.isInContent(vf) || isFileInBaseDir(vf) || vf.equals(myProject.getBaseDir()) ||
+                            hasExplicitMapping(vf) || isInDirectoryBasedRoot(vf)) && ! myExcludedIndex.isExcludedFile(vf);
   }
 
   private boolean isInDirectoryBasedRoot(final VirtualFile file) {

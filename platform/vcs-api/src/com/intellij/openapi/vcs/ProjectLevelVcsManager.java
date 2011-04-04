@@ -256,4 +256,5 @@ public abstract class ProjectLevelVcsManager {
   protected abstract VcsEnvironmentsProxyCreator getProxyCreator();
 
   public abstract VcsHistoryCache getVcsHistoryCache();
+  public abstract boolean isFileInContent(final VirtualFile vf);
 }

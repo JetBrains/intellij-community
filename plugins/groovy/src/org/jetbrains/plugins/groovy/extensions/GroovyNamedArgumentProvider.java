@@ -17,14 +17,21 @@ package org.jetbrains.plugins.groovy.extensions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.HashMap;
@@ -35,70 +42,187 @@ import java.util.Map;
  */
 public abstract class GroovyNamedArgumentProvider {
 
-  public static final ExtensionPointName<GroovyNamedArgumentProvider> EP_NAME = ExtensionPointName.create("org.intellij.groovy.namedArgumentProvider");
-
-  public abstract void getNamedArguments(@Nullable GrCall call, @NotNull PsiMethod method, Map<String, Condition<PsiType>> result);
-
-  public static Map<String, Condition<PsiType>> getNamedArguments(@Nullable GrCall call, @NotNull PsiMethod method) {
-    Map<String, Condition<PsiType>> namedArguments = new HashMap<String, Condition<PsiType>>();
-
-    for (GroovyNamedArgumentProvider namedArgumentProvider : GroovyNamedArgumentProvider.EP_NAME.getExtensions()) {
-      namedArgumentProvider.getNamedArguments(call, method, namedArguments);
-    }
-
-    return namedArguments;
-  }
+  public static final ExtensionPointName<GroovyNamedArgumentProvider> EP_NAME =
+    ExtensionPointName.create("org.intellij.groovy.namedArgumentProvider");
 
   public static final StringTypeCondition TYPE_STRING = new StringTypeCondition(CommonClassNames.JAVA_LANG_STRING);
   public static final StringTypeCondition TYPE_MAP = new StringTypeCondition(CommonClassNames.JAVA_UTIL_MAP);
   public static final StringTypeCondition TYPE_BOOL = new StringTypeCondition(CommonClassNames.JAVA_LANG_BOOLEAN);
   public static final StringTypeCondition TYPE_INTEGER = new StringTypeCondition(CommonClassNames.JAVA_LANG_INTEGER);
-  public static final Condition<PsiType> TYPE_ANY = Condition.TRUE;
+  public static final ArgumentDescriptor TYPE_ANY = new ArgumentDescriptor();
 
-  protected static class StringTypeCondition implements Condition<PsiType> {
-    private final String myTypeName;
+  public abstract void getNamedArguments(@NotNull GrCall call,
+                                         @Nullable PsiMethod method,
+                                         @Nullable String argumentName,
+                                         boolean forCompletion,
+                                         Map<String, ArgumentDescriptor> result);
 
-    public StringTypeCondition(String typeName) {
-      this.myTypeName = typeName;
+  public static Map<String, ArgumentDescriptor> getNamedArgumentsFromAllProviders(@NotNull GrCall call,
+                                                                                  @Nullable String argumentName,
+                                                                                  boolean forCompletion) {
+    Map<String, ArgumentDescriptor> namedArguments = new HashMap<String, ArgumentDescriptor>();
+
+    GroovyResolveResult[] callVariants = call.getCallVariants(null);
+
+    if (callVariants.length == 0) {
+      for (GroovyNamedArgumentProvider namedArgumentProvider : GroovyNamedArgumentProvider.EP_NAME.getExtensions()) {
+        namedArgumentProvider.getNamedArguments(call, null, argumentName, forCompletion, namedArguments);
+      }
+    }
+    else {
+      for (GroovyResolveResult result : callVariants) {
+        PsiElement element = result.getElement();
+        if (element instanceof PsiMethod) {
+          PsiMethod method = (PsiMethod)element;
+          PsiParameter[] parameters = method.getParameterList().getParameters();
+          if (parameters.length == 0 ? method.isConstructor() : canBeMap(parameters[0])) {
+            for (GroovyNamedArgumentProvider namedArgumentProvider : GroovyNamedArgumentProvider.EP_NAME.getExtensions()) {
+              namedArgumentProvider.getNamedArguments(call, method, argumentName, forCompletion, namedArguments);
+            }
+          }
+        }
+      }
     }
 
-    @Override
-    public boolean value(PsiType psiType) {
-      return InheritanceUtil.isInheritor(psiType, myTypeName);
+    return namedArguments;
+  }
+
+  public static boolean canBeMap(PsiParameter parameter) {
+    if (parameter instanceof GrParameter) {
+      if (((GrParameter)parameter).getTypeElementGroovy() == null) return true;
+    }
+    return InheritanceUtil.isInheritor(parameter.getType(), CommonClassNames.JAVA_UTIL_MAP);
+  }
+
+  public static class ArgumentDescriptor {
+
+    private PsiElement myNavigationElement;
+
+    protected ArgumentDescriptor() {
+    }
+
+    protected ArgumentDescriptor(PsiElement navigationElement) {
+      this.myNavigationElement = navigationElement;
+    }
+
+    public boolean checkType(@NotNull PsiType type) {
+      return true;
+    }
+
+    @Nullable
+    public PsiPolyVariantReference createReference(@NotNull GrArgumentLabel element) {
+      final PsiElement navigationElement = getNavigationElement();
+      if (navigationElement == null) return null;
+
+      return new NamedArgumentReference(element, navigationElement);
+    }
+
+    @Nullable
+    public PsiElement getNavigationElement() {
+      return myNavigationElement;
+    }
+
+    public static class NamedArgumentReference extends PsiPolyVariantReferenceBase<GrArgumentLabel> {
+      private final PsiElement myNavigationElement;
+
+      public NamedArgumentReference(GrArgumentLabel element, @NotNull PsiElement navigationElement) {
+        super(element);
+        myNavigationElement = navigationElement;
+      }
+
+      @Override
+      public PsiElement resolve() {
+        return myNavigationElement;
+      }
+
+      @Override
+      public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+        final PsiElement resolved = resolve();
+
+        if (resolved instanceof PsiMethod) {
+          final PsiMethod method = (PsiMethod) resolved;
+          final String oldName = getElement().getName();
+          if (!method.getName().equals(oldName)) { //was property reference to accessor
+            if (PropertyUtil.isSimplePropertySetter(method)) {
+              final String newPropertyName = PropertyUtil.getPropertyName(newElementName);
+              if (newPropertyName != null) {
+                newElementName = newPropertyName;
+              }
+            }
+          }
+        }
+
+        return super.handleElementRename(newElementName);
+      }
+
+      @NotNull
+      @Override
+      public Object[] getVariants() {
+        return ArrayUtil.EMPTY_OBJECT_ARRAY;
+      }
+
+      @NotNull
+      @Override
+      public ResolveResult[] multiResolve(boolean incompleteCode) {
+        return new ResolveResult[]{new GroovyResolveResultImpl(myNavigationElement, true)};
+      }
     }
   }
 
-  protected static class StringArrayTypeCondition implements Condition<PsiType> {
+  protected static class StringTypeCondition extends ArgumentDescriptor {
+    private final String myTypeName;
+
+    public StringTypeCondition(String typeName) {
+      this(typeName, null);
+    }
+
+    public StringTypeCondition(String typeName, @Nullable PsiElement navigationElement) {
+      super(navigationElement);
+      myTypeName = typeName;
+    }
+
+    @Override
+    public boolean checkType(@NotNull PsiType type) {
+      return InheritanceUtil.isInheritor(type, myTypeName);
+    }
+  }
+
+  protected static class StringArrayTypeCondition extends ArgumentDescriptor {
     private final String[] myTypeNames;
 
-    public StringArrayTypeCondition(String ... typeNames) {
+    public StringArrayTypeCondition(String... typeNames) {
+      this(null, typeNames);
+    }
+
+    public StringArrayTypeCondition(@Nullable PsiElement navigationElement, String... typeNames) {
+      super(navigationElement);
       this.myTypeNames = typeNames;
     }
 
     @Override
-    public boolean value(PsiType psiType) {
+    public boolean checkType(@NotNull PsiType type) {
       for (String typeName : myTypeNames) {
-        if (InheritanceUtil.isInheritor(psiType, typeName)) {
+        if (InheritanceUtil.isInheritor(type, typeName)) {
           return true;
         }
       }
-
       return false;
     }
   }
 
-  protected static class TypeCondition implements Condition<PsiType> {
+  protected static class TypeCondition extends ArgumentDescriptor {
     private final PsiType myType;
     private final GroovyPsiElement myContext;
 
-    public TypeCondition(PsiType type, GroovyPsiElement context) {
+    public TypeCondition(PsiType type, PsiElement navigationElement, @NotNull GroovyPsiElement context) {
+      super(navigationElement);
       myType = type;
       myContext = context;
     }
 
     @Override
-    public boolean value(PsiType psiType) {
-      return TypesUtil.isAssignable(myType, psiType, myContext);
+    public boolean checkType(@NotNull PsiType type) {
+      return TypesUtil.isAssignable(myType, type, myContext);
     }
   }
 }
