@@ -17,6 +17,7 @@ package com.intellij.cvsSupport2.ui.experts;
 
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
+import com.intellij.cvsSupport2.connections.CvsRootException;
 import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsBrowser.CvsTree;
 import com.intellij.cvsSupport2.cvsBrowser.LoginAbortedException;
@@ -24,6 +25,7 @@ import com.intellij.cvsSupport2.cvsExecution.ModalityContextImpl;
 import com.intellij.cvsSupport2.cvsoperations.common.LoginPerformer;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
@@ -79,11 +81,13 @@ public class SelectCvsElementStep extends WizardStep {
       });
     /*final boolean logged = performer.loginAll(
       new ModalityContextImpl(ModalityState.stateForComponent(mySelectCVSConfigurationStep.getComponent()), false), false);*/
-    final boolean logged = performer.loginAll(new ModalityContextImpl(ModalityState.current(), false), false);
-    if ((! logged) || (! errors.isNull())) {
+    try {
+      final boolean logged = performer.loginAll(new ModalityContextImpl(ModalityState.current(), false), false);
+      return logged && errors.isNull();
+    } catch (CvsRootException e) {
+      Messages.showErrorDialog(e.getMessage(), "Invalid CVS Root");
       return false;
     }
-    return true;
   }
 
   @Override

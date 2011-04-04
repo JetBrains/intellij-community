@@ -41,7 +41,6 @@ import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -81,6 +80,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private final SyncScrollSupport myScrollSupport = new SyncScrollSupport();
   private final FontSizeSynchronizer myFontSizeSynchronizer = new FontSizeSynchronizer();
   private DiffRequest myDiffRequest;
+  private boolean myIsRequestFocus = true;
 
   private final DiffRequest.ToolbarAddons TOOL_BAR = new DiffRequest.ToolbarAddons() {
     public void customize(DiffToolbar toolbar) {
@@ -117,8 +117,6 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     if (defaultComparisonPolicy != null && comparisonPolicy != defaultComparisonPolicy) {
       setComparisonPolicy(defaultComparisonPolicy);
     }
-
-
   }
 
   public Editor getEditor1() {
@@ -146,7 +144,9 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myLeftSide.setHighlighterFactory(createHighlighter(types[0], baseFile, project));
     myRightSide.setHighlighterFactory(createHighlighter(types[1], baseFile, project));
     rediff();
-    myPanel.requestScrollEditors();
+    if (myIsRequestFocus) {
+      myPanel.requestScrollEditors();
+    }
   }
 
   private static DiffHighlighterFactory createHighlighter(FileType contentType, VirtualFile file, Project project) {
@@ -351,11 +351,13 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myPanel.setBottomComponent(newBottomComponent);
 
 
-    if (isEditor1Focused || isEditor2Focused) {
-      fm.requestFocus(isEditor2Focused ? getEditor2().getContentComponent() : getEditor1().getContentComponent(), true);
-    }
+    if (myIsRequestFocus) {
+      if ((isEditor1Focused || isEditor2Focused)) {
+        fm.requestFocus(isEditor2Focused ? getEditor2().getContentComponent() : getEditor1().getContentComponent(), true);
+      }
 
-    myPanel.requestScrollEditors();
+      myPanel.requestScrollEditors();
+    }
   }
 
   private static void setWindowTitle(Window window, String title) {
@@ -382,6 +384,10 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     else {
       myLeftSide.getEditor().getContentComponent().requestFocus();
     }
+  }
+
+  public void setIsRequestFocus(boolean isRequestFocus) {
+    myIsRequestFocus = isRequestFocus;
   }
 
   private class MyScrollingPanel implements DiffPanelOutterComponent.ScrollingPanel {

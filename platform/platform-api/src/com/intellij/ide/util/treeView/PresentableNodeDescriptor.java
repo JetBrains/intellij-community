@@ -33,7 +33,8 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
 
   public final boolean update() {
     if (shouldUpdateData()) {
-      return apply(getUpdatedPresentation());
+      PresentationData updated = getUpdatedPresentation();
+      return shouldApply() ? apply(updated) : false;
     } else {
       return false;
     }
@@ -67,7 +68,11 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     myUpdatedPresentation = presentation;
     presentation.clear();
     update(presentation);
-    postprocess(presentation);
+
+    if (shouldPostprocess()) {
+      postprocess(presentation);
+    }
+
     return presentation;
   }
 
@@ -80,11 +85,19 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
 
   }
 
-  protected abstract void update(PresentationData presentation);
+  protected boolean shouldPostprocess() {
+    return true;
+  }
+
+  protected boolean shouldApply() {
+    return true;
+  }
 
   protected boolean shouldUpdateData() {
     return true;
   }
+
+  protected abstract void update(PresentationData presentation);
 
   @NotNull
   public final PresentationData getPresentation() {

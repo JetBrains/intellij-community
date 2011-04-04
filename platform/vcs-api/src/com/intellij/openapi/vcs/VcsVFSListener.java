@@ -39,6 +39,7 @@ import java.util.*;
  */
 public abstract class VcsVFSListener implements Disposable {
   private VcsDirtyScopeManager myDirtyScopeManager;
+  private final ProjectLevelVcsManager myVcsManager;
 
   protected static class MovedFileInfo {
     public final String myOldPath;
@@ -75,9 +76,9 @@ public abstract class VcsVFSListener implements Disposable {
     final MyVirtualFileAdapter myVFSListener = new MyVirtualFileAdapter();
     final MyCommandAdapter myCommandListener = new MyCommandAdapter();
 
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    myAddOption = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, vcs);
-    myRemoveOption = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, vcs);
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
+    myAddOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, vcs);
+    myRemoveOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, vcs);
 
     VirtualFileManager.getInstance().addVirtualFileListener(myVFSListener, this);
     CommandProcessor.getInstance().addCommandListener(myCommandListener, this);
@@ -87,7 +88,8 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected boolean isEventIgnored(final VirtualFileEvent event) {
-    return event.isFromRefresh() || ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getFile()) != myVcs;
+    return event.isFromRefresh() || myVcsManager.getVcsFor(event.getFile()) != myVcs ||
+           (! myVcsManager.isFileInContent(event.getFile())) || myChangeListManager.isIgnoredFile(event.getFile());
   }
 
   protected void executeAdd() {

@@ -17,7 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 /**
  * @author ilyas
  */
-public interface GrArgumentLabel extends GroovyPsiElement, PsiReference {
+public interface GrArgumentLabel extends GroovyPsiElement, PsiPolyVariantReference {
 
   GrArgumentLabel[] EMPTY_ARRAY = new GrArgumentLabel[0];
 

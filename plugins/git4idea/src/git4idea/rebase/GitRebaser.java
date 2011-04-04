@@ -84,7 +84,6 @@ public class GitRebaser {
     rh.addLineListener(rebaseConflictDetector);
 
     final GitTask rebaseTask = new GitTask(myProject, rh, "git rebase " + startOperation);
-    rebaseTask.setExecuteResultInAwt(false);
     rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     return executeRebaseTaskInBackground(root, rh, rebaseConflictDetector, rebaseTask);
   }
@@ -131,7 +130,6 @@ public class GitRebaser {
       rebaseEditorService.configureHandler(h, rebaseEditorNo);
 
       final GitTask rebaseTask = new GitTask(myProject, h, "Reordering commits");
-      rebaseTask.setExecuteResultInAwt(false);
       return executeRebaseTaskInBackground(root, h, rebaseConflictDetector, rebaseTask);
     } finally {
       // unregistering rebase service

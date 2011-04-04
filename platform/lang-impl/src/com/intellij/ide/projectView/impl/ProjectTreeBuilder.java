@@ -40,6 +40,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.xmlb.DefaultSerializationFilter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,7 +69,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
       public void beforeRootsChange(ModuleRootEvent event) {
       }
       public void rootsChanged(ModuleRootEvent event) {
-        getUpdater().addSubtreeToUpdate(getRootNode());
+        queueUpdate();
       }
     });
 
@@ -140,28 +141,18 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     private void updateForFile(VirtualFile file) {
       PsiElement element = findPsi(file);
       if (element != null) {
-        getUpdater().addSubtreeToUpdateByElement(element);
+        queueUpdateFrom(element, false);
       }
     }
   }
 
   private final class MyFileStatusListener implements FileStatusListener {
     public void fileStatusesChanged() {
-      getUpdater().addSubtreeToUpdate(getRootNode());
+      queueUpdate(false);
     }
 
     public void fileStatusChanged(@NotNull VirtualFile vFile) {
-      PsiElement element = findPsi(vFile);
-
-      final boolean fileAdded = getUpdater().addSubtreeToUpdateByElement(element);
-      if (!fileAdded) {
-        if (element instanceof PsiFile) {
-          getUpdater().addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());
-        }
-        else {
-          getUpdater().addSubtreeToUpdate(getRootNode());
-        }
-      }
+       queueUpdate(false);
     }
   }
 

@@ -16,8 +16,7 @@
 
 package git4idea.vfs;
 
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -153,9 +152,9 @@ public class GitIgnoreTracker {
    * This method is invoked when component is started or when vcs root mapping changes.
    */
   public void scan() {
-    GitVcs.runInBackground(new Task.Backgroundable(myProject, "Scanning ignored files...") {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
-      public void run(@NotNull ProgressIndicator indicator) {
+      public void run() {
         VirtualFile[] contentRoots = myVcsManager.getRootsUnderVcs(myVcs);
         if (contentRoots == null || contentRoots.length == 0) {
           return;

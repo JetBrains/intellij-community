@@ -45,6 +45,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
   protected static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.ProjectViewNode");
 
   private final ViewSettings mySettings;
+  private boolean myValidating;
 
   /**
    * Creates an instance of the project view node.
@@ -243,8 +244,32 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
   }
 
   public boolean validate() {
-    update();
+    setValidating(true);
+    try {
+      update();
+    }
+    finally {
+      setValidating(false);
+    }
     return getValue() != null;
+  }
+
+  @Override
+  protected boolean shouldPostprocess() {
+    return !isValidating();
+  }
+
+  @Override
+  protected boolean shouldApply() {
+    return !isValidating();
+  }
+
+  private void setValidating(boolean validating) {
+    myValidating = validating;
+  }
+
+  public boolean isValidating() {
+    return myValidating;
   }
 
   public boolean isAlwaysLeaf() {

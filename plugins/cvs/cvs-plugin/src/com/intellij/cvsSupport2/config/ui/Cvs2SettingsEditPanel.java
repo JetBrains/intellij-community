@@ -66,7 +66,6 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
   private final SshConnectionSettingsPanel mySshConnectionSettingsEditor;
   private final LocalConnectionSettingsPanel myLocalConnectionSettingsPanel;
 
-  private final PServerSettingsPanel myPServerSettingsEditor;
   private JButton myTestButton;
   @NonNls public static final String EMPTY = "EMPTY";
   private JPanel myProxySettingsPanel;
@@ -91,9 +90,8 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
     myExtConnectionSettingsEditor = new ExtConnectionDualPanel(this);
     mySshConnectionSettingsEditor = new SshConnectionSettingsPanel(this);
     myLocalConnectionSettingsPanel = new LocalConnectionSettingsPanel();
-    myPServerSettingsEditor = new PServerSettingsPanel();
     myConnectionSettingsPanel.add(myExtConnectionSettingsEditor.getPanel(), CvsMethod.EXT_METHOD.getDisplayName());
-    myConnectionSettingsPanel.add(myPServerSettingsEditor.getPanel(), CvsMethod.PSERVER_METHOD.getDisplayName());
+    myConnectionSettingsPanel.add(new JPanel(), CvsMethod.PSERVER_METHOD.getDisplayName());
     myConnectionSettingsPanel.add(mySshConnectionSettingsEditor.getPanel(), CvsMethod.SSH_METHOD.getDisplayName());
     myConnectionSettingsPanel.add(myLocalConnectionSettingsPanel.getPanel(), CvsMethod.LOCAL_METHOD.getDisplayName());
 
@@ -141,7 +139,6 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
       myDateOrRevisionOrTagSettings.updateFrom(configuration.DATE_OR_REVISION_SETTINGS);
       myLocalConnectionSettingsPanel.updateFrom(configuration.LOCAL_CONFIGURATION);
       myProxySettingsNonEmptyPanel.updateFrom(configuration.PROXY_SETTINGS);
-      myPServerSettingsEditor.updateFrom(CvsApplicationLevelConfiguration.getInstance());
     }
     finally {
       myIsInUpdating.setValue(false);
@@ -178,7 +175,6 @@ public class Cvs2SettingsEditPanel implements CvsRootEditor {
 
 
       myDateOrRevisionOrTagSettings.saveTo(configuration.DATE_OR_REVISION_SETTINGS);
-      myPServerSettingsEditor.saveTo(globalCvsSettings);
       return true;
     }
     catch (InputException ex) {

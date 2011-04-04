@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -137,29 +136,6 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     }
 
     @Override
-    public void visitNamedArgument(GrNamedArgument argument) {
-      super.visitNamedArgument(argument);
-
-      final GrArgumentLabel label = argument.getLabel();
-      if (label == null) return;
-
-      PsiType expectedType = label.getExpectedArgumentType();
-      if (expectedType == null) return;
-
-      expectedType = TypeConversionUtil.erasure(expectedType);
-      final GrExpression expr = argument.getExpression();
-      if (expr == null) return;
-
-      final PsiType argType = expr.getType();
-      if (argType == null) return;
-      final PsiClassType listType = JavaPsiFacade.getInstance(argument.getProject()).getElementFactory()
-        .createTypeByFQClassName(CommonClassNames.JAVA_UTIL_LIST, argument.getResolveScope());
-      if (listType.isAssignableFrom(argType)) return; //this is constructor arguments list
-
-      checkAssignability(expectedType, expr, argument);
-    }
-
-    @Override
     public void visitAssignmentExpression(GrAssignmentExpression assignment) {
       super.visitAssignmentExpression(assignment);
 
@@ -244,6 +220,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
           registerError(elementToHighlight, message);
         }
       }
+
+      checkNamedArgumentsType(newExpression);
     }
 
     @Override
@@ -310,38 +288,19 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       checkMethodCall(applicationStatement);
     }
 
-    private void checkMethodCall(GrMethodCall call) {
-      final GrExpression expression = call.getInvokedExpression();
-      if (!(expression instanceof GrReferenceExpression)) { //it checks in visitRefExpr(...)
-        final PsiType type = expression.getType();
-        checkCallApplicability(type, expression);
-      }
-
-      // Check named arguments.
+    private void checkNamedArgumentsType(GrCall call) {
       GrNamedArgument[] namedArguments = PsiUtil.getFirstMapNamedArguments(call);
 
       if (namedArguments.length == 0) return;
 
-      MultiMap<String, Condition<PsiType>> map = new MultiMap<String, Condition<PsiType>>();
-
-      GroovyResolveResult[] callVariants = call.getCallVariants(null);
-      for (GroovyResolveResult callVariant : callVariants) {
-        PsiElement element = callVariant.getElement();
-        if (element instanceof PsiMethod) {
-          Map<String, Condition<PsiType>> arguments = GroovyNamedArgumentProvider.getNamedArguments(call, (PsiMethod)element);
-
-          for (Map.Entry<String, Condition<PsiType>> entry : arguments.entrySet()) {
-            map.putValue(entry.getKey(), entry.getValue());
-          }
-        }
-      }
+      Map<String, GroovyNamedArgumentProvider.ArgumentDescriptor> map = GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders(call, null, false);
 
       for (GrNamedArgument namedArgument : namedArguments) {
         String labelName = namedArgument.getLabelName();
 
-        Collection<Condition<PsiType>> conditions = map.get(labelName);
+        GroovyNamedArgumentProvider.ArgumentDescriptor descriptor = map.get(labelName);
 
-        if (conditions.isEmpty()) continue;
+        if (descriptor == null) continue;
 
         GrExpression namedArgumentExpression = namedArgument.getExpression();
         if (namedArgumentExpression == null) continue;
@@ -353,19 +312,20 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
         expressionType = TypesUtil.boxPrimitiveType(expressionType, namedArgument.getManager(), namedArgument.getResolveScope());
 
-        boolean correct = false;
-
-        for (Condition<PsiType> condition : conditions) {
-          if (condition.value(expressionType)) {
-            correct = true;
-            break;
-          }
-        }
-
-        if (!correct) {
+        if (!descriptor.checkType(expressionType)) {
           registerError(namedArgumentExpression, "Type of argument '" + labelName + "' can not be '" + expressionType.getPresentableText() + "'");
         }
       }
+    }
+
+    private void checkMethodCall(GrMethodCall call) {
+      final GrExpression expression = call.getInvokedExpression();
+      if (!(expression instanceof GrReferenceExpression)) { //it checks in visitRefExpr(...)
+        final PsiType type = expression.getType();
+        checkCallApplicability(type, expression);
+      }
+
+      checkNamedArgumentsType(call);
     }
 
     private void highlightInapplicableMethodUsage(GroovyResolveResult methodResolveResult, PsiElement place,

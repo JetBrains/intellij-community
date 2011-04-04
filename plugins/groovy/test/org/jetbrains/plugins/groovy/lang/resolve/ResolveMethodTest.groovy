@@ -190,13 +190,13 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertFalse(resolved.isPhysical());
   }
 
-  public void testSwingProperty() throws Exception {
-    PsiReference ref = configureByFile("swingProperty/A.groovy");
-    PsiElement resolved = ref.resolve();
-    assertTrue(resolved instanceof PsiMethod);
-    assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod) resolved));
-    assertEquals("javax.swing.JComponent", ((PsiMethod) resolved).getContainingClass().getQualifiedName());
-  }
+  //public void testSwingProperty() throws Exception {
+  //  PsiReference ref = configureByFile("swingProperty/A.groovy");
+  //  PsiElement resolved = ref.resolve();
+  //  assertTrue(resolved instanceof PsiMethod);
+  //  assertTrue(PropertyUtil.isSimplePropertySetter((PsiMethod) resolved));
+  //  assertEquals("javax.swing.JComponent", ((PsiMethod) resolved).getContainingClass().getQualifiedName());
+  //}
 
   public void testLangClass() throws Exception {
     PsiReference ref = configureByFile("langClass/A.groovy");

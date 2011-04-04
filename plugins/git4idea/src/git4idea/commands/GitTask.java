@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +59,7 @@ public class GitTask {
   private final GitHandler myHandler;
   private final String myTitle;
   private GitProgressAnalyzer myProgressAnalyzer;
-  private boolean myExecuteResultInAwt = true;
+  private ProgressIndicator myProgressIndicator;
 
   public GitTask(Project project, GitHandler handler, String title) {
     myProject = project;
@@ -134,7 +133,7 @@ public class GitTask {
       };
       ProgressManager.getInstance().run(task);
     } else {
-      BackgroundableTask task = new BackgroundableTask(myProject, myHandler, myTitle) {
+      final BackgroundableTask task = new BackgroundableTask(myProject, myHandler, myTitle) {
         @Override public void onSuccess() {
           commonOnSuccess(LOCK, resultHandler);
           completed.set(true);
@@ -144,7 +143,11 @@ public class GitTask {
           completed.set(true);
         }
       };
-      GitVcs.runInBackground(task);
+      if (myProgressIndicator == null) {
+        GitVcs.runInBackground(task);
+      } else {
+        task.runAlone();
+      }
     }
 
     if (sync) {
@@ -161,37 +164,17 @@ public class GitTask {
   }
 
   private void commonOnSuccess(final Object LOCK, final GitTaskResultHandler resultHandler) {
-    final Runnable successRunnable = new Runnable() {
-      @Override public void run() {
-        GitTaskResult res = !myHandler.errors().isEmpty() ? GitTaskResult.GIT_ERROR : GitTaskResult.OK;
-        resultHandler.run(res);
-        synchronized (LOCK) {
-          LOCK.notifyAll();
-        }
-      }
-    };
-    executeInProperThread(successRunnable);
+    GitTaskResult res = !myHandler.errors().isEmpty() ? GitTaskResult.GIT_ERROR : GitTaskResult.OK;
+    resultHandler.run(res);
+    synchronized (LOCK) {
+      LOCK.notifyAll();
+    }
   }
 
   private void commonOnCancel(final Object LOCK, final GitTaskResultHandler resultHandler) {
-    final Runnable cancelRunnable = new Runnable() {
-      @Override
-      public void run() {
-        resultHandler.run(GitTaskResult.CANCELLED);
-        synchronized (LOCK) {
-          LOCK.notifyAll();
-        }
-      }
-    };
-    executeInProperThread(cancelRunnable);
-  }
-
-  // executes on a pooled thread or on AWT thread depending on the setting.
-  private void executeInProperThread(Runnable runnable) {
-    if (myExecuteResultInAwt) {
-      UIUtil.invokeAndWaitIfNeeded(runnable);
-    } else {
-      ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    resultHandler.run(GitTaskResult.CANCELLED);
+    synchronized (LOCK) {
+      LOCK.notifyAll();
     }
   }
 
@@ -258,8 +241,8 @@ public class GitTask {
     myProgressAnalyzer = progressAnalyzer;
   }
 
-  public void setExecuteResultInAwt(boolean executeResultInAwt) {
-    myExecuteResultInAwt = executeResultInAwt;
+  public void setProgressIndicator(ProgressIndicator progressIndicator) {
+    myProgressIndicator = progressIndicator;
   }
 
   /**
@@ -286,6 +269,31 @@ public class GitTask {
     @Override
     public final void run(@NotNull ProgressIndicator indicator) {
       myDelegate.run(indicator);
+    }
+
+    public final void runAlone() {
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            justRun();
+          }
+        });
+      } else {
+        justRun();
+      }
+    }
+
+    private void justRun() {
+      String oldTitle = myProgressIndicator.getText();
+      myProgressIndicator.setText(myTitle);
+      myDelegate.run(myProgressIndicator);
+      myProgressIndicator.setText(oldTitle);
+      if (myProgressIndicator.isCanceled()) {
+        onCancel();
+      } else {
+        onSuccess();
+      }
     }
 
     @Override

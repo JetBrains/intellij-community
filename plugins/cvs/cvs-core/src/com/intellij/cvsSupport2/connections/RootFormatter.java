@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.connections;
 
+import com.intellij.CvsBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import org.netbeans.lib.cvsclient.connection.PServerPasswordScrambler;
 
@@ -36,9 +37,6 @@ public class RootFormatter<Settings extends CvsSettings> {
   public Settings createConfiguration(String rootAsString, boolean check) {
     final CvsRootParser root = CvsRootParser.valueOf(rootAsString, check);
     final Settings result = myBuilder.createSettings(root.METHOD, rootAsString);
-    
-    
-    
     if (root.METHOD.equals(CvsMethod.LOCAL_METHOD)) {
       fillLocalSettings(root.REPOSITORY, result);
     }
@@ -52,7 +50,7 @@ public class RootFormatter<Settings extends CvsSettings> {
       fillSettings(root, result);
     }
     else {
-      throw new RuntimeException(com.intellij.CvsBundle.message("exception.text.unsupported.method", root.METHOD));
+      throw new CvsRootException(CvsBundle.message("exception.text.unsupported.method", root.METHOD, rootAsString));
     }
     return result;
   }

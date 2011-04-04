@@ -16,6 +16,7 @@
 
 package com.intellij.cvsSupport2.connections;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.connections.ext.ExtConnectionCvsSettings;
 import com.intellij.cvsSupport2.connections.local.LocalConnectionSettings;
@@ -36,6 +37,9 @@ public class IDEARootFormatter implements CvsRootSettingsBuilder<CvsConnectionSe
   }
 
   public CvsConnectionSettings createSettings(final CvsMethod method, final String cvsRootAsString) {
+    if (method == null) {
+      throw new CvsRootException(CvsBundle.message("message.error.missing.cvs.root", cvsRootAsString));
+    }
     if (method.equals(CvsMethod.LOCAL_METHOD)) {
       return new LocalConnectionSettings(cvsRootAsString, myCvsRootConfiguration);
     }
@@ -49,7 +53,7 @@ public class IDEARootFormatter implements CvsRootSettingsBuilder<CvsConnectionSe
       return new SshConnectionSettings(myCvsRootConfiguration);
     }
 
-    throw new RuntimeException(com.intellij.CvsBundle.message("exception.text.unsupported.method", method));
+    throw new CvsRootException(CvsBundle.message("exception.text.unsupported.method", method, cvsRootAsString));
   }
 
   public String getPServerPassword(final String cvsRoot) {
