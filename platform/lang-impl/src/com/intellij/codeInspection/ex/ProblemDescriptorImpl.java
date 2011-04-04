@@ -19,7 +19,6 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -95,10 +94,9 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
     myHighlightType = highlightType;
     final Project project = startElement.getProject();
-    final boolean useLazy = !onTheFly || ApplicationManager.getApplication().isHeadlessEnvironment();
     final SmartPointerManager manager = SmartPointerManager.getInstance(project);
-    myStartSmartPointer = useLazy? manager.createLazyPointer(startElement) : manager.createSmartPsiElementPointer(startElement);
-    myEndSmartPointer = startElement == endElement ? null : useLazy ? manager.createLazyPointer(endElement) : manager.createSmartPsiElementPointer(endElement);
+    myStartSmartPointer = manager.createSmartPsiElementPointer(startElement);
+    myEndSmartPointer = startElement == endElement ? null : manager.createSmartPsiElementPointer(endElement);
 
     myAfterEndOfLine = isAfterEndOfLine;
     myTextRangeInElement = rangeInElement;

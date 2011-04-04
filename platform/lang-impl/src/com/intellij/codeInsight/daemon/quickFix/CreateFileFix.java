@@ -100,7 +100,7 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   @Override
   public void invoke(@NotNull final Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
     final PsiDirectory myDirectory = (PsiDirectory)startElement;
-    if (isAvailable(project, null, null)) {
+    if (isAvailable(project, null, file)) {
       new WriteCommandAction(project) {
         protected void run(Result result) throws Throwable {
           invoke(project, myDirectory);

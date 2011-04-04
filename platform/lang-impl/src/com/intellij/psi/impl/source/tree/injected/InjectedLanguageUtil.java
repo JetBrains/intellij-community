@@ -270,6 +270,7 @@ public class InjectedLanguageUtil {
           TextRange hostRange = place.host.getTextRange();
           if (hostRange.cutOut(place.getRangeInsideHost()).grown(1).contains(hostOffset)) {
             DocumentWindowImpl document = (DocumentWindowImpl)documentManager.getCachedDocument(injectedPsi);
+            if (document == null) return;
             int injectedOffset = document.hostToInjected(hostOffset);
             PsiElement injElement = injectedPsi.findElementAt(injectedOffset);
             out.set(injElement == null ? injectedPsi : injElement);
