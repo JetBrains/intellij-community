@@ -48,7 +48,7 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
   @Override
   public Component getTableCellRendererComponent(final JTable table, Object value, boolean isSelected, boolean hasFocus, final int row, final int column) {
     final DirDiffTableModel model = (DirDiffTableModel)table.getModel();
-    final DirDiffElement element = model.myElements.get(row);
+    final DirDiffElement element = model.getElementAt(row);
     if (element.isSeparator()) {
       return new JPanel() {
         @Override

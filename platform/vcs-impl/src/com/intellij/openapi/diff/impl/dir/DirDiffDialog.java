@@ -33,6 +33,7 @@ public class DirDiffDialog extends DialogWrapper {
     setSize(600, 600);
     setTitle("Directory Diff");
     init();
+    myDiffPanel.getTable().changeSelection(myModel.getElementAt(0).isSeparator() ? 1: 0, 3, false, false);
   }
 
   @Override
@@ -42,7 +43,18 @@ public class DirDiffDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    myDiffPanel = new DirDiffPanel(myModel);
+    myDiffPanel = new DirDiffPanel(myModel, this);
     return myDiffPanel.getPanel();
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myDiffPanel.getTable();
+  }
+
+  @Override
+  public void doCancelAction() {
+    super.doCancelAction();
+    myDiffPanel.dispose();
   }
 }
