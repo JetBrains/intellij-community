@@ -26,10 +26,52 @@ import org.netbeans.lib.cvsclient.command.CommandAbortedException;
 import org.netbeans.lib.cvsclient.command.GlobalOptions;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 
 public abstract class CvsOperation {
+  private final static String[] ourKnownToCvs = {"CVSIGNORE",
+                                                 "CVSWRAPPERS",
+                                                 "CVSREAD",
+                                                 "CVSREADONLYFS",
+                                                 "CVSUMASK",
+
+                                                 "CVSROOT",
+                                                 "CVSEDITOR",
+                                                 "EDITOR",
+                                                 "VISUAL",
+                                                 "PATH",
+                                                 //10
+                                                 "HOME",
+                                                 "HOMEPATH",
+                                                 "HOMEDRIVE",
+                                                 "CVS_RSH",
+                                                 "CVS_SERVER",
+
+                                                 "CVS_PASSFILE",
+                                                 "CVS_CLIENT_PORT",
+                                                 "CVS_PROXY_PORT",
+                                                 "CVS_RCMD_PORT",
+                                                 "CVS_CLIENT_LOG",
+
+                                                 "CVS_SERVER_SLEEP",
+                                                 "CVS_IGNORE_REMOTE_ROOT",
+                                                 "CVS_LOCAL_BRANCH_NUM",
+                                                 "COMSPEC",
+                                                 "TMPDIR",
+                                                 "CVS_PID",
+                                                };
+  private final static Map<String, String> ourEnvironmentVariablesMap = new HashMap<String, String>();
+  {
+    ourEnvironmentVariablesMap.putAll(EnvironmentUtil.getEnviromentProperties());
+    final Iterator<String> iterator = ourEnvironmentVariablesMap.keySet().iterator();
+    final Set<String> known = new HashSet<String>(Arrays.asList(ourKnownToCvs));
+    while (iterator.hasNext()) {
+      final String key = iterator.next();
+      if (! known.contains(key)) {
+        iterator.remove();
+      }
+    }
+  }
 
   private final Collection<Runnable> myFinishActions = new ArrayList<Runnable>();
 
@@ -50,7 +92,7 @@ public abstract class CvsOperation {
   protected void modifyOptions(GlobalOptions options) {
     options.setUseGzip(CvsApplicationLevelConfiguration.getInstance().USE_GZIP);
     if (CvsApplicationLevelConfiguration.getInstance().SEND_ENVIRONMENT_VARIABLES_TO_SERVER) {
-      options.setEnvVariables(EnvironmentUtil.getEnviromentProperties());
+      options.setEnvVariables(ourEnvironmentVariablesMap);
     }
   }
 

@@ -38,6 +38,6 @@ public class ChangelistConflictNotificationProvider implements EditorNotificatio
   }
 
   public ChangelistConflictNotificationPanel createNotificationPanel(VirtualFile file) {
-    return myConflictTracker.hasConflict(file) ? new ChangelistConflictNotificationPanel(myConflictTracker, file) : null;
+    return myConflictTracker.hasConflict(file) ? ChangelistConflictNotificationPanel.create(myConflictTracker, file) : null;
   }
 }
