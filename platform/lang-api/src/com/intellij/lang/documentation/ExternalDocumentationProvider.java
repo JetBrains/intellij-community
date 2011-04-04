@@ -39,4 +39,19 @@ public interface ExternalDocumentationProvider {
    * @return true if the external documentation action should be enabled, false otherwise.
    */
   boolean hasDocumentationFor(PsiElement element, PsiElement originalElement);
+
+  /**
+   * Checks if the provider is capable of asking the user to configure external documentation for an element.
+   *
+   * @param element the element for which no documentation was found
+   * @return true if the element is applicable to this provider and the provider has a UI to configure the documentation location, false otherwise
+   */
+  boolean canPromptToConfigureDocumentation(PsiElement element);
+
+  /**
+   * Prompts the user to configure the external documentation for an element if none was found.
+   *
+   * @param element the element for which no documentation was found
+   */
+  void promptToConfigureDocumentation(PsiElement element);
 }

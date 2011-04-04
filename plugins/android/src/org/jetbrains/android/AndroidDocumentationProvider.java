@@ -18,7 +18,6 @@ package org.jetbrains.android;
 import com.android.sdklib.SdkConstants;
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.facet.ProjectFacetManager;
-import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.lang.java.JavaDocumentationProvider;
@@ -83,6 +82,15 @@ public class AndroidDocumentationProvider implements DocumentationProvider, Exte
   @Override
   public boolean hasDocumentationFor(PsiElement element, PsiElement originalElement) {
     return false;
+  }
+
+  @Override
+  public boolean canPromptToConfigureDocumentation(PsiElement element) {
+    return false;
+  }
+
+  @Override
+  public void promptToConfigureDocumentation(PsiElement element) {
   }
 
   private static boolean isMyContext(@NotNull final PsiElement element, @NotNull final Project project) {

@@ -298,6 +298,15 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     return CompositeDocumentationProvider.hasUrlsFor(this, element, originalElement);
   }
 
+  @Override
+  public boolean canPromptToConfigureDocumentation(PsiElement element) {
+    return false;
+  }
+
+  @Override
+  public void promptToConfigureDocumentation(PsiElement element) {
+  }
+
   private static String getMethodCandidateInfo(GrReferenceExpression expr) {
     final GroovyResolveResult[] candidates = expr.multiResolve(false);
     final String text = expr.getText();

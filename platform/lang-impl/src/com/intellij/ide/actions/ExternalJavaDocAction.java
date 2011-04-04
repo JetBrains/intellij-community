@@ -68,9 +68,15 @@ public class ExternalJavaDocAction extends AnAction {
     DocumentationManager.storeOriginalElement(project, originalElement, element);
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
     final List<String> urls = provider.getUrlFor(element, originalElement);
-    assert urls != null;
-    assert !urls.isEmpty();
-    showExternalJavadoc(urls);
+    if (urls != null && !urls.isEmpty()) {
+      showExternalJavadoc(urls);
+    }
+    else if (provider instanceof ExternalDocumentationProvider) {
+      final ExternalDocumentationProvider externalDocumentationProvider = (ExternalDocumentationProvider)provider;
+      if (externalDocumentationProvider.canPromptToConfigureDocumentation(element)) {
+        externalDocumentationProvider.promptToConfigureDocumentation(element);
+      }
+    }
   }
 
   public static void showExternalJavadoc(List<String> urls) {
@@ -103,7 +109,8 @@ public class ExternalJavaDocAction extends AnAction {
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
     boolean enabled;
     if (provider instanceof ExternalDocumentationProvider) {
-      enabled = ((ExternalDocumentationProvider) provider).hasDocumentationFor(element, originalElement);
+      final ExternalDocumentationProvider edProvider = (ExternalDocumentationProvider)provider;
+      enabled = edProvider.hasDocumentationFor(element, originalElement) || edProvider.canPromptToConfigureDocumentation(element);
     }
     else {
       final List<String> urls = provider.getUrlFor(element, originalElement);
