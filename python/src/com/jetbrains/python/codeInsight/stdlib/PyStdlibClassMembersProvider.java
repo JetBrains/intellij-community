@@ -1,6 +1,7 @@
-package com.jetbrains.python.codeInsight;
+package com.jetbrains.python.codeInsight.stdlib;
 
 import com.intellij.openapi.util.Key;
+import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyTargetExpression;

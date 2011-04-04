@@ -35,7 +35,6 @@ import com.jetbrains.python.psi.resolve.RootVisitor;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.FP;
 import com.jetbrains.python.toolbox.Maybe;
@@ -534,10 +533,6 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
       file = file.getParent();
       assert file != null;
     }
-    VirtualFile vFile = file.getVirtualFile();
-    if (vFile == null) {
-      return null;
-    }
     Sdk sdk = PyBuiltinCache.findSdkForFile(file);
     if (sdk == null) {
       return null;
@@ -564,14 +559,11 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
       }
       return url;
     }
-    if (PythonSdkType.isStdLib(vFile, sdk)) {
-      return getStdlibUrlFor(element, qName.getLastComponent(), pyVersion);
-    }
     for (PythonDocumentationLinkProvider provider : Extensions.getExtensions(PythonDocumentationLinkProvider.EP_NAME)) {
       final String providerUrl = provider.getExternalDocumentationUrl(element, originalElement);
       if (providerUrl != null) {
         if (checkExistence && !pageExists(providerUrl)) {
-          return provider.getExternalDocumentationRoot();
+          return provider.getExternalDocumentationRoot(pyVersion);
         }
         return providerUrl;
       }
@@ -595,29 +587,8 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
     return true;
   }
 
-  private static String getStdlibUrlFor(PsiElement element, String moduleName, String pyVersion) {
-    StringBuilder urlBuilder = new StringBuilder("http://docs.python.org/");
-    if (pyVersion != null) {
-      urlBuilder.append(pyVersion).append("/");
-    }
-    urlBuilder.append("library/");
-    urlBuilder.append(moduleName);
-    urlBuilder.append(".html");
-    if (element instanceof PsiNamedElement && !(element instanceof PyFile)) {
-      urlBuilder.append('#').append(moduleName).append(".");
-      if (element instanceof PyFunction) {
-        final PyClass containingClass = ((PyFunction)element).getContainingClass();
-        if (containingClass != null) {
-          urlBuilder.append(containingClass.getName()).append('.');
-        }
-      }
-      urlBuilder.append(((PsiNamedElement)element).getName());
-    }
-    return urlBuilder.toString();
-  }
-
   @Nullable
-  private static String pyVersion(String versionString) {
+  public static String pyVersion(String versionString) {
     String prefix = "Python ";
     if (versionString.startsWith(prefix)) {
       String version = versionString.substring(prefix.length());

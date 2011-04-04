@@ -1,5 +1,6 @@
-package com.jetbrains.python.codeInsight;
+package com.jetbrains.python.codeInsight.stdlib;
 
+import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.PyModuleMembersProvider;
