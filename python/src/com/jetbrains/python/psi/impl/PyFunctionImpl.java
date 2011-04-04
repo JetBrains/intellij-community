@@ -21,6 +21,7 @@ import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.documentation.EpydocString;
+import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -215,7 +216,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       }
     }
 
-    EpydocString epydocString = new EpydocString(docString);
+    StructuredDocString epydocString = StructuredDocString.parse(docString);
     return epydocString.getReturnType();
   }
 

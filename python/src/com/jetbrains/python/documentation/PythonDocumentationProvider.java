@@ -376,14 +376,14 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
       PyFunction function = PsiTreeUtil.getParentOfType(followed, PyFunction.class);
       if (function != null) {
         final String docString = PyUtil.strValue(function.getDocStringExpression());
-        EpydocString epydocString = new EpydocString(docString);
-        if (epydocString != null) {
+        StructuredDocString structuredDocString = StructuredDocString.parse(docString);
+        if (structuredDocString != null) {
           final String name = ((PyNamedParameter)followed).getName();
-          final String type = epydocString.getParamType(name);
+          final String type = structuredDocString.getParamType(name);
           if (type != null) {
             doc_cat.add(": ").add(type);
           }
-          final String desc = epydocString.getParamDescription(name);
+          final String desc = structuredDocString.getParamDescription(name);
           if (desc != null) {
             epilog_cat.add(BR).add(desc);
           }
