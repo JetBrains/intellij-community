@@ -25,6 +25,12 @@ import org.jetbrains.annotations.NotNull;
  * Basically it is a local inspection tool which cannot be selected in the inspection profile to be run on-the-fly.
  */
 public abstract class GlobalSimpleInspectionTool extends GlobalInspectionTool {
+  public void inspectionStarted(@NotNull InspectionManager manager,
+                                @NotNull GlobalInspectionContext globalContext,
+                                @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {}
+  public void inspectionFinished(@NotNull InspectionManager manager,
+                                 @NotNull GlobalInspectionContext globalContext,
+                                 @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {}
   public abstract void checkFile(@NotNull PsiFile file,
                                  @NotNull InspectionManager manager,
                                  @NotNull ProblemsHolder problemsHolder,

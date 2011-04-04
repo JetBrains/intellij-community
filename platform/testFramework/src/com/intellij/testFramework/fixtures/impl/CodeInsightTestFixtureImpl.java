@@ -45,6 +45,8 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -417,14 +419,36 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     VirtualFile sourceDir = copyDirectoryToProject(new File(testDir, "src").getPath(), "src");
     AnalysisScope scope = new AnalysisScope(getPsiManager().findDirectory(sourceDir));
 
-    InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
-    final GlobalInspectionContextImpl globalContext =
-      inspectionManager.createNewGlobalContext(!(myProjectFixture instanceof LightIdeaTestFixture));
-    globalContext.setCurrentScope(scope);
     scope.invalidate();
+
+    InspectionManagerEx inspectionManager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
+    GlobalInspectionContextImpl globalContext = createGlobalContextForTool(scope, getProject(), inspectionManager, tool);
 
     InspectionTestUtil.runTool(tool, scope, globalContext, inspectionManager);
     InspectionTestUtil.compareToolResults(tool, false, new File(getTestDataPath(), testDir).getPath());
+  }
+
+  public static GlobalInspectionContextImpl createGlobalContextForTool(AnalysisScope scope,
+                                                                       final Project project,
+                                                                       final InspectionManagerEx inspectionManager,
+                                                                       final InspectionTool... tools) {
+    final GlobalInspectionContextImpl globalContext = new GlobalInspectionContextImpl(project, inspectionManager.getContentManager()){
+      @Override
+      protected List<ToolsImpl> getUsedTools() {
+        List<ToolsImpl> result = new ArrayList<ToolsImpl>();
+        for (InspectionTool tool : tools) {
+          result.add(new ToolsImpl(tool, tool.getDefaultLevel(), true));
+        }
+        return result;
+      }
+
+      @Override
+      public boolean isToCheckMember(PsiElement element, InspectionProfileEntry tool) {
+        return true;
+      }
+    };
+    globalContext.setCurrentScope(scope);
+    return globalContext;
   }
 
   @Override
@@ -995,6 +1019,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
     ensureIndexesUpToDate(getProject());
+    ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivities();
   }
 
   @Override
@@ -1472,7 +1497,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final RangeMarker selEndMarker;
 
     static SelectionAndCaretMarkupLoader fromFile(String path, Project project) throws IOException {
-      return new SelectionAndCaretMarkupLoader(StringUtil.convertLineSeparators(new String(FileUtil.loadFileText(new File(path)))),
+      return new SelectionAndCaretMarkupLoader(StringUtil.convertLineSeparators(FileUtil.loadFile(new File(path))),
                                                project);
     }
 
@@ -1685,7 +1710,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private void testFoldingRegions(final String verificationFileName, boolean doCheckCollapseStatus) {
     String expectedContent;
     try {
-      expectedContent = new String(FileUtil.loadFileText(new File(verificationFileName)));
+      expectedContent = FileUtil.loadFile(new File(verificationFileName));
     }
     catch (IOException e) {
       throw new RuntimeException(e);

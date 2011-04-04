@@ -25,6 +25,7 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.BidirectionalMap;
 import gnu.trove.THashMap;
@@ -94,18 +95,27 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
   }
 
 
+  private static final Key<Set<ResourceBundle>> VISITED_BUNDLES_KEY = Key.create("VISITED_BUNDLES_KEY");
+  @Override
+  public void inspectionStarted(@NotNull InspectionManager manager,
+                                @NotNull GlobalInspectionContext globalContext,
+                                @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    globalContext.putUserData(VISITED_BUNDLES_KEY, new THashSet<ResourceBundle>());
+  }
+
   @Override
   public void checkFile(@NotNull PsiFile file,
                         @NotNull InspectionManager manager,
                         @NotNull ProblemsHolder problemsHolder,
                         @NotNull GlobalInspectionContext globalContext,
                         @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    checkFile(file, manager, new THashSet<ResourceBundle>(), globalContext.getRefManager(), problemDescriptionsProcessor);
+    Set<ResourceBundle> visitedBundles = globalContext.getUserData(VISITED_BUNDLES_KEY);
+    checkFile(file, manager, visitedBundles, globalContext.getRefManager(), problemDescriptionsProcessor);
   }
 
   private void checkFile(@NotNull final PsiFile file,
                          @NotNull final InspectionManager manager,
-                         final Set<ResourceBundle> visitedBundles,
+                         @NotNull Set<ResourceBundle> visitedBundles,
                          RefManager refManager, ProblemDescriptionsProcessor processor) {
     if (!(file instanceof PropertiesFile)) return;
     final PropertiesFile propertiesFile = (PropertiesFile)file;

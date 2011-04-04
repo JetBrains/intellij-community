@@ -21,6 +21,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
  * @see GlobalInspectionTool#queryExternalUsagesRequests
  * @since 6.0
  */
-public interface GlobalInspectionContext {
+public interface GlobalInspectionContext extends UserDataHolder {
   /**
    * Returns the reference graph for the global inspection run.
    *

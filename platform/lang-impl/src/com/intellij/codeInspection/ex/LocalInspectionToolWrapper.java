@@ -81,7 +81,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
 
   @NotNull
   public JobDescriptor[] getJobDescriptors() {
-    return JobDescriptor.EMPTY_ARRAY;
+    return GlobalInspectionContextImpl.LOCAL_ANALYSIS_ARRAY;
   }
 
   public void addProblemDescriptors(List<ProblemDescriptor> descriptors, final boolean filterSuppressed) {

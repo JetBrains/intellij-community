@@ -20,8 +20,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.codeInspection.ex.ToolsImpl;
-import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
@@ -145,28 +143,18 @@ expected:
     }
   }
 
-  public static void runTool(final InspectionTool tool, final AnalysisScope scope, GlobalInspectionContextImpl globalContext, final InspectionManagerEx inspectionManager) {
+  public static void runTool(final InspectionTool tool, final AnalysisScope scope, final GlobalInspectionContextImpl globalContext, final InspectionManagerEx inspectionManager) {
     final String shortName = tool.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null){
       HighlightDisplayKey.register(shortName);
     }
 
-    globalContext.getTools().put(tool.getShortName(), new ToolsImpl(tool, tool.getDefaultLevel(), true));
-    tool.initialize(globalContext);
-    ((RefManagerImpl)globalContext.getRefManager()).initializeAnnotators();
-    if (tool.isGraphNeeded()){
-      ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
-    }
-
     ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
-      @Override
-      public void run() {
-        tool.runInspection(scope, inspectionManager);
-      }
-    }, new EmptyProgressIndicator());
-
-
-    tool.queryExternalUsagesRequests(inspectionManager);
+        @Override
+        public void run() {
+          globalContext.performInspectionsWithProgress(scope, inspectionManager);
+        }
+      }, new EmptyProgressIndicator());
   }
 }

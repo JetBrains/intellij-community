@@ -20,9 +20,9 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -42,6 +42,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -118,34 +119,16 @@ public abstract class InspectionTestCase extends PsiTestCase {
     });
     AnalysisScope scope = createAnalysisScope(sourceDir[0].getParent());
 
-    InspectionManagerEx inspectionManager = (InspectionManagerEx) InspectionManager.getInstance(myProject);
-    final GlobalInspectionContextImpl globalContext = inspectionManager.createNewGlobalContext(true);
-    globalContext.setCurrentScope(scope);
+    InspectionManagerEx inspectionManager = (InspectionManagerEx) InspectionManager.getInstance(getProject());
+    InspectionTool[] tools = runDeadCodeFirst ? new InspectionTool[]{new UnusedDeclarationInspection(), tool} : new InspectionTool[]{tool};
+    final GlobalInspectionContextImpl globalContext = CodeInsightTestFixtureImpl.createGlobalContextForTool(scope, getProject(), inspectionManager, tools);
 
-    if (runDeadCodeFirst) {
-      runTool(new UnusedDeclarationInspection(), scope, globalContext, inspectionManager);
-    }
-    runTool(tool, scope, globalContext, inspectionManager);
+    InspectionTestUtil.runTool(tool, scope, globalContext, inspectionManager);
   }
 
   protected AnalysisScope createAnalysisScope(VirtualFile sourceDir) {
     PsiManager psiManager = PsiManager.getInstance(myProject);
     return new AnalysisScope(psiManager.findDirectory(sourceDir));
-  }
-
-  private static void runTool(final InspectionTool tool,
-                              final AnalysisScope scope,
-                              final GlobalInspectionContextImpl globalContext,
-                              final InspectionManagerEx inspectionManager) {
-    InspectionTestUtil.runTool(tool, scope, globalContext, inspectionManager);
-
-    final GlobalJavaInspectionContextImpl javaInspectionContext =
-        (GlobalJavaInspectionContextImpl)globalContext.getExtension(GlobalJavaInspectionContextImpl.CONTEXT);
-    if (javaInspectionContext != null) {
-      do {
-        javaInspectionContext.processSearchRequests(globalContext);
-      } while (tool.queryExternalUsagesRequests(inspectionManager));
-    }
   }
 
   protected void setupRootModel(final String testDir, final VirtualFile[] sourceDir, final String sdkName) {
