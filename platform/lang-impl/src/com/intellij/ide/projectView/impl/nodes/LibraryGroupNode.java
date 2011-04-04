@@ -88,6 +88,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
     VirtualFile[] files =
       entry instanceof LibraryOrderEntry ? getLibraryRoots((LibraryOrderEntry)entry) : entry.getFiles(OrderRootType.CLASSES);
     for (final VirtualFile file : files) {
+      if (!file.isValid()) continue;
       if (file.isDirectory()) {
         final PsiDirectory psiDir = psiManager.findDirectory(file);
         if (psiDir == null) {
