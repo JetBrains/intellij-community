@@ -1,11 +1,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator;
 
@@ -25,6 +27,7 @@ public class GrArgumentLabelManipulator extends AbstractElementManipulator<GrArg
 
   public GrArgumentLabel handleContentChange(GrArgumentLabel element, TextRange range, String newContent)
     throws IncorrectOperationException {
-    return (GrArgumentLabel)element.handleElementRename(newContent);
+    element.setName(newContent);
+    return element;
   }
 }
