@@ -81,8 +81,12 @@ public class IndexOfReplaceableByContainsInspection
         @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            if (!(element instanceof PsiBinaryExpression)) {
+                return;
+            }
             final PsiBinaryExpression expression =
-                    (PsiBinaryExpression)descriptor.getPsiElement();
+                    (PsiBinaryExpression) element;
             final PsiExpression lhs = expression.getLOperand();
             final PsiExpression rhs = expression.getROperand();
             final PsiJavaToken sign = expression.getOperationSign();
@@ -93,12 +97,13 @@ public class IndexOfReplaceableByContainsInspection
                 newExpressionText =
                         createContainsExpressionText(callExpression, sign,
                                 false);
-            } else {
+            } else if (rhs instanceof PsiMethodCallExpression) {
                 final PsiMethodCallExpression callExpression =
                         (PsiMethodCallExpression)rhs;
-                assert callExpression != null;
                 newExpressionText =
                         createContainsExpressionText(callExpression, sign, true);
+            } else {
+                return;
             }
             replaceExpression(expression, newExpressionText);
         }
