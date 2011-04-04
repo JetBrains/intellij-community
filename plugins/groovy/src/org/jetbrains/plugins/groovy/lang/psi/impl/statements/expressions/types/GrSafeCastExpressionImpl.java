@@ -41,8 +41,13 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
   private static final class OurResolver implements ResolveCache.PolyVariantResolver<GrSafeCastExpressionImpl> {
     @Override
     public ResolveResult[] resolve(GrSafeCastExpressionImpl cast, boolean incompleteCode) {
+      PsiType type = cast.getOperand().getType();
+      if (type == null) {
+        return GroovyResolveResult.EMPTY_ARRAY;
+      }
+
       return TypesUtil.getOverloadedOperatorCandidates(
-        cast.getOperand().getType(),
+        type,
         GroovyTokenTypes.kAS,
         cast,
         new PsiType[]{TypesUtil.createJavaLangClassType(cast.getCastTypeElement().getType(), cast.getProject(), cast.getResolveScope())}

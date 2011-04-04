@@ -85,9 +85,9 @@ public class TypesUtil {
   }
 
   @NotNull
-  public static GroovyResolveResult[] getOverloadedOperatorCandidates(PsiType thisType,
+  public static GroovyResolveResult[] getOverloadedOperatorCandidates(@NotNull PsiType thisType,
                                                                       IElementType tokenType,
-                                                                      GroovyPsiElement place,
+                                                                      @NotNull GroovyPsiElement place,
                                                                       PsiType[] argumentTypes) {
     return ResolveUtil.getMethodCandidates(thisType, ourOperationsToOperatorNames.get(tokenType), place, argumentTypes);
   }
