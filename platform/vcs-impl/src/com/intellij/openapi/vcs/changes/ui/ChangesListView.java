@@ -93,7 +93,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     SmartExpander.installOn(this);
     myCopyProvider = new TreeCopyProvider(this);
     new TreeLinkMouseListener(new ChangesBrowserNodeRenderer(myProject, false, false)).install(this);
-    setCellRenderer(new ChangesBrowserNodeRenderer(myProject, isShowFlatten(), true));
   }
 
   public DefaultTreeModel getModel() {
@@ -149,6 +148,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
 
     storeState();
     setModel(model);
+    setCellRenderer(new ChangesBrowserNodeRenderer(myProject, isShowFlatten(), true));
     expandPath(new TreePath(((ChangesBrowserNode)model.getRoot()).getPath()));
     restoreState();
   }
