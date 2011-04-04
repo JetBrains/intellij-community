@@ -8,7 +8,7 @@ public class TogglePreserveCaseAction extends EditorHeaderToggleAction  implemen
   private static final String TEXT = "Preserve Case";
 
   public TogglePreserveCaseAction(EditorSearchComponent editorSearchComponent) {
-    super(editorSearchComponent, TEXT, "r");
+    super(editorSearchComponent, TEXT);
   }
 
   @Override

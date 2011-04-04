@@ -21,7 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 
 public class ToggleRegex extends EditorHeaderToggleAction {
 
-  private static final String REGEX = "Regex";
+  private static final String REGEX = "R&egex";
 
   @Override
   public boolean isSelected(AnActionEvent e) {
@@ -38,6 +38,6 @@ public class ToggleRegex extends EditorHeaderToggleAction {
   }
 
   public ToggleRegex(EditorSearchComponent editorSearchComponent) {
-    super(editorSearchComponent, REGEX, null);
+    super(editorSearchComponent, REGEX);
   }
 }

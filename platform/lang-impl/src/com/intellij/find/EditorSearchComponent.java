@@ -236,7 +236,6 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     myToolbarComponent = myActionsToolbar.getComponent();
     myToolbarComponent.setBorder(null);
     myToolbarComponent.setOpaque(false);
-    Utils.setSmallerFontForChildren(myToolbarComponent);
     leadPanel.add(myToolbarComponent);
 
     myFindModel.addObserver(new FindModel.FindModelObserver() {
@@ -397,6 +396,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
       }
       updateExcludeStatus();
     }
+    Utils.setSmallerFontForChildren(myToolbarComponent);
   }
 
   private static boolean wholeWordsApplicable(String stringToFind) {
@@ -493,6 +493,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
     new VariantsCompletionAction(this, myReplaceField);
     new NextOccurrenceAction(this, myReplaceField);
     new PrevOccurrenceAction(this, myReplaceField);
+    Utils.setSmallerFontForChildren(myToolbarComponent);
   }
 
   private void replaceFieldDocumentChanged() {

@@ -44,7 +44,7 @@ public class Utils {
 
   public static void setSmallerFont(final JComponent component) {
     if (SystemInfo.isMac) {
-      Font f = component.getFont();
+      Font f = new JLabel(" ").getFont();
       Font font = smaller(f);
       component.setFont(font);
     }

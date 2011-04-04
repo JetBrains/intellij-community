@@ -76,6 +76,10 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   private int getMnemonicCharIndex(String text) {
+    final int mnemonicIndex = myPresentation.getDisplayedMnemonicIndex();
+    if (mnemonicIndex != -1) {
+      return mnemonicIndex;
+    }
     final ShortcutSet shortcutSet = myAction.getShortcutSet();
     final Shortcut[] shortcuts = shortcutSet.getShortcuts();
     for (int i = 0; i < shortcuts.length; i++) {

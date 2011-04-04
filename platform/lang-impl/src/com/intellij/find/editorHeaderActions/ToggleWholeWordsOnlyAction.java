@@ -5,10 +5,10 @@ import com.intellij.find.FindSettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
 public class ToggleWholeWordsOnlyAction extends EditorHeaderToggleAction {
-  private static final String WHOLE_WORDS_ONLY = "Whole Words";
+  private static final String WHOLE_WORDS_ONLY = "&Whole Words";
 
   public ToggleWholeWordsOnlyAction(EditorSearchComponent editorSearchComponent) {
-    super(editorSearchComponent, WHOLE_WORDS_ONLY, "w");
+    super(editorSearchComponent, WHOLE_WORDS_ONLY);
   }
 
   @Override
