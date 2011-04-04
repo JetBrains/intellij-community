@@ -114,10 +114,12 @@ public class GitStashChangesSaver extends GitChangesSaver {
     for (VirtualFile root : roots) {
       final String message = GitHandlerUtil.formatOperationName("Stashing changes from", root);
       LOG.info(message);
+      final String oldProgressTitle = myProgressIndicator.getText();
       myProgressIndicator.setText(message);
       if (GitStashUtils.saveStash(myProject, root, myStashMessage)) {
         myStashedRoots.add(root);
       }
+      myProgressIndicator.setText(oldProgressTitle);
     }
   }
 
@@ -150,8 +152,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
       }
     });
 
-    final GitTask task = new GitTask(myProject, handler, "git stash pop");
-    task.setExecuteResultInAwt(false);
+    final GitTask task = new GitTask(myProject, handler, "Unstashing uncommitted changes");
+    task.setProgressIndicator(myProgressIndicator);
     final AtomicBoolean failure = new AtomicBoolean();
     task.executeInBackground(true, new GitTaskResultHandlerAdapter() {
       @Override protected void onSuccess() {

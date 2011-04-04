@@ -31,7 +31,7 @@ public class ReferenceCompletionTest extends CompletionTestBase {
   public void testGrvy117() throws Throwable { doTest(); }
   public void testGrvy1272() throws Throwable { doTest(); }
   public void testGRVY1316() throws Throwable { doTest(); }
-  public void testGrvy194() throws Throwable { doTest(); }
+  //public void testGrvy194() throws Throwable { doTest(); }
   public void testGrvy194_1() throws Throwable { doTest(); }
   public void testGRVY223() throws Throwable { doTest(); }
   public void testGrvy487() throws Throwable { doTest(); }

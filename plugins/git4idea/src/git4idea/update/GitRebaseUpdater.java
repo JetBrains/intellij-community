@@ -64,22 +64,25 @@ public class GitRebaseUpdater extends GitUpdater {
     final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
     rebaseHandler.addLineListener(rebaseConflictDetector);
 
-    GitTask pullTask = new GitTask(myProject, rebaseHandler, "git rebase");
-    pullTask.setExecuteResultInAwt(false);
-    pullTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
+    GitTask rebaseTask = new GitTask(myProject, rebaseHandler, "Rebasing");
+    rebaseTask.setProgressIndicator(myProgressIndicator);
+    rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();
     final AtomicBoolean failure = new AtomicBoolean();
-    pullTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
-      @Override protected void onSuccess() {
+    rebaseTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
+      @Override
+      protected void onSuccess() {
         updateResult.set(GitUpdateResult.SUCCESS);
       }
 
-      @Override protected void onCancel() {
+      @Override
+      protected void onCancel() {
         cancel();
         updateResult.set(GitUpdateResult.CANCEL);
       }
 
-      @Override protected void onFailure() {
+      @Override
+      protected void onFailure() {
         failure.set(true);
       }
     });

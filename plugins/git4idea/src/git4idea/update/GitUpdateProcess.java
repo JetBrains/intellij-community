@@ -186,7 +186,7 @@ public class GitUpdateProcess {
 
   // fetch all roots. If an error happens, return false and notify about errors.
   private boolean fetchAndNotify() {
-    GitFetcher fetcher = new GitFetcher(myProject);
+    GitFetcher fetcher = new GitFetcher(myProject, myProgressIndicator);
     for (VirtualFile root : myRoots) {
       fetcher.fetch(root);
     }

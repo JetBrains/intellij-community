@@ -73,8 +73,8 @@ public class GitMergeUpdater extends GitUpdater {
     final MergeLineListener mergeLineListener = new MergeLineListener();
     mergeHandler.addLineListener(mergeLineListener);
 
-    final GitTask mergeTask = new GitTask(myProject, mergeHandler, "git merge");
-    mergeTask.setExecuteResultInAwt(false);
+    final GitTask mergeTask = new GitTask(myProject, mergeHandler, "Merging changes");
+    mergeTask.setProgressIndicator(myProgressIndicator);
     mergeTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
     final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();
     final AtomicBoolean failure = new AtomicBoolean();

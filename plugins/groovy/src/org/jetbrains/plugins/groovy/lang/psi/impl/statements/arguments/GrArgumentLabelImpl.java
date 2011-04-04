@@ -21,32 +21,27 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
 
 /**
  * @author ilyas
@@ -65,19 +60,81 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     return "Argument label";
   }
 
-  public PsiReference getReference() {
-    PsiReference[] otherReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this, GrArgumentLabel.class);
-    if (otherReferences.length == 0) {
-      return this;
+  @Nullable
+  private PsiPolyVariantReference getReferenceFromNamedArgumentProviders() {
+    PsiElement namedArgument = getParent();
+    if (!(namedArgument instanceof GrNamedArgument)) return null;
+
+    PsiElement nameElement = getNameElement();
+    if (!(nameElement instanceof LeafPsiElement)) return null;
+
+    IElementType elementType = ((LeafPsiElement)nameElement).getElementType();
+    if (elementType != GroovyElementTypes.mIDENT && !CommonClassNames.JAVA_LANG_STRING.equals(TypesUtil.getPsiTypeName(elementType))) {
+      return null;
     }
 
-    PsiReference[] refs = new PsiReference[otherReferences.length + 1];
-    refs[0] = this;
-    for (int i = 0; i < otherReferences.length; i++) {
-      refs[i + 1] = otherReferences[i];
+    GrCall call = PsiUtil.getMethodByNamedParameter((GrNamedArgument)namedArgument);
+    if (call == null) return null;
+
+    String labelName = getName();
+
+    GroovyNamedArgumentProvider.ArgumentDescriptor descr =
+      GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders(call, labelName, false).get(labelName);
+
+    if (descr != null) {
+      PsiPolyVariantReference res = descr.createReference(this);
+      if (res != null) {
+        return res;
+      }
     }
-    
-    return new PsiMultiReference(refs, this);
+
+    return null;
+  }
+
+  @NotNull
+  private PsiPolyVariantReference getRealReference() {
+    PsiReference[] otherReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this, GrArgumentLabel.class);
+    PsiPolyVariantReference reference = getReferenceFromNamedArgumentProviders();
+
+    if (otherReferences.length == 0) {
+      if (reference != null) {
+        return reference;
+      }
+      else {
+        return new PsiPolyVariantReferenceBase<PsiElement>(this) {
+
+          @NotNull
+          @Override
+          public Object[] getVariants() {
+            return ArrayUtil.EMPTY_OBJECT_ARRAY;
+          }
+
+          @NotNull
+          @Override
+          public ResolveResult[] multiResolve(boolean incompleteCode) {
+            return ResolveResult.EMPTY_ARRAY;
+          }
+        };
+      }
+    }
+    else {
+      if (reference != null) {
+        PsiReference[] refs = new PsiReference[otherReferences.length + 1];
+        refs[0] = reference;
+        //noinspection ManualArrayCopy
+        for (int i = 0; i < otherReferences.length; i++) {
+          refs[i + 1] = otherReferences[i];
+        }
+
+        otherReferences = refs;
+      }
+
+      return new PsiMultiReference(otherReferences, this);
+    }
+  }
+
+  public PsiReference getReference() {
+    return this;
   }
 
   @Nullable
@@ -125,45 +182,13 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
 
   @Nullable
   public PsiElement resolve() {
-    String propName = getText();
-    String setterName = PropertyUtil.suggestSetterName(propName);
-    PsiElement context = getParent().getParent();
-    if (context instanceof GrArgumentList) {
-      final PsiElement parent = context.getParent();
-      if (parent instanceof GrCallExpression) {
-        final PsiMethod resolvedMethod = ((GrCallExpression) parent).resolveMethod();
-        if (resolvedMethod != null) {
-          final PsiParameter[] parameters = resolvedMethod.getParameterList().getParameters();
-          if (parameters.length > 0) {
-            if (InheritanceUtil.isInheritor(parameters[0].getType(), CommonClassNames.JAVA_UTIL_MAP)) {
-              //call with named argument, not setting property
-              return null;
-            }
-          }
-        }
-      }
+    return getRealReference().resolve();
+  }
 
-      if (parent instanceof GrExpression || parent instanceof GrAnonymousClassDefinition) {
-        PsiType type =
-          parent instanceof GrExpression ? ((GrExpression)parent).getType() : ((GrAnonymousClassDefinition)parent).getBaseClassType();
-        if (type instanceof PsiClassType) {
-          PsiClass clazz = ((PsiClassType) type).resolve();
-          if (clazz != null) {
-            PsiMethod[] byName = clazz.findMethodsByName(setterName, true);
-            if (byName.length > 0) return byName[0];
-            final PsiField field = clazz.findFieldByName(propName, true);
-            if (field != null) return field;
-            final PropertyResolverProcessor processor = new PropertyResolverProcessor(propName, this);
-            ResolveUtil
-              .processNonCodeMethods(JavaPsiFacade.getElementFactory(getProject()).createType(clazz), processor, this);
-            final GroovyResolveResult[] candidates = processor.getCandidates();
-            if (candidates.length == 0) return null;
-            return candidates[0].getElement();
-          }
-        }
-      }
-    }
-    return null;
+  @NotNull
+  @Override
+  public ResolveResult[] multiResolve(boolean incompleteCode) {
+    return getRealReference().multiResolve(incompleteCode);
   }
 
   @NotNull
@@ -183,41 +208,15 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    final PsiElement resolved = resolve();
-    if (resolved instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod) resolved;
-      final String oldName = getNameElement().getText();
-      if (!method.getName().equals(oldName)) { //was property reference to accessor
-        if (PropertyUtil.isSimplePropertySetter(method)) {
-          final String newPropertyName = PropertyUtil.getPropertyName(newElementName);
-          if (newPropertyName != null) {
-            return doHandleElementRename(newPropertyName);
-          } else {
-            //todo encapsulate fields:)
-          }
-        }
-      }
-    }
-    return doHandleElementRename(newElementName);
-  }
-
-  private PsiElement doHandleElementRename(String newElementName) {
-    PsiElement nameElement = getNameElement();
-    ASTNode node = nameElement.getNode();
-    ASTNode newNameNode = GroovyPsiElementFactory.getInstance(getProject()).createReferenceNameFromText(newElementName).getNode();
-    assert newNameNode != null && node != null;
-    node.getTreeParent().replaceChild(node, newNameNode);
-    return this;
+    return getRealReference().handleElementRename(newElementName);
   }
 
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-    throw new IncorrectOperationException("NIY");
+    return getRealReference().bindToElement(element);
   }
 
   public boolean isReferenceTo(PsiElement element) {
-    return (element instanceof PsiMethod || element instanceof PsiField) &&
-        getManager().areElementsEquivalent(element, resolve());
-
+    return getRealReference().isReferenceTo(element);
   }
 
   @NotNull
@@ -244,20 +243,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   }
 
   @Nullable
-  public PsiType getExpectedArgumentType() {
-    final PsiElement resolved = resolve();
-    if (resolved instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod) resolved;
-      if (PropertyUtil.isSimplePropertyGetter(method)) {
-        return PsiUtil.getSmartReturnType(method);
-      }
-      if (PropertyUtil.isSimplePropertySetter(method))
-        return method.getParameterList().getParameters()[0].getType();
-
-    } else if (resolved instanceof PsiField) {
-      return ((PsiField) resolved).getType();
-    }
-
+  public PsiType getExpectedArgumentType() { // TODO use GroovyNamedArgumentProvider to determinate expected argument type.
     return null;
   }
 
@@ -287,7 +273,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
 
   @Override
   public PsiElement setName(@NotNull String newName) {
-    PsiImplUtil.setName(newName, getFirstChild());
+    PsiImplUtil.setName(newName, getNameElement());
     return this;
   }
 }

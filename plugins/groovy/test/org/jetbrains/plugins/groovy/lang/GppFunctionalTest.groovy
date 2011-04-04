@@ -19,6 +19,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil
 import org.jetbrains.plugins.groovy.util.TestUtils
 import com.intellij.psi.*
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl
 
 /**
  * @author peter

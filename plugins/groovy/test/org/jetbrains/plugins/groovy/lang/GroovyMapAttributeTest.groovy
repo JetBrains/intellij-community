@@ -17,29 +17,447 @@ package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.lookup.LookupElement
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection
 
 /**
  * @author Sergey Evdokimov
  */
 class GroovyMapAttributeTest extends LightCodeInsightFixtureTestCase {
 
+  private void doTestCompletion(String fileText, boolean exists) {
+    myFixture.configureByText("a.groovy", fileText)
+    def res = myFixture.completeBasic()
+
+    assertNotNull res;
+
+    Set<String> variants = new HashSet<String>()
+
+    for (LookupElement element : res) {
+      variants.add(element.getLookupString())
+    }
+
+    if (exists) {
+      assertTrue(variants.contains("sss1"))
+      assertTrue(variants.contains("sss2"))
+    }
+    else {
+      assertTrue(!variants.contains("sss1"))
+      assertTrue(!variants.contains("sss2"))
+    }
+  }
+
   public void testSmartCompletionCompletion() {
-    def file = myFixture.addFileToProject("a.groovy", """
+    myFixture.configureByText("a.groovy", """
 class Aaa {
   String sss1
   String sss2
-
 
   static {
     new Aaa(<caret>)
   }
 }
 """)
-    myFixture.configureFromExistingVirtualFile file.virtualFile
 
     def res = myFixture.complete(CompletionType.SMART)
     assertNotNull(res)
     assertSize(2, res)
+  }
+
+  public void testEmptyConstructorCompletion() {
+    doTestCompletion("""
+class Aaa {
+  String sss1
+  String sss2
+
+  public Aaa() {}
+
+  static {
+    new Aaa(<caret>)
+  }
+}
+""", true)
+  }
+
+  public void testNoDefaultConstructor() {
+    doTestCompletion("""
+class Aaa {
+  String sss1
+  String sss2
+
+  public Aaa(String sss) {}
+
+  static {
+    new Aaa(<caret>)
+  }
+}
+""", false)
+  }
+
+  public void testDefaultConstructorAndNonDefault() {
+    doTestCompletion("""
+class Aaa {
+  String sss1
+  String sss2
+
+  public Aaa() {}
+
+  public Aaa(String sss) {}
+
+  static {
+    new Aaa(<caret>)
+  }
+}
+""", true)
+  }
+
+  public void testHasMapConstructor() {
+    doTestCompletion("""
+class Aaa {
+  String sss1
+  String sss2
+
+  public Aaa() {
+  }
+
+  public Aaa(Map mmm) {}
+
+  static {
+    new Aaa(<caret>)
+  }
+}
+""", false)
+  }
+
+  public void testHasHashMapConstructor() {
+    doTestCompletion("""
+class Aaa {
+  String sss1
+  String sss2
+
+  public Aaa() {
+  }
+
+  public Aaa(java.util.HashMap mmm) {}
+
+  static {
+    new Aaa(<caret>)
+  }
+}
+""", false)
+  }
+
+  public void testMapNotFirstConstructor() {
+    doTestCompletion("""
+class Aaa {
+  String sss1
+  String sss2
+
+  public Aaa() {}
+
+  public Aaa(int x, Map mmm) {}
+
+  static {
+    new Aaa(<caret>)
+  }
+}
+""", true)
+  }
+
+  public void testCallOtherConstructor() {
+    doTestCompletion("""
+class Aaa {
+  String sss1
+  String sss2
+
+  public Aaa() {}
+
+  public Aaa(String s) {
+    this(sss<caret>: )
+  }
+}
+""", false)
+  }
+
+  public void testWithMap() {
+    doTestCompletion("""
+class Aaa {
+  String sss1
+  String sss2
+
+  public Aaa() {}
+
+  public Aaa(Map map, String s) {
+
+  }
+
+  static {
+    new Aaa(<caret>)
+  }
+}
+""", true)
+  }
+
+  public void testWithMap2() {
+    doTestCompletion("""
+class Aaa {
+  String sss1
+  String sss2
+
+  public Aaa() {}
+
+  public Aaa(Map map, String s = null) {
+
+  }
+
+  static {
+    new Aaa(<caret>)
+  }
+}
+""", false)
+  }
+
+  public void testAlreadyHasNonMapParameter() {
+    doTestCompletion("""
+class Aaa {
+  String sss1
+  String sss2
+
+  public Aaa() {}
+
+  static {
+    new Aaa(1, <caret>)
+  }
+}
+""", false)
+  }
+
+  public void testAlreadyHasNonMapParameter1() {
+    doTestCompletion("""
+class Aaa {
+  String sss1
+  String sss2
+
+  public Aaa() {}
+  public Aaa(String s) {}
+
+  static {
+    new Aaa(<caret>, "dff")
+  }
+}
+""", false)
+  }
+
+  public void testConstructorInJavaClass() {
+    myFixture.addFileToProject("Ccc.java", """
+public class Ccc {
+  private String sss1
+  private String sss2
+
+  private void setSss3(String s) {}
+  private void setSss4(String s) {}
+
+  public Aaa() {}
+  public Aaa(String s) {}
+}
+""")
+
+    myFixture.configureByText("a.groovy", "new Ccc(<caret>)")
+
+    def res = myFixture.complete(CompletionType.SMART)
+
+    assertNotNull res
+    assertSize 4, res
+  }
+
+  public void testStatic1() {
+    myFixture.configureByText("Ccc.groovy", """
+class Ccc {
+  String sss1
+  String sss2
+  static String sss3
+
+  static {
+    new Ccc(<caret>)
+  }
+}
+""")
+    def res = myFixture.complete(CompletionType.SMART)
+    assertNotNull res
+    assertSize 2, res
+  }
+
+  public void testStatic2() {
+    myFixture.configureByText("Ccc.groovy", """
+class Ccc {
+  public String setSss1(String s) {}
+  public String setSss2(String s) {}
+
+  public static String setSss3(String s) {}
+
+  static {
+    new Ccc(<caret>)
+  }
+}
+""")
+    def res = myFixture.complete(CompletionType.SMART)
+    assertNotNull res
+    assertSize 2, res
+  }
+
+  public void testRenameProperty() {
+    def groovyFile = myFixture.addFileToProject("g.groovy", "new Aaa(sss: '1')")
+    myFixture.configureByText("Aaa.java", """
+public class Aaa {
+  public String sss<caret>;
+}
+""")
+    myFixture.renameElementAtCaret("field")
+
+    assertEquals("new Aaa(field: '1')", groovyFile.text)
+  }
+
+  public void testRenameMethod() {
+    def groovyFile = myFixture.addFileToProject("g.groovy", "new Aaa(sss: '1')")
+    myFixture.configureByText("Aaa.java", """
+public class Aaa {
+  public void setSss<caret>(String s){}
+}
+""")
+    myFixture.renameElementAtCaret("setField")
+
+    assertEquals("new Aaa(field: '1')", groovyFile.text)
+  }
+
+  private void doTestHighlighting(String text) {
+    myFixture.enableInspections(GroovyAssignabilityCheckInspection)
+    myFixture.enableInspections(GroovyUncheckedAssignmentOfMemberOfRawTypeInspection)
+
+    myFixture.configureByText("a.groovy", text)
+    myFixture.checkHighlighting(true, false, true)
+  }
+
+  public void testCheckingTypeString() {
+    doTestHighlighting """
+class Ccc {
+  String foo
+
+  static {
+println(new Ccc(foo: 123))
+println(new Ccc(foo: 123L))
+println(new Ccc(foo: 123f))
+println(new Ccc(foo: 'text'))
+println(new Ccc(foo: null))
+println(new Ccc(foo: new Object()))
+println(new Ccc(foo: new Object[1]))
+println(new Ccc(foo: Collections.singletonList("as")))
+  }
+}
+"""
+  }
+
+  public void testCheckingTypeInt() {
+    doTestHighlighting """
+class Ccc {
+  int foo
+
+  static {
+println(new Ccc(foo: 123))
+println(new Ccc(foo: new Integer(123)))
+println(new Ccc(foo: 123L))
+println(new Ccc(foo: <warning descr="Type of argument 'foo' can not be 'Boolean'">true</warning>))
+println(new Ccc(foo: 123f))
+println(new Ccc(foo: new Float(123f)))
+println(new Ccc(foo: <warning descr="Type of argument 'foo' can not be 'String'">'1111'</warning>))
+println(new Ccc(foo: <warning descr="Type of argument 'foo' can not be 'null'">null</warning>))
+println(new Ccc(foo: <warning descr="Type of argument 'foo' can not be 'Object'">new Object()</warning>))
+println(new Ccc(foo: <warning descr="Type of argument 'foo' can not be 'Object[]'">new Object[1]</warning>))
+println(new Ccc(foo: <warning descr="Type of argument 'foo' can not be 'List<String>'">Collections.singletonList("as")</warning>))
+  }
+}
+"""
+  }
+
+  public void testCheckingTypeInteger() {
+    doTestHighlighting """
+class Ccc {
+  Integer foo
+
+  static {
+println(new Ccc(foo: 123))
+println(new Ccc(foo: new Integer(123)))
+println(new Ccc(foo: 123L))
+println(new Ccc(foo: <warning descr="Type of argument 'foo' can not be 'Boolean'">true</warning>))
+println(new Ccc(foo: 123f))
+println(new Ccc(foo: new Float(123f)))
+println(new Ccc(foo: <warning descr="Type of argument 'foo' can not be 'String'">'1111'</warning>))
+println(new Ccc(foo: null))
+println(new Ccc(foo: <warning descr="Type of argument 'foo' can not be 'Object'">new Object()</warning>))
+println(new Ccc(foo: <warning descr="Type of argument 'foo' can not be 'Object[]'">new Object[1]</warning>))
+println(new Ccc(foo: <warning descr="Type of argument 'foo' can not be 'List<String>'">Collections.singletonList("as")</warning>))
+  }
+}
+"""
+  }
+
+  public void testCheckingTypeList() {
+    doTestHighlighting """
+class Ccc {
+  List foo
+
+  static {
+println(new Ccc(foo: <warning descr="Type of argument 'foo' can not be 'Integer'">123</warning>))
+println(new Ccc(foo: null))
+println(new Ccc(foo: new Object[1]))
+println(new Ccc(foo: []))
+println(new Ccc(foo: [1,2,3]))
+println(new Ccc(foo: Collections.singletonList("as")))
+println(new Ccc(foo: Collections.singletonList(1)))
+  }
+}
+"""
+  }
+
+  public void testCheckingTypeGeneric() {
+    myFixture.addFileToProject("Ccc.groovy", """
+class Ccc<T> {
+  public void setFoo(T t) {}
+}
+
+class CccMap extends Ccc<Map> {}
+
+class CccList extends Ccc<ArrayList> {}
+""")
+
+    doTestHighlighting """
+println(new CccMap(foo: [:]))
+println(new CccList(foo: []))
+
+println(new CccMap(foo: <warning descr="Type of argument 'foo' can not be 'List'">[]</warning>))
+println(new CccList(foo: <warning descr="Type of argument 'foo' can not be 'Map'">[:]</warning>))
+"""
+  }
+
+  public void testCompletionReturnMethod() {
+    myFixture.addFileToProject("Ccc.groovy", """
+class Ccc {
+  String sss1;
+  String sss2;
+}
+""")
+
+    doTestCompletion """
+class Test {
+  public Ccc createC(HashMap m) {
+    return new Ccc(m)
+  }
+
+  public static void main(String[] args) {
+    println(new Test().createC(<caret>))
+  }
+}
+""", true
   }
 
 }

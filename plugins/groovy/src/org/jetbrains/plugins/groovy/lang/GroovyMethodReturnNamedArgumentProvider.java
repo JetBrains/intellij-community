@@ -15,39 +15,31 @@
  */
 package org.jetbrains.plugins.groovy.lang;
 
+import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.Map;
 
 /**
- * @author user
+ * @author Sergey Evdokimov
  */
-public class GroovySourceCodeNamedArgumentProvider extends GroovyNamedArgumentProvider {
+public class GroovyMethodReturnNamedArgumentProvider extends GroovyNamedArgumentProvider {
   @Override
   public void getNamedArguments(@NotNull GrCall call,
                                 @Nullable PsiMethod method,
                                 @Nullable String argumentName,
                                 boolean forCompletion,
                                 Map<String, ArgumentDescriptor> result) {
-    if (forCompletion && method instanceof GrMethod) {
-      String[] namedParametersArray = ((GrMethod)method).getNamedParametersArray();
+    if (!forCompletion || method == null) return;
 
-      if (argumentName == null) {
-        for (String parameter : namedParametersArray) {
-          result.put(parameter, TYPE_ANY);
-        }
-      }
-      else {
-        if (ArrayUtil.contains(argumentName)) {
-          result.put(argumentName, TYPE_ANY);
-        }
-      }
-    }
+    PsiType returnType = method.getReturnType();
+    if (!(returnType instanceof PsiClassType)) return;
+
+    GroovyConstructorNamedArgumentProvider.processClass(call, (PsiClassType)returnType, argumentName, result);
   }
 }
