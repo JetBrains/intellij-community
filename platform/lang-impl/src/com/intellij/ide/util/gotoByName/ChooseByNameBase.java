@@ -20,6 +20,8 @@ import com.intellij.Patches;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.NavigationItemListCellRenderer;
+import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -708,6 +710,15 @@ public abstract class ChooseByNameBase {
 
             cancelCalcElementsThread();
 
+            final ListCellRenderer cellRenderer = myList.getCellRenderer();
+            if (cellRenderer instanceof PsiElementListCellRenderer) {
+              final String namePattern = getNamePattern(text);
+              ((PsiElementListCellRenderer)cellRenderer).setPatternMatcher(buildPatternMatcher(isSearchInAnyPlace() ? "*" + namePattern + "*" : namePattern));
+            } else if (cellRenderer instanceof NavigationItemListCellRenderer) {
+              final String namePattern = getNamePattern(text);
+              ((NavigationItemListCellRenderer)cellRenderer).setPatternMatcher(buildPatternMatcher(isSearchInAnyPlace() ? "*" + namePattern + "*" : namePattern));
+            }
+
             myCalcElementsThread = new CalcElementsThread(text, myCheckBox.isSelected(), callback, modalityState, postRunnable == null);
             ApplicationManager.getApplication().executeOnPooledThread(myCalcElementsThread);
           }
@@ -1394,7 +1405,7 @@ public abstract class ChooseByNameBase {
     return matches;
   }
 
-  private NameUtil.Matcher buildPatternMatcher(String pattern) {
+  private static NameUtil.Matcher buildPatternMatcher(String pattern) {
     return NameUtil.buildMatcher(pattern, 0, true, true, pattern.toLowerCase().equals(pattern));
   }
 

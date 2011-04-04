@@ -17,6 +17,7 @@ package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Processor;
@@ -54,6 +55,29 @@ public final class SpeedSearchUtil {
       }
     }
     simpleColoredComponent.append(text, attributes);
+  }
+
+  public static void appendColoredFragmentForMatcher(final String text,
+                                                     final SimpleColoredComponent component,
+                                                     final SimpleTextAttributes attributes,
+                                                     final NameUtil.Matcher matcher,
+                                                     final Color selectedBg) {
+    if (!(matcher instanceof NameUtil.MinusculeMatcher)) {
+      component.append(text, attributes);
+      return;
+    }
+
+    final Iterable<TextRange> iterable = ((NameUtil.MinusculeMatcher)matcher).matchingFragments(text);
+    if (iterable != null) {
+      final Color fg = attributes.getFgColor();
+      final int style = attributes.getStyle();
+      final SimpleTextAttributes plain = new SimpleTextAttributes(style, fg);
+      final SimpleTextAttributes highlighted = new SimpleTextAttributes(selectedBg, fg, null, style | SimpleTextAttributes.STYLE_SEARCH_MATCH);
+      appendColoredFragments(component, text, iterable, plain, highlighted);
+    }
+    else {
+      component.append(text, attributes);
+    }
   }
 
   public static void appendColoredFragments(final SimpleColoredComponent simpleColoredComponent,

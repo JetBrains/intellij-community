@@ -30,10 +30,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
@@ -45,15 +47,24 @@ import java.awt.*;
 import java.util.Comparator;
 
 public abstract class PsiElementListCellRenderer<T extends PsiElement> extends JPanel implements ListCellRenderer {
+
+  private NameUtil.Matcher myMatcher;
+
   protected PsiElementListCellRenderer() {
     super(new BorderLayout());
   }
 
+  public void setPatternMatcher(final NameUtil.Matcher matcher) {
+    myMatcher = matcher;
+  }
+
   private class LeftRenderer extends ColoredListCellRenderer {
     private final String myModuleName;
+    private NameUtil.Matcher myMatcher;
 
-    public LeftRenderer(final String moduleName) {
+    public LeftRenderer(final String moduleName, NameUtil.Matcher matcher) {
       myModuleName = moduleName;
+      myMatcher = matcher;
     }
 
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
@@ -93,7 +104,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
 
         assert name != null : "Null name for PSI element " + element;
-        append(name, nameAttributes);
+        SpeedSearchUtil.appendColoredFragmentForMatcher(name,  this, nameAttributes, myMatcher, bgColor);
         setIcon(PsiElementListCellRenderer.this.getIcon(element));
 
         String containerText = getContainerText(element, name + (myModuleName != null ? myModuleName + "        " : ""));
@@ -130,7 +141,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
     removeAll();
     DefaultListCellRenderer rightRenderer = getRightCellRenderer();
-    ListCellRenderer leftRenderer = new LeftRenderer(null);
+    ListCellRenderer leftRenderer = new LeftRenderer(null, myMatcher);
     final Component leftCellRendererComponent = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     if (rightRenderer != null) {
       final Component rightCellRendererComponent = rightRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);

@@ -30,20 +30,24 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 
 public class NavigationItemListCellRenderer extends OpaquePanel implements ListCellRenderer {
+
+  private NameUtil.Matcher myMatcher;
+
   public NavigationItemListCellRenderer() {
     super(new BorderLayout());
   }
@@ -62,7 +66,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
     final boolean hasRightRenderer = UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION;
     final ModuleRendererFactory factory = ModuleRendererFactory.getInstance();
 
-    final LeftRenderer left = new LeftRenderer(!hasRightRenderer || !factory.rendersLocationString());
+    final LeftRenderer left = new LeftRenderer(!hasRightRenderer || !factory.rendersLocationString(), myMatcher);
     final Component leftCellRendererComponent = left.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     final Color listBg = leftCellRendererComponent.getBackground();
     add(leftCellRendererComponent, BorderLayout.WEST);
@@ -87,11 +91,17 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
     return this;
   }
 
+  public void setPatternMatcher(final NameUtil.Matcher matcher) {
+    myMatcher = matcher;
+  }
+
   private static class LeftRenderer extends ColoredListCellRenderer {
     public final boolean myRenderLocation;
+    private NameUtil.Matcher myMatcher;
 
-    public LeftRenderer(boolean renderLocation) {
+    public LeftRenderer(boolean renderLocation, NameUtil.Matcher matcher) {
       myRenderLocation = renderLocation;
+      myMatcher = matcher;
     }
 
     protected void customizeCellRenderer(
@@ -144,7 +154,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
         }
         textAttributes.setForegroundColor(color);
         SimpleTextAttributes nameAttributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
-        append(name, nameAttributes);
+        SpeedSearchUtil.appendColoredFragmentForMatcher(name,  this, nameAttributes, myMatcher, bgColor);
         setIcon(presentation.getIcon(false));
 
         if (myRenderLocation) {
