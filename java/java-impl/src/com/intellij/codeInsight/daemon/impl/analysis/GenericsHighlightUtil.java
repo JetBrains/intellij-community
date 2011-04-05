@@ -116,9 +116,9 @@ public class GenericsHighlightUtil {
         if (!typeParameterListOwner.hasTypeParameters()) {
           return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceElements[0], "Diamond operator is not applicable for non-parameterized types");
         }
+        inferenceResult = ((PsiDiamondType)referenceElements[0].getType()).resolveInferredTypes();
         final PsiType expectedType = detectExpectedType(referenceParameterList);
         if (!(expectedType instanceof PsiClassType && ((PsiClassType)expectedType).isRaw())) {
-          inferenceResult = ((PsiDiamondType)referenceElements[0].getType()).resolveInferredTypes();
           final String errorMessage = inferenceResult.getErrorMessage();
           if (errorMessage != null) {
            return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceElements[0], errorMessage);

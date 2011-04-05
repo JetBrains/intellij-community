@@ -6,6 +6,20 @@ class Test {
   ArrayList l = new ArrayList<>(8);
 }
 
+class HMCopy<K, V> {
+  private Entry[] table;
+
+  class Entry<K, V> {
+    Entry(int h, K k, V v, Entry<K, V> n) {
+    }
+  }
+
+  void addEntry(int hash, K key, V value, int bucketIndex) {
+    Entry<K, V> e = table[bucketIndex];
+    table[bucketIndex] = new Entry<>(hash, key, value, e);
+  }
+}
+
 class DD {
     P1<P<String>> l = new L<String>() {
         @Override
