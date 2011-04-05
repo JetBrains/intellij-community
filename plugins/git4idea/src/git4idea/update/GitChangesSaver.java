@@ -17,6 +17,8 @@ package git4idea.update;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -27,8 +29,8 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.continuation.ContinuationContext;
+import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,6 +105,17 @@ public abstract class GitChangesSaver {
    */
   public void restoreLocalChanges(ContinuationContext context) {
     load(getRestoreListsRunnable(), context);
+  }
+
+  public void notifyLocalChangesAreNotRestored() {
+    if (wereChangesSaved()) {
+      LOG.info("Update is incomplete, changes are not restored");
+      Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Local changes were not restored",
+                                                "Before update your uncommitted changes were saved to <a href='saver'>" + getSaverName() + "</a><br/>" +
+                                                "Update is not complete, you have unresolved merges in your working tree<br/>" +
+                                                "Resolve conflicts, complete update and restore changes manually.", NotificationType.WARNING,
+                                                new ShowSavedChangesNotificationListener()));
+    }
   }
 
   public List<LocalChangeList> getChangeLists() {
