@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
+ * @see com.intellij.pom.references.PomService#convertToPsi(PomTarget)
  */
 public interface PomTargetPsiElement extends PsiElement {
 
