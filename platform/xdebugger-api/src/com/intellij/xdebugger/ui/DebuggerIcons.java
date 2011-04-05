@@ -42,5 +42,6 @@ public interface DebuggerIcons {
   Icon WATCHED_VALUE_ICON = IconLoader.getIcon("/debugger/watch.png");
 
   Icon STACK_FRAME_ICON = IconLoader.getIcon("/debugger/stackFrame.png");
+  Icon CURRENT_THREAD_ICON = IconLoader.getIcon("/debugger/threadCurrent.png");
   Icon SUSPENDED_THREAD_ICON = IconLoader.getIcon("/debugger/threadSuspended.png");
 }
