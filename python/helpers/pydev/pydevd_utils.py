@@ -1,4 +1,10 @@
 import traceback
+
+try:
+    from urllib import quote
+except:
+    from urllib.parse import quote
+
 import pydevd_constants
 
 def to_number(x):
@@ -39,9 +45,9 @@ def compare_object_attrs(x, y):
         return x.__cmp__(y)
     except:
         if pydevd_constants.IS_PY3K:
-            return (str(x) > str(y)) - (str(x) < str(y))
+            return (to_string(x) > to_string(y)) - (to_string(x) < to_string(y))
         else:
-            return cmp(str(x), str(y))
+            return cmp(to_string(x), to_string(y))
 
 def cmp_to_key(mycmp):
     'Convert a cmp= function into a key= function'
@@ -68,6 +74,21 @@ def is_string(x):
     else:
         return isinstance(x, basestring)
 
+def to_string(x):
+    if is_string(x):
+        return x
+    else:
+        return str(x)
+
 def print_exc():
     if traceback:
         traceback.print_exc()
+
+def quote_smart(s, safe='/'):
+    if pydevd_constants.IS_PY3K:
+        return quote(s, safe)
+    else:
+        if isinstance(s, unicode):
+            s =  s.encode('utf-8')
+
+        return quote(s, safe)

@@ -68,16 +68,14 @@ except ImportError:
     import queue as PydevQueue
 from socket import socket
 from socket import AF_INET, SOCK_STREAM
-try:
-    from urllib import quote
-except:
-    from urllib.parse import quote
+
 import pydevd_vars
 import pydevd_tracing
 import pydevd_vm_type
 import pydevd_file_utils
 import traceback
 from pydevd_utils import *
+from pydevd_utils import quote_smart as quote
 
 from pydevd_tracing import GetExceptionTracebackStr
 
@@ -396,7 +394,7 @@ class NetCommand:
         return self.outgoing
     
     def makeMessage(self, cmd, seq, payload):
-        encoded = quote(str(payload), '/<>_=" \t')
+        encoded = quote(to_string(payload), '/<>_=" \t')
         return str(cmd) + '\t' + str(seq) + '\t' + encoded + "\n"
 
 #=======================================================================================================================
@@ -624,7 +622,7 @@ class InternalGetVariable(InternalThreadCommand):
                     keys = sorted(keys, cmp=compare_object_attrs) #Jython 2.1 does not have it (and all must be compared as strings).
 
             for k in keys:
-                xml += pydevd_vars.varToXML(valDict[k], str(k))
+                xml += pydevd_vars.varToXML(valDict[k], to_string(k))
 
             xml += "</xml>"
             cmd = dbg.cmdFactory.makeGetVariableMessage(self.sequence, xml)
