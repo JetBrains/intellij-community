@@ -217,4 +217,20 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "Bar9", "Bar1", "Bar2", "Bar3", "Bar4");
   }
 
+  public void testSortSameNamedVariantsByProximity() {
+    myFixture.addClass("public class Bar {}");
+    for (int i = 0; i < 10; i++) {
+      myFixture.addClass("public class Bar" + i + " {}");
+      myFixture.addClass("public class Bar" + i + "Colleague {}");
+    }
+    myFixture.addClass("package bar; public class Bar {}");
+    final String path = getTestName(false) + ".java";
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.complete(CompletionType.BASIC, 2);
+    assertPreferredItems(0);
+    List<LookupElement> items = getLookup().getItems();
+    assertEquals(((JavaPsiClassReferenceElement)items.get(0)).getQualifiedName(), "Bar");
+    assertEquals(((JavaPsiClassReferenceElement)items.get(1)).getQualifiedName(), "bar.Bar");
+  }
+
 }

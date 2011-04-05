@@ -292,28 +292,4 @@ public class CompletionServiceImpl extends CompletionService{
   public CompletionSorterImpl emptySorter() {
     return new CompletionSorterImpl(new ArrayList<ClassifierFactory<LookupElement>>());
   }
-
-  private static class NegatingComparable<T extends NegatingComparable<T>> implements Comparable<T> {
-    private final Comparable myWeigh;
-
-    public NegatingComparable(Comparable weigh) {
-      myWeigh = weigh;
-    }
-
-    @Override
-    public int compareTo(T o) {
-      final Comparable w1 = myWeigh;
-      final Comparable w2 = o.myWeigh;
-      if (w1 == null && w2 == null) return 0;
-      if (w1 == null) return 1;
-      if (w2 == null) return -1;
-
-      return -w1.compareTo(w2);
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(myWeigh);
-    }
-  }
 }
