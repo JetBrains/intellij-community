@@ -251,7 +251,7 @@ public class Messages {
                                      new PairFunction<Integer, JCheckBox, Integer>() {
                                        @Override
                                        public Integer fun(final Integer exitCode, final JCheckBox cb) {
-                                         return exitCode == CANCEL ? CANCEL : exitCode + (cb.isSelected() ? 1 : 0);
+                                         return exitCode == -1 ? CANCEL : exitCode + (cb.isSelected() ? 1 : 0);
                                        }
                                      });
   }
