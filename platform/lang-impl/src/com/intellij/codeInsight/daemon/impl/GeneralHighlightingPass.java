@@ -338,6 +338,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<PsiFile>(injectedFiles), new Processor<PsiFile>() {
       public boolean process(final PsiFile injectedPsi) {
         DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
+        if (documentWindow == null) return true;
         Place places = InjectedLanguageUtil.getShreds(injectedPsi);
         for (PsiLanguageInjectionHost.Shred place : places) {
           TextRange textRange = place.getRangeInsideHost().shiftRight(place.host.getTextRange().getStartOffset());
