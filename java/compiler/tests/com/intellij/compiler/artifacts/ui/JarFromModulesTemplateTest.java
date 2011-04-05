@@ -93,6 +93,16 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
                  " module:a");
   }
 
+  public void testIncludeTests() {
+    final Module a = addModule("a", null);
+    addProjectLibrary(a, "jdom", DependencyScope.TEST, getJDomJar());
+    createFromTemplate(a, null, null, true, true);
+    assertLayout("a.jar\n" +
+                 " module:a\n" +
+                 " module-tests:a\n" +
+                 " extracted:" + getLocalJarPath(getJDomJar()) + "!/");
+  }
+
   public void testTwoIndependentModules() throws Exception {
     final Module a = addModule("a", null);
     addModule("b", null);
@@ -197,14 +207,17 @@ public class JarFromModulesTemplateTest extends PackagingElementsTestCase {
     assertLayout(myArtifact, expected);
   }
 
-  private void createFromTemplate(final Module module,
-                                  final String mainClassName,
-                                  final String directoryForManifest,
+  private void createFromTemplate(final Module module, final String mainClassName, final String directoryForManifest,
                                   final boolean extractLibrariesToJar) {
+    createFromTemplate(module, mainClassName, directoryForManifest, extractLibrariesToJar, false);
+  }
+
+  private void createFromTemplate(final Module module, final String mainClassName, final String directoryForManifest,
+                                  final boolean extractLibrariesToJar, final boolean includeTests) {
     final JarFromModulesTemplate template = new JarFromModulesTemplate(getContext());
     final Module[] modules = module != null ? new Module[]{module} : ModuleManager.getInstance(getProject()).getModules();
     final ArtifactTemplate.NewArtifactConfiguration configuration =
-      template.doCreateArtifact(modules, mainClassName, directoryForManifest, extractLibrariesToJar);
+      template.doCreateArtifact(modules, mainClassName, directoryForManifest, extractLibrariesToJar, includeTests);
     assertNotNull(configuration);
     myArtifact = addArtifact(configuration.getArtifactName(), configuration.getArtifactType(), configuration.getRootElement());
   }
