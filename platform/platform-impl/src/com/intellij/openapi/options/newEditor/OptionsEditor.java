@@ -397,6 +397,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       public void run() {
+        if (myDisposed) return;
         myConfigurable2Content.put(configurable, content);
         result.setDone();
       }
