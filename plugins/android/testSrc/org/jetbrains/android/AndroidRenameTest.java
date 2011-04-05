@@ -20,6 +20,7 @@ import com.android.sdklib.SdkConstants;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -206,11 +207,28 @@ public class AndroidRenameTest extends AndroidTestCase {
   }
 
   public void testRenameComponent() throws Throwable {
-    myFixture.copyFileToProject(BASE_PATH + "MyActivity.java", "src/p1/p2/MyActivity.java");
-    VirtualFile manifestFile = myFixture.copyFileToProject(BASE_PATH + "ActivityManifest.xml", SdkConstants.FN_ANDROID_MANIFEST_XML);
-    myFixture.configureFromExistingVirtualFile(manifestFile);
-    myFixture.renameElementAtCaret("MyActivity1");
-    myFixture.checkResultByFile(BASE_PATH + "ActivityManifest_after.xml");
+    doRenameComponentTest("MyActivity1");
+  }
+
+  public void testRenamePackage() throws Throwable {
+    doRenameComponentTest("p10");
+  }
+
+  public void testRenamePackage1() throws Throwable {
+    doRenameComponentTest("p20");
+  }
+
+  public void testMovePackage() throws Throwable {
+    doMovePackageTest("p1.p2.p3", "p1", "src/p1/p2/p3/MyActivity.java");
+  }
+
+  public void testMovePackage1() throws Throwable {
+    doMovePackageTest("p1.p2.p3", "p1", "src/p1/p2/p3/MyActivity.java");
+  }
+
+  public void testMovePackage2() throws Throwable {
+    myFixture.copyDirectoryToProject(BASE_PATH + "empty", "src/p1/p3");
+    doMovePackageTest("p1.p3", "p1.p2", "src/p1/p3/MyActivity.java");
   }
 
   public void testRenameWidget() throws Throwable {
@@ -220,5 +238,37 @@ public class AndroidRenameTest extends AndroidTestCase {
     myFixture.configureFromExistingVirtualFile(file);
     myFixture.renameElementAtCaret("MyWidget1");
     myFixture.checkResultByFile(BASE_PATH + "layout_widget_after.xml");
+  }
+
+  private void doMovePackageTest(String packageName, String newPackageName, String activityPath) throws Exception {
+    myFixture.copyDirectoryToProject(BASE_PATH + "empty", "src/p1/p2/p3");
+    myFixture.copyFileToProject(BASE_PATH + "MyActivity.java", activityPath);
+    VirtualFile manifestFile = myFixture.copyFileToProject(BASE_PATH + getTestName(false) + ".xml", SdkConstants.FN_ANDROID_MANIFEST_XML);
+    myFixture.configureFromExistingVirtualFile(manifestFile);
+    doMovePackage(packageName, newPackageName);
+    myFixture.checkResultByFile(BASE_PATH + getTestName(false) + "_after.xml");
+  }
+
+  private void doRenameComponentTest(String newName) {
+    myFixture.copyFileToProject(BASE_PATH + "MyActivity.java", "src/p1/p2/MyActivity.java");
+    VirtualFile manifestFile = myFixture.copyFileToProject(BASE_PATH + getTestName(false) + ".xml", SdkConstants.FN_ANDROID_MANIFEST_XML);
+    myFixture.configureFromExistingVirtualFile(manifestFile);
+    myFixture.renameElementAtCaret(newName);
+    myFixture.checkResultByFile(BASE_PATH + getTestName(false) + "_after.xml");
+  }
+
+  private void doMovePackage(String packageName, String newPackageName) throws Exception {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiPackage aPackage = facade.findPackage(packageName);
+    final PsiPackage newParentPackage = facade.findPackage(newPackageName);
+
+    assertNotNull(newParentPackage);
+    final PsiDirectory[] dirs = newParentPackage.getDirectories();
+    assertEquals(dirs.length, 1);
+
+    new MoveClassesOrPackagesProcessor(getProject(), new PsiElement[] {aPackage},
+                                       new SingleSourceRootMoveDestination(PackageWrapper.create(newParentPackage), dirs[0]),
+                                       true, false, null).run();
+    FileDocumentManager.getInstance().saveAllDocuments();
   }
 }

@@ -102,6 +102,42 @@ public class AndroidManifestDomTest extends AndroidDomTest {
 
   public void testInnerActivityCompletion() throws Throwable {
     copyFileToProject("A.java", "src/p1/p2/A.java");
+    doTestCompletionVariants(getTestName(false) + ".xml", "B");
+  }
+
+  public void testActivityCompletion1() throws Throwable {
+    copyFileToProject("MyActivity1.java", "src/p1/p2/p3/MyActivity1.java");
+    copyFileToProject("MyActivity2.java", "src/p1/MyActivity2.java");
+    copyFileToProject("MyActivity.java", "src/p1/p2/MyActivity.java");
+    doTestCompletionVariants(getTestName(false) + ".xml", ".MyActivity", ".p3.MyActivity1", "p1.MyActivity2");
+  }
+
+  public void testActivityCompletion2() throws Throwable {
+    copyFileToProject("MyActivity.java", "src/p1/p2/MyActivity.java");
+    doTestCompletionVariants(getTestName(false) + ".xml", "p2.MyActivity");
+  }
+
+  public void testActivityCompletion3() throws Throwable {
+    copyFileToProject("MyActivity.java", "src/p1/p2/MyActivity.java");
+    copyFileToProject("MyActivity1.java", "src/p1/p2/p3/MyActivity1.java");
+    doTestCompletion();
+  }
+
+  public void testActivityCompletion4() throws Throwable {
+    copyFileToProject("MyActivity.java", "src/p1/p2/MyActivity.java");
+    copyFileToProject("MyActivity1.java", "src/p1/p2/p3/MyActivity1.java");
+    doTestCompletionVariants(getTestName(false) + ".xml", "MyActivity", "p3.MyActivity1");
+  }
+
+  public void testActivityCompletion5() throws Throwable {
+    copyFileToProject("MyActivity.java", "src/p1/p2/MyActivity.java");
+    copyFileToProject("MyActivity1.java", "src/p1/p2/p3/MyActivity1.java");
+    copyFileToProject("MyActivity2.java", "src/p1/MyActivity2.java");
+    doTestCompletionVariants(getTestName(false) + ".xml", "MyActivity", "p3.MyActivity1");
+  }
+
+  public void testActivityCompletion6() throws Throwable {
+    copyFileToProject("MyActivity.java", "src/p1/p2/MyActivity.java");
     doTestCompletion();
   }
 

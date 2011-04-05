@@ -15,8 +15,10 @@
  */
 package org.jetbrains.android.dom.manifest;
 
+import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.DefinesXml;
 import com.intellij.util.xml.GenericAttributeValue;
+import org.jetbrains.android.dom.converters.AndroidPackageConverter;
 
 import java.util.List;
 
@@ -27,6 +29,7 @@ import java.util.List;
 public interface Manifest extends ManifestElement {
   Application getApplication();
 
+  @Convert(AndroidPackageConverter.class)
   GenericAttributeValue<String> getPackage();
 
   List<Instrumentation> getInstrumentations();
