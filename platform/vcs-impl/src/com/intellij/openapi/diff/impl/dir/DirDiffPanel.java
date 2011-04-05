@@ -25,13 +25,17 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.Icons;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -44,6 +48,10 @@ public class DirDiffPanel {
   private JBTable myTable;
   private JPanel myComponent;
   private JSplitPane mySplitPanel;
+  private TextFieldWithBrowseButton mySourceDirField;
+  private TextFieldWithBrowseButton myTargetDirField;
+  private JBLabel myTargetDirLabel;
+  private JBLabel mySourceDirLabel;
   private final DirDiffTableModel myModel;
   private final DirDiffDialog myDialog;
   private DiffPanel myDiffPanelComponent;
@@ -52,6 +60,10 @@ public class DirDiffPanel {
   public DirDiffPanel(DirDiffTableModel model, DirDiffDialog dirDiffDialog) {
     myModel = model;
     myDialog = dirDiffDialog;
+    mySourceDirField.setText(model.getSourceDir().getPath());
+    myTargetDirField.setText(model.getTargetDir().getPath());
+    mySourceDirLabel.setIcon(Icons.FOLDER_ICON);
+    myTargetDirLabel.setIcon(Icons.FOLDER_ICON);
     myTable.setModel(myModel);
     final DirDiffTableCellRenderer renderer = new DirDiffTableCellRenderer(myTable);
     myTable.setDefaultRenderer(Object.class, renderer);
@@ -83,7 +95,7 @@ public class DirDiffPanel {
           } else {
             clearDiffPanel();
 
-            final VirtualFile file = element.getType() == DirDiffElement.ElementType.SOURCE ? element.getSource() : element.getTarget();
+            final VirtualFile file = element.isSource() ? element.getSource() : element.getTarget();
             final Document document = FileDocumentManager.getInstance().getDocument(file);
             myEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, project, file, true);
             myEditor.getSettings().setFoldingOutlineShown(false);
@@ -91,6 +103,7 @@ public class DirDiffPanel {
             myDiffPanel.revalidate();
           }
         }
+        myDialog.setTitle(myModel.getTitle());
       }
     });
     myTable.addKeyListener(new KeyAdapter() {
@@ -118,6 +131,9 @@ public class DirDiffPanel {
         }
       }
     });
+    final TableColumn operationColumn = myTable.getColumnModel().getColumn(3);
+    operationColumn.setMaxWidth(25);
+    operationColumn.setMinWidth(25);
   }
 
   private void clearDiffPanel() {

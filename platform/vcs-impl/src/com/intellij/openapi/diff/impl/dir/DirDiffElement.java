@@ -19,6 +19,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.sql.Date;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
+import static com.intellij.openapi.diff.impl.dir.DirDiffOperation.*;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -29,6 +35,7 @@ public class DirDiffElement {
   private final VirtualFile myTarget;
   private final long myTargetLength;
   private final String myName;
+  private DirDiffOperation myOperation;
 
   private DirDiffElement(@Nullable VirtualFile source, @Nullable VirtualFile target, ElementType type, String name) {
     myType = type;
@@ -37,14 +44,28 @@ public class DirDiffElement {
     myTarget = target;
     myTargetLength = target == null || target.isDirectory() ? -1 : target.getLength();
     myName = name;
+    if (isSource()) {
+      myOperation = COPY_TO;
+    }
+    else if (isTarget()) {
+      myOperation = DirDiffOperation.COPY_FROM;
+    }
+    else if (type == ElementType.CHANGED) {
+      assert source != null;
+      myOperation = source.getFileType().isBinary() ? NONE : DirDiffOperation.MERGE;
+    }
   }
 
   public String getSourceModificationDate() {
-    return null;
+    return mySource == null ? "" : getLastModification(mySource);
   }
 
   public String getTargetModificationDate() {
-    return null;
+    return myTarget == null ? "" : getLastModification(myTarget);
+  }
+
+  private static String getLastModification(VirtualFile file) {
+    return SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(new Date(file.getTimeStamp()));
   }
 
   public static DirDiffElement createChange(@NotNull VirtualFile source, @NotNull VirtualFile target) {
@@ -103,6 +124,29 @@ public class DirDiffElement {
 
   public boolean isSeparator() {
     return myType == ElementType.SEPARATOR;
+  }
+
+  public boolean isSource() {
+    return myType == ElementType.SOURCE;
+  }
+
+  public boolean isTarget() {
+    return myType == ElementType.TARGET;
+  }
+
+  public DirDiffOperation getOperation() {
+    return myOperation;
+  }
+
+  public void setNextOperation() {
+    final DirDiffOperation o = myOperation;
+    if (isSource()) {
+      myOperation = o == COPY_TO ? REMOVE : o == REMOVE ? NONE : COPY_TO;
+    } else if (isTarget()) {
+      myOperation = o == COPY_FROM ? REMOVE : o == REMOVE ? NONE : COPY_FROM;
+    } else {
+      myOperation = o == MERGE ? COPY_TO : o == COPY_TO ? COPY_FROM : o == COPY_FROM ? NONE : MERGE;
+    }
   }
 
   public static enum ElementType {SOURCE, TARGET, SEPARATOR, CHANGED}

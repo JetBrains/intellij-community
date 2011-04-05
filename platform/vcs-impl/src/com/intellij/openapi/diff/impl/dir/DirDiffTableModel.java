@@ -30,6 +30,8 @@ import java.util.*;
  */
 public class DirDiffTableModel extends AbstractTableModel {
   private final Project myProject;
+  private VirtualFile mySrc;
+  private VirtualFile myTrg;
   final List<DirDiffElement> myElements = new ArrayList<DirDiffElement>();
 
   public DirDiffTableModel(Project project, VirtualFile src, VirtualFile trg, ProgressIndicator indicator) {
@@ -37,7 +39,9 @@ public class DirDiffTableModel extends AbstractTableModel {
     loadModel(src, trg, indicator);
   }
 
-  private void loadModel(VirtualFile src, VirtualFile trg, ProgressIndicator indicator) {
+  public void loadModel(VirtualFile src, VirtualFile trg, ProgressIndicator indicator) {
+    mySrc = src;
+    myTrg = trg;
     final HashSet<String> files = new HashSet<String>();
     scan("", src, files, indicator, true);
     scan("", trg, files, indicator, true);
@@ -93,6 +97,10 @@ public class DirDiffTableModel extends AbstractTableModel {
     removeEmptyDirs(myElements);
   }
 
+  public String getTitle() {
+    return "Diff for " + mySrc.getPath() + " and " + myTrg.getPath();
+  }
+
   private static void removeEmptyDirs(List<DirDiffElement> elements) {
     final DirDiffElement[] tmp = elements.toArray(new DirDiffElement[elements.size()]);
     boolean prevItemIsSeparator = true;
@@ -122,6 +130,14 @@ public class DirDiffTableModel extends AbstractTableModel {
 
   public DirDiffElement getElementAt(int index) {
     return myElements.get(index);
+  }
+
+  public VirtualFile getSourceDir() {
+    return mySrc;
+  }
+
+  public VirtualFile getTargetDir() {
+    return myTrg;
   }
 
   private static void scan(String prefix, VirtualFile file, HashSet<String> files, ProgressIndicator indicator, boolean isRoot) {
@@ -174,7 +190,7 @@ public class DirDiffTableModel extends AbstractTableModel {
       case 0: case 6: return "Name";
       case 1: case 5: return "Size";
       case 2: case 4: return "Date";
-      case 3: return "<=>";
+      case 3: return "*";
     }
     return "";
   }

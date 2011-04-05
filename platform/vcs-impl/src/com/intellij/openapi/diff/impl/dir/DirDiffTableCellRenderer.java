@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -68,12 +70,40 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
         }
       };
     }
-
     final Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-    if (c instanceof JLabel && (hasFocus || isSelected)) {
-      ((JLabel)c).setBorder(noFocusBorder);
+    if (c instanceof JLabel) {
+      final JLabel label = (JLabel)c;
+      if (hasFocus || isSelected) {
+        label.setBorder(noFocusBorder);
+      }
+
+      final DirDiffOperation op = element.getOperation();
+      if (column == 3) {
+        label.setIcon(op.getIcon());
+        label.setHorizontalAlignment(CENTER);
+        return label;
+      } else {
+        label.setIcon(null);
+      }
+
+      Color fg = isSelected ? UIUtil.getTableSelectionForeground() : getForegroundColor(op);
+      label.setForeground(fg);
+      if (column == 2 || column == 4) {
+        label.setHorizontalAlignment(CENTER);
+      } else if (column == 1 || column == 5) {
+        label.setHorizontalAlignment(RIGHT);
+        label.setText(label.getText() + "  ");
+      } else {
+        label.setHorizontalAlignment(LEFT);
+        label.setText("  " + label.getText());
+      }
     }
     return c;
+  }
+
+  private static Color getForegroundColor(DirDiffOperation op) {
+    return op == DirDiffOperation.COPY_TO || op == DirDiffOperation.COPY_FROM
+           ? FileStatus.COLOR_ADDED : FileStatus.COLOR_MODIFIED;
   }
 
   private BufferedImage getOrCreate(String path) {
