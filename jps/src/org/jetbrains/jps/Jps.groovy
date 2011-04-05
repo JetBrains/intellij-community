@@ -40,7 +40,7 @@ final class Jps {
       def old = binding.getVariable("module")
       def layoutInfo = new LayoutInfo()
 
-      ["module", "zip", "dir"].each {tag ->
+      ["module", "moduleTests", "zip", "dir"].each {tag ->
         binding.setVariable(tag, {Object[] args ->
           if (args.length == 1) {
             binding.ant."$tag"(name: args[0])

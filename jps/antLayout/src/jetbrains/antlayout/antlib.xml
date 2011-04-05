@@ -7,4 +7,5 @@
     <typedef name="renamedFile" classname="jetbrains.antlayout.datatypes.RenamedFileContainer"/>
     <typedef name="extractedDir" classname="jetbrains.antlayout.datatypes.ExtractedDirContent"/>
     <typedef name="module" classname="jetbrains.antlayout.datatypes.IdeaModule"/>
+    <typedef name="moduleTests" classname="jetbrains.antlayout.datatypes.IdeaModuleTests"/>
 </antlib>

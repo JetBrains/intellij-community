@@ -27,8 +27,8 @@ public class FileSetContainer extends Content {
 
   @Override
   public void validateArguments() throws BuildException {
-    if (fileSet instanceof IdeaModule) {
-      ((IdeaModule) fileSet).validateArguments();
+    if (fileSet instanceof IdeaModuleBase) {
+      ((IdeaModuleBase) fileSet).validateArguments();
     }
   }
 }
