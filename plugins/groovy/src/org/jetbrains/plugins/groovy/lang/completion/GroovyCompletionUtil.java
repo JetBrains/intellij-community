@@ -42,6 +42,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -140,7 +141,14 @@ public class GroovyCompletionUtil {
   /**
    * return true, if the element is first element after modifiers and there is no type element
    */
-  public static boolean isFirstElementAfterModifiersInVariableDeclaration(PsiElement element, boolean acceptParameter) {
+  public static boolean isFirstElementAfterPossibleModifiersInVariableDeclaration(PsiElement element, boolean acceptParameter) {
+    if (element.getParent() instanceof GrTypeDefinitionBody) {
+      //is first on the line?
+      String text = element.getContainingFile().getText();
+      int i = CharArrayUtil.shiftBackward(text, element.getTextRange().getStartOffset() - 1, " \t");
+      return i >= 0 && (text.charAt(i) == '\n' || text.charAt(i) == '{');
+    }
+
     final PsiElement parent = element.getParent();
     if (!(parent instanceof GrVariable)) return false;
 

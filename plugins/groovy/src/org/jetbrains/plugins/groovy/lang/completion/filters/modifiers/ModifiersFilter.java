@@ -40,7 +40,7 @@ public class ModifiersFilter implements ElementFilter {
     if (GroovyCompletionUtil.asSimpleVariable(context) || GroovyCompletionUtil.asTypedMethod(context)) {
       return true;
     }
-    if (GroovyCompletionUtil.isFirstElementAfterModifiersInVariableDeclaration(context, false)) {
+    if (GroovyCompletionUtil.isFirstElementAfterPossibleModifiersInVariableDeclaration(context, false)) {
       return true;
     }
     final PsiElement contextParent = context.getParent();
