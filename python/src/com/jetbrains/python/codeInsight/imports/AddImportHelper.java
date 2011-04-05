@@ -183,7 +183,7 @@ public class AddImportHelper {
 
   public static void addImport(final PsiNamedElement target, final PsiFile file, final PyElement element) {
     final boolean useQualified = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
-    final PsiFileSystemItem toImport = target instanceof PsiFileSystemItem ? (PsiFileSystemItem)target : target.getContainingFile();
+    final PsiFileSystemItem toImport = target instanceof PsiFileSystemItem ? ((PsiFileSystemItem)target).getParent() : target.getContainingFile();
     final ImportPriority priority = getImportPriority(file, toImport);
     final PyQualifiedName qName = ResolveImportUtil.findCanonicalImportPath(target, element);
     if (qName == null) return;

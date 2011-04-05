@@ -67,7 +67,8 @@ public class PythonAllTestsSuite {
     PyPropertyTestSuite.PyClassicPropertyTest.class,
     PyPropertyTestSuite.PyDecoratedPropertyTest.class,
     PythonRunConfigurationTest.class,
-    PyFoldingTest.class
+    PyFoldingTest.class,
+    EpydocStringTest.class
   };
 
   public static TestSuite suite() {

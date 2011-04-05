@@ -1,4 +1,4 @@
-package com.jetbrains.python.codeInsight;
+package com.jetbrains.python.codeInsight.stdlib;
 
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;

@@ -14,6 +14,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.console.PydevConsoleReference;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
+import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.*;
@@ -314,6 +315,19 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         }
         catch (PyDefUseUtil.InstructionNotFoundException e) {
           // ignore
+        }
+      }
+    }
+    if (target instanceof PyNamedParameter && target.getParent() instanceof PyParameterList) {
+      PyFunction containingFunc = PsiTreeUtil.getParentOfType(target, PyFunction.class);
+      if (containingFunc != null) {
+        final String docString = PyUtil.strValue(containingFunc.getDocStringExpression());
+        if (docString != null) {
+          StructuredDocString epydocString = StructuredDocString.parse(docString);
+          String typeName = epydocString.getParamType(((PyNamedParameter) target).getName());
+          if (typeName != null) {
+            return PyTypeParser.getTypeByName(target, typeName);
+          }
         }
       }
     }

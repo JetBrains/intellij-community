@@ -3,18 +3,20 @@ package com.jetbrains.python.documentation;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.lang.documentation.QuickDocumentationProvider;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -33,7 +35,6 @@ import com.jetbrains.python.psi.resolve.RootVisitor;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.FP;
 import com.jetbrains.python.toolbox.Maybe;
@@ -371,6 +372,24 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
         doc_cat.add(combUp(PyUtil.getReadableRepr(followed, false)));
       }
     }
+    if (followed instanceof PyNamedParameter) {
+      PyFunction function = PsiTreeUtil.getParentOfType(followed, PyFunction.class);
+      if (function != null) {
+        final String docString = PyUtil.strValue(function.getDocStringExpression());
+        StructuredDocString structuredDocString = StructuredDocString.parse(docString);
+        if (structuredDocString != null) {
+          final String name = ((PyNamedParameter)followed).getName();
+          final String type = structuredDocString.getParamType(name);
+          if (type != null) {
+            doc_cat.add(": ").add(type);
+          }
+          final String desc = structuredDocString.getParamDescription(name);
+          if (desc != null) {
+            epilog_cat.add(BR).add(desc);
+          }
+        }
+      }
+    }
     if (doc_cat.isEmpty() && epilog_cat.isEmpty()) return null; // got nothing substantial to say!
     else return cat.toString();
   }
@@ -520,7 +539,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
   }
 
   @Override
-  public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
+  public List<String> getUrlFor(final PsiElement element, PsiElement originalElement) {
     final String url = getUrlFor(element, originalElement, true);
     return url == null ? null : Collections.singletonList(url);
   }
@@ -531,10 +550,6 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
     if (PyNames.INIT_DOT_PY.equals(file.getName())) {
       file = file.getParent();
       assert file != null;
-    }
-    VirtualFile vFile = file.getVirtualFile();
-    if (vFile == null) {
-      return null;
     }
     Sdk sdk = PyBuiltinCache.findSdkForFile(file);
     if (sdk == null) {
@@ -562,14 +577,11 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
       }
       return url;
     }
-    if (PythonSdkType.isStdLib(vFile, sdk)) {
-      return getStdlibUrlFor(element, qName.getLastComponent(), pyVersion);
-    }
     for (PythonDocumentationLinkProvider provider : Extensions.getExtensions(PythonDocumentationLinkProvider.EP_NAME)) {
       final String providerUrl = provider.getExternalDocumentationUrl(element, originalElement);
       if (providerUrl != null) {
         if (checkExistence && !pageExists(providerUrl)) {
-          return provider.getExternalDocumentationRoot();
+          return provider.getExternalDocumentationRoot(pyVersion);
         }
         return providerUrl;
       }
@@ -593,29 +605,8 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
     return true;
   }
 
-  private static String getStdlibUrlFor(PsiElement element, String moduleName, String pyVersion) {
-    StringBuilder urlBuilder = new StringBuilder("http://docs.python.org/");
-    if (pyVersion != null) {
-      urlBuilder.append(pyVersion).append("/");
-    }
-    urlBuilder.append("library/");
-    urlBuilder.append(moduleName);
-    urlBuilder.append(".html");
-    if (element instanceof PsiNamedElement && !(element instanceof PyFile)) {
-      urlBuilder.append('#').append(moduleName).append(".");
-      if (element instanceof PyFunction) {
-        final PyClass containingClass = ((PyFunction)element).getContainingClass();
-        if (containingClass != null) {
-          urlBuilder.append(containingClass.getName()).append('.');
-        }
-      }
-      urlBuilder.append(((PsiNamedElement)element).getName());
-    }
-    return urlBuilder.toString();
-  }
-
   @Nullable
-  private static String pyVersion(String versionString) {
+  public static String pyVersion(String versionString) {
     String prefix = "Python ";
     if (versionString.startsWith(prefix)) {
       String version = versionString.substring(prefix.length());
@@ -639,6 +630,43 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
   @Override
   public boolean hasDocumentationFor(PsiElement element, PsiElement originalElement) {
     return getUrlFor(element, originalElement, false) != null;
+  }
+
+  @Override
+  public boolean canPromptToConfigureDocumentation(PsiElement element) {
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile instanceof PyFile) {
+      final Project project = element.getProject();
+      final VirtualFile vFile = containingFile.getVirtualFile();
+      if (vFile != null && ProjectRootManager.getInstance(project).getFileIndex().isInLibraryClasses(vFile)) {
+        final PyQualifiedName qName = ResolveImportUtil.findCanonicalImportPath(element, element);
+        if (qName != null && qName.getComponentCount() > 0) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public void promptToConfigureDocumentation(PsiElement element) {
+    final Project project = element.getProject();
+    final PyQualifiedName qName = ResolveImportUtil.findCanonicalImportPath(element, element);
+    if (qName != null && qName.getComponentCount() > 0) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            int rc = Messages.showOkCancelDialog(project,
+                                                 "No external documentation URL configured for module " + qName.getComponents().get(0) +
+                                                 ".\nWould you like to configure it now?",
+                                                 "Python External Documentation",
+                                                 Messages.getQuestionIcon());
+            if (rc == 0) {
+              ShowSettingsUtil.getInstance().showSettingsDialog(project, PythonDocumentationConfigurable.class);
+            }
+          }
+        }, ModalityState.NON_MODAL);
+    }
   }
 
   @Nullable

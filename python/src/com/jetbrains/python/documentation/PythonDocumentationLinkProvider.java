@@ -13,5 +13,5 @@ public interface PythonDocumentationLinkProvider {
   @Nullable
   String getExternalDocumentationUrl(PsiElement element, PsiElement originalElement);
 
-  String getExternalDocumentationRoot();
+  String getExternalDocumentationRoot(String pyVersion);
 }

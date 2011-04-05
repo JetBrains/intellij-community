@@ -821,7 +821,7 @@ public class ResolveImportUtil {
    */
   @Nullable
   public static PyQualifiedName findCanonicalImportPath(PsiElement symbol, PsiElement foothold) {
-    PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
+    PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? (PsiFileSystemItem)symbol : symbol.getContainingFile();
     if (srcfile == null) {
       return null;
     }

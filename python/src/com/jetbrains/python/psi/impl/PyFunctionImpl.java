@@ -20,6 +20,8 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.documentation.EpydocString;
+import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -174,7 +176,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     else {
       typeName = extractDocStringReturnType();
     }
-    return getTypeByName(typeName);
+    return PyTypeParser.getTypeByName(this, typeName);
   }
 
   @Nullable
@@ -213,36 +215,9 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
         return firstLine.substring(pos + 2).trim();
       }
     }
-    return null;
-  }
 
-  @Nullable
-  private PyType getTypeByName(String returnType) {
-    if (returnType == null) {
-      return null;
-    }
-    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(this);
-
-    if (returnType.equals("string")) {
-      return builtinCache.getStrType();
-    }
-    if (returnType.equals("file object")) {
-      return builtinCache.getObjectType("file");
-    }
-    if (returnType.equals("dictionary")) {
-      return builtinCache.getObjectType("dict");
-    }
-    if (returnType.startsWith("list of")) {
-      return builtinCache.getObjectType("list");
-    }
-    if (returnType.equals("integer")) {
-      return builtinCache.getIntType();
-    }
-    final PyClassType type = builtinCache.getObjectType(returnType);
-    if (type != null) {
-      return type;
-    }
-    return null;
+    StructuredDocString epydocString = StructuredDocString.parse(docString);
+    return epydocString.getReturnType();
   }
 
   private static class ReturnVisitor extends PyRecursiveElementVisitor {
