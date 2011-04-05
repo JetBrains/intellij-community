@@ -38,15 +38,8 @@ public class GroovySourceCodeNamedArgumentProvider extends GroovyNamedArgumentPr
     if (forCompletion && method instanceof GrMethod) {
       String[] namedParametersArray = ((GrMethod)method).getNamedParametersArray();
 
-      if (argumentName == null) {
-        for (String parameter : namedParametersArray) {
-          result.put(parameter, TYPE_ANY);
-        }
-      }
-      else {
-        if (ArrayUtil.contains(argumentName)) {
-          result.put(argumentName, TYPE_ANY);
-        }
+      for (String parameter : namedParametersArray) {
+        result.put(parameter, TYPE_ANY);
       }
     }
   }

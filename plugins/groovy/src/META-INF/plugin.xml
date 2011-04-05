@@ -70,10 +70,10 @@
     <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector" />
     <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gradle.GradleScriptTypeDetector"/>
 
-    <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovySourceCodeNamedArgumentProvider"/>
+    <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovySourceCodeNamedArgumentProvider" order="last"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyConstructorNamedArgumentProvider"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyEventListenersNamedArgumentProvider"/>
-    <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyMethodReturnNamedArgumentProvider"/>
+    <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyMethodReturnNamedArgumentProvider" order="last"/>
 
     <!-- GroovyDSL extensions -->
     <gdslTopLevelProvider implementation="org.jetbrains.plugins.groovy.dsl.dsltop.GroovyDslDefaultMembers"/>

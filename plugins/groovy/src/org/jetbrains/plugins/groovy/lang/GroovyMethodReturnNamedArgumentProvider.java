@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -40,6 +41,12 @@ public class GroovyMethodReturnNamedArgumentProvider extends GroovyNamedArgument
     PsiType returnType = method.getReturnType();
     if (!(returnType instanceof PsiClassType)) return;
 
-    GroovyConstructorNamedArgumentProvider.processClass(call, (PsiClassType)returnType, argumentName, result);
+    Map<String, ArgumentDescriptor> map = new HashMap<String, ArgumentDescriptor>();
+
+    GroovyConstructorNamedArgumentProvider.processClass(call, (PsiClassType)returnType, argumentName, map);
+
+    for (String name : map.keySet()) {
+      result.put(name, TYPE_ANY_NOT_FIRST);
+    }
   }
 }

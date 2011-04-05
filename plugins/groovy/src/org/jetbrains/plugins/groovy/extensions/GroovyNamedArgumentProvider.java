@@ -47,6 +47,7 @@ public abstract class GroovyNamedArgumentProvider {
   public static final StringTypeCondition TYPE_BOOL = new StringTypeCondition(CommonClassNames.JAVA_LANG_BOOLEAN);
   public static final StringTypeCondition TYPE_INTEGER = new StringTypeCondition(CommonClassNames.JAVA_LANG_INTEGER);
   public static final ArgumentDescriptor TYPE_ANY = new ArgumentDescriptor();
+  public static final ArgumentDescriptor TYPE_ANY_NOT_FIRST = new ArgumentDescriptor().setShowFirst(false);
 
   public abstract void getNamedArguments(@NotNull GrCall call,
                                          @Nullable PsiMethod method,
@@ -57,7 +58,17 @@ public abstract class GroovyNamedArgumentProvider {
   public static Map<String, ArgumentDescriptor> getNamedArgumentsFromAllProviders(@NotNull GrCall call,
                                                                                   @Nullable String argumentName,
                                                                                   boolean forCompletion) {
-    Map<String, ArgumentDescriptor> namedArguments = new HashMap<String, ArgumentDescriptor>();
+    Map<String, ArgumentDescriptor> namedArguments = new HashMap<String, ArgumentDescriptor>() {
+      @Override
+      public ArgumentDescriptor put(String key, ArgumentDescriptor value) {
+        ArgumentDescriptor oldValue = super.put(key, value);
+        if (oldValue != null) {
+          super.put(key, oldValue);
+        }
+
+        return oldValue;
+      }
+    };
 
     GroovyResolveResult[] callVariants = call.getCallVariants(null);
 
@@ -95,11 +106,22 @@ public abstract class GroovyNamedArgumentProvider {
 
     private PsiElement myNavigationElement;
 
+    private boolean isShowFirst = true;
+
     protected ArgumentDescriptor() {
     }
 
     protected ArgumentDescriptor(PsiElement navigationElement) {
       this.myNavigationElement = navigationElement;
+    }
+
+    public boolean isShowFirst() {
+      return isShowFirst;
+    }
+
+    public ArgumentDescriptor setShowFirst(boolean showFirst) {
+      isShowFirst = showFirst;
+      return this;
     }
 
     public boolean checkType(@NotNull PsiType type) {

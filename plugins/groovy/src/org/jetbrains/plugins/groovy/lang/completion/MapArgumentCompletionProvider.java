@@ -16,21 +16,19 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.InitialPatternCondition;
 import com.intellij.patterns.StandardPatterns;
-import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.NamedArgumentInsertHandler;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -39,12 +37,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyElementPattern;
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
@@ -116,12 +111,16 @@ class MapArgumentCompletionProvider extends CompletionProvider<CompletionParamet
       map.remove(argument.getLabelName());
     }
 
-    for (String variant : map.keySet()) {
-      LookupElementBuilder lookup = LookupElementBuilder.create(variant)
+    for (Map.Entry<String, GroovyNamedArgumentProvider.ArgumentDescriptor> entry : map.entrySet()) {
+      LookupElement lookup = LookupElementBuilder.create(entry.getKey())
         .setIcon(GroovyIcons.DYNAMIC)
         .setInsertHandler(NamedArgumentInsertHandler.INSTANCE);
 
-      result.addElement(PrioritizedLookupElement.withPriority(lookup, 1));
+      if (entry.getValue().isShowFirst()) {
+        lookup = PrioritizedLookupElement.withPriority(lookup, 1);
+      }
+
+      result.addElement(lookup);
     }
   }
 }
