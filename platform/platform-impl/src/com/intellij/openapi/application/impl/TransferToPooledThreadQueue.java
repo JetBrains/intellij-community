@@ -27,14 +27,15 @@ import org.jetbrains.annotations.NotNull;
  * Usage: {@link #offer(Object)} } : schedules element for processing in a pooled thread
  */
 public class TransferToPooledThreadQueue<T> extends TransferToEDTQueue<T> {
-
-  public TransferToPooledThreadQueue(@NotNull Processor<T> processorInEDT, @NotNull Condition<?> shutUpCondition) {
-    super(processorInEDT, shutUpCondition);
+  public TransferToPooledThreadQueue(@NotNull String name,
+                                     @NotNull Processor<T> processorInEDT,
+                                     @NotNull Condition<?> shutUpCondition,
+                                     int maxUnitOfWorkThresholdMs) {
+    super(name, processorInEDT, shutUpCondition, maxUnitOfWorkThresholdMs);
   }
 
   @Override
-  protected void schedule(Runnable updateRunnable) {
+  protected void schedule(@NotNull Runnable updateRunnable) {
     JobScheduler.getScheduler().execute(updateRunnable);
-    //ApplicationManager.getApplication().executeOnPooledThread(updateRunnable);
   }
 }

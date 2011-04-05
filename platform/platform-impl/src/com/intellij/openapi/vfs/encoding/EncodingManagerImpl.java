@@ -76,7 +76,8 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   private final Alarm updateEncodingFromContent = new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
   private static final Key<Charset> CACHED_CHARSET_FROM_CONTENT = Key.create("CACHED_CHARSET_FROM_CONTENT");
 
-  private final TransferToPooledThreadQueue<Reference<Document>> myChangedDocuments = new TransferToPooledThreadQueue<Reference<Document>>(new Processor<Reference<Document>>() {
+  private final TransferToPooledThreadQueue<Reference<Document>> myChangedDocuments = new TransferToPooledThreadQueue<Reference<Document>>(
+    "Loading documents", new Processor<Reference<Document>>() {
     @Override
     public boolean process(Reference<Document> ref) {
       Document document = ref.get();
@@ -84,7 +85,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
       handleDocument(document);
       return true;
     }
-  }, ApplicationManager.getApplication().getDisposed());
+  }, ApplicationManager.getApplication().getDisposed(), -1); // drain the whole queue, do not reschedule
 
   public EncodingManagerImpl(EditorFactory editorFactory) {
     editorFactory.getEventMulticaster().addDocumentListener(new DocumentAdapter() {

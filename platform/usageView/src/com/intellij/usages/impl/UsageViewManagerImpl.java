@@ -158,11 +158,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
         catch (ProcessCanceledException e) {
           //ignore
         }
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            runnable.endSearchForUsages();
-          }
-        }, ModalityState.NON_MODAL);
+        finally {
+          runnable.endSearchForUsages();
+        }
       }
     });
   }
@@ -335,43 +333,45 @@ public class UsageViewManagerImpl extends UsageViewManager {
     }
 
     private void endSearchForUsages() {
+      assert !ApplicationManager.getApplication().isDispatchThread() : Thread.currentThread();
       int usageCount = myUsageCountWithoutDefinition.get();
       if (usageCount == 0 && myProcessPresentation.isShowNotFoundMessage()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            final List<Action> notFoundActions = myProcessPresentation.getNotFoundActions();
-            final String message = UsageViewBundle.message("dialog.no.usages.found.in",
-                                                           StringUtil.decapitalize(myPresentation.getUsagesString()),
-                                                           myPresentation.getScopeText());
+            public void run() {
+              final List<Action> notFoundActions = myProcessPresentation.getNotFoundActions();
+              final String message = UsageViewBundle.message("dialog.no.usages.found.in",
+                                                             StringUtil.decapitalize(myPresentation.getUsagesString()),
+                                                             myPresentation.getScopeText());
 
-            if (notFoundActions == null || notFoundActions.isEmpty()) {
-              ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, MessageType.INFO,
-                                                                       XmlStringUtil.escapeString(message),
-                                                                       IconLoader.getIcon("/actions/find.png"), null);
-            }
-            else {
-              List<String> titles = new ArrayList<String>(notFoundActions.size() + 1);
-              titles.add(UsageViewBundle.message("dialog.button.ok"));
-              for (Action action : notFoundActions) {
-                Object value = action.getValue(FindUsagesProcessPresentation.NAME_WITH_MNEMONIC_KEY);
-                if (value == null) value = action.getValue(Action.NAME);
-
-                titles.add((String)value);
+              if (notFoundActions == null || notFoundActions.isEmpty()) {
+                ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, MessageType.INFO,
+                                                                         XmlStringUtil.escapeString(message),
+                                                                         IconLoader.getIcon("/actions/find.png"), null);
               }
+              else {
+                List<String> titles = new ArrayList<String>(notFoundActions.size() + 1);
+                titles.add(UsageViewBundle.message("dialog.button.ok"));
+                for (Action action : notFoundActions) {
+                  Object value = action.getValue(FindUsagesProcessPresentation.NAME_WITH_MNEMONIC_KEY);
+                  if (value == null) value = action.getValue(Action.NAME);
 
-              int option = Messages.showDialog(myProject, message, UsageViewBundle.message("dialog.title.information"),
-                                               ArrayUtil.toStringArray(titles), 0, Messages.getInformationIcon());
+                  titles.add((String)value);
+                }
 
-              if (option > 0) {
-                notFoundActions.get(option - 1).actionPerformed(new ActionEvent(this, 0, titles.get(option)));
+                int option = Messages.showDialog(myProject, message, UsageViewBundle.message("dialog.title.information"),
+                                                 ArrayUtil.toStringArray(titles), 0, Messages.getInformationIcon());
+
+                if (option > 0) {
+                  notFoundActions.get(option - 1).actionPerformed(new ActionEvent(this, 0, titles.get(option)));
+                }
               }
             }
-          }
-        }, ModalityState.NON_MODAL, myProject.getDisposed());
+          }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
       else if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
+            if (myProject.isDisposed()) return;
             Usage usage = myFirstUsage.get();
             if (usage.canNavigate()) {
               usage.navigate(true);
@@ -382,7 +382,10 @@ public class UsageViewManagerImpl extends UsageViewManager {
       }
       else {
         final UsageViewImpl usageView = myUsageViewRef.get();
-        if (usageView != null) usageView.setSearchInProgress(false);
+        if (usageView != null) {
+          usageView.drainQueuedUsageNodes();
+          usageView.setSearchInProgress(false);
+        }
       }
 
       if (myListener != null) {

@@ -402,42 +402,39 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                              severity, problemDescriptor.isAfterEndOfLine(), null, isFileLevel);
   }
 
-  private final TransferToEDTQueue<Trinity<ProblemDescriptor, LocalInspectionTool,ProgressIndicator>> myTransferToEDTQueue;
-  {
-    myTransferToEDTQueue =
-      new TransferToEDTQueue<Trinity<ProblemDescriptor, LocalInspectionTool,ProgressIndicator>>(new Processor<Trinity<ProblemDescriptor, LocalInspectionTool,ProgressIndicator>>() {
-        private final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
-        private final InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
-        private final List<HighlightInfo> infos = new ArrayList<HighlightInfo>(2);
-        private final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-        @Override
-        public boolean process(Trinity<ProblemDescriptor, LocalInspectionTool,ProgressIndicator> trinity) {
-          ProgressIndicator indicator = trinity.getThird();
-          if (indicator.isCanceled()) {
-            return false;
-          }
+  private final TransferToEDTQueue<Trinity<ProblemDescriptor, LocalInspectionTool,ProgressIndicator>> myTransferToEDTQueue
+    = new TransferToEDTQueue<Trinity<ProblemDescriptor, LocalInspectionTool,ProgressIndicator>>("Apply inspection results", new Processor<Trinity<ProblemDescriptor, LocalInspectionTool,ProgressIndicator>>() {
+    private final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile();
+    private final InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
+    private final List<HighlightInfo> infos = new ArrayList<HighlightInfo>(2);
+    private final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+    @Override
+    public boolean process(Trinity<ProblemDescriptor, LocalInspectionTool,ProgressIndicator> trinity) {
+      ProgressIndicator indicator = trinity.getThird();
+      if (indicator.isCanceled()) {
+        return false;
+      }
 
-          ProblemDescriptor descriptor = trinity.first;
-          LocalInspectionTool tool = trinity.second;
-          PsiElement psiElement = descriptor.getPsiElement();
-          if (psiElement == null) return true;
-          PsiFile file = psiElement.getContainingFile();
-          Document thisDocument = documentManager.getDocument(file);
+      ProblemDescriptor descriptor = trinity.first;
+      LocalInspectionTool tool = trinity.second;
+      PsiElement psiElement = descriptor.getPsiElement();
+      if (psiElement == null) return true;
+      PsiFile file = psiElement.getContainingFile();
+      Document thisDocument = documentManager.getDocument(file);
 
-          HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
+      HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
 
-          infos.clear();
-          createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor, psiElement);
-          for (HighlightInfo info : infos) {
-            final EditorColorsScheme colorsScheme = getColorsScheme();
-            UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, myFile, myStartOffset, myEndOffset,
-                                                                       info, colorsScheme, getId());
-          }
+      infos.clear();
+      createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor, psiElement);
+      for (HighlightInfo info : infos) {
+        final EditorColorsScheme colorsScheme = getColorsScheme();
+        UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, myFile, myStartOffset, myEndOffset,
+                                                                   info, colorsScheme, getId());
+      }
 
-          return true;
-        }
-      }, myProject.getDisposed());
-  }
+      return true;
+    }
+  }, myProject.getDisposed(), 200);
 
   private final Set<TextRange> emptyActionRegistered = Collections.synchronizedSet(new HashSet<TextRange>());
 

@@ -225,7 +225,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         }
       });
     }
-    myTransferToEDTQueue = new TransferToEDTQueue<Usage>(new Processor<Usage>() {
+    myTransferToEDTQueue = new TransferToEDTQueue<Usage>("Insert usages", new Processor<Usage>() {
       @Override
       public boolean process(Usage usage) {
         appendUsage(usage);
@@ -236,7 +236,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       public boolean value(Object o) {
         return isDisposed || project.isDisposed() || com.intellij.usages.UsageViewManager.getInstance(project).searchHasBeenCancelled();
       }
-    });
+    },200);
   }
 
   private void setupCentralPanel() {
@@ -639,7 +639,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
             return indicator == null || !indicator.isCanceled();
           }
         });
-
+        drainQueuedUsageNodes();
         setSearchInProgress(false);
       }
     });
@@ -666,14 +666,23 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public void appendUsageLater(@NotNull Usage usage) {
     myTransferToEDTQueue.offer(usage);
   }
-  
+  public void drainQueuedUsageNodes() {
+    assert !ApplicationManager.getApplication().isDispatchThread() : Thread.currentThread();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        myTransferToEDTQueue.drain();
+      }
+    });
+  }
+
   private volatile boolean myIsFirstVisibleUsageFound = false;
 
   public void appendUsage(@NotNull Usage usage) {
     doAppendUsage(usage);
   }
 
-  public UsageNode doAppendUsage(Usage usage) {
+  public UsageNode doAppendUsage(@NotNull Usage usage) {
     // invoke in ReadAction to be be sure that usages are not invalidated while the tree is being built
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!usage.isValid()) {
@@ -747,7 +756,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return myUsageNodes.size();
   }
 
-  public void setContent(Content content) {
+  public void setContent(@NotNull Content content) {
     myContent = content;
     content.setDisposer(this);
   }
@@ -760,7 +769,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
-  private void checkNodeValidity(DefaultMutableTreeNode node) {
+  private void checkNodeValidity(@NotNull DefaultMutableTreeNode node) {
     Enumeration enumeration = node.children();
     while (enumeration.hasMoreElements()) {
       checkNodeValidity((DefaultMutableTreeNode)enumeration.nextElement());
@@ -823,7 +832,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
-  private void showNode(final UsageNode node) {
+  private void showNode(@NotNull final UsageNode node) {
     if (!myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
@@ -851,9 +860,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
                                         final String commandName,
                                         final String cannotMakeString,
                                         @NotNull String shortDescription) {
-
-    addButtonToLowerPane(new MyPerformOperationRunnable(cannotMakeString, processRunnable, commandName),
-                         shortDescription);
+    addButtonToLowerPane(new MyPerformOperationRunnable(cannotMakeString, processRunnable, commandName), shortDescription);
   }
 
   private boolean allTargetsAreValid() {
@@ -881,6 +888,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
            !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(VfsUtil.toVirtualFileArray(readOnlyUsages)).hasReadonlyFiles();
   }
 
+  @NotNull
   private Set<Usage> getReadOnlyUsages() {
     final Set<Usage> result = new THashSet<Usage>();
     final Set<Map.Entry<Usage,UsageNode>> usages = myUsageNodes.entrySet();
@@ -894,6 +902,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return result;
   }
 
+  @NotNull
   private Set<VirtualFile> getReadOnlyUsagesFiles() {
     Set<Usage> usages = getReadOnlyUsages();
     Set<VirtualFile> result = new THashSet<VirtualFile>();
@@ -987,7 +996,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return usages;
   }
 
-  private static void collectUsages(DefaultMutableTreeNode node, Set<Usage> usages) {
+  private static void collectUsages(@NotNull DefaultMutableTreeNode node, @NotNull Set<Usage> usages) {
     if (node instanceof UsageNode) {
       UsageNode usageNode = (UsageNode)node;
       final Usage usage = usageNode.getUsage();
@@ -1022,7 +1031,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   @Nullable
-  private static Navigatable getNavigatableForNode(DefaultMutableTreeNode node) {
+  private static Navigatable getNavigatableForNode(@NotNull DefaultMutableTreeNode node) {
     Object userObject = node.getUserObject();
     if (userObject instanceof Navigatable) {
       final Navigatable navigatable = (Navigatable)userObject;
@@ -1058,7 +1067,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private class MyPanel extends JPanel implements TypeSafeDataProvider, OccurenceNavigator,Disposable {
     @Nullable private OccurenceNavigatorSupport mySupport;
 
-    private MyPanel(JTree tree) {
+    private MyPanel(@NotNull JTree tree) {
       mySupport = new OccurenceNavigatorSupport(tree) {
         protected Navigatable createDescriptorForNode(DefaultMutableTreeNode node) {
           if (node.getChildCount() > 0) return null;
@@ -1208,7 +1217,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     private final Usage myUsage;
     private final boolean mySelected;
 
-    private UsageState(final Usage usage, boolean isSelected) {
+    private UsageState(@NotNull Usage usage, boolean isSelected) {
       myUsage = usage;
       mySelected = isSelected;
     }

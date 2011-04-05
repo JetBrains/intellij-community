@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,13 +31,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Usage: {@link TransferToEDTQueue#offer(Object)} } : schedules element for processing in EDT (via invokeLater)
  */
 public class TransferToEDTQueue<T> {
+  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
+  private final String myName;
   private final Processor<T> myProcessor;
   private volatile boolean stopped;
   private final Condition<?> myShutUpCondition;
+  private final int myMaxUnitOfWorkThresholdMs; //-1 means indefinite
 
   private final Queue<T> myQueue = new ConcurrentLinkedQueue<T>();
   private final AtomicBoolean invokeLaterScheduled = new AtomicBoolean();
-  private static final long MAX_UNIT_OF_WORK_THRESHOLD_MS = 200; // no more than 200 ms delay
   private final Runnable myUpdateRunnable = new Runnable() {
     @Override
     public void run() {
@@ -49,15 +52,14 @@ public class TransferToEDTQueue<T> {
       long start = System.currentTimeMillis();
       int processed = 0;
       while (true) {
-        T thing = myQueue.poll();
-        if (thing == null) break;
-        if (!myProcessor.process(thing)) {
-          stop();
-          return;
+        if (processNext()) {
+          processed++;
         }
-        processed++;
+        else {
+          break;
+        }
         long finish = System.currentTimeMillis();
-        if (finish - start > MAX_UNIT_OF_WORK_THRESHOLD_MS) break;
+        if (myMaxUnitOfWorkThresholdMs != -1 && finish - start > myMaxUnitOfWorkThresholdMs) break;
       }
       if (!myQueue.isEmpty()) {
         scheduleUpdate();
@@ -65,9 +67,21 @@ public class TransferToEDTQueue<T> {
     }
   };
 
-  public TransferToEDTQueue(@NotNull Processor<T> processorInEDT, @NotNull Condition<?> shutUpCondition) {
-    myProcessor = processorInEDT;
+  private boolean processNext() {
+    T thing = myQueue.poll();
+    if (thing == null) return false;
+    if (!myProcessor.process(thing)) {
+      stop();
+      return false;
+    }
+    return true;
+  }
+
+  public TransferToEDTQueue(@NotNull @NonNls String name, @NotNull Processor<T> processor, @NotNull Condition<?> shutUpCondition, int maxUnitOfWorkThresholdMs) {
+    myName = name;
+    myProcessor = processor;
     myShutUpCondition = shutUpCondition;
+    myMaxUnitOfWorkThresholdMs = maxUnitOfWorkThresholdMs;
   }
 
   public void offer(@NotNull T thing) {
@@ -76,17 +90,33 @@ public class TransferToEDTQueue<T> {
   }
 
   private void scheduleUpdate() {
-    if (invokeLaterScheduled.compareAndSet(false, true)) {
+    if (!stopped && invokeLaterScheduled.compareAndSet(false, true)) {
       schedule(myUpdateRunnable);
     }
   }
 
-  protected void schedule(Runnable updateRunnable) {
+  protected void schedule(@NotNull Runnable updateRunnable) {
     SwingUtilities.invokeLater(updateRunnable);
   }
 
   public void stop() {
     stopped = true;
     myQueue.clear();
+  }
+
+  // process all queue in current thread
+  public void drain() {
+    int processed = 0;
+    long start = System.currentTimeMillis();
+    while (true) {
+      if (processNext()) {
+        processed++;
+      }
+      else {
+        break;
+      }
+    }
+    long finish = System.currentTimeMillis();
+    int i  = 0;
   }
 }
