@@ -401,6 +401,10 @@
     <group id="ProjectViewPopupMenuModifyGroup">
       <reference ref="$Delete"/>
       <action id="ExcludeFromProject" class="com.intellij.openapi.file.exclude.ui.ExcludeFromProjectAction"/>
+      <group id="MarkFileAs" class="com.intellij.openapi.file.exclude.ui.MarkFileGroup">
+        <action id="MarkAsPlainTextAction" class="com.intellij.openapi.file.exclude.ui.MarkAsPlainTextAction"/>
+        <action id="MarkAsOriginalTypeAction" class="com.intellij.openapi.file.exclude.ui.MarkAsOriginalTypeAction"/>
+      </group>
     </group>
 
     <group id="ProjectViewPopupMenuRunGroup">
