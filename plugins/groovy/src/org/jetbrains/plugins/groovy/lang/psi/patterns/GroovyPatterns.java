@@ -155,4 +155,8 @@ public class GroovyPatterns extends PsiJavaPatterns {
       }
     });
   }
+
+  public static GroovyFieldPattern grField() {
+    return new GroovyFieldPattern();
+  }
 }
