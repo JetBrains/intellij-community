@@ -53,7 +53,7 @@ public class DomDocumentationProvider implements DocumentationProvider {
       String documentation = template.createPresentation(domElement).getDocumentation();
       if (documentation != null) return documentation;
     }
-    return ElementPresentationManagerImpl.getDocumentationForElement(domElement);
+    return ElementPresentationManager.getDocumentationForElement(domElement);
   }
 
   public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, final Object object, final PsiElement element) {
