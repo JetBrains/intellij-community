@@ -17,7 +17,6 @@ package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -47,9 +46,7 @@ import java.util.List;
  * Initialize git repository action
  */
 public class GitInit extends DumbAwareAction {
-  /**
-   * {@inheritDoc}
-   */
+
   public void actionPerformed(final AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) {
@@ -126,22 +123,4 @@ public class GitInit extends DumbAwareAction {
     GitUtil.refreshFiles(project, Collections.singleton(root));
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void update(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
-    Presentation presentation = e.getPresentation();
-    if (project == null) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
-      return;
-    }
-    presentation.setEnabled(true);
-    presentation.setVisible(true);
-  }
 }

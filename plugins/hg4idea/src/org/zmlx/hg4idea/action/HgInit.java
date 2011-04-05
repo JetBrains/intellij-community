@@ -103,17 +103,6 @@ public class HgInit extends DumbAwareAction {
     }
   }
 
-  @Override
-  public void update(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
-    final Presentation presentation = e.getPresentation();
-    presentation.setEnabled(project != null);
-    presentation.setVisible(project != null);
-  }
-
   private boolean createRepository(VirtualFile selectedRoot) {
     final boolean succeeded = (new HgInitCommand(myProject)).execute(selectedRoot);
     Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID,
