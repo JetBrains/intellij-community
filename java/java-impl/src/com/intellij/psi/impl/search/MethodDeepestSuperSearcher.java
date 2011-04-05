@@ -6,36 +6,35 @@ import com.intellij.util.QueryExecutor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
  * @author peter
  */
 public class MethodDeepestSuperSearcher implements QueryExecutor<PsiMethod, PsiMethod> {
-  public boolean execute(@NotNull final PsiMethod method, @NotNull final Processor<PsiMethod> consumer) {
-    final Set<PsiMethod> methods = new LinkedHashSet<PsiMethod>();
-    findDeepestSuperOrSelfSignature(method, methods, null);
-    for (final PsiMethod psiMethod : methods) {
-      if (psiMethod != method && !consumer.process(psiMethod)) {
-        return false;
-      }
-    }
-    return true;
+  public boolean execute(@NotNull PsiMethod method, @NotNull Processor<PsiMethod> consumer) {
+    final Set<PsiMethod> methods = new THashSet<PsiMethod>();
+    methods.add(method);
+    return findDeepestSuperOrSelfSignature(method, methods, null, consumer);
   }
 
-  private static void findDeepestSuperOrSelfSignature(PsiMethod method, final Set<PsiMethod> set, Set<PsiMethod> guard) {
-    if (guard != null && !guard.add(method)) return;
+  private static boolean findDeepestSuperOrSelfSignature(PsiMethod method,
+                                                         Set<PsiMethod> set,
+                                                         Set<PsiMethod> guard,
+                                                         Processor<PsiMethod> processor) {
+    if (guard != null && !guard.add(method)) return true;
     PsiMethod[] supers = method.findSuperMethods();
 
-    if (supers.length == 0) {
-      set.add(method);
+    if (supers.length == 0 && set.add(method) && !processor.process(method)) {
+      return false;
     }
-    else {
-      for (PsiMethod superMethod : supers) {
-        if (guard == null) guard = new THashSet<PsiMethod>();
-        findDeepestSuperOrSelfSignature(superMethod, set, guard);
+    for (PsiMethod superMethod : supers) {
+      if (guard == null) {
+        guard = new THashSet<PsiMethod>();
+        guard.add(method);
       }
+      if (!findDeepestSuperOrSelfSignature(superMethod, set, guard, processor)) return false;
     }
+    return true;
   }
 }

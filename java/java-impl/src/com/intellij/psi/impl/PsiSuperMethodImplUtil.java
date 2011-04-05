@@ -23,6 +23,7 @@ import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -313,6 +314,52 @@ public class PsiSuperMethodImplUtil {
     return SIGNATURES_KEY.getValue(aClass);
   }
 
+
+  // uses hierarchy signature tree if available, traverses class structure by itself otherwise
+  public static boolean processDirectSuperMethodsSmart(@NotNull PsiMethod method, @NotNull Processor<PsiMethod> superMethodProcessor) {
+    //boolean old = PsiSuperMethodUtil.isSuperMethod(method, superMethod);
+
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return false;
+
+    if (!canHaveSuperMethod(method, true, false)) return false;
+
+    Map<MethodSignature, HierarchicalMethodSignature> cachedMap = SIGNATURES_KEY.getCachedValueOrNull(aClass);
+    if (cachedMap != null) {
+      HierarchicalMethodSignature signature = cachedMap.get(method.getSignature(PsiSubstitutor.EMPTY));
+      if (signature != null) {
+        List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
+        for (HierarchicalMethodSignature superSignature : superSignatures) {
+          if (!superMethodProcessor.process(superSignature.getMethod())) return false;
+        }
+        return true;
+      }
+    }
+
+    PsiClassType[] directSupers = aClass.getSuperTypes();
+    for (PsiClassType directSuper : directSupers) {
+      PsiClassType.ClassResolveResult resolveResult = directSuper.resolveGenerics();
+      if (resolveResult.getSubstitutor() != PsiSubstitutor.EMPTY) {
+        // generics
+        break;
+      }
+      PsiClass directSuperClass = resolveResult.getElement();
+      if (directSuperClass == null) continue;
+      PsiMethod[] candidates = directSuperClass.findMethodsBySignature(method, false);
+      for (PsiMethod candidate : candidates) {
+        if (PsiUtil.canBeOverriden(candidate)) {
+          if (!superMethodProcessor.process(candidate)) return false;
+        }
+      }
+      return true;
+    }
+
+    List<HierarchicalMethodSignature> superSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
+    for (HierarchicalMethodSignature superSignature : superSignatures) {
+      if (!superMethodProcessor.process(superSignature.getMethod())) return false;
+    }
+    return true;
+  }
 
   // uses hierarchy signature tree if available, traverses class structure by itself otherwise
   public static boolean isSuperMethodSmart(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {

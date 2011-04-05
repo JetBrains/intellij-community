@@ -16,13 +16,17 @@
 package com.intellij.usages.impl.rules;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.Processor;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.ArrayDeque;
+import java.util.Queue;
+import java.util.Set;
 
 /**
  * @author yole
@@ -51,6 +55,9 @@ public class JavaUsageTypeProvider implements UsageTypeProvider {
         if (p instanceof PsiMethodCallExpression) {
           final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)p;
           final PsiMethod calledMethod = callExpression.resolveMethod();
+          if (calledMethod == containerMethod) {
+            return UsageType.RECURSION;
+          }
           if (qualifier != null && !(qualifier instanceof PsiThisExpression) && calledMethod != null) {
             if (haveCommonSuperMethod(containerMethod, calledMethod)) {
               boolean parametersDelegated = parametersDelegated(containerMethod, callExpression);
@@ -62,9 +69,6 @@ public class JavaUsageTypeProvider implements UsageTypeProvider {
                 return parametersDelegated ? UsageType.DELEGATE_TO_ANOTHER_INSTANCE : UsageType.DELEGATE_TO_ANOTHER_INSTANCE_PARAMETERS_CHANGED;
               }
             }
-          }
-          else if (calledMethod == containerMethod) {
-            return UsageType.RECURSION;
           }
         }
       }
@@ -94,6 +98,40 @@ public class JavaUsageTypeProvider implements UsageTypeProvider {
   }
 
   private static boolean haveCommonSuperMethod(@NotNull PsiMethod m1, @NotNull PsiMethod m2) {
+    final Queue<PsiMethod> supers1Q = new ArrayDeque<PsiMethod>(); supers1Q.add(m1);
+    final Queue<PsiMethod> supers2Q = new ArrayDeque<PsiMethod>(); supers2Q.add(m1);
+    Set<PsiMethod> supers1 = new THashSet<PsiMethod>();
+    Set<PsiMethod> supers2 = new THashSet<PsiMethod>();
+    while (true) {
+      PsiMethod me1;
+      if ((me1 = supers1Q.poll()) != null) {
+        if (supers2.contains(me1)) return true;
+        supers1.add(me1);
+        PsiSuperMethodImplUtil.processDirectSuperMethodsSmart(me1, new Processor<PsiMethod>() {
+          @Override
+          public boolean process(PsiMethod psiMethod) {
+            supers1Q.add(psiMethod);
+            return true;
+          }
+        });
+      }
+
+      PsiMethod me2;
+      if ((me2 = supers2Q.poll()) != null) {
+        if (supers1.contains(me2)) return true;
+        supers2.add(me2);
+        PsiSuperMethodImplUtil.processDirectSuperMethodsSmart(me2, new Processor<PsiMethod>() {
+          @Override
+          public boolean process(PsiMethod psiMethod) {
+            supers2Q.add(psiMethod);
+            return true;
+          }
+        });
+      }
+      if (me1 == null && me2==null) break;
+    }
+    return false;
+    /*
     HashSet<PsiMethod> s1 = new HashSet<PsiMethod>(Arrays.asList(m1.findDeepestSuperMethods()));
     s1.add(m1);
 
@@ -102,6 +140,7 @@ public class JavaUsageTypeProvider implements UsageTypeProvider {
 
     s1.retainAll(s2);
     return !s1.isEmpty();
+    */
   }
 
   @Nullable
