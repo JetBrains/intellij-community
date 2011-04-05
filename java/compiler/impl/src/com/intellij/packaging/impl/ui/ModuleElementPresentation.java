@@ -20,10 +20,11 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
+import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementWeights;
 import com.intellij.packaging.ui.TreeNodePresentation;
-import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,10 +34,12 @@ import org.jetbrains.annotations.Nullable;
 public class ModuleElementPresentation extends TreeNodePresentation {
   private final ModulePointer myModulePointer;
   private final ArtifactEditorContext myContext;
+  private final boolean myTestOutput;
 
-  public ModuleElementPresentation(@Nullable ModulePointer modulePointer, @NotNull ArtifactEditorContext context) {
+  public ModuleElementPresentation(@Nullable ModulePointer modulePointer, @NotNull ArtifactEditorContext context, final boolean testOutput) {
     myModulePointer = modulePointer;
     myContext = context;
+    myTestOutput = testOutput;
   }
 
   public String getPresentableName() {
@@ -68,7 +71,10 @@ public class ModuleElementPresentation extends TreeNodePresentation {
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     final Module module = findModule();
-    if (module != null) {
+    if (myTestOutput) {
+      presentationData.setIcons(Icons.TEST_SOURCE_FOLDER);
+    }
+    else if (module != null) {
       presentationData.setOpenIcon(module.getModuleType().getNodeIcon(true));
       presentationData.setClosedIcon(module.getModuleType().getNodeIcon(false));
     }
@@ -90,8 +96,9 @@ public class ModuleElementPresentation extends TreeNodePresentation {
       moduleName = "<unknown>";
     }
 
-    presentationData.addText(CompilerBundle.message("node.text.0.compile.output", moduleName),
-                             module != null ? mainAttributes : SimpleTextAttributes.ERROR_ATTRIBUTES);
+    String text = myTestOutput ? CompilerBundle.message("node.text.0.test.compile.output", moduleName)
+                               : CompilerBundle.message("node.text.0.compile.output", moduleName);
+    presentationData.addText(text, module != null ? mainAttributes : SimpleTextAttributes.ERROR_ATTRIBUTES);
   }
 
   @Override

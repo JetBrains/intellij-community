@@ -20,7 +20,7 @@ import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
-import com.intellij.packaging.impl.elements.ModuleOutputPackagingElementImpl;
+import com.intellij.packaging.impl.elements.ProductionModuleOutputPackagingElement;
 import com.intellij.packaging.impl.ui.ModuleElementPresentation;
 import com.intellij.packaging.ui.*;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +49,7 @@ public class ModuleOutputSourceItem extends PackagingSourceItem {
   @Override
   public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     final ModulePointer modulePointer = ModulePointerManager.getInstance(context.getProject()).create(myModule);
-    return new DelegatedSourceItemPresentation(new ModuleElementPresentation(modulePointer, context)) {
+    return new DelegatedSourceItemPresentation(new ModuleElementPresentation(modulePointer, context, false)) {
       @Override
       public int getWeight() {
         return SourceItemWeights.MODULE_OUTPUT_WEIGHT;
@@ -60,7 +60,7 @@ public class ModuleOutputSourceItem extends PackagingSourceItem {
   @NotNull
   public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
     final ModulePointer modulePointer = ModulePointerManager.getInstance(context.getProject()).create(myModule);
-    return Collections.singletonList(new ModuleOutputPackagingElementImpl(context.getProject(), modulePointer));
+    return Collections.singletonList(new ProductionModuleOutputPackagingElement(context.getProject(), modulePointer));
   }
 
   @NotNull

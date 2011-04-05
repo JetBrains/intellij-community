@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement;
-import com.intellij.packaging.impl.elements.ModuleOutputElementType;
+import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
 import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
 import com.intellij.packaging.impl.elements.PackagingElementFactoryImpl;
 import com.intellij.packaging.ui.ArtifactEditorContext;
@@ -109,7 +109,7 @@ public class ModulesAndLibrariesSourceItemsProvider extends PackagingSourceItems
   private static List<? extends Module> getNotAddedModules(@NotNull final ArtifactEditorContext context, @NotNull Artifact artifact,
                                                           final Module... allModules) {
     final Set<Module> modules = new HashSet<Module>(Arrays.asList(allModules));
-    ArtifactUtil.processPackagingElements(artifact, ModuleOutputElementType.MODULE_OUTPUT_ELEMENT_TYPE, new Processor<ModuleOutputPackagingElement>() {
+    ArtifactUtil.processPackagingElements(artifact, ProductionModuleOutputElementType.ELEMENT_TYPE, new Processor<ModuleOutputPackagingElement>() {
       public boolean process(ModuleOutputPackagingElement moduleOutputPackagingElement) {
         modules.remove(moduleOutputPackagingElement.findModule(context));
         return true;
