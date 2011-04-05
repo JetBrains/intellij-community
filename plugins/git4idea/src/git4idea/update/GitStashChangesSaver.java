@@ -83,6 +83,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
       }
       catch (VcsException e) {
         context.handleException(e);
+        return;
       }
     }
     final List<File> files = ObjectsConvertor.fp2jiof(getChangedFiles());
