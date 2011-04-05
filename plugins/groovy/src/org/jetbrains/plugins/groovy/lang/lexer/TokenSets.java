@@ -88,7 +88,8 @@ public abstract class TokenSets implements GroovyTokenTypes {
 
   public static final TokenSet PROPERTY_NAMES = TokenSet.create(mIDENT, mSTRING_LITERAL, mGSTRING_LITERAL);
 
-  public static TokenSet REFERENCE_NAMES = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES);
+  public static TokenSet REFERENCE_NAMES = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES, NUMBERS);
+  public static TokenSet REFERENCE_NAMES_WITHOUT_NUMBERS = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES);
 
 
   public static TokenSet VISIBILITY_MODIFIERS = TokenSet.create(

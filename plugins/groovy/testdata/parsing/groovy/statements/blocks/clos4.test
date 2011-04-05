@@ -21,17 +21,15 @@ Groovy script
             PsiElement(identifier)('b')
         PsiElement(;)(';')
         PsiWhiteSpace(' ')
-        Call expression
-          Reference expression
-            PsiElement(identifier)('println')
+        Reference expression
+          Call expression
+            Reference expression
+              PsiElement(identifier)('println')
+            PsiWhiteSpace(' ')
+            Command arguments
+              Literal
+                PsiElement(Gstring)('"bugaga"')
           PsiWhiteSpace(' ')
-          Command arguments
-            Literal
-              PsiElement(Gstring)('"bugaga"')
-        PsiErrorElement:';', '}' or new line expected
-          <empty list>
-        PsiWhiteSpace(' ')
-        Literal
           PsiElement(Integer)('3')
         PsiElement(})('}')
     PsiElement(Gstring content)(' ved')

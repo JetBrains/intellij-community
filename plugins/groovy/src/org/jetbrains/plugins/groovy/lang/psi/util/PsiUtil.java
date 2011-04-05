@@ -267,7 +267,7 @@ public class PsiUtil {
   public static boolean isValidReferenceName(String text) {
     final GroovyLexer lexer = new GroovyLexer();
     lexer.start(text);
-    return TokenSets.REFERENCE_NAMES.contains(lexer.getTokenType()) && lexer.getTokenEnd() == text.length();
+    return TokenSets.REFERENCE_NAMES_WITHOUT_NUMBERS.contains(lexer.getTokenType()) && lexer.getTokenEnd() == text.length();
   }
 
   public static void shortenReferences(GroovyPsiElement element) {
