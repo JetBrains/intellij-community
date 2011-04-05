@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -159,7 +160,7 @@ class ExportToHTMLManager {
     return constructOutputDirectory(psiFile.getContainingDirectory(), outputDirectoryName);
   }
 
-  private static String constructOutputDirectory(final PsiDirectory directory, final String outputDirectoryName) {
+  private static String constructOutputDirectory(@NotNull final PsiDirectory directory, final String outputDirectoryName) {
     String qualifiedName = PsiDirectoryFactory.getInstance(directory.getProject()).getQualifiedName(directory, false);
     String dirName = outputDirectoryName;
     if(qualifiedName.length() > 0) {
