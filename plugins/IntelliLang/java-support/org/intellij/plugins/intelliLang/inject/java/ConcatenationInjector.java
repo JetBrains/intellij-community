@@ -43,6 +43,7 @@ import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
+import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -117,6 +118,14 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull PsiElement... operands) {
     if (operands.length == 0) return;
+    boolean hasLiteral = false;
+    for (PsiElement operand : operands) {
+      if (PsiUtilEx.isStringOrCharacterLiteral(operand)) {
+        hasLiteral = true;
+        break;
+      }
+    }
+    if (!hasLiteral) return;
     final PsiFile containingFile = operands[0].getContainingFile();
     new InjectionProcessor(myConfiguration, operands) {
       @Override
