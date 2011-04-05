@@ -87,23 +87,9 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private TooltipProvider myTooltipProvider = null;
   private final FileEditorManager myFileEditorManager;
 
-  @Nullable
-  public static String getQuickNavigateInfo(PsiElement element) {
-    final String name = ElementDescriptionUtil.getElementDescription(element, UsageViewShortNameLocation.INSTANCE);
-    if (StringUtil.isEmpty(name)) return null;
-    final String typeName = ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE);
-    final PsiFile file = element.getContainingFile();
-    final StringBuilder sb = new StringBuilder();
-    if (StringUtil.isNotEmpty(typeName)) sb.append(typeName).append(" ");
-    sb.append("\"").append(name).append("\"");
-    if (file != null && file.isPhysical()) {
-      sb.append(" [").append(file.getName()).append("]");
-    }
-    return sb.toString();
-  }
 
-  private enum BrowseMode {None, Declaration, TypeDeclaration, Implementation}
 
+  private enum BrowseMode {None, Declaration, TypeDeclaration, Implementation;}
   private final KeyListener myEditorKeyListener = new KeyAdapter() {
     public void keyPressed(final KeyEvent e) {
       handleKey(e);
@@ -249,9 +235,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element, atPointer);
 
     String info = documentationProvider.getQuickNavigateInfo(element, atPointer);
-    if (info == null) {
-      info = getQuickNavigateInfo(element);
-    }
 
     if (info != null) {
       return info;
@@ -271,7 +254,22 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
 
-    return null;
+    return getQuickNavigateInfo(element);
+  }
+
+  @Nullable
+  private static String getQuickNavigateInfo(PsiElement element) {
+    final String name = ElementDescriptionUtil.getElementDescription(element, UsageViewShortNameLocation.INSTANCE);
+    if (StringUtil.isEmpty(name)) return null;
+    final String typeName = ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE);
+    final PsiFile file = element.getContainingFile();
+    final StringBuilder sb = new StringBuilder();
+    if (StringUtil.isNotEmpty(typeName)) sb.append(typeName).append(" ");
+    sb.append("\"").append(name).append("\"");
+    if (file != null && file.isPhysical()) {
+      sb.append(" [").append(file.getName()).append("]");
+    }
+    return sb.toString();
   }
 
   private abstract static class Info {
