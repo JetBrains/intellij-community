@@ -92,8 +92,12 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     }
   }
 
+  private static boolean isImported(PsiElement fileContext) {
+    return fileContext instanceof PsiImportStatement;
+  }
+
   private boolean isOnDemand(PsiElement fileContext, PsiClass psiClass) {
-    if (fileContext instanceof PsiImportStatementBase) {
+    if (isImported(fileContext)) {
       return ((PsiImportStatementBase)fileContext).isOnDemand();
     }
     String fqn = psiClass.getQualifiedName();
@@ -118,10 +122,12 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     if (fqName.equals(otherQName)) {
       return Domination.DOMINATED_BY;
     }
-    final PsiClass containingclass1 = aClass.getContainingClass();
-    final PsiClass containingclass2 = otherClass.getContainingClass();
-    if (containingclass1 != null && containingclass2 != null && containingclass2.isInheritor(containingclass1, true)) {
-      //shadowing
+
+    final PsiClass containingClass1 = aClass.getContainingClass();
+    final PsiClass containingClass2 = otherClass.getContainingClass();
+    if (containingClass1 != null && containingClass2 != null && containingClass2.isInheritor(containingClass1, true) &&
+        !isImported(myCurrentFileContext)) {
+      // shadowing
       return Domination.DOMINATED_BY;
     }
 

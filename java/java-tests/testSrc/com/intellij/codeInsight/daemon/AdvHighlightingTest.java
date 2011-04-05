@@ -72,6 +72,8 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   public void testImportOnDemand() throws Exception { doTest(BASE_PATH+"/importOnDemand/y/Y.java", BASE_PATH+"/importOnDemand", false, false); }
   public void testImportOnDemandVsSingle() throws Exception { doTest(BASE_PATH+"/importOnDemandVsSingle/y/Y.java", BASE_PATH+"/importOnDemandVsSingle", false, false); }
   public void testImportSingleVsSamePackage() throws Exception { doTest(BASE_PATH+"/importSingleVsSamePackage/y/Y.java", BASE_PATH+"/importSingleVsSamePackage", false, false); }
+  public void testImportSingleVsInherited() throws Exception { doTest(BASE_PATH + "/importSingleVsInherited/Test.java", BASE_PATH + "/importSingleVsInherited", false, false); }
+  public void testImportOnDemandVsInherited() throws Exception { doTest(BASE_PATH + "/importOnDemandVsInherited/Test.java", BASE_PATH + "/importOnDemandVsInherited", false, false); }
 
   public void testOverridePackageLocal() throws Exception { doTest(BASE_PATH+"/overridePackageLocal/x/y/Derived.java", BASE_PATH+"/overridePackageLocal", false, false); }
   public void testAlreadyImportedClass() throws Exception { doTest(BASE_PATH+"/alreadyImportedClass/pack/AlreadyImportedClass.java", BASE_PATH+"/alreadyImportedClass", false, false); }
