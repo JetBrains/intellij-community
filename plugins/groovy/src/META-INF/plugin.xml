@@ -72,7 +72,6 @@
 
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovySourceCodeNamedArgumentProvider" order="last"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyConstructorNamedArgumentProvider"/>
-    <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyEventListenersNamedArgumentProvider"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyMethodReturnNamedArgumentProvider" order="last"/>
 
     <!-- GroovyDSL extensions -->
