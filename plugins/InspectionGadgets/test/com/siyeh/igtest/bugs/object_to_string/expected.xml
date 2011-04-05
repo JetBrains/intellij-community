@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>ObjectToString.java</file>
+    <line>20</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Call to default 'toString()'</problem_class>
+    <description>Call to default 'toString()' on &lt;code&gt;n&lt;/code&gt; #loc</description>
+  </problem>
+</problems>

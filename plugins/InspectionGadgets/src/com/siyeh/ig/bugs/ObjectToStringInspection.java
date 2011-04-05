@@ -143,6 +143,14 @@ public class ObjectToStringInspection extends BaseInspection {
                     return;
                 }
                 final PsiExpression argument = arguments[0];
+                final PsiType type = argument.getType();
+                if (type instanceof PsiArrayType) {
+                    final PsiType componentType =
+                            ((PsiArrayType) type).getComponentType();
+                    if (PsiType.CHAR.equals(componentType)) {
+                        return;
+                    }
+                }
                 checkExpression(argument);
             }
         }
