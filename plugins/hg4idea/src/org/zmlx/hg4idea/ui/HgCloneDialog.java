@@ -15,11 +15,15 @@
  */
 package org.zmlx.hg4idea.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgCommandResult;
 import org.zmlx.hg4idea.command.HgIdentifyCommand;
@@ -180,21 +184,22 @@ public class HgCloneDialog extends DialogWrapper {
     testButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         testURL = repositoryURL.getText();
-        final boolean finished = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-          public void run() {
+        ProgressManager.getInstance().run(new Task.Backgroundable(project,HgVcsMessages.message("hg4idea.clone.test.progress", testURL), true) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
             testResult = testRepository(project, testURL);
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (testResult) {
+                  Messages.showInfoMessage(testButton, HgVcsMessages.message("hg4idea.clone.test.success.message", testURL),
+                                           HgVcsMessages.message("hg4idea.clone.test.success"));
+                }
+                updateCloneButton();
+              }
+            });
           }
-        }, HgVcsMessages.message("hg4idea.clone.test.progress", testURL), true, project, clonePanel);
-
-        if (!finished) {
-          return;
-        }
-
-        if (testResult) {
-          Messages.showInfoMessage(testButton, HgVcsMessages.message("hg4idea.clone.test.success.message", testURL),
-                                   HgVcsMessages.message("hg4idea.clone.test.success"));
-        }
-        updateCloneButton();
+        });
       }
     });
 

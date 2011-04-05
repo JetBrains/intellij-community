@@ -36,15 +36,19 @@ public class SocketServer {
     serverSocket = new ServerSocket(0);
     int port = serverSocket.getLocalPort();
 
-    String name = "hg4idea prompt server";
-    serverThread = new Thread(name) {
+    serverThread = new Thread("hg4idea prompt server") {
       @Override
       public void run() {
         try {
           boolean _continue = true;
           while (_continue) {
             Socket socket = serverSocket.accept();
-            _continue = protocol.handleConnection(socket);
+            try {
+              _continue = protocol.handleConnection(socket);
+            }
+            finally {
+              socket.close();
+            }
           }
         } catch (SocketException e) {
           //socket was closed, that's OK

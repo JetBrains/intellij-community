@@ -31,8 +31,6 @@ public class HgPullCommand {
   private boolean update = true;
   private boolean rebase = !update;
   
-  private final HgCommandAuthenticator authenticator = new HgCommandAuthenticator();
-
   public HgPullCommand(Project project, @NotNull VirtualFile repo) {
     this.project = project;
     this.repo = repo;
@@ -69,7 +67,7 @@ public class HgPullCommand {
 
     arguments.add(source);
 
-    HgCommandResult result = authenticator.executeCommandAndAuthenticateIfNecessary(project, repo, source, "pull", arguments, arguments.size()-1);
+    HgCommandResult result = HgCommandService.getInstance(project).execute(repo, "pull", arguments);
 
     project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
 

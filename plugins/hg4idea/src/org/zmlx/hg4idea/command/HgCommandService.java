@@ -14,7 +14,6 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -22,11 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgExecutableValidator;
-import org.zmlx.hg4idea.HgGlobalSettings;
-import org.zmlx.hg4idea.HgUtil;
-import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,6 +29,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -44,7 +40,7 @@ import java.util.List;
 
 public final class HgCommandService {
   
-  private static File PROMPT_HOOKS_PLUGIN;
+  private File myPromptHooksExtensionFile;
 
   static final Logger LOG = Logger.getInstance(HgCommandService.class.getName());
 
@@ -60,8 +56,8 @@ public final class HgCommandService {
   public HgCommandService(Project project, HgGlobalSettings settings) {
     myProject = project;
     mySettings = settings;
-    if (PROMPT_HOOKS_PLUGIN == null) {
-      PROMPT_HOOKS_PLUGIN = HgUtil.getTemporaryPythonFile("prompthooks");
+    if (myPromptHooksExtensionFile == null) {
+      myPromptHooksExtensionFile = HgUtil.getTemporaryPythonFile("prompthooks");
     }
     myVcs = HgVcs.getInstance(myProject);
     LOG.assertTrue(myVcs != null);
@@ -92,7 +88,17 @@ public final class HgCommandService {
   }
 
   @Nullable
-  HgCommandResult execute(VirtualFile repo, List<String> hgOptions, String operation, List<String> arguments, Charset charset, boolean silent) {
+  HgCommandResult execute(final VirtualFile repo, final List<String> hgOptions, final String operation, final List<String> arguments, final Charset charset, final boolean silent) {
+      return executeOffOfEDT(repo, hgOptions, operation, arguments, charset, silent);
+  }
+
+  private HgCommandResult executeOffOfEDT(VirtualFile repo,
+                                          List<String> hgOptions,
+                                          String operation,
+                                          List<String> arguments,
+                                          Charset charset,
+                                          boolean silent) {
+//    assert !EventQueue.isDispatchThread();
     if (myProject.isDisposed()) {
       return null;
     }
@@ -104,21 +110,28 @@ public final class HgCommandService {
       cmdLine.add(repo.getPath());
     }
 
-    SocketServer promptServer = new SocketServer(new PromptReceiver());
     WarningReceiver warningReceiver = new WarningReceiver();
+    PassReceiver passReceiver = new PassReceiver(myProject);
+    
+    SocketServer promptServer = new SocketServer(new PromptReceiver());
     SocketServer warningServer = new SocketServer(warningReceiver);
-    if (PROMPT_HOOKS_PLUGIN == null) {
+    SocketServer passServer = new SocketServer(passReceiver);
+    
+    if (myPromptHooksExtensionFile == null) {
       throw new RuntimeException("Could not hook into the prompt mechanism of Mercurial");
     }
     try {
       int promptPort = promptServer.start();
       int warningPort = warningServer.start();
+      int passPort = passServer.start();
       cmdLine.add("--config");
-      cmdLine.add("extensions.hg4ideapromptextension=" + PROMPT_HOOKS_PLUGIN.getAbsolutePath());
+      cmdLine.add("extensions.hg4ideapromptextension=" + myPromptHooksExtensionFile.getAbsolutePath());
       cmdLine.add("--config");
       cmdLine.add("hg4ideaprompt.port=" + promptPort);
       cmdLine.add("--config");
       cmdLine.add("hg4ideawarn.port=" + warningPort);
+      cmdLine.add("--config");
+      cmdLine.add("hg4ideapass.port=" + passPort);
 
       // Other parts of the plugin count on the availability of the MQ extension, so make sure it is enabled
       cmdLine.add("--config");
@@ -138,6 +151,9 @@ public final class HgCommandService {
     try {
       String workingDir = repo != null ? repo.getPath() : null;
       result = shellCommand.execute(cmdLine, workingDir, charset);
+      if (!HgErrorUtil.isAuthorizationError(result)) {
+        passReceiver.saveCredentials();
+      }
     } catch (ShellCommandException e) {
       if (!silent) {
         if (myValidator.checkExecutableAndNotifyIfNeeded()) {
@@ -155,6 +171,7 @@ public final class HgCommandService {
     } finally {
       promptServer.stop();
       warningServer.stop();
+      passServer.stop();
     }
     String warnings = warningReceiver.getWarnings();
     result.setWarnings(warnings);
@@ -241,6 +258,7 @@ public final class HgCommandService {
 
     public boolean handleConnection(Socket socket) throws IOException {
       DataInputStream dataInput = new DataInputStream(socket.getInputStream());
+      DataOutputStream out = new DataOutputStream(socket.getOutputStream());
       final String message = new String(readDataBlock(dataInput));
       int numOfChoices = dataInput.readInt();
       final Choice[] choices = new Choice[numOfChoices];
@@ -252,29 +270,32 @@ public final class HgCommandService {
       final Choice defaultChoice = choices[defaultChoiceInt];
 
       final int[] index = new int[]{-1};
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        public void run() {
-          Window parent = ApplicationManager.getApplication().getComponent(Window.class);
-          index[0] = JOptionPane.showOptionDialog(
-            parent,
-            message,
-            "hg4idea",
-            JOptionPane.OK_CANCEL_OPTION,
-            JOptionPane.QUESTION_MESSAGE,
-            null,
-            choices,
-            defaultChoice);
+      try {
+        EventQueue.invokeAndWait(new Runnable() {
+          public void run() {
+            Window parent = ApplicationManager.getApplication().getComponent(Window.class);
+            index[0] = JOptionPane
+              .showOptionDialog(parent, message, "hg4idea", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null, choices,
+                                defaultChoice);
+          }
+        });
+        
+        int chosen = index[0];
+        if (chosen == JOptionPane.CLOSED_OPTION) {
+          out.writeInt(-1);
+        } else {
+          out.writeInt(chosen);
         }
-      }, ModalityState.defaultModalityState());
-
-      int chosen = index[0];
-      DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-      if (chosen == JOptionPane.CLOSED_OPTION) {
-        out.writeInt(-1);
-      } else {
-        out.writeInt(chosen);
+        return true;
       }
-      return true;
+      catch (InterruptedException e) {
+        //do nothing
+        return true;
+      }
+      catch (InvocationTargetException e) {
+        //shouldn't happen
+        throw new RuntimeException(e);
+      }
     }
 
     private static class Choice{
@@ -313,6 +334,39 @@ public final class HgCommandService {
       }
     }
   }
+  
+  private static class PassReceiver extends SocketServer.Protocol{
+    private final Project myProject;
+    private HgCommandAuthenticator myAuthenticator;
 
+    private PassReceiver(Project project) {
+      myProject = project;
+    }
 
+    @Override
+    public boolean handleConnection(Socket socket) throws IOException {
+      DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+      DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+
+      String command = new String(readDataBlock(dataInputStream));
+      assert "getpass".equals(command);
+      String uri = new String(readDataBlock(dataInputStream));
+      String path = new String(readDataBlock(dataInputStream));
+      String proposedLogin = new String(readDataBlock(dataInputStream));
+
+      HgCommandAuthenticator authenticator = new HgCommandAuthenticator(myProject);
+      boolean ok = authenticator.promptForAuthentication(myProject, proposedLogin, uri, path);
+      if (ok) {
+        myAuthenticator = authenticator;
+        sendDataBlock(out, authenticator.getUserName().getBytes());
+        sendDataBlock(out, authenticator.getPassword().getBytes());
+      }
+      return true;
+    }
+
+    public void saveCredentials() {
+      if (myAuthenticator == null) return;
+      myAuthenticator.saveCredentials();
+    }
+  }
 }

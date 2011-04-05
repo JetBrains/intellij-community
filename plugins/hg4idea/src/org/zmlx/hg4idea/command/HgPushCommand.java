@@ -26,7 +26,6 @@ public class HgPushCommand {
   private final Project myProject;
   private final VirtualFile myRepo;
   private final String myDestination;
-  private final HgCommandAuthenticator authenticator = new HgCommandAuthenticator();
 
   private String myRevision;
   private boolean myForce;
@@ -65,7 +64,7 @@ public class HgPushCommand {
     }
     arguments.add(myDestination);
 
-    final HgCommandResult result = authenticator.executeCommandAndAuthenticateIfNecessary(myProject, myRepo, myDestination, "push", arguments, arguments.size()-1);
+    final HgCommandResult result = HgCommandService.getInstance(myProject).execute(myRepo, "push", arguments);
     myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject);
     return result;
   }

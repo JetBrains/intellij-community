@@ -20,9 +20,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @State(
   name = "HgGlobalSettings",
@@ -35,8 +33,8 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
 
   private String myHgExecutable = HG;
 
-  // visited URL -> list of logins for this URL. Passwords are remembered in the PasswordSafe.
-  private Map<String, List<String>> myRememberedUrls = new HashMap<String, List<String>>();
+  // visited URL -> login for this URL. Passwords are remembered in the PasswordSafe.
+  private Map<String, String> myRememberedUserNames = new HashMap<String, String>();
   private boolean myRunViaBash;
 
   public static class State {
@@ -57,12 +55,13 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
   }
 
   /**
-   * Returns the rememebered urls which were accessed while working in the plugin.
-   * @return key is a String representation of a URL, value is the list (probably empty) of logins remembered for this URL.
+   * Returns the remembered username for the specified URL which were accessed while working in the plugin.
+   * @param stringUrl the url for which to retrieve the last used username;
+   * @return the (probably empty) login remembered for this URL.
    */
-  @NotNull
-  public Map<String, List<String>> getRememberedUrls() {
-    return myRememberedUrls;
+  @Nullable
+  public String getRememberedUserName(@NotNull String stringUrl) {
+    return myRememberedUserNames.get(stringUrl);
   }
 
   /**
@@ -77,12 +76,7 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
     if (username == null) {
       username = "";
     }
-    List<String> list = myRememberedUrls.get(stringUrl);
-    if (list == null) {
-      list = new LinkedList<String>();
-      myRememberedUrls.put(stringUrl, list);
-    }
-    list.add(username);
+    myRememberedUserNames.put(stringUrl, username);
   }
 
   public static String getDefaultExecutable() {
