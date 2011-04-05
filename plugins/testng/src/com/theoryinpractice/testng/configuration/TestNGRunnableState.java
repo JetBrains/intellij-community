@@ -249,10 +249,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     LOG.info("Language level is " + effectiveLanguageLevel.toString());
     LOG.info("is15 is " + is15);
 
-    // Add plugin jars first...
-    javaParameters.getClassPath().add(is15 ? PathUtil.getJarPathForClass(AfterClass.class) : //testng-jdk15.jar
-                                      new File(PathManager.getPreinstalledPluginsPath(), "testng/lib-jdk14/testng-jdk14.jar")
-                                        .getPath());//todo !do not hard code lib name!
+
     // Configure rest of jars
     JavaParametersUtil.configureConfiguration(javaParameters, config);
     Sdk jdk = module == null ? ProjectRootManager.getInstance(project).getProjectSdk() : ModuleRootManager.getInstance(module).getSdk();
@@ -279,6 +276,10 @@ public class TestNGRunnableState extends JavaCommandLineState {
       JavaParametersUtil.configureModule(config.getConfigurationModule(), javaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS,
                                          config.ALTERNATIVE_JRE_PATH_ENABLED ? config.ALTERNATIVE_JRE_PATH : null);
     }
+
+    javaParameters.getClassPath().add(is15 ? PathUtil.getJarPathForClass(AfterClass.class) : //testng-jdk15.jar
+                                      new File(PathManager.getPreinstalledPluginsPath(), "testng/lib-jdk14/testng-jdk14.jar")
+                                        .getPath());//todo !do not hard code lib name!
 
     try {
       port = NetUtils.findAvailableSocketPort();
