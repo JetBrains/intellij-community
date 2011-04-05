@@ -335,8 +335,8 @@ public class InplaceIntroduceFieldPopup {
               final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
                 new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myInitializerExpression, settings, settings.getForcedType(),
                                                                         myOccurrences, myOccurenceManager,
-                                                                        myAnchorIdxIfAll != -1? myOccurrences[myAnchorIdxIfAll].getParent() : myAnchorElementIfAll,
-                                                                        myAnchorIdx != -1 ? myOccurrences[myAnchorIdx].getParent() : myAnchorElement, myEditor,
+                                                                        myAnchorIdxIfAll != -1 && myOccurrences[myAnchorIdxIfAll] != null ? myOccurrences[myAnchorIdxIfAll].getParent() : myAnchorElementIfAll,
+                                                                        myAnchorIdx != -1 && myOccurrences[myAnchorIdx] != null ? myOccurrences[myAnchorIdx].getParent() : myAnchorElement, myEditor,
                                                                         myParentClass);
               convertToFieldRunnable.run();
             }

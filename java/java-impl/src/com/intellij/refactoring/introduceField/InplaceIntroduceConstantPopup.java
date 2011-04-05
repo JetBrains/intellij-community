@@ -418,11 +418,11 @@ public class InplaceIntroduceConstantPopup {
             }
           }
 
-          if (myAnchorIdxIfAll != -1) {
+          if (myAnchorIdxIfAll != -1 && myOccurrences[myAnchorIdxIfAll] != null) {
             myAnchorElementIfAll = myOccurrences[myAnchorIdxIfAll].getParent();
           }
 
-          if (myAnchorIdx != -1) {
+          if (myAnchorIdx != -1 && myOccurrences[myAnchorIdx] != null) {
             myAnchorElement = myOccurrences[myAnchorIdx].getParent();
           }
           myOccurrenceMarkers = null;
