@@ -17,7 +17,6 @@ package com.intellij.ide.dnd;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ArrayUtil;
@@ -29,7 +28,6 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 
 public class DnDEventImpl extends UserDataHolderBase implements Transferable, DnDEvent {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.dnd.DnDEventImpl");
@@ -97,14 +95,21 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
   }
 
   public DataFlavor[] getTransferDataFlavors() {
-    return new DataFlavor[]{ourDataFlavor, DataFlavor.javaFileListFlavor};
+    if (myAttachedObject instanceof Transferable) {
+      return ((Transferable)myAttachedObject).getTransferDataFlavors();
+    }
+    else if (myAttachedObject instanceof FileFlavorProvider) {
+      return new DataFlavor[]{ourDataFlavor, DataFlavor.javaFileListFlavor};
+    }
+    return new DataFlavor[]{ourDataFlavor};
   }
 
   public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-    if (flavor == DataFlavor.javaFileListFlavor) {
-      if (myAttachedObject instanceof FileFlavorProvider) {
-        return ((FileFlavorProvider)myAttachedObject).asFileList();
-      }
+    if (myAttachedObject instanceof Transferable) {
+      return ((Transferable)myAttachedObject).getTransferData(flavor);
+    }
+    else if (myAttachedObject instanceof FileFlavorProvider && flavor == DataFlavor.javaFileListFlavor) {
+      return ((FileFlavorProvider)myAttachedObject).asFileList();
     }
     return getAttachedObject();
   }
