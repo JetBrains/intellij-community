@@ -433,6 +433,10 @@ public class DocumentationManager {
               return;
             }
 
+            if (PlatformDataKeys.PROJECT.getData(dataContext) != myProject) {
+              return;
+            }
+
             final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
 
             final Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file);
