@@ -87,9 +87,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private TooltipProvider myTooltipProvider = null;
   private final FileEditorManager myFileEditorManager;
 
-
-
-  private enum BrowseMode {None, Declaration, TypeDeclaration, Implementation;}
+  private enum BrowseMode {None, Declaration, TypeDeclaration, Implementation}
   private final KeyListener myEditorKeyListener = new KeyAdapter() {
     public void keyPressed(final KeyEvent e) {
       handleKey(e);
