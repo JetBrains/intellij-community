@@ -124,6 +124,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       protected TreeElementWrapper createTree() {
         return new StructureViewTreeElementWrapper(myProject, myModel.getRoot(), myModel);
       }
+
+      @Override
+      public String toString() {
+        return "structure view tree structure(model=" + myTreeModel + ")";
+      }
     };
 
     final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode(treeStructure.getRootElement()));
