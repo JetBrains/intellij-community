@@ -15,48 +15,31 @@
  */
 package com.siyeh.ipp.integer;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ipp.base.Intention;
+import com.intellij.psi.PsiType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 
 /**
  * @author Konstantin Bulenkov
+ * todo: actually it's a scientific notation, not an engineering one.
  */
-public class ConvertToEngineeringNotationIntention extends Intention {
+public class ConvertToEngineeringNotationIntention extends ConvertNumberIntentionBase {
+  private static final DecimalFormat FORMAT = new DecimalFormat("0.0#############E00", new DecimalFormatSymbols(Locale.US));
 
-    private static final DecimalFormat FORMAT =
-            new DecimalFormat("0.00000000000000E00");
-    private static final ConvertToEngineeringNotationPredicate PREDICATE =
-            new ConvertToEngineeringNotationPredicate();
+  @Override
+  protected String convertValue(final Number value, final PsiType type, final boolean negated) {
+    final double doubleValue = Double.parseDouble(value.toString());  // convert to double w/o adding parasitic digits
+    final String text = FORMAT.format(negated ? -doubleValue : doubleValue);
+    return PsiType.FLOAT.equals(type) ? text + "f" : text;
+  }
 
-    @Override
-    protected void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        final String elementText = element.getText();
-        if (elementText.length() == 0) {
-            return;
-        }
-        final int lastIndex = elementText.length() - 1;
-        final char lastChar = elementText.charAt(lastIndex);
-        String text = FORMAT.format(Double.parseDouble(elementText)).replace(',', '.');
-        while (text.contains("0E") && !text.contains(".0E")) {
-            text = text.replace("0E", "E");
-        }
-        if (lastChar == 'f' || lastChar == 'F') {
-            replaceExpression(text + lastChar, (PsiExpression)element);
-        } else {
-            replaceExpression(text, (PsiExpression)element);
-        }
-    }
-
-    @NotNull
-    @Override
-    protected PsiElementPredicate getElementPredicate() {
-        return PREDICATE;
-    }
+  @NotNull
+  @Override
+  protected PsiElementPredicate getElementPredicate() {
+    return new ConvertToEngineeringNotationPredicate();
+  }
 }
