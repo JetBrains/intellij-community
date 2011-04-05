@@ -7,11 +7,4 @@
     <description>&lt;code&gt;else&lt;/code&gt; branch may be unwrapped, as the if branch never completes #loc</description>
   </problem>
 
-  <problem>
-    <file>ConfusingElse.java</file>
-    <line>26</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Confusing 'else' branch</problem_class>
-    <description>&lt;code&gt;else&lt;/code&gt; branch may be unwrapped, as the if branch never completes #loc</description>
-  </problem>
-
 </problems>

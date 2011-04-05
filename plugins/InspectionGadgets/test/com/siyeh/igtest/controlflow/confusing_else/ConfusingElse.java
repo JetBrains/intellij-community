@@ -20,11 +20,11 @@ public class ConfusingElse {
 
     void two(boolean b) {
         if (foo()) {
-
+          System.out.println(0);
         } else if (b) {
             return;
         } else {
-
+          System.out.println(1);
         }
         bar();
     }
