@@ -233,9 +233,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element, atPointer);
 
     String info = documentationProvider.getQuickNavigateInfo(element, atPointer);
-    if (info == null) {
-      info = getQuickNavigateInfo(element);
-    }
     if (info != null) {
       return info;
     }
@@ -245,6 +242,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       if (virtualFile != null) {
         return virtualFile.getPresentableUrl();
       }
+    }
+
+    info = getQuickNavigateInfo(element);
+    if (info != null) {
+      return info;
     }
 
     if (element instanceof NavigationItem) {
