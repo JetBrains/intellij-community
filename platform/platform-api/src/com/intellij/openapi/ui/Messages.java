@@ -27,38 +27,19 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.PairFunction;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.Icon;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JScrollBar;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.JTextPane;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.html.HTMLEditorKit;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -264,15 +245,34 @@ public class Messages {
     return showDialog(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
   }
 
-  public static int showTwoStepConfirmationDialog(String message, String title, String checkboxText, Icon icon) {
+  public static int showCheckboxOkCancelDialog(String message, String title, String checkboxText, final boolean checked,
+                                                  final int defaultOptionIndex, final int focusedOptionIndex, Icon icon) {
+    return showCheckboxMessageDialog(message, title, checkboxText, checked, defaultOptionIndex, focusedOptionIndex, icon,
+                                     new PairFunction<Integer, JCheckBox, Integer>() {
+                                       @Override
+                                       public Integer fun(final Integer exitCode, final JCheckBox cb) {
+                                         return exitCode == CANCEL ? CANCEL : exitCode + (cb.isSelected() ? 1 : 0);
+                                       }
+                                     });
+  }
+
+  public static int showCheckboxMessageDialog(String message, String title, String checkboxText, final boolean checked,
+                                                  final int defaultOptionIndex, final int focusedOptionIndex, Icon icon,
+                                                  @Nullable final PairFunction<Integer, JCheckBox, Integer> exitFunc) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
     else {
-      TwoStepConfirmationDialog dialog = new TwoStepConfirmationDialog(message, title, checkboxText, icon);
+      TwoStepConfirmationDialog dialog = new TwoStepConfirmationDialog(message, title, checkboxText, checked, defaultOptionIndex,
+                                                                       focusedOptionIndex, icon, exitFunc);
       dialog.show();
       return dialog.getExitCode();
     }
+  }
+
+
+  public static int showTwoStepConfirmationDialog(String message, String title, String checkboxText, Icon icon) {
+    return showCheckboxMessageDialog(message, title, checkboxText, true, -1, -1, icon, null);
   }
 
   public static void showErrorDialog(Project project, @Nls String message, @Nls String title) {
@@ -317,6 +317,11 @@ public class Messages {
 
   public static int showYesNoCancelDialog(Project project, String message, String title, Icon icon) {
     return showDialog(project, message, title, new String[]{YES_BUTTON, NO_BUTTON, CANCEL_BUTTON}, 0, icon);
+  }
+
+  public static int showYesNoCancelDialog(Project project, String message, String title, final int defaultOptionIndex,
+                                          final int focusedOptionIndex, Icon icon) {
+    return showDialog(project, message, title, new String[]{YES_BUTTON, NO_BUTTON, CANCEL_BUTTON}, defaultOptionIndex, focusedOptionIndex, icon);
   }
 
   public static int showYesNoCancelDialog(Component parent, String message, String title, Icon icon) {
@@ -793,10 +798,16 @@ public class Messages {
   protected static class TwoStepConfirmationDialog extends MessageDialog {
     private JCheckBox myCheckBox;
     private final String myCheckboxText;
+    private boolean myChecked;
+    private PairFunction<Integer, JCheckBox, Integer> myExitFunc;
 
-    public TwoStepConfirmationDialog(String message, String title, String checkboxText, Icon icon) {
+    public TwoStepConfirmationDialog(String message, String title, String checkboxText, boolean checked, final int defaultOptionInxed,
+                                     final int focusedOptionIndex, Icon icon, @Nullable final PairFunction<Integer, JCheckBox, Integer> exitFunc) {
       myCheckboxText = checkboxText;
-      _init(title, message, new String[] {OK_BUTTON, CANCEL_BUTTON}, -1, -1, icon, null);
+      myChecked = checked;
+      myExitFunc = exitFunc;
+
+      _init(title, message, new String[] {OK_BUTTON, CANCEL_BUTTON}, defaultOptionInxed, focusedOptionIndex, icon, null);
     }
 
     @Override
@@ -822,7 +833,7 @@ public class Messages {
       checkboxPanel.setLayout(new BoxLayout(checkboxPanel, BoxLayout.X_AXIS));
 
       myCheckBox = new JCheckBox(myCheckboxText);
-      myCheckBox.setSelected(true);
+      myCheckBox.setSelected(myChecked);
       messagePanel.add(myCheckBox, BorderLayout.SOUTH);
       panel.add(messagePanel, BorderLayout.CENTER);
 
@@ -832,12 +843,16 @@ public class Messages {
     @Override
     public int getExitCode() {
       final int exitCode = super.getExitCode();
+      if (myExitFunc != null) {
+        return myExitFunc.fun(exitCode, myCheckBox);
+      }
+
       return exitCode == OK_EXIT_CODE ? myCheckBox.isSelected() ? OK_EXIT_CODE : CANCEL_EXIT_CODE : CANCEL_EXIT_CODE;
     }
 
     @Override
     public JComponent getPreferredFocusedComponent() {
-      return myCheckBox;
+      return myDefaultOptionIndex == -1 ? myCheckBox : super.getPreferredFocusedComponent();
     }
 
     @Override
