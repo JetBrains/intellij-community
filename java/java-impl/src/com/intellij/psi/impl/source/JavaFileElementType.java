@@ -43,7 +43,7 @@ import java.io.IOException;
 public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileStub> {
   public static boolean USE_NEW_STUB_BUILDER = true;
 
-  public static final int STUB_VERSION = (USE_NEW_STUB_BUILDER ? 6 : 5) + 2;
+  public static final int STUB_VERSION = (USE_NEW_STUB_BUILDER ? 6 : 5) + 3;
 
   public JavaFileElementType() {
     super("java.FILE", StdLanguages.JAVA);
