@@ -90,7 +90,13 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
     if (element.getTextOffset() >= lBrace.getTextOffset()) return false;
 
     TextRange declarationRange = HighlightNamesUtil.getClassDeclarationTextRange(psiClass);
-    if (!declarationRange.contains(element.getTextRange())) return false;
+    final TextRange elementTextRange = element.getTextRange();
+    if (!declarationRange.contains(elementTextRange)) {
+      if (!(element instanceof PsiWhiteSpace) || (declarationRange.getStartOffset() != elementTextRange.getEndOffset() &&
+                                                  declarationRange.getEndOffset() != elementTextRange.getStartOffset())) {
+        return false;
+      }
+    }
 
     myText = getTitle(psiClass);
     return true;
