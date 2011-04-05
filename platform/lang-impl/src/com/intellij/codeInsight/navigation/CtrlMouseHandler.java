@@ -353,6 +353,9 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
     else if (browseMode == BrowseMode.Declaration) {
+      final PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
+      final PsiElement resolvedElement = ref != null ? ref.resolve() : null;
+
       final PsiElement[] targetElements = GotoDeclarationAction.findTargetElementsNoVS(myProject, editor, offset);
       final PsiElement elementAtPointer = file.findElementAt(offset);
 
@@ -361,7 +364,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
           return null;
         }
         else if (targetElements.length == 1) {
-          if (elementAtPointer != null && targetElements[0].isPhysical()) {
+          if (targetElements[0] != resolvedElement && elementAtPointer != null && targetElements[0].isPhysical()) {
             return new InfoSingle(elementAtPointer, targetElements[0]);
           }
         }
@@ -370,12 +373,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         }
       }
 
-      PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
-      if (ref != null) {
-        PsiElement resolvedElement = resolve(ref);
-        if (resolvedElement != null) {
-          return new InfoSingle(ref, resolvedElement);
-        }
+      if (resolvedElement != null) {
+        return new InfoSingle(ref, resolvedElement);
       }
     }
     else if (browseMode == BrowseMode.Implementation) {
