@@ -225,6 +225,13 @@
       successive-show="5"
       min-usage-count="1"
       />
+    <feature
+      id="ui.horizontal.scrolling"
+      tip-file="HorizontalScrolling.html"
+      first-show="1"
+      successive-show="1"
+      min-usage-count="1"
+      />
     <!-- TODO: Uncomment usage in InsertPathAction when FeatureUsageTracker goes to OpenApi
     <feature
       id="ui.commandLine.insertPath"
