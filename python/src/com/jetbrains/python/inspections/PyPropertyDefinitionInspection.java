@@ -266,7 +266,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
         final PsiElement[] returnStatements = PsiTreeUtil.collectElements(callable, new PsiElementFilter() {
           @Override
           public boolean isAccepted(PsiElement element) {
-            return element instanceof PyReturnStatement;
+            return (element instanceof PyReturnStatement) || (element instanceof PyYieldExpression);
           }
         });
         hasReturns = returnStatements.length > 0; 

@@ -75,3 +75,15 @@ class B(object):
   y = property(Ghostbusters()) # pass
   z = property(Ghostbusters) # fail: not callable
 
+class Eternal(object):
+  def give(self):
+    while True:
+      yield 1
+
+  def giveAndTake(self):
+    x = 1
+    while True:
+      x = (yield x)
+
+  one = property(give) # should pass
+  anything = property(giveAndTake) # should pass
