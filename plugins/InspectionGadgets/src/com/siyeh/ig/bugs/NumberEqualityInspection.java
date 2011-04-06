@@ -61,25 +61,19 @@ public class NumberEqualityInspection extends BaseInspection {
         @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if(!(expression.getROperand() != null)){
+            final PsiExpression rhs = expression.getROperand();
+            if (rhs == null) {
                 return;
             }
             if (!ComparisonUtils.isEqualityComparison(expression)) {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
-            if (!hasNumberType(lhs)) {
-                return;
-            }
-            final PsiExpression rhs = expression.getROperand();
-            if (!hasNumberType(rhs)) {
+            if (!hasNumberType(lhs) || !hasNumberType(rhs)) {
                 return;
             }
             final String lhsText = lhs.getText();
             if (PsiKeyword.NULL.equals(lhsText)) {
-                return;
-            }
-            if (rhs == null) {
                 return;
             }
             final String rhsText = rhs.getText();
