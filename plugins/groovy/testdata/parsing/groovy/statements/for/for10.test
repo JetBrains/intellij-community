@@ -16,26 +16,26 @@ Groovy script
         PsiElement(=)('=')
         Literal
           PsiElement(Integer)('0')
-      PsiElement(,)(',')
-      PsiErrorElement:Expression expected
+      PsiErrorElement:';' expected
         <empty list>
-      PsiWhiteSpace(' ')
-      PsiElement(wrong token)('#')
-      PsiElement(,)(',')
-      PsiWhiteSpace(' ')
-      PsiElement(;)(';')
-      PsiWhiteSpace(' ')
-      Literal
-        PsiElement(true)('true')
-      PsiWhiteSpace(' ')
-      PsiElement(;)(';')
-      PsiWhiteSpace(' ')
-      Postfix expression
-        Reference expression
-          PsiElement(identifier)('i')
-        PsiElement(++)('++')
+  PsiErrorElement:';' or new line expected
+    PsiElement(,)(',')
+    PsiWhiteSpace(' ')
+    PsiElement(wrong token)('#')
+    PsiElement(,)(',')
+  PsiWhiteSpace(' ')
+  PsiElement(;)(';')
+  PsiWhiteSpace(' ')
+  Literal
+    PsiElement(true)('true')
+  PsiWhiteSpace(' ')
+  PsiElement(;)(';')
+  PsiWhiteSpace(' ')
+  Postfix expression
+    Reference expression
+      PsiElement(identifier)('i')
+    PsiElement(++)('++')
+  PsiErrorElement:';' or new line expected
     PsiElement())(')')
-    Block statement
-      Open block
-        PsiElement({)('{')
-        PsiElement(})('}')
+    PsiElement({)('{')
+    PsiElement(})('}')

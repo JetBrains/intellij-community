@@ -304,17 +304,11 @@ public class EquivalenceChecker {
 
   private static boolean forClausesAreEquivalent(@NotNull GrForClause statement1,
                                                  @NotNull GrForClause statement2) {
-    final GrVariable[] variables1 = statement1.getDeclaredVariables();
-    final GrVariable[] variables2 = statement2.getDeclaredVariables();
-    if (variables1.length != variables2.length) {
-      return false;
-    }
-    for (int i = 0; i < variables2.length; i++) {
-      if (!variablesAreEquivalent(variables1[i], variables2[i])) {
-        return false;
-      }
-    }
-    return true;
+    final GrVariable var1 = statement1.getDeclaredVariable();
+    final GrVariable var2 = statement2.getDeclaredVariable();
+    if (var1 == null && var2 == null) return true;
+    if (var1 == null || var2 == null) return false;
+    return variablesAreEquivalent(var1, var2);
   }
 
   private static boolean switchStatementsAreEquivalent(@NotNull GrSwitchStatement statement1,

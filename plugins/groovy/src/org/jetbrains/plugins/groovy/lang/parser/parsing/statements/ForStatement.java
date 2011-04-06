@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterDeclaration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.Declaration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.StrictContextExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.ShiftExpression;
@@ -41,58 +42,29 @@ public class ForStatement implements GroovyElementTypes {
   private static boolean tradForClauseParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
 
-    if (ParserUtils.getToken(builder, mSEMI) || (Declaration.parse(builder, false, parser) && ParserUtils.getToken(builder, mSEMI))) {
+    if (ParserUtils.getToken(builder, mSEMI) || (ParameterDeclaration.parse(builder, parser) && ParserUtils.getToken(builder, mSEMI))) {
       StrictContextExpression.parse(builder, parser);
       ParserUtils.getToken(builder, mSEMI, GroovyBundle.message("semi.expected"));
       ParserUtils.getToken(builder, mNLS);
       if (!mRPAREN.equals(builder.getTokenType())) {
-        controlExpressionListParse(builder, parser);
+        StrictContextExpression.parse(builder, parser);
       }
     }
     else {
       marker.rollbackTo();
       marker = builder.mark();
-      controlExpressionListParse(builder, parser);
+      StrictContextExpression.parse(builder, parser);
       ParserUtils.getToken(builder, mSEMI, GroovyBundle.message("semi.expected"));
       StrictContextExpression.parse(builder, parser);
       ParserUtils.getToken(builder, mSEMI, GroovyBundle.message("semi.expected"));
       ParserUtils.getToken(builder, mNLS);
       if (!mRPAREN.equals(builder.getTokenType())) {
-        controlExpressionListParse(builder, parser);
+        StrictContextExpression.parse(builder, parser);
       }
     }
 
     marker.done(FOR_TRADITIONAL_CLAUSE);
     return true;
-  }
-
-  /*
-   * Parses list of control expression in for condition
-   */
-  private static void controlExpressionListParse(PsiBuilder builder, GroovyParser parser) {
-
-    if (!StrictContextExpression.parse(builder, parser)) return;
-
-    while (ParserUtils.getToken(builder, mCOMMA)) {
-      ParserUtils.getToken(builder, mNLS);
-      if (builder.getTokenType() == mRPAREN) {
-        builder.error(GroovyBundle.message("expression.expected"));
-      }
-
-      if (!StrictContextExpression.parse(builder, parser)) {
-        ParserUtils.getToken(builder, mNLS);
-        if (!mRPAREN.equals(builder.getTokenType()) && !mSEMI.equals(builder.getTokenType())) {
-          builder.error(GroovyBundle.message("expression.expected"));
-        }
-        if (!mRPAREN.equals(builder.getTokenType()) &&
-            !mSEMI.equals(builder.getTokenType()) &&
-            !mCOMMA.equals(builder.getTokenType()) &&
-            !mRCURLY.equals(builder.getTokenType()) &&
-            !mNLS.equals(builder.getTokenType())) {
-          builder.advanceLexer();
-        }
-      }
-    }
   }
 
   /*

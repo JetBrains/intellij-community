@@ -18,17 +18,15 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-
-import java.util.List;
-import java.util.ArrayList;
 
 /**
  * @author ilyas
@@ -46,21 +44,18 @@ public class GrTraditionalForClauseImpl extends GroovyPsiElementImpl implements 
     return "Traditional FOR clause";
   }
 
-  public GrVariable[] getDeclaredVariables() {
-    GrVariableDeclaration declaration = findChildByClass(GrVariableDeclaration.class);
-    if (declaration == null) return GrVariable.EMPTY_ARRAY;
-    return declaration.getVariables();
+  public GrVariable getDeclaredVariable() {
+    return findChildByClass(GrParameter.class);
   }
 
-  public GrCondition[] getInitialization() {
-    List<GrCondition> result = new ArrayList<GrCondition>();
+  public GrCondition getInitialization() {
     final ASTNode first = getFirstSemicolon();
     for (ASTNode child = getNode().getFirstChildNode(); child != null && child != first; child = child.getTreeNext()) {
       if (child.getPsi() instanceof GrCondition) {
-        result.add((GrCondition) child.getPsi());
+        return (GrCondition)child.getPsi();
       }
     }
-    return result.toArray(new GrCondition[result.size()]);
+    return null;
   }
 
   public GrExpression getCondition() {
@@ -75,20 +70,19 @@ public class GrTraditionalForClauseImpl extends GroovyPsiElementImpl implements 
     return null;
   }
 
-  public GrExpression[] getUpdate() {
+  public GrExpression getUpdate() {
     final ASTNode second = getSecondSemicolon();
-    if (second == null) return GrExpression.EMPTY_ARRAY;
-
-    List<GrExpression> result = new ArrayList<GrExpression>();
+    if (second == null) return null;
 
     for (ASTNode child = second; child != null; child = child.getTreeNext()) {
       if (child.getPsi() instanceof GrExpression) {
-        result.add((GrExpression) child.getPsi());
+        return (GrExpression)child.getPsi();
       }
     }
-    return result.toArray(new GrExpression[result.size()]);
+    return null;
   }
 
+  @Nullable
   private ASTNode getFirstSemicolon() {
     for (ASTNode child = getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (child.getElementType() == GroovyElementTypes.mSEMI) {
@@ -99,6 +93,7 @@ public class GrTraditionalForClauseImpl extends GroovyPsiElementImpl implements 
     return null;
   }
 
+  @Nullable
   private ASTNode getSecondSemicolon() {
     boolean firstPassed = false;
     for (ASTNode child = getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {

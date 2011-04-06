@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil
 import org.jetbrains.plugins.groovy.util.TestUtils
 import com.intellij.psi.*
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 
 /**
  * @author ven
@@ -97,7 +98,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     assertTrue(ref.resolve() instanceof GrAccessorMethod);
   }
 
-  public void testForVariable2() throws Exception {
+  public void _testForVariable2() throws Exception {
     doTest("forVariable2/ForVariable.groovy");
   }
 
@@ -646,5 +647,14 @@ set<caret>Foo(2)
     final PsiElement resolved = resolve("A.groovy")
     assertInstanceOf resolved, PsiVariable
     assertTrue GroovyRefactoringUtil.isLocalVariable(resolved)
+  }
+
+  public void testResolveForVarOutsideOfFor() {
+    final PsiElement resolved = resolve("A.groovy")
+    assertInstanceOf resolved, GrParameter
+  }
+
+  public void dontResolveForVarOutsideOfFor(){
+    assertNull resolve("A.groovy")
   }
 }

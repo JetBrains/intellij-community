@@ -23,10 +23,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * @author ven
  */
 public interface GrTraditionalForClause extends GrForClause {
-  GrCondition[] getInitialization();
+  @Nullable
+  GrCondition getInitialization();
   
   @Nullable
   GrExpression getCondition();
 
-  GrExpression[] getUpdate();
+  @Nullable
+  GrExpression getUpdate();
 }

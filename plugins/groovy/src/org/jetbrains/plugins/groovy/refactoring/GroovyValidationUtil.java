@@ -34,6 +34,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
  */
 public class GroovyValidationUtil {
 
+  private GroovyValidationUtil() {
+  }
+
   public static boolean validateNewParameterName(GrParameter variable, MultiMap<PsiElement,String> conflicts, @NotNull String varName) {
     GrParameterList list = PsiTreeUtil.getParentOfType(variable, GrParameterList.class);
     GrParametersOwner owner = PsiTreeUtil.getParentOfType(variable, GrParametersOwner.class);
@@ -78,10 +81,9 @@ public class GroovyValidationUtil {
       GrForStatement statement = (GrForStatement)parent;
       GrForClause clause = statement.getClause();
       if (clause != null) {
-        for (GrVariable variable : clause.getDeclaredVariables()) {
-          if (varName.equals(variable.getName())) {
-            addConflict(varName, variable, conflicts);
-          }
+        final GrVariable variable = clause.getDeclaredVariable();
+        if (variable != null && varName.equals(variable.getName())) {
+          addConflict(varName, variable, conflicts);
         }
       }
     }
