@@ -4,7 +4,7 @@
     <file>ImplicitArrayToString.java</file>
     <line>13</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit call to array '.toString()'</problem_class>
-    <description>Implicit call to method 'toString()' on array &lt;code&gt;interfaces&lt;/code&gt;</description>
+    <description>Implicit call to 'toString()' on array &lt;code&gt;interfaces&lt;/code&gt;</description>
   </problem>
 
 
@@ -12,7 +12,7 @@
     <file>ImplicitArrayToString.java</file>
     <line>15</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit call to array '.toString()'</problem_class>
-    <description>Implicit call to method 'toString()' on array &lt;code&gt;interfaces&lt;/code&gt;</description>
+    <description>Implicit call to 'toString()' on array &lt;code&gt;interfaces&lt;/code&gt;</description>
   </problem>
 
 
@@ -20,6 +20,20 @@
     <file>ImplicitArrayToString.java</file>
     <line>17</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit call to array '.toString()'</problem_class>
-    <description>Implicit call to method 'toString()' on array &lt;code&gt;interfaces&lt;/code&gt;</description>
+    <description>Implicit call to 'toString()' on array &lt;code&gt;interfaces&lt;/code&gt;</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitArrayToString.java</file>
+    <line>29</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Call to 'toString()' on array</problem_class>
+    <description>Implicit call to 'toString()' on array &lt;code&gt;array&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>ImplicitArrayToString.java</file>
+    <line>29</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Call to 'toString()' on array</problem_class>
+    <description>Call to 'toString()' on array #loc</description>
   </problem>
 </problems>

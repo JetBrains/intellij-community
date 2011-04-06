@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 Bas Leijdekkers
+ * Copyright 2007-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -41,7 +42,10 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
     @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
-        if (infos[0] instanceof PsiMethodCallExpression) {
+        if (((Boolean) infos[1]).booleanValue()) {
+            return InspectionGadgetsBundle.message(
+                    "explicit.array.to.string.problem.descriptor");
+        } else if (infos[0] instanceof PsiMethodCallExpression) {
             return InspectionGadgetsBundle.message(
                     "implicit.array.to.string.method.call.problem.descriptor");
         } else {
@@ -59,22 +63,25 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
     @Nullable
     protected InspectionGadgetsFix buildFix(Object... infos) {
         final PsiExpression expression = (PsiExpression)infos[0];
+        final boolean removeToString = ((Boolean) infos[1]).booleanValue();
         final PsiArrayType type = (PsiArrayType) expression.getType();
         if (type != null) {
             final PsiType componentType = type.getComponentType();
             if (componentType instanceof PsiArrayType) {
-                return new ImplicitArrayToStringFix(true);
+                return new ImplicitArrayToStringFix(true, removeToString);
             }
         }
-        return new ImplicitArrayToStringFix(false);
+        return new ImplicitArrayToStringFix(false, removeToString);
     }
 
     private static class ImplicitArrayToStringFix extends InspectionGadgetsFix {
 
         private final boolean deepString;
+        private final boolean removeToString;
 
-        ImplicitArrayToStringFix(boolean deepString) {
+        ImplicitArrayToStringFix(boolean deepString, boolean removeToString) {
             this.deepString = deepString;
+            this.removeToString = removeToString;
         }
 
         @NotNull
@@ -92,9 +99,28 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
         @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
-            final PsiExpression expression =
-                    (PsiExpression)descriptor.getPsiElement();
-            final String expressionText = expression.getText();
+            final PsiElement element = descriptor.getPsiElement();
+            final PsiExpression expression;
+            if (element instanceof PsiExpression) {
+                expression = (PsiExpression) element;
+            }  else {
+                expression = (PsiExpression) element.getParent().getParent();
+            }
+            final String expressionText;
+            if (removeToString) {
+                final PsiMethodCallExpression methodCallExpression =
+                        (PsiMethodCallExpression) expression;
+                final PsiReferenceExpression methodExpression =
+                        methodCallExpression.getMethodExpression();
+                final PsiExpression qualifier =
+                        methodExpression.getQualifierExpression();
+                if (qualifier == null) {
+                    return;
+                }
+                expressionText = qualifier.getText(); 
+            } else {
+                expressionText = expression.getText();
+            }
             @NonNls final String newExpressionText;
             if (deepString) {
                 newExpressionText =
@@ -102,6 +128,21 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
             } else {
                 newExpressionText =
                         "java.util.Arrays.toString(" + expressionText + ')';
+            }
+            final PsiElement parent = expression.getParent();
+            if (parent instanceof PsiExpressionList) {
+                final PsiElement grandParent = parent.getParent();
+                if (grandParent instanceof PsiMethodCallExpression) {
+                    final PsiMethodCallExpression methodCallExpression =
+                            (PsiMethodCallExpression) grandParent;
+                    final PsiReferenceExpression methodExpression =
+                            methodCallExpression.getMethodExpression();
+                    if ("valueOf".equals(methodExpression.getReferenceName())) {
+                        replaceExpressionAndShorten(methodCallExpression,
+                                newExpressionText);
+                        return;
+                    }
+                }
             }
             replaceExpressionAndShorten(expression, newExpressionText);
         }
@@ -121,7 +162,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
             if (!isImplicitArrayToStringCall(expression)) {
                 return;
             }
-            registerError(expression, expression);
+            registerError(expression, expression, Boolean.FALSE);
         }
 
         @Override public void visitNewExpression(PsiNewExpression expression) {
@@ -129,16 +170,46 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
             if (!isImplicitArrayToStringCall(expression)) {
                 return;
             }
-            registerError(expression, expression);
+            registerError(expression, expression, Boolean.FALSE);
         }
 
         @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
+            if (isExplicitArrayToStringCall(expression)) {
+                final PsiReferenceExpression methodExpression =
+                        expression.getMethodExpression();
+                final PsiExpression qualifier =
+                        methodExpression.getQualifierExpression();
+                registerMethodCallError(expression, qualifier, Boolean.TRUE);
+                return;
+            }
             if (!isImplicitArrayToStringCall(expression)) {
                 return;
             }
-            registerError(expression, expression);
+            registerError(expression, expression, Boolean.FALSE);
+        }
+
+        private static boolean isExplicitArrayToStringCall(
+                PsiMethodCallExpression expression) {
+            final PsiReferenceExpression methodExpression =
+                    expression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            if (!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
+                return false;
+            }
+            final PsiExpressionList argumentList = expression.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length != 0) {
+                return false;
+            }
+            final PsiExpression qualifier =
+                    methodExpression.getQualifierExpression();
+            if (qualifier == null) {
+                return false;
+            }
+            final PsiType type = qualifier.getType();
+            return type instanceof PsiArrayType;
         }
 
         private static boolean isImplicitArrayToStringCall(
@@ -181,15 +252,41 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
                         methodCallExpression.getMethodExpression();
                 @NonNls final String methodName =
                         methodExpression.getReferenceName();
+                if ("valueOf".equals(methodName)) {
+                    final PsiExpression[] arguments =
+                            expressionList.getExpressions();
+                    if (arguments.length != 1) {
+                        System.out.println(1);
+                        return false;
+                    }
+                    final PsiMethod method =
+                            methodCallExpression.resolveMethod();
+                    if (method == null) {
+                        System.out.println(2);
+                        return false;
+                    }
+                    final PsiClass containingClass = method.getContainingClass();
+                    if (containingClass == null) {
+                        System.out.println(3);
+                        return false;
+                    }
+                    final String qualifiedName =
+                            containingClass.getQualifiedName();
+                    if (!"java.lang.String".equals(qualifiedName)) {
+                        System.out.println(54);
+                        return false;
+                    }
+                    return true;
+                }
                 if (!"print".equals(methodName) &&
                         !"println".equals(methodName)) {
                     if (!"printf".equals(methodName) &&
                         !"format".equals(methodName)) {
                         return false;
                     } else {
-                        final PsiExpression[] expressions =
+                        final PsiExpression[] arguments =
                                 expressionList.getExpressions();
-                        if (expressions.length < 1) {
+                        if (arguments.length < 1) {
                             return false;
                         }
                         final PsiMethod method =
@@ -205,11 +302,11 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
                         final PsiType firstParameterType = parameter.getType();
                         if (firstParameterType.equalsToText(
                                 "java.util.Locale")) {
-                            if (expressions.length < 4) {
+                            if (arguments.length < 4) {
                                 return false;
                             }
                         } else {
-                            if (expressions.length < 3) {
+                            if (arguments.length < 3) {
                                 return false;
                             }
                         }
