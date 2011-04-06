@@ -162,7 +162,9 @@ public class AndroidSdkUtils {
     sdkModificator.setHomePath(sdkPath);
     sdkModificator.commitChanges();
 
-    setUpSdk(sdk, null, table.getAllJdks(), target, addRoots);
+
+    final Sdk javaSdk = tryToChooseJavaSdk();
+    setUpSdk(sdk, javaSdk, table.getAllJdks(), target, addRoots);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -171,6 +173,16 @@ public class AndroidSdkUtils {
       }
     });
     return sdk;
+  }
+
+  @Nullable
+  private static Sdk tryToChooseJavaSdk() {
+    for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
+      if (isApplicableJdk(sdk)) {
+        return sdk;
+      }
+    }
+    return null;
   }
 
   public static String chooseNameForNewLibrary(IAndroidTarget target) {
@@ -190,7 +202,7 @@ public class AndroidSdkUtils {
            target.getName() + " (" + target.getVersionName() + ')';
   }
 
-  public static void setUpSdk(Sdk androidSdk, Sdk javaSdk, Sdk[] allSdks, IAndroidTarget target, boolean addRoots) {
+  public static void setUpSdk(Sdk androidSdk, @Nullable Sdk javaSdk, Sdk[] allSdks, IAndroidTarget target, boolean addRoots) {
     AndroidSdkAdditionalData data = new AndroidSdkAdditionalData(androidSdk, javaSdk);
 
     data.setBuildTarget(target);
@@ -201,7 +213,10 @@ public class AndroidSdkUtils {
     final SdkModificator sdkModificator = androidSdk.getSdkModificator();
 
     sdkModificator.setName(sdkName);
-    sdkModificator.setVersionString(javaSdk.getVersionString());
+
+    if (javaSdk != null) {
+      sdkModificator.setVersionString(javaSdk.getVersionString());
+    }
     sdkModificator.setSdkAdditionalData(data);
 
     if (addRoots) {
