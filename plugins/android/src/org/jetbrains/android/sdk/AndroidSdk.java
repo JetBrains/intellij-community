@@ -24,6 +24,7 @@ import com.android.sdklib.SdkConstants;
 import com.android.sdklib.SdkManager;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -50,6 +51,8 @@ import static org.jetbrains.android.util.AndroidUtils.ADB;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class AndroidSdk {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.sdk.AndroidSdk");
+
   private static volatile boolean myDdmLibInitialized = false;
 
   private static volatile boolean myAdbCrashed = false;
@@ -221,6 +224,7 @@ public abstract class AndroidSdk {
         myDdmLibInitialized = true;
         DdmPreferences.setTimeOut(AndroidUtils.TIMEOUT);
         AndroidDebugBridge.init(AndroidEnableDdmsAction.isDdmsEnabled());
+        LOG.info("DDMLib initialized");
         AndroidDebugBridge.createBridge(adbPath, true);
       }
       else {
@@ -241,6 +245,7 @@ public abstract class AndroidSdk {
     synchronized (myDdmsLock) {
       AndroidDebugBridge.disconnectBridge();
       AndroidDebugBridge.terminate();
+      LOG.info("DDMLib terminated");
       myDdmLibInitialized = false;
     }
   }
