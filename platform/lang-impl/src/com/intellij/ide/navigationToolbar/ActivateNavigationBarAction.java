@@ -19,36 +19,30 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 
 /**
- * User: anna
- * Date: 10-Nov-2005
+ * @author Anna Kozlova
+ * @author Konstantin Bulenkov
  */
 public class ActivateNavigationBarAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    if (project != null){
-      if (UISettings.getInstance().SHOW_NAVIGATION_BAR){
-        final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
-        final IdeRootPane ideRootPane = ((IdeRootPane)frame.getRootPane());
-        ((NavBarPanel)ideRootPane.findByName(NavBarRootPaneExtension.NAV_BAR).getComponent()).activatePopupOnLastElement();
-      }
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    if (project != null && UISettings.getInstance().SHOW_NAVIGATION_BAR){
+      final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
+      final IdeRootPane ideRootPane = ((IdeRootPane)frame.getRootPane());
+      final NavBarPanel navBarPanel = (NavBarPanel)ideRootPane.findByName(NavBarRootPaneExtension.NAV_BAR).getComponent();
+      navBarPanel.activatePopupOnLastElement(e.getDataContext());
     }
   }
 
   public void update(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    if (project == null){
-      e.getPresentation().setEnabled(false);
-      return;
-    }
-    if (!UISettings.getInstance().SHOW_NAVIGATION_BAR){
-      e.getPresentation().setEnabled(false);
-    }
+    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final boolean enabled = project != null && UISettings.getInstance().SHOW_NAVIGATION_BAR;
+    e.getPresentation().setEnabled(enabled);
   }
 }

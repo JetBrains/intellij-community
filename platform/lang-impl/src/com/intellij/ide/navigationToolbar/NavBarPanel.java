@@ -726,8 +726,14 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   }
 
   public void activatePopupOnLastElement() {
-    myUpdateQueue.queueRebuildUi();
+    activatePopupOnLastElement(null);
+  }
 
+  public void activatePopupOnLastElement(@Nullable DataContext context) {
+    if (context != null) {
+      myUpdateQueue.queueModelUpdate(context);
+    }
+    myUpdateQueue.queueRebuildUi();
     myUpdateQueue.queueSelect(new Runnable() {
       @Override
       public void run() {
