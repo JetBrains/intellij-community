@@ -342,6 +342,7 @@ public class FileStructureDialog extends DialogWrapper {
           myList.repaint(); // to update match highlighting
         }
       });
+      myListSpeedSearch.setComparator(createSpeedSearchComparator());
     }
 
     private boolean hasPrefixShortened(final PropertyChangeEvent evt) {
@@ -412,7 +413,7 @@ public class FileStructureDialog extends DialogWrapper {
       }
 
       ArrayList<Object> filteredElements = new ArrayList<Object>(childElements.length);
-      SpeedSearchBase.SpeedSearchComparator speedSearchComparator = new SpeedSearchBase.SpeedSearchComparator();
+      SpeedSearchBase.SpeedSearchComparator speedSearchComparator = createSpeedSearchComparator();
 
       for (Object child : childElements) {
         if (child instanceof AbstractTreeNode) {
@@ -436,6 +437,10 @@ public class FileStructureDialog extends DialogWrapper {
       getChildElements(getRootElement());   // for some reason necessary to rebuild tree correctly
       super.rebuildTree();
     }
+  }
+
+  private static SpeedSearchBase.SpeedSearchComparator createSpeedSearchComparator() {
+    return new SpeedSearchBase.SpeedSearchComparator(false);
   }
 
   private class MyTreeActionsOwner implements TreeActionsOwner {

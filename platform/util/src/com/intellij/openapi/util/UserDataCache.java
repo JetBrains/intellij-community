@@ -44,4 +44,19 @@ public abstract class UserDataCache<T, Owner extends UserDataHolder, Param> exte
   protected final void putValue(final T t, final Owner owner, final Key<T> key) {
     owner.putUserData(key, t);
   }
+
+  @Override
+  public T get(Key<T> a, Owner owner, Param p) {
+    T value = owner.getUserData(a);
+    if (value == null) {
+      value = compute(owner, p);
+      value = ((UserDataHolderEx)owner).putUserDataIfAbsent(a, value);
+    }
+    return value;
+  }
+
+  @Override
+  public void clear(Key<T> key, Owner owner) {
+    owner.putUserData(key, null);
+  }
 }

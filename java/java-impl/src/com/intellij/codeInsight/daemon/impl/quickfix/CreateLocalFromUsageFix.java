@@ -20,12 +20,15 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -59,10 +62,10 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       return;
     }
 
-    Project project = myReferenceExpression.getProject();
+    final Project project = myReferenceExpression.getProject();
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
 
-    PsiFile targetFile = targetClass.getContainingFile();
+    final PsiFile targetFile = targetClass.getContainingFile();
 
     PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
     PsiType type = expectedTypes[0];
@@ -104,12 +107,25 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     builder.setEndVariableAfter(var.getNameIdentifier());
     Template template = builder.buildTemplate();
 
-    Editor newEditor = positionCursor(project, targetFile, var);
+    final Editor newEditor = positionCursor(project, targetFile, var);
     TextRange range = var.getTextRange();
     newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
 
-    TemplateManager manager = TemplateManager.getInstance(project);
-    manager.startTemplate(newEditor, template);
+    startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
+      @Override
+      public void templateFinished(Template template, boolean brokenOff) {
+        PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
+        final int offset = newEditor.getCaretModel().getOffset();
+        final PsiLocalVariable localVariable = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset, PsiLocalVariable.class, false);
+        if (localVariable != null) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              CodeStyleManager.getInstance(project).reformat(localVariable);
+            }
+          });
+        }
+      }
+    });
   }
 
   protected boolean isAllowOuterTargetClass() {

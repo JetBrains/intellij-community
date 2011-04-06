@@ -15,9 +15,7 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -85,12 +83,8 @@ public class ArtifactBySourceFileFinderImpl extends ArtifactBySourceFileFinder {
             }
           }
           else if (element instanceof ModuleOutputPackagingElement) {
-            final Module module = ((ModuleOutputPackagingElement)element).findModule(context);
-            if (module != null) {
-              final ModuleRootModel rootModel = context.getModulesProvider().getRootModel(module);
-              for (VirtualFile sourceRoot : rootModel.getSourceRoots(false)) {
+            for (VirtualFile sourceRoot : ((ModuleOutputPackagingElement)element).getSourceRoots(context)) {
               result.put(sourceRoot, artifact);
-              }
             }
           }
           return true;

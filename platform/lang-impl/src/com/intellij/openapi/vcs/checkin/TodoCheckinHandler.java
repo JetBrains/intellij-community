@@ -149,9 +149,9 @@ public class TodoCheckinHandler extends CheckinHandler {
         }
     };
     final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, "Looking for new and edited TODO items...", true, myProject);
-    if (! completed || (worker.getAddedOrEditedTodos().isEmpty() && worker.getInChangedTodos().isEmpty() &&
+    if (completed && (worker.getAddedOrEditedTodos().isEmpty() && worker.getInChangedTodos().isEmpty() &&
       worker.getSkipped().isEmpty())) return ReturnResult.COMMIT;
-
+    if (! completed) return ReturnResult.CANCEL;
     return showResults(worker, executor);
   }
 

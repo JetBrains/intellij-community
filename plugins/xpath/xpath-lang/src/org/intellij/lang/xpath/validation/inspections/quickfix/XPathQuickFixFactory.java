@@ -23,22 +23,18 @@
 package org.intellij.lang.xpath.validation.inspections.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathNodeTest;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.intellij.lang.xpath.validation.inspections.XPathInspection;
+import org.jetbrains.annotations.NotNull;
 
 public interface XPathQuickFixFactory {
     Fix<XPathExpression>[] createImplicitTypeConversionFixes(XPathExpression expression, XPathType type, boolean explicit);
@@ -51,23 +47,21 @@ public interface XPathQuickFixFactory {
 
     boolean isSuppressedFor(PsiElement element, XPathInspection inspection);
 
-    abstract class Fix<E extends PsiElement> implements LocalQuickFix, IntentionAction {
-        protected final E myElement;
-
+    abstract class Fix<E extends PsiElement> extends LocalQuickFixAndIntentionActionOnPsiElement {
         protected Fix(E element) {
-            myElement = element;
+          super(element);
         }
 
         public boolean startInWriteAction() {
             return true;
         }
 
-        public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-            return isAvailableImpl();
-        }
-
-        protected boolean isAvailableImpl() {
-            return myElement.isValid() && myElement.getParent().isValid();
+      @Override
+      public boolean isAvailable(@NotNull Project project,
+                                 @NotNull PsiFile file,
+                                 @NotNull PsiElement startElement,
+                                 @NotNull PsiElement endElement) {
+            return startElement.isValid() && startElement.getParent().isValid();
         }
 
         @NotNull
@@ -75,23 +69,22 @@ public interface XPathQuickFixFactory {
             return getName();
         }
 
-        public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-            assert myElement == descriptor.getPsiElement();
-            if (!isAvailableImpl()) return;
+      @Override
+      public void invoke(@NotNull Project project,
+                         @NotNull PsiFile file,
+                         @NotNull PsiElement startElement,
+                         @NotNull PsiElement endElement) {
+        if(!CodeInsightUtilBase.prepareFileForWrite(file)) {
+            return;
+        }
             
             try {
-                invokeImpl(project, descriptor.getPsiElement().getContainingFile());
+                invokeImpl(project, file);
             } catch (IncorrectOperationException e) {
                 Logger.getInstance(getClass().getName()).error(e);
             }
         }
 
-        public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-            if(!CodeInsightUtilBase.prepareFileForWrite(file)) {
-                return;
-            }
-            invokeImpl(project, file);
-        }
 
         protected abstract void invokeImpl(Project project, PsiFile file) throws IncorrectOperationException;
     }

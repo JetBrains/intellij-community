@@ -32,8 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -109,10 +110,11 @@ public class SuppressForMemberFix extends SuppressIntentionAction {
     final GrExpression toAdd = GroovyPsiElementFactory.getInstance(project).createExpressionFromText("\"" + id + "\"");
     if (annotation != null) {
       final PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue(null);
-      if (value instanceof GrListOrMap) {
+      if (value instanceof GrAnnotationArrayInitializer) {
         value.add(toAdd);
       } else if (value != null) {
-        final GrExpression list = GroovyPsiElementFactory.getInstance(project).createExpressionFromText("[]");
+        GrAnnotation anno = GroovyPsiElementFactory.getInstance(project).createAnnotationFromText("@A([])");
+        final GrAnnotationArrayInitializer list = (GrAnnotationArrayInitializer)anno.findDeclaredAttributeValue(null);
         list.add(value);
         list.add(toAdd);
         annotation.setDeclaredAttributeValue(null, list);

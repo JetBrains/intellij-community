@@ -59,6 +59,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -66,9 +67,12 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.searches.DefinitionsSearch;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LightweightHint;
+import com.intellij.usageView.UsageViewShortNameLocation;
+import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -85,7 +89,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private final FileEditorManager myFileEditorManager;
 
   private enum BrowseMode {None, Declaration, TypeDeclaration, Implementation}
-
   private final KeyListener myEditorKeyListener = new KeyAdapter() {
     public void keyPressed(final KeyEvent e) {
       handleKey(e);
@@ -226,6 +229,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     return false;
   }
 
+  @TestOnly
+  public static String getInfo(PsiElement element, PsiElement atPointer) {
+    return generateInfo(element, atPointer);
+  }
+
   @Nullable
   private static String generateInfo(PsiElement element, PsiElement atPointer) {
     final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element, atPointer);
@@ -242,6 +250,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
 
+    info = getQuickNavigateInfo(element);
+    if (info != null) {
+      return info;
+    }
+
     if (element instanceof NavigationItem) {
       final ItemPresentation presentation = ((NavigationItem)element).getPresentation();
       if (presentation != null) {
@@ -250,6 +263,21 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
 
     return null;
+  }
+
+  @Nullable
+  private static String getQuickNavigateInfo(PsiElement element) {
+    final String name = ElementDescriptionUtil.getElementDescription(element, UsageViewShortNameLocation.INSTANCE);
+    if (StringUtil.isEmpty(name)) return null;
+    final String typeName = ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE);
+    final PsiFile file = element.getContainingFile();
+    final StringBuilder sb = new StringBuilder();
+    if (StringUtil.isNotEmpty(typeName)) sb.append(typeName).append(" ");
+    sb.append("\"").append(name).append("\"");
+    if (file != null && file.isPhysical()) {
+      sb.append(" [").append(file.getName()).append("]");
+    }
+    return sb.toString();
   }
 
   private abstract static class Info {

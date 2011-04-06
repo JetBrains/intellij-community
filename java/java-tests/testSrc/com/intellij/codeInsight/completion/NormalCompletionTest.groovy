@@ -809,6 +809,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   public void testQualifierCastingWithUnknownAssignments() throws Throwable { doTest(); }
   public void testQualifierCastingBeforeLt() throws Throwable { doTest(); }
 
+  public void testOrAssignmentDfa() throws Throwable { doTest(); }
+
   public void testWildcardsInLookup() throws Exception {
     configure()
     assertNotNull(getLookup());

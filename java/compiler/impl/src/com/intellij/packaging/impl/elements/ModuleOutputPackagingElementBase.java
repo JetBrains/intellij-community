@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,6 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
-import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
-import com.intellij.packaging.impl.ui.ModuleElementPresentation;
-import com.intellij.packaging.ui.ArtifactEditorContext;
-import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NonNls;
@@ -43,25 +39,20 @@ import java.util.List;
 /**
  * @author nik
  */
-public class ModuleOutputPackagingElementImpl extends PackagingElement<ModuleOutputPackagingElementImpl.ModuleOutputPackagingElementState>
-  implements ModuleOutputPackagingElement {
+public abstract class ModuleOutputPackagingElementBase extends PackagingElement<ModuleOutputPackagingElementBase.ModuleOutputPackagingElementState> implements ModuleOutputPackagingElement {
   @NonNls public static final String MODULE_NAME_ATTRIBUTE = "name";
-  private ModulePointer myModulePointer;
-  private final Project myProject;
+  protected ModulePointer myModulePointer;
+  protected final Project myProject;
 
-  public ModuleOutputPackagingElementImpl(@NotNull Project project) {
-    super(ModuleOutputElementType.MODULE_OUTPUT_ELEMENT_TYPE);
-    myProject = project;
-  }
-
-  public ModuleOutputPackagingElementImpl(@NotNull Project project, @NotNull ModulePointer modulePointer) {
-    super(ModuleOutputElementType.MODULE_OUTPUT_ELEMENT_TYPE);
+  public ModuleOutputPackagingElementBase(PackagingElementType type, Project project, ModulePointer modulePointer) {
+    super(type);
     myProject = project;
     myModulePointer = modulePointer;
   }
 
-  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
-    return new DelegatedPackagingElementPresentation(new ModuleElementPresentation(myModulePointer, context));
+  public ModuleOutputPackagingElementBase(PackagingElementType type, Project project) {
+    super(type);
+    myProject = project;
   }
 
   @Override
@@ -69,11 +60,13 @@ public class ModuleOutputPackagingElementImpl extends PackagingElement<ModuleOut
                                                           @NotNull ArtifactAntGenerationContext generationContext,
                                                           @NotNull ArtifactType artifactType) {
     if (myModulePointer != null) {
-      final String moduleOutput = BuildProperties.propertyRef(generationContext.getModuleOutputPath(myModulePointer.getModuleName()));
+      final String moduleOutput = BuildProperties.propertyRef(getModuleOutputAntProperty(generationContext));
       return Collections.singletonList(creator.createDirectoryContentCopyInstruction(moduleOutput));
     }
     return Collections.emptyList();
   }
+
+  protected abstract String getModuleOutputAntProperty(ArtifactAntGenerationContext generationContext);
 
   @Override
   public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
@@ -83,13 +76,16 @@ public class ModuleOutputPackagingElementImpl extends PackagingElement<ModuleOut
     if (module != null) {
       final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
       if (extension != null) {
-        final VirtualFile output = extension.getCompilerOutputPath();
+        final VirtualFile output = getModuleOutputPath(extension);
         if (output != null) {
           creator.addDirectoryCopyInstructions(output, null);
         }
       }
     }
   }
+
+  @Nullable
+  protected abstract VirtualFile getModuleOutputPath(CompilerModuleExtension extension);
 
   @NotNull
   @Override
@@ -99,8 +95,8 @@ public class ModuleOutputPackagingElementImpl extends PackagingElement<ModuleOut
 
   @Override
   public boolean isEqualTo(@NotNull PackagingElement<?> element) {
-    return element instanceof ModuleOutputPackagingElementImpl && myModulePointer != null
-           && myModulePointer.equals(((ModuleOutputPackagingElementImpl)element).myModulePointer);
+    return element.getClass() == getClass() && myModulePointer != null
+           && myModulePointer.equals(((ModuleOutputPackagingElementBase)element).myModulePointer);
   }
 
   public ModuleOutputPackagingElementState getState() {
@@ -114,11 +110,6 @@ public class ModuleOutputPackagingElementImpl extends PackagingElement<ModuleOut
   public void loadState(ModuleOutputPackagingElementState state) {
     final String moduleName = state.getModuleName();
     myModulePointer = moduleName != null ? ModulePointerManager.getInstance(myProject).create(moduleName) : null;
-  }
-
-  @NonNls @Override
-  public String toString() {
-    return "module:" + getModuleName();
   }
 
   @Override

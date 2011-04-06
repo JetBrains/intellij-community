@@ -22,6 +22,7 @@ import com.intellij.ide.actions.AboutAction;
 import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -31,14 +32,34 @@ import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.ui.mac.foundation.ID;
+import com.sun.jna.Callback;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.event.MouseEvent;
 import java.io.File;
 
 /**
  * @author max
  */
 public class MacOSApplicationProvider implements ApplicationComponent {
+
+  private static final Callback IMPL = new Callback() {
+    public void callback(ID self, String selector) {
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          ActionManagerEx am = ActionManagerEx.getInstanceEx();
+          MouseEvent me =
+            new MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
+          am.tryToExecute(am.getAction("CheckForUpdate"), me, null, null, false);
+        }
+      });
+    }
+  };
+
   @NotNull
   public String getComponentName() {
     return "MACOSApplicationProvider";
@@ -108,6 +129,34 @@ public class MacOSApplicationProvider implements ApplicationComponent {
       application.addPreferencesMenuItem();
       application.setEnabledAboutMenu(true);
       application.setEnabledPreferencesMenu(true);
+
+
+      installAutoUpdateMenu();
+    }
+
+    private static void installAutoUpdateMenu() {
+      ID pool = Foundation.invoke("NSAutoreleasePool", "new");
+
+      ID app = Foundation.invoke("NSApplication", "sharedApplication");
+      ID menu = Foundation.invoke(app, Foundation.createSelector("menu"));
+      ID item = Foundation.invoke(menu, Foundation.createSelector("itemAtIndex:"), 0);
+      ID appMenu = Foundation.invoke(item, Foundation.createSelector("submenu"));
+
+
+      final ID checkForUpdatesClass = Foundation.registerObjcClass(Foundation.getClass("NSMenuItem"), "NSCheckForUpdates");
+      Foundation.addMethod(checkForUpdatesClass, Foundation.createSelector("checkForUpdates"), IMPL, "v");
+
+      Foundation.registerObjcClassPair(checkForUpdatesClass);
+
+      ID checkForUpdates = Foundation.invoke("NSCheckForUpdates", "alloc");
+      Foundation.invoke(checkForUpdates, Foundation.createSelector("initWithTitle:action:keyEquivalent:"), Foundation.cfString("Check for Updates..."),
+                        Foundation.createSelector("checkForUpdates"), Foundation.cfString(""));
+      Foundation.invoke(checkForUpdates, Foundation.createSelector("setTarget:"), checkForUpdates);
+
+      Foundation.invoke(appMenu, Foundation.createSelector("insertItem:atIndex:"), checkForUpdates, 1);
+      Foundation.invoke(checkForUpdates, Foundation.createSelector("release"));
+
+      Foundation.invoke(pool, Foundation.createSelector("release"));
     }
 
     private static Project getProject() {

@@ -623,7 +623,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     // Consider that it's worth to perform complete re-parse instead of merge if the whole document text is replaced and
     // current document lines number is roughly above 5000. This makes sense in situations when external change is performed
     // for the huge file (that causes the whole document to be reloaded and 'merge' way takes a while to complete).
-    if (event.isWholeTextReplaced() && document.getTextLength() > 500000) {
+    if (event.isWholeTextReplaced() && document.getTextLength() > 100000) {
       document.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
     }
     

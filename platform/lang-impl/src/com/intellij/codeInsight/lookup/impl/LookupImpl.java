@@ -581,7 +581,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   public Point calculatePosition(final JComponent component) {
     Dimension dim = component.getPreferredSize();
     int lookupStart = getLookupStart();
-    if (lookupStart < 0) {
+    if (lookupStart < 0 || lookupStart >= myEditor.getDocument().getTextLength()) {
       LOG.error(lookupStart + "; offset=" + myEditor.getCaretModel().getOffset() + "; element=" +
                 getPsiElement());
     }
@@ -593,7 +593,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     JComponent internalComponent = myEditor.getContentComponent();
     final JRootPane rootPane = editorComponent.getRootPane();
     if (rootPane == null) {
-      LOG.error(myEditor.isDisposed());
+      LOG.error(myEditor.isDisposed() + "; shown=" + myShown + "; disposed=" + myDisposed + "; editorShowing=" + myEditor.getContentComponent().isShowing());
     }
     JLayeredPane layeredPane = rootPane.getLayeredPane();
     Point layeredPanePoint=SwingUtilities.convertPoint(internalComponent,location, layeredPane);
@@ -670,6 +670,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public int getLookupStart() {
+    LOG.assertTrue(myLookupStartMarker.isValid());
     return myLookupStartMarker.getStartOffset();
   }
 
@@ -683,6 +684,8 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     finally {
       myChangeGuard = false;
     }
+    LOG.assertTrue(!myDisposed, disposeTrace);
+    LOG.assertTrue(myLookupStartMarker.isValid());
     if (isVisible()) {
       updateLookupBounds();
     }
@@ -807,6 +810,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       }
       myElementHint = null;
     }
+    if (!isFocused()) {
+      return;
+    }
+
     final Collection<LookupElementAction> actions = myModel.getActionsFor(item);
     if (!actions.isEmpty()) {
       myHintAlarm.addRequest(new Runnable() {

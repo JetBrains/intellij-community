@@ -37,6 +37,8 @@ public interface ArtifactAntGenerationContext {
 
   String getModuleOutputPath(@NonNls String moduleName);
 
+  String getModuleTestOutputPath(@NonNls String moduleName);
+
   String getSubstitutedPath(@NonNls String path);
 
   String getArtifactOutputProperty(@NotNull Artifact artifact);

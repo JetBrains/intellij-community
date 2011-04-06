@@ -51,8 +51,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private boolean myMayRequestCurrentWindow;
 
   protected ChooseByNamePopup(final Project project, final ChooseByNameModel model, final ChooseByNamePopup oldPopup,
-                            final PsiElement context, @Nullable final String predefinedText, boolean mayRequestOpenInCurrentWundow) {
-    super(project, model, oldPopup != null ? oldPopup.getEnteredText() : predefinedText, context);
+                            final PsiElement context, @Nullable final String predefinedText, boolean mayRequestOpenInCurrentWundow, int initialIndex) {
+    super(project, model, oldPopup != null ? oldPopup.getEnteredText() : predefinedText, context, initialIndex);
     if (oldPopup == null && predefinedText != null) {
       setPreselectInitialText(true);
     }
@@ -66,11 +66,15 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return myTextField.getText();
   }
 
+  public int getSelectedIndex() {
+    return myList.getSelectedIndex();
+  }
+
   protected void initUI(final Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
     super.initUI(callback, modalityState, allowMultipleSelection);
     //LaterInvocator.enterModal(myTextFieldPanel);
     if (myInitialText != null) {
-      rebuildList(0, 0, null, ModalityState.current(), null);
+      rebuildList(myInitialIndex, 0, null, ModalityState.current(), null);
     }
     if (myOldFocusOwner != null){
       myPreviouslyFocusedComponent = myOldFocusOwner;
@@ -228,18 +232,19 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
                                               @Nullable final String predefinedText) {
-    return createPopup(project, model, context, predefinedText, false);
+    return createPopup(project, model, context, predefinedText, false, 0);
 
   }
 
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
                                               @Nullable final String predefinedText,
-                                              boolean mayRequestOpenInCurrentWindow) {
+                                              boolean mayRequestOpenInCurrentWindow, final int initialIndex) {
     final ChooseByNamePopup oldPopup = project.getUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
     if (oldPopup != null) {
       oldPopup.close(false);
     }
-    ChooseByNamePopup newPopup = new ChooseByNamePopup(project, model, oldPopup, context, predefinedText, mayRequestOpenInCurrentWindow);
+    ChooseByNamePopup newPopup = new ChooseByNamePopup(project, model, oldPopup, context, predefinedText, mayRequestOpenInCurrentWindow,
+                                                       initialIndex);
 
     project.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, newPopup);
     return newPopup;

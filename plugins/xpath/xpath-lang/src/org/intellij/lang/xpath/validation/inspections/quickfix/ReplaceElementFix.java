@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.validation.inspections.quickfix;
 
+import com.intellij.psi.PsiElement;
 import org.intellij.lang.xpath.psi.XPathElement;
 import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
 
@@ -27,6 +28,7 @@ public abstract class ReplaceElementFix<TYPE extends XPathElement> extends XPath
     }
 
     protected void replace(String expressionText) throws IncorrectOperationException {
-        myElement.replace(XPathChangeUtil.createExpression(myElement, expressionText));
+      PsiElement myElement = getStartElement();
+      myElement.replace(XPathChangeUtil.createExpression(myElement, expressionText));
     }
 }

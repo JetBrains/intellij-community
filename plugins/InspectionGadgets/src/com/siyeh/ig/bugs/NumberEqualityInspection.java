@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class NumberEqualityInspection extends BaseInspection {
 
     @Override
     public BaseInspectionVisitor buildVisitor() {
-        return new ObjectEqualityVisitor();
+        return new NumberEqualityVisitor();
     }
 
     @Override
@@ -56,30 +56,24 @@ public class NumberEqualityInspection extends BaseInspection {
         return new EqualityToEqualsFix();
     }
 
-    private static class ObjectEqualityVisitor extends BaseInspectionVisitor {
+    private static class NumberEqualityVisitor extends BaseInspectionVisitor {
 
         @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if(!(expression.getROperand() != null)){
+            final PsiExpression rhs = expression.getROperand();
+            if (rhs == null) {
                 return;
             }
             if (!ComparisonUtils.isEqualityComparison(expression)) {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
-            if (!hasNumberType(lhs)) {
-                return;
-            }
-            final PsiExpression rhs = expression.getROperand();
-            if (!hasNumberType(rhs)) {
+            if (!hasNumberType(lhs) || !hasNumberType(rhs)) {
                 return;
             }
             final String lhsText = lhs.getText();
             if (PsiKeyword.NULL.equals(lhsText)) {
-                return;
-            }
-            if (rhs == null) {
                 return;
             }
             final String rhsText = rhs.getText();
@@ -90,8 +84,8 @@ public class NumberEqualityInspection extends BaseInspection {
             registerError(sign);
         }
 
-        private static boolean hasNumberType(PsiExpression lhs) {
-            return TypeUtils.expressionHasTypeOrSubtype(lhs,
+        private static boolean hasNumberType(PsiExpression expression) {
+            return TypeUtils.expressionHasTypeOrSubtype(expression,
                     CommonClassNames.JAVA_LANG_NUMBER);
         }
     }

@@ -16,23 +16,20 @@
 
 package org.jetbrains.plugins.groovy.lang.completion.filters.control;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLoopStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
 /**
  * @author ilyas
@@ -49,16 +46,8 @@ public class ControlStructureFilter implements ElementFilter {
     }
     if (GroovyCompletionUtil.isNewStatement(context, true)) {
       final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(offset - 1, context);
-      if (leaf != null) {
-        PsiElement parent = leaf.getParent();
-        if (parent instanceof GroovyFile ||
-            parent instanceof GrOpenBlock ||
-            parent instanceof GrClosableBlock) {
-          return true;
-        }
-        if (parent instanceof GrCaseSection) {
-          return true;
-        }
+      if (leaf != null && leaf.getParent() instanceof GrStatementOwner) {
+        return true;
       }
     }
 
@@ -73,22 +62,15 @@ public class ControlStructureFilter implements ElementFilter {
       if (parent instanceof GrReferenceExpression) {
 
         PsiElement superParent = parent.getParent();
+        if (superParent instanceof GrExpression) {
+          superParent = superParent.getParent();
+        }
 
-        if (superParent instanceof GrOpenBlock ||
-            superParent instanceof GrClosableBlock ||
-            superParent instanceof GrCaseSection ||
+        if (superParent instanceof GrStatementOwner ||
             superParent instanceof GrIfStatement ||
             superParent instanceof GrForStatement ||
             superParent instanceof GrWhileStatement) {
           return true;
-        }
-        if (superParent instanceof GrExpression) {
-          PsiElement elem = superParent.getParent();
-          if (elem instanceof GrCaseSection ||
-              elem instanceof GrLoopStatement ||
-              elem instanceof GrIfStatement) {
-            return true;
-          }
         }
       }
 

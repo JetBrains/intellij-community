@@ -2,6 +2,7 @@ package com.intellij.execution.process;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -21,11 +22,14 @@ public class ConsoleHistoryModel implements ModificationTracker {
   public void addToHistory(final String statement) {
     final int maxHistorySize = getMaxHistorySize();
     synchronized (myHistory) {
-      removeFromHistory(statement);
-      if (myHistory.size() >= maxHistorySize) {
-        myHistory.removeLast();
+      myHistoryCursor = -1;
+      if (!StringUtil.isEmptyOrSpaces(statement)) {
+        removeFromHistory(statement);
+        if (myHistory.size() >= maxHistorySize) {
+          myHistory.removeLast();
+        }
+        myHistory.addFirst(statement);
       }
-      myHistory.addFirst(statement);
     }
   }
 
@@ -36,7 +40,7 @@ public class ConsoleHistoryModel implements ModificationTracker {
   public void removeFromHistory(final String statement) {
     synchronized (myHistory) {
       myModificationTracker++;
-      myHistoryCursor = -1;
+
       myHistory.remove(statement);
     }
   }

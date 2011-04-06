@@ -217,6 +217,9 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
             doPostponedFormatting(viewProvider);
           }
         }
+        catch (Exception e) {
+          LOG.error(e);
+        }
         finally {
           LOG.assertTrue(myReformatElements.isEmpty());
         }

@@ -162,6 +162,24 @@ public class OptimizeImportsTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult("import a.b.c.d");
   }
 
+  public void testCleanBeforeJavadoc() throws Exception {
+    myFixture.configureByText("a.groovy", """import javax.swing.JFrame
+
+/**
+ * some javadoc
+ */
+class Fooxx<caret>{
+}""");
+    myFixture.type ' '
+    myFixture.doHighlighting()
+//    doOptimizeImports();
+    myFixture.checkResult("""/**
+ * some javadoc
+ */
+class Fooxx <caret>{
+}""");
+  }
+
   private void doTest() throws Throwable {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);

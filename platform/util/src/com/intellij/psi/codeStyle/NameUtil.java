@@ -505,6 +505,9 @@ public class NameUtil {
       }
 
       if (StringUtil.toLowerCase(name.charAt(nameIndex)) != StringUtil.toLowerCase(myPattern[patternIndex])) {
+        if (Character.isDigit(name.charAt(nameIndex))) {
+          return matchName(name, patternIndex, nameIndex + 1);
+        }
         return null;
       }
 

@@ -59,12 +59,14 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
     }
 
     return doCreateArtifact(dialog.getSelectedModules(), dialog.getMainClassName(), dialog.getDirectoryForManifest(),
-                            dialog.isExtractLibrariesToJar());
+                            dialog.isExtractLibrariesToJar(), dialog.isIncludeTests());
   }
 
   @Nullable
   public NewArtifactConfiguration doCreateArtifact(final Module[] modules, final String mainClassName,
-                                                    final String directoryForManifest, final boolean extractLibrariesToJar) {
+                                                   final String directoryForManifest,
+                                                   final boolean extractLibrariesToJar,
+                                                   final boolean includeTests) {
     VirtualFile manifestFile = null;
     final Project project = myContext.getProject();
     if (mainClassName != null && !mainClassName.isEmpty() || !extractLibrariesToJar) {
@@ -92,14 +94,21 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
     final PackagingElementFactory factory = PackagingElementFactory.getInstance();
     final CompositePackagingElement<?> archive = factory.createArchive(FileUtil.sanitizeFileName(name) + ".jar");
 
-    final OrderEnumerator orderEnumerator = ProjectRootManager.getInstance(project).orderEntries(Arrays.asList(modules));
+    OrderEnumerator orderEnumerator = ProjectRootManager.getInstance(project).orderEntries(Arrays.asList(modules));
 
     final Set<Library> libraries = new THashSet<Library>();
-    orderEnumerator.using(myContext.getModulesProvider()).withoutSdk().productionOnly().runtimeOnly().recursively().forEach(new Processor<OrderEntry>() {
+    if (!includeTests) {
+      orderEnumerator = orderEnumerator.productionOnly();
+    }
+    orderEnumerator.using(myContext.getModulesProvider()).withoutSdk().runtimeOnly().recursively().forEach(new Processor<OrderEntry>() {
       @Override
       public boolean process(OrderEntry orderEntry) {
         if (orderEntry instanceof ModuleSourceOrderEntry) {
-          archive.addOrFindChild(factory.createModuleOutput(orderEntry.getOwnerModule()));
+          Module module = orderEntry.getOwnerModule();
+          archive.addOrFindChild(factory.createModuleOutput(module));
+          if (includeTests) {
+            archive.addOrFindChild(factory.createTestModuleOutput(module));
+          }
         }
         else if (orderEntry instanceof LibraryOrderEntry) {
           ContainerUtil.addIfNotNull(((LibraryOrderEntry)orderEntry).getLibrary(), libraries);

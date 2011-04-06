@@ -646,6 +646,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
   private class MyTreeSelectionListener implements TreeSelectionListener {
     private final TextAttributes myAttributes;
+    private RangeHighlighter myHighlighter;
 
     public MyTreeSelectionListener() {
       myAttributes = new TextAttributes();
@@ -656,11 +657,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     public void valueChanged(TreeSelectionEvent e) {
       if (!myEditor.getDocument().getText().equals(myLastParsedText)) return;
       TreePath path = myTree.getSelectionPath();
-      if (path == null) {
-        clearSelection();
-      }
-      else {
-        clearSelection();
+      clearSelection();
+      if (path != null) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
         if (!(node.getUserObject() instanceof ViewerNodeDescriptor)) return;
         ViewerNodeDescriptor descriptor = (ViewerNodeDescriptor)node.getUserObject();
@@ -684,8 +682,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
 
           final int textLength = myEditor.getDocument().getTextLength();
           if (end <= textLength) {
-            myEditor.getMarkupModel()
-              .addRangeHighlighter(start, end, HighlighterLayer.LAST, myAttributes, HighlighterTargetArea.EXACT_RANGE);
+            myHighlighter = myEditor.getMarkupModel().addRangeHighlighter(start, end, HighlighterLayer.LAST, myAttributes, HighlighterTargetArea.EXACT_RANGE);
             if (myTree.hasFocus()) {
               myEditor.getCaretModel().moveToOffset(start);
               myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -716,7 +713,10 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     }
 
     private void clearSelection() {
-      myEditor.getMarkupModel().removeAllHighlighters();
+      if (myHighlighter != null) {
+        myEditor.getMarkupModel().removeHighlighter(myHighlighter);
+        myHighlighter.dispose();
+      }
     }
   }
 

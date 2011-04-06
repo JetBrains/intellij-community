@@ -34,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -104,8 +105,11 @@ public class TodoCheckinHandlerWorker {
     for (Change change : changes) {
       ProgressManager.checkCanceled();
       if (change.getAfterRevision() == null) continue;
-      final VirtualFile afterFile = change.getAfterRevision().getFile().getVirtualFile();
-      if (afterFile.isDirectory() || afterFile.getFileType().isBinary()) continue;
+      VirtualFile afterFile = change.getAfterRevision().getFile().getVirtualFile();
+      if (afterFile == null) {
+        afterFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(change.getAfterRevision().getFile().getIOFile());
+      }
+      if (afterFile == null || afterFile.isDirectory() || afterFile.getFileType().isBinary()) continue;
       myPsiFile = null;
 
       if (afterFile.isValid()) {

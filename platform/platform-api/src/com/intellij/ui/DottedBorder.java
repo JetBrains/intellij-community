@@ -25,17 +25,19 @@ import java.awt.*;
  * Date: 08-Nov-2005
  */
 public class DottedBorder implements Border {
-  private final Insets myInsets;
+  private final int myTop, myBottom, myLeft, myRight;
   private final Color myColor;
 
   public DottedBorder(Insets insets, Color color) {
-    myInsets = insets;
+    myTop = insets.top;
+    myBottom = insets.bottom;
+    myLeft = insets.left;
+    myRight = insets.right;
     myColor = color;
   }
 
   public DottedBorder(Color color) {
-    myInsets = new Insets(1, 1, 1, 1);
-    myColor = color;
+    this(new Insets(1, 1, 1, 1), color);
   }
 
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
@@ -44,7 +46,8 @@ public class DottedBorder implements Border {
   }
 
   public Insets getBorderInsets(Component c) {
-    return myInsets;
+    //return a copy, otherwise someone could change our insets from outside
+    return new Insets(myTop, myLeft, myBottom, myRight);
   }
 
   public boolean isBorderOpaque() {

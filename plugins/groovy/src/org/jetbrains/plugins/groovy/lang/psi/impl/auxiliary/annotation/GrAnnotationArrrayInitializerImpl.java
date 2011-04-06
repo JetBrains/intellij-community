@@ -23,6 +23,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
+
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 04.04.2007
@@ -44,4 +46,16 @@ public class GrAnnotationArrrayInitializerImpl extends GroovyPsiElementImpl impl
   public GrExpression[] getInitializers() {
     return findChildrenByClass(GrExpression.class);
   }
+
+  @Override
+  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+    final GrExpression[] initializers = getInitializers();
+    if (initializers.length == 0) {
+      return super.addInternal(first, last, getNode().getFirstChildNode(), false);
+    }
+    final ASTNode lastChild = getNode().getLastChildNode();
+    getNode().addLeaf(mCOMMA, ",", lastChild);
+    return super.addInternal(first, last, lastChild.getTreePrev(), false);
+  }
+
 }

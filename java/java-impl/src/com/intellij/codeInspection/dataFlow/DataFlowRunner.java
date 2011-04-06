@@ -161,7 +161,8 @@ public class DataFlowRunner {
       LOG.error(psiBlock.getText(), e); /* TODO[max] !!! hack (of 18186). Please fix in better times. */
       return RunnerResult.ABORTED;
     }
-    catch (EmptyStackException e) /* TODO[max] !!! hack (of 18186). Please fix in better times. */ {
+    catch (EmptyStackException e) {
+      //LOG.error(psiBlock.getText(), e); /* TODO[max] !!! hack (of 18186). Please fix in better times. */
       return RunnerResult.ABORTED;
     }
   }

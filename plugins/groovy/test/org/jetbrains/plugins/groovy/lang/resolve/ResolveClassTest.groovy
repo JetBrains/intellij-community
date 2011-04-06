@@ -209,6 +209,21 @@ interface Super {
     assertInstanceOf resolve("A.groovy"), PsiClass;
   }
 
+  public void testPreferImportsToInheritance() {
+    myFixture.addClass("package java.util; public class MyMap { static interface Entry<K,V> {} } ")
+    myFixture.addClass("package java.util; public class MainMap { static interface Entry<K,V> {} } ")
+
+    myFixture.configureByText("a.groovy", """
+import java.util.MainMap.Entry;
+
+public class Test extends MyMap {
+    public void m(E<caret>ntry<String, String> o) {}
+}
+""")
+    def target = myFixture.getFile().findReferenceAt(myFixture.editor.caretModel.offset).resolve()
+    assert assertInstanceOf(target, PsiClass).qualifiedName == 'java.util.MainMap.Entry'
+  }
+
   void testPreferLastImportedAlias() {
     myFixture.addFileToProject "a/C1.groovy", "package a; class C1{}"
     myFixture.addFileToProject "a/C2.groovy", "package a; class C2{}"

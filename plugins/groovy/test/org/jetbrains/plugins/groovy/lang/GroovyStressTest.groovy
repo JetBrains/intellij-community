@@ -82,4 +82,15 @@ class GroovyStressTest extends LightCodeInsightFixtureTestCase {
     IdeaTestUtil.assertTiming "slow", 7000, (System.currentTimeMillis() - start)
   }
 
+  public void testManyAnnotatedFields() {
+    String text = "class Foo {\n"
+    for (i in 1..10) {
+      text += "@Deprecated String foo$i\n"
+    }
+    text += "}"
+
+    myFixture.configureByText("a.groovy", text)
+    IdeaTestUtil.assertTiming "slow", 5000, { myFixture.doHighlighting() } as Runnable
+  }
+
 }

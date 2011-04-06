@@ -32,8 +32,6 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.usageView.UsageViewShortNameLocation;
-import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -66,17 +64,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
     if (element instanceof SchemaPrefix) {
       return ((SchemaPrefix)element).getQuickNavigateInfo();
     }
-    final String name = ElementDescriptionUtil.getElementDescription(element, UsageViewShortNameLocation.INSTANCE);
-    if (StringUtil.isEmpty(name)) return null;
-    final String typeName = ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE);
-    final PsiFile file = element.getContainingFile();
-    final StringBuilder sb = new StringBuilder();
-    if (StringUtil.isNotEmpty(typeName)) sb.append(typeName).append(" ");
-    sb.append("\"").append(name).append("\"");
-    if (file != null && file.isPhysical()) {
-      sb.append(" [").append(file.getName()).append("]");
-    }
-    return sb.toString();
+    return null;
   }
 
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {

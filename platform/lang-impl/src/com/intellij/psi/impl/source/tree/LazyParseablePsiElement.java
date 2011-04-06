@@ -240,6 +240,7 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
 
   @NotNull
   public GlobalSearchScope getResolveScope() {
+    assert isValid();
     return getManager().getFileManager().getResolveScope(this);
   }
 

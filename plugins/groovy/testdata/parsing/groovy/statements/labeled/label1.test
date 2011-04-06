@@ -10,15 +10,14 @@ Groovy script
       PsiElement(identifier)('l')
     PsiElement(:)(':')
     PsiWhiteSpace(' ')
-    Closable block
-      PsiElement({)('{')
-      Parameter list
-        <empty list>
-      Call expression
-        Reference expression
-          PsiElement(identifier)('println')
-        PsiWhiteSpace(' ')
-        Command arguments
-          Literal
-            PsiElement(string)(''bugaga'')
-      PsiElement(})('}')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        Call expression
+          Reference expression
+            PsiElement(identifier)('println')
+          PsiWhiteSpace(' ')
+          Command arguments
+            Literal
+              PsiElement(string)(''bugaga'')
+        PsiElement(})('}')

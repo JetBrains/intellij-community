@@ -36,6 +36,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.parsing.ParseUtilBase;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -76,7 +77,8 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
     if (original instanceof PsiModifierList) {
       final String text = original.getText();
       assert text != null : "Text is null for " + original + "; " + original.getClass();
-      final DummyHolder holder = DummyHolderFactory.createHolder(original.getManager(), new JavaDummyElement(text, MOD_LIST, false), null);
+      final LanguageLevel level = PsiUtil.getLanguageLevel(original);
+      final DummyHolder holder = DummyHolderFactory.createHolder(original.getManager(), new JavaDummyElement(text, MOD_LIST, level), null);
       final TreeElement modifierListElement = holder.getTreeElement().getFirstChildNode();
       if (CodeEditUtil.isNodeGenerated(original.getNode())) modifierListElement.acceptTree(new GeneratedMarkerVisitor());
       return modifierListElement;

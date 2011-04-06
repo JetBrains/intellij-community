@@ -102,14 +102,15 @@ public class PsiWildcardType extends PsiType {
     }
   }
 
-
+  @NotNull
   public GlobalSearchScope getResolveScope() {
     if (myBound != null) {
-      return myBound.getResolveScope();
+      GlobalSearchScope scope = myBound.getResolveScope();
+      if (scope != null) {
+        return scope;
+      }
     }
-    else {
-      return GlobalSearchScope.allScope(myManager.getProject());
-    }
+    return GlobalSearchScope.allScope(myManager.getProject());
   }
 
   @NotNull

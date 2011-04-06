@@ -51,24 +51,27 @@ public class MakeTypeExplicitFix extends ReplaceElementFix<XPathExpression> {
     }
 
     public void invokeImpl(Project project, PsiFile file) throws IncorrectOperationException {
-        if (myType == XPathType.BOOLEAN) {
-            if (myElement.getType() == XPathType.STRING) {
-                final String text;
-                if (ExpectedTypeUtil.isExplicitConversion(myElement)) {
-                    final XPathExpression expr = ExpectedTypeUtil.unparenthesize(myElement);
-                    assert expr != null;
+      XPathExpression myElement = (XPathExpression)getStartElement();
+      if (myType == XPathType.BOOLEAN) {
+        if (myElement.getType() == XPathType.STRING) {
+          final String text;
+          if (ExpectedTypeUtil.isExplicitConversion(myElement)) {
+            final XPathExpression expr = ExpectedTypeUtil.unparenthesize(myElement);
+            assert expr != null;
 
-                    text = ((XPathFunctionCall)expr).getArgumentList()[0].getText();
-                } else {
-                    text = myElement.getText();
-                }
-                replace("string-length(" + text + ") > 0");
-                return;
-            } else if (myElement.getType() == XPathType.NODESET) {
-                replace("count(" + myElement.getText() + ") > 0");
-                return;
-            }
+            text = ((XPathFunctionCall)expr).getArgumentList()[0].getText();
+          }
+          else {
+            text = myElement.getText();
+          }
+          replace("string-length(" + text + ") > 0");
+          return;
         }
-        replace(myType.getName() + "(" + myElement.getText() + ")");
+        else if (myElement.getType() == XPathType.NODESET) {
+          replace("count(" + myElement.getText() + ") > 0");
+          return;
+        }
+      }
+      replace(myType.getName() + "(" + myElement.getText() + ")");
     }
 }

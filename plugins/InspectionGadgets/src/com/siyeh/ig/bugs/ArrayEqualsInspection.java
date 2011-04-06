@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,34 +29,57 @@ import org.jetbrains.annotations.NotNull;
 
 public class ArrayEqualsInspection extends BaseInspection {
 
+    @Override
     @NotNull
     public String getDisplayName(){
         return InspectionGadgetsBundle.message(
                 "equals.called.on.array.display.name");
     }
 
+    @Override
     @NotNull
     public String buildErrorString(Object... infos){
         return InspectionGadgetsBundle.message(
                 "equals.called.on.array.problem.descriptor");
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+    @Override
     public InspectionGadgetsFix buildFix(Object... infos){
-        return new ArrayEqualsFix();
+        final PsiArrayType type = (PsiArrayType)infos[0];
+        if (type != null) {
+            final PsiType componentType = type.getComponentType();
+            if (componentType instanceof PsiArrayType) {
+                return new ArrayEqualsFix(true);
+            }
+        }
+        return new ArrayEqualsFix(false);
     }
 
     private static class ArrayEqualsFix extends InspectionGadgetsFix{
 
-        @NotNull
-        public String getName(){
-          return InspectionGadgetsBundle.message(
-                  "equals.called.on.array.replace.quickfix");
+        private final boolean deepEquals;
+
+        public ArrayEqualsFix(boolean deepEquals) {
+            this.deepEquals = deepEquals;
         }
 
+        @NotNull
+        public String getName(){
+            if (deepEquals) {
+                return InspectionGadgetsBundle.message(
+                        "replace.with.arrays.deep.equals");
+            } else {
+                return InspectionGadgetsBundle.message(
+                        "replace.with.arrays.equals");
+            }
+        }
+
+        @Override
         public void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException{
             final PsiIdentifier name =
@@ -71,15 +94,23 @@ public class ArrayEqualsInspection extends BaseInspection {
             final String qualifierText = qualifier.getText();
             assert call != null;
             final PsiExpressionList argumentList = call.getArgumentList();
-            final PsiExpression[] args = argumentList.getExpressions();
-            final String argText = args[0].getText();
-            @NonNls final String newExpressionText =
-                    "java.util.Arrays.equals(" + qualifierText + ", " +
-                    argText + ')';
-            replaceExpressionAndShorten(call, newExpressionText);
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            final String argumentText = arguments[0].getText();
+            @NonNls final StringBuilder newExpressionText = new StringBuilder();
+            if (deepEquals) {
+                newExpressionText.append("java.util.Arrays.deepEquals(");
+            } else {
+                newExpressionText.append("java.util.Arrays.equals(");
+            }
+            newExpressionText.append(qualifierText);
+            newExpressionText.append(", ");
+            newExpressionText.append(argumentText);
+            newExpressionText.append(')');
+            replaceExpressionAndShorten(call, newExpressionText.toString());
         }
     }
 
+    @Override
     public BaseInspectionVisitor buildVisitor(){
         return new ArrayEqualsVisitor();
     }
@@ -95,16 +126,16 @@ public class ArrayEqualsInspection extends BaseInspection {
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
             final PsiExpressionList argumentList = expression.getArgumentList();
-            final PsiExpression[] args = argumentList.getExpressions();
-            if (args.length == 0) {
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            if (arguments.length == 0) {
                 return;
             }
-            final PsiExpression arg = args[0];
-            if(arg == null){
+            final PsiExpression argument = arguments[0];
+            if(argument == null){
                 return;
             }
-            final PsiType argType = arg.getType();
-            if(!(argType instanceof PsiArrayType)){
+            final PsiType argumentType = argument.getType();
+            if(!(argumentType instanceof PsiArrayType)){
                 return;
             }
             final PsiExpression qualifier =
@@ -116,7 +147,7 @@ public class ArrayEqualsInspection extends BaseInspection {
             if(!(qualifierType instanceof PsiArrayType)){
                 return;
             }
-            registerMethodCallError(expression);
+            registerMethodCallError(expression, qualifierType);
         }
     }
 }

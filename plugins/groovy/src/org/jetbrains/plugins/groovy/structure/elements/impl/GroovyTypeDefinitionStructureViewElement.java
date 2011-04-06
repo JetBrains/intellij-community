@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.structure.elements.impl;
 
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
@@ -32,6 +33,8 @@ import java.util.List;
 import java.util.Set;
 
 public class GroovyTypeDefinitionStructureViewElement extends GroovyStructureViewElement {
+  private static final Logger LOG =
+    Logger.getInstance("#org.jetbrains.plugins.groovy.structure.elements.impl.GroovyTypeDefinitionStructureViewElement");
   public GroovyTypeDefinitionStructureViewElement(GrTypeDefinition typeDefinition) {
     super(typeDefinition);
   }
@@ -45,6 +48,10 @@ public class GroovyTypeDefinitionStructureViewElement extends GroovyStructureVie
   }
 
   public TreeElement[] getChildren() {
+    if (!myElement.isValid()) {
+      return EMPTY_ARRAY;
+    }
+
     List<GroovyStructureViewElement> children = new ArrayList<GroovyStructureViewElement>();
 
     //adding statements for type definition

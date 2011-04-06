@@ -32,6 +32,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -95,6 +96,7 @@ public class VariableInplaceRenamer {
   private ArrayList<RangeHighlighter> myHighlighters;
   private final Editor myEditor;
   private final Project myProject;
+  private RangeMarker myRenameOffset;
 
   public void setAdvertisementText(String advertisementText) {
     myAdvertisementText = advertisementText;
@@ -108,6 +110,7 @@ public class VariableInplaceRenamer {
     myElementToRename = elementToRename;
     myEditor = /*(editor instanceof EditorWindow)? ((EditorWindow)editor).getDelegate() : */editor;
     myProject = myElementToRename.getProject();
+    myRenameOffset = myEditor.getDocument().createRangeMarker(myElementToRename.getTextRange());
   }
 
   public boolean performInplaceRename() {
@@ -230,7 +233,6 @@ public class VariableInplaceRenamer {
     addAdditionalVariables(builder);
 
     final PsiElement scope1 = scope;
-    final int renameOffset = myElementToRename.getTextOffset();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -268,11 +270,10 @@ public class VariableInplaceRenamer {
               @Override
               public void templateFinished(Template template, boolean brokenOff) {
                 super.templateFinished(template, brokenOff);
-                if (myNewName != null) {
-                  performAutomaticRename(myNewName, PsiTreeUtil.getParentOfType(containingFile.findElementAt(renameOffset),
-                                                                                PsiNameIdentifierOwner.class));
-                }
                 moveOffsetAfter(!brokenOff);
+                if (myNewName != null) {
+                  performAutomaticRename(myNewName, getVariable());
+                }
               }
 
               public void templateCancelled(Template template) {
@@ -316,6 +317,16 @@ public class VariableInplaceRenamer {
       return new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
     }
     return null;
+  }
+
+  @Nullable
+  protected PsiNamedElement getVariable() {
+    if (myElementToRename != null && myElementToRename.isValid()) return myElementToRename;
+    final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+    if (psiFile != null) {
+      return PsiTreeUtil.getParentOfType(psiFile.findElementAt(myRenameOffset.getStartOffset()), PsiNameIdentifierOwner.class);
+    }
+    return myElementToRename;
   }
 
   protected void moveOffsetAfter(boolean success) {

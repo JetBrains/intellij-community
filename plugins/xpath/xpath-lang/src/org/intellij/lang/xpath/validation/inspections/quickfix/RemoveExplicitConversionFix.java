@@ -15,16 +15,15 @@
  */
 package org.intellij.lang.xpath.validation.inspections.quickfix;
 
-import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.psi.XPathFunctionCall;
-import org.intellij.lang.xpath.psi.XPathBinaryExpression;
-import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
-
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.lang.xpath.psi.XPathBinaryExpression;
+import org.intellij.lang.xpath.psi.XPathExpression;
+import org.intellij.lang.xpath.psi.XPathFunctionCall;
+import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class RemoveExplicitConversionFix extends ReplaceElementFix<XPathExpression> {
@@ -43,13 +42,18 @@ public class RemoveExplicitConversionFix extends ReplaceElementFix<XPathExpressi
         return "ImplicitTypeConversion";
     }
 
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        if (!super.isAvailable(project, editor, file)) return false;
-        return ((XPathFunctionCall)myElement).getArgumentList().length == 1;
+  @Override
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    return super.isAvailable(project, file, startElement, endElement)
+        && ((XPathFunctionCall)startElement).getArgumentList().length == 1;
     }
 
     public void invokeImpl(Project project, PsiFile file) throws IncorrectOperationException {
-        final XPathExpression arg0 = ((XPathFunctionCall)myElement).getArgumentList()[0];
+      PsiElement myElement = getStartElement();
+      final XPathExpression arg0 = ((XPathFunctionCall)myElement).getArgumentList()[0];
         final XPathExpression outer = PsiTreeUtil.getParentOfType(myElement, XPathExpression.class);
         if (arg0 instanceof XPathBinaryExpression && outer instanceof XPathBinaryExpression) {
             // TODO make this smarter by determining operator precedence

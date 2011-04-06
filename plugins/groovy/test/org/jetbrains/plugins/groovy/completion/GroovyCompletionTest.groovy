@@ -643,4 +643,8 @@ return foo()"""
     checkCompletion("new Abcd<caret>", '<', "new AbcdClass<<caret>>()")
   }
 
+  public void testDoubleSpace() {
+    checkCompletion "asse<caret>x", ' ', 'assert <caret>x'
+  }
+
 }
