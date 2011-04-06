@@ -1,9 +1,11 @@
-package com.jetbrains.python.testing;
+package com.jetbrains.python.configuration;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.project.Project;
+import com.jetbrains.python.testing.PythonTestConfigurationsModel;
+import com.jetbrains.python.testing.TestRunnerService;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -12,19 +14,19 @@ import java.util.List;
 /**
  * User: catherine
  */
-public class TestRunnerConfigurable implements Configurable, NonDefaultProjectConfigurable {
+public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultProjectConfigurable {
   private JPanel myMainPanel;
   private JComboBox myComboBox;
   private PythonTestConfigurationsModel myModel;
   private Project myProject;
 
-  public TestRunnerConfigurable(Project project) {
+  public PyIntegratedToolsConfigurable(Project project) {
     myProject = project;
   }
   @Nls
   @Override
   public String getDisplayName() {
-    return "Test Runner";
+    return "Python Integrated Tools";
   }
 
   @Override
