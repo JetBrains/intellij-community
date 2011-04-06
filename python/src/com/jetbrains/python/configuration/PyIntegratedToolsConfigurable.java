@@ -4,6 +4,10 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.jetbrains.python.documentation.DocStringFormat;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
 import org.jetbrains.annotations.Nls;
@@ -16,13 +20,18 @@ import java.util.List;
  */
 public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultProjectConfigurable {
   private JPanel myMainPanel;
-  private JComboBox myComboBox;
+  private JComboBox myTestRunnerComboBox;
+  private JComboBox myDocstringFormatComboBox;
   private PythonTestConfigurationsModel myModel;
   private Project myProject;
+  private final PyDocumentationSettings myDocumentationSettings;
 
   public PyIntegratedToolsConfigurable(Project project) {
     myProject = project;
+    myDocumentationSettings = PyDocumentationSettings.getInstance(project);
+    myDocstringFormatComboBox.setModel(new CollectionComboBoxModel(DocStringFormat.ALL, myDocumentationSettings.myDocStringFormat));
   }
+
   @Nls
   @Override
   public String getDisplayName() {
@@ -49,13 +58,15 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
   }
 
   private void updateConfigurations() {
-    myComboBox.setModel(myModel);
-
+    myTestRunnerComboBox.setModel(myModel);
   }
 
   @Override
   public boolean isModified() {
-    if (myComboBox.getSelectedItem() != myModel.getProjectConfiguration()) {
+    if (myTestRunnerComboBox.getSelectedItem() != myModel.getProjectConfiguration()) {
+      return true;
+    }
+    if (!Comparing.equal(myDocstringFormatComboBox.getSelectedItem(), myDocumentationSettings.myDocStringFormat)) {
       return true;
     }
     return false;
@@ -64,17 +75,18 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
   @Override
   public void apply() throws ConfigurationException {
     myModel.apply();
+    myDocumentationSettings.myDocStringFormat = (String) myDocstringFormatComboBox.getSelectedItem();
   }
 
   @Override
   public void reset() {
-    myComboBox.setSelectedItem(myModel.getProjectConfiguration());
-    myComboBox.repaint();
+    myTestRunnerComboBox.setSelectedItem(myModel.getProjectConfiguration());
+    myTestRunnerComboBox.repaint();
     myModel.reset();
+    myDocstringFormatComboBox.setSelectedItem(myDocumentationSettings.myDocStringFormat);
   }
 
   @Override
   public void disposeUIResources() {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 }
