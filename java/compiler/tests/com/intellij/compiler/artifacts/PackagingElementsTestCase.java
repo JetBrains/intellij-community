@@ -71,19 +71,19 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
     return new PackagingElementBuilder(getFactory().createDirectory(name), null);
   }
 
-  protected VirtualFile createFile(final String path) throws IOException {
+  protected VirtualFile createFile(final String path) {
     return createFile(path, "");
   }
 
-  protected VirtualFile createFile(final String path, final String text) throws IOException {
+  protected VirtualFile createFile(final String path, final String text) {
     return createFile(path, text, false);
   }
 
-  protected VirtualFile createDir(final String path) throws IOException {
+  protected VirtualFile createDir(final String path) {
     return createFile(path, null, true);
   }
 
-  private VirtualFile createFile(final String path, final String text, final boolean dir) throws IOException {
+  private VirtualFile createFile(final String path, final String text, final boolean dir) {
     return new WriteAction<VirtualFile>() {
       @Override
       protected void run(final Result<VirtualFile> result) {

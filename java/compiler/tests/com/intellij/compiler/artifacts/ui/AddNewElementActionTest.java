@@ -8,16 +8,16 @@ import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
  */
 public class AddNewElementActionTest extends ArtifactEditorTestCase {
 
-  public void testSimple() throws Exception {
-    addModule("mod", null);
+  public void testSimple() {
+    addModule();
     createEditor(addArtifact(root()));
     myArtifactEditor.addNewPackagingElement(ProductionModuleOutputElementType.ELEMENT_TYPE);
     assertLayout("<root>\n" +
                  " module:mod");
   }
 
-  public void testAddToDirectory() throws Exception {
-    addModule("mod", null);
+  public void testAddToDirectory() {
+    addModule();
     createEditor(addArtifact(root().dir("dir")));
     selectNode("dir");
     myArtifactEditor.addNewPackagingElement(ProductionModuleOutputElementType.ELEMENT_TYPE);
@@ -25,9 +25,9 @@ public class AddNewElementActionTest extends ArtifactEditorTestCase {
                  " dir/\n" +
                  "  module:mod");
   }
-  
-  public void testAddToDirectoryInIncludedArtifact() throws Exception {
-    addModule("mod", null);
+
+  public void testAddToDirectoryInIncludedArtifact() {
+    addModule();
     Artifact included = addArtifact("included", root().dir("dir"));
     createEditor(addArtifact(root().artifact(included)), true);
     selectNode("dir");
@@ -38,14 +38,18 @@ public class AddNewElementActionTest extends ArtifactEditorTestCase {
                  "  module:mod");
   }
 
-  public void testDoNotAddIntoIncludedArchive() throws Exception {
-    addModule("mod", null);
+  public void testDoNotAddIntoIncludedArchive() {
+    addModule();
     final Artifact included = addArtifact("included", root().archive("x.jar"));
     createEditor(addArtifact(root().artifact(included)), true);
     selectNode("x.jar");
     addNewElement(ProductionModuleOutputElementType.ELEMENT_TYPE, true);
     assertLayout("<root>\n" +
                  " artifact:included");
+  }
+
+  private void addModule() {
+    addModule("mod", createDir("src"));
   }
 
   private void addNewElement(final ProductionModuleOutputElementType elementType, final boolean confirmationExpected) {
