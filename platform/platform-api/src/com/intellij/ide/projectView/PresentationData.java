@@ -261,6 +261,12 @@ public class PresentationData implements ItemPresentation, ComparableObject {
     myTooltip = from.myTooltip;
   }
 
+  public PresentationData clone() {
+    PresentationData clone = new PresentationData();
+    clone.copyFrom(this);
+    return clone;
+  }
+
   public void applyFrom(PresentationData from) {
     myAttributesKey = getValue(myAttributesKey, from.myAttributesKey);
     myClosedIcon = getValue(myClosedIcon, from.myClosedIcon);

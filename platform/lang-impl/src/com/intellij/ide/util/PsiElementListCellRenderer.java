@@ -104,7 +104,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(Font.PLAIN, color);
 
         assert name != null : "Null name for PSI element " + element;
-        SpeedSearchUtil.appendColoredFragmentForMatcher(name,  this, nameAttributes, myMatcher, bgColor);
+        SpeedSearchUtil.appendColoredFragmentForMatcher(name,  this, nameAttributes, myMatcher, bgColor, selected);
         setIcon(PsiElementListCellRenderer.this.getIcon(element));
 
         String containerText = getContainerText(element, name + (myModuleName != null ? myModuleName + "        " : ""));

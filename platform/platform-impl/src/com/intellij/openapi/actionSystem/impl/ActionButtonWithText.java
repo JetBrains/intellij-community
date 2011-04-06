@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -38,7 +39,7 @@ public class ActionButtonWithText extends ActionButton {
     final Dimension preferredSize = new Dimension(super.getPreferredSize());
     final String text = getText();
     final FontMetrics fontMetrics = getFontMetrics(getFont());
-    preferredSize.width += ICON_TEXT_SPACE;
+    preferredSize.width += iconTextSpace();
     preferredSize.width += fontMetrics.stringWidth(text);
     return preferredSize;
   }
@@ -58,7 +59,7 @@ public class ActionButtonWithText extends ActionButton {
     UIUtil.applyRenderingHints(g);
     g.setColor(isButtonEnabled() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
     final int iconTextDifference = (int)Math.ceil((icon.getIconHeight() - textHeight) / 2);
-    final int textStartX = x + icon.getIconWidth() + ICON_TEXT_SPACE;
+    final int textStartX = x + icon.getIconWidth() + iconTextSpace();
     g.drawString(text, textStartX, y + iconTextDifference + fontMetrics.getMaxAscent());
     final int mnemonicIndex = getMnemonicCharIndex(text);
     if (mnemonicIndex >= 0) {
@@ -70,7 +71,15 @@ public class ActionButtonWithText extends ActionButton {
     }
   }
 
+  private int iconTextSpace() {
+    return (getIcon() instanceof EmptyIcon || getIcon() == null ) ? 0 : ICON_TEXT_SPACE;
+  }
+
   private int getMnemonicCharIndex(String text) {
+    final int mnemonicIndex = myPresentation.getDisplayedMnemonicIndex();
+    if (mnemonicIndex != -1) {
+      return mnemonicIndex;
+    }
     final ShortcutSet shortcutSet = myAction.getShortcutSet();
     final Shortcut[] shortcuts = shortcutSet.getShortcuts();
     for (int i = 0; i < shortcuts.length; i++) {

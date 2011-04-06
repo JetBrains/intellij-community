@@ -112,7 +112,7 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
     if (virtualFile == null) return null;
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(file.getProject()).getFileIndex();
     boolean tests = fileIndex.isInTestSourceContent(virtualFile);
-    return module.getModuleRuntimeScope(tests).union(module.getModuleWithDependenciesAndLibrariesScope(tests));
+    return module.getModuleRuntimeScope(tests);
   }
 
   public static class AnnotationType extends PsiClassConverter {

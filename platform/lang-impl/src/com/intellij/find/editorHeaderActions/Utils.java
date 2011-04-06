@@ -3,8 +3,10 @@ package com.intellij.find.editorHeaderActions;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.SystemInfo;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class Utils {
   private Utils() {
@@ -37,6 +39,26 @@ public class Utils {
     }
     else {
       popup.showUnderneathOf(textField);
+    }
+  }
+
+  public static void setSmallerFont(final JComponent component) {
+    if (SystemInfo.isMac) {
+      Font f = new JLabel(" ").getFont();
+      Font font = smaller(f);
+      component.setFont(font);
+    }
+  }
+
+  static Font smaller(Font f) {
+    return f.deriveFont(f.getStyle(), f.getSize() - 2);
+  }
+
+  public static void setSmallerFontForChildren(JComponent component) {
+    for (Component c : component.getComponents()) {
+      if (c instanceof JComponent) {
+        setSmallerFont((JComponent)c);
+      }
     }
   }
 }

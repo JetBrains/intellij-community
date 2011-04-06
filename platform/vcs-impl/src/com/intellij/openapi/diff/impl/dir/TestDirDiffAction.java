@@ -22,7 +22,9 @@ import com.intellij.openapi.diff.DirDiffManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 
 /**
  * @author Konstantin Bulenkov
@@ -32,9 +34,11 @@ public class TestDirDiffAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project != null) {
+      final VirtualFile src = VirtualFileManager.getInstance().findFileByUrl(Registry.stringValue("dir.diff.default.src.folder"));
+      final VirtualFile trg = VirtualFileManager.getInstance().findFileByUrl(Registry.stringValue("dir.diff.default.trg.folder"));
       final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
-      final VirtualFile[] files1 = FileChooserFactory.getInstance().createFileChooser(descriptor, project).choose(null, project);
-      final VirtualFile[] files2 = FileChooserFactory.getInstance().createFileChooser(descriptor, project).choose(null, project);
+      final VirtualFile[] files1 = src != null ? new VirtualFile[]{src} : FileChooserFactory.getInstance().createFileChooser(descriptor, project).choose(null, project);
+      final VirtualFile[] files2 = trg != null ? new VirtualFile[]{trg} : FileChooserFactory.getInstance().createFileChooser(descriptor, project).choose(null, project);
       if (files1.length == 1 && files2.length == 1) {
         final DirDiffManager diffManager = DirDiffManager.getInstance(project);
         if (diffManager.canShow(files1[0], files2[0])) {

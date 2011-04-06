@@ -30,6 +30,8 @@ public class LabeledIcon implements Icon {
   private final String[] myStrings;
   private int myIconTextGap = 0;
 
+  private Font myFont = UIUtil.getLabelFont();
+
   /**
    * @param icon     not <code>null</code> icon.
    * @param text     to be painted under the <code>icon<code>. This parameter can
@@ -51,6 +53,14 @@ public class LabeledIcon implements Icon {
     }
   }
 
+  public Font getFont() {
+    return myFont;
+  }
+
+  public void setFont(Font font) {
+    myFont = font;
+  }
+
   public void setIconTextGap(int iconTextGap) {
     myIconTextGap = iconTextGap;
   }
@@ -69,13 +79,16 @@ public class LabeledIcon implements Icon {
 
   private int getTextHeight() {
     if (myStrings != null) {
-      Font font = UIUtil.getLabelFont();
-      FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
-      return fontMetrics.getHeight() * myStrings.length;
+      return getFontHeight(myStrings, myFont);
     }
     else {
       return 0;
     }
+  }
+
+  private static int getFontHeight(String[] strings, Font font) {
+    FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
+    return fontMetrics.getHeight() * strings.length;
   }
 
   private int getTextWidth() {
@@ -109,7 +122,7 @@ public class LabeledIcon implements Icon {
     }
     // Draw text
     if (myStrings != null) {
-      Font font = UIUtil.getLabelFont();
+      Font font = getFont();
       FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
       g.setFont(fontMetrics.getFont());
       if (myMnemonic != null) {

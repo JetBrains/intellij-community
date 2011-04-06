@@ -37,7 +37,7 @@ public enum ResourceRelevance {
   public static ResourceRelevance getRelevance(VirtualFile resource, @Nullable Module module, ProjectFileIndex fileIndex) {
     boolean inTest = fileIndex.isInTestSourceContent(resource);
     if (module != null) {
-      GlobalSearchScope scope = module.getModuleWithDependenciesAndLibrariesScope(inTest);
+      GlobalSearchScope scope = module.getModuleRuntimeScope(inTest);
       Module resourceModule = fileIndex.getModuleForFile(resource);
       if (resourceModule != null &&
           (resourceModule == module || scope.isSearchInModuleContent(resourceModule)) ||

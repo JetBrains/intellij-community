@@ -19,6 +19,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -33,19 +34,24 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
 
   public final boolean update() {
     if (shouldUpdateData()) {
+      PresentationData before = getPresentation().clone();
       PresentationData updated = getUpdatedPresentation();
-      return shouldApply() ? apply(updated) : false;
+      return shouldApply() ? apply(updated, before) : false;
     } else {
       return false;
     }
   }
 
   protected final boolean apply(PresentationData presentation) {
+    return apply(presentation, null);
+  }
+
+  protected final boolean apply(PresentationData presentation, @Nullable PresentationData before) {
     myOpenIcon = presentation.getIcon(true);
     myClosedIcon = presentation.getIcon(false);
     myName = presentation.getPresentableText();
     myColor = presentation.getForcedTextForeground();
-    boolean updated = !presentation.equals(myUpdatedPresentation);
+    boolean updated = before != null ? !presentation.equals(before) : true;
 
     if (myUpdatedPresentation == null) {
       myUpdatedPresentation = createPresentation();

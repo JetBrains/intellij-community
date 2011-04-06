@@ -25,9 +25,8 @@ import java.util.Locale;
 
 /**
  * @author Konstantin Bulenkov
- * todo: actually it's a scientific notation, not an engineering one.
  */
-public class ConvertToEngineeringNotationIntention extends ConvertNumberIntentionBase {
+public class ConvertToScientificNotationIntention extends ConvertNumberIntentionBase {
   private static final DecimalFormat FORMAT = new DecimalFormat("0.0#############E00", new DecimalFormatSymbols(Locale.US));
 
   @Override
@@ -40,6 +39,6 @@ public class ConvertToEngineeringNotationIntention extends ConvertNumberIntentio
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {
-    return new ConvertToEngineeringNotationPredicate();
+    return new ConvertToScientificNotationPredicate();
   }
 }
