@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -120,14 +121,15 @@ public class ArrayEqualsInspection extends BaseInspection {
         @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
-            if(!MethodCallUtils.isEqualsCall(expression)){
-                return;
-            }
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();
+            final String methodName = methodExpression.getReferenceName();
+            if (!HardcodedMethodConstants.EQUALS.equals(methodName)) {
+                return;
+            }
             final PsiExpressionList argumentList = expression.getArgumentList();
             final PsiExpression[] arguments = argumentList.getExpressions();
-            if (arguments.length == 0) {
+            if (arguments.length != 1) {
                 return;
             }
             final PsiExpression argument = arguments[0];
