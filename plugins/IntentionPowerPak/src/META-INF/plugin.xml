@@ -21,7 +21,7 @@
     </intentionAction>
 
     <intentionAction>
-      <className>com.siyeh.ipp.integer.ConvertToEngineeringNotationIntention</className>
+      <className>com.siyeh.ipp.integer.ConvertToScientificNotationIntention</className>
       <categoryKey>intention.category.numbers</categoryKey>
     </intentionAction>
 
