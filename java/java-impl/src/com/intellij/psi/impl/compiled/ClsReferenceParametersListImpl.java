@@ -36,7 +36,7 @@ public class ClsReferenceParametersListImpl extends ClsElementImpl implements Ps
     myTypeElements = typeElements;
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     if (myTypeElements.length != 0) {
       buffer.append('<');
       for (int i = 0; i < myTypeElements.length; i++) {

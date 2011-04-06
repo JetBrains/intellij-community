@@ -37,7 +37,7 @@ public class ClsTypeParametersListImpl extends ClsRepositoryPsiElement<PsiTypePa
     super(stub);
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     final PsiTypeParameter[] params = getTypeParameters();
     if (params.length != 0) {
       buffer.append('<');

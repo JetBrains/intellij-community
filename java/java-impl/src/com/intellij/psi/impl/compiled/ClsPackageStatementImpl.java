@@ -68,7 +68,7 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
     return myPackageName;
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append("package ");
     buffer.append(getPackageName());
     buffer.append(";");

@@ -209,7 +209,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     return false;
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append(PsiBundle.message("psi.decompiled.text.header"));
     goNextLine(indentLevel, buffer);
     goNextLine(indentLevel, buffer);
@@ -358,7 +358,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       psiFile = new ClsFileImpl((PsiManagerImpl)manager, new ClassFileViewProvider(manager, file), true);
     }
 
-    StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     psiFile.appendMirrorText(0, buffer);
     return buffer.toString();
   }
