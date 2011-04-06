@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -37,7 +38,7 @@ public abstract class EditorHighlighterFactory {
 
   public abstract EditorHighlighter createEditorHighlighter(final Project project, final FileType fileType);
 
-  public abstract EditorHighlighter createEditorHighlighter(final VirtualFile file, final EditorColorsScheme globalScheme, final Project project);
+  public abstract EditorHighlighter createEditorHighlighter(@NotNull final VirtualFile file, final EditorColorsScheme globalScheme, final Project project);
 
   public abstract EditorHighlighter createEditorHighlighter(final Project project, final VirtualFile file);
 
