@@ -125,7 +125,7 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
   public void normalizeDeclaration() throws IncorrectOperationException {
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     PsiAnnotation[] annotations = getModifierList().getAnnotations();
     for (PsiAnnotation annotation : annotations) {
       ((ClsAnnotationImpl)annotation).appendMirrorText(indentLevel, buffer);

@@ -39,7 +39,7 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
     }
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     if (myAttributes.length != 0) {
       buffer.append("(");
       for (int i = 0; i < myAttributes.length; i++) {

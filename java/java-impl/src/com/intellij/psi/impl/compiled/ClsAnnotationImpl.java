@@ -44,7 +44,7 @@ public class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotationStub
     super(stub);
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append("@").append(getReferenceElement().getCanonicalText());
     ((ClsAnnotationParameterListImpl)getParameterList()).appendMirrorText(indentLevel, buffer);
   }
@@ -110,7 +110,7 @@ public class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotationStub
   }
 
   public String getText() {
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     appendMirrorText(0, buffer);
     return buffer.toString();
   }

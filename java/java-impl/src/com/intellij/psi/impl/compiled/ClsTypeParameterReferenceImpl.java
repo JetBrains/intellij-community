@@ -156,7 +156,7 @@ public class ClsTypeParameterReferenceImpl extends ClsElementImpl implements Psi
     return false;
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer){
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer){
     buffer.append(getCanonicalText());
   }
 

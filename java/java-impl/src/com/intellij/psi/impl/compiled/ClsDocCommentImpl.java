@@ -36,7 +36,7 @@ class ClsDocCommentImpl extends ClsElementImpl implements PsiDocComment, JavaTok
     myTags = tags;
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append("/**");
     for (PsiDocTag tag : getTags()) {
       goNextLine(indentLevel + 1, buffer);

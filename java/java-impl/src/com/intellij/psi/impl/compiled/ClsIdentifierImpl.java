@@ -50,7 +50,7 @@ class ClsIdentifierImpl extends ClsElementImpl implements PsiIdentifier, PsiJava
     return myParent;
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer){
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer){
     buffer.append(getText());
   }
 

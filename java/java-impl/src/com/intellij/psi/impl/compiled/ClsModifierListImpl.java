@@ -84,7 +84,7 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
         || element instanceof PsiField;
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     final PsiAnnotation[] annotations = getAnnotations();
     final boolean formattingAllowed = isAnnotationFormattingAllowed();
     for (PsiAnnotation annotation : annotations) {

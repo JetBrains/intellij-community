@@ -234,7 +234,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     return false;
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append(getCanonicalText());
   }
 

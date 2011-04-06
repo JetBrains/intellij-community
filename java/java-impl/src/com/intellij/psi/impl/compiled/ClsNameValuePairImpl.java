@@ -37,7 +37,7 @@ public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValue
     myMemberValue = ClsParsingUtil.getMemberValue(value, this);
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     if (myNameIdentifier.getText() != null) {
       myNameIdentifier.appendMirrorText(0, buffer);
       buffer.append(" = ");
