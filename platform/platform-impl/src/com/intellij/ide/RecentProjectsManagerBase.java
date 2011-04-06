@@ -211,6 +211,11 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
   protected abstract void doOpenProject(String projectPath, Project projectToClose, final boolean forceOpenInNewFrame);
 
+  protected boolean isValidProjectPath(String projectPath) {
+    final File file = new File(projectPath);
+    return file.exists() && (!file.isDirectory() || new File(file, ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).exists());
+  }
+
   private class MyProjectManagerListener extends ProjectManagerAdapter {
     public void projectOpened(final Project project) {
       String path = getProjectPath(project);
@@ -301,13 +306,13 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
         List<String> openPaths = myState.openPaths;
         if (openPaths.size() > 0) {
           for (String openPath : openPaths) {
-            doOpenProject(openPath, null, true);
+            if (isValidProjectPath(openPath)) doOpenProject(openPath, null, true);
           }
         }
         else {
           String lastProjectPath = getLastProjectPath();
           if (lastProjectPath != null) {
-            doOpenProject(lastProjectPath, null, false);
+            if (isValidProjectPath(lastProjectPath)) doOpenProject(lastProjectPath, null, false);
           }
         }
       }

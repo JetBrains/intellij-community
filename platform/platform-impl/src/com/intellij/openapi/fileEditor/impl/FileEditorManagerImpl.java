@@ -142,7 +142,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   public Set<EditorsSplitters> getAllSplitters() {
     HashSet<EditorsSplitters> all = new HashSet<EditorsSplitters>();
     all.add(getMainSplitters());
-    Set<DockContainer> dockContainers = DockManager.getInstance(myProject).getContainers();
+    Set<DockContainer> dockContainers = myDockManager.getContainers();
     for (DockContainer each : dockContainers) {
       if (each instanceof DockableEditorTabbedContainer) {
         all.add(((DockableEditorTabbedContainer)each).getSplitters());
@@ -174,10 +174,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           focusOwner = fm.getLastFocusedFor(fm.getLastFocusedFrame());
         }
 
-        DockContainer container = DockManager.getInstance(myProject).getContainerFor(focusOwner);
+        DockContainer container = myDockManager.getContainerFor(focusOwner);
         if (container == null && !async) {
           focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-          container = DockManager.getInstance(myProject).getContainerFor(focusOwner);
+          container = myDockManager.getContainerFor(focusOwner);
         }
 
         if (container instanceof DockableEditorTabbedContainer) {
@@ -1641,7 +1641,7 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
 
   public EditorsSplitters getSplittersFor(Component c) {
     EditorsSplitters splitters = null;
-    DockContainer dockContainer = DockManager.getInstance(getProject()).getContainerFor(c);
+    DockContainer dockContainer = myDockManager.getContainerFor(c);
     if (dockContainer instanceof DockableEditorTabbedContainer) {
       splitters = ((DockableEditorTabbedContainer)dockContainer).getSplitters();
     }

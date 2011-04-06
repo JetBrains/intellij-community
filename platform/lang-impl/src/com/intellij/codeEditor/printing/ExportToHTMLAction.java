@@ -52,7 +52,7 @@ public class ExportToHTMLAction extends AnAction {
       return;
     }
     PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
-    presentation.setEnabled(psiFile != null);
+    presentation.setEnabled(psiFile != null && psiFile.getContainingDirectory() != null);
   }
 
 }

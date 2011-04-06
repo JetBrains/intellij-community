@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.LegacyCompletionContributor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.Trinity;
@@ -247,7 +248,13 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
     final double maxPriority = providers.get(0).getThird();
     next:
     for (Trinity<PsiReferenceProvider, ProcessingContext, Double> trinity : providers) {
-      final PsiReference[] refs = trinity.getFirst().getReferencesByElement(context, trinity.getSecond());
+      final PsiReference[] refs;
+      try {
+        refs = trinity.getFirst().getReferencesByElement(context, trinity.getSecond());
+      }
+      catch(IndexNotReadyException ex) {
+        continue;
+      }
       if (trinity.getThird().doubleValue() != maxPriority) {
         for (PsiReference ref : refs) {
           for (PsiReference reference : result) {

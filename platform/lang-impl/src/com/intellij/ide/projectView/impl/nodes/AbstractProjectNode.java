@@ -88,6 +88,8 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
 
   public boolean contains(@NotNull VirtualFile file) {
     ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
-    return index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file) || VfsUtil.isAncestor(getProject().getBaseDir(), file, false);
+    final VirtualFile baseDir = getProject().getBaseDir();
+    return index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file) ||
+           (baseDir != null && VfsUtil.isAncestor(baseDir, file, false));
   }
   }
