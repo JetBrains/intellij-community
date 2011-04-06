@@ -23,7 +23,6 @@ import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -35,13 +34,10 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
-import com.sun.java.swing.action.ActionManager;
 import com.sun.jna.Callback;
-import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
 
