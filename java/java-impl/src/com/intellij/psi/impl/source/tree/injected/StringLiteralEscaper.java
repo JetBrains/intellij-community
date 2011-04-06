@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.tree.injected;
 
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.openapi.util.TextRange;
@@ -24,10 +25,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author cdr
 */
-public class StringLiteralEscaper extends LiteralTextEscaper<PsiLiteralExpressionImpl> {
+public class StringLiteralEscaper<T extends PsiLanguageInjectionHost> extends LiteralTextEscaper<T> {
   private int[] outSourceOffsets;
 
-  public StringLiteralEscaper(PsiLiteralExpressionImpl host) {
+  public StringLiteralEscaper(T host) {
     super(host);
   }
 
