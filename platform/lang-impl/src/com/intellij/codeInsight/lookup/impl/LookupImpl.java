@@ -581,7 +581,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   public Point calculatePosition(final JComponent component) {
     Dimension dim = component.getPreferredSize();
     int lookupStart = getLookupStart();
-    if (lookupStart < 0 || lookupStart >= myEditor.getDocument().getTextLength()) {
+    if (lookupStart < 0 || lookupStart > myEditor.getDocument().getTextLength()) {
       LOG.error(lookupStart + "; offset=" + myEditor.getCaretModel().getOffset() + "; element=" +
                 getPsiElement());
     }
