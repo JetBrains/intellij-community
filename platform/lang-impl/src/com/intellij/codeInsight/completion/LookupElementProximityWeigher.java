@@ -15,11 +15,11 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.completion.impl.NegatingComparable;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -27,13 +27,18 @@ import org.jetbrains.annotations.Nullable;
 public class LookupElementProximityWeigher extends CompletionWeigher {
 
   public Comparable weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
-    if (location == null) {
-      return null;
-    }
     final Object o = item.getObject();
     if (o instanceof PsiElement) {
       return PsiProximityComparator.getProximity((PsiElement)o, location.getCompletionParameters().getPosition(), location.getProcessingContext());
     }
     return null;
   }
+
+  public static class Negative extends LookupElementProximityWeigher {
+    @Override
+    public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
+      return new NegatingComparable(super.weigh(element, location));
+    }
+  }
+
 }

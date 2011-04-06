@@ -47,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -271,18 +272,18 @@ public class GroovyCompletionContributor extends CompletionContributor {
                                     ProcessingContext context,
                                     @NotNull final CompletionResultSet result) {
         PsiElement position = parameters.getPosition();
-        final PsiElement reference = position.getParent();
-        if (reference instanceof GrReferenceElement) {
-          if (reference.getParent() instanceof GrImportStatement && ((GrReferenceElement)reference).getQualifier() != null) {
+        final PsiElement parent = position.getParent();
+        if (parent instanceof GrReferenceElement) {
+          if (parent.getParent() instanceof GrImportStatement && ((GrReferenceElement)parent).getQualifier() != null) {
             result.addElement(LookupElementBuilder.create("*"));
           }
 
 
           addKeywords(parameters, result);
-          completeReference(parameters, result, (GrReferenceElement)reference);
+          completeReference(parameters, result, (GrReferenceElement)parent);
         } else if (IN_CATCH_TYPE.accepts(position) || AFTER_AT.accepts(position)) {
           addAllClasses(parameters, result, new InheritorsHolder(position, result));
-        } else if (GroovyCompletionUtil.isFirstElementAfterModifiersInVariableDeclaration(position, true)) {
+        } else if (GroovyCompletionUtil.isFirstElementAfterPossibleModifiersInVariableDeclaration(position, true)) {
           addDeclarationTypes(result, position);
         }
       }
@@ -292,7 +293,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
   private static void addDeclarationTypes(CompletionResultSet result, PsiElement position) {
     ResolverProcessor processor = CompletionProcessor.createClassCompletionProcessor(position);
-    ResolveUtil.treeWalkUp((GrVariable)position.getParent(), processor, false);
+    ResolveUtil.treeWalkUp((GroovyPsiElement)position.getParent(), processor, false);
     for (Object variant : GroovyCompletionUtil.getCompletionVariants(processor.getCandidates())) {
 
       if (variant instanceof LookupElement) {

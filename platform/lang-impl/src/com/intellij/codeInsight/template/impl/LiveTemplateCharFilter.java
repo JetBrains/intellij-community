@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ipp.integer;
+package com.intellij.codeInsight.template.impl;
 
-import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.intellij.codeInsight.lookup.CharFilter;
+import com.intellij.codeInsight.lookup.Lookup;
 
-public class ConvertToPlainTest extends IPPTestCase {
-  public void testToPlain() { doTest(); }
-  public void testNegatedFloatToPlain() { doTest(); }
-  public void testWithUnderscoresToPlain() { doTest(); }
-
+/**
+ * @author peter
+ */
+public class LiveTemplateCharFilter extends CharFilter {
   @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("convert.to.plain.intention.name");
-  }
+  public Result acceptChar(char c, int prefixLength, Lookup lookup) {
+    if (lookup.getCurrentItem() instanceof LiveTemplateLookupElement && c != ' ') {
+      return Result.HIDE_LOOKUP;
+    }
 
-  @Override
-  protected String getRelativePath() {
-    return "float";
+    return null;
   }
 }

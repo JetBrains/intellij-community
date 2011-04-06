@@ -57,7 +57,7 @@ public class MethodCallInstruction extends Instruction {
   public MethodCallInstruction(@NotNull PsiExpression context, MethodType methodType) {
     myContext = context;
     myMethodType = methodType;
-    myCall = context instanceof PsiCallExpression ? (PsiCallExpression)context : null;
+    myCall = methodType == MethodType.REGULAR_METHOD_CALL && context instanceof PsiCallExpression ? (PsiCallExpression)context : null;
     final PsiExpressionList argList = myCall == null ? null : myCall.getArgumentList();
     myArgs = argList != null ? argList.getExpressions() : PsiExpression.EMPTY_ARRAY;
 

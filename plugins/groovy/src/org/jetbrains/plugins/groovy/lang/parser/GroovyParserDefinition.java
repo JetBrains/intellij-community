@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrStubFileElementType;
 
+import static com.intellij.lang.ParserDefinition.SpaceRequirements.MAY;
 import static com.intellij.lang.ParserDefinition.SpaceRequirements.MUST;
 import static com.intellij.lang.ParserDefinition.SpaceRequirements.MUST_LINE_BREAK;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
@@ -93,10 +94,10 @@ public class GroovyParserDefinition implements ParserDefinition {
     if (left.getElementType() == mSEMI || left.getElementType() == mSL_COMMENT) {
       return MUST_LINE_BREAK;
     }    
+    if (left.getElementType() == mNLS || left.getElementType() == mGDOC_COMMENT_START) {
+      return MAY;
+    }
 
-    Lexer lexer=new GroovyLexer();
-    final SpaceRequirements spaceRequirements = LanguageUtil.canStickTokensTogetherByLexer(left, right, lexer);
-    
-    return spaceRequirements;
+    return LanguageUtil.canStickTokensTogetherByLexer(left, right, new GroovyLexer());
   }
 }

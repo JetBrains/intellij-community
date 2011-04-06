@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -307,6 +308,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
       if (reference.getReferenceName() == null) return GroovyResolveResult.EMPTY_ARRAY;
       final GroovyResolveResult[] results = _resolve(reference, reference.getManager(), reference.getKind(false));
       if (results == null) return results;
+      List<GroovyResolveResult> imported = new ArrayList<GroovyResolveResult>();
       final PsiType[] args = reference.getTypeArguments();
       for (int i = 0; i < results.length; i++) {
         GroovyResolveResult result = results[i];
@@ -314,9 +316,18 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
         if (element instanceof PsiClass) {
           final PsiSubstitutor substitutor = result.getSubstitutor();
           final PsiSubstitutor newSubstitutor = substitutor.putAll((PsiClass) element, args);
-          results[i] = new GroovyResolveResultImpl(element, result.getCurrentFileResolveContext(), newSubstitutor, result.isAccessible(), result.isStaticsOK());
+          GroovyPsiElement context = result.getCurrentFileResolveContext();
+          GroovyResolveResultImpl newResult = new GroovyResolveResultImpl(element, context, newSubstitutor, result.isAccessible(), result.isStaticsOK());
+          results[i] = newResult;
+          if (context instanceof GrImportStatement) {
+            imported.add(newResult);
+          }
         }
       }
+      if (!imported.isEmpty()) {
+        return imported.toArray(new GroovyResolveResult[imported.size()]);
+      }
+
       return results;
     }
 

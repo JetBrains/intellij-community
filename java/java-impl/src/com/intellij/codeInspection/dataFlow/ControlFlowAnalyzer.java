@@ -532,9 +532,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       generateBoxingUnboxingInstructionFor(caseExpression, PsiType.INT);
       if (TypeConversionUtil.isEnumType(caseExpression.getType())) {
         addInstruction(new FieldReferenceInstruction(caseExpression, "switch statement expression"));
+      } else {
+        addInstruction(new PopInstruction());
       }
 
-      addInstruction(new PopInstruction());
     }
 
     PsiCodeBlock body = switchStmt.getBody();

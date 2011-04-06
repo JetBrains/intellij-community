@@ -16,9 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.light.LightMethodBuilder;
@@ -114,7 +112,10 @@ public class GrClassImplUtil {
     if (!visited.add(grType)) return;
 
     final PsiClassType[] implementsTypes = getReferenceListTypes(grType.getImplementsClause());
-    getImplementsFromDelegate(grType, result, visited);
+    List<PsiClassType> fromDelegates = getImplementsFromDelegate(grType, visited);
+    if (fromDelegates != null) {
+      result.addAll(fromDelegates);
+    }
     result.addAll(Arrays.asList(implementsTypes));
 
     if (!grType.isInterface() &&
@@ -124,32 +125,40 @@ public class GrClassImplUtil {
     }
   }
 
-  private static List<PsiClassType> getImplementsFromDelegate(GrTypeDefinition grType, List<PsiClassType> result, Set<PsiClass> visited) {
-    final GrField[] fields = grType.getFields();
-    for (GrField field : fields) {
-      final PsiAnnotation delegate = getAnnotation(field, GroovyCommonClassNames.GROOVY_LANG_DELEGATE);
-      if (delegate == null) continue;
+  @Nullable
+  private static List<PsiClassType> getImplementsFromDelegate(final GrTypeDefinition grType, final Set<PsiClass> visited) {
+    return RecursionManager.createGuard("groovyDelegateFields").doPreventingRecursion(grType, new Computable<List<PsiClassType>>() {
+      @Override
+      public List<PsiClassType> compute() {
+        List<PsiClassType> result = new ArrayList<PsiClassType>();
+        final GrField[] fields = grType.getFields();
+        for (GrField field : fields) {
+          final PsiAnnotation delegate = getAnnotation(field, GroovyCommonClassNames.GROOVY_LANG_DELEGATE);
+          if (delegate == null) continue;
 
-      final boolean shouldImplement = shouldImplementDelegatedInterfaces(delegate);
-      if (!shouldImplement) continue;
+          final boolean shouldImplement = shouldImplementDelegatedInterfaces(delegate);
+          if (!shouldImplement) continue;
 
-      final PsiType type = field.getDeclaredType();
-      if (!(type instanceof PsiClassType)) continue;
+          final PsiType type = field.getDeclaredType();
+          if (!(type instanceof PsiClassType)) continue;
 
-      final PsiClass psiClass = ((PsiClassType)type).resolve();
-      if (psiClass == null) continue;
+          final PsiClass psiClass = ((PsiClassType)type).resolve();
+          if (psiClass == null) continue;
 
-      if (psiClass instanceof GrTypeDefinition) {
-        getImplementListsInner((GrTypeDefinition)psiClass, result, visited);
+          if (psiClass instanceof GrTypeDefinition) {
+            getImplementListsInner((GrTypeDefinition)psiClass, result, visited);
+          }
+          else {
+            result.addAll(Arrays.asList(psiClass.getImplementsListTypes()));
+          }
+          if (psiClass.isInterface()) {
+            result.add((PsiClassType)type);
+          }
+        }
+        return result;
+
       }
-      else {
-        result.addAll(Arrays.asList(psiClass.getImplementsListTypes()));
-      }
-      if (psiClass.isInterface()) {
-        result.add((PsiClassType)type);
-      }
-    }
-    return result;
+    });
   }
 
   public static PsiClassType getGroovyObjectType(@NotNull PsiElement context) {

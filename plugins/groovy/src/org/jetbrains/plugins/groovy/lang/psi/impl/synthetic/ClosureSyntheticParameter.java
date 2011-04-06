@@ -52,6 +52,8 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
 
   @Nullable
   public PsiType getTypeGroovy() {
+    assert isValid();
+
     PsiType typeGroovy = GrVariableEnhancer.getEnhancedType(this);
     if (typeGroovy instanceof PsiIntersectionType) {
       return ((PsiIntersectionType)typeGroovy).getRepresentative();

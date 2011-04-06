@@ -18,14 +18,14 @@ package com.siyeh.ipp.integer;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 
-public class ConvertToPlainTest extends IPPTestCase {
-  public void testToPlain() { doTest(); }
-  public void testNegatedFloatToPlain() { doTest(); }
-  public void testWithUnderscoresToPlain() { doTest(); }
+public class ConvertToScientificNotationTest extends IPPTestCase {
+  public void testToSci() { doTest(); }
+  public void testNegatedFloatToSci() { doTest(); }
+  public void testWithUnderscoresToSci() { doTest(); }
 
   @Override
   protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("convert.to.plain.intention.name");
+    return IntentionPowerPackBundle.message("convert.to.scientific.notation.intention.name");
   }
 
   @Override

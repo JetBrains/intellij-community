@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
@@ -37,6 +38,7 @@ import java.util.Set;
  * @author ven
  */
 public class CollectClassMembersUtil {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil");
   private static final Key<CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>>> CACHED_MEMBERS = Key.create("CACHED_CLASS_MEMBERS");
 
   private static final Key<CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>>> CACHED_MEMBERS_INCLUDING_SYNTHETIC = Key.create("CACHED_MEMBERS_INCLUDING_SYNTHETIC");
@@ -85,6 +87,8 @@ public class CollectClassMembersUtil {
   }
 
   private static void processClass(PsiClass aClass, Map<String, CandidateInfo> allFields, Map<String, List<CandidateInfo>> allMethods, Map<String, CandidateInfo> allInnerClasses, Set<PsiClass> visitedClasses, PsiSubstitutor substitutor, boolean includeSynthetic, boolean shouldProcessInnerClasses) {
+    LOG.assertTrue(aClass.isValid());
+
     if (visitedClasses.contains(aClass)) return;
     visitedClasses.add(aClass);
 
@@ -92,7 +96,8 @@ public class CollectClassMembersUtil {
       String name = field.getName();
       if (!allFields.containsKey(name)) {
         allFields.put(name, new CandidateInfo(field, substitutor));
-      } else if (hasExplicitVisibilityModifiers(field)) {
+      }
+      else if (hasExplicitVisibilityModifiers(field)) {
         final CandidateInfo candidateInfo = allFields.get(name);
         final PsiElement element = candidateInfo.getElement();
         if (element instanceof GrField && (((GrField)element).getModifierList() == null ||
@@ -104,7 +109,9 @@ public class CollectClassMembersUtil {
       }
     }
 
-    for (PsiMethod method : includeSynthetic || !(aClass instanceof GrTypeDefinition) ? aClass.getMethods() : ((GrTypeDefinition) aClass).getGroovyMethods()) {
+    for (PsiMethod method : includeSynthetic || !(aClass instanceof GrTypeDefinition)
+                            ? aClass.getMethods()
+                            : ((GrTypeDefinition)aClass).getGroovyMethods()) {
       addMethod(allMethods, method, substitutor);
     }
 

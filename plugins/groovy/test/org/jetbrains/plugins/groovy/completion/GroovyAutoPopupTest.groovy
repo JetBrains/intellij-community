@@ -89,4 +89,10 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     assert lookup.focused
   }
 
+  public void testFieldTypeLowercase() {
+    myFixture.configureByText "a.groovy", "class Foo { <caret> }"
+    type 'aioobe'
+    assert myFixture.lookupElementStrings == [ArrayIndexOutOfBoundsException.simpleName]
+  }
+
 }

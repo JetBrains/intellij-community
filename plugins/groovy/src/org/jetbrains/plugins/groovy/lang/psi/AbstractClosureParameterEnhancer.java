@@ -23,11 +23,14 @@ public abstract class AbstractClosureParameterEnhancer extends GrVariableEnhance
       return null;
     }
 
+    assert variable.isValid();
     GrClosableBlock closure = variable instanceof ClosureSyntheticParameter
                               ? ((ClosureSyntheticParameter)variable).getClosure() : findClosureWithArgument(variable.getParent());
     if (closure == null) {
       return null;
     }
+
+    assert closure.isValid();
 
     @SuppressWarnings({"SuspiciousMethodCalls"})
     int index = Arrays.asList(closure.getAllParameters()).indexOf(variable);

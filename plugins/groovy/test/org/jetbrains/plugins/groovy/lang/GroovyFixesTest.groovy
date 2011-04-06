@@ -8,6 +8,7 @@ package org.jetbrains.plugins.groovy.lang;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyConstantIfStatementInspection
 import org.jetbrains.plugins.groovy.codeInspection.gpath.GroovySetterCallCanBePropertyAccessInspection
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection
 
 /**
  * @author peter
@@ -40,6 +41,44 @@ if (true) {
 
 """
     assertEmpty myFixture.filterAvailableIntentions("Change to Groovy-style property reference")
+  }
+
+  public void testSecondAnnotationSuppression() {
+    myFixture.enableInspections new GroovyUnresolvedAccessInspection()
+    myFixture.configureByText "a.groovy", """class FooBarGoo {
+  @SuppressWarnings(["GroovyParameterNamingConvention"])
+  def test(def abc) {
+    abc.d<caret>ef()
+  }
+}
+"""
+    myFixture.launchAction(myFixture.findSingleIntention("Suppress for method"))
+    myFixture.checkResult """class FooBarGoo {
+  @SuppressWarnings(["GroovyParameterNamingConvention", "GroovyUnresolvedAccess"])
+  def test(def abc) {
+    abc.def()
+  }
+}
+"""
+  }
+
+  public void testSecondAnnotationSuppression2() {
+    myFixture.enableInspections new GroovyUnresolvedAccessInspection()
+    myFixture.configureByText "a.groovy", """class FooBarGoo {
+  @SuppressWarnings("GroovyParameterNamingConvention")
+  def test(def abc) {
+    abc.d<caret>ef()
+  }
+}
+"""
+    myFixture.launchAction(myFixture.findSingleIntention("Suppress for method"))
+    myFixture.checkResult """class FooBarGoo {
+  @SuppressWarnings(["GroovyParameterNamingConvention", "GroovyUnresolvedAccess"])
+  def test(def abc) {
+    abc.def()
+  }
+}
+"""
   }
 
 }

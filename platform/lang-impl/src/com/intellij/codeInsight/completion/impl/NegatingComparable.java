@@ -13,23 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ipp.integer;
+package com.intellij.codeInsight.completion.impl;
 
-import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+/**
+* @author peter
+*/
+public class NegatingComparable<T extends NegatingComparable<T>> implements Comparable<T> {
+  private final Comparable myWeigh;
 
-public class ConvertToEngineeringNotationTest extends IPPTestCase {
-  public void testPlainToEng() { doTest(); }
-  public void testNegatedFloatToEng() { doTest(); }
-  public void testToEngWithUnderscores() { doTest(); }
-
-  @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("convert.to.engineering.notation.intention.name");
+  public NegatingComparable(Comparable weigh) {
+    myWeigh = weigh;
   }
 
   @Override
-  protected String getRelativePath() {
-    return "float";
+  public int compareTo(T o) {
+    final Comparable w1 = myWeigh;
+    final Comparable w2 = o.myWeigh;
+    if (w1 == null && w2 == null) return 0;
+    if (w1 == null) return 1;
+    if (w2 == null) return -1;
+
+    return -w1.compareTo(w2);
+  }
+
+  @Override
+  public String toString() {
+    return String.valueOf(myWeigh);
   }
 }

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.util.Consumer;
@@ -63,7 +64,7 @@ public class RelaxedMatchingContributor extends CompletionContributor {
     }
 
     CompletionParameters relaxed;
-    if (elements.isEmpty() && parameters.getInvocationCount() == 0) {
+    if (parameters.getInvocationCount() == 0 && (elements.isEmpty() || elements.size() == 1 && elements.iterator().next() instanceof LiveTemplateLookupElement)) {
       relaxed = parameters.withRelaxedMatching();
     }
     else if (parameters.getInvocationCount() >= 2) {

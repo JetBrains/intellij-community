@@ -81,7 +81,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   static final ElementPattern<PsiElement> AFTER_THROW_NEW = psiElement().afterLeaf(psiElement().withText(PsiKeyword.NEW).afterLeaf(PsiKeyword.THROW));
   private static final OrFilter THROWABLE_TYPE_FILTER = new OrFilter(
       new GeneratorFilter(AssignableGroupFilter.class, new ThrowsListGetter()),
-      new AssignableFromFilter(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION));
+      new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE));
   public static final ElementPattern<PsiElement> INSIDE_EXPRESSION = or(
         psiElement().withParent(PsiExpression.class).andNot(psiElement().withParent(PsiLiteralExpression.class)),
         psiElement().inside(PsiClassObjectAccessExpression.class),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,15 +46,32 @@ public class ArrayEqualityInspection extends BaseInspection {
 
     @Override
     public InspectionGadgetsFix buildFix(Object... infos) {
-        return new ArrayEqualityFix();
+        final PsiArrayType type = (PsiArrayType) infos[0];
+        final PsiType componentType = type.getComponentType();
+        if (componentType instanceof PsiArrayType) {
+            return new ArrayEqualityFix(true);
+        }
+        return new ArrayEqualityFix(false);
     }
 
     private static class ArrayEqualityFix extends InspectionGadgetsFix {
-        
+
+        private final boolean deepEquals;
+
+        public ArrayEqualityFix(boolean deepEquals) {
+            this.deepEquals = deepEquals;
+        }
+
         @NotNull
         @Override
         public String getName() {
-            return InspectionGadgetsBundle.message("array.comparison.quickfix");
+            if (deepEquals) {
+                return InspectionGadgetsBundle.message(
+                        "replace.with.arrays.deep.equals");
+            } else {
+                return InspectionGadgetsBundle.message(
+                        "replace.with.arrays.equals");
+            }
         }
 
         @Override
@@ -75,7 +92,11 @@ public class ArrayEqualityInspection extends BaseInspection {
             } else if (!JavaTokenType.EQEQ.equals(tokenType)) {
                 return;
             }
-            newExpressionText.append("java.util.Arrays.equals(");
+            if (deepEquals) {
+                newExpressionText.append("java.util.Arrays.deepEquals(");
+            } else {
+                newExpressionText.append("java.util.Arrays.equals(");
+            }
             newExpressionText.append(binaryExpression.getLOperand().getText());
             newExpressionText.append(',');
             final PsiExpression rhs = binaryExpression.getROperand();
@@ -99,18 +120,16 @@ public class ArrayEqualityInspection extends BaseInspection {
         @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
-            if(!(expression.getROperand() != null)){
+            final PsiExpression rhs = expression.getROperand();
+            if (rhs == null) {
                 return;
             }
             if (!ComparisonUtils.isEqualityComparison(expression)) {
                 return;
             }
             final PsiExpression lhs = expression.getLOperand();
-            if (!(lhs.getType() instanceof PsiArrayType)) {
-                return;
-            }
-            final PsiExpression rhs = expression.getROperand();
-            if (rhs == null) {
+            final PsiType lhsType = lhs.getType();
+            if (!(lhsType instanceof PsiArrayType)) {
                 return;
             }
             if (!(rhs.getType() instanceof PsiArrayType)) {
@@ -125,7 +144,7 @@ public class ArrayEqualityInspection extends BaseInspection {
                 return;
             }
             final PsiJavaToken sign = expression.getOperationSign();
-            registerError(sign);
+            registerError(sign, lhsType);
         }
     }
 }

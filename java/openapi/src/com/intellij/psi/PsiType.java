@@ -108,7 +108,7 @@ public abstract class PsiType implements PsiAnnotationOwner {
    * @return the class instance.
    */
   @NotNull
-  public static PsiClassType getJavaLangObject(PsiManager manager, GlobalSearchScope resolveScope) {
+  public static PsiClassType getJavaLangObject(@NotNull PsiManager manager, @NotNull GlobalSearchScope resolveScope) {
     return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
   }
 

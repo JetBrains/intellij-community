@@ -17,6 +17,7 @@ package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -61,8 +62,9 @@ public final class SpeedSearchUtil {
                                                      final SimpleColoredComponent component,
                                                      final SimpleTextAttributes attributes,
                                                      final NameUtil.Matcher matcher,
-                                                     final Color selectedBg) {
-    if (!(matcher instanceof NameUtil.MinusculeMatcher)) {
+                                                     final Color selectedBg,
+                                                     final boolean selected) {
+    if (!(matcher instanceof NameUtil.MinusculeMatcher) || (Registry.is("ide.highlight.match.in.selected.only") && !selected)) {
       component.append(text, attributes);
       return;
     }

@@ -20,6 +20,7 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testBlocks$clos5() throws Throwable { doTest(); }
   public void testBlocks$clos6() throws Throwable { doTest(); }
   public void testBlocks$form() throws Throwable { doTest(); }
+  public void testBlocks$labeledClosure() throws Throwable { doTest(); }
   public void testBranch$assert1() throws Throwable { doTest(); }
   public void testBranch$assert2() throws Throwable { doTest(); }
   public void testBranch$break1() throws Throwable { doTest(); }

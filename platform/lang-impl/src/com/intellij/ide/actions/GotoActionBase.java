@@ -28,12 +28,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -43,7 +44,7 @@ public abstract class GotoActionBase extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.GotoActionBase");
 
   protected static Class myInAction = null;
-  private static Map<Class, String> ourLastStrings = new HashMap<Class, String>();
+  private static Map<Class, Pair<String, Integer>> ourLastStrings = CollectionFactory.hashMap();
 
 
   public final void actionPerformed(AnActionEvent e) {
@@ -98,22 +99,22 @@ public abstract class GotoActionBase extends AnAction {
     public abstract void elementChosen(ChooseByNamePopup popup, Object element);
   }
 
-  private static String getInitialText(Editor editor) {
+  private static Pair<String, Integer> getInitialText(Editor editor) {
     if (editor != null) {
       final String selectedText = editor.getSelectionModel().getSelectedText();
       if (selectedText != null && selectedText.indexOf("\n") < 0) {
-        return selectedText;
+        return Pair.create(selectedText, 0);
       }
     }
 
     if (myInAction != null) {
-      final String lastString = ourLastStrings.get(myInAction);
+      final Pair<String, Integer> lastString = ourLastStrings.get(myInAction);
       if (lastString != null) {
         return lastString;
       }
     }
 
-    return "";
+    return Pair.create("", 0);
   }
 
   protected static <T> void showNavigationPopup(AnActionEvent e, ChooseByNameModel model, final GotoActionCallback<T> callback) {
@@ -122,14 +123,15 @@ public abstract class GotoActionBase extends AnAction {
     boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
     final Class startedAction = myInAction;
     LOG.assertTrue(startedAction != null);
-    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e), getInitialText(e.getData(PlatformDataKeys.EDITOR)), mayRequestOpenInCurrentWindow);
+    Pair<String, Integer> start = getInitialText(e.getData(PlatformDataKeys.EDITOR));
+    final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, getPsiContext(e), start.first, mayRequestOpenInCurrentWindow, start.second);
     final ChooseByNameFilter<T> filter = callback.createFilter(popup);
 
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
 
       @Override
       public void onClose() {
-        ourLastStrings.put(myInAction, popup.getEnteredText());
+        ourLastStrings.put(myInAction, Pair.create(popup.getEnteredText(), popup.getSelectedIndex()));
         if (startedAction.equals(myInAction)) {
           myInAction = null;
         }

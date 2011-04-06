@@ -23,7 +23,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 /**
  * @author Konstantin Bulenkov
  */
-class ConvertToEngineeringNotationPredicate implements PsiElementPredicate {
+class ConvertToScientificNotationPredicate implements PsiElementPredicate {
 
     public boolean satisfiedBy(PsiElement element) {
         if (!(element instanceof PsiLiteralExpression)) {

@@ -381,7 +381,7 @@
   <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher$Negative" id="sPriority" order="first"/>
   <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.GroupingWeigher" id="sGrouping" order="after sPriority"/>
   <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.LookupStringWeigher" id="sLookupString" order="after sGrouping"/>
-  <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.LookupElementProximityWeigher" id="sProximity" order="after sLookupString"/>
+  <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.LookupElementProximityWeigher$Negative" id="sProximity" order="after sLookupString"/>
 
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.RelaxedMatchingContributor" id="inexactMatching" order="first"/>
   <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.DefaultCompletionContributor" id="default" order="last"/>
@@ -402,6 +402,7 @@
 
   <psi.referenceContributor implementation="com.intellij.psi.PsiReferenceContributorImpl"/>
 
+  <lookup.charFilter implementation="com.intellij.codeInsight.template.impl.LiveTemplateCharFilter" order="first" id="liveTemplate"/>
   <lookup.charFilter implementation="com.intellij.codeInsight.completion.CompletionCharFilter" order="last" id="completion"/>
   <lookup.charFilter implementation="com.intellij.refactoring.IdentifierCharFilter" id="identifier"/>
   <lookup.charFilter implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceCharFilter" id="fileRef" order="before completion"/>

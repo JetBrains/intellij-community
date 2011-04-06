@@ -109,11 +109,14 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       return;
     }
 
-    if (obj instanceof String && !"assert".equals(obj)) {
+    if (obj instanceof String) {
       Editor editor = context.getEditor();
       Document document = editor.getDocument();
       if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
         handleOverwrite(editor.getCaretModel().getOffset(), document);
+      }
+      else if (context.getCompletionChar() == ' ') {
+        context.setAddCompletionChar(false);
       }
     } else if (obj instanceof PsiClass) {
       final PsiClass clazz = (PsiClass)obj;

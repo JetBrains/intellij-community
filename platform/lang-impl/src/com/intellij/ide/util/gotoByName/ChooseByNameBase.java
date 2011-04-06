@@ -131,6 +131,7 @@ public abstract class ChooseByNameBase {
   protected JBPopup myDropdownPopup;
 
   private boolean myClosedByShiftEnter = false;
+  protected final int myInitialIndex;
 
   private static class MatchesComparator implements Comparator<String> {
     private final String myOriginalPattern;
@@ -154,10 +155,20 @@ public abstract class ChooseByNameBase {
    * @param context
    */
   protected ChooseByNameBase(Project project, ChooseByNameModel model, String initialText, final PsiElement context) {
+    this(project, model, initialText, context, 0);
+  }
+
+  /**
+   * @param initialText initial text which will be in the lookup text field
+   * @param context
+   * @param initialIndex
+   */
+  protected ChooseByNameBase(Project project, ChooseByNameModel model, String initialText, final PsiElement context, final int initialIndex) {
     myProject = project;
     myModel = model;
     myInitialText = initialText;
     myContext = new WeakReference<PsiElement>(context);
+    myInitialIndex = initialIndex;
   }
 
   public boolean isPreselectInitialText() {
@@ -418,7 +429,7 @@ public abstract class ChooseByNameBase {
 
     myCheckBox.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
-        rebuildList();
+        rebuildList(false);
       }
     });
     myCheckBox.setFocusable(false);
@@ -426,7 +437,7 @@ public abstract class ChooseByNameBase {
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       protected void textChanged(DocumentEvent e) {
         clearPosponedOkAction(false);
-        rebuildList();
+        rebuildList(false);
       }
     });
 
@@ -514,7 +525,7 @@ public abstract class ChooseByNameBase {
     showTextFieldPanel();
 
     if (modalityState != null) {
-      rebuildList(0, 0, null, modalityState, null);
+      rebuildList(myInitialIndex, 0, null, modalityState, null);
     }
   }
 
@@ -528,9 +539,9 @@ public abstract class ChooseByNameBase {
   /**
    * Default rebuild list. It uses {@link #REBUILD_DELAY} and current modality state.
    */
-  public void rebuildList() {
+  public void rebuildList(boolean initial) {
     // TODO this method is public, because the chooser does not listed for the model.
-    rebuildList(0, REBUILD_DELAY, null, ModalityState.current(), null);
+    rebuildList(initial ? myInitialIndex : 0, REBUILD_DELAY, null, ModalityState.current(), null);
   }
 
   private void updateDocumentation() {
@@ -577,7 +588,7 @@ public abstract class ChooseByNameBase {
     return false;
   }
 
-  protected boolean isToFixLostTyping() {
+  protected static boolean isToFixLostTyping() {
     return Registry.is("actionSystem.fixLostTyping");
   }
 
@@ -793,7 +804,7 @@ public abstract class ChooseByNameBase {
       myListUpdater.appendToModel(commands, pos);
     }
     else {
-      if (pos == 0) {
+      if (pos <= 0) {
         pos = detectBestStatisticalPosition();
       }
 
@@ -915,7 +926,7 @@ public abstract class ChooseByNameBase {
 
           myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
           if (!myListModel.isEmpty()) {
-            int pos = selectionPos == 0 ? detectBestStatisticalPosition() : selectionPos;
+            int pos = selectionPos <= 0 ? detectBestStatisticalPosition() : selectionPos;
             ListScrollingUtil.selectItem(myList, Math.min(pos, myListModel.size() - 1));
           }
 
@@ -1116,7 +1127,7 @@ public abstract class ChooseByNameBase {
       myTextField.setText(newPattern);
       myTextField.setCaretPosition(newPattern.length());
 
-      rebuildList();
+      rebuildList(false);
     }
 
     private boolean isComplexPattern(final String pattern) {
