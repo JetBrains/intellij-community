@@ -53,7 +53,7 @@ public class ClsLiteralExpressionImpl extends ClsElementImpl implements PsiLiter
     return null;
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append(getText());
   }
 

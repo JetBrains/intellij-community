@@ -28,8 +28,9 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
 public class JUnit3OutputObjectRegistry extends OutputObjectRegistry {
-  public JUnit3OutputObjectRegistry(PacketProcessor mainTransport) {
-    super(mainTransport);
+
+  public JUnit3OutputObjectRegistry(PacketProcessor mainTransport, int lastIndex) {
+    super(mainTransport, lastIndex);
   }
 
   protected int getTestCont(Object test) {

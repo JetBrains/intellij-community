@@ -21,6 +21,7 @@ import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
 
 public abstract class FieldCache<T, Owner,AccessorParameter,Parameter> {
+  private static final RecursionGuard ourGuard = RecursionManager.createGuard("fieldCache");
   private final JBLock r;
   private final JBLock w;
 
@@ -46,8 +47,11 @@ public abstract class FieldCache<T, Owner,AccessorParameter,Parameter> {
       try {
         result = getValue(owner, a);
         if (result == null) {
+          RecursionGuard.StackStamp stamp = ourGuard.markStack();
           result = compute(owner, p);
-          putValue(result, owner, a);
+          if (stamp.mayCacheNow()) {
+            putValue(result, owner, a);
+          }
         }
       }
       finally {

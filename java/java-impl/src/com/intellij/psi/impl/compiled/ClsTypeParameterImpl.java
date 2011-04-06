@@ -266,7 +266,7 @@ public class ClsTypeParameterImpl extends ClsRepositoryPsiElement<PsiTypeParamet
     return "PsiTypeParameter";
   }
 
-  public void appendMirrorText(final int indentLevel, @NonNls final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, @NonNls final StringBuilder buffer) {
     buffer.append(getName());
     PsiJavaCodeReferenceElement[] bounds = getExtendsList().getReferenceElements();
     if (bounds.length > 0) {

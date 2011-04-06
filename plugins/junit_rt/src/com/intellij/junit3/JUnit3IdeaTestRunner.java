@@ -15,28 +15,37 @@
  */
 package com.intellij.junit3;
 
-import com.intellij.rt.execution.junit.DeafStream;
-import com.intellij.rt.execution.junit.IdeaTestRunner;
-import com.intellij.rt.execution.junit.IDEAJUnitListener;
-import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
+import com.intellij.rt.execution.junit.*;
+import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
 import junit.framework.*;
 import junit.textui.ResultPrinter;
 import junit.textui.TestRunner;
 
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Vector;
 
 public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
   private TestListener myTestsListener;
   private JUnit3OutputObjectRegistry myRegistry;
   private ArrayList myListeners;
+  private boolean mySendTree;
 
   public JUnit3IdeaTestRunner() {
     super(DeafStream.DEAF_PRINT_STREAM);
   }
 
-  public int startRunnerWithArgs(String[] args, ArrayList listeners) {
+  public int startRunnerWithArgs(String[] args, ArrayList listeners, boolean sendTree) {
     myListeners = listeners;
+    mySendTree = sendTree;
+    if (sendTree) {
+      setPrinter(new TimeSender(myRegistry));
+    }
+    else {
+      setPrinter(new MockResultPrinter());
+    }
     try {
       Test suite = TestRunnerUtil.getTestSuite(this, args);
       if (suite == null) return -1;
@@ -60,10 +69,29 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     super.runFailed(message);
   }
 
-  public void setStreams(SegmentedOutputStream segmentedOut, SegmentedOutputStream segmentedErr) {
-    setPrinter(new TimeSender());
-    myRegistry = new JUnit3OutputObjectRegistry(segmentedOut);
+  public void setStreams(SegmentedOutputStream segmentedOut, SegmentedOutputStream segmentedErr, int lastIdx) {
+    myRegistry = new JUnit3OutputObjectRegistry(segmentedOut, lastIdx);
     myTestsListener = new TestResultsSender(myRegistry);
+  }
+
+  public Object getTestToStart(String[] args) {
+    return TestRunnerUtil.getTestSuite(this, args);
+  }
+
+  public List getChildTests(Object description) {
+    return getTestCasesOf((Test)description);
+  }
+
+  public OutputObjectRegistry getRegistry() {
+    return myRegistry;
+  }
+
+  public String getStartDescription(Object child) {
+    final Test test = (Test)child;
+    if (test instanceof TestCase) {
+      return test.getClass().getName() + "," + ((TestCase)test).getName();
+    }
+    return test.toString();
   }
 
   protected TestResult createTestResult() {
@@ -97,31 +125,40 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     return testResult;
   }
 
-  public TestResult doRun(Test suite, boolean wait) {
-    try {
-      TreeSender.sendSuite(myRegistry, suite);
-    }
-    catch (Exception e) {
-      //noinspection HardCodedStringLiteral
-      System.err.println("Internal Error occured.");
-      e.printStackTrace(System.err);
+  public TestResult doRun(Test suite, boolean wait) {  //todo
+    if (mySendTree) {
+      try {
+        TreeSender.sendTree(this, suite);
+      }
+      catch (Exception e) {
+        //noinspection HardCodedStringLiteral
+        System.err.println("Internal Error occured.");
+        e.printStackTrace(System.err);
+      }
     }
     return super.doRun(suite, wait);
+  }
+
+  static Vector getTestCasesOf(Test test) {
+    Vector testCases = new Vector();
+    if (test instanceof TestRunnerUtil.SuiteMethodWrapper) {
+      test = ((TestRunnerUtil.SuiteMethodWrapper)test).getSuite();
+    }
+    if (test instanceof TestSuite) {
+      TestSuite testSuite = (TestSuite)test;
+
+      for (Enumeration each = testSuite.tests(); each.hasMoreElements();) {
+        Object childTest = each.nextElement();
+        if (childTest instanceof TestSuite && !((TestSuite)childTest).tests().hasMoreElements()) continue;
+        testCases.addElement(childTest);
+      }
+    }
+    return testCases;
   }
 
   public static class MockResultPrinter extends ResultPrinter {
     public MockResultPrinter() {
       super(DeafStream.DEAF_PRINT_STREAM);
-    }
-  }
-
-  private class TimeSender extends ResultPrinter {
-    public TimeSender() {
-      super(DeafStream.DEAF_PRINT_STREAM);
-    }
-
-    protected void printHeader(long runTime) {
-      myRegistry.createPacket().addString(PoolOfDelimiters.TESTS_DONE).addLong(runTime).send();
     }
   }
 }

@@ -48,7 +48,7 @@ public abstract class ClsAnnotationValueImpl extends ClsElementImpl implements P
 
   protected abstract ClsJavaCodeReferenceElementImpl createReference();
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append("@").append(myReferenceElement.getCanonicalText());
     myParameterList.appendMirrorText(indentLevel, buffer);
   }
@@ -107,7 +107,7 @@ public abstract class ClsAnnotationValueImpl extends ClsElementImpl implements P
   }
 
   public String getText() {
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     appendMirrorText(0, buffer);
     return buffer.toString();
   }

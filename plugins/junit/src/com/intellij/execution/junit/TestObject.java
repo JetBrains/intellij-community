@@ -44,13 +44,17 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -61,12 +65,12 @@ import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PathUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.*;
 
 public abstract class TestObject implements JavaCommandLine {
@@ -349,7 +353,40 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
   protected JUnitProcessHandler createHandler() throws ExecutionException {
-    return JUnitProcessHandler.runJava(getJavaParameters(), myProject);
+    appendForkInfo();
+    return JUnitProcessHandler.runCommandLine(CommandLineBuilder.createFromJavaParameters(myJavaParameters, myProject, true));
+  }
+
+  private void appendForkInfo() throws ExecutionException {
+    final String forkMode = myConfiguration.getForkMode();
+    if (Comparing.strEqual(forkMode, "none")) return;
+    File tempFile = null;
+    try {
+      tempFile = FileUtil.createTempFile("command.line", "");
+      myJavaParameters.getProgramParametersList().add("@@@" + tempFile.getAbsolutePath());
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    final JavaParameters javaParameters = getJavaParameters();
+    try {
+      final PrintWriter writer = new PrintWriter(tempFile, "UTF-8");
+      try {
+        writer.print(GeneralCommandLine
+                       .quoteParameter(((JavaSdkType)javaParameters.getJdk().getSdkType()).getVMExecutablePath(javaParameters.getJdk())) + " ");
+        writer.print(javaParameters.getVMParametersList().getParametersString() + " ");
+        writer.print("-classpath ");
+        writer.print(GeneralCommandLine.quoteParameter(javaParameters.getClassPath().getPathsString()));
+        writer.print("\n" + forkMode);
+      }
+      finally {
+        writer.close();
+      }
+      tempFile.deleteOnExit();
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
 

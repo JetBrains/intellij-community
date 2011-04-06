@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileTypes.StdFileTypes
@@ -14,7 +15,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
-import com.intellij.codeInsight.lookup.LookupElementPresentation
 
 public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   @Override
@@ -677,7 +677,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testDoubleFalse() throws Throwable {
     configureByFile(getTestName(false) + ".java");
-    assertStringItems("false", "finalize");
+    assertStringItems("false", "fefefef");
   }
 
   public void testSameNamedVariableInNestedClasses() throws Throwable {
@@ -822,6 +822,16 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testMethodParameterAnnotationClass() throws Throwable { doTest(); }
 
+  public void testVoidMethodsInNonVoidContext() throws Throwable {
+    configure()
+    checkResultByFile(getTestName(false) + ".java")
+    assertEmpty(myItems)
+    assertNull(getLookup());
+
+    myFixture.complete(CompletionType.BASIC, 2)
+    checkResult()
+  }
+
   public void testEnumConstantFromEnumMember() throws Throwable { doTest(); }
 
   public void testPrimitiveMethodParameter() throws Throwable { doTest(); }
@@ -892,9 +902,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testClassNameInsideIdentifierInIf() throws Throwable {
-    configure()
-    type '\n'
-    checkResult()
+    doTest '\n'
   }
 
   public void testSuggestMembersOfStaticallyImportedClasses() throws Exception {

@@ -338,6 +338,11 @@ public class LookupCellRenderer implements ListCellRenderer {
       setFocusBorderAroundIcon(true);
       setBorderInsets(new Insets(0, 0, 0, 0));
     }
+
+    @Override
+    protected void applyAdditionalHints(Graphics g) {
+      UISettings.setupAntialiasing(g);
+    }
   }
 
   private class LookupPanel extends JPanel {
@@ -346,7 +351,6 @@ public class LookupCellRenderer implements ListCellRenderer {
     }
 
     public void paint(Graphics g){
-      UISettings.setupAntialiasing(g);
       if (!myLookup.isFocused() && myLookup.isCompletion()) {
         ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f));
       }

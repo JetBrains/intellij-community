@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 05-Jun-2009
- */
 package com.intellij.rt.execution.junit;
 
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
-import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
-import org.junit.runner.Description;
+import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
+import junit.textui.ResultPrinter;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+/**
+* User: anna
+* Date: 4/5/11
+*/
+public class TimeSender extends ResultPrinter {
+  private final OutputObjectRegistry myRegistry;
 
-public interface IdeaTestRunner {
+  public TimeSender(OutputObjectRegistry registry) {
+    super(DeafStream.DEAF_PRINT_STREAM);
+    myRegistry = registry;
+  }
 
-  int startRunnerWithArgs(String[] args, ArrayList listeners, boolean sendTree);
-  void setStreams(SegmentedOutputStream segmentedOut, SegmentedOutputStream segmentedErr, int lastIdx);
-
-  Object getTestToStart(String[] args);
-  List getChildTests(Object description);
-  String getStartDescription(Object child);
-
-  OutputObjectRegistry getRegistry();
+  public void printHeader(long runTime) {
+    myRegistry.createPacket().addString(PoolOfDelimiters.TESTS_DONE).addLong(runTime).send();
+  }
 }

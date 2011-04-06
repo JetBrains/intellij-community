@@ -547,7 +547,7 @@ public class PsiLiteralExpressionImpl
 
   @NotNull
   public LiteralTextEscaper<PsiLiteralExpressionImpl> createLiteralTextEscaper() {
-    return new StringLiteralEscaper(this);
+    return new StringLiteralEscaper<PsiLiteralExpressionImpl>(this);
   }
 
   public void processInjectedPsi(@NotNull InjectedPsiVisitor visitor) {

@@ -8,4 +8,6 @@ public class Foo {
         });
     }
 
+  boolean fefefef() {}
+
 }

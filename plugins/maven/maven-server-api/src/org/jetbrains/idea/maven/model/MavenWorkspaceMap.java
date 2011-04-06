@@ -29,8 +29,12 @@ public class MavenWorkspaceMap implements Serializable {
   private final THashMap<MavenId, Data> myMapping = new THashMap<MavenId, Data>();
 
   public void register(@NotNull MavenId id, @NotNull File file) {
+    register(id, file, null);
+  }
+  
+  public void register(@NotNull MavenId id, @NotNull File file, @Nullable File outputFile) {
     for (MavenId each : getAllIDs(id)) {
-      myMapping.put(each, new Data(id, file));
+      myMapping.put(each, new Data(id, file, outputFile));
     }
   }
 
@@ -70,11 +74,17 @@ public class MavenWorkspaceMap implements Serializable {
 
   public static class Data implements Serializable {
     public final MavenId originalId;
-    public final File file;
+    private final File file;
+    private final File outputFile;
 
-    private Data(MavenId originalId, File file) {
+    private Data(MavenId originalId, File file, File outputFile) {
       this.originalId = originalId;
       this.file = file;
+      this.outputFile = outputFile;
+    }
+
+    public File getFile(String type) {
+      return outputFile == null || MavenConstants.POM_EXTENSION.equalsIgnoreCase(type) ? file : outputFile;
     }
   }
 }

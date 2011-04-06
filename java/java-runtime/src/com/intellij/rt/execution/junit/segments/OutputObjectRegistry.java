@@ -23,8 +23,9 @@ public abstract class OutputObjectRegistry  {
   private int myLastIndex = 0;
   private PacketProcessor myMainTransport;
 
-  public OutputObjectRegistry(PacketProcessor transport) {
-    myMainTransport = transport;
+  protected OutputObjectRegistry(PacketProcessor mainTransport, int lastIndex) {
+    myLastIndex = lastIndex;
+    myMainTransport = mainTransport;
   }
 
   public String referenceTo(Object test) {
@@ -96,5 +97,13 @@ public abstract class OutputObjectRegistry  {
 
   public void forget(Object test) {
     myKnownKeys.remove(test);
+  }
+
+  public int getKnownObject(Object description) {
+    final Object o = myKnownKeys.get(description);
+    if (o instanceof String) {
+      return Integer.parseInt((String)o);
+    }
+    return 0;
   }
 }

@@ -45,6 +45,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Icons;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -92,6 +93,11 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
 
   private final BrowseModuleValueActionListener[] myBrowsers;
   private AlternativeJREPanel myAlternativeJREPanel;
+  private JComboBox myForkCb;
+  @NonNls private static final String NONE = "none";
+  @NonNls private static final String METHOD = "method";
+  private static final String[] FORK_MODE_ALL = {NONE, METHOD, "class"};
+  private static final String[] FORK_MODE = {NONE, METHOD};
 
   public JUnitConfigurable(final Project project) {
     myModel = new JUnitConfigurationModel(project);
@@ -142,8 +148,8 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
                 myModel.setType(i);
                 break;
               }
+            changePanel();
           }
-          changePanel();
         }
       });
     myModel.setType(JUnitConfigurationModel.CLASS);
@@ -175,6 +181,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     configuration.setAlternativeJrePathEnabled(myAlternativeJREPanel.isPathEnabled());
 
     myCommonJavaParameters.applyTo(configuration);
+    configuration.setForkMode((String)myForkCb.getSelectedItem());
   }
 
   public void resetEditorFrom(final JUnitConfiguration configuration) {
@@ -192,7 +199,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
       myWholeProjectScope.setSelected(true);
     }
     myAlternativeJREPanel.init(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
-
+    myForkCb.setSelectedItem(configuration.getForkMode());
   }
 
   private void changePanel () {
@@ -201,23 +208,34 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
       myPattern.setVisible(false);
       myClass.setVisible(false);
       myMethod.setVisible(false);
+      myForkCb.setEnabled(true);
+      myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
+      myForkCb.setSelectedItem(NONE);
     }
     else if (myClassButton.isSelected()){
       myPackagePanel.setVisible(false);
       myPattern.setVisible(false);
       myClass.setVisible(true);
       myMethod.setVisible(false);
+      myForkCb.setEnabled(true);
+      myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE));
+      myForkCb.setSelectedItem(NONE);
     }
     else if (myTestMethodButton.isSelected()){
       myPackagePanel.setVisible(false);
       myPattern.setVisible(false);
       myClass.setVisible(true);
       myMethod.setVisible(true);
+      myForkCb.setEnabled(false);
+      myForkCb.setSelectedItem(NONE);
     } else {
       myPackagePanel.setVisible(false);
       myPattern.setVisible(true);
       myClass.setVisible(false);
       myMethod.setVisible(false);
+      myForkCb.setEnabled(true);
+      myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
+      myForkCb.setSelectedItem(NONE);
     }
   }
 

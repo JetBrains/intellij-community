@@ -32,7 +32,7 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
     super(stub);
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     ClsDocCommentImpl docComment = (ClsDocCommentImpl)getDocComment();
     if (docComment != null) {
       docComment.appendMirrorText(indentLevel, buffer);

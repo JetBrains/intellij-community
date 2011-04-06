@@ -319,7 +319,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
     return getStub().isEnum();
   }
 
-  public void appendMirrorText(final int indentLevel, @NonNls final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, @NonNls final StringBuilder buffer) {
     ClsDocCommentImpl docComment = (ClsDocCommentImpl)getDocComment();
     if (docComment != null) {
       docComment.appendMirrorText(indentLevel, buffer);

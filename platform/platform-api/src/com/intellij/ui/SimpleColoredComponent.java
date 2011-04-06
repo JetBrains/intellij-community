@@ -405,8 +405,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     final List<Object[]> searchMatches = new ArrayList<Object[]>();
 
     // Paint text
-    applyAdditionalHints(g);
     UIUtil.applyRenderingHints(g);
+    applyAdditionalHints(g);
     for (int i = 0; i < myFragments.size(); i++) {
       final SimpleTextAttributes attributes = myAttributes.get(i);
       Font font = g.getFont();

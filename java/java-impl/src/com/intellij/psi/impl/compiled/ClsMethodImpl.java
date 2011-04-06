@@ -242,7 +242,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     return MethodSignatureBackedByPsiMethod.create(this, substitutor);
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     appendMethodHeader(buffer, indentLevel);
 
     if (hasModifierProperty(PsiModifier.ABSTRACT) || hasModifierProperty(PsiModifier.NATIVE)) {
@@ -255,7 +255,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement<PsiMethodStub> implem
     }
   }
 
-  private void appendMethodHeader(@NonNls StringBuffer buffer, final int indentLevel) {
+  private void appendMethodHeader(@NonNls StringBuilder buffer, final int indentLevel) {
     ClsDocCommentImpl docComment = (ClsDocCommentImpl)getDocComment();
     if (docComment != null) {
       docComment.appendMirrorText(indentLevel, buffer);
