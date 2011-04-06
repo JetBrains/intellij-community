@@ -15,14 +15,9 @@
  */
 package com.intellij.junit4;
 
-import com.intellij.rt.execution.junit.DeafStream;
-import com.intellij.rt.execution.junit.IDEAJUnitListener;
-import com.intellij.rt.execution.junit.IdeaTestRunner;
+import com.intellij.rt.execution.junit.*;
 import com.intellij.rt.execution.junit.segments.OutputObjectRegistry;
-import com.intellij.rt.execution.junit.segments.Packet;
-import com.intellij.rt.execution.junit.segments.PoolOfDelimiters;
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
-import junit.textui.ResultPrinter;
 import org.junit.internal.requests.ClassRequest;
 import org.junit.internal.requests.FilterRequest;
 import org.junit.runner.*;
@@ -37,49 +32,28 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
   private RunListener myTestsListener;
   private OutputObjectRegistry myRegistry;
 
-  private static void sendNode(Description test, Packet packet, Collection objectPackets) {
-    final ArrayList children = test.getChildren();
-    packet.addObject(test, objectPackets).addLong(children.size());
-    for (int i = 0; i < children.size(); i++) {
-      sendNode((Description)children.get(i), packet, objectPackets);
-    }
-  }
+  public int startRunnerWithArgs(String[] args, ArrayList listeners, boolean sendTree) {
 
-  public void sendTree(OutputObjectRegistry registry, Description suite) {
-    Packet packet = registry.createPacket();
-    packet.addString(PoolOfDelimiters.TREE_PREFIX);
-    Set objects = new HashSet();
-    sendNode(suite, packet, objects);
-    for (Iterator iterator = objects.iterator(); iterator.hasNext();) {
-      ((Packet)iterator.next()).send();
+    final Request request = JUnit4TestRunnerUtil.buildRequest(args);
+    final Runner testRunner = request.getRunner();
+    try {
+      Description description = testRunner.getDescription();
+      if (request instanceof ClassRequest) {
+        description = getSuiteMethodDescription(request, description);
+      }
+      else if (request instanceof FilterRequest) {
+        description = getFilteredDescription(request, description);
+      }
+      if (sendTree) TreeSender.sendTree(this, description);
     }
-    packet.addString("\n");
-    packet.send();
-  }
+    catch (Exception e) {
+      //noinspection HardCodedStringLiteral
+      System.err.println("Internal Error occured.");
+      e.printStackTrace(System.err);
+    }
 
-  public int startRunnerWithArgs(String[] args, ArrayList listeners) {
     try {
       final JUnitCore runner = new JUnitCore();
-
-      final Request request = JUnit4TestRunnerUtil.buildRequest(args);
-
-      final Runner testRunner = request.getRunner();
-      try {
-        Description description = testRunner.getDescription();
-        if (request instanceof ClassRequest) {
-          description = getSuiteMethodDescription(request, description);
-        }
-        else if (request instanceof FilterRequest) {
-          description = getFilteredDescription(request, description);
-        }
-        sendTree(myRegistry, description);
-      }
-      catch (Exception e) {
-        //noinspection HardCodedStringLiteral
-        System.err.println("Internal Error occured.");
-        e.printStackTrace(System.err);
-      }
-
       runner.addListener(myTestsListener);
       for (Iterator iterator = listeners.iterator(); iterator.hasNext();) {
         final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName((String)iterator.next()).newInstance();
@@ -101,7 +75,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
       })*/);
       long endTime = System.currentTimeMillis();
       long runTime = endTime - startTime;
-      new TimeSender().printHeader(runTime);
+      if (sendTree) new TimeSender(myRegistry).printHeader(runTime);
 
       if (!result.wasSuccessful()) {
         return -1;
@@ -152,18 +126,43 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
   }
 
 
-  public void setStreams(SegmentedOutputStream segmentedOut, SegmentedOutputStream segmentedErr) {
-    myRegistry = new JUnit4OutputObjectRegistry(segmentedOut);
+  public void setStreams(SegmentedOutputStream segmentedOut, SegmentedOutputStream segmentedErr, int lastIdx) {
+    myRegistry = new JUnit4OutputObjectRegistry(segmentedOut, lastIdx);
     myTestsListener = new JUnit4TestResultsSender(myRegistry);
   }
 
-  private class TimeSender extends ResultPrinter {
-    public TimeSender() {
-      super(DeafStream.DEAF_PRINT_STREAM);
+  public Object getTestToStart(String[] args) {
+    final Request request = JUnit4TestRunnerUtil.buildRequest(args);
+    final Runner testRunner = request.getRunner();
+    Description description = null;
+    try {
+      description = testRunner.getDescription();
+      if (request instanceof ClassRequest) {
+        description = getSuiteMethodDescription(request, description);
+      }
+      else if (request instanceof FilterRequest) {
+        description = getFilteredDescription(request, description);
+      }
     }
+    catch (Exception e) {
+      //noinspection HardCodedStringLiteral
+      System.err.println("Internal Error occured.");
+      e.printStackTrace(System.err);
+    }
+    return description;
+  }
 
-    protected void printHeader(long runTime) {
-      myRegistry.createPacket().addString(PoolOfDelimiters.TESTS_DONE).addLong(runTime).send();
-    }
+  public List getChildTests(Object description) {
+    return ((Description)description).getChildren();
+  }
+
+  public OutputObjectRegistry getRegistry() {
+    return myRegistry;
+  }
+
+  public String getStartDescription(Object child) {
+    final Description description = (Description)child;
+    final String methodName = description.getMethodName();
+    return methodName != null ? description.getClassName() + "," + methodName : description.getClassName();
   }
 }
