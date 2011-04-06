@@ -154,7 +154,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
         }
         textAttributes.setForegroundColor(color);
         SimpleTextAttributes nameAttributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
-        SpeedSearchUtil.appendColoredFragmentForMatcher(name,  this, nameAttributes, myMatcher, bgColor);
+        SpeedSearchUtil.appendColoredFragmentForMatcher(name,  this, nameAttributes, myMatcher, bgColor, selected);
         setIcon(presentation.getIcon(false));
 
         if (myRenderLocation) {
