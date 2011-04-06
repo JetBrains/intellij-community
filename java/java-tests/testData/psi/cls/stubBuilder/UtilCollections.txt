@@ -2289,7 +2289,7 @@ PsiJavaFileStub [java.util]
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[varargs addAll:boolean]
-      PsiModifierListStub[mask=137]
+      PsiModifierListStub[mask=9]
       PsiTypeParameterListStub
         PsiTypeParameter[T]
           PsiRefListStub[EXTENDS_BOUNDS_LIST:]

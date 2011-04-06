@@ -23,7 +23,7 @@ PsiJavaFileStub []
           PsiModifierListStub[mask=0]
       PsiRefListStub[THROWS_LIST:]
     PsiMethodStub[cons varargs AnnotatedEnumConstructor:void]
-      PsiModifierListStub[mask=130]
+      PsiModifierListStub[mask=2]
       PsiTypeParameterListStub
       PsiParameterListStub
         PsiParameterStub[names:java.lang.String...]
