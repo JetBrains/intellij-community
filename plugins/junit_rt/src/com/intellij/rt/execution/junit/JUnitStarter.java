@@ -34,6 +34,7 @@ public class JUnitStarter {
   public static final String IDE_VERSION = "-ideVersion";
   public static final String JUNIT4_PARAMETER = "-junit4";
   private static final String SOCKET = "-socket";
+  private static String ourCommandLine;
 
   public static void main(String[] args) throws IOException {
     SegmentedOutputStream out = new SegmentedOutputStream(System.out);
@@ -76,7 +77,7 @@ public class JUnitStarter {
       }
       else {
         if (arg.startsWith("@@@")) {
-          System.setProperty("idea.command.line", arg.substring(3));
+          ourCommandLine = arg.substring(3);
           continue;
         } else if (arg.startsWith("@@")) {
           if (new File(arg.substring(2)).exists()) {
@@ -190,9 +191,8 @@ public class JUnitStarter {
     try {
       System.setOut(new PrintStream(out));
       System.setErr(new PrintStream(err));
-      final String commandline = JUnitForkedStarter.getForkedCommandLine();
-      if (commandline != null) {
-        return JUnitForkedStarter.startForkedVMs(args, isJUnit4, listeners, out, err, commandline);
+      if (ourCommandLine != null) {
+        return JUnitForkedStarter.startForkedVMs(args, isJUnit4, listeners, out, err, ourCommandLine);
       }
       IdeaTestRunner testRunner = (IdeaTestRunner)getAgentClass(isJUnit4).newInstance();
       testRunner.setStreams(out, err, 0);

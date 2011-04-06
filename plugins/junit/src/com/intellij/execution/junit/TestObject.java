@@ -48,6 +48,7 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
@@ -352,6 +353,13 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
   protected JUnitProcessHandler createHandler() throws ExecutionException {
+    appendForkInfo();
+    return JUnitProcessHandler.runCommandLine(CommandLineBuilder.createFromJavaParameters(myJavaParameters, myProject, true));
+  }
+
+  private void appendForkInfo() throws ExecutionException {
+    final String forkMode = myConfiguration.getForkMode();
+    if (Comparing.strEqual(forkMode, "none")) return;
     File tempFile = null;
     try {
       tempFile = FileUtil.createTempFile("command.line", "");
@@ -364,10 +372,12 @@ public abstract class TestObject implements JavaCommandLine {
     try {
       final PrintWriter writer = new PrintWriter(tempFile, "UTF-8");
       try {
-        writer.print(GeneralCommandLine.quoteParameter(((JavaSdkType)javaParameters.getJdk().getSdkType()).getVMExecutablePath(javaParameters.getJdk())) + " ");
+        writer.print(GeneralCommandLine
+                       .quoteParameter(((JavaSdkType)javaParameters.getJdk().getSdkType()).getVMExecutablePath(javaParameters.getJdk())) + " ");
         writer.print(javaParameters.getVMParametersList().getParametersString() + " ");
         writer.print("-classpath ");
         writer.print(GeneralCommandLine.quoteParameter(javaParameters.getClassPath().getPathsString()));
+        writer.print("\n" + forkMode);
       }
       finally {
         writer.close();
@@ -377,7 +387,6 @@ public abstract class TestObject implements JavaCommandLine {
     catch (Exception e) {
       LOG.error(e);
     }
-    return JUnitProcessHandler.runCommandLine(CommandLineBuilder.createFromJavaParameters(javaParameters, myProject, true));
   }
 
 

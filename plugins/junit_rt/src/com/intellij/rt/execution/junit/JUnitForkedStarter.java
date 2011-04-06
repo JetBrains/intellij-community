@@ -66,7 +66,11 @@ public class JUnitForkedStarter {
                             boolean isJUnit4,
                             ArrayList listeners,
                             SegmentedOutputStream out,
-                            SegmentedOutputStream err, String commandline) throws Exception {
+                            SegmentedOutputStream err, String path) throws Exception {
+    final BufferedReader reader = new BufferedReader(new FileReader(path));
+    final String commandline = reader.readLine();
+    final String forkMode = reader.readLine();
+    reader.close();
     IdeaTestRunner testRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(isJUnit4).newInstance();
     testRunner.setStreams(out, err, 0);
     final Object description = testRunner.getTestToStart(args);
@@ -76,7 +80,7 @@ public class JUnitForkedStarter {
     long startTime = System.currentTimeMillis();
 
     final List children = testRunner.getChildTests(description);
-    final boolean forkTillMethod = System.getProperty("idea.fork.junit.tests").equalsIgnoreCase("method");
+    final boolean forkTillMethod = forkMode.equalsIgnoreCase("method");
     int result = processChildren(isJUnit4, listeners, out, err, commandline, testRunner, children, 0, forkTillMethod);
 
     long endTime = System.currentTimeMillis();
@@ -124,16 +128,5 @@ public class JUnitForkedStarter {
     ForkedVMWrapper.readWrapped(testOutputPath, out.getPrintStream(), err.getPrintStream());
    // tempFile.deleteOnExit();
     return result;
-  }
-
-  static String getForkedCommandLine() throws IOException {
-    final String path = System.getProperty("idea.fork.junit.tests") != null ? System.getProperty("idea.command.line") : null;
-    String commandline = null;
-    if (path != null) {
-      final BufferedReader reader = new BufferedReader(new FileReader(path));
-      commandline = reader.readLine();
-      reader.close();
-    }
-    return commandline;
   }
 }
