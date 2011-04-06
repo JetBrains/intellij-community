@@ -72,6 +72,7 @@ import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -226,6 +227,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
     }
     return false;
+  }
+
+  @TestOnly
+  public static String getInfo(PsiElement element, PsiElement atPointer) {
+    return generateInfo(element, atPointer);
   }
 
   @Nullable
