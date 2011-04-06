@@ -196,4 +196,9 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     assert vFile2 != null;
     assertEquals(vFile1.getParent(), vFile2.getParent());
   }
+
+  public void testNotAKeywords() throws Exception {
+    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_4);
+    doTest(BASE_PATH + "/notAKeywords/Test.java", BASE_PATH + "/notAKeywords", false, false);
+  }
 }

@@ -21,12 +21,14 @@ import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -85,7 +87,8 @@ public class ClsParsingUtil {
     final String exprText = mapIndeterminate(text);
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     final PsiJavaFile context = ((PsiElementFactoryImpl)factory).getDummyJavaFile(); // to resolve classes from java.lang
-    final DummyHolder holder = DummyHolderFactory.createHolder(manager, new JavaDummyElement(exprText, ANNOTATION_VALUE, false), context);
+    final LanguageLevel level = PsiUtil.getLanguageLevel(parent);
+    final DummyHolder holder = DummyHolderFactory.createHolder(manager, new JavaDummyElement(exprText, ANNOTATION_VALUE, level), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiAnnotationMemberValue)) {
       LOG.error("Could not parse initializer:'" + exprText + "'");

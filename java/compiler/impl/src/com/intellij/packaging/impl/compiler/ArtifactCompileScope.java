@@ -26,7 +26,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.packaging.impl.elements.ModuleOutputElementType;
+import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
 import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +94,7 @@ public class ArtifactCompileScope {
 
   private static boolean containsModuleOutput(Artifact artifact, final Set<Module> modules, ArtifactManager artifactManager) {
     final PackagingElementResolvingContext context = artifactManager.getResolvingContext();
-    return !ArtifactUtil.processPackagingElements(artifact, ModuleOutputElementType.MODULE_OUTPUT_ELEMENT_TYPE,
+    return !ArtifactUtil.processPackagingElements(artifact, ProductionModuleOutputElementType.ELEMENT_TYPE,
                                                          new Processor<ModuleOutputPackagingElement>() {
                                                            public boolean process(ModuleOutputPackagingElement moduleOutputPackagingElement) {
                                                              final Module module = moduleOutputPackagingElement.findModule(context);

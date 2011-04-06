@@ -316,15 +316,21 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     hosts.addAll(elements1);
     hosts.addAll(elements2);
 
-    PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+    final PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
       public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-        outInjected.add(injectedPsi);
+        synchronized (outInjected) {
+          outInjected.add(injectedPsi);
+        }
       }
     };
-    for (PsiElement element : hosts) {
-      progress.checkCanceled();
-      InjectedLanguageUtil.enumerate(element, myFile, visitor, false);
-    }
+    if (!JobUtil.invokeConcurrentlyUnderProgress(new ArrayList<PsiElement>(hosts), new Processor<PsiElement>() {
+        @Override
+        public boolean process(PsiElement element) {
+          progress.checkCanceled();
+          InjectedLanguageUtil.enumerate(element, myFile, visitor, false);
+          return true;
+        }
+      }, false, progress)) throw new ProcessCanceledException();
   }
 
   // returns false if canceled

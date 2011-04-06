@@ -39,6 +39,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Properties;
@@ -170,7 +171,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   @NotNull
   @Override
   public PsiAnnotation createAnnotationFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, ANNOTATION, false), context);
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, ANNOTATION, level(context)), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiAnnotation)) {
       throw new IncorrectOperationException("Incorrect annotation \"" + text + "\".");
@@ -219,7 +220,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   @NotNull
   @Override
   public PsiField createFieldFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, DECLARATION, false), context);
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, DECLARATION, level(context)), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiField)) {
       throw new IncorrectOperationException("Incorrect field \"" + text + "\".");
@@ -230,7 +231,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   @NotNull
   @Override
   public PsiMethod createMethodFromText(@NotNull final String text, final PsiElement context, final LanguageLevel level) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, DECLARATION, false, level), context);
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, DECLARATION, level), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiMethod)) {
       throw new IncorrectOperationException("Incorrect method \"" + text + "\" (" + element + ").");
@@ -248,7 +249,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   @NotNull
   @Override
   public PsiParameter createParameterFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, PARAMETER, false), context);
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, PARAMETER, level(context)), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiParameter)) {
       throw new IncorrectOperationException("Incorrect parameter \"" + text + "\".");
@@ -259,7 +260,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   @NotNull
   @Override
   public PsiResourceVariable createResourceFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, RESOURCE, false), context);
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, RESOURCE, level(context)), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiResourceVariable)) {
       throw new IncorrectOperationException("Incorrect resource \"" + text + "\".");
@@ -276,7 +277,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   @NotNull
   @Override
   public PsiTypeElement createTypeElementFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, TYPE, false), context);
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, TYPE, level(context)), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiTypeElement)) {
       throw new IncorrectOperationException("Incorrect type \"" + text + "\".");
@@ -303,7 +304,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     final boolean mayHaveDiamonds = context instanceof PsiNewExpression &&
                                     PsiUtil.getLanguageLevel(context).isAtLeast(LanguageLevel.JDK_1_7);
     final JavaParserUtil.ParserWrapper wrapper = isStaticImport ? STATIC_IMPORT_REF : mayHaveDiamonds ? DIAMOND_REF : REFERENCE;
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, wrapper, false), context);
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, wrapper, level(context)), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiJavaCodeReferenceElement)) {
       throw new IncorrectOperationException("Incorrect reference \"" + text + "\".");
@@ -314,7 +315,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   @NotNull
   @Override
   public PsiCodeBlock createCodeBlockFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, CODE_BLOCK, true), context);
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, CODE_BLOCK, level(context), true), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiCodeBlock)) {
       throw new IncorrectOperationException("Incorrect code block \"" + text + "\".");
@@ -325,7 +326,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   @NotNull
   @Override
   public PsiStatement createStatementFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, STATEMENT, false), context);
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, STATEMENT, level(context)), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiStatement)) {
       throw new IncorrectOperationException("Incorrect statement \"" + text + "\".");
@@ -336,7 +337,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   @NotNull
   @Override
   public PsiExpression createExpressionFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, EXPRESSION, false), context);
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, EXPRESSION, level(context)), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiExpression)) {
       throw new IncorrectOperationException("Incorrect expression \"" + text + "\".");
@@ -353,7 +354,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   @NotNull
   @Override
   public PsiTypeParameter createTypeParameterFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, TYPE_PARAMETER, false), context);
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, TYPE_PARAMETER, level(context)), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiTypeParameter)) {
       throw new IncorrectOperationException("Incorrect type parameter \"" + text + "\".");
@@ -382,7 +383,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   @NotNull
   @Override
   public PsiEnumConstant createEnumConstantFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, ENUM_CONSTANT, false), context);
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, ENUM_CONSTANT, level(context)), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiEnumConstant)) {
       throw new IncorrectOperationException("Incorrect enum constant \"" + text + "\".");
@@ -396,7 +397,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
                                             final PsiElement context) throws IncorrectOperationException {
     final String text = StringUtil
       .join("catch (", exceptionType.getCanonicalText(), " ", exceptionName, ") {}");
-    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, CATCH_SECTION, false), context);
+    final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, CATCH_SECTION, level(context)), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiCatchSection)) {
       throw new IncorrectOperationException("Incorrect catch section '" + text + "'. Parsed element: "+element);
@@ -443,5 +444,9 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
 
   public static PsiPrimitiveType getPrimitiveType(final String text) {
     return PRIMITIVE_TYPES.get(text);
+  }
+
+  private static LanguageLevel level(@Nullable final PsiElement context) {
+    return context != null ? PsiUtil.getLanguageLevel(context) : LanguageLevel.HIGHEST;
   }
 }

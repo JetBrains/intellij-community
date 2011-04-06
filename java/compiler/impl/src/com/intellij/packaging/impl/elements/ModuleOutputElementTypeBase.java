@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,11 @@
  */
 package com.intellij.packaging.impl.elements;
 
-import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
@@ -28,49 +27,37 @@ import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
-* @author nik
-*/
-public class ModuleOutputElementType extends PackagingElementType<ModuleOutputPackagingElementImpl> {
-  public static final ModuleOutputElementType MODULE_OUTPUT_ELEMENT_TYPE = new ModuleOutputElementType();
-
-  ModuleOutputElementType() {
-    super("module-output", CompilerBundle.message("element.type.name.module.output"));
-  }
-
-  @Override
-  public Icon getCreateElementIcon() {
-    return IconLoader.getIcon("/nodes/ModuleOpen.png");
+ * @author nik
+ */
+public abstract class ModuleOutputElementTypeBase<E extends ModuleOutputPackagingElementBase> extends PackagingElementType<E> {
+  public ModuleOutputElementTypeBase(String id, String presentableName) {
+    super(id, presentableName);
   }
 
   @Override
   public boolean canCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact) {
-    return context.getModulesProvider().getModules().length > 0;
+    return !getSuitableModules(context).isEmpty();
   }
 
   @NotNull
   public List<? extends PackagingElement<?>> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                        @NotNull CompositePackagingElement<?> parent) {
-    List<Module> modules = chooseModules(context);
+    List<Module> suitableModules = getSuitableModules(context);
+    List<Module> selected = context.chooseModules(suitableModules, ProjectBundle.message("dialog.title.packaging.choose.module"));
+
     final List<PackagingElement<?>> elements = new ArrayList<PackagingElement<?>>();
     final ModulePointerManager pointerManager = ModulePointerManager.getInstance(context.getProject());
-    for (Module module : modules) {
-      elements.add(new ModuleOutputPackagingElementImpl(context.getProject(), pointerManager.create(module)));
+    for (Module module : selected) {
+      elements.add(createElement(context.getProject(), pointerManager.create(module)));
     }
     return elements;
   }
 
-  public static List<Module> chooseModules(ArtifactEditorContext context) {
-    return context.chooseModules(Arrays.asList(context.getModulesProvider().getModules()), ProjectBundle.message("dialog.title.packaging.choose.module"));
-  }
+  protected abstract ModuleOutputPackagingElementBase createElement(@NotNull Project project, @NotNull ModulePointer pointer);
 
-  @NotNull
-  public ModuleOutputPackagingElementImpl createEmpty(@NotNull Project project) {
-    return new ModuleOutputPackagingElementImpl(project);
-  }
+  protected abstract List<Module> getSuitableModules(ArtifactEditorContext context);
 }

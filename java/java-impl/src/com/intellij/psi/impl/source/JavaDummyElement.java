@@ -28,22 +28,24 @@ import org.jetbrains.annotations.Nullable;
  * See {@link com.intellij.psi.impl.PsiJavaParserFacadeImpl} for details.
  */
 public class JavaDummyElement extends FileElement {
-  @NotNull private final JavaParserUtil.ParserWrapper myParser;
+  private final JavaParserUtil.ParserWrapper myParser;
+  private final LanguageLevel myLanguageLevel;
   private final boolean myConsumeAll;
-  @NotNull private final LanguageLevel myLanguageLevel;
 
-  public JavaDummyElement(@Nullable final CharSequence text, @NotNull final JavaParserUtil.ParserWrapper parser, final boolean consumeAll) {
-    this(text, parser, consumeAll, LanguageLevel.HIGHEST);
+  public JavaDummyElement(@Nullable final CharSequence text,
+                          @NotNull final JavaParserUtil.ParserWrapper parser,
+                          @NotNull final LanguageLevel level) {
+    this(text, parser, level, false);
   }
 
   public JavaDummyElement(@Nullable final CharSequence text,
                           @NotNull final JavaParserUtil.ParserWrapper parser,
-                          final boolean consumeAll,
-                          @NotNull final LanguageLevel level) {
+                          @NotNull final LanguageLevel level,
+                          final boolean consumeAll) {
     super(JavaElementType.DUMMY_ELEMENT, text);
     myParser = parser;
-    myConsumeAll = consumeAll;
     myLanguageLevel = level;
+    myConsumeAll = consumeAll;
   }
 
   @NotNull

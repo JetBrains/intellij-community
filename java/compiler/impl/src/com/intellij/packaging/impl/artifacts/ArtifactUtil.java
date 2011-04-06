@@ -19,7 +19,6 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
@@ -360,13 +359,9 @@ public class ArtifactUtil {
   @Nullable
   private static String getRelativePathInSources(@NotNull VirtualFile file, final @NotNull ModuleOutputPackagingElement moduleElement,
                                                 @NotNull PackagingElementResolvingContext context) {
-    final Module module = moduleElement.findModule(context);
-    if (module != null) {
-      final ModuleRootModel rootModel = context.getModulesProvider().getRootModel(module);
-      for (VirtualFile sourceRoot : rootModel.getSourceRoots(false)) {
-        if (VfsUtil.isAncestor(sourceRoot, file, true)) {
-          return VfsUtil.getRelativePath(file, sourceRoot, '/');
-        }
+    for (VirtualFile sourceRoot : moduleElement.getSourceRoots(context)) {
+      if (VfsUtil.isAncestor(sourceRoot, file, true)) {
+        return VfsUtil.getRelativePath(file, sourceRoot, '/');
       }
     }
     return null;
@@ -420,15 +415,11 @@ public class ArtifactUtil {
           }
         }
         else if (element instanceof ModuleOutputPackagingElement) {
-          final Module module = ((ModuleOutputPackagingElement)element).findModule(context);
-          if (module != null) {
-            final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(context.getProject());
-            final ModuleRootModel rootModel = context.getModulesProvider().getRootModel(module);
-            for (VirtualFile sourceRoot : rootModel.getSourceRoots(false)) {
-              final VirtualFile sourceFile = sourceRoot.findFileByRelativePath(path);
-              if (sourceFile != null && compilerConfiguration.isResourceFile(sourceFile)) {
-                result.add(sourceFile);
-              }
+          final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(context.getProject());
+          for (VirtualFile sourceRoot : ((ModuleOutputPackagingElement)element).getSourceRoots(context)) {
+            final VirtualFile sourceFile = sourceRoot.findFileByRelativePath(path);
+            if (sourceFile != null && compilerConfiguration.isResourceFile(sourceFile)) {
+              result.add(sourceFile);
             }
           }
         }

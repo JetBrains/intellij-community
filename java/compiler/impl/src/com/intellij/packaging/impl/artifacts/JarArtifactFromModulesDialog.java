@@ -15,6 +15,7 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
@@ -30,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
@@ -47,6 +47,7 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
   private JLabel myManifestDirLabel;
   private JRadioButton myExtractJarsRadioButton;
   private JRadioButton myCopyJarsRadioButton;
+  private JCheckBox myIncludeTestsCheckBox;
   private PackagingElementResolvingContext myContext;
 
   public JarArtifactFromModulesDialog(PackagingElementResolvingContext context) {
@@ -84,7 +85,7 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
     for (Module module : modules) {
       myModuleComboBox.addItem(module);
     }
-    myModuleComboBox.setRenderer(new ModuleListRenderer());
+    myModuleComboBox.setRenderer(new ModuleListRenderer(myModuleComboBox));
     init();
   }
 
@@ -122,6 +123,10 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
     return myExtractJarsRadioButton.isSelected();
   }
 
+  public boolean isIncludeTests() {
+    return myIncludeTestsCheckBox.isSelected();
+  }
+
   public String getMainClassName() {
     return myMainClassField.getText();
   }
@@ -136,20 +141,21 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
     return myMainPanel;
   }
 
-  private static class ModuleListRenderer extends DefaultListCellRenderer {
+  private static class ModuleListRenderer extends ListCellRendererWrapper<Module> {
+    public ModuleListRenderer(JComboBox comboBox) {
+      super(comboBox);
+    }
+
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      if (value instanceof Module) {
-        final Module module = (Module)value;
-        setIcon(module.getModuleType().getNodeIcon(false));
-        setText(module.getName());
+    public void customize(JList list, Module value, int index, boolean selected, boolean hasFocus) {
+      if (value != null) {
+        setIcon(value.getModuleType().getNodeIcon(false));
+        setText(value.getName());
       }
       else {
         setText("<All Modules>");
         setIcon(null);
       }
-      return component;
     }
   }
 }

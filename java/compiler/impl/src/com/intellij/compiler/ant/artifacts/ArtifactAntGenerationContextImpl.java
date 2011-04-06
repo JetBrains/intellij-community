@@ -151,6 +151,11 @@ public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationCo
     return BuildProperties.getOutputPathProperty(moduleName);
   }
 
+  @Override
+  public String getModuleTestOutputPath(@NonNls String moduleName) {
+    return BuildProperties.getOutputPathForTestsProperty(moduleName);
+  }
+
   public List<Generator> getBeforeBuildGenerators() {
     return myBeforeBuildGenerators;
   }

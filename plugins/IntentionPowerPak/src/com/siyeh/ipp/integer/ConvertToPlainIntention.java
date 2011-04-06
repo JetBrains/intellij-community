@@ -15,10 +15,7 @@
  */
 package com.siyeh.ipp.integer;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ipp.base.Intention;
+import com.intellij.psi.PsiType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,38 +24,18 @@ import java.math.BigDecimal;
 /**
  * @author Konstantin Bulenkov
  */
-public class ConvertToPlainIntention extends Intention {
+public class ConvertToPlainIntention extends ConvertNumberIntentionBase {
+  @Override
+  protected String convertValue(final Number value, final PsiType type, final boolean negated) {
+    String text = new BigDecimal(value.toString()).toPlainString();
+    if (negated) text = "-" + text;
+    if (PsiType.FLOAT.equals(type)) text += "f";
+    return text;
+  }
 
-    private static final ConvertToPlainPredicate PREDICATE =
-            new ConvertToPlainPredicate();
-
-    @Override
-    protected void processIntention(@NotNull PsiElement element)
-            throws IncorrectOperationException {
-        try {
-            final String elementText = element.getText();
-            if (elementText.length() == 0) {
-                return;
-            }
-            final int lastIndex = elementText.length() - 1;
-            final char lastChar = elementText.charAt(lastIndex);
-            if (lastChar == 'f' || lastChar == 'F') {
-                final BigDecimal bigDecimal =
-                        new BigDecimal(elementText.substring(0, lastIndex));
-                replaceExpression(bigDecimal.toPlainString() + lastChar,
-                        (PsiExpression) element);
-            } else {
-                final BigDecimal bigDecimal = new BigDecimal(elementText);
-                replaceExpression(bigDecimal.toPlainString(),
-                        (PsiExpression) element);
-            }
-        } catch (Exception e) {//
-        }
-    }
-
-    @NotNull
-    @Override
-    protected PsiElementPredicate getElementPredicate() {
-        return PREDICATE;
-    }
+  @NotNull
+  @Override
+  protected PsiElementPredicate getElementPredicate() {
+    return new ConvertToPlainPredicate();
+  }
 }
