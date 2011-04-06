@@ -729,9 +729,6 @@ public class AbstractPopup implements JBPopup {
         if (myRequestFocus) {
           _requestFocus();
 
-          if (myFocusable) {
-            myFocusTrackback.cleanParentWindow();
-          }
         }
 
         if (myPreferredFocusedComponent != null && myInStack) {
@@ -745,6 +742,10 @@ public class AbstractPopup implements JBPopup {
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
+            if (myFocusable && myRequestFocus && myFocusTrackback != null) {
+              myFocusTrackback.cleanParentWindow();
+            }
+
             result.setDone();
           }
         });
