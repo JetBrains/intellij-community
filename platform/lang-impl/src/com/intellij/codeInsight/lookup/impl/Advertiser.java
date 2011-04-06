@@ -34,18 +34,18 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author peter
  */
 public class Advertiser {
-  private final List<JLabel> myTexts = new CopyOnWriteArrayList<JLabel>();
+  private final List<String> myTexts = new CopyOnWriteArrayList<String>();
   private final JPanel myComponent = new JPanel(new GridBagLayout()) {
     @Override
     public Dimension getPreferredSize() {
-      List<JLabel> texts = getTexts();
+      List<String> texts = getTexts();
       if (texts.isEmpty()) {
         return new Dimension(-1, 0);
       }
 
       int maxSize = 0;
-      for (JLabel label : texts) {
-        maxSize = Math.max(maxSize, label.getPreferredSize().width);
+      for (String label : texts) {
+        maxSize = Math.max(maxSize, createLabel(label).getPreferredSize().width);
       }
 
       Dimension sup = super.getPreferredSize();
@@ -78,18 +78,25 @@ public class Advertiser {
   }
 
   private void updateAdvertisements() {
-    List<JLabel> texts = getTexts();
+    List<String> texts = getTexts();
     myNextLabel.setVisible(texts.size() > 1);
     myTextPanel.removeAll();
     if (!texts.isEmpty()) {
-      myTextPanel.add(texts.get(myCurrentItem % texts.size()));
+      String text = texts.get(myCurrentItem % texts.size());
+      myTextPanel.add(createLabel(text));
     }
     myComponent.revalidate();
     myComponent.repaint();
   }
 
-  private synchronized List<JLabel> getTexts() {
-    return new ArrayList<JLabel>(myTexts);
+  private static JLabel createLabel(String text) {
+    JLabel label = new JLabel(text + "  ");
+    label.setFont(adFont());
+    return label;
+  }
+
+  private synchronized List<String> getTexts() {
+    return new ArrayList<String>(myTexts);
   }
 
   public void showRandomText() {
@@ -110,9 +117,7 @@ public class Advertiser {
   }
 
   public synchronized void addAdvertisement(@NotNull String text) {
-    JLabel label = new JLabel(text + "  ");
-    label.setFont(adFont());
-    myTexts.add(label);
+    myTexts.add(text);
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
