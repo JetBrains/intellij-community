@@ -317,7 +317,7 @@ public class AbstractTreeUi {
           runnable.run();
         }
         else {
-          UIUtil.invokeLaterIfNeeded(runnable);
+          invokeLaterIfNeeded(runnable);
         }
       }
     }
@@ -336,7 +336,7 @@ public class AbstractTreeUi {
       cleanup.run();
     }
     else {
-      UIUtil.invokeLaterIfNeeded(cleanup);
+      invokeLaterIfNeeded(cleanup);
     }
   }
 
@@ -817,7 +817,7 @@ public class AbstractTreeUi {
           result.setDone(_update(nodeDescriptor));
         }
         else {
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
+          invokeLaterIfNeeded(new Runnable() {
             public void run() {
               execute(new Runnable() {
                 public void run() {
@@ -834,7 +834,7 @@ public class AbstractTreeUi {
       public void run(final Boolean changes) {
         if (changes) {
           final long updateStamp = nodeDescriptor.getUpdateCount();
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
+          invokeLaterIfNeeded(new Runnable() {
             public void run() {
               Object element = nodeDescriptor.getElement();
               DefaultMutableTreeNode node = getNodeForElement(element, false);

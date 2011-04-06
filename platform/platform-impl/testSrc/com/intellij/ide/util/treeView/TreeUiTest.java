@@ -2204,16 +2204,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     public SyncUpdate() {
       super(false, false);
     }
-
-    @Override
-    public void testQueryWhenUpdatingPresentation() throws Exception {
-      super.testQueryWhenUpdatingPresentation();    //To change body of overridden methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public void testElementMove1() throws Exception {
-      super.testElementMove1();    //To change body of overridden methods use File | Settings | File Templates.
-    }
   }
 
   public static class Passthrough extends TreeUiTest {
@@ -2357,7 +2347,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
   public static TestSuite suite() {
     TestSuite suite = new TestSuite();
-    //suite.addTestSuite(Passthrough.class);
+    suite.addTestSuite(Passthrough.class);
     suite.addTestSuite(SyncUpdate.class);
     suite.addTestSuite(YieldingUpdate.class);
     suite.addTestSuite(VeryQuickBgLoadingSyncUpdate.class);
