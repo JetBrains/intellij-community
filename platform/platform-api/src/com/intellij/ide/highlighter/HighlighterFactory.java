@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public class HighlighterFactory {
   private HighlighterFactory() {}
@@ -50,7 +51,7 @@ public class HighlighterFactory {
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(fileType, settings, project);
   }
 
-  public static EditorHighlighter createHighlighter(VirtualFile vFile, EditorColorsScheme settings, Project project) {
+  public static EditorHighlighter createHighlighter(@NotNull VirtualFile vFile, EditorColorsScheme settings, Project project) {
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(vFile, settings, project);
   }
 }
