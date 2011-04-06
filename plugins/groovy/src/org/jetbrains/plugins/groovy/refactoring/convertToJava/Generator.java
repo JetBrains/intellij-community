@@ -15,28 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.hash.HashSet;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+/**
+ * @author Maxim.Medvedev
+ */
+public abstract class Generator extends GroovyRecursiveElementVisitor {
+  public abstract StringBuilder getBuilder();
 
-class ExpressionContext {
-  List<String> myStatements = new ArrayList<String>();
-  Set<String> myUsedVarNames;
-  Project project;
-
-  ExpressionContext(Project project, Set<String> usedVarNames) {
-    this.project = project;
-    myUsedVarNames = usedVarNames;
-  }
-
-  ExpressionContext(Project project) {
-    this(project, new HashSet<String>());
-  }
-
-  ExpressionContext copy() {
-    return new ExpressionContext(project, myUsedVarNames);
-  }
+  public abstract ExpressionContext getContext();
 }

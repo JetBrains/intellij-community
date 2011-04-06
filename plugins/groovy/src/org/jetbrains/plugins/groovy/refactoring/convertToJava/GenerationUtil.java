@@ -40,6 +40,16 @@ import java.util.List;
  */
 public class GenerationUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil");
+  public static final String[] JAVA_MODIFIERS = new String[]{
+      PsiModifier.PUBLIC,
+      PsiModifier.PROTECTED,
+      PsiModifier.PRIVATE,
+      PsiModifier.PACKAGE_LOCAL,
+      PsiModifier.STATIC,
+      PsiModifier.ABSTRACT,
+      PsiModifier.FINAL,
+      PsiModifier.NATIVE,
+  };
 
   private GenerationUtil() {
   }
@@ -119,12 +129,7 @@ public class GenerationUtil {
     argumentListGenerator.generate(null, exprs, namedArgs, closureArgs, psiContext);
   }
 
-  public static void writeModifierList(StringBuilder builder, GrModifierList modifierList) {
-    final PsiElement[] modifiers = modifierList.getModifiers();
-
-  }
-
-  public static boolean writeModifiers(StringBuffer text, PsiModifierList modifierList, String[] modifiers) {
+  public static boolean writeModifiers(StringBuilder text, PsiModifierList modifierList, String[] modifiers) {
     boolean wasAddedModifiers = false;
     for (String modifierType : modifiers) {
       if (modifierList.hasModifierProperty(modifierType)) {
@@ -136,7 +141,7 @@ public class GenerationUtil {
     return wasAddedModifiers;
   }
 
-  public static void writeClassModifiers(StringBuffer text,
+  public static void writeClassModifiers(StringBuilder text,
                                           @Nullable PsiModifierList modifierList,
                                           boolean isInterface,
                                           boolean toplevel) {
