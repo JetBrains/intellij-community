@@ -2357,7 +2357,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
   public static TestSuite suite() {
     TestSuite suite = new TestSuite();
-    suite.addTestSuite(Passthrough.class);
+    //suite.addTestSuite(Passthrough.class);
     suite.addTestSuite(SyncUpdate.class);
     suite.addTestSuite(YieldingUpdate.class);
     suite.addTestSuite(VeryQuickBgLoadingSyncUpdate.class);
