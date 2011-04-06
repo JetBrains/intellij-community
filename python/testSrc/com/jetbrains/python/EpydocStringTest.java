@@ -1,12 +1,14 @@
 package com.jetbrains.python;
 
+import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.python.documentation.EpydocString;
-import junit.framework.TestCase;
+
+import java.util.List;
 
 /**
  * @author yole
  */
-public class EpydocStringTest extends TestCase {
+public class EpydocStringTest extends UsefulTestCase {
   public void testTagValue() {
     EpydocString docString = new EpydocString("@rtype: C{str}");
     assertEquals("C{str}", docString.getTagValue("rtype"));
@@ -50,6 +52,9 @@ public class EpydocStringTest extends TestCase {
                                               "    @param *args: arguments passed to function\n" +
                                               "    @param **kwargs: keyword arguments passed to C{function}\n" +
                                               "    \"\"\"");
+
+    final List<String> params = docString.getParameters();
+    assertOrderedEquals(params, "euid", "egid", "function", "*args", "**kwargs");
     assertEquals("effective UID used to call the function.", docString.getParamDescription("euid"));
     assertEquals("effective GID used to call the function.", docString.getParamDescription("egid"));
     assertEquals("arguments passed to function", docString.getParamDescription("args"));
@@ -60,7 +65,7 @@ public class EpydocStringTest extends TestCase {
   }
 
   public void testCodeToHTML() {
-    assertEquals("<pre>my_dict={1:2, 3:4}</pre>", EpydocString.inlineMarkupToHTML("C{my_dict={1:2, 3:4}}"));
+    assertEquals("<code>my_dict={1:2, 3:4}</code>", EpydocString.inlineMarkupToHTML("C{my_dict={1:2, 3:4}}"));
   }
 
   public void testUrlToHTML() {
@@ -76,5 +81,9 @@ public class EpydocStringTest extends TestCase {
                  EpydocString.inlineMarkupToHTML("I{B{Inline markup} may be nested; and\n" +
                                                  "    it may span} multiple lines."));
 
+  }
+
+  public void testParagraph() {
+    assertEquals("foo<p>bar", EpydocString.inlineMarkupToHTML("foo\n\nbar"));
   }
 }

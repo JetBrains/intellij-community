@@ -1,16 +1,20 @@
 package com.jetbrains.python.documentation;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author yole
  */
 public abstract class StructuredDocString {
+  protected final String myDescription;
+  protected final List<String> myParameters = Lists.newArrayList();
   protected final Map<String, String> mySimpleTagValues = Maps.newHashMap();
   protected final Map<String, Map<String, String>> myArgTagValues = Maps.newHashMap();
 
@@ -24,13 +28,22 @@ public abstract class StructuredDocString {
   protected StructuredDocString(String docstringText, String tagPrefix) {
     final String[] lines = LineTokenizer.tokenize(docstringText, false);
     int i = 0;
+    StringBuilder descBuilder = new StringBuilder();
     while (i < lines.length) {
       String line = lines[i].trim();
       if (line.startsWith(tagPrefix)) {
         i = parseTag(lines, i, tagPrefix);
       }
+      else {
+        descBuilder.append(line).append("\n");
+      }
       i++;
     }
+    myDescription = descBuilder.toString();
+  }
+
+  public String getDescription() {
+    return myDescription;
   }
 
   private int parseTag(String[] lines, int index, String tagPrefix) {
@@ -57,6 +70,9 @@ public abstract class StructuredDocString {
         myArgTagValues.put(tagName, argValues);
       }
       argValues.put(arg, value);
+      if (tagName.equals("param")) {
+        myParameters.add(arg);
+      }
     }
     return index;
   }
@@ -70,6 +86,10 @@ public abstract class StructuredDocString {
   public String getTagValue(String tagName, String argName) {
     Map<String, String> argValues = myArgTagValues.get(tagName);
     return argValues == null ? null : argValues.get(argName);
+  }
+
+  public List<String> getParameters() {
+    return myParameters;
   }
 
   @Nullable

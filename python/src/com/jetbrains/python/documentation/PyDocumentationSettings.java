@@ -16,6 +16,10 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 public class PyDocumentationSettings implements PersistentStateComponent<PyDocumentationSettings> {
   public String myDocStringFormat = DocStringFormat.PLAIN;
 
+  public boolean isEpydocFormat() {
+    return DocStringFormat.EPYDOC.equals(myDocStringFormat);
+  }
+
   public static PyDocumentationSettings getInstance(Project project) {
     return ServiceManager.getService(project, PyDocumentationSettings.class);
   }

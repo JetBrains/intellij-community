@@ -45,10 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -181,8 +178,14 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
     return cat;
   }
 
-  private static @NotNull ChainIterable<String> combUpDocString(Project project, @NotNull String docstring) {
-    ChainIterable<String> cat = new ChainIterable<String>();
+  private static @NotNull List<String> combUpDocString(Project project, @NotNull String docstring) {
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
+    List<String> result = new ArrayList<String>();
+    if (documentationSettings.isEpydocFormat()) {
+      final EpydocString epydocString = new EpydocString(docstring);
+      result.add(formatStructuredDocString(epydocString));
+      return result;
+    }
     // detect common indentation
     String[] lines = LineTokenizer.tokenize(docstring, false);
     Pattern spaces_pat = Pattern.compile("^\\s+");
@@ -217,7 +220,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
     for (String line : lines) {
       if (is_first && spaces_pat.matcher(line).matches()) continue; // ignore all initial whitespace
       if (is_first) is_first = false;
-      else cat.add(BR);
+      else result.add(BR);
       int leadingTabs = 0;
       while (leadingTabs < line.length() && line.charAt(leadingTabs) == '\t') {
         leadingTabs++;
@@ -225,9 +228,22 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
       if (leadingTabs > 0) {
         line = StringUtil.repeatSymbol(' ', tabSize * leadingTabs) + line.substring(leadingTabs);
       }
-      cat.add(combUp(line));
+      result.add(combUp(line));
     }
-    return cat;
+    return result;
+  }
+
+  private static String formatStructuredDocString(StructuredDocString docString) {
+    StringBuilder result = new StringBuilder(docString.getDescription());
+    final List<String> parameters = docString.getParameters();
+    if (parameters.size() > 0) {
+      result.append("<br><b>Parameters:</b><br>");
+      for (String parameter : parameters) {
+        result.append("<b>").append(parameter).append("</b>: ").append(docString.getParamDescription(parameter)).append("<br>");
+      }
+    }
+    return result.toString();
+
   }
 
   // provides ctrl+Q doc
