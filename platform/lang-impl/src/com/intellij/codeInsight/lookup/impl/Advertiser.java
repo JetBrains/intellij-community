@@ -15,98 +15,86 @@
  */
 package com.intellij.codeInsight.lookup.impl;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ui.Animator;
+import com.google.common.collect.ImmutableMap;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.font.TextAttribute;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author peter
  */
-public class Advertiser implements Disposable {
-  private static final int ourScrollingResolution = 15;
-  private final List<String> myTexts = new CopyOnWriteArrayList<String>();
-  private final JPanel myComponent = new JPanel() {
-
+public class Advertiser {
+  private final List<JLabel> myTexts = new CopyOnWriteArrayList<JLabel>();
+  private final JPanel myComponent = new JPanel(new GridBagLayout()) {
     @Override
     public Dimension getPreferredSize() {
-      List<String> texts = getTexts();
-      if (texts.isEmpty()) return new Dimension(0, 0);
-
-      FontMetrics fm = getFontMetrics(adFont());
-      int w = 0;
-      for (String text : texts) {
-        w = Math.max(w, fm.stringWidth(text));
+      Dimension sup = super.getPreferredSize();
+      int maxSize = 0;
+      for (JLabel label : getTexts()) {
+        maxSize = Math.max(maxSize, label.getPreferredSize().width);
       }
-
-      Insets insets = getBorder().getBorderInsets(this);
-      return new Dimension(w + insets.left + insets.right, fm.getHeight() + insets.top + insets.bottom);
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-      super.paintComponent(g);
-
-      int currentItem = myCurrentItem;
-      List<String> texts = getTexts();
-      if (texts.isEmpty() || currentItem >= texts.size()) return;
-
-      Font font = adFont();
-      FontMetrics metrics = g.getFontMetrics(font);
-      g.setFont(font);
-
-      int height = getHeight();
-      int y = (height - metrics.getHeight()) / 2 + metrics.getAscent() - (myScrollingOffset * height / ourScrollingResolution);
-      int x = getBorder().getBorderInsets(this).left;
-
-      if (currentItem >= 0) {
-        g.drawString(texts.get(currentItem), x, y);
-      }
-      if (myScrollingOffset != 0) {
-        g.drawString(texts.get((currentItem + 1) % texts.size()), x, y + height);
-      }
+      return new Dimension(maxSize + sup.width - myTextPanel.getPreferredSize().width, sup.height);
     }
   };
-  private int myCurrentItem = 0;
-  private int myScrollingOffset = 0;
+  private volatile int myCurrentItem = 0;
+  private JPanel myTextPanel;
+  private JLabel myNextLabel;
 
-  public Advertiser(Disposable parentDisposable) {
-    Disposer.register(parentDisposable, this);
-    int interCycleGap = 4000;
-    Animator animator = new Animator("completion ad", ourScrollingResolution, 800, true, interCycleGap, -1) {
+  public Advertiser() {
+    myTextPanel = new JPanel(new BorderLayout());
+
+    myNextLabel = new JLabel(">>");
+    myNextLabel.setFont(adFont().deriveFont(ImmutableMap.<TextAttribute, Object>builder().put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON).build()));
+    myNextLabel.setForeground(Color.blue);
+    myNextLabel.addMouseListener(new MouseAdapter() {
       @Override
-      public void paintNow(float frame, float totalFrames, float cycle) {
-        int adCount = getTexts().size();
-        if (adCount <= 1) {
-          myCurrentItem = myScrollingOffset = 0;
-          myComponent.repaint();
-          return;
-        }
-
-        myScrollingOffset = ((int)frame + 1) % ourScrollingResolution;
-        if (myScrollingOffset == 0) {
-          myCurrentItem = (myCurrentItem + 1) % adCount;
-        }
-        myComponent.paintImmediately(0, 0, myComponent.getWidth(), myComponent.getHeight());
+      public void mouseClicked(MouseEvent e) {
+        myCurrentItem++;
+        updateAdvertisements();
       }
-    };
-    animator.resume();
-    Disposer.register(this, animator);
+    });
+    myNextLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+    GridBag gb = new GridBag();
+    myComponent.add(myTextPanel, gb.next());
+    myComponent.add(myNextLabel, gb.next());
+    myComponent.add(new JPanel(), gb.next().fillCellHorizontally().weightx(1));
   }
 
-  private synchronized List<String> getTexts() {
-    return new ArrayList<String>(myTexts);
+  private void updateAdvertisements() {
+    List<JLabel> texts = getTexts();
+    myNextLabel.setVisible(texts.size() > 1);
+    myTextPanel.removeAll();
+    if (!texts.isEmpty()) {
+      myTextPanel.add(texts.get(myCurrentItem % texts.size()));
+    }
+    myComponent.revalidate();
+    myComponent.repaint();
+  }
+
+  private synchronized List<JLabel> getTexts() {
+    return new ArrayList<JLabel>(myTexts);
+  }
+
+  public void showRandomText() {
+    myCurrentItem = new Random().nextInt(myTexts.size());
+    updateAdvertisements();
   }
 
   public synchronized void clearAdvertisements() {
     myTexts.clear();
+    myCurrentItem = 0;
+    updateAdvertisements();
   }
 
   private static Font adFont() {
@@ -115,19 +103,19 @@ public class Advertiser implements Disposable {
   }
 
   public synchronized void addAdvertisement(@NotNull String text) {
-    myTexts.add(text);
-    if (myTexts.size() == 2) {
-     if (!myComponent.isShowing()) {
-        myCurrentItem = -1;
+    JLabel label = new JLabel(text + "  ");
+    label.setFont(adFont());
+    myTexts.add(label);
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        updateAdvertisements();
       }
-    }
+    });
   }
 
   public JComponent getAdComponent() {
     return myComponent;
   }
 
-  @Override
-  public void dispose() {
-  }
 }
