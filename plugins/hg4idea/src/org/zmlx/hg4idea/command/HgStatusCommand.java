@@ -18,8 +18,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgChange;
 import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgFileStatusEnum;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -99,7 +103,7 @@ public class HgStatusCommand {
       return Collections.emptySet();
     }
 
-    HgCommandService service = HgCommandService.getInstance(project);
+    HgCommandExecutor executor = HgCommandExecutor.getInstance(project);
 
     List<String> arguments = new LinkedList<String>();
     if (includeAdded) {
@@ -136,7 +140,7 @@ public class HgStatusCommand {
       arguments.add(file);
     }
 
-    HgCommandResult result = service.execute(repo, HgCommandService.DEFAULT_OPTIONS, "status", arguments, Charset.defaultCharset(), true);
+    HgCommandResult result = executor.execute(repo, HgCommandExecutor.DEFAULT_OPTIONS, "status", arguments, Charset.defaultCharset(), true);
     Set<HgChange> changes = new HashSet<HgChange>();
     HgChange previous = null;
     if (result == null) {

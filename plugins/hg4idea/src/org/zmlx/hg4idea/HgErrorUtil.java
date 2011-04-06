@@ -10,10 +10,11 @@
 // the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 // either express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
-package org.zmlx.hg4idea.command;
+package org.zmlx.hg4idea;
 
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ public final class HgErrorUtil {
     return StringUtils.isNotBlank(line) && StringUtils.contains(line, "abort:");
   }
 
-  static boolean isAuthorizationError(HgCommandResult result) {
+  public static boolean isAuthorizationError(HgCommandResult result) {
     if (result == null) {
       return true;
     }

@@ -25,7 +25,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.command.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.command.HgIdentifyCommand;
 
 import javax.swing.*;

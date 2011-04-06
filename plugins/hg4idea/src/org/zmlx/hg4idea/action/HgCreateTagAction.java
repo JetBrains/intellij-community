@@ -15,8 +15,8 @@ package org.zmlx.hg4idea.action;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
 import org.zmlx.hg4idea.command.HgTagCreateCommand;
-import org.zmlx.hg4idea.command.HgCommandException;
-import org.zmlx.hg4idea.command.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.ui.HgTagDialog;
 
 import java.util.Collection;

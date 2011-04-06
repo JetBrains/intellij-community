@@ -24,7 +24,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,16 +32,10 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgCloneCommand;
-import org.zmlx.hg4idea.command.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.ui.HgCloneDialog;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.URI;
 
 /**
  * Checkout provider for Mercurial

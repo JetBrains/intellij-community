@@ -17,6 +17,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -67,7 +69,7 @@ public class HgPullCommand {
 
     arguments.add(source);
 
-    HgCommandResult result = HgCommandService.getInstance(project).execute(repo, "pull", arguments);
+    HgCommandResult result = HgCommandExecutor.getInstance(project).execute(repo, "pull", arguments);
 
     project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
 

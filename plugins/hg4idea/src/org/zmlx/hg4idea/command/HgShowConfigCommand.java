@@ -15,6 +15,8 @@ package org.zmlx.hg4idea.command;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
 import java.nio.charset.Charset;
 import java.util.Collections;
@@ -48,7 +50,8 @@ public class HgShowConfigCommand {
     }
 
     HgCommandResult result =
-      HgCommandService.getInstance(project).execute(repo, HgCommandService.DEFAULT_OPTIONS, "showconfig", null, Charset.defaultCharset(), true);
+      HgCommandExecutor
+        .getInstance(project).execute(repo, HgCommandExecutor.DEFAULT_OPTIONS, "showconfig", null, Charset.defaultCharset(), true);
 
     if (result == null) {
       return Collections.emptyMap();

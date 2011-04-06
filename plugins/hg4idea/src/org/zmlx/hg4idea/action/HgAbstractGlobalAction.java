@@ -22,7 +22,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgUtil;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.command.HgCommandException;
+import org.zmlx.hg4idea.execution.HgCommandException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;

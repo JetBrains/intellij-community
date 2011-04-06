@@ -22,10 +22,10 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.*;
+import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.ArrayList;
 import java.util.List;

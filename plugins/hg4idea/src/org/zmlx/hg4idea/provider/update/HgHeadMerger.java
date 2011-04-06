@@ -20,11 +20,11 @@ import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgChange;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgUtil;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.command.HgChange;
-import org.zmlx.hg4idea.command.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.command.HgMergeCommand;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 

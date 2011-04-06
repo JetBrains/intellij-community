@@ -20,9 +20,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import org.zmlx.hg4idea.HgContentRevision;
-import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.*;
 
 import java.awt.*;

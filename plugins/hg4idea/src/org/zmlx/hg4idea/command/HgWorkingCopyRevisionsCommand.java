@@ -23,6 +23,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -127,8 +129,8 @@ public class HgWorkingCopyRevisionsCommand {
 
   @Nullable
   public HgRevisionNumber identify(@NotNull VirtualFile repo) {
-    HgCommandService commandService = HgCommandService.getInstance(myProject);
-    HgCommandResult result = commandService.execute(
+    HgCommandExecutor commandExecutor = HgCommandExecutor.getInstance(myProject);
+    HgCommandResult result = commandExecutor.execute(
       repo, "identify", Arrays.asList("--num", "--id")
     );
     if (result == null) {
@@ -170,7 +172,7 @@ public class HgWorkingCopyRevisionsCommand {
     if (file != null) { // NB: this must be the last argument
       args.add(HgUtil.getOriginalFileName(file, ChangeListManager.getInstance(myProject)).getPath());
     }
-    final HgCommandResult result = HgCommandService.getInstance(myProject).execute(repo, command, args);
+    final HgCommandResult result = HgCommandExecutor.getInstance(myProject).execute(repo, command, args);
 
     if (result == null) {
       return new ArrayList<HgRevisionNumber>(0);

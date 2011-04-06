@@ -2,6 +2,8 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +31,6 @@ public class HgCloneCommand {
     final List<String> arguments = new ArrayList<String>(2);
     arguments.add(repositoryURL);
     arguments.add(directory);
-    return HgCommandService.getInstance(project).execute(null, "clone", arguments);
+    return HgCommandExecutor.getInstance(project).execute(null, "clone", arguments);
   }
 }

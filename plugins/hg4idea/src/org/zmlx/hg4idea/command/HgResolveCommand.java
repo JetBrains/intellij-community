@@ -17,6 +17,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.io.File;
 import java.util.Arrays;
@@ -38,7 +40,7 @@ public class HgResolveCommand {
     if (repo == null) {
       return Collections.emptyMap();
     }
-    final HgCommandResult result = HgCommandService.getInstance(myProject).execute(repo, "resolve", Arrays.asList("--list"));
+    final HgCommandResult result = HgCommandExecutor.getInstance(myProject).execute(repo, "resolve", Arrays.asList("--list"));
     if (result == null) {
       return Collections.emptyMap();
     }
@@ -58,11 +60,11 @@ public class HgResolveCommand {
   }
 
   public void markResolved(VirtualFile repo, VirtualFile path) {
-    HgCommandService.getInstance(myProject).execute(repo, "resolve", Arrays.asList("--mark", path.getPath()));
+    HgCommandExecutor.getInstance(myProject).execute(repo, "resolve", Arrays.asList("--mark", path.getPath()));
   }
 
   public void markResolved(VirtualFile repo, FilePath path) {
-    HgCommandService.getInstance(myProject).execute(repo, "resolve", Arrays.asList("--mark", path.getPath()));
+    HgCommandExecutor.getInstance(myProject).execute(repo, "resolve", Arrays.asList("--mark", path.getPath()));
   }
 
 }

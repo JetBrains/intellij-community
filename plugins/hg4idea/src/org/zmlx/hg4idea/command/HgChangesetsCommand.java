@@ -18,6 +18,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -83,7 +85,8 @@ public abstract class HgChangesetsCommand {
 
   @Nullable
   protected HgCommandResult executeCommand(VirtualFile repo, List<String> args) {
-    return HgCommandService.getInstance(project).execute(repo, HgCommandService.DEFAULT_OPTIONS, command, args, Charset.defaultCharset(), isSilentCommand());
+    return HgCommandExecutor
+      .getInstance(project).execute(repo, HgCommandExecutor.DEFAULT_OPTIONS, command, args, Charset.defaultCharset(), isSilentCommand());
   }
 
   protected boolean isSilentCommand() {

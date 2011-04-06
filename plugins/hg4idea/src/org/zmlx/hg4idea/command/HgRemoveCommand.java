@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,7 +51,7 @@ public class HgRemoveCommand {
     for( Map.Entry<VirtualFile, List<String>> entry : HgUtil.getRelativePathsByRepository(hgFiles).entrySet()) {
       List<String> filePaths = entry.getValue();
       filePaths.add(0, "--after");
-      HgCommandService.getInstance(myProject).execute(entry.getKey(), "remove", filePaths);
+      HgCommandExecutor.getInstance(myProject).execute(entry.getKey(), "remove", filePaths);
     }
   }
 

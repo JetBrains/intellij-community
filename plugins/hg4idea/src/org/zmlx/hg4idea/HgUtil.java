@@ -33,7 +33,6 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.command.HgChange;
 import org.zmlx.hg4idea.command.HgRemoveCommand;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;

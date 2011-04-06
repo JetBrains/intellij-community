@@ -15,6 +15,7 @@ package org.zmlx.hg4idea.command;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class HgMQCommand {
   }
 
   public List<String> qapplied(@NotNull VirtualFile repo) {
-    return HgCommandService.getInstance(project).execute(repo, "qapplied", null).getOutputLines();
+    return HgCommandExecutor.getInstance(project).execute(repo, "qapplied", null).getOutputLines();
   }
 
 }

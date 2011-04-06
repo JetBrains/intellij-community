@@ -25,6 +25,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.List;
@@ -51,7 +53,7 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
   @Override
   protected HgCommandResult executeCommand(VirtualFile repo, List<String> args) {
     String repositoryURL = new HgShowConfigCommand(project).getDefaultPath(repo);
-    HgCommandResult result = HgCommandService.getInstance(project).execute(repo, command, args);
+    HgCommandResult result = HgCommandExecutor.getInstance(project).execute(repo, command, args);
     if (result == HgCommandResult.CANCELLED) {
       final HgVcs vcs = HgVcs.getInstance(project);
       Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID, "Checking for incoming/outgoing changes disabled",

@@ -17,8 +17,8 @@ package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.testng.annotations.Test;
-import org.zmlx.hg4idea.command.HgCommandResult;
-import org.zmlx.hg4idea.command.HgErrorUtil;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.HgErrorUtil;
 import org.zmlx.hg4idea.command.HgPushCommand;
 
 import static org.testng.Assert.assertFalse;

@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
 import java.util.Arrays;
 
@@ -26,9 +27,9 @@ public class HgCopyCommand {
   }
 
   public void execute(HgFile source, HgFile target) {
-    HgCommandService service = HgCommandService.getInstance(project);
+    HgCommandExecutor executor = HgCommandExecutor.getInstance(project);
     if (source.getRepo().equals(target.getRepo())) {
-      service.execute(source.getRepo(), "copy",
+      executor.execute(source.getRepo(), "copy",
         Arrays.asList("--after", source.getRelativePath(), target.getRelativePath()));
     }
   }

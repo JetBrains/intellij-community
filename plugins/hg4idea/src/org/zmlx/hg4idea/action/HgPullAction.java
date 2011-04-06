@@ -15,7 +15,7 @@ package org.zmlx.hg4idea.action;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.zmlx.hg4idea.command.HgPullCommand;
-import org.zmlx.hg4idea.command.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.ui.HgPullDialog;
 
 import java.util.Collection;

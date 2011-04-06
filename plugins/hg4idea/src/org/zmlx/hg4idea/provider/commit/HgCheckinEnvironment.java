@@ -30,10 +30,12 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgChange;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.*;
+import org.zmlx.hg4idea.execution.HgCommandException;
 
 import java.util.*;
 

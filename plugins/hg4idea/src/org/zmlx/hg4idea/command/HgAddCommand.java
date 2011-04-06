@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -48,7 +49,7 @@ public class HgAddCommand {
    */
   public void execute(@NotNull Collection<HgFile> hgFiles) {
     for(Map.Entry<VirtualFile, List<String>> entry : HgUtil.getRelativePathsByRepository(hgFiles).entrySet()) {
-      HgCommandService.getInstance(myProject).execute(entry.getKey(), "add", entry.getValue());
+      HgCommandExecutor.getInstance(myProject).execute(entry.getKey(), "add", entry.getValue());
     }
   }
 

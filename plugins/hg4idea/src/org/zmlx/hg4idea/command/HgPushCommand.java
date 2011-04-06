@@ -17,6 +17,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -64,7 +66,7 @@ public class HgPushCommand {
     }
     arguments.add(myDestination);
 
-    final HgCommandResult result = HgCommandService.getInstance(myProject).execute(myRepo, "push", arguments);
+    final HgCommandResult result = HgCommandExecutor.getInstance(myProject).execute(myRepo, "push", arguments);
     myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject);
     return result;
   }

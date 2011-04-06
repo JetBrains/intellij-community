@@ -16,7 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgUpdateCommand;
-import org.zmlx.hg4idea.command.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.ui.HgSwitchDialog;
 
 import java.util.Collection;

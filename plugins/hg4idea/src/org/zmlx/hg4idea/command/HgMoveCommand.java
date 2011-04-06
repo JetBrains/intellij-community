@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
 import java.util.Arrays;
 
@@ -27,7 +28,7 @@ public class HgMoveCommand {
 
   public void execute(HgFile source, HgFile target) {
     if (source.getRepo().equals(target.getRepo())) {
-      HgCommandService.getInstance(project).execute(source.getRepo(), "rename",
+      HgCommandExecutor.getInstance(project).execute(source.getRepo(), "rename",
         Arrays.asList("--after", source.getRelativePath(), target.getRelativePath()));
     }
   }

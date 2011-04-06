@@ -16,6 +16,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -59,7 +61,7 @@ public class HgUpdateCommand {
       arguments.add(branch);
     }
 
-    return HgCommandService.getInstance(project).execute(repo, "update", arguments);
+    return HgCommandExecutor.getInstance(project).execute(repo, "update", arguments);
   }
 
 }

@@ -18,6 +18,8 @@ import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -41,7 +43,7 @@ public class HgTagBranchCommand {
 
   @Nullable
   public String getCurrentBranch() {
-    HgCommandResult result = HgCommandService.getInstance(project).execute(repo, "branch", null);
+    HgCommandResult result = HgCommandExecutor.getInstance(project).execute(repo, "branch", null);
     if (result == null) {
       return null;
     }
@@ -53,11 +55,11 @@ public class HgTagBranchCommand {
   }
 
   public List<HgTagBranch> listBranches() {
-    return tokenize(HgCommandService.getInstance(project).execute(repo, "branches", null));
+    return tokenize(HgCommandExecutor.getInstance(project).execute(repo, "branches", null));
   }
 
   public List<HgTagBranch> listTags() {
-    return tokenize(HgCommandService.getInstance(project).execute(repo, "tags", null));
+    return tokenize(HgCommandExecutor.getInstance(project).execute(repo, "tags", null));
   }
 
   private List<HgTagBranch> tokenize(HgCommandResult result) {

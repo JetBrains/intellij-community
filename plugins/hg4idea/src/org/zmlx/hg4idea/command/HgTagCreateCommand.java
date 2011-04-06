@@ -16,6 +16,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.Arrays;
 
@@ -35,7 +38,7 @@ public class HgTagCreateCommand {
     if (StringUtils.isBlank(tagName)) {
       throw new HgCommandException("tag name is empty");
     }
-    return HgCommandService.getInstance(project).execute(repo, "tag", Arrays.asList(tagName));
+    return HgCommandExecutor.getInstance(project).execute(repo, "tag", Arrays.asList(tagName));
   }
 
 }

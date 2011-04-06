@@ -17,6 +17,8 @@ import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.nio.charset.Charset;
 import java.util.Collections;
@@ -34,8 +36,8 @@ public class HgCatCommand {
   @Nullable
   public String execute(HgFile hgFile, HgRevisionNumber vcsRevisionNumber, Charset charset) {
     final List<String> arguments = createArguments(vcsRevisionNumber, hgFile.getRelativePath());
-    final HgCommandService service = HgCommandService.getInstance(myProject);
-    final HgCommandResult result = service.execute(hgFile.getRepo(), Collections.<String>emptyList(), "cat", arguments, charset, true);
+    final HgCommandExecutor executor = HgCommandExecutor.getInstance(myProject);
+    final HgCommandResult result = executor.execute(hgFile.getRepo(), Collections.<String>emptyList(), "cat", arguments, charset, true);
 
     if (result == null) { // in case of error
       return null;

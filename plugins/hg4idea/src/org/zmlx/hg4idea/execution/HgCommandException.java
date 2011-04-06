@@ -10,21 +10,23 @@
 // the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 // either express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
-package org.zmlx.hg4idea.command;
+package org.zmlx.hg4idea.execution;
 
-public class ShellCommandException extends Exception {
-  ShellCommandException() {
+public class HgCommandException extends Exception {
+
+  public HgCommandException() {
   }
 
-  ShellCommandException(String message) {
+  public HgCommandException(String message) {
     super(message);
   }
 
-  ShellCommandException(String message, Throwable cause) {
+  public HgCommandException(String message, Throwable cause) {
     super(message, cause);
   }
 
-  ShellCommandException(Throwable cause) {
+  public HgCommandException(Throwable cause) {
     super(cause);
   }
+
 }

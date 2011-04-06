@@ -15,7 +15,7 @@ package org.zmlx.hg4idea.action;
 import com.intellij.openapi.project.Project;
 import com.intellij.vcsUtil.VcsUtil;
 import org.apache.commons.lang.StringUtils;
-import org.zmlx.hg4idea.command.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.List;
 

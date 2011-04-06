@@ -10,7 +10,7 @@
 // the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 // either express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
-package org.zmlx.hg4idea.command;
+package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,10 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgExecutableValidator;
-import org.zmlx.hg4idea.HgGlobalSettings;
-import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,13 +36,13 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-public final class HgCommandService {
+public final class HgCommandExecutor {
   
-  static final List<String> DEFAULT_OPTIONS = Arrays.asList(
+  public static final List<String> DEFAULT_OPTIONS = Arrays.asList(
     "--config", "ui.merge=internal:merge"
   );
 
-  private static final Logger LOG = Logger.getInstance(HgCommandService.class.getName());
+  private static final Logger LOG = Logger.getInstance(HgCommandExecutor.class.getName());
 
   private final Project myProject;
   private final HgGlobalSettings mySettings;
@@ -56,7 +53,7 @@ public final class HgCommandService {
   private boolean myIsSilent;
   private List<String> myOptions = DEFAULT_OPTIONS;
 
-  public HgCommandService(Project project, HgGlobalSettings settings) {
+  public HgCommandExecutor(Project project, HgGlobalSettings settings) {
     myProject = project;
     mySettings = settings;
     myVcs = HgVcs.getInstance(myProject);
@@ -74,19 +71,19 @@ public final class HgCommandService {
   }
 
   @Deprecated
-  public static HgCommandService getInstance(Project project) {
-    return new HgCommandService(project, HgVcs.getInstance(project).getGlobalSettings());
+  public static HgCommandExecutor getInstance(Project project) {
+    return new HgCommandExecutor(project, HgVcs.getInstance(project).getGlobalSettings());
   }
 
   @Nullable
-  HgCommandResult execute(VirtualFile repo, String operation, List<String> arguments) {
+  public HgCommandResult execute(VirtualFile repo, String operation, List<String> arguments) {
     return execute(
       repo, DEFAULT_OPTIONS, operation, arguments, Charset.defaultCharset(), false
     );
   }
 
   @Nullable
-  HgCommandResult execute(final VirtualFile repo, final List<String> hgOptions, final String operation, final List<String> arguments, final Charset charset, final boolean silent) {
+  public HgCommandResult execute(final VirtualFile repo, final List<String> hgOptions, final String operation, final List<String> arguments, final Charset charset, final boolean silent) {
       return executeOffOfEDT(repo, hgOptions, operation, arguments, charset, silent);
   }
 

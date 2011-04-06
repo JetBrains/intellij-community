@@ -10,11 +10,10 @@
 // the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 // either express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
-package org.zmlx.hg4idea.command;
+package org.zmlx.hg4idea;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.zmlx.hg4idea.HgFile;
 
 public final class HgChange {
 
