@@ -17,8 +17,6 @@
                         serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
     <projectService serviceInterface="org.zmlx.hg4idea.HgProjectSettings"
                     serviceImplementation="org.zmlx.hg4idea.HgProjectSettings"/>
-    <projectService serviceInterface="org.zmlx.hg4idea.command.HgCommandService"
-                    serviceImplementation="org.zmlx.hg4idea.command.HgCommandService"/>
     <projectService serviceInterface="org.zmlx.hg4idea.HgRootsHandler"
                     serviceImplementation="org.zmlx.hg4idea.HgRootsHandler" />
   </extensions>

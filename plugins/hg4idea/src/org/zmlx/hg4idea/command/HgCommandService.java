@@ -14,20 +14,21 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.HgExecutableValidator;
+import org.zmlx.hg4idea.HgGlobalSettings;
+import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.HgVcsMessages;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
@@ -40,51 +41,48 @@ import java.util.List;
 
 public final class HgCommandService {
   
-  private File myPromptHooksExtensionFile;
-
-  static final Logger LOG = Logger.getInstance(HgCommandService.class.getName());
-
   static final List<String> DEFAULT_OPTIONS = Arrays.asList(
     "--config", "ui.merge=internal:merge"
   );
 
+  private static final Logger LOG = Logger.getInstance(HgCommandService.class.getName());
+
   private final Project myProject;
   private final HgGlobalSettings mySettings;
-  private HgExecutableValidator myValidator;
-  private HgVcs myVcs;
+  private final HgExecutableValidator myValidator;
+  private final HgVcs myVcs;
+
+  private Charset myCharset;
+  private boolean myIsSilent;
+  private List<String> myOptions = DEFAULT_OPTIONS;
 
   public HgCommandService(Project project, HgGlobalSettings settings) {
     myProject = project;
     mySettings = settings;
-    if (myPromptHooksExtensionFile == null) {
-      myPromptHooksExtensionFile = HgUtil.getTemporaryPythonFile("prompthooks");
-    }
     myVcs = HgVcs.getInstance(myProject);
-    LOG.assertTrue(myVcs != null);
     myValidator = myVcs.getExecutableValidator();
+    myCharset = Charset.defaultCharset();
+    myIsSilent = false;
   }
 
+  public void setCharset(Charset charset) {
+    myCharset = charset;
+  }
+
+  public void setSilent(boolean isSilent) {
+    myIsSilent = isSilent;
+  }
+
+  @Deprecated
   public static HgCommandService getInstance(Project project) {
-    return ServiceManager.getService(project, HgCommandService.class);
+    return new HgCommandService(project, HgVcs.getInstance(project).getGlobalSettings());
   }
 
   @Nullable
   HgCommandResult execute(VirtualFile repo, String operation, List<String> arguments) {
     return execute(
-      repo, DEFAULT_OPTIONS, operation, arguments, Charset.defaultCharset()
+      repo, DEFAULT_OPTIONS, operation, arguments, Charset.defaultCharset(), false
     );
-  }
-
-  @Nullable
-  HgCommandResult execute(VirtualFile repo, List<String> hgOptions,
-    String operation, List<String> arguments) {
-    return execute(repo, hgOptions, operation, arguments, Charset.defaultCharset());
-  }
-
-  @Nullable
-  HgCommandResult execute(VirtualFile repo, List<String> hgOptions,
-    String operation, List<String> arguments, Charset charset) {
-    return execute(repo, hgOptions, operation, arguments, charset, false);
   }
 
   @Nullable
@@ -117,15 +115,12 @@ public final class HgCommandService {
     SocketServer warningServer = new SocketServer(warningReceiver);
     SocketServer passServer = new SocketServer(passReceiver);
     
-    if (myPromptHooksExtensionFile == null) {
-      throw new RuntimeException("Could not hook into the prompt mechanism of Mercurial");
-    }
     try {
       int promptPort = promptServer.start();
       int warningPort = warningServer.start();
       int passPort = passServer.start();
       cmdLine.add("--config");
-      cmdLine.add("extensions.hg4ideapromptextension=" + myPromptHooksExtensionFile.getAbsolutePath());
+      cmdLine.add("extensions.hg4ideapromptextension=" + myVcs.getPromptHooksExtensionFile().getAbsolutePath());
       cmdLine.add("--config");
       cmdLine.add("hg4ideaprompt.port=" + promptPort);
       cmdLine.add("--config");
