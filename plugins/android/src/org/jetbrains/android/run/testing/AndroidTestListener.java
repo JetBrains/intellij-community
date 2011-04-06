@@ -23,8 +23,6 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.android.run.AndroidRunningState;
 
-import java.util.Map;
-
 /**
  * Created by IntelliJ IDEA.
  * User: Eugene.Kudelevsky
@@ -72,7 +70,7 @@ public class AndroidTestListener implements ITestRunListener {
   }
 
   @Override
-  public void testRunStarted(String runName, int testCount) {
+  public void testRunStarted(int testCount) {
     ProcessHandler handler = getProcessHandler();
     handler.notifyTextAvailable("Test running started\n", ProcessOutputTypes.STDOUT);
     TeamcityCommandBuilder builder = new TeamcityCommandBuilder("testCount");
@@ -81,7 +79,7 @@ public class AndroidTestListener implements ITestRunListener {
   }
 
   @Override
-  public void testRunEnded(long elapsedTime, Map<String, String> runMetrics) {
+  public void testRunEnded(long elapsedTime) {
     if (myTestClassName != null) {
       testSuiteFinished();
     }
@@ -129,7 +127,7 @@ public class AndroidTestListener implements ITestRunListener {
   }
 
   @Override
-  public void testEnded(TestIdentifier test, Map<String, String> testMetrics) {
+  public void testEnded(TestIdentifier test) {
     TeamcityCommandBuilder builder = new TeamcityCommandBuilder("testFinished");
     builder.addAttribute("name", test.getTestName());
     builder.addAttribute("duration", Long.toString(System.currentTimeMillis() - myTestStartingTime));
