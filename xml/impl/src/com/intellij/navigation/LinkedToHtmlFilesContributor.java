@@ -15,11 +15,7 @@
  */
 package com.intellij.navigation;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ResolveResult;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
+import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -50,14 +46,20 @@ public class LinkedToHtmlFilesContributor extends RelatedToHtmlFilesContributor 
         }
 
         for (PsiReference reference : link.getReferences()) {
-          if (reference instanceof FileReference) {
-            ResolveResult[] results = ((FileReference)reference).multiResolve(false);
+          if (reference instanceof PsiPolyVariantReference) {
+            final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
 
             for (ResolveResult result : results) {
-              PsiElement resolvedElement = result.getElement();
+              final PsiElement resolvedElement = result.getElement();
               if (resolvedElement instanceof PsiFile) {
                 resultSet.add((PsiFile)resolvedElement);
               }
+            }
+          }
+          else {
+            final PsiElement resolvedElement = reference.resolve();
+            if (resolvedElement instanceof PsiFile) {
+              resultSet.add((PsiFile)resolvedElement);
             }
           }
         }
