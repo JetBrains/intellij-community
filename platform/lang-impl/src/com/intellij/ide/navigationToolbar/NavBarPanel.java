@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DataManager;
@@ -714,13 +715,31 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
             public void run(RelativePoint rp) {
               Point p = rp.getPointOn(myHintContainer).getPoint();
               final HintHint hintInfo = new HintHint(editor, p);
-              HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editor, p, HintManagerImpl.HIDE_BY_ESCAPE, 0, true, hintInfo);
+              HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editor, p, HintManager.HIDE_BY_ESCAPE, 0, true, hintInfo);
             }
           });
         }
-        selectTail();
+        activatePopupOnLastElement();
       }
     }, NavBarUpdateQueue.ID.SHOW_HINT);
+
+  }
+
+  public void activatePopupOnLastElement() {
+    myUpdateQueue.queueRebuildUi();
+
+    myUpdateQueue.queueSelect(new Runnable() {
+      @Override
+      public void run() {
+        if (!myList.isEmpty()) {
+          myModel.setSelectedIndex(Math.max(myList.size() - 2, 0));
+          IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
+          restorePopup();
+        }
+      }
+    });
+
+    myUpdateQueue.flush();
   }
 
   AsyncResult<RelativePoint> getHintContainerShowPoint() {

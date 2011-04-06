@@ -27,9 +27,6 @@ import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.NonNls;
@@ -37,62 +34,64 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 
 /**
- * User: anna
- * Date: 09-Nov-2005
+ * @author Anna Kozlova
+ * @author Konstantin Bulenkov
  */
 public class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements DumbAware {
+  public static final String NAV_BAR_ID = "NavBar";
+
   public SelectInNavBarTarget(final Project project) {
     super(project);
   }
 
-  public String toString() {
-    return SelectInManager.NAV_BAR;
-  }
-
   @NonNls
   public String getToolWindowId() {
-    return "NavBar";
+    return NAV_BAR_ID;
+  }
+
+  protected boolean canSelect(final PsiFileSystemItem file) {
+    return UISettings.getInstance().SHOW_NAVIGATION_BAR;
+  }
+
+  protected void select(final Object selector, final VirtualFile virtualFile, final boolean requestFocus) {
+    selectInNavBar();
+  }
+
+  protected void select(final PsiElement element, boolean requestFocus) {
+    selectInNavBar();
+  }
+
+  private static void selectInNavBar() {
+    DataManager.getInstance().getDataContextFromFocus()
+      .doWhenDone(new AsyncResult.Handler<DataContext>() {
+        @Override
+        public void run(DataContext context) {
+          final IdeFrame frame = IdeFrame.KEY.getData(context);
+          if (frame != null) {
+            final IdeRootPaneNorthExtension navBarExt = frame.getNorthExtension(NavBarRootPaneExtension.NAV_BAR);
+            if (navBarExt != null) {
+              final JComponent c = navBarExt.getComponent();
+              final NavBarPanel panel = (NavBarPanel)c.getClientProperty("NavBarPanel");
+              panel.activatePopupOnLastElement();
+            }
+          }
+        }
+      });
+  }
+
+  public float getWeight() {
+    return StandardTargetWeights.NAV_BAR_WEIGHT;
   }
 
   public String getMinorViewId() {
     return null;
   }
 
-  public float getWeight() {
-    return StandardTargetWeights.NAV_BAR;
-  }
-
-  protected boolean canSelect(PsiFileSystemItem file) {
-    return UISettings.getInstance().SHOW_NAVIGATION_BAR;
-  }
-
-  protected void select(final Object selector, VirtualFile virtualFile, final boolean requestFocus) {
-    selectTail();
-  }
-
-  private static void selectTail() {
-    DataManager.getInstance().getDataContextFromFocus().doWhenDone(new AsyncResult.Handler<DataContext>() {
-      @Override
-      public void run(DataContext context) {
-        IdeFrame frame = IdeFrame.KEY.getData(context);
-        if (frame != null) {
-          IdeRootPaneNorthExtension navBarExt = frame.getNorthExtension(NavBarRootPaneExtension.NAV_BAR);
-          if (navBarExt != null) {
-            JComponent c = navBarExt.getComponent();
-            NavBarPanel panel = (NavBarPanel)c.getClientProperty("NavBarPanel");
-            panel.selectTail();
-          }
-        }
-      }
-    });
-  }
-
   protected boolean canWorkWithCustomObjects() {
     return false;
   }
 
-  protected void select(PsiElement element, boolean requestFocus) {
-    selectTail();
+  public String toString() {
+    return SelectInManager.NAV_BAR;
   }
-
 }
