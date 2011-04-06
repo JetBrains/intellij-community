@@ -516,6 +516,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
 
     private void registerBugInspections() {
         m_inspectionClasses.add(ArchaicSystemPropertyAccessInspection.class);
+        m_inspectionClasses.add(ArrayEqualityInspection.class);
         m_inspectionClasses.add(ArrayEqualsInspection.class);
         m_inspectionClasses.add(AssertWithSideEffectsInspection.class);
         m_inspectionClasses.add(ConstantAssertConditionInspection.class);
