@@ -30,7 +30,7 @@ public abstract class FieldCache<T, Owner,AccessorParameter,Parameter> {
     w = ourLock.writeLock();
   }
 
-  public final T get(AccessorParameter a, Owner owner, Parameter p) {
+  public T get(AccessorParameter a, Owner owner, Parameter p) {
     r.lock();
     T result;
     try {
@@ -68,7 +68,7 @@ public abstract class FieldCache<T, Owner,AccessorParameter,Parameter> {
     }
   }
 
-  public final void clear(AccessorParameter a, Owner owner) {
+  public void clear(AccessorParameter a, Owner owner) {
     w.lock();
     try {
       putValue(null, owner, a);
