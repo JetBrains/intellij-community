@@ -54,4 +54,27 @@ public class EpydocStringTest extends TestCase {
     assertEquals("effective GID used to call the function.", docString.getParamDescription("egid"));
     assertEquals("arguments passed to function", docString.getParamDescription("args"));
   }
+
+  public void testInlineMarkupToHTML() {
+    assertEquals("can contain <i>inline markup</i> and <b>bold text</b>", EpydocString.inlineMarkupToHTML("can contain I{inline markup} and B{bold text}"));
+  }
+
+  public void testCodeToHTML() {
+    assertEquals("<pre>my_dict={1:2, 3:4}</pre>", EpydocString.inlineMarkupToHTML("C{my_dict={1:2, 3:4}}"));
+  }
+
+  public void testUrlToHTML() {
+    assertEquals("<a href=\"http://www.python.org\">www.python.org</a>", EpydocString.inlineMarkupToHTML("U{www.python.org}"));
+    assertEquals("<a href=\"http://www.python.org\">www.python.org</a>", EpydocString.inlineMarkupToHTML("U{www.python.org}"));
+    assertEquals("<a href=\"http://epydoc.sourceforge.net\">The epydoc homepage</a>",
+                 EpydocString.inlineMarkupToHTML("U{The epydoc homepage<http://\n" +
+                                                 "    epydoc.sourceforge.net>}"));
+  }
+
+  public void testNestedInlineMarkup() {
+    assertEquals("<i><b>Inline markup</b> may be nested; and it may span</i> multiple lines.",
+                 EpydocString.inlineMarkupToHTML("I{B{Inline markup} may be nested; and\n" +
+                                                 "    it may span} multiple lines."));
+
+  }
 }
