@@ -21,11 +21,15 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -35,16 +39,17 @@ import java.util.*;
 public final class PackageElement implements Queryable, RootsProvider {
   public static final DataKey<PackageElement> DATA_KEY =  DataKey.create("package.element");
 
-  private final Module myModule;
-  private final PsiPackage myElement;
+  @Nullable private final Module myModule;
+  @NotNull private final PsiPackage myElement;
   private final boolean myIsLibraryElement;
 
-  public PackageElement(Module module, PsiPackage element, boolean isLibraryElement) {
+  public PackageElement(@Nullable Module module, @NotNull PsiPackage element, boolean isLibraryElement) {
     myModule = module;
     myElement = element;
     myIsLibraryElement = isLibraryElement;
   }
 
+  @Nullable
   public Module getModule() {
     return myModule;
   }
@@ -56,7 +61,7 @@ public final class PackageElement implements Queryable, RootsProvider {
   @Override
   public Collection<VirtualFile> getRoots() {
     Set<VirtualFile> roots= new HashSet<VirtualFile>();
-    final GlobalSearchScope scopeToShow = PackageUtil.getScopeToShow(myModule.getProject(), myModule, isLibraryElement());
+    final GlobalSearchScope scopeToShow = PackageUtil.getScopeToShow(myElement.getProject(), myModule, isLibraryElement());
     final PsiDirectory[] dirs = getPackage().getDirectories(scopeToShow);
     for (PsiDirectory each : dirs) {
       roots.add(each.getVirtualFile());
@@ -71,7 +76,7 @@ public final class PackageElement implements Queryable, RootsProvider {
     final PackageElement packageElement = (PackageElement)o;
 
     if (myIsLibraryElement != packageElement.myIsLibraryElement) return false;
-    if (myElement != null ? !myElement.equals(packageElement.myElement) : packageElement.myElement != null) return false;
+    if (!myElement.equals(packageElement.myElement)) return false;
     if (myModule != null ? !myModule.equals(packageElement.myModule) : packageElement.myModule != null) return false;
 
     return true;
@@ -80,7 +85,7 @@ public final class PackageElement implements Queryable, RootsProvider {
   public int hashCode() {
     int result;
     result = (myModule != null ? myModule.hashCode() : 0);
-    result = 29 * result + (myElement != null ? myElement.hashCode() : 0);
+    result = 29 * result + (myElement.hashCode());
     result = 29 * result + (myIsLibraryElement ? 1 : 0);
     return result;
   }
