@@ -102,7 +102,7 @@ public class FunctionDeclarationParsing {
 
     XPathType r = null;
     if ("numeric".equals(type)) {
-      r = XPathType.NUMBER;
+      r = XPath2Type.NUMERIC;
     } else if (type.startsWith("xs:")) {
       final String base = type.substring(3);
       r = XPath2Type.fromName(new QName(XPath2Type.XMLSCHEMA_NS, base));

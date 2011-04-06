@@ -23,20 +23,46 @@ import org.intellij.lang.xpath.psi.XPathType;
 public class XPath2StaticTypeTest extends TestCase {
 
   public void testStatic() throws Throwable {
-    assertTrue(XPathType.isAssignable(XPath2Type.ITEM, XPath2Type.STRING));
+    assertTrue(XPathType.isAssignable(XPath2Type.NODE, XPath2Type.ITEM));
 
-    assertTrue(XPathType.isAssignable(XPath2Type.STRING, XPath2Type.ANYURI));
+    assertFalse(XPathType.isAssignable(XPath2Type.NODE, XPath2Type.STRING));
+  }
+
+  public void testBooleanAssignability() {
+    // via "effective boolean value"
+    assertTrue(XPathType.isAssignable(XPath2Type.BOOLEAN, XPath2Type.STRING));
+    assertTrue(XPathType.isAssignable(XPath2Type.BOOLEAN, XPath2Type.NUMERIC));
+    assertTrue(XPathType.isAssignable(XPath2Type.BOOLEAN, XPath2Type.INTEGER));
+
+    assertFalse(XPathType.isAssignable(XPath2Type.BOOLEAN_STRICT, XPath2Type.STRING));
+  }
+
+  public void testAnyAssignability() {
+    assertTrue(XPathType.isAssignable(XPath2Type.ITEM, XPath2Type.STRING));
+    assertTrue(XPathType.isAssignable(XPath2Type.ITEM, XPath2Type.BOOLEAN));
+    assertTrue(XPathType.isAssignable(XPath2Type.ITEM, XPath2Type.DATE));
+  }
+
+  public void testNumericAssignability() {
+    assertTrue(XPathType.isAssignable(XPath2Type.FLOAT, XPath2Type.INTEGER));
 
     assertTrue(XPathType.isAssignable(XPath2Type.DOUBLE, XPath2Type.FLOAT));
     assertTrue(XPathType.isAssignable(XPath2Type.DOUBLE, XPath2Type.INTEGER));
 
-    assertTrue(XPathType.isAssignable(XPath2SequenceType.create(XPath2Type.STRING), XPath2SequenceType.create(XPath2Type.STRING)));
+    assertTrue(XPathType.isAssignable(XPath2Type.FLOAT, XPath2Type.DOUBLE));
+
+    assertFalse(XPathType.isAssignable(XPath2Type.NUMERIC, XPath2Type.BOOLEAN));
+  }
+
+  public void testStringAssignability() {
+    assertTrue(XPathType.isAssignable(XPath2Type.STRING, XPath2Type.ANYURI));
     assertTrue(XPathType.isAssignable(XPath2Type.STRING, XPath2SequenceType.create(XPath2Type.STRING)));
+
+    assertTrue(XPathType.isAssignable(XPath2SequenceType.create(XPath2Type.STRING), XPath2SequenceType.create(XPath2Type.STRING)));
     assertTrue(XPathType.isAssignable(XPath2SequenceType.create(XPath2Type.STRING), XPath2Type.STRING));
 
-    assertFalse(XPathType.isAssignable(XPath2SequenceType.create(XPath2Type.STRING), XPath2SequenceType.create(XPath2Type.INTEGER)));
-
     assertFalse(XPathType.isAssignable(XPath2Type.STRING, XPath2Type.INTEGER));
-    assertFalse(XPathType.isAssignable(XPath2Type.NODE, XPath2Type.STRING));
+
+    assertFalse(XPathType.isAssignable(XPath2SequenceType.create(XPath2Type.STRING), XPath2SequenceType.create(XPath2Type.INTEGER)));
   }
 }
