@@ -38,11 +38,17 @@ public class Advertiser {
   private final JPanel myComponent = new JPanel(new GridBagLayout()) {
     @Override
     public Dimension getPreferredSize() {
-      Dimension sup = super.getPreferredSize();
+      List<JLabel> texts = getTexts();
+      if (texts.isEmpty()) {
+        return new Dimension(-1, 0);
+      }
+
       int maxSize = 0;
-      for (JLabel label : getTexts()) {
+      for (JLabel label : texts) {
         maxSize = Math.max(maxSize, label.getPreferredSize().width);
       }
+
+      Dimension sup = super.getPreferredSize();
       return new Dimension(maxSize + sup.width - myTextPanel.getPreferredSize().width, sup.height);
     }
   };
@@ -87,7 +93,8 @@ public class Advertiser {
   }
 
   public void showRandomText() {
-    myCurrentItem = new Random().nextInt(myTexts.size());
+    int count = myTexts.size();
+    myCurrentItem = count > 0 ? new Random().nextInt(count) : 0;
     updateAdvertisements();
   }
 
