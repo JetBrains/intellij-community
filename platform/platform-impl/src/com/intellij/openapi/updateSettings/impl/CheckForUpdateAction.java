@@ -31,6 +31,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class CheckForUpdateAction extends AnAction implements DumbAware {
+
+  public void update(AnActionEvent e) {
+    e.getPresentation().setVisible(!SystemInfo.isMacSystemMenu);
+  }
+
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     actionPerformed(project, true, null);
