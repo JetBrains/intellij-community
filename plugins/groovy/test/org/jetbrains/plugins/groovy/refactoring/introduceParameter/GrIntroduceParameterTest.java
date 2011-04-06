@@ -30,6 +30,8 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.*;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
+import java.io.File;
+
 /**
  * @author Maxim.Medvedev
  */
@@ -48,23 +50,50 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
                          boolean searchForSuper,
                          final boolean declareFinal,
                          final String conflicts) {
+    return doTest(replaceFieldsWithGetters, removeUnusedParameters, searchForSuper, declareFinal, conflicts, false);
+  }
+
+  private boolean doTest(final int replaceFieldsWithGetters,
+                         final boolean removeUnusedParameters,
+                         boolean searchForSuper,
+                         final boolean declareFinal,
+                         final String conflicts,
+                         final boolean generateDelegate) {
     final String beforeGroovy = getTestName(false)+"Before.groovy";
     final String afterGroovy = getTestName(false) + "After.groovy";
     final String clazz = getTestName(false) + "MyClass.groovy";
-    myFixture.configureByFiles(clazz, beforeGroovy);
+    final String afterClazz = getTestName(false) + "MyClass_after.groovy";
 
-    execute(replaceFieldsWithGetters, removeUnusedParameters, declareFinal, conflicts);
+    final boolean beforeExists = exists(beforeGroovy);
+    if (beforeExists) {
+      myFixture.copyFileToProject(beforeGroovy);
+    }
+    myFixture.configureByFile(clazz);
+
+    execute(replaceFieldsWithGetters, removeUnusedParameters, declareFinal, conflicts, generateDelegate);
 
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     myFixture.getEditor().getSelectionModel().removeSelection();
-    myFixture.checkResultByFile(beforeGroovy, afterGroovy, true);
+    if (beforeExists) {
+      myFixture.checkResultByFile(beforeGroovy, afterGroovy, true);
+    }
+
+    if (exists(afterClazz)) {
+      myFixture.checkResultByFile(afterClazz);
+    }
     return true;
+  }
+
+  private boolean exists(String sourceFilePath) {
+    File file = new File(getTestDataPath() + "/" + sourceFilePath);
+    return file.exists();
   }
 
   private void execute(final int replaceFieldsWithGetters,
                        final boolean removeUnusedParameters,
                        final boolean declareFinal,
-                       final String conflicts) {
+                       final String conflicts,
+                       final boolean generateDelegate) {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {
@@ -76,7 +105,7 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
                 @Override
                 protected GrIntroduceDialog<GrIntroduceParameterSettings> getDialog(final GrIntroduceContext context) {
                   final GrIntroduceParameterSettings hackedSettings =
-                    getSettings(context, removeUnusedParameters, replaceFieldsWithGetters, declareFinal);
+                    getSettings(context, removeUnusedParameters, replaceFieldsWithGetters, declareFinal, generateDelegate);
 
 
                   return new GrIntroduceDialog<GrIntroduceParameterSettings>() {
@@ -113,14 +142,15 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
     }, "introduce Parameter", null);
   }
 
-  private GrIntroduceParameterSettings getSettings(final GrIntroduceContext context,
-                                                   final boolean removeUnusedParameters,
-                                                   final int replaceFieldsWithGetters,
-                                                   final boolean declareFinal) {
+  private static GrIntroduceParameterSettings getSettings(final GrIntroduceContext context,
+                                                          final boolean removeUnusedParameters,
+                                                          final int replaceFieldsWithGetters,
+                                                          final boolean declareFinal,
+                                                          final boolean generateDelegate) {
     return new GrIntroduceParameterSettings() {
       @Override
       public boolean generateDelegate() {
-        return false;
+        return generateDelegate;
       }
 
       @Override
@@ -292,5 +322,12 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
 
   public void testClosure() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false);
+  }
+
+  public void testDelegate1() {doDelegateTest();}
+  public void testDelegate2() {doDelegateTest();}
+
+  private void doDelegateTest() {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, false, null, true);
   }
 }
