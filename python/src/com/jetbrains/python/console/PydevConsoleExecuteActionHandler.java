@@ -85,9 +85,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     if (myInputBuffer == null) {
       myInputBuffer = new StringBuilder();
     }
-    if (myConsoleCommunication != null && myConsoleCommunication.isWaitingForInput()) {
-      myInputBuffer.setLength(0);
-    }
+
     myInputBuffer.append(line).append("\n");
 
     // multiline strings handling
@@ -142,8 +140,14 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
 
     if (myConsoleCommunication != null) {
       final boolean waitedForInputBefore = myConsoleCommunication.isWaitingForInput();
-      executingPrompt(console);
-      myConsoleCommunication.execInterpreter(myInputBuffer.toString(), new ICallback<Object, InterpreterResponse>() {
+      final String command = myInputBuffer.toString();
+      if (myConsoleCommunication.isWaitingForInput()) {
+        myInputBuffer.setLength(0);
+      }
+      else {
+        executingPrompt(console);
+      }
+      myConsoleCommunication.execInterpreter(command, new ICallback<Object, InterpreterResponse>() {
         public Object call(final InterpreterResponse interpreterResponse) {
           // clear
           myInputBuffer = null;
@@ -165,7 +169,9 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
             }
           }
           else {
-            ordinaryPrompt(console, currentEditor);
+            if (!myConsoleCommunication.isWaitingForInput()) {
+              ordinaryPrompt(console, currentEditor);
+            }
             myCurrentIndentSize = -1;
           }
 
@@ -277,7 +283,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   @Override
   public void runExecuteAction(LanguageConsoleImpl languageConsole) {
     if (isEnabled()) {
-      if (myConsoleCommunication.isExecuting()) {
+      if (myConsoleCommunication.isExecuting() && !myConsoleCommunication.isWaitingForInput()) {
         HintManager.getInstance().showErrorHint(languageConsole.getConsoleEditor(), getPrevCommandRunningMessage());
       }
       else {
