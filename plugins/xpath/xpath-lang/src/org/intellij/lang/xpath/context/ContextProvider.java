@@ -21,12 +21,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.context.functions.DefaultFunctionContext;
 import org.intellij.lang.xpath.context.functions.FunctionContext;
 import org.intellij.lang.xpath.psi.*;
 import org.intellij.lang.xpath.validation.inspections.quickfix.XPathQuickFixFactory;
+import org.intellij.lang.xpath.xslt.context.XsltNamespaceContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +41,7 @@ public abstract class ContextProvider {
      * It gets lost with putUserData()!
      */
     private static final Key<ContextProvider> KEY = Key.create("CONTEXT_PROVIDER");
+    private static final Key<Boolean> XML_FILE_WITH_XPATH_INJECTTION = Key.create("XML_FILE_WITH_XPATH_INJECTTION");
 
     private volatile FunctionContext myFunctionContext;
 
@@ -175,18 +178,37 @@ public abstract class ContextProvider {
         }
     }
 
+    public static boolean hasXPathInjections(XmlFile file) {
+      return Boolean.TRUE.equals(file.getUserData(XML_FILE_WITH_XPATH_INJECTTION));
+    }
+
     static class DefaultProvider extends ContextProvider {
         private final XmlElement myContextElement;
         private final ContextType myContextType;
+        private final NamespaceContext myNamespaceContext;
 
         DefaultProvider(XmlElement contextElement) {
             myContextElement = contextElement;
             myContextType = ContextType.PLAIN;
+
+            if (myContextElement != null) {
+              myNamespaceContext = XsltNamespaceContext.NAMESPACE_CONTEXT;
+              myContextElement.getContainingFile().putUserData(XML_FILE_WITH_XPATH_INJECTTION, Boolean.TRUE);
+            } else {
+              myNamespaceContext = null;
+            }
         }
 
         public DefaultProvider(XmlElement element, Language language) {
           myContextElement = element;
           myContextType = language == XPathFileType.XPATH2.getLanguage() ? ContextType.PLAIN_V2 : ContextType.PLAIN;
+
+          if (myContextElement != null) {
+            myNamespaceContext = XsltNamespaceContext.NAMESPACE_CONTEXT;
+            myContextElement.getContainingFile().putUserData(XML_FILE_WITH_XPATH_INJECTTION, Boolean.TRUE);
+          } else {
+            myNamespaceContext = null;
+          }
         }
 
         @NotNull
@@ -201,7 +223,7 @@ public abstract class ContextProvider {
 
         @Nullable
         public NamespaceContext getNamespaceContext() {
-            return null;
+          return myNamespaceContext;
         }
 
         @Nullable

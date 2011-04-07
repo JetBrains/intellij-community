@@ -18,13 +18,16 @@ package org.intellij.lang.xpath.xslt.impl;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 
 /*
@@ -41,8 +44,14 @@ public final class XsltImplicitUsagesProvider implements ImplicitUsageProvider {
         if (!attr.isNamespaceDeclaration()) {
             return false;
         }
+        final PsiFile file = attr.getContainingFile();
+        if (!(file instanceof XmlFile)) {
+          return false;
+        }
 
-        if (!XsltSupport.isXsltFile(attr.getContainingFile())) {
+        // also catch namespace declarations in "normal" XML files that have XPath injected into some attributes
+        // ContextProvider.hasXPathInjections() is an optimization that avoids to run the references search on totally XPath-free XML files
+        if (!ContextProvider.hasXPathInjections((XmlFile)file) && !XsltSupport.isXsltFile(file)) {
             return false;
         }
 
