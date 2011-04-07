@@ -29,9 +29,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
-import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -180,7 +178,7 @@ public final class HgCommandExecutor {
   // logging to the Version Control console (without extensions and configs)
   private void log(String operation, List<String> arguments, HgCommandResult result) {
     final String executable = mySettings.isRunViaBash() ? "bash -c " + HgVcs.HG_EXECUTABLE_FILE_NAME : HgVcs.HG_EXECUTABLE_FILE_NAME;
-    final String cmdString = String.format("%s %s %s", executable, operation, StringUtils.join(maskAuthInfoFromUrl(arguments), " "));
+    final String cmdString = String.format("%s %s %s", executable, operation, StringUtils.join(arguments, " "));
 
     // log command
     LOG.info(cmdString);
@@ -199,32 +197,6 @@ public final class HgCommandExecutor {
       LOG.info(result.getRawError());
       myVcs.showMessageInConsole(result.getRawError(), ConsoleViewContentType.ERROR_OUTPUT.getAttributes());
     }
-  }
-
-  /**
-   * Strips possible authentication information from arguments passed to the command line
-   * to prevent private information appear in the VCS console or logs.
-   * @param arguments command line arguments.
-   * @return command line arguments which don't contain authentication information.
-   */
-  private static List<String> maskAuthInfoFromUrl(List<String> arguments) {
-    if (arguments == null || arguments.isEmpty()) {
-      return arguments;
-    }
-    final List<String> newArgs = new ArrayList<String>(arguments.size());
-    for (String arg : arguments) {
-      if (!arg.contains("@")) { // simple filter
-        newArgs.add(arg);
-      } else {
-        try {
-          final URI uri = new URI(arg); // parsing via URI methods, exception means it's not an URI
-          newArgs.add(uri.toString().replace(uri.getUserInfo(), "<username>:<password>"));
-        } catch (Throwable e) {
-          newArgs.add(arg);
-        }
-      }
-    }
-    return newArgs;
   }
 
   private void showError(Exception e) {
