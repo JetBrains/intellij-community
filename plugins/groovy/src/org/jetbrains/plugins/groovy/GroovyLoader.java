@@ -16,52 +16,31 @@
 
 package org.jetbrains.plugins.groovy;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 import org.jetbrains.plugins.groovy.lang.GroovyChangeUtilSupport;
-import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
-import org.jetbrains.plugins.groovy.lang.groovydoc.completion.GroovyDocCompletionData;
 
 /**
  * Main application component, that loads Groovy language support
  *
  * @author ilyas
  */
-public class GroovyLoader implements ApplicationComponent {
+public class GroovyLoader {
 
-  public void initComponent() {
+  public GroovyLoader() {
     GroovyEditorActionsManager.registerGroovyEditorActions();
 
     ChangeUtil.registerCopyHandler(new GroovyChangeUtilSupport());
-
-    //Register Keyword completion
-    setupCompletion();
 
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
       public void projectOpened(final Project project) {
         GroovyPositionManager.registerPositionManager(project);
       }
     });
-  }
-
-  private static void setupCompletion() {
-    CompositeCompletionData compositeCompletionData = new CompositeCompletionData(new GroovyCompletionData(), new GroovyDocCompletionData());
-    CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE, compositeCompletionData);
-  }
-
-  public void disposeComponent() {
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "groovy.support.loader";
   }
 
 }

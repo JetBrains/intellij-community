@@ -648,6 +648,11 @@ return foo()"""
     checkCompletion("Foo f = aaaaaaaa<caret>", '\n', "Foo f = Foo.aaaaaaaaaaaaaaaaaaaaaa<caret>")
   }
 
+  public void testFieldTypeAfterModifier() {
+    myFixture.addClass("package bar; public class Fooooooooooo { }")
+    doBasicTest();
+  }
+
   public void testDoubleSpace() {
     checkCompletion "asse<caret>x", ' ', 'assert <caret>x'
   }
