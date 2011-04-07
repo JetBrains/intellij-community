@@ -1,8 +1,5 @@
 import random
 
-class R(random.WichmannHill):
-    def <warning descr="Call to constructor of super class is missed">__init__</warning>(self):
-        pass
 #PY-3278
 class R1(random.WichmannHill):
     def __init__(self):
@@ -46,3 +43,11 @@ class D(A):
     if True:
       A.__init__(self)
     print("Constructor D was called")
+
+#PY-3238
+class Kl:
+    pass
+
+class Kl2(Kl):
+    def __init__(self):
+        pass

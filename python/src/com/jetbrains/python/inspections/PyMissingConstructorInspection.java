@@ -53,6 +53,15 @@ public class PyMissingConstructorInspection extends PyInspection {
       if (superClasses.length == 1 && PyNames.OBJECT.equals(superClasses[0].getText()))
         return;
 
+      boolean superHasConstructor = false;
+      PyClass[] supers = node.getSuperClasses();
+      for (PyClass cl : supers) {
+        if (cl.findMethodByName(PyNames.INIT, false) != null) {
+          superHasConstructor = true;
+          break;
+        }
+      }
+      if (!superHasConstructor) return;
       PyFunction initMethod = node.findMethodByName(PyNames.INIT, false);
       if (initMethod != null) {
         if (hasConstructorCall(initMethod, superNames))
