@@ -15,11 +15,14 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffPanel;
 import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
+import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -44,6 +47,7 @@ import java.awt.event.KeyEvent;
  * @author Konstantin Bulenkov
  */
 public class DirDiffPanel {
+  public static final JBLabel CANT_OPEN_LABEL = new JBLabel("Can't open file content", SwingConstants.CENTER);
   private JPanel myDiffPanel;
   private JBTable myTable;
   private JPanel myComponent;
@@ -52,6 +56,10 @@ public class DirDiffPanel {
   private TextFieldWithBrowseButton myTargetDirField;
   private JBLabel myTargetDirLabel;
   private JBLabel mySourceDirLabel;
+  private JPanel myActionsPanel;
+  private JPanel myActionsCenterPanel;
+  private JComboBox myFileFilter;
+  private JPanel myToolBarPanel;
   private final DirDiffTableModel myModel;
   private final DirDiffDialog myDialog;
   private DiffPanel myDiffPanelComponent;
@@ -97,9 +105,13 @@ public class DirDiffPanel {
 
             final VirtualFile file = element.isSource() ? element.getSource() : element.getTarget();
             final Document document = FileDocumentManager.getInstance().getDocument(file);
-            myEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, project, file, true);
-            myEditor.getSettings().setFoldingOutlineShown(false);
-            myDiffPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
+            if (document != null) {
+              myEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, project, file, true);
+              myEditor.getSettings().setFoldingOutlineShown(false);
+              myDiffPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
+            } else {
+              myDiffPanel.add(CANT_OPEN_LABEL, BorderLayout.CENTER);
+            }
             myDiffPanel.revalidate();
           }
         }
@@ -134,6 +146,8 @@ public class DirDiffPanel {
     final TableColumn operationColumn = myTable.getColumnModel().getColumn(3);
     operationColumn.setMaxWidth(25);
     operationColumn.setMinWidth(25);
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DirDiff", new DirDiffToolbarActions(myModel), true);
+    myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
   }
 
   private void clearDiffPanel() {
@@ -147,6 +161,7 @@ public class DirDiffPanel {
       EditorFactory.getInstance().releaseEditor(myEditor);
       myEditor = null;
     }
+    myDiffPanel.remove(CANT_OPEN_LABEL);
   }
 
   private void createUIComponents() {
