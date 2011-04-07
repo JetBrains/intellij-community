@@ -32,10 +32,7 @@ import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.process.ProcessAdapter
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
-import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager
 
@@ -72,10 +69,11 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     super.tuneFixture(moduleBuilder)
-    moduleBuilder.addJdk(StringUtil.getPackageName(FileUtil.toSystemIndependentName(SystemProperties.javaHome), '/' as char))
+    moduleBuilder.addJdk(System.getenv('JAVA_HOME'))
   }
 
   private void runDebugger(Closure cl) {
+    make()
     edt {
       runProcess('Foo', myModule, DefaultDebugExecutor, GenericDebuggerRunner, [onTextAvailable:{ evt, type -> /*print evt.text*/}] as ProcessAdapter)
     }
@@ -86,7 +84,6 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
 
   public void testSimpleEvaluate() {
     def foo = myFixture.addFileToProject("Foo.groovy", "println 'hello'");
-    make()
 
     edt {
       DebuggerManagerImpl.getInstanceEx(project).breakpointManager.addLineBreakpoint(foo.viewProvider.document, 0)
