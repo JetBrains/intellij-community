@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.jetbrains.python.console.pydev.*;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebuggerException;
+import org.apache.commons.lang.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -42,6 +43,11 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
     return false;
   }
 
+  @Override
+  public boolean isExecuting() {
+    return false;
+  }
+
   protected Pair<String, Boolean> exec(final String command) throws PyDebuggerException {
     String value = myDebugProcess.consoleExec(command);
     return parseExecResponseString(value);
@@ -65,5 +71,10 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
       myExpression.setLength(0);
       callback.call(new InterpreterResponse(false, isWaitingForInput()));
     }
+  }
+
+  @Override
+  public void interrupt() {
+    throw new NotImplementedException();
   }
 }

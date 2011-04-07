@@ -19,6 +19,7 @@ import com.intellij.psi.impl.source.codeStyle.IndentHelper;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
+import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.console.pydev.ICallback;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
 import org.apache.commons.lang.StringUtils;
@@ -28,7 +29,7 @@ import java.util.Scanner;
 /**
  * @author traff
  */
-public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandler {
+public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandler implements ConsoleCommunicationListener {
   private static final String DOUBLE_QUOTE_MULTILINE = "\"\"\"";
   private static final String SINGLE_QUOTE_MULTILINE = "'''";
 
@@ -48,6 +49,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     super(myProcessHandler, false);
     myConsoleView = consoleView;
     myConsoleCommunication = consoleCommunication;
+    myConsoleCommunication.addCommunicationListener(this);
     myIndentHelper = HelperFactory.createHelper(PythonFileType.INSTANCE, consoleView.getConsole().getProject());
   }
 
@@ -131,7 +133,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
       if ((myCurrentIndentSize != -1 && indent >= myCurrentIndentSize) || flag) {
         myCurrentIndentSize = indent;
         indentEditor(currentEditor, indent);
-        scrollDown(currentEditor);
+        more(console, currentEditor);
 
         return;
       }
@@ -140,6 +142,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
 
     if (myConsoleCommunication != null) {
       final boolean waitedForInputBefore = myConsoleCommunication.isWaitingForInput();
+      executingPrompt(console);
       myConsoleCommunication.execInterpreter(myInputBuffer.toString(), new ICallback<Object, InterpreterResponse>() {
         public Object call(final InterpreterResponse interpreterResponse) {
           // clear
@@ -153,10 +156,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
             myCurrentIndentSize = -1;
           }
           else if (interpreterResponse.more) {
-            if (!PyConsoleHighlightingUtil.INDENT_PROMPT.equals(console.getPrompt())) {
-              console.setPrompt(PyConsoleHighlightingUtil.INDENT_PROMPT);
-              scrollDown(currentEditor);
-            }
+            more(console, currentEditor);
             if (myCurrentIndentSize == -1) {
               // compute current indentation
               myCurrentIndentSize = myIndentHelper.getIndent(line, false) + getPythonIndent();
@@ -165,10 +165,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
             }
           }
           else {
-            if (!PyConsoleHighlightingUtil.ORDINARY_PROMPT.equals(console.getPrompt())) {
-              console.setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT);
-              scrollDown(currentEditor);
-            }
+            ordinaryPrompt(console, currentEditor);
             myCurrentIndentSize = -1;
           }
 
@@ -181,6 +178,40 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         scrollDown(currentEditor);
       }
     }
+  }
+
+  private void ordinaryPrompt(LanguageConsoleImpl console, Editor currentEditor) {
+    if (!myConsoleCommunication.isExecuting()) {
+      if (!PyConsoleHighlightingUtil.ORDINARY_PROMPT.equals(console.getPrompt())) {
+        console.setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT);
+        scrollDown(currentEditor);
+      }
+    }
+    else {
+      executingPrompt(console);
+    }
+  }
+
+  private void executingPrompt(LanguageConsoleImpl console) {
+    console.setPrompt(PyConsoleHighlightingUtil.EXECUTING_PROMPT);
+  }
+
+  private void more(LanguageConsoleImpl console, Editor currentEditor) {
+    if (!PyConsoleHighlightingUtil.INDENT_PROMPT.equals(console.getPrompt())) {
+      console.setPrompt(PyConsoleHighlightingUtil.INDENT_PROMPT);
+      scrollDown(currentEditor);
+    }
+  }
+
+  public String getPrevCommandRunningMessage() {
+    return "Previous command is still running. Wait for it termination or press Ctrl+C to interrupt.";
+  }
+
+  @Override
+  public void executionFinished() {
+    final LanguageConsoleImpl console = myConsoleView.getConsole();
+    final Editor currentEditor = console.getCurrentEditor();
+    ordinaryPrompt(console, currentEditor);
   }
 
   private static boolean isMultilineStarts(String line, String substring) {
@@ -246,7 +277,12 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   @Override
   public void runExecuteAction(LanguageConsoleImpl languageConsole) {
     if (isEnabled()) {
-      super.runExecuteAction(languageConsole);
+      if (myConsoleCommunication.isExecuting()) {
+        HintManager.getInstance().showErrorHint(languageConsole.getConsoleEditor(), getPrevCommandRunningMessage());
+      }
+      else {
+        super.runExecuteAction(languageConsole);
+      }
     }
     else {
       HintManager.getInstance().showErrorHint(languageConsole.getConsoleEditor(), getConsoleIsNotEnabledMessage());

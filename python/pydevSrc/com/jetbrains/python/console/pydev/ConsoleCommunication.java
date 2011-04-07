@@ -15,5 +15,13 @@ public interface ConsoleCommunication {
 
   boolean isWaitingForInput();
 
+  boolean isExecuting();
+
   void execInterpreter(String s, ICallback<Object,InterpreterResponse> callback);
+
+  void interrupt();
+
+  void addCommunicationListener(ConsoleCommunicationListener listener);
+  void notifyFinished();
+
 }

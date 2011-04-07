@@ -11,6 +11,7 @@ import org.apache.xmlrpc.WebServer;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.XmlRpcHandler;
 import org.jetbrains.annotations.NotNull;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.net.MalformedURLException;
 import java.util.Collections;
@@ -54,6 +55,8 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    * the communication)
    */
   private volatile boolean firstCommWorked = false;
+
+  private boolean myExecuting;
 
   /**
    * Initializes the xml-rpc communication.
@@ -123,6 +126,27 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    * Called when the server is requesting some input from this class.
    */
   public Object execute(String method, Vector params) throws Exception {
+    if ("NotifyFinished".equals(method)) {
+      return execNotifyFinished();
+    } else
+    if ("RequestInput".equals(method)) {
+      return execRequestInput();
+    } else {
+      throw new NotImplementedException();
+    }
+  }
+
+  private Object execNotifyFinished() {
+    setExecuting(false);
+    notifyFinished();
+    return true;
+  }
+
+  private void setExecuting(boolean executing) {
+    myExecuting = executing;
+  }
+
+  private Object execRequestInput() {
     waitingForInput = true;
     inputReceived = null;
     boolean needInput = true;
@@ -152,6 +176,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    * @throws XmlRpcException
    */
   protected Pair<String, Boolean> exec(final String command) throws XmlRpcException {
+    setExecuting(true);
     Object execute = client.execute("addExec", new Object[]{command});
 
     Object object;
@@ -231,7 +256,8 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
               //executed.o1 is not null only if we had an error
 
-              String refusedConnPattern = "Failed to read servers response";  // Was "refused", but it didn't
+              String refusedConnPattern = "Failed to read servers response";
+              // Was "refused", but it didn't
               // work on non English system
               // (in Spanish localized systems
               // it is "rechazada")
@@ -306,5 +332,20 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
         }
       }, "Waiting for REPL response", true, myProject);
     }
+  }
+
+  @Override
+  public void interrupt() {
+    try {
+      client.execute("interrupt", new Object[]{});
+    }
+    catch (XmlRpcException e) {
+      LOG.error(e);
+    }
+  }
+
+  @Override
+  public boolean isExecuting() {
+    return myExecuting;
   }
 }

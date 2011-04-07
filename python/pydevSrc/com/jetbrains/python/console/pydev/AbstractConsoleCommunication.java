@@ -1,7 +1,10 @@
 package com.jetbrains.python.console.pydev;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+
+import java.util.List;
 
 /**
  * @author traff
@@ -15,6 +18,8 @@ public abstract class AbstractConsoleCommunication implements ConsoleCommunicati
    * Signals that the next command added should be sent as an input to the server.
    */
   public volatile boolean waitingForInput;
+
+  private List<ConsoleCommunicationListener> communicationListeners = Lists.newArrayList();
 
 
   public AbstractConsoleCommunication(Project project) {
@@ -42,5 +47,17 @@ public abstract class AbstractConsoleCommunication implements ConsoleCommunicati
   @Override
   public boolean isWaitingForInput() {
     return waitingForInput;
+  }
+
+  @Override
+  public void addCommunicationListener(ConsoleCommunicationListener listener) {
+    communicationListeners.add(listener);
+  }
+
+  @Override
+  public void notifyFinished() {
+    for (ConsoleCommunicationListener listener: communicationListeners) {
+      listener.executionFinished();
+    }
   }
 }

@@ -1016,7 +1016,7 @@ def SetTraceForParents(frame, dispatch_func):
 def exit_hook():
     GetGlobalDebugger().checkOutputRedirect()
 
-def settrace(host='localhost', stdoutToServer=False, stderrToServer=False, port=5678, suspend=True, trace_only_current_thread=True):
+def settrace(host='localhost', stdoutToServer=False, stderrToServer=False, port=5678, suspend=True, trace_only_current_thread=False):
     '''Sets the tracing function with the pydev debug function and initializes needed facilities.
     
     @param host: the user may specify another host, if the debug server is not in the same machine

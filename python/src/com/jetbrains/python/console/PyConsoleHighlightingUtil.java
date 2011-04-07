@@ -18,6 +18,7 @@ public class PyConsoleHighlightingUtil {
   public static final String INPUT_PROMPT =      ">? ";
   public static final String INDENT_PROMPT =        "... ";
   static final String HELP_PROMPT =                 "help> ";
+  public static final String EXECUTING_PROMPT =      "";
 
   public static final Key STRING_KEY = new Key("PYTHON_STRING");
   public static final Key NUMBER_KEY = new Key("PYTHON_NUMBER");

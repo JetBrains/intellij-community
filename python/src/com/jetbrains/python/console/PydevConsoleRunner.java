@@ -8,7 +8,10 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.CommandLineArgumentsProvider;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -18,6 +21,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -28,6 +32,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.net.NetUtils;
 import com.jetbrains.django.run.Runner;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -89,12 +94,14 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
 
   @Override
   protected List<AnAction> fillToolBarActions(final DefaultActionGroup toolbarActions,
-                                          final Executor defaultExecutor,
-                                          final RunContentDescriptor contentDescriptor) {
+                                              final Executor defaultExecutor,
+                                              final RunContentDescriptor contentDescriptor) {
     AnAction backspaceHandlingAction = createBackspaceHandlingAction();
     toolbarActions.add(backspaceHandlingAction);
+    AnAction interruptAction = createInterruptAction();
     List<AnAction> actions = super.fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
     actions.add(backspaceHandlingAction);
+    actions.add(interruptAction);
     return actions;
   }
 
@@ -119,7 +126,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     args.add(sdk.getHomePath());
     final String versionString = sdk.getVersionString();
     if (versionString == null || !versionString.toLowerCase().contains("jython")) {
-      args.add("-u");
+        args.add("-u");
     }
     args.add(FileUtil.toSystemDependentName(PythonHelpersLocator.getHelperPath("pydev/console/pydevconsole.py")));
     for (int port : ports) {
@@ -220,6 +227,26 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
       myProcessHandler.destroyProcess();
       finishConsole();
     }
+  }
+
+  private AnAction createInterruptAction() {
+    AnAction anAction = new AnAction() {
+      @Override
+      public void actionPerformed(final AnActionEvent e) {
+
+        myPydevConsoleCommunication.interrupt();
+      }
+
+      @Override
+      public void update(final AnActionEvent e) {
+        EditorEx consoleEditor = getConsoleView().getConsole().getConsoleEditor();
+        boolean enabled = IJSwingUtilities.hasFocus(consoleEditor.getComponent()) && !consoleEditor.getSelectionModel().hasSelection();
+        e.getPresentation().setEnabled(enabled);
+      }
+    };
+    anAction.registerCustomShortcutSet(KeyEvent.VK_C, KeyEvent.CTRL_MASK, getConsoleView().getConsole().getConsoleEditor().getComponent());
+    anAction.getTemplatePresentation().setVisible(false);
+    return anAction;
   }
 
 
@@ -336,7 +363,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     myConsoleExecuteActionHandler =
       new PydevConsoleExecuteActionHandler(getConsoleView(), getProcessHandler(), myPydevConsoleCommunication);
     myConsoleExecuteActionHandler.setEnabled(false);
-    new ConsoleHistoryController(myConsoleType.getTypeId(), "", getLanguageConsole(), myConsoleExecuteActionHandler.getConsoleHistoryModel()).install();
+    new ConsoleHistoryController(myConsoleType.getTypeId(), "", getLanguageConsole(),
+                                 myConsoleExecuteActionHandler.getConsoleHistoryModel()).install();
     return myConsoleExecuteActionHandler;
   }
 
