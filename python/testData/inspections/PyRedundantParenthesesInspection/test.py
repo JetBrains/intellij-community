@@ -31,3 +31,11 @@ result = (
     "\n"
     "int line2 = 2;\n"
 )
+
+#PY-2310
+if (A and
+    B):
+    print
+
+var = '<input type="submit" value="Yes, Delete this event."/></form>' % (
+event_id)

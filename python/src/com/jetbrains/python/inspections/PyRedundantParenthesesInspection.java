@@ -47,6 +47,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
     @Override
     public void visitPyParenthesizedExpression(final PyParenthesizedExpression node) {
       PyExpression expression = node.getContainedExpression();
+      if (node.getText().contains("\n")) return;
       if (expression instanceof PyReferenceExpression
               || expression instanceof PyNumericLiteralExpression) {
         if (myIgnorePercOperator) {
@@ -65,9 +66,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
       }
       else if (node.getParent() instanceof PyIfPart || node.getParent() instanceof PyWhilePart
                   || node.getParent() instanceof PyReturnStatement) {
-        if (!node.getText().contains("\n")) {
           registerProblem(node, "Remove redundant parentheses", new RedundantParenthesesQuickFix());
-        }
       }
       else if (expression instanceof PyBinaryExpression) {
         if (((PyBinaryExpression)expression).getOperator() == PyTokenTypes.AND_KEYWORD ||
