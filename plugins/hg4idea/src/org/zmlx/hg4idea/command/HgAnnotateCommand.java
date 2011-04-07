@@ -46,10 +46,8 @@ public class HgAnnotateCommand {
   }
 
   public List<HgAnnotationLine> execute(@NotNull HgFile hgFile) {
-    HgCommandExecutor executor = HgCommandExecutor.getInstance(project);
-    HgCommandResult result = executor.execute(
-      hgFile.getRepo(), "annotate", Arrays.asList("-cqnudl", hgFile.getRelativePath())
-    );
+    HgCommandExecutor executor = new HgCommandExecutor(project);
+    HgCommandResult result = executor.executeInCurrentThread(hgFile.getRepo(), "annotate", Arrays.asList("-cqnudl", hgFile.getRelativePath()));
 
     List<HgAnnotationLine> annotations = new ArrayList<HgAnnotationLine>();
     for (String line : result.getOutputLines()) {

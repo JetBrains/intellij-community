@@ -57,7 +57,7 @@ class HgTrackFileNamesAccrossRevisionsCommand {
 
     arguments.add(hgFile.getRelativePath());
 
-    return executor.execute(repo, "log", arguments);
+    return executor.executeInCurrentThread(repo, "log", arguments);
   }
 
   public final String execute(HgFile hgFile, String currentRevision, String givenRevision, int limit) {
@@ -65,7 +65,7 @@ class HgTrackFileNamesAccrossRevisionsCommand {
       return null;
     }
 
-    HgCommandExecutor hgCommandExecutor = HgCommandExecutor.getInstance(project);
+    HgCommandExecutor hgCommandExecutor = new HgCommandExecutor(project);
     HgCommandResult result = execute(hgCommandExecutor, hgFile.getRepo(), limit, hgFile, currentRevision, givenRevision);
 
     String output = result.getRawOutput();

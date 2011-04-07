@@ -18,7 +18,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
-import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 
 import java.util.Arrays;
 
@@ -34,11 +34,11 @@ public class HgTagCreateCommand {
     this.tagName = tagName;
   }
 
-  public HgCommandResult execute() throws HgCommandException {
+  public void execute(HgCommandResultHandler resultHandler) throws HgCommandException {
     if (StringUtils.isBlank(tagName)) {
       throw new HgCommandException("tag name is empty");
     }
-    return HgCommandExecutor.getInstance(project).execute(repo, "tag", Arrays.asList(tagName));
+    new HgCommandExecutor(project).execute(repo, "tag", Arrays.asList(tagName), resultHandler);
   }
 
 }

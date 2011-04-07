@@ -129,10 +129,8 @@ public class HgWorkingCopyRevisionsCommand {
 
   @Nullable
   public HgRevisionNumber identify(@NotNull VirtualFile repo) {
-    HgCommandExecutor commandExecutor = HgCommandExecutor.getInstance(myProject);
-    HgCommandResult result = commandExecutor.execute(
-      repo, "identify", Arrays.asList("--num", "--id")
-    );
+    HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
+    HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "identify", Arrays.asList("--num", "--id"));
     if (result == null) {
       return HgRevisionNumber.NULL_REVISION_NUMBER;
     }
@@ -172,7 +170,7 @@ public class HgWorkingCopyRevisionsCommand {
     if (file != null) { // NB: this must be the last argument
       args.add(HgUtil.getOriginalFileName(file, ChangeListManager.getInstance(myProject)).getPath());
     }
-    final HgCommandResult result = HgCommandExecutor.getInstance(myProject).execute(repo, command, args);
+    final HgCommandResult result = new HgCommandExecutor(myProject).executeInCurrentThread(repo, command, args);
 
     if (result == null) {
       return new ArrayList<HgRevisionNumber>(0);

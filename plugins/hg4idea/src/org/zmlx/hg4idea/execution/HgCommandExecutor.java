@@ -53,10 +53,10 @@ public final class HgCommandExecutor {
   private boolean myIsSilent;
   private List<String> myOptions = DEFAULT_OPTIONS;
 
-  public HgCommandExecutor(Project project, HgGlobalSettings settings) {
+  public HgCommandExecutor(Project project) {
     myProject = project;
-    mySettings = settings;
     myVcs = HgVcs.getInstance(myProject);
+    mySettings = myVcs.getGlobalSettings();
     myValidator = myVcs.getExecutableValidator();
     myCharset = Charset.defaultCharset();
     myIsSilent = false;
@@ -70,30 +70,21 @@ public final class HgCommandExecutor {
     myIsSilent = isSilent;
   }
 
-  @Deprecated
-  public static HgCommandExecutor getInstance(Project project) {
-    return new HgCommandExecutor(project, HgVcs.getInstance(project).getGlobalSettings());
+  public void execute(@Nullable final VirtualFile repo, final String operation, final List<String> arguments, @Nullable final HgCommandResultHandler handler) {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        final HgCommandResult result = executeInCurrentThread(repo, operation, arguments);
+        if (handler != null) {
+          handler.process(result);
+        }
+      }
+    });
   }
 
   @Nullable
-  public HgCommandResult execute(VirtualFile repo, String operation, List<String> arguments) {
-    return execute(
-      repo, DEFAULT_OPTIONS, operation, arguments, Charset.defaultCharset(), false
-    );
-  }
-
-  @Nullable
-  public HgCommandResult execute(final VirtualFile repo, final List<String> hgOptions, final String operation, final List<String> arguments, final Charset charset, final boolean silent) {
-      return executeOffOfEDT(repo, hgOptions, operation, arguments, charset, silent);
-  }
-
-  private HgCommandResult executeOffOfEDT(VirtualFile repo,
-                                          List<String> hgOptions,
-                                          String operation,
-                                          List<String> arguments,
-                                          Charset charset,
-                                          boolean silent) {
-//    assert !EventQueue.isDispatchThread();
+  public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo, final String operation, final List<String> arguments) {
+    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     if (myProject.isDisposed()) {
       return null;
     }
@@ -133,7 +124,7 @@ public final class HgCommandExecutor {
       LOG.info("IOException during preparing command", e);
       return null;
     }
-    cmdLine.addAll(hgOptions);
+    cmdLine.addAll(myOptions);
     cmdLine.add(operation);
     if (arguments != null && arguments.size() != 0) {
       cmdLine.addAll(arguments);
@@ -142,12 +133,12 @@ public final class HgCommandExecutor {
     HgCommandResult result;
     try {
       String workingDir = repo != null ? repo.getPath() : null;
-      result = shellCommand.execute(cmdLine, workingDir, charset);
+      result = shellCommand.execute(cmdLine, workingDir, myCharset);
       if (!HgErrorUtil.isAuthorizationError(result)) {
         passReceiver.saveCredentials();
       }
     } catch (ShellCommandException e) {
-      if (!silent) {
+      if (!myIsSilent) {
         if (myValidator.checkExecutableAndNotifyIfNeeded()) {
           // if the problem was not with invalid executable - show error.
           showError(e);
@@ -173,7 +164,7 @@ public final class HgCommandExecutor {
             StringUtils.join(maskAuthInfoFromUrl(arguments), " "));
     myVcs.showMessageInConsole(cmdString, ConsoleViewContentType.NORMAL_OUTPUT.getAttributes());
     LOG.info(cmdString);
-    if (!silent) {
+    if (!myIsSilent) {
       myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
       LOG.info(result.getRawOutput());
     }
@@ -181,6 +172,10 @@ public final class HgCommandExecutor {
     LOG.info(result.getRawError());
 
     return result;
+  }
+
+  public void setOptions(List<String> options) {
+    myOptions = options;
   }
 
   /**

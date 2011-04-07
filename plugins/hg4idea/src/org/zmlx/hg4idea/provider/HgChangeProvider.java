@@ -88,7 +88,7 @@ public class HgChangeProvider implements ChangeProvider {
       return new HashSet<HgChange>();
     }
     sendChanges(builder, hgChanges,
-      new HgResolveCommand(myProject).list(repo),
+      new HgResolveCommand(myProject).getListSynchronously(repo),
       new HgWorkingCopyRevisionsCommand(myProject).identify(repo),
       new HgWorkingCopyRevisionsCommand(myProject).firstParent(repo)
     );

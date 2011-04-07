@@ -28,7 +28,7 @@ public class HgMoveCommand {
 
   public void execute(HgFile source, HgFile target) {
     if (source.getRepo().equals(target.getRepo())) {
-      HgCommandExecutor.getInstance(project).execute(source.getRepo(), "rename",
+      new HgCommandExecutor(project).executeInCurrentThread(source.getRepo(), "rename",
         Arrays.asList("--after", source.getRelativePath(), target.getRelativePath()));
     }
   }

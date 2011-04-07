@@ -49,7 +49,7 @@ public class HgAddCommand {
    */
   public void execute(@NotNull Collection<HgFile> hgFiles) {
     for(Map.Entry<VirtualFile, List<String>> entry : HgUtil.getRelativePathsByRepository(hgFiles).entrySet()) {
-      HgCommandExecutor.getInstance(myProject).execute(entry.getKey(), "add", entry.getValue());
+      new HgCommandExecutor(myProject).executeInCurrentThread(entry.getKey(), "add", entry.getValue());
     }
   }
 

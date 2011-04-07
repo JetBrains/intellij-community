@@ -70,7 +70,7 @@ public class HgCommitCommand {
       for (HgFile hgFile : files) {
         parameters.add(hgFile.getRelativePath());
       }
-      ensureSuccess(HgCommandExecutor.getInstance(project).execute(repo, "commit", parameters));
+      ensureSuccess(new HgCommandExecutor(project).executeInCurrentThread(repo, "commit", parameters));
       project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
     } catch (IOException e) {
       LOG.info(e);

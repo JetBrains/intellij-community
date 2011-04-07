@@ -27,10 +27,9 @@ public class HgCopyCommand {
   }
 
   public void execute(HgFile source, HgFile target) {
-    HgCommandExecutor executor = HgCommandExecutor.getInstance(project);
+    HgCommandExecutor executor = new HgCommandExecutor(project);
     if (source.getRepo().equals(target.getRepo())) {
-      executor.execute(source.getRepo(), "copy",
-        Arrays.asList("--after", source.getRelativePath(), target.getRelativePath()));
+      executor.execute(source.getRepo(), "copy", Arrays.asList("--after", source.getRelativePath(), target.getRelativePath()), null);
     }
   }
 

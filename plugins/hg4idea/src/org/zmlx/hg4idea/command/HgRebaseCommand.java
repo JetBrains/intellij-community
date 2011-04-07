@@ -30,7 +30,7 @@ public class HgRebaseCommand {
   }
 
   public void continueRebase() {
-    HgCommandExecutor.getInstance(project).execute(repo, "rebase", Arrays.asList("--continue"));
+    new HgCommandExecutor(project).execute(repo, "rebase", Arrays.asList("--continue"), null);
   }
 
 }

@@ -49,6 +49,6 @@ public class HgRevertCommand {
 
     ContainerUtil.addAll(arguments, hgFile.getRelativePath());
 
-    HgCommandExecutor.getInstance(project).execute(hgFile.getRepo(), "revert", arguments);
+    new HgCommandExecutor(project).execute(hgFile.getRepo(), "revert", arguments, null);
   }
 }

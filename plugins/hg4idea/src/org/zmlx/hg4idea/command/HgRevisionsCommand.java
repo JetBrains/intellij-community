@@ -71,7 +71,7 @@ abstract class HgRevisionsCommand {
       return Collections.emptyList();
     }
 
-    HgCommandExecutor hgCommandExecutor = HgCommandExecutor.getInstance(project);
+    HgCommandExecutor hgCommandExecutor = new HgCommandExecutor(project);
 
     String template = includeFiles ? LONG_TEMPLATE : SHORT_TEMPLATE;
     int itemCount = includeFiles ? LONG_ITEM_COUNT : SHORT_ITEM_COUNT;

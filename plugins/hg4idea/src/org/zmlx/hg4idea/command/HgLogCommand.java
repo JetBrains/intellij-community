@@ -66,7 +66,7 @@ public class HgLogCommand extends HgRevisionsCommand {
     if (logFile) {
       arguments.add(hgFile.getRelativePath());
     }
-    return executor.execute(repo, "log", arguments);
+    return executor.executeInCurrentThread(repo, "log", arguments);
   }
 
 }

@@ -29,6 +29,6 @@ public class HgIdentifyCommand {
   public HgCommandResult execute() {
     final List<String> arguments = new LinkedList<String>();
     arguments.add(source);
-    return HgCommandExecutor.getInstance(project).execute(null, "identify", arguments);
+    return new HgCommandExecutor(project).executeInCurrentThread(null, "identify", arguments);
   }
 }

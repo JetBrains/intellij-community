@@ -177,13 +177,18 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
-    HgAddCommand command = new HgAddCommand(project);
-    for (VirtualFile file : files) {
-      VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, file);
+    final HgAddCommand command = new HgAddCommand(project);
+    for (final VirtualFile file : files) {
+      final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, file);
       if (vcsRoot == null) {
         continue;
       }
-      command.execute(new HgFile(vcsRoot, VfsUtil.virtualToIoFile(file)));
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          command.execute(new HgFile(vcsRoot, VfsUtil.virtualToIoFile(file)));
+        }
+      });
     }
     return null;
   }

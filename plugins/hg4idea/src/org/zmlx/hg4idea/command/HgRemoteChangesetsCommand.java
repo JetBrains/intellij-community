@@ -53,7 +53,7 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
   @Override
   protected HgCommandResult executeCommand(VirtualFile repo, List<String> args) {
     String repositoryURL = new HgShowConfigCommand(project).getDefaultPath(repo);
-    HgCommandResult result = HgCommandExecutor.getInstance(project).execute(repo, command, args);
+    HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(repo, command, args);
     if (result == HgCommandResult.CANCELLED) {
       final HgVcs vcs = HgVcs.getInstance(project);
       Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID, "Checking for incoming/outgoing changes disabled",

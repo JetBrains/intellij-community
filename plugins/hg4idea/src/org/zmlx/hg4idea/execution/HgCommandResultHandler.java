@@ -12,8 +12,16 @@
 // limitations under the License.
 package org.zmlx.hg4idea.execution;
 
-public interface HgCommandResultListener {
+import org.jetbrains.annotations.Nullable;
 
-  void process(HgCommandResult result);
+public interface HgCommandResultHandler {
+
+  HgCommandResultHandler DUMB = new HgCommandResultHandler() {
+    @Override
+    public void process(@Nullable HgCommandResult result) {
+    }
+  };
+
+  void process(@Nullable HgCommandResult result);
 
 }

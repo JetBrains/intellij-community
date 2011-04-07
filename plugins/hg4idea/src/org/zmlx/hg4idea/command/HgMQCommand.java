@@ -28,7 +28,7 @@ public class HgMQCommand {
   }
 
   public List<String> qapplied(@NotNull VirtualFile repo) {
-    return HgCommandExecutor.getInstance(project).execute(repo, "qapplied", null).getOutputLines();
+    return new HgCommandExecutor(project).executeInCurrentThread(repo, "qapplied", null).getOutputLines();
   }
 
 }

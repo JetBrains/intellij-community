@@ -15,8 +15,11 @@ package org.zmlx.hg4idea.action;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.command.*;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.provider.update.HgConflictResolver;
 import org.zmlx.hg4idea.ui.HgPullDialog;
 
@@ -57,23 +60,29 @@ public class HgMqRebaseAction extends HgAbstractGlobalAction {
         pullCommand.setSource(dialog.getSource());
         pullCommand.setRebase(true);
         pullCommand.setUpdate(false);
-        new HgCommandResultNotifier(project).process(pullCommand.execute());
 
-        String currentBranch = new HgTagBranchCommand(project, repository).getCurrentBranch();
-        if (StringUtils.isBlank(currentBranch)) {
-          return;
-        }
+        pullCommand.execute(new HgCommandResultHandler() {
+          @Override
+          public void process(@Nullable HgCommandResult result) {
+            new HgCommandResultNotifier(project).process(result);
 
-        new HgConflictResolver(project).resolve(repository);
+            String currentBranch = new HgTagBranchCommand(project, repository).getCurrentBranch();
+            if (StringUtils.isBlank(currentBranch)) {
+              return;
+            }
 
-        HgResolveCommand resolveCommand = new HgResolveCommand(project);
-        Map<HgFile, HgResolveStatusEnum> status = resolveCommand.list(repository);
+            new HgConflictResolver(project).resolve(repository);
 
-        if (status.containsValue(HgResolveStatusEnum.UNRESOLVED)) {
-          return;
-        }
+            HgResolveCommand resolveCommand = new HgResolveCommand(project);
+            Map<HgFile, HgResolveStatusEnum> status = resolveCommand.getListSynchronously(repository);
 
-        new HgRebaseCommand(project, repository).continueRebase();
+            if (status.containsValue(HgResolveStatusEnum.UNRESOLVED)) {
+              return;
+            }
+
+            new HgRebaseCommand(project, repository).continueRebase();
+          }
+        });
       }
     };
   }

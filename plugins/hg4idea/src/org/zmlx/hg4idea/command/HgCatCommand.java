@@ -36,8 +36,10 @@ public class HgCatCommand {
   @Nullable
   public String execute(HgFile hgFile, HgRevisionNumber vcsRevisionNumber, Charset charset) {
     final List<String> arguments = createArguments(vcsRevisionNumber, hgFile.getRelativePath());
-    final HgCommandExecutor executor = HgCommandExecutor.getInstance(myProject);
-    final HgCommandResult result = executor.execute(hgFile.getRepo(), Collections.<String>emptyList(), "cat", arguments, charset, true);
+    final HgCommandExecutor executor = new HgCommandExecutor(myProject);
+    executor.setOptions(Collections.<String>emptyList());
+    executor.setSilent(true);
+    final HgCommandResult result = executor.executeInCurrentThread(hgFile.getRepo(), "cat", arguments);
 
     if (result == null) { // in case of error
       return null;

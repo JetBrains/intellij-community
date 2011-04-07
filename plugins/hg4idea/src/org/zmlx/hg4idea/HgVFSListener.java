@@ -146,22 +146,22 @@ public class HgVFSListener extends VcsVFSListener {
   protected VcsDeleteType needConfirmDeletion(VirtualFile file) {
     //// newly added files (which were added to the repo but never committed) should be removed from the VCS,
     //// but without user confirmation.
-    final FilePath filePath = VcsUtil.getFilePath(file.getPath());
-    final VirtualFile repo = HgUtil.getHgRootOrNull(myProject, filePath);
-    if (repo == null) {
-      return super.needConfirmDeletion(file);
-    }
-    final HgFile hgFile = new HgFile(repo, filePath);
-
-    final HgLogCommand logCommand = new HgLogCommand(myProject);
-    logCommand.setLogFile(true);
-    logCommand.setFollowCopies(false);
-    logCommand.setIncludeRemoved(true);
-    final List<HgFileRevision> localRevisions = logCommand.execute(hgFile, -1, true);
-    // file is newly added, if it doesn't have a history or if the last history action was deleting this file.
-    if (localRevisions == null || localRevisions.isEmpty() || localRevisions.get(0).getDeletedFiles().contains(hgFile.getRelativePath())) {
-      return VcsDeleteType.SILENT;
-    }
+    //final FilePath filePath = VcsUtil.getFilePath(file.getPath());
+    //final VirtualFile repo = HgUtil.getHgRootOrNull(myProject, filePath);
+    //if (repo == null) {
+    //  return super.needConfirmDeletion(file);
+    //}
+    //final HgFile hgFile = new HgFile(repo, filePath);
+    //
+    //final HgLogCommand logCommand = new HgLogCommand(myProject);
+    //logCommand.setLogFile(true);
+    //logCommand.setFollowCopies(false);
+    //logCommand.setIncludeRemoved(true);
+    //final List<HgFileRevision> localRevisions = logCommand.execute(hgFile, -1, true);
+    //// file is newly added, if it doesn't have a history or if the last history action was deleting this file.
+    //if (localRevisions == null || localRevisions.isEmpty() || localRevisions.get(0).getDeletedFiles().contains(hgFile.getRelativePath())) {
+    //  return VcsDeleteType.SILENT;
+    //}
     return VcsDeleteType.CONFIRM;
   }
 

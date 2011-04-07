@@ -17,11 +17,9 @@ package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.testng.annotations.Test;
-import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.HgErrorUtil;
 import org.zmlx.hg4idea.command.HgPushCommand;
+import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 
-import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 
 /**
@@ -59,9 +57,7 @@ public class HgPushTest extends HgCollaborativeTest {
     myChangeListManager.commitFiles(vf);
 
     final HgPushCommand command = new HgPushCommand(myProject, myRepo.getDir(), myParentRepo.getDir().getUrl());
-    final HgCommandResult result = command.execute();
-    assertNotNull(result);
-    assertFalse(HgErrorUtil.isAbort(result));
+    command.execute(HgCommandResultHandler.DUMB);
 
     myParentRepo.update();
     assertNotNull(myParentRepo.getDir().findChild(AFILE));

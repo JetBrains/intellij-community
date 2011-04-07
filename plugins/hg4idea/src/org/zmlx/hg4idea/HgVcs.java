@@ -245,6 +245,13 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
    * @return the prompthooks.py extension used for capturing prompts from Mercurial and requesting IDEA's user about authentication.
    */
   public @NotNull File getPromptHooksExtensionFile() {
+    if (myPromptHooksExtensionFile == null) {
+      // check that hooks are available
+      myPromptHooksExtensionFile = HgUtil.getTemporaryPythonFile("prompthooks");
+      if (myPromptHooksExtensionFile == null || !myPromptHooksExtensionFile.exists()) {
+        LOG.error("prompthooks.py Mercurial extension is not found. Please reinstall " + ApplicationNamesInfo.getInstance().getProductName());
+      }
+    }
     return myPromptHooksExtensionFile;
   }
 
@@ -253,12 +260,6 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     // validate hg executable on start
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       getExecutableValidator().checkExecutableAndShowDialogIfNeeded();
-    }
-
-    // check that hooks are available
-    myPromptHooksExtensionFile = HgUtil.getTemporaryPythonFile("prompthooks");
-    if (myPromptHooksExtensionFile == null || !myPromptHooksExtensionFile.exists()) {
-      LOG.error("prompthooks.py Mercurial extension is not found. Please reinstall " + ApplicationNamesInfo.getInstance().getProductName());
     }
 
     // status bar

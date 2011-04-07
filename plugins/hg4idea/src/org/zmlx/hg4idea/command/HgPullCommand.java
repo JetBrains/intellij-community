@@ -16,9 +16,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -54,7 +56,7 @@ public class HgPullCommand {
     this.source = source;
   }
 
-  public HgCommandResult execute() {
+  public void execute(@Nullable final HgCommandResultHandler resultHandler) {
     List<String> arguments = new LinkedList<String>();
     if (update) {
       arguments.add("--update");
@@ -69,11 +71,15 @@ public class HgPullCommand {
 
     arguments.add(source);
 
-    HgCommandResult result = HgCommandExecutor.getInstance(project).execute(repo, "pull", arguments);
-
-    project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
-
-    return result;
+    new HgCommandExecutor(project).execute(repo, "pull", arguments, new HgCommandResultHandler() {
+      @Override
+      public void process(@Nullable HgCommandResult result) {
+        project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
+        if (resultHandler != null) {
+          resultHandler.process(result);
+        }
+      }
+    });
   }
 
 }

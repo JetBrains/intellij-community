@@ -68,7 +68,7 @@ class HgRemoteStatusUpdater implements HgUpdater {
           }
         }.queue();
       }
-    }, project.getDisposed());
+    });
   }
 
   private void updateChangesetStatus(Project project, VcsRoot[] roots, HgChangesetStatus status, boolean incoming) {

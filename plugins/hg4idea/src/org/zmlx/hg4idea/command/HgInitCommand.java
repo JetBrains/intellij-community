@@ -2,10 +2,13 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgErrorUtil;
-import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,11 +24,14 @@ public class HgInitCommand {
     myProject = project;
   }
 
-  public boolean execute(@NotNull VirtualFile repositoryRoot) {
+  public void execute(@NotNull VirtualFile repositoryRoot, final Consumer<Boolean> booleanResultHandler) {
     final List<String> args = new ArrayList<String>(1);
     args.add(repositoryRoot.getPath());
-    final HgCommandResult result = HgCommandExecutor.getInstance(myProject).execute(null, "init", args);
-    return result != null && !HgErrorUtil.isAbort(result);
+    new HgCommandExecutor(myProject).execute(null, "init", args, new HgCommandResultHandler() {
+      @Override public void process(@Nullable HgCommandResult result) {
+        booleanResultHandler.consume(result != null && !HgErrorUtil.isAbort(result));
+      }
+    });
   }
 
 }
