@@ -889,7 +889,7 @@ public class ContainerUtil {
     return value;
   }
 
-  public static <T, V> V getOrCreate(final Map<T, V> result, final T key, final Factory<V> factory) {
+  public static <T, V> V getOrCreate(@NotNull Map<T, V> result, final T key, @NotNull  Factory<V> factory) {
     V value = result.get(key);
     if (value == null) {
       result.put(key, value = factory.create());

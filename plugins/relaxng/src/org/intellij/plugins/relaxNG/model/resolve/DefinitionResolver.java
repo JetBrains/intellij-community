@@ -51,8 +51,8 @@ public class DefinitionResolver extends CommonElement.Visitor implements
 
   private static final Key<CachedValue<Map<String, Set<Define>>>> KEY = Key.create("CACHED_DEFINES");
 
-  private THashSet<PsiFile> myVisitedFiles;
-  private Map<String, Set<Define>> myDefines;
+  private static final ThreadLocal<Set<PsiFile>> myVisitedFiles = new ThreadLocal<Set<PsiFile>>();
+  private static final ThreadLocal<Map<String, Set<Define>>> myDefines = new ThreadLocal<Map<String, Set<Define>>>();
 
   private final Grammar myScope;
 
@@ -65,11 +65,11 @@ public class DefinitionResolver extends CommonElement.Visitor implements
     include.acceptChildren(this);
 
     final PsiFile value = include.getInclude();
-    if (myVisitedFiles == null) {
+    if (myVisitedFiles.get() == null) {
       //noinspection unchecked
-      myVisitedFiles = new THashSet<PsiFile>(TObjectHashingStrategy.IDENTITY);
+      myVisitedFiles.set(new THashSet<PsiFile>(TObjectHashingStrategy.IDENTITY));
     }
-    if (value != null && myVisitedFiles.add(value)) {
+    if (value != null && myVisitedFiles.get().add(value)) {
       if (value instanceof RncFile) {
         final Grammar grammar = ((RncFile)value).getGrammar();
         if (grammar != null) {
@@ -92,7 +92,7 @@ public class DefinitionResolver extends CommonElement.Visitor implements
 
   @Override
   public void visitDefine(Define def) {
-    ContainerUtil.getOrCreate(myDefines, def.getName(), this).add(def);
+    ContainerUtil.getOrCreate(myDefines.get(), def.getName(), this).add(def);
   }
 
   public void visitPattern(Pattern pattern) {
@@ -110,7 +110,7 @@ public class DefinitionResolver extends CommonElement.Visitor implements
   }
 
   public Result<Map<String, Set<Define>>> compute() {
-    myDefines = new HashMap<String, Set<Define>>();
+    myDefines.set(new HashMap<String, Set<Define>>());
 
     myScope.acceptChildren(this);
 
@@ -121,15 +121,15 @@ public class DefinitionResolver extends CommonElement.Visitor implements
       }
 
       final PsiFile file = psiElement.getContainingFile();
-      if (myVisitedFiles != null) {
-        myVisitedFiles.add(file);
-        return Result.create(myDefines, myVisitedFiles.toArray());
+      if (myVisitedFiles.get() != null) {
+        myVisitedFiles.get().add(file);
+        return Result.create(myDefines.get(), myVisitedFiles.get().toArray());
       } else {
-        return Result.create(myDefines, file);
+        return Result.create(myDefines.get(), file);
       }
     } finally {
-      myVisitedFiles = null;
-      myDefines = null;
+      myVisitedFiles.set(null);
+      myDefines.set(null);
     }
   }
 
