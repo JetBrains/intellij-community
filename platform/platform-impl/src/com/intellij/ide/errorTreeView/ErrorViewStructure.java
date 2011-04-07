@@ -47,7 +47,11 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     new HashMap<ErrorTreeElementKind, List<ErrorTreeElement>>();
 
   private static final ErrorTreeElementKind[] ourMessagesOrder = new ErrorTreeElementKind[]{
-    ErrorTreeElementKind.INFO, ErrorTreeElementKind.ERROR, ErrorTreeElementKind.WARNING, ErrorTreeElementKind.GENERIC
+    ErrorTreeElementKind.INFO,
+    ErrorTreeElementKind.ERROR,
+    ErrorTreeElementKind.WARNING,
+    ErrorTreeElementKind.NOTE,
+    ErrorTreeElementKind.GENERIC
   };
   private final Project myProject;
   private final boolean myCanHideWarnings;
@@ -66,7 +70,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       final List<Object> children = new ArrayList<Object>();
       // simple messages
       for (final ErrorTreeElementKind kind : ourMessagesOrder) {
-        if (ErrorTreeElementKind.WARNING.equals(kind)) {
+        if (ErrorTreeElementKind.WARNING.equals(kind) || ErrorTreeElementKind.NOTE.equals(kind)) {
           if (myCanHideWarnings && ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
             continue;
           }
@@ -92,7 +96,8 @@ public class ErrorViewStructure extends AbstractTreeStructure {
           if (myCanHideWarnings && ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
             final List<NavigatableMessageElement> filtered = new ArrayList<NavigatableMessageElement>(children.size());
             for (final NavigatableMessageElement navigatableMessageElement : children) {
-              if (ErrorTreeElementKind.WARNING.equals(navigatableMessageElement.getKind())) {
+              ErrorTreeElementKind kind = navigatableMessageElement.getKind();
+              if (ErrorTreeElementKind.WARNING.equals(kind) || ErrorTreeElementKind.NOTE.equals(kind)) {
                 continue;
               }
               filtered.add(navigatableMessageElement);
@@ -114,7 +119,8 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       final List<NavigatableMessageElement> children = myGroupNameToMessagesMap.get(groupingElement.getName());
       if (children != null) {
         for (final NavigatableMessageElement child : children) {
-          if (!ErrorTreeElementKind.WARNING.equals(child.getKind())) {
+          ErrorTreeElementKind kind = child.getKind();
+          if (!ErrorTreeElementKind.WARNING.equals(kind) && !ErrorTreeElementKind.NOTE.equals(kind)) {
             return true;
           }
         }
@@ -296,7 +302,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
 
   public ErrorTreeElement getFirstMessage(ErrorTreeElementKind kind) {
     if (myCanHideWarnings &&
-        ErrorTreeElementKind.WARNING.equals(kind) &&
+        (ErrorTreeElementKind.WARNING.equals(kind) || ErrorTreeElementKind.NOTE.equals(kind)) &&
         ErrorTreeViewConfiguration.getInstance(myProject).isHideWarnings()) {
       return null; // no warnings are available
     }

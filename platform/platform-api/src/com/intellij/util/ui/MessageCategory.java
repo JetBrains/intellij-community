@@ -21,4 +21,5 @@ public interface MessageCategory {
   int INFORMATION = 3;
   int ERROR = 4;
   int WARNING = 5;
+  int NOTE = 6;
 }

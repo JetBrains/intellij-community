@@ -184,7 +184,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
       if (ErrorTreeElementKind.ERROR.equals(kind)) {
         icon = ourErrorIcon;
       }
-      else if (ErrorTreeElementKind.WARNING.equals(kind)) {
+      else if (ErrorTreeElementKind.WARNING.equals(kind) || ErrorTreeElementKind.NOTE.equals(kind)) {
         icon = ourWarningIcon;
       }
       else if (ErrorTreeElementKind.INFO.equals(kind)) {

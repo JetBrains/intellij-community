@@ -215,6 +215,8 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
     else {
       ErrorTreeElement firstWarning = myErrorViewStructure.getFirstMessage(ErrorTreeElementKind.WARNING);
+      if (firstWarning == null) firstWarning = myErrorViewStructure.getFirstMessage(ErrorTreeElementKind.NOTE);
+
       if (firstWarning != null) {
         selectElement(firstWarning, null);
       }
