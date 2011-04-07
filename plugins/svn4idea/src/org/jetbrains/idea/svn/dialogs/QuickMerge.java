@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -665,7 +666,12 @@ public class QuickMerge {
       for (String name : map.keySet()) {
         try {
           final Collection<Change> changes = map.get(name);
-          FileDocumentManager.getInstance().saveAllDocuments();
+          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+              @Override
+              public void run() {
+                FileDocumentManager.getInstance().saveAllDocuments();
+              }
+            }, ModalityState.NON_MODAL);
           ShelveChangesManager.getInstance(myProject).shelveChanges(changes, myIntersection.getComment(name) + " (auto shelve before merge)");
           session.addAllFiles(ChangesUtil.getFilesFromChanges(changes));
         }
