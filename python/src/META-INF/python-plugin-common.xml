@@ -451,6 +451,9 @@
     <lang.syntaxHighlighterFactory key="ReST"
                                    implementationClass="com.jetbrains.rest.RestHighlighterFactory"/>
     <colorSettingsPage implementation="com.jetbrains.rest.RestColorsPage"/>
+
+    <projectService serviceInterface="com.jetbrains.rest.ReSTService"
+                    serviceImplementation="com.jetbrains.rest.ReSTService"/>
   </extensions>
 
   <extensionPoints>
@@ -598,11 +601,25 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-    <group text="ReST">
-      <action id="com.jetbrains.rest.actions.RunDocutilAction"
-              class="com.jetbrains.rest.actions.RunDocutilAction"
+    <group text="Restructured Text" popup="true">
+      <action id="com.jetbrains.rest.actions.docutils.RunDocutilAction"
+              class="com.jetbrains.rest.actions.docutils.RunDocutilAction"
               text="Run docutils task..." description="Allows to run docutils tasks">
       </action>
+      <group text="Sphinx actions" popup="true">
+        <action id="com.jetbrains.rest.actions.sphinx.RunSphinxQuickStartAction"
+                class="com.jetbrains.rest.actions.sphinx.RunSphinxQuickStartAction"
+                text="Run sphinx quick-start..." description="Allows to run sphinx quick-start action">
+        </action>
+        <action id="com.jetbrains.rest.actions.sphinx.RunSphinxMakeAction"
+                class="com.jetbrains.rest.actions.sphinx.RunSphinxMakeAction"
+                text="Run sphinx make targets..." description="Allows to run sphinx make tasks">
+        </action>
+        <action id="com.jetbrains.rest.actions.sphinx.RunSphinxBuildAction"
+                class="com.jetbrains.rest.actions.sphinx.RunSphinxBuildAction"
+                text="Run sphinx-build..." description="Allows to run sphinx-build action">
+        </action>
+      </group>
 
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
