@@ -29,8 +29,11 @@ public class RedundantParenthesesQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     PsiElement binaryExpression = ((PyParenthesizedExpression)element).getContainedExpression();
-    if (binaryExpression instanceof PyBinaryExpression)
-      replaceBinaryExpression((PyBinaryExpression)binaryExpression);
+    if (binaryExpression instanceof PyBinaryExpression) {
+      if (!replaceBinaryExpression((PyBinaryExpression)binaryExpression)) {
+        element.replace(binaryExpression);
+      }
+    }
     else {
       while (element instanceof PyParenthesizedExpression) {
         PyExpression expression = ((PyParenthesizedExpression)element).getContainedExpression();
@@ -41,7 +44,7 @@ public class RedundantParenthesesQuickFix implements LocalQuickFix {
     }
   }
 
-  private static void replaceBinaryExpression(PyBinaryExpression element) {
+  private static boolean replaceBinaryExpression(PyBinaryExpression element) {
     PyExpression left = element.getLeftExpression();
     PyExpression right = element.getRightExpression();
     if (left instanceof PyParenthesizedExpression &&
@@ -51,7 +54,9 @@ public class RedundantParenthesesQuickFix implements LocalQuickFix {
       if (leftContained != null && rightContained != null) {
         left.replace(leftContained);
         right.replace(rightContained);
+        return true;
       }
     }
+    return false;
   }
 }
