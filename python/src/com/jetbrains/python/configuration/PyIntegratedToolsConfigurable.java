@@ -1,15 +1,19 @@
 package com.jetbrains.python.configuration;
 
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
+import com.jetbrains.rest.ReSTService;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -25,11 +29,17 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
   private PythonTestConfigurationsModel myModel;
   private Project myProject;
   private final PyDocumentationSettings myDocumentationSettings;
+  private TextFieldWithBrowseButton myWorkDir;
 
   public PyIntegratedToolsConfigurable(Project project) {
     myProject = project;
     myDocumentationSettings = PyDocumentationSettings.getInstance(project);
     myDocstringFormatComboBox.setModel(new CollectionComboBoxModel(DocStringFormat.ALL, myDocumentationSettings.myDocStringFormat));
+
+    final FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+    myWorkDir.addBrowseFolderListener("Please, choose working directory:", null, project, fileChooserDescriptor);
+    ReSTService service = ReSTService.getInstance(myProject);
+    myWorkDir.setText(service.getWorkdir());
   }
 
   @Nls
@@ -69,6 +79,8 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
     if (!Comparing.equal(myDocstringFormatComboBox.getSelectedItem(), myDocumentationSettings.myDocStringFormat)) {
       return true;
     }
+    if (!ReSTService.getInstance(myProject).getWorkdir().equals(myWorkDir.getText()))
+      return true;
     return false;
   }
 
@@ -76,6 +88,7 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
   public void apply() throws ConfigurationException {
     myModel.apply();
     myDocumentationSettings.myDocStringFormat = (String) myDocstringFormatComboBox.getSelectedItem();
+    ReSTService.getInstance(myProject).setWorkdir(myWorkDir.getText());
   }
 
   @Override
@@ -84,6 +97,7 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
     myTestRunnerComboBox.repaint();
     myModel.reset();
     myDocstringFormatComboBox.setSelectedItem(myDocumentationSettings.myDocStringFormat);
+    myWorkDir.setText(ReSTService.getInstance(myProject).getWorkdir());
   }
 
   @Override
