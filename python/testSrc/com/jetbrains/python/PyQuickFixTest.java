@@ -189,6 +189,11 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
                           PyBundle.message("QFIX.augment.assignment"), true, true);
   }
 
+  public void testAugmentAssignmentPerc() {  // PY-3197
+    doInspectionTest("AugmentAssignmentPerc.py", PyAugmentAssignmentInspection.class,
+                          PyBundle.message("QFIX.augment.assignment"), true, true);
+  }
+
   public void testChainedComparisons() {  // PY-1020
     doInspectionTest("ChainedComparisons.py", PyChainedComparisonsInspection.class,
                           PyBundle.message("QFIX.chained.comparison"), true, true);

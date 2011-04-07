@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementImpl;
 import org.jetbrains.annotations.NotNull;
@@ -48,9 +49,8 @@ public class AugmentedAssignmentQuickFix implements LocalQuickFix {
       if (leftExpression != null
           && (leftExpression instanceof PyReferenceExpression || leftExpression instanceof PySubscriptionExpression)) {
         if (leftExpression.getText().equals(target.getText())) {
-          if (rightExpression instanceof PyNumericLiteralExpression ||
-                    rightExpression instanceof PyStringLiteralExpression
-                          || rightExpression instanceof PyReferenceExpression) {
+          if (rightExpression instanceof PyNumericLiteralExpression || rightExpression instanceof PyStringLiteralExpression
+            || rightExpression instanceof PyReferenceExpression || isPercentage(rightExpression) ) {
 
             PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
             StringBuilder stringBuilder = new StringBuilder();
@@ -63,5 +63,11 @@ public class AugmentedAssignmentQuickFix implements LocalQuickFix {
         }
       }
     }
+  }
+
+  private boolean isPercentage(PyExpression rightExpression) {
+    return (rightExpression instanceof PyBinaryExpression &&
+              ((PyBinaryExpression)rightExpression).getLeftExpression() instanceof PyStringLiteralExpression &&
+              ((PyBinaryExpression)rightExpression).getOperator() == PyTokenTypes.PERC);
   }
 }
