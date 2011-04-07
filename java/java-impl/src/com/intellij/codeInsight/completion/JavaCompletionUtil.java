@@ -60,6 +60,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.PairFunction;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -668,27 +669,32 @@ public class JavaCompletionUtil {
 
   public static LookupItem qualify(final LookupItem ret) {
     if (!(ret instanceof JavaMethodCallElement)) {
-      final PsiMember completionElement = (PsiMember)ret.getObject();
-      String prefix = "";
-      PsiClass containingClass = completionElement.getContainingClass();
-      while (containingClass != null) {
-        final String className = containingClass.getName();
-        if (className == null) {
-          break;
-        }
-
-        prefix = className + "." + prefix;
-        final PsiElement parent = containingClass.getParent();
-        if (!(parent instanceof PsiClass)) {
-          break;
-        }
-        containingClass = (PsiClass)parent;
-      }
-      if (StringUtil.isNotEmpty(prefix)) {
-        ret.setLookupString(prefix + ret.getLookupString());
+      for (String s : getAllLookupStrings((PsiMember)ret.getObject())) {
+        ret.setLookupString(s);
       }
     }
     return ret.forceQualify();
+  }
+
+  public static Set<String> getAllLookupStrings(@NotNull PsiMember member) {
+    Set<String> allLookupStrings = CollectionFactory.linkedHashSet();
+    String name = member.getName();
+    allLookupStrings.add(name);
+    PsiClass containingClass = member.getContainingClass();
+    while (containingClass != null) {
+      final String className = containingClass.getName();
+      if (className == null) {
+        break;
+      }
+      name = className + "." + name;
+      allLookupStrings.add(name);
+      final PsiElement parent = containingClass.getParent();
+      if (!(parent instanceof PsiClass)) {
+        break;
+      }
+      containingClass = (PsiClass)parent;
+    }
+    return allLookupStrings;
   }
 
   public static LookupItem setShowFQN(final LookupItem ret) {
