@@ -15,33 +15,34 @@
  */
 package org.jetbrains.plugins.groovy.compiler
 
-import com.intellij.debugger.DebuggerInvocationUtil
-import com.intellij.debugger.EvaluatingComputable
-import com.intellij.debugger.engine.ContextUtil
 import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
-import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder
-import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl
-import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator
-import com.intellij.debugger.engine.events.DebuggerCommandImpl
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
+import com.intellij.debugger.impl.DebuggerContextUtil
 import com.intellij.debugger.impl.DebuggerManagerImpl
+import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.impl.GenericDebuggerRunner
-import com.intellij.debugger.impl.PositionUtil
 import com.intellij.debugger.ui.DebuggerPanelsManager
+import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor
+import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.process.ProcessAdapter
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
+import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager
 
 /**
  * @author peter
  */
 class GroovyDebuggerTest extends GroovyCompilerTestCase {
-  DebuggerManagerThreadImpl managerThread
 
   @Override
   protected void setUp() {
@@ -51,7 +52,6 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
     }
 
     GroovyPositionManager.registerPositionManager(project)
-    managerThread = DebuggerManagerThreadImpl.createTestInstance()
   }
 
   @Override
@@ -66,14 +66,22 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
 
   @Override
   protected void tearDown() {
-    managerThread = null
     super.tearDown()
   }
 
-  private void startDebugging() {
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
+    super.tuneFixture(moduleBuilder)
+    moduleBuilder.addJdk(StringUtil.getPackageName(FileUtil.toSystemIndependentName(SystemProperties.javaHome), '/' as char))
+  }
+
+  private void runDebugger(Closure cl) {
     edt {
       runProcess('Foo', myModule, DefaultDebugExecutor, GenericDebuggerRunner, [onTextAvailable:{ evt, type -> /*print evt.text*/}] as ProcessAdapter)
     }
+    cl.call()
+    resume()
+    debugProcess.executionResult.processHandler.waitFor()
   }
 
   public void testSimpleEvaluate() {
@@ -84,16 +92,15 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
       DebuggerManagerImpl.getInstanceEx(project).breakpointManager.addLineBreakpoint(foo.viewProvider.document, 0)
     }
 
-    startDebugging()
-    def context = waitForBreakpoint()
-    assert eval(context, '2+2') == '4'
-    resume()
-
-    debugProcess.executionResult.processHandler.waitFor()
+    runDebugger {
+      waitForBreakpoint()
+      eval '2?:3', '2'
+      eval 'null?:3', '3'
+    }
   }
 
   private def resume() {
-    managerThread.invoke(debugProcess.createResumeCommand(debugProcess.suspendManager.pausedContext))
+    debugProcess.managerThread.invoke(debugProcess.createResumeCommand(debugProcess.suspendManager.pausedContext))
   }
 
   private SuspendContextImpl waitForBreakpoint() {
@@ -109,32 +116,43 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
   }
 
   private DebugProcessImpl getDebugProcess() {
-    return DebuggerPanelsManager.getInstance(project).sessionTab.session.process
+    return getDebugSession().process
+  }
+
+  private DebuggerSession getDebugSession() {
+    return DebuggerPanelsManager.getInstance(project).sessionTab.session
   }
 
   private def managed(Closure cl) {
     def result = null
-    managerThread.invokeAndWait(new DebuggerCommandImpl() {
-                         @Override
-                         protected void action() {
-                           result = cl()
-                         }
-                         })
+    def ctx = DebuggerContextUtil.createDebuggerContext(debugSession, debugProcess.suspendManager.pausedContext)
+    debugProcess.managerThread.invokeAndWait(new DebuggerContextCommandImpl(ctx) {
+                                             @Override
+                                             void threadAction() {
+                                               result = cl()
+                                             }
+                                             })
     return result
   }
 
-  private String eval(final SuspendContextImpl suspendContext, final String codeText) throws EvaluateException {
-    return managed({
-      final ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, {
-          final EvaluatorBuilder builder = EvaluatorBuilderImpl.getInstance();
-          return builder.build(
-            new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, codeText),
-            PositionUtil.getContextElement(suspendContext),
-            ContextUtil.getSourcePosition(suspendContext)
-          );
-        } as EvaluatingComputable<ExpressionEvaluator>)
-      return evaluator.evaluate(new EvaluationContextImpl(suspendContext, suspendContext.frameProxy, suspendContext.frameProxy.thisObject()))
-    }) as String
+  private String eval(final String codeText, String expected) throws EvaluateException {
+    final SuspendContextImpl suspendContext = debugProcess.suspendManager.pausedContext
+
+    Semaphore semaphore = new Semaphore()
+    semaphore.down()
+    semaphore.down()
+
+    EvaluationContextImpl ctx
+    def item = new WatchItemDescriptor(project, new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, codeText))
+    managed {
+      ctx = new EvaluationContextImpl(suspendContext, suspendContext.frameProxy, suspendContext.frameProxy.thisObject())
+      item.setContext(ctx)
+      item.updateRepresentation(ctx, { semaphore.up() } as DescriptorLabelListener)
+    }
+    semaphore.waitFor()
+
+    String result = managed { DebuggerUtils.getValueAsString(ctx, item.value) }
+    assert result == expected
   }
 
 
