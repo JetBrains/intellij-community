@@ -19,15 +19,18 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author nik
  */
-public abstract class ArtifactValidationUtil {
-  public static ArtifactValidationUtil getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ArtifactValidationUtil.class);
+public abstract class ArtifactSortingUtil {
+  public static ArtifactSortingUtil getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, ArtifactSortingUtil.class);
   }
 
   public abstract Map<String, String> getArtifactToSelfIncludingNameMap();
+
+  public abstract List<String> getArtifactsSortedByInclusion();
 }

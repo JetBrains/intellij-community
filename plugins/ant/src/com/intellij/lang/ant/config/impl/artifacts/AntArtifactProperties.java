@@ -15,12 +15,14 @@
  */
 package com.intellij.lang.ant.config.impl.artifacts;
 
-import com.intellij.lang.ant.config.*;
+import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntBuildModel;
+import com.intellij.lang.ant.config.AntBuildTarget;
+import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.impl.AntConfigurationImpl;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.project.Project;
@@ -85,20 +87,12 @@ public class AntArtifactProperties extends ArtifactProperties<AntArtifactPropert
       final Project project = compileContext.getProject();
       final AntBuildTarget target = findTarget(AntConfiguration.getInstance(project));
       if (target != null) {
-        final List<BuildFileProperty> properties = getAllProperties(artifact);
         final DataContext dataContext = SimpleDataContext.getProjectContext(project);
-        if (!myPostProcessing) {
-          final boolean success = AntConfigurationImpl.executeTargetSynchronously(dataContext, target, properties);
-          if (!success) {
-            compileContext.addMessage(CompilerMessageCategory.ERROR, "Cannot build artifact '" + artifact.getName() + "': ant target '" + target.getDisplayName() + "' failed with error", null, -1, -1);
-          }
-          return;
+        List<BuildFileProperty> properties = getAllProperties(artifact);
+        final boolean success = AntConfigurationImpl.executeTargetSynchronously(dataContext, target, properties);
+        if (!success) {
+          compileContext.addMessage(CompilerMessageCategory.ERROR, "Cannot build artifact '" + artifact.getName() + "': ant target '" + target.getDisplayName() + "' failed with error", null, -1, -1);
         }
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            target.run(dataContext, properties, AntBuildListener.NULL);
-          }
-        });
       }
     }
   }
