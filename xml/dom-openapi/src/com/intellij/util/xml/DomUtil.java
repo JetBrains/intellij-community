@@ -1,5 +1,6 @@
 package com.intellij.util.xml;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -32,6 +33,7 @@ import java.util.*;
  * @author peter
  */
 public class DomUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.DomUtil");
   public static final TypeVariable<Class<GenericValue>> GENERIC_VALUE_TYPE_VARIABLE = ReflectionCache.getTypeParameters(GenericValue.class)[0];
   private static final Class<Void> DUMMY = void.class;
   private static final Key<DomFileElement> FILE_ELEMENT_KEY = Key.create("dom file element");
@@ -229,6 +231,9 @@ public class DomUtil {
       }
       if (tags) {
         for (final XmlTag subTag : tag.getSubTags()) {
+          if (!subTag.isValid()) {
+            throw new AssertionError("Invalid subtag: parent.valid=" + tag.isValid());
+          }
           ContainerUtil.addIfNotNull(domManager.getDomElement(subTag), result);
         }
       }
