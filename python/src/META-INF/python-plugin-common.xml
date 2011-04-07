@@ -278,6 +278,8 @@
     <applicationService serviceInterface="com.jetbrains.python.documentation.PythonDocumentationMap"
                         serviceImplementation="com.jetbrains.python.documentation.PythonDocumentationMap"/>
     <applicationConfigurable implementation="com.jetbrains.python.documentation.PythonDocumentationConfigurable"/>
+    <projectService serviceInterface="com.jetbrains.python.documentation.PyDocumentationSettings"
+                    serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
 
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>
