@@ -42,37 +42,33 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
     super.tearDown();
   }
 
-  protected CompilationLog compileProject() throws Exception {
+  protected CompilationLog compileProject() {
     return compile(ArtifactManager.getInstance(myProject).getArtifacts());
   }
 
-  protected CompilationLog compile(final Artifact... artifacts) throws Exception {
+  protected CompilationLog compile(final Artifact... artifacts) {
     final CompileScope scope = ArtifactCompileScope.createArtifactsScope(myProject, Arrays.asList(artifacts));
     return compile(scope, CompilerFilter.ALL);
   }
 
-  protected CompilationLog compile(Module module) throws Exception {
+  protected CompilationLog compile(Module module) {
     return compile(CompilerManager.getInstance(myProject).createModuleCompileScope(module, false), CompilerFilter.ALL);
   }
 
-  protected CompilationLog compile(boolean force, VirtualFile... files) throws Exception {
+  protected CompilationLog compile(boolean force, VirtualFile... files) {
     return compile(CompilerManager.getInstance(myProject).createFilesCompileScope(files), CompilerFilter.ALL, force);
   }
 
-  protected CompilationLog compile(final CompileScope scope, final CompilerFilter filter) throws Exception {
+  protected CompilationLog compile(final CompileScope scope, final CompilerFilter filter) {
     return compile(scope, filter, false);
   }
 
-  protected CompilationLog compile(final CompileScope scope,
-                                   final CompilerFilter filter,
-                                   final boolean forceCompile) throws Exception {
+  protected CompilationLog compile(final CompileScope scope, final CompilerFilter filter, final boolean forceCompile) {
     return compile(scope, filter, forceCompile, false);
   }
 
-  protected CompilationLog compile(final CompileScope scope,
-                                   final CompilerFilter filter,
-                                   final boolean forceCompile,
-                                   final boolean errorsExpected) throws Exception {
+  protected CompilationLog compile(final CompileScope scope, final CompilerFilter filter, final boolean forceCompile,
+                                   final boolean errorsExpected) {
     final Ref<CompilationLog> result = Ref.create(null);
     final Semaphore semaphore = new Semaphore();
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -195,7 +191,7 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
     assertOutput(a1, ArtifactCompilerTestCase.fs());
   }
 
-  public static void assertOutput(Artifact artifact, TestFileSystemBuilder item) throws IOException {
+  public static void assertOutput(Artifact artifact, TestFileSystemBuilder item) {
     final String output = artifact.getOutputPath();
     assertNotNull("output path not specified for " + artifact.getName(), output);
     final VirtualFile outputFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(output);

@@ -52,11 +52,11 @@ public class TestFileSystemItem {
     return myName;
   }
 
-  public void assertDirectoryEqual(VirtualFile file) throws IOException {
+  public void assertDirectoryEqual(VirtualFile file) {
     assertDirectoryEqual(VfsUtil.virtualToIoFile(file), "/");
   }
 
-  private void assertDirectoryEqual(File file, String relativePath) throws IOException {
+  private void assertDirectoryEqual(File file, String relativePath) {
     final File[] actualChildren = file.listFiles();
     Set<String> notFound = new HashSet<String>(myChildren.keySet());
     for (File child : actualChildren) {
@@ -69,20 +69,25 @@ public class TestFileSystemItem {
     Assert.assertTrue("files " + notFound.toString() + " not found in " + relativePath, notFound.isEmpty());
   }
 
-  private void assertFileEqual(File file, String relativePath) throws IOException {
-    Assert.assertEquals("in " + relativePath, myName, file.getName());
-    if (myArchive) {
-      final File dirForExtracted = PlatformTestCase.createTempDir("extracted_archive");
-      ZipUtil.extract(file, dirForExtracted, null);
-      assertDirectoryEqual(dirForExtracted, relativePath);
+  private void assertFileEqual(File file, String relativePath) {
+    try {
+      Assert.assertEquals("in " + relativePath, myName, file.getName());
+      if (myArchive) {
+        final File dirForExtracted = PlatformTestCase.createTempDir("extracted_archive");
+        ZipUtil.extract(file, dirForExtracted, null);
+        assertDirectoryEqual(dirForExtracted, relativePath);
+      }
+      else if (myDirectory) {
+        Assert.assertTrue(relativePath + file.getName() + " is not a directory", file.isDirectory());
+        assertDirectoryEqual(file, relativePath);
+      }
+      else if (myContent != null) {
+        final String content = FileUtil.loadFile(file);
+        Assert.assertEquals("content mismatch for " + relativePath, myContent, content);
+      }
     }
-    else if (myDirectory) {
-      Assert.assertTrue(relativePath + file.getName() + " is not a directory", file.isDirectory());
-      assertDirectoryEqual(file, relativePath);
-    }
-    else if (myContent != null) {
-      final String content = FileUtil.loadFile(file);
-      Assert.assertEquals("content mismatch for " + relativePath, myContent, content);
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 }

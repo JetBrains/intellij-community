@@ -24,7 +24,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     CompilerTestUtil.setupJavacForTests(getProject());
   }
 
-  public void testFileCopy() throws Exception {
+  public void testFileCopy() {
     final Artifact a = addArtifact(
       root().file(createFile("file.txt", "foo"))
     );
@@ -32,7 +32,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     assertOutput(a, fs().file("file.txt", "foo"));
   }
 
-  public void testDir() throws Exception {
+  public void testDir() {
     final Artifact a = addArtifact(
       root()
         .file(createFile("abc.txt"))
@@ -47,7 +47,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     );
   }
 
-  public void testArchive() throws Exception {
+  public void testArchive() {
     final Artifact a = addArtifact(
       root()
         .archive("xxx.zip")
@@ -64,7 +64,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     );
   }
 
-  public void testArchiveInArchive() throws Exception {
+  public void testArchiveInArchive() {
     final Artifact a = addArtifact(
       root()
         .archive("a.jar")
@@ -79,7 +79,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
       );
   }
 
-  public void testIncludedArtifact() throws Exception {
+  public void testIncludedArtifact() {
     final Artifact included = addArtifact("included",
                                           root()
                                             .file(createFile("aaa.txt")));
@@ -101,7 +101,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
       );
   }
 
-  public void testMergeDirectories() throws Exception {
+  public void testMergeDirectories() {
     final Artifact included = addArtifact("included",
                                           root().dir("dir").file(createFile("aaa.class")));
     final Artifact a = addArtifact(
@@ -117,7 +117,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
       );
   }
 
-  public void testOverwriteArchives() throws Exception {
+  public void testOverwriteArchives() {
     final Artifact included = addArtifact("included",
                                           root().archive("x.jar").file(createFile("aaa.class")));
     final Artifact a = addArtifact(
@@ -132,7 +132,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
       );
   }
   
-  public void testOverwriteNestedArchive() throws Exception {
+  public void testOverwriteNestedArchive() {
     final Artifact included = addArtifact("included", root().archive("a.jar").archive("b.jar").file(createFile("c.class")));
     final Artifact a = addArtifact(
       root()
@@ -142,14 +142,33 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     assertOutput(a, fs().archive("a.jar").archive("b.jar").file("c.class"));
   }
 
-  public void testCopyLibrary() throws Exception {
+  public void testOverwriteFileByArchive() {
+    final Library library = addProjectLibrary(null, "lib", getJDomJar());
+    Artifact included = addArtifact("included", root().archive("jdom.jar").file(createFile("x.class")));
+    Artifact a = addArtifact(root()
+                               .artifact(included)
+                               .lib(library));
+    compileProject();
+    assertOutput(a, fs().archive("jdom.jar").file("x.class"));
+  }
+
+  public void testOverwriteArchiveByFile() {
+    Artifact included = addArtifact("included", root().archive("jdom.jar").file(createFile("x.class")));
+    Artifact a = addArtifact(root()
+                               .file(createFile("jdom.jar", "123"))
+                               .artifact(included));
+    compileProject();
+    assertOutput(a, fs().file("jdom.jar", "123"));
+  }
+
+  public void testCopyLibrary() {
     final Library library = addProjectLibrary(null, "lib", getJDomJar());
     final Artifact a = addArtifact(root().lib(library));
     compileProject();
     assertOutput(a, fs().file("jdom.jar"));
   }
 
-  public void testFileOrder() throws Exception {
+  public void testFileOrder() {
     final Artifact a1 = addArtifact("included1",
                                     root().dir("ddd").file(createFile("d1/xxx.txt", "first")));
     final Artifact a2 = addArtifact("included2",
@@ -168,7 +187,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
       );
   }
 
-  public void testModuleOutput() throws Exception {
+  public void testModuleOutput() {
     final VirtualFile file = createFile("src/A.java", "public class A {}");
     final Module module = addModule("a", file.getParent());
     CompilerTestUtil.scanSourceRootsToRecompile(getProject());
@@ -179,7 +198,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     assertOutput(artifact, fs().file("A.class"));
   }
 
-  public void testIgnoredFile() throws Exception {
+  public void testIgnoredFile() {
     final VirtualFile file = createFile("a/.svn/a.txt");
     createFile("a/svn/b.txt");
     final Artifact a = addArtifact(root().dirCopy(file.getParent().getParent()));
@@ -187,7 +206,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     assertOutput(a, fs().dir("svn").file("b.txt"));
   }
 
-  public void testCopyExcludedFolder() throws Exception {
+  public void testCopyExcludedFolder() {
     //explicitly added excluded files should be copied (e.g. compile output)
     final VirtualFile file = createFile("xxx/excluded/a.txt");
     createFile("xxx/excluded/CVS");
@@ -210,7 +229,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
                      .file("a.txt"));
   }
 
-  public void testCopyExcludedFile() throws Exception {
+  public void testCopyExcludedFile() {
     //excluded files under non-excluded directory should not be copied
     final VirtualFile file = createFile("xxx/excluded/a.txt");
     createFile("xxx/b.txt");
@@ -233,7 +252,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
                      .file("b.txt"));
   }
 
-  public void testExtractDirectory() throws Exception {
+  public void testExtractDirectory() {
     final Artifact a = addArtifact("a", root().dir("dir").extractedDir(getJUnitJarPath(), "/junit/textui/"));
     compileProject();
     assertOutput(a, fs().dir("dir")
@@ -241,7 +260,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
                            .file("TestRunner.class"));
   }
 
-  public void testPackExtractedDirectory() throws Exception {
+  public void testPackExtractedDirectory() {
     final Artifact a = addArtifact("a", root().archive("a.jar").extractedDir(getJUnitJarPath(), "/junit/textui/"));
     compileProject();
     assertOutput(a, fs().archive("a.jar")
@@ -249,13 +268,13 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
                            .file("TestRunner.class"));
   }
 
-  public void testSelfIncludingArtifact() throws Exception {
+  public void testSelfIncludingArtifact() {
     final Artifact a = addArtifact("a", root());
     ArtifactsTestUtil.addArtifactToLayout(myProject, a, a);
     assertCompilationFailed(a);
   }
 
-  public void testCircularInclusion() throws Exception {
+  public void testCircularInclusion() {
     final Artifact a = addArtifact("a", root());
     final Artifact b = addArtifact("b", root());
     ArtifactsTestUtil.addArtifactToLayout(myProject, a, b);
@@ -264,7 +283,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     assertCompilationFailed(b);
   }
 
-  public void testArtifactContainingSelfIncludingArtifact() throws Exception {
+  public void testArtifactContainingSelfIncludingArtifact() {
     Artifact c = addArtifact("c", root());
     final Artifact a = addArtifact("a", root().artifact(c));
     ArtifactsTestUtil.addArtifactToLayout(myProject, a, a);
@@ -275,7 +294,7 @@ public class ArtifactsCompilerTest extends ArtifactCompilerTestCase {
     assertCompilationFailed(a);
   }
 
-  private void assertCompilationFailed(Artifact a) throws Exception {
+  private void assertCompilationFailed(Artifact a) {
     compile(ArtifactCompileScope.createArtifactsScope(myProject, Arrays.asList(a)), CompilerFilter.ALL, false, true);
   }
 }
