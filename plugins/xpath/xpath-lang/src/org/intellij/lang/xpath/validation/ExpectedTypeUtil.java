@@ -57,7 +57,11 @@ public class ExpectedTypeUtil {
                     }
                   } else if (XPath2TokenTypes.COMP_OPS.contains(op)) {
                     if (lop != null && lop.getType() != XPathType.NODESET) {
-                      expectedType = lop.getType();
+                      if ((expectedType = lop.getType()) == XPathType.BOOLEAN) {
+                        if (!isXPath1(expression)) expectedType = XPath2Type.BOOLEAN_STRICT;
+                      } else if (expectedType == XPath2Type.BOOLEAN) {
+                        expectedType = XPath2Type.BOOLEAN_STRICT;
+                      }
                     } else {
                       expectedType = XPathType.UNKNOWN;
                     }
