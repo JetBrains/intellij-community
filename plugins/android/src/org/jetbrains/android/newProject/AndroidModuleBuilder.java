@@ -93,14 +93,15 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
 
     rootModel.setSdk(mySdk);
 
-    if (myProjectType == null) {
-      return;
-    }
-
     VirtualFile[] files = rootModel.getContentRoots();
     if (files.length > 0) {
       final VirtualFile contentRoot = files[0];
       final AndroidFacet facet = addAndroidFacet(rootModel, contentRoot);
+
+      if (myProjectType == null) {
+        return;
+      }
+
       final Project project = rootModel.getProject();
       final VirtualFile sourceRoot = findSourceRoot(rootModel);
 
