@@ -136,7 +136,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
     final PsiReference reference = TargetElementUtilBase.findReference(editor, offset);
 
-    if (elements == null) {
+    if (elements == null || elements.length == 0) {
       final Collection<PsiElement> candidates = suggestCandidates(reference);
       elements = PsiUtilBase.toPsiElementArray(candidates);
     }
