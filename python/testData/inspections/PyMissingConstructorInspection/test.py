@@ -1,3 +1,13 @@
+import random
+
+class R(random.WichmannHill):
+    def <warning descr="Call to constructor of super class is missed">__init__</warning>(self):
+        pass
+#PY-3278
+class R1(random.WichmannHill):
+    def __init__(self):
+        random.WichmannHill.__init__(self)
+
 class A(object):
   def __init__(self):
     pass

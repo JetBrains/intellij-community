@@ -40,17 +40,17 @@ public class PyMissingConstructorInspection extends PyInspection {
 
     @Override
     public void visitPyClass(final PyClass node) {
-      PyClass[] superClasses = node.getSuperClasses();
+      PsiElement[] superClasses = node.getSuperClassExpressions();
       if (superClasses.length == 0)
         return;
       Set<String> superNames = new HashSet<String>();
       if (node.isNewStyleClass())
         superNames.add(PyNames.SUPER);
-      for (PyClass cl : superClasses) {
-        if (!PyNames.OBJECT.equals(cl.getName()))
-          superNames.add(cl.getName());
+      for (PsiElement cl : superClasses) {
+        if (!PyNames.OBJECT.equals(cl.getText()))
+          superNames.add(cl.getText());
       }
-      if (superClasses.length == 1 && PyNames.OBJECT.equals(superClasses[0].getName()))
+      if (superClasses.length == 1 && PyNames.OBJECT.equals(superClasses[0].getText()))
         return;
 
       PyFunction initMethod = node.findMethodByName(PyNames.INIT, false);
