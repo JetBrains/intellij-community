@@ -117,6 +117,10 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   public boolean isWritable() {
     return myWritable;
   }
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
 
   public Icon getElementIcon(final int flags) {
     final RowIcon baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, ElementPresentationUtil.getFlags(this, false));

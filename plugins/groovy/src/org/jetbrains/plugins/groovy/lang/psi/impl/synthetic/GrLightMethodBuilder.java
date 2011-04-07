@@ -325,6 +325,11 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod {
     return myMethodKind + ":" + getName();
   }
 
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
+
   public Icon getElementIcon(final int flags) {
     Icon methodIcon = myBaseIcon != null ? myBaseIcon :
                       hasModifierProperty(PsiModifier.ABSTRACT) ? Icons.ABSTRACT_METHOD_ICON : Icons.METHOD_ICON;

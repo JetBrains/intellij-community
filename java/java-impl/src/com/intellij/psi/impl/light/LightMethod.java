@@ -187,6 +187,11 @@ public class LightMethod extends LightElement implements PsiMethod {
     return "PsiMethod:" + getName();
   }
 
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
+
   public Icon getElementIcon(final int flags) {
     Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? Icons.ABSTRACT_METHOD_ICON : Icons.METHOD_ICON;
     RowIcon baseIcon = createLayeredIcon(methodIcon, ElementPresentationUtil.getFlags(this, false));

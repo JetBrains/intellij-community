@@ -256,6 +256,11 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
   @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
+
+  @Override
   public Icon getIcon(int flags) {
     RowIcon baseIcon = createLayeredIcon(GroovyIcons.METHOD, ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);

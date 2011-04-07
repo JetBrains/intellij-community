@@ -280,6 +280,11 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
+
   public LightMethodBuilder setBaseIcon(Icon baseIcon) {
     myBaseIcon = baseIcon;
     return this;

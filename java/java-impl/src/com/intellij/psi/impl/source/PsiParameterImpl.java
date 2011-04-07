@@ -228,6 +228,10 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     final RowIcon baseIcon = createLayeredIcon(Icons.PARAMETER_ICON, 0);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
 
   @NotNull
   public SearchScope getUseScope() {
