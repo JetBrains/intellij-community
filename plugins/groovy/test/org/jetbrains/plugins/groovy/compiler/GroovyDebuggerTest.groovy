@@ -35,6 +35,7 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager
+import com.intellij.execution.runners.ProgramRunner
 
 /**
  * @author peter
@@ -75,7 +76,8 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
   private void runDebugger(Closure cl) {
     make()
     edt {
-      runProcess('Foo', myModule, DefaultDebugExecutor, GenericDebuggerRunner, [onTextAvailable:{ evt, type -> /*print evt.text*/}] as ProcessAdapter)
+      ProgramRunner runner = ProgramRunner.PROGRAM_RUNNER_EP.extensions.find { it.class == GenericDebuggerRunner }
+      runProcess('Foo', myModule, DefaultDebugExecutor, [onTextAvailable: { evt, type -> print evt.text}] as ProcessAdapter, runner)
     }
     cl.call()
     resume()
@@ -108,7 +110,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
     }
 
     def context = suspendManager.pausedContext
-    assert context : 'too long process'
+    assert context : "too long process, terminated=$debugProcess.executionResult.processHandler.processTerminated"
     return context
   }
 

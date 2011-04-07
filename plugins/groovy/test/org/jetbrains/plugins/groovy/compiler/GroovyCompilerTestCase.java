@@ -211,29 +211,28 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
 
   protected void assertOutput(String className, String expected, final Module module) throws ExecutionException {
     final StringBuffer sb = new StringBuffer();
-    ProcessHandler process = runProcess(className, module, DefaultRunExecutor.class, DefaultJavaProgramRunner.class, new ProcessAdapter() {
+    ProcessHandler process = runProcess(className, module, DefaultRunExecutor.class, new ProcessAdapter() {
       @Override
       public void onTextAvailable(ProcessEvent event, Key outputType) {
         if (ProcessOutputTypes.SYSTEM != outputType) {
           sb.append(event.getText());
         }
       }
-    });
+    }, ProgramRunner.PROGRAM_RUNNER_EP.findExtension(DefaultJavaProgramRunner.class));
     process.waitFor();
     assertEquals(expected.trim(), StringUtil.convertLineSeparators(sb.toString().trim()));
   }
 
   protected ProcessHandler runProcess(String className,
-                              Module module,
-                              final Class<? extends Executor> executorClass,
-                              final Class<? extends ProgramRunner> runnerClass, final ProcessListener listener) throws ExecutionException {
+                                      Module module,
+                                      final Class<? extends Executor> executorClass,
+                                      final ProcessListener listener, final ProgramRunner runner) throws ExecutionException {
     final ApplicationConfiguration configuration = new ApplicationConfiguration("app", getProject(), ApplicationConfigurationType.getInstance());
     configuration.setModule(module);
     configuration.setMainClassName(className);
     final Executor executor = Executor.EXECUTOR_EXTENSION_NAME.findExtension(executorClass);
     final ExecutionEnvironment environment = new ExecutionEnvironment(configuration, getProject(),
                                                                       new RunnerSettings<JDOMExternalizable>(null, null), null, null);
-    final ProgramRunner runner = ProgramRunner.PROGRAM_RUNNER_EP.findExtension(runnerClass);
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
