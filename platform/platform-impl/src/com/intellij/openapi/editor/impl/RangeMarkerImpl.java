@@ -30,6 +30,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   protected final DocumentEx myDocument;
   RangeMarkerTree.RMNode myNode;
+  private boolean myTrackInvalidation;
 
   private final long myId;
   //private static long counter;
@@ -237,7 +238,16 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   @Override
+  public void trackInvalidation(boolean track) {
+    myTrackInvalidation = track;
+  }
+
+  @Override
   public boolean setValid(boolean value) {
+    if (!value && myTrackInvalidation) {
+      LOG.error("Range marker invalidated");
+    }
+
     RangeMarkerTree.RMNode node = myNode;
     return node == null || node.setValid(value);
   }
