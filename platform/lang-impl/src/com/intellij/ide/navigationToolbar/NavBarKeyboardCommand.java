@@ -29,6 +29,7 @@ public enum NavBarKeyboardCommand {
   HOME(KeyEvent.VK_HOME),
   END(KeyEvent.VK_END),
   DOWN(KeyEvent.VK_DOWN),
+  UP(KeyEvent.VK_UP),
   ENTER(KeyEvent.VK_ENTER),
   NAVIGATE(KeyEvent.VK_F4),
   ESCAPE(KeyEvent.VK_ESCAPE);

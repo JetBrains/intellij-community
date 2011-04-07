@@ -94,6 +94,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   private NavBarItem myContextObject;
   private boolean myDisposed = false;
   private RelativePoint myLocationCache;
+  private boolean initialized = false;
 
 
   public NavBarPanel(final Project project) {
@@ -171,8 +172,14 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   }
 
   public void moveDown() {
-    if (myModel.getSelectedIndex() != -1) {
-      ctrlClick(myModel.getSelectedIndex());
+    final int index = myModel.getSelectedIndex();
+    if (index != -1) {
+      if (myModel.size() - 1 == index) {
+        shiftFocus(-1);
+        ctrlClick(index - 1);
+      } else {
+        ctrlClick(index);
+      }
     }
   }
 
@@ -719,7 +726,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
             }
           });
         }
-        activatePopupOnLastElement();
+        selectTail();
       }
     }, NavBarUpdateQueue.ID.SHOW_HINT);
 
@@ -741,6 +748,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
           myModel.setSelectedIndex(Math.max(myList.size() - 2, 0));
           IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
           restorePopup();
+          initialized = true;
         }
       }
     });
