@@ -162,7 +162,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
 
   private static void addAllClasses(CompletionParameters parameters, final CompletionResultSet result, final InheritorsHolder inheritors) {
-    result.stopHere();
     final PsiElement position = parameters.getPosition();
     final ElementFilter filter = getClassFilter(position);
     AllClassesGetter.processJavaClasses(parameters, result.getPrefixMatcher(), parameters.getInvocationCount() <= 1, new Consumer<PsiClass>() {
@@ -243,6 +242,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
+        result.stopHere();
         addAllClasses(parameters, result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters)), new InheritorsHolder(parameters.getPosition(), result));
       }
     });
@@ -316,7 +316,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
     if (AFTER_NUMBER_LITERAL.accepts(parameters.getPosition())) {
-      result.stopHere();
       return;
     }
 
