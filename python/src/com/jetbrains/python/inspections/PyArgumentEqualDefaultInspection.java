@@ -1,14 +1,17 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.RemoveArgumentEqualDefaultQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyArgumentList;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyNamedParameter;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
 
 /**
  * User: catherine
@@ -40,35 +43,20 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
 
     @Override
     public void visitPyCallExpression(final PyCallExpression node){
-      PyExpression[] arguments = node.getArguments();
-      PyExpression callee = node.getCallee();
-      if (callee != null) {
-        PsiReference ref = callee.getReference();
-        if (ref != null) {
-          PsiElement function = ref.resolve();
-          if (function instanceof PyFunction) {
-            checkArguments(function, arguments);
-          }
-        }
-      }
+      PyArgumentList list = node.getArgumentList();
+      if (list == null) return;
+      PyArgumentList.AnalysisResult result = list.analyzeCall(myTypeEvalContext);
+      checkArguments(result);
     }
 
-    private void checkArguments(PsiElement function, PyExpression[] arguments) {
-      int argumentsSize = arguments.length;
-      PyClass containingClass = ((PyFunction)function).getContainingClass();
-      int adjust = 0;
-      if (containingClass != null)
-        adjust = 1;
-      PyParameter[] params = ((PyFunction)function).getParameterList().getParameters();
-      for (int i = 0; i != params.length - adjust; ++i) {
-        PyParameter p = params[i+adjust];
-        if (p instanceof PyNamedParameter) {
-          PyExpression defaultValue = p.getDefaultValue();
-          if (defaultValue != null && i < argumentsSize) {
-            if (arguments[i].getText().equals(defaultValue.getText())) {
-              registerProblem(arguments[i], "Argument equals to default parameter value",
-                              new RemoveArgumentEqualDefaultQuickFix());
-            }
+    private void checkArguments(PyArgumentList.AnalysisResult result) {
+      Map<PyExpression, PyNamedParameter> mapping = result.getPlainMappedParams();
+      for (Map.Entry<PyExpression, PyNamedParameter> e : mapping.entrySet()) {
+        PyExpression defaultValue = e.getValue().getDefaultValue();
+        if (defaultValue != null) {
+          if (e.getKey().getText().equals(defaultValue.getText())) {
+            registerProblem(e.getKey(), "Argument equals to default parameter value",
+                            new RemoveArgumentEqualDefaultQuickFix());
           }
         }
       }
