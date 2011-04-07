@@ -18,6 +18,7 @@ package com.intellij.util.continuation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
@@ -116,6 +117,10 @@ public class Continuation {
     return myGeneralRunner.isEmpty();
   }
 
+  public void onCancel() {
+    myGeneralRunner.onCancel();
+  }
+
   private static class TaskWrapper extends Task.Backgroundable {
     private final TaskDescriptor myTaskDescriptor;
     private final GeneralRunner myGeneralRunner;
@@ -138,6 +143,11 @@ public class Continuation {
     @Override
     public void onSuccess() {
       myGeneralRunner.ping();
+    }
+
+    @Override
+    public void onCancel() {
+      myGeneralRunner.onCancel();
     }
   }
 
@@ -334,6 +344,25 @@ public class Continuation {
           return;
         }
       }
+    }
+
+    @CalledInAwt
+    public void onCancel() {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+
+      // left only "final" tasks
+      synchronized (myQueueLock) {
+        if (myQueue.isEmpty()) return;
+        final Iterator<TaskDescriptor> iterator = myQueue.iterator();
+        while (iterator.hasNext()) {
+          final TaskDescriptor next = iterator.next();
+          if (! next.isHaveMagicCure()) {
+            iterator.remove();
+          }
+        }
+      }
+
+      ping();
     }
   }
 }
