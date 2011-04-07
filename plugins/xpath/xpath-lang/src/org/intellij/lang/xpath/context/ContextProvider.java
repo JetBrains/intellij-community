@@ -15,7 +15,9 @@
  */
 package org.intellij.lang.xpath.context;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -182,7 +184,7 @@ public abstract class ContextProvider {
       return Boolean.TRUE.equals(file.getUserData(XML_FILE_WITH_XPATH_INJECTTION));
     }
 
-    static class DefaultProvider extends ContextProvider {
+    public static final class DefaultProvider extends ContextProvider {
         private final XmlElement myContextElement;
         private final ContextType myContextType;
         private final NamespaceContext myNamespaceContext;
@@ -193,7 +195,7 @@ public abstract class ContextProvider {
 
             if (myContextElement != null) {
               myNamespaceContext = XsltNamespaceContext.NAMESPACE_CONTEXT;
-              myContextElement.getContainingFile().putUserData(XML_FILE_WITH_XPATH_INJECTTION, Boolean.TRUE);
+              setXPathInjected(myContextElement.getContainingFile());
             } else {
               myNamespaceContext = null;
             }
@@ -205,9 +207,30 @@ public abstract class ContextProvider {
 
           if (myContextElement != null) {
             myNamespaceContext = XsltNamespaceContext.NAMESPACE_CONTEXT;
-            myContextElement.getContainingFile().putUserData(XML_FILE_WITH_XPATH_INJECTTION, Boolean.TRUE);
+            setXPathInjected(myContextElement.getContainingFile());
           } else {
             myNamespaceContext = null;
+          }
+        }
+
+        private static void setXPathInjected(final PsiFile file) {
+          final Boolean flag = file.getUserData(XML_FILE_WITH_XPATH_INJECTTION);
+
+          // This is a very ugly hack, but it is required to make the implicit usages provider recognize namespace declarations used from
+          // within injected XPath fragments during IDEA startup. Otherwise, the namespace declarations may be marked as unused until the
+          // first edit in the file.
+          // Another (possibly perferred) solution might be to make org.intellij.lang.xpath.xslt.impl.XsltImplicitUsagesProvider run
+          // unconditionally or - even better - pull its functionality into the platform.
+          if (flag == null) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (file.getUserData(XML_FILE_WITH_XPATH_INJECTTION) == null) {
+                  file.putUserData(XML_FILE_WITH_XPATH_INJECTTION, Boolean.TRUE);
+                  DaemonCodeAnalyzer.getInstance(file.getProject()).restart(file);
+                }
+              }
+            });
           }
         }
 

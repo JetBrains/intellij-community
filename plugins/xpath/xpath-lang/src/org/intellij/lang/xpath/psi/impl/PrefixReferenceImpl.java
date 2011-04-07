@@ -60,6 +60,9 @@ class PrefixReferenceImpl extends ReferenceBase implements PrefixReference {
   }
 
   public boolean isSoft() {
+    final ContextProvider context = getElement().getXPathContext();
+    if (context instanceof ContextProvider.DefaultProvider) return true;
+
     return !canResolve();
   }
 
