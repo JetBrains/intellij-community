@@ -552,6 +552,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     myProject2Frame.remove(project);
     if (myProject2Frame.isEmpty()) {
       myProject2Frame.put(null, frame);
+
+      if (ApplicationManager.getApplication().isDisposeInProgress()) {
+        // disposing last frame if quitting
+        frame.dispose();
+      }
     }
     else {
       Disposer.dispose((StatusBarEx) frame.getStatusBar());

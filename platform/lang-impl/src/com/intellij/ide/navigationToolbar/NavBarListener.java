@@ -113,6 +113,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
         case HOME:     myPanel.moveHome();  break;
         case END:      myPanel.moveEnd();   break;
         case DOWN:     myPanel.moveDown();  break;
+        case UP:       myPanel.moveDown();  break;
         case ENTER:    myPanel.enter();     break;
         case ESCAPE:   myPanel.escape();    break;
         case NAVIGATE: myPanel.navigate();  break;
