@@ -322,6 +322,14 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     }
   }
 
+  public void setForkMode(String forkMode) {
+    myData.FORK_MODE = forkMode;
+  }
+
+  public String getForkMode() {
+    return myData.FORK_MODE;
+  }
+
   public static class Data implements Cloneable {
     public String PACKAGE_NAME;
     public String MAIN_CLASS_NAME;
@@ -330,6 +338,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     public String VM_PARAMETERS;
     public String PARAMETERS;
     public String WORKING_DIRECTORY;
+    public String FORK_MODE;
     private Set<String> myPattern = new LinkedHashSet<String>();
 
     //iws/ipr compatibility
@@ -349,7 +358,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
              Comparing.equal(getWorkingDirectory(), second.getWorkingDirectory()) &&
              Comparing.equal(VM_PARAMETERS, second.VM_PARAMETERS) &&
              Comparing.equal(PARAMETERS, second.PARAMETERS) &&
-             Comparing.equal(myPattern, second.myPattern);
+             Comparing.equal(myPattern, second.myPattern) &&
+             Comparing.equal(FORK_MODE, second.FORK_MODE) ;
     }
 
     public int hashCode() {
@@ -360,7 +370,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
              Comparing.hashcode(getWorkingDirectory()) ^
              Comparing.hashcode(VM_PARAMETERS) ^
              Comparing.hashcode(PARAMETERS) ^
-             Comparing.hashcode(myPattern);
+             Comparing.hashcode(myPattern) ^
+             Comparing.hashcode(FORK_MODE);
     }
 
     public TestSearchScope getScope() {

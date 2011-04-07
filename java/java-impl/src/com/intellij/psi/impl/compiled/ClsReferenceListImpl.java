@@ -62,7 +62,7 @@ public class ClsReferenceListImpl extends ClsRepositoryPsiElement<PsiClassRefere
     return getStub().getRole();
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     final String[] names = getStub().getReferencedNames();
     if (names.length != 0) {
       final Role role = getStub().getRole();

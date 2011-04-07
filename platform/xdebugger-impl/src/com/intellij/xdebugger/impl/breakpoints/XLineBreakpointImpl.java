@@ -45,6 +45,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
 import com.intellij.xdebugger.ui.DebuggerColors;
+import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,6 +125,8 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   @NotNull
   private Icon calculateIcon() {
     if (!isEnabled()) {
+      // disabled icon takes precedence to other to visually distinguish it and provide feedback then it is enabled/disabled
+      // (e.g. in case of mute-mode we would like to differentiate muted but enabled breakpoints from simply disabled ones)
       return myType.getDisabledIcon();
     }
 
@@ -135,7 +138,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     }
     else {
       if (session.areBreakpointsMuted()) {
-        return myType.getDisabledIcon();
+        return DebuggerIcons.MUTED_BREAKPOINT_ICON;
       }
       if (session.isDisabledSlaveBreakpoint(this)) {
         return myType.getDisabledDependentIcon();

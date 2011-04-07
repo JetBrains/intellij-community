@@ -49,7 +49,7 @@ public class ClsParameterListImpl extends ClsRepositoryPsiElement<PsiParameterLi
     return getParameters().length;
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append('(');
     PsiParameter[] parameters = getParameters();
     for (int i = 0; i < parameters.length; i++) {

@@ -159,7 +159,7 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     return false;
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append(getText());
   }
 

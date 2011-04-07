@@ -247,6 +247,8 @@ public class JavaCompletionContributor extends CompletionContributor {
         if (reference instanceof PsiJavaReference) {
           final ElementFilter filter = getReferenceFilter(position);
           if (filter != null) {
+            boolean filterVoid = JavaSmartCompletionContributor.getExpectedTypes(parameters).length > 0 && parameters.getInvocationCount() < 2;
+
             final boolean isSwitchLabel = SWITCH_LABEL.accepts(position);
             final PsiFile originalFile = parameters.getOriginalFile();
             for (LookupElement element : JavaCompletionUtil.processJavaReference(position,
@@ -266,6 +268,11 @@ public class JavaCompletionContributor extends CompletionContributor {
                 if (originalFile instanceof PsiJavaCodeReferenceCodeFragment &&
                     !((PsiJavaCodeReferenceCodeFragment)originalFile).isClassesAccepted() && item != null) {
                   item.setTailType(TailType.NONE);
+                }
+
+                Object object = element.getObject();
+                if (filterVoid && object instanceof PsiMethod && PsiType.VOID.equals(((PsiMethod)object).getReturnType())) {
+                  continue;
                 }
 
                 result.addElement(element);

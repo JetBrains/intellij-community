@@ -1,5 +1,5 @@
 class Foo {
     boolean zoo(String s) {
-      return f<caret>
+      return f<caret>x
     }
 }

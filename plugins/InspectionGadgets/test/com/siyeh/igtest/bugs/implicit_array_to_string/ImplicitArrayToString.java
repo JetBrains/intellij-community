@@ -24,4 +24,8 @@ public class ImplicitArrayToString {
         formatter.format( null, format, formatArguments ); // formatArguments triggers inspection, quickfix changes the semantics
         return formatter.toString();
     }
+
+    private String bar(int[] array) {
+        return String.valueOf(array) + array.toString();
+    }
 }

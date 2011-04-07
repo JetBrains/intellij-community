@@ -84,30 +84,33 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
         || element instanceof PsiField;
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
-    PsiAnnotation[] annotations = getAnnotations();
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
+    final PsiAnnotation[] annotations = getAnnotations();
     final boolean formattingAllowed = isAnnotationFormattingAllowed();
     for (PsiAnnotation annotation : annotations) {
       ((ClsAnnotationImpl)annotation).appendMirrorText(indentLevel, buffer);
       if (formattingAllowed) {
         goNextLine(indentLevel, buffer);
-      } else {
+      }
+      else {
         buffer.append(' ');
       }
     }
 
-    PsiElement parent = getParent();
+    final PsiElement parent = getParent();
 
     //TODO : filtering & ordering modifiers can go to CodeStyleManager
-    boolean isInterface = parent instanceof PsiClass && ((PsiClass)parent).isInterface();
-    boolean isInterfaceMethod = parent instanceof PsiMethod && parent.getParent() instanceof PsiClass && ((PsiClass)parent.getParent()).isInterface();
-    boolean isInterfaceField = parent instanceof PsiField && parent.getParent() instanceof PsiClass && ((PsiClass)parent.getParent()).isInterface();
-    boolean isInterfaceClass = parent instanceof PsiClass && parent.getParent() instanceof PsiClass && ((PsiClass)parent.getParent()).isInterface();
-    if (hasModifierProperty(PsiModifier.PUBLIC)) {
-      if (!isInterfaceMethod && !isInterfaceField && !isInterfaceClass) {
-        buffer.append(PsiModifier.PUBLIC);
-        buffer.append(' ');
-      }
+    final boolean isClass = parent instanceof PsiClass;
+    final boolean isInterface = isClass && ((PsiClass)parent).isInterface();
+    final boolean isInterfaceClass = isClass && parent.getParent() instanceof PsiClass && ((PsiClass)parent.getParent()).isInterface();
+    final boolean isMethod = parent instanceof PsiMethod;
+    final boolean isInterfaceMethod = isMethod && parent.getParent() instanceof PsiClass && ((PsiClass)parent.getParent()).isInterface();
+    final boolean isField = parent instanceof PsiField;
+    final boolean isInterfaceField = isField && parent.getParent() instanceof PsiClass && ((PsiClass)parent.getParent()).isInterface();
+
+    if (hasModifierProperty(PsiModifier.PUBLIC) && !isInterfaceMethod && !isInterfaceField && !isInterfaceClass) {
+      buffer.append(PsiModifier.PUBLIC);
+      buffer.append(' ');
     }
     if (hasModifierProperty(PsiModifier.PROTECTED)) {
       buffer.append(PsiModifier.PROTECTED);
@@ -117,23 +120,17 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
       buffer.append(PsiModifier.PRIVATE);
       buffer.append(' ');
     }
-    if (hasModifierProperty(PsiModifier.STATIC)) {
-      if (!isInterfaceField) {
-        buffer.append(PsiModifier.STATIC);
-        buffer.append(' ');
-      }
+    if (hasModifierProperty(PsiModifier.STATIC) && !isInterfaceField) {
+      buffer.append(PsiModifier.STATIC);
+      buffer.append(' ');
     }
-    if (hasModifierProperty(PsiModifier.ABSTRACT)) {
-      if (!isInterface && !isInterfaceMethod) {
-        buffer.append(PsiModifier.ABSTRACT);
-        buffer.append(' ');
-      }
+    if (hasModifierProperty(PsiModifier.ABSTRACT) && !isInterface && !isInterfaceMethod) {
+      buffer.append(PsiModifier.ABSTRACT);
+      buffer.append(' ');
     }
-    if (hasModifierProperty(PsiModifier.FINAL)) {
-      if (!isInterfaceField) {
-        buffer.append(PsiModifier.FINAL);
-        buffer.append(' ');
-      }
+    if (hasModifierProperty(PsiModifier.FINAL) && !isInterfaceField) {
+      buffer.append(PsiModifier.FINAL);
+      buffer.append(' ');
     }
     if (hasModifierProperty(PsiModifier.NATIVE)) {
       buffer.append(PsiModifier.NATIVE);
@@ -151,16 +148,20 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
       buffer.append(PsiModifier.VOLATILE);
       buffer.append(' ');
     }
+    if (hasModifierProperty(PsiModifier.STRICTFP)) {
+      buffer.append(PsiModifier.STRICTFP);
+      buffer.append(' ');
+    }
   }
 
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, JavaElementType.MODIFIER_LIST);
 
-    PsiElement[] mirrorAnnotations = ((PsiModifierList)SourceTreeToPsiMap.treeElementToPsi(element)).getAnnotations();
+    PsiElement[] mirrorAnnotations = SourceTreeToPsiMap.<PsiModifierList>treeToPsiNotNull(element).getAnnotations();
     PsiAnnotation[] annotations = getAnnotations();
     LOG.assertTrue(annotations.length == mirrorAnnotations.length);
     for (int i = 0; i < annotations.length; i++) {
-        ((ClsElementImpl)annotations[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirrorAnnotations[i]));
+      ((ClsElementImpl)annotations[i]).setMirror(SourceTreeToPsiMap.psiToTreeNotNull(mirrorAnnotations[i]));
     }
   }
 

@@ -24,7 +24,12 @@ public class SegmentedOutputStream extends OutputStream implements PacketProcess
   private boolean myStarted = false;
 
   public SegmentedOutputStream(PrintStream transportStream) {
+    this(transportStream, false);
+  }
+
+  public SegmentedOutputStream(PrintStream transportStream, boolean started) {
     myPrintStream = transportStream;
+    myStarted = started;
     try {
       flush();
     }
@@ -74,5 +79,9 @@ public class SegmentedOutputStream extends OutputStream implements PacketProcess
   public void sendStart() {
     writeNext(SegmentedStream.STARTUP_MESSAGE);
     myStarted = true;
+  }
+
+  public PrintStream getPrintStream() {
+    return myPrintStream;
   }
 }
