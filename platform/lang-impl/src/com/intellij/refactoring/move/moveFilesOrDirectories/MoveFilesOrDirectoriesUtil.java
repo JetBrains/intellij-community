@@ -123,14 +123,18 @@ public class MoveFilesOrDirectoriesUtil {
                 manager.checkMove(psiElement, targetDirectory);
                 els.add(psiElement);
               }
-
-              new MoveFilesOrDirectoriesProcessor(project, els.toArray(new PsiElement[els.size()]), targetDirectory,
-                                                  RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE,
-                                                  false, false, moveCallback, new Runnable() {
+              final Runnable callback = new Runnable() {
                 public void run() {
                   if (moveDialog != null) moveDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
                 }
-              }).run();
+              };
+              if (els.isEmpty()) {
+                callback.run();
+                return;
+              }
+              new MoveFilesOrDirectoriesProcessor(project, els.toArray(new PsiElement[els.size()]), targetDirectory,
+                                                  RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE,
+                                                  false, false, moveCallback, callback).run();
             }
             catch (IncorrectOperationException e) {
               CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(),
