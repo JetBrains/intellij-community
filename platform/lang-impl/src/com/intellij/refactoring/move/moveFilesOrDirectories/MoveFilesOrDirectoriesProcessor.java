@@ -33,6 +33,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.FileReferenceContextUtil;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -93,7 +94,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     for (int i = 0; i < myElementsToMove.length; i++) {
       PsiElement element = myElementsToMove[i];
       for (PsiReference reference : ReferencesSearch.search(element)) {
-        result.add(new MyUsageInfo(reference.getElement(), i, reference));
+        result.add(new MyUsageInfo(reference.getElement(), i));
       }
       findElementUsages(result, element);
     }
@@ -226,8 +227,8 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
       if (usageInfo instanceof MyUsageInfo) {
         final MyUsageInfo info = (MyUsageInfo)usageInfo;
         final PsiElement element = myElementsToMove[info.myIndex];
-
-        if (info.getReference() instanceof FileReference || info.getReference() instanceof PsiDynaReference) {
+        final PsiReference reference = info.getReference();
+        if (reference instanceof FileReference || reference instanceof PsiDynaReference) {
           final PsiElement usageElement = info.getElement();
           if (usageElement != null) {
             final PsiFile usageFile = usageElement.getContainingFile();
@@ -238,7 +239,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
           }
         }
 
-        info.myReference.bindToElement(element);
+        if (reference != null) reference.bindToElement(element);
       } else if (usageInfo instanceof NonCodeUsageInfo) {
         nonCodeUsages.add((NonCodeUsageInfo)usageInfo);
       }
@@ -257,12 +258,10 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
   static class MyUsageInfo extends UsageInfo {
     int myIndex;
-    PsiReference myReference;
 
-    public MyUsageInfo(PsiElement element, final int index, PsiReference reference) {
+    public MyUsageInfo(PsiElement element, final int index) {
       super(element);
       myIndex = index;
-      myReference = reference;
     }
   }
 }
