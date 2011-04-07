@@ -31,7 +31,7 @@ import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.EnumOrAnnotationTypeFilter;
 import com.intellij.psi.filters.classes.InterfaceFilter;
 import com.intellij.psi.filters.element.ReferenceOnFilter;
-import com.intellij.psi.filters.getters.MembersGetter;
+import com.intellij.psi.filters.getters.JavaMembersGetter;
 import com.intellij.psi.filters.position.*;
 import com.intellij.psi.filters.types.TypeCodeFragmentIsVoidEnabledFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
@@ -616,7 +616,7 @@ public class JavaCompletionData extends JavaAwareCompletionData{
         !(position.getParent() instanceof PsiLiteralExpression) &&
         !(position.getParent().getParent() instanceof PsiSwitchLabelStatement)) {
       for (final ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
-        MembersGetter.addMembers(position, info.getDefaultType(), new Consumer<LookupElement>() {
+        new JavaMembersGetter(info.getDefaultType()).addMembers(position, new Consumer<LookupElement>() {
           @Override
           public void consume(LookupElement element) {
             result.addElement(element);

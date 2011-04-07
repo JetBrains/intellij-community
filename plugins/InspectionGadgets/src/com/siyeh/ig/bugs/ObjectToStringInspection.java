@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,14 +143,6 @@ public class ObjectToStringInspection extends BaseInspection {
                     return;
                 }
                 final PsiExpression argument = arguments[0];
-                final PsiType type = argument.getType();
-                if (type instanceof PsiArrayType) {
-                    final PsiType componentType =
-                            ((PsiArrayType) type).getComponentType();
-                    if (PsiType.CHAR.equals(componentType)) {
-                        return;
-                    }
-                }
                 checkExpression(argument);
             }
         }
@@ -160,13 +152,6 @@ public class ObjectToStringInspection extends BaseInspection {
                 return;
             }
             final PsiType type = expression.getType();
-            if(type == null) {
-                return;
-            }
-            if(type instanceof PsiArrayType) {
-                registerError(expression);
-                return;
-            }
             if(!(type instanceof PsiClassType)) {
                 return;
             }

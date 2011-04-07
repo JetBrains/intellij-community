@@ -72,7 +72,7 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Du
             if (navBarExt != null) {
               final JComponent c = navBarExt.getComponent();
               final NavBarPanel panel = (NavBarPanel)c.getClientProperty("NavBarPanel");
-              panel.activatePopupOnLastElement();
+              panel.selectTail();
             }
           }
         }

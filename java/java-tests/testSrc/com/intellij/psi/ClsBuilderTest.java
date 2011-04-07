@@ -61,15 +61,23 @@ public class ClsBuilderTest extends LightIdeaTestCase {
     doTestFromTestData();
   }
 
+  public void testModifiers() throws Exception {
+    final String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/repositoryUse/cls/pack/" + getTestName(false) + ".class";
+    final VirtualFile clsFile = LocalFileSystem.getInstance().findFileByPath(clsFilePath);
+    assert clsFile != null : clsFilePath;
+    doTest(clsFile, getTestName(false) + ".txt");
+  }
+
   private void doTestFromTestData() throws ClsFormatException, IOException {
     final String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + getTestName(false) + ".class";
-    VirtualFile clsFile = LocalFileSystem.getInstance().findFileByPath(clsFilePath);
+    final VirtualFile clsFile = LocalFileSystem.getInstance().findFileByPath(clsFilePath);
+    assert clsFile != null : clsFilePath;
     doTest(clsFile, getTestName(false) + ".txt");
   }
 
   private void doTest(final String className) throws IOException, ClsFormatException {
-    VirtualFile vFile = findFile(className);
-    doTest(vFile, getTestName(false)+".txt");
+    final VirtualFile clsFile = findFile(className);
+    doTest(clsFile, getTestName(false) + ".txt");
   }
 
   private static void doTest(VirtualFile vFile, String goldFile) throws ClsFormatException, IOException {

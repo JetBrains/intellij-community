@@ -27,6 +27,7 @@ import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -47,6 +48,8 @@ import java.util.*;
 * @author cdr
 */
 class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>, SpeedSearchFilter<IntentionActionWithTextCaching> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionListStep");
+
   private final Set<IntentionActionWithTextCaching> myCachedIntentions = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
   private final Set<IntentionActionWithTextCaching> myCachedErrorFixes = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
   private final Set<IntentionActionWithTextCaching> myCachedInspectionFixes = new THashSet<IntentionActionWithTextCaching>(ACTION_TEXT_AND_CLASS_EQUALS);
@@ -311,7 +314,11 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
 
   @NotNull
   public String getTextFor(final IntentionActionWithTextCaching action) {
-    return action.getAction().getText();
+    final String text = action.getAction().getText();
+    if (text.startsWith("<html>")) {
+      LOG.info("IntentionAction.getText() returned HTML: action=" + action + " text=" + text);
+    }
+    return text;
   }
 
   public Icon getIconFor(final IntentionActionWithTextCaching value) {

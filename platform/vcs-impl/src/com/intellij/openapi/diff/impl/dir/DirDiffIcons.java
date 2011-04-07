@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.packaging.impl.artifacts;
+package com.intellij.openapi.diff.impl.dir;
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.Icons;
 
-import java.util.Map;
+import javax.swing.*;
 
 /**
- * @author nik
+ * @author Konstantin Bulenkov
  */
-public abstract class ArtifactValidationUtil {
-  public static ArtifactValidationUtil getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, ArtifactValidationUtil.class);
-  }
-
-  public abstract Map<String, String> getArtifactToSelfIncludingNameMap();
+public interface DirDiffIcons {
+  Icon FOLDER = Icons.FOLDER_ICON;
+  Icon MOVE_RIGHT = IconLoader.getIcon("/vcs/arrow_right.png");
+  Icon MOVE_LEFT = IconLoader.getIcon("/vcs/arrow_left.png");
+  Icon EQUAL = IconLoader.getIcon("/vcs/equal.png");
+  Icon NOT_EQUAL = IconLoader.getIcon("/vcs/not_equal.png");
 }

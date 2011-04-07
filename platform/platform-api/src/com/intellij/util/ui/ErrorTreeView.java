@@ -54,7 +54,7 @@ public interface ErrorTreeView extends Disposable {
    */
   void addMessage(int type,
                   @NotNull String[] text,
-                  @NotNull String groupName,
+                  @Nullable String groupName,
                   @NotNull Navigatable navigatable,
                   @Nullable String exportTextPrefix,
                   @Nullable String rendererTextPrefix,

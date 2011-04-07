@@ -174,7 +174,10 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
 
   private static Pair<TextRange, PsiElement> createTagNameRange(final XmlTag tag) {
     final PsiElement startToken = XmlTagUtil.getStartTagNameElement(tag);
-    assert startToken != null : tag.getText();
+    if (startToken == null) {
+      return Pair.create(tag.getTextRange(), (PsiElement)tag);
+    }
+
     return Pair.create(startToken.getTextRange().shiftRight(-tag.getTextRange().getStartOffset()), (PsiElement)tag);
   }
 

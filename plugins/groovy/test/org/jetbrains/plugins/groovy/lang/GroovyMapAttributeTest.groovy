@@ -263,7 +263,7 @@ public class Ccc {
 }
 """)
 
-    myFixture.configureByText("a.groovy", "new Ccc(<caret>)")
+    myFixture.configureByText("a.groovy", "new Ccc(ss<caret>)")
 
     def res = myFixture.complete(CompletionType.SMART)
 

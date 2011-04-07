@@ -36,11 +36,12 @@ import java.util.*;
 /**
  * @author nik
  */
-public class ArtifactValidationUtilImpl extends ArtifactValidationUtil {
+public class ArtifactSortingUtilImpl extends ArtifactSortingUtil {
   private final Project myProject;
   private CachedValue<Map<String, String>> myArtifactToSelfIncludingName;
+  private CachedValue<List<String>> mySortedArtifacts;
 
-  public ArtifactValidationUtilImpl(Project project) {
+  public ArtifactSortingUtilImpl(Project project) {
     myProject = project;
   }
 
@@ -56,10 +57,32 @@ public class ArtifactValidationUtilImpl extends ArtifactValidationUtil {
     return myArtifactToSelfIncludingName.getValue();
   }
 
+  @Override
+  public List<String> getArtifactsSortedByInclusion() {
+    if (mySortedArtifacts == null) {
+      mySortedArtifacts = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<List<String>>() {
+          @Override
+          public Result<List<String>> compute() {
+            return Result.create(doGetSortedArtifacts(), ArtifactManager.getInstance(myProject).getModificationTracker());
+          }
+        }, false);
+    }
+    return mySortedArtifacts.getValue();
+  }
+
+  private List<String> doGetSortedArtifacts() {
+    GraphGenerator<String> graph = createArtifactsGraph();
+    DFSTBuilder<String> builder = new DFSTBuilder<String>(graph);
+    builder.buildDFST();
+    List<String> names = new ArrayList<String>();
+    names.addAll(graph.getNodes());
+    Collections.sort(names, builder.comparator());
+    return names;
+  }
+
   private Map<String, String> computeArtifactToSelfIncludingNameMap() {
     final Map<String, String> result = new HashMap<String, String>();
-    final ArtifactManager artifactManager = ArtifactManager.getInstance(myProject);
-    final GraphGenerator<String> graph = GraphGenerator.create(CachingSemiGraph.create(new ArtifactsGraph(artifactManager)));
+    final GraphGenerator<String> graph = createArtifactsGraph();
     for (String artifactName : graph.getNodes()) {
       final Iterator<String> in = graph.getIn(artifactName);
       while (in.hasNext()) {
@@ -104,6 +127,11 @@ public class ArtifactValidationUtilImpl extends ArtifactValidationUtil {
     }
 
     return result;
+  }
+
+  private GraphGenerator<String> createArtifactsGraph() {
+    final ArtifactManager artifactManager = ArtifactManager.getInstance(myProject);
+    return GraphGenerator.create(CachingSemiGraph.create(new ArtifactsGraph(artifactManager)));
   }
 
   private class ArtifactsGraph implements GraphGenerator.SemiGraph<String> {

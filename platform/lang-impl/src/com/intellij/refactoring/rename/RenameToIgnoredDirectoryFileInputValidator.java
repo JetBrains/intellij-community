@@ -46,6 +46,6 @@ public class RenameToIgnoredDirectoryFileInputValidator implements RenameInputVa
 
   @Override
   public boolean isInputValid(String newName, PsiElement element, ProcessingContext context) {
-    return newName != null && newName.length() > 0;
+    return newName != null && newName.length() > 0 && newName.indexOf('\\') < 0 && newName.indexOf('/') < 0;
   }
 }

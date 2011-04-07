@@ -219,6 +219,10 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
+  public static void edt(Runnable r) {
+    UIUtil.invokeAndWaitIfNeeded(r);
+  }
+
   protected void invokeTestRunnable(Runnable runnable) throws Exception {
     UIUtil.invokeAndWaitIfNeeded(runnable);
     //runnable.run();

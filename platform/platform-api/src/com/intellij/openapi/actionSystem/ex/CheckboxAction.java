@@ -35,6 +35,10 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
     super(text);
   }
 
+  public JCheckBox getCheckBox() {
+    return myCheckBox;
+  }
+
   protected CheckboxAction(final String text, final String description, final Icon icon) {
     super(text, description, icon);
   }
@@ -60,10 +64,8 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
     super.update(e);
     if (myCheckBox != null) {
       myCheckBox.setSelected(((Boolean)e.getPresentation().getClientProperty(SELECTED_PROPERTY)).booleanValue());
-      /* TODO: react on property change
       myCheckBox.setEnabled(e.getPresentation().isEnabled());
       myCheckBox.setVisible(e.getPresentation().isVisible());
-      */
     }
   }
 }

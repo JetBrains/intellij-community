@@ -170,6 +170,11 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
   }
 
   @Override
+  protected boolean performAutomaticRename() {
+    return false;
+  }
+
+  @Override
   protected void moveOffsetAfter(boolean success) {
     try {
       if (success) {

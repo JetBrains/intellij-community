@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.lexer.JavaLexer;
@@ -25,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiReferenceList;
@@ -51,12 +48,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
+/**
+ * @author max
+ */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class ClsStubBuilder {
   private static final Pattern REGEX_PATTERN = Pattern.compile("(?<=[^\\$])\\${1}(?=[^\\$])");
 
-  private ClsStubBuilder() {
-  }
+  private ClsStubBuilder() { }
 
   @Nullable
   public static PsiFileStub build(final VirtualFile vFile, byte[] bytes) throws ClsFormatException {
@@ -102,7 +101,7 @@ public class ClsStubBuilder {
     private final StubElement myParent;
     private final int myAccess;
     private final VirtualFile myVFile;
-    private PsiModifierListStub myModlist;
+    private PsiModifierListStub myModList;
     private PsiClassStub myResult;
     @NonNls private static final String SYNTHETIC_CLINIT_METHOD = "<clinit>";
     @NonNls private static final String SYNTHETIC_INIT_METHOD = "<init>";
@@ -143,7 +142,7 @@ public class ClsStubBuilder {
       myLexer = new JavaLexer(languageLevel);
 
       ((PsiClassStubImpl)myResult).setLanguageLevel(languageLevel);
-      myModlist = new PsiModifierListStubImpl(myResult, packModlistFlags(flags));
+      myModList = new PsiModifierListStubImpl(myResult, packClassFlags(flags));
 
       CharacterIterator signatureIterator = signature != null ? new StringCharacterIterator(signature) : null;
       if (signatureIterator != null) {
@@ -177,7 +176,7 @@ public class ClsStubBuilder {
         new PsiClassReferenceListStubImpl(JavaStubElementTypes.IMPLEMENTS_LIST, myResult, ArrayUtil.EMPTY_STRING_ARRAY,
                                           PsiReferenceList.Role.IMPLEMENTS_LIST);
       } else {
-        if (convertedSuper != null && !"java.lang.Object".equals(convertedSuper)) {
+        if (convertedSuper != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(convertedSuper)) {
           new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_LIST, myResult, new String[]{convertedSuper},
                                             PsiReferenceList.Role.EXTENDS_LIST);
         } else {
@@ -226,36 +225,66 @@ public class ClsStubBuilder {
       return LanguageLevel.HIGHEST;
     }
 
-    private static int packModlistFlags(final int access) {
+    private static int packCommonFlags(final int access) {
       int flags = 0;
 
       if ((access & Opcodes.ACC_PRIVATE) != 0) {
         flags |= ModifierFlags.PRIVATE_MASK;
-      } else if ((access & Opcodes.ACC_PROTECTED) != 0) {
+      }
+      else if ((access & Opcodes.ACC_PROTECTED) != 0) {
         flags |= ModifierFlags.PROTECTED_MASK;
-      } else if ((access & Opcodes.ACC_PUBLIC) != 0) {
+      }
+      else if ((access & Opcodes.ACC_PUBLIC) != 0) {
         flags |= ModifierFlags.PUBLIC_MASK;
-      } else {
+      }
+      else {
         flags |= ModifierFlags.PACKAGE_LOCAL_MASK;
       }
 
-      if ((access & Opcodes.ACC_ABSTRACT) != 0) {
-        flags |= ModifierFlags.ABSTRACT_MASK;
+      if ((access & Opcodes.ACC_STATIC) != 0) {
+        flags |= ModifierFlags.STATIC_MASK;
       }
       if ((access & Opcodes.ACC_FINAL) != 0) {
         flags |= ModifierFlags.FINAL_MASK;
       }
-      if ((access & Opcodes.ACC_NATIVE) != 0) {
-        flags |= ModifierFlags.NATIVE_MASK;
+
+      return flags;
+    }
+
+    private static int packClassFlags(final int access) {
+      int flags = packCommonFlags(access);
+
+      if ((access & Opcodes.ACC_ABSTRACT) != 0) {
+        flags |= ModifierFlags.ABSTRACT_MASK;
       }
-      if ((access & Opcodes.ACC_STATIC) != 0) {
-        flags |= ModifierFlags.STATIC_MASK;
+
+      return flags;
+    }
+
+    private static int packFieldFlags(final int access) {
+      int flags = packCommonFlags(access);
+
+      if ((access & Opcodes.ACC_VOLATILE) != 0) {
+        flags |= ModifierFlags.VOLATILE_MASK;
       }
       if ((access & Opcodes.ACC_TRANSIENT) != 0) {
         flags |= ModifierFlags.TRANSIENT_MASK;
       }
-      if ((access & Opcodes.ACC_VOLATILE) != 0) {
-        flags |= ModifierFlags.VOLATILE_MASK;
+
+      return flags;
+    }
+
+    private static int packMethodFlags(final int access) {
+      int flags = packCommonFlags(access);
+
+      if ((access & Opcodes.ACC_SYNCHRONIZED) != 0) {
+        flags |= ModifierFlags.SYNCHRONIZED_MASK;
+      }
+      if ((access & Opcodes.ACC_NATIVE) != 0) {
+        flags |= ModifierFlags.NATIVE_MASK;
+      }
+      if ((access & Opcodes.ACC_ABSTRACT) != 0) {
+        flags |= ModifierFlags.ABSTRACT_MASK;
       }
       if ((access & Opcodes.ACC_STRICT) != 0) {
         flags |= ModifierFlags.STRICTFP_MASK;
@@ -274,7 +303,7 @@ public class ClsStubBuilder {
     public AnnotationVisitor visitAnnotation(final String desc, final boolean visible) {
       return new AnnotationTextCollector(desc, new AnnotationResultCallback() {
         public void callback(final String text) {
-          new PsiAnnotationStubImpl(myModlist, text);
+          new PsiAnnotationStubImpl(myModList, text);
         }
       });
     }
@@ -287,11 +316,11 @@ public class ClsStubBuilder {
       if (!isCorrectName(innerName)) return;
 
       if (innerName != null && outerName != null && getClassName(outerName).equals(myResult.getQualifiedName())) {
-        final String basename = myVFile.getNameWithoutExtension();
+        final String baseName = myVFile.getNameWithoutExtension();
         final VirtualFile dir = myVFile.getParent();
         assert dir != null;
 
-        final VirtualFile innerFile = dir.findChild(basename + "$" + innerName + ".class");
+        final VirtualFile innerFile = dir.findChild(baseName + "$" + innerName + ".class");
         if (innerFile != null) {
           try {
             buildClass(innerFile, innerFile.contentsToByteArray(), myResult, access);
@@ -318,8 +347,8 @@ public class ClsStubBuilder {
 
       final byte flags = PsiFieldStubImpl.packFlags((access & Opcodes.ACC_ENUM) != 0, (access & Opcodes.ACC_DEPRECATED) != 0, false);
       PsiFieldStub stub = new PsiFieldStubImpl(myResult, name, fieldType(desc, signature), constToString(value), flags);
-      final PsiModifierListStub modlist = new PsiModifierListStubImpl(stub, packModlistFlags(access));
-      return new AnnotationCollectingVisitor(stub, modlist);
+      final PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packFieldFlags(access));
+      return new AnnotationCollectingVisitor(stub, modList);
     }
 
     @NotNull
@@ -346,7 +375,6 @@ public class ClsStubBuilder {
       return new TypeInfo(StringRef.fromString(getTypeText(type)), (byte)dim, false, Collections.<PsiAnnotationStub>emptyList()); //todo read annos from .class file
     }
 
-
     @Nullable
     public MethodVisitor visitMethod(final int access,
                                      final String name,
@@ -372,7 +400,7 @@ public class ClsStubBuilder {
 
       PsiMethodStubImpl stub = new PsiMethodStubImpl(myResult, StringRef.fromString(canonicalMethodName), flags, null);
 
-      final PsiModifierListStub modlist = new PsiModifierListStubImpl(stub, packMethodFlags(access));
+      final PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packMethodFlags(access));
       boolean parsedViaGenericSignature = false;
       String returnType;
       if (signature == null) {
@@ -392,7 +420,7 @@ public class ClsStubBuilder {
 
 
       final boolean isNonStaticInnerClassConstructor = 
-        isConstructor && !(myParent instanceof PsiFileStub) && (myModlist.getModifiersMask() & Opcodes.ACC_STATIC) == 0;
+        isConstructor && !(myParent instanceof PsiFileStub) && (myModList.getModifiersMask() & Opcodes.ACC_STATIC) == 0;
       final boolean shouldSkipFirstParamForNonStaticInnerClassConstructor = !parsedViaGenericSignature && isNonStaticInnerClassConstructor;
 
       final PsiParameterListStubImpl parameterList = new PsiParameterListStubImpl(stub);
@@ -420,7 +448,7 @@ public class ClsStubBuilder {
         localVarIgnoreCount += 2;
       }
       final int paramIgnoreCount = isEnumConstructor? 2 : isNonStaticInnerClassConstructor ? 1 : 0;
-      return new AnnotationParamCollectingVisitor(stub, modlist, localVarIgnoreCount, paramIgnoreCount, paramCount, paramStubs);
+      return new AnnotationParamCollectingVisitor(stub, modList, localVarIgnoreCount, paramIgnoreCount, paramCount, paramStubs);
     }
 
     private static String[] buildThrowsList(String[] exceptions, List<String> throwables, boolean parsedViaGenericSignature) {
@@ -443,15 +471,6 @@ public class ClsStubBuilder {
         }
         return converted;
       }
-    }
-
-    private static int packMethodFlags(final int access) {
-      int commonFlags = packModlistFlags(access);
-      if ((access & Opcodes.ACC_SYNCHRONIZED) != 0) {
-        commonFlags |= ModifierFlags.SYNCHRONIZED_MASK;
-      }
-
-      return commonFlags;
     }
 
     private static String parseMethodViaDescription(final String desc, final PsiMethodStubImpl stub, final List<String> args) {
@@ -691,10 +710,10 @@ public class ClsStubBuilder {
 
   private static String getTypeText(final Type type) {
     final String raw = type.getClassName();
-    // As the '$' char is a valid java identifier and is actively used by bytecode genarators, the problem is
+    // As the '$' char is a valid java identifier and is actively used by byte code generators, the problem is
     // which occurrences of this char should be replaced and which should not.
     // Heuristic: replace only those $ occurrences that are surrounded non-"$" chars
-    //   (most likely generated by javac to separate inner or anonymoys class name)
+    //   (most likely generated by javac to separate inner or anonymous class name)
     //   Leading and trailing $ chars should be left unchanged.
     return raw.contains("$")? REGEX_PATTERN.matcher(raw).replaceAll("\\.") : raw;
   }

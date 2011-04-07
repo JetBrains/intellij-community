@@ -33,6 +33,10 @@ public class DirDiffTableModel extends AbstractTableModel {
   private VirtualFile mySrc;
   private VirtualFile myTrg;
   final List<DirDiffElement> myElements = new ArrayList<DirDiffElement>();
+  private boolean showEqual = false;
+  private boolean showDifferent = true;
+  private boolean showNewOnSource = true;
+  private boolean showNewOnTarget = true;
 
   public DirDiffTableModel(Project project, VirtualFile src, VirtualFile trg, ProgressIndicator indicator) {
     myProject = project;
@@ -197,5 +201,37 @@ public class DirDiffTableModel extends AbstractTableModel {
 
   public Project getProject() {
     return myProject;
+  }
+
+  public boolean isShowEqual() {
+    return showEqual;
+  }
+
+  public void setShowEqual(boolean show) {
+    this.showEqual = show;
+  }
+
+  public boolean isShowDifferent() {
+    return showDifferent;
+  }
+
+  public void setShowDifferent(boolean show) {
+    this.showDifferent = show;
+  }
+
+  public boolean isShowNewOnSource() {
+    return showNewOnSource;
+  }
+
+  public void setShowNewOnSource(boolean show) {
+    this.showNewOnSource = show;
+  }
+
+  public boolean isShowNewOnTarget() {
+    return showNewOnTarget;
+  }
+
+  public void setShowNewOnTarget(boolean show) {
+    this.showNewOnTarget = show;
   }
 }

@@ -76,7 +76,7 @@ public class CustomArtifactResolver extends DefaultArtifactResolver {
     if (resolved == null) return false;
 
     a.setResolved(true);
-    a.setFile(resolved.file);
+    a.setFile(resolved.getFile(a.getType()));
     a.selectVersion(resolved.originalId.getVersion());
 
     return true;

@@ -21,9 +21,8 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.util.ui.UIUtil
 
- /**
+/**
  * @author peter
  */
 abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCase {
@@ -72,11 +71,6 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
   protected void joinAlarm() {
     edt { PlatformTestUtil.waitForAlarm(CodeInsightSettings.instance.AUTO_LOOKUP_DELAY)}
   }
-
-  protected void edt(Closure c) {
-    UIUtil.invokeAndWaitIfNeeded(c as Runnable)
-  }
-
 
   @Override protected void runTest() {
     runTestBare()

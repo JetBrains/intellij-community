@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,6 +22,9 @@ import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.cls.ClsFormatException;
 
+/**
+ * @author max
+ */
 public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   public boolean acceptsFile(final VirtualFile file) {
     return !isInner(file.getNameWithoutExtension(), new ParentDirectory(file));
@@ -37,8 +36,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
 
   private static boolean isInner(final String name, final int from, final Directory directory) {
     final int index = name.indexOf('$', from);
-    return index == -1 ? false
-                       : containsPart(directory, name, index) ? true : isInner(name, index + 1, directory);
+    return index != -1 && (containsPart(directory, name, index) || isInner(name, index + 1, directory));
   }
 
   private static boolean containsPart(Directory directory, String name, int endIndex) {
@@ -55,7 +53,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   }
 
   public int getStubVersion() {
-    return JavaFileElementType.STUB_VERSION;
+    return JavaFileElementType.STUB_VERSION + 1;
   }
 
 
@@ -74,7 +72,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
 
     public boolean contains(final String name) {
       final String fullName = myExtension == null ? name : name + "." + myExtension;
-      return myDirectory == null ? false : myDirectory.findChild(fullName) != null;
+      return myDirectory != null && myDirectory.findChild(fullName) != null;
     }
   }
 }

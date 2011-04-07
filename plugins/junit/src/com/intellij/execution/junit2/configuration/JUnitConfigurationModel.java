@@ -56,11 +56,12 @@ public class JUnitConfigurationModel {
     myProject = project;
   }
 
-  public void setType(int type) {
-    if (type == myType) return;
+  public boolean setType(int type) {
+    if (type == myType) return false;
     if (type < 0 || type >= ourTestObjects.size()) type = CLASS;
     myType = type;
     fireTypeChanged(type);
+    return true;
   }
 
   private void fireTypeChanged(final int newType) {

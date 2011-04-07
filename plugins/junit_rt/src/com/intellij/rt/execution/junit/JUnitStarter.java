@@ -16,6 +16,7 @@
 package com.intellij.rt.execution.junit;
 
 import com.intellij.rt.execution.junit.segments.SegmentedOutputStream;
+
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -33,6 +34,7 @@ public class JUnitStarter {
   public static final String IDE_VERSION = "-ideVersion";
   public static final String JUNIT4_PARAMETER = "-junit4";
   private static final String SOCKET = "-socket";
+  private static String ourCommandLine;
 
   public static void main(String[] args) throws IOException {
     SegmentedOutputStream out = new SegmentedOutputStream(System.out);
@@ -74,7 +76,10 @@ public class JUnitStarter {
         isJunit4 = true;
       }
       else {
-        if (arg.startsWith("@@")) {
+        if (arg.startsWith("@@@")) {
+          ourCommandLine = arg.substring(3);
+          continue;
+        } else if (arg.startsWith("@@")) {
           if (new File(arg.substring(2)).exists()) {
             try {
               final BufferedReader reader = new BufferedReader(new FileReader(arg.substring(2)));
@@ -183,26 +188,27 @@ public class JUnitStarter {
                                             SegmentedOutputStream err) {
     PrintStream oldOut = System.out;
     PrintStream oldErr = System.err;
-    int result;
     try {
       System.setOut(new PrintStream(out));
       System.setErr(new PrintStream(err));
+      if (ourCommandLine != null) {
+        return JUnitForkedStarter.startForkedVMs(args, isJUnit4, listeners, out, err, ourCommandLine);
+      }
       IdeaTestRunner testRunner = (IdeaTestRunner)getAgentClass(isJUnit4).newInstance();
-      testRunner.setStreams(out, err);
-      result = testRunner.startRunnerWithArgs(args, listeners);
+      testRunner.setStreams(out, err, 0);
+      return testRunner.startRunnerWithArgs(args, listeners, true);
     }
     catch (Exception e) {
       e.printStackTrace(System.err);
-      result = -2;
+      return -2;
     }
     finally {
       System.setOut(oldOut);
       System.setErr(oldErr);
     }
-    return result;
   }
 
-  private static Class getAgentClass(boolean isJUnit4) throws ClassNotFoundException {
+  static Class getAgentClass(boolean isJUnit4) throws ClassNotFoundException {
     return isJUnit4
            ? Class.forName("com.intellij.junit4.JUnit4IdeaTestRunner")
            : Class.forName("com.intellij.junit3.JUnit3IdeaTestRunner");

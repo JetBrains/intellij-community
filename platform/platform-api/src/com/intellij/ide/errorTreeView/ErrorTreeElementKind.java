@@ -27,6 +27,7 @@ public enum ErrorTreeElementKind {
   INFO ("INFO", IdeBundle.message("errortree.information")),
   ERROR ("ERROR", IdeBundle.message("errortree.error")),
   WARNING ("WARNING", IdeBundle.message("errortree.warning")),
+  NOTE ("NOTE", IdeBundle.message("errortree.note")),
   GENERIC ("GENERIC", "");
 
   private final String myText;
@@ -52,6 +53,7 @@ public enum ErrorTreeElementKind {
       case MessageCategory.INFORMATION : return INFO;
       case MessageCategory.STATISTICS : return INFO;
       case MessageCategory.SIMPLE : return GENERIC;
+      case MessageCategory.NOTE : return NOTE;
       default : return GENERIC;
     }
   }

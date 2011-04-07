@@ -97,13 +97,12 @@ public abstract class AbstractConsoleRunnerWithHistory {
     }
   }
 
-
   private void initConsoleUI(Process process) {
     // Init console view
     myConsoleView = createConsoleView();
     myConsoleView.setBorder(new SideBorder(UIUtil.getBorderColor(), SideBorder.LEFT));
 
-    myProcessHandler = createProcessHandler(process, myProvider.getCommandLineString());
+      myProcessHandler = createProcessHandler(process, myProvider.getCommandLineString());
 
     myConsoleExecuteActionHandler = createConsoleExecuteActionHandler();
 

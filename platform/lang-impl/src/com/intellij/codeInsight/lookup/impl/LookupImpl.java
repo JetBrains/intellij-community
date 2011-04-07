@@ -159,7 +159,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     getComponent().add(myScrollPane, BorderLayout.NORTH);
     myScrollPane.setBorder(null);
 
-    myAdComponent = new Advertiser(this);
+    myAdComponent = new Advertiser();
     JComponent adComponent = myAdComponent.getAdComponent();
     adComponent.setBorder(new EmptyBorder(0, 1, 1, 2 + relevanceSortIcon.getIconWidth()));
     getComponent().add(adComponent, BorderLayout.SOUTH);
@@ -581,7 +581,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   public Point calculatePosition(final JComponent component) {
     Dimension dim = component.getPreferredSize();
     int lookupStart = getLookupStart();
-    if (lookupStart < 0 || lookupStart >= myEditor.getDocument().getTextLength()) {
+    if (lookupStart < 0 || lookupStart > myEditor.getDocument().getTextLength()) {
       LOG.error(lookupStart + "; offset=" + myEditor.getCaretModel().getOffset() + "; element=" +
                 getPsiElement());
     }
@@ -706,12 +706,16 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
+    myAdComponent.showRandomText();
+
     getComponent().setBorder(null);
     updateScrollbarVisibility();
 
     Point p = calculatePosition(getComponent());
     HintManagerImpl.getInstanceImpl().showEditorHint(this, myEditor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.UPDATE_BY_SCROLLING, 0, false,
                                                      HintManagerImpl.createHintHint(myEditor, p, this, HintManager.UNDER).setAwtTooltip(false));
+    LOG.assertTrue(isVisible(), "!visible, disposed=" + myDisposed);
+    LOG.assertTrue(myList.isShowing(), "!showing, disposed=" + myDisposed);
 
     final JLayeredPane layeredPane = getComponent().getRootPane().getLayeredPane();
     layeredPane.add(myIconPanel, 42, 0);

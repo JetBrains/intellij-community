@@ -448,10 +448,13 @@ public class GroovyCompletionContributor extends CompletionContributor {
             staticMembers.remove(member);
             return;
           }
-          staticMembers.put(member, new JavaGlobalMemberLookupElement(member, psiClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER, true));
+          staticMembers.put(member, createGlobalMemberElement(member, psiClass, true));
 
         }
       });
+
+      GroovySmartCompletionContributor.addExpectedClassMembers(parameters, result);
+
 
       if (StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix()) || parameters.relaxMatching()) {
         addAllClasses(parameters, result, inheritors);
@@ -482,8 +485,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       @NotNull
       @Override
       protected LookupElement createLookupElement(@NotNull PsiMember member, @NotNull PsiClass containingClass, boolean shouldImport) {
-        return new JavaGlobalMemberLookupElement(member, containingClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER,
-                                                 shouldImport);
+        return createGlobalMemberElement(member, containingClass, shouldImport);
       }
 
       @Override
@@ -526,6 +528,11 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     }
     return processor;
+  }
+
+  static JavaGlobalMemberLookupElement createGlobalMemberElement(PsiMember member, PsiClass containingClass, boolean shouldImport) {
+    return new JavaGlobalMemberLookupElement(member, containingClass, QUALIFIED_METHOD_INSERT_HANDLER, STATIC_IMPORT_INSERT_HANDLER,
+                                             shouldImport);
   }
 
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {

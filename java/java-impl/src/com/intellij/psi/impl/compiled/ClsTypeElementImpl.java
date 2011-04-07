@@ -84,7 +84,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     return decorateTypeText(myTypeText);
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer){
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer){
     buffer.append(decorateTypeText(myTypeText));
   }
 

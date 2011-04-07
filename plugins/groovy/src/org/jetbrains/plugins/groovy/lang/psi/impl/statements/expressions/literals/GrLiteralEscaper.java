@@ -16,30 +16,12 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals;
 
-import com.intellij.psi.LiteralTextEscaper;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.ProperTextRange;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper;
 
-public class GrLiteralEscaper extends LiteralTextEscaper<GrLiteralImpl> {
-  private int[] outSourceOffsets;
+public class GrLiteralEscaper extends StringLiteralEscaper<GrLiteralImpl> {
 
   public GrLiteralEscaper(final GrLiteralImpl literal) {
     super(literal);
-  }
-
-  public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
-    ProperTextRange.assertProperRange(rangeInsideHost);
-    String subText = rangeInsideHost.substring(myHost.getText());
-    outSourceOffsets = new int[subText.length() + 1];
-    return PsiLiteralExpressionImpl.parseStringCharacters(subText, outChars, outSourceOffsets);
-  }
-
-  public int getOffsetInHost(int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
-    int result = offsetInDecoded < outSourceOffsets.length ? outSourceOffsets[offsetInDecoded] : -1;
-    if (result == -1) return -1;
-    return (result <= rangeInsideHost.getLength() ? result : rangeInsideHost.getLength()) + rangeInsideHost.getStartOffset();
   }
 
   public boolean isOneLine() {

@@ -215,6 +215,8 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
     else {
       ErrorTreeElement firstWarning = myErrorViewStructure.getFirstMessage(ErrorTreeElementKind.WARNING);
+      if (firstWarning == null) firstWarning = myErrorViewStructure.getFirstMessage(ErrorTreeElementKind.NOTE);
+
       if (firstWarning != null) {
         selectElement(firstWarning, null);
       }
@@ -260,7 +262,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   public void addMessage(int type,
                          @NotNull String[] text,
-                         @NotNull String groupName,
+                         @Nullable String groupName,
                          @NotNull Navigatable navigatable,
                          @Nullable String exportTextPrefix,
                          @Nullable String rendererTextPrefix,
@@ -287,6 +289,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     return "(" + line + ", " + column + ")";
   }
 
+  @NotNull
   public JComponent getComponent() {
     return this;
   }

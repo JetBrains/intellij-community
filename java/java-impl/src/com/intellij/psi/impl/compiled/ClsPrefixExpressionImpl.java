@@ -63,7 +63,7 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
     return "-" + myOperand.getText();
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append(getText());
   }
 
@@ -98,7 +98,7 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
       return ClsPrefixExpressionImpl.this;
     }
 
-    public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+    public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
       buffer.append("-");
     }
 

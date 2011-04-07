@@ -138,30 +138,8 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
           } else if (activeWindow instanceof JDialog) {
             activeWindowTitle = ((JDialog)activeWindow).getTitle();
           }
-          if (activeWindowTitle == null || activeWindowTitle.length() == 0) return;
 
-          final ID sharedApplication = invoke("NSApplication", "sharedApplication");
-          final ID windows = invoke(sharedApplication, "windows");
-          final ID windowEnumerator = invoke(windows, "objectEnumerator");
-
-          ID focusedWindow = null;
-          while (true) {
-            // dirty hack: walks through all the windows to find a cocoa window to show sheet for
-            final ID window = invoke(windowEnumerator, "nextObject");
-            if (0 == window.intValue()) break;
-
-            final ID windowTitle = invoke(window, "title");
-            if (windowTitle != null && windowTitle.intValue() != 0) {
-              final String titleString = Foundation.toStringViaUTF8(windowTitle);
-              if (titleString.equals(activeWindowTitle)) {
-                if (1 == invoke(window, "isVisible").intValue()) {
-                  focusedWindow = window;
-                  break;
-                }
-              }
-            }
-          }
-
+          final ID focusedWindow = MacMainFrameDecorator.findWindowForTitle(activeWindowTitle);
           if (focusedWindow != null) {
             invoke(chooser, "beginSheetForDirectory:file:types:modalForWindow:modalDelegate:didEndSelector:contextInfo:",
                    directory, file, null, focusedWindow, self, Foundation.createSelector("openPanelDidEnd:returnCode:contextInfo:"), null);

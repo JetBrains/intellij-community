@@ -50,7 +50,7 @@ import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
-import com.intellij.packaging.impl.artifacts.ArtifactValidationUtil;
+import com.intellij.packaging.impl.artifacts.ArtifactSortingUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
@@ -109,8 +109,15 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
         }
         artifacts.addAll(additionalArtifacts);
 
+        Map<String, Artifact> artifactsMap = new HashMap<String, Artifact>();
         for (Artifact artifact : artifacts) {
-          targets.add(new ArtifactBuildTarget(artifact));
+          artifactsMap.put(artifact.getName(), artifact);
+        }
+        for (String name : ArtifactSortingUtil.getInstance(getProject()).getArtifactsSortedByInclusion()) {
+          Artifact artifact = artifactsMap.get(name);
+          if (artifact != null) {
+            targets.add(new ArtifactBuildTarget(artifact));
+          }
         }
       }
     }.execute();
@@ -131,7 +138,7 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
 
     final Map<String, String> selfIncludingArtifacts = new ReadAction<Map<String, String>>() {
       protected void run(final Result<Map<String, String>> result) {
-        result.setResult(ArtifactValidationUtil.getInstance(getProject()).getArtifactToSelfIncludingNameMap());
+        result.setResult(ArtifactSortingUtil.getInstance(getProject()).getArtifactToSelfIncludingNameMap());
       }
     }.execute().getResultObject();
     final String selfIncludingName = selfIncludingArtifacts.get(artifact.getName());

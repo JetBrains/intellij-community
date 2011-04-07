@@ -15,31 +15,27 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Icons;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -66,15 +62,16 @@ public class NullableNotNullDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    final JPanel panel = new JPanel(new GridBagLayout());
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
+    final Splitter splitter = new Splitter(true);
     myNullablePanel =
       new AnnoPanel("Nullable", manager.getDefaultNullable(), manager.getNullables(), NullableNotNullManager.DEFAULT_NULLABLES);
-    panel.add(myNullablePanel, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0));
+    splitter.setFirstComponent(myNullablePanel);
     myNotNullPanel = new AnnoPanel("NotNull", manager.getDefaultNotNull(), manager.getNotNulls(), NullableNotNullManager.DEFAULT_NOT_NULLS);
-    panel.add(myNotNullPanel, new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0));
-    panel.add(Box.createVerticalBox(), new GridBagConstraints(0, 2, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0,0));
-    return panel;
+    splitter.setSecondComponent(myNotNullPanel);
+    splitter.setHonorComponentsMinimumSize(true);
+    splitter.setPreferredSize(new Dimension(300, 400));
+    return splitter;
   }
 
   @Override
@@ -99,7 +96,6 @@ public class NullableNotNullDialog extends DialogWrapper {
       super(new GridBagLayout());
       myDefaultAnn = defaultAnn;
       myDefaultAnns = defaultAnns;
-      setBorder(BorderFactory.createTitledBorder(title));
       myList = new JBList(anns);
       myList.setCellRenderer(new DefaultListCellRenderer(){
         @Override
@@ -153,16 +149,23 @@ public class NullableNotNullDialog extends DialogWrapper {
 
         @Override
         public void actionPerformed(AnActionEvent e) {
-           myDefaultAnn = (String)myList.getSelectedValue();
+          myDefaultAnn = (String)myList.getSelectedValue();
+          final DefaultListModel model = (DefaultListModel)myList.getModel();
+
+          // to show the new default value in the ui
+          model.setElementAt(myList.getSelectedValue(), myList.getSelectedIndex());
         }
       });
-      GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0);
+      GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5,0,0,0), 0, 0);
+      add(new TitledSeparator(title), gc);
+      gc.gridy++;
+      gc.insets.top = 0;
       add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), gc);
-      gc.gridy = 1;
+      gc.gridy++;
       gc.weighty = 1;
       gc.fill = GridBagConstraints.BOTH;
       final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myList);
-      scrollPane.setMinimumSize(new Dimension(-1, 150));
+      scrollPane.setMinimumSize(new Dimension(250, 100));
       add(scrollPane, gc);
     }
 

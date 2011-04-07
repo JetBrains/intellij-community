@@ -89,6 +89,10 @@ public class XPath2TypeTest extends XPath2HighlightingTestBase {
     doXPathHighlighting();
   }
 
+  public void testToNumericIDEA67335() throws Throwable {
+    doXPathHighlighting();
+  }
+
   @Override
   protected String getSubPath() {
     return "xpath/highlighting/types";

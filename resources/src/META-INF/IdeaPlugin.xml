@@ -378,8 +378,8 @@
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactPointerManagerImpl"/>
     <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder"
                     serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinderImpl"/>
-    <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactValidationUtil"
-                    serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactValidationUtilImpl"/>
+    <projectService serviceInterface="com.intellij.packaging.impl.artifacts.ArtifactSortingUtil"
+                    serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactSortingUtilImpl"/>
     <applicationService serviceImplementation="com.intellij.packaging.impl.artifacts.InvalidArtifactType"/>
 
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"

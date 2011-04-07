@@ -291,6 +291,13 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       }
       myData.setPatterns(tests);
     }
+    final Element forkModeElement = element.getChild("fork_mode");
+    if (forkModeElement != null) {
+      final String mode = forkModeElement.getAttributeValue("value");
+      if (mode != null) {
+        setForkMode(mode);
+      }
+    }
   }
 
   public void writeExternal(final Element element) throws WriteExternalException {
@@ -305,6 +312,12 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       final Element patternElement = new Element(PATTERN_EL_NAME);
       patternElement.setAttribute(TEST_CLASS_ATT_NAME, o);
       patternsElement.addContent(patternElement);
+    }
+    final String forkMode = getForkMode();
+    if (!forkMode.equals("none")) {
+      final Element forkModeElement = new Element("fork_mode");
+      forkModeElement.setAttribute("value", forkMode);
+      element.addContent(forkModeElement);
     }
     element.addContent(patternsElement);
     PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
@@ -322,6 +335,14 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     }
   }
 
+  public void setForkMode(@NotNull String forkMode) {
+    myData.FORK_MODE = forkMode;
+  }
+
+  public String getForkMode() {
+    return myData.FORK_MODE;
+  }
+
   public static class Data implements Cloneable {
     public String PACKAGE_NAME;
     public String MAIN_CLASS_NAME;
@@ -330,6 +351,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     public String VM_PARAMETERS;
     public String PARAMETERS;
     public String WORKING_DIRECTORY;
+    private String FORK_MODE = "none";
     private Set<String> myPattern = new LinkedHashSet<String>();
 
     //iws/ipr compatibility
@@ -349,7 +371,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
              Comparing.equal(getWorkingDirectory(), second.getWorkingDirectory()) &&
              Comparing.equal(VM_PARAMETERS, second.VM_PARAMETERS) &&
              Comparing.equal(PARAMETERS, second.PARAMETERS) &&
-             Comparing.equal(myPattern, second.myPattern);
+             Comparing.equal(myPattern, second.myPattern) &&
+             Comparing.equal(FORK_MODE, second.FORK_MODE) ;
     }
 
     public int hashCode() {
@@ -360,7 +383,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
              Comparing.hashcode(getWorkingDirectory()) ^
              Comparing.hashcode(VM_PARAMETERS) ^
              Comparing.hashcode(PARAMETERS) ^
-             Comparing.hashcode(myPattern);
+             Comparing.hashcode(myPattern) ^
+             Comparing.hashcode(FORK_MODE);
     }
 
     public TestSearchScope getScope() {

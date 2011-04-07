@@ -46,6 +46,6 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
     myFixture.complete(CompletionType.SMART);
     final List<String> list = myFixture.getLookupElementStrings();
     assertNotNull(list);
-    UsefulTestCase.assertSameElements(list, variants);
+    UsefulTestCase.assertOrderedEquals(list, variants);
   }
 }

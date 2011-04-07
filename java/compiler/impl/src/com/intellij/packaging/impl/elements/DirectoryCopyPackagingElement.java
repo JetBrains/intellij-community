@@ -61,7 +61,7 @@ public class DirectoryCopyPackagingElement extends FileOrDirectoryCopyPackagingE
                                                      @NotNull ArtifactType artifactType) {
     final VirtualFile file = findFile();
     if (file != null && file.isValid() && file.isDirectory()) {
-      creator.addDirectoryCopyInstructions(file, null);
+      creator.addDirectoryCopyInstructions(file);
     }
   }
 

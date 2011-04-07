@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.keymap.impl;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -187,6 +188,7 @@ public final class IdeMouseEventDispatcher {
   }
 
   private static boolean doHorizontalScrolling(Component c, MouseWheelEvent me) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.horizontal.scrolling");
     final JScrollBar scrollBar = findHorizontalScrollBar(c);
     if (scrollBar != null) {
       scrollBar.setValue(scrollBar.getValue() + getScrollAmount(c, me, scrollBar));

@@ -137,6 +137,8 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
             }
           });
         }
+
+        addExpectedClassMembers(params, result);
       }
     });
 
@@ -204,6 +206,27 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       }
     });
 
+  }
+
+  static void addExpectedClassMembers(CompletionParameters params, final CompletionResultSet result) {
+    PsiElement reference = params.getPosition().getParent();
+
+    for (TypeConstraint info : getExpectedTypeInfos(params)) {
+      Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
+        @Override
+        public void consume(LookupElement element) {
+          result.addElement(element);
+        }
+      };
+      PsiType type = info.getType();
+      PsiType defType = info.getDefaultType();
+      if (type instanceof PsiClassType) {
+        new GroovyMembersGetter((PsiClassType)type, reference).processMembers(consumer);
+      }
+      if (!defType.equals(type) && defType instanceof PsiClassType) {
+        new GroovyMembersGetter((PsiClassType)defType, reference).processMembers(consumer);
+      }
+    }
   }
 
   static void generateInheritorVariants(CompletionParameters parameters, PrefixMatcher matcher, final Consumer<LookupElement> consumer) {

@@ -104,9 +104,9 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
   protected static final String CAN_NOT_MODIFY_MESSAGE = PsiBundle.message("psi.error.attempt.to.edit.class.file");
 
-  public abstract void appendMirrorText(final int indentLevel, final StringBuffer buffer);
+  public abstract void appendMirrorText(final int indentLevel, final StringBuilder buffer);
 
-  protected static void goNextLine(int indentLevel, StringBuffer buffer) {
+  protected static void goNextLine(int indentLevel, StringBuilder buffer) {
     buffer.append('\n');
     for (int i = 0; i < indentLevel; i++) buffer.append(' ');
   }

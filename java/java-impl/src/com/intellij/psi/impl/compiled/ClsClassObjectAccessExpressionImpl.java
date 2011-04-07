@@ -41,7 +41,7 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
     myTypeElement = new ClsTypeElementImpl(this, canonicalClassText, ClsTypeElementImpl.VARIANCE_NONE);
   }
 
-  public void appendMirrorText(final int indentLevel, final StringBuffer buffer) {
+  public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     myTypeElement.appendMirrorText(0, buffer);
     buffer.append(CLASS_ENDING);
   }
@@ -81,7 +81,7 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
   }
 
   public String getText() {
-    StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     appendMirrorText(0, buffer);
     return buffer.toString();
   }

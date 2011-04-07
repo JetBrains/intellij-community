@@ -416,7 +416,6 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.anchor = GridBagConstraints.NORTHWEST;
 
-      //mySuggestNullables = new JCheckBox("Suggest @Nullable annotation for method possibly return null.\n Requires JDK5.0 and annotations.jar from IDEA distribution");
       mySuggestNullables = new JCheckBox(
         InspectionsBundle.message("inspection.data.flow.nullable.quickfix.option", ApplicationNamesInfo.getInstance().getProductName()));
       mySuggestNullables.setSelected(SUGGEST_NULLABLE_ANNOTATIONS);
@@ -455,6 +454,8 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       gc.insets.bottom = 15;
       add(configureAnnotations, gc);
 
+      gc.fill = GridBagConstraints.HORIZONTAL;
+      gc.weighty = 1;
       gc.insets.left = 0;
       gc.gridy++;
       add(myDontReportTrueAsserts, gc);

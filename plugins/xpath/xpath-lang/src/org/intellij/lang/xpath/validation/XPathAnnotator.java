@@ -237,13 +237,11 @@ public final class XPathAnnotator implements Annotator {
     }
   }
 
-  private static void checkExpression(AnnotationHolder holder, XPathExpression expression) {
+  private static void checkExpression(AnnotationHolder holder, @NotNull XPathExpression expression) {
     final XPathType expectedType = ExpectedTypeUtil.getExpectedType(expression);
-    if (expression != null) {
-      final XPathType opType = ExpectedTypeUtil.mapType(expression, expression.getType());
-      if (!XPathType.isAssignable(expectedType, opType)) {
-        holder.createErrorAnnotation(expression, "Expected type '" + expectedType.getName() + "', got '" + opType.getName() + "'");
-      }
+    final XPathType opType = ExpectedTypeUtil.mapType(expression, expression.getType());
+    if (!XPathType.isAssignable(expectedType, opType)) {
+      holder.createErrorAnnotation(expression, "Expected type '" + expectedType.getName() + "', got '" + opType.getName() + "'");
     }
   }
 }

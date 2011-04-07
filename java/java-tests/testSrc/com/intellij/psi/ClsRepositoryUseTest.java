@@ -752,4 +752,20 @@ public class ClsRepositoryUseTest extends PsiTestCase{
     assertTrue(substitution instanceof PsiWildcardType);
     assertEquals(PsiWildcardType.createUnbounded(myPsiManager), substitution);
   }
+
+  public void testModifiers() throws Exception {
+    final PsiClass psiClass = myJavaFacade.findClass("pack.Modifiers", RESOLVE_SCOPE);
+    assertNotNull(psiClass);
+    assertEquals("public class Modifiers  {\n" +
+                 "    private transient int f1;\n" +
+                 "    private volatile int f2;\n" +
+                 "    \n" +
+                 "    public Modifiers() { /* compiled code */ }\n" +
+                 "    \n" +
+                 "    private void m1(int... i) { /* compiled code */ }\n" +
+                 "    \n" +
+                 "    private synchronized void m2() { /* compiled code */ }\n" +
+                 "}",
+                 psiClass.getText().trim());
+  }
 }

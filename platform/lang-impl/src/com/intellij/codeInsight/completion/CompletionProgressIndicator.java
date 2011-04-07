@@ -569,9 +569,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void addWatchedPrefix(int startOffset, ElementPattern<String> restartCondition) {
-    if (isAutopopupCompletion()) {
-      myRestartingPrefixConditions.add(Pair.create(startOffset, restartCondition));
-    }
+    myRestartingPrefixConditions.add(Pair.create(startOffset, restartCondition));
   }
 
   public void prefixUpdated() {
