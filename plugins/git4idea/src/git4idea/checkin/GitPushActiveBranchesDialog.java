@@ -978,7 +978,8 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
 
     @Override
     public String toString() {
-      return revision.toString();
+      String mergeCommitStr = isMerge ? " " + GitBundle.getString("push.active.commit.node.merge") : "";
+      return revision.toShortString() + " " + message + mergeCommitStr;
     }
   }
 
