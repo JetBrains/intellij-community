@@ -141,6 +141,7 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
   public boolean isModified() {
     final NewCodeStyleSettingsPanel[] panels = getPanels();
     for (NewCodeStyleSettingsPanel panel : panels) {
+      if (!panel.isMultiLanguage()) mySchemesPanel.setPredefinedEnabled(false);
       if (panel.isModified()) return true;
     }
     return false;
@@ -224,6 +225,7 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
     for (NewCodeStyleSettingsPanel panel : mySettingsPanels.values()) {
       panel.setLanguage(lang);
     }
+    mySchemesPanel.setPredefinedEnabled(lang.getDisplayName().contains("PHP"));
   }
 
   public Set<String> processListOptions() {

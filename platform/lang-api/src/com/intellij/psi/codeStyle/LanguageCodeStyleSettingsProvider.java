@@ -92,6 +92,14 @@ public abstract class LanguageCodeStyleSettingsProvider {
     return null;
   }
 
+  /**
+   * @return Array of predefined code styles (empty array by default).
+   */
+  @NotNull
+  public PredefinedCodeStyle[] getPredefinedCodeStyles() {
+    return PredefinedCodeStyle.EMPTY_ARRAY;
+  }
+
   @NotNull
   public static Language[] getLanguagesWithCodeStyleSettings() {
     final ArrayList<Language> languages = new ArrayList<Language>();

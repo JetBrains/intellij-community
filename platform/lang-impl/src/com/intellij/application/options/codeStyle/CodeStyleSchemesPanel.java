@@ -24,8 +24,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.codeStyle.CodeStyleScheme;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 
 import javax.swing.*;
@@ -50,6 +49,7 @@ public class CodeStyleSchemesPanel{
   private JPanel myPanel;
   private JButton myExportAsGlobalButton;
   private JButton myCopyToProjectButton;
+  public JButton myPredefinedButton;
   private boolean myIsReset = false;
   private NewCodeStyleSettingsPanel mySettingsPanel;
 
@@ -148,6 +148,14 @@ public class CodeStyleSchemesPanel{
     myExportAsGlobalButton.addActionListener(new ActionListener(){
       public void actionPerformed(final ActionEvent e) {
         onExportProjectScheme();
+      }
+    });
+    
+    myPredefinedButton.addActionListener(new ActionListener() {
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        selectPredefinedStyle();
       }
     });
   }
@@ -307,5 +315,20 @@ public class CodeStyleSchemesPanel{
 
   public void setCodeStyleSettingsPanel(NewCodeStyleSettingsPanel settingsPanel) {
     mySettingsPanel = settingsPanel;
+  }
+  
+  public void setPredefinedEnabled(boolean isEnabled) {
+    myPredefinedButton.setEnabled(isEnabled);
+  }
+  
+  private void selectPredefinedStyle() {
+    Language selectedLanguage = mySettingsPanel.getSelectedLanguage();
+    if (selectedLanguage == null) return;
+    PredefinedCodeStylesDialog dialog = new PredefinedCodeStylesDialog(myPredefinedButton, selectedLanguage);
+    dialog.show();
+    if (dialog.isOK()) {
+      PredefinedCodeStyle codeStyle = dialog.getSelectedStyle();
+      if (codeStyle != null) mySettingsPanel.applyPredefinedSettings(codeStyle);
+    }
   }
 }
