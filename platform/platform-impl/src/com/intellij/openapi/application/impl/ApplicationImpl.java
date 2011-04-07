@@ -71,7 +71,6 @@ import org.picocontainer.MutablePicoContainer;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.concurrent.*;
@@ -245,25 +244,17 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         if (isDisposed() || isDisposeInProgress()) {
           return;
         }
-        try {
-          SwingUtilities.invokeAndWait(new Runnable() {
-            public void run() {
-              ApplicationManagerEx.setApplication(ApplicationImpl.this);
-              try {
-                saveAll();
-              }
-              finally {
-                disposeSelf();
-              }
+        ShutDownTracker.invokeAndWait(isUnitTestMode(), new Runnable() {
+          public void run() {
+            ApplicationManagerEx.setApplication(ApplicationImpl.this);
+            try {
+              saveAll();
             }
-          });
-        }
-        catch (InterruptedException e) {
-          LOG.error(e);
-        }
-        catch (InvocationTargetException e) {
-          LOG.error(e);
-        }
+            finally {
+              disposeSelf();
+            }
+          }
+        });
       }
     });
   }
