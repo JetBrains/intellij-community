@@ -16,6 +16,7 @@
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.ClickableTreeCellRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeNodePartListener;
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
@@ -154,7 +155,8 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
       String prefix = element.getKind().getPresentableText();
 
       if (element instanceof NavigatableMessageElement) {
-        prefix += ((NavigatableMessageElement)element).getRendererTextPrefix() + " ";
+        String rendPrefix = ((NavigatableMessageElement)element).getRendererTextPrefix();
+        if (!StringUtil.isEmpty(rendPrefix)) prefix += rendPrefix + " ";
       }
 
       setText(element.getText(), prefix);
