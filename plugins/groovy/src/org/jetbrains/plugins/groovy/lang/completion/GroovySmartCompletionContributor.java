@@ -41,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.AfterNewClassInsertHandler;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.ArrayInsertHandler;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -139,24 +138,7 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
           });
         }
 
-        for (TypeConstraint info : infos) {
-          Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
-            @Override
-            public void consume(LookupElement element) {
-              result.addElement(element);
-            }
-          };
-          PsiType type = info.getType();
-          PsiType defType = info.getDefaultType();
-          if (type instanceof PsiClassType) {
-            new GroovyMembersGetter((PsiClassType)type, reference).processMembers(consumer);
-          }
-          if (!defType.equals(type) && defType instanceof PsiClassType) {
-            new GroovyMembersGetter((PsiClassType)defType, reference).processMembers(consumer);
-          }
-        }
-
-
+        addExpectedClassMembers(params, result);
       }
     });
 
@@ -224,6 +206,27 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       }
     });
 
+  }
+
+  static void addExpectedClassMembers(CompletionParameters params, final CompletionResultSet result) {
+    PsiElement reference = params.getPosition().getParent();
+
+    for (TypeConstraint info : getExpectedTypeInfos(params)) {
+      Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
+        @Override
+        public void consume(LookupElement element) {
+          result.addElement(element);
+        }
+      };
+      PsiType type = info.getType();
+      PsiType defType = info.getDefaultType();
+      if (type instanceof PsiClassType) {
+        new GroovyMembersGetter((PsiClassType)type, reference).processMembers(consumer);
+      }
+      if (!defType.equals(type) && defType instanceof PsiClassType) {
+        new GroovyMembersGetter((PsiClassType)defType, reference).processMembers(consumer);
+      }
+    }
   }
 
   static void generateInheritorVariants(CompletionParameters parameters, PrefixMatcher matcher, final Consumer<LookupElement> consumer) {

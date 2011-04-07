@@ -643,6 +643,11 @@ return foo()"""
     checkCompletion("new Abcd<caret>", '<', "new AbcdClass<<caret>>()")
   }
 
+  public void testSuggestMembersOfExpectedType() {
+    myFixture.addClass("enum Foo { aaaaaaaaaaaaaaaaaaaaaa, bbbbbb }")
+    checkCompletion("Foo f = aaaaaaaa<caret>", '\n', "Foo f = Foo.aaaaaaaaaaaaaaaaaaaaaa<caret>")
+  }
+
   public void testDoubleSpace() {
     checkCompletion "asse<caret>x", ' ', 'assert <caret>x'
   }
