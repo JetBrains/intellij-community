@@ -161,7 +161,8 @@ target('default': "Build artifacts") {
   ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
 
   if (isEap()) {
-    binding.setVariable("common_vmoptions", "$common_vmoptions -agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=PyCharm")
+    binding.setVariable("common_vmoptions",
+                        "$common_vmoptions -XX:+HeapDumpOnOutOfMemoryError -agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=PyCharm")
   }
 
   ant.patternset(id: "resources.included") {
