@@ -158,7 +158,11 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
     if (!refMethod.isBodyEmpty()) {
       return false;
     }
-    if (AnnotationUtil.isAnnotated(refMethod.getElement(), EXCLUDE_ANNOS)) {
+    final PsiModifierListOwner owner = refMethod.getElement();
+    if (owner == null) {
+      return false;
+    }
+    if (AnnotationUtil.isAnnotated(owner, EXCLUDE_ANNOS)) {
       return false;
     }
     for (final Object extension : Extensions.getExtensions(ExtensionPoints.EMPTY_METHOD_TOOL)) {
