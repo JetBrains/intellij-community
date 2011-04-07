@@ -44,7 +44,9 @@ public class HgResolveCommand {
     if (repo == null) {
       return Collections.emptyMap();
     }
-    final HgCommandResult result = new HgCommandExecutor(myProject).executeInCurrentThread(repo, "resolve", Arrays.asList("--list"));
+    final HgCommandExecutor executor = new HgCommandExecutor(myProject);
+    executor.setSilent(true);
+    final HgCommandResult result = executor.executeInCurrentThread(repo, "resolve", Arrays.asList("--list"));
     if (result == null) {
       return Collections.emptyMap();
     }
@@ -55,7 +57,9 @@ public class HgResolveCommand {
     if (repo == null) {
       resultHandler.consume(Collections.<HgFile, HgResolveStatusEnum>emptyMap());
     }
-    new HgCommandExecutor(myProject).execute(repo, "resolve", Arrays.asList("--list"), new HgCommandResultHandler() {
+    final HgCommandExecutor executor = new HgCommandExecutor(myProject);
+    executor.setSilent(true);
+    executor.execute(repo, "resolve", Arrays.asList("--list"), new HgCommandResultHandler() {
       @Override
       public void process(@Nullable HgCommandResult result) {
         if (result == null) {

@@ -68,7 +68,9 @@ public class HgPushCommand {
     }
     arguments.add(myDestination);
 
-    new HgCommandExecutor(myProject).execute(myRepo, "push", arguments, new HgCommandResultHandler() {
+    final HgCommandExecutor executor = new HgCommandExecutor(myProject);
+    executor.setShowOutput(true);
+    executor.execute(myRepo, "push", arguments, new HgCommandResultHandler() {
       @Override
       public void process(@Nullable HgCommandResult result) {
         myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject);

@@ -27,8 +27,11 @@ public class HgInitCommand {
   public void execute(@NotNull VirtualFile repositoryRoot, final Consumer<Boolean> booleanResultHandler) {
     final List<String> args = new ArrayList<String>(1);
     args.add(repositoryRoot.getPath());
-    new HgCommandExecutor(myProject).execute(null, "init", args, new HgCommandResultHandler() {
-      @Override public void process(@Nullable HgCommandResult result) {
+    final HgCommandExecutor executor = new HgCommandExecutor(myProject);
+    executor.setShowOutput(true);
+    executor.execute(null, "init", args, new HgCommandResultHandler() {
+      @Override
+      public void process(@Nullable HgCommandResult result) {
         booleanResultHandler.consume(result != null && !HgErrorUtil.isAbort(result));
       }
     });

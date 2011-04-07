@@ -63,7 +63,9 @@ public class HgUpdateCommand {
       arguments.add(branch);
     }
 
-    return new HgCommandExecutor(project).executeInCurrentThread(repo, "update", arguments);
+    final HgCommandExecutor executor = new HgCommandExecutor(project);
+    executor.setShowOutput(true);
+    return executor.executeInCurrentThread(repo, "update", arguments);
   }
 
 }

@@ -46,6 +46,7 @@ public class HgMergeCommand {
   @Nullable
   public HgCommandResult execute() {
     HgCommandExecutor commandExecutor = new HgCommandExecutor(project);
+    commandExecutor.setShowOutput(true);
     List<String> arguments = new LinkedList<String>();
     if (StringUtils.isNotBlank(revision)) {
       arguments.add("--rev");

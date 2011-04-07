@@ -36,21 +36,29 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * <p>Executes an hg external command synchronously or asynchronously with the consequent call of {@link HgCommandResultHandler}</p>
+ *
+ * <p>Silence policy:
+ * <li>if the command is silent, the fact of its execution will be recorded in the log, but not in the VCS console.
+ * <li>if the command is not silent, which is default, it is written in the log and console.
+ * <li>the command output is not written to the log or shown to console by default, but it can be changed via {@link #myShowOutput}
+ * <li>error output is logged to the console and log, if the command is not silent.
+ * </p>
+ */
 public final class HgCommandExecutor {
   
-  public static final List<String> DEFAULT_OPTIONS = Arrays.asList(
-    "--config", "ui.merge=internal:merge"
-  );
-
   private static final Logger LOG = Logger.getInstance(HgCommandExecutor.class.getName());
+  private static final List<String> DEFAULT_OPTIONS = Arrays.asList("--config", "ui.merge=internal:merge");
 
   private final Project myProject;
   private final HgGlobalSettings mySettings;
   private final HgExecutableValidator myValidator;
   private final HgVcs myVcs;
 
-  private Charset myCharset;
-  private boolean myIsSilent;
+  private Charset myCharset = Charset.defaultCharset();
+  private boolean myIsSilent = false;
+  private boolean myShowOutput = false;
   private List<String> myOptions = DEFAULT_OPTIONS;
 
   public HgCommandExecutor(Project project) {
@@ -58,8 +66,6 @@ public final class HgCommandExecutor {
     myVcs = HgVcs.getInstance(myProject);
     mySettings = myVcs.getGlobalSettings();
     myValidator = myVcs.getExecutableValidator();
-    myCharset = Charset.defaultCharset();
-    myIsSilent = false;
   }
 
   public void setCharset(Charset charset) {
@@ -68,6 +74,14 @@ public final class HgCommandExecutor {
 
   public void setSilent(boolean isSilent) {
     myIsSilent = isSilent;
+  }
+
+  public void setOptions(List<String> options) {
+    myOptions = options;
+  }
+
+  public void setShowOutput(boolean showOutput) {
+    myShowOutput = showOutput;
   }
 
   public void execute(@Nullable final VirtualFile repo, final String operation, final List<String> arguments, @Nullable final HgCommandResultHandler handler) {
@@ -159,23 +173,32 @@ public final class HgCommandExecutor {
     String warnings = warningReceiver.getWarnings();
     result.setWarnings(warnings);
 
-    // logging to the Version Control console (without extensions and configs)
-    final String cmdString = String.format("%s %s %s", mySettings.isRunViaBash() ? "bash -c " + HgVcs.HG_EXECUTABLE_FILE_NAME : HgVcs.HG_EXECUTABLE_FILE_NAME, operation,
-            StringUtils.join(maskAuthInfoFromUrl(arguments), " "));
-    myVcs.showMessageInConsole(cmdString, ConsoleViewContentType.NORMAL_OUTPUT.getAttributes());
-    LOG.info(cmdString);
-    if (!myIsSilent) {
-      myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
-      LOG.info(result.getRawOutput());
-    }
-    myVcs.showMessageInConsole(result.getRawError(), ConsoleViewContentType.ERROR_OUTPUT.getAttributes());
-    LOG.info(result.getRawError());
-
+    log(operation, arguments, result);
     return result;
   }
 
-  public void setOptions(List<String> options) {
-    myOptions = options;
+  // logging to the Version Control console (without extensions and configs)
+  private void log(String operation, List<String> arguments, HgCommandResult result) {
+    final String executable = mySettings.isRunViaBash() ? "bash -c " + HgVcs.HG_EXECUTABLE_FILE_NAME : HgVcs.HG_EXECUTABLE_FILE_NAME;
+    final String cmdString = String.format("%s %s %s", executable, operation, StringUtils.join(maskAuthInfoFromUrl(arguments), " "));
+
+    // log command
+    LOG.info(cmdString);
+    if (!myIsSilent) {
+      myVcs.showMessageInConsole(cmdString, ConsoleViewContentType.NORMAL_OUTPUT.getAttributes());
+    }
+
+    // log output if needed
+    if (!myIsSilent && myShowOutput) {
+      LOG.info(result.getRawOutput());
+      myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
+    }
+
+    // log error
+    if (!myIsSilent) {
+      LOG.info(result.getRawError());
+      myVcs.showMessageInConsole(result.getRawError(), ConsoleViewContentType.ERROR_OUTPUT.getAttributes());
+    }
   }
 
   /**

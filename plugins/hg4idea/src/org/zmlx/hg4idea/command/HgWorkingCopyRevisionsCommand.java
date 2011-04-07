@@ -51,7 +51,7 @@ public class HgWorkingCopyRevisionsCommand {
    */
   @NotNull
   public List<HgRevisionNumber> parents(@NotNull VirtualFile repo) {
-    return getRevisions(repo, "parents", null, null);
+    return getRevisions(repo, "parents", null, null, true);
   }
 
   /**
@@ -95,7 +95,7 @@ public class HgWorkingCopyRevisionsCommand {
    */
   @NotNull
   public Pair<HgRevisionNumber, HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable FilePath file, @Nullable HgRevisionNumber revision) {
-    final List<HgRevisionNumber> revisions = getRevisions(repo, "parents", file, revision);
+    final List<HgRevisionNumber> revisions = getRevisions(repo, "parents", file, revision, true);
     switch (revisions.size()) {
       case 1: return Pair.create(revisions.get(0), null);
       case 2: return Pair.create(revisions.get(0), revisions.get(1));
@@ -117,7 +117,7 @@ public class HgWorkingCopyRevisionsCommand {
 
   @Nullable
   public HgRevisionNumber tip(@NotNull VirtualFile repo) {
-    List<HgRevisionNumber> tips = getRevisions(repo, "tip", null, null);
+    List<HgRevisionNumber> tips = getRevisions(repo, "tip", null, null, true);
     if (tips.size() > 1) {
       throw new IllegalStateException("There cannot be multiple tips");
     }
@@ -130,6 +130,7 @@ public class HgWorkingCopyRevisionsCommand {
   @Nullable
   public HgRevisionNumber identify(@NotNull VirtualFile repo) {
     HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
+    commandExecutor.setSilent(true);
     HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "identify", Arrays.asList("--num", "--id"));
     if (result == null) {
       return HgRevisionNumber.NULL_REVISION_NUMBER;
@@ -154,12 +155,14 @@ public class HgWorkingCopyRevisionsCommand {
    * @param command  command to execute.
    * @param file     file which revisions are wanted. If <code><b>null</b></code> then repository revisions are considered.
    * @param revision revision to execute on. If <code><b>null</b></code> then executed without the '-r' parameter, i.e. on the latest revision.
+   * @param silent   pass true if this command shouldn't be mentioned in the VCS console.
    * @return List of revisions.
    */
   private List<HgRevisionNumber> getRevisions(@NotNull VirtualFile repo,
                                               @NotNull String command,
                                               @Nullable FilePath file,
-                                              @Nullable HgRevisionNumber revision) {
+                                              @Nullable HgRevisionNumber revision,
+                                              boolean silent) {
     final List<String> args = new LinkedList<String>();
     args.add("--template");
     args.add("{rev}|{node|short}\\n");
@@ -170,7 +173,9 @@ public class HgWorkingCopyRevisionsCommand {
     if (file != null) { // NB: this must be the last argument
       args.add(HgUtil.getOriginalFileName(file, ChangeListManager.getInstance(myProject)).getPath());
     }
-    final HgCommandResult result = new HgCommandExecutor(myProject).executeInCurrentThread(repo, command, args);
+    final HgCommandExecutor executor = new HgCommandExecutor(myProject);
+    executor.setSilent(silent);
+    final HgCommandResult result = executor.executeInCurrentThread(repo, command, args);
 
     if (result == null) {
       return new ArrayList<HgRevisionNumber>(0);

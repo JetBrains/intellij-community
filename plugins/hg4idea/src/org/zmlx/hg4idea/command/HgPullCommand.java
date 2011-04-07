@@ -71,7 +71,9 @@ public class HgPullCommand {
 
     arguments.add(source);
 
-    new HgCommandExecutor(project).execute(repo, "pull", arguments, new HgCommandResultHandler() {
+    final HgCommandExecutor executor = new HgCommandExecutor(project);
+    executor.setShowOutput(true);
+    executor.execute(repo, "pull", arguments, new HgCommandResultHandler() {
       @Override
       public void process(@Nullable HgCommandResult result) {
         project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
