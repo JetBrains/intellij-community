@@ -16,6 +16,8 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
@@ -24,6 +26,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
  * @author ilyas
  */
 public interface GrSwitchStatement extends GroovyPsiElement, GrStatement {
+  @Nullable
   GrCondition getCondition();
+
+  @NotNull
   GrCaseSection[] getCaseSections();
 }

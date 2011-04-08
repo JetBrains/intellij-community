@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -42,9 +43,10 @@ public class GrSwitchStatementImpl extends GroovyPsiElementImpl implements GrSwi
   }
 
   public GrCondition getCondition() {
-    return findChildByClass(GrCondition.class);
+    return findChildByClass(GrExpression.class);
   }
 
+  @NotNull
   public GrCaseSection[] getCaseSections() {
     return findChildrenByClass(GrCaseSection.class);
   }
