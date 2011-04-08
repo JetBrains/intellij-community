@@ -289,7 +289,12 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
   public Icon getIcon(int flags) {
     if (myColor == null) {
       if (myValue.startsWith("#")) {
-        myColor = Color.decode("0x" + myValue.substring(1));
+        try {
+          myColor = Color.decode("0x" + myValue.substring(1));
+        }
+        catch (NumberFormatException e) {
+          return null;
+        }
       }
     }
 
