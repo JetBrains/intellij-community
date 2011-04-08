@@ -303,17 +303,29 @@ public class CodeBlockGenerator extends Generator {
 
   @Override
   public void visitWhileStatement(GrWhileStatement whileStatement) {
-    //todo
+    final GrCondition condition = whileStatement.getCondition();
+    final GrStatement body = whileStatement.getBody();
+
+    StringBuilder builder = new StringBuilder();
+    builder.append("while (");
+    final ExpressionContext copy = context.copy();
+    if (condition != null) {
+      condition.accept(new ExpressionGenerator(builder, copy));
+    }
+    builder.append(" )");
+    if (body != null) {
+      body.accept(new CodeBlockGenerator(builder, copy.extend()));
+    }
+    writeStatement(builder, whileStatement, copy);
   }
 
   @Override
   public void visitSwitchStatement(GrSwitchStatement switchStatement) {
-    super.visitSwitchStatement(switchStatement);    //To change body of overridden methods use File | Settings | File Templates.
+    //todo
   }
 
   @Override
   public void visitTryStatement(GrTryCatchStatement tryCatchStatement) {
-    //todo
     final GrOpenBlock tryBlock = tryCatchStatement.getTryBlock();
     final GrCatchClause[] catchClauses = tryCatchStatement.getCatchClauses();
     final GrFinallyClause finallyClause = tryCatchStatement.getFinallyClause();
@@ -367,7 +379,7 @@ public class CodeBlockGenerator extends Generator {
 
   @Override
   public void visitVariableDeclaration(GrVariableDeclaration variableDeclaration) {
-    final GrModifierList modifierList = variableDeclaration.getModifierList();               //todo
+    final GrModifierList modifierList = variableDeclaration.getModifierList();
     final GrVariable[] variables = variableDeclaration.getVariables();
 
     StringBuilder builder = new StringBuilder();
