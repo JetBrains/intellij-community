@@ -195,7 +195,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
   @Nullable
   @Override
   public TextRange performReplace(final LiveOccurrence occurrence, final String replacement, final Editor editor) {
-    if (myReplaceDenied || !Utils.okToWrite(editor)) return null;
+    if (myReplaceDenied || !Utils.ensureOkToWrite(editor)) return null;
     TextRange range = occurrence.getPrimaryRange();
     FindModel findModel = mySearchResults.getFindModel();
     TextRange result = null;
@@ -217,7 +217,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
 
   @Override
   public void performReplaceAll(Editor e) {
-    if (!Utils.okToWrite(e)) return;
+    if (!Utils.ensureOkToWrite(e)) return;
     if (mySearchResults.getFindModel() != null) {
       FindUtil.replace(e.getProject(), e,
                        mySearchResults.getFindModel().isGlobal() ? 0 : mySearchResults.getEditor().getSelectionModel().getSelectionStart(),

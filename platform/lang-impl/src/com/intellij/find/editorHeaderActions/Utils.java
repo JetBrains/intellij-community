@@ -67,7 +67,7 @@ public class Utils {
     }
   }
 
-  public static boolean okToWrite(Editor e) {
+  public static boolean ensureOkToWrite(Editor e) {
     final PsiFile psiFile = PsiDocumentManager.getInstance(e.getProject()).getPsiFile(e.getDocument());
     boolean okWritable;
     if (psiFile != null) {

@@ -20,7 +20,6 @@ import com.intellij.find.EditorSearchComponent;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindUtil;
-import com.intellij.find.editorHeaderActions.Utils;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -70,7 +69,7 @@ public class IncrementalFindAction extends EditorAction {
 
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
-      return project != null && !editor.isOneLineMode() && (!myReplace || Utils.okToWrite(editor));
+      return project != null && !editor.isOneLineMode() && (!myReplace || editor.getDocument().isWritable());
     }
   }
 
