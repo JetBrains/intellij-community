@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.VariableInitializer;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
@@ -36,17 +37,33 @@ import java.util.Set;
 public class ParameterDeclaration implements GroovyElementTypes {
 
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
+    return parse(builder, parser, false);
+  }
+
+  public static boolean parse(PsiBuilder builder, GroovyParser parser, boolean forForStatement) {
     PsiBuilder.Marker pdMarker = builder.mark();
 
     // Parse optional modifier(s)
-    parseOptionalModifier(builder, parser);
+    final boolean hasModifiers = parseOptionalModifier(builder, parser);
 
     PsiBuilder.Marker rb = builder.mark();
-    TypeSpec.parseStrict(builder);
-    if (!(mIDENT.equals(builder.getTokenType()) || mTRIPLE_DOT.equals(builder.getTokenType()))) {
-      rb.rollbackTo();
-    } else {
+    final ReferenceElement.ReferenceElementResult result = TypeSpec.parseStrict(builder);
+
+    if (forForStatement && result == ReferenceElement.ReferenceElementResult.fail && !hasModifiers) {
       rb.drop();
+      pdMarker.rollbackTo();
+      return false;
+    }
+
+    if (mIDENT.equals(builder.getTokenType()) || (!forForStatement && mTRIPLE_DOT.equals(builder.getTokenType()))) {
+      rb.drop();
+    }
+    else {
+      rb.rollbackTo();
+      if (forForStatement && !hasModifiers) {
+        pdMarker.rollbackTo();
+        return false;
+      }
     }
 
     // Possible it is a parameter, not statement
@@ -58,12 +75,14 @@ public class ParameterDeclaration implements GroovyElementTypes {
       }
       pdMarker.done(PARAMETER);
       return true;
-    } else {
+    }
+    else {
       // If has triple dots
       if (hasDots) {
         pdMarker.error(GroovyBundle.message("identifier.expected"));
         return true;
-      } else {
+      }
+      else {
         pdMarker.rollbackTo();
         return false;
       }
@@ -75,16 +94,17 @@ public class ParameterDeclaration implements GroovyElementTypes {
    *
    * @param builder Given builder
    */
-  private static void parseOptionalModifier(PsiBuilder builder, GroovyParser parser) {
+  private static boolean parseOptionalModifier(PsiBuilder builder, GroovyParser parser) {
 
     Set<IElementType> modSet = new HashSet<IElementType>();
 
     PsiBuilder.Marker marker = builder.mark();
 
+    boolean hasModifiers = false;
     while (builder.getTokenType() == kFINAL ||
             builder.getTokenType() == kDEF ||
             builder.getTokenType() == mAT) {
-
+      hasModifiers = true;
       if (kFINAL.equals(builder.getTokenType())) {
         if (modSet.contains(kFINAL)) {
           ParserUtils.wrapError(builder, GroovyBundle.message("duplicate.modifier", GrModifier.FINAL));
@@ -106,6 +126,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
       }
     }
     marker.done(MODIFIERS);
+    return hasModifiers;
   }
 
 }

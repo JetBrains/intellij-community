@@ -42,27 +42,19 @@ public class ForStatement implements GroovyElementTypes {
   private static boolean tradForClauseParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
 
-    if (ParserUtils.getToken(builder, mSEMI) || (ParameterDeclaration.parse(builder, parser) && ParserUtils.getToken(builder, mSEMI))) {
-      StrictContextExpression.parse(builder, parser);
-      ParserUtils.getToken(builder, mSEMI, GroovyBundle.message("semi.expected"));
-      ParserUtils.getToken(builder, mNLS);
-      if (!mRPAREN.equals(builder.getTokenType())) {
-        StrictContextExpression.parse(builder, parser);
-      }
-    }
-    else {
+    if (!ParameterDeclaration.parse(builder, parser, true)) {
       marker.rollbackTo();
       marker = builder.mark();
       StrictContextExpression.parse(builder, parser);
-      ParserUtils.getToken(builder, mSEMI, GroovyBundle.message("semi.expected"));
-      StrictContextExpression.parse(builder, parser);
-      ParserUtils.getToken(builder, mSEMI, GroovyBundle.message("semi.expected"));
-      ParserUtils.getToken(builder, mNLS);
-      if (!mRPAREN.equals(builder.getTokenType())) {
-        StrictContextExpression.parse(builder, parser);
-      }
     }
 
+    ParserUtils.getToken(builder, mSEMI, GroovyBundle.message("semi.expected"));
+    StrictContextExpression.parse(builder, parser);
+    ParserUtils.getToken(builder, mSEMI, GroovyBundle.message("semi.expected"));
+    ParserUtils.getToken(builder, mNLS);
+    if (!mRPAREN.equals(builder.getTokenType())) {
+      StrictContextExpression.parse(builder, parser);
+    }
     marker.done(FOR_TRADITIONAL_CLAUSE);
     return true;
   }
