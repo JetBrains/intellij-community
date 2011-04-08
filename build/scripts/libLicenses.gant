@@ -170,6 +170,7 @@ libraryLicense(name: "JUnit", libraryName: "JUnit4", version: "4.8", license: "C
 libraryLicense(name: "Log4j", libraryName: "Log4J", version: "1.2", license: "Apache 2.0", url: "http://logging.apache.org/log4j/1.2/index.html", licenseUrl: "http://logging.apache.org/license.html")
 libraryLicense(name: "Maven", version: "2.2.1", license: "Apache 2.0", url: "http://maven.apache.org/", licenseUrl: "http://maven.apache.org/license.html")
 libraryLicense(name: "Maven3", libraryNames: ["Maven3", "maven-dependency-tree-1.2.jar"], version: "3.0.3", license: "Apache 2.0", url: "http://maven.apache.org/", licenseUrl: "http://maven.apache.org/license.html")
+libraryLicense(name: "mercurial_prompthooks", attachedTo: "hg4idea", version: "", license: "GPLv2 (used as hg extension called from hg executable)", url: "https://github.com/willemv/mercurial_prompthooks", licenseUrl: "https://github.com/willemv/mercurial_prompthooks/blob/master/LICENSE.txt")
 libraryLicense(name: "Microba", libraryName: "microba", version: "0.4.2", license: "BSD", url: "http://microba.sourceforge.net/", licenseUrl: "http://microba.sourceforge.net/license.txt")
 libraryLicense(name: "NanoXML", version: "2.2.3", license: "zlib/libpng", url: "http://nanoxml.cyberelf.be/", licenseUrl: "http://devkix.com/nanoxml.php")
 libraryLicense(name: "Eclipse JDT Core", libraryName: "Eclipse", version: "3.3", license: "CPL 1.0", url: "http://www.eclipse.org/jdt/core/index.php")
