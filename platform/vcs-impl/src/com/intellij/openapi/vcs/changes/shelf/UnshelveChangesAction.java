@@ -27,11 +27,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -65,7 +70,7 @@ public class UnshelveChangesAction extends AnAction {
       }
     }
     defaultName = changeLists.length == 1 ? changeLists [0].DESCRIPTION : null;
-    ChangeListChooser chooser = new ChangeListChooser(project, allChangeLists, list,
+    final ChangeListChooser chooser = new ChangeListChooser(project, allChangeLists, list,
                                                       VcsBundle.message("unshelve.changelist.chooser.title"), defaultName);
     chooser.show();
     if (!chooser.isOK()) {
@@ -74,9 +79,16 @@ public class UnshelveChangesAction extends AnAction {
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    for(ShelvedChangeList changeList: changeLists) {
-      ShelveChangesManager.getInstance(project).unshelveChangeList(changeList, changes, binaryFiles, chooser.getSelectedList());
-    }
+    final List<ShelvedBinaryFile> finalBinaryFiles = binaryFiles;
+    final List<ShelvedChange> finalChanges = changes;
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Unshelve changes", true, BackgroundFromStartOption.getInstance()) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        for(ShelvedChangeList changeList: changeLists) {
+          ShelveChangesManager.getInstance(project).unshelveChangeList(changeList, finalChanges, finalBinaryFiles, chooser.getSelectedList());
+        }
+      }
+    });
   }
 
   @Override
