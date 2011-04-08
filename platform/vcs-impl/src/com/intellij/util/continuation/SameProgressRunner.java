@@ -17,6 +17,7 @@ package com.intellij.util.continuation;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -26,6 +27,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.concurrency.Semaphore;
+import sun.util.LocaleServiceProviderPool;
 
 /**
  * @author irengrig
@@ -35,6 +37,7 @@ import com.intellij.util.concurrency.Semaphore;
 public class SameProgressRunner extends GeneralRunner {
   private final Thread myInitThread;
   private final Semaphore mySemaphore;
+  private final static Logger LOG = Logger.getInstance("#com.intellij.util.continuation.SameProgressRunner");
 
   public SameProgressRunner(Project project, boolean cancellable, final String commonName) {
     super(project, cancellable);
@@ -90,6 +93,9 @@ public class SameProgressRunner extends GeneralRunner {
           current.run(this);
         }
       } catch (ProcessCanceledException ignored) {
+      } catch (Throwable t) {
+        LOG.error(t);
+        myIndicator.cancel();
       }
     }
   }

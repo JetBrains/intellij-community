@@ -85,13 +85,14 @@ public class TestContinuationAction extends AnAction {
               catch (InterruptedException e1) {
                 //
               }
-              context.suspend();
+              throw new IllegalStateException();
+              /*context.suspend();
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                 @Override
                 public void run() {
                   context.ping();
                 }
-              }, ModalityState.NON_MODAL);
+              }, ModalityState.NON_MODAL);*/
             }
           },
           new LongTaskDescriptor("Third"), new ReportTask("Third complete"),
