@@ -25,6 +25,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.intellij.lang.xpath.XPath2TokenTypes;
+import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.context.functions.Function;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,31 +43,89 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class XPathAnnotator implements Annotator {
+public final class XPathAnnotator extends XPath2ElementVisitor implements Annotator {
+
+  private AnnotationHolder myHolder;
 
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
-    if (!(psiElement instanceof XPathElement)) return;
 
-    final ContextProvider contextProvider = ((XPathElement)psiElement).getXPathContext();
+    try {
+      myHolder = holder;
+      psiElement.accept(this);
+    } finally {
+      myHolder = null;
+    }
+  }
 
-    if (psiElement instanceof XPathNodeTest) {
-      checkNodeTest(contextProvider, holder, (XPathNodeTest)psiElement);
-    } else if (psiElement instanceof XPathStep) {
-      checkSillyStep(holder, (XPathStep)psiElement);
-    } else if (psiElement instanceof XPathNodeTypeTest) {
-      checkNodeTypeTest(holder, ((XPathNodeTypeTest)psiElement));
-    } else if (psiElement instanceof XPathFunctionCall) {
-      checkFunctionCall(holder, ((XPathFunctionCall)psiElement), contextProvider);
-    } else if (psiElement instanceof XPathString) {
-      checkString(holder, ((XPathString)psiElement));
-    } else if (psiElement instanceof XPathVariableReference) {
-      checkVariableReference(holder, ((XPathVariableReference)psiElement), contextProvider);
-    } else if (psiElement instanceof XPath2TypeElement) {
-      checkPrefixReferences(holder, (XPath2TypeElement)psiElement, contextProvider);
+  @Override
+  public void visitXPathNodeTest(XPathNodeTest o) {
+    final ContextProvider contextProvider = o.getXPathContext();
+    checkNodeTest(contextProvider, myHolder, o);
+  }
+
+  @Override
+  public void visitXPathStep(XPathStep o) {
+    checkSillyStep(myHolder, o);
+    super.visitXPathStep(o);
+  }
+
+  @Override
+  public void visitXPathNodeTypeTest(XPathNodeTypeTest o) {
+    checkNodeTypeTest(myHolder, o);
+    visitXPathExpression(o);
+  }
+
+  @Override
+  public void visitXPathFunctionCall(XPathFunctionCall o) {
+    final ContextProvider contextProvider = o.getXPathContext();
+    checkFunctionCall(myHolder, o, contextProvider);
+    super.visitXPathFunctionCall(o);
+  }
+
+  @Override
+  public void visitXPathString(XPathString o) {
+    checkString(myHolder, o);
+    super.visitXPathString(o);
+  }
+
+  @Override
+  public void visitXPathVariableReference(XPathVariableReference o) {
+    final ContextProvider contextProvider = o.getXPathContext();
+    checkVariableReference(myHolder, o, contextProvider);
+    super.visitXPathVariableReference(o);
+  }
+
+  @Override
+  public void visitXPath2TypeElement(XPath2TypeElement o) {
+    final ContextProvider contextProvider = o.getXPathContext();
+    checkPrefixReferences(myHolder, o, contextProvider);
+    super.visitXPath2TypeElement(o);
+  }
+
+  @Override
+  public void visitXPathBinaryExpression(final XPathBinaryExpression o) {
+    if (XPath2TokenTypes.COMP_OPS.contains(o.getOperator())) {
+      if (o.getContainingFile().getLanguage() == XPathFileType.XPATH2.getLanguage()) {
+        final XPathExpression operand = o.getLOperand();
+        if (operand instanceof XPathBinaryExpression && XPath2TokenTypes.COMP_OPS.contains(((XPathBinaryExpression)operand).getOperator())) {
+          final Annotation annotation = myHolder.createErrorAnnotation(o, "Consecutive comparison is not allowed in XPath 2");
+
+          final XPathExpression rOperand = o.getROperand();
+          if (rOperand != null) {
+            final String replacement = "(" + operand.getText() + ") " + o.getOperationSign() + " " + rOperand.getText();
+            annotation.registerFix(new ConsecutiveComparisonFix(replacement, o));
+          }
+        }
+      }
     }
-    if (psiElement instanceof XPathExpression) {
-      checkExpression(holder, ((XPathExpression)psiElement));
-    }
+
+    checkExpression(myHolder, o);
+    super.visitXPathBinaryExpression(o);
+  }
+
+  @Override
+  public void visitXPathExpression(XPathExpression o) {
+    checkExpression(myHolder, o);
   }
 
   private static void checkString(AnnotationHolder holder, XPathString string) {
