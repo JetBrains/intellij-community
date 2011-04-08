@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -165,6 +166,8 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
       }
     } else if (value instanceof VirtualFile) {
       return Collections.singleton(((VirtualFile)value));
+    } else if (value instanceof PsiFileSystemItem) {
+      return Collections.singleton(((PsiFileSystemItem)value).getVirtualFile());
     }
 
     return EMPTY_ROOTS;
