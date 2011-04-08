@@ -19,14 +19,17 @@ package com.intellij.util.xml.converters.values;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.DomBundle;
+import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Collection;
+import java.util.Collections;
 
-public class NumberValueConverter extends Converter<String> {
+public class NumberValueConverter extends ResolvingConverter<String> {
 
   private final Class myNumberClass;
   private final boolean myAllowEmpty;
@@ -55,6 +58,12 @@ public class NumberValueConverter extends Converter<String> {
     return  s.trim().length() == 0 ?
           DomBundle.message("value.converter.format.exception.empty.string", myNumberClass.getName()) :
           DomBundle.message("value.converter.format.exception", s, myNumberClass.getName());
+  }
+
+  @NotNull
+  @Override
+  public Collection<? extends String> getVariants(ConvertContext context) {
+    return Collections.emptySet();
   }
 
   @Nullable
