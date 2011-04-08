@@ -88,22 +88,6 @@ def sandbox = "$home/out/pycharm";
 
 setProperty("buildName", "PY-$buildNumber")
 
-def zipSources() {
-  def sources = "$paths.artifacts/sources.zip"
-  project.stage("zip sources to $sources")
-
-  ant.mkdir(dir: paths.artifacts)
-  ant.delete(file: sources)
-  ant.zip(destfile: sources) {
-    fileset(dir: home) {
-      ["java", "ipr", "iml", "form", "xml", "properties"].each {
-        include(name: "**/*.$it")
-      }
-      exclude(name: "**/testData/**")
-    }
-  }
-}
-
 def buildDebuggerEgg(paths, buildName) {
   def eggDir = "$paths.sandbox/pycharm-debug"
   def egg = "$paths.sandbox/pycharm-debug.egg"
@@ -186,7 +170,7 @@ target('default': "Build artifacts") {
     exclude(name: "tips")
   }
 
-  zipSources()
+  zipSources(home, paths.artifacts)
 
   def usedJars = new HashSet();
 
