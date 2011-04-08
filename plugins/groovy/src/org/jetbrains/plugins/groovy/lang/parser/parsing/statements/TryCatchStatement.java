@@ -56,21 +56,21 @@ public class TryCatchStatement implements GroovyElementTypes {
       parseHandlers(builder, parser);
     }
 
-    if (kFINALLY.equals(builder.getTokenType()) |
-        ParserUtils.lookAhead(builder,mNLS, kFINALLY)) {
+    if (kFINALLY.equals(builder.getTokenType()) || ParserUtils.lookAhead(builder, mNLS, kFINALLY)) {
       ParserUtils.getToken(builder, mNLS);
       PsiBuilder.Marker finallyMarker = builder.mark();
       warn = builder.mark();
       ParserUtils.getToken(builder, kFINALLY);
       ParserUtils.getToken(builder, mNLS);
 
-      if (!mLCURLY.equals(builder.getTokenType()) || !OpenOrClosableBlock.parseOpenBlock(builder, parser)) {
+      if (mLCURLY.equals(builder.getTokenType()) && OpenOrClosableBlock.parseOpenBlock(builder, parser)) {
+        warn.drop();
+        finallyMarker.done(FINALLY_CLAUSE);
+      }
+      else {
         finallyMarker.drop();
         warn.rollbackTo();
         builder.error(GroovyBundle.message("expression.expected"));
-      } else {
-        warn.drop();
-        finallyMarker.done(FINALLY_CLAUSE);
       }
     }
     marker.done(TRY_BLOCK_STATEMENT);

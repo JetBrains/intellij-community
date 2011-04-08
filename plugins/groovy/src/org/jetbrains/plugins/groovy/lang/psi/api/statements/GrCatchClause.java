@@ -12,8 +12,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 public interface GrCatchClause extends GrParametersOwner {
 
   @Nullable
-  public GrParameter getParameter();
+  GrParameter getParameter();
 
-  public GrOpenBlock getBody();
+  @Nullable
+  GrOpenBlock getBody();
 
 }
