@@ -220,7 +220,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     int offset = getUsageInfo().getNavigationOffset();
     if (offset == -1) offset = myOffset;
     if (offset >= document.getTextLength()) {
-      int line = Math.max(0, Math.min(myLineNumber, document.getLineCount()));
+      int line = Math.max(0, Math.min(myLineNumber, document.getLineCount() - 1));
       offset = document.getLineStartOffset(line);
     }
     return offset;
