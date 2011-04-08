@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 
 import java.util.ArrayList;
@@ -152,7 +153,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     ASTNode prevChildNode = null;
     for (ASTNode childNode : visibleChildren(node)) {
       final Indent indent = GroovyIndentProcessor.getChildIndent(block, prevChildNode, childNode);
-      subBlocks.add(new GroovyBlock(childNode, myAlignment, indent, myWrap, mySettings, block.myInnerAlignments));
+      subBlocks.add(new GroovyBlock(childNode, blockPsi instanceof GrAnonymousClassDefinition ? null : myAlignment, indent, myWrap, mySettings, block.myInnerAlignments));
       prevChildNode = childNode;
     }
     return subBlocks;
