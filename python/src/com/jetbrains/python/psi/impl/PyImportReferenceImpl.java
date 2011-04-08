@@ -229,13 +229,16 @@ public class PyImportReferenceImpl extends PyReferenceImpl {
         }
         // look at dir by level
         if (myCurrentFile != null && (relative_level >= 0 || !ResolveImportUtil.isAbsoluteImportEnabledFor(myCurrentFile))) {
-          PyQualifiedName thisQName = ResolveImportUtil.findShortestImportableQName(myCurrentFile.getContainingDirectory());
-          if (thisQName == null) {
-            fillFromDir(ResolveImportUtil.stepBackFrom(myCurrentFile, relative_level), insertHandler);
-          }
-          else if (thisQName.getComponentCount() >= relative_level) {
-            thisQName = thisQName.removeTail(relative_level);
-            fillFromQName(thisQName, insertHandler);
+          final PsiDirectory containingDirectory = myCurrentFile.getContainingDirectory();
+          if (containingDirectory != null) {
+            PyQualifiedName thisQName = ResolveImportUtil.findShortestImportableQName(containingDirectory);
+            if (thisQName == null) {
+              fillFromDir(ResolveImportUtil.stepBackFrom(myCurrentFile, relative_level), insertHandler);
+            }
+            else if (thisQName.getComponentCount() >= relative_level) {
+              thisQName = thisQName.removeTail(relative_level);
+              fillFromQName(thisQName, insertHandler);
+            }
           }
         }
       }
