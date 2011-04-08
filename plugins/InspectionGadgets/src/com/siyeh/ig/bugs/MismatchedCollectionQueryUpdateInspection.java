@@ -17,9 +17,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -29,29 +27,25 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.ui.ExternalizableStringSet;
 import com.siyeh.ig.ui.UiUtils;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MismatchedCollectionQueryUpdateInspection
         extends BaseInspection {
 
-    @NonNls public String queries = "copyInto,drainTo,propertyNames,save,store,write";
-    @NonNls public String updates = "add,clear,drainTo,insert,load,offer,poll,push,put,remove,replace,retain,set,take";
+    public final ExternalizableStringSet queryNames =
+            new ExternalizableStringSet("copyInto", "drainTo", "propertyNames",
+                    "save", "store", "write");
+    public final ExternalizableStringSet updateNames =
+            new ExternalizableStringSet("add", "clear", "drainTo", "insert",
+                    "load", "offer", "poll", "push", "put", "remove", "replace",
+                    "retain", "set", "take");
 
-    private final List<String> queryNames = new ArrayList();
-    private final List<String> updateNames = new ArrayList();
-
-    public MismatchedCollectionQueryUpdateInspection() {
-        parseString(queries, queryNames);
-        parseString(updates, updateNames);
-    }
+    public MismatchedCollectionQueryUpdateInspection() {}
 
     @Override
     @NotNull
@@ -82,16 +76,16 @@ public class MismatchedCollectionQueryUpdateInspection
     @Override
     public JComponent createOptionsPanel() {
         final JPanel panel = new JPanel(new GridBagLayout());
-        final ListTable table1 = new ListTable(new ListWrappingTableModel(
-                queryNames,
-                InspectionGadgetsBundle.message("query.column.name")));
+        final ListTable table1 =
+                new ListTable(new ListWrappingTableModel(queryNames,
+                        InspectionGadgetsBundle.message("query.column.name")));
         final JScrollPane scrollPane1 =
                 ScrollPaneFactory.createScrollPane(table1);
         final ActionToolbar toolbar1 = UiUtils.createAddRemoveToolbar(table1);
 
-        final ListTable table2 = new ListTable(new ListWrappingTableModel(
-                updateNames,
-                InspectionGadgetsBundle.message("update.column.name")));
+        final ListTable table2 =
+                new ListTable(new ListWrappingTableModel(updateNames,
+                        InspectionGadgetsBundle.message("update.column.name")));
         final JScrollPane scrollPane2 =
                 ScrollPaneFactory.createScrollPane(table2);
         final ActionToolbar toolbar2 = UiUtils.createAddRemoveToolbar(table2);
@@ -117,20 +111,6 @@ public class MismatchedCollectionQueryUpdateInspection
         constraints.gridx = 1;
         panel.add(scrollPane2, constraints);
         return panel;
-    }
-
-    @Override
-    public void readSettings(Element node) throws InvalidDataException {
-        super.readSettings(node);
-        parseString(queries, queryNames);
-        parseString(updates, updateNames);
-    }
-
-    @Override
-    public void writeSettings(Element node) throws WriteExternalException {
-        queries = formatString(queryNames);
-        updates = formatString(updateNames);
-        super.writeSettings(node);
     }
 
     @Override
@@ -176,7 +156,7 @@ public class MismatchedCollectionQueryUpdateInspection
         return true;
     }
 
-    private static class MismatchedCollectionQueryUpdateVisitor
+    private class MismatchedCollectionQueryUpdateVisitor
             extends BaseInspectionVisitor{
 
         @Override public void visitField(@NotNull PsiField field){
@@ -223,7 +203,7 @@ public class MismatchedCollectionQueryUpdateInspection
             }
         }
 
-        private static boolean collectionContentsAreUpdated(
+        private boolean collectionContentsAreUpdated(
                 PsiVariable variable, PsiElement context){
             if(collectionUpdateCalled(variable, context)){
                 return true;
@@ -261,7 +241,7 @@ public class MismatchedCollectionQueryUpdateInspection
                     context);
         }
 
-        private static boolean collectionContentsAreQueried(
+        private boolean collectionContentsAreQueried(
                 PsiVariable variable, PsiElement context){
             if(collectionQueryCalled(variable, context)){
                 return true;
@@ -288,18 +268,18 @@ public class MismatchedCollectionQueryUpdateInspection
                     context);
         }
 
-        private static boolean collectionQueryCalled(PsiVariable variable,
+        private boolean collectionQueryCalled(PsiVariable variable,
                                                      PsiElement context){
             final CollectionQueryCalledVisitor visitor =
-                    new CollectionQueryCalledVisitor(variable);
+                    new CollectionQueryCalledVisitor(variable, queryNames);
             context.accept(visitor);
             return visitor.isQueried();
         }
 
-        private static boolean collectionUpdateCalled(PsiVariable variable,
+        private boolean collectionUpdateCalled(PsiVariable variable,
                                                       PsiElement context){
             final CollectionUpdateCalledVisitor visitor =
-                    new CollectionUpdateCalledVisitor(variable);
+                    new CollectionUpdateCalledVisitor(variable, updateNames);
             context.accept(visitor);
             return visitor.isUpdated();
         }
@@ -320,7 +300,6 @@ public class MismatchedCollectionQueryUpdateInspection
         @NotNull private final PsiVariable variable;
 
         CollectionQueriedByAssignmentVisitor(@NotNull PsiVariable variable){
-            super();
             this.variable = variable;
         }
 

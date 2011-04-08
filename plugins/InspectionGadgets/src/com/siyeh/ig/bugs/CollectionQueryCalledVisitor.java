@@ -24,26 +24,14 @@ import java.util.Set;
 
 class CollectionQueryCalledVisitor extends JavaRecursiveElementVisitor{
 
-    /**
-         * @noinspection StaticCollection
-         */
-    @NonNls private static final Set<String> queryNames =
-            new HashSet<String>(6);
-    static{
-        queryNames.add("copyInto");
-        queryNames.add("drainTo");
-        queryNames.add("propertyNames");
-        queryNames.add("save");
-        queryNames.add("store");
-        queryNames.add("write");
-    }
+    @NonNls private final Set<String> queryNames;
 
     private boolean queried = false;
     private final PsiVariable variable;
 
-    CollectionQueryCalledVisitor(PsiVariable variable){
-        super();
+    CollectionQueryCalledVisitor(PsiVariable variable, Set<String> queryNames){
         this.variable = variable;
+        this.queryNames = queryNames;
     }
 
     @Override public void visitElement(@NotNull PsiElement element){
