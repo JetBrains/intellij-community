@@ -1,0 +1,1 @@
+<error descr="Number literal must be followed by whitespace in XPath 2">10div 2</error> + 3 mod 2

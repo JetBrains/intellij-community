@@ -29,6 +29,10 @@ public class XPath2HighlightingTest extends XPath2HighlightingTestBase {
     doXPathHighlighting();
   }
 
+  public void testNumberFollowedByToken() throws Throwable {
+    doXPathHighlighting();
+  }
+
   @Override
   protected String getSubPath() {
     return "xpath/highlighting";

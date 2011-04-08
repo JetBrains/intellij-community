@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.xpath.XPath2TokenTypes;
+import org.intellij.lang.xpath.XPathElementType;
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.context.functions.Function;
 import org.jetbrains.annotations.NotNull;
@@ -104,9 +105,18 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
 
   @Override
   public void visitXPathBinaryExpression(final XPathBinaryExpression o) {
-    if (XPath2TokenTypes.COMP_OPS.contains(o.getOperator())) {
-      if (o.getContainingFile().getLanguage() == XPathFileType.XPATH2.getLanguage()) {
-        final XPathExpression operand = o.getLOperand();
+    if (o.getContainingFile().getLanguage() == XPathFileType.XPATH2.getLanguage()) {
+      final XPathExpression operand = o.getLOperand();
+      final XPathElementType operator = o.getOperator();
+      if (operand instanceof XPathNumber) {
+        if (operator != XPathTokenTypes.STAR && XPath2TokenTypes.KEYWORDS.contains(operator)) {
+          final String op = o.getOperationSign();
+          if (o.getText().startsWith(operand.getText() + op)) {
+            myHolder.createErrorAnnotation(o, "Number literal must be followed by whitespace in XPath 2");
+          }
+        }
+      }
+      if (XPath2TokenTypes.COMP_OPS.contains(operator)) {
         if (operand instanceof XPathBinaryExpression && XPath2TokenTypes.COMP_OPS.contains(((XPathBinaryExpression)operand).getOperator())) {
           final Annotation annotation = myHolder.createErrorAnnotation(o, "Consecutive comparison is not allowed in XPath 2");
 
