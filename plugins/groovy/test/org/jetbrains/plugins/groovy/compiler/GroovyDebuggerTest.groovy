@@ -36,6 +36,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.openapi.fileEditor.FileDocumentManager
 
 /**
  * @author peter
@@ -73,11 +74,11 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
     moduleBuilder.addJdk(System.getenv('JAVA_HOME'))
   }
 
-  private void runDebugger(Closure cl) {
+  private void runDebugger(String mainClass, Closure cl) {
     make()
     edt {
       ProgramRunner runner = ProgramRunner.PROGRAM_RUNNER_EP.extensions.find { it.class == GenericDebuggerRunner }
-      runProcess('Foo', myModule, DefaultDebugExecutor, [onTextAvailable: { evt, type -> print evt.text}] as ProcessAdapter, runner)
+      runProcess(mainClass, myModule, DefaultDebugExecutor, [onTextAvailable: { evt, type -> print evt.text}] as ProcessAdapter, runner)
     }
     cl.call()
     resume()
@@ -85,16 +86,60 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
   }
 
   public void testSimpleEvaluate() {
-    def foo = myFixture.addFileToProject("Foo.groovy", "println 'hello'");
-
-    edt {
-      DebuggerManagerImpl.getInstanceEx(project).breakpointManager.addLineBreakpoint(foo.viewProvider.document, 0)
-    }
-
-    runDebugger {
+    myFixture.addFileToProject("Foo.groovy", "println 'hello'");
+    addBreakpoint 'Foo.groovy', 0
+    runDebugger 'Foo', {
       waitForBreakpoint()
       eval '2?:3', '2'
       eval 'null?:3', '3'
+    }
+  }
+
+  public void testVariableInScript() {
+    myFixture.addFileToProject("Foo.groovy", """def a = 2
+a""");
+    addBreakpoint 'Foo.groovy', 1
+    runDebugger 'Foo', {
+      waitForBreakpoint()
+      eval 'a', '2'
+    }
+  }
+
+  public void testVariableInsideClosure() {
+    myFixture.addFileToProject("Foo.groovy", """def a = 2
+Closure c = {
+  a++;
+  a    //3
+}
+c()
+a++""");
+    addBreakpoint 'Foo.groovy', 3
+    runDebugger 'Foo', {
+      waitForBreakpoint()
+      eval 'a', '3'
+    }
+  }
+
+  public void testQualifyClassNames() {
+    myFixture.addFileToProject("com/Foo.groovy", """
+package com
+class Foo { static bar = 2 }""")
+
+
+    myFixture.addFileToProject("com/Bar.groovy", """package com
+println 2""")
+
+    addBreakpoint 'com/Bar.groovy', 1
+    runDebugger 'com.Bar', {
+      waitForBreakpoint()
+      eval 'Foo.bar', '2'
+    }
+  }
+
+  private def addBreakpoint(String fileName, int line) {
+    edt {
+      def file = myFixture.tempDirFixture.getFile(fileName)
+      DebuggerManagerImpl.getInstanceEx(project).breakpointManager.addLineBreakpoint(FileDocumentManager.instance.getDocument(file), line)
     }
   }
 
