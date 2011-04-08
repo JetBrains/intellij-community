@@ -65,7 +65,6 @@ import java.util.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.elementType;
 import static com.intellij.util.containers.CollectionFactory.hashMap;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
 
 /**
  * @author ilyas
@@ -332,17 +331,14 @@ public class GroovyCompletionContributor extends CompletionContributor {
     }
 
     final int invocationCount = parameters.getInvocationCount();
-    final boolean secondCompletionInvoked = invocationCount > 1;
+    final boolean firstCompletionInvoked = invocationCount < 2;
 
     final String prefix = result.getPrefixMatcher().getPrefix();
-    final boolean skipAccessors = !secondCompletionInvoked && !prefix.startsWith(GET_PREFIX) &&
-                                  !prefix.startsWith(SET_PREFIX) &&
-                                  !prefix.startsWith(IS_PREFIX);
+    final boolean skipAccessors = firstCompletionInvoked && !prefix.startsWith("g") && !prefix.startsWith("s") && !prefix.startsWith("i");
+    result.restartCompletionOnPrefixChange("g");
+    result.restartCompletionOnPrefixChange("i");
+    result.restartCompletionOnPrefixChange("s");
 
-
-    result.restartCompletionOnPrefixChange(GET_PREFIX);
-    result.restartCompletionOnPrefixChange(SET_PREFIX);
-    result.restartCompletionOnPrefixChange(IS_PREFIX);
     final Map<PsiModifierListOwner, LookupElement> staticMembers = hashMap();
     final PsiElement qualifier = reference.getQualifier();
     final PsiType qualifierType = qualifier instanceof GrExpression ? ((GrExpression)qualifier).getType() : null;
@@ -372,7 +368,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
         final boolean autopopup = parameters.getInvocationCount() == 0;
         //skip default groovy methods
-        if (!secondCompletionInvoked &&
+        if (firstCompletionInvoked &&
             object instanceof GrGdkMethod &&
             GroovyCompletionUtil.skipDefGroovyMethod((GrGdkMethod)object, substitutor, qualifierType)) {
           if (!autopopup) {
@@ -382,7 +378,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         }
 
         //skip operator methods
-        if (!secondCompletionInvoked &&
+        if (firstCompletionInvoked &&
             object instanceof PsiMethod &&
             GroovyCompletionUtil.OPERATOR_METHOD_NAMES.contains(((PsiMethod)object).getName())) {
           if (!checkForIterator((PsiMethod)object)) {
@@ -402,7 +398,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
         }
 
         //skip inaccessible elements
-        if (!secondCompletionInvoked && resolveResult != null && !resolveResult.isAccessible()) {
+        if (firstCompletionInvoked && resolveResult != null && !resolveResult.isAccessible()) {
           if (!autopopup) {
             showInfo();
           }

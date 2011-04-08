@@ -37,10 +37,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FormatterImpl extends FormatterEx
@@ -52,15 +50,9 @@ public class FormatterImpl extends FormatterEx
              FormattingModelFactory
 {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.FormatterImpl");
-  
-  private enum Source {
-    EXECUTE_SEQUENTIAL_TASK, GET_WHITESPACE_BEFORE, ADJUST_LINE_INDENT, ADJUST_LINE_INDENTS_FOR_RANGE, FORMAT_AROUND_RANGE,
-    ADJUST_TEXT_RANGE, ADJUST_TEXT_RANGE_WITH_ADDITIONAL_SETTINGS, RUN_WITH_FORMATTING_DISABLED
-  }
 
   private FormattingProgressIndicatorImpl myProgressIndicator;
   
-  private final Deque<Source> myDisabledFormattingRequests = new LinkedBlockingDeque<Source>();
   private final AtomicInteger myIsDisabledCount = new AtomicInteger();
   private final IndentImpl NONE_INDENT = new IndentImpl(Indent.Type.NONE, false, false);
   private final IndentImpl myAbsoluteNoneIndent = new IndentImpl(Indent.Type.NONE, true, false);
@@ -218,7 +210,7 @@ public class FormatterImpl extends FormatterEx
    * @param task    task to execute
    */
   private void execute(@NotNull SequentialTask task) {
-    disableFormatting(Source.EXECUTE_SEQUENTIAL_TASK);
+    disableFormatting();
     Application application = ApplicationManager.getApplication();
     if (myProgressIndicator == null || !application.isDispatchThread() || application.isUnitTestMode()) {
       try {
@@ -228,7 +220,7 @@ public class FormatterImpl extends FormatterEx
         }
       }
       finally {
-        enableFormatting(Source.EXECUTE_SEQUENTIAL_TASK);
+        enableFormatting();
         myProgressIndicator = null;
       }
     }
@@ -242,7 +234,7 @@ public class FormatterImpl extends FormatterEx
             public void run() {
               // Reset current progress indicator.
               myProgressIndicator = null;
-              enableFormatting(Source.EXECUTE_SEQUENTIAL_TASK);
+              enableFormatting();
             }
           });
         }
@@ -257,7 +249,7 @@ public class FormatterImpl extends FormatterEx
                                         final CodeStyleSettings.IndentOptions indentOptions,
                                         final TextRange affectedRange, final boolean mayChangeLineFeeds)
   {
-    disableFormatting(Source.GET_WHITESPACE_BEFORE);
+    disableFormatting();
     try {
       final FormatProcessor processor = buildProcessorAndWrapBlocks(
         model, block, settings, indentOptions, new FormatTextRanges(affectedRange, true)
@@ -275,7 +267,7 @@ public class FormatterImpl extends FormatterEx
       return new IndentInfo(whiteSpace.getLineFeeds(), whiteSpace.getIndentOffset(), whiteSpace.getSpaces());
     }
     finally {
-      enableFormatting(Source.GET_WHITESPACE_BEFORE);
+      enableFormatting();
     }
   }
 
@@ -283,7 +275,7 @@ public class FormatterImpl extends FormatterEx
                                         final CodeStyleSettings settings,
                                         final CodeStyleSettings.IndentOptions indentOptions,
                                         final TextRange rangeToAdjust) {
-    disableFormatting(Source.ADJUST_LINE_INDENTS_FOR_RANGE);
+    disableFormatting();
     try {
       final FormattingDocumentModel documentModel = model.getDocumentModel();
       final Block block = model.getRootBlock();
@@ -303,7 +295,7 @@ public class FormatterImpl extends FormatterEx
       processor.performModifications(model);
     }
     finally {
-      enableFormatting(Source.ADJUST_LINE_INDENTS_FOR_RANGE);
+      enableFormatting();
     }
   }
 
@@ -311,7 +303,7 @@ public class FormatterImpl extends FormatterEx
                                 final CodeStyleSettings settings,
                                 final TextRange textRange,
                                 final FileType fileType) {
-    disableFormatting(Source.FORMAT_AROUND_RANGE);
+    disableFormatting();
     try {
       final FormattingDocumentModel documentModel = model.getDocumentModel();
       final Block block = model.getRootBlock();
@@ -340,7 +332,7 @@ public class FormatterImpl extends FormatterEx
       processor.performModifications(model);
     }
     finally{
-      enableFormatting(Source.FORMAT_AROUND_RANGE);
+      enableFormatting();
     }
   }
 
@@ -349,7 +341,7 @@ public class FormatterImpl extends FormatterEx
                               final CodeStyleSettings.IndentOptions indentOptions,
                               final int offset,
                               final TextRange affectedRange) throws IncorrectOperationException {
-    disableFormatting(Source.ADJUST_LINE_INDENT);
+    disableFormatting();
     if (model instanceof PsiBasedFormattingModel) {
       ((PsiBasedFormattingModel)model).canModifyAllWhiteSpaces();
     }
@@ -370,7 +362,7 @@ public class FormatterImpl extends FormatterEx
       return adjustLineIndent(offset, documentModel, processor, indentOptions, model, whiteSpace);
     }
     finally {
-      enableFormatting(Source.ADJUST_LINE_INDENT);
+      enableFormatting();
     }
   }
 
@@ -542,7 +534,7 @@ public class FormatterImpl extends FormatterEx
                               final boolean changeWSBeforeFirstElement,
                               final boolean changeLineFeedsBeforeFirstElement,
                               @Nullable final IndentInfoStorage indentInfoStorage) {
-    disableFormatting(Source.ADJUST_TEXT_RANGE_WITH_ADDITIONAL_SETTINGS);
+    disableFormatting();
     try {
       final FormatProcessor processor = buildProcessorAndWrapBlocks(
         model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, new FormatTextRanges(affectedRange, true)
@@ -603,7 +595,7 @@ public class FormatterImpl extends FormatterEx
       processor.format(model);
     }
     finally {
-      enableFormatting(Source.ADJUST_TEXT_RANGE_WITH_ADDITIONAL_SETTINGS);
+      enableFormatting();
     }
   }
 
@@ -611,7 +603,7 @@ public class FormatterImpl extends FormatterEx
                               final CodeStyleSettings settings,
                               final CodeStyleSettings.IndentOptions indentOptions,
                               final TextRange affectedRange) {
-    disableFormatting(Source.ADJUST_TEXT_RANGE);
+    disableFormatting();
     try {
       final FormatProcessor processor = buildProcessorAndWrapBlocks(
         model.getDocumentModel(), model.getRootBlock(), settings, indentOptions, new FormatTextRanges(affectedRange, true)
@@ -633,7 +625,7 @@ public class FormatterImpl extends FormatterEx
       processor.format(model);
     }
     finally {
-      enableFormatting(Source.ADJUST_TEXT_RANGE);
+      enableFormatting();
     }
   }
 
@@ -743,34 +735,24 @@ public class FormatterImpl extends FormatterEx
     return myIsDisabledCount.get() > 0;
   }
 
-  private void disableFormatting(@NotNull Source requestSource) {
+  private void disableFormatting() {
     myIsDisabledCount.incrementAndGet();
-    myDisabledFormattingRequests.add(requestSource);
   }
 
-  private void enableFormatting(@NotNull Source requestSource) {
-    boolean checkSource = true;
+  private void enableFormatting() {
     int old = myIsDisabledCount.getAndDecrement();
     if (old <= 0) {
-      checkSource = false;
-      LOG.error(
-        "enableFormatting()/disableFormatting() not paired. DisabledLevel = " + old + ", request source: " + myDisabledFormattingRequests
-      );
-    }
-    Source source = myDisabledFormattingRequests.pollLast();
-    if (checkSource && requestSource != source) {
-      LOG.error("enableFormatting()/disableFormatting() from different sources detected! 'Disable source': " + source 
-                + ", 'enable source': " + requestSource);
+      LOG.error("enableFormatting()/disableFormatting() not paired. DisabledLevel = " + old);
     }
   }
 
   public <T> T runWithFormattingDisabled(@NotNull Computable<T> runnable) {
-    disableFormatting(Source.RUN_WITH_FORMATTING_DISABLED);
+    disableFormatting();
     try {
       return runnable.compute();
     }
     finally {
-      enableFormatting(Source.RUN_WITH_FORMATTING_DISABLED);
+      enableFormatting();
     }
   }
   

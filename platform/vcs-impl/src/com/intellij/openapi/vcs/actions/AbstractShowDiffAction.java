@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -89,7 +90,10 @@ public abstract class AbstractShowDiffAction extends AbstractVcsAction{
     final Project project = vcsContext.getProject();
     final VirtualFile selectedFile = vcsContext.getSelectedFiles()[0];
     final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-    fileDocumentManager.saveDocument(fileDocumentManager.getDocument(selectedFile));
+    final Document document = fileDocumentManager.getDocument(selectedFile);
+    if (document != null) {
+      fileDocumentManager.saveDocument(document);
+    }
 
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     final AbstractVcs vcs = vcsManager.getVcsFor(selectedFile);

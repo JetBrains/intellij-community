@@ -12,64 +12,67 @@
 // limitations under the License.
 package org.zmlx.hg4idea.execution;
 
+import com.intellij.openapi.application.ApplicationManager;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.concurrent.Future;
 
 /**
  * Common server class that contains the boiler-plate code to set up a server socket.
  * The actual logic is delegated to the Protocol instance.
  */
 public class SocketServer {
-  protected Thread serverThread;
-  protected ServerSocket serverSocket;
-  private final Protocol protocol;
+  protected ServerSocket myServerSocket;
+  private final Protocol myProtocol;
+  private Future<?> myExecutingFuture;
 
   public SocketServer(Protocol protocol) {
-    this.protocol = protocol;
+    myProtocol = protocol;
   }
 
   public int start() throws IOException {
-    serverSocket = new ServerSocket(0);
-    int port = serverSocket.getLocalPort();
+    myServerSocket = new ServerSocket(0);
+    int port = myServerSocket.getLocalPort();
 
-    serverThread = new Thread("hg4idea prompt server") {
+    myExecutingFuture = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         try {
           boolean _continue = true;
           while (_continue) {
-            Socket socket = serverSocket.accept();
+            Socket socket = myServerSocket.accept();
             try {
-              _continue = protocol.handleConnection(socket);
+              _continue = myProtocol.handleConnection(socket);
             }
             finally {
               socket.close();
             }
           }
-        } catch (SocketException e) {
+        }
+        catch (SocketException e) {
           //socket was closed, that's OK
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
           throw new RuntimeException(e); //TODO implement catch clause
         }
       }
-    };
-    serverThread.start();
+    });
 
     return port;
   }
 
   public void stop() {
-    serverThread.interrupt();
+    myExecutingFuture.cancel(true);
     try {
-      serverSocket.close();
+      myServerSocket.close();
     } catch (IOException e) {
       throw new RuntimeException(e); //TODO implement catch clause
     }
-
   }
 
   public static abstract class Protocol {

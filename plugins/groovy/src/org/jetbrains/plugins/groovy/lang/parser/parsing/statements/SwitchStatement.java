@@ -67,11 +67,7 @@ public class SwitchStatement implements GroovyElementTypes {
     ParserUtils.getToken(builder, mLCURLY);
     ParserUtils.getToken(builder, mNLS);
 
-    while (true) {
-      if (ParserUtils.getToken(builder, mRCURLY)) {
-        return;
-      }
-
+    while (!ParserUtils.getToken(builder, mRCURLY)) {
       if (builder.getTokenType() != kCASE && builder.getTokenType() != kDEFAULT) {
         builder.error("case, default or } expected");
         ParserUtils.skipCountingBraces(builder, TokenSet.create(kCASE, kDEFAULT, mRCURLY));
@@ -104,8 +100,8 @@ public class SwitchStatement implements GroovyElementTypes {
 
     PsiBuilder.Marker label = builder.mark();
     builder.advanceLexer();
-    if (kCASE.equals(elem)) {
-      AssignmentExpression.parse(builder, parser, true);
+    if (kCASE.equals(elem) && !AssignmentExpression.parse(builder, parser)) {
+      builder.error(GroovyBundle.message("expression.expected"));
     }
     ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
     label.done(CASE_LABEL);

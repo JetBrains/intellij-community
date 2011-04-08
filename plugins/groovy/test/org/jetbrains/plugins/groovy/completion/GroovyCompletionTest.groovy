@@ -657,4 +657,32 @@ return foo()"""
     checkCompletion "asse<caret>x", ' ', 'assert <caret>x'
   }
 
+  public void testDontShowAccessors() {
+    assertNull doContainsTest("getFoo", """
+class MyClass {
+  def foo
+}
+
+def a = new MyClass()
+a.<caret>""")
+  }
+
+  private doContainsTest(String itemToCheck, String text) {
+    myFixture.configureByText "a.groovy", text
+
+    final LookupElement[] completion = myFixture.completeBasic()
+    return completion.find {println it.lookupString;itemToCheck == it.lookupString}
+  }
+
+
+  public void testShowAccessor() {
+    assertNotNull doContainsTest("getFoo", """
+class MyClass {
+  def foo
+}
+
+def a = new MyClass()
+a.g<caret>
+""")
+  }
 }

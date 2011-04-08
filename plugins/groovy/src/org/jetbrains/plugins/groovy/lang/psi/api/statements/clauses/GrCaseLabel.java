@@ -16,10 +16,14 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @author ilyas
  */
 public interface GrCaseLabel extends GroovyPsiElement {
+  @Nullable
+  GrExpression getValue();
 }

@@ -39,4 +39,10 @@ class ExpressionContext {
   ExpressionContext copy() {
     return new ExpressionContext(project, myUsedVarNames);
   }
+
+  ExpressionContext extend() {
+    final HashSet<String> usedVarNames = new HashSet<String>();
+    usedVarNames.addAll(myUsedVarNames);
+    return new ExpressionContext(project, usedVarNames);
+  }
 }

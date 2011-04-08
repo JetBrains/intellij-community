@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -37,5 +38,10 @@ public class GrCaseLabelImpl extends GroovyPsiElementImpl implements GrCaseLabel
 
   public String toString() {
     return "Case label";
+  }
+
+  @Override
+  public GrExpression getValue() {
+    return findChildByClass(GrExpression.class);
   }
 }

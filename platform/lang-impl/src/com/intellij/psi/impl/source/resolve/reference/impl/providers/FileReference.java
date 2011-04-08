@@ -202,7 +202,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
 
             public boolean execute(PsiFileSystemItem element) {
               result.add(new PsiElementResolveResult(getOriginalFile(element)));
-              return false;
+              return true;
             }
           });
         }
