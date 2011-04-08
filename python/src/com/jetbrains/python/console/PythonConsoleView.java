@@ -7,6 +7,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
@@ -15,12 +16,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author traff
  */
-public class PythonDebugConsoleView extends LanguageConsoleViewImpl implements PyCodeExecutor {
+public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCodeExecutor {
   private ConsoleExecuteActionHandler myExecuteActionHandler;
 
-  public PythonDebugConsoleView(final Project project, final String title) {
+  public PythonConsoleView(final Project project, final String title) {
     super(project, new PythonLanguageConsole(project, title));
-    getPythonLanguageConsole().setPythonDebugConsoleView(this);
+    getPythonLanguageConsole().setPythonConsoleView(this);
     getPythonLanguageConsole().setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT);
   }
 
@@ -47,8 +48,13 @@ public class PythonDebugConsoleView extends LanguageConsoleViewImpl implements P
     myExecuteActionHandler.finishExecution();
   }
 
+  public void executeStatement(@NotNull String statement, @NotNull final Key attributes) {
+    PyConsoleHighlightingUtil.printToConsoleView(this, statement, attributes);
+    myExecuteActionHandler.processLine(statement);
+  }
+
   private static class PythonLanguageConsole extends LanguageConsoleImpl {
-    private PythonDebugConsoleView myPythonDebugConsoleView;
+    private PythonConsoleView myPythonConsoleView;
 
     public PythonLanguageConsole(final Project project, final String title) {
       super(project, title, PythonLanguage.getInstance());
@@ -56,8 +62,8 @@ public class PythonDebugConsoleView extends LanguageConsoleViewImpl implements P
       getConsoleEditor().putUserData(PydevCompletionAutopopupBlockingHandler.REPL_KEY, new Object());
     }
 
-    public void setPythonDebugConsoleView(PythonDebugConsoleView pythonDebugConsoleView) {
-      myPythonDebugConsoleView = pythonDebugConsoleView;
+    public void setPythonConsoleView(PythonConsoleView pythonConsoleView) {
+      myPythonConsoleView = pythonConsoleView;
     }
 
     public void setConsoleCommunication(final ConsoleCommunication communication) {
@@ -66,7 +72,7 @@ public class PythonDebugConsoleView extends LanguageConsoleViewImpl implements P
 
     @Override
     protected void appendToHistoryDocument(@NotNull Document history, @NotNull String text) {
-      myPythonDebugConsoleView.beforeExternalAddContentToDocument(text.length(), ConsoleViewContentType.NORMAL_OUTPUT);
+      myPythonConsoleView.beforeExternalAddContentToDocument(text.length(), ConsoleViewContentType.NORMAL_OUTPUT);
       super.appendToHistoryDocument(history, text);
     }
   }

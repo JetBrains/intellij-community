@@ -15,7 +15,7 @@ public interface IPydevXmlRpcClient {
      * @param args the arguments passed to the command
      * @param
      * @return the result from executing the command
-     * 
+     *
      * @throws XmlRpcException
      */
     Object execute(String command, Object[] args) throws XmlRpcException;

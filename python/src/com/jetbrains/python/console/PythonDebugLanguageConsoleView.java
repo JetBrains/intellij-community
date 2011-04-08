@@ -34,7 +34,7 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
   private final static String TEXT_CONSOLE_PANEL = "TEXT_CONSOLE_PANEL";
   private final static String PYDEV_CONSOLE_PANEL = "PYDEV_CONSOLE_PANEL";
 
-  private final PythonDebugConsoleView myPydevConsoleView;
+  private final PythonConsoleView myPydevConsoleView;
 
   private final ConsoleViewImpl myTextConsole;
 
@@ -58,8 +58,8 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
     getPydevConsoleView().executeCode(code);
   }
 
-  private static PythonDebugConsoleView createConsoleView(Project project) {
-    return new PythonDebugConsoleView(project, "");
+  private static PythonConsoleView createConsoleView(Project project) {
+    return new PythonConsoleView(project, "");
   }
 
   private void doShowConsole(String type) {
@@ -83,7 +83,7 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
     myIsDebugConsole = flag;
   }
 
-  public PythonDebugConsoleView getPydevConsoleView() {
+  public PythonConsoleView getPydevConsoleView() {
     return myPydevConsoleView;
   }
 

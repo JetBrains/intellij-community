@@ -12,15 +12,15 @@ import java.nio.charset.Charset;
  * @author oleg
  */
 public class PyConsoleProcessHandler extends PythonProcessHandler {
-  private final LanguageConsoleImpl myLanguageConsole;
+  private final PythonConsoleView myConsoleView;
   private final PydevConsoleCommunication myPydevConsoleCommunication;
 
   public PyConsoleProcessHandler(final Process process,
-                                 final LanguageConsoleImpl languageConsole,
+                                 PythonConsoleView consoleView,
                                  PydevConsoleCommunication pydevConsoleCommunication, final String commandLine,
                                  final Charset charset) {
     super(process, commandLine, charset);
-    myLanguageConsole = languageConsole;
+    myConsoleView = consoleView;
     myPydevConsoleCommunication = pydevConsoleCommunication;
   }
 
@@ -33,10 +33,10 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
 
   @Override
   protected void textAvailable(final String text, final Key attributes) {
-    final String string = processPrompts(myLanguageConsole, StringUtil.convertLineSeparators(text));
-    PyConsoleHighlightingUtil.processOutput(myLanguageConsole, string, attributes);
-    // scroll to end
-    myLanguageConsole.queueUiUpdate(true);
+    final String string = processPrompts(getConsole(), StringUtil.convertLineSeparators(text));
+    myConsoleView.print(text, PyConsoleHighlightingUtil.outputTypeForAttributes(attributes));
+    //PyConsoleHighlightingUtil.processOutput(myLanguageConsole, string, attributes);
+    //myLanguageConsole.queueUiUpdate(true);
   }
 
   private String processPrompts(final LanguageConsoleImpl languageConsole, String string) {
@@ -95,6 +95,10 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
         // Ignore
       }
     }
+  }
+
+  private LanguageConsoleImpl getConsole() {
+    return myConsoleView.getConsole();
   }
 }
 

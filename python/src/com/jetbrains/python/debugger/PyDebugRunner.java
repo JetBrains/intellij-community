@@ -21,7 +21,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PythonDebugConsoleCommunication;
-import com.jetbrains.python.console.PythonDebugConsoleView;
+import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
@@ -92,25 +92,25 @@ public class PyDebugRunner extends GenericProgramRunner {
     ProcessHandler processHandler = result.getProcessHandler();
 
     if (console instanceof PythonDebugLanguageConsoleView) {
-      PythonDebugConsoleView pythonDebugConsoleView = ((PythonDebugLanguageConsoleView)console).getPydevConsoleView();
+      PythonConsoleView pythonConsoleView = ((PythonDebugLanguageConsoleView)console).getPydevConsoleView();
 
 
       ConsoleCommunication consoleCommunication =
         new PythonDebugConsoleCommunication(project, debugProcess, ((PythonDebugLanguageConsoleView)console).getTextConsole());
-      pythonDebugConsoleView.setConsoleCommunication(consoleCommunication);
+      pythonConsoleView.setConsoleCommunication(consoleCommunication);
 
 
-      PydevDebugConsoleExecuteActionHandler consoleExecuteActionHandler = new PydevDebugConsoleExecuteActionHandler(pythonDebugConsoleView,
+      PydevDebugConsoleExecuteActionHandler consoleExecuteActionHandler = new PydevDebugConsoleExecuteActionHandler(pythonConsoleView,
                                                                                                                     processHandler,
                                                                                                                     consoleCommunication);
 
-      pythonDebugConsoleView.setExecutionHandler(consoleExecuteActionHandler);
+      pythonConsoleView.setExecutionHandler(consoleExecuteActionHandler);
 
       debugProcess.getSession().addSessionListener(consoleExecuteActionHandler);
-      new ConsoleHistoryController("py", "", pythonDebugConsoleView.getConsole(), consoleExecuteActionHandler.getConsoleHistoryModel()).install();
+      new ConsoleHistoryController("py", "", pythonConsoleView.getConsole(), consoleExecuteActionHandler.getConsoleHistoryModel()).install();
       final AnAction execAction = AbstractConsoleRunnerWithHistory
-        .createConsoleExecAction(pythonDebugConsoleView.getConsole(), processHandler, consoleExecuteActionHandler);
-      execAction.registerCustomShortcutSet(execAction.getShortcutSet(), pythonDebugConsoleView.getComponent());
+        .createConsoleExecAction(pythonConsoleView.getConsole(), processHandler, consoleExecuteActionHandler);
+      execAction.registerCustomShortcutSet(execAction.getShortcutSet(), pythonConsoleView.getComponent());
     }
   }
 

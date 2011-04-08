@@ -6,8 +6,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.Executor;
 import com.intellij.execution.console.ConsoleHistoryController;
-import com.intellij.execution.console.LanguageConsoleImpl;
-import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.CommandLineArgumentsProvider;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -53,7 +51,7 @@ import java.util.Map;
 /**
  * @author oleg
  */
-public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
+public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonConsoleView> {
   private Sdk mySdk;
   private final int[] myPorts;
   private PydevConsoleCommunication myPydevConsoleCommunication;
@@ -126,7 +124,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
     args.add(sdk.getHomePath());
     final String versionString = sdk.getVersionString();
     if (versionString == null || !versionString.toLowerCase().contains("jython")) {
-        args.add("-u");
+      args.add("-u");
     }
     args.add(FileUtil.toSystemDependentName(PythonHelpersLocator.getHelperPath("pydev/console/pydevconsole.py")));
     for (int port : ports) {
@@ -162,8 +160,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
   }
 
   @Override
-  protected LanguageConsoleViewImpl createConsoleView() {
-    return new PydevLanguageConsoleView(getProject(), getConsoleTitle());
+  protected PythonConsoleView createConsoleView() {
+    return new PythonConsoleView(getProject(), getConsoleTitle());
   }
 
   @Override
@@ -180,7 +178,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
 
   @Override
   protected PyConsoleProcessHandler createProcessHandler(final Process process, final String commandLine) {
-    myProcessHandler = new PyConsoleProcessHandler(process, getConsoleView().getConsole(), myPydevConsoleCommunication, commandLine,
+    myProcessHandler = new PyConsoleProcessHandler(process, getConsoleView(), myPydevConsoleCommunication, commandLine,
                                                    CharsetToolkit.UTF8_CHARSET);
     return myProcessHandler;
   }
@@ -195,7 +193,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
         @Override
         public void run() {
           // Propagate console communication to language console
-          final PydevLanguageConsoleView consoleView = (PydevLanguageConsoleView)getConsoleView();
+          final PythonConsoleView consoleView = getConsoleView();
 
           consoleView.setConsoleCommunication(myPydevConsoleCommunication);
           consoleView.setExecutionHandler(getConsoleExecuteActionHandler());
@@ -203,7 +201,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
             @Override
             public void onTextAvailable(ProcessEvent event, Key outputType) {
               String text = event.getText();
-              PyConsoleHighlightingUtil.processOutput(consoleView.getConsole(), text, outputType);
+              PyConsoleHighlightingUtil.printToConsoleView(consoleView, text, outputType);
             }
           });
 
@@ -215,15 +213,12 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory {
             consoleView.executeStatement(statement + "\n", ProcessOutputTypes.SYSTEM);
           }
 
-          consoleView.flushUIUpdates();
-
           fireConsoleInitializedEvent();
         }
       });
     }
     else {
-      final LanguageConsoleImpl console = getConsoleView().getConsole();
-      PyConsoleHighlightingUtil.processOutput(console, "Couldn't connect to console process.", ProcessOutputTypes.STDERR);
+      PyConsoleHighlightingUtil.printToConsoleView(getConsoleView(), "Couldn't connect to console process.", ProcessOutputTypes.STDERR);
       myProcessHandler.destroyProcess();
       finishConsole();
     }
