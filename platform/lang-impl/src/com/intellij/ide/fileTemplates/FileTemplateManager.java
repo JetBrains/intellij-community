@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.Properties;
@@ -32,56 +33,68 @@ public abstract class FileTemplateManager{
   public static final Key<Properties> DEFAULT_TEMPLATE_PROPERTIES = Key.create("DEFAULT_TEMPLATE_PROPERTIES");
   public static final int RECENT_TEMPLATES_SIZE = 25;
 
-  @NonNls public static final String INTERNAL_HTML_TEMPLATE_NAME = "Html";
-  @NonNls public static final String INTERNAL_HTML5_TEMPLATE_NAME = "Html5";
-  @NonNls public static final String INTERNAL_XHTML_TEMPLATE_NAME = "Xhtml";
-  @NonNls public static final String FILE_HEADER_TEMPLATE_NAME = "File Header";
+  @NonNls 
+  public static final String INTERNAL_HTML_TEMPLATE_NAME = "Html";
+  @NonNls 
+  public static final String INTERNAL_HTML5_TEMPLATE_NAME = "Html5";
+  @NonNls 
+  public static final String INTERNAL_XHTML_TEMPLATE_NAME = "Xhtml";
+  @NonNls 
+  public static final String FILE_HEADER_TEMPLATE_NAME = "File Header";
+  public static final String DEFAULT_TEMPLATES_CATEGORY = "Default";
+  public static final String INTERNAL_TEMPLATES_CATEGORY = "Internal";
+  public static final String INCLUDES_TEMPLATES_CATEGORY = "Includes";
+  public static final String CODE_TEMPLATES_CATEGORY = "Code";
+  public static final String J2EE_TEMPLATES_CATEGORY = "J2EE";
 
   public static FileTemplateManager getInstance(){
     return ServiceManager.getService(FileTemplateManager.class);
   }
 
-  @NotNull public abstract FileTemplate[] getAllTemplates();
+  @NotNull 
+  public abstract FileTemplate[] getAllTemplates();
 
   public abstract FileTemplate getTemplate(@NotNull @NonNls String templateName);
 
-  @NotNull public abstract Properties getDefaultProperties();
+  @NotNull 
+  public abstract Properties getDefaultProperties();
 
   /**
    * Creates a new template with specified name.
    * @param name
    * @return created template
    */
-  @NotNull public abstract FileTemplate addTemplate(@NotNull @NonNls String name, @NotNull @NonNls String extension);
+  @NotNull 
+  public abstract FileTemplate addTemplate(@NotNull @NonNls String name, @NotNull @NonNls String extension);
 
-  public abstract void removeTemplate(@NotNull FileTemplate template, boolean fromDiskOnly);
-  public abstract void removeInternal(@NotNull FileTemplate template);
+  public abstract void removeTemplate(@NotNull FileTemplate template);
+  //public abstract void removeInternal(@NotNull FileTemplate template);
 
-  @NotNull public abstract Collection<String> getRecentNames();
+  @NotNull 
+  public abstract Collection<String> getRecentNames();
 
   public abstract void addRecentName(@NotNull @NonNls String name);
 
   public abstract void saveAll();
 
   public abstract FileTemplate getInternalTemplate(@NotNull @NonNls String templateName);
-  @NotNull public abstract FileTemplate[] getInternalTemplates();
+  @NotNull 
+  public abstract FileTemplate[] getInternalTemplates();
 
   public abstract FileTemplate getJ2eeTemplate(@NotNull @NonNls String templateName);
   public abstract FileTemplate getCodeTemplate(@NotNull @NonNls String templateName);
 
-  @NotNull public abstract FileTemplate[] getAllPatterns();
+  @NotNull 
+  public abstract FileTemplate[] getAllPatterns();
 
-  public abstract FileTemplate addPattern(@NotNull @NonNls String name, @NotNull @NonNls String extension);
+  @NotNull 
+  public abstract FileTemplate[] getAllCodeTemplates();
+  
+  @NotNull 
+  public abstract FileTemplate[] getAllJ2eeTemplates();
 
-  @NotNull public abstract FileTemplate[] getAllCodeTemplates();
-  @NotNull public abstract FileTemplate[] getAllJ2eeTemplates();
-
-  @NotNull public abstract FileTemplate addCodeTemplate(@NotNull @NonNls String name, @NotNull @NonNls String extension);
-  @NotNull public abstract FileTemplate addJ2eeTemplate(@NotNull @NonNls String name, @NotNull @NonNls String extension);
-
-  public abstract void removePattern(@NotNull FileTemplate template, boolean fromDiskOnly);
-  public abstract void removeCodeTemplate(@NotNull FileTemplate template, boolean fromDiskOnly);
-  public abstract void removeJ2eeTemplate(@NotNull FileTemplate template, boolean fromDiskOnly);
+  @TestOnly
+  public abstract FileTemplate addInternal(@NotNull @NonNls String name, @NotNull @NonNls String extension);
 
   @NotNull public abstract String internalTemplateToSubject(@NotNull @NonNls String templateName);
 
@@ -92,5 +105,6 @@ public abstract class FileTemplateManager{
   @NotNull
   public abstract FileTemplate getDefaultTemplate(@NotNull @NonNls String name);
 
-  public abstract FileTemplate addInternal(@NotNull @NonNls String name, @NotNull @NonNls String extension);
+  public abstract void setTemplates(@NotNull String templatesCategory, Collection<FileTemplate> templates);
+  
 }

@@ -17,12 +17,12 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -30,7 +30,7 @@ import java.util.Map;
  * @author Alexey Kudravtsev
  */
 abstract class FileTemplateTab {
-  public Map<FileTemplate, FileTemplate> savedTemplates;
+  protected final java.util.List<FileTemplateBase> myTemplates = new ArrayList<FileTemplateBase>(); 
   private final String myTitle;
   protected static final Color MODIFIED_FOREGROUND = new Color(0, 0, 210);
 
@@ -49,17 +49,18 @@ abstract class FileTemplateTab {
   public abstract void onTemplateSelected();
 
   public void init(FileTemplate[] templates) {
-    FileTemplate oldSelection = getSelectedTemplate();
+    final FileTemplate oldSelection = getSelectedTemplate();
+    final String oldSelectionName = oldSelection != null? ((FileTemplateBase)oldSelection).getQualifiedName() : null;
+
+    myTemplates.clear();
     FileTemplate newSelection = null;
-    Map<FileTemplate, FileTemplate> templatesToSave = new LinkedHashMap<FileTemplate, FileTemplate>();
-    for (FileTemplate aTemplate : templates) {
-      FileTemplate copy = FileTemplateUtil.cloneTemplate(aTemplate);
-      templatesToSave.put(aTemplate, copy);
-      if (savedTemplates != null && savedTemplates.get(aTemplate) == oldSelection) {
+    for (FileTemplate original : templates) {
+      final FileTemplateBase copy = (FileTemplateBase)original.clone();
+      if (oldSelectionName != null && oldSelectionName.equals(copy.getQualifiedName())) {
         newSelection = copy;
       }
+      myTemplates.add(copy);
     }
-    savedTemplates = templatesToSave;
     initSelection(newSelection);
   }
 
@@ -69,7 +70,7 @@ abstract class FileTemplateTab {
 
   @NotNull 
   public FileTemplate[] getTemplates() {
-    return savedTemplates.values().toArray(new FileTemplate[savedTemplates.values().size()]);
+    return myTemplates.toArray(new FileTemplate[myTemplates.size()]);
   }
 
   public abstract void addTemplate(FileTemplate newTemplate);

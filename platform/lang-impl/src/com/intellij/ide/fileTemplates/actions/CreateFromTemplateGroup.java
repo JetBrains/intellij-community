@@ -27,6 +27,7 @@ import com.intellij.ide.fileTemplates.ui.SelectTemplateDialog;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
@@ -68,10 +69,10 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
     Arrays.sort(templates, new Comparator<FileTemplate>() {
       public int compare(FileTemplate template1, FileTemplate template2) {
         // java first
-        if (template1.isJavaClassTemplate() && !template2.isJavaClassTemplate()) {
+        if (template1.isTemplateOfType(StdFileTypes.JAVA) && !template2.isTemplateOfType(StdFileTypes.JAVA)) {
           return -1;
         }
-        if (template2.isJavaClassTemplate() && !template1.isJavaClassTemplate()) {
+        if (template2.isTemplateOfType(StdFileTypes.JAVA) && !template1.isTemplateOfType(StdFileTypes.JAVA)) {
           return 1;
         }
 

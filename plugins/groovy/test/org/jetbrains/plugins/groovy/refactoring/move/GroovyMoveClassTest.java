@@ -56,13 +56,13 @@ public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
     super.setUp();
     final FileTemplateManager templateManager = FileTemplateManager.getInstance();
     FileTemplate temp = templateManager.getTemplate("GroovyClass.groovyForTest");
-    if (temp != null) templateManager.removeTemplate(temp, false);
+    if (temp != null) templateManager.removeTemplate(temp);
 
     temp = templateManager.addTemplate("GroovyClass.groovyForTest", "groovy");
     temp.setText("#if ( $PACKAGE_NAME != \"\" )package ${PACKAGE_NAME}\n" + "#end\n" + "class ${NAME} {\n" + "}");
 
     temp = templateManager.getTemplate("GroovyClass.groovy");
-    if (temp != null) templateManager.removeTemplate(temp, false);
+    if (temp != null) templateManager.removeTemplate(temp);
 
     temp = templateManager.addTemplate("GroovyClass.groovy", "groovy");
     temp.setText("#if ( $PACKAGE_NAME != \"\" )package ${PACKAGE_NAME}\n" + "#end\n" + "class ${NAME} {\n" + "}");
@@ -72,10 +72,10 @@ public class GroovyMoveClassTest extends LightCodeInsightFixtureTestCase {
   protected void tearDown() throws Exception {
     final FileTemplateManager templateManager = FileTemplateManager.getInstance();
     FileTemplate temp = templateManager.getTemplate("GroovyClass.groovy");
-    templateManager.removeTemplate(temp, false);
+    templateManager.removeTemplate(temp);
 
     temp = templateManager.getTemplate("GroovyClass.groovyForTest");
-    templateManager.removeTemplate(temp, false);
+    templateManager.removeTemplate(temp);
     super.tearDown();
   }
 

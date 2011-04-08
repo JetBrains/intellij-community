@@ -48,9 +48,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -70,6 +67,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 
 /*
@@ -94,7 +92,7 @@ public class FileTemplateConfigurable implements Configurable {
   private JPanel myTopPanel;
   private JEditorPane myDescriptionComponent;
   private boolean myModified = false;
-  private String myDefaultDescriptionUrl;
+  private URL myDefaultDescriptionUrl;
   private final Project myProject = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
 
   private final ArrayList<ChangeListener> myChangeListeners = new ArrayList<ChangeListener>();
@@ -104,8 +102,8 @@ public class FileTemplateConfigurable implements Configurable {
     return myTemplate;
   }
 
-  public void setTemplate(FileTemplate template, VirtualFile defaultDescription) {
-    myDefaultDescriptionUrl = defaultDescription == null ? null : defaultDescription.getUrl();
+  public void setTemplate(FileTemplate template, URL defaultDescription) {
+    myDefaultDescriptionUrl = defaultDescription;
     myTemplate = template;
     reset();
     myNameField.selectAll();
@@ -168,11 +166,6 @@ public class FileTemplateConfigurable implements Configurable {
 
     myDescriptionComponent = new JEditorPane(CONTENT_TYPE_HTML, EMPTY_HTML);
     myDescriptionComponent.setEditable(false);
-//    myDescriptionComponent.setMargin(new Insets(2, 2, 2, 2));
-
-//    myDescriptionComponent = new JLabel();
-//    myDescriptionComponent.setBorder(BorderFactory.createEmptyBorder(2,2,2,2));
-//    myDescriptionComponent.setVerticalAlignment(SwingConstants.TOP);
 
     myAdjustBox = new JCheckBox(IdeBundle.message("checkbox.reformat.according.to.style"));
     myTopPanel = new JPanel(new GridBagLayout());
@@ -282,7 +275,7 @@ public class FileTemplateConfigurable implements Configurable {
       return true;
     }
     if (myTemplate != null) {
-      if (myTemplate.isAdjust() != myAdjustBox.isSelected()) {
+      if (myTemplate.isReformatCode() != myAdjustBox.isSelected()) {
         return true;
       }
     }
@@ -304,7 +297,7 @@ public class FileTemplateConfigurable implements Configurable {
       }
       myTemplate.setName(name);
       myTemplate.setExtension(extension);
-      myTemplate.setAdjust(myAdjustBox.isSelected());
+      myTemplate.setReformatCode(myAdjustBox.isSelected());
     }
     myModified = false;
   }
@@ -326,10 +319,7 @@ public class FileTemplateConfigurable implements Configurable {
 
     if ((description.length() == 0) && (myDefaultDescriptionUrl != null)) {
       try {
-        VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(myDefaultDescriptionUrl);
-        if (file != null) {
-          description = VfsUtil.loadText(file);
-        }
+        description = UrlUtil.loadText(myDefaultDescriptionUrl);
       }
       catch (IOException e) {
         LOG.error(e);
@@ -340,7 +330,7 @@ public class FileTemplateConfigurable implements Configurable {
     myFile = createFile(text, name);
     myTemplateEditor = createEditor();
 
-    boolean adjust = (myTemplate != null) && myTemplate.isAdjust();
+    boolean adjust = (myTemplate != null) && myTemplate.isReformatCode();
     myNameField.setText(name);
     myExtensionField.setText(extension);
     myAdjustBox.setSelected(adjust);

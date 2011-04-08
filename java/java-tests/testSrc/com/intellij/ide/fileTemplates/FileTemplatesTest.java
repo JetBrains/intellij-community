@@ -104,7 +104,7 @@ public class FileTemplatesTest extends IdeaTestCase {
     }
     finally {
       FileTemplateManager.getInstance().saveAll();
-      FileTemplateManager.getInstance().removeTemplate(template, false);
+      FileTemplateManager.getInstance().removeTemplate(template);
     }
   }
 }

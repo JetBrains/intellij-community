@@ -85,7 +85,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
   }
 
   static void hackAwayEmptyPackage(PsiJavaFile file, FileTemplate template, Properties props) throws IncorrectOperationException {
-    if (!template.isJavaClassTemplate()) return;
+    if (!template.isTemplateOfType(StdFileTypes.JAVA)) return;
 
     String packageName = props.getProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
     if(packageName == null || packageName.length() == 0 || packageName.equals(FileTemplate.ATTRIBUTE_PACKAGE_NAME)){
@@ -104,7 +104,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
   public PsiElement createFromTemplate(final Project project, final PsiDirectory directory, final String fileName, FileTemplate template,
                                        String templateText, Properties props) throws IncorrectOperationException {
     String extension = template.getExtension();
-    PsiElement result = createClassOrInterface(project, directory, templateText, template.isAdjust(), extension);
+    PsiElement result = createClassOrInterface(project, directory, templateText, template.isReformatCode(), extension);
     hackAwayEmptyPackage((PsiJavaFile)result.getContainingFile(), template, props);
     return result;
   }

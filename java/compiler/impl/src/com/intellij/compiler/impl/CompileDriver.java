@@ -447,7 +447,7 @@ public class CompileDriver {
           if (message != null) {
             compileContext.addMessage(message);
           }
-          TranslatingCompilerFilesMonitor.getInstance().ensureInitializationCompleted(myProject);
+          TranslatingCompilerFilesMonitor.getInstance().ensureInitializationCompleted(myProject, compileContext.getProgressIndicator());
           doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion);
         }
         finally {

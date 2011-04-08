@@ -17,7 +17,6 @@
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.fileTemplates.impl.FileTemplateImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -25,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -199,16 +199,11 @@ public class FileTemplateUtil{
     return stringWriter.toString();
   }
 
-  public static FileTemplate cloneTemplate(FileTemplate template){
-    FileTemplateImpl templateImpl = (FileTemplateImpl) template;
-    return (FileTemplate)templateImpl.clone();
-  }
-
-  public static void copyTemplate(FileTemplate src, FileTemplate dest){
-    dest.setExtension(src.getExtension());
-    dest.setName(src.getName());
-    dest.setText(src.getText());
-    dest.setAdjust(src.isAdjust());
+  public static void copyTemplate(FileTemplate from, FileTemplate to){
+    to.setExtension(from.getExtension());
+    to.setName(from.getName());
+    to.setText(from.getText());
+    to.setReformatCode(from.isReformatCode());
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -289,7 +284,7 @@ public class FileTemplateUtil{
       props.setProperty(dummyRef, "");
     }
 
-    if (template.isJavaClassTemplate()){
+    if (template.isTemplateOfType(StdFileTypes.JAVA)){
       String packageName = props.getProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
       if(packageName == null || packageName.length() == 0){
         props = new Properties(props);
@@ -323,7 +318,7 @@ public class FileTemplateUtil{
           }
         });
       }
-    }, template.isJavaClassTemplate()
+    }, template.isTemplateOfType(StdFileTypes.JAVA)
        ? IdeBundle.message("command.create.class.from.template")
        : IdeBundle.message("command.create.file.from.template"), null);
     if(commandException[0] != null){

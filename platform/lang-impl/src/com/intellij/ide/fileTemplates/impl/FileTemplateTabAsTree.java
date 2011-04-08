@@ -19,7 +19,6 @@ package com.intellij.ide.fileTemplates.impl;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateGroupDescriptor;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -65,9 +64,10 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
   }
 
   protected abstract FileTemplateNode initModel();
+  
   protected static class FileTemplateNode extends DefaultMutableTreeNode {
     private Icon myIcon;
-    private final String myTemplate;
+    private final String myTemplateName;
 
     FileTemplateNode(FileTemplateDescriptor descriptor) {
       this(descriptor.getDisplayName(),
@@ -84,14 +84,14 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
       this(name, icon, children, null);
     }
 
-    FileTemplateNode(Icon icon, String template) {
-      this(template, icon, Collections.<FileTemplateNode>emptyList(), template);
+    FileTemplateNode(Icon icon, String templateName) {
+      this(templateName, icon, Collections.<FileTemplateNode>emptyList(), templateName);
     }
 
-    private FileTemplateNode(String name, Icon icon, List<FileTemplateNode> children, String template) {
+    private FileTemplateNode(String name, Icon icon, List<FileTemplateNode> children, String templateName) {
       super(name);
       myIcon = icon;
-      myTemplate = template;
+      myTemplateName = templateName;
       for (FileTemplateNode child : children) {
         add(child);
       }
@@ -101,8 +101,8 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
       return myIcon;
     }
 
-    public String getTemplate() {
-      return myTemplate;
+    public String getTemplateName() {
+      return myTemplateName;
     }
 
   }
@@ -121,7 +121,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
         final FileTemplateNode node = (FileTemplateNode)value;
         setText((String) node.getUserObject());
         setIcon(node.getIcon());
-        setFont(getFont().deriveFont(AllFileTemplatesConfigurable.isInternalTemplate(node.getTemplate(), getTitle()) ? Font.BOLD : Font.PLAIN));
+        setFont(getFont().deriveFont(AllFileTemplatesConfigurable.isInternalTemplate(node.getTemplateName(), getTitle()) ? Font.BOLD : Font.PLAIN));
 
         final FileTemplate template = getTemplate(node);
         if (template != null && !template.isDefault()) {
@@ -163,15 +163,25 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
   @Nullable
   public FileTemplate getSelectedTemplate() {
     final TreePath selectionPath = myTree.getSelectionPath();
-    if (selectionPath == null) return null;
+    if (selectionPath == null) {
+      return null;
+    }
     final FileTemplateNode node = (FileTemplateNode)selectionPath.getLastPathComponent();
     return getTemplate(node);
   }
 
   @Nullable
   private FileTemplate getTemplate(final FileTemplateNode node) {
-    final String template = node.getTemplate();
-    return template == null || savedTemplates == null ? null : savedTemplates.get(FileTemplateManager.getInstance().getJ2eeTemplate(template));
+    final String templateName = node.getTemplateName();
+    if (templateName == null || myTemplates.isEmpty()) {
+      return null;
+    }
+    for (FileTemplateBase template : myTemplates) {
+      if (templateName.equals(template.getQualifiedName()) || templateName.equals(template.getName())) {
+        return template;
+      }
+    }
+    return null;
   }
 
   public JComponent getComponent() {

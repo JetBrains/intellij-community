@@ -16,6 +16,7 @@
 
 package com.intellij.ide.fileTemplates;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.apache.velocity.runtime.parser.ParseException;
 import org.jetbrains.annotations.NonNls;
@@ -29,21 +30,23 @@ import java.util.Properties;
  * @author MYakovlev
  * Date: Jul 24, 2002
  */
-public interface FileTemplate{
-  @NonNls String ATTRIBUTE_EXCEPTION = "EXCEPTION";
-  @NonNls String ATTRIBUTE_DESCRIPTION = "DESCRIPTION";
-  @NonNls String ATTRIBUTE_DISPLAY_NAME = "DISPLAY_NAME";
+public interface FileTemplate extends Cloneable {
+  FileTemplate[] EMPTY_ARRAY = new FileTemplate[0];
+  
+  String ATTRIBUTE_EXCEPTION = "EXCEPTION";
+  String ATTRIBUTE_DESCRIPTION = "DESCRIPTION";
+  String ATTRIBUTE_DISPLAY_NAME = "DISPLAY_NAME";
 
-  @NonNls String ATTRIBUTE_RETURN_TYPE = "RETURN_TYPE";
-  @NonNls String ATTRIBUTE_DEFAULT_RETURN_VALUE = "DEFAULT_RETURN_VALUE";
-  @NonNls String ATTRIBUTE_CALL_SUPER = "CALL_SUPER";
+  String ATTRIBUTE_RETURN_TYPE = "RETURN_TYPE";
+  String ATTRIBUTE_DEFAULT_RETURN_VALUE = "DEFAULT_RETURN_VALUE";
+  String ATTRIBUTE_CALL_SUPER = "CALL_SUPER";
 
-  @NonNls String ourEncoding = CharsetToolkit.UTF8;
-  @NonNls String ATTRIBUTE_CLASS_NAME = "CLASS_NAME";
-  @NonNls String ATTRIBUTE_SIMPLE_CLASS_NAME = "SIMPLE_CLASS_NAME";
-  @NonNls String ATTRIBUTE_METHOD_NAME = "METHOD_NAME";
-  @NonNls String ATTRIBUTE_PACKAGE_NAME = "PACKAGE_NAME";
-  @NonNls String ATTRIBUTE_NAME = "NAME";
+  String ourEncoding = CharsetToolkit.UTF8;
+  String ATTRIBUTE_CLASS_NAME = "CLASS_NAME";
+  String ATTRIBUTE_SIMPLE_CLASS_NAME = "SIMPLE_CLASS_NAME";
+  String ATTRIBUTE_METHOD_NAME = "METHOD_NAME";
+  String ATTRIBUTE_PACKAGE_NAME = "PACKAGE_NAME";
+  String ATTRIBUTE_NAME = "NAME";
 
   @NotNull String[] getUnsetAttributes(@NotNull Properties properties) throws ParseException;
 
@@ -51,7 +54,7 @@ public interface FileTemplate{
 
   void setName(@NotNull String name);
 
-  boolean isJavaClassTemplate();
+  boolean isTemplateOfType(final FileType fType);
 
   boolean isDefault();
 
@@ -73,10 +76,9 @@ public interface FileTemplate{
 
   void setExtension(@NotNull String extension);
 
-  boolean isAdjust();
+  boolean isReformatCode();
 
-  void setAdjust(boolean adjust);
+  void setReformatCode(boolean reformat);
 
-  boolean isInternal();
-
+  FileTemplate clone();
 }

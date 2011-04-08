@@ -60,7 +60,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
         final FileTemplate template = manager.getTemplate("GUI Form");
         //noinspection HardCodedStringLiteral
         if (template != null && template.getExtension().equals("form")) {
-          manager.removeTemplate(template, false);
+          manager.removeTemplate(template);
         }
       }
     });

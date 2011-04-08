@@ -22,6 +22,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -74,7 +75,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     }
 
     if (unsetAttributes != null) {
-      myAttrPanel = new CreateFromTemplatePanel(unsetAttributes, !myTemplate.isJavaClassTemplate(), attributesDefaults);
+      myAttrPanel = new CreateFromTemplatePanel(unsetAttributes, !myTemplate.isTemplateOfType(StdFileTypes.JAVA), attributesDefaults);
       myAttrComponent = myAttrPanel.getComponent();
       init();
     }
@@ -124,7 +125,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
   }
 
   private String getErrorMessage() {
-    return myTemplate.isJavaClassTemplate() ? IdeBundle.message("title.cannot.create.class") : IdeBundle.message("title.cannot.create.file");
+    return myTemplate.isTemplateOfType(StdFileTypes.JAVA) ? IdeBundle.message("title.cannot.create.class") : IdeBundle.message("title.cannot.create.file");
   }
 
   @Nullable
