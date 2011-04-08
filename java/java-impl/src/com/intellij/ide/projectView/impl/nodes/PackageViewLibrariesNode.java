@@ -41,7 +41,10 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   }
 
   public boolean contains(@NotNull final VirtualFile file) {
-    return someChildContainsFile(file);
+    ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
+    if (!index.isInLibrarySource(file) && !index.isInLibraryClasses(file)) return false;
+
+    return someChildContainsFile(file, false);
   }
 
   @NotNull

@@ -129,9 +129,7 @@ public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.I
 
   private void updateTable() {
     final AndroidDebugBridge bridge = myFacet.getDebugBridge();
-    if (bridge == null) return;
-
-    IDevice[] devices = bridge.getDevices();
+    IDevice[] devices = bridge != null ? bridge.getDevices() : EMPTY_DEVICE_ARRAY;
     int[] selectedRows = myDeviceTable.getSelectedRows();
     myDeviceTable.setModel(new MyDeviceTableModel(devices));
     if (selectedRows.length == 0 && devices.length > 0) {

@@ -83,7 +83,7 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
   }
 
   public boolean contains(@NotNull VirtualFile file) {
-    return someChildContainsFile(file);
+    return someChildContainsFile(file, false);
   }
 
   public void update(PresentationData presentation) {

@@ -23,6 +23,7 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
+import org.jetbrains.plugins.groovy.formatter.MethodCallWithoutQualifierBlock;
 import org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -56,7 +57,7 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
 
     //Braces Placement
     // For multi-line strings
-    if (!child1.getNode().getTextRange().equals(child1.getTextRange()) || !child2.getNode().getTextRange().equals(child2.getTextRange())) {
+    if (!mirrorsAst(child1) || !mirrorsAst(child2)) {
       return NO_SPACING;
     }
 
@@ -218,6 +219,10 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
     }
 
     return COMMON_SPACING;
+  }
+
+  private static boolean mirrorsAst(GroovyBlock block) {
+    return block.getNode().getTextRange().equals(block.getTextRange()) || block instanceof MethodCallWithoutQualifierBlock;
   }
 
   private static boolean isDollarInGStringInjection(ASTNode node) {

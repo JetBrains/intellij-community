@@ -228,14 +228,15 @@ public class GroovyCompletionUtil {
       if (importedName != null) {
         final GrCodeReferenceElement importReference = ((GrImportStatement)context).getImportReference();
         if (importReference != null) {
+          boolean alias = ((GrImportStatement)context).isAliasedImport();
           for (GroovyResolveResult r : importReference.multiResolve(false)) {
             final PsiElement resolved = r.getElement();
             if (context.getManager().areElementsEquivalent(resolved, element)) {
-              return generateLookupForImportedElement(candidate, importedName);
+              return generateLookupForImportedElement(candidate, importedName, alias);
             }
             else {
               if (resolved instanceof PsiField && element instanceof PsiMethod && isAccessorFor((PsiMethod)element, (PsiField)resolved)) {
-                return generateLookupForImportedElement(candidate, getAccessorPrefix((PsiMethod)element) + capitalize(importedName));
+                return generateLookupForImportedElement(candidate, getAccessorPrefix((PsiMethod)element) + capitalize(importedName), alias);
               }
             }
           }
@@ -268,9 +269,13 @@ public class GroovyCompletionUtil {
     return AllClassesGetter.createLookupItem(psiClass, new GroovyClassNameInsertHandler());
   }
 
-  private static LookupElementBuilder generateLookupForImportedElement(GroovyResolveResult resolveResult, String importedName) {
+  private static LookupElement generateLookupForImportedElement(GroovyResolveResult resolveResult, String importedName, boolean alias) {
     final PsiElement element = resolveResult.getElement();
     assert element != null;
+    if (!alias && element instanceof PsiClass) {
+      return createClassLookupItem((PsiClass)element);
+    }
+
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     LookupElementBuilder builder = LookupElementBuilder.create(resolveResult, importedName).setPresentableText(importedName);
     return setupLookupBuilder(element, substitutor, builder);

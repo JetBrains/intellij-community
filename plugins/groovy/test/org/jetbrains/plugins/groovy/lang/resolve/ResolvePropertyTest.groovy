@@ -649,7 +649,7 @@ set<caret>Foo(2)
     assertTrue GroovyRefactoringUtil.isLocalVariable(resolved)
   }
 
-  public void testResolveForVarOutsideOfFor() {
+  public void _testResolveForVarOutsideOfFor() {
     final PsiElement resolved = resolve("A.groovy")
     assertInstanceOf resolved, GrParameter
   }

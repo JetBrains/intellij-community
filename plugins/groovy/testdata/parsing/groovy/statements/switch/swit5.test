@@ -18,16 +18,15 @@ Groovy script
       Case label
         PsiElement(case)('case')
         PsiWhiteSpace(' ')
-        Call expression
-          Literal
-            PsiElement(Integer)('1')
-          PsiWhiteSpace(' ')
-          Command arguments
-            Reference expression
-              PsiElement(identifier)('expr1')
+        Literal
+          PsiElement(Integer)('1')
         PsiErrorElement:':' expected
           <empty list>
-      PsiElement(new line)('\n')
+      PsiWhiteSpace(' ')
+      Reference expression
+        PsiElement(identifier)('expr1')
+    PsiElement(new line)('\n')
+    Case section
       Case label
         PsiElement(default)('default')
         PsiElement(:)(':')

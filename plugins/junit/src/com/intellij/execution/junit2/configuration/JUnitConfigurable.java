@@ -96,7 +96,8 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   private JComboBox myForkCb;
   @NonNls private static final String NONE = "none";
   @NonNls private static final String METHOD = "method";
-  private static final String[] FORK_MODE_ALL = {NONE, METHOD, "class"};
+  @NonNls private static final String KLASS = "class";
+  private static final String[] FORK_MODE_ALL = {NONE, METHOD, KLASS};
   private static final String[] FORK_MODE = {NONE, METHOD};
 
   public JUnitConfigurable(final Project project) {
@@ -203,6 +204,10 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   }
 
   private void changePanel () {
+    String selectedItem = (String)myForkCb.getSelectedItem();
+    if (selectedItem == null) {
+      selectedItem = NONE;
+    }
     if (myAllInPackageButton.isSelected()) {
       myPackagePanel.setVisible(true);
       myPattern.setVisible(false);
@@ -210,7 +215,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
       myMethod.setVisible(false);
       myForkCb.setEnabled(true);
       myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
-      myForkCb.setSelectedItem(NONE);
+      myForkCb.setSelectedItem(selectedItem);
     }
     else if (myClassButton.isSelected()){
       myPackagePanel.setVisible(false);
@@ -219,7 +224,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
       myMethod.setVisible(false);
       myForkCb.setEnabled(true);
       myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE));
-      myForkCb.setSelectedItem(NONE);
+      myForkCb.setSelectedItem(selectedItem != KLASS ? selectedItem : METHOD);
     }
     else if (myTestMethodButton.isSelected()){
       myPackagePanel.setVisible(false);
@@ -235,7 +240,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
       myMethod.setVisible(false);
       myForkCb.setEnabled(true);
       myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
-      myForkCb.setSelectedItem(NONE);
+      myForkCb.setSelectedItem(selectedItem);
     }
   }
 

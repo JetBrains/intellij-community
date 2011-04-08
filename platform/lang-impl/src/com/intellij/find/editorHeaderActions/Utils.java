@@ -1,9 +1,14 @@
 package com.intellij.find.editorHeaderActions;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,5 +65,21 @@ public class Utils {
         setSmallerFont((JComponent)c);
       }
     }
+  }
+
+  public static boolean ensureOkToWrite(Editor e) {
+    final PsiFile psiFile = PsiDocumentManager.getInstance(e.getProject()).getPsiFile(e.getDocument());
+    boolean okWritable;
+    if (psiFile != null) {
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (virtualFile != null) {
+        okWritable = ReadonlyStatusHandler.ensureFilesWritable(e.getProject(), virtualFile);
+      } else {
+        okWritable = psiFile.isWritable();
+      }
+    } else  {
+      okWritable = e.getDocument().isWritable();
+    }
+    return okWritable;
   }
 }

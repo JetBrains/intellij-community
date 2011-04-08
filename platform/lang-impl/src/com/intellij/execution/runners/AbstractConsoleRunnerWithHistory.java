@@ -51,7 +51,7 @@ import java.util.List;
  *         This class provides basic functionality for running consoles.
  *         It launches external process and handles line input with history
  */
-public abstract class AbstractConsoleRunnerWithHistory {
+public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsoleViewImpl> {
   private final Project myProject;
   private final String myConsoleTitle;
 
@@ -59,7 +59,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
   private final CommandLineArgumentsProvider myProvider;
   private final String myWorkingDir;
 
-  private LanguageConsoleViewImpl myConsoleView;
+  private T myConsoleView;
 
   private ConsoleExecuteActionHandler myConsoleExecuteActionHandler;
 
@@ -194,7 +194,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
     myConsoleView.getConsole().setEditable(false);
   }
 
-  protected abstract LanguageConsoleViewImpl createConsoleView();
+  protected abstract T createConsoleView();
 
   @Nullable
   protected abstract Process createProcess(CommandLineArgumentsProvider provider) throws ExecutionException;
@@ -288,7 +288,7 @@ public abstract class AbstractConsoleRunnerWithHistory {
     }
   }
 
-  public LanguageConsoleViewImpl getConsoleView() {
+  public T getConsoleView() {
     return myConsoleView;
   }
 

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableCellRenderer;
@@ -602,34 +603,32 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     }
   }
 
+  /**
+   * @author Konstantin Bulenkov
+   */
   private class MyValueEditor extends AbstractTableCellEditor {
-    private final JComboBox myComboBox = new JComboBox();
-    private final JCheckBox myCheckBox = new JCheckBox();
+    private final JCheckBox myBooleanEditor = new JCheckBox();
+    private JBComboBoxTableCellEditorComponent myOptionsEditor = new JBComboBoxTableCellEditorComponent();
     private Component myCurrentEditor = null;
     private MyTreeNode myCurrentNode = null;
 
     public MyValueEditor() {
-      ActionListener synchronizer = new ActionListener() {
+      myBooleanEditor.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           if (myCurrentNode != null) {
             myCurrentNode.setValue(getCellEditorValue());
           }
         }
-      };
-      myComboBox.addActionListener(synchronizer);
-      myCheckBox.addActionListener(synchronizer);
-
-      myComboBox.putClientProperty("JComponent.sizeVariant", "small");
-      myComboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-      myCheckBox.putClientProperty("JComponent.sizeVariant", "small");
+      });
+      myBooleanEditor.putClientProperty("JComponent.sizeVariant", "small");
     }
 
     public Object getCellEditorValue() {
-      if (myCurrentEditor == myComboBox) {
-        return myComboBox.getSelectedItem();
+      if (myCurrentEditor == myOptionsEditor) {
+        return myOptionsEditor.getEditorValue();
       }
-      else if (myCurrentEditor == myCheckBox) {
-        return myCheckBox.isSelected() ? Boolean.TRUE : Boolean.FALSE;
+      else if (myCurrentEditor == myBooleanEditor) {
+        return myBooleanEditor.isSelected() ? Boolean.TRUE : Boolean.FALSE;
       }
 
       return null;
@@ -642,27 +641,22 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
       myCurrentNode = null;
       if (defaultNode instanceof MyTreeNode) {
         MyTreeNode node = (MyTreeNode)defaultNode;
+        myCurrentNode = node;
         if (node.getKey() instanceof BooleanOption) {
-          myCurrentEditor = myCheckBox;
-          myCheckBox.setSelected(node.getValue() == Boolean.TRUE);
-          myCheckBox.setEnabled(node.isEnabled());
+          myCurrentEditor = myBooleanEditor;
+          myBooleanEditor.setSelected(node.getValue() == Boolean.TRUE);
+          myBooleanEditor.setEnabled(node.isEnabled());
         }
         else {
-          myCurrentEditor = myComboBox;
-          myComboBox.removeAllItems();
-          SelectionOption key = (SelectionOption)node.getKey();
-          String[] values = key.options;
-          for (String value1 : values) {
-            myComboBox.addItem(value1);
-          }
-          myComboBox.setSelectedItem(node.getValue());
-          myComboBox.setEnabled(node.isEnabled());
+          myCurrentEditor = myOptionsEditor;
+          myOptionsEditor.setCell(table, row, column);
+          myOptionsEditor.setText(String.valueOf(node.getValue()));
+          myOptionsEditor.setOptions(((SelectionOption)node.getKey()).options);
+          myOptionsEditor.setDefaultValue(node.getValue());
         }
-        myCurrentNode = node;
       }
 
       myCurrentEditor.setBackground(table.getBackground());
-
       return myCurrentEditor;
     }
   }

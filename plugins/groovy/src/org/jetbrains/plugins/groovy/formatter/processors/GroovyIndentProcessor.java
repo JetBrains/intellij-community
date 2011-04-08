@@ -22,7 +22,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -41,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrElvisE
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 /**
  * @author ilyas
@@ -53,17 +53,20 @@ public abstract class GroovyIndentProcessor implements GroovyElementTypes {
    *
    * @param parent        parent block
    * @param child         child node
-   * @param prevChildNode previous child node
    * @return indent
    */
   @NotNull
-  public static Indent getChildIndent(@NotNull final GroovyBlock parent, @Nullable final ASTNode prevChildNode, @NotNull final ASTNode child) {
+  public static Indent getChildIndent(@NotNull final GroovyBlock parent, @NotNull final ASTNode child) {
     ASTNode astNode = parent.getNode();
     final PsiElement psiParent = astNode.getPsi();
 
     // For Groovy file
     if (psiParent instanceof GroovyFileBase) {
       return Indent.getNoneIndent();
+    }
+
+    if (psiParent instanceof GrMethod && child.getPsi() instanceof GrParameterList) {
+      return Indent.getContinuationIndent();
     }
 
     if (GroovyEditorActionUtil.GSTRING_TOKENS_INNER.contains(child.getElementType()) &&

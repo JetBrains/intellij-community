@@ -27,8 +27,10 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.lookup.LookupElement
 
- /**
+/**
  * @author Maxim.Medvedev
  */
 public class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCase {
@@ -118,6 +120,11 @@ class Foo {
   abcme<caret>
 }""")
     def item = myFixture.complete(CompletionType.CLASS_NAME)[0]
+
+    LookupElementPresentation presentation = renderElement(item)
+    assert "Foo.abcmethod1" == presentation.itemText
+    assert presentation.tailText == "(int a)"
+
     ((StaticallyImportable) item).shouldBeImported = true
     myFixture.type('\n')
     myFixture.checkResult """import static Foo.abcmethod1
@@ -196,7 +203,12 @@ import static foo.Foo.anotherMethod
 
 anotherMethod()
 abcme<caret>x""")
-    assertOneElement myFixture.complete(CompletionType.CLASS_NAME)[0]
+    def element = assertOneElement(myFixture.complete(CompletionType.CLASS_NAME)[0])
+
+    LookupElementPresentation presentation = renderElement(element)
+    assert "abcMethod" == presentation.itemText
+    assert presentation.tailText == "() in Foo (foo)"
+
     myFixture.type('\t')
     myFixture.checkResult """
 import static foo.Foo.anotherMethod
@@ -205,6 +217,12 @@ import static foo.Foo.abcMethod
 anotherMethod()
 abcMethod()<caret>"""
 
+  }
+
+  private LookupElementPresentation renderElement(LookupElement element) {
+    def presentation = new LookupElementPresentation()
+    element.renderElement(presentation)
+    return presentation
   }
 
   public void testNewClassName() {
@@ -221,7 +239,6 @@ new Fxoo()<caret>\n"""
     myFixture.configureByText("a.groovy", "new ArrayLi<caret>\n")
     myFixture.completeBasic()
     myFixture.checkResult "new ArrayList(<caret>)\n"
-
   }
 
   public void testOnlyAnnotationsAfterAt() {
@@ -242,6 +259,13 @@ new Fxoo()<caret>\n"""
     myFixture.configureByText "a.groovy", 'def s = """a\nAIOOBE<caret>\na"""'
     myFixture.complete(CompletionType.CLASS_NAME)
     myFixture.checkResult 'def s = """a\njava.lang.ArrayIndexOutOfBoundsException<caret>\na"""'
+  }
+
+  public void testDoubleClass() {
+    myFixture.addClass "package foo; public class Zooooooo {}"
+    myFixture.configureByText("a.groovy", """import foo.Zooooooo
+Zoooo<caret>x""")
+    assertOneElement(myFixture.completeBasic())
   }
 
 

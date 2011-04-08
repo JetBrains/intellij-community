@@ -53,7 +53,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
     init();
   }
 
-  private static DefaultListModel createDefaultListModel(Object[] items) {
+  public static DefaultListModel createDefaultListModel(Object... items) {
     final DefaultListModel model = new DefaultListModel();
     for (Object item : items) {
       model.add(model.getSize(), item);

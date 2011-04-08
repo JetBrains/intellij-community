@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -124,21 +125,29 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
   }
 
   public boolean someChildContainsFile(final VirtualFile file) {
+    return someChildContainsFile(file, true);
+  }
+
+  public boolean someChildContainsFile(final VirtualFile file, boolean optimizeByCheckingFileRootsFirst) {
     VirtualFile parent = file.getParent();
-    if (parent == null) return false;
 
     boolean mayContain = false;
-    Collection<VirtualFile> roots = getRoots();
-    for (VirtualFile eachRoot : roots) {
-      if (parent.equals(eachRoot.getParent())) {
-        mayContain = true;
-        break;
-      }
 
-      if (VfsUtil.isAncestor(eachRoot, file, true)) {
-        mayContain = true;
-        break;
+    if (optimizeByCheckingFileRootsFirst && parent != null) {
+      Collection<VirtualFile> roots = getRoots();
+      for (VirtualFile eachRoot : roots) {
+        if (parent.equals(eachRoot.getParent())) {
+          mayContain = true;
+          break;
+        }
+
+        if (VfsUtil.isAncestor(eachRoot, file, true)) {
+          mayContain = true;
+          break;
+        }
       }
+    } else {
+      mayContain = true;
     }
 
     if (!mayContain) {
@@ -165,6 +174,8 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
       }
     } else if (value instanceof VirtualFile) {
       return Collections.singleton(((VirtualFile)value));
+    } else if (value instanceof PsiFileSystemItem) {
+      return Collections.singleton(((PsiFileSystemItem)value).getVirtualFile());
     }
 
     return EMPTY_ROOTS;

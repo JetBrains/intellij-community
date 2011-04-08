@@ -74,7 +74,12 @@ public class AndroidXmlSchemaProvider extends XmlSchemaProvider {
       public Result<XmlFile> compute() {
         final URL resource = AndroidXmlSchemaProvider.class.getResource("android.xsd");
         final VirtualFile fileByURL = VfsUtil.findFileByURL(resource);
-        XmlFile result = (XmlFile)PsiManager.getInstance(module.getProject()).findFile(fileByURL).copy();
+        XmlFile result = ApplicationManager.getApplication().runWriteAction(new Computable<XmlFile>() {
+          @Override
+          public XmlFile compute() {
+            return (XmlFile)PsiManager.getInstance(module.getProject()).findFile(fileByURL).copy();
+          }
+        });
         return new Result<XmlFile>(result, PsiModificationTracker.MODIFICATION_COUNT);
       }
     }, false);
