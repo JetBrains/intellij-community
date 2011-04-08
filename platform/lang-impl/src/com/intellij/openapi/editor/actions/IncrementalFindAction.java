@@ -69,7 +69,7 @@ public class IncrementalFindAction extends EditorAction {
 
     public boolean isEnabled(Editor editor, DataContext dataContext) {
       Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
-      return project != null && !editor.isOneLineMode() && (!myReplace || editor.getDocument().isWritable());
+      return project != null && !editor.isOneLineMode();
     }
   }
 
