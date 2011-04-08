@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
@@ -42,7 +41,6 @@ import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expres
  */
 public class ExpressionStatement implements GroovyElementTypes {
 
-  @Nullable
   private static IElementType parseExpressionStatement(PsiBuilder builder, GroovyParser parser) {
     if (checkForTypeCast(builder, parser)) return CAST_EXPRESSION;
     PsiBuilder.Marker marker = builder.mark();
@@ -78,14 +76,20 @@ public class ExpressionStatement implements GroovyElementTypes {
     return AssignmentExpression.parse(builder, parser);
   }
 
-  public static boolean parse(PsiBuilder builder, GroovyParser parser) {
+  enum Result {
+    WRONG_WAY, EXPR_STATEMENT, EXPRESSION
+  }
+
+  public static Result parse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
 
     final IElementType result = parseExpressionStatement(builder, parser);
     if (result != CALL_EXPRESSION && result != PATH_METHOD_CALL) {
       marker.drop();
-      return result != WRONGWAY;
+      return result == WRONGWAY ? Result.WRONG_WAY : Result.EXPRESSION;
     }
+
+    boolean isExprStatement = result == CALL_EXPRESSION;
 
     while (true) {
       boolean nameParsed = namePartParse(builder, parser) == REFERENCE_EXPRESSION;
@@ -123,6 +127,7 @@ public class ExpressionStatement implements GroovyElementTypes {
         exprStatement.done(PATH_METHOD_CALL);
       }
       else if (nameParsed && CommandArguments.parseCommandArguments(builder, parser)) {
+        isExprStatement = true;
         exprStatement.done(CALL_EXPRESSION);
       }
       else {
@@ -133,7 +138,7 @@ public class ExpressionStatement implements GroovyElementTypes {
       marker = exprStatement.precede();
     }
 
-    return true;
+    return isExprStatement ? Result.EXPR_STATEMENT : Result.EXPRESSION;
   }
 
   private static GroovyElementType namePartParse(PsiBuilder builder, GroovyParser parser) {

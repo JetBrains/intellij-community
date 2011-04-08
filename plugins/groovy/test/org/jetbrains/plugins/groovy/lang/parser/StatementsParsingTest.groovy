@@ -45,6 +45,10 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testDeclaration$decl9() throws Throwable { doTest(); }
   public void testDeclaration$decl12() throws Throwable { doTest(); }
   public void testDeclaration$decl13() throws Throwable { doTest(); }
+  public void testDeclaration$exprStatement() throws Throwable { doTest(); }
+  public void testDeclaration$conditional1() throws Throwable { doTest(); }
+  public void testDeclaration$conditional2() throws Throwable { doTest(); }
+  public void testDeclaration$conditional3() throws Throwable { doTest(); }
 
   public void testDeclaration$dollar() throws Throwable {doTest();}
   public void testDeclaration$groovyMain() throws Throwable { doTest(); }

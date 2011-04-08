@@ -80,12 +80,16 @@ public class AssignmentExpression implements GroovyElementTypes {
 
     if (comExprAllowed) {
       Marker marker = builder.mark();
-      if (ExpressionStatement.parse(builder, parser)) {
-        marker.drop();
-        return true;
-      }
-      else {
-        marker.rollbackTo();
+      final ExpressionStatement.Result result = ExpressionStatement.parse(builder, parser);
+      switch (result) {
+        case EXPR_STATEMENT:
+          marker.drop();
+          return true;
+        case EXPRESSION:
+          ConditionalExpression.parseAfterCondition(builder, parser, marker);
+          return true;
+        case WRONG_WAY:
+          marker.rollbackTo();
       }
     }
     return ConditionalExpression.parse(builder, parser);

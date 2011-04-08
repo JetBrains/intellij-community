@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.Par
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.TupleParse;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
