@@ -27,6 +27,7 @@ public abstract class EditorHeaderToggleAction extends CheckboxAction {
   public JComponent createCustomComponent(Presentation presentation) {
     final JComponent customComponent = super.createCustomComponent(presentation);
     getCheckBox().setFocusable(false);
+    getCheckBox().setOpaque(false);
     return customComponent;
   }
 
