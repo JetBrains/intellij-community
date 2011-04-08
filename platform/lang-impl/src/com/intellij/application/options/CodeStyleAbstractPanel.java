@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypesBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.TextRange;
@@ -566,10 +565,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   
   public final void applyPredefinedSettings(@NotNull PredefinedCodeStyle codeStyle) {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getCurrentProject()).clone();
-    CommonCodeStyleSettings commonSettings = settings.getCommonSettings(codeStyle.getLanguage());
-    FileType fileType = codeStyle.getLanguage().getAssociatedFileType();
-    CodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(fileType);
-    codeStyle.apply(commonSettings, indentOptions);
+    codeStyle.apply(settings);
     reset(settings);
     onSomethingChanged();    
   }

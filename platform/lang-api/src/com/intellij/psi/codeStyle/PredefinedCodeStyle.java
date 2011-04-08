@@ -38,11 +38,9 @@ public abstract class PredefinedCodeStyle {
    * the code style may be left unchanged (as defined by end-user). If the name doesn't match any predefined styles,
    * the method does nothing.
    *
-   * @param settings      The common settings to change.
-   * @param indentOptions The indent options to change.
+   * @param settings      The settings to change.
    */
-  public abstract void apply(CommonCodeStyleSettings settings,
-                             CodeStyleSettings.IndentOptions indentOptions);
+  public abstract void apply(CodeStyleSettings settings);
 
   @Override
   public boolean equals(Object obj) {
