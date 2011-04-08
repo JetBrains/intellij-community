@@ -47,7 +47,10 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    return someChildContainsFile(file);
+    ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
+    if (!index.isInLibrarySource(file) && !index.isInLibraryClasses(file)) return false;
+
+    return someChildContainsFile(file, false);
   }
 
   @NotNull
