@@ -80,17 +80,6 @@ public class GroovyToJavaGenerator {
     typesToInitialValues.put("void", "");
   }
 
-  private static final String[] JAVA_MODIFIERS = new String[]{
-      PsiModifier.PUBLIC,
-      PsiModifier.PROTECTED,
-      PsiModifier.PRIVATE,
-      PsiModifier.PACKAGE_LOCAL,
-      PsiModifier.STATIC,
-      PsiModifier.ABSTRACT,
-      PsiModifier.FINAL,
-      PsiModifier.NATIVE,
-  };
-
   private final List<VirtualFile> myAllToCompile;
   private final Project myProject;
 
@@ -146,7 +135,7 @@ public class GroovyToJavaGenerator {
   }
 
   private void generateClassStub(@NotNull PsiClass typeDefinition, GrPackageDefinition packageDefinition, Map<String, String> output) {
-    StringBuffer text = new StringBuffer();
+    StringBuilder text = new StringBuilder();
     try {
       writeTypeDefinition(text, typeDefinition, packageDefinition, true);
 
@@ -178,7 +167,7 @@ public class GroovyToJavaGenerator {
     });
   }
 
-  private void writeTypeDefinition(StringBuffer text,
+  private void writeTypeDefinition(StringBuilder text,
                                    @NotNull final PsiClass typeDefinition,
                                    @Nullable GrPackageDefinition packageDefinition,
                                    boolean toplevel) {
@@ -267,7 +256,7 @@ public class GroovyToJavaGenerator {
     text.append("}");
   }
 
-  private void writeAllMethods(StringBuffer text, Collection<PsiMethod> methods, PsiClass aClass) {
+  private void writeAllMethods(StringBuilder text, Collection<PsiMethod> methods, PsiClass aClass) {
     Set<MethodSignature> methodSignatures = new HashSet<MethodSignature>();
     for (PsiMethod method : methods) {
       if (!shouldBeGenerated(method)) {
@@ -333,7 +322,7 @@ public class GroovyToJavaGenerator {
           final PsiMethod method = ((MethodSignatureBackedByPsiMethod)signature).getMethod();
           final PsiClass baseClass = method.getContainingClass();
           if (isAbstractInJava(method) && baseClass != null && typeDefinition.isInheritor(baseClass, true)) {
-            methods.add(mirrorMethod(typeDefinition, method, baseClass, PsiSubstitutor.EMPTY, JAVA_MODIFIERS));
+            methods.add(mirrorMethod(typeDefinition, method, baseClass, PsiSubstitutor.EMPTY, GenerationUtil.JAVA_MODIFIERS));
           }
         }
       }
@@ -383,7 +372,7 @@ public class GroovyToJavaGenerator {
     return psiClass != null && GrClassSubstitutor.getSubstitutedClass(psiClass).isInterface();
   }
 
-  private void appendTypeParameters(StringBuffer text, PsiTypeParameterListOwner typeParameterListOwner) {
+  private void appendTypeParameters(StringBuilder text, PsiTypeParameterListOwner typeParameterListOwner) {
     if (typeParameterListOwner.hasTypeParameters()) {
       text.append("<");
       PsiTypeParameter[] parameters = typeParameterListOwner.getTypeParameters();
@@ -404,7 +393,7 @@ public class GroovyToJavaGenerator {
     }
   }
 
-  private void writeEnumConstants(StringBuffer text, GrEnumTypeDefinition enumDefinition) {
+  private void writeEnumConstants(StringBuilder text, GrEnumTypeDefinition enumDefinition) {
     text.append("\n  ");
     GrEnumConstant[] enumConstants = enumDefinition.getEnumConstants();
     for (int i = 0; i < enumConstants.length; i++) {
@@ -430,7 +419,7 @@ public class GroovyToJavaGenerator {
     text.append(";");
   }
 
-  private void writeStubConstructorInvocation(StringBuffer text, PsiMethod constructor, PsiSubstitutor substitutor) {
+  private void writeStubConstructorInvocation(StringBuilder text, PsiMethod constructor, PsiSubstitutor substitutor) {
     final PsiParameter[] superParams = constructor.getParameterList().getParameters();
     for (int j = 0; j < superParams.length; j++) {
       if (j > 0) text.append(", ");
@@ -439,7 +428,7 @@ public class GroovyToJavaGenerator {
     }
   }
 
-  private static void writePackageStatement(StringBuffer text, GrPackageDefinition packageDefinition) {
+  private static void writePackageStatement(StringBuilder text, GrPackageDefinition packageDefinition) {
     if (packageDefinition != null) {
       text.append("package ");
       text.append(packageDefinition.getPackageName());
@@ -449,7 +438,7 @@ public class GroovyToJavaGenerator {
     }
   }
 
-  private void writeConstructor(final StringBuffer text, final GrConstructor constructor, boolean isEnum, final boolean prefix) {
+  private void writeConstructor(final StringBuilder text, final GrConstructor constructor, boolean isEnum, final boolean prefix) {
     if (prefix) {
       text.append("\n");
       text.append("  ");
@@ -550,7 +539,7 @@ public class GroovyToJavaGenerator {
     return result;
   }
 
-  private void writeVariableDeclarations(StringBuffer text, GrVariableDeclaration variableDeclaration) {
+  private void writeVariableDeclarations(StringBuilder text, GrVariableDeclaration variableDeclaration) {
     GrTypeElement typeElement = variableDeclaration.getTypeElementGroovy();
     final String type = typeElement == null ? CommonClassNames.JAVA_LANG_OBJECT : getTypeText(typeElement.getType(), typeElement, false);
     final String initializer = getDefaultValueText(type);
@@ -564,10 +553,11 @@ public class GroovyToJavaGenerator {
       }
 
       text.append("\n  ");
-      GenerationUtil.writeModifiers(text, modifierList, JAVA_MODIFIERS);
+      GenerationUtil.writeModifiers(text, modifierList, GenerationUtil.JAVA_MODIFIERS);
 
       //type
-      text.append(type).append(" ").append(name).append(" = ").append(initializer).append(";\n");
+      text.append(type).append(" ").append(name).append(" = ").append(initializer);
+      text.append(";\n");
     }
   }
 
@@ -577,7 +567,7 @@ public class GroovyToJavaGenerator {
     }
 
     final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(method.getProject(), Collections.<VirtualFile>emptyList(), false);
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     if (method instanceof GrConstructor) {
       generator.writeConstructor(buffer, (GrConstructor)method, false, false);
     }
@@ -587,7 +577,7 @@ public class GroovyToJavaGenerator {
     return buffer.toString();
   }
 
-  private void writeMethod(StringBuffer text, PsiMethod method, final PsiParameter[] parameters, final boolean prefix) {
+  private void writeMethod(StringBuilder text, PsiMethod method, final PsiParameter[] parameters, final boolean prefix) {
     if (method == null) return;
     String name = method.getName();
     if (!JavaPsiFacade.getInstance(method.getProject()).getNameHelper().isIdentifier(name))
@@ -601,7 +591,7 @@ public class GroovyToJavaGenerator {
       text.append("\n");
       text.append("  ");
     }
-    GenerationUtil.writeModifiers(text, modifierList, JAVA_MODIFIERS);
+    GenerationUtil.writeModifiers(text, modifierList, GenerationUtil.JAVA_MODIFIERS);
     if (method.hasTypeParameters()) {
       appendTypeParameters(text, method);
       text.append(" ");
@@ -639,7 +629,7 @@ public class GroovyToJavaGenerator {
     text.append("\n");
   }
 
-  private void generateMethodBody(StringBuffer text, PsiMethod method, PsiType retType) {
+  private void generateMethodBody(StringBuilder text, PsiMethod method, PsiType retType) {
     if (!fullConversion) {
       text.append("{\n    return ");
       text.append(getDefaultValueText(getTypeText(retType, method, false)));
@@ -654,7 +644,7 @@ public class GroovyToJavaGenerator {
     }
   }
 
-  private void writeThrowsList(StringBuffer text, PsiMethod method) {
+  private void writeThrowsList(StringBuilder text, PsiMethod method) {
     final PsiReferenceList throwsList = method.getThrowsList();
     final PsiClassType[] exceptions = throwsList.getReferencedTypes();
     if (exceptions.length > 0) {
@@ -686,7 +676,7 @@ public class GroovyToJavaGenerator {
     //final Collection<PsiReference> collection = MethodReferencesSearch.search(method).findAll();
   }
 
-  private void writeParameterList(StringBuffer text, PsiParameter[] parameters) {
+  private void writeParameterList(StringBuilder text, PsiParameter[] parameters) {
     text.append("(");
 
     //writes myParameters

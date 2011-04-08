@@ -47,7 +47,7 @@ public class SourceItemNode extends SourceItemNodeBase {
     }
   }
 
-  protected PackagingSourceItem getSourceItem() {
+  public PackagingSourceItem getSourceItem() {
     return mySourceItem;
   }
 }

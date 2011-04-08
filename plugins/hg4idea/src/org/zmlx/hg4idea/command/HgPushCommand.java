@@ -16,7 +16,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -26,7 +30,6 @@ public class HgPushCommand {
   private final Project myProject;
   private final VirtualFile myRepo;
   private final String myDestination;
-  private final HgCommandAuthenticator authenticator = new HgCommandAuthenticator();
 
   private String myRevision;
   private boolean myForce;
@@ -50,7 +53,7 @@ public class HgPushCommand {
     myBranch = branch;
   }
 
-  public HgCommandResult execute() {
+  public void execute(final HgCommandResultHandler resultHandler) {
     final List<String> arguments = new LinkedList<String>();
     if (StringUtils.isNotBlank(myRevision)) {
       arguments.add("-r");
@@ -65,9 +68,15 @@ public class HgPushCommand {
     }
     arguments.add(myDestination);
 
-    final HgCommandResult result = authenticator.executeCommandAndAuthenticateIfNecessary(myProject, myRepo, myDestination, "push", arguments, arguments.size()-1);
-    myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject);
-    return result;
+    final HgCommandExecutor executor = new HgCommandExecutor(myProject);
+    executor.setShowOutput(true);
+    executor.execute(myRepo, "push", arguments, new HgCommandResultHandler() {
+      @Override
+      public void process(@Nullable HgCommandResult result) {
+        myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject);
+        resultHandler.process(result);
+      }
+    });
   }
 
 }

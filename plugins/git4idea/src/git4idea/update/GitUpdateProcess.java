@@ -27,6 +27,8 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.continuation.ContinuationContext;
+import com.intellij.util.continuation.ContinuationFinalTasksInserter;
+import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchPair;
@@ -189,7 +191,11 @@ public class GitUpdateProcess {
                              "Restoring changes saved before update failed with an error.<br/>" + e.getLocalizedMessage());
       }
     });
+    // try restore changes under all circumstances
+    final ContinuationFinalTasksInserter finalTasksInserter = new ContinuationFinalTasksInserter(context);
+    finalTasksInserter.allNextAreFinal();
     mySaver.restoreLocalChanges(context);
+    finalTasksInserter.removeFinalPropertyAdder();
   }
 
   // fetch all roots. If an error happens, return false and notify about errors.

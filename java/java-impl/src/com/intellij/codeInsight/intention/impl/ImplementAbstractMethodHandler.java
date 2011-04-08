@@ -164,8 +164,9 @@ public class ImplementAbstractMethodHandler {
   }
 
   public static PsiClass addClassInitializer(PsiEnumConstant enumConstant) {
+    final PsiExpressionList argumentList = enumConstant.getArgumentList();
     final PsiEnumConstant constantFromText = JavaPsiFacade.getElementFactory(enumConstant.getProject()).createEnumConstantFromText(
-      enumConstant.getName() + "{}", enumConstant);
+      enumConstant.getName() + (argumentList != null ? argumentList.getText() : "") + "{}", enumConstant);
     final PsiEnumConstant replace = (PsiEnumConstant)enumConstant.replace(constantFromText);
 
     return replace.getInitializingClass();

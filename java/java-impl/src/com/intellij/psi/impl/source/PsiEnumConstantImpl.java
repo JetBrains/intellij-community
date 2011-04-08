@@ -179,6 +179,11 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
+
   private class MyReference implements PsiJavaReference {
     public PsiElement getElement() {
       return PsiEnumConstantImpl.this;

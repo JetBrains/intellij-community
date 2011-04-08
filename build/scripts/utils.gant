@@ -218,3 +218,17 @@ idea.fatal.error.notification=disabled
 )
 })
 
+binding.setVariable("zipSources", {String home, String targetDir ->
+  def sources = "$targetDir/sources.zip"
+  project.stage("zip sources to $sources")
+  ant.mkdir(dir: targetDir)
+  ant.delete(file: sources)
+  ant.zip(destfile: sources) {
+    fileset(dir: home) {
+      ["java", "groovy", "ipr", "iml", "form", "xml", "properties"].each {
+        include(name: "**/*.$it")
+      }
+      exclude(name: "**/testData/**")
+    }
+  }
+})

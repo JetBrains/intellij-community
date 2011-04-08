@@ -244,6 +244,11 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
     return getModifierList().getAnnotations();
   }
 
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
+
   public Icon getElementIcon(final int flags) {
     final RowIcon baseIcon = createLayeredIcon(Icons.PARAMETER_ICON, 0);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);

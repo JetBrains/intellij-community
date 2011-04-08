@@ -31,32 +31,36 @@ public class ConditionalExpression implements GroovyElementTypes {
 
     PsiBuilder.Marker marker = builder.mark();
     if (BinaryExpression.parseLogicalExpression(builder, parser)) {
-      if (ParserUtils.getToken(builder, mQUESTION)) {
-        ParserUtils.getToken(builder, mNLS);
-        if (!AssignmentExpression.parse(builder, parser)) {
-          builder.error(GroovyBundle.message("expression.expected"));
-        }
-        if (ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"))) {
-          ParserUtils.getToken(builder, mNLS);
-          parse(builder, parser);
-        }
-        marker.done(CONDITIONAL_EXPRESSION);
-      } else if (ParserUtils.getToken(builder, mELVIS)) {
-        ParserUtils.getToken(builder, mNLS);
-        if (!parse(builder, parser)) {
-          builder.error(GroovyBundle.message("expression.expected"));
-        }
-        marker.done(ELVIS_EXPRESSION);
-      } else {
-        marker.drop();
-      }
+      parseAfterCondition(builder, parser, marker);
       return true;
-    } else {
+    }
+    else {
       marker.drop();
       return false;
     }
-
-
   }
 
+  public static void parseAfterCondition(PsiBuilder builder, GroovyParser parser, PsiBuilder.Marker marker) {
+    if (ParserUtils.getToken(builder, mQUESTION)) {
+      ParserUtils.getToken(builder, mNLS);
+      if (!AssignmentExpression.parse(builder, parser)) {
+        builder.error(GroovyBundle.message("expression.expected"));
+      }
+      if (ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"))) {
+        ParserUtils.getToken(builder, mNLS);
+        parse(builder, parser);
+      }
+      marker.done(CONDITIONAL_EXPRESSION);
+    }
+    else if (ParserUtils.getToken(builder, mELVIS)) {
+      ParserUtils.getToken(builder, mNLS);
+      if (!parse(builder, parser)) {
+        builder.error(GroovyBundle.message("expression.expected"));
+      }
+      marker.done(ELVIS_EXPRESSION);
+    }
+    else {
+      marker.drop();
+    }
+  }
 }

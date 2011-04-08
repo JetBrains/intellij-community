@@ -48,11 +48,6 @@ public class ArtifactElementPresentation extends TreeNodePresentation {
   }
 
   @Override
-  public Object getSourceObject() {
-    return myArtifactPointer;
-  }
-
-  @Override
   public void navigateToSource() {
     final Artifact artifact = findArtifact();
     if (artifact != null) {

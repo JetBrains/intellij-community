@@ -15,6 +15,7 @@
  */
 package com.intellij.usages;
 
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -26,6 +27,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -101,10 +103,11 @@ public class ChunkExtractor {
   private ChunkExtractor(@NotNull PsiFile file) {
     myColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
 
-    myDocument = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    Project project = file.getProject();
+    myDocument = PsiDocumentManager.getInstance(project).getDocument(file);
     LOG.assertTrue(myDocument != null);
     final FileType fileType = file.getFileType();
-    final SyntaxHighlighter highlighter = SyntaxHighlighter.PROVIDER.create(fileType, file.getProject(), file.getVirtualFile());
+    final SyntaxHighlighter highlighter = SyntaxHighlighter.PROVIDER.create(fileType, project, file.getVirtualFile());
     myHighlighter = highlighter == null ? new PlainSyntaxHighlighter() : highlighter;
     myLexer = myHighlighter.getHighlightingLexer();
     myLexer.start(myDocument.getCharsSequence());
@@ -125,8 +128,15 @@ public class ChunkExtractor {
     int absoluteStartOffset = usageInfo2UsageAdapter.getNavigationOffset();
     if (absoluteStartOffset == -1) return TextChunk.EMPTY_ARRAY;
 
-    final int lineNumber = myDocument.getLineNumber(absoluteStartOffset);
-    final int columnNumber = absoluteStartOffset - myDocument.getLineStartOffset(lineNumber);
+    Document visibleDocument = myDocument instanceof DocumentWindow ? ((DocumentWindow)myDocument).getDelegate() : myDocument;
+    int visibleStartOffset = myDocument instanceof DocumentWindow ? ((DocumentWindow)myDocument).injectedToHost(absoluteStartOffset) : absoluteStartOffset;
+
+    int lineNumber = myDocument.getLineNumber(absoluteStartOffset);
+    //int columnNumber = absoluteStartOffset - myDocument.getLineStartOffset(lineNumber);
+    int visibleLineNumber = visibleDocument.getLineNumber(visibleStartOffset);
+    int visibleColumnNumber = visibleStartOffset - visibleDocument.getLineStartOffset(visibleLineNumber);
+    final List<TextChunk> result = new ArrayList<TextChunk>();
+    appendPrefix(result, visibleLineNumber, visibleColumnNumber);
 
     int lineStartOffset = myDocument.getLineStartOffset(lineNumber);
     int lineEndOffset = lineStartOffset < myDocument.getTextLength() ? myDocument.getLineEndOffset(lineNumber) : 0;
@@ -136,8 +146,6 @@ public class ChunkExtractor {
     if (myLexer.getTokenStart() > absoluteStartOffset) {
       myLexer.start(chars);
     }
-    final List<TextChunk> result = new ArrayList<TextChunk>();
-    appendPrefix(result, lineNumber, columnNumber);
     if (lineEndOffset - lineStartOffset > MAX_LINE_TO_SHOW) {
       lineStartOffset = Math.max(lineStartOffset, absoluteStartOffset - OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE);
       lineEndOffset = Math.min(lineEndOffset, absoluteStartOffset + OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE);

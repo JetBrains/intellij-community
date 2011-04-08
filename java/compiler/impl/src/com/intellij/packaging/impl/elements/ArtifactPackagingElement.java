@@ -17,8 +17,14 @@ package com.intellij.packaging.impl.elements;
 
 import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.compiler.ant.Generator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.packaging.artifacts.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactPointer;
+import com.intellij.packaging.artifacts.ArtifactPointerManager;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.ArtifactElementPresentation;
 import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
@@ -37,6 +43,7 @@ import java.util.List;
  * @author nik
  */
 public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPackagingElement.ArtifactPackagingElementState> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.elements.ArtifactPackagingElement");
   private final Project myProject;
   private ArtifactPointer myArtifactPointer;
   @NonNls public static final String ARTIFACT_NAME_ATTRIBUTE = "artifact-name";
@@ -80,12 +87,44 @@ public class ArtifactPackagingElement extends ComplexPackagingElement<ArtifactPa
     final Artifact artifact = findArtifact(resolvingContext);
     if (artifact != null) {
       if (artifact.getArtifactType().getSubstitution(artifact, resolvingContext, artifactType) != null) {
-        return super.computeAntInstructions(resolvingContext, creator, generationContext, artifactType); 
+        return super.computeAntInstructions(resolvingContext, creator, generationContext, artifactType);
       }
       final String outputPath = BuildProperties.propertyRef(generationContext.getArtifactOutputProperty(artifact));
       return Collections.singletonList(creator.createDirectoryContentCopyInstruction(outputPath));
     }
     return Collections.emptyList();
+  }
+
+  @Override
+  public void computeIncrementalCompilerInstructions(@NotNull IncrementalCompilerInstructionCreator creator,
+                                                     @NotNull PackagingElementResolvingContext resolvingContext,
+                                                     @NotNull ArtifactIncrementalCompilerContext compilerContext,
+                                                     @NotNull ArtifactType artifactType) {
+    Artifact artifact = findArtifact(resolvingContext);
+    if (artifact == null) return;
+
+    if (StringUtil.isEmpty(artifact.getOutputPath())
+        || artifact.getArtifactType().getSubstitution(artifact, resolvingContext, artifactType) != null) {
+      super.computeIncrementalCompilerInstructions(creator, resolvingContext, compilerContext, artifactType);
+      return;
+    }
+
+    VirtualFile outputFile = artifact.getOutputFile();
+    if (outputFile == null) {
+      LOG.debug("Output file for " + artifact + " not found");
+      return;
+    }
+    if (!outputFile.isValid()) {
+      LOG.debug("Output file for " + artifact + "(" + outputFile + ") is not valid");
+      return;
+    }
+
+    if (outputFile.isDirectory()) {
+      creator.addDirectoryCopyInstructions(outputFile);
+    }
+    else {
+      creator.addFileCopyInstruction(outputFile, outputFile.getName());
+    }
   }
 
   @Override

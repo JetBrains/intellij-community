@@ -15,6 +15,8 @@ package org.zmlx.hg4idea.command;
 import com.intellij.openapi.project.Project;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationLine;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,10 +46,8 @@ public class HgAnnotateCommand {
   }
 
   public List<HgAnnotationLine> execute(@NotNull HgFile hgFile) {
-    HgCommandService service = HgCommandService.getInstance(project);
-    HgCommandResult result = service.execute(
-      hgFile.getRepo(), "annotate", Arrays.asList("-cqnudl", hgFile.getRelativePath())
-    );
+    HgCommandExecutor executor = new HgCommandExecutor(project);
+    HgCommandResult result = executor.executeInCurrentThread(hgFile.getRepo(), "annotate", Arrays.asList("-cqnudl", hgFile.getRelativePath()));
 
     List<HgAnnotationLine> annotations = new ArrayList<HgAnnotationLine>();
     for (String line : result.getOutputLines()) {

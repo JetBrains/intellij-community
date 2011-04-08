@@ -36,4 +36,9 @@ public class HgParentsCommand extends HgChangesetsCommand{
       args.add(revision.getChangeset());
     }
   }
+
+  @Override
+  protected boolean isSilentCommand() {
+    return true;
+  }
 }

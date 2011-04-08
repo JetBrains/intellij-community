@@ -46,7 +46,7 @@ public class ForToEachIntention extends Intention {
     final GrForStatement parentStatement =
         (GrForStatement) element;
     final GrForInClause clause = (GrForInClause) parentStatement.getClause();
-    final GrVariable var = clause.getDeclaredVariables()[0];
+    final GrVariable var = clause.getDeclaredVariable();
     final GrStatement body = parentStatement.getBody();
     final String bodyText;
     if (body instanceof GrBlockStatement) {

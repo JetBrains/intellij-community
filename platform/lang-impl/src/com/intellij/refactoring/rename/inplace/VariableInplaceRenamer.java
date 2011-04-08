@@ -252,7 +252,7 @@ public class VariableInplaceRenamer {
               public void beforeTemplateFinished(final TemplateState templateState, Template template) {
                 finish();
 
-                if (snapshot != null) {
+                if (snapshot != null && performAutomaticRename()) {
                   TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
                   if (value != null) {
                     myNewName = value.toString();
@@ -327,6 +327,10 @@ public class VariableInplaceRenamer {
       return PsiTreeUtil.getParentOfType(psiFile.findElementAt(myRenameOffset.getStartOffset()), PsiNameIdentifierOwner.class);
     }
     return myElementToRename;
+  }
+
+  protected boolean performAutomaticRename() {
+    return true;
   }
 
   protected void moveOffsetAfter(boolean success) {

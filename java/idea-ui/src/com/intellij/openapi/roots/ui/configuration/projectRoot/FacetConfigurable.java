@@ -23,7 +23,8 @@ import com.intellij.facet.impl.ui.FacetEditorImpl;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.ui.NamedConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.FacetProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -33,16 +34,18 @@ import javax.swing.*;
 /**
  * @author nik
  */
-public class FacetConfigurable extends NamedConfigurable<Facet> {
+public class FacetConfigurable extends ProjectStructureElementConfigurable<Facet> {
   private final Facet myFacet;
   private final ModulesConfigurator myModulesConfigurator;
   private String myFacetName;
+  private FacetProjectStructureElement myProjectStructureElement;
 
-  public FacetConfigurable(final Facet facet, final ModulesConfigurator modulesConfigurator, final Runnable updateTree) {
+  public FacetConfigurable(final Facet facet, final StructureConfigurableContext context, final Runnable updateTree) {
     super(!facet.getType().isOnlyOneFacetAllowed() && !(facet instanceof InvalidFacet), updateTree);
     myFacet = facet;
-    myModulesConfigurator = modulesConfigurator;
+    myModulesConfigurator = context.getModulesConfigurator();
     myFacetName = myFacet.getName();
+    myProjectStructureElement = new FacetProjectStructureElement(context, facet);
   }
 
 
@@ -52,6 +55,11 @@ public class FacetConfigurable extends NamedConfigurable<Facet> {
       getFacetsConfigurator().getOrCreateModifiableModel(myFacet.getModule()).rename(myFacet, name);
       myFacetName = name;
     }
+  }
+
+  @Override
+  public ProjectStructureElement getProjectStructureElement() {
+    return myProjectStructureElement;
   }
 
   private ProjectFacetsConfigurator getFacetsConfigurator() {

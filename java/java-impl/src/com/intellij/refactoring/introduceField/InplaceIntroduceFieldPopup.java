@@ -59,7 +59,7 @@ public class InplaceIntroduceFieldPopup {
   private final Editor myEditor;
   private Project myProject;
 
-  private final TypeSelectorManagerImpl myTypeSelectorManager;
+  private TypeSelectorManagerImpl myTypeSelectorManager;
   private final PsiElement myAnchorElement;
   private int myAnchorIdx = -1;
   private final PsiElement myAnchorElementIfAll;
@@ -136,16 +136,7 @@ public class InplaceIntroduceFieldPopup {
 
     myWholePanel.add(myIntroduceFieldPanel.createCenterPanel(), gc);
     myIntroduceFieldPanel.initializeControls(initializerExpression, ourLastInitializerPlace);
-    myIntroduceFieldPanel.addOccurrenceListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-        if (templateState != null) {
-          templateState.gotoEnd(true);
-          startTemplate(myIntroduceFieldPanel.isReplaceAllOccurrences());
-        }
-      }
-    });
+
 
   }
 
@@ -296,6 +287,17 @@ public class InplaceIntroduceFieldPopup {
           @Override
           public void itemStateChanged(ItemEvent e) {
             finalListener.perform(myIntroduceFieldPanel.isDeclareFinal());
+          }
+        });
+        myIntroduceFieldPanel.addOccurrenceListener(new ItemListener() {
+          @Override
+          public void itemStateChanged(ItemEvent e) {
+            final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+            if (templateState != null) {
+              templateState.gotoEnd(true);
+              myTypeSelectorManager = new TypeSelectorManagerImpl(myProject, myFieldTypePointer.getType(), null, myInitializerExpression, myOccurrences);
+              startTemplate(myIntroduceFieldPanel.isReplaceAllOccurrences());
+            }
           }
         });
       }

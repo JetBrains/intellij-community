@@ -39,6 +39,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -541,10 +542,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
 
     final Editor editor = indicator.getEditor();
-    final PsiFile file = indicator.getParameters().getOriginalFile();
-    final InsertionContext context = new InsertionContext(indicator.getOffsetMap(), completionChar, items.toArray(new LookupElement[items.size()]), file, editor,
-                                                          completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
-                                                          completionChar != Lookup.NORMAL_SELECT_CHAR && completionChar != Lookup.COMPLETE_STATEMENT_SELECT_CHAR);
+    final WatchingInsertionContext context = new WatchingInsertionContext(indicator, completionChar, items, editor);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final int idEndOffset = indicator.getIdentifierEndOffset();
@@ -571,6 +569,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         else {
           LOG.error("tailOffset<0 after inserting " + item + " of " + item.getClass());
         }
+        context.stopWatching();
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
     });
@@ -578,9 +577,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     if (runnable != null) {
       final Runnable runnable1 = new Runnable() {
         public void run() {
-          final Project project = context.getProject();
-          if (project.isDisposed()) return;
-          runnable.run();
+          if (!context.getProject().isDisposed()) {
+            runnable.run();
+          }
         }
       };
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -684,5 +683,45 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         editor.getSelectionModel().setSelection(selStart, selEnd);
       }
     };
+  }
+
+  private static class WatchingInsertionContext extends InsertionContext {
+    private RangeMarkerEx tailWatcher;
+
+    public WatchingInsertionContext(CompletionProgressIndicator indicator, char completionChar, List<LookupElement> items, Editor editor) {
+      super(indicator.getOffsetMap(), completionChar, items.toArray(new LookupElement[items.size()]),
+            indicator.getParameters().getOriginalFile(), editor,
+            completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
+            completionChar != Lookup.NORMAL_SELECT_CHAR && completionChar != Lookup.COMPLETE_STATEMENT_SELECT_CHAR);
+    }
+
+    @Override
+    public void setTailOffset(int offset) {
+      super.setTailOffset(offset);
+      watchTail(offset);
+    }
+
+    private void watchTail(int offset) {
+      stopWatching();
+      tailWatcher = (RangeMarkerEx)getDocument().createRangeMarker(offset, offset);
+      tailWatcher.trackInvalidation(true);
+      tailWatcher.setGreedyToRight(true);
+    }
+
+    void stopWatching() {
+      if (tailWatcher != null) {
+        tailWatcher.trackInvalidation(false);
+      }
+    }
+
+    @Override
+    public int getTailOffset() {
+      int offset = super.getTailOffset();
+      if (tailWatcher.getStartOffset() != tailWatcher.getEndOffset()) {
+        watchTail(offset);
+      }
+
+      return offset;
+    }
   }
 }

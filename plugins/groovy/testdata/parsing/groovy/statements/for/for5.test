@@ -6,7 +6,7 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(()('(')
     Traditional FOR clause
-      Variable definitions
+      Parameter
         Modifiers
           PsiElement(def)('def')
         PsiWhiteSpace(' ')

@@ -16,13 +16,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgChange;
 import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgFileStatusEnum;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.io.File;
-import java.nio.charset.Charset;
 import java.util.*;
 
 public class HgStatusCommand {
@@ -88,18 +89,12 @@ public class HgStatusCommand {
     return doExecute(repo, null);
   }
 
-  @Nullable
-  public HgChange execute(VirtualFile repo, @NotNull String file) {
-    Set<HgChange> changes = doExecute(repo, file);
-    return changes.isEmpty() ? null : changes.iterator().next();
-  }
-
   private Set<HgChange> doExecute(VirtualFile repo, String file) {
     if (repo == null) {
       return Collections.emptySet();
     }
 
-    HgCommandService service = HgCommandService.getInstance(project);
+    HgCommandExecutor executor = new HgCommandExecutor(project);
 
     List<String> arguments = new LinkedList<String>();
     if (includeAdded) {
@@ -136,7 +131,8 @@ public class HgStatusCommand {
       arguments.add(file);
     }
 
-    HgCommandResult result = service.execute(repo, HgCommandService.DEFAULT_OPTIONS, "status", arguments, Charset.defaultCharset(), true);
+    executor.setSilent(true);
+    HgCommandResult result = executor.executeInCurrentThread(repo, "status", arguments);
     Set<HgChange> changes = new HashSet<HgChange>();
     HgChange previous = null;
     if (result == null) {

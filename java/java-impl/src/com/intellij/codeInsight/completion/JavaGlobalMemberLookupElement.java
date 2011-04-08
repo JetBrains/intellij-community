@@ -10,6 +10,7 @@ import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
@@ -54,6 +55,11 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
   @Override
   public String getLookupString() {
     return assertNotNull(getObject().getName());
+  }
+
+  @Override
+  public Set<String> getAllLookupStrings() {
+    return JavaCompletionUtil.getAllLookupStrings(getObject());
   }
 
   @Override

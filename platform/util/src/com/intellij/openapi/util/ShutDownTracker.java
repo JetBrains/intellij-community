@@ -16,9 +16,11 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -126,5 +128,28 @@ public class ShutDownTracker implements Runnable {
   @Nullable
   private synchronized <T> T removeLast(LinkedList<T> list) {
     return list.isEmpty()? null : list.removeLast();
+  }
+
+  public static void invokeAndWait(boolean timed, Runnable runnable) {
+    if (timed) {
+      final Semaphore semaphore = new Semaphore();
+      semaphore.down();
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          semaphore.up();
+        }
+      });
+      if (!semaphore.waitFor(1000)) {
+        return;
+      }
+    }
+
+    try {
+      SwingUtilities.invokeAndWait(runnable);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 }

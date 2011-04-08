@@ -49,6 +49,8 @@ import com.intellij.openapi.wm.impl.status.ToggleReadOnlyAttributePanel;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.FocusTrackback;
+import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,9 +60,6 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 
 /**
  * @author Anton Katilin
@@ -80,6 +79,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
   private IdeRootPane myRootPane;
   private final BalloonLayout myBalloonLayout;
   private static boolean myUpdatingTitle;
+  private MacMainFrameDecorator myFrameDecorator;
 
   public IdeFrameImpl(ApplicationInfoEx applicationInfoEx, ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
                       final Application application, final String[] commandLineArgs) {
@@ -130,6 +130,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
         setFocusableWindowState(true);
       }
     });
+
+    if (SystemInfo.isMac && myFrameDecorator == null) {
+      myFrameDecorator = new MacMainFrameDecorator(this, PlatformUtils.isCidr());
+    }
   }
 
   /**
@@ -335,6 +339,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
     if (myRootPane != null) {
       myRootPane = null;
+    }
+
+    if (myFrameDecorator != null) {
+      myFrameDecorator.remove();
     }
 
     FocusTrackback.release(this);

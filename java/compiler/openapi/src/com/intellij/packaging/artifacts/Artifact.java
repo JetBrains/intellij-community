@@ -16,6 +16,7 @@
 package com.intellij.packaging.artifacts;
 
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,4 +44,6 @@ public interface Artifact extends UserDataHolder {
 
   ArtifactProperties<?> getProperties(@NotNull ArtifactPropertiesProvider propertiesProvider);
 
+  @Nullable
+  VirtualFile getOutputFile();
 }

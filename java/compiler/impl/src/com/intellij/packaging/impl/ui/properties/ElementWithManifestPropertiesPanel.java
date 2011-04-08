@@ -120,7 +120,9 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
       card = "properties";
       myManifestPathField.setText(FileUtil.toSystemDependentName(myManifestFileConfiguration.getManifestFilePath()));
       myMainClassField.setText(StringUtil.notNullize(myManifestFileConfiguration.getMainClass()));
+      myMainClassField.setEnabled(myManifestFileConfiguration.isWritable());
       myClasspathField.setText(StringUtil.join(myManifestFileConfiguration.getClasspath(), " "));
+      myClasspathField.setEnabled(myManifestFileConfiguration.isWritable());
     }
     else {
       card = "buttons";

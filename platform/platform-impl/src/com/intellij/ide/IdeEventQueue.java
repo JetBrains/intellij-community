@@ -434,6 +434,9 @@ public class IdeEventQueue extends EventQueue {
 
     if (e instanceof KeyEvent) {
       myKeyboardBusy = e.getID() != KeyEvent.KEY_RELEASED || ((KeyEvent)e).getModifiers() != 0;
+      if (e.getID() == KeyEvent.KEY_RELEASED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_SHIFT) {
+        myMouseEventDispatcher.resetHorScrollingTracker();
+      }
     }
 
     if (!typeaheadFlushing && typeAheadDispatchToFocusManager(e)) return;

@@ -36,7 +36,7 @@ public class ActivateNavigationBarAction extends AnAction implements DumbAware {
       final IdeFrameImpl frame = WindowManagerEx.getInstanceEx().getFrame(project);
       final IdeRootPane ideRootPane = ((IdeRootPane)frame.getRootPane());
       final NavBarPanel navBarPanel = (NavBarPanel)ideRootPane.findByName(NavBarRootPaneExtension.NAV_BAR).getComponent();
-      navBarPanel.activatePopupOnLastElement(e.getDataContext());
+      navBarPanel.selectTail();
     }
   }
 

@@ -36,11 +36,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class PatchFileType implements FileType {
+  public static final String NAME = "PATCH";
 
   @NotNull
   @NonNls
   public String getName() {
-    return "PATCH";
+    return NAME;
   }
 
   @NotNull

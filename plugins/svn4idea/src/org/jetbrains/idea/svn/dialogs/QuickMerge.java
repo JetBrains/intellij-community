@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -88,7 +89,7 @@ public class QuickMerge {
     myWcInfo = wcInfo;
     myTitle = "Merge from " + myBranchName;
 
-    myContinuation = new Continuation(myProject, true);
+    myContinuation = Continuation.createFragmented(myProject, true);
   }
 
   private class SourceUrlCorrection extends TaskDescriptor {
@@ -157,6 +158,8 @@ public class QuickMerge {
 
   @CalledInAwt
   public void execute() {
+    FileDocumentManager.getInstance().saveAllDocuments();
+
     final List<TaskDescriptor> tasks = new LinkedList<TaskDescriptor>();
     tasks.add(new MyInitChecks());
     tasks.add(new SourceUrlCorrection());
@@ -665,7 +668,12 @@ public class QuickMerge {
       for (String name : map.keySet()) {
         try {
           final Collection<Change> changes = map.get(name);
-          FileDocumentManager.getInstance().saveAllDocuments();
+          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+              @Override
+              public void run() {
+                FileDocumentManager.getInstance().saveAllDocuments();
+              }
+            }, ModalityState.NON_MODAL);
           ShelveChangesManager.getInstance(myProject).shelveChanges(changes, myIntersection.getComment(name) + " (auto shelve before merge)");
           session.addAllFiles(ChangesUtil.getFilesFromChanges(changes));
         }

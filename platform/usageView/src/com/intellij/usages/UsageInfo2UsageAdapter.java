@@ -16,6 +16,7 @@
 package com.intellij.usages;
 
 import com.intellij.ide.SelectInEditorManager;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
@@ -79,7 +80,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
       @Override
       public void run() {
         PsiElement element = getElement();
-        Document document = getDocument();
+        Document document = PsiDocumentManager.getInstance(getProject()).getDocument(element.getContainingFile());
         int startOffset = myUsageInfo.getNavigationOffset();
 
         if (document != null) {
@@ -197,7 +198,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   public boolean canNavigate() {
-    return getFile().isValid();
+    VirtualFile file = getFile();
+    return file != null && file.isValid();
   }
 
   public boolean canNavigateToSource() {
@@ -218,7 +220,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     int offset = getUsageInfo().getNavigationOffset();
     if (offset == -1) offset = myOffset;
     if (offset >= document.getTextLength()) {
-      int line = Math.max(0, Math.min(myLineNumber, document.getLineCount()));
+      int line = Math.max(0, Math.min(myLineNumber, document.getLineCount() - 1));
       offset = document.getLineStartOffset(line);
     }
     return offset;
@@ -323,16 +325,27 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return myUsageInfo;
   }
 
+  // by start offset
   public int compareTo(final UsageInfo2UsageAdapter o) {
     VirtualFile containingFile = getFile();
+    int shift1 = 0;
+    if (containingFile instanceof VirtualFileWindow) {
+      shift1 = ((VirtualFileWindow)containingFile).getDocumentWindow().injectedToHost(0);
+      containingFile = ((VirtualFileWindow)containingFile).getDelegate();
+    }
     VirtualFile oContainingFile = o.getFile();
+    int shift2 = 0;
+    if (oContainingFile instanceof VirtualFileWindow) {
+      shift2 = ((VirtualFileWindow)oContainingFile).getDocumentWindow().injectedToHost(0);
+      oContainingFile = ((VirtualFileWindow)oContainingFile).getDelegate();
+    }
     if (containingFile == null && oContainingFile == null || !Comparing.equal(containingFile, oContainingFile)) {
       return 0;
     }
     Segment s1 = getFirstSegment();
     Segment s2 = o.getFirstSegment();
     if (s1 == null || s2 == null) return 0;
-    return s1.getStartOffset() - s2.getStartOffset();
+    return s1.getStartOffset() + shift1 - s2.getStartOffset() - shift2;
   }
 
   public void rename(String newName) throws IncorrectOperationException {

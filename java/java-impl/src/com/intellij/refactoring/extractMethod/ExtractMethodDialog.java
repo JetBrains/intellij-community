@@ -398,7 +398,7 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
         //String typeAndModifiers = PsiFormatUtil.formatVariable(data.variable,
         //  PsiFormatUtil.SHOW_MODIFIERS | PsiFormatUtil.SHOW_TYPE);
         PsiType type = data.type;
-        if (i == datas.length - 1 && type instanceof PsiArrayType && myCbMakeVarargs.isSelected()) {
+        if (i == datas.length - 1 && type instanceof PsiArrayType && myCbMakeVarargs != null && myCbMakeVarargs.isSelected()) {
           type = new PsiEllipsisType(((PsiArrayType)type).getComponentType());
         }
 

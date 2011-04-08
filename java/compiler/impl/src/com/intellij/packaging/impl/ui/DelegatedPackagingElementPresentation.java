@@ -57,11 +57,6 @@ public class DelegatedPackagingElementPresentation extends PackagingElementPrese
     myDelegate.navigateToSource();
   }
 
-  @Nullable
-  public Object getSourceObject() {
-    return myDelegate.getSourceObject();
-  }
-
   public int getWeight() {
     return myDelegate.getWeight();
   }

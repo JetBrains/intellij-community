@@ -25,15 +25,20 @@ import java.util.ArrayList;
  * @author nik
  */
 public class ManifestFileConfiguration {
+  private final boolean myWritable;
   private List<String> myClasspath = new ArrayList<String>();
   private String myMainClass;
   private String myManifestFilePath;
 
   public ManifestFileConfiguration(@NotNull ManifestFileConfiguration configuration) {
-    copyFrom(configuration);
+    myWritable = configuration.isWritable();
+    myClasspath.addAll(configuration.getClasspath());
+    myMainClass = configuration.getMainClass();
+    myManifestFilePath = configuration.getManifestFilePath();
   }
 
-  public ManifestFileConfiguration(@NotNull String manifestFilePath, @Nullable List<String> classpath, @Nullable String mainClass) {
+  public ManifestFileConfiguration(@NotNull String manifestFilePath, @Nullable List<String> classpath, @Nullable String mainClass, boolean isWritable) {
+    myWritable = isWritable;
     if (classpath != null) {
       myClasspath.addAll(classpath);
     }
@@ -41,15 +46,12 @@ public class ManifestFileConfiguration {
     myManifestFilePath = manifestFilePath;
   }
 
-  public void copyFrom(@NotNull ManifestFileConfiguration configuration) {
-    myClasspath.clear();
-    myClasspath.addAll(configuration.getClasspath());
-    myMainClass = configuration.getMainClass();
-    myManifestFilePath = configuration.getManifestFilePath();
-  }
-
   public List<String> getClasspath() {
     return myClasspath;
+  }
+
+  public boolean isWritable() {
+    return myWritable;
   }
 
   public void setClasspath(List<String> classpath) {

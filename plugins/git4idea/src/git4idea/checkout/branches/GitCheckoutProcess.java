@@ -36,7 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.continuation.Continuation;
-import com.intellij.util.continuation.ContinuationContext;
+import com.intellij.util.continuation.GatheringContinuationContext;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -578,7 +578,7 @@ public class GitCheckoutProcess {
     progress.setText("Refreshing files before restoring shelve: " + shelve.DESCRIPTION);
     final ShelvedChangeList finalShelve = shelve;
 
-    final Continuation continuation = new Continuation(myProject, true);
+    final Continuation continuation = Continuation.createForCurrentProgress(myProject, true, "Git: restore changes");
     final Consumer<VcsException> exceptionConsumer = new Consumer<VcsException>() {
       @Override
       public void consume(VcsException e) {
@@ -590,8 +590,7 @@ public class GitCheckoutProcess {
       }
     };
     continuation.addExceptionHandler(VcsException.class, exceptionConsumer);
-    final ContinuationContext.GatheringContinuationContext initContext =
-      new ContinuationContext.GatheringContinuationContext();
+    final GatheringContinuationContext initContext = new GatheringContinuationContext();
     GitStashUtils.doSystemUnshelve(myProject, shelve, myShelveManager, new Runnable() {
       @Override
       public void run() {

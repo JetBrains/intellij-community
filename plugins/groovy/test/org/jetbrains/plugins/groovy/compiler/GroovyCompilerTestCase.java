@@ -8,10 +8,7 @@ import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.DefaultJavaProgramRunner;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -26,7 +23,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,6 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author peter
@@ -212,23 +209,38 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     assertOutput(className, output, myModule);
   }
 
-  protected void assertOutput(String className, String output, final Module module) throws ExecutionException {
-    final ApplicationConfiguration configuration =
-      new ApplicationConfiguration("app", getProject(), ApplicationConfigurationType.getInstance());
+  protected void assertOutput(String className, String expected, final Module module) throws ExecutionException {
+    final StringBuffer sb = new StringBuffer();
+    ProcessHandler process = runProcess(className, module, DefaultRunExecutor.class, new ProcessAdapter() {
+      @Override
+      public void onTextAvailable(ProcessEvent event, Key outputType) {
+        if (ProcessOutputTypes.SYSTEM != outputType) {
+          sb.append(event.getText());
+        }
+      }
+    }, ProgramRunner.PROGRAM_RUNNER_EP.findExtension(DefaultJavaProgramRunner.class));
+    process.waitFor();
+    assertEquals(expected.trim(), StringUtil.convertLineSeparators(sb.toString().trim()));
+  }
+
+  protected ProcessHandler runProcess(String className,
+                                      Module module,
+                                      final Class<? extends Executor> executorClass,
+                                      final ProcessListener listener, final ProgramRunner runner) throws ExecutionException {
+    final ApplicationConfiguration configuration = new ApplicationConfiguration("app", getProject(), ApplicationConfigurationType.getInstance());
     configuration.setModule(module);
     configuration.setMainClassName(className);
-    final DefaultRunExecutor extension = Executor.EXECUTOR_EXTENSION_NAME.findExtension(DefaultRunExecutor.class);
+    final Executor executor = Executor.EXECUTOR_EXTENSION_NAME.findExtension(executorClass);
     final ExecutionEnvironment environment = new ExecutionEnvironment(configuration, getProject(),
                                                                       new RunnerSettings<JDOMExternalizable>(null, null), null, null);
-    final DefaultJavaProgramRunner runner = ProgramRunner.PROGRAM_RUNNER_EP.findExtension(DefaultJavaProgramRunner.class);
-    final StringBuffer sb = new StringBuffer();
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
-    runner.execute(extension, environment, new ProgramRunner.Callback() {
+    final AtomicReference<ProcessHandler> processHandler = new AtomicReference<ProcessHandler>();
+    runner.execute(executor, environment, new ProgramRunner.Callback() {
       @Override
       public void processStarted(final RunContentDescriptor descriptor) {
-        Disposer.register(myFixture.getProject(), new Disposable() {
+        disposeOnTearDown(new Disposable() {
           @Override
           public void dispose() {
             descriptor.dispose();
@@ -236,23 +248,13 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
         });
         final ProcessHandler handler = descriptor.getProcessHandler();
         assert handler != null;
-        handler.addProcessListener(new ProcessAdapter() {
-          @Override
-          public void onTextAvailable(ProcessEvent event, Key outputType) {
-            if (ProcessOutputTypes.SYSTEM != outputType) {
-              sb.append(event.getText());
-            }
-          }
-
-          @Override
-          public void processTerminated(ProcessEvent event) {
-            semaphore.up();
-          }
-        });
+        handler.addProcessListener(listener);
+        processHandler.set(handler);
+        semaphore.up();
       }
     });
     semaphore.waitFor();
-    assertEquals(output.trim(), StringUtil.convertLineSeparators(sb.toString().trim()));
+    return processHandler.get();
   }
 
   private static class ErrorReportingCallback implements CompileStatusNotification {
@@ -267,7 +269,6 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     @Override
     public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
       try {
-        assertFalse("Code did not compile!", aborted);
         for (CompilerMessageCategory category : CompilerMessageCategory.values()) {
           for (CompilerMessage message : compileContext.getMessages(category)) {
             final String msg = message.getMessage();
@@ -279,6 +280,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
         if (errors > 0) {
           fail("Compiler errors occurred! " + StringUtil.join(myMessages, "\n"));
         }
+        assertFalse("Code did not compile!", aborted);
       }
       catch (Throwable t) {
         myError = t;

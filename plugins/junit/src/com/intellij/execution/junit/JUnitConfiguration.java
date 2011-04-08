@@ -291,6 +291,13 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       }
       myData.setPatterns(tests);
     }
+    final Element forkModeElement = element.getChild("fork_mode");
+    if (forkModeElement != null) {
+      final String mode = forkModeElement.getAttributeValue("value");
+      if (mode != null) {
+        setForkMode(mode);
+      }
+    }
   }
 
   public void writeExternal(final Element element) throws WriteExternalException {
@@ -305,6 +312,12 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
       final Element patternElement = new Element(PATTERN_EL_NAME);
       patternElement.setAttribute(TEST_CLASS_ATT_NAME, o);
       patternsElement.addContent(patternElement);
+    }
+    final String forkMode = getForkMode();
+    if (!forkMode.equals("none")) {
+      final Element forkModeElement = new Element("fork_mode");
+      forkModeElement.setAttribute("value", forkMode);
+      element.addContent(forkModeElement);
     }
     element.addContent(patternsElement);
     PathMacroManager.getInstance(getProject()).collapsePathsRecursively(element);
@@ -322,7 +335,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     }
   }
 
-  public void setForkMode(String forkMode) {
+  public void setForkMode(@NotNull String forkMode) {
     myData.FORK_MODE = forkMode;
   }
 
@@ -338,7 +351,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     public String VM_PARAMETERS;
     public String PARAMETERS;
     public String WORKING_DIRECTORY;
-    public String FORK_MODE;
+    private String FORK_MODE = "none";
     private Set<String> myPattern = new LinkedHashSet<String>();
 
     //iws/ipr compatibility

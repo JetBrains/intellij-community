@@ -94,7 +94,7 @@ public class EachToForIntention extends Intention {
     final GrStatement statement = elementFactory.createStatementFromText(builder.toString());
     final GrForStatement forStatement = (GrForStatement)expression.replaceWithStatement(statement);
     final GrForClause clause = forStatement.getClause();
-    GrVariable variable = clause.getDeclaredVariables()[0];
+    GrVariable variable = clause.getDeclaredVariable();
 
     if (variable == null) return;
 

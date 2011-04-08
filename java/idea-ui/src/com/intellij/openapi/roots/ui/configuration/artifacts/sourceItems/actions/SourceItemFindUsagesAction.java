@@ -19,8 +19,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.artifacts.actions.ArtifactEditorFindUsagesActionBase;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ArtifactsTreeNode;
-import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemNode;
-import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.SourceItemsTree;
+import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.*;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.packaging.ui.PackagingSourceItem;
 
 import java.util.List;
 
@@ -35,9 +39,27 @@ public class SourceItemFindUsagesAction extends ArtifactEditorFindUsagesActionBa
     myTree = tree;
   }
 
-  @Override
-  protected ArtifactsTreeNode getSelectedNode() {
+  protected ProjectStructureElement getSelectedElement() {
     final List<SourceItemNode> nodes = myTree.getSelectedSourceItemNodes();
-    return nodes.size() == 1 ? nodes.get(0) : null;
+    if (nodes.size() != 1) return null;
+    ArtifactsTreeNode node = nodes.get(0);
+    if (!(node instanceof SourceItemNode)) {
+      return null;
+    }
+
+    PackagingSourceItem sourceItem = ((SourceItemNode)node).getSourceItem();
+    if (sourceItem == null) return null;
+
+    final StructureConfigurableContext context = getContext();
+    if (sourceItem instanceof ModuleOutputSourceItem) {
+      return new ModuleProjectStructureElement(context, ((ModuleOutputSourceItem)sourceItem).getModule());
+    }
+    else if (sourceItem instanceof LibrarySourceItem) {
+      return new LibraryProjectStructureElement(context, ((LibrarySourceItem)sourceItem).getLibrary());
+    }
+    else if (sourceItem instanceof ArtifactSourceItem) {
+      return myArtifactContext.getOrCreateArtifactElement(((ArtifactSourceItem)sourceItem).getArtifact());
+    }
+    return null;
   }
 }

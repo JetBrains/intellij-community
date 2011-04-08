@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,18 +37,21 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     public boolean ignoreTypeCasts = false;
 
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
                 "raw.use.of.parameterized.type.display.name");
     }
 
+    @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "raw.use.of.parameterized.type.problem.descriptor");
     }
 
+    @Override
     @Nullable
     public JComponent createOptionsPanel() {
         final MultipleCheckboxOptionsPanel optionsPanel =
@@ -69,6 +72,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       return "unchecked";
     }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
         return new RawUseOfParameterizedTypeVisitor();
     }
@@ -91,7 +95,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
                 return;
             }
             final PsiJavaCodeReferenceElement classReference =
-                    expression.getClassReference();
+                    expression.getClassOrAnonymousClassReference();
             checkReferenceElement(classReference);
         }
 
@@ -173,3 +177,4 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
         }
     }
 }
+

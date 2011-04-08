@@ -21,8 +21,10 @@ public class PatchNameChecker {
   public final static int MAX = 100;
   private final String myName;
   private String myError;
+  private final String myPath;
 
   public PatchNameChecker(final String name) {
+    myPath = name;
     myName = new File(name).getName();
   }
 
@@ -32,6 +34,9 @@ public class PatchNameChecker {
       return false;
     } else if (myName.length() > MAX) {
       myError = "File name length cannot exceed " + MAX + " characters";
+      return false;
+    } else if (new File(myPath).exists()) {
+      myError = "File with the same name already exists";
       return false;
     }
     return true;

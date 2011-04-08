@@ -1610,24 +1610,36 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       int selEndLine = StringUtil.offsetToLineNumber(loader.newFileText, loader.selEndMarker.getEndOffset());
       int selEndCol = loader.selEndMarker.getEndOffset() - StringUtil.lineColToOffset(loader.newFileText, selEndLine, 0);
 
-      Assert.assertEquals("selectionStartLine in " + expectedFile, selStartLine + 1,
-                          StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionStart()) + 1);
+      final int selStartLineActual = StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionStart());
+      final int selStartColActual = myEditor.getSelectionModel().getSelectionStart() - StringUtil.lineColToOffset(loader.newFileText,
+                                                                                                                  selStartLine, 0);
+      final int selEndLineActual = StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionEnd());
+      final int selEndColActual =
+        myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(loader.newFileText, selEndLine, 0);
 
-      Assert.assertEquals("selectionStartCol in " + expectedFile, selStartCol + 1, myEditor.getSelectionModel().getSelectionStart() -
-                                                                                   StringUtil
-                                                                                     .lineColToOffset(loader.newFileText, selStartLine, 0) +
-                                                                                   1);
-
-      Assert.assertEquals("selectionEndLine in " + expectedFile, selEndLine + 1,
-                          StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionEnd()) + 1);
-
-      Assert.assertEquals("selectionEndCol in " + expectedFile, selEndCol + 1,
-                          myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(loader.newFileText, selEndLine, 0) +
-                          1);
+      final boolean selectionEquals = selStartCol == selStartColActual &&
+                                      selStartLine == selStartLineActual &&
+                                      selEndCol == selEndColActual &&
+                                      selEndLine == selEndLineActual;
+      Assert.assertTrue("selection in " +
+                          expectedFile +
+                          " differs. Expected " +
+                          genSelectionPresentation(selStartLine, selStartCol, selEndLine, selEndCol) +
+                          ". Actual " +
+                          genSelectionPresentation(selStartLineActual, selStartColActual, selEndLineActual, selEndColActual),
+                        selectionEquals);
     }
     else if (myEditor != null) {
       Assert.assertTrue("has no selection in " + expectedFile, !myEditor.getSelectionModel().hasSelection());
     }
+  }
+
+  private static String genSelectionPresentation(int startLine, int startCol, int endLine, int endCol) {
+    startCol++;
+    startLine++;
+    endCol++;
+    endLine++;
+    return "(" + startLine + ", " + startCol + ")-(" + endLine + ", " + endCol + ")";
   }
 
   private static String stripTrailingSpaces(String actualText) {

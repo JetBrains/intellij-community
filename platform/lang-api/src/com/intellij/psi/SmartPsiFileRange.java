@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Segment;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * pointer to a PsiFile + range inside the file.
@@ -25,5 +26,6 @@ public interface SmartPsiFileRange extends SmartPsiElementPointer<PsiFile> {
   /**
    * @return the range inside the PsiFile, or null if the range or PsiFile became invalid
    */
+  @Nullable
   Segment getRange();
 }

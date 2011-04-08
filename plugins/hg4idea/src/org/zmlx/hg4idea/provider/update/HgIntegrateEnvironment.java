@@ -12,8 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -97,11 +95,7 @@ public class HgIntegrateEnvironment implements UpdateEnvironment {
           exceptions.add(warning);
         }
 
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          public void run() {
-            new HgConflictResolver(project, updatedFiles).resolve(repo);
-          }
-        }, ModalityState.defaultModalityState());
+        new HgConflictResolver(project, updatedFiles).resolve(repo);
 
       } catch (VcsException e) {
         exceptions.add(e);

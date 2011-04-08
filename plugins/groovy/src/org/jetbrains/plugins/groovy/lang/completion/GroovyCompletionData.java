@@ -19,11 +19,11 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CompletionData;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionVariant;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.codeInsight.lookup.*;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -50,6 +50,8 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.PackageFilt
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeAsArgumentFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeFilter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 
@@ -59,9 +61,11 @@ import java.util.Set;
  * @author ilyas
  */
 public class GroovyCompletionData extends CompletionData {
-  private final static Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData");
   public static final String[] BUILT_IN_TYPES = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "void"};
   public static final String[] MODIFIERS = new String[]{"private", "public", "protected", "transient", "abstract", "native", "volatile", "strictfp"};
+  static final String[] INLINED_DOC_TAGS = {"code", "docRoot", "inheritDoc", "link", "linkplain", "literal"};
+  static final String[] DOC_TAGS = {"author", "deprecated", "exception", "param", "return", "see", "serial", "serialData",
+      "serialField", "since", "throws", "version"};
 
   public GroovyCompletionData() {
     registerAllCompletions();
@@ -230,4 +234,13 @@ public class GroovyCompletionData extends CompletionData {
   }
 
 
+  public static void addGroovyDocKeywords(CompletionParameters parameters, CompletionResultSet result) {
+    PsiElement position = parameters.getPosition();
+    if (PlatformPatterns.psiElement(GroovyDocTokenTypes.mGDOC_TAG_NAME).andNot(PlatformPatterns.psiElement().afterLeaf(".")).accepts(position)) {
+      String[] tags = position.getParent() instanceof GrDocInlinedTag ? INLINED_DOC_TAGS : DOC_TAGS;
+      for (String docTag : tags) {
+        result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(docTag), TailType.SPACE));
+      }
+    }
+  }
 }

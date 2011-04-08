@@ -86,6 +86,9 @@ public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
 
   public void testDontCompletePrivateMembers() {doSmartCompletion "foo1", "foo2"}
 
+  public void testEnumMembersInAssignment() {doSmartCompletion "IN_STOCK", "NOWHERE", "ORDERED" }
+  public void testEnumMembersInAssignmentInsideEnum() {doSmartCompletion "IN_STOCK", "NOWHERE", "ORDERED", "next", "previous" }
+
   def getFileText(PsiFile file) {
     return PsiDocumentManager.getInstance(project).getDocument(file).text
   }

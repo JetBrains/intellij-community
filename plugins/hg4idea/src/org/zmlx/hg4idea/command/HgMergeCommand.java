@@ -15,6 +15,9 @@ package org.zmlx.hg4idea.command;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -40,8 +43,10 @@ public class HgMergeCommand {
     this.revision = revision;
   }
 
+  @Nullable
   public HgCommandResult execute() {
-    HgCommandService commandService = HgCommandService.getInstance(project);
+    HgCommandExecutor commandExecutor = new HgCommandExecutor(project);
+    commandExecutor.setShowOutput(true);
     List<String> arguments = new LinkedList<String>();
     if (StringUtils.isNotBlank(revision)) {
       arguments.add("--rev");
@@ -49,7 +54,7 @@ public class HgMergeCommand {
     } else if (StringUtils.isNotBlank(branch)) {
       arguments.add(branch);
     }
-    return commandService.execute(repo, "merge", arguments);
+    return commandExecutor.executeInCurrentThread(repo, "merge", arguments);
   }
 
 }

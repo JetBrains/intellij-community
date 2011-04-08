@@ -12,11 +12,13 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nls;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcsMessages;
@@ -135,35 +137,48 @@ public class HgIntegrateDialog implements Configurable {
   }
 
   private void loadBranches(VirtualFile root) {
-    List<HgTagBranch> branches = new HgTagBranchCommand(project, root).listBranches();
-    branchSelector.setModel(new DefaultComboBoxModel(branches.toArray()));
+    new HgTagBranchCommand(project, root).listBranches(new Consumer<List<HgTagBranch>>() {
+      @Override
+      public void consume(List<HgTagBranch> branches) {
+        branchSelector.setModel(new DefaultComboBoxModel(branches.toArray()));
+      }
+    });
   }
 
   private void loadTags(VirtualFile root) {
-    List<HgTagBranch> tags = new HgTagBranchCommand(project, root).listTags();
-    tagSelector.setModel(new DefaultComboBoxModel(tags.toArray()));
+    new HgTagBranchCommand(project, root).listTags(new Consumer<List<HgTagBranch>>() {
+      @Override
+      public void consume(List<HgTagBranch> tags) {
+        tagSelector.setModel(new DefaultComboBoxModel(tags.toArray()));
+      }
+    });
   }
 
-  private void loadHeads(VirtualFile root) {
-    List<HgRevisionNumber> heads = new HgHeadsCommand(project, root).execute();
-    if (heads.size() != 2) {
-      disableOtherHeadsChoice();
-      return;
-    }
+  private void loadHeads(final VirtualFile root) {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        final List<HgRevisionNumber> heads = new HgHeadsCommand(project, root).execute();
+        if (heads.size() != 2) {
+          disableOtherHeadsChoice();
+          return;
+        }
 
-    otherHeadRadioButton.setVisible(true);
-    otherHeadLabel.setVisible(true);
+        otherHeadRadioButton.setVisible(true);
+        otherHeadLabel.setVisible(true);
 
-    HgRevisionNumber currentParent = new HgWorkingCopyRevisionsCommand(project).identify(root);
-    heads.remove(currentParent);
+        HgRevisionNumber currentParent = new HgWorkingCopyRevisionsCommand(project).identify(root);
+        heads.remove(currentParent);
 
-    if (heads.size() == 1) {
-      otherHead = heads.get(0);
-      otherHeadLabel.setText(HgVcsMessages.message("hg4idea.integrate.other.head", otherHead.asString()));
-    } else {
-      //apparently we are not at one of the heads
-      disableOtherHeadsChoice();
-    }
+        if (heads.size() == 1) {
+          otherHead = heads.get(0);
+          otherHeadLabel.setText(HgVcsMessages.message("hg4idea.integrate.other.head", otherHead.asString()));
+        } else {
+          //apparently we are not at one of the heads
+          disableOtherHeadsChoice();
+        }
+      }
+    });
   }
 
   private void disableOtherHeadsChoice() {

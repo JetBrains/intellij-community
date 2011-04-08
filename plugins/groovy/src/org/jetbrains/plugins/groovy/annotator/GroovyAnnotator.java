@@ -755,10 +755,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   @Override
   public void visitForInClause(GrForInClause forInClause) {
-    final GrVariable[] declaredVariables = forInClause.getDeclaredVariables();
-    if (declaredVariables.length < 1) return;
-    final GrVariable variable = declaredVariables[0];
-    final GrModifierList modifierList = ((GrModifierList)variable.getModifierList());
+    final GrVariable var = forInClause.getDeclaredVariable();
+    if (var == null) return;
+    final GrModifierList modifierList = ((GrModifierList)var.getModifierList());
     if (modifierList == null) return;
     final PsiElement[] modifiers = modifierList.getModifiers();
     for (PsiElement modifier : modifiers) {

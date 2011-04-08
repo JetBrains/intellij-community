@@ -57,11 +57,6 @@ public class DelegatedSourceItemPresentation extends SourceItemPresentation {
     myPresentation.navigateToSource();
   }
 
-  @Nullable
-  public Object getSourceObject() {
-    return myPresentation.getSourceObject();
-  }
-
   public int getWeight() {
     return myPresentation.getWeight();
   }

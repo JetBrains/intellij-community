@@ -16,8 +16,11 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
@@ -142,6 +145,18 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
 
   public ArtifactProperties<?> getProperties(@NotNull ArtifactPropertiesProvider provider) {
     return myProperties.get(provider);
+  }
+
+  @Override
+  public VirtualFile getOutputFile() {
+    String filePath;
+    if (myRootElement instanceof ArchivePackagingElement) {
+      filePath = myOutputPath + "/" + ((ArchivePackagingElement)myRootElement).getArchiveFileName();
+    }
+    else {
+      filePath = myOutputPath;
+    }
+    return LocalFileSystem.getInstance().findFileByPath(filePath);
   }
 
   public void copyFrom(ArtifactImpl modified) {

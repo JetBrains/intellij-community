@@ -160,7 +160,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
         int newY = start.y;
         SoftWrapModel softWrapModel = editor.getSoftWrapModel();
         int lineHeight = editor.getLineHeight();
-        for (int i = startLine + lineShift; i < endLine && newY < maxY; i++) {
+        for (int i = Math.max(0, startLine + lineShift); i < endLine && newY < maxY; i++) {
           List<? extends SoftWrap> softWraps = softWrapModel.getSoftWrapsForLine(i);
           int logicalLineHeight = softWraps.size() * lineHeight;
           if (i > startLine + lineShift) {

@@ -25,9 +25,9 @@ public class HgUsernamePasswordDialog extends DialogWrapper {
 
   public HgUsernamePasswordDialog(Project project, String url, String login, String password) {
     super(project, false);
-    setTitle(HgVcsMessages.message("hgidea.dialog.login.password.required"));
-    final String desc = (url == null ? null : "Login to " + url);
-    authPanel = new AuthenticationPanel(desc, login, password, false);
+    setTitle(HgVcsMessages.message("hg4idea.dialog.login.password.required"));
+    authPanel = new AuthenticationPanel(HgVcsMessages.message("hg4idea.dialog.login.description", url), login, password,
+                                        !StringUtils.isBlank(password));
     init();
   }
 

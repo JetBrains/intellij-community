@@ -12,9 +12,12 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcsMessages;
@@ -103,17 +106,36 @@ public class HgPushDialog extends DialogWrapper {
   }
 
   private void updateRepository() {
-    final VirtualFile repo = hgRepositorySelectorComponent.getRepository();
-    final HgShowConfigCommand configCommand = new HgShowConfigCommand(myProject);
-    final String defaultPath = configCommand.getDefaultPushPath(repo);
-    repositoryTxt.setText(defaultPath);
-    loadBranches(repo);
-    update();
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        final VirtualFile repo = hgRepositorySelectorComponent.getRepository();
+        final HgShowConfigCommand configCommand = new HgShowConfigCommand(myProject);
+        final String defaultPath = configCommand.getDefaultPushPath(repo);
+        loadBranches(repo);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            repositoryTxt.setText(defaultPath);
+            update();
+          }
+        }, ModalityState.stateForComponent(getRootPane()));
+      }
+    });
   }
 
   private void loadBranches(VirtualFile root) {
-    final List<HgTagBranch> branches = new HgTagBranchCommand(myProject, root).listBranches();
-    branchComboBox.setModel(new DefaultComboBoxModel(branches.toArray()));
+    new HgTagBranchCommand(myProject, root).listBranches(new Consumer<List<HgTagBranch>>() {
+      @Override
+      public void consume(final List<HgTagBranch> branches) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            branchComboBox.setModel(new DefaultComboBoxModel(branches.toArray()));
+          }
+        }, ModalityState.stateForComponent(getRootPane()));
+      }
+    });
   }
 
   private void update() {

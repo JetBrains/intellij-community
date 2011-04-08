@@ -16,12 +16,13 @@
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Nov 12, 2004
  */
-public class NavigatableMessageElement extends ErrorTreeElement{
+public class NavigatableMessageElement extends ErrorTreeElement {
   private final GroupingElement myParent;
   private final String[] myMessage;
   private final Navigatable myNavigatable;
@@ -29,11 +30,11 @@ public class NavigatableMessageElement extends ErrorTreeElement{
   private final String myRendererTextPrefix;
 
   public NavigatableMessageElement(ErrorTreeElementKind kind,
-                                 GroupingElement parent,
-                                 String[] message,
-                                 Navigatable navigatable,
-                                 String exportText,
-                                 String rendererTextPrefix) {
+                                   @Nullable GroupingElement parent,
+                                   String[] message,
+                                   Navigatable navigatable,
+                                   String exportText,
+                                   String rendererTextPrefix) {
     super(kind);
     myParent = parent;
     myMessage = message;
@@ -54,6 +55,7 @@ public class NavigatableMessageElement extends ErrorTreeElement{
     return myParent.getData();
   }
 
+  @Nullable
   public GroupingElement getParent() {
     return myParent;
   }

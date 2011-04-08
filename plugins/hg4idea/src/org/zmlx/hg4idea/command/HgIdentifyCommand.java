@@ -2,17 +2,15 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
-import java.nio.charset.Charset;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
 public class HgIdentifyCommand {
 
   private final Project project;
-  private final HgCommandAuthenticator authenticator = new HgCommandAuthenticator();
   private String source;
 
   public HgIdentifyCommand(Project project) {
@@ -31,6 +29,8 @@ public class HgIdentifyCommand {
   public HgCommandResult execute() {
     final List<String> arguments = new LinkedList<String>();
     arguments.add(source);
-    return authenticator.executeCommandAndAuthenticateIfNecessary(project, null, source, "identify", arguments);
+    final HgCommandExecutor executor = new HgCommandExecutor(project);
+    executor.setSilent(true);
+    return executor.executeInCurrentThread(null, "identify", arguments);
   }
 }

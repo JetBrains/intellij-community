@@ -30,12 +30,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.event.MouseWheelEvent;
+import java.util.Arrays;
 import java.util.List;
 
 public class EditorUtil {
   private EditorUtil() { }
 
-  public static int getLastVisualLineColumnNumber(Editor editor, int line) {
+  public static int getLastVisualLineColumnNumber(Editor editor, final int line) {
     Document document = editor.getDocument();
     int lastLine = document.getLineCount() - 1;
     if (lastLine < 0) {
@@ -128,8 +129,9 @@ public class EditorUtil {
 
     assert false : String.format(
       "Target visual line: %d, mapped logical line: %d, visual lines range for the mapped logical line: [%s]-[%s], soft wraps for "
-      + "the target logical line: %s%nDocument text: '%s'",
-      line, resultLogLine, resVisStart, resVisEnd, softWraps, editor.getDocument().getText()
+      + "the target logical line: %s, all soft wraps: %s, fold regions: %s%nDocument text: '%s'",
+      line, resultLogLine, resVisStart, resVisEnd, softWraps, editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength()),
+      Arrays.toString(editor.getFoldingModel().getAllFoldRegions()), editor.getDocument().getText()
     );
     return resVisEnd.column;
   }
@@ -372,7 +374,9 @@ public class EditorUtil {
 
       for (int i = start; i < offset; i++) {
         char c = text.charAt(i);
-        assert c != '\n' && c != '\r';
+        assert c != '\n' && c != '\r' :
+          String.format("Symbol: %c, its index: %d, given start: %d, given offset: %d, given tab size: %d, text: '%s'",
+                        c, i, start, offset, tabSize, text);
         if (c == '\t') {
           shift += getTabLength(i + shift - start, tabSize) - 1;
         }

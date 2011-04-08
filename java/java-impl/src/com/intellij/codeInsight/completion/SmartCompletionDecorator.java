@@ -115,8 +115,9 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
   @Override
   public void handleInsert(InsertionContext context) {
     myPosition = getPosition(context, this);
-    if (getDelegate() instanceof LookupItem) {
-      analyzeItem(context, (LookupItem)getDelegate(), getObject(), myPosition, myExpectedTypeInfos);
+    LookupItem item = getDelegate().as(LookupItem.CLASS_CONDITION_KEY);
+    if (item != null) {
+      analyzeItem(context, item, getObject(), myPosition, myExpectedTypeInfos);
     }
     super.handleInsert(context);
   }

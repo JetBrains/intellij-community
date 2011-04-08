@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -262,7 +263,9 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     if (element instanceof PsiClass) {
       String fqn = ((PsiClass)element).getQualifiedName();
       if (fqn == null) {
-        LOG.error("FQN is null. reference:" + getElement().getText()+"; resolves to "+element);
+        LOG.error("FQN is null. Reference:" + getElement().getText() +
+                  " resolves to:" + LogUtil.objectAndClass(element) +
+                  " parent:" + LogUtil.objectAndClass(element.getParent()));
       }
       return fqn;
     }

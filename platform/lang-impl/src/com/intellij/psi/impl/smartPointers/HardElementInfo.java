@@ -65,7 +65,7 @@ class HardElementInfo implements SmartPointerElementInfo {
   }
 
   @Override
-  public boolean pointsToTheSameElementAs(SmartPointerElementInfo other) {
+  public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
     return Comparing.equal(myElement, other.restoreElement());
   }
 

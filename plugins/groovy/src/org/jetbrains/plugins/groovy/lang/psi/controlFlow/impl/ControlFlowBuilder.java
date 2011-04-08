@@ -459,7 +459,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitForStatement(GrForStatement forStatement) {
     final GrForClause clause = forStatement.getClause();
     if (clause instanceof GrTraditionalForClause) {
-      for (GrCondition initializer : ((GrTraditionalForClause)clause).getInitialization()) {
+      final GrCondition initializer = ((GrTraditionalForClause)clause).getInitialization();
+      if (initializer != null) {
         initializer.accept(this);
       }
     }
@@ -468,7 +469,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       if (expression != null) {
         expression.accept(this);
       }
-      for (GrVariable variable : clause.getDeclaredVariables()) {
+      GrVariable variable = clause.getDeclaredVariable();
+      if (variable != null) {
         ReadWriteVariableInstructionImpl writeInsn = new ReadWriteVariableInstructionImpl(variable, myInstructionNumber++);
         checkPending(writeInsn);
         addNode(writeInsn);
@@ -497,8 +499,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     checkPending(instruction); //check for breaks targeted here
 
     if (clause instanceof GrTraditionalForClause) {
-      for (GrExpression expression : ((GrTraditionalForClause)clause).getUpdate()) {
-        expression.accept(this);
+      final GrExpression update = ((GrTraditionalForClause)clause).getUpdate();
+      if (update != null) {
+        update.accept(this);
       }
     }
     if (myHead != null) addEdge(myHead, instruction);  //loop
@@ -710,6 +713,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   public void visitParameter(GrParameter parameter) {
+    if (parameter.getParent() instanceof GrForClause) {
+      visitVariable(parameter);
+    }
   }
 
   public void visitMethod(GrMethod method) {

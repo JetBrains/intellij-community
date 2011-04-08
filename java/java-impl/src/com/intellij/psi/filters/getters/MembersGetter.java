@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,91 +16,24 @@
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.completion.JavaMethodCallElement;
-import com.intellij.codeInsight.completion.SmartCompletionDecorator;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 15.04.2003
- * Time: 17:07:09
- * To change this template use Options | File Templates.
+ * @author ik
+ * @author peter
  */
-public class MembersGetter {
+public abstract class MembersGetter {
 
-  public static void addMembers(PsiElement position, PsiType expectedType, Consumer<LookupElement> results) {
-    final PsiClass psiClass = PsiUtil.resolveClassInType(expectedType);
-    processMembers(position, results, psiClass, PsiTreeUtil.getParentOfType(position, PsiAnnotation.class) != null, expectedType);
-
-    if (expectedType instanceof PsiPrimitiveType && PsiType.DOUBLE.isAssignableFrom(expectedType)) {
-      addConstantsFromTargetClass(position, expectedType, results);
-    }
-  }
-
-  private static void addConstantsFromTargetClass(PsiElement position, PsiType expectedType, Consumer<LookupElement> results) {
-    PsiElement parent = position.getParent();
-    if (!(parent instanceof PsiReferenceExpression)) {
-      return;
-    }
-
-    PsiElement prev = parent;
-    parent = parent.getParent();
-    while (parent instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
-      final IElementType op = binaryExpression.getOperationSign().getTokenType();
-      if (JavaTokenType.EQEQ == op || JavaTokenType.NE == op) {
-        if (prev == binaryExpression.getROperand()) {
-          processMembers(position, results, getCalledClass(binaryExpression.getLOperand()), false, expectedType);
-        }
-        return;
-      }
-      prev = parent;
-      parent = parent.getParent();
-    }
-    if (parent instanceof PsiExpressionList) {
-      processMembers(position, results, getCalledClass(parent.getParent()), false, expectedType);
-    }
-  }
-
-  @Nullable
-  private static PsiClass getCalledClass(@Nullable PsiElement call) {
-    if (call instanceof PsiMethodCallExpression) {
-      for (final JavaResolveResult result : ((PsiMethodCallExpression)call).getMethodExpression().multiResolve(true)) {
-        final PsiElement element = result.getElement();
-        if (element instanceof PsiMethod) {
-          final PsiClass aClass = ((PsiMethod)element).getContainingClass();
-          if (aClass != null) {
-            return aClass;
-          }
-        }
-      }
-    }
-    if (call instanceof PsiNewExpression) {
-      final PsiJavaCodeReferenceElement reference = ((PsiNewExpression)call).getClassReference();
-      if (reference != null) {
-        for (final JavaResolveResult result : reference.multiResolve(true)) {
-          final PsiElement element = result.getElement();
-          if (element instanceof PsiClass) {
-            return (PsiClass)element;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  private static void processMembers(final PsiElement context, final Consumer<LookupElement> results, @Nullable final PsiClass where,
-                                     final boolean acceptMethods, PsiType expectedType) {
+  public void processMembers(@NotNull final PsiElement context, final Consumer<LookupElement> results, @Nullable final PsiClass where, final boolean acceptMethods) {
     if (where == null) return;
 
     PsiClass current = PsiTreeUtil.getContextOfType(context, PsiClass.class);
@@ -122,20 +55,18 @@ public class MembersGetter {
         if (member.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(member, context, null)) {
           if (result instanceof PsiField && !member.hasModifierProperty(PsiModifier.FINAL)) continue;
           if (result instanceof PsiMethod && acceptMethods) continue;
-          final LookupItem item = result instanceof PsiMethod ? new JavaMethodCallElement((PsiMethod)result) : new VariableLookupItem((PsiVariable)result);
-          item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-          JavaCompletionUtil.qualify(item);
-          if (member instanceof PsiMethod) {
-            final PsiMethod method = (PsiMethod)member;
-            final PsiSubstitutor substitutor = SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, expectedType);
-            ((JavaMethodCallElement) item).setInferenceSubstitutor(substitutor);
-          }
-          final PsiType itemType = ((TypedLookupItem)item).getType();
-          if (itemType != null && expectedType.isAssignableFrom(itemType)) {
-            results.consume(item);
+          final LookupElement item = result instanceof PsiMethod ? createMethodElement((PsiMethod)result) : createFieldElement((PsiField)result);
+          if (item != null) {
+            results.consume(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(item));
           }
         }
       }
     }
   }
+
+  @Nullable
+  protected abstract LookupElement createFieldElement(PsiField field);
+
+  @Nullable
+  protected abstract LookupElement createMethodElement(PsiMethod method);
 }

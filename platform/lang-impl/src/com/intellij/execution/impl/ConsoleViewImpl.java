@@ -68,7 +68,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
@@ -102,6 +102,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, DataProvider, OccurenceNavigator {
+  
   private @NonNls String CONSOLE_VIEW_POPUP_MENU = "ConsoleView.PopupMenu";
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.ConsoleViewImpl");
 
@@ -115,35 +116,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     typedAction.setupHandler(new MyTypedHandler(typedAction.getHandler()));
   }
 
-  private final int CYCLIC_BUFFER_SIZE = getCycleBufferSize();
-  /**
-   * Main console usage scenario assumes the following:
-   * <pre>
-   * <ul>
-   *   <li>
-   *      console may be {@link #print(String, ConsoleViewContentType) provided} with the new text from any thread
-   *      (e.g. separate thread is charged for reading output of java application launched under IJ. That output is provided
-   *      to the console);
-   *   </li>
-   *   <li>current class flushes provided text to {@link Editor editor} used for representing it to end-user from EDT;</li>
-   *   <li>
-   *      dedicated buffer is kept to hold console text between the moment when it's provided to the current class
-   *      and flush to the editor;</li>
-   * </ul>
-   * </pre>
-   * <p/>
-   * It's also possible to configure console to use cyclic buffer in order to avoid unnecessary memory consumption.
-   * However, that implies possibility of the following situation - console user provides it with the great number
-   * of small chunks of text (that is the case for junit processing). It's inappropriate to use single {@link StringBuilder} as
-   * a buffer then because every time we see that cyclic buffer size is exceeded and we need to cut exceeding text from buffer
-   * start, trailing part is moved to the zero offset. That produces extensive CPU usage in case of great number of small messages
-   * where every such message exceeds cyclic buffer size.
-   * <p/>
-   * That is the reason why we use data structure similar to STL deque here - we hold number of string buffers of small size instead
-   * of the single big buffer. That means that every 'cut at the start' operation requires much less number of trailing symbols
-   * to be moved. Current constant defines desired size of that small buffers.
-   */
-  private static final int CYCLIC_BUFFER_UNIT_SIZE = 256;
   private final CommandLineFolding myCommandLineFolding = new CommandLineFolding();
 
   private final DisposedPsiManagerCheck myPsiDisposedCheck;
@@ -153,30 +125,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private Computable<ModalityState> myStateForUpdate;
 
-  private static int getCycleBufferSize() {
-    final String cycleBufferSizeProperty = System.getProperty("idea.cycle.buffer.size");
-    if (cycleBufferSizeProperty == null) return 1024 * 1024;
-    try {
-      return Integer.parseInt(cycleBufferSizeProperty) * 1024;
-    }
-    catch (NumberFormatException e) {
-      return 1024 * 1024;
-    }
-  }
-
-  private final boolean USE_CYCLIC_BUFFER = useCycleBuffer();
-
-  private static boolean useCycleBuffer() {
-    final String useCycleBufferProperty = System.getProperty("idea.cycle.buffer.size");
-    return useCycleBufferProperty == null || !"disabled".equalsIgnoreCase(useCycleBufferProperty);
-  }
-
   private static final int HYPERLINK_LAYER = HighlighterLayer.SELECTION - 123;
   private final Alarm mySpareTimeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
 
   private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
-  private final Set<ConsoleViewContentType> myDeferredTypes = new HashSet<ConsoleViewContentType>();
   private final ArrayList<AnAction> customActions = new ArrayList<AnAction>();
+  private final ConsoleBuffer myBuffer = new ConsoleBuffer();
 
   @TestOnly
   public Editor getEditor() {
@@ -211,10 +165,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     updateFoldings(0, myEditor.getDocument().getLineCount() - 1, true);
   }
 
-  private static class TokenInfo {
-    private final ConsoleViewContentType contentType;
-    private int startOffset;
-    private int endOffset;
+  static class TokenInfo {
+    final ConsoleViewContentType contentType;
+    int startOffset;
+    int endOffset;
     private final TextAttributes attributes;
 
     TokenInfo(final ConsoleViewContentType contentType, final int startOffset, final int endOffset) {
@@ -239,7 +193,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private static class HyperlinkTokenInfo extends TokenInfo {
+  static class HyperlinkTokenInfo extends TokenInfo {
     private HyperlinkInfo myHyperlinkInfo;
 
     HyperlinkTokenInfo(final ConsoleViewContentType contentType, final int startOffset, final int endOffset, HyperlinkInfo hyperlinkInfo) {
@@ -269,33 +223,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private int myContentSize;
 
   /**
-   * Buffer for deferred stdout, stderr and stdin output.
-   * <p/>
-   * Feel free to check rationale for using this approach at {@link #CYCLIC_BUFFER_UNIT_SIZE} contract.
-   */
-  private final Deque<StringBuilder> myDeferredOutput = new ArrayDeque<StringBuilder>();
-
-  /**
-   * Holds information about number of symbols stored at {@link #myDeferredOutput} collection.
-   */
-  private int myDeferredOutputLength;
-
-  /** Buffer for deferred stdin and stderr output. */
-  private StringBuffer myDeferredUserInput = new StringBuffer();
-
-  /**
    * Holds information about lexical division by offsets of the text already pushed to document.
    * <p/>
    * Target offsets are anchored to the document here.
    */
   private ArrayList<TokenInfo> myTokens = new ArrayList<TokenInfo>();
-
-  /**
-   * Holds information about lexical division by offsets of the text that is not yet pushed to document.
-   * <p/>
-   * Target offsets are anchored to the {@link #myDeferredOutput deferred buffer}.
-   */
-  private final List<TokenInfo> myDeferredTokens = new ArrayList<TokenInfo>();
 
   private final Hyperlinks myHyperlinks = new Hyperlinks();
   private final TIntObjectHashMap<ConsoleFolding> myFolding = new TIntObjectHashMap<ConsoleFolding>();
@@ -416,14 +348,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       // code and alarm clear request (in EDT) my occur print event in non-EDT thread
       // and unfortunately it is a real usecase and happens when switching active test in
       // tests console.
-      myContentSize = Math.max(0, myContentSize - myDeferredOutputLength);
-
-      myDeferredOutput.clear();
-      myDeferredOutput.add(new StringBuilder(CYCLIC_BUFFER_UNIT_SIZE));
-      myDeferredOutputLength = 0;
-      myDeferredTypes.clear();
-      myDeferredUserInput = new StringBuffer();
-      myDeferredTokens.clear();
+      myContentSize = Math.max(0, myContentSize - myBuffer.getLength());
+      myBuffer.clear();
     }
     myFlushAlarm.cancelAllRequests();
     myFlushAlarm.addRequest(myClearRequest, 0, getStateForUpdate());
@@ -435,7 +361,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         flushDeferredText(false);
         if (myEditor == null) return;
         int moveOffset = offset;
-        if (USE_CYCLIC_BUFFER && moveOffset >= myEditor.getDocument().getTextLength()) {
+        if (myBuffer.isUseCyclicBuffer() && moveOffset >= myEditor.getDocument().getTextLength()) {
           moveOffset = 0;
         }
         myEditor.getCaretModel().moveToOffset(moveOffset);
@@ -462,7 +388,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   public boolean hasDeferredOutput() {
     synchronized (LOCK) {
-      return myDeferredOutputLength > 0;
+      return myBuffer.getLength() > 0;
     }
   }
 
@@ -531,9 +457,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       mySpareTimeAlarm.cancelAllRequests();
       disposeEditor();
       synchronized (LOCK) {
-        myDeferredOutput.clear();
-        myDeferredOutput.add(new StringBuilder());
-        myDeferredOutputLength = 0;
+        myBuffer.clear();
       }
       myEditor = null;
     }
@@ -551,44 +475,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private void printHyperlink(String s, ConsoleViewContentType contentType, HyperlinkInfo info) {
     synchronized (LOCK) {
-      int numberOfSymbolsToProceed = s.length();
-      if (contentType != ConsoleViewContentType.USER_INPUT) {
-        numberOfSymbolsToProceed = trimDeferredOutputIfNecessary(s.length());
-      }
-
-      if (numberOfSymbolsToProceed <= 0) {
-        return;
-      }
-
-      if (numberOfSymbolsToProceed < s.length()) {
-        s = s.substring(s.length() - numberOfSymbolsToProceed);
-      }
-
-      myDeferredTypes.add(contentType);
-
-      s = StringUtil.convertLineSeparators(s, !SystemInfo.isMac);
-      myContentSize += s.length();
-      myDeferredOutputLength += s.length();
-      StringBuilder bufferToUse;
-      if (myDeferredOutput.isEmpty()) {
-        myDeferredOutput.add(bufferToUse = new StringBuilder(s.length()));
-      }
-      else {
-        StringBuilder lastBuffer = myDeferredOutput.getLast();
-        bufferToUse = lastBuffer;
-        if (USE_CYCLIC_BUFFER) {
-          if (lastBuffer.length() + s.length() > CYCLIC_BUFFER_UNIT_SIZE) {
-            myDeferredOutput.addLast(bufferToUse = new StringBuilder(CYCLIC_BUFFER_UNIT_SIZE));
-          }
-        }
-      }
-      
-      bufferToUse.append(s);
-      if (contentType == ConsoleViewContentType.USER_INPUT) {
-        myDeferredUserInput.append(s);
-      }
-
-      addToken(s.length(), info, contentType, myDeferredTokens);
+      Pair<String,Integer> pair = myBuffer.print(s, contentType, info);
+      s = pair.first;
+      myContentSize += s.length() - pair.second;
 
       if (s.indexOf('\n') >= 0 || s.indexOf('\r') >= 0) {
         if (contentType == ConsoleViewContentType.USER_INPUT) {
@@ -596,120 +485,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         }
       }
       if (myFlushAlarm.getActiveRequestCount() == 0 && myEditor != null && !myFlushAlarm.isDisposed()) {
-        final boolean shouldFlushNow = USE_CYCLIC_BUFFER && myDeferredOutputLength > CYCLIC_BUFFER_SIZE;
+        final boolean shouldFlushNow = myBuffer.isUseCyclicBuffer() && myBuffer.getLength() >= myBuffer.getCyclicBufferSize();
         myFlushAlarm.addRequest(myFlushDeferredRunnable, shouldFlushNow ? 0 : FLUSH_DELAY, getStateForUpdate());
       }
     }
-  }
-
-  /**
-   * IJ console works as follows - it receives managed process outputs from dedicated thread that serves that process and
-   * pushes it to the {@link Document document} of editor used to represent process console. Important point here is that process
-   * output is received in a control flow of the thread over than EDT but push to the document is performed from EDT. Hence, we
-   * have a potential situation when particular process outputs a lot and EDT is busy or push to the document is performed slowly.
-   * <p/>
-   * We don't want to keep too many information from the underlying process then and want to trim text buffer that holds text
-   * to push to the document then. Current method serves exactly that purpose, i.e. it's expected to be called when new chunk of
-   * text is received from the underlying process and trims existing text buffer if necessary.
-   *
-   * @param numberOfNewSymbols    number of symbols read from the managed process output
-   * @return                      number of newly read symbols that should be accepted
-   */
-  @SuppressWarnings({"ForLoopReplaceableByForEach"})
-  private int trimDeferredOutputIfNecessary(final int numberOfNewSymbols) {
-    if (!USE_CYCLIC_BUFFER || myDeferredOutputLength <= 0 || myDeferredOutputLength + numberOfNewSymbols <= CYCLIC_BUFFER_SIZE) {
-      return numberOfNewSymbols;
-    }
-
-    final int numberOfSymbolsToRemove = myDeferredOutputLength + numberOfNewSymbols - CYCLIC_BUFFER_SIZE;
-    myDeferredTypes.clear();
-
-    int removedSymbolsNumber = 0;
-    int endIndex = -1;
-    Iterator<StringBuilder> iterator = myDeferredOutput.iterator();
-    StringBuilder currentBuffer = iterator.next();
-    int bufferOffset = 0;
-    for (int i = 0; i < myDeferredTokens.size(); i++) {
-      TokenInfo tokenInfo = myDeferredTokens.get(i);
-
-      if (removedSymbolsNumber < numberOfSymbolsToRemove) {
-        int tokenLength = tokenInfo.getLength();
-
-        // Don't remove input text.
-        if (tokenInfo.contentType == ConsoleViewContentType.USER_INPUT) {
-          tokenInfo.startOffset -= removedSymbolsNumber;
-          tokenInfo.endOffset -= removedSymbolsNumber;
-          removedSymbolsNumber += tokenLength;
-          bufferOffset += tokenLength;
-          continue;
-        }
-
-        int remainingNumberOfSymbolsToRemove = numberOfSymbolsToRemove - removedSymbolsNumber;
-        int numberOfSymbolsToRemoveNow = Math.min(remainingNumberOfSymbolsToRemove, tokenLength);
-        while (numberOfSymbolsToRemoveNow > 0) {
-          int diff = numberOfSymbolsToRemoveNow - currentBuffer.length() - bufferOffset;
-          int endDeleteOffset = Math.min(bufferOffset + numberOfSymbolsToRemoveNow, currentBuffer.length());
-          int numberOfSymbolsRemovedFromCurrentBuffer = endDeleteOffset - bufferOffset;
-          numberOfSymbolsToRemoveNow -= numberOfSymbolsRemovedFromCurrentBuffer;
-          removedSymbolsNumber += numberOfSymbolsRemovedFromCurrentBuffer;
-          myDeferredOutputLength -= numberOfSymbolsRemovedFromCurrentBuffer;
-          currentBuffer.delete(bufferOffset, endDeleteOffset);
-          if (diff >= 0) {
-            iterator.remove();
-            if (iterator.hasNext()) {
-              currentBuffer = iterator.next();
-            }
-            else if (numberOfSymbolsToRemove > 0) {
-              assert false;
-            }
-            
-            bufferOffset = 0;
-          }
-        }
-        if (remainingNumberOfSymbolsToRemove < tokenLength) {
-          tokenInfo.startOffset += remainingNumberOfSymbolsToRemove;
-          endIndex = i;
-        }
-        else {
-          endIndex = i + 1;
-        }
-      }
-
-      if (removedSymbolsNumber < numberOfSymbolsToRemove) {
-        continue;
-      }
-
-      tokenInfo.startOffset -= numberOfSymbolsToRemove;
-      tokenInfo.endOffset -= numberOfSymbolsToRemove;
-      myDeferredTypes.add(tokenInfo.contentType);
-    }
-
-    if (endIndex < 0) {
-      myDeferredTokens.clear();
-    }
-    else if (endIndex > 0) {
-      myDeferredTokens.subList(0, endIndex).clear();
-    }
-
-    if (!myDeferredTokens.isEmpty()) {
-      TokenInfo tokenInfo = myDeferredTokens.get(0);
-      if (tokenInfo.startOffset > 0) {
-        final HyperlinkInfo hyperlinkInfo = tokenInfo.getHyperlinkInfo();
-        myDeferredTokens.add(0, hyperlinkInfo != null ? new HyperlinkTokenInfo(ConsoleViewContentType.USER_INPUT, 0, tokenInfo.startOffset, hyperlinkInfo)
-                                                      : new TokenInfo(ConsoleViewContentType.USER_INPUT, 0, tokenInfo.startOffset));
-        myDeferredTypes.add(ConsoleViewContentType.USER_INPUT);
-      }
-    }
-
-    myContentSize -= removedSymbolsNumber;
-    if (numberOfNewSymbols + myDeferredOutputLength > CYCLIC_BUFFER_SIZE) {
-      int result = CYCLIC_BUFFER_SIZE - myDeferredOutputLength;
-      if (result < 0) {
-        return 0;
-      }
-      return result;
-    }
-    return numberOfNewSymbols;
   }
 
   protected void beforeExternalAddContentToDocument(int length, ConsoleViewContentType contentType) {
@@ -718,24 +497,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void addToken(int length, @Nullable HyperlinkInfo info, ConsoleViewContentType contentType) {
-    addToken(length, info, contentType, myTokens);
-  }
-
-  private static void addToken(int length, @Nullable HyperlinkInfo info, ConsoleViewContentType contentType, List<TokenInfo> tokens) {
-    int startOffset = 0;
-    if (!tokens.isEmpty()) {
-      final TokenInfo lastToken = tokens.get(tokens.size() - 1);
-      if (lastToken.contentType == contentType && info == lastToken.getHyperlinkInfo()) {
-        lastToken.endOffset += length; // optimization
-        return;
-      }
-      else {
-        startOffset = lastToken.endOffset;
-      }
-    }
-
-    tokens.add(info != null ? new HyperlinkTokenInfo(contentType, startOffset, startOffset + length, info)
-                            : new TokenInfo(contentType, startOffset, startOffset + length));
+    ConsoleUtil.addToken(length, info, contentType, myTokens);
   }
 
   private ModalityState getStateForUpdate() {
@@ -783,50 +545,29 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }, null, DocCommandGroupId.noneGroupId(document));
     }
 
-    final StringBuilder buffer = new StringBuilder();
+    
     final String text;
     final Collection<ConsoleViewContentType> contentTypes;
     int deferredTokensSize;
     synchronized (LOCK) {
       if (myOutputPaused) return;
-      if (myDeferredOutput.isEmpty() || (myDeferredOutput.size() == 1 && myDeferredOutput.getFirst().length() <= 0)) return;
+      if (myBuffer.isEmpty()) return;
       if (myEditor == null) return;
 
-      if (myDeferredOutput.size() > 1) {
-        for (StringBuilder builder : myDeferredOutput) {
-          buffer.append(builder);
-        }
-        text = buffer.substring(0);
-      }
-      else if (myDeferredOutput.size() == 1) {
-        text = myDeferredOutput.getFirst().substring(0);
-      }
-      else {
-        return;
-      }
+      text = myBuffer.getText();
       
-      contentTypes = Collections.unmodifiableCollection(new HashSet<ConsoleViewContentType>(myDeferredTypes));
-      for (TokenInfo deferredToken : myDeferredTokens) {
+      contentTypes = Collections.unmodifiableCollection(new HashSet<ConsoleViewContentType>(myBuffer.getDeferredTokenTypes()));
+      List<TokenInfo> deferredTokens = myBuffer.getDeferredTokens();
+      for (TokenInfo deferredToken : deferredTokens) {
         addToken(deferredToken.getLength(), deferredToken.getHyperlinkInfo(), deferredToken.contentType);
       }
-      deferredTokensSize = myDeferredTokens.size();
-      myDeferredTokens.clear();
-      myDeferredTypes.clear();
-      if (USE_CYCLIC_BUFFER) {
-        myDeferredOutput.clear();
-        myDeferredOutput.add(new StringBuilder(CYCLIC_BUFFER_SIZE));
-      }
-      else {
-        for (StringBuilder builder : myDeferredOutput) {
-          builder.setLength(0);
-        }
-      }
-      myDeferredOutputLength = 0;
+      deferredTokensSize = deferredTokens.size();
+      myBuffer.clear();
     }
     final Document document = myEditor.getDocument();
     final int oldLineCount = document.getLineCount();
     final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == document.getTextLength();
-    boolean cycleUsed = USE_CYCLIC_BUFFER && document.getTextLength() + text.length() > CYCLIC_BUFFER_SIZE;
+    boolean cycleUsed = myBuffer.isUseCyclicBuffer() && document.getTextLength() + text.length() > myBuffer.getCyclicBufferSize();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         int offset = myEditor.getCaretModel().getOffset();
@@ -887,12 +628,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void flushDeferredUserInput() {
-    final String text = myDeferredUserInput.substring(0, myDeferredUserInput.length());
-    final int index = Math.max(text.lastIndexOf('\n'), text.lastIndexOf('\r'));
-    if (index < 0) return;
-    final String textToSend = text.substring(0, index + 1);
-    myDeferredUserInput.setLength(0);
-    myDeferredUserInput.append(text.substring(index + 1));
+    final String textToSend = myBuffer.cutFirstUserInputLine();
+    if (textToSend == null) {
+      return;
+    }
     myFlushUserInputAlarm.addRequest(new Runnable() {
       public void run() {
         if (myState.isRunning()) {
@@ -980,7 +719,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     });
 
 
-    final int bufferSize = USE_CYCLIC_BUFFER ? CYCLIC_BUFFER_SIZE : 0;
+    final int bufferSize = myBuffer.isUseCyclicBuffer() ? myBuffer.getCyclicBufferSize() : 0;
     editor.getDocument().setCyclicBufferSize(bufferSize);
 
     editor.putUserData(CONSOLE_VIEW_IN_EDITOR_VIEW, this);
@@ -1589,7 +1328,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     public void execute(final ConsoleViewImpl consoleView, final DataContext context) {
       final int maxSize = UISettings.getInstance().CONSOLE_COMMAND_HISTORY_LIMIT;
       synchronized (consoleView.LOCK) {
-        String str = consoleView.myDeferredUserInput.toString();
+        String str = consoleView.myBuffer.getUserInput();
         if (StringUtil.isNotEmpty(str)) {
           consoleView.myHistory.remove(str);
           consoleView.myHistory.add(str);
@@ -1917,6 +1656,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
    */
   private void insertUserText(final String s, int offset) {
     final ConsoleViewImpl consoleView = this;
+    final ConsoleBuffer buffer = consoleView.myBuffer;
     final Editor editor = consoleView.myEditor;
     final Document document = editor.getDocument();
     final int startOffset;
@@ -1938,7 +1678,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         return;
       }
 
-      final int deferredOffset = myContentSize - consoleView.myDeferredOutputLength - consoleView.myDeferredUserInput.length();
+      final int deferredOffset = myContentSize - buffer.getLength() - buffer.getUserInputLength();
       if (offset > info.endOffset) {
         startOffset = info.endOffset;
       }
@@ -1946,7 +1686,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         startOffset = Math.max(deferredOffset, Math.max(info.startOffset, offset));
       }
 
-      consoleView.myDeferredUserInput.insert(startOffset - deferredOffset, s);
+      buffer.addUserText(startOffset - deferredOffset, s);
 
       int charCountToAdd = s.length();
       info.endOffset += charCountToAdd;
@@ -1972,6 +1712,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       return;
     }
     final ConsoleViewImpl consoleView = this;
+    final ConsoleBuffer buffer = consoleView.myBuffer;
     final Editor editor = consoleView.myEditor;
     final Document document = editor.getDocument();
     final int startOffset;
@@ -1987,9 +1728,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         editor.getSelectionModel().removeSelection();
         return;
       }
-      if (consoleView.myDeferredUserInput.length() == 0) return;
+      if (buffer.isEmpty()) return;
 
-      final int deferredOffset = myContentSize - consoleView.myDeferredOutputLength - consoleView.myDeferredUserInput.length();
+      final int deferredOffset = myContentSize - buffer.getLength() - buffer.getUserInputLength();
 
       startOffset = getStartOffset(start, info, deferredOffset);
       endOffset = getEndOffset(end, info);
@@ -2003,7 +1744,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
       int charCountToReplace = s.length() - endOffset + startOffset;
 
-      consoleView.myDeferredUserInput.replace(startOffset - deferredOffset, endOffset - deferredOffset, s);
+      buffer.replaceUserText(startOffset - deferredOffset, endOffset - deferredOffset, s);
 
       info.endOffset += charCountToReplace;
       if (info.startOffset == info.endOffset) {
@@ -2026,6 +1767,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
    */
   private void deleteUserText(int offset, int length) {
     ConsoleViewImpl consoleView = this;
+    ConsoleBuffer buffer = consoleView.myBuffer;
     final Editor editor = consoleView.myEditor;
     final Document document = editor.getDocument();
     final int startOffset;
@@ -2035,9 +1777,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (consoleView.myTokens.isEmpty()) return;
       final TokenInfo info = consoleView.myTokens.get(consoleView.myTokens.size() - 1);
       if (info.contentType != ConsoleViewContentType.USER_INPUT) return;
-      if (consoleView.myDeferredUserInput.length() == 0) return;
+      if (myBuffer.getUserInputLength() == 0) return;
 
-      final int deferredOffset = myContentSize - consoleView.myDeferredOutputLength - consoleView.myDeferredUserInput.length();
+      final int deferredOffset = myContentSize - buffer.getLength() - buffer.getUserInputLength();
       startOffset = getStartOffset(offset, info, deferredOffset);
       endOffset = getEndOffset(offset + length, info);
       if (startOffset == -1 ||
@@ -2049,7 +1791,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         return;
       }
 
-      consoleView.myDeferredUserInput.delete(startOffset - deferredOffset, endOffset - deferredOffset);
+      buffer.removeUserText(startOffset - deferredOffset, endOffset - deferredOffset);
       int charCountToDelete = endOffset - startOffset;
 
       info.endOffset -= charCountToDelete;

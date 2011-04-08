@@ -107,6 +107,10 @@ public class LightVariableBuilder<T extends LightVariableBuilder> extends LightE
   public PsiType getTypeNoResolve() {
     return getType();
   }
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
 
   public Icon getElementIcon(final int flags) {
     final RowIcon baseIcon = createLayeredIcon(myBaseIcon, ElementPresentationUtil.getFlags(this, false));

@@ -15,6 +15,7 @@ package org.zmlx.hg4idea.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 import org.zmlx.hg4idea.command.HgResolveStatusEnum;
@@ -61,18 +62,22 @@ public class HgRunConflictResolverDialog extends DialogWrapper {
   private void onChangeRepository() {
     VirtualFile repo = repositorySelector.getRepository();
     HgResolveCommand command = new HgResolveCommand(project);
-    Map<HgFile, HgResolveStatusEnum> status = command.list(repo);
-    DefaultListModel model = new DefaultListModel();
-    for (Map.Entry<HgFile, HgResolveStatusEnum> entry : status.entrySet()) {
-      if (entry.getValue() == HgResolveStatusEnum.UNRESOLVED) {
-        model.addElement(entry.getKey().getRelativePath());
+    command.list(repo, new Consumer<Map<HgFile, HgResolveStatusEnum>>() {
+      @Override
+      public void consume(Map<HgFile, HgResolveStatusEnum> status) {
+        DefaultListModel model = new DefaultListModel();
+        for (Map.Entry<HgFile, HgResolveStatusEnum> entry : status.entrySet()) {
+          if (entry.getValue() == HgResolveStatusEnum.UNRESOLVED) {
+            model.addElement(entry.getKey().getRelativePath());
+          }
+        }
+        setOKActionEnabled(!model.isEmpty());
+        if (model.isEmpty()) {
+          model.addElement("No conflicts to resolve");
+        }
+        conflictsList.setModel(model);
       }
-    }
-    setOKActionEnabled(!model.isEmpty());
-    if (model.isEmpty()) {
-      model.addElement("No conflicts to resolve");
-    }
-    conflictsList.setModel(model);
+    });
   }
 
 }

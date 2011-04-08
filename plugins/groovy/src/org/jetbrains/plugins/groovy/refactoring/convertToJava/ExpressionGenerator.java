@@ -65,7 +65,7 @@ import java.util.*;
 /**
  * @author Maxim.Medvedev
  */
-public class ExpressionGenerator extends GroovyRecursiveElementVisitor {
+public class ExpressionGenerator extends Generator {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ExpressionGenerator");
 
   private StringBuilder builder;
@@ -84,10 +84,12 @@ public class ExpressionGenerator extends GroovyRecursiveElementVisitor {
     this(new StringBuilder(), new ExpressionContext(project));
   }
 
+  @Override
   public StringBuilder getBuilder() {
     return builder;
   }
 
+  @Override
   public ExpressionContext getContext() {
     return context;
   }

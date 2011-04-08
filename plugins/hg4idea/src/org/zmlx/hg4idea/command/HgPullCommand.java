@@ -16,7 +16,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -31,8 +35,6 @@ public class HgPullCommand {
   private boolean update = true;
   private boolean rebase = !update;
   
-  private final HgCommandAuthenticator authenticator = new HgCommandAuthenticator();
-
   public HgPullCommand(Project project, @NotNull VirtualFile repo) {
     this.project = project;
     this.repo = repo;
@@ -54,7 +56,7 @@ public class HgPullCommand {
     this.source = source;
   }
 
-  public HgCommandResult execute() {
+  public void execute(@Nullable final HgCommandResultHandler resultHandler) {
     List<String> arguments = new LinkedList<String>();
     if (update) {
       arguments.add("--update");
@@ -69,11 +71,17 @@ public class HgPullCommand {
 
     arguments.add(source);
 
-    HgCommandResult result = authenticator.executeCommandAndAuthenticateIfNecessary(project, repo, source, "pull", arguments, arguments.size()-1);
-
-    project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
-
-    return result;
+    final HgCommandExecutor executor = new HgCommandExecutor(project);
+    executor.setShowOutput(true);
+    executor.execute(repo, "pull", arguments, new HgCommandResultHandler() {
+      @Override
+      public void process(@Nullable HgCommandResult result) {
+        project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
+        if (resultHandler != null) {
+          resultHandler.process(result);
+        }
+      }
+    });
   }
 
 }

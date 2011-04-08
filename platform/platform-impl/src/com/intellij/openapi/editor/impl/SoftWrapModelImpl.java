@@ -635,6 +635,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
           + "%s%nDocument:%n%s%nFold regions: %s",
           task, myDataMapper, myEditor.getDocument().getText(), Arrays.toString(myEditor.getFoldingModel().fetchTopLevel())), e);
       }
+      myEditor.getFoldingModel().rebuild();
       myDataMapper.release();
       myApplianceManager.reset();
       myStorage.removeAll();

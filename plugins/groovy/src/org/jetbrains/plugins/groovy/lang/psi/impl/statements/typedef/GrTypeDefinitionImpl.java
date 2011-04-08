@@ -571,6 +571,11 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
     return GrTypeParameter.EMPTY_ARRAY;
   }
 
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
+
   @Nullable
   public Icon getIcon(int flags) {
     Icon icon = getIconInner();

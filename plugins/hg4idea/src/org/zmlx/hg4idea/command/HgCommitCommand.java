@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -68,7 +70,7 @@ public class HgCommitCommand {
       for (HgFile hgFile : files) {
         parameters.add(hgFile.getRelativePath());
       }
-      ensureSuccess(HgCommandService.getInstance(project).execute(repo, "commit", parameters));
+      ensureSuccess(new HgCommandExecutor(project).executeInCurrentThread(repo, "commit", parameters));
       project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
     } catch (IOException e) {
       LOG.info(e);

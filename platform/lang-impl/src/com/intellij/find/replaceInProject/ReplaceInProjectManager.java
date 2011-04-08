@@ -362,7 +362,7 @@ public class ReplaceInProjectManager {
     for (final Usage usage : selectedUsages) {
       final VirtualFile file = ((UsageInFile)usage).getFile();
 
-      if (!file.isWritable()) {
+      if (file != null && !file.isWritable()) {
         if (readOnlyFiles == null) readOnlyFiles = new HashSet<VirtualFile>();
         readOnlyFiles.add(file);
       }

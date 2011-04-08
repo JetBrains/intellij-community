@@ -382,7 +382,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
     else if (browseMode == BrowseMode.Declaration) {
       final PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
-      final PsiElement resolvedElement = ref != null ? ref.resolve() : null;
+      final PsiElement resolvedElement = ref != null ? resolve(ref) : null;
 
       final PsiElement[] targetElements = GotoDeclarationAction.findTargetElementsNoVS(myProject, editor, offset);
       final PsiElement elementAtPointer = file.findElementAt(offset);

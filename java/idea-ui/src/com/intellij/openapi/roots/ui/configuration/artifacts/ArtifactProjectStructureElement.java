@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
+import com.intellij.facet.Facet;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -25,9 +26,11 @@ import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.artifacts.PackagingElementPath;
 import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
+import com.intellij.packaging.impl.elements.FacetBasedPackagingElement;
 import com.intellij.packaging.impl.elements.LibraryPackagingElement;
 import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,30 +67,46 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
     ArtifactUtil.processPackagingElements(myArtifactsStructureContext.getRootElement(artifact), null, new PackagingElementProcessor<PackagingElement<?>>() {
       @Override
       public boolean process(@NotNull PackagingElement<?> packagingElement, @NotNull PackagingElementPath path) {
-        if (packagingElement instanceof ModuleOutputPackagingElement) {
-          final Module module = ((ModuleOutputPackagingElement)packagingElement).findModule(myArtifactsStructureContext);
-          if (module != null) {
-            usages.add(createUsage(packagingElement, path, new ModuleProjectStructureElement(myContext, module)));
-          }
-        }
-        else if (packagingElement instanceof LibraryPackagingElement) {
-          final Library library = ((LibraryPackagingElement)packagingElement).findLibrary(myArtifactsStructureContext);
-          if (library != null) {
-            usages.add(createUsage(packagingElement, path,
-                                   new LibraryProjectStructureElement(ArtifactProjectStructureElement.this.myContext, library)));
-          }
-        }
-        else if (packagingElement instanceof ArtifactPackagingElement) {
-          final Artifact usedArtifact = ((ArtifactPackagingElement)packagingElement).findArtifact(myArtifactsStructureContext);
-          if (usedArtifact != null) {
-            final ArtifactProjectStructureElement artifactElement = myArtifactsStructureContext.getOrCreateArtifactElement(usedArtifact);
-            usages.add(createUsage(packagingElement, path, artifactElement));
-          }
+        ProjectStructureElement element = getProjectStructureElementFor(packagingElement, ArtifactProjectStructureElement.this.myContext,
+                                                                        ArtifactProjectStructureElement.this.myArtifactsStructureContext);
+        if (element != null) {
+          usages.add(createUsage(packagingElement, path, element));
         }
         return true;
       }
     }, myArtifactsStructureContext, false, artifact.getArtifactType());
     return usages;
+  }
+
+  @Nullable
+  public static ProjectStructureElement getProjectStructureElementFor(PackagingElement<?> packagingElement,
+                                                                       final StructureConfigurableContext context,
+                                                                       final ArtifactsStructureConfigurableContext artifactsStructureContext) {
+    if (packagingElement instanceof ModuleOutputPackagingElement) {
+      final Module module = ((ModuleOutputPackagingElement)packagingElement).findModule(artifactsStructureContext);
+      if (module != null) {
+        return new ModuleProjectStructureElement(context, module);
+      }
+    }
+    else if (packagingElement instanceof LibraryPackagingElement) {
+      final Library library = ((LibraryPackagingElement)packagingElement).findLibrary(artifactsStructureContext);
+      if (library != null) {
+        return new LibraryProjectStructureElement(context, library);
+      }
+    }
+    else if (packagingElement instanceof ArtifactPackagingElement) {
+      final Artifact usedArtifact = ((ArtifactPackagingElement)packagingElement).findArtifact(artifactsStructureContext);
+      if (usedArtifact != null) {
+        return artifactsStructureContext.getOrCreateArtifactElement(usedArtifact);
+      }
+    }
+    else if (packagingElement instanceof FacetBasedPackagingElement) {
+      Facet facet = ((FacetBasedPackagingElement)packagingElement).findFacet(artifactsStructureContext);
+      if (facet != null) {
+        return new FacetProjectStructureElement(context, facet);
+      }
+    }
+    return null;
   }
 
   private UsageInArtifact createUsage(PackagingElement<?> packagingElement, PackagingElementPath path,

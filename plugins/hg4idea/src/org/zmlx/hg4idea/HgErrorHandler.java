@@ -13,7 +13,7 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.openapi.vcs.VcsException;
-import org.zmlx.hg4idea.command.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 public abstract class HgErrorHandler {
   

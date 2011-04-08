@@ -44,13 +44,13 @@ public class GrForInClauseImpl extends GroovyPsiElementImpl implements GrForInCl
     return "In clause";
   }
 
-  public GrParameter[] getDeclaredVariables() {
-    GrParameter param = findChildByClass(GrParameter.class);
-    return param != null ? new GrParameter[]{param} : GrParameter.EMPTY_ARRAY;
+  public GrParameter getDeclaredVariable() {
+    return findChildByClass(GrParameter.class);
   }
 
   public GrParameter[] getParameters() {
-    return getDeclaredVariables();
+    final GrParameter declaredVariable = getDeclaredVariable();
+    return declaredVariable == null ? GrParameter.EMPTY_ARRAY : new GrParameter[]{declaredVariable};
   }
 
   public GrParameterList getParameterList() {

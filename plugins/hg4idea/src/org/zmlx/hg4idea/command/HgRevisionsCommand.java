@@ -23,6 +23,8 @@ import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -61,7 +63,7 @@ abstract class HgRevisionsCommand {
 
   @Nullable
   protected abstract HgCommandResult execute(
-    HgCommandService service, VirtualFile repo, String template, int limit, HgFile hgFile
+    HgCommandExecutor executor, VirtualFile repo, String template, int limit, HgFile hgFile
   );
 
   public final List<HgFileRevision> execute(HgFile hgFile, int limit, boolean includeFiles) {
@@ -69,7 +71,7 @@ abstract class HgRevisionsCommand {
       return Collections.emptyList();
     }
 
-    HgCommandService hgCommandService = HgCommandService.getInstance(project);
+    HgCommandExecutor hgCommandExecutor = new HgCommandExecutor(project);
 
     String template = includeFiles ? LONG_TEMPLATE : SHORT_TEMPLATE;
     int itemCount = includeFiles ? LONG_ITEM_COUNT : SHORT_ITEM_COUNT;
@@ -77,7 +79,7 @@ abstract class HgRevisionsCommand {
     FilePath originalFileName = HgUtil.getOriginalFileName(hgFile.toFilePath(), ChangeListManager.getInstance(project));
     HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);
     HgCommandResult result = execute(
-      hgCommandService, hgFile.getRepo(), template, limit, originalHgFile
+      hgCommandExecutor, hgFile.getRepo(), template, limit, originalHgFile
     );
 
     List<HgFileRevision> revisions = new LinkedList<HgFileRevision>();

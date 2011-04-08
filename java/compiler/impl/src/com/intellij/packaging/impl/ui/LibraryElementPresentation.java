@@ -58,11 +58,6 @@ public class LibraryElementPresentation extends PackagingElementPresentation {
   }
 
   @Override
-  public Object getSourceObject() {
-    return myLibrary;
-  }
-
-  @Override
   public void navigateToSource() {
     myContext.selectLibrary(myLibrary);
   }

@@ -18,12 +18,10 @@ package git4idea.update;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.util.continuation.Continuation;
-import com.intellij.util.continuation.ContinuationContext;
-import com.intellij.util.continuation.TaskDescriptor;
-import com.intellij.util.continuation.Where;
+import com.intellij.util.continuation.*;
 import com.intellij.util.ui.UIUtil;
 
 /**
@@ -32,6 +30,7 @@ import com.intellij.util.ui.UIUtil;
  *         Time: 2:59 PM
  */
 public abstract class GitUpdateLikeProcess {
+  public static final String GIT_UPDATING = "Git: updating";
   private final Project myProject;
   private GeneralSettings myGeneralSettings;
   private ProjectManagerEx myProjectManager;
@@ -60,22 +59,25 @@ public abstract class GitUpdateLikeProcess {
       }
     });
 
-    final Continuation continuation = new Continuation(myProject, true);
-    final ContinuationContext.GatheringContinuationContext initContext = new ContinuationContext.GatheringContinuationContext();
-    initContext.next(new TaskDescriptor("Git: updating", Where.POOLED) {
-        @Override
-        public void run(final ContinuationContext context) {
-          runImpl(context);
-        }
-      }, new TaskDescriptor("", Where.AWT) {
+    final Continuation continuation = Continuation.createForCurrentProgress(myProject, true, GIT_UPDATING);
+    final GatheringContinuationContext initContext = new GatheringContinuationContext();
+    final TaskDescriptor returnFlagsBack = new TaskDescriptor("", Where.AWT) {
       @Override
       public void run(ContinuationContext context) {
         myProjectManager.unblockReloadingProjectOnExternalChanges();
         myGeneralSettings.setSaveOnFrameDeactivation(saveOnFrameDeactivation);
         myGeneralSettings.setSyncOnFrameActivation(syncOnFrameDeactivation);
       }
-    });
-    continuation.runAndWait(initContext.getList());
+    };
+    final TaskDescriptor[] next = {new TaskDescriptor(GIT_UPDATING, Where.POOLED) {
+        @Override
+        public void run(final ContinuationContext context) {
+          runImpl(context);
+        }
+      }, returnFlagsBack};
+    returnFlagsBack.setHaveMagicCure(true);
+    initContext.next(next);
+    continuation.run(initContext.getList());
   }
 
   protected abstract void runImpl(ContinuationContext context);

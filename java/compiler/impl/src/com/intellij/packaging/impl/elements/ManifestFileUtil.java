@@ -229,7 +229,7 @@ public class ManifestFileUtil {
     if (classpathText != null) {
       classpath.addAll(StringUtil.split(classpathText, " "));
     }
-    return new ManifestFileConfiguration(path, classpath, mainClass);
+    return new ManifestFileConfiguration(path, classpath, mainClass, manifestFile.isWritable());
   }
 
   public static List<String> getClasspathForElements(List<? extends PackagingElement<?>> elements, PackagingElementResolvingContext context, final ArtifactType artifactType) {

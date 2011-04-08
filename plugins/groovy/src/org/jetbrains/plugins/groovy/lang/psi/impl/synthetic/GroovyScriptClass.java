@@ -399,6 +399,11 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     return PsiImplUtil.getOriginalElement(this, myFile);
   }
 
+  @Override
+  protected boolean isVisibilitySupported() {
+    return true;
+  }
+
   @Nullable
   public Icon getIcon(int flags) {
     final Icon icon = myFile.getIcon(flags);

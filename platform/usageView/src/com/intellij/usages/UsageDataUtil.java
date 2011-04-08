@@ -41,7 +41,7 @@ public class UsageDataUtil {
       for (Usage usage : usages) {
         if (usage instanceof UsageInFile) {
           VirtualFile file = ((UsageInFile)usage).getFile();
-          if (file.isValid()) {
+          if (file != null && file.isValid()) {
             result.add(file);
           }
         }

@@ -38,8 +38,9 @@ public class GrFinallyClauseImpl extends GroovyPsiElementImpl implements GrFinal
     return "Finally clause";
   }
 
+  @NotNull
   public GrOpenBlock getBody() {
-    return findChildByClass(GrOpenBlock.class);
+    return findNotNullChildByClass(GrOpenBlock.class);
   }
 
 }

@@ -29,6 +29,8 @@ import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.FocusManager;
 import javax.swing.*;
 import javax.swing.event.CaretListener;
@@ -235,6 +237,23 @@ public final class SwingCleanuper implements ApplicationComponent{
                 if (isCAccessibleListener(each)) {
                   slider.removeChangeListener(each);
                 }
+              }
+            }
+
+            AccessibleContext ac = c.getAccessibleContext();
+            if (ac != null) {
+              try {
+                Field field = ReflectionUtil.findField(ac.getClass(), Object.class, "nativeAXResource");
+                field.setAccessible(true);
+                Object resource = field.get(ac);
+                if (resource != null && resource.getClass().getName().equals("apple.awt.CAccessible")) {
+                  Field accessible = ReflectionUtil.findField(resource.getClass(), Accessible.class, "accessible");
+                  accessible.setAccessible(true);
+                  accessible.set(resource, null);
+                }
+              }
+              catch (Exception e) {
+               return;
               }
             }
           }

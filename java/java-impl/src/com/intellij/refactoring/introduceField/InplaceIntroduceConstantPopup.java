@@ -62,7 +62,7 @@ public class InplaceIntroduceConstantPopup {
   private PsiExpression myExpr;
   private final PsiLocalVariable myLocalVariable;
   private final PsiExpression[] myOccurrences;
-  private final TypeSelectorManagerImpl myTypeSelectorManager;
+  private TypeSelectorManagerImpl myTypeSelectorManager;
   private PsiElement myAnchorElement;
   private int myAnchorIdx = -1;
   private PsiElement myAnchorElementIfAll;
@@ -370,6 +370,7 @@ public class InplaceIntroduceConstantPopup {
             final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
             if (templateState != null) {
               templateState.gotoEnd(true);
+              myTypeSelectorManager = new TypeSelectorManagerImpl(myProject, myFieldTypePointer.getType(), null, myExpr, myOccurrences);
               startIntroduceTemplate(isReplaceAllOccurrences());
             }
           }

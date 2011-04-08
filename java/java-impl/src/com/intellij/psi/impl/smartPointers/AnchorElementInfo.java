@@ -52,12 +52,12 @@ class AnchorElementInfo extends SelfElementInfo {
   @Nullable
   public PsiElement restoreElement() {
     if (stubId != -1) {
-      PsiFile file = SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject);
+      PsiFile file = SelfElementInfo.restoreFileFromVirtual(getVirtualFile(), myProject);
       if (!(file instanceof PsiFileWithStubSupport)) return null;
       return PsiAnchor.restoreFromStubIndex((PsiFileWithStubSupport)file, stubId, myStubElementType);
     }
     if (!mySyncMarkerIsValid) return null;
-    PsiFile file = SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject);
+    PsiFile file = SelfElementInfo.restoreFileFromVirtual(getVirtualFile(), myProject);
     if (file == null) return null;
     PsiElement anchor = file.findElementAt(getSyncStartOffset());
     if (anchor == null) return null;

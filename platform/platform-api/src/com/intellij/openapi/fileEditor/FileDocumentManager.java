@@ -27,6 +27,7 @@ public abstract class FileDocumentManager {
     return ApplicationManager.getApplication().getComponent(FileDocumentManager.class);
   }
 
+  @Nullable
   public abstract Document getDocument(@NotNull VirtualFile file);
 
   @Nullable

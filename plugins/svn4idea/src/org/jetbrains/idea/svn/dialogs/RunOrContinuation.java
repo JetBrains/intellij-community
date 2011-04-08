@@ -82,7 +82,7 @@ public abstract class RunOrContinuation<T> {
 
   @CalledInAwt
   public void execute() {
-    new Continuation(myProject, true).run(getTask());
+    Continuation.createFragmented(myProject, true).run(getTask());
   }
 
   /*@CalledInAwt

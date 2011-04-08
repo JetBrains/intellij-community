@@ -38,7 +38,7 @@ interface SmartPointerElementInfo {
 
   void dispose();
   int elementHashCode(); // must be immutable
-  boolean pointsToTheSameElementAs(SmartPointerElementInfo other);
+  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other);
 
   VirtualFile getVirtualFile();
 

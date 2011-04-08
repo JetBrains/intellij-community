@@ -24,10 +24,19 @@ import java.util.Set;
 
 class ExpressionContext {
   List<String> myStatements = new ArrayList<String>();
-  Set<String> myUsedVarNames = new HashSet<String>();
+  Set<String> myUsedVarNames;
   Project project;
 
-  ExpressionContext(Project project) {
+  ExpressionContext(Project project, Set<String> usedVarNames) {
     this.project = project;
+    myUsedVarNames = usedVarNames;
+  }
+
+  ExpressionContext(Project project) {
+    this(project, new HashSet<String>());
+  }
+
+  ExpressionContext copy() {
+    return new ExpressionContext(project, myUsedVarNames);
   }
 }

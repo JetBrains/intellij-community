@@ -339,7 +339,7 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
       StringBuilder builder = new StringBuilder();
       builder.append(prototype.getModifierList().getText()).append(' ');
 
-      if (prototype.getReturnTypeElement() != null) {
+      if (prototype.getReturnTypeElement() != null  ) {
         builder.append(prototype.getReturnTypeElement().getText());
       }
       builder.append(' ').append(prototype.getName());
@@ -353,9 +353,6 @@ public class GrIntroduceParameterProcessor extends BaseRefactoringProcessor impl
     final GrParameter[] parameters = result.getParameters();
     for (GrParameter parameter : parameters) {
       call.append(parameter.getName()).append(", ");
-    }
-    if (parameters.length > 0) {
-      call.delete(call.length() - 2, call.length());
     }
     call.append(myParameterInitializer.getText());
     call.append(");\n}");

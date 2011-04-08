@@ -39,12 +39,12 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
   @NonNls private static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
 
   private final PsiElement myElement;
-  private TextRange myRange;
-  private boolean mySoft;
+  private final TextRange myRange;
+  private final boolean mySoft;
   private boolean myIncorrectResourceMapped;
 
   public URLReference(PsiElement element) {
-    myElement = element;
+    this(element, null, false);
   }
 
   public URLReference(PsiElement element, @Nullable TextRange range, boolean soft) {
@@ -69,10 +69,9 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
     if (canonicalText.length() == 0) {
       final XmlAttribute attr = PsiTreeUtil.getParentOfType(getElement(), XmlAttribute.class);
 
-      if (( attr != null &&
+      if (attr != null &&
             attr.isNamespaceDeclaration() &&
-            attr.getNamespacePrefix().length() == 0
-          ) ||
+            attr.getNamespacePrefix().length() == 0 ||
           ExternalResourceManagerEx.getInstanceEx().isIgnoredResource(canonicalText)
          ) {
         // Namespaces in XML 1.0 2nd edition, Section 6.2, last paragraph

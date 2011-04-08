@@ -40,7 +40,6 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
   private static final Logger LOG = Logger.getInstance("#" + NullableNotNullManager.class.getName());
 
   public String myDefaultNullable = AnnotationUtil.NULLABLE;
-
   public String myDefaultNotNull = AnnotationUtil.NOT_NULL;
   public JDOMExternalizableStringList myNullables = new JDOMExternalizableStringList();
   public JDOMExternalizableStringList myNotNulls = new JDOMExternalizableStringList();
@@ -122,11 +121,32 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
     return myNotNulls;
   }
 
+  public boolean hasDefaultValues() {
+    if (DEFAULT_NULLABLES.length != myNullables.size() || DEFAULT_NOT_NULLS.length != myNotNulls.size()) {
+      return false;
+    }
+    if (myDefaultNotNull != AnnotationUtil.NOT_NULL || myDefaultNullable != AnnotationUtil.NULLABLE) {
+      return false;
+    }
+    for (int i = 0; i < DEFAULT_NULLABLES.length; i++) {
+      if (!myNullables.get(i).equals(DEFAULT_NULLABLES[i])) {
+        return false;
+      }
+    }
+    for (int i = 0; i < DEFAULT_NOT_NULLS.length; i++) {
+      if (!myNotNulls.get(i).equals(DEFAULT_NOT_NULLS[i])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   @Override
   public Element getState() {
     final Element component = new Element("component");
 
-    if (getNullables().size() == DEFAULT_NULLABLES.length && getNotNulls().size() == DEFAULT_NOT_NULLS.length) {
+    if (hasDefaultValues()) {
       return component;
     }
 

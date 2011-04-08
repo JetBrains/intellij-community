@@ -75,7 +75,7 @@ public class ArtifactsProcessingItemsBuilderContext implements ArtifactIncrement
   }
 
   public boolean registerJarFile(@NotNull JarInfo jarInfo, @NotNull String outputPath) {
-    if (myJarByPath.containsKey(outputPath)) {
+    if (mySourceByOutput.containsKey(outputPath) || myJarByPath.containsKey(outputPath)) {
       return false;
     }
     myJarByPath.put(outputPath, jarInfo);

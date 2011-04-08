@@ -47,6 +47,7 @@ public final class IdeMouseEventDispatcher {
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
   private final ArrayList<AnAction> myActions = new ArrayList<AnAction>(1);
   private final Map<Container, Integer> myRootPane2BlockedId = new HashMap<Container, Integer>();
+  private int myLastHorScrolledComponentHash = 0;
 
   public IdeMouseEventDispatcher() {
   }
@@ -187,14 +188,21 @@ public final class IdeMouseEventDispatcher {
     return false;
   }
 
-  private static boolean doHorizontalScrolling(Component c, MouseWheelEvent me) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.horizontal.scrolling");
+  private boolean doHorizontalScrolling(Component c, MouseWheelEvent me) {
     final JScrollBar scrollBar = findHorizontalScrollBar(c);
     if (scrollBar != null) {
+      if (scrollBar.hashCode() != myLastHorScrolledComponentHash) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.horizontal.scrolling");
+        myLastHorScrolledComponentHash = scrollBar.hashCode();
+      }
       scrollBar.setValue(scrollBar.getValue() + getScrollAmount(c, me, scrollBar));
       return true;
     }
     return false;
+  }
+
+  public void resetHorScrollingTracker() {
+    myLastHorScrolledComponentHash = 0;
   }
 
   private static int getScrollAmount(Component c, MouseWheelEvent me, JScrollBar scrollBar) {
