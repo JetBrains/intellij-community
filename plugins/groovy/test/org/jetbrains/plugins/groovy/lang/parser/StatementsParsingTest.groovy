@@ -112,6 +112,7 @@ public class StatementsParsingTest extends GroovyParsingTestCase {
   public void testSwitch$swit5() throws Throwable { doTest(); }
   public void testSwitch$swit6() throws Throwable { doTest(); }
   public void testSwitch$swit7() throws Throwable { doTest(); }
+  public void testSwitch$swit8() throws Throwable { doTest(); }
   public void testSyn$syn1() throws Throwable { doTest(); }
   public void testTop_methods$method1() throws Throwable { doTest(); }
   public void testTop_methods$method2() throws Throwable { doTest(); }

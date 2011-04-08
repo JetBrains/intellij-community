@@ -19,7 +19,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -42,7 +41,7 @@ public class GrSwitchStatementImpl extends GroovyPsiElementImpl implements GrSwi
     return "Switch statement";
   }
 
-  public GrCondition getCondition() {
+  public GrExpression getCondition() {
     return findChildByClass(GrExpression.class);
   }
 
