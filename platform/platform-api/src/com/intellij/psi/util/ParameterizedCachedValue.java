@@ -15,11 +15,8 @@
  */
 package com.intellij.psi.util;
 
-import org.jetbrains.annotations.Nullable;
-
 public interface ParameterizedCachedValue<T, P> {
 
-  @Nullable
   T getValue(P param);
 
   ParameterizedCachedValueProvider<T,P> getValueProvider();
