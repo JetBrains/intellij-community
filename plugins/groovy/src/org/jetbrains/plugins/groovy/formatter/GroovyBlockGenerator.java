@@ -109,13 +109,11 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     if (block.getNode().getElementType() == GSTRING) {
       final ArrayList<Block> subBlocks = new ArrayList<Block>();
       ASTNode[] children = getGroovyChildren(node);
-      ASTNode prevChildNode = null;
       for (ASTNode childNode : children) {
         if (childNode.getTextRange().getLength() > 0) {
-          final Indent indent = GroovyIndentProcessor.getChildIndent(block, prevChildNode, childNode);
+          final Indent indent = GroovyIndentProcessor.getChildIndent(block, childNode);
           subBlocks.add(new GroovyBlock(childNode, myAlignment, indent, myWrap, mySettings));
         }
-        prevChildNode = childNode;
       }
       return subBlocks;
     }
@@ -130,12 +128,11 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     // For Parameter lists
     if (isListLikeClause(blockPsi)) {
       final ArrayList<Block> subBlocks = new ArrayList<Block>();
-      ASTNode prevChildNode = null;
-      final Alignment alignment = mustAlign(blockPsi, mySettings, node.getChildren(null)) ? Alignment.createAlignment() : null;
-      for (ASTNode childNode : visibleChildren(node)) {
-        final Indent indent = GroovyIndentProcessor.getChildIndent(block, prevChildNode, childNode);
+      List<ASTNode> astNodes = visibleChildren(node);
+      final Alignment alignment = mustAlign(blockPsi, mySettings, astNodes) ? Alignment.createAlignment() : null;
+      for (ASTNode childNode : astNodes) {
+        final Indent indent = GroovyIndentProcessor.getChildIndent(block, childNode);
         subBlocks.add(new GroovyBlock(childNode, isKeyword(childNode) ? null : alignment, indent, myWrap, mySettings));
-        prevChildNode = childNode;
       }
       return subBlocks;
     }
@@ -144,22 +141,18 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       List<ASTNode> children = visibleChildren(node);
       Map<GrBinaryExpression, Alignment> innerAlignments = calculateInnerAlignments(children);
       final ArrayList<Block> subBlocks = new ArrayList<Block>();
-      ASTNode prevChildNode = null;
       for (ASTNode childNode : children) {
-        final Indent indent = GroovyIndentProcessor.getChildIndent(block, prevChildNode, childNode);
+        final Indent indent = GroovyIndentProcessor.getChildIndent(block, childNode);
         subBlocks.add(new GroovyBlock(childNode, null, indent, myWrap, mySettings, innerAlignments));
-        prevChildNode = childNode;
       }
       return subBlocks;
     }
 
     // For other cases
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
-    ASTNode prevChildNode = null;
     for (ASTNode childNode : visibleChildren(node)) {
-      final Indent indent = GroovyIndentProcessor.getChildIndent(block, prevChildNode, childNode);
+      final Indent indent = GroovyIndentProcessor.getChildIndent(block, childNode);
       subBlocks.add(new GroovyBlock(childNode, blockPsi instanceof GrAnonymousClassDefinition ? null : myAlignment, indent, myWrap, mySettings, block.myInnerAlignments));
-      prevChildNode = childNode;
     }
     return subBlocks;
   }
@@ -217,7 +210,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     return list;
   }
 
-  private static boolean mustAlign(PsiElement blockPsi, CodeStyleSettings mySettings, ASTNode[] children) {
+  private static boolean mustAlign(PsiElement blockPsi, CodeStyleSettings mySettings, List<ASTNode> children) {
     // We don't want to align single call argument if it's a closure. The reason is that it looks better to have call like
     //
     // foo({
@@ -230,14 +223,8 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     //       println 'xxx'
     //     })
     if (blockPsi instanceof GrArgumentList && mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS) {
-      List<ASTNode> nonWhiteSpaceNodes = new ArrayList<ASTNode>();
-      for (ASTNode child : children) {
-        if (!WHITE_SPACES_OR_COMMENTS.contains(child.getElementType())) {
-          nonWhiteSpaceNodes.add(child);
-        }
-      }
-      return nonWhiteSpaceNodes.size() != 3 || nonWhiteSpaceNodes.get(0).getElementType() != mLPAREN
-             || nonWhiteSpaceNodes.get(1).getElementType() != CLOSABLE_BLOCK || nonWhiteSpaceNodes.get(2).getElementType() != mRPAREN;
+      return children.size() != 3 || children.get(0).getElementType() != mLPAREN
+             || children.get(1).getElementType() != CLOSABLE_BLOCK || children.get(2).getElementType() != mRPAREN;
     }
 
     return blockPsi instanceof GrParameterList && mySettings.ALIGN_MULTILINE_PARAMETERS ||

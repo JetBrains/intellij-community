@@ -129,6 +129,8 @@ public class FormatterTest extends GroovyFormatterTestCase {
   }
   public void testCaseInSwitchIndented() throws Throwable { doTest(); }
 
+  public void testStuffAfterLineComments() throws Throwable { doTest(); }
+
   public void testAnonymousInCall() throws Throwable {
     myTempSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest();

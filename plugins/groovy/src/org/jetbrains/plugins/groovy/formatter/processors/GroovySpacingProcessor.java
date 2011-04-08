@@ -63,7 +63,6 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_INLINE_TAG_END;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_INLINE_TAG_START;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mGDOC_TAG_VALUE_RPAREN;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mNLS;
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.mRCURLY;
 
 /**
@@ -93,19 +92,20 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       return;
     }
 
+    ASTNode prev = getPrevElementType(myChild2);
+    if (prev != null && prev.getElementType() == mNLS) {
+      prev = getPrevElementType(prev);
+    }
+    if (prev != null && prev.getElementType() == mSL_COMMENT) {
+      myResult = Spacing.createSpacing(0, Integer.MAX_VALUE, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      return;
+    }
+
     if (myChild2 != null && mySettings.KEEP_FIRST_COLUMN_COMMENT && COMMENT_SET.contains(myChild2.getElementType())) {
       if (myChild1.getElementType() != IMPORT_STATEMENT) {
         myResult = Spacing.createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, 1);
       }
       return;
-    }
-
-    if (myChild1 != null && myChild2 != null && myChild1.getElementType() == mNLS) {
-      final ASTNode prev = getPrevElementType(myChild1);
-      if (prev != null && prev.getElementType() == mSL_COMMENT) {
-        myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
-        return;
-      }
     }
 
     if (myParent instanceof GroovyPsiElement) {
@@ -481,12 +481,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   private void createSpaceProperty(boolean space, boolean keepLineBreaks, final int keepBlankLines) {
-    final ASTNode prev = getPrevElementType(myChild2);
-    if (prev != null && prev.getElementType() == mSL_COMMENT) {
-      myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
-    } else {
-      myResult = Spacing.createSpacing(space ? 1 : 0, space ? 1 : 0, 0, keepLineBreaks, keepBlankLines);
-    }
+    myResult = Spacing.createSpacing(space ? 1 : 0, space ? 1 : 0, 0, keepLineBreaks, keepBlankLines);
   }
 
   private Spacing getSpaceBeforeLBrace(final boolean spaceBeforeLbrace, int braceStyle, TextRange dependantRange, boolean keepOneLine) {
