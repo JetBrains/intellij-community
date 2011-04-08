@@ -239,7 +239,6 @@ new Fxoo()<caret>\n"""
     myFixture.configureByText("a.groovy", "new ArrayLi<caret>\n")
     myFixture.completeBasic()
     myFixture.checkResult "new ArrayList(<caret>)\n"
-
   }
 
   public void testOnlyAnnotationsAfterAt() {
@@ -260,6 +259,13 @@ new Fxoo()<caret>\n"""
     myFixture.configureByText "a.groovy", 'def s = """a\nAIOOBE<caret>\na"""'
     myFixture.complete(CompletionType.CLASS_NAME)
     myFixture.checkResult 'def s = """a\njava.lang.ArrayIndexOutOfBoundsException<caret>\na"""'
+  }
+
+  public void testDoubleClass() {
+    myFixture.addClass "package foo; public class Zooooooo {}"
+    myFixture.configureByText("a.groovy", """import foo.Zooooooo
+Zoooo<caret>x""")
+    assertOneElement(myFixture.completeBasic())
   }
 
 
