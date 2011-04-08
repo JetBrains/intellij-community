@@ -372,7 +372,9 @@ public class EditorUtil {
 
       for (int i = start; i < offset; i++) {
         char c = text.charAt(i);
-        assert c != '\n' && c != '\r';
+        assert c != '\n' && c != '\r' :
+          String.format("Symbol: %c, its index: %d, given start: %d, given offset: %d, given tab size: %d, text: '%s'",
+                        c, i, start, offset, tabSize, text);
         if (c == '\t') {
           shift += getTabLength(i + shift - start, tabSize) - 1;
         }
