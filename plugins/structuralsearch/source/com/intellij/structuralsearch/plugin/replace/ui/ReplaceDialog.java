@@ -179,7 +179,7 @@ public class ReplaceDialog extends SearchDialog {
   private static void ensureFileWritable(final UsageInfo2UsageAdapter usage) {
     final VirtualFile file = usage.getFile();
 
-    if (!file.isWritable()) {
+    if (file != null && !file.isWritable()) {
       ReadonlyStatusHandler.getInstance(usage.getElement().getProject()).ensureFilesWritable(file);
     }
   }
