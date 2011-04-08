@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
@@ -44,6 +45,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
@@ -388,26 +391,63 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   }
 
 
-  private static void addNestedChildren(PsiElement elem, List<Block> list,
-                                        Alignment alignment,
-                                        Wrap wrap,
-                                        CodeStyleSettings settings, boolean topLevel) {
-    ASTNode[] children = elem.getNode().getChildren(null);
-    // For path expressions
-    if (children.length > 0 && NESTED.contains(children[0].getElementType())) {
-      addNestedChildren(children[0].getPsi(), list, alignment, wrap, settings, false);
-    } else if (canBeCorrectBlock(children[0])) {
-      list.add(new GroovyBlock(children[0], alignment, Indent.getContinuationWithoutFirstIndent(), wrap, settings));
-    }
-    if (children.length > 1) {
-      for (ASTNode childNode : children) {
-        if (canBeCorrectBlock(childNode) && children[0] != childNode) {
-          IElementType type = childNode.getElementType();
-          Indent indent = topLevel || NESTED.contains(type) || type == mIDENT ? Indent.getContinuationWithoutFirstIndent() : Indent.getNoneIndent();
-          list.add(new GroovyBlock(childNode, childNode instanceof CompositeElement || type == mIDENT ? alignment : null, indent, wrap, settings));
+  private static void addNestedChildren(final PsiElement elem, List<Block> list,
+                                        final Alignment alignment,
+                                        final Wrap wrap,
+                                        final CodeStyleSettings settings, final boolean topLevel) {
+    final List<ASTNode> children = visibleChildren(elem.getNode());
+    if (elem instanceof GrMethodCallExpression) {
+      GrExpression invokedExpression = ((GrMethodCallExpression)elem).getInvokedExpression();
+      if (invokedExpression instanceof GrQualifiedReference) {
+        final PsiElement nameElement = ((GrQualifiedReference)invokedExpression).getReferenceNameElement();
+        if (nameElement != null) {
+          List<ASTNode> grandChildren = visibleChildren(invokedExpression.getNode());
+          int i = 0;
+          while (i < grandChildren.size() && nameElement != grandChildren.get(i).getPsi()) { i++; }
+          if (i > 0) {
+            processNestedChildrenPrefix(list, alignment, wrap, settings, false, grandChildren, i);
+          }
+          if (i < grandChildren.size()) {
+            assert nameElement == grandChildren.get(i).getPsi();
+            list.add(new MethodCallWithoutQualifierBlock(nameElement, alignment, wrap, settings, topLevel, children, elem));
+          }
+          return;
         }
+      }
+
+    }
+
+
+    processNestedChildrenPrefix(list, alignment, wrap, settings, topLevel, children, children.size());
+  }
+
+  private static void processNestedChildrenPrefix(List<Block> list,
+                                                  Alignment alignment,
+                                                  Wrap wrap,
+                                                  CodeStyleSettings settings,
+                                                  boolean topLevel, List<ASTNode> children, int limit) {
+    ASTNode fst = children.get(0);
+    assert limit > 0;
+    if (NESTED.contains(fst.getElementType())) {
+      addNestedChildren(fst.getPsi(), list, alignment, wrap, settings, false);
+    } else {
+      list.add(new GroovyBlock(fst, alignment, Indent.getContinuationWithoutFirstIndent(), wrap, settings));
+    }
+    addNestedChildrenSuffix(list, alignment, wrap, settings, topLevel, children, limit);
+  }
+
+  static void addNestedChildrenSuffix(List<Block> list,
+                                      Alignment alignment,
+                                      Wrap wrap,
+                                      CodeStyleSettings settings,
+                                      boolean topLevel, List<ASTNode> children, int limit) {
+    for (int i = 1; i < limit; i++) {
+      ASTNode childNode = children.get(i);
+      if (canBeCorrectBlock(childNode)) {
+        IElementType type = childNode.getElementType();
+        Indent indent = topLevel || NESTED.contains(type) || type == mIDENT ? Indent.getContinuationWithoutFirstIndent() : Indent.getNoneIndent();
+        list.add(new GroovyBlock(childNode, childNode instanceof CompositeElement || type == mIDENT ? alignment : null, indent, wrap, settings));
       }
     }
   }
-
 }

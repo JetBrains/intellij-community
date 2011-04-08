@@ -139,6 +139,8 @@ public class FormatterTest extends GroovyFormatterTestCase {
     doTest();
   }
 
+  public void testChainCallWithClosures() throws Throwable { doTest(); }
+
   public void doTest() throws Throwable {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
     checkFormatting(data.get(0), data.get(1));

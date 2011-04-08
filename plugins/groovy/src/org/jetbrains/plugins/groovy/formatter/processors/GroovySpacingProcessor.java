@@ -21,7 +21,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.tree.IElementType;
@@ -91,7 +93,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       return;
     }
 
-    if (myChild2 != null && mySettings.KEEP_FIRST_COLUMN_COMMENT && SpacingUtil.COMMENT_BIT_SET.contains(myChild2.getElementType())) {
+    if (myChild2 != null && mySettings.KEEP_FIRST_COLUMN_COMMENT && COMMENT_SET.contains(myChild2.getElementType())) {
       if (myChild1.getElementType() != IMPORT_STATEMENT) {
         myResult = Spacing.createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, 1);
       }
@@ -99,7 +101,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
 
     if (myChild1 != null && myChild2 != null && myChild1.getElementType() == mNLS) {
-      final ASTNode prev = SpacingUtil.getPrevElementType(myChild1);
+      final ASTNode prev = getPrevElementType(myChild1);
       if (prev != null && prev.getElementType() == mSL_COMMENT) {
         myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
         return;
@@ -114,7 +116,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   private void _init(final ASTNode child) {
     if (child != null) {
       ASTNode treePrev = child.getTreePrev();
-      while (treePrev != null && SpacingUtil.isWhiteSpace(treePrev)) {
+      while (treePrev != null && isWhiteSpace(treePrev)) {
         treePrev = treePrev.getTreePrev();
       }
       if (treePrev == null) {
@@ -479,7 +481,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   private void createSpaceProperty(boolean space, boolean keepLineBreaks, final int keepBlankLines) {
-    final ASTNode prev = SpacingUtil.getPrevElementType(myChild2);
+    final ASTNode prev = getPrevElementType(myChild2);
     if (prev != null && prev.getElementType() == mSL_COMMENT) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     } else {
@@ -503,7 +505,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   }
 
   private Spacing createNonLFSpace(int spaces, final TextRange dependantRange, final boolean keepLineBreaks) {
-    final ASTNode prev = SpacingUtil.getPrevElementType(myChild2);
+    final ASTNode prev = getPrevElementType(myChild2);
     if (prev != null && prev.getElementType() == mSL_COMMENT) {
       return Spacing.createSpacing(0, Integer.MAX_VALUE, 1, keepLineBreaks, mySettings.KEEP_BLANK_LINES_IN_CODE);
     } else if (dependantRange != null) {
@@ -513,5 +515,12 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
   }
 
+  static boolean isWhiteSpace(final ASTNode treePrev) {
+    return treePrev != null && (treePrev.getPsi() instanceof PsiWhiteSpace || treePrev.getTextLength() == 0);
+  }
+
+  static ASTNode getPrevElementType(final ASTNode child) {
+    return FormatterUtil.getLeafNonSpaceBefore(child);
+  }
 }
 

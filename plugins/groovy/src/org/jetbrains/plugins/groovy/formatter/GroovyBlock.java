@@ -215,6 +215,6 @@ public class GroovyBlock implements Block, GroovyElementTypes {
 
   @Override
   public String toString() {
-    return myNode.getTextRange() + ": " + myNode;
+    return getTextRange() + ": " + myNode;
   }
 }
