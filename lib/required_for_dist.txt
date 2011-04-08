@@ -10,7 +10,7 @@ commons-logging-1.1.1.jar
 commons-net-2.0-patched.jar
 dtdparser113.jar
 groovy-all-1.7.3.jar
-guava-r08.jar
+guava-r09.jar
 jaxen-1.1.3.jar
 jcip-annotations.jar
 jdom.jar
