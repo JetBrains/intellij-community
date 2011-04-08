@@ -74,7 +74,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
           final PsiParameterList parameterList = psiMethod.getParameterList();
           final PsiParameter[] parameters = parameterList.getParameters();
           final PsiExpression[] expressions = expression.getArgumentList().getExpressions();
-          for (int i = 0, expressionsLength = expressions.length; i < Math.max(expressionsLength, parameters.length); i++) {
+          for (int i = 0, expressionsLength = expressions.length; i < Math.min(expressionsLength, parameters.length); i++) {
             PsiExpression psiExpression = expressions[i];
             if (psiExpression.getType() == PsiType.NULL) {
               if (!AnnotationUtil.isNullable(parameters[i]) && !AnnotationUtil.isNotNull(parameters[i])) {
