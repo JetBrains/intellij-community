@@ -326,6 +326,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     props.setProperty("MINUTE", getCalendarValue(calendar, Calendar.MINUTE));
 
     props.setProperty("USER", SystemProperties.getUserName());
+    props.setProperty("PRODUCT_NAME", ApplicationNamesInfo.getInstance().getFullProductName());
 
     return props;
   }
