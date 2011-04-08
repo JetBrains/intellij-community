@@ -16,6 +16,7 @@
 package com.intellij.util.continuation;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -42,7 +43,10 @@ public class SameProgressRunner extends GeneralRunner {
   public SameProgressRunner(Project project, boolean cancellable, final String commonName) {
     super(project, cancellable);
 
-    assert ! ApplicationManager.getApplication().isDispatchThread();
+    final Application application = ApplicationManager.getApplication();
+    if (! application.isUnitTestMode()) {
+      assert ! application.isDispatchThread();
+    }
     myIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (myIndicator == null) {
       myIndicator = new EmptyProgressIndicator();
@@ -53,10 +57,10 @@ public class SameProgressRunner extends GeneralRunner {
 
   @Override
   public void ping() {
+    myTriggerSuspend = false;
     if (Thread.currentThread().equals(myInitThread)) {
       pingInSourceThread();
     } else {
-      myTriggerSuspend = false;
       mySemaphore.up();
     }
   }
