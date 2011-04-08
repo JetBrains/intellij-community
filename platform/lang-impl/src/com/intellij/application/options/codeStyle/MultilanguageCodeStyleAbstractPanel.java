@@ -55,7 +55,6 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   private static final Logger LOG = Logger.getInstance("com.intellij.application.options.codeStyle.MultilanguageCodeStyleAbstractPanel");
 
   private Language myLanguage;
-  private LanguageSelector myLanguageSelector;
   private int myLangSelectionIndex;
   private JTabbedPane tabbedPane;
 
@@ -69,20 +68,19 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     }
   }
 
-  public void setLanguageSelector(LanguageSelector langSelector) {
-    if (myLanguageSelector == null) {
-      myLanguageSelector = langSelector;
-    }
-  }
+  public boolean setPanelLanguage(Language language) {    
 
-  public void setPanelLanguage(Language language) {
-    myLanguage = language;
-
+    boolean languageProviderFound = false;
     for(LanguageCodeStyleSettingsProvider provider: Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME)) {
       if (provider.getLanguage().is(language)) {
         provider.customizeSettings(this, getSettingsType());
+        languageProviderFound = true;
+        break;
       }
     }
+    if (!languageProviderFound) return false;
+    
+    myLanguage = language;
 
     setSkipPreviewHighlighting(true);
     try {
@@ -92,6 +90,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
       setSkipPreviewHighlighting(false);
     }
     updatePreview();
+    return true;
   }
 
   public Language getSelectedLanguage() {
@@ -253,8 +252,8 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     myLangSelectionIndex = i;
     String selectionTitle = tabs.getTitleAt(i);
     Language lang = LanguageCodeStyleSettingsProvider.getLanguage(selectionTitle);
-    if (lang != null && myLanguageSelector != null) {
-      myLanguageSelector.setLanguage(lang);
+    if (lang != null && getLanguageSelector() != null) {
+      getLanguageSelector().setLanguage(lang);
     }
   }
 
@@ -267,5 +266,10 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
     String tabName = LanguageCodeStyleSettingsProvider.getLanguageName(language);
     if (tabName == null) tabName = language.getDisplayName();
     return tabName;
+  }
+
+  @Override
+  public Language getDefaultLanguage() {
+    return getSelectedLanguage();
   }
 }

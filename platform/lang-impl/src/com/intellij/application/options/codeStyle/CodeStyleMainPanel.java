@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
 
@@ -141,7 +142,7 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
   public boolean isModified() {
     final NewCodeStyleSettingsPanel[] panels = getPanels();
     for (NewCodeStyleSettingsPanel panel : panels) {
-      if (!panel.isMultiLanguage()) mySchemesPanel.setPredefinedEnabled(false);
+      //if (!panel.isMultiLanguage()) mySchemesPanel.setPredefinedEnabled(false);
       if (panel.isModified()) return true;
     }
     return false;
@@ -197,6 +198,8 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
       mySettingsPanel.add(scheme.getName(), panel);
       mySchemesPanel.setCodeStyleSettingsPanel(panel);
       panel.setLanguage(myLangSelector.getLanguage());
+      Language panelLanguage = panel.getSelectedLanguage();
+      mySchemesPanel.setPredefinedEnabled(panelLanguage != null && hasPredefinedStyles(panelLanguage));
     }
 
     return mySettingsPanels.get(name);
@@ -224,8 +227,14 @@ public class CodeStyleMainPanel extends JPanel implements LanguageSelectorListen
   public void languageChanged(Language lang) {
     for (NewCodeStyleSettingsPanel panel : mySettingsPanels.values()) {
       panel.setLanguage(lang);
+      Language resultingLang = panel.getSelectedLanguage();
+      mySchemesPanel.setPredefinedEnabled(hasPredefinedStyles(resultingLang));
     }
-    mySchemesPanel.setPredefinedEnabled(lang.getDisplayName().contains("PHP"));
+  }
+  
+  private static boolean hasPredefinedStyles(Language language) {
+    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
+    return provider != null && provider.getPredefinedCodeStyles().length > 0;
   }
 
   public Set<String> processListOptions() {

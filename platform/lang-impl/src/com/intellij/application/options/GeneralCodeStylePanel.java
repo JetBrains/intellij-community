@@ -16,6 +16,7 @@
 
 package com.intellij.application.options;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -40,10 +41,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.GeneralCodeStylePanel");
@@ -154,6 +153,13 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       }
     });
 
+    myIndentOptionsTabs.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        onTabChange();
+      }
+    });
+    
     optionGroup.add(myIndentOptionsTabs.getComponent());
 
     /*
@@ -341,5 +347,31 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     if (provider != null) {
       provider.prepareForReformat(psiFile);
     }
+  }
+
+  private void onTabChange() {
+    getLanguageSelector().setLanguage(getSelectedLanguage());
+  }
+  
+  @Nullable
+  private Language getSelectedLanguage() {
+    int selectedIndex = myIndentOptionsTabs.getSelectedIndex();
+    int i = 0;
+    for (Map.Entry<FileType, IndentOptionsEditor> entry : myAdditionalIndentOptions.entrySet()) {
+      if (i == selectedIndex) {
+        FileType ft = entry.getKey();
+        if (ft instanceof LanguageFileType) {
+          return ((LanguageFileType)ft).getLanguage();
+        }
+        return null;
+      }
+      i++;
+    }
+    return null;
+  }
+
+  @Override
+  public Language getDefaultLanguage() {
+    return getSelectedLanguage();
   }
 }

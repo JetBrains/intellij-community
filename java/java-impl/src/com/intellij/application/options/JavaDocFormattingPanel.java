@@ -166,7 +166,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
     return StdFileTypes.JAVA;
   }
 
-  public void setPanelLanguage(Language language) {
-    super.setPanelLanguage(Language.findInstance(JavaLanguage.class));
+  public boolean setPanelLanguage(Language language) {
+    return super.setPanelLanguage(Language.findInstance(JavaLanguage.class));
   }
 }

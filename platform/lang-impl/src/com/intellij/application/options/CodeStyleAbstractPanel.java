@@ -16,8 +16,10 @@
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
+import com.intellij.application.options.codeStyle.LanguageSelector;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -85,6 +87,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private long myEndHighlightPreviewChangesTimeMillis = -1;
   private boolean myShowsPreviewHighlighters;
   private boolean mySkipPreviewHighlighting;
+  private LanguageSelector myLanguageSelector;  
 
   protected CodeStyleAbstractPanel(CodeStyleSettings settings) {
     mySettings = settings;
@@ -569,4 +572,24 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     reset(settings);
     onSomethingChanged();    
   }
+
+  /**
+   * Override this method if the panel is linked to a specific language. 
+   * @return The language this panel is associated with.
+   */
+  @Nullable
+  public Language getDefaultLanguage()  {
+    return null;
+  }
+  
+  public void setLanguageSelector(LanguageSelector langSelector) {
+    if (myLanguageSelector == null) {
+      myLanguageSelector = langSelector;
+    }
+  }
+  
+  public LanguageSelector getLanguageSelector() {
+    return myLanguageSelector;
+  }
+  
 }

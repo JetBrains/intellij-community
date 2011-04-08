@@ -45,7 +45,9 @@ public class NewCodeStyleSettingsPanel extends JPanel {
     myTab = tab;
     JComponent component = myTab.createComponent();
     add(component, BorderLayout.CENTER);
-
+    if (tab instanceof CodeStyleAbstractConfigurable) {
+      mySelectedLanguage = ((CodeStyleAbstractConfigurable)tab).getPanel().getDefaultLanguage();
+    }
   }
 
   public boolean isModified() {
@@ -95,10 +97,8 @@ public class NewCodeStyleSettingsPanel extends JPanel {
 
   public void setLanguageSelector(final LanguageSelector langSelector) {
     if (myTab instanceof CodeStyleAbstractConfigurable) {
-      CodeStyleAbstractConfigurable configurable = (CodeStyleAbstractConfigurable)myTab;
-      if (configurable.getPanel() instanceof MultilanguageCodeStyleAbstractPanel) {
-        ((MultilanguageCodeStyleAbstractPanel)configurable.getPanel()).setLanguageSelector(langSelector);
-      }
+      CodeStyleAbstractConfigurable configurable = (CodeStyleAbstractConfigurable)myTab;      
+      configurable.getPanel().setLanguageSelector(langSelector);
     }
   }
 
@@ -116,15 +116,18 @@ public class NewCodeStyleSettingsPanel extends JPanel {
 
   }
 
-
   public void setLanguage(Language language) {
     if (myTab instanceof CodeStyleAbstractConfigurable) {
       CodeStyleAbstractConfigurable configurable = (CodeStyleAbstractConfigurable)myTab;
       if (configurable.getPanel() instanceof MultilanguageCodeStyleAbstractPanel) {
-        mySelectedLanguage = language;
-        ((MultilanguageCodeStyleAbstractPanel)configurable.getPanel()).setPanelLanguage(language);
-        return;
+        if (((MultilanguageCodeStyleAbstractPanel)configurable.getPanel()).setPanelLanguage(language)) {
+          mySelectedLanguage = language;
+        }
       }
+      else {
+        mySelectedLanguage = configurable.getPanel().getDefaultLanguage();
+      }
+      return;
     }
     mySelectedLanguage = null;
   }
