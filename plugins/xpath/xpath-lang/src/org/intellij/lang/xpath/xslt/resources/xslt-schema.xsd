@@ -996,9 +996,42 @@ Please send your comments and suggestions to asirv@webmethods.com
         <extension base="xsl:anyType">
           <attribute name="select" type="xsl:expression" use="optional" default="."/>
           <attribute name="lang" type="xsl:expr-avt"/>
-          <attribute name="data-type" type="xsl:expr-avt" use="optional" default="text"/>
-          <attribute name="order" type="xsl:expr-avt" use="optional" default="ascending"/>
-          <attribute name="case-order" type="xsl:expr-avt"/>
+          <attribute name="data-type" use="optional" default="text">
+            <simpleType>
+              <union memberTypes="xsl:expr-avt">
+                <simpleType>
+                  <restriction base="string">
+                    <enumeration value="text" />
+                    <enumeration value="number" />
+                  </restriction>
+                </simpleType>
+              </union>
+            </simpleType>
+          </attribute>
+          <attribute name="order" use="optional" default="ascending">
+            <simpleType>
+              <union memberTypes="xsl:expr-avt">
+                <simpleType>
+                  <restriction base="string">
+                    <enumeration value="ascending" />
+                    <enumeration value="descending" />
+                  </restriction>
+                </simpleType>
+              </union>
+            </simpleType>
+          </attribute>
+          <attribute name="case-order">
+            <simpleType>
+              <union memberTypes="xsl:expr-avt">
+                <simpleType>
+                  <restriction base="string">
+                    <enumeration value="upper-first" />
+                    <enumeration value="lower-first" />
+                  </restriction>
+                </simpleType>
+              </union>
+            </simpleType>
+          </attribute>
         </extension>
       </complexContent>
     </complexType>
