@@ -43,5 +43,6 @@ public class PyStringLiteralTest extends PyLightFixtureTestCase {
     assertEquals("foo", createLiteralFromText("b\"foo\"").getStringValue());
     assertEquals("\\b", createLiteralFromText("r'\\b'").getStringValue());
     assertEquals("b\\n", createLiteralFromText("ur'\\u0062\\n'").getStringValue());
+    assertEquals("\\8", createLiteralFromText("'\\8'").getStringValue());
   }
 }
