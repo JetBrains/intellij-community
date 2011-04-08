@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -82,11 +83,16 @@ public class HgPullDialog extends DialogWrapper {
   }
 
   private void onChangeRepository() {
-    VirtualFile repo = hgRepositorySelector.getRepository();
-    HgShowConfigCommand configCommand = new HgShowConfigCommand(project);
-    String defaultPath = configCommand.getDefaultPath(repo);
-    sourceTxt.setText(defaultPath);
-    onChangePullSource();
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        VirtualFile repo = hgRepositorySelector.getRepository();
+        HgShowConfigCommand configCommand = new HgShowConfigCommand(project);
+        String defaultPath = configCommand.getDefaultPath(repo);
+        sourceTxt.setText(defaultPath);
+        onChangePullSource();
+      }
+    });
   }
 
   private void onChangePullSource() {

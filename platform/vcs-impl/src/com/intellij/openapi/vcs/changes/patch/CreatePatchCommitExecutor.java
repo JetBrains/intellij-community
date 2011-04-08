@@ -29,6 +29,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.util.WaitForProgressToShow;
@@ -118,7 +119,7 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
       if (PATCH_PATH.length() == 0) {
         PATCH_PATH = myProject.getBaseDir().getPresentableUrl();
       }
-      myPanel.setFileName(ShelveChangesManager.suggestPatchName(commitMessage, new File(PATCH_PATH)));
+      myPanel.setFileName(ShelveChangesManager.suggestPatchName(myProject, commitMessage, new File(PATCH_PATH), null));
       myPanel.setReversePatch(REVERSE_PATCH);
       return myPanel.getPanel();
     }
@@ -150,6 +151,7 @@ public class CreatePatchCommitExecutor implements CommitExecutorWithHelp, Projec
       try {
         final String fileName = myPanel.getFileName();
         final File file = new File(fileName).getAbsoluteFile();
+        VcsConfiguration.getInstance(myProject).acceptLastCreatedPatchName(file.getName());
         PATCH_PATH = file.getParent();
         REVERSE_PATCH = myPanel.isReversePatch();
         

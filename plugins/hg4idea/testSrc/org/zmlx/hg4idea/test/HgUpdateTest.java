@@ -19,10 +19,10 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.zmlx.hg4idea.HgChange;
 import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgFileStatusEnum;
 import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.command.HgChange;
-import org.zmlx.hg4idea.command.HgFileStatusEnum;
 import org.zmlx.hg4idea.command.HgHeadsCommand;
 import org.zmlx.hg4idea.command.HgIncomingCommand;
 import org.zmlx.hg4idea.command.HgParentsCommand;
@@ -70,7 +70,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
     HgPullCommand pull = new HgPullCommand(myProject, projectRepoVirtualFile);
     pull.setSource(new HgShowConfigCommand(myProject).getDefaultPath(projectRepoVirtualFile));
     pull.setUpdate(false);
-    pull.execute();
+    pull.execute(null);
 
     assertEquals( determineNumberOfIncomingChanges( projectRepo ), 0,
                   "The update operation should have pulled the incoming changes from the default repository." );

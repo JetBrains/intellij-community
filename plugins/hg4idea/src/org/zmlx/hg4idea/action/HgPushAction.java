@@ -14,7 +14,10 @@ package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgPushCommand;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.ui.HgPushDialog;
 
 import java.util.Collection;
@@ -46,7 +49,12 @@ public class HgPushAction extends HgAbstractGlobalAction {
         command.setRevision(dialog.getRevision());
         command.setForce(dialog.isForce());
         command.setBranch(dialog.getBranch());
-        new HgCommandResultNotifier(project).process(command.execute());
+        command.execute(new HgCommandResultHandler() {
+          @Override
+          public void process(@Nullable HgCommandResult result) {
+            new HgCommandResultNotifier(project).process(result);
+          }
+        });
       }
     };
   }

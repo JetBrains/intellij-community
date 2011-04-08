@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.provider.update;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.update.FileGroup;
@@ -45,7 +46,7 @@ public final class HgConflictResolver {
   }
 
   public void resolve(final VirtualFile repo) {
-    Map<HgFile, HgResolveStatusEnum> resolves = new HgResolveCommand(myProject).list(repo);
+    Map<HgFile, HgResolveStatusEnum> resolves = new HgResolveCommand(myProject).getListSynchronously(repo);
     final List<VirtualFile> conflicts = new ArrayList<VirtualFile>();
     for (Map.Entry<HgFile, HgResolveStatusEnum> entry : resolves.entrySet()) {
       File file = entry.getKey().getFile();
@@ -72,11 +73,13 @@ public final class HgConflictResolver {
       return;
     }
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      final HgVcs vcs = HgVcs.getInstance(myProject);
-      if (vcs == null) { return; }
-      AbstractVcsHelper.getInstance(myProject).showMergeDialog(conflicts, vcs.getMergeProvider());
-    }
+    final HgVcs vcs = HgVcs.getInstance(myProject);
+    if (vcs == null) { return; }
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      public void run() {
+        AbstractVcsHelper.getInstance(myProject).showMergeDialog(conflicts, vcs.getMergeProvider());
+      }
+    }, ModalityState.defaultModalityState());
   }
 
 }

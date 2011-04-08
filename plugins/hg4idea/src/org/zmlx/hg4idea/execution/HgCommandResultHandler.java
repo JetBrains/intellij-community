@@ -10,23 +10,18 @@
 // the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 // either express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
-package org.zmlx.hg4idea.command;
+package org.zmlx.hg4idea.execution;
 
-public class HgCommandException extends Exception {
+import org.jetbrains.annotations.Nullable;
 
-  public HgCommandException() {
-  }
+public interface HgCommandResultHandler {
 
-  public HgCommandException(String message) {
-    super(message);
-  }
+  HgCommandResultHandler DUMB = new HgCommandResultHandler() {
+    @Override
+    public void process(@Nullable HgCommandResult result) {
+    }
+  };
 
-  public HgCommandException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public HgCommandException(Throwable cause) {
-    super(cause);
-  }
+  void process(@Nullable HgCommandResult result);
 
 }

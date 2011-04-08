@@ -30,10 +30,12 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgChange;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.*;
+import org.zmlx.hg4idea.execution.HgCommandException;
 
 import java.util.*;
 
@@ -175,13 +177,18 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
-    HgAddCommand command = new HgAddCommand(project);
-    for (VirtualFile file : files) {
-      VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, file);
+    final HgAddCommand command = new HgAddCommand(project);
+    for (final VirtualFile file : files) {
+      final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, file);
       if (vcsRoot == null) {
         continue;
       }
-      command.execute(new HgFile(vcsRoot, VfsUtil.virtualToIoFile(file)));
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          command.execute(new HgFile(vcsRoot, VfsUtil.virtualToIoFile(file)));
+        }
+      });
     }
     return null;
   }

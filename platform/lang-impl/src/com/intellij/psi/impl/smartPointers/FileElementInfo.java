@@ -69,7 +69,7 @@ class FileElementInfo implements SmartPointerElementInfo {
   }
 
   @Override
-  public boolean pointsToTheSameElementAs(SmartPointerElementInfo other) {
+  public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
     if (other instanceof FileElementInfo) {
       return myVirtualFile == ((FileElementInfo)other).myVirtualFile;
     }

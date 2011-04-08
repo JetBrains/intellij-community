@@ -15,10 +15,7 @@ package git4idea.history.wholeTree;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.continuation.Continuation;
-import com.intellij.util.continuation.ContinuationContext;
-import com.intellij.util.continuation.TaskDescriptor;
-import com.intellij.util.continuation.Where;
+import com.intellij.util.continuation.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -45,8 +42,7 @@ public class LoadAlgorithm {
   }
 
   public void fillContinuation() {
-    final ContinuationContext.GatheringContinuationContext initContext =
-      new ContinuationContext.GatheringContinuationContext();
+    final GatheringContinuationContext initContext = new GatheringContinuationContext();
 
     for (LoaderAndRefresher<CommitHashPlusParents> loader : myLoaders) {
       final LoaderFactory factory = new LoaderFactory(loader);

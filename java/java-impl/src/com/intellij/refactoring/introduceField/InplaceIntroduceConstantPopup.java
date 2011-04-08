@@ -19,7 +19,13 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.ide.ui.ListCellRendererWrapper;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -28,6 +34,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -42,11 +49,11 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.TitlePanel;
+import com.intellij.util.VisibilityUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -62,7 +69,7 @@ public class InplaceIntroduceConstantPopup {
   private PsiExpression myExpr;
   private final PsiLocalVariable myLocalVariable;
   private final PsiExpression[] myOccurrences;
-  private final TypeSelectorManagerImpl myTypeSelectorManager;
+  private TypeSelectorManagerImpl myTypeSelectorManager;
   private PsiElement myAnchorElement;
   private int myAnchorIdx = -1;
   private PsiElement myAnchorElementIfAll;
@@ -83,7 +90,7 @@ public class InplaceIntroduceConstantPopup {
 
   private JCheckBox myMoveToAnotherClassCb;
 
-  private JavaVisibilityPanel myVisibilityPanel;
+  private JComboBox myVisibilityCombo;
 
   private JPanel myWholePanel;
 
@@ -122,31 +129,36 @@ public class InplaceIntroduceConstantPopup {
     myLocalName = localVariable != null ? localVariable.getName() : null;
 
     myWholePanel = new JPanel(new GridBagLayout());
-    GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0 , 0, 0), 0, 0);
+    GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0 , 0, 0), 0, 0);
 
     final TitlePanel titlePanel = new TitlePanel();
     titlePanel.setBorder(null);
     titlePanel.setText(IntroduceConstantHandler.REFACTORING_NAME);
-
+    gc.gridwidth = 2;
     myWholePanel.add(titlePanel, gc);
 
-    gc.insets = new Insets(5, 5, 5, 5);
+    gc.gridwidth = 1;
+    gc.gridy = 1;
+    myWholePanel.add(createLeftPanel(), gc);
 
-    myVisibilityPanel = new JavaVisibilityPanel(false, false);
-    myVisibilityPanel.setVisibility(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY);
-    myWholePanel.add(myVisibilityPanel, gc);
+    gc.gridx = 1;
+    gc.insets.left = 6;
+    myWholePanel.add(createRightPanel(), gc);
 
+  }
+
+  private JPanel createRightPanel() {
+    final JPanel right = new JPanel(new GridBagLayout());
+    final GridBagConstraints rgc = new GridBagConstraints(0, GridBagConstraints.RELATIVE,1,1,0,0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(1,0,0,0), 0, 0);
     myReplaceAllCb = new JCheckBox("Replace all occurrences");
     myReplaceAllCb.setMnemonic('a');
     myReplaceAllCb.setFocusable(false);
-    myWholePanel.add(myReplaceAllCb, gc);
     myReplaceAllCb.setVisible(myOccurrences.length > 1);
-
+    right.add(myReplaceAllCb, rgc);
 
     myCbDeleteVariable = new StateRestoringCheckBox("Delete variable declaration");
     myCbDeleteVariable.setMnemonic('d');
     myCbDeleteVariable.setFocusable(false);
-    myWholePanel.add(myCbDeleteVariable, gc);
     if (myLocalVariable != null) {
       if (myReplaceAllCb != null) {
         myReplaceAllCb.setEnabled(false);
@@ -157,15 +169,15 @@ public class InplaceIntroduceConstantPopup {
     } else {
       myCbDeleteVariable.setVisible(false);
     }
+    right.add(myCbDeleteVariable, rgc);
 
     myAnnotateNonNls = new JCheckBox("Annotate field as @NonNls");
     myAnnotateNonNls.setMnemonic('f');
     myAnnotateNonNls.setFocusable(false);
-    myWholePanel.add(myAnnotateNonNls, gc);
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
-    if ((myTypeSelectorManager.isSuggestedType("java.lang.String") || (myLocalVariable != null && AnnotationUtil.isAnnotated(myLocalVariable, AnnotationUtil.NON_NLS, false)))&&
-        LanguageLevelProjectExtension.getInstance(psiManager.getProject()).getLanguageLevel().hasEnumKeywordAndAutoboxing() &&
-        JavaPsiFacade.getInstance(psiManager.getProject()).findClass(AnnotationUtil.NON_NLS, myParentClass.getResolveScope()) != null) {
+    if ((myTypeSelectorManager.isSuggestedType("java.lang.String") || (myLocalVariable != null && AnnotationUtil
+      .isAnnotated(myLocalVariable, AnnotationUtil.NON_NLS, false)))&&
+        LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel().hasEnumKeywordAndAutoboxing() &&
+        JavaPsiFacade.getInstance(myProject).findClass(AnnotationUtil.NON_NLS, myParentClass.getResolveScope()) != null) {
       final PropertiesComponent component = PropertiesComponent.getInstance(myProject);
       myAnnotateNonNls.setSelected(component.isTrueValue(IntroduceConstantDialog.NONNLS_SELECTED_PROPERTY));
       myAnnotateNonNls.addItemListener(new ItemListener() {
@@ -176,13 +188,69 @@ public class InplaceIntroduceConstantPopup {
     } else {
       myAnnotateNonNls.setVisible(false);
     }
+    right.add(myAnnotateNonNls, rgc);
+    return right;
+  }
+
+  private JPanel createLeftPanel() {
+    final JPanel left = new JPanel(new GridBagLayout());
+    final GridBagConstraints lgc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5,5,0,0), 0, 0);
+
+    final JLabel label = new JLabel("Visibility:");
+    label.setDisplayedMnemonic('V');
+    left.add(label, lgc);
+    myVisibilityCombo = new JComboBox(new String[]{PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PRIVATE});
+    myVisibilityCombo.setRenderer(new ListCellRendererWrapper<String>(myVisibilityCombo.getRenderer()){
+      @Override
+      public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
+        setText(PsiBundle.visibilityPresentation(value));
+      }
+    });
+    label.setLabelFor(myVisibilityCombo);
+    myVisibilityCombo.setSelectedItem(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY);
+    myVisibilityCombo.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyReleased(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+          ToolWindowManager.getInstance(myProject).activateEditorComponent();
+        }
+      }
+    });
+    final AnAction arrow = new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if (e.getInputEvent() instanceof KeyEvent) {
+          final int code = ((KeyEvent)e.getInputEvent()).getKeyCode();
+          final int delta = code == KeyEvent.VK_DOWN ? 1 : code == KeyEvent.VK_UP ? -1 : 0;
+          if (delta == 0) return;
+          final int size = myVisibilityCombo.getModel().getSize();
+          int next = myVisibilityCombo.getSelectedIndex() + delta;
+          if (next < 0 || next >= size) {
+            if (!UISettings.getInstance().CYCLE_SCROLLING) {
+              return;
+            }
+            next = (next + size) % size;
+          }
+          myVisibilityCombo.setSelectedIndex(next);
+        }
+      }
+    };
+    arrow.registerCustomShortcutSet(new CustomShortcutSet(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), null),
+                                                          new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), null)), myVisibilityCombo);
+    lgc.gridx = 1;
+    lgc.insets.top = 2;
+    lgc.insets.left = 0;
+    left.add(myVisibilityCombo, lgc);
 
     myMoveToAnotherClassCb = new JCheckBox("Move to another class");
     myMoveToAnotherClassCb.setMnemonic('m');
     myMoveToAnotherClassCb.setFocusable(false);
-    myWholePanel.add(myMoveToAnotherClassCb, gc);
-
-
+    lgc.gridx = 0;
+    lgc.gridy = 1;
+    lgc.gridwidth = 2;
+    lgc.insets.top = 0;
+    left.add(myMoveToAnotherClassCb, lgc);
+    return left;
   }
 
   public void performInplaceIntroduce() {
@@ -220,7 +288,7 @@ public class InplaceIntroduceConstantPopup {
         PsiField field = elementFactory.createFieldFromText(psiType.getCanonicalText() + " " + (myConstantName != null ? myConstantName : names[0]) + " = " + myExprText + ";", myParentClass);
         PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
         PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
-        final String visibility = myVisibilityPanel.getVisibility();
+        final String visibility = getSelectedVisibility();
         if (visibility != null) {
           PsiUtil.setModifierProperty(field, visibility, true);
         }
@@ -228,6 +296,10 @@ public class InplaceIntroduceConstantPopup {
         return field;
       }
     });
+  }
+
+  private String getSelectedVisibility() {
+    return (String)myVisibilityCombo.getSelectedItem();
   }
 
   public List<RangeMarker> getOccurrenceMarkers() {
@@ -301,7 +373,7 @@ public class InplaceIntroduceConstantPopup {
     @Override
     protected void saveSettings(PsiVariable psiVariable) {
       TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myDefaultParameterTypePointer.getType());
-      JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY = myVisibilityPanel.getVisibility();
+      JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY = getSelectedVisibility();
     }
 
     @Override
@@ -321,7 +393,7 @@ public class InplaceIntroduceConstantPopup {
                                                     isReplaceAllOccurrences(), true,
                                                     true,
                                                     BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION,
-                                                    myVisibilityPanel.getVisibility(), myLocalVariable,
+                                                    getSelectedVisibility(), myLocalVariable,
                                                     myFieldTypePointer.getType(),
                                                     isDeleteVariable(),
                                                     myParentClass, isAnnotateNonNls(), false);
@@ -358,10 +430,16 @@ public class InplaceIntroduceConstantPopup {
     protected JComponent getComponent() {
       if (!myInitListeners) {
         myInitListeners = true;
-        myVisibilityPanel.addListener(new VisibilityListener(myProject, myEditor){
+        final VisibilityListener visibilityListener = new VisibilityListener(myProject, myEditor) {
           @Override
           protected String getVisibility() {
-            return myVisibilityPanel.getVisibility();
+            return getSelectedVisibility();
+          }
+        };
+        myVisibilityCombo.addActionListener(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            visibilityListener.stateChanged(null);
           }
         });
         myReplaceAllCb.addItemListener(new ItemListener() {
@@ -370,6 +448,7 @@ public class InplaceIntroduceConstantPopup {
             final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
             if (templateState != null) {
               templateState.gotoEnd(true);
+              myTypeSelectorManager = new TypeSelectorManagerImpl(myProject, myFieldTypePointer.getType(), null, myExpr, myOccurrences);
               startIntroduceTemplate(isReplaceAllOccurrences());
             }
           }

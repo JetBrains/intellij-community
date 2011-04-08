@@ -16,6 +16,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -46,6 +49,7 @@ public class HgUpdateCommand {
     this.clean = clean;
   }
 
+  @Nullable
   public HgCommandResult execute() {
     List<String> arguments = new LinkedList<String>();
     if (clean) {
@@ -59,7 +63,9 @@ public class HgUpdateCommand {
       arguments.add(branch);
     }
 
-    return HgCommandService.getInstance(project).execute(repo, "update", arguments);
+    final HgCommandExecutor executor = new HgCommandExecutor(project);
+    executor.setShowOutput(true);
+    return executor.executeInCurrentThread(repo, "update", arguments);
   }
 
 }

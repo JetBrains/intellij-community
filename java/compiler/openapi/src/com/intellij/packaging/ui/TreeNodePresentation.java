@@ -45,6 +45,9 @@ public abstract class TreeNodePresentation {
   public void navigateToSource() {
   }
 
+  /**
+   * @deprecated this method is not used and will be removed in the future
+   */
   @Nullable
   public Object getSourceObject() {
     return null;

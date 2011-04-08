@@ -141,11 +141,6 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
     }
 
     @Override
-    public Object getSourceObject() {
-      return myModule;
-    }
-
-    @Override
     public int getWeight() {
       return SourceItemWeights.MODULE_WEIGHT;
     }

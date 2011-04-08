@@ -24,7 +24,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,16 +32,10 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgCloneCommand;
-import org.zmlx.hg4idea.command.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.ui.HgCloneDialog;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.URI;
 
 /**
  * Checkout provider for Mercurial
@@ -78,105 +71,25 @@ public class HgCheckoutProvider implements CheckoutProvider {
         clone.setDirectory(targetDir);
 
         // handle result
-        try {
-          final HgCommandResult myCloneResult = clone.execute();
-          if (myCloneResult == null) {
-            notifyError("Clone failed", "Clone failed due to unknown error", project);
-          } else if (myCloneResult.getExitValue() != 0) {
-            notifyError("Clone failed", "Clone from " + sourceRepositoryURL + " failed.<br/><br/>" + myCloneResult.getRawError(), project);
-          } else {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (listener != null) {
-                  listener.directoryCheckedOut(new File(dialog.getParentDirectory(), dialog.getDirectoryName()));
-                  listener.checkoutCompleted();
-                }
+        final HgCommandResult myCloneResult = clone.execute();
+        if (myCloneResult == null) {
+          notifyError("Clone failed", "Clone failed due to unknown error", project);
+        } else if (myCloneResult.getExitValue() != 0) {
+          notifyError("Clone failed", "Clone from " + sourceRepositoryURL + " failed.<br/><br/>" + myCloneResult.getRawError(), project);
+        } else {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (listener != null) {
+                listener.directoryCheckedOut(new File(dialog.getParentDirectory(), dialog.getDirectoryName()));
+                listener.checkoutCompleted();
               }
-            });
-          }
-        } finally {
-          cleanupAuthDataFromHgrc(targetDir);
+            }
+          });
         }
       }
     }.queue();
 
-  }
-
-  /**
-   * Removes authentication data from the parent URL of a just cloned repository.
-   * @param targetDir directory where the hg project was cloned into.
-   */
-  private static void cleanupAuthDataFromHgrc(String targetDir) {
-    File hgrc = new File(new File(targetDir, ".hg"), "hgrc");
-    if (!hgrc.exists()) {
-      return;
-    }
-
-    for (int i = 0; i < 3; i++) { // 3 attempts in case of an IOException
-      BufferedReader reader = null;
-      PrintWriter writer = null;
-      try {
-        // writing correct info into a temporary file
-        final File tempFile = FileUtil.createTempFile("hgrc", "temp");
-        tempFile.deleteOnExit();
-        reader = new BufferedReader(new FileReader(hgrc));
-        writer = new PrintWriter(new FileWriter(tempFile));
-        String line;
-        while ((line = reader.readLine()) != null) {
-          String parseLine = line.trim();
-          if (parseLine.startsWith("default") && parseLine.contains("@")) { // looking for paths.default
-            int eqIdx = parseLine.indexOf('=');
-            parseLine = parseLine.substring(eqIdx+1).trim();  // getting value of paths.default
-            try {
-              final URI uri = new URI(parseLine);
-              final String userInfo = uri.getUserInfo();
-              if (userInfo == null) { // no user info => OK
-                writer.println(line);
-                continue;
-              }
-              int colonIdx = userInfo.indexOf(':');
-              if (colonIdx == -1) {  // no password given => OK
-                writer.println(line);
-                continue;
-              }
-              final String urlWithoutAuthData = uri.toString().replace(userInfo, userInfo.substring(0, colonIdx)); // remove password, leave username
-              writer.println("default = " + urlWithoutAuthData);
-            } catch (Throwable t) { // not URI => no sensitive data
-              writer.println(line);
-            }
-          } else {
-            writer.println(line);
-          }
-        }
-        reader.close();
-        writer.close();
-
-        // substituting files
-        try {
-          if (!tempFile.renameTo(hgrc)) { // this may fail in case of different FSs
-            FileUtil.copy(tempFile, hgrc);
-            FileUtil.delete(tempFile);
-          }
-        } catch (Throwable e) {
-          FileUtil.copy(tempFile, hgrc);
-          FileUtil.delete(tempFile);
-        }
-        return;
-      } catch (IOException e) {
-        LOG.info(e);
-      } finally {
-        if (reader != null) {
-          try {
-            reader.close();
-          } catch (IOException e) {
-          }
-        }
-        if (writer != null) {
-          writer.close();
-        }
-      }
-    }
   }
 
   private static void notifyError(String title, String description, Project project) {

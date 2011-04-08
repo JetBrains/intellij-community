@@ -47,10 +47,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
-import com.intellij.util.continuation.Continuation;
-import com.intellij.util.continuation.ContinuationContext;
-import com.intellij.util.continuation.TaskDescriptor;
-import com.intellij.util.continuation.Where;
+import com.intellij.util.continuation.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,9 +108,9 @@ public class PatchApplier<BinaryType extends FilePatch> {
 
   @AsynchronousExecution
   public void execute(boolean showSuccessNotification) {
-    final Continuation continuation = new Continuation(myProject, true);
-    final ContinuationContext.GatheringContinuationContext initContext =
-      new ContinuationContext.GatheringContinuationContext();
+    final Continuation continuation = Continuation.createForCurrentProgress(myProject, true, "Apply patch");
+    final GatheringContinuationContext initContext =
+      new GatheringContinuationContext();
     scheduleSelf(showSuccessNotification, initContext);
     continuation.run(initContext.getList());
   }

@@ -10,8 +10,10 @@
 // the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 // either express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
-package org.zmlx.hg4idea.command;
+package org.zmlx.hg4idea.execution;
 
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 
@@ -21,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-final class ShellCommand {
+public final class ShellCommand {
 
   private static final Logger LOG = Logger.getInstance(ShellCommand.class.getName());
 
@@ -56,46 +58,17 @@ final class ShellCommand {
         processBuilder = processBuilder.directory(new File(dir));
       }
       Process process = processBuilder.start();
-      Thread outReaderThread = startReader(
-        new InputStreamReader(process.getInputStream(), charset), out
-      );
-      Thread errReaderThread = startReader(
-        new InputStreamReader(process.getErrorStream()), err
-      );
-      process.waitFor();
-      int exitValue = process.exitValue();
-      outReaderThread.join();
-      errReaderThread.join();
+
+      CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
+      final ProcessOutput processOutput = processHandler.runProcess();
+
+      int exitValue = processOutput.getExitCode();
+      out.write(processOutput.getStdout());
+      err.write(processOutput.getStderr());
       return new HgCommandResult(out, err, exitValue );
     } catch (IOException e) {
       throw new ShellCommandException(e);
     }
-  }
-
-  private Thread startReader(final InputStreamReader in, final Writer writer) {
-    Thread readingThread = new Thread(new Runnable() {
-      public void run() {
-        char[] buffer = new char[BUFFER_SIZE];
-        int count;
-        try {
-          while ((count = in.read(buffer)) > 0) {
-            writer.write(buffer, 0, count);
-          }
-          writer.flush();
-        } catch (IOException e) {
-          LOG.info(e.getMessage());
-        } finally {
-          try {
-            in.close();
-          }
-          catch (IOException e) {
-            // ignore
-          }
-        }
-      }
-    });
-    readingThread.start();
-    return readingThread;
   }
 
   /**

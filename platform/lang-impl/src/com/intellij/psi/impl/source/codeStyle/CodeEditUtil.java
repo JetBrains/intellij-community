@@ -22,13 +22,11 @@ import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.formatting.IndentInfo;
 import com.intellij.lang.*;
 import com.intellij.openapi.command.AbnormalCommandTerminationException;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.Factory;
@@ -53,7 +51,13 @@ public class CodeEditUtil {
       return Boolean.TRUE;
     }
   };
-
+  private static final ThreadLocal<Boolean> ALLOW_NODES_REFORMATTING = new ThreadLocal<Boolean>() {
+    @Override
+    protected Boolean initialValue() {
+      return Boolean.TRUE;
+    }
+  };
+  
   public static final Key<Boolean> OUTER_OK = new Key<Boolean>("OUTER_OK");
 
   private CodeEditUtil() {
@@ -425,7 +429,7 @@ public class CodeEditUtil {
    * @return        <code>true</code> if given node is configured to be reformatted; <code>false</code> otherwise
    */
   public static boolean isMarkedToReformat(final ASTNode node) {
-    return node.getCopyableUserData(REFORMAT_KEY) != null;
+    return node.getCopyableUserData(REFORMAT_KEY) != null && ALLOW_NODES_REFORMATTING.get();
   }
 
   /**
@@ -454,9 +458,9 @@ public class CodeEditUtil {
    * to {@link #markToReformat(ASTNode, boolean) mark node for postponed formatting} will have no effect until current method is
    * called with <code>'true'</code> as an argument. Hence, following usage scenario is expected:
    * <ol>
-   *   <li>this method is called with <code>'false'</code> argument;</li>
-   *   <li>formatting is performed at dedicated <code>'try'</code> block;</li>
-   *   <li>this method is called with <code>'false'</code> argument from <code>'finally'</code> section;</li>
+   *   <li>This method is called with <code>'false'</code> argument;</li>
+   *   <li>Formatting is performed at dedicated <code>'try'</code> block;</li>
+   *   <li>This method is called with <code>'false'</code> argument from <code>'finally'</code> section;</li>
    * </ol>
    *
    * @param allow     flag that defines if new reformat markers can be added from the current thread
@@ -464,5 +468,33 @@ public class CodeEditUtil {
    */
   public static void allowToMarkNodesForPostponedFormatting(boolean allow) {
     ALLOW_TO_MARK_NODES_TO_REFORMAT.set(allow);
+  }
+
+  /**
+   * @return    <code>'allow suspended formatting'</code> flag value
+   * @see #setAllowSuspendNodesReformatting(boolean) 
+   */
+  public static boolean isSuspendedNodesReformattingAllowed() {
+    return ALLOW_NODES_REFORMATTING.get();
+  }
+  
+  /**
+   * There is a possible case that particular PSI tree node is {@link #markToReformat(ASTNode, boolean) marked for reformatting}.
+   * That means that there is a big chance that the node will be re-formatted during corresponding document processing
+   * (e.g. on call to {@link PsiDocumentManager#doPostponedOperationsAndUnblockDocument(Document)}).
+   * <p/>
+   * However, there is a possible case that particular activity that triggers such document processing is not ready to the
+   * situation when the document is modified because of postponed formatting. Hence, it may ask to suspend postponed formatting
+   * for a while. This method allows to do that at thread-local manner. I.e. it's expected to be called as follows:
+   * <pre>
+   * <ol>
+   *   <li>This method is called with <code>'false'</code> argument;</li>
+   *   <li>Document is processed at dedicated <code>'try'</code> block;</li>
+   *   <li>This method is called with <code>'false'</code> argument from <code>'finally'</code> section;</li>
+   * </ol>
+   </pre>
+   */
+  public static void setAllowSuspendNodesReformatting(boolean allow) {
+    ALLOW_NODES_REFORMATTING.set(allow);
   }
 }

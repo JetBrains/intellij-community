@@ -14,9 +14,11 @@ package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgTagCreateCommand;
-import org.zmlx.hg4idea.command.HgCommandException;
-import org.zmlx.hg4idea.command.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.ui.HgTagDialog;
 
 import java.util.Collection;
@@ -44,10 +46,12 @@ public class HgCreateTagAction extends HgAbstractGlobalAction {
       }
 
       public void execute() throws HgCommandException {
-        HgCommandResult result =
-          new HgTagCreateCommand(project, dialog.getRepository(), dialog.getTagName()).execute();
-
-        new HgCommandResultNotifier(project).process(result);
+        new HgTagCreateCommand(project, dialog.getRepository(), dialog.getTagName()).execute(new HgCommandResultHandler() {
+          @Override
+          public void process(@Nullable HgCommandResult result) {
+            new HgCommandResultNotifier(project).process(result);
+          }
+        });
       }
     };
   }

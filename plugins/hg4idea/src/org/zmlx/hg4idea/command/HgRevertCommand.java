@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.apache.commons.lang.StringUtils;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -48,6 +49,6 @@ public class HgRevertCommand {
 
     ContainerUtil.addAll(arguments, hgFile.getRelativePath());
 
-    HgCommandService.getInstance(project).execute(hgFile.getRepo(), "revert", arguments);
+    new HgCommandExecutor(project).execute(hgFile.getRepo(), "revert", arguments, null);
   }
 }

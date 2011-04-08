@@ -13,6 +13,8 @@
 package org.zmlx.hg4idea.command;
 
 import org.apache.commons.lang.StringUtils;
+import org.zmlx.hg4idea.execution.ShellCommand;
+import org.zmlx.hg4idea.execution.ShellCommandException;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;

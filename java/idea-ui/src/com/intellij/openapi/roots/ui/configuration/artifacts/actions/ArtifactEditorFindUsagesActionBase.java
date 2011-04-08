@@ -15,21 +15,11 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurableContext;
-import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ArtifactsTreeNode;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
-import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -38,7 +28,7 @@ import java.awt.*;
  */
 public abstract class ArtifactEditorFindUsagesActionBase extends FindUsagesInProjectStructureActionBase {
   private final Tree myTree;
-  private final ArtifactsStructureConfigurableContext myArtifactContext;
+  protected final ArtifactsStructureConfigurableContext myArtifactContext;
 
   public ArtifactEditorFindUsagesActionBase(Tree tree, Project project, ArtifactsStructureConfigurableContext artifactContext) {
     super(tree, project);
@@ -47,32 +37,8 @@ public abstract class ArtifactEditorFindUsagesActionBase extends FindUsagesInPro
   }
 
   protected boolean isEnabled() {
-    ArtifactsTreeNode node = getSelectedNode();
-    return node != null && node.getElementPresentation().getSourceObject() != null;
+    return getSelectedElement() != null;
   }
-
-  protected ProjectStructureElement getSelectedElement() {
-    ArtifactsTreeNode node = getSelectedNode();
-    if (node == null) {
-      return null;
-    }
-
-    final Object sourceObject = node.getElementPresentation().getSourceObject();
-    final StructureConfigurableContext context = ProjectStructureConfigurable.getInstance(getContext().getProject()).getContext();
-    if (sourceObject instanceof Module) {
-      return new ModuleProjectStructureElement(context, (Module)sourceObject);
-    }
-    else if (sourceObject instanceof Library) {
-      return new LibraryProjectStructureElement(context, (Library)sourceObject);
-    }
-    else if (sourceObject instanceof Artifact) {
-      return myArtifactContext.getOrCreateArtifactElement((Artifact)sourceObject);
-    }
-    return null;
-  }
-
-  @Nullable
-  protected abstract ArtifactsTreeNode getSelectedNode();
 
   protected RelativePoint getPointToShowResults() {
     final int selectedRow = myTree.getSelectionRows()[0];

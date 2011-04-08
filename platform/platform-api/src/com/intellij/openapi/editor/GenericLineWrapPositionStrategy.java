@@ -71,7 +71,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
         if (rule.condition == WrapCondition.BOTH || rule.condition == WrapCondition.AFTER) {
           int target = i+1;
           if (rule.symbol != ' ') {
-            while(i < maxPreferredOffsetToUse && text.charAt(target) == ' ') {
+            while(target < maxPreferredOffsetToUse && text.charAt(target) == ' ') {
               target++;
             }
           }

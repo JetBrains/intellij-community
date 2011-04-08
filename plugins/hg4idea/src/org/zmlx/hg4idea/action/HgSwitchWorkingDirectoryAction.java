@@ -12,11 +12,12 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgUpdateCommand;
-import org.zmlx.hg4idea.command.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.ui.HgSwitchDialog;
 
 import java.util.Collection;
@@ -44,7 +45,7 @@ public class HgSwitchWorkingDirectoryAction extends HgAbstractGlobalAction {
       }
 
       public void execute() {
-        HgUpdateCommand command = new HgUpdateCommand(project, dialog.getRepository());
+        final HgUpdateCommand command = new HgUpdateCommand(project, dialog.getRepository());
         command.setClean(dialog.isRemoveLocalChanges());
         if (dialog.isRevisionSelected()) {
           command.setRevision(dialog.getRevision());
@@ -56,10 +57,14 @@ public class HgSwitchWorkingDirectoryAction extends HgAbstractGlobalAction {
           command.setRevision(dialog.getTag().getName());
         }
 
-        HgCommandResult result = command.execute();
-        new HgCommandResultNotifier(project).process(result);
-
-        project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project);
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            HgCommandResult result = command.execute();
+            new HgCommandResultNotifier(project).process(result);
+            project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project);
+          }
+        });
       }
     };
   }

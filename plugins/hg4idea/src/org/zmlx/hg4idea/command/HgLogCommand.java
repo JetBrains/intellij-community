@@ -15,6 +15,8 @@ package org.zmlx.hg4idea.command;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -41,7 +43,7 @@ public class HgLogCommand extends HgRevisionsCommand {
   }
 
   @Override
-  public HgCommandResult execute(HgCommandService service, VirtualFile repo,
+  public HgCommandResult execute(HgCommandExecutor executor, VirtualFile repo,
     String template, int limit, HgFile hgFile) {
     List<String> arguments = new LinkedList<String>();
     if (followCopies) {
@@ -64,7 +66,7 @@ public class HgLogCommand extends HgRevisionsCommand {
     if (logFile) {
       arguments.add(hgFile.getRelativePath());
     }
-    return service.execute(repo, "log", arguments);
+    return executor.executeInCurrentThread(repo, "log", arguments);
   }
 
 }

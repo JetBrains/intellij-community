@@ -85,7 +85,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     if (element != null && !element.isValid()) {
       element = null;
     }
-    if (element == null && myElementInfo != null) {
+    if (element == null) {
       element = (E)myElementInfo.restoreElement();
       if (element != null && (!element.getClass().equals(myElementClass) || !element.isValid())) {
         element = null;
@@ -153,7 +153,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
     FileViewProvider viewProvider = containingFile.getViewProvider();
     if (viewProvider instanceof InjectedFileViewProvider) {
-      return new InjectedSelfElementInfo(project, element, containingFile);
+      PsiElement context = containingFile.getContext();
+      if (context != null) return new InjectedSelfElementInfo(project, element, context);
     }
 
     if (element instanceof PsiFile) {
@@ -167,17 +168,13 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   public void documentAndPsiInSync() {
-    if (myElementInfo != null) {
-      myElementInfo.documentAndPsiInSync();
-    }
+    myElementInfo.documentAndPsiInSync();
   }
 
   @Override
   public void dispose() {
-    if (myElementInfo != null) {
-      myElementInfo.dispose();
-      myElement = null;
-    }
+    myElementInfo.dispose();
+    myElement = null;
   }
 
   @Override
@@ -189,6 +186,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     myElementInfo.fastenBelt(offset);
   }
 
+  @NotNull
   SmartPointerElementInfo getElementInfo() {
     return myElementInfo;
   }

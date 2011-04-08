@@ -141,7 +141,7 @@ public class CreatePatchConfigurationPanel {
   }
 
   public boolean isOkToExecute() {
-    return myErrorLabel.getText() == null || myErrorLabel.getText().length() == 0; 
+    return myErrorLabel.getText() == null || myErrorLabel.getText().length() == 0;
   }
 
   public String getError() {

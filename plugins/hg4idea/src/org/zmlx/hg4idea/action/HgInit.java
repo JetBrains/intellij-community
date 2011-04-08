@@ -5,7 +5,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -13,6 +12,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.zmlx.hg4idea.HgUtil;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
@@ -53,6 +53,7 @@ public class HgInit extends DumbAwareAction {
     // check if the selected folder is not yet under mercurial and provide some options in that case
     final VirtualFile vcsRoot = HgUtil.getNearestHgRoot(selectedRoot);
     VirtualFile mapRoot = selectedRoot;
+    boolean needToCreateRepo = false;
     if (vcsRoot != null) {
       final HgInitAlreadyUnderHgDialog dialog = new HgInitAlreadyUnderHgDialog(myProject,
                                                    selectedRoot.getPresentableUrl(), vcsRoot.getPresentableUrl());
@@ -64,18 +65,23 @@ public class HgInit extends DumbAwareAction {
       if (dialog.getAnswer() == HgInitAlreadyUnderHgDialog.Answer.USE_PARENT_REPO) {
         mapRoot = vcsRoot;
       } else if (dialog.getAnswer() == HgInitAlreadyUnderHgDialog.Answer.CREATE_REPO_HERE) {
-        if (!createRepository(selectedRoot)) {
-          return;
-        }
+        needToCreateRepo = true;
       }
     } else { // no parent repository => creating the repository here.
-       if (!createRepository(selectedRoot)){
-         return;
-       }
+      needToCreateRepo = true;
     }
 
-    // update vcs directory mappings if new repository was created inside the current project directory
-    if (myProject != null && (! myProject.isDefault()) && myProject.getBaseDir() != null && VfsUtil.isAncestor(myProject.getBaseDir(), mapRoot, false)) {
+    if (needToCreateRepo) {
+      createRepository(selectedRoot, mapRoot); 
+    } else {
+      updateDirectoryMappings(mapRoot);
+    }
+  }
+
+  // update vcs directory mappings if new repository was created inside the current project directory
+  private void updateDirectoryMappings(VirtualFile mapRoot) {
+    if (myProject != null && (! myProject.isDefault()) && myProject.getBaseDir() != null && VfsUtil
+      .isAncestor(myProject.getBaseDir(), mapRoot, false)) {
       mapRoot.refresh(false, false);
       final String path = mapRoot.equals(myProject.getBaseDir()) ? "" : mapRoot.getPath();
       final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
@@ -103,14 +109,24 @@ public class HgInit extends DumbAwareAction {
     }
   }
 
-  private boolean createRepository(VirtualFile selectedRoot) {
-    final boolean succeeded = (new HgInitCommand(myProject)).execute(selectedRoot);
-    Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID,
-                                              HgVcsMessages.message(succeeded ? "hg4idea.init.created.notification.title" : "hg4idea.init.error.title"),
-                                              HgVcsMessages.message(succeeded ? "hg4idea.init.created.notification.description" : "hg4idea.init.error.description", 
-                                                                    selectedRoot.getPresentableUrl()),
-                                              succeeded ? NotificationType.INFORMATION : NotificationType.ERROR), myProject.isDefault() ? null : myProject);
-    return succeeded;
+  private void createRepository(final VirtualFile selectedRoot, final VirtualFile mapRoot) {
+    new HgInitCommand(myProject).execute(selectedRoot, new Consumer<Boolean>() {
+      @Override
+      public void consume(Boolean succeeded) {
+        if (succeeded) {
+          updateDirectoryMappings(mapRoot);
+        }
+        Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID,
+                                                  HgVcsMessages.message(
+                                                    succeeded ? "hg4idea.init.created.notification.title" : "hg4idea.init.error.title"),
+                                                  HgVcsMessages.message(succeeded
+                                                                        ? "hg4idea.init.created.notification.description"
+                                                                        : "hg4idea.init.error.description",
+                                                                        selectedRoot.getPresentableUrl()),
+                                                  succeeded ? NotificationType.INFORMATION : NotificationType.ERROR),
+                                 myProject.isDefault() ? null : myProject);
+      }
+    });
   }
   
 }

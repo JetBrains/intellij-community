@@ -139,4 +139,5 @@
   <tip file="DragToOpen.html"/>
   <tip file="EnterDirectoryInGotoFile.html"/>
   <tip file="GotoLineInFile.html"/>
+  <tip file="AnnotationsAndDiffs.html"/>
 </tips>

@@ -14,6 +14,8 @@ package org.zmlx.hg4idea;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
@@ -46,6 +48,7 @@ import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.provider.*;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
@@ -72,6 +75,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   private static final Icon INCOMING_ICON = IconLoader.getIcon("/actions/moveDown.png");
   private static final Icon OUTGOING_ICON = IconLoader.getIcon("/actions/moveUp.png");
+  private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
   public static final String VCS_NAME = "hg4idea";
   public static final String NOTIFICATION_GROUP_ID = "Mercurial";
@@ -102,6 +106,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private final HgMergeProvider myMergeProvider;
   private HgExecutableValidator myExecutableValidator;
   private final Object myExecutableValidatorLock = new Object();
+  private File myPromptHooksExtensionFile;
 
   public HgVcs(Project project,
     HgGlobalSettings globalSettings, HgProjectSettings projectSettings,
@@ -236,12 +241,27 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return HgUtil.getNearestHgRoot(dir) != null;
   }
 
+  /**
+   * @return the prompthooks.py extension used for capturing prompts from Mercurial and requesting IDEA's user about authentication.
+   */
+  public @NotNull File getPromptHooksExtensionFile() {
+    if (myPromptHooksExtensionFile == null) {
+      // check that hooks are available
+      myPromptHooksExtensionFile = HgUtil.getTemporaryPythonFile("prompthooks");
+      if (myPromptHooksExtensionFile == null || !myPromptHooksExtensionFile.exists()) {
+        LOG.error("prompthooks.py Mercurial extension is not found. Please reinstall " + ApplicationNamesInfo.getInstance().getProductName());
+      }
+    }
+    return myPromptHooksExtensionFile;
+  }
+
   @Override
   public void activate() {
     // validate hg executable on start
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       getExecutableValidator().checkExecutableAndShowDialogIfNeeded();
     }
+
     // status bar
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
     if (statusBar != null) {

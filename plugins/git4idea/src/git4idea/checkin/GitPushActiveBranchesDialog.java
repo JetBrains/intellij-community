@@ -20,7 +20,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -37,7 +36,6 @@ import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.Consumer;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
@@ -72,7 +70,8 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static git4idea.ui.GitUIUtil.*;
+import static git4idea.ui.GitUIUtil.notifyError;
+import static git4idea.ui.GitUIUtil.notifyMessage;
 
 /**
  * The dialog that allows pushing active branches.
@@ -304,8 +303,8 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     final ArrayList<VcsException> errors = new ArrayList<VcsException>();
     for (Root r : rootsToPush) {
       GitLineHandler h = new GitLineHandler(myProject, r.root, GitCommand.PUSH);
-      String src = r.commitToPush != null ? r.commitToPush : r.branch;
-      h.addParameters("-v", r.remote, src + ":" + r.remoteBranch);
+      String src = r.commitToPush != null ? r.commitToPush : r.currentBranch;
+      h.addParameters("-v", r.remoteName, src + ":" + r.remoteBranch);
       GitPushUtils.trackPushRejectedAsError(h, "Rejected push (" + r.root.getPresentableUrl() + "): ");
       errors.addAll(GitHandlerUtil.doSynchronouslyWithExceptions(h));
     }
@@ -321,7 +320,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     for (int i = 0; i < myTreeRoot.getChildCount(); i++) {
       CheckedTreeNode node = (CheckedTreeNode) myTreeRoot.getChildAt(i);
       Root r = (Root)node.getUserObject();
-      if (r.remote == null || r.commits.size() == 0) {
+      if (r.remoteName == null || r.commits.size() == 0) {
         continue;
       }
       boolean topCommit = true;
@@ -646,7 +645,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       for (Commit c : r.commits) {
         CheckedTreeNode child = new CheckedTreeNode(c);
         rootNode.add(child);
-        child.setChecked(r.remote != null && !unchecked.contains(c.commitId()));
+        child.setChecked(r.remoteName != null && !unchecked.contains(c.commitId()));
       }
       myTreeRoot.add(rootNode);
     }
@@ -704,7 +703,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
           error = GitBundle.getString("push.active.error.reorder.needed");
         }
       }
-      if (r.branch == null) {
+      if (r.currentBranch == null) {
         if (error == null) {
           error = GitBundle.getString("push.active.error.no.branch");
         }
@@ -770,20 +769,20 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
         r.root = root;
         GitBranch b = GitBranch.current(project, root);
         if (b != null) {
-          r.branch = b.getFullName();
-          r.remote = b.getTrackedRemoteName(project, root);
+          r.currentBranch = b.getFullName();
+          r.remoteName = b.getTrackedRemoteName(project, root);
           r.remoteBranch = b.getTrackedBranchName(project, root);
-          if (r.remote != null) {
-            if (fetchData && !r.remote.equals(".")) {
+          if (r.remoteName != null) {
+            if (fetchData && !r.remoteName.equals(".")) {
               GitLineHandler fetch = new GitLineHandler(project, root, GitCommand.FETCH);
-              fetch.addParameters(r.remote, "-v");
+              fetch.addParameters(r.remoteName, "-v");
               Collection<VcsException> exs = GitHandlerUtil.doSynchronouslyWithExceptions(fetch);
               exceptions.addAll(exs);
             }
             GitBranch tracked = b.tracked(project, root);
             assert tracked != null : "Tracked branch cannot be null here";
             GitSimpleHandler unmerged = new GitSimpleHandler(project, root, GitCommand.LOG);
-            unmerged.addParameters("--pretty=format:%H", r.branch + ".." + tracked.getFullName());
+            unmerged.addParameters("--pretty=format:%H", r.currentBranch + ".." + tracked.getFullName());
             unmerged.setNoSSH(true);
             unmerged.setStdoutSuppressed(true);
             StringScanner su = new StringScanner(unmerged.run());
@@ -793,7 +792,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
               }
             }
             GitSimpleHandler toPush = new GitSimpleHandler(project, root, GitCommand.LOG);
-            toPush.addParameters("--pretty=format:%H%x20%ct%x20%at%x20%s%n%P", tracked.getFullName() + ".." + r.branch);
+            toPush.addParameters("--pretty=format:%H%x20%ct%x20%at%x20%s%n%P", tracked.getFullName() + ".." + r.currentBranch);
             toPush.setNoSSH(true);
             toPush.setStdoutSuppressed(true);
             StringScanner sp = new StringScanner(toPush.run());
@@ -907,46 +906,46 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
   static abstract class Node {
     /**
      * Render the node text
-     *
-     * @param renderer the renderer to use
      */
     protected abstract void render(ColoredTreeCellRenderer renderer);
   }
 
-  /**
-   * The commit descriptor
-   */
   static class Status extends Node {
-    /**
-     * The root
-     */
     Root root;
+    private String myMessage = "";
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void render(ColoredTreeCellRenderer renderer) {
       renderer.append(GitBundle.getString("push.active.status.status"));
-      if (root.branch == null) {
-        renderer.append(GitBundle.message("push.active.status.no.branch"), SimpleTextAttributes.ERROR_ATTRIBUTES);
+      if (root.currentBranch == null) {
+        myMessage = GitBundle.message("push.active.status.no.branch");
+        renderer.append(myMessage, SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
-      else if (root.remote == null) {
-        renderer.append(GitBundle.message("push.active.status.no.tracked"), SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
+      else if (root.remoteName == null) {
+        myMessage = GitBundle.message("push.active.status.no.tracked");
+        renderer.append(myMessage, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
       }
       else if (root.remoteCommits != 0 && root.commits.size() == 0) {
-        renderer.append(GitBundle.message("push.active.status.no.commits.behind", root.remoteCommits),
-                        SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
+        myMessage = GitBundle.message("push.active.status.no.commits.behind", root.remoteCommits);
+        renderer.append(myMessage, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
       }
       else if (root.commits.size() == 0) {
-        renderer.append(GitBundle.message("push.active.status.no.commits"), SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
+        myMessage = GitBundle.message("push.active.status.no.commits");
+        renderer.append(myMessage, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
       }
       else if (root.remoteCommits != 0) {
-        renderer.append(GitBundle.message("push.active.status.behind", root.remoteCommits), SimpleTextAttributes.ERROR_ATTRIBUTES);
+        myMessage = GitBundle.message("push.active.status.behind", root.remoteCommits);
+        renderer.append(myMessage, SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
       else {
-        renderer.append(GitBundle.message("push.active.status.push", root.commits.size()));
+        myMessage = GitBundle.message("push.active.status.push", root.commits.size());
+        renderer.append(myMessage);
       }
+    }
+
+    @Override
+    public String toString() {
+      return GitBundle.getString("push.active.status.status") + myMessage;
     }
   }
 
@@ -954,30 +953,12 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
    * The commit descriptor
    */
   static class Commit extends Node {
-    /**
-     * The root
-     */
     Root root;
-    /**
-     * The revision
-     */
     GitRevisionNumber revision;
-    /**
-     * The message
-     */
     String message;
-    /**
-     * The author time
-     */
     String authorTime;
-    /**
-     * If true, the commit is a merge
-     */
-    boolean isMerge;
+    boolean isMerge; // true if this commit is a merge commit
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void render(ColoredTreeCellRenderer renderer) {
       renderer.append(revision.asString().substring(0, HASH_PREFIX_SIZE), SimpleTextAttributes.GRAYED_ATTRIBUTES);
@@ -994,53 +975,35 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
     String commitId() {
       return authorTime + ":" + message;
     }
+
+    @Override
+    public String toString() {
+      String mergeCommitStr = isMerge ? " " + GitBundle.getString("push.active.commit.node.merge") : "";
+      return revision.toShortString() + " " + message + mergeCommitStr;
+    }
   }
 
   /**
    * The root node
    */
   static class Root extends Node {
-    /**
-     * if true, the update is required
-     */
     int remoteCommits;
-    /**
-     * the path to vcs root
-     */
     VirtualFile root;
-    /**
-     * the current branch
-     */
-    String branch;
-    /**
-     * the remote name
-     */
-    String remote;
-    /**
-     * the remote branch name
-     */
+    String currentBranch;
+    String remoteName;
     String remoteBranch;
-    /**
-     * The commit that will be actually pushed
-     */
-    String commitToPush;
-    /**
-     * the commit
-     */
+    String commitToPush; // The commit that will be actually pushed
     List<Commit> commits = new ArrayList<Commit>();
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void render(ColoredTreeCellRenderer renderer) {
       SimpleTextAttributes rootAttributes;
       SimpleTextAttributes branchAttributes;
-      if (remote != null && commits.size() != 0 && remoteCommits != 0 || branch == null) {
+      if (remoteName != null && commits.size() != 0 && remoteCommits != 0 || currentBranch == null) {
         rootAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES.derive(SimpleTextAttributes.STYLE_BOLD, null, null, null);
         branchAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES;
       }
-      else if (remote == null || commits.size() == 0) {
+      else if (remoteName == null || commits.size() == 0) {
         rootAttributes = SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES;
         branchAttributes = SimpleTextAttributes.GRAYED_ATTRIBUTES;
       }
@@ -1049,13 +1012,27 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
         rootAttributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
       }
       renderer.append(root.getPresentableUrl(), rootAttributes);
-      if (branch != null) {
-        renderer.append(" [" + branch, branchAttributes);
-        if (remote != null) {
-          renderer.append(" -> " + remote + "#" + remoteBranch, branchAttributes);
+      if (currentBranch != null) {
+        renderer.append(" [" + currentBranch, branchAttributes);
+        if (remoteName != null) {
+          renderer.append(" -> " + remoteName + "#" + remoteBranch, branchAttributes);
         }
         renderer.append("]", branchAttributes);
       }
+    }
+
+    @Override
+    public String toString() {
+      final StringBuilder string = new StringBuilder();
+      string.append(root.getPresentableUrl());
+      if (currentBranch != null) {
+        string.append(" [").append(currentBranch);
+        if (remoteName != null) {
+          string.append(" -> ").append(remoteName).append("#").append(remoteBranch);
+        }
+        string.append("]");
+      }
+      return string.toString();
     }
   }
 }

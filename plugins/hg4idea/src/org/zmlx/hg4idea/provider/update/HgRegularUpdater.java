@@ -12,8 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.provider.update;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
@@ -22,10 +21,12 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.HgVcsMessages;
+import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.*;
+import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +39,7 @@ public class HgRegularUpdater implements HgUpdater {
   private final Project project;
   @NotNull private final VirtualFile repository;
   @NotNull private final UpdateConfiguration updateConfiguration;
+  private static final Logger LOG = Logger.getInstance(HgRegularUpdater.class);
 
   public HgRegularUpdater(Project project, @NotNull VirtualFile repository, @NotNull UpdateConfiguration configuration) {
     this.project = project;
@@ -197,11 +199,7 @@ public class HgRegularUpdater implements HgUpdater {
   }
 
   private void resolvePossibleConflicts(final UpdatedFiles updatedFiles) {
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      public void run() {
-        new HgConflictResolver(project, updatedFiles).resolve(repository);
-      }
-    }, ModalityState.defaultModalityState());
+    new HgConflictResolver(project, updatedFiles).resolve(repository);
   }
 
   private Set<HgChange> getLocalChanges() {
@@ -218,7 +216,17 @@ public class HgRegularUpdater implements HgUpdater {
     hgPullCommand.setSource(new HgShowConfigCommand(project).getDefaultPath(repo));
     hgPullCommand.setUpdate(false);
     hgPullCommand.setRebase(false);
-    ensureSuccess(hgPullCommand.execute());
+    hgPullCommand.execute(new HgCommandResultHandler() {
+      @Override
+      public void process(@Nullable HgCommandResult result) {
+        try {
+          ensureSuccess(result);
+        }
+        catch (VcsException e) {
+          LOG.error(e);
+        }
+      }
+    });
   }
 
   private void update(@NotNull VirtualFile repo, ProgressIndicator indicator, UpdatedFiles updatedFiles, List<VcsException> warnings) throws VcsException {

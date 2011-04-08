@@ -10,31 +10,21 @@
 // the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 // either express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
-package org.zmlx.hg4idea.command;
+package org.zmlx.hg4idea.execution;
 
-public enum HgFileStatusEnum {
-
-  ADDED('A'),
-  MODIFIED('M'),
-  UNVERSIONED('?'),
-  MISSING('!'),
-  UNMODIFIED('C'),
-  DELETED('R'),
-  COPY(' '),
-  IGNORED('I');
-
-  private final char id;
-
-  private HgFileStatusEnum(char id) {
-    this.id = id;
+public class ShellCommandException extends Exception {
+  ShellCommandException() {
   }
 
-  public static HgFileStatusEnum valueOf(char c) {
-    for (HgFileStatusEnum status : HgFileStatusEnum.values()) {
-      if (status.id == c) {
-        return status;
-      }
-    }
-    return null;
+  ShellCommandException(String message) {
+    super(message);
+  }
+
+  ShellCommandException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  ShellCommandException(Throwable cause) {
+    super(cause);
   }
 }

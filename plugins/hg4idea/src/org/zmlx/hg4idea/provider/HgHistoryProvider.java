@@ -66,7 +66,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     }
     final List<VcsFileRevision> revisions = new ArrayList<VcsFileRevision>();
     revisions.addAll(getHistory(filePath, vcsRoot, myProject, DEFAULT_LIMIT));
-    return createAppendableSession(vcsRoot, revisions);
+    return createAppendableSession(vcsRoot, revisions, null);
   }
 
   public void reportAppendableHistory(FilePath filePath, final VcsAppendableHistorySessionPartner partner) throws VcsException {
@@ -75,7 +75,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     final List<HgFileRevision> history = getHistory(filePath, vcsRoot, myProject, DEFAULT_LIMIT);
     if (history.size() == 0) return;
 
-    final VcsAbstractHistorySession emptySession = createAppendableSession(vcsRoot, Collections.<VcsFileRevision>emptyList());
+    final VcsAbstractHistorySession emptySession = createAppendableSession(vcsRoot, Collections.<VcsFileRevision>emptyList(), null);
     partner.reportCreatedEmptySession(emptySession);
 
     for (HgFileRevision hgFileRevision : history) {
@@ -84,8 +84,8 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     partner.finished();
   }
 
-  private VcsAbstractHistorySession createAppendableSession(final VirtualFile vcsRoot, List<VcsFileRevision> revisions) {
-    return new VcsAbstractHistorySession(revisions) {
+  private VcsAbstractHistorySession createAppendableSession(final VirtualFile vcsRoot, List<VcsFileRevision> revisions, @Nullable VcsRevisionNumber number) {
+    return new VcsAbstractHistorySession(revisions, number) {
       @Nullable
       protected VcsRevisionNumber calcCurrentRevisionNumber() {
         return new HgWorkingCopyRevisionsCommand(myProject).firstParent(vcsRoot);
@@ -97,7 +97,7 @@ public class HgHistoryProvider implements VcsHistoryProvider {
 
       @Override
       public VcsHistorySession copy() {
-        return createAppendableSession(vcsRoot, getRevisionList());
+        return createAppendableSession(vcsRoot, getRevisionList(), getCurrentRevisionNumber());
       }
     };
   }

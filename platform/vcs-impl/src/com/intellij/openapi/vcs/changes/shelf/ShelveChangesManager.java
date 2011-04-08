@@ -37,21 +37,17 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.openapi.vcs.changes.patch.PatchNameChecker;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
+import com.intellij.openapi.vcs.impl.VcsFileTypeFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.continuation.Continuation;
-import com.intellij.util.continuation.ContinuationContext;
-import com.intellij.util.continuation.TaskDescriptor;
-import com.intellij.util.continuation.Where;
+import com.intellij.util.continuation.*;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -67,8 +63,6 @@ import java.util.*;
 
 public class ShelveChangesManager implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager");
-
-  @NonNls private static final String PATCH_EXTENSION = "patch";
 
   public static ShelveChangesManager getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ShelveChangesManager.class);
@@ -221,17 +215,30 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     }
   }
 
+  public List<VirtualFile> gatherPatchFiles(final Collection<VirtualFile> files) {
+    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+
+    final LinkedList<VirtualFile> filesQueue = new LinkedList<VirtualFile>(files);
+    while (! filesQueue.isEmpty()) {
+      ProgressManager.checkCanceled();
+      final VirtualFile file = filesQueue.removeFirst();
+      if (file.isDirectory()) {
+        filesQueue.addAll(Arrays.asList(file.getChildren()));
+        continue;
+      }
+      if (PatchFileType.NAME.equals(file.getFileType().getName())) {
+        result.add(file);
+      }
+    }
+
+    return result;
+  }
+
   public List<ShelvedChangeList> importChangeLists(final Collection<VirtualFile> files, final Consumer<VcsException> exceptionConsumer) {
     final List<ShelvedChangeList> result = new ArrayList<ShelvedChangeList>(files.size());
     try {
-      final LinkedList<VirtualFile> filesQueue = new LinkedList<VirtualFile>(files);
-      while (! filesQueue.isEmpty()) {
+      for (VirtualFile file : files) {
         ProgressManager.checkCanceled();
-        final VirtualFile file = filesQueue.removeFirst();
-        if (file.isDirectory()) {
-          filesQueue.addAll(Arrays.asList(file.getChildren()));
-          continue;
-        }
 
         final String description = file.getNameWithoutExtension().replace('_', ' ');
         final File patchPath = getPatchPath(description);
@@ -289,16 +296,17 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       file.mkdirs();
     }
 
-    return suggestPatchName(commitMessage.length() > PatchNameChecker.MAX ? (commitMessage.substring(0, PatchNameChecker.MAX)) :
-                            commitMessage, file);
+    return suggestPatchName(myProject, commitMessage.length() > PatchNameChecker.MAX ? (commitMessage.substring(0, PatchNameChecker.MAX)) :
+                            commitMessage, file, VcsConfiguration.PATCH);
   }
 
-  public static File suggestPatchName(final String commitMessage, final File file) {
+  public static File suggestPatchName(Project project, final String commitMessage, final File file, String extension) {
     @NonNls String defaultPath = PathUtil.suggestFileName(commitMessage);
     if (defaultPath.length() == 0) {
       defaultPath = "unnamed";
     }
-    return FileUtil.findSequentNonexistentFile(file, defaultPath, PATCH_EXTENSION);
+    return FileUtil.findSequentNonexistentFile(file, defaultPath,
+      extension == null ? VcsConfiguration.getInstance(project).getPatchFileExtension() : extension);
   }
 
   public void unshelveChangeList(final ShelvedChangeList changeList, @Nullable final List<ShelvedChange> changes,
@@ -312,8 +320,8 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
                                  @Nullable final List<ShelvedBinaryFile> binaryFiles,
                                  @Nullable final LocalChangeList targetChangeList,
                                  boolean showSuccessNotification) {
-    final Continuation continuation = new Continuation(myProject, true);
-    final ContinuationContext.GatheringContinuationContext initContext = new ContinuationContext.GatheringContinuationContext();
+    final Continuation continuation = Continuation.createForCurrentProgress(myProject, true, "Unshelve changes");
+    final GatheringContinuationContext initContext = new GatheringContinuationContext();
     scheduleUnshelveChangeList(changeList, changes, binaryFiles, targetChangeList, showSuccessNotification, initContext);
     continuation.run(initContext.getList());
   }

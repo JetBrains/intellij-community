@@ -97,11 +97,11 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       baseIcon = myBaseIcon.get(flags);
     }
 
+    if (!psiElement.isValid()) return null;
     if (isToDeferIconLoading()) {
       return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement, flags), ICON_COMPUTE);
     }
     else {
-      if (!psiElement.isValid()) return null;
       return computeIconNow(psiElement, flags);
     }
   }

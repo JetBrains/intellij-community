@@ -14,10 +14,14 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -41,7 +45,7 @@ public class HgTagBranchCommand {
 
   @Nullable
   public String getCurrentBranch() {
-    HgCommandResult result = HgCommandService.getInstance(project).execute(repo, "branch", null);
+    HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(repo, "branch", null);
     if (result == null) {
       return null;
     }
@@ -52,12 +56,22 @@ public class HgTagBranchCommand {
     return StringUtils.trim(output.get(0));
   }
 
-  public List<HgTagBranch> listBranches() {
-    return tokenize(HgCommandService.getInstance(project).execute(repo, "branches", null));
+  public void listBranches(final Consumer<List<HgTagBranch>> branchListConsumer) {
+    new HgCommandExecutor(project).execute(repo, "branches", null, new HgCommandResultHandler() {
+      @Override
+      public void process(@Nullable HgCommandResult result) {
+        branchListConsumer.consume(tokenize(result));
+      }
+    });
   }
 
-  public List<HgTagBranch> listTags() {
-    return tokenize(HgCommandService.getInstance(project).execute(repo, "tags", null));
+  public void listTags(final Consumer<List<HgTagBranch>> tagListConsumer) {
+    new HgCommandExecutor(project).execute(repo, "tags", null, new HgCommandResultHandler() {
+      @Override
+      public void process(@Nullable HgCommandResult result) {
+        tagListConsumer.consume(tokenize(result));
+      }
+    });
   }
 
   private List<HgTagBranch> tokenize(HgCommandResult result) {

@@ -221,7 +221,7 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
           LOG.error(e);
         }
         finally {
-          LOG.assertTrue(myReformatElements.isEmpty());
+          LOG.assertTrue(myReformatElements.isEmpty(), myReformatElements);
         }
       }
     });

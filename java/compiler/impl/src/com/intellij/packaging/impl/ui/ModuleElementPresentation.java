@@ -51,11 +51,6 @@ public class ModuleElementPresentation extends TreeNodePresentation {
     return findModule() != null;
   }
 
-  @Override
-  public Object getSourceObject() {
-    return findModule();
-  }
-
   @Nullable
   private Module findModule() {
     return myModulePointer != null ? myModulePointer.getModule() : null;
