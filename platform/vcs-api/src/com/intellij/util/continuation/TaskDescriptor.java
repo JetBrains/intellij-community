@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class TaskDescriptor {
+  // this also means that it would be called in case of chain cancel()
   private boolean myHaveMagicCure;
   private final String myName;
   @NotNull

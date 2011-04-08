@@ -48,10 +48,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.continuation.Continuation;
-import com.intellij.util.continuation.ContinuationContext;
-import com.intellij.util.continuation.TaskDescriptor;
-import com.intellij.util.continuation.Where;
+import com.intellij.util.continuation.*;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -312,8 +309,8 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
                                  @Nullable final List<ShelvedBinaryFile> binaryFiles,
                                  @Nullable final LocalChangeList targetChangeList,
                                  boolean showSuccessNotification) {
-    final Continuation continuation = new Continuation(myProject, true);
-    final ContinuationContext.GatheringContinuationContext initContext = new ContinuationContext.GatheringContinuationContext();
+    final Continuation continuation = Continuation.createForCurrentProgress(myProject, true, "Unshelve changes");
+    final GatheringContinuationContext initContext = new GatheringContinuationContext();
     scheduleUnshelveChangeList(changeList, changes, binaryFiles, targetChangeList, showSuccessNotification, initContext);
     continuation.run(initContext.getList());
   }

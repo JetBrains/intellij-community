@@ -89,7 +89,7 @@ public class QuickMerge {
     myWcInfo = wcInfo;
     myTitle = "Merge from " + myBranchName;
 
-    myContinuation = new Continuation(myProject, true);
+    myContinuation = Continuation.createFragmented(myProject, true);
   }
 
   private class SourceUrlCorrection extends TaskDescriptor {
@@ -158,6 +158,8 @@ public class QuickMerge {
 
   @CalledInAwt
   public void execute() {
+    FileDocumentManager.getInstance().saveAllDocuments();
+
     final List<TaskDescriptor> tasks = new LinkedList<TaskDescriptor>();
     tasks.add(new MyInitChecks());
     tasks.add(new SourceUrlCorrection());

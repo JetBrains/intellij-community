@@ -86,7 +86,7 @@ public class LoadController implements Loader {
       continuation = myPreviousAlgorithm.getContinuation();
       continuation.clearQueue();
     } else {
-      continuation = new Continuation(myProject, true);
+      continuation = Continuation.createFragmented(myProject, true);
     }
     myPreviousAlgorithm = new LoadAlgorithm(myProject, list, shortLoaders, continuation);
     myPreviousAlgorithm.fillContinuation();
