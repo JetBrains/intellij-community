@@ -15,6 +15,7 @@
  */
 package org.zmlx.hg4idea;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.*;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Listens to VFS events (such as adding or deleting bunch of files) and performs necessary operations with the VCS.
@@ -142,56 +144,81 @@ public class HgVFSListener extends VcsVFSListener {
     return HgVcsMessages.message("hg4idea.remove.single.body");
   }
 
-  @Override
-  protected VcsDeleteType needConfirmDeletion(VirtualFile file) {
-    //// newly added files (which were added to the repo but never committed) should be removed from the VCS,
-    //// but without user confirmation.
-    //final FilePath filePath = VcsUtil.getFilePath(file.getPath());
-    //final VirtualFile repo = HgUtil.getHgRootOrNull(myProject, filePath);
-    //if (repo == null) {
-    //  return super.needConfirmDeletion(file);
-    //}
-    //final HgFile hgFile = new HgFile(repo, filePath);
-    //
-    //final HgLogCommand logCommand = new HgLogCommand(myProject);
-    //logCommand.setLogFile(true);
-    //logCommand.setFollowCopies(false);
-    //logCommand.setIncludeRemoved(true);
-    //final List<HgFileRevision> localRevisions = logCommand.execute(hgFile, -1, true);
-    //// file is newly added, if it doesn't have a history or if the last history action was deleting this file.
-    //if (localRevisions == null || localRevisions.isEmpty() || localRevisions.get(0).getDeletedFiles().contains(hgFile.getRelativePath())) {
-    //  return VcsDeleteType.SILENT;
-    //}
-    return VcsDeleteType.CONFIRM;
-  }
-
   protected void executeDelete() {
     final List<FilePath> filesToDelete = new ArrayList<FilePath>(myDeletedWithoutConfirmFiles);
-    final List<FilePath> deletedFiles = new ArrayList<FilePath>(myDeletedFiles);
+    final List<FilePath> filesToConfirmDeletion = new ArrayList<FilePath>(myDeletedFiles);
     myDeletedWithoutConfirmFiles.clear();
     myDeletedFiles.clear();
 
     // skip unversioned files and files which are not under Mercurial
     final ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
     skipUnversionedAndNotUnderHg(changeListManager, filesToDelete);
-    skipUnversionedAndNotUnderHg(changeListManager, deletedFiles);
+    skipUnversionedAndNotUnderHg(changeListManager, filesToConfirmDeletion);
 
-    // confirm removal from the VCS if needed
-    if (myRemoveOption.getValue() != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
-      if (myRemoveOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY || deletedFiles.isEmpty()) {
-        filesToDelete.addAll(deletedFiles);
-      }
-      else {
-        Collection<FilePath> filePaths = selectFilePathsToDelete(deletedFiles);
-        if (filePaths != null) {
-          filesToDelete.addAll(filePaths);
+    // newly added files (which were added to the repo but never committed) should be removed from the VCS,
+    // but without user confirmation.
+    new Task.ConditionalModal(myProject,
+                              HgVcsMessages.message("hg4idea.remove.progress"),
+                              false,
+                              VcsConfiguration.getInstance(myProject).getAddRemoveOption()) {
+      @Override public void run( @NotNull ProgressIndicator indicator ) {
+        // move files that are not to be confirmed anyway from filesToConfirmDeletion to filesToDelete
+        for (Iterator<FilePath> it = filesToConfirmDeletion.iterator(); it.hasNext(); ) {
+          FilePath file = it.next();
+          if (!isDeleteCofirmationNeeded(file)) {
+            filesToDelete.add(file);
+            it.remove();
+          }
+        }
+
+        // confirm removal from the VCS if needed
+        if (myRemoveOption.getValue() != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
+          if (myRemoveOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY || filesToConfirmDeletion.isEmpty()) {
+            filesToDelete.addAll(filesToConfirmDeletion);
+          }
+          else {
+            final AtomicReference<Collection<FilePath>> filePaths = new AtomicReference<Collection<FilePath>>();
+            ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+                @Override public void run() {
+                  filePaths.set(selectFilePathsToDelete(filesToConfirmDeletion));
+                }
+              }, indicator.getModalityState());
+            if (filePaths.get() != null) {
+              filesToDelete.addAll(filePaths.get());
+            }
+          }
+        }
+
+        if (!filesToDelete.isEmpty()) {
+          performDeletion(filesToDelete);
         }
       }
-    }
+    }.queue();
+  }
 
-    if (!filesToDelete.isEmpty()) {
-      performDeletion(filesToDelete);
+  /**
+   * Newly added files (which were added to the repo but never committed) should be removed from the VCS,
+   * but without user confirmation.
+   * <p>NB: we don't use {@link #needConfirmDeletion(com.intellij.openapi.vfs.VirtualFile)},
+   * because it is executed in EDT, while we need to access hg log, which should be done in background. Starting a Task.Modal for
+   * each file is ineffective, so we start it once (in {@link #executeDelete()} for all files.</p
+   * 
+   * @return true if remove confirmation is needed.
+   */
+  private boolean isDeleteCofirmationNeeded(FilePath filePath) {
+    final VirtualFile repo = HgUtil.getHgRootOrNull(myProject, filePath);
+    if (repo == null) {
+      return false;
     }
+    final HgFile hgFile = new HgFile(repo, filePath);
+    final HgLogCommand logCommand = new HgLogCommand(myProject);
+    logCommand.setLogFile(true);
+    logCommand.setFollowCopies(false);
+    logCommand.setIncludeRemoved(true);
+    final List<HgFileRevision> localRevisions = logCommand.execute(hgFile, -1, true);
+
+    // file is newly added, if it doesn't have a history or if the last history action was deleting this file.
+    return localRevisions != null && !localRevisions.isEmpty() && !localRevisions.get(0).getDeletedFiles().contains(hgFile.getRelativePath());
   }
 
     /**
@@ -211,30 +238,22 @@ public class HgVFSListener extends VcsVFSListener {
 
   @Override
   protected void performDeletion( final List<FilePath> filesToDelete) {
-    (new Task.ConditionalModal(myProject,
-                                        HgVcsMessages.message("hg4idea.remove.progress"),
-                                        false,
-                                        VcsConfiguration.getInstance(myProject).getAddRemoveOption()) {
-      @Override public void run( @NotNull ProgressIndicator aProgressIndicator ) {
-        final ArrayList<HgFile> deletes = new ArrayList<HgFile>();
-        for (FilePath file : filesToDelete) {
-          if (file.isDirectory()) {
-            continue;
-          }
-
-          deletes.add(new HgFile(VcsUtil.getVcsRootFor(myProject, file), file));
-        }
-
-        if (!deletes.isEmpty()) {
-          new HgRemoveCommand(myProject).execute(deletes);
-        }
-
-        for (HgFile file : deletes) {
-          dirtyScopeManager.fileDirty(file.toFilePath());
-        }
+    final ArrayList<HgFile> deletes = new ArrayList<HgFile>();
+    for (FilePath file : filesToDelete) {
+      if (file.isDirectory()) {
+        continue;
       }
 
-    }).queue();
+      deletes.add(new HgFile(VcsUtil.getVcsRootFor(myProject, file), file));
+    }
+
+    if (!deletes.isEmpty()) {
+      new HgRemoveCommand(myProject).execute(deletes);
+    }
+
+    for (HgFile file : deletes) {
+      dirtyScopeManager.fileDirty(file.toFilePath());
+    }
   }
 
   @Override
