@@ -19,6 +19,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.Icons;
+import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,7 +40,21 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
   private final JBList myList = new JBList();
   private Object[] myOptions = {};
   private Object myValue;
-  private ListCellRenderer myRenderer;
+
+  private ListCellRenderer myRenderer = new DefaultListCellRenderer() {
+    private Icon myCheckIcon = Icons.CHECK_ICON;
+    private Icon myEmptyIcon = EmptyIcon.create(Icons.CHECK_ICON.getIconWidth());
+    @Override
+    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      final JLabel label = (JLabel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      if (value == myValue) {
+        label.setIcon(myCheckIcon);
+      } else {
+        label.setIcon(myEmptyIcon);
+      }
+      return label;
+    }
+  };
 
   public JBComboBoxTableCellEditorComponent() {
   }
