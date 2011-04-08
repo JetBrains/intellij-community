@@ -129,6 +129,10 @@ public class GenerationUtil {
     argumentListGenerator.generate(null, exprs, namedArgs, closureArgs, psiContext);
   }
 
+  public static boolean writeModifiers(StringBuilder text, PsiModifierList modifierList) {
+    return writeModifiers(text, modifierList, JAVA_MODIFIERS);
+  }
+
   public static boolean writeModifiers(StringBuilder text, PsiModifierList modifierList, String[] modifiers) {
     boolean wasAddedModifiers = false;
     for (String modifierType : modifiers) {
