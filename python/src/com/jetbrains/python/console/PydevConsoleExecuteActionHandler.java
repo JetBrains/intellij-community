@@ -210,7 +210,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   }
 
   public String getPrevCommandRunningMessage() {
-    return "Previous command is still running. Wait for it termination or press Ctrl+C to interrupt.";
+    return "Previous command is still running. Please wait or press Ctrl+C to interrupt.";
   }
 
   @Override
