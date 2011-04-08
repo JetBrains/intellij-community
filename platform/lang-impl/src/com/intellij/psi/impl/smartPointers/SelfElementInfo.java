@@ -34,7 +34,7 @@ import java.lang.ref.SoftReference;
 * User: cdr
 */
 public class SelfElementInfo implements SmartPointerElementInfo {
-  protected final VirtualFile myVirtualFile;
+  private final VirtualFile myVirtualFile;
   private Reference<RangeMarker> myMarkerRef; // create marker only in case of live document
   private int mySyncStartOffset;
   private int mySyncEndOffset;
@@ -44,6 +44,9 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   @SuppressWarnings({"UnusedDeclaration"})
   private RangeMarker myRangeMarker; //maintain hard reference during modification
 
+  protected SelfElementInfo(@NotNull Project project, @NotNull PsiElement anchor) {
+    this(project, anchor.getTextRange(), anchor.getClass(), anchor.getContainingFile());
+  }
   public SelfElementInfo(@NotNull Project project, @NotNull TextRange anchor, @NotNull Class anchorClass, @NotNull PsiFile containingFile) {
     myVirtualFile = containingFile.getVirtualFile();
     myType = anchorClass;
@@ -154,7 +157,11 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     final int syncStartOffset = getSyncStartOffset();
     final int syncEndOffset = getSyncEndOffset();
 
-    PsiElement anchor = findAnchorAt(file, syncStartOffset);
+    return findElementInside(file, syncStartOffset, syncEndOffset, myType);
+  }
+
+  protected static PsiElement findElementInside(PsiFile file, int syncStartOffset, int syncEndOffset, Class type) {
+    PsiElement anchor = file.getViewProvider().findElementAt(syncStartOffset, file.getLanguage());
     if (anchor == null) return null;
 
     TextRange range = anchor.getTextRange();
@@ -166,7 +173,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
       range = anchor.getTextRange();
     }
 
-    while (range.getEndOffset() == syncEndOffset && anchor != null && !myType.equals(anchor.getClass())) {
+    while (range.getEndOffset() == syncEndOffset && anchor != null && !type.equals(anchor.getClass())) {
       anchor = anchor.getParent();
       if (anchor == null || anchor.getTextRange() == null) break;
       range = anchor.getTextRange();
@@ -174,10 +181,6 @@ public class SelfElementInfo implements SmartPointerElementInfo {
 
     if (range.getEndOffset() == syncEndOffset) return anchor;
     return null;
-  }
-
-  protected PsiElement findAnchorAt(@NotNull PsiFile file, int syncStartOffset) {
-    return file.getViewProvider().findElementAt(syncStartOffset, file.getLanguage());
   }
 
   @Override

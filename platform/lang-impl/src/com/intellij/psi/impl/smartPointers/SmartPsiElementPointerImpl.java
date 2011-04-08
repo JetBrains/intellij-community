@@ -153,7 +153,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
     FileViewProvider viewProvider = containingFile.getViewProvider();
     if (viewProvider instanceof InjectedFileViewProvider) {
-      return new InjectedSelfElementInfo(project, element, containingFile);
+      PsiElement context = containingFile.getContext();
+      if (context != null) return new InjectedSelfElementInfo(project, element, context);
     }
 
     if (element instanceof PsiFile) {
