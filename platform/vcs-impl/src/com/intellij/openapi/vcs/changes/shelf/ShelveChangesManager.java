@@ -39,8 +39,10 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.openapi.vcs.changes.patch.PatchNameChecker;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
+import com.intellij.openapi.vcs.impl.VcsFileTypeFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
@@ -213,17 +215,30 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     }
   }
 
+  public List<VirtualFile> gatherPatchFiles(final Collection<VirtualFile> files) {
+    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+
+    final LinkedList<VirtualFile> filesQueue = new LinkedList<VirtualFile>(files);
+    while (! filesQueue.isEmpty()) {
+      ProgressManager.checkCanceled();
+      final VirtualFile file = filesQueue.removeFirst();
+      if (file.isDirectory()) {
+        filesQueue.addAll(Arrays.asList(file.getChildren()));
+        continue;
+      }
+      if (PatchFileType.NAME.equals(file.getFileType().getName())) {
+        result.add(file);
+      }
+    }
+
+    return result;
+  }
+
   public List<ShelvedChangeList> importChangeLists(final Collection<VirtualFile> files, final Consumer<VcsException> exceptionConsumer) {
     final List<ShelvedChangeList> result = new ArrayList<ShelvedChangeList>(files.size());
     try {
-      final LinkedList<VirtualFile> filesQueue = new LinkedList<VirtualFile>(files);
-      while (! filesQueue.isEmpty()) {
+      for (VirtualFile file : files) {
         ProgressManager.checkCanceled();
-        final VirtualFile file = filesQueue.removeFirst();
-        if (file.isDirectory()) {
-          filesQueue.addAll(Arrays.asList(file.getChildren()));
-          continue;
-        }
 
         final String description = file.getNameWithoutExtension().replace('_', ' ');
         final File patchPath = getPatchPath(description);
