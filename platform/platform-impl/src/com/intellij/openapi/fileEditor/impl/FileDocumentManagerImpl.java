@@ -107,6 +107,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   public void disposeComponent() {
   }
 
+  @Nullable
   public Document getDocument(@NotNull final VirtualFile file) {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document == null) {
