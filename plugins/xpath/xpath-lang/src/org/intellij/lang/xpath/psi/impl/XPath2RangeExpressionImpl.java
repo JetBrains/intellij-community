@@ -19,7 +19,7 @@ import com.intellij.lang.ASTNode;
 import org.intellij.lang.xpath.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class XPath2RangeExpressionImpl extends XPathElementImpl implements XPath2RangeExpression {
+public class XPath2RangeExpressionImpl extends XPath2ElementImpl implements XPath2RangeExpression {
   public XPath2RangeExpressionImpl(ASTNode node) {
     super(node);
   }
@@ -40,5 +40,9 @@ public class XPath2RangeExpressionImpl extends XPathElementImpl implements XPath
   @Override
   public XPathType getType() {
     return XPath2SequenceType.create(XPath2Type.INTEGER, XPath2SequenceType.Cardinality.ZERO_OR_MORE);
+  }
+
+  public void accept(XPath2ElementVisitor visitor) {
+    visitor.visitXPath2RangeExpression(this);
   }
 }

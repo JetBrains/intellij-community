@@ -16,14 +16,11 @@
 package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import org.intellij.lang.xpath.psi.XPath2Castable;
-import org.intellij.lang.xpath.psi.XPath2Type;
-import org.intellij.lang.xpath.psi.XPath2TypeElement;
-import org.intellij.lang.xpath.psi.XPathType;
+import org.intellij.lang.xpath.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class XPath2CastableImpl extends XPathElementImpl implements XPath2Castable {
+public class XPath2CastableImpl extends XPath2ElementImpl implements XPath2Castable {
   public XPath2CastableImpl(ASTNode node) {
     super(node);
   }
@@ -39,5 +36,9 @@ public class XPath2CastableImpl extends XPathElementImpl implements XPath2Castab
   @Override
   public XPathType getType() {
     return XPath2Type.BOOLEAN;
+  }
+
+  public void accept(XPath2ElementVisitor visitor) {
+    visitor.visitXPath2Castable(this);
   }
 }

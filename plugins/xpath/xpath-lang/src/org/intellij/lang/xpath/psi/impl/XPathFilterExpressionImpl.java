@@ -54,4 +54,8 @@ public class XPathFilterExpressionImpl extends XPathElementImpl implements XPath
         assert nodes.length == 1;
         return (XPathPredicate)nodes[0].getPsi();
     }
+
+  public void accept(XPathElementVisitor visitor) {
+    visitor.visitXPathFilterExpression(this);
+  }
 }

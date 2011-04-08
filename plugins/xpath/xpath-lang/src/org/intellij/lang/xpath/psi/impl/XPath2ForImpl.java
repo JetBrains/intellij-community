@@ -18,12 +18,13 @@ package org.intellij.lang.xpath.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.xpath.XPath2ElementTypes;
+import org.intellij.lang.xpath.psi.XPath2ElementVisitor;
 import org.intellij.lang.xpath.psi.XPath2For;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 
-public class XPath2ForImpl extends XPath2VariableDeclarationImpl  implements XPath2For {
+public class XPath2ForImpl extends XPath2VariableDeclarationImpl implements XPath2For {
   public XPath2ForImpl(ASTNode node) {
     super(node);
   }
@@ -38,5 +39,9 @@ public class XPath2ForImpl extends XPath2VariableDeclarationImpl  implements XPa
   public XPathExpression getReturn() {
     final ASTNode node = getNode().findChildByType(XPath2ElementTypes.BODY);
     return node != null ? PsiTreeUtil.findChildOfType(node.getPsi(), XPathExpression.class) : null;
+  }
+
+  public void accept(XPath2ElementVisitor visitor) {
+    visitor.visitXPath2For(this);
   }
 }

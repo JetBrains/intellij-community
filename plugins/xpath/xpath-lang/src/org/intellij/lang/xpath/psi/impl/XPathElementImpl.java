@@ -19,6 +19,7 @@ import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.XPath2ElementTypes;
 import org.intellij.lang.xpath.XPathElementTypes;
@@ -27,6 +28,7 @@ import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.XPathVersion;
 import org.intellij.lang.xpath.psi.XPathElement;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class XPathElementImpl extends ASTWrapperPsiElement implements XPathElement {
@@ -124,5 +126,18 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     @Override
     public XPathVersion getXPathVersion() {
       return getContainingFile().getXPathVersion();
+    }
+
+  @Override
+  public final void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof XPathElementVisitor) {
+      accept((XPathElementVisitor)visitor);
+    } else {
+      super.accept(visitor);
+    }
+  }
+
+  public void accept(XPathElementVisitor visitor) {
+      visitor.visitXPathElement(this);
     }
 }

@@ -18,6 +18,7 @@ package org.intellij.lang.xpath.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import org.intellij.lang.xpath.XPath2Language;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
 import org.intellij.lang.xpath.psi.XPathString;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
@@ -59,5 +60,9 @@ public class XPathStringImpl extends XPathElementImpl implements XPathString {
       return value.replaceAll("\"\"", "\"").replaceAll("''", "'");
     }
     return value;
+  }
+
+  public void accept(XPathElementVisitor visitor) {
+    visitor.visitXPathString(this);
   }
 }

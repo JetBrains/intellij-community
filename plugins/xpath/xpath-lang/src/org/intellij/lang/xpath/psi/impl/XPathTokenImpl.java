@@ -17,6 +17,7 @@ package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.IElementType;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
 import org.intellij.lang.xpath.psi.XPathToken;
 
 public class XPathTokenImpl extends XPathElementImpl implements XPathToken {
@@ -27,4 +28,8 @@ public class XPathTokenImpl extends XPathElementImpl implements XPathToken {
     public IElementType getTokenType() {
         return getNode().getElementType();
     }
+
+  public void accept(XPathElementVisitor visitor) {
+    visitor.visitXPathToken(this);
+  }
 }

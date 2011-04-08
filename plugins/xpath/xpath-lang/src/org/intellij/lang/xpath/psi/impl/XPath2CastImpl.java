@@ -17,12 +17,13 @@ package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import org.intellij.lang.xpath.psi.XPath2Cast;
+import org.intellij.lang.xpath.psi.XPath2ElementVisitor;
 import org.intellij.lang.xpath.psi.XPath2TypeElement;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class XPath2CastImpl extends XPathElementImpl implements XPath2Cast {
+public class XPath2CastImpl extends XPath2ElementImpl implements XPath2Cast {
   public XPath2CastImpl(ASTNode node) {
     super(node);
   }
@@ -38,5 +39,9 @@ public class XPath2CastImpl extends XPathElementImpl implements XPath2Cast {
   public XPathType getType() {
     final XPathType type = getTargetType();
     return type != null ? type : XPathType.UNKNOWN;
+  }
+
+  public void accept(XPath2ElementVisitor visitor) {
+    visitor.visitXPath2Cast(this);
   }
 }

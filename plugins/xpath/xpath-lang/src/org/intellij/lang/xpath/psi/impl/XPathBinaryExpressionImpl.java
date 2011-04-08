@@ -18,10 +18,7 @@ package org.intellij.lang.xpath.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.TokenSet;
 import org.intellij.lang.xpath.*;
-import org.intellij.lang.xpath.psi.XPath2Type;
-import org.intellij.lang.xpath.psi.XPathBinaryExpression;
-import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.psi.XPathType;
+import org.intellij.lang.xpath.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +50,13 @@ public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPath
         final XPathElementType elementType = (XPathElementType)(nodes.length > 0 ? nodes[0].getElementType() : null);
         assert elementType != null;
         return elementType;
+    }
+
+    @NotNull
+    @Override
+    public String getOperationSign() {
+      final ASTNode[] nodes = getNode().getChildren(BINARY_OPERATIONS);
+      return nodes[0].getText();
     }
 
     @NotNull
@@ -131,5 +135,9 @@ public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPath
 
   private static boolean is(XPathExpression op, XPathType type) {
     return op != null && (type instanceof XPath2Type ? type.isAssignableFrom(op.getType()) : type == op.getType());
+  }
+
+  public void accept(XPathElementVisitor visitor) {
+    visitor.visitXPathBinaryExpression(this);
   }
 }

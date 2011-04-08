@@ -118,4 +118,8 @@ public class XPathStepImpl extends XPathElementImpl implements XPathStep {
   public boolean isAbsolute() {
     return getPreviousStep() == null && getNode().getChildren(XPathTokenTypes.PATH_OPS).length > 0;
   }
+
+  public void accept(XPathElementVisitor visitor) {
+    visitor.visitXPathStep(this);
+  }
 }

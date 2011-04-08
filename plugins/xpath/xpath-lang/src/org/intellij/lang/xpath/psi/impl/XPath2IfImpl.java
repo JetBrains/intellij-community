@@ -16,12 +16,13 @@
 package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import org.intellij.lang.xpath.psi.XPath2ElementVisitor;
 import org.intellij.lang.xpath.psi.XPath2If;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 
-public class XPath2IfImpl extends XPathElementImpl implements XPath2If {
+public class XPath2IfImpl extends XPath2ElementImpl implements XPath2If {
   public XPath2IfImpl(ASTNode node) {
     super(node);
   }
@@ -47,5 +48,9 @@ public class XPath2IfImpl extends XPathElementImpl implements XPath2If {
   @Override
   public XPathExpression getElseBranch() {
     return null;
+  }
+
+  public void accept(XPath2ElementVisitor visitor) {
+    visitor.visitXPath2If(this);
   }
 }

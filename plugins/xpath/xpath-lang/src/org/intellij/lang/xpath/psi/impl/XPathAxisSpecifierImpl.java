@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.psi.impl;
 
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
 import org.intellij.lang.xpath.psi.XPathAxisSpecifier;
 import org.intellij.lang.xpath.psi.Axis;
 import org.intellij.lang.xpath.XPathTokenTypes;
@@ -43,4 +44,8 @@ public class XPathAxisSpecifierImpl extends XPathElementImpl implements XPathAxi
         final boolean b = node.getChildren(XPathTokenTypes.AXIS).length == 0;
         return b && node.findChildByType(XPathTokenTypes.AT) == null;
     }
+
+  public void accept(XPathElementVisitor visitor) {
+    visitor.visitXPathAxisSpecifier(this);
+  }
 }

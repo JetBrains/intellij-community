@@ -280,6 +280,14 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
       public XPathVersion getXPathVersion() {
         return getElement().getXPathVersion();
       }
+
+      public void accept(XPathElementVisitor visitor) {
+        visitor.visitXPathFunction(this);
+      }
     }
+  }
+
+  public void accept(XPathElementVisitor visitor) {
+    visitor.visitXPathFunctionCall(this);
   }
 }

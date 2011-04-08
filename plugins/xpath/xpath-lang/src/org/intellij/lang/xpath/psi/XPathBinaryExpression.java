@@ -28,4 +28,7 @@ public interface XPathBinaryExpression extends XPathExpression {
 
     @NotNull
     XPathElementType getOperator();
+
+    @NotNull
+    String getOperationSign();
 }

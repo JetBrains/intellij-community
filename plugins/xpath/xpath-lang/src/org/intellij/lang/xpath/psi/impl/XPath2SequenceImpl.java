@@ -16,13 +16,10 @@
 package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import org.intellij.lang.xpath.psi.XPath2Sequence;
-import org.intellij.lang.xpath.psi.XPath2Type;
-import org.intellij.lang.xpath.psi.XPathExpression;
-import org.intellij.lang.xpath.psi.XPathType;
+import org.intellij.lang.xpath.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class XPath2SequenceImpl extends XPathElementImpl implements XPath2Sequence {
+public class XPath2SequenceImpl extends XPath2ElementImpl implements XPath2Sequence {
   public XPath2SequenceImpl(ASTNode node) {
     super(node);
   }
@@ -37,5 +34,9 @@ public class XPath2SequenceImpl extends XPathElementImpl implements XPath2Sequen
   @Override
   public XPathType getType() {
     return XPath2Type.SEQUENCE;
+  }
+
+  public void accept(XPath2ElementVisitor visitor) {
+    visitor.visitXPath2Sequence(this);
   }
 }

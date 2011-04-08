@@ -22,11 +22,11 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
-import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.functions.Function;
 import org.intellij.lang.xpath.context.functions.FunctionImpl;
 import org.intellij.lang.xpath.context.functions.Parameter;
 import org.intellij.lang.xpath.psi.XPath2Type;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.XsltFunction;
@@ -129,5 +129,9 @@ public class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, I
   @Override
   public int getMinArity() {
     return getFunction().getMinArity();
+  }
+
+  public void accept(@NotNull XPathElementVisitor visitor) {
+    visitor.visitXPathFunction(this);
   }
 }

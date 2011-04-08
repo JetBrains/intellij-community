@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Sascha Weinreuter
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,29 @@
 package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import org.intellij.lang.xpath.psi.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.intellij.lang.xpath.psi.XPath2ElementVisitor;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
 
-public class XPath2InstanceOfImpl extends XPath2ElementImpl implements XPath2InstanceOf {
-  public XPath2InstanceOfImpl(ASTNode node) {
+/*
+* Created by IntelliJ IDEA.
+* User: sweinreuter
+* Date: 08.04.11
+*/
+public class XPath2ElementImpl extends XPathElementImpl {
+  public XPath2ElementImpl(ASTNode node) {
     super(node);
   }
 
-  @Override
-  @Nullable
-  public XPathType getTargetType() {
-    final XPath2TypeElement node = findChildByClass(XPath2TypeElement.class);
-    return node != null ? node.getDeclaredType() : null;
-  }
-
-  @NotNull
-  @Override
-  public XPathType getType() {
-    return XPath2Type.BOOLEAN;
-  }
-
   public void accept(XPath2ElementVisitor visitor) {
-    visitor.visitXPath2InstanceOf(this);
+    visitor.visitXPath2Element(this);
+  }
+
+  @Override
+  public final void accept(XPathElementVisitor visitor) {
+    if (visitor instanceof XPath2ElementVisitor) {
+      accept((XPath2ElementVisitor)visitor);
+    } else {
+      super.accept(visitor);
+    }
   }
 }

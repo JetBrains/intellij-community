@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import org.intellij.lang.xpath.XPath2ElementTypes;
 import org.intellij.lang.xpath.XPathElementType;
 import org.intellij.lang.xpath.XPathTokenTypes;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathPrefixExpression;
 import org.intellij.lang.xpath.psi.XPathType;
@@ -50,5 +51,9 @@ public class XPathPrefixExpressionImpl extends XPathElementImpl implements XPath
     final XPathElementType elementType = (XPathElementType)(node != null ? node.getElementType() : null);
     assert elementType != null;
     return elementType;
+  }
+
+  public void accept(XPathElementVisitor visitor) {
+    visitor.visitXPathPrefixExpression(this);
   }
 }

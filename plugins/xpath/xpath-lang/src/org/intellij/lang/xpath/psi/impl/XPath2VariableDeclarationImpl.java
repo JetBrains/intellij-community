@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.xpath.XPath2ElementTypes;
+import org.intellij.lang.xpath.psi.XPath2ElementVisitor;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathVariable;
 import org.intellij.lang.xpath.psi.XPathVariableDeclaration;
@@ -31,7 +32,7 @@ import java.util.List;
 * User: sweinreuter
 * Date: 10.01.11
 */
-public class XPath2VariableDeclarationImpl extends XPathElementImpl implements XPathVariableDeclaration {
+public class XPath2VariableDeclarationImpl extends XPath2ElementImpl implements XPathVariableDeclaration {
   public XPath2VariableDeclarationImpl(ASTNode node) {
     super(node);
   }
@@ -60,5 +61,9 @@ public class XPath2VariableDeclarationImpl extends XPathElementImpl implements X
       }
     }
     return null;
+  }
+
+  public void accept(XPath2ElementVisitor visitor) {
+    visitor.visitXPathVariableDeclaration(this);
   }
 }

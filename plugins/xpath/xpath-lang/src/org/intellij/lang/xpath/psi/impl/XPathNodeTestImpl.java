@@ -116,4 +116,8 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
             return EMPTY_ARRAY;
         }
     }
+
+  public void accept(XPathElementVisitor visitor) {
+    visitor.visitXPathNodeTest(this);
+  }
 }

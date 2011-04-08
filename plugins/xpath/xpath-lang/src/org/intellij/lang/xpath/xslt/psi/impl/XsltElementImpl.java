@@ -35,6 +35,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.completion.CompletionLists;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.XPathVersion;
+import org.intellij.lang.xpath.psi.XPathElement;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.XsltElement;
 import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
@@ -203,8 +205,16 @@ abstract class XsltElementImpl extends LightElement implements Iconable, Navigat
         return canNavigate();
     }
 
+    public void accept(@NotNull XPathElementVisitor visitor) {
+      visitor.visitXPathElement((XPathElement)this);
+    }
+
     public void accept(@NotNull PsiElementVisitor visitor) {
+      if (visitor instanceof XPathElementVisitor && this instanceof XPathElement) {
+        accept((XPathElementVisitor)visitor);
+      } else {
         myElement.accept(visitor);
+      }
     }
 
     @Override

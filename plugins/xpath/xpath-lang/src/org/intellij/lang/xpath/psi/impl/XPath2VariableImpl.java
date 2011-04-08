@@ -53,4 +53,8 @@ public class XPath2VariableImpl extends XPathElementImpl implements XPathVariabl
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     return replace(XPathChangeUtil.createVariableReference(this, name));
   }
+
+  public void accept(XPathElementVisitor visitor) {
+    visitor.visitXPathVariable(this);
+  }
 }

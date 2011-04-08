@@ -19,15 +19,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.TokenSet;
 import org.intellij.lang.xpath.XPathTokenTypes;
-import org.intellij.lang.xpath.psi.PrefixedName;
-import org.intellij.lang.xpath.psi.XPath2Type;
-import org.intellij.lang.xpath.psi.XPath2TypeElement;
-import org.intellij.lang.xpath.psi.XPathType;
+import org.intellij.lang.xpath.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.namespace.QName;
 
-public class XPath2TypeElementImpl extends XPathElementImpl implements XPath2TypeElement {
+public class XPath2TypeElementImpl extends XPath2ElementImpl implements XPath2TypeElement {
   public XPath2TypeElementImpl(ASTNode node) {
     super(node);
   }
@@ -82,5 +79,9 @@ public class XPath2TypeElementImpl extends XPathElementImpl implements XPath2Typ
       return new PsiReference[]{ new PrefixReferenceImpl(this, ((PrefixedNameImpl)prefixedName).getPrefixNode() )};
     }
     return super.getReferences();
+  }
+
+  public void accept(XPath2ElementVisitor visitor) {
+    visitor.visitXPath2TypeElement(this);
   }
 }

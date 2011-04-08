@@ -20,6 +20,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Icons;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathType;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
@@ -95,4 +96,8 @@ public class XsltVariableImpl extends XsltElementImpl implements XsltVariable {
         final String name = getName();
         return name != null && "type:void".equals(QNameUtil.createQName(name, getTag()).getNamespaceURI());
     }
+
+  public void accept(@NotNull XPathElementVisitor visitor) {
+    visitor.visitXPathVariable(this);
+  }
 }

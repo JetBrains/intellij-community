@@ -159,4 +159,8 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
     public boolean equals(Object obj) {
         return obj == this;
     }
+
+  public void accept(XPathElementVisitor visitor) {
+    visitor.visitXPathVariableReference(this);
+  }
 }
