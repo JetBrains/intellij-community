@@ -130,11 +130,10 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
 
   public boolean someChildContainsFile(final VirtualFile file, boolean optimizeByCheckingFileRootsFirst) {
     VirtualFile parent = file.getParent();
-    if (parent == null) return false;
 
     boolean mayContain = false;
 
-    if (optimizeByCheckingFileRootsFirst) {
+    if (optimizeByCheckingFileRootsFirst && parent != null) {
       Collection<VirtualFile> roots = getRoots();
       for (VirtualFile eachRoot : roots) {
         if (parent.equals(eachRoot.getParent())) {
