@@ -134,6 +134,9 @@ public final class HgCommandExecutor {
     } catch (IOException e) {
       showError(e);
       LOG.info("IOException during preparing command", e);
+      promptServer.stop();
+      warningServer.stop();
+      passServer.stop();
       return null;
     }
     cmdLine.addAll(myOptions);
