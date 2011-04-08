@@ -254,7 +254,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   }
 
   @Override
-  public boolean pointsToTheSameElementAs(SmartPointerElementInfo other) {
+  public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
     if (other instanceof SelfElementInfo) {
       return myVirtualFile == ((SelfElementInfo)other).myVirtualFile
         && myType == ((SelfElementInfo)other).myType

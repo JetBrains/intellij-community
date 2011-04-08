@@ -77,4 +77,13 @@ class InjectedSelfElementInfo extends SelfElementInfo {
 
     return result.get();
   }
+
+  @Override
+  public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
+    if (getClass() != other.getClass()) return false;
+    if (!super.pointsToTheSameElementAs(other)) return false;
+    SmartPointerElementInfo myElementInfo = ((SmartPsiElementPointerImpl)myPsiFileRangeInHostElement).getElementInfo();
+    SmartPointerElementInfo oElementInfo = ((SmartPsiElementPointerImpl)((InjectedSelfElementInfo)other).myPsiFileRangeInHostElement).getElementInfo();
+    return myElementInfo.pointsToTheSameElementAs(oElementInfo);
+  }
 }

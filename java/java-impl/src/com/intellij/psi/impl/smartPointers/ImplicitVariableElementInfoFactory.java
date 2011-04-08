@@ -77,7 +77,7 @@ public class ImplicitVariableElementInfoFactory implements SmartPointerElementIn
     }
 
     @Override
-    public boolean pointsToTheSameElementAs(SmartPointerElementInfo other) {
+    public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
       if (other instanceof ImplicitVariableInfo) {
         return myVar == ((ImplicitVariableInfo)other).myVar;
       }
