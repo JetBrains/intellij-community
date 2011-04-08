@@ -37,10 +37,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FilePathImpl;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.PatchNameChecker;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
@@ -64,8 +61,6 @@ import java.util.*;
 
 public class ShelveChangesManager implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager");
-
-  @NonNls private static final String PATCH_EXTENSION = "patch";
 
   public static ShelveChangesManager getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ShelveChangesManager.class);
@@ -286,16 +281,17 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       file.mkdirs();
     }
 
-    return suggestPatchName(commitMessage.length() > PatchNameChecker.MAX ? (commitMessage.substring(0, PatchNameChecker.MAX)) :
-                            commitMessage, file);
+    return suggestPatchName(myProject, commitMessage.length() > PatchNameChecker.MAX ? (commitMessage.substring(0, PatchNameChecker.MAX)) :
+                            commitMessage, file, VcsConfiguration.PATCH);
   }
 
-  public static File suggestPatchName(final String commitMessage, final File file) {
+  public static File suggestPatchName(Project project, final String commitMessage, final File file, String extension) {
     @NonNls String defaultPath = PathUtil.suggestFileName(commitMessage);
     if (defaultPath.length() == 0) {
       defaultPath = "unnamed";
     }
-    return FileUtil.findSequentNonexistentFile(file, defaultPath, PATCH_EXTENSION);
+    return FileUtil.findSequentNonexistentFile(file, defaultPath,
+      extension == null ? VcsConfiguration.getInstance(project).getPatchFileExtension() : extension);
   }
 
   public void unshelveChangeList(final ShelvedChangeList changeList, @Nullable final List<ShelvedChange> changes,

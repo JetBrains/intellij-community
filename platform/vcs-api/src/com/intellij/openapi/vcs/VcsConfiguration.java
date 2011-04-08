@@ -28,6 +28,8 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +56,10 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   @NonNls private static final String VALUE_ATTR = "value";
   @NonNls private static final String CONFIRM_MOVE_TO_FAILED_COMMIT_ELEMENT = "confirmMoveToFailedCommit";
   @NonNls private static final String CONFIRM_REMOVE_EMPTY_CHANGELIST_ELEMENT = "confirmRemoveEmptyChangelist";
+
+  @NonNls public static final String PATCH = "patch";
+  @NonNls public static final String DIFF = "diff";
+
   private Project myProject;
 
   public boolean OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = true;
@@ -73,6 +79,7 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
   public int CHANGED_ON_SERVER_INTERVAL = 60;
   public boolean SHOW_ONLY_CHANGED_IN_SELECTION_DIFF = true;
   public boolean CHECK_COMMIT_MESSAGE_SPELLING = true;
+  public String DEFAULT_PATCH_EXTENSION = PATCH;
 
   public enum StandardOption {
     ADD(VcsBundle.message("vcs.command.name.add")),
@@ -346,4 +353,17 @@ public final class VcsConfiguration implements PersistentStateComponent<Element>
 
   }
 
+  public String getPatchFileExtension() {
+    return DEFAULT_PATCH_EXTENSION;
+  }
+
+  public void acceptLastCreatedPatchName(final String string) {
+    if (StringUtil.isEmptyOrSpaces(string)) return;
+    final String extension = FileUtil.getExtension(string);
+    if (DIFF.equalsIgnoreCase(extension)) {
+      DEFAULT_PATCH_EXTENSION = DIFF;
+    } else if (PATCH.equalsIgnoreCase(extension)) {
+      DEFAULT_PATCH_EXTENSION = PATCH;
+    }
+  }
 }
