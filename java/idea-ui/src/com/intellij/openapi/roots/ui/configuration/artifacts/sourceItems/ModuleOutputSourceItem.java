@@ -38,6 +38,10 @@ public class ModuleOutputSourceItem extends PackagingSourceItem {
     myModule = module;
   }
 
+  public Module getModule() {
+    return myModule;
+  }
+
   public boolean equals(Object obj) {
     return obj instanceof ModuleOutputSourceItem && myModule.equals(((ModuleOutputSourceItem)obj).myModule);
   }

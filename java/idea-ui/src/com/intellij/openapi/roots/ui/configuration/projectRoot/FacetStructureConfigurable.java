@@ -36,6 +36,8 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.FacetProjectStructureElement;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.IconLoader;
@@ -99,6 +101,19 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     }
   }
 
+  @NotNull
+  @Override
+  protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
+    List<ProjectStructureElement> elements = new ArrayList<ProjectStructureElement>();
+    for (Module module : myModuleManager.getModules()) {
+      Facet[] facets = FacetManager.getInstance(module).getAllFacets();
+      for (Facet facet : facets) {
+        elements.add(new FacetProjectStructureElement(myContext, facet));
+      }
+    }
+    return elements;
+  }
+
   public MyNode findFacetTypeNode(FacetType facetType) {
     return findNodeByObject(myRoot, facetType);
   }
@@ -106,6 +121,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   public void addFacetNode(@NotNull MyNode facetTypeNode, @NotNull Facet facet, @NotNull FacetEditorFacadeImpl editorFacade) {
     FacetConfigurable facetConfigurable = editorFacade.getOrCreateConfigurable(facet);
     addNode(new FacetConfigurableNode(facetConfigurable), facetTypeNode);
+    myContext.getDaemonAnalyzer().queueUpdate(new FacetProjectStructureElement(myContext, facet));
   }
 
   @Nullable
@@ -177,6 +193,9 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   protected List<Facet> removeFacet(final Facet facet) {
     List<Facet> removed = super.removeFacet(facet);
     ModuleStructureConfigurable.getInstance(myProject).removeFacetNodes(removed);
+    for (Facet removedFacet : removed) {
+      myContext.getDaemonAnalyzer().removeElement(new FacetProjectStructureElement(myContext, removedFacet));
+    }
     return removed;
   }
 

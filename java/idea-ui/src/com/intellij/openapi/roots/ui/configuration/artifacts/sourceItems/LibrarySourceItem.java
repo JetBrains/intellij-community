@@ -91,11 +91,6 @@ public class LibrarySourceItem extends PackagingSourceItem {
     }
 
     @Override
-    public Object getSourceObject() {
-      return myLibrary;
-    }
-
-    @Override
     public String getPresentableName() {
       final String name = myLibrary.getName();
       if (name != null) {
