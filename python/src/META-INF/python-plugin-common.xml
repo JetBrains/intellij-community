@@ -234,7 +234,7 @@
 
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.codeInsight.PyClassNameCompletionContributor"/>
     <weigher key="completion" implementationClass="com.jetbrains.python.codeInsight.PythonCompletionWeigher" order="first"/>
-    <typedHandler implementation="com.jetbrains.python.console.PydevCompletionAutopopupBlockingHandler" id="pydevBlockAutoPopup"
+    <typedHandler implementation="com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler" id="pydevBlockAutoPopup"
                   order="before completionAutoPopup"/>
 
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyInitReferenceSearchExecutor"/>

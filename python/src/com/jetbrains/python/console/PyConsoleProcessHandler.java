@@ -24,52 +24,11 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
     myPydevConsoleCommunication = pydevConsoleCommunication;
   }
 
-
-  private final String[] PROMPTS = new String[]{
-    PyConsoleHighlightingUtil.ORDINARY_PROMPT,
-    PyConsoleHighlightingUtil.INDENT_PROMPT,
-    PyConsoleHighlightingUtil.HELP_PROMPT
-  };
-
   @Override
   protected void textAvailable(final String text, final Key attributes) {
-    final String string = processPrompts(getConsole(), StringUtil.convertLineSeparators(text));
-    myConsoleView.print(text, PyConsoleHighlightingUtil.outputTypeForAttributes(attributes));
-    //PyConsoleHighlightingUtil.processOutput(myLanguageConsole, string, attributes);
-    //myLanguageConsole.queueUiUpdate(true);
-  }
+    final String string = PyPromptUtil.processPrompts(getConsole(), StringUtil.convertLineSeparators(text));
 
-  private String processPrompts(final LanguageConsoleImpl languageConsole, String string) {
-    // Change prompt
-    for (String prompt : PROMPTS) {
-      if (string.startsWith(prompt)) {
-        // Process multi prompts here
-        if (prompt != PyConsoleHighlightingUtil.HELP_PROMPT) {
-          final StringBuilder builder = new StringBuilder();
-          builder.append(prompt).append(prompt);
-          while (string.startsWith(builder.toString())) {
-            builder.append(prompt);
-          }
-          final String multiPrompt = builder.toString().substring(prompt.length());
-          if (prompt == PyConsoleHighlightingUtil.INDENT_PROMPT) {
-            prompt = multiPrompt;
-          }
-          string = string.substring(multiPrompt.length());
-        }
-        else {
-          string = string.substring(prompt.length());
-        }
-
-        // Change console editor prompt if required
-        final String currentPrompt = languageConsole.getPrompt();
-        final String trimmedPrompt = prompt.trim();
-        if (!currentPrompt.equals(trimmedPrompt)) {
-          languageConsole.setPrompt(trimmedPrompt);
-        }
-        break;
-      }
-    }
-    return string;
+    myConsoleView.printText(string, attributes);
   }
 
   @Override

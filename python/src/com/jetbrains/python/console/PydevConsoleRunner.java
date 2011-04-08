@@ -34,6 +34,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.net.NetUtils;
 import com.jetbrains.django.run.Runner;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
 import org.apache.commons.lang.StringUtils;
@@ -200,8 +201,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
           myProcessHandler.addProcessListener(new ProcessAdapter() {
             @Override
             public void onTextAvailable(ProcessEvent event, Key outputType) {
-              String text = event.getText();
-              PyConsoleHighlightingUtil.printToConsoleView(consoleView, text, outputType);
+              consoleView.printText(event.getText(), outputType);
             }
           });
 
@@ -218,7 +218,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       });
     }
     else {
-      PyConsoleHighlightingUtil.printToConsoleView(getConsoleView(), "Couldn't connect to console process.", ProcessOutputTypes.STDERR);
+      getConsoleView().printText("Couldn't connect to console process.", ProcessOutputTypes.STDERR);
       myProcessHandler.destroyProcess();
       finishConsole();
     }

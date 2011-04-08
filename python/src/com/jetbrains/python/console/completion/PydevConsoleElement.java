@@ -1,4 +1,4 @@
-package com.jetbrains.python.console;
+package com.jetbrains.python.console.completion;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;

@@ -1,9 +1,11 @@
 package com.jetbrains.python.console;
 
-import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.jetbrains.python.console.pydev.*;
+import com.jetbrains.python.console.pydev.AbstractConsoleCommunication;
+import com.jetbrains.python.console.pydev.ICallback;
+import com.jetbrains.python.console.pydev.InterpreterResponse;
+import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import org.apache.commons.lang.NotImplementedException;
@@ -16,15 +18,13 @@ import java.util.List;
  */
 public class PythonDebugConsoleCommunication extends AbstractConsoleCommunication {
   private final PyDebugProcess myDebugProcess;
-  private final ConsoleViewImpl myTextConsoleView;
 
   private final StringBuilder myExpression = new StringBuilder();
 
 
-  public PythonDebugConsoleCommunication(Project project, PyDebugProcess debugProcess, ConsoleViewImpl textConsoleView) {
+  public PythonDebugConsoleCommunication(Project project, PyDebugProcess debugProcess) {
     super(project);
     myDebugProcess = debugProcess;
-    myTextConsoleView = textConsoleView;
   }
 
   @NotNull
@@ -35,7 +35,7 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
 
   @Override
   public String getDescription(String text) {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   @Override

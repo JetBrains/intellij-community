@@ -96,7 +96,7 @@ public class PyDebugRunner extends GenericProgramRunner {
 
 
       ConsoleCommunication consoleCommunication =
-        new PythonDebugConsoleCommunication(project, debugProcess, ((PythonDebugLanguageConsoleView)console).getTextConsole());
+        new PythonDebugConsoleCommunication(project, debugProcess);
       pythonConsoleView.setConsoleCommunication(consoleCommunication);
 
 

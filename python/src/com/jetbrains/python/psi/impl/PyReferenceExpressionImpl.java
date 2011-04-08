@@ -11,7 +11,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.console.PydevConsoleReference;
+import com.jetbrains.python.console.completion.PydevConsoleReference;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.documentation.StructuredDocString;

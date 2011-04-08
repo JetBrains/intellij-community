@@ -1,4 +1,4 @@
-package com.jetbrains.python.console;
+package com.jetbrains.python.console.completion;
 
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -7,7 +7,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPolyVariantReferenceBase;
 import com.intellij.psi.ResolveResult;
-import com.jetbrains.python.console.pydev.*;
+import com.jetbrains.python.console.pydev.ConsoleCommunication;
+import com.jetbrains.python.console.pydev.IToken;
+import com.jetbrains.python.console.pydev.PyCodeCompletionImages;
+import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 

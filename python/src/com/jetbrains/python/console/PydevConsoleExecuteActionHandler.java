@@ -94,7 +94,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         myInMultilineStringState = null;
         // restore language
         console.setLanguage(PythonLanguage.getInstance());
-        console.setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT);
+        console.setPrompt(PyPromptUtil.ORDINARY_PROMPT);
       }
       else {
         return;
@@ -110,14 +110,14 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
       if (myInMultilineStringState != null) {
         // change language
         console.setLanguage(PlainTextLanguage.INSTANCE);
-        console.setPrompt(PyConsoleHighlightingUtil.INDENT_PROMPT);
+        console.setPrompt(PyPromptUtil.INDENT_PROMPT);
         return;
       }
     }
 
     // Process line continuation
     if (line.endsWith("\\")) {
-      console.setPrompt(PyConsoleHighlightingUtil.INDENT_PROMPT);
+      console.setPrompt(PyPromptUtil.INDENT_PROMPT);
       return;
     }
 
@@ -153,8 +153,8 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
           myInputBuffer = null;
           // Handle prompt
           if (interpreterResponse.need_input) {
-            if (!PyConsoleHighlightingUtil.INPUT_PROMPT.equals(console.getPrompt())) {
-              console.setPrompt(PyConsoleHighlightingUtil.INPUT_PROMPT);
+            if (!PyPromptUtil.INPUT_PROMPT.equals(console.getPrompt())) {
+              console.setPrompt(PyPromptUtil.INPUT_PROMPT);
               scrollDown(currentEditor);
             }
             myCurrentIndentSize = -1;
@@ -180,7 +180,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
       });
       // After requesting input we got no call back to change prompt, change it manually
       if (waitedForInputBefore && !myConsoleCommunication.isWaitingForInput()) {
-        console.setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT);
+        console.setPrompt(PyPromptUtil.ORDINARY_PROMPT);
         scrollDown(currentEditor);
       }
     }
@@ -188,8 +188,8 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
 
   private void ordinaryPrompt(LanguageConsoleImpl console, Editor currentEditor) {
     if (!myConsoleCommunication.isExecuting()) {
-      if (!PyConsoleHighlightingUtil.ORDINARY_PROMPT.equals(console.getPrompt())) {
-        console.setPrompt(PyConsoleHighlightingUtil.ORDINARY_PROMPT);
+      if (!PyPromptUtil.ORDINARY_PROMPT.equals(console.getPrompt())) {
+        console.setPrompt(PyPromptUtil.ORDINARY_PROMPT);
         scrollDown(currentEditor);
       }
     }
@@ -199,12 +199,12 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   }
 
   private void executingPrompt(LanguageConsoleImpl console) {
-    console.setPrompt(PyConsoleHighlightingUtil.EXECUTING_PROMPT);
+    console.setPrompt(PyPromptUtil.EXECUTING_PROMPT);
   }
 
   private void more(LanguageConsoleImpl console, Editor currentEditor) {
-    if (!PyConsoleHighlightingUtil.INDENT_PROMPT.equals(console.getPrompt())) {
-      console.setPrompt(PyConsoleHighlightingUtil.INDENT_PROMPT);
+    if (!PyPromptUtil.INDENT_PROMPT.equals(console.getPrompt())) {
+      console.setPrompt(PyPromptUtil.INDENT_PROMPT);
       scrollDown(currentEditor);
     }
   }

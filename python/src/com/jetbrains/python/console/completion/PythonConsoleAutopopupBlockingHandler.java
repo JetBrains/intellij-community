@@ -1,4 +1,4 @@
-package com.jetbrains.python.console;
+package com.jetbrains.python.console.completion;
 
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.openapi.editor.Editor;
@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile;
  * @author oleg
  * @date 10/26/10
  */
-public class PydevCompletionAutopopupBlockingHandler extends TypedHandlerDelegate {
+public class PythonConsoleAutopopupBlockingHandler extends TypedHandlerDelegate {
 
   public static final Key<Object> REPL_KEY = new Key<Object>("python.repl.console.editor");
 
