@@ -128,6 +128,11 @@ class FTManager {
       myTemplates.put(qName, template);
       mySortedTemplates = null;
     }
+    else {
+      if (template instanceof BundledFileTemplate && !((BundledFileTemplate)template).isEnabled()) {
+        ((BundledFileTemplate)template).setEnabled(true);
+      }
+    }
     return template;
   }
 

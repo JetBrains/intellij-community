@@ -98,7 +98,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     return (FileTemplateManagerImpl)ServiceManager.getService(FileTemplateManager.class);
   }
 
-  public FileTemplateManagerImpl(@NotNull FileTypeManagerEx typeManager, @NotNull MessageBus bus) {
+  public FileTemplateManagerImpl(@NotNull FileTypeManagerEx typeManager) {
     myTypeManager = typeManager;
     myDefaultTemplatesManager = new FTManager(DEFAULT_TEMPLATES_CATEGORY, ROOT_DIR);
     myInternalTemplatesManager = new FTManager(INTERNAL_TEMPLATES_CATEGORY, INTERNAL_DIR);
