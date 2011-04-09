@@ -226,7 +226,7 @@ public class InplaceIntroduceConstantPopup {
     return visibilityCombo;
   }
 
-  static void appendActions(final JComboBox visibilityCombo, final Project project) {
+  public static void appendActions(final JComboBox visibilityCombo, final Project project) {
     final AnAction arrow = new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
