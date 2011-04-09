@@ -17,7 +17,6 @@ package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TestUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -38,33 +37,26 @@ import java.awt.event.ItemListener;
  * User: anna
  * Date: 3/16/11
  */
-public class IntroduceFieldCentralPanel {
-   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.IntroduceFieldDialog");
+public abstract class IntroduceFieldCentralPanel {
+   protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.IntroduceFieldDialog");
 
-  private static boolean ourLastCbFinalState = false;
+  protected static boolean ourLastCbFinalState = false;
 
-  private final PsiClass myParentClass;
-  private final PsiExpression myInitializerExpression;
-  private final PsiLocalVariable myLocalVariable;
-  private final boolean myIsCurrentMethodConstructor;
-  private final boolean myIsInvokedOnDeclaration;
-  private final boolean myWillBeDeclaredStatic;
-  private final int myOccurrencesCount;
-  private final boolean myAllowInitInMethod;
-  private final boolean myAllowInitInMethodIfAll;
-  private final TypeSelectorManager myTypeSelectorManager;
+  protected final PsiClass myParentClass;
+  protected final PsiExpression myInitializerExpression;
+  protected final PsiLocalVariable myLocalVariable;
+  protected final boolean myIsCurrentMethodConstructor;
+  protected final boolean myIsInvokedOnDeclaration;
+  protected final boolean myWillBeDeclaredStatic;
+  protected final int myOccurrencesCount;
+  protected final boolean myAllowInitInMethod;
+  protected final boolean myAllowInitInMethodIfAll;
+  protected final TypeSelectorManager myTypeSelectorManager;
 
 
   private JCheckBox myCbReplaceAll;
   private StateRestoringCheckBox myCbDeleteVariable;
   private StateRestoringCheckBox myCbFinal;
-
-  private JRadioButton myRbInConstructor;
-  private JRadioButton myRbInCurrentMethod;
-  private JRadioButton myRbInFieldDeclaration;
-  private JRadioButton myRbInSetUp;
-
-  private JavaVisibilityPanel myVisibilityPanel;
 
   public IntroduceFieldCentralPanel(PsiClass parentClass,
                                     PsiExpression initializerExpression,
@@ -84,79 +76,22 @@ public class IntroduceFieldCentralPanel {
     myTypeSelectorManager = typeSelectorManager;
   }
 
-  void initializeControls(PsiExpression initializerExpression, BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
-    if (initializerExpression != null) {
-      setEnabledInitializationPlaces(initializerExpression, initializerExpression);
-      if (!myAllowInitInMethod) {
-        myRbInCurrentMethod.setEnabled(false);
-      }
-    } else {
-      myRbInConstructor.setEnabled(false);
-      myRbInCurrentMethod.setEnabled(false);
-      myRbInFieldDeclaration.setEnabled(false);
-      if (myRbInSetUp != null) myRbInSetUp.setEnabled(false);
-    }
+  protected abstract boolean setEnabledInitializationPlaces(PsiElement initializerPart, PsiElement initializer);
+  public abstract BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace();
+  protected abstract void initializeInitializerPlace(PsiExpression initializerExpression,
+                                                     BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace);
+  protected abstract JComponent createInitializerPlacePanel(ItemListener itemListener, ItemListener finalUpdater);
+  public abstract void setInitializeInFieldDeclaration();
 
-    final PsiMethod setUpMethod = TestUtil.findSetUpMethod(myParentClass);
-    if (myInitializerExpression != null && PsiTreeUtil.isAncestor(setUpMethod, myInitializerExpression, false) && myRbInSetUp.isEnabled() ||
-        ourLastInitializerPlace == BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD && TestUtil.isTestClass(myParentClass) && myRbInSetUp.isEnabled()) {
-      myRbInSetUp.setSelected(true);
-    }
-    else if (ourLastInitializerPlace == BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR) {
-      if (myRbInConstructor.isEnabled()) {
-        myRbInConstructor.setSelected(true);
-      } else {
-        selectInCurrentMethod();
-      }
-    } else if (ourLastInitializerPlace == BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION) {
-      if (myRbInFieldDeclaration.isEnabled()) {
-        myRbInFieldDeclaration.setSelected(true);
-      } else {
-        selectInCurrentMethod();
-      }
-    } else {
-      selectInCurrentMethod();
-    }
-    String ourLastVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY;
-    myVisibilityPanel.setVisibility(ourLastVisibility);
+  public abstract void setVisibility(String visibility);
+  public abstract String getFieldVisibility();
+  public abstract void addVisibilityListener(ChangeListener changeListener);
+
+  protected void initializeControls(PsiExpression initializerExpression,
+                                    BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
     myCbFinal.setSelected(myCbFinal.isEnabled() && ourLastCbFinalState);
   }
 
-  private void selectInCurrentMethod() {
-    if (myRbInCurrentMethod.isEnabled()) {
-      myRbInCurrentMethod.setSelected(true);
-    }
-    else if (myRbInFieldDeclaration.isEnabled()) {
-      myRbInFieldDeclaration.setSelected(true);
-    }
-    else {
-      myRbInCurrentMethod.setSelected(true);
-    }
-  }
-
-
-  public BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace() {
-    if (myRbInConstructor.isSelected()) {
-      return BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR;
-    }
-    if (myRbInCurrentMethod.isSelected()) {
-      return BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD;
-    }
-    if (myRbInFieldDeclaration.isSelected()) {
-      return BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION;
-    }
-    if (myRbInSetUp != null && myRbInSetUp.isSelected()) {
-      return BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD;
-    }
-
-    LOG.assertTrue(false);
-    return BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION;
-  }
-
-
-  public String getFieldVisibility() {
-    return myVisibilityPanel.getVisibility();
-  }
 
   public boolean isReplaceAllOccurrences() {
     if (myIsInvokedOnDeclaration) return true;
@@ -174,29 +109,12 @@ public class IntroduceFieldCentralPanel {
     return myCbFinal.isSelected();
   }
 
-
-
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
-    GridBagConstraints gbConstraints = new GridBagConstraints();
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-    gbConstraints.weightx = 1;
-    gbConstraints.weighty = 0;
-    gbConstraints.gridwidth = 1;
-    gbConstraints.gridx = 0;
-    gbConstraints.gridy = 0;
-    final Insets standardInsets = new Insets(0, 0, 0, 0);
-    gbConstraints.insets = standardInsets;
 
-    panel.add(createInitializerPlacePanel(), gbConstraints);
     ItemListener itemListener = new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
         if (myCbReplaceAll != null && myAllowInitInMethod) {
-          myRbInCurrentMethod.setEnabled(myAllowInitInMethodIfAll || !myCbReplaceAll.isSelected());
-          if (!myRbInCurrentMethod.isEnabled() && myRbInCurrentMethod.isSelected()) {
-            myRbInCurrentMethod.setSelected(false);
-            myRbInFieldDeclaration.setSelected(true);
-          }
+          updateInitializerSelection();
         }
         updateTypeSelector();
       }
@@ -206,13 +124,29 @@ public class IntroduceFieldCentralPanel {
         updateCbFinal();
       }
     };
-    myRbInConstructor.addItemListener(itemListener);
-    myRbInCurrentMethod.addItemListener(itemListener);
-    myRbInFieldDeclaration.addItemListener(itemListener);
-    myRbInConstructor.addItemListener(finalUpdater);
-    myRbInCurrentMethod.addItemListener(finalUpdater);
-    myRbInFieldDeclaration.addItemListener(finalUpdater);
-    if (myRbInSetUp != null) myRbInSetUp.addItemListener(finalUpdater);
+    final JComponent initializerPlacePanel = createInitializerPlacePanel(itemListener, finalUpdater);
+    final JPanel checkboxes = appendCheckboxes(itemListener);
+    JPanel panel = composeWholePanel(initializerPlacePanel, checkboxes);
+
+    updateTypeSelector();
+    return panel;
+  }
+
+  protected abstract JPanel composeWholePanel(JComponent initializerPlacePanel, JPanel checkboxPanel);
+
+  protected void updateInitializerSelection() {
+  }
+
+  private JPanel appendCheckboxes(ItemListener itemListener) {
+    GridBagConstraints gbConstraints = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1,1,0,0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,0), 0,0);
+    JPanel panel = new JPanel(new GridBagLayout());
+    myCbFinal = new StateRestoringCheckBox();
+    myCbFinal.setFocusable(false);
+    myCbFinal.setText(RefactoringBundle.message("declare.final"));
+    myCbFinal.addItemListener(itemListener);
+    gbConstraints.gridy++;
+    panel.add(myCbFinal, gbConstraints);
+
     if (myOccurrencesCount > 1) {
       myCbReplaceAll = new NonFocusableCheckBox();
       myCbReplaceAll.setText(RefactoringBundle.message("replace.all.occurrences.of.expression.0.occurrences", myOccurrencesCount));
@@ -246,20 +180,7 @@ public class IntroduceFieldCentralPanel {
                 }
         );
       }
-      gbConstraints.insets = standardInsets;
     }
-    myCbFinal.addItemListener(itemListener);
-//    myCbStatic.addItemListener(itemListener);
-//    myCbStatic.addItemListener(finalUpdater);
-//    myCbStatic.addItemListener(
-//      new ItemListener() {
-//        public void itemStateChanged(ItemEvent e) {
-//          updateNameList();
-//        }
-//      }
-//    );
-
-    updateTypeSelector();
     return panel;
   }
 
@@ -279,101 +200,15 @@ public class IntroduceFieldCentralPanel {
     }
   }
 
-  private JComponent createInitializerPlacePanel() {
-    JPanel mainPanel = new JPanel();
-    mainPanel.setLayout(new BorderLayout());
-
-    JPanel initializationPanel = new JPanel();
-    initializationPanel.setBorder(IdeBorderFactory.createTitledBorder(RefactoringBundle.message("initialize.in.border.title")));
-    initializationPanel.setLayout(new BoxLayout(initializationPanel, BoxLayout.Y_AXIS));
-
-
-    myRbInCurrentMethod = new JRadioButton();
-    myRbInCurrentMethod.setFocusable(false);
-    myRbInCurrentMethod.setText(RefactoringBundle.message("current.method.radio"));
-    myRbInCurrentMethod.setEnabled(myAllowInitInMethod);
-
-    myRbInFieldDeclaration = new JRadioButton();
-    myRbInFieldDeclaration.setFocusable(false);
-    myRbInFieldDeclaration.setText(RefactoringBundle.message("field.declaration.radio"));
-
-    myRbInConstructor = new JRadioButton();
-    myRbInConstructor.setFocusable(false);
-    myRbInConstructor.setText(RefactoringBundle.message("class.constructors.radio"));
-
-    myVisibilityPanel = new JavaVisibilityPanel(false, false);
-
-    myCbFinal = new StateRestoringCheckBox();
-    myCbFinal.setFocusable(false);
-    myCbFinal.setText(RefactoringBundle.message("declare.final"));
-
-    initializationPanel.add(myRbInCurrentMethod);
-    initializationPanel.add(myRbInFieldDeclaration);
-    initializationPanel.add(myRbInConstructor);
-
-    if (TestUtil.isTestClass(myParentClass)) {
-      myRbInSetUp = new JRadioButton();
-      myRbInSetUp.setFocusable(false);
-      myRbInSetUp.setText(RefactoringBundle.message("setup.method.radio"));
-      initializationPanel.add(myRbInSetUp);
-    }
-
-    ButtonGroup bg = new ButtonGroup();
-    bg.add(myRbInCurrentMethod);
-    bg.add(myRbInFieldDeclaration);
-    bg.add(myRbInConstructor);
-    if (myRbInSetUp != null) bg.add(myRbInSetUp);
-
-
-
-//    modifiersPanel.add(myCbFinal);
-//    modifiersPanel.add(myCbStatic);
-
-    JPanel groupPanel = new JPanel(new GridLayout(1, 2));
-    groupPanel.add(initializationPanel);
-    groupPanel.add(myVisibilityPanel);
-    mainPanel.add(groupPanel, BorderLayout.CENTER);
-    mainPanel.add(myCbFinal, BorderLayout.SOUTH);
-
-    return mainPanel;
-  }
-
   private void updateCbFinal() {
-    boolean allowFinal = myRbInFieldDeclaration.isSelected() || (myRbInConstructor.isSelected() && !myWillBeDeclaredStatic);
-    if (myRbInCurrentMethod.isSelected() && myIsCurrentMethodConstructor) {
-      final PsiMethod[] constructors = myParentClass.getConstructors();
-      allowFinal = constructors.length <= 1;
-    }
-    if (!allowFinal) {
+    if (!allowFinal()) {
       myCbFinal.makeUnselectable(false);
     } else {
       myCbFinal.makeSelectable();
     }
   }
 
-
-
-
-  private boolean setEnabledInitializationPlaces(PsiElement initializerPart, PsiElement initializer) {
-    if (initializerPart instanceof PsiReferenceExpression) {
-      PsiReferenceExpression refExpr = (PsiReferenceExpression) initializerPart;
-      if (refExpr.getQualifierExpression() == null) {
-        PsiElement refElement = refExpr.resolve();
-        if (refElement == null ||
-            (refElement instanceof PsiLocalVariable || refElement instanceof PsiParameter) &&
-            !PsiTreeUtil.isAncestor(initializer, refElement, true)) {
-          myRbInFieldDeclaration.setEnabled(false);
-          myRbInConstructor.setEnabled(false);
-          if (myRbInSetUp != null) myRbInSetUp.setEnabled(false);
-          myCbFinal.setEnabled(false);
-          return false;
-        }
-      }
-    }
-    PsiElement[] children = initializerPart.getChildren();
-    for (PsiElement child : children) {
-      if (!setEnabledInitializationPlaces(child, initializer)) return false;
-    }
+  protected boolean allowFinal() {
     return true;
   }
 
@@ -381,10 +216,6 @@ public class IntroduceFieldCentralPanel {
     if (myCbReplaceAll != null) {
       myCbReplaceAll.addItemListener(itemListener);
     }
-  }
-
-  public void addVisibilityListener(ChangeListener changeListener) {
-    myVisibilityPanel.addListener(changeListener);
   }
 
   public void addFinalListener(ItemListener itemListener) {
@@ -401,11 +232,11 @@ public class IntroduceFieldCentralPanel {
     myCbFinal.setSelected(createFinal);
   }
 
-  public void setInitializeInFieldDeclaration() {
-    myRbInFieldDeclaration.setSelected(true);
+  protected void enableFinal(boolean enable){
+    myCbFinal.setEnabled(enable);
   }
 
-  public void setVisibility(String visibility) {
-    myVisibilityPanel.setVisibility(visibility);
-  }
+
+
+
 }
