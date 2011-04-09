@@ -53,7 +53,7 @@ public class GroovySwitchStatementWithNoDefaultInspection extends BaseInspection
       super.visitSwitchStatement(switchStatement);
       final GrCaseSection[] caseSections = switchStatement.getCaseSections();
       for (GrCaseSection caseSection : caseSections) {
-        if (caseSection.getCaseLabel().getText().startsWith("default")) {
+        if (caseSection.getCaseLabel().isDefault()) {
           return;
         }
       }
