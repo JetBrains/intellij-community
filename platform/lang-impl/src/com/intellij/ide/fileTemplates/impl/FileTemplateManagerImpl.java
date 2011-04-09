@@ -119,22 +119,18 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       loadCustomizedContent(child);
     }
     
-    // todo: do something with this hack
-    //if (ApplicationManager.getApplication().isUnitTestMode()) {
-    //  for (String tname : Arrays.asList("Class", "AnnotationType", "Enum", "Interface")) {
-    //    for (FileTemplate template : getAllTemplates()) {
-    //      if (tname.equals(template.getName())) {
-    //        myInternalTemplatesManager.getTemplateContainer().removeTemplate(template);
-    //        break;
-    //      }
-    //    }
-    //    FileTemplateImpl fileTemplate = new FileTemplateImpl(normalizeText(getTestClassTemplateText(tname)), tname, "java");
-    //    fileTemplate.setReadOnly(true);
-    //    fileTemplate.setModified(false);
-    //    myInternalTemplatesManager.getTemplateContainer().addTemplate(fileTemplate);
-    //    fileTemplate.setInternal(true);
-    //  }
-    //}
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      for (String tname : Arrays.asList("Class", "AnnotationType", "Enum", "Interface")) {
+        for (FileTemplate template : myInternalTemplatesManager.getAllTemplates(true)) {
+          if (tname.equals(template.getName())) {
+            myInternalTemplatesManager.removeTemplate(((FileTemplateBase)template).getQualifiedName());
+            break;
+          }
+        }
+        final FileTemplateBase template = myInternalTemplatesManager.addTemplate(tname, "java");
+        template.setText(normalizeText(getTestClassTemplateText(tname)));
+      }
+    }
     
   }
 
@@ -202,33 +198,52 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     if (configFiles == null) {
       return;
     }
+
+    final List<File> oldFormatTemplates = new ArrayList<File>();
+    final Set<String> processedNames = new HashSet<String>();
+
     for (File file : configFiles) {
       if (file.isDirectory() || myTypeManager.isFileIgnored(file.getName()) || file.isHidden()) {
         continue;
       }
       String name = file.getName();
       if (!name.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX)) {
+        oldFormatTemplates.add(file);
         continue;
       }
       // cut default template extension
       name = name.substring(0, name.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
-      
-      final String extension = myTypeManager.getExtension(name);
-      name = name.substring(0, name.length() - extension.length() - 1);
-      if (name.length() == 0) {
-        continue;
+      processedNames.add(name);
+
+      addTemplateFromFile(manager, name, file);
+    }
+
+    for (File oldFile : oldFormatTemplates) {
+      final String name = oldFile.getName();
+      if (!processedNames.contains(name)) {
+        addTemplateFromFile(manager, name, oldFile);
       }
-      try {
-        final String text = FileUtil.loadFile(file, FTManager.CONTENT_ENCODING);
-        manager.addTemplate(name, extension).setText(text);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+      FileUtil.delete(oldFile);
     }
   }
-  
+
+  private void addTemplateFromFile(FTManager manager, String templateQName, File file) {
+    final String extension = myTypeManager.getExtension(templateQName);
+    templateQName = templateQName.substring(0, templateQName.length() - extension.length() - 1);
+    if (templateQName.length() == 0) {
+      return;
+    }
+    try {
+      final String text = FileUtil.loadFile(file, FTManager.CONTENT_ENCODING);
+      manager.addTemplate(templateQName, extension).setText(text);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+  }
+
   //Example: templateName="NewClass"   templateExtension="java"
+  @Nullable
   private static String getDescriptionPath(String pathPrefix, String templateName, String templateExtension, Set<String> descriptionPaths) {
     final Locale locale = Locale.getDefault();
     
@@ -341,6 +356,33 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       myRecentList.readExternal(recentElement);
     }
 
+    // support older format
+    final DeletedTemplatesManager deletedDefaults = new DeletedTemplatesManager();
+    Element deletedTemplatesElement = element.getChild(ELEMENT_DELETED_TEMPLATES);
+    if (deletedTemplatesElement != null) {
+      deletedDefaults.readExternal(deletedTemplatesElement);
+    }
+    
+    final DeletedTemplatesManager deletedIncludes = new DeletedTemplatesManager();
+    Element deletedIncludesElement = element.getChild(ELEMENT_DELETED_INCLUDES);
+    if (deletedIncludesElement != null) {
+      deletedIncludes.readExternal(deletedIncludesElement);
+    }
+    
+    final Set<String> templateNamesWithReformatOff = new HashSet<String>();
+    final Element templatesElement = element.getChild(ELEMENT_TEMPLATES);
+    if (templatesElement != null) {
+      final List children = templatesElement.getChildren();
+      for (final Object child : children) {
+        final Element childElement = (Element)child;
+        boolean reformat = Boolean.TRUE.toString().equals(childElement.getAttributeValue(ATTRIBUTE_REFORMAT));
+        if (!reformat) {
+          final String name = childElement.getAttributeValue(ATTRIBUTE_NAME);
+          templateNamesWithReformatOff.add(name);
+        }
+      }
+    }
+    
     for (final FTManager manager : myAllManagers) {
       final Element templatesGroup = element.getChild(getXmlElementGroupName(manager));
       if (templatesGroup == null) {
@@ -364,39 +406,44 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       }
     }
 
-    //Element deletedTemplatesElement = element.getChild(ELEMENT_DELETED_TEMPLATES);
-    //if (deletedTemplatesElement != null) {
-    //  myDefaultTemplatesManager.getDeletedTemplates().readExternal(deletedTemplatesElement);
-    //}
-    //
-    //Element deletedIncludesElement = element.getChild(ELEMENT_DELETED_INCLUDES);
-    //if (deletedIncludesElement != null) {
-    //  myPatternsManager.getDeletedTemplates().readExternal(deletedIncludesElement);
-    //}
-    //
-    //Element recentElement = element.getChild(ELEMENT_RECENT_TEMPLATES);
-    //if (recentElement != null) {
-    //  myRecentList.readExternal(recentElement);
-    //}
-    //
-    //Element templatesElement = element.getChild(ELEMENT_TEMPLATES);
-    //if (templatesElement != null) {
-    //  myDefaultTemplatesManager.invalidate();
-    //  List children = templatesElement.getChildren();
-    //  myDefaultTemplatesManager.resetNotAdjusted();
-    //  for (final Object aChildren : children) {
-    //    Element child = (Element)aChildren;
-    //    String name = child.getAttributeValue(ATTRIBUTE_NAME);
-    //    boolean reformat = Boolean.TRUE.toString().equals(child.getAttributeValue(ATTRIBUTE_REFORMAT));
-    //    if (!reformat) {
-    //      myDefaultTemplatesManager.setNotAdjusted(name);
-    //    }
-    //  }
-    //}
+    // apply data loaded from older format
+    final boolean hasDeletedDefaultsInOlderFormat = !deletedDefaults.DELETED_DEFAULT_TEMPLATES.isEmpty();
+    final boolean hasDeletedincludesinOlderFormat = !deletedIncludes.DELETED_DEFAULT_TEMPLATES.isEmpty();
+    final boolean hasTemplatesWithReformatAttibuteAltered = !templateNamesWithReformatOff.isEmpty();
+    final boolean hasSettingsInOlderFormat = hasDeletedDefaultsInOlderFormat || 
+                                             hasDeletedincludesinOlderFormat || 
+                                             hasTemplatesWithReformatAttibuteAltered;
+    if (hasSettingsInOlderFormat) {
+      final Collection<FileTemplateBase> allDefaults = myDefaultTemplatesManager.getAllTemplates(true);
+      if (hasDeletedDefaultsInOlderFormat) {
+        applyDeletedState(deletedDefaults, allDefaults);
+      }
+      if (hasDeletedincludesinOlderFormat) {
+        applyDeletedState(deletedIncludes, myPatternsManager.getAllTemplates(true));
+      }
+      if (hasTemplatesWithReformatAttibuteAltered) {
+        applyReformatState(templateNamesWithReformatOff, allDefaults);
+        applyReformatState(templateNamesWithReformatOff, myInternalTemplatesManager.getAllTemplates(true));
+      }
+    }
   }
 
-  private static String getXmlElementGroupName(FTManager manager) {
-    return manager.getName().toLowerCase(Locale.US) + "_" + "templates";
+  // need this to support options from older format
+  private static void applyReformatState(Set<String> templateNamesWithReformatOff, Collection<FileTemplateBase> templates) {
+    for (FileTemplateBase template : templates) {
+      if (templateNamesWithReformatOff.contains(template.getName())) {
+        template.setReformatCode(false);
+      }
+    }
+  }
+
+  // need this to support options from older format
+  private static void applyDeletedState(DeletedTemplatesManager deletedDefaults, Collection<FileTemplateBase> templates) {
+    for (FileTemplateBase template : templates) {
+      if (template instanceof BundledFileTemplate && deletedDefaults.contains(template.getQualifiedName())) {
+        ((BundledFileTemplate)template).setEnabled(false);
+      }
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -460,6 +507,10 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   //  templateElement.setAttribute(ATTRIBUTE_REFORMAT, Boolean.toString(template.isReformatCode()));
   //  return templateElement;
   //}
+
+  private static String getXmlElementGroupName(FTManager manager) {
+    return manager.getName().toLowerCase(Locale.US) + "_" + "templates";
+  }
 
   private void validateRecentNames() {
     final Collection<FileTemplateBase> allTemplates = myDefaultTemplatesManager.getAllTemplates(false);
