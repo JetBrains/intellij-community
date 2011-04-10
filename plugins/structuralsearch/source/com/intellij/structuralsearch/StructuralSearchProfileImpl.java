@@ -4,15 +4,17 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.javascript.psi.JSFunction;
-import com.intellij.lang.javascript.psi.JSVariable;
-import com.intellij.lang.javascript.psi.ecmal4.JSClass;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.structuralsearch.equivalence.EquivalenceDescriptor;
+import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
+import com.intellij.structuralsearch.equivalence.MultiChildDescriptor;
+import com.intellij.structuralsearch.equivalence.SingleChildDescriptor;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
@@ -31,6 +33,7 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
   private static final String TYPED_VAR_PREFIX = "__$_";
 
   private static final String DELIMETER_CHARS = ",;.[]{}():";
+  private PsiElementVisitor myLexicalNodesFilter;
 
   @Override
   public void compile(PsiElement element, @NotNull final GlobalCompilingVisitor globalVisitor) {
@@ -60,7 +63,7 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
          */
         if (handler instanceof LightTopLevelMatchingHandler) {
           MatchingHandler delegate = ((LightTopLevelMatchingHandler)handler).getDelegate();
-            if (!(delegate instanceof SubstitutionHandler)) {
+          if (!(delegate instanceof SubstitutionHandler)) {
             pattern.setHandler(element, new LightTopLevelMatchingHandler(new SkippingHandler(delegate)));
           }
         }
@@ -115,16 +118,19 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
 
   @NotNull
   @Override
-  public PsiElementVisitor createLexicalNodesFilter(@NotNull final LexicalNodesFilter filter) {
-    return new PsiElementVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        super.visitElement(element);
-        if (isLexicalNode(element)) {
-          filter.setResult(true);
+  public PsiElementVisitor getLexicalNodesFilter(@NotNull final LexicalNodesFilter filter) {
+    if (myLexicalNodesFilter == null) {
+      myLexicalNodesFilter = new PsiElementVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          super.visitElement(element);
+          if (isLexicalNode(element)) {
+            filter.setResult(true);
+          }
         }
-      }
-    };
+      };
+    }
+    return myLexicalNodesFilter;
   }
 
   private static boolean isLexicalNode(PsiElement element) {
@@ -133,10 +139,12 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
       return true;
     }*/
 
-    return element instanceof LeafElement && containsOnlyDelimeters(element.getText());
+    return element instanceof PsiWhiteSpace ||
+           element instanceof PsiErrorElement/* ||
+           (element instanceof LeafElement && containsOnlyDelimeters(element.getText()))*/;
   }
 
-  private static boolean containsOnlyDelimeters(String s) {
+  public static boolean containsOnlyDelimeters(String s) {
     for (int i = 0, n = s.length(); i < n; i++) {
       if (DELIMETER_CHARS.indexOf(s.charAt(i)) < 0) {
         return false;
@@ -159,7 +167,7 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
         return str.startsWith(TYPED_VAR_PREFIX);
       }
 
-      @Override
+      /*@Override
       public String getTypedVarString(PsiElement element) {
         String text = element.getText();
 
@@ -182,7 +190,7 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
         }
 
         return text.substring(start, end + 1);
-      }
+      }*/
     };
   }
 
@@ -206,7 +214,7 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
     return child != null && child instanceof LeafElement;
   }
 
-  @Nullable
+  /*@Nullable
   private static PsiElement getOnlyNonLexicalChild(PsiElement element) {
     PsiElement onlyChild = null;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -219,7 +227,7 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
       onlyChild = child;
     }
     return onlyChild;
-  }
+  }*/
 
 
   private static boolean isLiteral(PsiElement element) {
@@ -236,6 +244,15 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
   private static boolean canBePatternVariableValue(PsiElement element) {
     // can be leaf element! (ex. var a = 1 <-> var $a$ = 1)
     return !containsOnlyDelimeters(element.getText());
+  }
+
+  @Override
+  public boolean canBeVarDelimeter(@NotNull PsiElement element) {
+    final EquivalenceDescriptorProvider provider = EquivalenceDescriptorProvider.getInstance(element);
+    if (provider != null) {
+      return provider.canBeVariableDelimeter(element);
+    }
+    return super.canBeVarDelimeter(element);
   }
 
   // todo: support expression patterns
@@ -344,10 +361,10 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
 
             MatchingHandler matchingHandler = pattern.getHandler(el);
             pattern.setHandler(el, element instanceof PsiFile ? new TopLevelMatchingHandler(matchingHandler) :
-            new LightTopLevelMatchingHandler(matchingHandler));
+                                   new LightTopLevelMatchingHandler(matchingHandler));
 
             /*
-              do not assign top-level handlers through skipping, because it is incorrect;
+              do not assign light-top-level handlers through skipping, because it is incorrect;
               src: if (...) { st1; st2; }
               pattern: if (...) {$a$;}
 
@@ -373,41 +390,20 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
     public void visitElement(PsiElement element) {
       super.visitElement(element);
 
-      // todo: make abstract!
-      if (element instanceof JSClass) {
-        JSClass c1 = (JSClass)element;
-        JSClass c2 = (JSClass)myGlobalVisitor.getElement();
+      final EquivalenceDescriptorProvider descriptorProvider = EquivalenceDescriptorProvider.getInstance(element);
 
-        myGlobalVisitor.setResult(myGlobalVisitor.match(c1.getNameIdentifier(), c2.getNameIdentifier()) &&
-                                  myGlobalVisitor.matchSonsOptionally(c1.getAttributeList(), c2.getAttributeList()) &&
-                                  myGlobalVisitor.matchSonsInAnyOrder(c1.getExtendsList(), c2.getExtendsList()) &&
-                                  myGlobalVisitor.matchSonsInAnyOrder(c1.getImplementsList(), c2.getImplementsList()) &&
-                                  myGlobalVisitor.matchInAnyOrder(c1.getFields(), c2.getFields()) &&
-                                  myGlobalVisitor.matchInAnyOrder(c1.getFunctions(), c2.getFunctions()));
-        return;
-      }
-      else if (element instanceof JSFunction) {
-        final JSFunction f1 = (JSFunction)element;
-        final JSFunction f2 = (JSFunction)myGlobalVisitor.getElement();
+      if (descriptorProvider != null) {
+        final EquivalenceDescriptor descriptor1 = descriptorProvider.buildDescriptor(element);
+        final EquivalenceDescriptor descriptor2 = descriptorProvider.buildDescriptor(myGlobalVisitor.getElement());
 
-        myGlobalVisitor.setResult(f1.getKind() == f2.getKind() &&
-                                  myGlobalVisitor.match(f1.getNameIdentifier(), f2.getNameIdentifier()) &&
-                                  myGlobalVisitor.matchSonsOptionally(f1.getAttributeList(), f2.getAttributeList()) &&
-                                  myGlobalVisitor.matchSons(f1.getParameterList(), f2.getParameterList()) &&
-                                  myGlobalVisitor.matchOptionally(f1.getReturnTypeElement(), f2.getReturnTypeElement()) &&
-                                  myGlobalVisitor.matchOptionally(f1.getBody(), f2.getBody()));
-        return;
+        if (descriptor1 != null && descriptor2 != null) {
+          final boolean result = match(descriptor1, descriptor2, myGlobalVisitor);
+          myGlobalVisitor.setResult(result);
+          return;
+        }
       }
-      else if (element instanceof JSVariable) {
-        JSVariable v1 = (JSVariable)element;
-        JSVariable v2 = (JSVariable)myGlobalVisitor.getElement();
 
-        myGlobalVisitor.setResult(myGlobalVisitor.match(v1.getNameIdentifier(), v2.getNameIdentifier()) &&
-                                  myGlobalVisitor.matchOptionally(v1.getTypeElement(), v2.getTypeElement()) &&
-                                  myGlobalVisitor.matchOptionally(v1.getInitializer(), v2.getInitializer()));
-        return;
-      }
-      else if (isLiteral(element)) {
+      if (isLiteral(element)) {
         visitLiteral(element);
         return;
       }
@@ -437,6 +433,115 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
 
         boolean matched = myGlobalVisitor.matchSequentially(patternIterator, matchedIterator);
         myGlobalVisitor.setResult(matched);
+      }
+    }
+
+    private static boolean match(@NotNull EquivalenceDescriptor descriptor1,
+                                 @NotNull EquivalenceDescriptor descriptor2,
+                                 @NotNull GlobalMatchingVisitor g) {
+
+      if (descriptor1.getSingleChildDescriptors().size() != descriptor2.getSingleChildDescriptors().size()) {
+        return false;
+      }
+
+      if (descriptor1.getMultiChildDescriptors().size() != descriptor2.getMultiChildDescriptors().size()) {
+        return false;
+      }
+
+      if (descriptor1.getConstants().size() != descriptor2.getConstants().size()) {
+        return false;
+      }
+
+      for (int i = 0, n = descriptor1.getConstants().size(); i < n; i++) {
+        Object childDescriptor1 = descriptor1.getConstants().get(i);
+        Object childDescriptor2 = descriptor2.getConstants().get(i);
+
+        if (!Comparing.equal(childDescriptor1, childDescriptor2)) {
+          return false;
+        }
+      }
+
+      for (int i = 0, n = descriptor1.getSingleChildDescriptors().size(); i < n; i++) {
+        SingleChildDescriptor childDescriptor1 = descriptor1.getSingleChildDescriptors().get(i);
+        SingleChildDescriptor childDescriptor2 = descriptor2.getSingleChildDescriptors().get(i);
+
+        if (!match(childDescriptor1, childDescriptor2, g)) {
+          return false;
+        }
+      }
+
+
+      for (int i = 0, n = descriptor1.getMultiChildDescriptors().size(); i < n; i++) {
+        MultiChildDescriptor childDescriptor1 = descriptor1.getMultiChildDescriptors().get(i);
+        MultiChildDescriptor childDescriptor2 = descriptor2.getMultiChildDescriptors().get(i);
+
+        if (!match(childDescriptor1, childDescriptor2, g)) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    private static boolean match(@NotNull SingleChildDescriptor childDescriptor1,
+                                 @NotNull SingleChildDescriptor childDescriptor2,
+                                 @NotNull GlobalMatchingVisitor g) {
+      if (childDescriptor1.getType() != childDescriptor2.getType()) {
+        return false;
+      }
+
+      final PsiElement element1 = childDescriptor1.getElement();
+      final PsiElement element2 = childDescriptor2.getElement();
+
+      switch (childDescriptor1.getType()) {
+
+        case DEFAULT:
+          return g.match(element1, element2);
+
+        case OPTIONALLY_IN_PATTERN:
+        case OPTIONALLY:
+          return g.matchOptionally(element1, element2);
+
+        case CHILDREN:
+          return g.matchSons(element1, element2);
+
+        case CHILDREN_OPTIONALLY_IN_PATTERN:
+        case CHILDREN_OPTIONALLY:
+          return g.matchSonsOptionally(element1, element2);
+
+        case CHILDREN_IN_ANY_ORDER:
+          return g.matchSonsInAnyOrder(element1, element2);
+
+        default:
+          return false;
+      }
+    }
+
+    private static boolean match(@NotNull MultiChildDescriptor childDescriptor1,
+                                 @NotNull MultiChildDescriptor childDescriptor2,
+                                 @NotNull GlobalMatchingVisitor g) {
+
+      if (childDescriptor1.getType() != childDescriptor2.getType()) {
+        return false;
+      }
+
+      final PsiElement[] elements1 = childDescriptor1.getElements();
+      final PsiElement[] elements2 = childDescriptor2.getElements();
+
+      switch (childDescriptor1.getType()) {
+
+        case DEFAULT:
+          return g.matchSequentially(elements1, elements2);
+
+        case OPTIONALLY_IN_PATTERN:
+        case OPTIONALLY:
+          return g.matchOptionally(elements1, elements2);
+
+        case IN_ANY_ORDER:
+          return g.matchInAnyOrder(elements1, elements2);
+
+        default:
+          return false;
       }
     }
 

@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="platform-ultimate" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="JavaScriptLanguage" />
+    <orderEntry type="module" module-name="duplicates" />
   </component>
   <component name="copyright">
     <Base>

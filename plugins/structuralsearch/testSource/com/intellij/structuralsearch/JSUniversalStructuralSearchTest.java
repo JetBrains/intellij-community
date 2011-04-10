@@ -103,8 +103,8 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
                "doc.method2(null);\n" +
                "doc.method3(1, 2, 3);\n" +
                "doc.method4();";
-    doTest(s, "doc.'_T('_T1*)", 4);
     doTest(s, "doc.'_T('_T1+)", 3);
+    doTest(s, "doc.'_T('_T1*)", 4);
     doTest(s, "doc.'_T('_T1)", 1);
   }
 

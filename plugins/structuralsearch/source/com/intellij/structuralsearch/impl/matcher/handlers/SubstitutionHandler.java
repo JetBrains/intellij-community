@@ -3,8 +3,12 @@ package com.intellij.structuralsearch.impl.matcher.handlers;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.StructuralSearchProfile;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
+import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
+import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
@@ -29,6 +33,22 @@ public class SubstitutionHandler extends MatchingHandler {
   private int matchedOccurs;
   private int totalMatchedOccurs = -1;
   private MatchResultImpl myNestedResult;
+
+  private static final NodeFilter VARS_DELIM_FILTER = new NodeFilter() {
+    @Override
+    public boolean accepts(PsiElement element) {
+      if (element == null) {
+        return false;
+      }
+
+      StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
+      if (profile == null) {
+        return false;
+      }
+
+      return profile.canBeVarDelimeter(element);
+    }
+  };
 
   public SubstitutionHandler(final String name, final boolean target, int minOccurs,
                              int maxOccurs, boolean greedy) {
@@ -330,36 +350,48 @@ public class SubstitutionHandler extends MatchingHandler {
   public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
     final int previousMatchedOccurs = matchedOccurs;
 
+    FilteringNodeIterator fNodes = new FilteringNodeIterator(nodes, VARS_DELIM_FILTER);
+    FilteringNodeIterator fNodes2 = new FilteringNodeIterator(nodes2, VARS_DELIM_FILTER);
+
     try {
       MatchingHandler handler = context.getPattern().getHandler(nodes.current());
       matchedOccurs = 0;
 
-      while(nodes2.hasNext() && matchedOccurs < minOccurs) {
-        if (handler.match(nodes.current(),nodes2.current(),context)) {
+      boolean flag = false;
+
+      while(fNodes2.hasNext() && matchedOccurs < minOccurs) {
+        if (handler.match(nodes.current(), nodes2.current(), context)) {
           ++matchedOccurs;
         } else {
           break;
         }
-        nodes2.advance();
+        fNodes2.advance();
+        flag = true;
       }
 
       if (matchedOccurs!=minOccurs) {
         // failed even for min occurs
         removeLastResults(matchedOccurs,context);
-        nodes2.rewind(matchedOccurs);
+        fNodes2.rewind(matchedOccurs);
         return false;
       }
 
       if (greedy) {
         // go greedily to maxOccurs
 
-        while(nodes2.hasNext() && matchedOccurs < maxOccurs) {
-          if (handler.match(nodes.current(),nodes2.current(),context)) {
+        while(fNodes2.hasNext() && matchedOccurs < maxOccurs) {
+          if (handler.match(nodes.current(), nodes2.current(), context)) {
             ++matchedOccurs;
           } else {
             // no more matches could take!
             break;
           }
+          fNodes2.advance();
+          flag = true;
+        }
+
+        if (flag) {
+          fNodes2.rewind();
           nodes2.advance();
         }
 
@@ -398,13 +430,27 @@ public class SubstitutionHandler extends MatchingHandler {
       } else {
         nodes.advance();
 
+        if (flag) {
+          fNodes2.rewind();
+          nodes2.advance();
+        }
+
         if (nodes.hasNext()) {
           final MatchingHandler nextHandler = context.getPattern().getHandler(nodes.current());
+
+          flag = false;
 
           while(nodes2.hasNext() && matchedOccurs <= maxOccurs) {
             if (nextHandler.matchSequentially(nodes,nodes2,context)) {
               return checkSameOccurencesConstraint();
-            } else if (handler.match(nodes.current(),nodes2.current(),context)) {
+            }
+
+            if (flag) {
+              nodes2.rewind();
+              fNodes2.advance();
+            }
+
+            if (handler.match(nodes.current(), nodes2.current(), context)) {
               matchedOccurs++;
             } else {
               nodes.rewind();
@@ -412,6 +458,7 @@ public class SubstitutionHandler extends MatchingHandler {
               return false;
             }
             nodes2.advance();
+            flag = true;
           }
 
           nodes.rewind();

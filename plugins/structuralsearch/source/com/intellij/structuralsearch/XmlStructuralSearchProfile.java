@@ -32,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
+  private XmlLexicalNodesFilter myLexicalNodesFilter;
+
   public void compile(PsiElement element, @NotNull GlobalCompilingVisitor globalVisitor) {
     element.accept(new XmlCompilingVisitor(globalVisitor));
   }
@@ -43,8 +45,11 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   @NotNull
   @Override
-  public PsiElementVisitor createLexicalNodesFilter(@NotNull LexicalNodesFilter filter) {
-    return new XmlLexicalNodesFilter(filter);
+  public PsiElementVisitor getLexicalNodesFilter(@NotNull LexicalNodesFilter filter) {
+    if (myLexicalNodesFilter == null) {
+      myLexicalNodesFilter = new XmlLexicalNodesFilter(filter);
+    }
+    return myLexicalNodesFilter;
   }
 
   @NotNull

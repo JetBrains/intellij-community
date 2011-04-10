@@ -24,6 +24,8 @@ import java.util.List;
  * @author Eugene.Kudelevsky
  */
 public class JavaStructuralSearchProfile extends StructuralSearchProfile {
+  private JavaLexicalNodesFilter myJavaLexicalNodesFilter;
+
   public void compile(PsiElement element, @NotNull GlobalCompilingVisitor globalVisitor) {
     element.accept(new JavaCompilingVisitor(globalVisitor));
   }
@@ -35,8 +37,11 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @NotNull
   @Override
-  public PsiElementVisitor createLexicalNodesFilter(@NotNull LexicalNodesFilter filter) {
-    return new JavaLexicalNodesFilter(filter);
+  public PsiElementVisitor getLexicalNodesFilter(@NotNull LexicalNodesFilter filter) {
+    if (myJavaLexicalNodesFilter == null) {
+      myJavaLexicalNodesFilter = new JavaLexicalNodesFilter(filter);
+    }
+    return myJavaLexicalNodesFilter;
   }
 
   @NotNull

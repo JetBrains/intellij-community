@@ -49,6 +49,8 @@ import java.util.Map;
 public class JSStructuralSearchProfile extends StructuralSearchProfile {
   private static final String TYPED_VAR_PREFIX = "__$_";
 
+  private PsiElementVisitor myLexicalNodesFilter;
+
   @NotNull
   @Override
   public CompiledPattern createCompiledPattern() {
@@ -68,16 +70,19 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
 
   @NotNull
   @Override
-  public PsiElementVisitor createLexicalNodesFilter(@NotNull final LexicalNodesFilter filter) {
-    return new PsiElementVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        super.visitElement(element);
-        if (isLexicalNode(element)) {
-          filter.setResult(true);
+  public PsiElementVisitor getLexicalNodesFilter(@NotNull final LexicalNodesFilter filter) {
+    if (myLexicalNodesFilter == null) {
+      myLexicalNodesFilter = new PsiElementVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          super.visitElement(element);
+          if (isLexicalNode(element)) {
+            filter.setResult(true);
+          }
         }
-      }
-    };
+      };
+    }
+    return myLexicalNodesFilter;
   }
 
   @Override

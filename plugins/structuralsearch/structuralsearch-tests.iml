@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="idea-tests" />
     <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module" module-name="JavaScriptLanguage" />
+    <orderEntry type="module" module-name="duplicates" />
   </component>
 </module>
 

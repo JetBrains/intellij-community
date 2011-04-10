@@ -5,7 +5,6 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -53,14 +52,9 @@ public final class LexicalNodesFilter  implements NodeFilter {
   public boolean accepts(PsiElement element) {
     result = false;
     if (element!=null) {
-      if (myCachedFilters == null) {
-        myCachedFilters = new ArrayList<PsiElementVisitor>();
-        for (StructuralSearchProfile profile : StructuralSearchUtil.getAllProfiles()) {
-          myCachedFilters.add(profile.createLexicalNodesFilter(this));
-        }
-      }
-      for (PsiElementVisitor filter : myCachedFilters) {
-        element.accept(filter);
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
+      if (profile != null) {
+        element.accept(profile.getLexicalNodesFilter(this));
       }
     }
     return result;

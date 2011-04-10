@@ -1,17 +1,15 @@
 package com.intellij.structuralsearch.impl.matcher.iterators;
 
-import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
-import com.intellij.structuralsearch.impl.matcher.iterators.SiblingNodeIterator;
-import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
-import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.psi.PsiElement;
+import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
+import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 
 /**
  * Iterator over important nodes
  */
 public final class FilteringNodeIterator extends NodeIterator {
   private NodeIterator delegate;
-  private final NodeFilter filter = LexicalNodesFilter.getInstance();
+  private final NodeFilter filter;
 
   private void advanceToNext() {
     while (delegate.hasNext() && filter.accepts(delegate.current())) {
@@ -29,9 +27,14 @@ public final class FilteringNodeIterator extends NodeIterator {
     this(new SiblingNodeIterator(element));
   }
 
-  public FilteringNodeIterator(final NodeIterator iterator) {
+  public FilteringNodeIterator(NodeIterator iterator, NodeFilter filter) {
     delegate = iterator;
+    this.filter = filter;
     advanceToNext();
+  }
+
+  public FilteringNodeIterator(final NodeIterator iterator) {
+    this(iterator, LexicalNodesFilter.getInstance());
   }
 
   public boolean hasNext() {

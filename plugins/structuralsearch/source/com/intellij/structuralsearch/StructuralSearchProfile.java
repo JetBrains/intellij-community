@@ -33,7 +33,7 @@ public abstract class StructuralSearchProfile {
   public abstract PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor);
 
   @NotNull
-  public abstract PsiElementVisitor createLexicalNodesFilter(@NotNull LexicalNodesFilter filter);
+  public abstract PsiElementVisitor getLexicalNodesFilter(@NotNull LexicalNodesFilter filter);
 
   @NotNull
   public abstract CompiledPattern createCompiledPattern();
@@ -99,5 +99,10 @@ public abstract class StructuralSearchProfile {
   @NotNull
   public Language getLanguage(PsiElement element) {
     return element.getLanguage();
+  }
+
+  // only for nodes not filtered by lexical-nodes filter; they can be by default
+  public boolean canBeVarDelimeter(@NotNull PsiElement element) {
+    return false;
   }
 }
