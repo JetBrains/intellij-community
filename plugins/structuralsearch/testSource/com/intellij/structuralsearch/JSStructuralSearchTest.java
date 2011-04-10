@@ -320,7 +320,14 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
     doTest(c1, "class $name$ implements $i$ {}", 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
   }
 
-
+  public void testCustomAttributes() throws Exception {
+    String pattern = "[Embed(source=\"$a$\")]";
+    doTest("package {\n" +
+           "public class C {\n" +
+           "[Embed(source='pic.png')] public static const n: int;\n" +
+           "}\n" +
+           "}", pattern, 1, JavaScriptSupportLoader.JAVASCRIPT, "as");
+  }
 
   private void doTestByFile(String fileName, String pattern, int expectedOccurences) throws IOException {
     doTestByFile(fileName, pattern, expectedOccurences, JavaScriptSupportLoader.JAVASCRIPT, "js");

@@ -4,6 +4,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.javascript.JavaScriptSupportLoader;
 import com.intellij.lang.javascript.JavascriptLanguage;
 import com.intellij.lang.javascript.psi.*;
+import com.intellij.lang.javascript.psi.ecmal4.JSAttributeList;
 import com.intellij.lang.javascript.psi.ecmal4.JSClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
@@ -107,6 +108,12 @@ public class JSMatchingStrategy extends JSElementVisitor implements MatchingStra
   public void visitJSClass(JSClass aClass) {
     result = true;
     super.visitJSClass(aClass);
+  }
+
+  @Override
+  public void visitJSAttributeList(JSAttributeList attributeList) {
+    result = true;
+    super.visitJSAttributeList(attributeList);
   }
 
   public boolean continueMatching(PsiElement start) {
