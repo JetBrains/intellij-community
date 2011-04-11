@@ -52,19 +52,19 @@ public class HgChangeProvider implements ChangeProvider {
   }
 
   public HgChangeProvider(Project project, VcsKey vcsKey) {
-    this.myProject = project;
-    this.myVcsKey = vcsKey;
+    myProject = project;
+    myVcsKey = vcsKey;
   }
 
   public void getChanges(VcsDirtyScope dirtyScope, ChangelistBuilder builder,
                          ProgressIndicator progress, ChangeListManagerGate addGate) throws VcsException {
-    final Set<VirtualFile> processedRoots = new LinkedHashSet<VirtualFile>();
     final Collection<HgChange> changes = new HashSet<HgChange>();
+
     for (FilePath filePath : dirtyScope.getRecursivelyDirtyDirectories()) {
-      changes.addAll(process(builder, filePath, processedRoots));
+      changes.addAll(process(builder, filePath));
     }
     for (FilePath filePath : dirtyScope.getDirtyFiles()) {
-      changes.addAll(process(builder, filePath, processedRoots));
+      changes.addAll(process(builder, filePath));
     }
 
     processUnsavedChanges(builder, dirtyScope.getDirtyFilesNoExpand(), changes);
@@ -78,12 +78,12 @@ public class HgChangeProvider implements ChangeProvider {
   }
 
   private Collection<HgChange> process(ChangelistBuilder builder,
-    FilePath filePath, Set<VirtualFile> processedRoots) {
+    FilePath filePath) {
     VirtualFile repo = VcsUtil.getVcsRootFor(myProject, filePath);
-    if (repo == null || processedRoots.contains(repo)) {
+    if (repo == null) {
       return new HashSet<HgChange>();
     }
-    Set<HgChange> hgChanges = new HgStatusCommand(myProject).execute(repo);
+    Set<HgChange> hgChanges = new HgStatusCommand(myProject).execute(repo, filePath.getPath());
     if (hgChanges == null || hgChanges.isEmpty()) {
       return new HashSet<HgChange>();
     }
@@ -92,7 +92,6 @@ public class HgChangeProvider implements ChangeProvider {
       new HgWorkingCopyRevisionsCommand(myProject).identify(repo),
       new HgWorkingCopyRevisionsCommand(myProject).firstParent(repo)
     );
-    processedRoots.add(repo);
     return hgChanges;
   }
 
