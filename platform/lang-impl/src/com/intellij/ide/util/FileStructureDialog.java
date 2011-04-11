@@ -274,7 +274,14 @@ public class FileStructureDialog extends DialogWrapper {
         myTreeStructure.rebuildTree();
         if (builder != null) {
           if (currentParent != null) {
-            builder.enterElement(currentParent, PsiUtilBase.getVirtualFile(currentParent));
+            boolean oldNarrowDown = myShouldNarrowDown;
+            myShouldNarrowDown = false;
+            try {
+              builder.enterElement(currentParent, PsiUtilBase.getVirtualFile(currentParent));
+            }
+            finally {
+              myShouldNarrowDown = oldNarrowDown;
+            }
           }
           builder.updateList(true);
         }
