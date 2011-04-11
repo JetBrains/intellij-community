@@ -24,4 +24,6 @@ import java.util.Set;
 public interface JspFileViewProvider extends JspxFileViewProvider {
 
   Set<String> getKnownTaglibPrefixes();
+
+  Set<String> getKnownTaglibPrefixes(CharSequence newContent);
 }
