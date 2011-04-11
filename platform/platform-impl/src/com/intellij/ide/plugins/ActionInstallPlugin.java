@@ -94,7 +94,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
         }
       }
       try {
-        if (PluginManagerMain.downloadPlugins(list)) {
+        if (PluginManagerMain.downloadPlugins(list, host.getAvailablePluginsModel().view)) {
           host.getInstalledPluginsModel().modifyData(new ArrayList<IdeaPluginDescriptor>(list));
           host.setRequireShutdown(true);
         }
@@ -111,7 +111,9 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
 
   public PluginTable getPluginTable() {
     return host.getPluginTable();
-  }//---------------------------------------------------------------------------
+  }
+
+  //---------------------------------------------------------------------------
   //  Show confirmation message depending on the amount and type of the
   //  selected plugin descriptors: already downloaded plugins need "update"
   //  while non-installed yet need "install".
