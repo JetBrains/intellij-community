@@ -571,7 +571,9 @@ public class PythonSdkType extends SdkType {
       indicator.checkCanceled();
       indicator.setText("Reading versions file...");
     }
-    SkeletonVersionChecker checker = cached_checker.withDefaultVersionIfUnknown(generator_version);
+    SkeletonVersionChecker checker;
+    if (cached_checker != null) checker = cached_checker.withDefaultVersionIfUnknown(generator_version);
+    else checker = new SkeletonVersionChecker(generator_version);
 
     // check builtins
     String builtins_fname = getBuiltinsFileName(sdk);
