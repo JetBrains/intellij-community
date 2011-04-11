@@ -20,39 +20,19 @@ import com.siyeh.ig.psiutils.CollectionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 class CollectionUpdateCalledVisitor extends JavaRecursiveElementVisitor{
 
-    /**
-     * @noinspection StaticCollection
-     */
-    @NonNls private static final Set<String> updateNames =
-            new HashSet<String>(14);
-    static{
-        updateNames.add("add");
-        updateNames.add("clear");
-        updateNames.add("drainTo");
-        updateNames.add("insert");
-        updateNames.add("load");
-        updateNames.add("offer");
-        updateNames.add("poll");
-        updateNames.add("push");
-        updateNames.add("put");
-        updateNames.add("remove");
-        updateNames.add("replace");
-        updateNames.add("retain");
-        updateNames.add("set");
-        updateNames.add("take");
-    }
+    @NonNls private final Set<String> updateNames;
 
     private boolean updated = false;
     private final PsiVariable variable;
 
-    CollectionUpdateCalledVisitor(PsiVariable variable){
-        super();
+    CollectionUpdateCalledVisitor(PsiVariable variable,
+                                  Set<String> updateNames){
         this.variable = variable;
+        this.updateNames = updateNames;
     }
 
     @Override public void visitElement(@NotNull PsiElement element){

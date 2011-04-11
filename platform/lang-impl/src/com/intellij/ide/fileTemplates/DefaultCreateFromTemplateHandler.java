@@ -42,7 +42,7 @@ public class DefaultCreateFromTemplateHandler implements CreateFromTemplateHandl
     directory.checkCreateFile(fileName);
     PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, templateText);
 
-    if (template.isAdjust()) {
+    if (template.isReformatCode()) {
       CodeStyleManager.getInstance(project).reformat(file);
     }
 

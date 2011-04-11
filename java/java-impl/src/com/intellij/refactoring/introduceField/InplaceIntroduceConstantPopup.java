@@ -44,12 +44,10 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.introduceParameter.AbstractInplaceIntroducer;
 import com.intellij.refactoring.move.moveMembers.MoveMembersImpl;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
-import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.TitlePanel;
-import com.intellij.util.VisibilityUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -194,28 +192,41 @@ public class InplaceIntroduceConstantPopup {
 
   private JPanel createLeftPanel() {
     final JPanel left = new JPanel(new GridBagLayout());
-    final GridBagConstraints lgc = new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5,5,0,0), 0, 0);
+    myVisibilityCombo = createVisibilityCombo(left, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHEAST, GridBagConstraints.NONE, new Insets(6,5,0,0), 0, 0),
+                                              myProject);
+    myMoveToAnotherClassCb = new JCheckBox("Move to another class");
+    myMoveToAnotherClassCb.setMnemonic('m');
+    myMoveToAnotherClassCb.setFocusable(false);
+    left.add(myMoveToAnotherClassCb, new GridBagConstraints(0, 1, 2, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+    return left;
+  }
+
+  public static JComboBox createVisibilityCombo(final JPanel left,
+                                                final GridBagConstraints lgc,
+                                                final Project project) {
 
     final JLabel label = new JLabel("Visibility:");
     label.setDisplayedMnemonic('V');
     left.add(label, lgc);
-    myVisibilityCombo = new JComboBox(new String[]{PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PRIVATE});
-    myVisibilityCombo.setRenderer(new ListCellRendererWrapper<String>(myVisibilityCombo.getRenderer()){
+    final JComboBox visibilityCombo = new JComboBox(new String[]{PsiModifier.PUBLIC, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PRIVATE});
+    visibilityCombo.setRenderer(new ListCellRendererWrapper<String>(visibilityCombo.getRenderer()) {
       @Override
       public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
         setText(PsiBundle.visibilityPresentation(value));
       }
     });
-    label.setLabelFor(myVisibilityCombo);
-    myVisibilityCombo.setSelectedItem(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY);
-    myVisibilityCombo.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyReleased(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-          ToolWindowManager.getInstance(myProject).activateEditorComponent();
-        }
-      }
-    });
+    label.setLabelFor(visibilityCombo);
+    visibilityCombo.setSelectedItem(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY);
+
+    appendActions(visibilityCombo, project);
+    lgc.gridx++;
+    lgc.insets.top = 2;
+    lgc.insets.left = 0;
+    left.add(visibilityCombo, lgc);
+    return visibilityCombo;
+  }
+
+  public static void appendActions(final JComboBox visibilityCombo, final Project project) {
     final AnAction arrow = new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -223,34 +234,29 @@ public class InplaceIntroduceConstantPopup {
           final int code = ((KeyEvent)e.getInputEvent()).getKeyCode();
           final int delta = code == KeyEvent.VK_DOWN ? 1 : code == KeyEvent.VK_UP ? -1 : 0;
           if (delta == 0) return;
-          final int size = myVisibilityCombo.getModel().getSize();
-          int next = myVisibilityCombo.getSelectedIndex() + delta;
+          final int size = visibilityCombo.getModel().getSize();
+          int next = visibilityCombo.getSelectedIndex() + delta;
           if (next < 0 || next >= size) {
             if (!UISettings.getInstance().CYCLE_SCROLLING) {
               return;
             }
             next = (next + size) % size;
           }
-          myVisibilityCombo.setSelectedIndex(next);
+          visibilityCombo.setSelectedIndex(next);
         }
       }
     };
     arrow.registerCustomShortcutSet(new CustomShortcutSet(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), null),
-                                                          new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), null)), myVisibilityCombo);
-    lgc.gridx = 1;
-    lgc.insets.top = 2;
-    lgc.insets.left = 0;
-    left.add(myVisibilityCombo, lgc);
+                                                          new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), null)), visibilityCombo);
 
-    myMoveToAnotherClassCb = new JCheckBox("Move to another class");
-    myMoveToAnotherClassCb.setMnemonic('m');
-    myMoveToAnotherClassCb.setFocusable(false);
-    lgc.gridx = 0;
-    lgc.gridy = 1;
-    lgc.gridwidth = 2;
-    lgc.insets.top = 0;
-    left.add(myMoveToAnotherClassCb, lgc);
-    return left;
+    visibilityCombo.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyReleased(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+          ToolWindowManager.getInstance(project).activateEditorComponent();
+        }
+      }
+    });
   }
 
   public void performInplaceIntroduce() {

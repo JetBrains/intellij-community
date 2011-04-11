@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ArrayUtil;
@@ -46,6 +45,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.net.URL;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
@@ -58,6 +58,13 @@ import java.util.List;
 
 public class AllFileTemplatesConfigurable implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable");
+
+  private static final String TEMPLATES_TITLE = IdeBundle.message("tab.filetemplates.templates");
+  private static final String INCLUDES_TITLE = IdeBundle.message("tab.filetemplates.includes");
+  private static final String CODE_TITLE = IdeBundle.message("tab.filetemplates.code");
+  private static final String J2EE_TITLE = IdeBundle.message("tab.filetemplates.j2ee");
+  private static final Icon ourIcon = IconLoader.getIcon("/general/fileTemplates.png");
+
   private JPanel myMainPanel;
   private FileTemplateTab myCurrentTab;
   private FileTemplateTab myTemplatesList;
@@ -69,20 +76,12 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
   private FileTemplateConfigurable myEditor;
   private boolean myModified = false;
   private JComponent myEditorComponent;
-  private static final int TEMPLATE_ID = 0;
-  private static final int PATTERN_ID = 1;
-  private static final int CODE_ID = 2;
-  private static final int J2EE_ID = 3;
-  private static final Icon ourIcon = IconLoader.getIcon("/general/fileTemplates.png");
   private FileTemplateTab[] myTabs;
-  private static final String TEMPLATES_TITLE = IdeBundle.message("tab.filetemplates.templates");
-  private static final String INCLUDES_TITLE = IdeBundle.message("tab.filetemplates.includes");
-  private static final String CODE_TITLE = IdeBundle.message("tab.filetemplates.code");
-  private static final String J2EE_TITLE = IdeBundle.message("tab.filetemplates.j2ee");
   private Disposable myUIDisposable;
+  private final Set<String> myInternalTemplateNames = new HashSet<String>();
 
-  @NonNls private static final String CURRENT_TAB = "FileTemplates.CurrentTab";
-  @NonNls private static final String SELECTED_TEMPLATE = "FileTemplates.SelectedTemplate";
+  private static final String CURRENT_TAB = "FileTemplates.CurrentTab";
+  private static final String SELECTED_TEMPLATE = "FileTemplates.SelectedTemplate";
 
   public Icon getIcon() {
     return ourIcon;
@@ -97,14 +96,14 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     String ext = "java";
     final FileTemplateDefaultExtension[] defaultExtensions = Extensions.getExtensions(FileTemplateDefaultExtension.EP_NAME);
     if (defaultExtensions.length > 0) {
-      ext = defaultExtensions [0].value;
+      ext = defaultExtensions[0].value;
     }
     createTemplate(IdeBundle.message("template.unnamed"), ext, "");
   }
 
-  private FileTemplate createTemplate(@NotNull String prefName, @NotNull @NonNls String extension, @NotNull String content) {
-    FileTemplate[] templates = myCurrentTab.getTemplates();
-    ArrayList<String> names = new ArrayList<String>(templates.length);
+  private void createTemplate(final @NotNull String prefName, final @NotNull String extension, final @NotNull String content) {
+    final FileTemplate[] templates = myCurrentTab.getTemplates();
+    final Set<String> names = new HashSet<String>();
     for (FileTemplate template : templates) {
       names.add(template.getName());
     }
@@ -113,32 +112,35 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     while (names.contains(name)) {
       name = prefName + " (" + ++i + ")";
     }
-    FileTemplate newTemplate = new FileTemplateImpl(content, name, extension);
+    final FileTemplate newTemplate = new CustomFileTemplate(name, extension);
+    newTemplate.setText(content);
     myCurrentTab.addTemplate(newTemplate);
     myModified = true;
     myCurrentTab.selectTemplate(newTemplate);
     fireListChanged();
     myEditor.focusToNameField();
-    return newTemplate;
   }
 
   private void onClone() {
-    FileTemplate selected = myCurrentTab.getSelectedTemplate();
-    if (selected == null) return;
+    final FileTemplate selected = myCurrentTab.getSelectedTemplate();
+    if (selected == null) {
+      return;
+    }
 
     final FileTemplate[] templates = myCurrentTab.getTemplates();
-    ArrayList<String> names = new ArrayList<String>(templates.length);
+    final Set<String> names = new HashSet<String>();
     for (FileTemplate template : templates) {
       names.add(template.getName());
     }
     @SuppressWarnings({"UnresolvedPropertyKey"})
-    String nameTemplate = IdeBundle.message("template.copy.N.of.T");
+    final String nameTemplate = IdeBundle.message("template.copy.N.of.T");
     String name = MessageFormat.format(nameTemplate, "", selected.getName());
     int i = 0;
     while (names.contains(name)) {
       name = MessageFormat.format(nameTemplate, ++i + " ", selected.getName());
     }
-    FileTemplate newTemplate = new FileTemplateImpl(selected.getText(), name, selected.getExtension());
+    final FileTemplate newTemplate = new CustomFileTemplate(name, selected.getExtension());
+    newTemplate.setText(selected.getText());
     myCurrentTab.addTemplate(newTemplate);
     myModified = true;
     myCurrentTab.selectTemplate(newTemplate);
@@ -184,7 +186,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     };
     myCurrentTab = myTemplatesList;
 
-    List<FileTemplateTab> allTabs = new ArrayList<FileTemplateTab>(Arrays.asList(myTemplatesList, myIncludesList, myCodeTemplatesList));
+    final List<FileTemplateTab> allTabs = new ArrayList<FileTemplateTab>(Arrays.asList(myTemplatesList, myIncludesList, myCodeTemplatesList));
 
     final Set<FileTemplateGroupDescriptorFactory> factories = new THashSet<FileTemplateGroupDescriptorFactory>();
     ContainerUtil.addAll(factories, ApplicationManager.getApplication().getComponents(FileTemplateGroupDescriptorFactory.class));
@@ -274,13 +276,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
 
       public void update(AnActionEvent e) {
         super.update(e);
-        FileTemplate selectedItem = myCurrentTab.getSelectedTemplate();
-        FileTemplateManagerImpl manager = FileTemplateManagerImpl.getInstanceImpl();
-        e.getPresentation().setEnabled(selectedItem != null
-                                       && !selectedItem.isDefault()
-                                       &&
-                                       manager.getDefaultTemplate(selectedItem.getName(), selectedItem.getExtension()) !=
-                                       null);
+        final FileTemplate selectedItem = myCurrentTab.getSelectedTemplate();
+        e.getPresentation().setEnabled(selectedItem instanceof BundledFileTemplate && !selectedItem.isDefault());
       }
     };
     group.add(addAction);
@@ -325,15 +322,13 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
 
   private void onReset() {
     FileTemplate selected = myCurrentTab.getSelectedTemplate();
-    if (selected != null) {
+    if (selected instanceof BundledFileTemplate) {
       if (Messages.showOkCancelDialog(IdeBundle.message("prompt.reset.to.original.template"),
                                       IdeBundle.message("title.reset.template"), Messages.getQuestionIcon()) !=
           DialogWrapper.OK_EXIT_CODE) {
         return;
       }
-      FileTemplateImpl template = (FileTemplateImpl)selected;
-
-      template.resetToDefault();
+      ((BundledFileTemplate)selected).revertToDefaults();
       myEditor.reset();
       myModified = true;
     }
@@ -343,9 +338,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     fireListChanged();
   }
 
-
   private void onTabChanged() {
-    int selectedIndex = myTabbedPane.getSelectedIndex();
+    final int selectedIndex = myTabbedPane.getSelectedIndex();
     if (0 <= selectedIndex && selectedIndex < myTabs.length) {
       myCurrentTab = myTabs[selectedIndex];
     }
@@ -381,7 +375,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
   }
 
   private void selectTemplate(FileTemplate template) {
-    VirtualFile defDesc = null;
+    URL defDesc = null;
     if (myCurrentTab == myTemplatesList) {
       defDesc = FileTemplateManagerImpl.getInstanceImpl().getDefaultTemplateDescription();
     }
@@ -397,9 +391,10 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
   }
 
   // internal template could not be removed and should be rendered bold
-  @SuppressWarnings({"SimplifiableIfStatement"})
   public static boolean isInternalTemplate(String templateName, String templateTabTitle) {
-    if (templateName == null) return false;
+    if (templateName == null) {
+      return false;
+    }
     if (Comparing.strEqual(templateTabTitle, TEMPLATES_TITLE)) {
       return isInternalTemplateName(templateName);
     }
@@ -412,13 +407,14 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     if (Comparing.strEqual(templateTabTitle, INCLUDES_TITLE)) {
       return Comparing.strEqual(templateName, FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
     }
-
     return false;
   }
 
   private static boolean isInternalTemplateName(final String templateName) {
     for(InternalTemplateBean bean: Extensions.getExtensions(InternalTemplateBean.EP_NAME)) {
-      if (Comparing.strEqual(templateName, bean.name)) return true;
+      if (Comparing.strEqual(templateName, bean.name)) {
+        return true;
+      }
     }
     return false;
   }
@@ -453,11 +449,15 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
   }
 
   private void initLists() {
-    FileTemplateManager templateManager = FileTemplateManager.getInstance();
-    FileTemplate[] templates = templateManager.getAllTemplates();
-    FileTemplate[] internals = templateManager.getInternalTemplates();
-    FileTemplate[] templatesAndInternals = ArrayUtil.mergeArrays(internals, templates, FileTemplate.class);
-    myTemplatesList.init(templatesAndInternals);
+    final FileTemplateManager templateManager = FileTemplateManager.getInstance();
+    
+    final FileTemplate[] internalTemplates = templateManager.getInternalTemplates();
+    myInternalTemplateNames.clear();
+    for (FileTemplate internalTemplate : internalTemplates) {
+      myInternalTemplateNames.add(((FileTemplateBase)internalTemplate).getQualifiedName());
+    }
+    
+    myTemplatesList.init(ArrayUtil.mergeArrays(internalTemplates, templateManager.getAllTemplates(), FileTemplate.class));
     myIncludesList.init(templateManager.getAllPatterns());
     myCodeTemplatesList.init(templateManager.getAllCodeTemplates());
     if (myJ2eeTemplatesList != null) {
@@ -469,75 +469,53 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     return myModified || myEditor != null && myEditor.isModified();
   }
 
-  /**
-   * If apply is acceptable, returns true. If no, returns false and fills error string.
-   */
-  private boolean canApply(final boolean showErrorDialog, String[] errorString) {
-    for (FileTemplateTab list : myTabs) {
-      if (!canApply(showErrorDialog, errorString, list)) return false;
-    }
-    return true;
-  }
-
-  private boolean canApply(final boolean showErrorDialog, String[] errorString, FileTemplateTab list) {
+  private void checkCanApply(FileTemplateTab list) throws ConfigurationException {
     final FileTemplate[] templates = myCurrentTab.getTemplates();
-    ArrayList<String> allNames = new ArrayList<String>();
+    final List<String> allNames = new ArrayList<String>();
     FileTemplate itemWithError = null;
-    String errorMessage = null;
-    String errorTitle = null;
     boolean errorInName = true;
+    String errorString = null;
     for (FileTemplate template : templates) {
-      if (isInternalTemplateName(template.getName())) continue;
-      String currName = template.getName();
-      String currExt = template.getExtension();
+      if (isInternalTemplateName(template.getName())) {
+        continue;
+      }
+      final String currName = template.getName();
+      final String currExt = template.getExtension();
       if (currName.length() == 0) {
         itemWithError = template;
-        errorMessage = IdeBundle.message("error.please.specify.a.name.for.this.template");
-        errorTitle = IdeBundle.message("title.template.name.not.specified");
-        errorString[0] = IdeBundle.message("error.please.specify.template.name");
+        errorString = IdeBundle.message("error.please.specify.template.name");
         break;
       }
       if (allNames.contains(currName)) {
         itemWithError = template;
-        errorMessage = IdeBundle.message("error.please.specify.a.different.name.for.this.template");
-        errorTitle = IdeBundle.message("title.template.already.exists");
-        errorString[0] = IdeBundle.message("error.template.with.such.name.already.exists");
+        errorString = IdeBundle.message("error.template.with.such.name.already.exists");
         break;
       }
       if (currExt.length() == 0) {
         itemWithError = template;
-        errorMessage = IdeBundle.message("error.please.specify.extension");
-        errorTitle = IdeBundle.message("title.template.extension.not.specified");
-        errorString[0] = IdeBundle.message("error.please.specify.template.extension");
+        errorString = IdeBundle.message("error.please.specify.template.extension");
         errorInName = false;
         break;
       }
       allNames.add(currName);
     }
-    if (itemWithError == null) {
-      return true;
-    }
-    else {
-      final String _errorString = errorMessage;
-      final String _errorTitle = errorTitle;
+    
+    if (itemWithError != null) {
       final boolean _errorInName = errorInName;
       myTabbedPane.setSelectedIndex(Arrays.asList(myTabs).indexOf(list));
       selectTemplate(itemWithError);
       list.selectTemplate(itemWithError);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            if (showErrorDialog) {
-              Messages.showMessageDialog(myMainPanel, _errorString, _errorTitle, Messages.getErrorIcon());
-            }
-            if (_errorInName) {
-              myEditor.focusToNameField();
-            }
-            else {
-              myEditor.focusToExtensionField();
-            }
+        public void run() {
+          if (_errorInName) {
+            myEditor.focusToNameField();
           }
-        });
-      return false;
+          else {
+            myEditor.focusToExtensionField();
+          }
+        }
+      });
+      throw new ConfigurationException(errorString);
     }
   }
 
@@ -555,118 +533,39 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
       myModified = true;
       myEditor.apply();
     }
-    String[] errorString = new String[1];
-    if (!canApply(false, errorString)) {
-      throw new ConfigurationException(errorString[0]);
+    
+    for (FileTemplateTab list : myTabs) {
+      checkCanApply(list);
     }
 
+    final FileTemplateManager templatesManager = FileTemplateManager.getInstance();
     // Apply templates
-    ArrayList<FileTemplate> newModifiedItems = new ArrayList<FileTemplate>();
-    FileTemplate[] templates = myTemplatesList.getTemplates();
-    ContainerUtil.addAll(newModifiedItems, templates);
-    FileTemplateManager templatesManager = FileTemplateManager.getInstance();
-    apply(newModifiedItems, myTemplatesList.savedTemplates, TEMPLATE_ID, templatesManager.getAllTemplates());
-
-    // Apply patterns
-    newModifiedItems = new ArrayList<FileTemplate>();
-    templates = myIncludesList.getTemplates();
-    ContainerUtil.addAll(newModifiedItems, templates);
-    apply(newModifiedItems, myIncludesList.savedTemplates, PATTERN_ID, templatesManager.getAllPatterns());
-
-    //Apply code templates
-    newModifiedItems = new ArrayList<FileTemplate>();
-    templates = myCodeTemplatesList.getTemplates();
-    ContainerUtil.addAll(newModifiedItems, templates);
-    apply(newModifiedItems, myCodeTemplatesList.savedTemplates, CODE_ID, templatesManager.getAllCodeTemplates());
-
-    //Apply J2EE templates
+    
+    final List<FileTemplate> templates = new ArrayList<FileTemplate>();
+    final List<FileTemplate> internalTemplates = new ArrayList<FileTemplate>();
+    for (FileTemplate template : myTemplatesList.getTemplates()) {
+      if (myInternalTemplateNames.contains(((FileTemplateBase)template).getQualifiedName())) {
+        internalTemplates.add(template);
+      }
+      else {
+        templates.add(template);
+      }
+    }
+    
+    templatesManager.setTemplates(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, templates);
+    templatesManager.setTemplates(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY, internalTemplates);
+    templatesManager.setTemplates(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, Arrays.asList(myIncludesList.getTemplates()));
+    templatesManager.setTemplates(FileTemplateManager.CODE_TEMPLATES_CATEGORY, Arrays.asList(myCodeTemplatesList.getTemplates()));
     if (myJ2eeTemplatesList != null) {
-      newModifiedItems = new ArrayList<FileTemplate>();
-      templates = myJ2eeTemplatesList.getTemplates();
-      ContainerUtil.addAll(newModifiedItems, templates);
-      apply(newModifiedItems, myJ2eeTemplatesList.savedTemplates, J2EE_ID, templatesManager.getAllJ2eeTemplates());
+      templatesManager.setTemplates(FileTemplateManager.J2EE_TEMPLATES_CATEGORY, Arrays.asList(myJ2eeTemplatesList.getTemplates()));
     }
 
-    FileTemplateManager.getInstance().saveAll();
+    templatesManager.saveAll();
 
     if (myEditor != null) {
       myModified = false;
       fireListChanged();
       reset();
-    }
-  }
-
-  private static void removeTemplate(FileTemplate aTemplate, int listId, boolean fromDiskOnly) {
-    FileTemplateManager manager = FileTemplateManager.getInstance();
-    if (listId == TEMPLATE_ID) {
-      if (!aTemplate.isInternal()) {
-        manager.removeTemplate(aTemplate, fromDiskOnly);
-      } else {
-        manager.removeInternal(aTemplate);
-      }
-    }
-    else if (listId == PATTERN_ID) {
-      manager.removePattern(aTemplate, fromDiskOnly);
-    }
-    else if (listId == CODE_ID) {
-      manager.removeCodeTemplate(aTemplate, fromDiskOnly);
-    }
-    else if (listId == J2EE_ID) {
-      manager.removeJ2eeTemplate(aTemplate, fromDiskOnly);
-    }
-  }
-
-  private static void apply(ArrayList<FileTemplate> newModifiedItems,
-                            Map<FileTemplate,FileTemplate> savedTemplate2ModifiedTemplate,
-                            int listId,
-                            FileTemplate[] templates) {
-    FileTemplateManager templatesManager = FileTemplateManager.getInstance();
-    if (listId == TEMPLATE_ID) {
-      FileTemplate[] internals = templatesManager.getInternalTemplates();
-      templates = ArrayUtil.mergeArrays(internals, templates, FileTemplate.class);
-    }
-    ArrayList<FileTemplate> savedTemplates = new ArrayList<FileTemplate>();
-    // Delete removed and fill savedTemplates
-    for (FileTemplate aTemplate : templates) {
-      FileTemplate aModifiedTemplate = savedTemplate2ModifiedTemplate.get(aTemplate);
-      if (newModifiedItems.contains(aModifiedTemplate)) {
-        savedTemplates.add(aTemplate);
-      } else {
-        removeTemplate(aTemplate, listId, false);
-        savedTemplate2ModifiedTemplate.remove(aTemplate);
-      }
-    }
-    // Now all removed templates deleted from table, savedTemplates contains all templates in table
-    for (FileTemplate aTemplate : savedTemplates) {
-      FileTemplate aModifiedTemplate = savedTemplate2ModifiedTemplate.get(aTemplate);
-      LOG.assertTrue(aModifiedTemplate != null);
-      aTemplate.setAdjust(aModifiedTemplate.isAdjust());
-      if (!aModifiedTemplate.isDefault()) {
-        FileTemplateUtil.copyTemplate(aModifiedTemplate, aTemplate);
-      } else {
-        if (!aTemplate.isDefault()) {
-          removeTemplate(aTemplate, listId, true);
-        }
-      }
-    }
-
-    // Add new templates to table
-    for (FileTemplate aModifiedTemplate : newModifiedItems) {
-      LOG.assertTrue(aModifiedTemplate != null);
-      if (!savedTemplate2ModifiedTemplate.containsValue(aModifiedTemplate)) {
-        if (listId == TEMPLATE_ID) {
-          templatesManager.addTemplate(aModifiedTemplate.getName(), aModifiedTemplate.getExtension()).setText(aModifiedTemplate.getText());
-        }
-        else if (listId == PATTERN_ID) {
-          templatesManager.addPattern(aModifiedTemplate.getName(), aModifiedTemplate.getExtension()).setText(aModifiedTemplate.getText());
-        }
-        else if (listId == CODE_ID) {
-          templatesManager.addCodeTemplate(aModifiedTemplate.getName(), aModifiedTemplate.getExtension()).setText(aModifiedTemplate.getText());
-        }
-        else if (listId == J2EE_ID) {
-          templatesManager.addJ2eeTemplate(aModifiedTemplate.getName(), aModifiedTemplate.getExtension()).setText(aModifiedTemplate.getText());
-        }
-      }
     }
   }
 
@@ -680,10 +579,10 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
       if (Comparing.strEqual(tab.getTitle(), tabName)) {
         myCurrentTab = tab;
         myTabbedPane.setSelectedIndex(idx);
-        final String selectedTemplate = component.getValue(SELECTED_TEMPLATE);
+        final String selectedTemplateName = component.getValue(SELECTED_TEMPLATE);
         final FileTemplate[] templates = myCurrentTab.getTemplates();
         for (FileTemplate template : templates) {
-          if (Comparing.strEqual(template.getName(), selectedTemplate)) {
+          if (Comparing.strEqual(template.getName(), selectedTemplateName)) {
             tab.selectTemplate(template);
             break;
           }

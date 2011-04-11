@@ -198,7 +198,9 @@ public class DumbServiceImpl extends DumbService {
 
   private void updateFinished() {
     myDumb = false;
-    myPublisher.exitDumbMode();
+    if (!myProject.isDisposed()) {
+      myPublisher.exitDumbMode();
+    }
     while (true) {
       final Runnable runnable;
       synchronized (myRunWhenSmartQueue) {
@@ -207,10 +209,9 @@ public class DumbServiceImpl extends DumbService {
         }
         runnable = myRunWhenSmartQueue.pullFirst();
       }
-      if (myProject.isDisposed()) {
-        return;
+      if (!myProject.isDisposed()) {
+        runnable.run();
       }
-      runnable.run();
     }
   }
 

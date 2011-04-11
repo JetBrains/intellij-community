@@ -18,24 +18,31 @@ package com.intellij.refactoring.introduceParameter;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.introduceField.InplaceIntroduceConstantPopup;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TitlePanel;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 
@@ -67,6 +74,9 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
   private String myParameterName;
   private final String myExprText;
 
+  private JComboBox myReplaceFieldsCb;
+  private boolean myInitialized = false;
+
 
   InplaceIntroduceParameterPopup(final Project project,
                                  final Editor editor,
@@ -95,29 +105,77 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     myWholePanel = new JPanel(new GridBagLayout());
     myWholePanel.setBorder(null);
     final GridBagConstraints gc =
-      new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
+      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
 
     final TitlePanel titlePanel = new TitlePanel();
     titlePanel.setBorder(null);
     titlePanel.setText(IntroduceParameterHandler.REFACTORING_NAME);
+    gc.gridwidth = 2;
     myWholePanel.add(titlePanel, gc);
 
-    gc.insets = new Insets(5, 5, 5, 0);
+    gc.insets = new Insets(0, 5, 0, 0);
+    gc.gridwidth = 1;
+    gc.fill = GridBagConstraints.NONE;
     if (myOccurrences.length > 1 && !myIsInvokedOnDeclaration) {
       gc.gridy++;
       createOccurrencesCb(gc, myWholePanel, myOccurrences.length);
     }
-    final JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
-    createLocalVariablePanel(gc, myWholePanel, settings);
-    createRemoveParamsPanel(gc, myWholePanel);
-    if (Util.anyFieldsWithGettersPresent(classMemberRefs)) {
-      gc.gridy++;
-      myWholePanel.add(createReplaceFieldsWithGettersPanel(), gc);
-    }
     gc.gridy++;
+    gc.insets.left = 5;
     createDelegateCb(gc, myWholePanel);
+
+
+    final JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
+    final JPanel rightPanel = new JPanel(new GridBagLayout());
+    final GridBagConstraints rgc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0,0,0,5), 0, 0);
+    createLocalVariablePanel(rgc, rightPanel, settings);
+    createRemoveParamsPanel(rgc, rightPanel);
+    if (Util.anyFieldsWithGettersPresent(classMemberRefs)) {
+      rgc.gridy++;
+      rightPanel.add(createReplaceFieldsWithGettersPanel(), rgc);
+    }
+
+    gc.gridx = 1;
+    gc.gridheight = myCbReplaceAllOccurences != null ? 3 : 2;
+    gc.gridy = 1;
+    myWholePanel.add(rightPanel, gc);
   }
 
+
+  @Override
+  protected JPanel createReplaceFieldsWithGettersPanel() {
+    final LabeledComponent<JComboBox> component = new LabeledComponent<JComboBox>();
+    myReplaceFieldsCb = new JComboBox(new Integer[] {IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL,
+    IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE});
+    myReplaceFieldsCb.setRenderer(new ListCellRendererWrapper<Integer>(myReplaceFieldsCb) {
+      @Override
+      public void customize(JList list, Integer value, int index, boolean selected, boolean hasFocus) {
+        switch (value) {
+          case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE:
+            setText(UIUtil.removeMnemonic(RefactoringBundle.message("do.not.replace")));
+            break;
+          case IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE:
+            setText(UIUtil.removeMnemonic(RefactoringBundle.message("replace.fields.inaccessible.in.usage.context")));
+            break;
+          default:
+            setText(UIUtil.removeMnemonic(RefactoringBundle.message("replace.all.fields")));
+        }
+      }
+    });
+    myReplaceFieldsCb.setSelectedItem(JavaRefactoringSettings.getInstance().INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS);
+    InplaceIntroduceConstantPopup.appendActions(myReplaceFieldsCb, myProject);
+    component.setComponent(myReplaceFieldsCb);
+    component.setText(RefactoringBundle.message("replace.fields.used.in.expressions.with.their.getters"));
+    component.getLabel().setDisplayedMnemonic('u');
+    component.setLabelLocation(BorderLayout.NORTH);
+    component.setBorder(IdeBorderFactory.createEmptyBorder(3, 3, 2, 2));
+    return component;
+  }
+
+  @Override
+  protected int getReplaceFieldsWithGetters() {
+    return (Integer)myReplaceFieldsCb.getSelectedItem();
+  }
 
   void inplaceIntroduceParameter() {
     startIntroduceTemplate(false);
@@ -182,17 +240,11 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
 
     @Override
     protected JComponent getComponent() {
-      final JPanel panel = new JPanel(new BorderLayout());
-      panel.add(myWholePanel, BorderLayout.CENTER);
-
-      final JPanel wrapper = new JPanel(new BorderLayout());
-      wrapper.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-      if (myCanBeFinal != null) {
-        wrapper.add(myCanBeFinal, BorderLayout.NORTH);
+      if (!myInitialized) {
+        myInitialized = true;
+        myWholePanel.add(myCanBeFinal, new GridBagConstraints(0, myCbReplaceAllOccurences == null ? 2 : 3, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 5, 2, 5), 0, 0));
       }
-      panel.add(wrapper, BorderLayout.SOUTH);
-
-      return panel;
+      return myWholePanel;
     }
 
     @Override

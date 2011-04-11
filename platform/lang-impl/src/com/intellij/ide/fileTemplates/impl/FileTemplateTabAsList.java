@@ -76,17 +76,16 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
 
   public void removeSelected() {
     final FileTemplate selectedTemplate = getSelectedTemplate();
-    if (selectedTemplate == null) return;
-    DefaultListModel model = (DefaultListModel) myList.getModel();
-    int selectedIndex = myList.getSelectedIndex();
+    if (selectedTemplate == null) {
+      return;
+    }
+    final DefaultListModel model = (DefaultListModel) myList.getModel();
+    final int selectedIndex = myList.getSelectedIndex();
     model.remove(selectedIndex);
     if (!model.isEmpty()) {
       myList.setSelectedIndex(Math.min(selectedIndex, model.size() - 1));
     }
     onTemplateSelected();
-//      myModified = true;
-//      fireListChanged();
-//      onListSelectionChanged();
   }
 
   private static class MyListModel extends DefaultListModel {
@@ -101,14 +100,15 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
   protected void initSelection(FileTemplate selection) {
     myModel = new MyListModel();
     myList.setModel(myModel);
-    final FileTemplate[] templates = savedTemplates.values().toArray(new FileTemplate[savedTemplates.values().size()]);
-    for (FileTemplate template : templates) {
+    for (FileTemplate template : myTemplates) {
       myModel.addElement(template);
     }
     if (selection != null) {
       selectTemplate(selection);
     }
-    else if (myList.getModel().getSize() > 0) myList.setSelectedIndex(0);
+    else if (myList.getModel().getSize() > 0) {
+      myList.setSelectedIndex(0);
+    }
   }
 
   public void fireDataChanged() {

@@ -115,7 +115,7 @@ public class InplaceIntroduceFieldPopup {
     myEditor = editor;
 
     myIntroduceFieldPanel =
-      new IntroduceFieldCentralPanel(parentClass, initializerExpression, localVariable, currentMethodConstructor, localVariable != null, aStatic,
+      new IntroduceFieldPopupPanel(parentClass, initializerExpression, localVariable, currentMethodConstructor, localVariable != null, aStatic,
                                myOccurrences.length, allowInitInMethod, allowInitInMethodIfAll, typeSelectorManager);
 
     myWholePanel = new JPanel(new GridBagLayout());

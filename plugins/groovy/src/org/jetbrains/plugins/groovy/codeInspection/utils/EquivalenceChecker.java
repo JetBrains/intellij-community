@@ -336,7 +336,7 @@ public class EquivalenceChecker {
   private static boolean caseClausesAreEquivalent(GrCaseSection clause1, GrCaseSection clause2) {
     final GrCaseLabel label1 = clause1.getCaseLabel();
     final GrCaseLabel label2 = clause2.getCaseLabel();
-    if (!expressionsAreEquivalent(getExpressionForCaseLabel(label1), getExpressionForCaseLabel(label2))) {
+    if (!expressionsAreEquivalent(label1.getValue(), label2.getValue())) {
       return false;
     }
     final GrStatement[] statements1 = clause1.getStatements();
@@ -350,16 +350,6 @@ public class EquivalenceChecker {
       }
     }
     return false;
-  }
-
-  @Nullable
-  private static GrExpression getExpressionForCaseLabel(GrCaseLabel label) {
-    for (PsiElement child : label.getChildren()) {
-      if (child instanceof GrExpression) {
-        return (GrExpression) child;
-      }
-    }
-    return null;
   }
 
   private static boolean blockStatementsAreEquivalent(@NotNull GrBlockStatement statement1,

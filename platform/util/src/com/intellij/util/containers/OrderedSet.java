@@ -121,7 +121,9 @@ public class OrderedSet<T> extends AbstractSet<T> implements List<T> {
   }
 
   public T set(final int index, final T element) {
-    throw new UnsupportedOperationException();
+    final T removed = remove(index);
+    add(index, element);
+    return removed;
   }
 
   public void add(final int index, final T element) {

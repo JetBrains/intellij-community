@@ -34,7 +34,7 @@ public class MarkExcludeRootAction extends MarkRootAction {
     VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     String message = vFiles.length == 1 ? FileUtil.toSystemDependentName(vFiles [0].getPath()) : vFiles.length + " selected files";
     final int rc = Messages.showOkCancelDialog(e.getData(PlatformDataKeys.PROJECT),
-                                              "Are you sure you would you like to exclude " + message +
+                                              "Are you sure you would like to exclude " + message +
                                               " from the project?\nYou can restore excluded folders later using the Project Structure dialog.",
                                               "Mark as Excluded", Messages.getQuestionIcon());
     if (rc != 0) {

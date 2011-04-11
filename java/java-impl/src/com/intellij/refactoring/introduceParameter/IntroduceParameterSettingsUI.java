@@ -251,7 +251,7 @@ public abstract class IntroduceParameterSettingsUI {
       panel.add(myCbDeleteLocalVariable, gbConstraints);
       myCbDeleteLocalVariable.setSelected(settings.INTRODUCE_PARAMETER_DELETE_LOCAL_VARIABLE);
 
-      gbConstraints.insets = new Insets(4, 0, 4, 8);
+      gbConstraints.insets = new Insets(0, 0, 4, 8);
       if(myHasInitializer) {
         myCbUseInitializer = new StateRestoringCheckBox();
         myCbUseInitializer.setText(RefactoringBundle.message("use.variable.initializer.to.initialize.parameter"));

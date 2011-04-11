@@ -27,8 +27,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -70,7 +69,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         if (!PsiUtil.isLanguageLevel5OrHigher(expression) || !REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD) return;
         final PsiMethod psiMethod = expression.resolveMethod();
-        if (psiMethod != null) {
+        if (psiMethod != null && (psiMethod.getManager().isInProject(psiMethod) || CodeStyleSettingsManager.getInstance().getCurrentSettings().USE_EXTERNAL_ANNOTATIONS)) {
           final PsiParameterList parameterList = psiMethod.getParameterList();
           final PsiParameter[] parameters = parameterList.getParameters();
           final PsiExpression[] expressions = expression.getArgumentList().getExpressions();

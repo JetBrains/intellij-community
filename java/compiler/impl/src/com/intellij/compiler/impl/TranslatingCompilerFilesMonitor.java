@@ -965,16 +965,16 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     }
   }
 
-  public void ensureInitializationCompleted(Project project) {
+  public void ensureInitializationCompleted(Project project, ProgressIndicator indicator) {
     final int id = getProjectId(project);
     synchronized (myInitializationLock) {
       while (myInitInProgress.contains(id)) {
-        if (!project.isOpen() || project.isDisposed()) {
+        if (!project.isOpen() || project.isDisposed() || (indicator != null && indicator.isCanceled())) {
           // makes no sense to continue waiting
           break;
         }
         try {
-          myInitializationLock.wait();
+          myInitializationLock.wait(500);
         }
         catch (InterruptedException ignored) {
           break;

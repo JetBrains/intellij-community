@@ -68,7 +68,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     myParentClass = parentClass;
     myInitializerExpression = initializerExpression;
     myCentralPanel =
-      new IntroduceFieldCentralPanel(parentClass, initializerExpression, localVariable, isCurrentMethodConstructor, isInvokedOnDeclaration,
+      new IntroduceFieldDialogPanel(parentClass, initializerExpression, localVariable, isCurrentMethodConstructor, isInvokedOnDeclaration,
                                      willBeDeclaredStatic, occurrencesCount, allowInitInMethod, allowInitInMethodIfAll,
                                      typeSelectorManager);
     myLocalVariable = localVariable;

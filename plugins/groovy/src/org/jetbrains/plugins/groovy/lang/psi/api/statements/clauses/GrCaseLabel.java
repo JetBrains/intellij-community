@@ -26,4 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 public interface GrCaseLabel extends GroovyPsiElement {
   @Nullable
   GrExpression getValue();
+
+  boolean isDefault();
 }
