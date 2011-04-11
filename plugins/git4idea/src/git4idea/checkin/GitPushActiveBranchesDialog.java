@@ -781,18 +781,30 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
             }
             GitBranch tracked = b.tracked(project, root);
             assert tracked != null : "Tracked branch cannot be null here";
-            GitSimpleHandler unmerged = new GitSimpleHandler(project, root, GitCommand.LOG);
-            unmerged.addParameters("--pretty=format:%H", r.currentBranch + ".." + tracked.getFullName());
-            unmerged.setNoSSH(true);
-            unmerged.setStdoutSuppressed(true);
-            StringScanner su = new StringScanner(unmerged.run());
-            while (su.hasMoreData()) {
-              if (su.line().trim().length() != 0) {
-                r.remoteCommits++;
+            final boolean trackedBranchExists = tracked.exists(root);
+            if (!trackedBranchExists) {
+              LOG.info("loadRoots tracked branch " + tracked + " doesn't exist yet");
+            }
+
+            // check what remote commits are not yet merged
+            if (trackedBranchExists) {
+              GitSimpleHandler toPull = new GitSimpleHandler(project, root, GitCommand.LOG);
+              toPull.addParameters("--pretty=format:%H", r.currentBranch + ".." + tracked.getFullName());
+              toPull.setNoSSH(true);
+              toPull.setStdoutSuppressed(true);
+              StringScanner su = new StringScanner(toPull.run());
+              while (su.hasMoreData()) {
+                if (su.line().trim().length() != 0) {
+                  r.remoteCommits++;
+                }
               }
             }
+
+            // check what local commits are to be pushed
             GitSimpleHandler toPush = new GitSimpleHandler(project, root, GitCommand.LOG);
-            toPush.addParameters("--pretty=format:%H%x20%ct%x20%at%x20%s%n%P", tracked.getFullName() + ".." + r.currentBranch);
+            // if the tracked branch doesn't exist yet (nobody pushed the branch yet), show all commits on this branch.
+            final String revisions = trackedBranchExists ? tracked.getFullName() + ".." + r.currentBranch : r.currentBranch;
+            toPush.addParameters("--pretty=format:%H%x20%ct%x20%at%x20%s%n%P", revisions);
             toPush.setNoSSH(true);
             toPush.setStdoutSuppressed(true);
             StringScanner sp = new StringScanner(toPush.run());
