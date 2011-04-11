@@ -18,9 +18,9 @@ package com.intellij.psi.impl.search;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -38,24 +38,26 @@ public class VariableInIncompleteCodeSearcher extends QueryExecutorBase<PsiRefer
     final PsiElement refElement = p.getElementToSearch();
     if (!(refElement instanceof PsiLocalVariable || refElement instanceof PsiParameter)) return;
 
+    final String name = ((PsiVariable)refElement).getName();
+    if (name == null) return;
+
     final SearchScope scope = refElement.getUseScope();
-    if (scope instanceof LocalSearchScope) {
-      final PsiElement[] scopeElements = ((LocalSearchScope)scope).getScope();
-      if (scopeElements.length == 1) {
-        final String name = ((PsiVariable)refElement).getName();
-        PsiTreeUtil.collectElements(scopeElements[0], new PsiElementFilter() {
-          @Override
-          public boolean isAccepted(final PsiElement element) {
-            if (element instanceof PsiJavaCodeReferenceElement) {
-              final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element;
-              if (name.equals(ref.getCanonicalText()) && ref.resolve() == null && ref.advancedResolve(true).getElement() == refElement) {
-                consumer.process(ref);
-              }
+    if (!(scope instanceof LocalSearchScope)) return;
+
+    final PsiElement[] scopeElements = ((LocalSearchScope)scope).getScope();
+    for (PsiElement scopeElement : scopeElements) {
+      PsiTreeUtil.processElements(scopeElement, new PsiElementProcessor() {
+        @Override
+        public boolean execute(final PsiElement element) {
+          if (element instanceof PsiJavaCodeReferenceElement) {
+            final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element;
+            if (name.equals(ref.getCanonicalText()) && ref.resolve() == null && ref.advancedResolve(true).getElement() == refElement) {
+              consumer.process(ref);
             }
-            return false;
           }
-        });
-      }
+          return true;
+        }
+      });
     }
   }
 }
