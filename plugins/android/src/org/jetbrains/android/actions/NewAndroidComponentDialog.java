@@ -217,6 +217,11 @@ public class NewAndroidComponentDialog extends DialogWrapper {
   }
 
   @Override
+  protected String getHelpId() {
+    return "reference.new.android.component";
+  }
+
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }
