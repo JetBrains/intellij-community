@@ -168,6 +168,8 @@ class FTManager {
       _template.setText(template.getText());
       _template.setReformatCode(template.isReformatCode());
     }
+    // Important! Must update template files on disk so that Velocity is able to use them
+    saveTemplates();
   }
   
   public void addDefaultTemplate(DefaultTemplate template) {
@@ -185,72 +187,6 @@ class FTManager {
     return bundled;
   }
 
-  // synchronizes templates: merges user-defined templates with default templates from the same category
-  //private void loadTemplates() {
-  //  final File configRoot = getConfigRoot(false);
-  //  File[] configFiles = configRoot.listFiles();
-  //  if (configFiles == null) {
-  //    configFiles = ArrayUtil.EMPTY_FILE_ARRAY;
-  //  }
-  //
-  //  final List<FileTemplate> existingTemplates = new ArrayList<FileTemplate>();
-  //  // Read user-defined templates
-  //  for (File file : configFiles) {
-  //    if (file.isDirectory() || myTypeManager.isFileIgnored(file.getName()) || file.isHidden()) {
-  //      continue;
-  //    }
-  //    String name = file.getName();
-  //    final String extension = myTypeManager.getExtension(name);
-  //    name = name.substring(0, name.length() - extension.length() - 1);
-  //    if (name.length() == 0) {
-  //      continue;
-  //    }
-  //    final FileTemplate existing = myTemplates.findByName(name);
-  //    if (existing == null || existing.isDefault()) {
-  //      if (existing != null) {
-  //        myTemplates.removeTemplate(existing);
-  //      }
-  //      FileTemplateImpl fileTemplate = new FileTemplateImpl(file, name, extension, false);
-  //      myTemplates.addTemplate(fileTemplate);
-  //      existingTemplates.add(fileTemplate);
-  //    }
-  //    else {
-  //      // it is a user-defined template, revalidate it
-  //      LOG.assertTrue(!((FileTemplateImpl)existing).isModified());
-  //      ((FileTemplateImpl)existing).invalidate();
-  //      existingTemplates.add(existing);
-  //    }
-  //  }
-  //
-  //  for (final DefaultTemplate defaultTemplate : getDefaultTemplates()) {
-  //    final String name = defaultTemplate.getName();
-  //    final FileTemplate template = myTemplates.findByName(name);
-  //    if (template == null) {
-  //      final FileTemplateImpl _template = new FileTemplateImpl(defaultTemplate.getTemplateURL(), defaultTemplate.getName(), defaultTemplate.getExtension());
-  //      _template.setDescription(defaultTemplate.getDescriptionURL());
-  //      myTemplates.addTemplate(_template);
-  //    }
-  //  }
-  //  
-  //  List<FileTemplateImpl> toRemove = null;
-  //  for (FileTemplate template : myTemplates.getAllTemplates()) {
-  //    final FileTemplateImpl templateImpl = (FileTemplateImpl)template;
-  //    if (!templateImpl.isDefault() && !existingTemplates.contains(templateImpl) && !templateImpl.isNew()) {
-  //      if (toRemove == null) {
-  //        toRemove = new ArrayList<FileTemplateImpl>();
-  //      }
-  //      toRemove.add(templateImpl);
-  //    }
-  //  }
-  //  
-  //  if (toRemove != null) {
-  //    for (FileTemplateImpl template : toRemove) {
-  //      myTemplates.removeTemplate(template);
-  //      template.removeFromDisk();
-  //    }
-  //  }
-  //}
-
   void saveTemplates() {
     try {
       final File configRoot = getConfigRoot(true);
@@ -259,9 +195,7 @@ class FTManager {
       final File[] files = configRoot.listFiles();
       if (files != null) {
         for (File file : files) {
-          if (file.getName().endsWith(TEMPLATE_EXTENSION_SUFFIX)) {
-            FileUtil.delete(file);
-          }
+          FileUtil.delete(file);
         }
       }
 
@@ -283,7 +217,7 @@ class FTManager {
    *  todo: review saving algorithm
    */
   private static void saveTemplate(File parentDir, FileTemplateBase template, final String lineSeparator) throws IOException {
-    final File templateFile = new File(parentDir, template.getName() + "." + template.getExtension() + TEMPLATE_EXTENSION_SUFFIX);
+    final File templateFile = new File(parentDir, template.getName() + "." + template.getExtension());
 
     FileOutputStream fileOutputStream = new FileOutputStream(templateFile);
     OutputStreamWriter outputStreamWriter;

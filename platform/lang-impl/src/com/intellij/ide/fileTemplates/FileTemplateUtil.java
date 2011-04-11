@@ -199,13 +199,6 @@ public class FileTemplateUtil{
     return stringWriter.toString();
   }
 
-  public static void copyTemplate(FileTemplate from, FileTemplate to){
-    to.setExtension(from.getExtension());
-    to.setName(from.getName());
-    to.setText(from.getText());
-    to.setReformatCode(from.isReformatCode());
-  }
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static synchronized void initVelocity(){
     try{
