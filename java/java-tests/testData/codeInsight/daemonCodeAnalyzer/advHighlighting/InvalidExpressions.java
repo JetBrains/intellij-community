@@ -80,8 +80,8 @@ public class a12 {
     i = var.length;
 
     // array initializers
-    var = <error descr="Expression expected">{ null, null }</error>;
-    Object var1 = <error descr="Expression expected">{ null, null }</error>;
+    var = <error descr="Array initializer is not allowed here">{ null, null }</error>;
+    Object var1 = <error descr="Array initializer is not allowed here">{ null, null }</error>;
     int[] var2 = { 1,2 };
     var2 = new int[] { 2, 4};
     int[][] ii2 = { { 1,2}, {4} };
