@@ -18,7 +18,10 @@ package com.intellij.ide;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.StartupUtil;
+import com.intellij.openapi.application.ApplicationStarter;
+import com.intellij.openapi.application.ApplicationStarterEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -28,6 +31,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -118,7 +122,17 @@ public class CommandLineProcessor {
       }
     }
     LOG.info("-----");
-    // TODO[yole] handle AppStarters here?
+
+    if (args.size() > 0) {
+      String command = args.get(0);
+      for(ApplicationStarter starter: Extensions.getExtensions(ApplicationStarter.EP_NAME)) {
+        if (starter instanceof ApplicationStarterEx && command.equals(starter.getCommandName())) {
+          ((ApplicationStarterEx) starter).processExternalCommandLine(ArrayUtil.toStringArray(args));
+          return null;
+        }
+      }
+    }
+
     Project lastOpenedProject = null;
     int line = -1;
     for (int i = 0, argsSize = args.size(); i < argsSize; i++) {
