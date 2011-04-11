@@ -37,8 +37,7 @@ public class AddNewArrayExpressionFix implements IntentionAction {
 
   @NotNull
   public String getText() {
-    PsiExpression expr = myInitializer.getInitializers()[0];
-    PsiType type = expr.getType();
+    PsiType type = getType();
     return QuickFixBundle.message("add.new.array.text", type.getPresentableText());
   }
 
@@ -49,21 +48,30 @@ public class AddNewArrayExpressionFix implements IntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myInitializer.isValid() || !myInitializer.getManager().isInProject(myInitializer)) return false;
-    PsiExpression[] initializers = myInitializer.getInitializers();
-    return initializers.length > 0 && initializers[0].getType() != null;
+    return getType() != null;
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementsForWrite(myInitializer, file)) return;
     PsiManager manager = file.getManager();
-    PsiExpression expr = myInitializer.getInitializers()[0];
-    PsiType type = expr.getType();
+    PsiType type = getType();
     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     @NonNls String text = "new " + type.getPresentableText() + "[]{}";
     PsiNewExpression newExpr = (PsiNewExpression) factory.createExpressionFromText(text, null);
     newExpr.getArrayInitializer().replace(myInitializer);
     newExpr = (PsiNewExpression) manager.getCodeStyleManager().reformat(newExpr);
     myInitializer.replace(newExpr);
+  }
+
+  private PsiType getType() {
+    final PsiExpression[] initializers = myInitializer.getInitializers();
+    final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression) myInitializer.getParent();
+    final PsiType type = assignmentExpression.getType();
+    if (!(type instanceof PsiArrayType)) {
+      if (initializers.length <= 0) return null;
+      return initializers[0].getType();
+    }
+    return ((PsiArrayType)type).getComponentType();
   }
 
   public boolean startInWriteAction() {
