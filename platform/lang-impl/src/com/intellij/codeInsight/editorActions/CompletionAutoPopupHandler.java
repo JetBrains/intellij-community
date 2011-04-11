@@ -23,13 +23,14 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 
 /**
  * @author peter
@@ -96,7 +97,12 @@ public class CompletionAutoPopupHandler extends TypedHandlerDelegate {
         if (ApplicationManager.getApplication().isWriteAccessAllowed()) return; //it will fail anyway
         if (DumbService.getInstance(project).isDumb()) return;
 
-        invokeAutoPopupCompletion(project, editor);
+        // retrieve the injected file from scratch since our typing might have destroyed the old one completely
+        Editor topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
+        PsiFile topLevelFile = InjectedLanguageUtil.getTopLevelFile(file);
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+        Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(topLevelEditor, topLevelFile);
+        invokeAutoPopupCompletion(project, newEditor);
       }
     };
     AutoPopupController.getInstance(project).invokeAutoPopupRunnable(request, CodeInsightSettings.getInstance().AUTO_LOOKUP_DELAY);
