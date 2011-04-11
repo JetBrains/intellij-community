@@ -21,11 +21,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 import java.util.*;
 
@@ -96,5 +98,23 @@ public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor 
     }
 
     super.visitReferenceExpression(referenceExpression);
+  }
+
+  public static String[] find(GrVariable variable) {
+    final GrExpression initializerGroovy = variable.getInitializerGroovy();
+
+    if (!(initializerGroovy instanceof GrClosableBlock)) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+
+    final GrClosableBlock closure = (GrClosableBlock)initializerGroovy;
+    final GrParameter[] parameters = closure.getAllParameters();
+    if (parameters.length == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
+
+    GrParameter parameter = parameters[0];
+
+    GrNamedArgumentSearchVisitor visitor = new GrNamedArgumentSearchVisitor(parameter.getName());
+    closure.accept(visitor);
+    return visitor.getResult();
   }
 }

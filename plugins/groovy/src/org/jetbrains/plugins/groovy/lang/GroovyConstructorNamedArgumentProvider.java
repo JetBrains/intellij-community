@@ -51,13 +51,17 @@ public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentP
 
   @Override
   public void getNamedArguments(@NotNull GrCall call,
-                                @Nullable PsiMethod method,
+                                @Nullable PsiElement resolve,
                                 @Nullable String argumentName,
                                 boolean forCompletion,
                                 Map<String, ArgumentDescriptor> result) {
     if (!(call instanceof GrNewExpression)) return;
 
-    if (method != null && (method.getParameterList().getParametersCount() > 0 || !method.isConstructor())) return;
+    if (resolve != null) {
+      if (!(resolve instanceof PsiMethod)) return;
+      PsiMethod method = (PsiMethod)resolve;
+      if (method.getParameterList().getParametersCount() > 0 || !method.isConstructor()) return;
+    }
 
     GrNewExpression newCall = (GrNewExpression)call;
 
