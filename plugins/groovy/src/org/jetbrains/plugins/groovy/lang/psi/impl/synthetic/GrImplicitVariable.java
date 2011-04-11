@@ -22,5 +22,5 @@ import com.intellij.psi.PsiVariable;
  * User: Dmitry.Krasilschikov
  * Date: 04.02.2008
  */
-public interface GrImplicitVariable extends PsiVariable, NavigatablePsiElement  {
+public interface GrImplicitVariable extends PsiVariable, NavigatablePsiElement, GrRenamedLightElement {
 }

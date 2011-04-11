@@ -27,6 +27,7 @@ import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -49,8 +50,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.List;
@@ -284,6 +287,25 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     final GrDocComment doc = PsiTreeUtil.getParentOfType(originalElement, GrDocComment.class);
     if (doc != null) {
       element = GrDocCommentUtil.findDocOwner(doc);
+    }
+
+    if (element instanceof GrLightVariable) {
+      PsiElement navigationElement = element.getNavigationElement();
+
+      if (navigationElement != null) {
+        element = navigationElement;
+
+        if (element.getContainingFile() instanceof ClsFileImpl) {
+          navigationElement = element.getNavigationElement();
+          if (navigationElement != null) {
+            element = navigationElement;
+          }
+        }
+
+        if (element instanceof GrAccessorMethod) {
+          element = ((GrAccessorMethod)element).getProperty();
+        }
+      }
     }
 
     return JavaDocumentationProvider.generateExternalJavadoc(element);

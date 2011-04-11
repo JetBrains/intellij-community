@@ -7,7 +7,7 @@ import com.intellij.psi.impl.light.LightVariableBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author ilyas
@@ -16,7 +16,7 @@ public class GrImplicitVariableImpl extends LightVariableBase implements GrImpli
   private PsiModifierList myInnerModifierList;
 
   public GrImplicitVariableImpl(PsiModifierList modifierList, PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {
-    super(manager, nameIdentifier, type, writable, scope);
+    super(manager, nameIdentifier, GroovyFileType.GROOVY_LANGUAGE, type, writable, scope);
         myInnerModifierList = modifierList != null ? modifierList : myModifierList;
     }
 
