@@ -119,13 +119,13 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     myElements.add(key);
   }
 
-  public void replaceElement(PsiElement element, Expression expression) {
+  public void replaceElement(@NotNull PsiElement element, Expression expression) {
     final RangeMarker key = wrapElement(element);
     replaceElement(key, expression);
   }
 
   @Override
-  public void replaceElement(PsiElement element, TextRange rangeWithinElement, Expression expression) {
+  public void replaceElement(@NotNull PsiElement element, TextRange rangeWithinElement, Expression expression) {
     final RangeMarker key = myDocument.createRangeMarker(rangeWithinElement.shiftRight(element.getTextRange().getStartOffset()));
     replaceElement(key, expression);
   }
@@ -242,11 +242,11 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     return myDocument.getCharsSequence().subSequence(startOffset, endOffset).toString();
   }
 
-  public void replaceElement(PsiElement element, String replacementText) {
+  public void replaceElement(@NotNull PsiElement element, String replacementText) {
     replaceElement(element, new ConstantNode(replacementText));
   }
 
-  public void replaceElement(PsiElement element, TextRange rangeWithinElement, String replacementText) {
+  public void replaceElement(@NotNull PsiElement element, TextRange rangeWithinElement, String replacementText) {
     final RangeMarker key = myDocument.createRangeMarker(rangeWithinElement.shiftRight(element.getTextRange().getStartOffset()));
     ConstantNode value = new ConstantNode(replacementText);
     replaceElement(key, value);
