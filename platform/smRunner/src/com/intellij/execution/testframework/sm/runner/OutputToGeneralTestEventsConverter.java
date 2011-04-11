@@ -175,10 +175,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
 
   private void processConsistentText(final String text, final Key outputType, boolean tcLikeFakeOutput) {
     try {
-      final ServiceMessage serviceMessage = parseServiceMessage(text, outputType);
-      if (serviceMessage != null) {
-        serviceMessage.visit(myServiceMessageVisitor);
-      } else {
+      if (!processServiceMessages(text, outputType, myServiceMessageVisitor)) {
         // Filters \n
         if (text.equals("\n") && tcLikeFakeOutput) {
           // ServiceMessages protocol requires that every message
@@ -199,10 +196,16 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  @Nullable
-  protected ServiceMessage parseServiceMessage(final String text, final Key outputType) throws ParseException {
-    return ServiceMessage.parse(text);
+  protected boolean processServiceMessages(final String text,
+                                          final Key outputType,
+                                          final ServiceMessageVisitor visitor) throws ParseException {
+    final ServiceMessage message = ServiceMessage.parse(text);
+    if (message != null) {
+      message.visit(visitor);
+    }
+    return message != null;
   }
+
 
   private void fireOnTestStarted(final String testName, @Nullable  final String locationUrl) {
     assertNotNull(testName);
