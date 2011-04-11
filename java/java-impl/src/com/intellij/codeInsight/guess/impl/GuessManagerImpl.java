@@ -162,6 +162,7 @@ public class GuessManagerImpl extends GuessManager {
   }
 
   private static Map<PsiExpression, PsiType> getAllTypeCasts(PsiExpression forPlace) {
+    assert forPlace.isValid();
     final int start = forPlace.getTextRange().getStartOffset();
     final Map<PsiExpression, PsiType> allCasts = new THashMap<PsiExpression, PsiType>(ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY);
     getTopmostBlock(forPlace).accept(new JavaRecursiveElementWalkingVisitor() {
@@ -198,6 +199,7 @@ public class GuessManagerImpl extends GuessManager {
   }
 
   private static PsiElement getTopmostBlock(PsiElement scope) {
+    assert scope.isValid();
     PsiElement lastScope = scope;
     while (true) {
       final PsiCodeBlock lastCodeBlock = PsiTreeUtil.getParentOfType(lastScope, PsiCodeBlock.class, true);
