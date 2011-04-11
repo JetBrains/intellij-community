@@ -101,7 +101,7 @@ public class FSRecords implements Forceable {
   }
 
   private static class DbConnection {
-    private static int refCount = 0;
+    private static boolean ourInitialized;
     private static final TObjectIntHashMap<String> myAttributeIds = new TObjectIntHashMap<String>();
 
     private static PersistentStringEnumerator myNames;
@@ -114,17 +114,15 @@ public class FSRecords implements Forceable {
     private static ScheduledFuture<?> myFlushingFuture;
     private static boolean myCorrupted = false;
 
-    public static DbConnection connect() {
+    public static void connect() {
       synchronized (lock) {
-        if (refCount == 0) {
+        if (!ourInitialized) {
           init();
           scanFreeRecords();
           setupFlushing();
+          ourInitialized = true;
         }
-        refCount++;
       }
-
-      return new DbConnection();
     }
 
     private static void scanFreeRecords() {
@@ -382,15 +380,6 @@ public class FSRecords implements Forceable {
 
     public static ResizeableMappedFile getRecords() {
       return myRecords;
-    }
-
-    public static void dispose() throws IOException {
-      synchronized (lock) {
-        refCount--;
-        if (refCount == 0) {
-          closeFiles();
-        }
-      }
     }
 
     private static void closeFiles() throws IOException {
