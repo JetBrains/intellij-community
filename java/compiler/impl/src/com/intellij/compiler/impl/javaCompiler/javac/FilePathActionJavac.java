@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 
 import java.io.File;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev              
@@ -32,15 +33,23 @@ import java.util.regex.Matcher;
  */
 public class FilePathActionJavac extends JavacParserAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.javac.FilePathActionJavac");
-
+  private final Matcher myJdk7FormatMatcher;
+  
   public FilePathActionJavac(final Matcher matcher) {
     super(matcher);
+    myJdk7FormatMatcher = Pattern.compile("^\\w+\\[(.+)\\]$", Pattern.CASE_INSENSITIVE).matcher("");
   }
 
-  protected void doExecute(final String line, final String filePath, final OutputParser.Callback callback) {
+  protected void doExecute(final String line, String filePath, final OutputParser.Callback callback) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Process parsing message: " + filePath);
     }
+
+    // for jdk7: cut off characters wrapping the path. e.g. "RegularFileObject[C:/tmp/bugs/src/a/Demo1.java]"
+    if (myJdk7FormatMatcher.reset(filePath).matches()) {
+      filePath = myJdk7FormatMatcher.group(1);
+    }
+
     int index = filePath.lastIndexOf('/');
     final String name = index >= 0 ? filePath.substring(index + 1) : filePath;
 
