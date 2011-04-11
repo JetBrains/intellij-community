@@ -20,7 +20,9 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -141,6 +143,16 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
         ((DataManagerImpl)myDataManager).setWindowManager(this);
     }
 
+    final Application application = ApplicationManager.getApplication();
+    if (!application.isUnitTestMode()) {
+      Disposer.register(application, new Disposable() {
+        @Override
+        public void dispose() {
+          disposeRootFrame();
+        }
+      });
+    }
+
     myCommandProcessor = new CommandProcessor();
     myWindowWatcher = new WindowWatcher();
     final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -156,7 +168,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     // Calculate screen bounds.
 
     Rectangle screenBounds = new Rectangle();
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!application.isHeadlessEnvironment()) {
       final GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
       final GraphicsDevice[] devices = env.getScreenDevices();
       for (final GraphicsDevice device : devices) {
@@ -552,15 +564,20 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     myProject2Frame.remove(project);
     if (myProject2Frame.isEmpty()) {
       myProject2Frame.put(null, frame);
-
-      if (ApplicationManager.getApplication().isDisposeInProgress()) {
-        // disposing last frame if quitting
-        frame.dispose();
-      }
     }
     else {
       Disposer.dispose((StatusBarEx) frame.getStatusBar());
       frame.dispose();
+    }
+  }
+
+  public final void disposeRootFrame() {
+    if (myProject2Frame.size() == 1) {
+      final IdeFrameImpl rootFrame = myProject2Frame.get(null);
+      if (rootFrame != null) {
+        // disposing last frame if quitting
+        rootFrame.dispose();
+      }
     }
   }
 
