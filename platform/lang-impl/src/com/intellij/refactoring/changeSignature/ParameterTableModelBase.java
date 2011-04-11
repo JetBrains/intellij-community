@@ -63,6 +63,10 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
     setItems(items);
   }
 
+  public void setValueAtWithoutUpdate(Object aValue, int rowIndex, int columnIndex) {
+    super.setValueAt(aValue, rowIndex, columnIndex);
+  }
+
   @Override
   public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
     super.setValueAt(aValue, rowIndex, columnIndex);
