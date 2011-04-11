@@ -52,13 +52,12 @@ public class NavBarModel {
   private final Project myProject;
   private final NavBarModelListener myNotificator;
   private boolean myChanged = true;
-  private boolean shouldSkipUpdateFromDataContext = false;
-  private final boolean myIsFloatingModeModel;
+  private boolean updated = false;
+  private boolean isFixedComponent = false;
 
   public NavBarModel(final Project project) {
     myProject = project;
     myNotificator = project.getMessageBus().syncPublisher(NavBarModelListener.NAV_BAR);
-    myIsFloatingModeModel = !UISettings.getInstance().SHOW_NAVIGATION_BAR;
   }
 
   public int getSelectedIndex() {
@@ -93,7 +92,7 @@ public class NavBarModel {
   }
 
   protected void updateModel(DataContext dataContext) {
-    if (LaterInvocator.isInModalContext() || (shouldSkipUpdateFromDataContext && myIsFloatingModeModel)) return;
+    if (LaterInvocator.isInModalContext() || (updated && !isFixedComponent)) return;
 
     PsiElement psiElement = LangDataKeys.PSI_FILE.getData(dataContext);
     if (psiElement == null) {
@@ -120,7 +119,7 @@ public class NavBarModel {
     }
     setChanged(false);
 
-    shouldSkipUpdateFromDataContext = !UISettings.getInstance().SHOW_NAVIGATION_BAR;
+    updated = true;
   }
 
   protected void updateModel(final PsiElement psiElement) {
@@ -371,6 +370,10 @@ public class NavBarModel {
       mySelectedIndex = selectedIndex;
       myNotificator.selectionChanged();
     }
+  }
+
+  public void setFixedComponent(boolean fixedComponent) {
+    isFixedComponent = fixedComponent;
   }
 
   private static final class SiblingsComparator implements Comparator<Object> {

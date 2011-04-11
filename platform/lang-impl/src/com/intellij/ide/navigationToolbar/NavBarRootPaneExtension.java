@@ -127,6 +127,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     final JComponent result = new OpaquePanel.List(new BorderLayout());
     result.setBackground(UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
     myNavigationBar = new NavBarPanel(myProject);
+    myNavigationBar.getModel().setFixedComponent(true);
 
     JScrollPane scroller = ScrollPaneFactory.createScrollPane(myNavigationBar);
     scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
