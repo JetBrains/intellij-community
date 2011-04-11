@@ -621,9 +621,42 @@ of problems processing the schema using various tools
       <xs:extension base="xsl:sequence-constructor">
         <xs:attribute name="select" type="xsl:expression"/>
         <xs:attribute name="lang" type="xsl:avt"/>
-        <xs:attribute name="data-type" type="xsl:avt" default="text"/>
-        <xs:attribute name="order" type="xsl:avt" default="ascending"/>
-        <xs:attribute name="case-order" type="xsl:avt"/>
+        <xs:attribute name="data-type" default="text">
+          <xs:simpleType>
+            <xs:union memberTypes="xsl:avt">
+              <xs:simpleType>
+                <xs:restriction base="string">
+                  <xs:enumeration value="text" />
+                  <xs:enumeration value="number" />
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:union>
+          </xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="order" default="ascending">
+          <xs:simpleType>
+            <xs:union memberTypes="xsl:avt">
+              <xs:simpleType>
+                <xs:restriction base="string">
+                  <xs:enumeration value="ascending" />
+                  <xs:enumeration value="descending" />
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:union>
+          </xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="case-order">
+          <xs:simpleType>
+            <xs:union memberTypes="xsl:avt">
+              <xs:simpleType>
+                <xs:restriction base="string">
+                  <xs:enumeration value="upp-first" />
+                  <xs:enumeration value="lower-first" />
+                </xs:restriction>
+              </xs:simpleType>
+            </xs:union>
+          </xs:simpleType>
+        </xs:attribute>
         <xs:attribute name="collation" type="xsl:avt"/>
         <xs:attribute name="stable" type="xsl:yes-or-no"/>
       </xs:extension>
