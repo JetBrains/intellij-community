@@ -87,8 +87,18 @@ public abstract class XsltContextProviderBase extends ContextProvider {
   protected XsltContextProviderBase(XmlElement element) {
     final Project project = element.getProject();
     myFileAssociationsManager = FileAssociationsManager.getInstance(project);
-    myContextElement = SmartPointerManager.getInstance(project).createLazyPointer(element);
+    myContextElement = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(element);
     attachTo(element);
+  }
+
+  @Override
+  protected boolean isValid() {
+    return super.isValid() && matchContextType();
+  }
+
+  private boolean matchContextType() {
+    final PsiFile file = myContextElement.getContainingFile();
+    return file != null && XsltSupport.getXsltLanguageLevel(file).getXPathVersion() == getContextType().getVersion();
   }
 
   private static void fillFromSchema(PsiFile file, ElementNames names) {

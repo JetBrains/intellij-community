@@ -16,12 +16,23 @@
 
 package org.intellij.lang.xpath.xslt.impl;
 
+import org.intellij.lang.xpath.context.XPathVersion;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 
 import com.intellij.util.xml.NanoXmlUtil;
 
 public class XsltChecker extends NanoXmlUtil.IXMLBuilderAdapter {
-    public enum LanguageLevel { NONE, V1, V2 }
+    public enum LanguageLevel { NONE(null), V1(XPathVersion.V1), V2(XPathVersion.V2);
+      private final XPathVersion myVersion;
+
+      LanguageLevel(XPathVersion version) {
+        myVersion = version;
+      }
+
+      public XPathVersion getXPathVersion() {
+        return myVersion;
+      }
+    }
 
     enum State {
         YES, SIMPLIFIED, NO, POSSIBLY, POSSIBLY_SIMPLIFIED_SYNTAX, VERSION2
