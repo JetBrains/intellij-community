@@ -23,6 +23,8 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -45,7 +47,7 @@ public class CompletionServiceImpl extends CompletionService{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.impl.CompletionServiceImpl");
   private Throwable myTrace = null;
   private CompletionProgressIndicator myCurrentCompletion;
-  private static CompletionPhase ourPhase = CompletionPhase.NoCompletion;
+  private static volatile CompletionPhase ourPhase = CompletionPhase.NoCompletion;
   private static String ourPhaseTrace;
 
   public CompletionServiceImpl() {
@@ -228,8 +230,9 @@ public class CompletionServiceImpl extends CompletionService{
 
   public static boolean isPhase(Class<? extends CompletionPhase>... possibilities) {
     ApplicationManager.getApplication().assertIsDispatchThread();
+    CompletionPhase phase = getCompletionPhase();
     for (Class<? extends CompletionPhase> possibility : possibilities) {
-      if (possibility.isInstance(ourPhase)) {
+      if (possibility.isInstance(phase)) {
         return true;
       }
     }
@@ -238,14 +241,25 @@ public class CompletionServiceImpl extends CompletionService{
 
   public static void setCompletionPhase(@NotNull CompletionPhase phase) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    Disposer.dispose(ourPhase);
+    CompletionPhase oldPhase = getCompletionPhase();
+    CompletionProgressIndicator oldIndicator = oldPhase.indicator;
+    if (oldIndicator != null) {
+      LOG.assertTrue(!oldIndicator.isRunning() || oldIndicator.isCanceled(), "don't change phase during running completion");
+    }
+
+    Disposer.dispose(oldPhase);
     ourPhase = phase;
     ourPhaseTrace = DebugUtil.currentStackTrace();
   }
 
   public static CompletionPhase getCompletionPhase() {
 //    ApplicationManager.getApplication().assertIsDispatchThread();
-    return ourPhase;
+    CompletionPhase phase = ourPhase;
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) {
+      indicator.checkCanceled();
+    }
+    return phase;
   }
 
   public CompletionSorterImpl defaultSorter(CompletionParameters parameters) {
