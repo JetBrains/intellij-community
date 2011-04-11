@@ -53,10 +53,12 @@ public class NavBarModel {
   private final NavBarModelListener myNotificator;
   private boolean myChanged = true;
   private boolean shouldSkipUpdateFromDataContext = false;
+  private final boolean myIsFloatingModeModel;
 
   public NavBarModel(final Project project) {
     myProject = project;
     myNotificator = project.getMessageBus().syncPublisher(NavBarModelListener.NAV_BAR);
+    myIsFloatingModeModel = !UISettings.getInstance().SHOW_NAVIGATION_BAR;
   }
 
   public int getSelectedIndex() {
@@ -91,7 +93,7 @@ public class NavBarModel {
   }
 
   protected void updateModel(DataContext dataContext) {
-    if (LaterInvocator.isInModalContext() || shouldSkipUpdateFromDataContext) return;
+    if (LaterInvocator.isInModalContext() || (shouldSkipUpdateFromDataContext && myIsFloatingModeModel)) return;
 
     PsiElement psiElement = LangDataKeys.PSI_FILE.getData(dataContext);
     if (psiElement == null) {
