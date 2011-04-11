@@ -80,7 +80,7 @@ def reorder_suite(suite, classes):
         bins[0].addTests(bins[i+1])
     return bins[0]
 
-def run_tests(test_labels, verbosity=1, interactive=False, extra_tests=[]):
+def run_tests(test_labels, verbosity=1, interactive=False, extra_tests=[], **kwargs):
     """
     Run the unit tests for all the test labels in the provided list.
     Labels must be of the form:
