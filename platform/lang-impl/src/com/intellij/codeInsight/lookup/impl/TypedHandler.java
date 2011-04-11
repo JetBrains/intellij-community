@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +53,10 @@ public class TypedHandler implements TypedActionHandler {
       if (lookup == null){
         myOriginalHandler.execute(editor, charTyped, dataContext);
         return;
+      }
+
+      if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
+         return;
       }
 
       final CharFilter.Result result = getLookupAction(charTyped, lookup);

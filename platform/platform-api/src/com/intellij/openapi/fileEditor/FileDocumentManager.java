@@ -68,7 +68,7 @@ public abstract class FileDocumentManager {
    * @return true if writing access allowed
    * @see com.intellij.openapi.vfs.ReadonlyStatusHandler#ensureFilesWritable(com.intellij.openapi.project.Project, com.intellij.openapi.vfs.VirtualFile...)
    */
-  public abstract boolean requestWriting(@NotNull Document document, Project project);
+  public abstract boolean requestWriting(@NotNull Document document, @Nullable Project project);
 
   public static boolean fileForDocumentCheckedOutSuccessfully(@NotNull Document document, @NotNull Project project) {
     return getInstance().requestWriting(document, project);
