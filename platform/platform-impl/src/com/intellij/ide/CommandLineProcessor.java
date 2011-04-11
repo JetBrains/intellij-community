@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.PlatformProjectOpenProcessor;
@@ -141,6 +142,9 @@ public class CommandLineProcessor {
       }
       else {
         if (line != -1) {
+          if (StringUtil.isQuotedString(arg)) {
+            arg = StringUtil.stripQuotesAroundValue(arg);
+          }
           final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(arg);
           if (virtualFile != null) {
             lastOpenedProject = doOpenFile(virtualFile, line);
