@@ -63,4 +63,21 @@ public abstract class ProjectOpenProcessor {
     }
     return null;
   }
+
+  @Nullable
+  public static ProjectOpenProcessor getStrongImportProvider(VirtualFile file) {
+    for (ProjectOpenProcessor provider : Extensions.getExtensions(EXTENSION_POINT_NAME)) {
+      if (provider.canOpenProject(file) && provider.isStrongProjectInfoHolder()) {
+        return provider;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * @return true if this open processor should be ranked over general .idea and .ipr files even if those exist.
+   */
+  public boolean isStrongProjectInfoHolder() {
+    return false;
+  }
 }

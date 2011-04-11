@@ -103,11 +103,16 @@ public class ProjectUtil {
     final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
 
     if (virtualFile == null) return null;
+    ProjectOpenProcessor strong = ProjectOpenProcessor.getStrongImportProvider(virtualFile);
+    if (strong != null) {
+      return strong.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
+    }
 
     if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) ||
         virtualFile.isDirectory() && virtualFile.findChild(DIRECTORY_BASED_PROJECT_DIR) != null) {
       return openProject(path, projectToClose, forceOpenInNewFrame);
     }
+
     if (virtualFile.isDirectory()) {
       for (VirtualFile child : virtualFile.getChildren()) {
         final String childPath = child.getPath();
@@ -116,6 +121,7 @@ public class ProjectUtil {
         }
       }
     }
+
     ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(virtualFile);
     if (provider != null) {
       return provider.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
