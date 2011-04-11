@@ -15,13 +15,10 @@
  */
 package com.intellij.openapi.diff;
 
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.*;
 
 /**
  * Two contents for general diff
@@ -79,8 +76,10 @@ public class SimpleDiffRequest extends DiffRequest {
     }
 
     public DiffContent[] getContents() {
-      return new DiffContent[]{DocumentContent.fromFile(getProject(), myVirtualFiles[0]),
-                               DocumentContent.fromFile(getProject(), myVirtualFiles[1])};
+      return new DiffContent[]{
+        DiffContent.fromFile(getProject(), myVirtualFiles[0]),
+        DiffContent.fromFile(getProject(), myVirtualFiles[1])
+      };
     }
 
     public String[] getContentTitles() {
