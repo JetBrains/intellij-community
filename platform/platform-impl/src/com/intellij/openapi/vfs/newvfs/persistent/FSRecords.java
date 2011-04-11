@@ -91,6 +91,7 @@ public class FSRecords implements Forceable {
   private static final Object lock = new Object();
 
   private static volatile int ourLocalModificationCount = 0;
+  private static volatile boolean ourIsDisposed;
 
   private static final int FREE_RECORD_FLAG = 0x100;
   private static final int ALL_VALID_FLAGS = PersistentFS.ALL_VALID_FLAGS | FREE_RECORD_FLAG;
@@ -429,10 +430,13 @@ public class FSRecords implements Forceable {
     }
 
     private static RuntimeException handleError(final Throwable e) {
-      if (!myCorrupted) {
-        createBrokenMarkerFile(e);
-        myCorrupted = true;
-        force();
+      if (!ourIsDisposed) {
+        // No need to forcibly mark VFS corrupted if it is already shut down
+        if (!myCorrupted) {
+          createBrokenMarkerFile(e);
+          myCorrupted = true;
+          force();
+        }
       }
 
       return new RuntimeException(e);
@@ -1189,6 +1193,9 @@ public class FSRecords implements Forceable {
       }
       catch (Throwable e) {
         throw DbConnection.handleError(e);
+      }
+      finally {
+        ourIsDisposed = true;
       }
     }
   }
