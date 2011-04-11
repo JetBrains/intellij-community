@@ -95,19 +95,6 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
         else {
           artifacts = new HashSet<Artifact>(Arrays.asList(ArtifactManager.getInstance(getProject()).getArtifacts()));
         }
-        List<Artifact> additionalArtifacts = new ArrayList<Artifact>();
-        for (BuildParticipantProvider provider : BuildParticipantProvider.EXTENSION_POINT_NAME.getExtensions()) {
-          for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
-            final Collection<? extends BuildParticipant> participants = provider.getParticipants(module);
-            for (BuildParticipant participant : participants) {
-              ContainerUtil.addIfNotNull(participant.createArtifact(myContext), additionalArtifacts);
-            }
-          }
-        }
-        if (LOG.isDebugEnabled() && !additionalArtifacts.isEmpty()) {
-          LOG.debug("additional artifacts to build: " + additionalArtifacts);
-        }
-        artifacts.addAll(additionalArtifacts);
 
         Map<String, Artifact> artifactsMap = new HashMap<String, Artifact>();
         for (Artifact artifact : artifacts) {
@@ -117,6 +104,19 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
           Artifact artifact = artifactsMap.get(name);
           if (artifact != null) {
             targets.add(new ArtifactBuildTarget(artifact));
+          }
+        }
+
+        for (BuildParticipantProvider provider : BuildParticipantProvider.EXTENSION_POINT_NAME.getExtensions()) {
+          for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
+            final Collection<? extends BuildParticipant> participants = provider.getParticipants(module);
+            for (BuildParticipant participant : participants) {
+              Artifact artifact = participant.createArtifact(myContext);
+              if (artifact != null) {
+                LOG.debug("additional artifact to build: " + artifact);
+                targets.add(new ArtifactBuildTarget(artifact));
+              }
+            }
           }
         }
       }
