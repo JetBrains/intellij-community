@@ -227,7 +227,6 @@ public class RedundantCastUtil {
             addToResults(typeCast);
           }
         }
-        qualifier = ((PsiTypeCastExpression)((PsiParenthesizedExpression)qualifier).getExpression()).getOperand();
       }
       catch (IncorrectOperationException e) {
       }
@@ -332,6 +331,7 @@ public class RedundantCastUtil {
         }
         processAlreadyHasTypeCast(typeCast);
       }
+      super.visitTypeCastExpression(typeCast);
     }
 
     private void processAlreadyHasTypeCast(PsiTypeCastExpression typeCast){
