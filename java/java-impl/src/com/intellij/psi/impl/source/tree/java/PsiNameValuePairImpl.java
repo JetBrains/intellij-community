@@ -30,6 +30,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -125,11 +126,14 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
 
   public PsiReference getReference() {
     return new PsiReference() {
-      private PsiClass getReferencedClass () {
+      @Nullable
+      private PsiClass getReferencedClass() {
         LOG.assertTrue(getParent() instanceof PsiAnnotationParameterList && getParent().getParent() instanceof PsiAnnotation);
         PsiAnnotation annotation = (PsiAnnotation)getParent().getParent();
         PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
-        return nameRef == null ? null : (PsiClass)nameRef.resolve();
+        if (nameRef == null) return null;
+        PsiElement target = nameRef.resolve();
+        return target instanceof PsiClass ? (PsiClass)target : null;
       }
 
       public PsiElement getElement() {
@@ -209,8 +213,8 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
     final TreeElement treeElement = super.addInternal(first, last, anchor, before);
-    if (first == last && first.getElementType() == ElementType.IDENTIFIER) {
-      LeafElement eq = Factory.createSingleLeafElement(ElementType.EQ, "=", 0, 1, treeCharTab, getManager());
+    if (first == last && first.getElementType() == JavaTokenType.IDENTIFIER) {
+      LeafElement eq = Factory.createSingleLeafElement(JavaTokenType.EQ, "=", 0, 1, treeCharTab, getManager());
       super.addInternal(eq, eq, first, Boolean.FALSE);
     }
     return treeElement;
@@ -219,7 +223,10 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
   public void deleteChildInternal(@NotNull ASTNode child) {
     super.deleteChildInternal(child);
     if (child.getElementType() == JavaTokenType.IDENTIFIER) {
-      super.deleteChildInternal(findChildByRole(ChildRole.OPERATION_SIGN));
+      final ASTNode sign = findChildByRole(ChildRole.OPERATION_SIGN);
+      if (sign != null) {
+        super.deleteChildInternal(sign);
+      }
     }
   }
 }
