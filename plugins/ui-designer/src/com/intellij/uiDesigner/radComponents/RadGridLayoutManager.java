@@ -74,7 +74,19 @@ public class RadGridLayoutManager extends RadAbstractGridLayoutManager {
   }
 
   public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
+    super.addComponentToContainer(container, component, index);
     container.getDelegee().add(component.getDelegee(), component.getConstraints());
+  }
+
+  @Override
+  protected void updateConstraints(RadComponent component) {
+    GridLayoutManager layout = (GridLayoutManager) component.getParent().getLayout();
+    final GridConstraints radConstraints = component.getConstraints();
+    final GridConstraints delegeeConstraints = layout.getConstraintsForComponent(component.getDelegee());
+    if (radConstraints != delegeeConstraints) {
+      delegeeConstraints.restore(radConstraints);
+    }
+    super.updateConstraints(component);
   }
 
   public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
