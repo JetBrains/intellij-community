@@ -1265,7 +1265,7 @@ public class HighlightUtil {
       return null;
     }
 
-    HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, JavaErrorMessages.message("expression.expected"));
+    HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, JavaErrorMessages.message("array.initializer.not.allowed"));
     QuickFixAction.registerQuickFixAction(info, new AddNewArrayExpressionFix(expression));
     return info;
   }
