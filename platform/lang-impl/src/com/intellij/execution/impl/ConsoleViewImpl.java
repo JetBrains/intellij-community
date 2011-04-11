@@ -131,6 +131,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
   private final ArrayList<AnAction> customActions = new ArrayList<AnAction>();
   private final ConsoleBuffer myBuffer = new ConsoleBuffer();
+  private boolean myUpdateFoldingsEnabled = true;
 
   @TestOnly
   public Editor getEditor() {
@@ -707,6 +708,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myHelpId = helpId;
   }
 
+  public void setUpdateFoldingsEnabled(boolean updateFoldingsEnabled) {
+    myUpdateFoldingsEnabled = updateFoldingsEnabled;
+  }
+
   public void addMessageFilter(final Filter filter) {
     myCustomFilter.addFilter(filter);
   }
@@ -999,10 +1004,19 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void highlightHyperlinksAndFoldings(final int line1, final int endLine) {
+    boolean canHighlightHyperlinks = !myCustomFilter.isEmpty() || !myPredefinedMessageFilter.isEmpty();
+
+    if (!canHighlightHyperlinks && myUpdateFoldingsEnabled) {
+      return;
+    }
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    highlightHyperlinks(myEditor, myHyperlinks, myCustomFilter, myPredefinedMessageFilter, line1, endLine);
-    updateFoldings(line1, endLine, true);
+    if (canHighlightHyperlinks) {
+      highlightHyperlinks(myEditor, myHyperlinks, myCustomFilter, myPredefinedMessageFilter, line1, endLine);
+    }
+    if (myUpdateFoldingsEnabled) {
+      updateFoldings(line1, endLine, true);
+    }
   }
 
   private void updateFoldings(final int line1, final int endLine, boolean immediately) {
