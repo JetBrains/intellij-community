@@ -60,6 +60,7 @@ public class NavBarPopup extends LightweightHint {
       }
 
       private void click(final MouseEvent e) {
+        if (e.getComponent() != getList()) return;
         if (!e.isConsumed() && e.isPopupTrigger()) {
           myPanel.getModel().setSelectedIndex(selectedIndex);
           IdeFocusManager.getInstance(myPanel.getProject()).requestFocus(myPanel, true);
