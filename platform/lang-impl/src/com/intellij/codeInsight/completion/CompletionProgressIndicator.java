@@ -358,6 +358,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     }
 
+    LOG.assertTrue(myParameters.getPosition().isValid());
+
     myLookup.addItem(item);
     myCount++;
     if (unitTestMode) return;
