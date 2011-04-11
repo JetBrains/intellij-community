@@ -1,0 +1,1 @@
+5 div <error descr="Number literal must be followed by whitespace in XPath 2">2gt</error> 1

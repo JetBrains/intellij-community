@@ -20,23 +20,29 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.intellij.lang.xpath.psi.XPathBinaryExpression;
+import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
 import org.jetbrains.annotations.NotNull;
 
 class ExpressionReplacementFix implements IntentionAction {
   private final String myReplacement;
-  private final XPathBinaryExpression myExpr;
+  private final String myDisplay;
+  private final XPathExpression myExpr;
 
-  public ExpressionReplacementFix(String replacement, XPathBinaryExpression expr) {
+  public ExpressionReplacementFix(String replacement, XPathExpression expr) {
+    this(replacement, replacement, expr);
+  }
+
+  public ExpressionReplacementFix(String replacement, String display, XPathExpression expression) {
     myReplacement = replacement;
-    myExpr = expr;
+    myDisplay = display;
+    myExpr = expression;
   }
 
   @NotNull
   @Override
   public String getText() {
-    return "Replace with '" + myReplacement + "'";
+    return "Replace with '" + myDisplay + "'";
   }
 
   @NotNull
