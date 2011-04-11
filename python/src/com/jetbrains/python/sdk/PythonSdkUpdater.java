@@ -6,7 +6,9 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -29,64 +31,47 @@ import java.util.List;
 public class PythonSdkUpdater implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkUpdater");
 
-  public static int SKELETONS_VERSION = 18;
-
   public PythonSdkUpdater(final Project project, StartupManager startupManager) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
     startupManager.registerStartupActivity(new Runnable() {
       public void run() {
-        final File skeletonDir = new File(PathManager.getSystemPath(), PythonSdkType.SKELETON_DIR_NAME);
-        final File versionFile = new File(skeletonDir, "version");
-        boolean versionUpdated = false;
-        int version = versionFile.exists() ? readVersion(versionFile) : -1;
-        if (version != SKELETONS_VERSION) {
-          if (version == -1) {
-            LOG.info("Version file " + versionFile.getPath() +  " did not exist, rebuilding all skeletons");
-          }
-          else {
-            LOG.info("Skeletons version incremented from " + version + " to " + SKELETONS_VERSION + ", rebuilding all skeletons");
-          }
-          skeletonDir.mkdirs();
-          writeVersion(versionFile, SKELETONS_VERSION);
-          versionUpdated = true;
-        }
-        final List<Sdk> sdkList = PythonSdkType.getAllSdks();
-        for (Sdk sdk : sdkList) {
-          final String skeletonsPath = PythonSdkType.findSkeletonsPath(sdk);
-          if (skeletonsPath == null) {
-            LOG.info("Could not find skeletons path for SDK path " + sdk.getHomePath());
-          }
-          else if (versionUpdated || !new File(skeletonsPath).isDirectory()) {
-            if (!versionUpdated) {
-              LOG.info("Rebuilding skeletons for " + sdk.getHomePath() + " because skeletons directory " + skeletonsPath + " was not found");
-            }
-            PythonSdkType.generateSkeletons(ProgressManager.getInstance().getProgressIndicator(), sdk.getHomePath(), skeletonsPath);
-          }
-        }
+        long start_time = System.currentTimeMillis();
         final Module[] modules = ModuleManager.getInstance(project).getModules();
         if (modules.length > 0) {
-          updateSysPath(modules[0]);
+          updateSysPath(project, modules[0]);
         }
+        LOG.info("Refreshing skeletons took " + (System.currentTimeMillis() - start_time) + " ms");
       }
     });
   }
 
-  public static boolean skeletonsUpToDate() {
-    final File skeletonDir = new File(PathManager.getSystemPath(), PythonSdkType.SKELETON_DIR_NAME);
-    final File versionFile = new File(skeletonDir, "version");
-    int version = versionFile.exists() ? readVersion(versionFile) : -1;
-    return version == SKELETONS_VERSION;
-  }
-
-  private static void updateSysPath(Module module) {
+  private static void updateSysPath(final Project project, Module module) {
+    // NOTE: everything is run later on the AWT thread
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
     if (sdk != null) {
       final SdkType sdkType = sdk.getSdkType();
       if (sdkType instanceof PythonSdkType) {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
+            // update skeletons
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  Thread.sleep(7000); // wait until all short-term disk-hitting activity ceases
+                }
+                catch (InterruptedException ignore) {}
+                ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating skeletons", false) {
+                  @Override
+                  public void run(@NotNull ProgressIndicator indicator) {
+                    PythonSdkType.refreshSkeletonsOfAllSDKs(project); // NOTE: whole thing would need a rename
+                  }
+                });
+              }
+            });
+            // update paths
             final List<String> sysPath = ((PythonSdkType)sdkType).getSysPath(sdk.getHomePath());
             if (sysPath != null) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -152,48 +137,6 @@ public class PythonSdkUpdater implements ProjectComponent {
   }
 
   public void projectOpened() {
-  }
-
-  private static int readVersion(File versionFile) {
-    try {
-      final FileInputStream stream = new FileInputStream(versionFile);
-      try {
-        DataInputStream dataInputStream = new DataInputStream(stream);
-        try {
-          return dataInputStream.readInt();
-        }
-        finally {
-          dataInputStream.close();
-        }
-      }
-      finally {
-        stream.close();
-      }
-    }
-    catch (IOException e) {
-      return -1;
-    }
-  }
-
-  private static void writeVersion(File versionFile, int version) {
-    try {
-      final FileOutputStream stream = new FileOutputStream(versionFile);
-      try {
-        DataOutputStream dataOutputStream = new DataOutputStream(stream);
-        try {
-          dataOutputStream.writeInt(version);
-        }
-        finally {
-          dataOutputStream.close();
-        }
-      }
-      finally {
-        stream.close();
-      }
-    }
-    catch (IOException e) {
-      LOG.info(e);
-    }
   }
 
   public void projectClosed() {

@@ -24,8 +24,11 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-from datetime import datetime
+VERSION = "1.84" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 
+from datetime import datetime # TODO: remove
+
+# TODO: remove
 OUR_OWN_DATETIME = datetime(2011, 2, 17, 15, 30, 0) # datetime.now() of edit time
 # we could use script's ctime, but the actual running copy may have it all wrong.
 #
@@ -52,6 +55,10 @@ version = (
     (sys.hexversion & (0xff << 24)) >> 24,
     (sys.hexversion & (0xff << 16)) >> 16
 )
+
+IS_JAVA = hasattr(os, "java")
+
+OUT_ENCODING = 'utf-8' # what output we generate
 
 if version[0] >= 3:
     import builtins as the_builtins
@@ -198,7 +205,7 @@ def print_profile():
     data.extend(clr.GetProfilerData())
     data.sort(lambda x, y: -cmp(x.ExclusiveTime, y.ExclusiveTime))
     for p in data:
-        print('%s\t%d\t%d\t%d' % (p.Name, p.InclusiveTime, p.ExclusiveTime, p.Calls))
+        say('%s\t%d\t%d\t%d', p.Name, p.InclusiveTime, p.ExclusiveTime, p.Calls)
 
 def is_clr_type(t):
     if not t: return False
@@ -219,8 +226,6 @@ _prop_types = tuple(_prop_types)
 
 def isProperty(x):
     return isinstance(x, _prop_types)
-
-FAKE_CLASSOBJ_NAME = "___Classobj"
 
 def sanitizeIdent(x, is_clr=False):
     "Takes an identifier and returns it sanitized"
@@ -268,14 +273,6 @@ def extractAlphaPrefix(p_string, default="some"):
     name = match and match.groups()[match.lastindex - 1] or None
     return name or default
 
-
-class FakeClassObj:
-    "A mock class representing the old style class base."
-    __module__ = None
-    __class__ = None
-
-    def __init__(self):
-        pass
 
 if version[0] < 3:
     from pyparsing import *
@@ -589,6 +586,10 @@ if version[0] < 3:
     RET_TYPE.update({
         'file': "file('/dev/null')",
     })
+    def ensureUnicode(data):
+        if type(data) == str:
+            return data.decode(OUT_ENCODING, 'replace')
+        return unicode(data)
 else:
     UNICODE_LIT = '""'
     BYTES_LIT = 'b""'
@@ -611,6 +612,10 @@ else:
     RET_TYPE.update({
         'file': None,
     })
+    def ensureUnicode(data):
+        if type(data) == bytes:
+            return data.decode(OUT_ENCODING, 'replace')
+        return str(data)
 
 def packageOf(name, unqualified_ok=False):
     """
@@ -646,7 +651,7 @@ class Buf(object):
 
     def put(self, data):
         if data:
-            self.data.append(str(data))
+            self.data.append(ensureUnicode(data))
 
     def out(self, indent, *what):
         "Output the arguments, indenting as needed, and adding an eol"
@@ -655,9 +660,18 @@ class Buf(object):
             self.put(item)
         self.put("\n")
 
-    def flush(self, outfile):
+    def flush_bytes(self, outfile):
+        for x in self.data:
+            outfile.write(x.encode(OUT_ENCODING, "replace"))
+
+    def flush_str(self, outfile):
         for x in self.data:
             outfile.write(x)
+
+    if version[0] < 3:
+        flush = flush_bytes
+    else:
+        flush = flush_str
 
     def isEmpty(self):
         return len(self.data) == 0
@@ -665,15 +679,17 @@ class Buf(object):
 
 
 class ModuleRedeclarator(object):
-    def __init__(self, module, outfile, indent_size=4, doing_builtins=False):
+    def __init__(self, module, outfile, mod_filename, indent_size=4, doing_builtins=False):
         """
         Create new instance.
         @param module module to restore.
         @param outfile output file, must be open and writable.
+        @param mod_filename filename of binary module (the .dll or .so)
         @param indent_size amount of space characters per indent
         """
         self.module = module
         self.outfile = outfile # where we finally write
+        self.mod_filename = mod_filename
         # we write things into buffers out-of-order
         self.header_buf = Buf(self)
         self.imports_buf = Buf(self)
@@ -744,6 +760,10 @@ class ModuleRedeclarator(object):
         v = OMIT_NAME_IN_MODULE.get(BUILTIN_MOD_NAME, []) + ["True", "False", "None", "__debug__"]
         OMIT_NAME_IN_MODULE[BUILTIN_MOD_NAME] = v
 
+    if IS_JAVA and version > (2,4):  # in 2.5.1 things are way weird!
+        OMIT_NAME_IN_MODULE['_codecs'] = ['EncodingMap']
+        OMIT_NAME_IN_MODULE['_hashlib'] = ['Hash']
+
     ADD_VALUE_IN_MODULE = {
         "sys": ("exc_value = Exception()", "exc_traceback=None"), # only present after an exception in current thread
     }
@@ -752,6 +772,7 @@ class ModuleRedeclarator(object):
     # Dict is keyed by (module name, member name) and value is the replacement.
     REPLACE_MODULE_VALUES = {
         ("numpy.core.multiarray", "typeinfo") : "{}",
+        ("psycopg2._psycopg", "string_types") : "{}", # badly mangled __eq__ breaks fmtValue
     }
     if version[0] <= 2:
         REPLACE_MODULE_VALUES[(BUILTIN_MOD_NAME, "None")] = "object()"
@@ -799,7 +820,6 @@ class ModuleRedeclarator(object):
     # NOTE: per-module signature data may be lazily imported
     # keyed by (module_name, class_name, method_name). PREDEFINED_BUILTIN_SIGS might be a layer of it.
     # value is ("signature", "return_literal")
-    # TODO: create only the part relevant to current module, save a few milliseconds
     PREDEFINED_MOD_CLASS_SIGS = {
         ("binascii", None, "hexlify"): ("(data)", BYTES_LIT),
         ("binascii", None, "unhexlify"): ("(hexstr)", BYTES_LIT),
@@ -854,6 +874,12 @@ class ModuleRedeclarator(object):
         ("numpy.core.multiarray", None, "arange") : ("(start=None, stop=None, step=None, dtype=None)", None), # same as range()
         ("numpy.core.multiarray", None, "set_numeric_ops") : ("(**ops)", None),
     }
+
+    if version[0] < 3:
+        PREDEFINED_MOD_CLASS_SIGS[("itertools", "product", "__init__")] = ("(self, *iterables, **kwargs)", LIST_LIT)
+    else:
+        PREDEFINED_MOD_CLASS_SIGS[("itertools", "product", "__init__")] = ("(self, *iterables, repeat=1)", LIST_LIT)
+
 
     if version[0] < 3:
        PREDEFINED_MOD_CLASS_SIGS[("PyQt4.QtCore", None, "pyqtSlot")] = ("(*types, **keywords)", None) # doc assumes py3k syntax
@@ -1459,6 +1485,7 @@ class ModuleRedeclarator(object):
         ret_literal = None
         is_init = False
         # any decorators?
+        action("redoing decos of func %r of class %r", p_name, p_class)
         if self.doing_builtins and p_modname == BUILTIN_MOD_NAME:
             deco = self.KNOWN_DECORATORS.get((classname, p_name), None)
             if deco:
@@ -1475,6 +1502,7 @@ class ModuleRedeclarator(object):
             deco = "staticmethod"
             deco_comment = " # known case of __new__"
 
+        action("redoing innards of func %r of class %r", p_name, p_class)
         if deco and HAS_DECORATORS:
             out(indent, "@", deco, deco_comment)
         if inspect and inspect.isfunction(p_func):
@@ -1515,6 +1543,7 @@ class ModuleRedeclarator(object):
             elif hasattr(p_func, "__doc__"):
                 funcdoc = p_func.__doc__
             sig_restored = False
+            action("parsing doc of func %r of class %r", p_name, p_class)
             if isinstance(funcdoc, STR_TYPES):
                 (spec, ret_literal, more_notes) = self.parseFuncDoc(funcdoc, p_name, p_name, classname, deco, sip_generated)
                 if spec is None and p_name == '__init__' and classname:
@@ -1590,13 +1619,17 @@ class ModuleRedeclarator(object):
         methods = {}
         properties = {}
         others = {}
-        we_are_the_base_class = p_modname == BUILTIN_MOD_NAME and p_name in ("object", FAKE_CLASSOBJ_NAME)
+        we_are_the_base_class = p_modname == BUILTIN_MOD_NAME and p_name == "object"
         has_dict = hasattr(p_class, "__dict__")
         if has_dict:
             field_source = p_class.__dict__
         else:
             field_source = dir(p_class) # this includes unwanted inherited methods, but no dict + inheritance is rare
-        for item_name in field_source:
+        try:
+            field_keys = field_source.keys() # Jython 2.5.1 _codecs fail here
+        except:
+            field_keys = ()
+        for item_name in field_keys:
             if item_name in ("__doc__", "__module__"):
                 if we_are_the_base_class:
                     item = "" # must be declared in base types
@@ -1678,7 +1711,8 @@ class ModuleRedeclarator(object):
     def redoSimpleHeader(self, p_name):
         "Puts boilerplate code on the top"
         out = self.header_buf.out # 1st class methods rule :)
-        out(0, "# encoding: utf-8") # NOTE: maybe encoding should be selectable
+        out(0, "# encoding: %s" % OUT_ENCODING) # line 1
+        # NOTE: maybe encoding should be selectable
         if hasattr(self.module, "__name__"):
             self_name = self.module.__name__
             if self_name != p_name:
@@ -1687,11 +1721,13 @@ class ModuleRedeclarator(object):
                 mod_name = ""
         else:
             mod_name = " does not know its name"
+        out(0, "# module ", p_name, mod_name) # line 2
+        version_control_header_format = '# from %s by generator %s'
+        out(0, version_control_header_format % (
+            self.mod_filename or getattr(self.module, "__file__", "(built-in)"), VERSION)
+        ) # line 3
         if p_name == BUILTIN_MOD_NAME and version[0] == 2 and version[1] >= 6:
             out(0, "from __future__ import print_function")
-        out(0, "# module " + p_name + mod_name)
-        if hasattr(self.module, "__file__"):
-            out(0, "# from file " + self.module.__file__)
         self.outDocAttr(out, self.module, 0)
 
 
@@ -1722,15 +1758,17 @@ class ModuleRedeclarator(object):
         Intended for built-in modules and thus does not handle import statements.
         @param p_name name of module
         """
-        action("redoing module %r %r", p_name, str(self.module))
+        action("redoing header of module %r %r", p_name, str(self.module))
         self.redoSimpleHeader(p_name)
 
         # find whatever other self.imported_modules the module knows; effectively these are imports
+        action("redoing imports of module %r %r", p_name, str(self.module))
         try:
             self.redoImports()
         except:
             pass
 
+        action("redoing innards of module %r %r", p_name, str(self.module))
         module_type = type(sys)
         for item_name, item in self.module.__dict__.items():
             if type(item) is module_type: # not isinstance, py2.7 + PyQt4.QtCore on windows have a bug here
@@ -1765,7 +1803,7 @@ class ModuleRedeclarator(object):
             if not skip_modname:
                 try:
                     mod_name = getattr(item, '__module__', None)
-                except NameError:
+                except:
                     pass
             import_from_top = our_package.startswith(packageOf(mod_name, True)) # e.g. p_name="pygame.rect" and mod_name="pygame"
             want_to_import = False
@@ -1795,7 +1833,7 @@ class ModuleRedeclarator(object):
                     if item_name not in import_list:
                         import_list.append(item_name)
             if not want_to_import:
-                if isinstance(item, type) or item is FakeClassObj: # some classes are callable, check them before functions
+                if isinstance(item, type): # some classes are callable, check them before functions
                     classes[item_name] = item
                 elif isCallable(item):
                     funcs[item_name] = item
@@ -1808,6 +1846,7 @@ class ModuleRedeclarator(object):
                         vars_complex[item_name] = item
         #
         # sort and output every bucket
+        action("outputting innards of module %r %r", p_name, str(self.module))
         self.outputImportFroms()
         #
         omitted_names = self.OMIT_NAME_IN_MODULE.get(p_name, [])
@@ -1884,6 +1923,23 @@ class ModuleRedeclarator(object):
                 self.redoClass(out, item, item_name, 0, p_modname=p_name, seen=seen_classes)
                 self._defined[item_name] = True
                 out(0, "") # empty line after each item
+                
+            if self.doing_builtins and p_name == BUILTIN_MOD_NAME and version[0] < 3:
+                # classobj still supported
+                txt = (
+                    "class ___Classobj:" "\n"
+                    "    '''A mock class representing the old style class base.'''" "\n"
+                    "    __module__ = None" "\n"
+                    "    __class__ = None" "\n"
+                    "    #" "\n"
+                    "    def __init__(cls):" "\n"
+                    "        pass" "\n"
+                    "    __dict__ = {}" "\n"
+                    "    __doc__ = ''" "\n"
+                    "    __module__ = ''" "\n"
+                )
+                self.classes_buf.out(0, txt)
+
         else:
             self.classes_buf.out(0, "# no classes")
         #
@@ -1954,8 +2010,9 @@ class ModuleRedeclarator(object):
 
 def hasRegularPythonExt(name):
     "Does name end with .py?"
-    return name.endswith(".py")   # Note that the standard library on MacOS X 10.6 is shipped only as .pyc files, so we need to
-                                  # have them processed by the generator in order to have any code insight for the standard library.
+    return name.endswith(".py")
+    # Note that the standard library on MacOS X 10.6 is shipped only as .pyc files, so we need to
+    # have them processed by the generator in order to have any code insight for the standard library.
 
 def buildOutputName(subdir, name):
     global action
@@ -1983,8 +2040,7 @@ def buildOutputName(subdir, name):
         fname = target_name + ".py"
     return fname
 
-def redoModule(name, fname, imported_module_names):
-    global action
+def redoModule(name, out_name, mod_file_name, doing_builtins, imported_module_names):
     # gobject does 'del _gobject' in its __init__.py, so the chained attribute lookup code
     # fails to find 'gobject._gobject'. thus we need to pull the module directly out of
     # sys.modules
@@ -1993,157 +2049,283 @@ def redoModule(name, fname, imported_module_names):
         report("Failed to find imported module in sys.modules")
         #sys.exit(0)
 
-    if update_mode and hasattr(mod, "__file__"):
-        action("probing %r", fname)
-        mod_mtime = os.path.exists(mod.__file__) and os.path.getmtime(mod.__file__) or 0.0
-        file_mtime = os.path.exists(fname) and os.path.getmtime(fname) or 0.0
-        # skeleton's file is no older than module's, and younger than our script
-        if file_mtime >= mod_mtime and datetime.fromtimestamp(file_mtime) > OUR_OWN_DATETIME:
-            return # skip the file
-
-    if doing_builtins and name == BUILTIN_MOD_NAME:
-        action("grafting")
-        setattr(mod, FAKE_CLASSOBJ_NAME, FakeClassObj)
-    action("opening %r", fname)
-    outfile = fopen(fname, "w")
+    action("opening %r", out_name)
+    outfile = fopen(out_name, "w")
     action("restoring")
-    r = ModuleRedeclarator(mod, outfile, doing_builtins=doing_builtins)
+    r = ModuleRedeclarator(mod, outfile, mod_file_name, doing_builtins=doing_builtins)
     r.redo(name, imported_module_names)
     action("flushing")
     r.flush()
-    action("closing %r", fname)
+    action("closing %r", out_name)
     outfile.close()
+
+# find_binaries functionality
+
+def is_binary_lib_name(path, f):
+    suffixes = ('.so', '.pyd')
+    for suf in suffixes:
+        if f.endswith(suf):
+            return True
+    if f.endswith('.pyc') or f.endswith('.pyo'):
+        fullname = os.path.join(path, f[:-1])
+        return not os.path.exists(fullname)
+    return False
+
+mac_stdlib_pattern = re.compile("/System/Library/Frameworks/Python\\.framework/Versions/(.+)/lib/python\\1/(.+)")
+mac_skip_modules = ["test", "ctypes/test", "distutils/tests", "email/test",
+                    "importlib/test", "json/tests", "lib2to3/tests",
+                    "sqlite3/test", "tkinter/test", "idlelib"]
+
+posix_skip_modules = ["vtemodule", "PAMmodule", "_snackmodule", "/quodlibet/_mmkeys"]
+
+def is_posix_skipped_module(path, f):
+    if os.name == 'posix':
+        name = os.path.join(path, f)
+        for mod in posix_skip_modules:
+            if name.endswith(mod):
+                return True
+    return False
+
+def is_mac_skipped_module(path, f):
+    fullname = os.path.join(path, f)
+    m = mac_stdlib_pattern.match(fullname)
+    if not m: return 0
+    relpath = m.group(2)
+    for module in mac_skip_modules:
+        if relpath.startswith(module): return 1
+    return 0
+
+def is_skipped_module(path, f):
+    return is_mac_skipped_module(path, f) or is_posix_skipped_module(path, f[:f.rindex('.')])
+
+
+def find_binaries(paths):
+    """
+    Finds binaries in the given list of paths.
+    Understands nested paths, as sys.paths have it (both "a/b" and "a/b/c").
+    Tries to be case-insensitive, but case-preserving.
+    @param paths a list of paths.
+    @return a list like [(module_name: full_path),.. ]
+    """
+    SEP = os.path.sep
+    res = {} # {name.upper(): (name, full_path)} # b/c windows is case-oblivious
+    if not paths:
+        return {}
+    if IS_JAVA: # jython can't have binary modules
+        return {}
+    reasonable_name_rx = re.compile("^\w(?<![0-9])\w*(\.\w(?<![0-9])\w*)*$", re.UNICODE)
+    # ^^^ any dot-separated words consisting of \w and not starting with a digit
+    paths = sortedNoCase(paths)
+    for path in paths:
+        for root, dirs, files in os.walk(path):
+            if root.endswith('__pycache__'): continue
+            cutpoint = path.rfind(SEP)
+            if cutpoint > 0:
+                preprefix = path[(cutpoint + len(SEP)):] + '.'
+            else:
+                preprefix = ''
+            prefix = root[(len(path) + len(SEP)):].replace(SEP, '.')
+            if prefix:
+                prefix += '.'
+            note("root: %s path: %s prefix: %s preprefix: %s", root, path, prefix, preprefix)
+            for f in files:
+                if is_binary_lib_name(root, f) and not is_skipped_module(root, f):
+                    name = f[:f.rindex('.')]
+                    note("cutout: %s", name)
+                    if preprefix:
+                        note("prefixes: %s %s", prefix, preprefix)
+                        pre_name = (preprefix + prefix + name).upper()
+                        if pre_name in res:
+                            res.pop(pre_name) # there might be a dupe, if paths got both a/b and a/b/c
+                        note("done with %s", name)
+                    the_name = prefix + name
+                    if reasonable_name_rx.match(the_name): # lest smth like lib-dynload sneaks in
+                        res[the_name.upper()] = (the_name, root + SEP + f)
+    return list(res.values())
+
+if sys.platform == 'cli':
+    from System import DateTime
+    class Timer(object):
+        def __init__(self):
+            self.started = DateTime.Now
+        def elapsed(self):
+            return (DateTime.Now - self.started).TotalMilliseconds
+else:
+    from time import time
+    class Timer(object):
+        def __init__(self):
+            self.started = time()
+        def elapsed(self):
+            return int((time() - self.started)*1000)
 
 
 # command-line interface
+
+def processOne(name, mod_file_name, doing_builtins):
+    """
+    Processes a single module named name defined in file_name (autodetect if not given).
+    Returns True on success.
+    """
+    if hasRegularPythonExt(name):
+        report("Ignored a regular Python file %r", name)
+        return False
+    if not quiet:
+        say(name)
+        sys.stdout.flush()
+    action("doing nothing")
+    #noinspection PyBroadException
+    try:
+        fname = buildOutputName(subdir, name)
+
+        old_modules = list(sys.modules.keys())
+        imported_module_names = []
+        class MyFinder:
+            def find_module(self, fullname, path=None):
+                if fullname != name:
+                    imported_module_names.append(fullname)
+                return None
+
+        my_finder = None
+        if hasattr(sys, 'meta_path'):
+            my_finder = MyFinder()
+            sys.meta_path.append(my_finder)
+        else:
+            imported_module_names = None
+
+        action("importing %r", name)
+        try:
+            __import__(name) # sys.modules will fill up with what we want
+        except ImportError:
+            exctype, value = sys.exc_info()[:2]
+            report("Name %r failed to import: %r", name, str(value))
+            if debug_mode:
+                sys.exit(1)
+            return False
+
+        if my_finder:
+            sys.meta_path.remove(my_finder)
+        if imported_module_names is None:
+            imported_module_names = [m for m in sys.modules.keys() if m not in old_modules]
+
+        redoModule(name, fname, mod_file_name, doing_builtins, imported_module_names)
+        # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
+        # restore all of them
+        if imported_module_names:
+            for m in sys.modules.keys():
+                action("restoring submodule %r", m)
+                # if module has __file__ defined, it has Python source code and doesn't need a skeleton
+                if m not in old_modules and m not in imported_module_names and m != name and not hasattr(sys.modules[m], '__file__'):
+                    if not quiet:
+                        say(m)
+                        sys.stdout.flush()
+                    fname = buildOutputName(subdir, m)
+                    redoModule(m, fname, mod_file_name, doing_builtins, imported_module_names)
+    except:
+        report("Failed to process %r while %s", name, _current_action)
+        if debug_mode:
+            if sys.platform == 'cli':
+              traceback.print_exc(file=sys.stderr)
+            raise
+        return False
+    return True
 
 if __name__ == "__main__":
     from getopt import getopt
     import os
 
-    if sys.version_info[0] > 2:
+    if version[0] > 2:
         import io  # in 3.0
 
-        fopen = lambda name, mode: io.open(name, mode, encoding='utf-8')
+        fopen = lambda name, mode: io.open(name, mode, encoding=OUT_ENCODING)
     else:
         fopen = open
+
+    debug_mode = False
 
     # handle cmdline
     helptext = (
         'Generates interface skeletons for python modules.' '\n'
-        'Usage: generator [options] [name ...]' '\n'
-        'Every "name" is a (qualified) module name, e.g. "foo.bar"' '\n'
+        'Usage: generator [options] [module_name [file_name]]' '\n'
+        '  module_name is fully qualified, and file_name is where the module is defined.' '\n'
+        '  E.g. foo.bar /usr/lib/python/foo_bar.so' '\n'
+        '  For built-in modules file_name is not provided.' '\n'
         'Output files will be named as modules plus ".py" suffix.' '\n'
         'Normally every name processed will be printed and stdout flushed.' '\n'
+        '\n'
         'Options are:' '\n'
         ' -h -- prints this help message.' '\n'
         ' -d dir -- output dir, must be writable. If not given, current dir is used.' '\n'
         ' -b -- use names from sys.builtin_module_names' '\n'
         ' -q -- quiet, do not print anything on stdout. Errors still go to stderr.' '\n'
-        ' -u -- update, only recreate skeletons for newer files, and skip unchanged.' '\n'
         ' -x -- die on exceptions with a stacktrace; only for debugging.' '\n'
         ' -v -- be verbose, print lots of debug output to stderr' '\n'
         ' -c modules -- import CLR assemblies with specified names' '\n'
         ' -p -- run CLR profiler ' '\n'
+        ' -L -- print version and then a list of binary module files on sys.path;' '\n'
+        '       lines are "qualified.module.name /full/path/to/module_file.{dll,so}"' '\n'
     )
-    opts, fnames = getopt(sys.argv[1:], "d:hbquxvc:p")
+    opts, args = getopt(sys.argv[1:], "d:hbqxvc:pL")
     opts = dict(opts)
+
     if not opts or '-h' in opts:
-        print(helptext)
+        say(helptext)
         sys.exit(0)
-    if '-b' not in opts and not fnames:
-        report("Neither -b nor any module name given")
+
+    if '-L' not in opts and '-b' not in opts and not args:
+        report("Neither -L nor -b nor any module name given")
         sys.exit(1)
+
     quiet = '-q' in opts
-    update_mode = "-u" in opts
-    debug_mode = "-x" in opts
+
+    if "-x" in opts:
+        debug_mode = True
+        if sys.platform == "cli":
+            import traceback
+
     _is_verbose = '-v' in opts
+
+    # find binaries?
+    if "-L" in opts:
+        say(VERSION)
+        for name, path in find_binaries(sys.path):
+            say("%s %s", name, path)
+        sys.exit(0)
+
+    # build skeleton(s)
     subdir = opts.get('-d', '')
+    timer = Timer()
     # determine names
-    names = fnames
     if '-b' in opts:
-        doing_builtins = True
-        names.extend(sys.builtin_module_names)
+        if args:
+            report("No names should not be specified with -b")
+            sys.exit(1)
+        names = list(sys.builtin_module_names)
         if not BUILTIN_MOD_NAME in names:
             names.append(BUILTIN_MOD_NAME)
         if '__main__' in names:
             names.remove('__main__') # we don't want ourselves processed
+        # TODO: process the whole names list separately here
+        for name in names:
+            processOne(name, None, True)
+
     else:
-        doing_builtins = False
+        if len(args) > 2:
+            report("Only module_name or module_name and file_name should be specified; got %d args", len(args))
+            sys.exit(1)
+        name = args[0]
+        if len(args) == 2:
+            mod_file_name = args[1]
+        else:
+            mod_file_name = None
 
-    if sys.platform == 'cli':
-        refs = opts.get('-c', '')
-        if refs:
-            for ref in refs.split(';'): clr.AddReferenceByPartialName(ref)
+        if sys.platform == 'cli':
+            refs = opts.get('-c', '')
+            if refs:
+                for ref in refs.split(';'): clr.AddReferenceByPartialName(ref)
 
-        if '-p' in opts:
-            atexit.register(print_profile)
+            if '-p' in opts:
+                atexit.register(print_profile)
 
-        from System import DateTime
+        processOne(name, mod_file_name, False)
 
-        start = DateTime.Now
-
-    # go on
-    for name in names:
-        if hasRegularPythonExt(name):
-          report("Ignored a regular Python file %r", name)
-          continue
-        if not quiet:
-            say(name)
-            sys.stdout.flush()
-        action("doing nothing")
-        try:
-            fname = buildOutputName(subdir, name)
-
-            old_modules = list(sys.modules.keys())
-            imported_module_names = []
-            class MyFinder:
-                def find_module(self, fullname, path=None):
-                    if fullname != name:
-                        imported_module_names.append(fullname)
-                    return None
-
-            my_finder = None
-            if hasattr(sys, 'meta_path'):
-                my_finder = MyFinder()
-                sys.meta_path.append(my_finder)
-            else:
-                imported_module_names = None
-
-            action("importing %r", name)
-            try:
-                __import__(name) # sys.modules will fill up with what we want
-            except ImportError:
-                exctype, value = sys.exc_info()[:2]
-                report("Name %r failed to import: %r", name, str(value))
-                if debug_mode:
-                    sys.exit(1)
-                continue
-
-            if my_finder:
-                sys.meta_path.remove(my_finder)
-            if imported_module_names is None:
-                imported_module_names = [m for m in sys.modules.keys() if m not in old_modules]
-
-            redoModule(name, fname, imported_module_names)
-            # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
-            # restore all of them
-            if imported_module_names:
-                for m in sys.modules.keys():
-                    action("restoring submodule %r", m)
-                    # if module has __file__ defined, it has Python source code and doesn't need a skeleton 
-                    if m not in old_modules and m not in imported_module_names and m != name and not hasattr(sys.modules[m], '__file__'):
-                        if not quiet:
-                            say(m)
-                            sys.stdout.flush()
-                        fname = buildOutputName(subdir, m)
-                        redoModule(m, fname, imported_module_names)
-        except:
-            report("Failed to process %r while %s", name, _current_action)
-            if debug_mode:
-                raise
-            else:
-                continue
-
-    if sys.platform == 'cli':
-        print("Generation completed in " + str((DateTime.Now - start).TotalMilliseconds) + " ms")
+    say("Generation completed in %d ms" , timer.elapsed())
