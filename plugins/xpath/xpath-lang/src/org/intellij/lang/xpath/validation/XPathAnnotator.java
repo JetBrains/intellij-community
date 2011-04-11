@@ -112,7 +112,14 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
         if (operator != XPathTokenTypes.STAR && XPath2TokenTypes.KEYWORDS.contains(operator)) {
           final String op = o.getOperationSign();
           if (o.getText().startsWith(operand.getText() + op)) {
-            myHolder.createErrorAnnotation(o, "Number literal must be followed by whitespace in XPath 2");
+            final Annotation annotation =
+              myHolder.createErrorAnnotation(o, "Number literal must be followed by whitespace in XPath 2");
+
+            final XPathExpression rOperand = o.getROperand();
+            if (rOperand != null) {
+              final String replacement = operand.getText() + " " + op + " " + rOperand.getText();
+              annotation.registerFix(new ExpressionReplacementFix(replacement, o));
+            }
           }
         }
       }
@@ -123,7 +130,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
           final XPathExpression rOperand = o.getROperand();
           if (rOperand != null) {
             final String replacement = "(" + operand.getText() + ") " + o.getOperationSign() + " " + rOperand.getText();
-            annotation.registerFix(new ConsecutiveComparisonFix(replacement, o));
+            annotation.registerFix(new ExpressionReplacementFix(replacement, o));
           }
         }
       }
@@ -203,6 +210,9 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
 
   private static void checkFunctionCall(AnnotationHolder holder, XPathFunctionCall call, @NotNull ContextProvider contextProvider) {
     final ASTNode node = call.getNode().findChildByType(XPathTokenTypes.FUNCTION_NAME);
+    if (node == null) {
+      return;
+    }
 
     final QName name = contextProvider.getQName(call);
     final XPathFunction function = call.resolve();

@@ -24,11 +24,11 @@ import org.intellij.lang.xpath.psi.XPathBinaryExpression;
 import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
 import org.jetbrains.annotations.NotNull;
 
-class ConsecutiveComparisonFix implements IntentionAction {
+class ExpressionReplacementFix implements IntentionAction {
   private final String myReplacement;
   private final XPathBinaryExpression myExpr;
 
-  public ConsecutiveComparisonFix(String replacement, XPathBinaryExpression expr) {
+  public ExpressionReplacementFix(String replacement, XPathBinaryExpression expr) {
     myReplacement = replacement;
     myExpr = expr;
   }
