@@ -16,6 +16,7 @@
 package org.intellij.lang.xpath.psi;
 
 import com.intellij.psi.PsiElementVisitor;
+import org.intellij.lang.xpath.XPathFile;
 
 /*
 * Created by IntelliJ IDEA.
@@ -103,5 +104,9 @@ public class XPathElementVisitor extends PsiElementVisitor {
 
   public void visitXPathElement(XPathElement o) {
     visitElement(o);
+  }
+
+  public void visitXPathFile(XPathFile file) {
+    visitFile(file);
   }
 }
