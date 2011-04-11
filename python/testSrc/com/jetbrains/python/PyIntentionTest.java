@@ -40,10 +40,12 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
   }
 
   public void testConvertDictComp() {
+    setLanguageLevel(LanguageLevel.PYTHON26);
     doTest(PyBundle.message("INTN.convert.dict.comp.to"));
   }
 
   public void testConvertSetLiteral() {
+    setLanguageLevel(LanguageLevel.PYTHON26);
     doTest(PyBundle.message("INTN.convert.set.literal.to"));
   }
 
