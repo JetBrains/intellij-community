@@ -130,11 +130,14 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
   private static final Handler[] ourHandlers = { new MyLiteralHandler(), new MyDocCommentHandler(), new MyCommentHandler() };
 
   private static class MyLiteralHandler extends Handler {
-    private static final TokenSet ourLiterals = TokenSet.create(JavaTokenType.CHARACTER_LITERAL, JavaTokenType.STRING_LITERAL);
+    private static final TokenSet LITERALS = TokenSet.create(JavaTokenType.CHARACTER_LITERAL, JavaTokenType.STRING_LITERAL);
 
     public PsiElement findApplicable(final PsiElement element) {
-      return element instanceof PsiJavaToken && ourLiterals.contains(((PsiJavaToken)element).getTokenType()) ?
-             element.getParent() : null;
+      final PsiElement parent = element.getParent();
+      return element instanceof PsiJavaToken &&
+             LITERALS.contains(((PsiJavaToken)element).getTokenType()) &&
+             parent instanceof PsiLiteralExpression
+             ? parent : null;
     }
 
     public PsiElement createReplacement(final PsiElement element, final String newText) {
