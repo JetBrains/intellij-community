@@ -16,6 +16,7 @@
 
 package com.intellij.execution.impl;
 
+import com.google.common.collect.Lists;
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
 import com.intellij.execution.ConsoleFolding;
 import com.intellij.execution.ExecutionBundle;
@@ -69,7 +70,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -102,7 +102,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, DataProvider, OccurenceNavigator {
-  
+
   private @NonNls String CONSOLE_VIEW_POPUP_MENU = "ConsoleView.PopupMenu";
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.ConsoleViewImpl");
 
@@ -475,7 +475,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private void printHyperlink(String s, ConsoleViewContentType contentType, HyperlinkInfo info) {
     synchronized (LOCK) {
-      Pair<String,Integer> pair = myBuffer.print(s, contentType, info);
+      Pair<String, Integer> pair = myBuffer.print(s, contentType, info);
       s = pair.first;
       myContentSize += s.length() - pair.second;
 
@@ -492,7 +492,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   protected void beforeExternalAddContentToDocument(int length, ConsoleViewContentType contentType) {
-    myContentSize+=length;
+    myContentSize += length;
     addToken(length, null, contentType);
   }
 
@@ -545,8 +545,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }, null, DocCommandGroupId.noneGroupId(document));
     }
 
-    
-    final String text;
+
+    final StringBuilder[] text;
     final Collection<ConsoleViewContentType> contentTypes;
     int deferredTokensSize;
     synchronized (LOCK) {
@@ -555,7 +555,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (myEditor == null) return;
 
       text = myBuffer.getText();
-      
+
       contentTypes = Collections.unmodifiableCollection(new HashSet<ConsoleViewContentType>(myBuffer.getDeferredTokenTypes()));
       List<TokenInfo> deferredTokens = myBuffer.getDeferredTokens();
       for (TokenInfo deferredToken : deferredTokens) {
@@ -567,7 +567,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final Document document = myEditor.getDocument();
     final int oldLineCount = document.getLineCount();
     final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == document.getTextLength();
-    boolean cycleUsed = myBuffer.isUseCyclicBuffer() && document.getTextLength() + text.length() > myBuffer.getCyclicBufferSize();
+    int textLength = 0;
+
+    final List<String> textLines = splitToLines(text);
+    for (String line : textLines) {
+      textLength += line.length();
+    }
+
+    boolean cycleUsed = myBuffer.isUseCyclicBuffer() && document.getTextLength() + textLength > myBuffer.getCyclicBufferSize();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         int offset = myEditor.getCaretModel().getOffset();
@@ -576,15 +583,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           myEditor.getScrollingModel().accumulateViewportChanges();
         }
         try {
-          String[] strings = text.split("\\r");
-          for (int i = 0; i < strings.length - 1; i++) {
-            document.insertString(document.getTextLength(), strings[i]);
+
+          for (int i = 0; i < textLines.size() - 1; i++) {
+            document.insertString(document.getTextLength(), textLines.get(i));
             int lastLine = document.getLineCount() - 1;
             if (lastLine >= 0) {
               document.deleteString(document.getLineStartOffset(lastLine), document.getTextLength());
             }
           }
-          document.insertString(document.getTextLength(), strings[strings.length - 1]);
+          document.insertString(document.getTextLength(), textLines.get(textLines.size() - 1));
         }
         finally {
           if (preserveCurrentVisualArea) {
@@ -599,7 +606,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     }, null, DocCommandGroupId.noneGroupId(document));
     synchronized (LOCK) {
-      for (int i = myTokens.size() - 1; i >=0 && deferredTokensSize > 0; i--, deferredTokensSize--) {
+      for (int i = myTokens.size() - 1; i >= 0 && deferredTokensSize > 0; i--, deferredTokensSize--) {
         TokenInfo token = myTokens.get(i);
         final HyperlinkInfo info = token.getHyperlinkInfo();
         if (info != null) {
@@ -610,7 +617,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myPsiDisposedCheck.performCheck();
     final int newLineCount = document.getLineCount();
     if (cycleUsed) {
-      final int lineCount = LineTokenizer.calcLineCount(text, true);
+      final int lineCount = textLines.size();
       for (Iterator<RangeHighlighter> it = myHyperlinks.getRanges().keySet().iterator(); it.hasNext();) {
         if (!it.next().isValid()) {
           it.remove();
@@ -625,6 +632,30 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (isAtEndOfDocument) {
       EditorUtil.scrollToTheEnd(myEditor);
     }
+  }
+
+  private List<String> splitToLines(StringBuilder[] text) {
+    final List<String> textLines = Lists.newArrayList();
+    StringBuilder line = new StringBuilder();
+    for (StringBuilder textItem : text) {
+      for (int j = 0; j < textItem.length(); j++) {
+        if (textItem.charAt(j) == '\r') {
+          textLines.add(new String(line));
+          line.setLength(0);
+        }
+        else {
+          line.append(textItem.charAt(j));
+        }
+      }
+    }
+    if (line.length() > 0) {
+      textLines.add(line.toString());
+    }
+
+    if (textLines.size() == 0) {
+      textLines.add("");
+    }
+    return textLines;
   }
 
   private void flushDeferredUserInput() {
@@ -773,7 +804,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       @Override
       public Color getDefaultBackground() {
         final Color color = getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
-        return color == null? super.getDefaultBackground() : color;
+        return color == null ? super.getDefaultBackground() : color;
       }
     };
     editor.setColorsScheme(scheme);
@@ -1510,7 +1541,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       scrollTo(next.getStartOffset());
     }
     final HyperlinkInfo hyperlinkInfo = myHyperlinks.getRanges().get(next);
-    return  hyperlinkInfo == null ? null : new OccurenceInfo(new Navigatable.Adapter() {
+    return hyperlinkInfo == null ? null : new OccurenceInfo(new Navigatable.Adapter() {
       public void navigate(final boolean requestFocus) {
         hyperlinkInfo.navigate(myProject);
         linkFollowed(hyperlinkInfo);
@@ -1551,7 +1582,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
        * used soft wraps mode and perform update if we see that the current value differs from the stored.
        */
       private boolean myLastIsSelected;
-      
+
       @Override
       protected Editor getEditor(AnActionEvent e) {
         return myEditor;

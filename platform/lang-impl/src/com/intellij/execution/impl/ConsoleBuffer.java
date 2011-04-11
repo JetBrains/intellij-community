@@ -39,7 +39,7 @@ import static com.intellij.execution.impl.ConsoleViewImpl.TokenInfo;
  * <p/>
  * <b>Note:</b> basically this class consists of functionality that is cut from {@link ConsoleViewImpl} in order to make it possible
  * to cover it by tests.
- * 
+ *
  * @author Denis Zhdanov
  * @since 4/5/11 5:26 PM
  */
@@ -54,9 +54,9 @@ public class ConsoleBuffer {
    * <p/>
    * Feel free to check rationale for using this approach at {@link #myCyclicBufferSize} contract.
    */
-  private final Deque<StringBuilder>        myDeferredOutput                  = new ArrayDeque<StringBuilder>();
+  private final Deque<StringBuilder> myDeferredOutput = new ArrayDeque<StringBuilder>();
   private final Set<ConsoleViewContentType> myContentTypesToNotStripOnCycling = new HashSet<ConsoleViewContentType>();
-  
+
   /**
    * Main console usage scenario assumes the following:
    * <pre>
@@ -85,8 +85,8 @@ public class ConsoleBuffer {
    * to be moved. Current constant defines default size of that small buffers.
    */
 
-  private final int     myCyclicBufferSize;
-  private final int     myCyclicBufferUnitSize;
+  private final int myCyclicBufferSize;
+  private final int myCyclicBufferUnitSize;
   private final boolean myUseCyclicBuffer;
 
   /**
@@ -94,7 +94,9 @@ public class ConsoleBuffer {
    */
   private int myDeferredOutputLength;
 
-  /** Buffer for deferred stdin and stderr output. */
+  /**
+   * Buffer for deferred stdin and stderr output.
+   */
   private StringBuffer myDeferredUserInput = new StringBuffer();
 
   /**
@@ -120,7 +122,7 @@ public class ConsoleBuffer {
     final String useCycleBufferProperty = System.getProperty("idea.cycle.buffer.size");
     return useCycleBufferProperty == null || !"disabled".equalsIgnoreCase(useCycleBufferProperty);
   }
-  
+
   private static int getCycleBufferSize() {
     final String cycleBufferSizeProperty = System.getProperty("idea.cycle.buffer.size");
     if (cycleBufferSizeProperty == null) return 1024 * 1024;
@@ -143,7 +145,7 @@ public class ConsoleBuffer {
   public boolean isEmpty() {
     return myDeferredOutput.isEmpty() || (myDeferredOutput.size() == 1 && myDeferredOutput.getFirst().length() <= 0);
   }
-  
+
   public int getLength() {
     return myDeferredOutputLength;
   }
@@ -168,19 +170,16 @@ public class ConsoleBuffer {
     return myDeferredOutput;
   }
 
-  public String getText() {
-    if (myDeferredOutput.size() > 1) {
+  public StringBuilder[] getText() {
+    if (myDeferredOutput.size() > 0) {
       final StringBuilder buffer = new StringBuilder();
       for (StringBuilder builder : myDeferredOutput) {
         buffer.append(builder);
       }
-      return buffer.toString();
-    }
-    else if (myDeferredOutput.size() == 1) {
-      return myDeferredOutput.getFirst().substring(0);
+      return myDeferredOutput.toArray(new StringBuilder[myDeferredOutput.size()]);
     }
     else {
-      return "";
+      return new StringBuilder[0];
     }
   }
 
@@ -190,14 +189,14 @@ public class ConsoleBuffer {
    * <p/>
    * {@link ConsoleViewContentType#USER_INPUT} is considered to be such a type by default, however, it's possible to overwrite that
    * via the current method.
-   * 
-   * @param types       content types that should not be stripped during the buffer's cycling
+   *
+   * @param types content types that should not be stripped during the buffer's cycling
    */
   public void setContentTypesToNotStripOnCycling(@NotNull Collection<ConsoleViewContentType> types) {
     myContentTypesToNotStripOnCycling.clear();
     myContentTypesToNotStripOnCycling.addAll(types);
   }
-  
+
   public void clear() {
     if (myUseCyclicBuffer) {
       myDeferredOutput.clear();
@@ -213,7 +212,7 @@ public class ConsoleBuffer {
     myDeferredUserInput = new StringBuffer();
     myDeferredTokens.clear();
   }
-  
+
   @Nullable
   public String cutFirstUserInputLine() {
     final String text = myDeferredUserInput.substring(0, myDeferredUserInput.length());
@@ -238,16 +237,16 @@ public class ConsoleBuffer {
   public void replaceUserText(int startOffset, int endOffset, String text) {
     myDeferredUserInput.replace(startOffset, endOffset, text);
   }
-  
+
   /**
    * Asks current buffer to store given text of the given type.
-   * 
-   * @param s               text to store
-   * @param contentType     type of the given text
-   * @param info            hyperlink info for the given text (if any)
-   * @return                text that is actually stored (there is a possible case that the buffer is full and given text's type
-   *                        is considered to have lower priority than the stored one, hence, it's better to drop given text completely
-   *                        or partially) and number of existed symbols removed during storing the given data
+   *
+   * @param s           text to store
+   * @param contentType type of the given text
+   * @param info        hyperlink info for the given text (if any)
+   * @return text that is actually stored (there is a possible case that the buffer is full and given text's type
+   *         is considered to have lower priority than the stored one, hence, it's better to drop given text completely
+   *         or partially) and number of existed symbols removed during storing the given data
    */
   @NotNull
   public Pair<String, Integer> print(@NotNull String s, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
@@ -272,7 +271,7 @@ public class ConsoleBuffer {
     myDeferredTypes.add(contentType);
 
     s = StringUtil.convertLineSeparators(s, !SystemInfo.isMac);
-    
+
     myDeferredOutputLength += s.length();
     StringBuilder bufferToUse;
     if (myDeferredOutput.isEmpty()) {
@@ -286,7 +285,7 @@ public class ConsoleBuffer {
       if (bufferToUse.length() >= myCyclicBufferUnitSize) {
         myDeferredOutput.add(bufferToUse = new StringBuilder(myCyclicBufferUnitSize));
       }
-      
+
       if (bufferToUse.length() < myCyclicBufferUnitSize) {
         int numberOfSymbolsToAdd = Math.min(myCyclicBufferUnitSize - bufferToUse.length(), s.length() - offset);
         bufferToUse.append(s.substring(offset, offset + numberOfSymbolsToAdd));
@@ -297,7 +296,7 @@ public class ConsoleBuffer {
     if (contentType == ConsoleViewContentType.USER_INPUT) {
       myDeferredUserInput.append(s);
     }
-    
+
     ConsoleUtil.addToken(s.length(), info, contentType, myDeferredTokens);
     return new Pair<String, Integer>(s, trimmedSymbolsNumber);
   }
@@ -360,7 +359,7 @@ public class ConsoleBuffer {
   //    }
   //  }
   //}
-  
+
   /**
    * IJ console works as follows - it receives managed process outputs from dedicated thread that serves that process and
    * pushes it to the {@link Document document} of editor used to represent process console. Important point here is that process
@@ -371,8 +370,8 @@ public class ConsoleBuffer {
    * to push to the document then. Current method serves exactly that purpose, i.e. it's expected to be called when new chunk of
    * text is received from the underlying process and trims existing text buffer if necessary.
    *
-   * @param numberOfNewSymbols    number of symbols read from the managed process output
-   * @return                      number of newly read symbols that should be accepted
+   * @param numberOfNewSymbols number of symbols read from the managed process output
+   * @return number of newly read symbols that should be accepted
    */
   @SuppressWarnings({"ForLoopReplaceableByForEach"})
   private int trimDeferredOutputIfNecessary(final int numberOfNewSymbols) {
@@ -392,13 +391,13 @@ public class ConsoleBuffer {
     }
 
     Context context = new Context(numberOfSymbolsToRemove);
-    
+
     TIntArrayList indicesOfTokensToRemove = new TIntArrayList();
     for (int i = 0; i < myDeferredTokens.size(); i++) {
       TokenInfo tokenInfo = myDeferredTokens.get(i);
       tokenInfo.startOffset -= context.removedSymbolsNumber;
       tokenInfo.endOffset -= context.removedSymbolsNumber;
-      
+
       if (!context.canContinueProcessing()) {
         // Just update token offsets.
         myDeferredTypes.add(tokenInfo.contentType);
@@ -435,8 +434,9 @@ public class ConsoleBuffer {
       TokenInfo tokenInfo = myDeferredTokens.get(0);
       if (tokenInfo.startOffset > 0) {
         final HyperlinkInfo hyperlinkInfo = tokenInfo.getHyperlinkInfo();
-        myDeferredTokens.add(0, hyperlinkInfo != null ? new HyperlinkTokenInfo(ConsoleViewContentType.USER_INPUT, 0, tokenInfo.startOffset, hyperlinkInfo)
-                                                      : new TokenInfo(ConsoleViewContentType.USER_INPUT, 0, tokenInfo.startOffset));
+        myDeferredTokens
+          .add(0, hyperlinkInfo != null ? new HyperlinkTokenInfo(ConsoleViewContentType.USER_INPUT, 0, tokenInfo.startOffset, hyperlinkInfo)
+                                        : new TokenInfo(ConsoleViewContentType.USER_INPUT, 0, tokenInfo.startOffset));
         myDeferredTypes.add(ConsoleViewContentType.USER_INPUT);
       }
     }
@@ -482,7 +482,7 @@ public class ConsoleBuffer {
       }
     }
   }
-  
+
   private int remove(@NotNull Context context, int tokenLength) {
     int removedSymbolsNumber = 0;
     int remainingTotalNumberOfSymbolsToRemove = context.numberOfSymbolsToRemove - context.removedSymbolsNumber;
@@ -518,7 +518,7 @@ public class ConsoleBuffer {
     }
     return removedSymbolsNumber;
   }
-  
+
   private final class Context {
 
     public final int numberOfSymbolsToRemove;
@@ -537,11 +537,11 @@ public class ConsoleBuffer {
         currentBuffer = null;
       }
     }
-    
+
     public boolean canContinueProcessing() {
       return removedSymbolsNumber < numberOfSymbolsToRemove && currentBuffer != null;
     }
-    
+
     public boolean nextBuffer() {
       if (iterator.hasNext()) {
         currentBuffer = iterator.next();
@@ -551,9 +551,9 @@ public class ConsoleBuffer {
       return false;
     }
   }
-  
+
   @SuppressWarnings({"PointlessBooleanExpression", "ConstantConditions"})
-  private  void dumpDeferredOutput() {
+  private void dumpDeferredOutput() {
     if (!DEBUG_PROCESSING) {
       return;
     }
@@ -567,7 +567,7 @@ public class ConsoleBuffer {
     }
     log("-----------------------------------------------------------------------------------------------------");
   }
-  
+
   @SuppressWarnings({"UnusedDeclaration", "CallToPrintStackTrace"})
   private static void log(Object o) {
     //try {
