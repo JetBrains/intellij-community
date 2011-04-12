@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,35 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.lang.documentation;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
- * @see AbstractDocumentationProvider
+ * @author Dmitry Avdeev
  */
-@Deprecated
-public abstract class QuickDocumentationProvider implements DocumentationProvider {
-  @Nullable
+public abstract class AbstractDocumentationProvider implements DocumentationProvider {
 
+  @Override
+  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+    return null; 
+  }
+
+  @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
-    return null;
+    return null; 
   }
 
+  @Override
   public String generateDoc(PsiElement element, PsiElement originalElement) {
-    return null;
+    return null; 
   }
 
+  @Override
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
-    return null;
+    return null; 
   }
 
+  @Override
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
-    return null;
+    return null; 
   }
 }
