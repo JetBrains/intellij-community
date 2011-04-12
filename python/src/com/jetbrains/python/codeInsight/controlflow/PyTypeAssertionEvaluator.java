@@ -2,6 +2,7 @@ package com.jetbrains.python.codeInsight.controlflow;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.CollectionFactory;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyCallExpression(PyCallExpression node) {
-    if ("isinstance".equals(node.getCallee().getText())) {
+    if (node.isCalleeText(PyNames.ISINSTANCE)) {
       PyExpression[] args = node.getArguments();
       if (args.length == 2 && args[0] instanceof PyReferenceExpression) {
         PyReferenceExpression target = (PyReferenceExpression)args[0];
