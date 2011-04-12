@@ -1,0 +1,21 @@
+occurence 0:
+function f() {
+    for each (var obj in arguments) {
+        print("Hello!");
+        print("Hello!");
+        print("Hello!");
+        print("Hello!");
+        print("Hello!");
+    }
+}
+
+occurence 1:
+function f() {
+    for each (var obj in arguments) {
+        print("Hello!");
+        print("Hello!");
+        print("Hello!");
+        print("Hello!");
+        print("Hello!");
+    }
+}

@@ -102,7 +102,7 @@ public class JSDuplicatesTest extends LightCodeInsightTestCase {
     return buffer.toString();
   }
 
-  private void doTest(String fileName, boolean distinguishVars, boolean distinguishMethods, boolean distinguishListerals, int patternCount)
+  private void doTest(String fileName, boolean distinguishVars, boolean distinguishMethods, boolean distinguishListerals, int patternCount, String suffix)
     throws Exception {
     DuplocatorSettings settings = DuplocatorSettings.getInstance();
     boolean oldMethods = settings.DISTINGUISH_METHODS;
@@ -113,7 +113,7 @@ public class JSDuplicatesTest extends LightCodeInsightTestCase {
       settings.DISTINGUISH_METHODS = distinguishMethods;
       settings.DISTINGUISH_LITERALS = distinguishListerals;
       settings.DISTINGUISH_VARIABLES = distinguishVars;
-      settings.LOWER_BOUND = 2;
+      settings.LOWER_BOUND = 10;
 
       DuplicatesProfile[] profiles = {new SSRDuplicatesProfile()};
 
@@ -126,7 +126,7 @@ public class JSDuplicatesTest extends LightCodeInsightTestCase {
 
       DupInfo info = collector.getInfo();
       assertEquals(patternCount, info.getPatterns());
-      Set<String> expectedFiles = readExpectedFiles(testName, patternCount);
+      Set<String> expectedFiles = readExpectedFiles(testName + suffix, patternCount);
 
       for (int i = 0; i < info.getPatterns(); i++) {
         String s = toString(info, i);
@@ -143,10 +143,10 @@ public class JSDuplicatesTest extends LightCodeInsightTestCase {
   }
 
   public void test1() throws Exception {
-    doTest("jsdup1.js", true, true, true, 2);
-    doTest("jsdup1.js", true, false, true, 3);
-    doTest("jsdup1.js", false, false, true, 4);
-    doTest("jsdup1.js", false, false, false, 5);
+    doTest("jsdup1.js", true, true, true, 1, "_0");
+    doTest("jsdup1.js", true, false, true, 1, "_1");
+    doTest("jsdup1.js", false, false, true, 1, "_2");
+    doTest("jsdup1.js", false, false, false, 1, "_3");
   }
 
   @Override
