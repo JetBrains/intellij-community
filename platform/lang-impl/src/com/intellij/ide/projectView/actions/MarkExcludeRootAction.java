@@ -33,13 +33,16 @@ public class MarkExcludeRootAction extends MarkRootAction {
   public void actionPerformed(AnActionEvent e) {
     VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     String message = vFiles.length == 1 ? FileUtil.toSystemDependentName(vFiles [0].getPath()) : vFiles.length + " selected files";
-    final int rc = Messages.showOkCancelDialog(e.getData(PlatformDataKeys.PROJECT),
-                                              "Are you sure you would like to exclude " + message +
-                                              " from the project?\nYou can restore excluded folders later using the Project Structure dialog.",
-                                              "Mark as Excluded", Messages.getQuestionIcon());
+    final int rc = Messages
+      .showOkCancelDialog(e.getData(PlatformDataKeys.PROJECT), getPromptText(message), "Mark as Excluded", Messages.getQuestionIcon());
     if (rc != 0) {
       return;
     }
     super.actionPerformed(e);
+  }
+
+  protected String getPromptText(String message) {
+    return "Are you sure you would like to exclude " + message +
+           " from the project?\nYou can restore excluded folders later using the Project Structure dialog.";
   }
 }

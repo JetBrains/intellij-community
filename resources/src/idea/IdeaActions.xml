@@ -671,6 +671,18 @@
       <add-to-group group-id="DiffPanel.Toolbar" anchor="after" relative-to-action="$Copy"/>
     </group>
 
-    
+    <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkRootAction">
+      <add-to-group group-id="MarkRootGroup"/>
+    </action>
+    <action id="MarkTestSourceRoot" class="com.intellij.ide.projectView.actions.MarkTestSourceRootAction">
+      <add-to-group group-id="MarkRootGroup"/>
+    </action>
+    <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction">
+      <add-to-group group-id="MarkRootGroup"/>
+    </action>
+    <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction">
+      <add-to-group group-id="MarkRootGroup"/>
+    </action>
+
   </actions>
 </component>
