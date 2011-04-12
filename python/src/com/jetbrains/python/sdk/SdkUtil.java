@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -14,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -64,12 +64,32 @@ public class SdkUtil {
    * Waits for process for possibly limited duration.
    * @param homePath process run directory
    * @param command command to execute and its arguments
-   * @param addEnv items are prepended to same-named values of inherited process environment. 
+   * @param addEnv items are prepended to same-named values of inherited process environment.
    * @param timeout how many milliseconds to wait until the process terminates; non-positive means inifinity.
    * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null.
    */
   @NotNull
-  public static ProcessOutput getProcessOutput(String homePath, @NonNls String[] command, @NonNls String[] addEnv, final int timeout) {
+  public static ProcessOutput getProcessOutput(String homePath, @NonNls String[] command, @Nullable @NonNls String[] addEnv, final int timeout) {
+    return getProcessOutput(homePath, command, addEnv, timeout, null);
+  }
+
+  /**
+   * Executes a process and returns its stdout and stderr outputs as lists of lines.
+   * Waits for process for possibly limited duration.
+   *
+   * @param homePath process run directory
+   * @param command command to execute and its arguments
+   * @param addEnv items are prepended to same-named values of inherited process environment.
+   * @param timeout how many milliseconds to wait until the process terminates; non-positive means infinity.
+   * @param stdin the data to write to the process standard input stream
+   * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null.
+   */
+  @NotNull
+  public static ProcessOutput getProcessOutput(String homePath,
+                                               @NonNls String[] command,
+                                               @Nullable @NonNls String[] addEnv,
+                                               final int timeout,
+                                               @Nullable byte[] stdin) {
     final ProcessOutput failure_output = new ProcessOutput();
     if (homePath == null || !new File(homePath).exists()) {
       return failure_output;
@@ -112,6 +132,13 @@ public class SdkUtil {
       }
       Process process = Runtime.getRuntime().exec(ArrayUtil.toStringArray(commands), new_env, new File(homePath));
       CapturingProcessHandler processHandler = new CapturingProcessHandler(process);
+      if (stdin != null) {
+        final OutputStream processInput = processHandler.getProcessInput();
+        assert processInput != null;
+        processInput.write(stdin);
+        processInput.write(26);    // EOF marker
+        processInput.flush();
+      }
       return processHandler.runProcess(timeout);
     }
     catch (IOException ex) {
