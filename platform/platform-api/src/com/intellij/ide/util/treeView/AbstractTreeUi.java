@@ -2873,6 +2873,11 @@ public class AbstractTreeUi {
               if (parentNode.getUserObject() instanceof NodeDescriptor) {
                 final NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
                 childDesc.set(getTreeStructure().createDescriptor(elementFromMap, parentDescriptor));
+                NodeDescriptor oldDesc = getDescriptorFrom(childNode);
+                if (oldDesc != null) {
+                  childDesc.get().applyFrom(oldDesc);
+                }
+
                 childNode.setUserObject(childDesc.get());
                 newElement.set(elementFromMap);
                 forceRemapping.set(true);
@@ -3132,7 +3137,8 @@ public class AbstractTreeUi {
   }
 
   protected static boolean doUpdateNodeDescriptor(final NodeDescriptor descriptor) {
-    return descriptor.update();
+    boolean update = descriptor.update();
+    return update;
   }
 
   private void makeLoadingOrLeafIfNoChildren(final DefaultMutableTreeNode node) {

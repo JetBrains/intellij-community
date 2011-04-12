@@ -115,6 +115,13 @@ public abstract class NodeDescriptor<E> {
     myWasDeclaredAlwaysLeaf = leaf;
   }
 
+  public void applyFrom(NodeDescriptor desc) {
+    myOpenIcon = desc.myOpenIcon;
+    myClosedIcon = desc.myClosedIcon;
+    myName = desc.myName;
+    myColor = desc.myColor;
+  }
+
   public abstract static class NodeComparator<T extends NodeDescriptor> implements Comparator<T> {
 
     private long myStamp;
