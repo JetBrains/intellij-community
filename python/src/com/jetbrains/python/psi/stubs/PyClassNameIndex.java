@@ -94,7 +94,8 @@ public class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
   @Nullable
   private static VirtualFile findLibDir(VirtualFile[] files) {
     for (VirtualFile file : files) {
-      if ((file.findChild("__future__.py") != null || file.findChild("__future__.pyc") != null) && file.findChild("test") != null) {
+      if ((file.findChild("__future__.py") != null || file.findChild("__future__.pyc") != null) &&
+          file.findChild("xml") != null && file.findChild("email") != null) {
         return file;
       }
     }
