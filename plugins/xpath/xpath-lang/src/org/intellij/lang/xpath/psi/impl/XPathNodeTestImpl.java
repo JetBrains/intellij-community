@@ -32,7 +32,7 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
     @NotNull
     public XPathStep getStep() {
         final XPathStep step = PsiTreeUtil.getParentOfType(this, XPathStep.class);
-        assert step != null;
+        assert step != null : unexpectedPsiAssertion();
         return step;
     }
 

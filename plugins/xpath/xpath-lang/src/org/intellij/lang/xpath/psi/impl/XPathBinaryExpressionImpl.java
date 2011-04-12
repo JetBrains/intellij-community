@@ -48,7 +48,7 @@ public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPath
     public XPathElementType getOperator() {
         final ASTNode[] nodes = getNode().getChildren(BINARY_OPERATIONS);
         final XPathElementType elementType = (XPathElementType)(nodes.length > 0 ? nodes[0].getElementType() : null);
-        assert elementType != null;
+        assert elementType != null : unexpectedPsiAssertion();
         return elementType;
     }
 
@@ -87,7 +87,7 @@ public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPath
             return XPath2Type.DAYTIMEDURATION;
           }
           if (sameType(lop, rop)) {
-            assert lop != null;
+            assert lop != null : unexpectedPsiAssertion();
             return lop.getType();
           }
 
