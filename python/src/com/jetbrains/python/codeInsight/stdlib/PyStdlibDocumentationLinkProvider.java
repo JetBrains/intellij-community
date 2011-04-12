@@ -391,7 +391,12 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     if (pyVersion != null) {
       urlBuilder.append(pyVersion).append("/");
     }
-    urlBuilder.append("library/");
+    if (pyVersion != null && (pyVersion.startsWith("2.4") || pyVersion.startsWith("2.5"))) {
+      urlBuilder.append("lib/");
+    }
+    else {
+      urlBuilder.append("library/");
+    }
     String qnameString = moduleName.toString();
     if (qnameString.equals("ntpath") || qnameString.equals("posixpath")) {
       qnameString = "os.path";
