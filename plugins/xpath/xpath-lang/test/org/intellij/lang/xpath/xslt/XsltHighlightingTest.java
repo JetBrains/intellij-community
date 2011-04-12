@@ -108,6 +108,10 @@ public class XsltHighlightingTest extends TestBase {
         doXsltHighlighting();
     }
 
+    public void testEmptyExpression() throws Throwable {
+        doXsltHighlighting();
+    }
+
     public void xtestPerformance() throws Throwable {
         myFixture.configureByFile(getTestFileName() + ".xsl");
         final long l = runHighlighting();
