@@ -6,6 +6,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.structuralsearch.StructuralSearchProfileImpl;
 import com.intellij.structuralsearch.equivalence.js.JSEquivalenceDescriptorProvider;
+import com.intellij.structuralsearch.equivalence.xml.XmlEquivalenceDescriptorProvider;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +17,8 @@ import org.jetbrains.annotations.Nullable;
 public abstract class EquivalenceDescriptorProvider {
 
   public static final EquivalenceDescriptorProvider[] DESCRIPTOR_PROVIDERS = new EquivalenceDescriptorProvider[] {
-    new JSEquivalenceDescriptorProvider()
+    new JSEquivalenceDescriptorProvider(),
+    new XmlEquivalenceDescriptorProvider(),
   };
 
   public abstract boolean isMyContext(@NotNull PsiElement context);
