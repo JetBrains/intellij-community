@@ -17,6 +17,7 @@ package org.jetbrains.android.dom.manifest;
 
 import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomFileDescription;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -40,7 +41,8 @@ public class ManifestDomFileDescription extends DomFileDescription<Manifest> {
     if (!file.getName().equals(SdkConstants.FN_ANDROID_MANIFEST_XML)) {
       return false;
     }
-    return AndroidFacet.getInstance(file) != null;
+    final Module module = ModuleUtil.findModuleForPsiElement(file);
+    return module == null || AndroidFacet.getInstance(module) != null;
   }
 
   protected void initializeFileDescription() {
