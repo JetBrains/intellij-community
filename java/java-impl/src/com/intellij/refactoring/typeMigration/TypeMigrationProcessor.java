@@ -78,7 +78,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
                 result.add(element);
               }
             }
-            RefactoringUtil.highlightAllOccurences(project, PsiUtilBase.toPsiElementArray(result), editor);
+            if (editor != null) RefactoringUtil.highlightAllOccurences(project, PsiUtilBase.toPsiElementArray(result), editor);
           }
         });
       }

@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -88,17 +89,16 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   }
 
   @NotNull
-  public String getName() {
-    return getText();
-  }
-
-  @NotNull
   public String getFamilyName() {
     return CodeInsightBundle.message("create.file.family");
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+  public void invoke(@NotNull final Project project,
+                     @NotNull PsiFile file,
+                     Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
     final PsiDirectory myDirectory = (PsiDirectory)startElement;
     if (isAvailable(project, null, file)) {
       new WriteCommandAction(project) {

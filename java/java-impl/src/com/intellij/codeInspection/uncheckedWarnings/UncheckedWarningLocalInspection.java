@@ -398,7 +398,7 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
             if (valueType != null) {
               checkRawToGenericsAssignment(returnValue, returnType, valueType,
                                            false,
-                                           (LocalQuickFix)QuickFixFactory.getInstance().createMethodReturnFix(method, valueType, true));
+                                           QuickFixFactory.getInstance().createMethodReturnFix(method, valueType, true));
             }
           }
         }

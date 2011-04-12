@@ -18,10 +18,9 @@
  * User: anna
  * Date: 07-May-2010
  */
-package com.intellij.codeInsight.daemon;
+package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 
 public class ReplaceImplementsWithStaticImportTest extends LightQuickFixTestCase {
   @Override

@@ -30,19 +30,23 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AddAssertStatementFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.AddAssertStatementFix");
-  private final PsiExpression myExpressionToAssert;
+  private final SmartPsiElementPointer<PsiExpression> myExpressionToAssert;
+  private final String myText;
+
+  public AddAssertStatementFix(@NotNull PsiExpression expressionToAssert) {
+    myExpressionToAssert = SmartPointerManager.getInstance(expressionToAssert.getProject()).createSmartPsiElementPointer(expressionToAssert);
+    LOG.assertTrue(PsiType.BOOLEAN.equals(expressionToAssert.getType()));
+    myText = expressionToAssert.getText();
+  }
 
   @NotNull
   public String getName() {
-    return InspectionsBundle.message("inspection.assert.quickfix", myExpressionToAssert.getText());
-  }
-
-  public AddAssertStatementFix(PsiExpression expressionToAssert) {
-    myExpressionToAssert = expressionToAssert;
-    LOG.assertTrue(PsiType.BOOLEAN.equals(myExpressionToAssert.getType()));
+    return InspectionsBundle.message("inspection.assert.quickfix", myText);
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    PsiExpression expressionToAssert = myExpressionToAssert.getElement();
+    if (expressionToAssert == null) return;
     if (!CodeInsightUtilBase.preparePsiElementForWrite(descriptor.getPsiElement())) return;
     PsiElement element = descriptor.getPsiElement();
     PsiElement anchorElement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
@@ -58,7 +62,8 @@ public class AddAssertStatementFix implements LocalQuickFix {
       PsiAssertStatement assertStatement = (PsiAssertStatement)factory.createStatementFromText(text, null);
       final PsiExpression assertCondition = assertStatement.getAssertCondition();
       assert assertCondition != null;
-      assertCondition.replace(myExpressionToAssert);
+
+      assertCondition.replace(expressionToAssert);
       final PsiElement parent = anchorElement.getParent();
       if (parent instanceof PsiCodeBlock) {
         parent.addBefore(assertStatement, anchorElement);

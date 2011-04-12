@@ -30,6 +30,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -39,6 +40,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -52,25 +54,31 @@ public class ChangeParameterClassFix extends ExtendsListFix {
     return QuickFixBundle.message("change.parameter.class.family");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  @Override
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
     return
-        super.isAvailable(project, editor, file)
-        && myClass != null
-        && myClass.isValid()
-        && myClass.getQualifiedName() != null
+        super.isAvailable(project, file, startElement, endElement)
         && myClassToExtendFrom != null
         && myClassToExtendFrom.isValid()
         && myClassToExtendFrom.getQualifiedName() != null
-        && myClass.getManager().isInProject(myClass)
     ;
   }
 
-  public void invoke(@NotNull final Project project, Editor editor, PsiFile file) {
+  @Override
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable("is null when called from inspection") Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    final PsiClass myClass = (PsiClass)startElement;
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         public void run() {
-          invokeImpl();
+          invokeImpl(myClass);
         }
       }
     );
@@ -99,6 +107,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
         OverrideImplementUtil.chooseAndImplementMethods(project, editor1, myClass);
       }
     }
+    UndoUtil.markPsiFileForUndo(file);
   }
 
   public static void registerQuickFixActions(PsiMethodCallExpression methodCall, PsiExpressionList list, HighlightInfo highlightInfo) {

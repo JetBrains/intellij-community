@@ -33,7 +33,7 @@ public class RemoveExplicitConversionFix extends ReplaceElementFix<XPathExpressi
     }
 
     @NotNull
-    public String getName() {
+    public String getText() {
         return "Remove Explicit Type Conversion";
     }
 

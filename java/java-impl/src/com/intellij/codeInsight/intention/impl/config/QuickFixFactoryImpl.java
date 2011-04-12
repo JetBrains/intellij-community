@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.psi.util.ClassKind;
@@ -30,71 +31,77 @@ import org.jetbrains.annotations.Nullable;
  * @author cdr
  */
 public class QuickFixFactoryImpl extends QuickFixFactory {
-  public IntentionAction createModifierListFix(@NotNull PsiModifierList modifierList,
-                                               @NotNull String modifier,
-                                               boolean shouldHave,
-                                               boolean showContainingClass) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createModifierListFix(@NotNull PsiModifierList modifierList,
+                                                                           @NotNull String modifier,
+                                                                           boolean shouldHave,
+                                                                           boolean showContainingClass) {
     return new ModifierFix(modifierList, modifier, shouldHave,showContainingClass);
   }
 
-  public IntentionAction createModifierListFix(@NotNull PsiModifierListOwner owner,
-                                               @NotNull final String modifier,
-                                               final boolean shouldHave,
-                                               final boolean showContainingClass) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createModifierListFix(@NotNull PsiModifierListOwner owner,
+                                                                           @NotNull final String modifier,
+                                                                           final boolean shouldHave,
+                                                                           final boolean showContainingClass) {
     return new ModifierFix(owner, modifier, shouldHave, showContainingClass);
   }
 
-  public IntentionAction createMethodReturnFix(@NotNull PsiMethod method, @NotNull PsiType toReturn, boolean fixWholeHierarchy) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createMethodReturnFix(@NotNull PsiMethod method,
+                                                                           @NotNull PsiType toReturn,
+                                                                           boolean fixWholeHierarchy) {
     return new MethodReturnTypeFix(method, toReturn, fixWholeHierarchy);
   }
 
-  public IntentionAction createAddMethodFix(@NotNull PsiMethod method, @NotNull PsiClass toClass) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createAddMethodFix(@NotNull PsiMethod method, @NotNull PsiClass toClass) {
     return new AddMethodFix(method, toClass);
   }
 
-  public IntentionAction createAddMethodFix(@NotNull String methodText, @NotNull PsiClass toClass, String... exceptions) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createAddMethodFix(@NotNull String methodText,
+                                                                        @NotNull PsiClass toClass,
+                                                                        String... exceptions) {
     return new AddMethodFix(methodText, toClass, exceptions);
   }
 
-  public IntentionAction createImplementMethodsFix(@NotNull PsiClass aClass) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createImplementMethodsFix(@NotNull PsiClass aClass) {
     return new ImplementMethodsFix(aClass);
   }
 
-  public IntentionAction createImplementMethodsFix(@NotNull PsiElement psiElement) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createImplementMethodsFix(@NotNull PsiElement psiElement) {
     return new ImplementMethodsFix(psiElement);
   }
 
-  public IntentionAction createMethodThrowsFix(@NotNull PsiMethod method,
-                                               @NotNull PsiClassType exceptionClass,
-                                               boolean shouldThrow,
-                                               boolean showContainingClass) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createMethodThrowsFix(@NotNull PsiMethod method,
+                                                                           @NotNull PsiClassType exceptionClass,
+                                                                           boolean shouldThrow,
+                                                                           boolean showContainingClass) {
     return new MethodThrowsFix(method, exceptionClass, shouldThrow, showContainingClass);
   }
 
-  public IntentionAction createAddDefaultConstructorFix(@NotNull PsiClass aClass) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createAddDefaultConstructorFix(@NotNull PsiClass aClass) {
     return new AddDefaultConstructorFix(aClass);
   }
 
-  public IntentionAction createMethodParameterTypeFix(@NotNull PsiMethod method,
-                                                      int index,
-                                                      @NotNull PsiType newType,
-                                                      boolean fixWholeHierarchy) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createMethodParameterTypeFix(@NotNull PsiMethod method,
+                                                                                  int index,
+                                                                                  @NotNull PsiType newType,
+                                                                                  boolean fixWholeHierarchy) {
     return new MethodParameterFix(method, newType, index, fixWholeHierarchy);
   }
 
-  public IntentionAction createMakeClassInterfaceFix(@NotNull PsiClass aClass) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createMakeClassInterfaceFix(@NotNull PsiClass aClass) {
     return new MakeClassInterfaceFix(aClass, true);
   }
 
-  public IntentionAction createMakeClassInterfaceFix(@NotNull PsiClass aClass, final boolean makeInterface) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createMakeClassInterfaceFix(@NotNull PsiClass aClass, final boolean makeInterface) {
     return new MakeClassInterfaceFix(aClass, makeInterface);
   }
 
-  public IntentionAction createExtendsListFix(@NotNull PsiClass aClass, @NotNull PsiClassType typeToExtendFrom, boolean toAdd) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createExtendsListFix(@NotNull PsiClass aClass,
+                                                                          @NotNull PsiClassType typeToExtendFrom,
+                                                                          boolean toAdd) {
     return new ExtendsListFix(aClass, typeToExtendFrom, toAdd);
   }
 
-  public IntentionAction createRemoveUnusedParameterFix(@NotNull PsiParameter parameter) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createRemoveUnusedParameterFix(@NotNull PsiParameter parameter) {
     return new RemoveUnusedParameterFix(parameter);
   }
 

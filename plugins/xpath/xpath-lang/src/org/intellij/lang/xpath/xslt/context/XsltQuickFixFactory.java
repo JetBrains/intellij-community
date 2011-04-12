@@ -17,12 +17,9 @@ package org.intellij.lang.xpath.xslt.context;
 
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
-
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathNodeTest;
 import org.intellij.lang.xpath.psi.XPathType;
@@ -33,6 +30,7 @@ import org.intellij.lang.xpath.validation.inspections.quickfix.RemoveRedundantCo
 import org.intellij.lang.xpath.validation.inspections.quickfix.XPathQuickFixFactory;
 import org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable;
 import org.intellij.lang.xpath.xslt.validation.inspections.InspectionUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -90,7 +88,7 @@ public class XsltQuickFixFactory implements XPathQuickFixFactory {
         }
 
         @NotNull
-        public String getName() {
+        public String getText() {
             return "Edit File Associations";
         }
 

@@ -17,9 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -28,45 +26,48 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class ExtendsListFix implements IntentionAction, LocalQuickFix {
+public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.ExtendsListFix");
 
-  final PsiClass myClass;
   final PsiClass myClassToExtendFrom;
   private final boolean myToAdd;
   private final PsiClassType myTypeToExtendFrom;
+  private final String myName;
 
   public ExtendsListFix(@NotNull PsiClass aClass, @NotNull PsiClassType typeToExtendFrom, boolean toAdd) {
-    myClass = aClass;
-    myClassToExtendFrom = typeToExtendFrom.resolve();
-    myTypeToExtendFrom = typeToExtendFrom;
-    myToAdd = toAdd;
+    this(aClass, typeToExtendFrom.resolve(), typeToExtendFrom, toAdd);
   }
 
   public ExtendsListFix(@NotNull PsiClass aClass, @NotNull PsiClass classToExtendFrom, boolean toAdd) {
-    myClass = aClass;
-    myClassToExtendFrom = classToExtendFrom;
-    myTypeToExtendFrom = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(classToExtendFrom);
-    myToAdd = toAdd;
+    this(aClass, classToExtendFrom, JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(classToExtendFrom), toAdd);
   }
+
+  private ExtendsListFix(@NotNull PsiClass aClass,
+                         PsiClass classToExtendFrom,
+                         @NotNull PsiClassType typeToExtendFrom,
+                         boolean toAdd) {
+    super(aClass);
+    myClassToExtendFrom = classToExtendFrom;
+    myToAdd = toAdd;
+    myTypeToExtendFrom = typeToExtendFrom;
+
+    @NonNls final String messageKey;
+    if (aClass.isInterface() == classToExtendFrom.isInterface()) {
+      messageKey = toAdd ? "add.class.to.extends.list" : "remove.class.from.extends.list";
+    }
+    else {
+      messageKey = toAdd ? "add.interface.to.implements.list" : "remove.interface.from.implements.list";
+    }
+
+    myName = QuickFixBundle.message(messageKey, aClass.getName(), classToExtendFrom.getQualifiedName());
+  }
+
 
   @NotNull
   public String getText() {
-    @NonNls final String messageKey;
-    if (myClass.isInterface() == myClassToExtendFrom.isInterface()) {
-      messageKey = myToAdd ? "add.class.to.extends.list" : "remove.class.from.extends.list";
-    }
-    else {
-      messageKey = myToAdd ? "add.interface.to.implements.list" : "remove.interface.from.implements.list";
-    }
-
-    return QuickFixBundle.message(messageKey, myClass.getName(), myClassToExtendFrom.getQualifiedName());
-  }
-
-  @NotNull
-  public String getName() {
-    return getText();
+    return myName;
   }
 
   @NotNull
@@ -74,27 +75,38 @@ public class ExtendsListFix implements IntentionAction, LocalQuickFix {
     return QuickFixBundle.message("change.extends.list.family");
   }
 
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    invoke(project, null, descriptor.getPsiElement().getContainingFile());
-  }
-
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  @Override
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    final PsiClass myClass = (PsiClass)startElement;
     return
-        myClass != null
-        && myClass.isValid()
-        && myClass.getManager().isInProject(myClass)
-        && myClassToExtendFrom != null
-        && myClassToExtendFrom.isValid()
-        && !myClassToExtendFrom.hasModifierProperty(PsiModifier.FINAL)
-        && (myClassToExtendFrom.isInterface()
-            || (!myClass.isInterface()
-                && myClass.getExtendsList() != null
-                && myClass.getExtendsList().getReferencedTypes().length == 0 == myToAdd))
+      myClass.isValid()
+      && myClass.getManager().isInProject(myClass)
+      && myClassToExtendFrom != null
+      && myClassToExtendFrom.isValid()
+      && !myClassToExtendFrom.hasModifierProperty(PsiModifier.FINAL)
+      && (myClassToExtendFrom.isInterface()
+          || !myClass.isInterface()
+              && myClass.getExtendsList() != null
+              && myClass.getExtendsList().getReferencedTypes().length == 0 == myToAdd)
         ;
 
   }
 
-  protected void invokeImpl () {
+  @Override
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable("is null when called from inspection") Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    final PsiClass myClass = (PsiClass)startElement;
+    invokeImpl(myClass);
+    UndoUtil.markPsiFileForUndo(file);
+  }
+
+  protected void invokeImpl(PsiClass myClass) {
     if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
     PsiReferenceList extendsList = !(myClass instanceof PsiTypeParameter) &&
                                    myClass.isInterface() != myClassToExtendFrom.isInterface() ?
@@ -112,11 +124,6 @@ public class ExtendsListFix implements IntentionAction, LocalQuickFix {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-  }
-
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    invokeImpl();
-    UndoUtil.markPsiFileForUndo(file);
   }
 
   /**
@@ -146,7 +153,7 @@ public class ExtendsListFix implements IntentionAction, LocalQuickFix {
         anchor = referenceElements[position - 1];
       }
       PsiJavaCodeReferenceElement classReferenceElement =
-        JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory().createReferenceElementByType(myTypeToExtendFrom);
+        JavaPsiFacade.getInstance(extendsList.getProject()).getElementFactory().createReferenceElementByType(myTypeToExtendFrom);
       PsiElement element;
       if (anchor == null) {
         if (referenceElements.length == 0) {
