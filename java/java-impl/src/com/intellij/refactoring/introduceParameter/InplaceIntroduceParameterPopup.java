@@ -174,7 +174,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
 
   @Override
   protected int getReplaceFieldsWithGetters() {
-    return (Integer)myReplaceFieldsCb.getSelectedItem();
+    return myReplaceFieldsCb!= null ? (Integer)myReplaceFieldsCb.getSelectedItem() : IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE;
   }
 
   void inplaceIntroduceParameter() {
