@@ -305,7 +305,7 @@ public abstract class TestObject implements JavaCommandLine {
             unboundOutputRoot.flush();
             packetsReceiver.checkTerminated();
             final JUnitRunningModel model = packetsReceiver.getModel();
-            TestsUIUtil.notifyByBalloon(myProject, model != null ? model.getRoot() : null, consoleProperties);
+            notifyByBalloon(model, consoleProperties);
           }
         });
       }
@@ -350,6 +350,10 @@ public abstract class TestObject implements JavaCommandLine {
     final DefaultExecutionResult result = new DefaultExecutionResult(consoleView, handler);
     result.setRestartActions(rerunFailedTestsAction);
     return result;
+  }
+
+  protected void notifyByBalloon(JUnitRunningModel model, JUnitConsoleProperties consoleProperties) {
+    TestsUIUtil.notifyByBalloon(myProject, model != null ? model.getRoot() : null, consoleProperties);
   }
 
   protected JUnitProcessHandler createHandler() throws ExecutionException {
