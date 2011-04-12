@@ -170,16 +170,19 @@ public class ConsoleBuffer {
     return myDeferredOutput;
   }
 
-  public StringBuilder[] getText() {
-    if (myDeferredOutput.size() > 0) {
+  public String getText() {
+    if (myDeferredOutput.size() > 1) {
       final StringBuilder buffer = new StringBuilder();
       for (StringBuilder builder : myDeferredOutput) {
         buffer.append(builder);
       }
-      return myDeferredOutput.toArray(new StringBuilder[myDeferredOutput.size()]);
+      return buffer.toString();
+    }
+    else if (myDeferredOutput.size() == 1) {
+      return myDeferredOutput.getFirst().substring(0);
     }
     else {
-      return new StringBuilder[0];
+      return "";
     }
   }
 

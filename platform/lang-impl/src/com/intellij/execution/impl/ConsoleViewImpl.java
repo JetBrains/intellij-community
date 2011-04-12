@@ -16,7 +16,6 @@
 
 package com.intellij.execution.impl;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
 import com.intellij.execution.ConsoleFolding;
 import com.intellij.execution.ExecutionBundle;
@@ -70,6 +69,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -547,7 +547,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
 
-    final StringBuilder[] text;
+    final String text;
     final Collection<ConsoleViewContentType> contentTypes;
     int deferredTokensSize;
     synchronized (LOCK) {
@@ -568,14 +568,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     final Document document = myEditor.getDocument();
     final int oldLineCount = document.getLineCount();
     final boolean isAtEndOfDocument = myEditor.getCaretModel().getOffset() == document.getTextLength();
-    int textLength = 0;
-
-    final List<String> textLines = splitToLines(text);
-    for (String line : textLines) {
-      textLength += line.length();
-    }
-
-    boolean cycleUsed = myBuffer.isUseCyclicBuffer() && document.getTextLength() + textLength > myBuffer.getCyclicBufferSize();
+    boolean cycleUsed = myBuffer.isUseCyclicBuffer() && document.getTextLength() + text.length() > myBuffer.getCyclicBufferSize();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         int offset = myEditor.getCaretModel().getOffset();
@@ -584,15 +577,15 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
           myEditor.getScrollingModel().accumulateViewportChanges();
         }
         try {
-
-          for (int i = 0; i < textLines.size() - 1; i++) {
-            document.insertString(document.getTextLength(), textLines.get(i));
+          String[] strings = text.split("\\r");
+          for (int i = 0; i < strings.length - 1; i++) {
+            document.insertString(document.getTextLength(), strings[i]);
             int lastLine = document.getLineCount() - 1;
             if (lastLine >= 0) {
               document.deleteString(document.getLineStartOffset(lastLine), document.getTextLength());
             }
           }
-          document.insertString(document.getTextLength(), textLines.get(textLines.size() - 1));
+          document.insertString(document.getTextLength(), strings[strings.length - 1]);
         }
         finally {
           if (preserveCurrentVisualArea) {
@@ -618,7 +611,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myPsiDisposedCheck.performCheck();
     final int newLineCount = document.getLineCount();
     if (cycleUsed) {
-      final int lineCount = textLines.size();
+      final int lineCount = LineTokenizer.calcLineCount(text, true);
       for (Iterator<RangeHighlighter> it = myHyperlinks.getRanges().keySet().iterator(); it.hasNext();) {
         if (!it.next().isValid()) {
           it.remove();
@@ -633,30 +626,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (isAtEndOfDocument) {
       EditorUtil.scrollToTheEnd(myEditor);
     }
-  }
-
-  private List<String> splitToLines(StringBuilder[] text) {
-    final List<String> textLines = Lists.newArrayList();
-    StringBuilder line = new StringBuilder();
-    for (StringBuilder textItem : text) {
-      for (int j = 0; j < textItem.length(); j++) {
-        if (textItem.charAt(j) == '\r') {
-          textLines.add(new String(line));
-          line.setLength(0);
-        }
-        else {
-          line.append(textItem.charAt(j));
-        }
-      }
-    }
-    if (line.length() > 0) {
-      textLines.add(line.toString());
-    }
-
-    if (textLines.size() == 0) {
-      textLines.add("");
-    }
-    return textLines;
   }
 
   private void flushDeferredUserInput() {
