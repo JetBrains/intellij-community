@@ -13,7 +13,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.*;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
@@ -21,8 +20,6 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
-import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
@@ -772,12 +769,8 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
           super.visitPyAssignmentStatement(node);
           final PyExpression[] targets = node.getTargets();
           for (PyExpression target : targets) {
-            if (target instanceof PyTargetExpression) {
-              final PyTargetExpression targetExpr = (PyTargetExpression)target;
-              PyExpression qualifier = targetExpr.getQualifier();
-              if (qualifier != null && qualifier.getText().equals(selfName) && !result.containsKey(targetExpr.getName())) {
-                result.put(targetExpr.getName(), targetExpr);
-              }
+            if (PyUtil.isInstanceAttribute(target) && !result.containsKey(target.getName())) {
+              result.put(target.getName(), (PyTargetExpression) target);
             }
           }
         }
