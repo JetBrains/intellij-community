@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
+import com.intellij.ide.diff.DiffElement;
+import com.intellij.ide.diff.VirtualFileDiffElement;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -40,9 +42,11 @@ public class TestDirDiffAction extends AnAction {
       final VirtualFile[] files1 = src != null ? new VirtualFile[]{src} : FileChooserFactory.getInstance().createFileChooser(descriptor, project).choose(null, project);
       final VirtualFile[] files2 = trg != null ? new VirtualFile[]{trg} : FileChooserFactory.getInstance().createFileChooser(descriptor, project).choose(null, project);
       if (files1.length == 1 && files2.length == 1) {
+        DiffElement elem1 = new VirtualFileDiffElement(files1[0]);
+        DiffElement elem2 = new VirtualFileDiffElement(files2[0]);
         final DirDiffManager diffManager = DirDiffManager.getInstance(project);
-        if (diffManager.canShow(files1[0], files2[0])) {
-          diffManager.showDiff(files1[0], files2[0]);
+        if (diffManager.canShow(elem1, elem2)) {
+          diffManager.showDiff(elem1, elem2);
         }
       }
     }

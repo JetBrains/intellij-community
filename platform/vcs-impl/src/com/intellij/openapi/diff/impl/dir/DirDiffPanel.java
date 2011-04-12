@@ -15,22 +15,12 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
+import com.intellij.ide.diff.DiffElement;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.diff.DiffPanel;
-import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.SimpleDiffRequest;
-import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Icons;
@@ -62,8 +52,9 @@ public class DirDiffPanel {
   private JPanel myToolBarPanel;
   private final DirDiffTableModel myModel;
   private final DirDiffDialog myDialog;
-  private DiffPanel myDiffPanelComponent;
-  private EditorEx myEditor;
+  private JComponent myDiffPanelComponent;
+  private JComponent myViewComponent;
+  private DiffElement myCurrentElement;
 
   public DirDiffPanel(DirDiffTableModel model, DirDiffDialog dirDiffDialog) {
     myModel = model;
@@ -90,29 +81,30 @@ public class DirDiffPanel {
         else {
           final DirDiffElement element = myModel.getElementAt(myTable.getSelectedRow());
           final Project project = myModel.getProject();
+          clearDiffPanel();
           if (element.getType() == DirDiffElement.ElementType.CHANGED) {
-            final DiffRequest request = SimpleDiffRequest.compareFiles(element.getSource(), element.getTarget(), project);
-            final DiffPanelImpl panel = (DiffPanelImpl)DiffManager.getInstance().createDiffPanel(myDialog.getWindow(), project);
-            panel.setIsRequestFocus(false);
-            panel.setDiffRequest(request);
+            myDiffPanelComponent = element.getSource().getDiffComponent(element.getTarget(), project, myDialog.getWindow());
+            if (myDiffPanelComponent != null) {
+              myDiffPanel.add(myDiffPanelComponent, BorderLayout.CENTER);
+              myCurrentElement = element.getSource();
+            }
 
-            clearDiffPanel();
-
-            myDiffPanelComponent = panel;
-            myDiffPanel.add(panel.getComponent(), BorderLayout.CENTER);
           } else {
-            clearDiffPanel();
+            final DiffElement object = element.isSource() ? element.getSource() : element.getTarget();
+            myViewComponent = object.getViewComponent(project);
 
-            final VirtualFile file = element.isSource() ? element.getSource() : element.getTarget();
-            final Document document = FileDocumentManager.getInstance().getDocument(file);
-            if (document != null) {
-              myEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, project, file, true);
-              myEditor.getSettings().setFoldingOutlineShown(false);
-              myDiffPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
+            if (myViewComponent != null) {
+              myCurrentElement = object;
+              myDiffPanel.add(myViewComponent, BorderLayout.CENTER);
             } else {
               myDiffPanel.add(CANT_OPEN_LABEL, BorderLayout.CENTER);
             }
-            myDiffPanel.revalidate();
+
+            if (myViewComponent != null) {
+              myViewComponent.revalidate();
+            } else {
+              myDiffPanel.repaint();
+            }
           }
         }
         myDialog.setTitle(myModel.getTitle());
@@ -152,15 +144,20 @@ public class DirDiffPanel {
 
   private void clearDiffPanel() {
     if (myDiffPanelComponent != null) {
-      myDiffPanel.remove(myDiffPanelComponent.getComponent());
-      Disposer.dispose(((DiffPanelImpl)myDiffPanelComponent));
+      myDiffPanel.remove(myDiffPanelComponent);
       myDiffPanelComponent = null;
+      if (myCurrentElement != null) {
+        myCurrentElement.disposeDiffComponent();
+      }
     }
-    if (myEditor != null) {
-      myDiffPanel.remove(myEditor.getComponent());
-      EditorFactory.getInstance().releaseEditor(myEditor);
-      myEditor = null;
+    if (myViewComponent != null) {
+      myDiffPanel.remove(myViewComponent);
+      myViewComponent = null;
+      if (myCurrentElement != null) {
+        myCurrentElement.disposeViewComponent();
+      }
     }
+    myCurrentElement = null;
     myDiffPanel.remove(CANT_OPEN_LABEL);
   }
 

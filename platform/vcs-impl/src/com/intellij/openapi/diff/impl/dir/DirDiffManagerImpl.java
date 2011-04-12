@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
+import com.intellij.ide.diff.DiffElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DirDiffManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -36,7 +37,7 @@ public class DirDiffManagerImpl extends DirDiffManager {
   }
 
   @Override
-  public void showDiff(@NotNull final VirtualFile dir1, @NotNull final VirtualFile dir2) {
+  public void showDiff(@NotNull final DiffElement dir1, @NotNull final DiffElement dir2) {
     Task.Backgroundable task = new Task.Backgroundable(myProject, "Directory comparison", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -58,7 +59,7 @@ public class DirDiffManagerImpl extends DirDiffManager {
   }
 
   @Override
-  public boolean canShow(@NotNull VirtualFile dir1, @NotNull VirtualFile dir2) {
-    return dir1.isDirectory() && dir2.isDirectory();
+  public boolean canShow(@NotNull DiffElement dir1, @NotNull DiffElement dir2) {
+    return dir1.isContainer() && dir2.isContainer();
   }
 }
