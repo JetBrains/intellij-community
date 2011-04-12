@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.duplicates;
 import com.intellij.dupLocator.DuplocatorSettings;
 import com.intellij.dupLocator.NodeSpecificHasher;
 import com.intellij.dupLocator.treeHash.DuplocatorHashCallback;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -98,7 +99,10 @@ public class SSRNodeSpecificHasher extends NodeSpecificHasher {
 
   @Override
   public void visitNode(@NotNull PsiElement node) {
-    myTreeHasher.hash(node, this);
+    if (ApplicationManager.getApplication().isUnitTestMode() ||
+        mySettings.SELECTED_PROFILES.contains(node.getLanguage().getDisplayName())) {
+      myTreeHasher.hash(node, this);
+    }
   }
 
   @Override
