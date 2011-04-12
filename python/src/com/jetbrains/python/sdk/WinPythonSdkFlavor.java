@@ -4,12 +4,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -39,7 +37,8 @@ public class WinPythonSdkFlavor extends PythonSdkFlavor {
     final String path = System.getenv("PATH");
     for (String pathEntry : StringUtil.split(path, ";")) {
       if (pathEntry.startsWith("\"") && pathEntry.endsWith("\"")) {
-        pathEntry = pathEntry.substring(1, pathEntry.length()-2);
+        if (pathEntry.length() < 2) continue;
+        pathEntry = pathEntry.substring(1, pathEntry.length()-1);
       }
       File f = new File(pathEntry, exeName);
       if (f.exists()) {
