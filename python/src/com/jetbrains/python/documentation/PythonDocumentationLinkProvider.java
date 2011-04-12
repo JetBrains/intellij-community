@@ -1,6 +1,7 @@
 package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,5 +14,5 @@ public interface PythonDocumentationLinkProvider {
   @Nullable
   String getExternalDocumentationUrl(PsiElement element, PsiElement originalElement);
 
-  String getExternalDocumentationRoot(String pyVersion);
+  String getExternalDocumentationRoot(Sdk sdk);
 }

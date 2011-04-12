@@ -2,6 +2,7 @@ package com.jetbrains.python.codeInsight.stdlib;
 
 import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -375,18 +376,18 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     VirtualFile vFile = file.getVirtualFile();
     if (vFile != null && sdk != null && PythonSdkType.isStdLib(vFile, sdk)) {
       PyQualifiedName qName = ResolveImportUtil.findCanonicalImportPath(element, originalElement);
-      String pyVersion = PythonDocumentationProvider.pyVersion(sdk.getVersionString());
-      return getStdlibUrlFor(element, qName, pyVersion);
+      return getStdlibUrlFor(element, qName, sdk);
     }
     return null;
   }
 
   @Override
-  public String getExternalDocumentationRoot(String pyVersion) {
-    return "http://docs.python.org/" + (pyVersion != null ? (pyVersion + "/") : "") + "library";
-  }
-
-  private static String getStdlibUrlFor(PsiElement element, PyQualifiedName moduleName, String pyVersion) {
+  public String getExternalDocumentationRoot(Sdk sdk) {
+    final String versionString = sdk.getVersionString();
+    if (versionString != null && StringUtil.startsWithIgnoreCase(versionString, "jython")) {
+      return "http://jython.org/docs/library/";
+    }
+    final String pyVersion = PythonDocumentationProvider.pyVersion(versionString);
     StringBuilder urlBuilder = new StringBuilder("http://docs.python.org/");
     if (pyVersion != null) {
       urlBuilder.append(pyVersion).append("/");
@@ -397,6 +398,11 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     else {
       urlBuilder.append("library/");
     }
+    return urlBuilder.toString();
+  }
+
+  private String getStdlibUrlFor(PsiElement element, PyQualifiedName moduleName, Sdk sdk) {
+    StringBuilder urlBuilder = new StringBuilder(getExternalDocumentationRoot(sdk));
     String qnameString = moduleName.toString();
     if (qnameString.equals("ntpath") || qnameString.equals("posixpath")) {
       qnameString = "os.path";
@@ -407,6 +413,8 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     else if (qnameString.equals("pyexpat")) {
       qnameString = "xml.parsers.expat";
     }
+
+    final String pyVersion = PythonDocumentationProvider.pyVersion(sdk.getVersionString());
     List<String> modules = pyVersion != null && pyVersion.startsWith("3") ? py3LibraryModules : py2LibraryModules;
     boolean foundModule = false;
     for (String module : modules) {

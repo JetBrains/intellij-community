@@ -613,7 +613,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
       final String providerUrl = provider.getExternalDocumentationUrl(element, originalElement);
       if (providerUrl != null) {
         if (checkExistence && !pageExists(providerUrl)) {
-          return provider.getExternalDocumentationRoot(pyVersion);
+          return provider.getExternalDocumentationRoot(sdk);
         }
         return providerUrl;
       }
