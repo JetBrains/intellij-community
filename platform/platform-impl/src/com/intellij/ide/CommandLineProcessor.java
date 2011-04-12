@@ -128,6 +128,7 @@ public class CommandLineProcessor {
       String command = args.get(0);
       for(ApplicationStarter starter: Extensions.getExtensions(ApplicationStarter.EP_NAME)) {
         if (starter instanceof ApplicationStarterEx && command.equals(starter.getCommandName())) {
+          LOG.info("Processing command with " + starter);
           ((ApplicationStarterEx) starter).processExternalCommandLine(ArrayUtil.toStringArray(args));
           return null;
         }
