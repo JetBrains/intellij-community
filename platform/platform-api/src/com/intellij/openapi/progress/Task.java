@@ -195,13 +195,15 @@ public abstract class Task implements TaskInfo, Progressive {
     private final String myNotificationText;
     private final boolean myShowWhenFocused;
 
-    public NotificationInfo(final String notificationName, final String notificationTitle, final String notificationText) {
-      this(notificationName,  notificationTitle, notificationText, false);
+    public NotificationInfo(@NotNull final String notificationName,
+                            @NotNull final String notificationTitle,
+                            @NotNull final String notificationText) {
+      this(notificationName, notificationTitle, notificationText, false);
     }
 
-    public NotificationInfo(final String notificationName,
-                            final String notificationTitle,
-                            final String notificationText,
+    public NotificationInfo(@NotNull final String notificationName,
+                            @NotNull final String notificationTitle,
+                            @NotNull final String notificationText,
                             final boolean showWhenFocused) {
       myNotificationName = notificationName;
       myNotificationTitle = notificationTitle;
@@ -209,14 +211,17 @@ public abstract class Task implements TaskInfo, Progressive {
       myShowWhenFocused = showWhenFocused;
     }
 
+    @NotNull
     public String getNotificationName() {
       return myNotificationName;
     }
 
+    @NotNull
     public String getNotificationTitle() {
       return myNotificationTitle;
     }
 
+    @NotNull
     public String getNotificationText() {
       return myNotificationText;
     }
