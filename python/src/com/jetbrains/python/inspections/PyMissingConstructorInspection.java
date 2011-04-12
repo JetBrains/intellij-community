@@ -7,11 +7,9 @@ import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * User: catherine
@@ -41,27 +39,16 @@ public class PyMissingConstructorInspection extends PyInspection {
     @Override
     public void visitPyClass(final PyClass node) {
       PsiElement[] superClasses = node.getSuperClassExpressions();
-      if (superClasses.length == 0)
-        return;
-      Set<String> superNames = new HashSet<String>();
-      if (node.isNewStyleClass())
-        superNames.add(PyNames.SUPER);
-      for (PsiElement cl : superClasses) {
-        if (!PyNames.OBJECT.equals(cl.getText()))
-          superNames.add(cl.getText());
-      }
-      if (superClasses.length == 1 && PyNames.OBJECT.equals(superClasses[0].getText()))
+      if (superClasses.length == 0 || (superClasses.length == 1 && PyNames.OBJECT.equals(superClasses[0].getText())))
         return;
 
-      boolean superHasConstructor = false;
-      PyClass[] supers = node.getSuperClasses();
-      for (PyClass cl : supers) {
-        if (cl.findMethodByName(PyNames.INIT, false) != null) {
-          superHasConstructor = true;
-          break;
-        }
-      }
-      if (!superHasConstructor) return;
+      Stack<String> superNames = new Stack<String>();
+      if (node.isNewStyleClass())
+        superNames.push(PyNames.SUPER);
+
+      addSuperNames(superNames, superClasses);
+
+      if (!superHasConstructor(node)) return;
       PyFunction initMethod = node.findMethodByName(PyNames.INIT, false);
       if (initMethod != null) {
         if (hasConstructorCall(initMethod, superNames))
@@ -70,7 +57,39 @@ public class PyMissingConstructorInspection extends PyInspection {
       }
     }
 
-    private static boolean hasConstructorCall(PyFunction initMethod, Set<String> superNames) {
+    private static boolean superHasConstructor(PyClass node) {
+      Stack<PyClass> st = new Stack<PyClass>();
+      addSuperClasses(st, node.getSuperClasses());
+
+      while (!st.empty()) {
+        if ((st.pop()).findMethodByName(PyNames.INIT, false) != null) {
+          return true;
+        }
+      }
+      return false;
+    }
+    private static void addSuperClasses(Stack<PyClass> st, PyClass[] superClasses) {
+      for (PyClass cl : superClasses) {
+        st.push(cl);
+        addSuperClasses(st, cl.getSuperClasses());
+      }
+    }
+
+    private static void addSuperNames(Stack<String> st, PsiElement[] superClasses) {
+      for (PsiElement cl : superClasses) {
+        if (!PyNames.OBJECT.equals(cl.getText()))
+          st.push(cl.getText());
+
+        if (cl instanceof PyReferenceExpression) {
+          PyReferenceExpression ref = (PyReferenceExpression) cl;
+          final PsiElement result = ref.getReference(PyResolveContext.noProperties()).resolve();
+          if (result instanceof PyClass)
+            addSuperNames(st, ((PyClass)result).getSuperClassExpressions());
+        }
+      }
+    }
+
+    private static boolean hasConstructorCall(PyFunction initMethod, Stack<String> superNames) {
       Stack<PsiElement> stack = new Stack<PsiElement>();
       PyStatementList statementList = initMethod.getStatementList();
       boolean hasConstructor = false;
@@ -95,7 +114,7 @@ public class PyMissingConstructorInspection extends PyInspection {
       return hasConstructor;
     }
 
-    private static boolean isConstructorCall(PyCallExpression expression, Set<String> superNames) {
+    private static boolean isConstructorCall(PyCallExpression expression, Stack<String> superNames) {
       PyExpression callee = expression.getCallee();
       if (callee instanceof PyQualifiedExpression) {
         PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
