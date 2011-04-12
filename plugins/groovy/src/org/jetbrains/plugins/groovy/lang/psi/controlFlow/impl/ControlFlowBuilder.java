@@ -252,6 +252,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (assertion != null) {
       assertion.accept(this);
       final InstructionImpl assertInstruction = startNode(assertStatement);
+      GrExpression errorMessage = assertStatement.getErrorMessage();
+      if (errorMessage != null) {
+        errorMessage.accept(this);
+      }
       final PsiType type = TypesUtil.createTypeByFQClassName("java.lang.AssertionError", assertStatement);
       ExceptionInfo info = findCatch(type);
       if (info != null) {
@@ -419,41 +423,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       if (elseEnd != null) addEdge(elseEnd, end);
     }
     finishNode(ifInstruction);
-
-
-
-    /*InstructionImpl ifInstruction = startNode(ifStatement);
-    final GrCondition condition = ifStatement.getCondition();
-
-    final InstructionImpl head = myHead;
-    final GrStatement thenBranch = ifStatement.getThenBranch();
-    if (thenBranch != null) {
-      if (condition != null) {
-        condition.accept(this);
-      }
-      thenBranch.accept(this);
-      handlePossibleReturn(thenBranch);
-      addPendingEdge(ifStatement, myHead);
-    }
-
-    myHead = head;
-    if (condition != null) {
-      myNegate = !myNegate;
-      final boolean old = myAssertionsOnly;
-      myAssertionsOnly = true;
-      condition.accept(this);
-      myNegate = !myNegate;
-      myAssertionsOnly = old;
-    }
-
-    final GrStatement elseBranch = ifStatement.getElseBranch();
-    if (elseBranch != null) {
-      elseBranch.accept(this);
-      handlePossibleReturn(elseBranch);
-      addPendingEdge(ifStatement, myHead);
-    }
-
-    finishNode(ifInstruction);*/
   }
 
   public void visitForStatement(GrForStatement forStatement) {
@@ -706,7 +675,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   private void finishNode(InstructionImpl instruction) {
     assert instruction.equals(myProcessingStack.pop());
-/*    myHead = myProcessingStack.peek();*/
   }
 
   public void visitField(GrField field) {
