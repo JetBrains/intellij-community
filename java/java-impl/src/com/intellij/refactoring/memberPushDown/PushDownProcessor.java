@@ -26,7 +26,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -368,6 +370,17 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
           if (annotation != null) {
             annotation.delete();
           }
+          final PsiDocComment oldDocComment = method.getDocComment();
+          if (oldDocComment != null) {
+            final PsiDocComment docComment = methodBySignature.getDocComment();
+            if (myJavaDocPolicy.getJavaDocPolicy() == DocCommentPolicy.COPY || myJavaDocPolicy.getJavaDocPolicy() == DocCommentPolicy.MOVE) {
+              if (docComment != null) {
+                docComment.replace(oldDocComment);
+              } else {
+                methodBySignature.getParent().addBefore(oldDocComment, methodBySignature);
+              }
+            }
+          }
         }
       }
       else if (member instanceof PsiClass) {
@@ -392,7 +405,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
           }
         });
         for (PsiReference psiReference : refsToRebind) {
-          JavaCodeStyleManagerImpl.getInstance(myProject).shortenClassReferences(psiReference.bindToElement(newMember));
+          JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(psiReference.bindToElement(newMember));
         }
         final JavaRefactoringListenerManager listenerManager = JavaRefactoringListenerManager.getInstance(newMember.getProject());
         ((JavaRefactoringListenerManagerImpl)listenerManager).fireMemberMoved(myClass, newMember);
