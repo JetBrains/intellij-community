@@ -708,7 +708,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     public final LocalInspectionTool tool;
     public final List<ProblemDescriptor> foundProblems;
 
-    private InspectionResult(final LocalInspectionTool tool, final List<ProblemDescriptor> foundProblems) {
+    private InspectionResult(@NotNull LocalInspectionTool tool, @NotNull List<ProblemDescriptor> foundProblems) {
       this.tool = tool;
       this.foundProblems = foundProblems;
     }
