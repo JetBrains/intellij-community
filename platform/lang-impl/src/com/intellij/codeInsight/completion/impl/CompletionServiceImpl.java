@@ -243,7 +243,7 @@ public class CompletionServiceImpl extends CompletionService{
     ApplicationManager.getApplication().assertIsDispatchThread();
     CompletionPhase oldPhase = getCompletionPhase();
     CompletionProgressIndicator oldIndicator = oldPhase.indicator;
-    if (oldIndicator != null) {
+    if (oldIndicator != null && !(phase instanceof CompletionPhase.BgCalculation)) {
       LOG.assertTrue(!oldIndicator.isRunning() || oldIndicator.isCanceled(), "don't change phase during running completion");
     }
 
