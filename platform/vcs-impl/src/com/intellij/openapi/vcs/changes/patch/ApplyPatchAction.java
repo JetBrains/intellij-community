@@ -34,8 +34,7 @@ import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -49,6 +48,7 @@ import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,21 +76,22 @@ public class ApplyPatchAction extends DumbAwareAction {
 
   public static void showApplyPatch(final Project project, final VirtualFile file) {
     FileDocumentManager.getInstance().saveAllDocuments();
-    final VirtualFile toUse;
     if (file != null) {
-      toUse = file;
+      final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(project, new ApplyPatchDefaultExecutor(project),
+        Collections.<ApplyPatchExecutor>singletonList(new ImportToShelfExecutor(project)), ApplyPatchMode.APPLY, file);
+      dialog.show();
     } else {
-      final FileChooserDialog fileChooserDialog = FileChooserFactory.getInstance().createFileChooser(
-        ApplyPatchDifferentiatedDialog.createSelectPatchDescriptor(), project);
-      final VirtualFile[] files = fileChooserDialog.choose(null, project);
-      if (files.length != 1) {
-        return;
-      }
-      toUse = files[0];
+      FileChooser.chooseFilesWithSlideEffect(ApplyPatchDifferentiatedDialog.createSelectPatchDescriptor(), 
+                                             project, null, new Consumer<VirtualFile[]>() {
+          @Override
+          public void consume(VirtualFile[] virtualFiles) {
+            if (virtualFiles.length != 1) return;
+            final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(project, new ApplyPatchDefaultExecutor(project),
+              Collections.<ApplyPatchExecutor>singletonList(new ImportToShelfExecutor(project)), ApplyPatchMode.APPLY, virtualFiles[0]);
+            dialog.show();
+          }
+        });
     }
-    final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(project, new ApplyPatchDefaultExecutor(project),
-      Collections.<ApplyPatchExecutor>singletonList(new ImportToShelfExecutor(project)), ApplyPatchMode.APPLY, toUse);
-    dialog.show();
   }
 
   public static void applySkipDirs(final List<FilePatch> patches, final int skipDirs) {
