@@ -292,15 +292,11 @@ public class TreeChangeImpl implements TreeChange {
     int oldOffsetInParent = 0;
 
     // find last changed element before child
-    ASTNode lastChangedElementBeforeChild = null;
     ASTNode current = myParent.getFirstChildNode();
     // calculate not changed elements
     while(current != child) {
       if (!myChanges.containsKey(current)) {
         oldOffsetInParent += current.getTextLength();
-      }
-      if (myChanges.containsKey(child)) {
-        lastChangedElementBeforeChild = current;
       }
       current = current.getTreeNext();
     }
@@ -309,7 +305,6 @@ public class TreeChangeImpl implements TreeChange {
       if(offset.getSecond() > oldOffsetInParent) break;
 
       final ASTNode changedNode = offset.getFirst();
-      if(changedNode == lastChangedElementBeforeChild) break;
       final ChangeInfo change = getChangeByChild(changedNode);
       oldOffsetInParent += change.getOldLength();
     }
