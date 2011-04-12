@@ -21,14 +21,8 @@ import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompileStatusNotification;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import org.jetbrains.android.exportSignedPackage.CheckModulePanel;
 import org.jetbrains.android.exportSignedPackage.ExportSignedPackageWizard;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -51,55 +45,18 @@ public class ExportSignedPackageAction extends AnAction {
     e.getPresentation().setEnabled(project != null && ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID).size() > 0);
   }
 
-  private static void makeProjectIfNeccessaryAndRun(final Project project, final Runnable afterAction) {
-    final CompilerManager manager = CompilerManager.getInstance(project);
-    final CompileScope compileScope = manager.createProjectCompileScope(project);
-    if (!manager.isUpToDate(compileScope)) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          final int result = Messages.showYesNoDialog(project, AndroidBundle.message("android.export.signed.package.make.question"),
-                                                      AndroidBundle.message("android.export.signed.package.action.text"),
-                                                      Messages.getQuestionIcon());
-          if (result == 0) {
-            manager.make(compileScope, new CompileStatusNotification() {
-              public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-                if (!aborted && errors == 0) {
-                  afterAction.run();
-                }
-              }
-            });
-          }
-          else {
-            afterAction.run();
-          }
-        }
-      });
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(afterAction);
-    }
-  }
-
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(DataKeys.PROJECT);
     assert project != null;
-    final Runnable exportRunnable = new Runnable() {
-      public void run() {
-        List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
-        assert facets.size() > 0;
-        if (facets.size() == 1) {
-          if (!checkFacet(facets.get(0))) return;
-        }
-        ExportSignedPackageWizard wizard = new ExportSignedPackageWizard(project, facets);
-        wizard.show();
-      }
-    };
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        makeProjectIfNeccessaryAndRun(project, exportRunnable);
-      }
-    });
+
+    List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
+    assert facets.size() > 0;
+    if (facets.size() == 1) {
+      if (!checkFacet(facets.get(0))) return;
+    }
+    ExportSignedPackageWizard wizard = new ExportSignedPackageWizard(project, facets);
+    wizard.show();
   }
 
   private static boolean checkFacet(final AndroidFacet facet) {

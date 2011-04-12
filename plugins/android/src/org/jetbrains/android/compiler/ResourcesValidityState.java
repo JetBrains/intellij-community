@@ -49,7 +49,7 @@ public class ResourcesValidityState implements ValidityState {
     IAndroidTarget target = platform != null ? platform.getTarget() : null;
     myAndroidTargetName = target != null ? target.getFullName() : "";
 
-    VirtualFile manifestFile = AndroidRootUtil.getManifestFile(module);
+    VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
     if (manifestFile != null) {
       myResourceTimestamps.put(manifestFile.getPath(), manifestFile.getTimeStamp());
     }

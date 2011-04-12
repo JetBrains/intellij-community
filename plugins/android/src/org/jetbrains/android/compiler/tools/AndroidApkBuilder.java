@@ -43,16 +43,13 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import static com.intellij.openapi.compiler.CompilerMessageCategory.ERROR;
-import static com.intellij.openapi.compiler.CompilerMessageCategory.INFORMATION;
-import static com.intellij.openapi.compiler.CompilerMessageCategory.WARNING;
+import static com.intellij.openapi.compiler.CompilerMessageCategory.*;
 
 /**
  * @author yole
  */
 public class AndroidApkBuilder {
   private static final String UNALIGNED_SUFFIX = ".unaligned";
-  private static final String UNSIGNED_SUFFIX = ".unsigned";
 
   private AndroidApkBuilder() {
   }
@@ -114,18 +111,13 @@ public class AndroidApkBuilder {
                                                                    @NotNull String[] externalJars,
                                                                    @NotNull VirtualFile[] nativeLibsFolders,
                                                                    @NotNull String finalApk,
-                                                                   boolean generateUnsignedApk) throws IOException {
-    String unsignedApk = finalApk + UNSIGNED_SUFFIX;
-
-    Map<CompilerMessageCategory, List<String>> map;
-    if (generateUnsignedApk) {
-      map = filterUsingKeystoreMessages(
-        finalPackage(resPackagePath, dexPath, sourceRoots, externalJars, nativeLibsFolders, unsignedApk, false));
-    }
-    else {
-      map = new HashMap<CompilerMessageCategory, List<String>>();
+                                                                   boolean unsigned) throws IOException {
+    if (unsigned) {
+      return filterUsingKeystoreMessages(
+        finalPackage(resPackagePath, dexPath, sourceRoots, externalJars, nativeLibsFolders, finalApk, false));
     }
 
+    final Map<CompilerMessageCategory, List<String>> map = new HashMap<CompilerMessageCategory, List<String>>();
     final String zipAlignPath = sdkPath + File.separator + AndroidUtils.toolPath(SdkConstants.FN_ZIPALIGN);
     boolean withAlignment = new File(zipAlignPath).exists();
     String unalignedApk = finalApk + UNALIGNED_SUFFIX;

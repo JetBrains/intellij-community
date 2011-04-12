@@ -27,7 +27,10 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.CompilerPaths;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -38,6 +41,8 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.android.compiler.AndroidCompileUtil;
+import org.jetbrains.android.compiler.AndroidPackagingCompiler;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
@@ -166,7 +171,8 @@ class ApkStep extends ExportSignedPackageWizardStep {
     assert certificate != null;
     SignedJarBuilder builder = new SignedJarBuilder(fos, privateKey, certificate);
     Module module = myWizard.getFacet().getModule();
-    String srcApkPath = CompilerPaths.getModuleOutputPath(module, false) + '/' + module.getName() + ".apk";
+    //String srcApkPath = CompilerPaths.getModuleOutputPath(module, false) + '/' + module.getName() + ".apk";
+    String srcApkPath = myWizard.getFacet().getApkPath() + AndroidPackagingCompiler.UNSIGNED_SUFFIX;
     FileInputStream fis = new FileInputStream(new File(FileUtil.toSystemDependentName(srcApkPath)));
     try {
       builder.writeZip(fis, null);
@@ -255,11 +261,23 @@ class ApkStep extends ExportSignedPackageWizardStep {
     catch (Exception e) {
       throw new CommitStepException(e.getMessage());
     }
-    String title = AndroidBundle.message("android.extract.package.task.title");
-    ProgressManager.getInstance().run(new Task.Backgroundable(myWizard.getProject(), title, true, null) {
-      
-      public void run(@NotNull ProgressIndicator indicator) {
-        createAndAlignApk(apkPath);
+
+    final CompilerManager manager = CompilerManager.getInstance(myWizard.getProject());
+    final CompileScope compileScope = manager.createModuleCompileScope(facet.getModule(), true);
+    AndroidCompileUtil.setReleaseBuild(compileScope);
+
+    manager.make(compileScope, new CompileStatusNotification() {
+      public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+        if (aborted || errors != 0) {
+          return;
+        }
+
+        final String title = AndroidBundle.message("android.extract.package.task.title");
+        ProgressManager.getInstance().run(new Task.Backgroundable(myWizard.getProject(), title, true, null) {
+          public void run(@NotNull ProgressIndicator indicator) {
+            createAndAlignApk(apkPath);
+          }
+        });
       }
     });
   }
