@@ -45,7 +45,7 @@
         </constraints>
         <properties>
           <labelFor value="e486b"/>
-          <text value="Path to the ReST root directory:"/>
+          <text value="Path to the directory with *.rst files:"/>
         </properties>
       </component>
       <component id="bef7c" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myWorkDir">
