@@ -29,6 +29,9 @@ import java.util.List;
  */
 public interface DocumentationProvider {
 
+  /**
+   * Please use {@link com.intellij.lang.LanguageDocumentation} instead of this for language-specific documentation
+   */
   ExtensionPointName<DocumentationProvider> EP_NAME = ExtensionPointName.create("com.intellij.documentationProvider");
 
   @Nullable
