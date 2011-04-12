@@ -132,7 +132,7 @@ public class GroovyCompletionUtil {
       return null;
     }
     PsiElement candidate = element.getContainingFile();
-    while (candidate.getNode().getChildren(null).length > 0) {
+    while (candidate.getNode().getFirstChildNode() != null) {
       candidate = candidate.findElementAt(offset);
     }
     return candidate;

@@ -67,6 +67,8 @@ public abstract class AbstractExternalFilter {
   @NonNls protected static final String HTML = "<HTML>";
   @NonNls private static final String BR = "<BR>";
   @NonNls private static final String DT = "<DT>";
+  private static final Pattern CHARSET_META_PATTERN =
+    Pattern.compile("<meta.*content\\s*=\".*[;|\\s]*charset=\\s*(.*)\\s*[;|\\s]*\">", Pattern.CASE_INSENSITIVE);
 
   protected static abstract class RefConvertor {
     private final Pattern mySelector;
@@ -166,7 +168,7 @@ public abstract class AbstractExternalFilter {
     final InputStream inputStream =
       pi != null ? UrlConnectionUtil.getConnectionInputStreamWithException(urlConnection, pi) : urlConnection.getInputStream();
     //noinspection IOResourceOpenedButNotSafelyClosed
-    return contentEncoding != null ? new InputStreamReader(inputStream, contentEncoding) : new InputStreamReader(inputStream);
+    return contentEncoding != null ? new MyReader(inputStream, contentEncoding) : new MyReader(inputStream);
   }
 
   @Nullable
@@ -207,7 +209,7 @@ public abstract class AbstractExternalFilter {
   }
 
   protected void doBuildFromStream(String surl, Reader input, StringBuffer data) throws IOException {
-    final BufferedReader buf = new BufferedReader(input);
+    BufferedReader buf = new BufferedReader(input);
     Matcher anchorMatcher = ourAnchorsuffix.matcher(surl);
     @NonNls String startSection = "<!-- ======== START OF CLASS DATA ======== -->";
     @NonNls String endSection = "SUMMARY ========";
@@ -223,12 +225,22 @@ public abstract class AbstractExternalFilter {
     data.append(HTML);
 
     String read;
-
+    String charset = null;
     do {
       read = buf.readLine();
+      if (read != null && read.contains("charset")) {
+        charset = read;
+      }
     }
     while (read != null && read.toUpperCase().indexOf(startSection) == -1);
 
+    if (input instanceof MyReader && charset != null) {
+      String contentEncoding = parseContentEncoding(charset);
+      if (contentEncoding != null) { //restart page parsing with correct encoding
+        input = new MyReader(((MyReader)input).getInputStream(), contentEncoding);
+        buf = new BufferedReader(input);
+      }
+    }
 
     if (read == null) {
       data.delete(0, data.length());
@@ -273,6 +285,15 @@ public abstract class AbstractExternalFilter {
     }
 
     data.append(HTML_CLOSE);
+  }
+
+  @Nullable
+  private static String parseContentEncoding(String charset) {
+    final Matcher matcher = CHARSET_META_PATTERN.matcher(charset);
+    if (matcher.matches()) {
+      return matcher.group(1);
+    }
+    return null;
   }
 
   private static void appendLine(final StringBuffer buffer, final String read) {
@@ -354,6 +375,24 @@ public abstract class AbstractExternalFilter {
 
     public void cleanup() {
       myExceptions[0] = null;
+    }
+  }
+
+  private static class MyReader extends InputStreamReader {
+    private InputStream myInputStream;
+
+    public MyReader(InputStream in) {
+      super(in);
+      myInputStream = in;
+    }
+
+    public MyReader(InputStream in, String charsetName) throws UnsupportedEncodingException {
+      super(in, charsetName);
+      myInputStream = in;
+    }
+
+    public InputStream getInputStream() {
+      return myInputStream;
     }
   }
 }

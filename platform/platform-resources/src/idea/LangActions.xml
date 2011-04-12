@@ -413,10 +413,6 @@
 
     <group id="ProjectViewPopupMenuSettingsGroup">
       <group id="MarkRootGroup" class="com.intellij.ide.projectView.actions.MarkRootGroup" popup="true">
-        <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkRootAction"/>
-        <action id="MarkTestSourceRoot" class="com.intellij.ide.projectView.actions.MarkTestSourceRootAction"/>
-        <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction"/>
-        <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction"/>
       </group>
     </group>
 

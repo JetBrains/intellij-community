@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ide.diff.DiffElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,19 +30,19 @@ import static com.intellij.openapi.diff.impl.dir.DirDiffOperation.*;
  */
 public class DirDiffElement {
   private final ElementType myType;
-  private final VirtualFile mySource;
+  private final DiffElement mySource;
   private final long mySourceLength;
-  private final VirtualFile myTarget;
+  private final DiffElement myTarget;
   private final long myTargetLength;
   private final String myName;
   private DirDiffOperation myOperation;
 
-  private DirDiffElement(@Nullable VirtualFile source, @Nullable VirtualFile target, ElementType type, String name) {
+  private DirDiffElement(@Nullable DiffElement source, @Nullable DiffElement target, ElementType type, String name) {
     myType = type;
     mySource = source;
-    mySourceLength = source == null || source.isDirectory() ? -1 : source.getLength();
+    mySourceLength = source == null || source.isContainer() ? -1 : source.getSize();
     myTarget = target;
-    myTargetLength = target == null || target.isDirectory() ? -1 : target.getLength();
+    myTargetLength = target == null || target.isContainer() ? -1 : target.getSize();
     myName = name;
     if (isSource()) {
       myOperation = COPY_TO;
@@ -64,23 +64,23 @@ public class DirDiffElement {
     return myTarget == null ? "" : getLastModification(myTarget);
   }
 
-  private static String getLastModification(VirtualFile file) {
-    return SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(new Date(file.getTimeStamp()));
+  private static String getLastModification(DiffElement file) {
+    return SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(new Date(file.getModificationStamp()));
   }
 
-  public static DirDiffElement createChange(@NotNull VirtualFile source, @NotNull VirtualFile target) {
+  public static DirDiffElement createChange(@NotNull DiffElement source, @NotNull DiffElement target) {
     return new DirDiffElement(source, target, ElementType.CHANGED, source.getName());
   }
 
-  public static DirDiffElement createSourceOnly(@NotNull VirtualFile source) {
+  public static DirDiffElement createSourceOnly(@NotNull DiffElement source) {
     return new DirDiffElement(source, null, ElementType.SOURCE, null);
   }
 
-  public static DirDiffElement createTargetOnly(@NotNull VirtualFile target) {
+  public static DirDiffElement createTargetOnly(@NotNull DiffElement target) {
     return new DirDiffElement(null, target, ElementType.TARGET, null);
   }
 
-  public static DirDiffElement createDirElement(VirtualFile src, VirtualFile trg, String name) {
+  public static DirDiffElement createDirElement(DiffElement src, DiffElement trg, String name) {
     return new DirDiffElement(src, trg, ElementType.SEPARATOR, name);
   }
 
@@ -88,11 +88,11 @@ public class DirDiffElement {
     return myType;
   }
 
-  public VirtualFile getSource() {
+  public DiffElement getSource() {
     return mySource;
   }
 
-  public VirtualFile getTarget() {
+  public DiffElement getTarget() {
     return myTarget;
   }
 

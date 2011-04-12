@@ -22,6 +22,7 @@ import com.intellij.formatting.Indent;
 import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -181,6 +182,12 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
           innerAlignments.put(table.get(i), currentGroup.get(i));
         }
       } else {
+        if (psi instanceof PsiComment) {
+          PsiElement prev = psi.getPrevSibling();
+          if (prev != null && prev.getNode().getElementType() != mNLS) {
+            continue;
+          }
+        }
         currentGroup = null;
       }
     }

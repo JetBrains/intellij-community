@@ -27,6 +27,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.openapi.util.Condition;
@@ -340,6 +341,11 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   @Override
   public void notifyByBalloon(@NotNull final String toolWindowId, final MessageType type, @NotNull final String text, @Nullable final Icon icon,
                               @Nullable final HyperlinkListener listener) {
+  }
+
+  @Override
+  public Balloon getToolWindowBalloon(String id) {
+    return null;
   }
 
   public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener l) {
