@@ -55,14 +55,14 @@ public class PythonSdkUpdater implements ProjectComponent {
       if (sdkType instanceof PythonSdkType) {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
+            try {
+              Thread.sleep(7000); // wait until all short-term disk-hitting activity ceases
+            }
+            catch (InterruptedException ignore) {}
             // update skeletons
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
-                try {
-                  Thread.sleep(7000); // wait until all short-term disk-hitting activity ceases
-                }
-                catch (InterruptedException ignore) {}
                 ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating skeletons", false) {
                   @Override
                   public void run(@NotNull ProgressIndicator indicator) {
