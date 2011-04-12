@@ -101,6 +101,10 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
       return;
     }
 
+    invoke(project, dataContext, aClass, aMember);
+  }
+
+  private void invoke(Project project, DataContext dataContext, PsiClass aClass, PsiElement aMember) {
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (aClass == null) {
       String message =
@@ -112,6 +116,11 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
     ArrayList<PsiClass> bases = RefactoringHierarchyUtil.createBasesList(aClass, false, true);
 
     if (bases.isEmpty()) {
+      final PsiClass containingClass = aClass.getContainingClass();
+      if (containingClass != null) {
+        invoke(project, dataContext, containingClass, aClass);
+        return;
+      }
       String message = RefactoringBundle.getCannotRefactorMessage(
         RefactoringBundle.message("class.does.not.have.base.classes.interfaces.in.current.project", aClass.getQualifiedName()));
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PULL_UP);
