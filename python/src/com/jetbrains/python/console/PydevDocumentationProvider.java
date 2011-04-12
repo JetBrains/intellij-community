@@ -1,6 +1,6 @@
 package com.jetbrains.python.console;
 
-import com.intellij.lang.documentation.QuickDocumentationProvider;
+import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -13,10 +13,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author oleg
  */
-public class PydevDocumentationProvider extends QuickDocumentationProvider {
-  public String getQuickNavigateInfo(final PsiElement element, PsiElement originalElement) {
-    return null;
-  }
+public class PydevDocumentationProvider extends AbstractDocumentationProvider {
 
   @Override
   public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, final Object object, final PsiElement element) {
