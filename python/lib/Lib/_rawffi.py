@@ -52,6 +52,3 @@ class CDLL(object):
             fnp = FuncPtr(fn, name, argtypes, restype)
             self.cache[key] = fnp
             return fnp
-
-
-

@@ -171,18 +171,18 @@ class XMLParser(object):
     returns_unicode = property(_get_returns_unicode, _set_returns_unicode)
 
     def _expat_error(self, sax_error):
-         sax_message = sax_error.getMessage()
-         pattern = 'The entity ".*" was referenced, but not declared\.'
-         if re.match(pattern, sax_message):
-             expat_message = "undefined entity: line %s, column %s" % \
-                             (self.ErrorLineNumber, self.ErrorColumnNumber)
-         else:
-             expat_message = sax_message
-         error = ExpatError(expat_message)
-         error.lineno = self.ErrorLineNumber
-         error.offset = self.ErrorColumnNumber
-         error.code = self.ErrorCode
-         return error
+        sax_message = sax_error.getMessage()
+        pattern = 'The entity ".*" was referenced, but not declared\.'
+        if re.match(pattern, sax_message):
+            expat_message = "undefined entity: line %s, column %s" % \
+                            (self.ErrorLineNumber, self.ErrorColumnNumber)
+        else:
+            expat_message = sax_message
+        error = ExpatError(expat_message)
+        error.lineno = self.ErrorLineNumber
+        error.offset = self.ErrorColumnNumber
+        error.code = self.ErrorCode
+        return error
 
     def Parse(self, data, isfinal=False):
         # The 'data' argument should be an encoded text: a str instance that

@@ -14,9 +14,36 @@ On the Mac EasyDialogs.AskPassword is used, if available.
 # Authors: Piers Lauder (original)
 #          Guido van Rossum (Windows support and cleanup)
 
+import os
 import sys
 
 __all__ = ["getpass","getuser"]
+
+def jython_getpass(prompt='Password: ', stream=None):
+    """Prompt for a password, with echo turned off.
+    The prompt is written on stream, by default stdout.
+
+    Restore terminal settings at end.
+    """
+    if stream is None:
+        stream = sys.stdout
+
+    try:
+        terminal = sys._jy_interpreter.reader.terminal
+    except:
+        return default_getpass(prompt)
+
+    echoed = terminal.getEcho()
+    terminal.disableEcho()
+    try:
+        passwd = _raw_input(prompt, stream)
+    finally:
+        if echoed:
+           terminal.enableEcho()
+
+    stream.write('\n')
+    return passwd
+
 
 def unix_getpass(prompt='Password: ', stream=None):
     """Prompt for a password, with echo turned off.
@@ -99,8 +126,6 @@ def getuser():
 
     """
 
-    import os
-
     for name in ('LOGNAME', 'USER', 'LNAME', 'USERNAME'):
         user = os.environ.get(name)
         if user:
@@ -123,7 +148,10 @@ except (ImportError, AttributeError):
         try:
             from EasyDialogs import AskPassword
         except ImportError:
-            getpass = default_getpass
+            if os.name == 'java':
+                getpass = jython_getpass
+            else:
+                getpass = default_getpass
         else:
             getpass = AskPassword
     else:

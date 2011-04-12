@@ -155,25 +155,26 @@ def change_root (new_root, pathname):
     Otherwise, it requires making 'pathname' relative and then joining the
     two, which is tricky on DOS/Windows and Mac OS.
     """
-    if os.name == 'posix' or os.name == 'java':
+    os_name = os._name if sys.platform.startswith('java') else os.name
+    if os_name == 'posix':
         if not os.path.isabs(pathname):
             return os.path.join(new_root, pathname)
         else:
             return os.path.join(new_root, pathname[1:])
 
-    elif os.name == 'nt':
+    elif os_name == 'nt':
         (drive, path) = os.path.splitdrive(pathname)
         if path[0] == '\\':
             path = path[1:]
         return os.path.join(new_root, path)
 
-    elif os.name == 'os2':
+    elif os_name == 'os2':
         (drive, path) = os.path.splitdrive(pathname)
         if path[0] == os.sep:
             path = path[1:]
         return os.path.join(new_root, path)
 
-    elif os.name == 'mac':
+    elif os_name == 'mac':
         if not os.path.isabs(pathname):
             return os.path.join(new_root, pathname)
         else:
@@ -184,7 +185,7 @@ def change_root (new_root, pathname):
 
     else:
         raise DistutilsPlatformError, \
-              "nothing known about platform '%s'" % os.name
+              "nothing known about platform '%s'" % os_name
 
 
 _environ_checked = 0

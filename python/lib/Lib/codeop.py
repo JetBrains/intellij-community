@@ -132,4 +132,3 @@ class CommandCompiler:
             raise ValueError,"symbol arg must be either single or eval"
         symbol = CompileMode.getMode(symbol)
         return Py.compile_command_flags(source,filename,symbol,self._cflags,0)
-

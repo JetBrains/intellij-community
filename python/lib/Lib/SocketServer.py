@@ -348,6 +348,9 @@ class TCPServer(BaseServer):
 
         """
         self.socket.listen(self.request_queue_size)
+        # Adding a second call to getsockname() because of this issue
+        # http://wiki.python.org/jython/NewSocketModule#Deferredsocketcreationonjython
+        self.server_address = self.socket.getsockname()
 
     def server_close(self):
         """Called to clean-up the server.
@@ -517,12 +520,11 @@ class BaseRequestHandler:
         self.request = request
         self.client_address = client_address
         self.server = server
+        self.setup()
         try:
-            self.setup()
             self.handle()
-            self.finish()
         finally:
-            sys.exc_traceback = None    # Help garbage collection
+            self.finish()
 
     def setup(self):
         pass

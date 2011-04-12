@@ -575,17 +575,22 @@ class ElementTree:
     # @defreturn Element
 
     def parse(self, source, parser=None):
-        if not hasattr(source, "read"):
+        managed_file = not hasattr(source, "read")
+        if managed_file:
             source = open(source, "rb")
-        if not parser:
-            parser = XMLTreeBuilder()
-        while 1:
-            data = source.read(32768)
-            if not data:
-                break
-            parser.feed(data)
-        self._root = parser.close()
-        return self._root
+        try:
+            if not parser:
+                parser = XMLTreeBuilder()
+            while 1:
+                data = source.read(32768)
+                if not data:
+                    break
+                parser.feed(data)
+            self._root = parser.close()
+            return self._root
+        finally:
+            if managed_file:
+                source.close()
 
     ##
     # Creates a tree iterator for the root element.  The iterator loops
@@ -654,13 +659,18 @@ class ElementTree:
 
     def write(self, file, encoding="us-ascii"):
         assert self._root is not None
-        if not hasattr(file, "write"):
+        managed_file = not hasattr(file, "write")
+        if managed_file:
             file = open(file, "wb")
-        if not encoding:
-            encoding = "us-ascii"
-        elif encoding != "utf-8" and encoding != "us-ascii":
-            file.write("<?xml version='1.0' encoding='%s'?>\n" % encoding)
-        self._write(file, self._root, encoding, {})
+        try:
+            if not encoding:
+                encoding = "us-ascii"
+            elif encoding != "utf-8" and encoding != "us-ascii":
+                file.write("<?xml version='1.0' encoding='%s'?>\n" % encoding)
+            self._write(file, self._root, encoding, {})
+        finally:
+            if managed_file:
+                file.close()
 
     def _write(self, file, node, encoding, namespaces):
         # write XML to file
@@ -874,7 +884,8 @@ def parse(source, parser=None):
 class iterparse:
 
     def __init__(self, source, events=None):
-        if not hasattr(source, "read"):
+        self._managed_file = not hasattr(source, "read")
+        if self._managed_file:
             source = open(source, "rb")
         self._file = source
         self._events = []
@@ -938,6 +949,8 @@ class iterparse:
                 else:
                     self._root = self._parser.close()
                     self._parser = None
+                    if self._managed_file:
+                        self._file.close()
             else:
                 self._index = self._index + 1
                 return item

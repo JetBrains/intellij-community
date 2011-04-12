@@ -246,7 +246,7 @@ class ImpLoader:
             return f.read()
         finally:
             f.close()
-    
+
     def _reopen(self):
         if self.file and self.file.closed:
             mod_type = self.etc[2]
@@ -454,7 +454,7 @@ def get_loader(module_or_name):
         if loader is not None:
             return loader
         fullname = module.__name__
-    elif module_or_name == sys: 
+    elif module_or_name == sys:
         # Jython sys is not a real module; fake it here for now since
         # making it a module requires a fair amount of decoupling from
         # PySystemState

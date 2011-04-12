@@ -1,22 +1,22 @@
 """
     This module provides mechanisms to use signal handlers in Python.
-    
+
     Functions:
-    
+
     signal(sig,action) -- set the action for a given signal (done)
     pause(sig) -- wait until a signal arrives [Unix only]
     alarm(seconds) -- cause SIGALRM after a specified time [Unix only]
     getsignal(sig) -- get the signal action for a given signal
     default_int_handler(action) -- default SIGINT handler (done, but acts string)
-    
+
     Constants:
-    
+
     SIG_DFL -- used to refer to the system default handler
     SIG_IGN -- used to ignore the signal
     NSIG -- number of defined signals
-    
+
     SIGINT, SIGTERM, etc. -- signal numbers
-    
+
     *** IMPORTANT NOTICES ***
     A signal handler function is called with two arguments:
     the first is the signal number, the second is the interrupted stack frame.
@@ -173,7 +173,7 @@ def getsignal(sig):
 def default_int_handler(sig, frame):
     """
     default_int_handler(...)
-    
+
     The default handler for SIGINT installed by Python.
     It raises KeyboardInterrupt.
     """
@@ -214,7 +214,7 @@ class _Alarm(object):
             return self.scheduled - now
         else:
             return 0
-        
+
 def alarm(time):
     try:
         SIGALRM

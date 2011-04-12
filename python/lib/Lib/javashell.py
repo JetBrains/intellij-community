@@ -28,7 +28,7 @@ __all__ = ["shellexecute"]
 
 def __warn( *args ):
     print " ".join( [str( arg ) for arg in args ])
-    
+
 class _ShellEnv:
     """Provide environment derived by spawning a subshell and parsing its
     environment.  Also supports subshell execution functions and provides
@@ -69,14 +69,14 @@ class _ShellEnv:
         if self.cmd is None:
             msgFmt = "Unable to execute commands in subshell because shell" \
                      " functionality not implemented for OS %s"  \
-                     " Failed command=%s" 
+                     " Failed command=%s"
             raise OSError( 0, msgFmt % ( os._name, cmd ))
-            
+
         if isinstance(cmd, basestring):
             shellCmd = self.cmd + [cmd]
         else:
             shellCmd = cmd
-            
+
         return shellCmd
 
     def _formatEnvironment( self, env ):

@@ -1,5 +1,7 @@
 """
-AMAK: 20070515: New select implementation that uses java.nio
+This is an select module for use on JVMs > 1.5.
+It is documented, along with known issues and workarounds, on the jython wiki.
+http://wiki.python.org/jython/SelectModule
 """
 
 import java.nio.channels.SelectableChannel
@@ -117,7 +119,7 @@ class poll:
         else:
             try:
                 timeout = int(timeout)
-                if timeout == 0:
+                if not timeout:
                     self.selector.selectNow()
                 else:
                     # No multiplication required: both cpython and java use millisecond timeouts
@@ -180,7 +182,7 @@ def _calcselecttimeoutvalue(value):
 class poll_object_cache:
 
     def __init__(self):
-        self.is_windows = os.get_os_type() == 'nt'
+        self.is_windows = os._name == 'nt'
         if self.is_windows:
             self.poll_object_queue = Queue.Queue()
         import atexit
@@ -224,7 +226,7 @@ def native_select(read_fd_list, write_fd_list, outofband_fd_list, timeout=None):
             registered_for_read[fd] = 1
         # And now the write list
         for fd in write_fd_list:
-            if registered_for_read.has_key(fd):
+            if fd in registered_for_read:
                 # registering a second time overwrites the first
                 pobj.register(fd, POLLIN|POLLOUT)
             else:

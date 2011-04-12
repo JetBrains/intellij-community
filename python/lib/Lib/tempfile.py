@@ -377,19 +377,6 @@ class _TemporaryFileWrapper:
         self.name = name
         self.close_called = False
 
-        # XXX: CPython assigns unlink as a class var but this would
-        # rebind Jython's os.unlink (to be a classmethod) because it's
-        # not a built-in function (unfortunately built-in functions act
-        # differently when binding:
-        # http://mail.python.org/pipermail/python-dev/2003-April/034749.html)
-
-        # Cache the unlinker so we don't get spurious errors at
-        # shutdown when the module-level "os" is None'd out.  Note
-        # that this must be referenced as self.unlink, because the
-        # name TemporaryFileWrapper may also get None'd out before
-        # __del__ is called.
-        self.unlink = _os.unlink
-
     def __getattr__(self, name):
         # Attribute lookups are delegated to the underlying file
         # and cached for non-numeric results
@@ -410,6 +397,13 @@ class _TemporaryFileWrapper:
     # the wrapper to do anything special.  We still use it so that
     # file.name is useful (i.e. not "(fdopen)") with NamedTemporaryFile.
     if _os.name != 'nt':
+        # Cache the unlinker so we don't get spurious errors at
+        # shutdown when the module-level "os" is None'd out.  Note
+        # that this must be referenced as self.unlink, because the
+        # name TemporaryFileWrapper may also get None'd out before
+        # __del__ is called.
+        unlink = _os.unlink
+
         def close(self):
             if not self.close_called:
                 self.close_called = True

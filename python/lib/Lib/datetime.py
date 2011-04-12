@@ -13,7 +13,7 @@ ftp://elsie.nci.nih.gov/pub/
 Sources for time zone and DST data: http://www.twinsun.com/tz/tz-link.htm
 
 This was originally copied from the sandbox of the CPython CVS repository.
-Thanks to Tim Peters for suggesting using it. 
+Thanks to Tim Peters for suggesting using it.
 """
 
 import time as _time
@@ -599,9 +599,9 @@ class timedelta(object):
     def __neg__(self):
             # for CPython compatibility, we cannot use
             # our __class__ here, but need a real timedelta
-            return timedelta(-self.__days,
-                             -self.__seconds,
-                             -self.__microseconds)
+        return timedelta(-self.__days,
+                         -self.__seconds,
+                         -self.__microseconds)
 
     def __pos__(self):
         return self
@@ -1622,7 +1622,7 @@ class datetime(date):
         if L[-1] == 0:
             del L[-1]
         if L[-1] == 0:
-            del L[-1]            
+            del L[-1]
         s = ", ".join(map(str, L))
         s = "%s(%s)" % ('datetime.' + self.__class__.__name__, s)
         if self._tzinfo is not None:
@@ -1853,12 +1853,14 @@ class datetime(date):
         calendar.clear()
         calendar.set(self.year, self.month - 1, self.day,
                      self.hour, self.minute, self.second)
-        calendar.set(Calendar.MILLISECOND, self.microsecond // 1000)
 
         if java_class == Calendar:
+            calendar.set(Calendar.MILLISECOND, self.microsecond // 1000)
             return calendar
         else:
-            return Timestamp(calendar.getTimeInMillis())
+            timestamp = Timestamp(calendar.getTimeInMillis())
+            timestamp.setNanos(self.microsecond * 1000)
+            return timestamp
 
 
 datetime.min = datetime(1, 1, 1)
@@ -2074,4 +2076,3 @@ small dst() may get within its bounds; and it doesn't even matter if some
 perverse time zone returns a negative dst()).  So a breaking case must be
 pretty bizarre, and a tzinfo subclass can override fromutc() if it is.
 """
-

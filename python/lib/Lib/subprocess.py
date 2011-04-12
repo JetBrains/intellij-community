@@ -562,7 +562,7 @@ if jython:
         (which takes a String cmdline). This process ruins String
         cmdlines from the user with escapes or quotes. To avoid this we
         first parse these cmdlines into an argv.
-        
+
         Runtime.exec(String) is too naive and useless for this case.
         """
         whitespace = ' \t'
@@ -620,11 +620,7 @@ if jython:
             _cmdline2listimpl = lambda args: [args]
             _escape_args = lambda args: args
 
-        os_info = os._os_map.get(os._name)
-        if os_info is None:
-            os_info = os._os_map.get('posix')
-            
-        for shell_command in os_info[1]:
+        for shell_command in os._get_shell_commands():
             executable = shell_command[0]
             if not os.path.isabs(executable):
                 import distutils.spawn
@@ -1174,7 +1170,7 @@ class Popen(object):
             else:
                 # Assuming file-like object
                 errwrite = stderr.fileno()
-        
+
             return (p2cread, p2cwrite,
                     c2pread, c2pwrite,
                     errread, errwrite)
@@ -1184,7 +1180,7 @@ class Popen(object):
             """Determine if the subprocess' stderr should be redirected
             to stdout
             """
-            return (errwrite == STDOUT or c2pwrite not in (None, PIPE) and 
+            return (errwrite == STDOUT or c2pwrite not in (None, PIPE) and
                     c2pwrite is errwrite)
 
 
@@ -1196,7 +1192,7 @@ class Popen(object):
         def _setup_env(self, env, builder_env):
             """Carefully merge env with ProcessBuilder's only
             overwriting key/values that differ
-            
+
             System.getenv (Map<String, String>) may be backed by
             <byte[], byte[]> on UNIX platforms where these are really
             bytes. ProcessBuilder's env inherits its contents and will

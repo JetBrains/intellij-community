@@ -25,6 +25,7 @@ try:
     from org.python.core import FilelikeInputStream
     from org.xml.sax.helpers import XMLReaderFactory
     from org.xml import sax as javasax
+    from org.xml.sax.ext import LexicalHandler
 except ImportError:
     raise _exceptions.SAXReaderNotAvailable("SAX is not on the classpath", None)
 
@@ -35,7 +36,7 @@ try:
     jaxp = 1
 except ImportError:
     jaxp = 0
-    
+
 from java.lang import String
 
 
@@ -50,7 +51,7 @@ def _wrap_sax_exception(e):
 class JyErrorHandlerWrapper(javasax.ErrorHandler):
     def __init__(self, err_handler):
         self._err_handler = err_handler
-        
+
     def error(self, exc):
         self._err_handler.error(_wrap_sax_exception(exc))
 
@@ -62,7 +63,7 @@ class JyErrorHandlerWrapper(javasax.ErrorHandler):
 
 class JyInputSourceWrapper(javasax.InputSource):
     def __init__(self, source):
-        if isinstance(source, str):
+        if isinstance(source, basestring):
             javasax.InputSource.__init__(self, source)
         elif hasattr(source, "read"):#file like object
             f = source
@@ -105,7 +106,7 @@ class SimpleLocator(xmlreader.Locator):
         self.lineNum = lineNum
         self.pubId = pubId
         self.sysId = sysId
-    
+
     def getColumnNumber(self):
         return self.colNum
 
@@ -119,7 +120,7 @@ class SimpleLocator(xmlreader.Locator):
         return self.sysId
 
 # --- JavaSAXParser
-class JavaSAXParser(xmlreader.XMLReader, javasax.ContentHandler):
+class JavaSAXParser(xmlreader.XMLReader, javasax.ContentHandler, LexicalHandler):
     "SAX driver for the Java SAX parsers."
 
     def __init__(self, jdriver = None):
@@ -133,6 +134,10 @@ class JavaSAXParser(xmlreader.XMLReader, javasax.ContentHandler):
         self.setEntityResolver(self.getEntityResolver())
         self.setErrorHandler(self.getErrorHandler())
         self.setDTDHandler(self.getDTDHandler())
+        try:
+            self._parser.setProperty("http://xml.org/sax/properties/lexical-handler", self)
+        except Exception, x:
+            pass
 
     # XMLReader methods
 
@@ -185,10 +190,11 @@ class JavaSAXParser(xmlreader.XMLReader, javasax.ContentHandler):
         self._cont_handler.startPrefixMapping(prefix, uri)
 
     def characters(self, char, start, len):
-        self._cont_handler.characters(str(String(char, start, len)))
+        self._cont_handler.characters(unicode(String(char, start, len)))
 
     def ignorableWhitespace(self, char, start, len):
-        self._cont_handler.ignorableWhitespace(str(String(char, start, len)))
+        self._cont_handler.ignorableWhitespace(unicode(String(char, start,
+                                                              len)))
 
     def endElement(self, uri, lname, qname):
         if self._namespaces:
@@ -205,7 +211,48 @@ class JavaSAXParser(xmlreader.XMLReader, javasax.ContentHandler):
     def processingInstruction(self, target, data):
         self._cont_handler.processingInstruction(target, data)
 
+    # Lexical handler methods
+    def comment(self, char, start, len):
+        try:
+            # Need to wrap this in a try..except in case the parser does not support lexical events
+            self._cont_handler.comment(unicode(String(char, start, len)))
+        except:
+            pass
+
+    def startCDATA(self):
+        pass # TODO
+
+    def endCDATA(self):
+        pass # TODO
+
+    def startDTD(self, name, publicId, systemId):
+        pass # TODO
+
+    def endDTD(self):
+        pass # TODO
+
+    def startEntity(self, name):
+        pass # TODO
+
+    def endEntity(self, name):
+        pass # TODO
+
+def _fixTuple(nsTuple, frm, to):
+    if len(nsTuple) == 2:
+        nsUri, localName = nsTuple
+        if nsUri == frm:
+            nsUri = to
+        return (nsUri, localName)
+    return nsTuple
+
+def _makeJavaNsTuple(nsTuple):
+    return _fixTuple(nsTuple, None, '')
+
+def _makePythonNsTuple(nsTuple):
+    return _fixTuple(nsTuple, '', None)
+
 class AttributesImpl:
+
     def __init__(self, attrs = None):
         self._attrs = attrs
 
@@ -213,16 +260,16 @@ class AttributesImpl:
         return self._attrs.getLength()
 
     def getType(self, name):
-        return self._attrs.getType(name)
+        return self._attrs.getType(_makeJavaNsTuple(name))
 
     def getValue(self, name):
-        value = self._attrs.getValue(name)
+        value = self._attrs.getValue(_makeJavaNsTuple(name))
         if value == None:
             raise KeyError(name)
         return value
 
     def getNames(self):
-        return [self._attrs.getQName(index) for index in range(len(self))]
+        return [_makePythonNsTuple(self._attrs.getQName(index)) for index in range(len(self))]
 
     def getQNames(self):
         return [self._attrs.getQName(index) for index in range(len(self))]
@@ -240,7 +287,7 @@ class AttributesImpl:
         return qname
 
     def getQNameByName(self, name):
-        idx = self._attrs.getIndex(name)
+        idx = self._attrs.getIndex(_makeJavaNsTuple(name))
         if idx == -1:
             raise KeyError, name
         return name
@@ -265,7 +312,7 @@ class AttributesImpl:
 
     def get(self, name, alt=None):
         try:
-           return self.getValue(name)
+            return self.getValue(name)
         except KeyError:
             return alt
 
@@ -284,10 +331,12 @@ class AttributesNSImpl(AttributesImpl):
         AttributesImpl.__init__(self, attrs)
 
     def getType(self, name):
+        name = _makeJavaNsTuple(name)
         return self._attrs.getType(name[0], name[1])
 
     def getValue(self, name):
-        value = self._attrs.getValue(name[0], name[1])
+        jname = _makeJavaNsTuple(name)
+        value = self._attrs.getValue(jname[0], jname[1])
         if value == None:
             raise KeyError(name)
         return value
@@ -295,17 +344,17 @@ class AttributesNSImpl(AttributesImpl):
     def getNames(self):
         names = []
         for idx in range(len(self)):
-            names.append((self._attrs.getURI(idx),
-                          self._attrs.getLocalName(idx)))
+            names.append(_makePythonNsTuple( (self._attrs.getURI(idx), self._attrs.getLocalName(idx)) ))
         return names
 
     def getNameByQName(self, qname):
         idx = self._attrs.getIndex(qname)
         if idx == -1:
             raise KeyError, qname
-        return (self._attrs.getURI(idx), self._attrs.getLocalName(idx))
+        return _makePythonNsTuple( (self._attrs.getURI(idx), self._attrs.getLocalName(idx)) )
 
     def getQNameByName(self, name):
+        name = _makeJavaNsTuple(name)
         idx = self._attrs.getIndex(name[0], name[1])
         if idx == -1:
             raise KeyError, name

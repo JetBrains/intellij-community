@@ -17,7 +17,7 @@ import urlparse, urllib, urllib2
 
 def UnsplitUriRef(uriRefSeq):
     """should replace urlparse.urlunsplit
-    
+
     Given a sequence as would be produced by SplitUriRef(), assembles and
     returns a URI reference as a string.
     """
@@ -40,7 +40,7 @@ SPLIT_URI_REF_PATTERN = re.compile(r"^(?:(?P<scheme>[^:/?#]+):)?(?://(?P<authori
 
 def SplitUriRef(uriref):
     """should replace urlparse.urlsplit
-    
+
     Given a valid URI reference as a string, returns a tuple representing the
     generic URI components, as per RFC 2396 appendix B. The tuple's structure
     is (scheme, authority, path, query, fragment).
