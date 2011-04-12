@@ -1,6 +1,7 @@
 package com.jetbrains.python.documentation;
 
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -17,6 +18,8 @@ import java.nio.charset.Charset;
  * @author yole
  */
 public class EpydocRunner {
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.documentation.EpydocRunner");
+
   private EpydocRunner() {
   }
 
@@ -30,7 +33,8 @@ public class EpydocRunner {
     String sdkHome = sdk.getHomePath();
     final String formatter = PythonHelpersLocator.getHelperPath("epydoc_formatter.py");
     final ByteBuffer encoded = charset.encode(text);
-    final byte[] data = encoded.compact().array();
+    final byte[] data = new byte[encoded.limit()];
+    encoded.get(data);
     ProcessOutput output = SdkUtil.getProcessOutput(new File(sdkHome).getParent(),
                                                     new String[] {
                                                       sdkHome,
@@ -39,7 +43,13 @@ public class EpydocRunner {
                                                     null,
                                                     2000,
                                                     data);
-    if (output.isTimeout() || output.getExitCode() != 0) {
+    if (output.isTimeout()) {
+      LOG.info("timeout when calculating docstring");
+      return null;
+    }
+    else if (output.getExitCode() != 0) {
+      final String error = "error when calculating docstring: " + output.getStderr();
+      LOG.info(error);
       return null;
     }
     return output.getStdout();
