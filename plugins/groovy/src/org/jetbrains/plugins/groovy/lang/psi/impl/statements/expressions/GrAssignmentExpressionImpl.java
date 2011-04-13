@@ -25,7 +25,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTupleDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -66,7 +66,7 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
   }
 
   public IElementType getOperationToken() {
-    return findChildByType(GroovyTokenTypes.ASSIGN_OP_SET).getNode().getElementType();
+    return findNotNullChildByType(TokenSets.ASSIGN_OP_SET).getNode().getElementType();
   }
 
   public PsiType getType() {

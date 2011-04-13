@@ -25,7 +25,6 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.formatter.MethodCallWithoutQualifierBlock;
 import org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
@@ -36,6 +35,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.*;
 
 /**
  * @author ilyas
@@ -126,7 +127,7 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
       return NO_SPACING;
     }
 
-    if (GroovyTokenTypes.DOTS.contains(leftType)) {
+    if (DOTS.contains(leftType)) {
       return NO_SPACING_WITH_NEWLINE;
     }
 

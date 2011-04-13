@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -69,7 +70,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     if (!(nameElement instanceof LeafPsiElement)) return null;
 
     IElementType elementType = ((LeafPsiElement)nameElement).getElementType();
-    if (elementType != GroovyElementTypes.mIDENT && !CommonClassNames.JAVA_LANG_STRING.equals(TypesUtil.getPsiTypeName(elementType))) {
+    if (elementType != GroovyTokenTypes.mIDENT && !CommonClassNames.JAVA_LANG_STRING.equals(TypesUtil.getPsiTypeName(elementType))) {
       return null;
     }
 
@@ -161,7 +162,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     }
 
     final IElementType elemType = element.getNode().getElementType();
-    if (GroovyTokenTypes.mIDENT == elemType || GroovyTokenTypes.KEYWORDS.contains(elemType)) {
+    if (GroovyTokenTypes.mIDENT == elemType || TokenSets.KEYWORDS.contains(elemType)) {
       return element.getText();
     }
 

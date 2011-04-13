@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
@@ -42,14 +43,6 @@ public class GroovyNamesUtil {
     Lexer lexer = new GroovyLexer();
     lexer.start(text);
     if (lexer.getTokenType() != GroovyTokenTypes.mIDENT) return false;
-    lexer.advance();
-    return lexer.getTokenType() == null;
-  }
-
-  public static boolean isKeyword(String text) {
-    Lexer lexer = new GroovyLexer();
-    lexer.start(text);
-    if (lexer.getTokenType() == null || !GroovyTokenTypes.KEYWORDS.contains(lexer.getTokenType())) return false;
     lexer.advance();
     return lexer.getTokenType() == null;
   }

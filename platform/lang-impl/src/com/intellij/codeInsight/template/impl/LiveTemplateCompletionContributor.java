@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
@@ -42,6 +43,13 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
 
         final PsiFile file = parameters.getOriginalFile();
         final int offset = parameters.getOffset();
+        if (Registry.is("show.live.templates.in.completion")) {
+          for (final TemplateImpl possible : listApplicableTemplates(file, offset)) {
+            result.addElement(new LiveTemplateLookupElement(possible.getKey(), possible));
+          }
+          return;
+        }
+
         final String prefix = result.getPrefixMatcher().getPrefix();
         final TemplateImpl template = findApplicableTemplate(file, offset, prefix);
         if (template != null) {
