@@ -48,13 +48,19 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement implements Loc
     myEndElement = endElement == startElement ? null : SmartPointerManager.getInstance(project).createSmartPsiElementPointer(endElement);
   }
 
+  @NotNull
+  @Override
+  public final String getName() {
+    return getText();
+  }
+
   @Override
   public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (file == null||myStartElement==null) return;
     final PsiElement startElement = myStartElement.getElement();
     final PsiElement endElement = myEndElement == null ? startElement : myEndElement.getElement();
     if (startElement == null || endElement == null) return;
-    invoke(project, file, startElement, endElement);
+    invoke(project, file, editor, startElement, endElement);
   }
 
   @Override
@@ -63,7 +69,7 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement implements Loc
     final PsiElement startElement = myStartElement.getElement();
     final PsiElement endElement = myEndElement == null ? startElement : myEndElement.getElement();
     if (startElement == null || endElement == null) return;
-    invoke(project, startElement.getContainingFile(), startElement, endElement);
+    invoke(project, startElement.getContainingFile(), null, startElement, endElement);
   }
 
   @Override
@@ -89,5 +95,9 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement implements Loc
     return myStartElement == null ? null : myStartElement.getElement();
   }
 
-  public abstract void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement);
+  public abstract void invoke(@NotNull Project project,
+                              @NotNull PsiFile file,
+                              @Nullable("is null when called from inspection") Editor editor,
+                              @NotNull PsiElement startElement,
+                              @NotNull PsiElement endElement);
 }

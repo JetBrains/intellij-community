@@ -35,7 +35,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.DateFormatUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -199,31 +198,32 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
       return;
     }
 
-    final List<File> oldFormatTemplates = new ArrayList<File>();
+    final List<File> templateWithDefaultExtension = new ArrayList<File>();
     final Set<String> processedNames = new HashSet<String>();
 
     for (File file : configFiles) {
       if (file.isDirectory() || myTypeManager.isFileIgnored(file.getName()) || file.isHidden()) {
         continue;
       }
-      String name = file.getName();
-      if (!name.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX)) {
-        oldFormatTemplates.add(file);
-        continue;
+      final String name = file.getName();
+      if (name.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX)) {
+        templateWithDefaultExtension.add(file);
       }
-      // cut default template extension
-      name = name.substring(0, name.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
-      processedNames.add(name);
+      else {
+        processedNames.add(name);
+        addTemplateFromFile(manager, name, file);
+      }
 
-      addTemplateFromFile(manager, name, file);
     }
 
-    for (File oldFile : oldFormatTemplates) {
-      final String name = oldFile.getName();
+    for (File file : templateWithDefaultExtension) {
+      String name = file.getName();
+      // cut default template extension
+      name = name.substring(0, name.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
       if (!processedNames.contains(name)) {
-        addTemplateFromFile(manager, name, oldFile);
+        addTemplateFromFile(manager, name, file);
       }
-      FileUtil.delete(oldFile);
+      FileUtil.delete(file);
     }
   }
 
@@ -554,6 +554,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
         final String text = normalizeText(getDefaultClassTemplateText(templateName));
         template = myInternalTemplatesManager.addTemplate(templateName, "java");
         template.setText(text);
+        // Important! Must update template files on disk so that Velocity is able to use them
+        myInternalTemplatesManager.saveTemplates();
       }
     }
     return template;

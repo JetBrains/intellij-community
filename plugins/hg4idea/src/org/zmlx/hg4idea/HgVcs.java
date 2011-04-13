@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.RepositoryChangeListener;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
+import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
@@ -53,6 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.provider.*;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
+import org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutor;
 import org.zmlx.hg4idea.provider.update.HgIntegrateEnvironment;
 import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
 import org.zmlx.hg4idea.ui.HgChangesetStatus;
@@ -107,6 +109,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private HgExecutableValidator myExecutableValidator;
   private final Object myExecutableValidatorLock = new Object();
   private File myPromptHooksExtensionFile;
+  private CommitExecutor myCommitAndPushExecutor;
 
   public HgVcs(Project project,
     HgGlobalSettings globalSettings, HgProjectSettings projectSettings,
@@ -126,6 +129,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     commitedChangesProvider = new HgCachingCommitedChangesProvider(project);
     myDirStateChangeListener = new RepositoryChangeListener(myProject, ".hg/dirstate");
     myMergeProvider = new HgMergeProvider(myProject);
+    myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
   }
 
   public String getDisplayName() {
@@ -383,4 +387,10 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   public boolean reportsIgnoredDirectories() {
     return false;
   }
+
+  @Override
+  public List<CommitExecutor> getCommitExecutors() {
+    return Collections.<CommitExecutor>singletonList(myCommitAndPushExecutor);
+  }
+
 }

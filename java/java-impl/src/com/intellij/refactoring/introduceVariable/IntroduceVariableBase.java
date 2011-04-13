@@ -628,7 +628,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
   public static PsiElement replace(final PsiExpression expr1, final PsiExpression ref, final Project project)
     throws IncorrectOperationException {
-    final PsiExpression expr2 = RefactoringUtil.outermostParenthesizedExpression(expr1);
+    final PsiExpression expr2;
+    if (expr1 instanceof PsiArrayInitializerExpression &&
+      expr1.getParent() instanceof PsiNewExpression) {
+      expr2 = (PsiNewExpression) expr1.getParent();
+    } else {
+      expr2 = RefactoringUtil.outermostParenthesizedExpression(expr1);
+    }
     if (expr2.isPhysical()) {
       return expr2.replace(ref);
     }

@@ -251,11 +251,13 @@ public class OutputParser{
       }
 
       public String getNextLine() {
-        final int next = myIndex + 1;
-        if (next >= javacMessages.size()) {
+        final int size = javacMessages.size();
+        final int next = Math.min(myIndex + 1, javacMessages.size());
+        myIndex = next;
+        if (next >= size) {
           return null;
         }
-        return javacMessages.get(myIndex = next);
+        return javacMessages.get(next);
       }
 
       @Override

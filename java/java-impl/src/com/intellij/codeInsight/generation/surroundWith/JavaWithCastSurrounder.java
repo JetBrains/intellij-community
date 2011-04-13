@@ -40,6 +40,7 @@ class JavaWithCastSurrounder extends JavaExpressionSurrounder {
   }
 
   public TextRange surroundExpression(final Project project, final Editor editor, PsiExpression expr) throws IncorrectOperationException {
+    assert expr.isValid();
     PsiType[] types = GuessManager.getInstance(project).guessTypeToCast(expr);
     final Template template = generateTemplate(project, expr.getText(), types);
     TextRange range = expr.getTextRange();

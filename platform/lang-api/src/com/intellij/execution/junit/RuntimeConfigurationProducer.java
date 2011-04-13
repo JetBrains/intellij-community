@@ -16,18 +16,18 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.execution.Location;
-import com.intellij.execution.PsiLocation;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.RuntimeConfiguration;
+import com.intellij.execution.configurations.*;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,8 +113,9 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
   protected RunnerAndConfigurationSettings cloneTemplateConfiguration(final Project project, @Nullable final ConfigurationContext context) {
     if (context != null) {
       final RuntimeConfiguration original = context.getOriginalConfiguration(myConfigurationFactory.getType());
-      if (original != null){
-        return RunManager.getInstance(project).createConfiguration(original.clone(), myConfigurationFactory);
+      if (original != null) {
+        final RunConfiguration c = original instanceof DelegatingRuntimeConfiguration? ((DelegatingRuntimeConfiguration)original).getPeer() : original;
+        return RunManager.getInstance(project).createConfiguration(c.clone(), myConfigurationFactory);
       }
     }
     return RunManager.getInstance(project).createRunConfiguration("", myConfigurationFactory);
@@ -153,6 +154,59 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
         if (container.equals(element)) return true;
       }
       return false;
+    }
+  }
+
+  public static class DelegatingRuntimeConfiguration<T extends RunConfigurationBase & LocatableConfiguration>
+    extends RuntimeConfiguration {
+    private final T myConfig;
+
+    public DelegatingRuntimeConfiguration(T config) {
+      super(config.getName(), config.getProject(), config.getFactory());
+      myConfig = config;
+    }
+
+    public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+      return myConfig.getConfigurationEditor();
+    }
+
+    @SuppressWarnings({"CloneDoesntCallSuperClone"})
+    @Override
+    public RuntimeConfiguration clone() {
+      return new DelegatingRuntimeConfiguration<T>((T)myConfig.clone());
+    }
+
+    public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
+      return myConfig.getState(executor, env);
+    }
+
+    @Override
+    public void checkConfiguration() throws RuntimeConfigurationException {
+      myConfig.checkConfiguration();
+    }
+
+    @Override
+    public boolean isGeneratedName() {
+      return myConfig.isGeneratedName();
+    }
+
+    @Override
+    public String suggestedName() {
+      return myConfig.suggestedName();
+    }
+
+    @Override
+    public void readExternal(Element element) throws InvalidDataException {
+      myConfig.readExternal(element);
+    }
+
+    @Override
+    public void writeExternal(Element element) throws WriteExternalException {
+      myConfig.writeExternal(element);
+    }
+
+    public T getPeer() {
+      return myConfig;
     }
   }
 }

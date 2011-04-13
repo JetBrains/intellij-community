@@ -21,19 +21,12 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-
-import static java.util.Arrays.asList;
+import java.util.List;
 
 /**
  * @author lesya
  */
 public abstract class AbstractBlockWrapper {
-
-  private static final Set<IndentImpl.Type> RELATIVE_INDENT_TYPES = new HashSet<IndentImpl.Type>(asList(
-    Indent.Type.NORMAL, Indent.Type.CONTINUATION, Indent.Type.CONTINUATION_WITHOUT_FIRST
-  ));
 
   protected WhiteSpace myWhiteSpace;
   protected CompositeBlockWrapper myParent;
@@ -165,13 +158,10 @@ public abstract class AbstractBlockWrapper {
 
   public IndentData getChildOffset(AbstractBlockWrapper child, CodeStyleSettings.IndentOptions options, int targetBlockStartOffset) {
     final boolean childStartsNewLine = child.getWhiteSpace().containsLineFeeds();
-    IndentImpl.Type childIndentType = child.getIndent().getType();
     IndentData childIndent;
 
     // Calculate child indent.
-    if (childStartsNewLine
-        || (!getWhiteSpace().containsLineFeeds() && RELATIVE_INDENT_TYPES.contains(childIndentType) && indentAlreadyUsedBefore(child)))
-    {
+    if (childStartsNewLine) {
       childIndent = getIndent(options, child, targetBlockStartOffset);
     }
     else {
@@ -202,7 +192,38 @@ public abstract class AbstractBlockWrapper {
     //            }
     //        );
     //    }
-    if (child.getIndent().isEnforceParentIndent() && !child.getWhiteSpace().containsLineFeeds()) {
+    if (child.getIndent().isEnforceIndentToChildren() && !child.getWhiteSpace().containsLineFeeds()) {
+      AlignmentImpl alignment = child.getAlignment();
+      if (alignment != null) {
+        // Generally, we want to handle situation like the one below:
+        //   test("text", new Runnable() { 
+        //            @Override
+        //            public void run() {
+        //            }
+        //        },
+        //        new Runnable() {
+        //            @Override
+        //            public void run() {
+        //            }
+        //        }
+        //   );
+        // I.e. we want 'run()' method from the first anonymous class to be aligned with the 'run()' method of the second anonymous class.
+
+      AbstractBlockWrapper anchorBlock = alignment.getOffsetRespBlockBefore(child);
+        if (anchorBlock == null) {
+          anchorBlock = this;
+          if (anchorBlock instanceof CompositeBlockWrapper) {
+            List<AbstractBlockWrapper> children = ((CompositeBlockWrapper)anchorBlock).getChildren();
+            for (AbstractBlockWrapper c : children) {
+              if (c.getStartOffset() != getStartOffset()) {
+                anchorBlock = c;
+                break;
+              }
+            }
+          }
+        }
+        return anchorBlock.getNumberOfSymbolsBeforeBlock();
+      }
       childIndent = childIndent.add(getIndent(options, child, getStartOffset()));
     }
 
@@ -267,15 +288,6 @@ public abstract class AbstractBlockWrapper {
   }
 
   /**
-   * Allows to answer if current wrapped block has a child block that is located before given block and has line feed.
-   *
-   * @param child   target child block to process
-   * @return        <code>true</code> if current block has a child that is located before the given block and contains line feed;
-   *                <code>false</code> otherwise
-   */
-  protected abstract boolean indentAlreadyUsedBefore(final AbstractBlockWrapper child);
-
-  /**
    * Allows to retrieve object that encapsulates information about number of symbols before the current block starting
    * from the line start. I.e. all symbols (either white space or not) between start of the line where current block begins
    * and the block itself are count and returned.
@@ -310,9 +322,7 @@ public abstract class AbstractBlockWrapper {
     if (childIndent == null) childIndent = (IndentImpl)Indent.getContinuationWithoutFirstIndent(indentOption.USE_RELATIVE_INDENTS);
 
     IndentData indent = getIndent(indentOption, index, childIndent);
-    if (myParent == null) {
-      return indent.add(getWhiteSpace());
-    } else if ((myFlags & CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT) != 0 && getWhiteSpace().containsLineFeeds()) {
+    if (myParent == null || (myFlags & CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT) != 0 && getWhiteSpace().containsLineFeeds()) {
       return indent.add(getWhiteSpace());
     }
     else {

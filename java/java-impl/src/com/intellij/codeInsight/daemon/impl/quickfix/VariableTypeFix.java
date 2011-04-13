@@ -17,8 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.IntentionAndQuickFixAction;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -30,23 +29,23 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class VariableTypeFix extends IntentionAndQuickFixAction {
+public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix");
 
-  private final PsiVariable myVariable;
   private final PsiType myReturnType;
+  protected final String myName;
 
-  public VariableTypeFix(PsiVariable variable, PsiType toReturn) {
-    myVariable = variable;
+  public VariableTypeFix(@NotNull PsiVariable variable, PsiType toReturn) {
+    super(variable);
     myReturnType = toReturn != null ? GenericsUtil.getVariableTypeByExpressionType(toReturn) : null;
+    myName = variable.getName();
   }
-
 
   @NotNull
   @Override
-  public String getName() {
+  public String getText() {
     return QuickFixBundle.message("fix.variable.type.text",
-                                  getVariable().getName(),
+                                  myName,
                                   getReturnType().getCanonicalText());
   }
 
@@ -55,10 +54,14 @@ public class VariableTypeFix extends IntentionAndQuickFixAction {
     return QuickFixBundle.message("fix.variable.type.family");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return getVariable() != null
-        && getVariable().isValid()
-        && getVariable().getManager().isInProject(getVariable())
+  @Override
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    final PsiVariable myVariable = (PsiVariable)startElement;
+    return myVariable.isValid()
+        && myVariable.getManager().isInProject(myVariable)
         && getReturnType() != null
         && getReturnType().isValid()
         && !TypeConversionUtil.isNullType(getReturnType())
@@ -66,13 +69,18 @@ public class VariableTypeFix extends IntentionAndQuickFixAction {
   }
 
   @Override
-  public void applyFix(Project project, PsiFile file, @Nullable Editor editor) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(getVariable().getContainingFile())) return;
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable("is null when called from inspection") Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    final PsiVariable myVariable = (PsiVariable)startElement;
+    if (!CodeInsightUtilBase.prepareFileForWrite(myVariable.getContainingFile())) return;
     try {
-      getVariable().normalizeDeclaration();
-      getVariable().getTypeElement().replace(JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createTypeElement(
+      myVariable.normalizeDeclaration();
+      myVariable.getTypeElement().replace(JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createTypeElement(
           getReturnType()));
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(getVariable());
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
       UndoUtil.markPsiFileForUndo(file);
     } catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -81,10 +89,6 @@ public class VariableTypeFix extends IntentionAndQuickFixAction {
 
   public boolean startInWriteAction() {
     return true;
-  }
-
-  protected PsiVariable getVariable() {
-    return myVariable;
   }
 
   protected PsiType getReturnType() {

@@ -26,7 +26,7 @@ public class RemoveRedundantConversionFix extends RemoveExplicitConversionFix {
     }
 
     @NotNull
-    public String getName() {
+    public String getText() {
         return "Remove Redundant Conversion";
     }
 

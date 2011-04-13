@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
+import com.intellij.ide.diff.DiffElement;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,20 +30,20 @@ import java.util.*;
  */
 public class DirDiffTableModel extends AbstractTableModel {
   private final Project myProject;
-  private VirtualFile mySrc;
-  private VirtualFile myTrg;
+  private DiffElement mySrc;
+  private DiffElement myTrg;
   final List<DirDiffElement> myElements = new ArrayList<DirDiffElement>();
   private boolean showEqual = false;
   private boolean showDifferent = true;
   private boolean showNewOnSource = true;
   private boolean showNewOnTarget = true;
 
-  public DirDiffTableModel(Project project, VirtualFile src, VirtualFile trg, ProgressIndicator indicator) {
+  public DirDiffTableModel(Project project, DiffElement src, DiffElement trg, ProgressIndicator indicator) {
     myProject = project;
     loadModel(src, trg, indicator);
   }
 
-  public void loadModel(VirtualFile src, VirtualFile trg, ProgressIndicator indicator) {
+  public void loadModel(DiffElement src, DiffElement trg, ProgressIndicator indicator) {
     mySrc = src;
     myTrg = trg;
     final HashSet<String> files = new HashSet<String>();
@@ -77,20 +77,20 @@ public class DirDiffTableModel extends AbstractTableModel {
     });
 
     for (String path : pathes) {
-      final VirtualFile srcFile = src.findFileByRelativePath(path);
-      final VirtualFile trgFile = trg.findFileByRelativePath(path);
+      final DiffElement srcFile = src.findFileByRelativePath(path);
+      final DiffElement trgFile = trg.findFileByRelativePath(path);
       if (srcFile == null && trgFile != null) {
         myElements.add(DirDiffElement.createTargetOnly(trgFile));
       } else if (srcFile != null && trgFile == null) {
         myElements.add(DirDiffElement.createSourceOnly(srcFile));
       } else if (srcFile != null && trgFile != null) {
         indicator.setText2("Comparing " + path);
-        if (srcFile.isDirectory() && trgFile.isDirectory()) {
+        if (srcFile.isContainer() && trgFile.isContainer()) {
           myElements.add(DirDiffElement.createDirElement(srcFile, trgFile, path));
-        } else if (srcFile.isDirectory() && !trgFile.isDirectory()) {
+        } else if (srcFile.isContainer() && !trgFile.isContainer()) {
           myElements.add(DirDiffElement.createDirElement(srcFile, null, path));
           myElements.add(DirDiffElement.createTargetOnly(trgFile));
-        } else if (!srcFile.isDirectory() && trgFile.isDirectory()) {
+        } else if (!srcFile.isContainer() && trgFile.isContainer()) {
           myElements.add(DirDiffElement.createDirElement(null, trgFile, path));
           myElements.add(DirDiffElement.createSourceOnly(srcFile));
         } else if (!isEqual(srcFile, trgFile)) {
@@ -121,11 +121,11 @@ public class DirDiffTableModel extends AbstractTableModel {
     }
   }
 
-  private static boolean isEqual(VirtualFile file1, VirtualFile file2) {
-    if (file1.isDirectory() || file2.isDirectory()) return false;
-    if (file1.getLength() != file2.getLength()) return false;
+  private static boolean isEqual(DiffElement file1, DiffElement file2) {
+    if (file1.isContainer() || file2.isContainer()) return false;
+    if (file1.getSize() != file2.getSize()) return false;
     try {
-      return Arrays.equals(file1.contentsToByteArray(), file2.contentsToByteArray());
+      return Arrays.equals(file1.getContent(), file2.getContent());
     }
     catch (IOException e) {
       return false;
@@ -136,22 +136,22 @@ public class DirDiffTableModel extends AbstractTableModel {
     return myElements.get(index);
   }
 
-  public VirtualFile getSourceDir() {
+  public DiffElement getSourceDir() {
     return mySrc;
   }
 
-  public VirtualFile getTargetDir() {
+  public DiffElement getTargetDir() {
     return myTrg;
   }
 
-  private static void scan(String prefix, VirtualFile file, HashSet<String> files, ProgressIndicator indicator, boolean isRoot) {
-    if (file.isDirectory()) {
+  private static void scan(String prefix, DiffElement file, HashSet<String> files, ProgressIndicator indicator, boolean isRoot) {
+    if (file.isContainer()) {
       indicator.setText2(file.getPath());
       String p = isRoot ? "" : prefix + file.getName() + "/";
       if (!isRoot) {
         files.add(p);
       }
-      for (VirtualFile f : file.getChildren()) {
+      for (DiffElement f : file.getChildren()) {
         scan(p, f, files, indicator, false);
       }
     } else {

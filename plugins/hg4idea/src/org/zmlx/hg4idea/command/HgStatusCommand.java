@@ -86,10 +86,10 @@ public class HgStatusCommand {
   }
 
   public Set<HgChange> execute(VirtualFile repo) {
-    return doExecute(repo, null);
+    return execute(repo, null);
   }
 
-  private Set<HgChange> doExecute(VirtualFile repo, String file) {
+  public Set<HgChange> execute(VirtualFile repo, String relativePath) {
     if (repo == null) {
       return Collections.emptySet();
     }
@@ -127,11 +127,11 @@ public class HgStatusCommand {
       }
     }
 
-    if (file != null) {
-      arguments.add(file);
+    if (relativePath != null) {
+      arguments.add(relativePath);
     }
 
-    executor.setSilent(true);
+    //executor.setSilent(true);
     HgCommandResult result = executor.executeInCurrentThread(repo, "status", arguments);
     Set<HgChange> changes = new HashSet<HgChange>();
     HgChange previous = null;

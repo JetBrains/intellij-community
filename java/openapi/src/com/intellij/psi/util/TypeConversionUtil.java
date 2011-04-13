@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vcs.changes.IgnoredFileBean;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -862,6 +863,14 @@ public class TypeConversionUtil {
       }
     }
     else {
+      final PsiClass leftClass = PsiUtil.resolveClassInType(typeLeft);
+      if (leftClass instanceof PsiTypeParameter) {
+        for (PsiClassType leftClassType : leftClass.getExtendsListTypes()) {
+          if (TypesDistinctProver.provablyDistinct(leftClassType, typeRight)) return false;
+        }
+        if (!(typeRight instanceof PsiCapturedWildcardType || typeRight instanceof PsiWildcardType)) return true;
+      }
+
       return typeLeft.equals(typeRight);
     }
   }

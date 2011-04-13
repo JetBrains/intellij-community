@@ -30,4 +30,6 @@ public interface XPathElement extends PsiElement {
   ContextProvider getXPathContext();
 
   XPathVersion getXPathVersion();
+
+  void accept(XPathElementVisitor visitor);
 }

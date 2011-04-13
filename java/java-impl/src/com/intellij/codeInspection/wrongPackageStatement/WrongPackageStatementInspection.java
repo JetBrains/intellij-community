@@ -68,8 +68,8 @@ public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool
         }
         else if (!Comparing.equal(dirPackage.getQualifiedName(), packageReference.getText(), true)) {
           availableFixes.add(new AdjustPackageNameFix(javaFile, packageStatement, dirPackage));
-          MoveToPackageFix moveToPackageFix = new MoveToPackageFix(file, classPackage);
-          if (moveToPackageFix.isAvailable()) {
+          MoveToPackageFix moveToPackageFix = new MoveToPackageFix(classPackage.getQualifiedName());
+          if (moveToPackageFix.isAvailable(file)) {
             availableFixes.add(moveToPackageFix);
           }
         }
@@ -77,7 +77,11 @@ public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool
           String description = JavaErrorMessages.message("package.name.file.path.mismatch",
                                                          packageReference.getText(),
                                                          dirPackage.getQualifiedName());
-          return new ProblemDescriptor[]{manager.createProblemDescriptor(packageStatement.getPackageReference(), description, isOnTheFly, availableFixes.toArray(new LocalQuickFix[availableFixes.size()]), ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
+          LocalQuickFix[] fixes = availableFixes.toArray(new LocalQuickFix[availableFixes.size()]);
+          ProblemDescriptor descriptor =
+            manager.createProblemDescriptor(packageStatement.getPackageReference(), description, isOnTheFly,
+                                            fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          return new ProblemDescriptor[]{descriptor};
 
         }
       }

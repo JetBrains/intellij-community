@@ -17,6 +17,7 @@ package com.intellij.execution.filters;
 
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,7 @@ public class CompositeFilter implements Filter {
     myDumbService = DumbService.getInstance(project);
   }
 
+  @Nullable
   public Result applyFilter(final String line, final int entireLength) {
     final boolean dumb = myDumbService.isDumb();
     List<Filter> filters = myFilters;
@@ -43,6 +45,10 @@ public class CompositeFilter implements Filter {
       }
     }
     return null;
+  }
+
+  public boolean isEmpty() {
+    return myFilters.isEmpty();
   }
 
   public void addFilter(final Filter filter) {

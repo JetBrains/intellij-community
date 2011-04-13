@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.google.common.collect.Lists;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.editor.Editor;
@@ -29,11 +30,14 @@ import java.util.ArrayList;
  * @author yole
  */
 public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelectionHandler {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase");
   public abstract boolean canSelect(PsiElement e);
 
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
 
     final TextRange originalRange = e.getTextRange();
+    LOG.assertTrue(originalRange.getEndOffset() <= editorText.length(), getClass() + "; " + e);
+
     List<TextRange> ranges = expandToWholeLine(editorText, originalRange, true);
 
     if (ranges.size() == 1 && ranges.contains(originalRange)) {
@@ -53,6 +57,7 @@ public abstract class ExtendWordSelectionHandlerBase implements ExtendWordSelect
       return result;
     }
 
+    LOG.assertTrue(range.getEndOffset() <= text.length());
     boolean hasNewLines = false;
 
     for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {

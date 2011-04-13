@@ -32,6 +32,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
@@ -84,7 +85,7 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
           usedComments.add(current);
           continue;
         }
-        if (WHITE_SPACES_SET.contains(elementType)) {
+        if (TokenSets.WHITE_SPACES_SET.contains(elementType)) {
           continue;
         }
         break;
@@ -282,7 +283,7 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes,
   }
 
   private static boolean isMultiLineStringLiteral(ASTNode node) {
-    return (STRING_LITERAL_SET.contains(node.getElementType()) || node.getElementType().equals(GSTRING)) &&
+    return (TokenSets.STRING_LITERAL_SET.contains(node.getElementType()) || node.getElementType().equals(GSTRING)) &&
      isMultiline(node.getPsi()) &&
      isWellEndedString(node.getPsi());
   }

@@ -32,17 +32,15 @@ import org.jetbrains.annotations.NotNull;
 
 public class MoveToPackageFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.MoveToPackageFix");
-  private final PsiFile myFile;
-  private final PsiPackage myTargetPackage;
+  private final String myTargetPackage;
 
-  public MoveToPackageFix(PsiFile file, PsiPackage targetPackage) {
-    myFile = file;
+  public MoveToPackageFix(String targetPackage) {
     myTargetPackage = targetPackage;
   }
 
   @NotNull
   public String getName() {
-    return QuickFixBundle.message("move.class.to.package.text", myTargetPackage.getQualifiedName());
+    return QuickFixBundle.message("move.class.to.package.text", myTargetPackage);
   }
 
   @NotNull
@@ -50,22 +48,26 @@ public class MoveToPackageFix implements LocalQuickFix {
     return QuickFixBundle.message("move.class.to.package.family");
   }
 
-  public boolean isAvailable() {
+  public boolean isAvailable(PsiFile myFile) {
     return myFile != null
         && myFile.isValid()
         && myFile.getManager().isInProject(myFile)
         && myFile instanceof PsiJavaFile
         && ((PsiJavaFile) myFile).getClasses().length != 0
         && myTargetPackage != null
-        && myTargetPackage.isValid()
+        && JavaPsiFacade.getInstance(myFile.getProject()).findPackage(myTargetPackage) != null
         ;
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    PsiElement element = descriptor.getPsiElement();
+    if (element == null) return;
+    final PsiFile myFile = element.getContainingFile();
+
     if (!CodeInsightUtilBase.prepareFileForWrite(myFile)) return;
 
     try {
-      String packageName = myTargetPackage.getQualifiedName();
+      String packageName = myTargetPackage;
       PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(project, packageName, null, true);
 
       if (directory == null) {

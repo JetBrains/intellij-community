@@ -44,7 +44,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
-import com.sun.jna.examples.WindowUtils;
+import com.sun.jna.platform.WindowUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

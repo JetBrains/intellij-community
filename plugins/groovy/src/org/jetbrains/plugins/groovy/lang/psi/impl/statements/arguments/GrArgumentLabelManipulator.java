@@ -1,13 +1,11 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator;
 
@@ -18,7 +16,7 @@ public class GrArgumentLabelManipulator extends AbstractElementManipulator<GrArg
   @Override
   public TextRange getRangeInElement(GrArgumentLabel element) {
     final PsiElement nameElement = element.getNameElement();
-    if (nameElement instanceof LeafPsiElement && GroovyTokenTypes.STRING_LITERAL_SET.contains(((LeafPsiElement)nameElement).getElementType())) {
+    if (nameElement instanceof LeafPsiElement && TokenSets.STRING_LITERAL_SET.contains(((LeafPsiElement)nameElement).getElementType())) {
       return GroovyStringLiteralManipulator.getLiteralRange(nameElement.getText());
     }
 

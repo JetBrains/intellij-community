@@ -20,7 +20,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.impl.ImplementAbstractMethodHandler;
-import com.intellij.codeInspection.IntentionAndQuickFixAction;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.util.MemberChooser;
@@ -39,14 +39,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
 
-public class ImplementMethodsFix extends IntentionAndQuickFixAction {
-  private final PsiElement myPsiElement;
+public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   public ImplementMethodsFix(PsiElement aClass) {
-    myPsiElement = aClass;
+    super(aClass);
   }
 
   @NotNull
-  public String getName() {
+  @Override
+  public String getText() {
     return QuickFixBundle.message("implement.methods.fix");
   }
 
@@ -55,11 +55,23 @@ public class ImplementMethodsFix extends IntentionAndQuickFixAction {
     return QuickFixBundle.message("implement.methods.fix");
   }
 
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+  @Override
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    PsiElement myPsiElement = startElement;
     return myPsiElement.isValid() && myPsiElement.getManager().isInProject(myPsiElement);
   }
 
-  public void applyFix(final Project project, final PsiFile file, @Nullable final Editor editor) {
+  @Override
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable("is null when called from inspection") final Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    final PsiElement myPsiElement = startElement;
+
     if (editor == null || !CodeInsightUtilBase.prepareFileForWrite(myPsiElement.getContainingFile())) return;
     if (myPsiElement instanceof PsiEnumConstant) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.CODEASSISTS_OVERRIDE_IMPLEMENT);

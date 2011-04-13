@@ -18,7 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
-import com.intellij.codeInspection.IntentionAndQuickFixAction;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -31,22 +31,22 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class AddMethodFix extends IntentionAndQuickFixAction {
+public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddMethodFix");
 
-  private final PsiClass myClass;
-  private final PsiMethod myMethod;
+  private final PsiMethod myMethodPrototype;
   private String myText;
   private final List<String> myExceptions = new ArrayList<String>();
 
-  public AddMethodFix(@NotNull PsiMethod method, @NotNull PsiClass implClass) {
-    myMethod = method;
-    myClass = implClass;
-    setText(QuickFixBundle.message("add.method.text", method.getName(), implClass.getName()));
+  public AddMethodFix(@NotNull PsiMethod methodPrototype, @NotNull PsiClass implClass) {
+    super(implClass);
+    myMethodPrototype = methodPrototype;
+    setText(QuickFixBundle.message("add.method.text", methodPrototype.getName(), implClass.getName()));
   }
 
   public AddMethodFix(@NonNls @NotNull String methodText, @NotNull PsiClass implClass, @NotNull String... exceptions) {
@@ -78,7 +78,8 @@ public class AddMethodFix extends IntentionAndQuickFixAction {
   }
 
   @NotNull
-  public String getName() {
+  @Override
+  public String getText() {
     return myText;
   }
 
@@ -87,28 +88,44 @@ public class AddMethodFix extends IntentionAndQuickFixAction {
     return QuickFixBundle.message("add.method.family");
   }
 
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return myMethod != null
-           && myMethod.isValid()
-           && myClass != null
+  @Override
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    final PsiClass myClass = (PsiClass)startElement;
+
+    return myMethodPrototype != null
+           && myMethodPrototype.isValid()
            && myClass.isValid()
            && myClass.getManager().isInProject(myClass)
            && myText != null
-           && MethodSignatureUtil.findMethodBySignature(myClass, myMethod, false) == null
+           && MethodSignatureUtil.findMethodBySignature(myClass, myMethodPrototype, false) == null
         ;
   }
 
-  public void applyFix(final Project project, final PsiFile file, final Editor editor) {
+  @Override
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable("is null when called from inspection") Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    final PsiClass myClass = (PsiClass)startElement;
     if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
     PsiCodeBlock body;
-    if (myClass.isInterface() && (body = myMethod.getBody()) != null) body.delete();
+    if (myClass.isInterface() && (body = myMethodPrototype.getBody()) != null) body.delete();
     for (String exception : myExceptions) {
-      PsiUtil.addException(myMethod, exception);
+      PsiUtil.addException(myMethodPrototype, exception);
     }
-    PsiMethod method = (PsiMethod)myClass.add(myMethod);
+    PsiMethod method = (PsiMethod)myClass.add(myMethodPrototype);
     method = (PsiMethod)method.replace(reformat(project, method));
     if (editor != null) {
       GenerateMembersUtil.positionCaret(editor, method, true);
     }
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return true;
   }
 }

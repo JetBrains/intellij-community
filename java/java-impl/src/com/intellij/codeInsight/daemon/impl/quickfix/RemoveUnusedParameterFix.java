@@ -17,11 +17,11 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.IntentionAndQuickFixAction;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
@@ -33,16 +33,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RemoveUnusedParameterFix extends IntentionAndQuickFixAction {
-  private final PsiParameter myParameter;
+public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+
+  private final String myName;
 
   public RemoveUnusedParameterFix(PsiParameter parameter) {
-    myParameter = parameter;
+    super(parameter);
+    myName = parameter.getName();
   }
 
   @NotNull
-  public String getName() {
-    return QuickFixBundle.message("remove.unused.parameter.text", myParameter.getName());
+  @Override
+  public String getText() {
+    return QuickFixBundle.message("remove.unused.parameter.text", myName);
   }
 
   @NotNull
@@ -50,14 +53,25 @@ public class RemoveUnusedParameterFix extends IntentionAndQuickFixAction {
     return QuickFixBundle.message("remove.unused.parameter.family");
   }
 
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+  @Override
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    final PsiParameter myParameter = (PsiParameter)startElement;
     return
       myParameter.isValid()
       && myParameter.getDeclarationScope() instanceof PsiMethod
       && myParameter.getManager().isInProject(myParameter);
   }
 
-  public void applyFix(final Project project, final PsiFile file, @Nullable final Editor editor) {
+  @Override
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable("is null when called from inspection") Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    final PsiParameter myParameter = (PsiParameter)startElement;
     if (!CodeInsightUtilBase.prepareFileForWrite(myParameter.getContainingFile())) return;
     removeReferences(myParameter);
   }
@@ -66,17 +80,11 @@ public class RemoveUnusedParameterFix extends IntentionAndQuickFixAction {
     PsiMethod method = (PsiMethod) parameter.getDeclarationScope();
     ChangeSignatureProcessor processor = new ChangeSignatureProcessor(parameter.getProject(),
                                                                       method,
-        false, null,
-        method.getName(),
-        method.getReturnType(),
-        getNewParametersInfo(method, parameter));
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      processor.run();
-    }
-    else {
-      processor.run();
-    }
+                                                                      false, null,
+                                                                      method.getName(),
+                                                                      method.getReturnType(),
+                                                                      getNewParametersInfo(method, parameter));
+    processor.run();
   }
 
   public static ParameterInfoImpl[] getNewParametersInfo(PsiMethod method, PsiParameter parameterToRemove) {

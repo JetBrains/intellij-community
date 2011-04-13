@@ -273,7 +273,12 @@ public class BackendCompilerWrapper {
     if (moduleTestOutputDirectory == null) {
       return false;
     }
+    // here we have test output specified
     final String moduleOutputDirectory = getOutputDir(module);
+    if (moduleOutputDirectory == null) {
+      // only test output is specified, so should return true
+      return true;
+    }
     return !FileUtil.pathsEqual(moduleTestOutputDirectory, moduleOutputDirectory);
   }
 

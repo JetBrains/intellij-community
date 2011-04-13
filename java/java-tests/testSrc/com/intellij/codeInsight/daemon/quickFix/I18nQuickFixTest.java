@@ -1,4 +1,4 @@
-package com.intellij.codeInsight.daemon;
+package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFix15TestCase;
 import com.intellij.codeInspection.LocalInspectionTool;

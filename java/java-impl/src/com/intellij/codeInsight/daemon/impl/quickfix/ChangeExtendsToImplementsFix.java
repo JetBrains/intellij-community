@@ -29,15 +29,18 @@ import org.jetbrains.annotations.NotNull;
  * changes 'class a extends b' to 'class a implements b' or vice versa
  */
 public class ChangeExtendsToImplementsFix extends ExtendsListFix {
+  private final String myName;
+
   public ChangeExtendsToImplementsFix(PsiClass aClass, PsiClassType classToExtendFrom) {
     super(aClass, classToExtendFrom, true);
+    myName = QuickFixBundle.message("exchange.extends.implements.keyword",
+                                    aClass.isInterface() == myClassToExtendFrom.isInterface() ? PsiKeyword.IMPLEMENTS : PsiKeyword.EXTENDS,
+                                    aClass.isInterface() == myClassToExtendFrom.isInterface() ? PsiKeyword.EXTENDS : PsiKeyword.IMPLEMENTS,
+                                    myClassToExtendFrom.getQualifiedName());
   }
 
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("exchange.extends.implements.keyword",
-          myClass.isInterface() == myClassToExtendFrom.isInterface() ? PsiKeyword.IMPLEMENTS : PsiKeyword.EXTENDS,
-          myClass.isInterface() == myClassToExtendFrom.isInterface() ? PsiKeyword.EXTENDS : PsiKeyword.IMPLEMENTS,
-          myClassToExtendFrom.getQualifiedName());
+    return myName;
   }
 }

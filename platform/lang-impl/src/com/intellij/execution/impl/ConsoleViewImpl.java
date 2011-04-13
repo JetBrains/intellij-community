@@ -102,7 +102,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, DataProvider, OccurenceNavigator {
-  
+
   private @NonNls String CONSOLE_VIEW_POPUP_MENU = "ConsoleView.PopupMenu";
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.ConsoleViewImpl");
 
@@ -131,6 +131,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
   private final ArrayList<AnAction> customActions = new ArrayList<AnAction>();
   private final ConsoleBuffer myBuffer = new ConsoleBuffer();
+  private boolean myUpdateFoldingsEnabled = true;
 
   @TestOnly
   public Editor getEditor() {
@@ -475,7 +476,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private void printHyperlink(String s, ConsoleViewContentType contentType, HyperlinkInfo info) {
     synchronized (LOCK) {
-      Pair<String,Integer> pair = myBuffer.print(s, contentType, info);
+      Pair<String, Integer> pair = myBuffer.print(s, contentType, info);
       s = pair.first;
       myContentSize += s.length() - pair.second;
 
@@ -492,7 +493,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   protected void beforeExternalAddContentToDocument(int length, ConsoleViewContentType contentType) {
-    myContentSize+=length;
+    myContentSize += length;
     addToken(length, null, contentType);
   }
 
@@ -545,7 +546,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }, null, DocCommandGroupId.noneGroupId(document));
     }
 
-    
+
     final String text;
     final Collection<ConsoleViewContentType> contentTypes;
     int deferredTokensSize;
@@ -555,7 +556,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (myEditor == null) return;
 
       text = myBuffer.getText();
-      
+
       contentTypes = Collections.unmodifiableCollection(new HashSet<ConsoleViewContentType>(myBuffer.getDeferredTokenTypes()));
       List<TokenInfo> deferredTokens = myBuffer.getDeferredTokens();
       for (TokenInfo deferredToken : deferredTokens) {
@@ -599,7 +600,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     }, null, DocCommandGroupId.noneGroupId(document));
     synchronized (LOCK) {
-      for (int i = myTokens.size() - 1; i >=0 && deferredTokensSize > 0; i--, deferredTokensSize--) {
+      for (int i = myTokens.size() - 1; i >= 0 && deferredTokensSize > 0; i--, deferredTokensSize--) {
         TokenInfo token = myTokens.get(i);
         final HyperlinkInfo info = token.getHyperlinkInfo();
         if (info != null) {
@@ -674,6 +675,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   public void setHelpId(final String helpId) {
     myHelpId = helpId;
+  }
+
+  public void setUpdateFoldingsEnabled(boolean updateFoldingsEnabled) {
+    myUpdateFoldingsEnabled = updateFoldingsEnabled;
   }
 
   public void addMessageFilter(final Filter filter) {
@@ -773,7 +778,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       @Override
       public Color getDefaultBackground() {
         final Color color = getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
-        return color == null? super.getDefaultBackground() : color;
+        return color == null ? super.getDefaultBackground() : color;
       }
     };
     editor.setColorsScheme(scheme);
@@ -968,10 +973,19 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void highlightHyperlinksAndFoldings(final int line1, final int endLine) {
+    boolean canHighlightHyperlinks = !myCustomFilter.isEmpty() || !myPredefinedMessageFilter.isEmpty();
+
+    if (!canHighlightHyperlinks && myUpdateFoldingsEnabled) {
+      return;
+    }
     ApplicationManager.getApplication().assertIsDispatchThread();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    highlightHyperlinks(myEditor, myHyperlinks, myCustomFilter, myPredefinedMessageFilter, line1, endLine);
-    updateFoldings(line1, endLine, true);
+    if (canHighlightHyperlinks) {
+      highlightHyperlinks(myEditor, myHyperlinks, myCustomFilter, myPredefinedMessageFilter, line1, endLine);
+    }
+    if (myUpdateFoldingsEnabled) {
+      updateFoldings(line1, endLine, true);
+    }
   }
 
   private void updateFoldings(final int line1, final int endLine, boolean immediately) {
@@ -1510,7 +1524,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       scrollTo(next.getStartOffset());
     }
     final HyperlinkInfo hyperlinkInfo = myHyperlinks.getRanges().get(next);
-    return  hyperlinkInfo == null ? null : new OccurenceInfo(new Navigatable.Adapter() {
+    return hyperlinkInfo == null ? null : new OccurenceInfo(new Navigatable.Adapter() {
       public void navigate(final boolean requestFocus) {
         hyperlinkInfo.navigate(myProject);
         linkFollowed(hyperlinkInfo);
@@ -1551,7 +1565,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
        * used soft wraps mode and perform update if we see that the current value differs from the stored.
        */
       private boolean myLastIsSelected;
-      
+
       @Override
       protected Editor getEditor(AnActionEvent e) {
         return myEditor;

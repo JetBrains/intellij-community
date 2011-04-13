@@ -27,13 +27,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -47,21 +47,21 @@ public class PluginInstaller {
 
   private PluginInstaller() {}
 
-  public static boolean prepareToInstall (List <PluginNode> plugins) {
+  public static boolean prepareToInstall(List<PluginNode> pluginsToInstall, List<IdeaPluginDescriptor> allPlugins) {
     ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
 
     final List<PluginId> pluginIds = new ArrayList<PluginId>();
-    for (PluginNode pluginNode : plugins) {
+    for (PluginNode pluginNode : pluginsToInstall) {
       pluginIds.add(pluginNode.getPluginId());
     }
 
     boolean result = false;
 
-    for (final PluginNode pluginNode : plugins) {
+    for (final PluginNode pluginNode : pluginsToInstall) {
       if (pi != null) pi.setText(pluginNode.getName());
 
       try {
-        result |= prepareToInstall(pluginNode, pluginIds);
+        result |= prepareToInstall(pluginNode, pluginIds, allPlugins);
       }
       catch (final IOException e) {
         SwingUtilities.invokeLater(new Runnable(){
@@ -74,7 +74,9 @@ public class PluginInstaller {
     return result;
   }
 
-  private static boolean prepareToInstall(final PluginNode pluginNode, final List<PluginId> pluginIds) throws IOException {
+  private static boolean prepareToInstall(final PluginNode pluginNode,
+                                          final List<PluginId> pluginIds,
+                                          List<IdeaPluginDescriptor> allPlugins) throws IOException {
     // check for dependent plugins at first.
     if (pluginNode.getDepends() != null && pluginNode.getDepends().size() > 0) {
       // prepare plugins list for install
@@ -95,9 +97,12 @@ public class PluginInstaller {
         depPlugin.setSize("-1");
         depPlugin.setName(depPluginId.getIdString()); //prevent from exceptions
 
-        if (optionalDependentPluginIds != null && Arrays.binarySearch(optionalDependentPluginIds, depPluginId) != -1) {
-          optionalDeps.add(depPlugin);
-        } else {
+        if (optionalDependentPluginIds != null && ArrayUtil.indexOf(optionalDependentPluginIds, depPluginId) != -1) {
+          if (isPluginInRepo(depPluginId, allPlugins)) {
+            optionalDeps.add(depPlugin);
+          }
+        }
+        else {
           depends.add(depPlugin);
         }
       }
@@ -120,7 +125,7 @@ public class PluginInstaller {
           return false;
         }
         if (proceed[0]) {
-          if (!prepareToInstall(depends)) {
+          if (!prepareToInstall(depends, allPlugins)) {
             return false;
           }
         } else {
@@ -147,7 +152,7 @@ public class PluginInstaller {
           return false;
         }
         if (proceed[0]) {
-          if (!prepareToInstall(optionalDeps)) {
+          if (!prepareToInstall(optionalDeps, allPlugins)) {
             return false;
           }
         }
@@ -171,14 +176,14 @@ public class PluginInstaller {
 
     return true;
   }
-  /**
-   * Install plugin into a temp direcotry
-   * Append 'action script' file with installing actions
-   *
-   * @param pluginNode Plugin to install
-   */
-  public static boolean prepareToInstall (PluginNode pluginNode) throws IOException {
-    return prepareToInstall(pluginNode, null);
+
+  private static boolean isPluginInRepo(PluginId depPluginId, List<IdeaPluginDescriptor> allPlugins) {
+    for (IdeaPluginDescriptor plugin : allPlugins) {
+      if (plugin.getPluginId().equals(depPluginId)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static void prepareToUninstall (PluginId pluginId) throws IOException {

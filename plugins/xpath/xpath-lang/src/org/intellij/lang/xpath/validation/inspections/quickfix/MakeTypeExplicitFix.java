@@ -41,7 +41,7 @@ public class MakeTypeExplicitFix extends ReplaceElementFix<XPathExpression> {
     }
 
     @NotNull
-    public String getName() {
+    public String getText() {
         return "Make Type Conversion Explicit";
     }
 

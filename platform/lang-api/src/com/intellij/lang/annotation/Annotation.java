@@ -79,6 +79,11 @@ public final class Annotation implements Segment {
       displayName = key != null ? HighlightDisplayKey.getDisplayNameByKey(key) : fix.getText();
       options = null;
     }
+
+    @Override
+    public String toString() {
+      return quickFix.toString();
+    }
   }
 
   /**

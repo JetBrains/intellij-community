@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang;
 
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -32,13 +33,13 @@ import java.util.Map;
 public class GroovyMethodReturnNamedArgumentProvider extends GroovyNamedArgumentProvider {
   @Override
   public void getNamedArguments(@NotNull GrCall call,
-                                @Nullable PsiMethod method,
+                                @Nullable PsiElement resolve,
                                 @Nullable String argumentName,
                                 boolean forCompletion,
                                 Map<String, ArgumentDescriptor> result) {
-    if (!forCompletion || method == null) return;
+    if (!forCompletion || !(resolve instanceof PsiMethod)) return;
 
-    PsiType returnType = method.getReturnType();
+    PsiType returnType = ((PsiMethod)resolve).getReturnType();
     if (!(returnType instanceof PsiClassType)) return;
 
     Map<String, ArgumentDescriptor> map = new HashMap<String, ArgumentDescriptor>();

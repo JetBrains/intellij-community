@@ -41,7 +41,12 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider {
   private Project myProject;
   private final Object myLock = new Object();
   private final DocumentWindow myDocumentWindow;
-  private volatile boolean physical = true;
+  private static final ThreadLocal<Boolean> disabledTemporarily = new ThreadLocal<Boolean>(){
+    @Override
+    protected Boolean initialValue() {
+      return false;
+    }
+  };
 
   InjectedFileViewProvider(@NotNull PsiManager psiManager,
                            @NotNull VirtualFileWindow virtualFile,
@@ -142,7 +147,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider {
   @Override
   public boolean isEventSystemEnabled() {
     if (myLock == null) return true; // hack to avoid NPE when this method called from super class constructor
-    return physical;
+    return !disabledTemporarily.get();
   }
 
   @Override
@@ -152,18 +157,18 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider {
 
   public void performNonPhysically(Runnable runnable) {
     synchronized (myLock) {
-      physical = false;
+      disabledTemporarily.set(true);
       try {
         runnable.run();
       }
       finally {
-        physical = true;
+        disabledTemporarily.set(false);
       }
     }
   }
 
   @Override
   public String toString() {
-    return "Injected file '"+getVirtualFile().getName()+"' " + (isValid() ? "" : " invalid") + (physical ? "" : " nonphysical");
+    return "Injected file '"+getVirtualFile().getName()+"' " + (isValid() ? "" : " invalid") + (isPhysical() ? "" : " nonphysical");
   }
 }

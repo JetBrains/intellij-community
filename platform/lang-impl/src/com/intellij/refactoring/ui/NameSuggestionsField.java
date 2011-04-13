@@ -118,7 +118,7 @@ public class NameSuggestionsField extends JPanel {
       public void run() {
         Editor editor = getEditor();
         if (editor == null) return;
-        final int pos = editor.getDocument().getText().indexOf('.');
+        final int pos = editor.getDocument().getText().lastIndexOf('.');
         if (pos > 0) {
           editor.getSelectionModel().setSelection(0, pos);
           editor.getCaretModel().moveToOffset(pos);

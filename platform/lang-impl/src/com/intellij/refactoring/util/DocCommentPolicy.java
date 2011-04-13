@@ -61,4 +61,8 @@ public class DocCommentPolicy<T extends PsiComment> {
       oldDocComment.delete();
     }
   }
+
+  public int getJavaDocPolicy() {
+    return myJavaDocPolicy;
+  }
 }

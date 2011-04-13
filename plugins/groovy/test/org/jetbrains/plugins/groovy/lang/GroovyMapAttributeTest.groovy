@@ -439,6 +439,34 @@ println(new CccList(foo: <warning descr="Type of argument 'foo' can not be 'Map'
 """
   }
 
+  public void testCompletionFieldClosureParam() {
+    doTestCompletion("""
+class Test {
+  def field = {attr ->
+    return attr.sss1 + attr.sss2
+  };
+
+  {
+    field(ss<caret>)
+  }
+}
+""", true);
+  }
+
+  public void testCompletionVariableClosureParam() {
+    doTestCompletion("""
+class Test {
+  {
+    def variable = {attr ->
+      return attr.sss1 + attr.sss2
+    }
+
+    variable(ss<caret>)
+  }
+}
+""", true);
+  }
+
   public void testCompletionReturnMethod() {
     myFixture.addFileToProject("Ccc.groovy", """
 class Ccc {

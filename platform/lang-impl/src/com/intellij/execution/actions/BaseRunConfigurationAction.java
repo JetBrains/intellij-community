@@ -198,6 +198,11 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     }
   }
 
+  @Override
+  public boolean isDumbAware() {
+    return false;
+  }
+
   public static String suggestRunActionName(final LocatableConfiguration configuration) {
     if (!configuration.isGeneratedName()) {
       return "\"" + ProgramRunnerUtil.shortenName(configuration.getName(), 0) + "\"";

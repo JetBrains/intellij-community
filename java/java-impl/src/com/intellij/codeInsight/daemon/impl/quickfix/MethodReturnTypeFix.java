@@ -18,7 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInspection.IntentionAndQuickFixAction;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -52,22 +52,27 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class MethodReturnTypeFix extends IntentionAndQuickFixAction {
+public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodReturnBooleanFix");
 
-  private final PsiMethod myMethod;
   private final PsiType myReturnType;
   private final boolean myFixWholeHierarchy;
+  private final String myName;
+  private final String myCanonicalText;
 
   public MethodReturnTypeFix(final PsiMethod method, final PsiType returnType, boolean fixWholeHierarchy) {
-    myMethod = method;
+    super(method);
     myReturnType = returnType;
     myFixWholeHierarchy = fixWholeHierarchy;
+    myName = method.getName();
+    myCanonicalText = returnType.getCanonicalText();
   }
 
+
   @NotNull
-  public String getName() {
-    return QuickFixBundle.message("fix.return.type.text", myMethod.getName(), myReturnType.getCanonicalText());
+  @Override
+  public String getText() {
+    return QuickFixBundle.message("fix.return.type.text", myName, myCanonicalText);
   }
 
   @NotNull
@@ -75,9 +80,14 @@ public class MethodReturnTypeFix extends IntentionAndQuickFixAction {
     return QuickFixBundle.message("fix.return.type.family");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myMethod != null
-        && myMethod.isValid()
+  @Override
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    final PsiMethod myMethod = (PsiMethod)startElement;
+
+    return myMethod.isValid()
         && myMethod.getManager().isInProject(myMethod)
         && myReturnType != null
         && myReturnType.isValid()
@@ -91,14 +101,20 @@ public class MethodReturnTypeFix extends IntentionAndQuickFixAction {
   }
 
   @Override
-  public void applyFix(Project project, PsiFile file, @Nullable Editor editor) {
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    final PsiMethod myMethod = (PsiMethod)startElement;
+
     if (!CodeInsightUtilBase.prepareFileForWrite(myMethod.getContainingFile())) return;
     if (myFixWholeHierarchy) {
       final PsiMethod superMethod = myMethod.findDeepestSuperMethod();
       final PsiType superReturnType = superMethod == null ? null : superMethod.getReturnType();
       if (superReturnType != null &&
           !Comparing.equal(myReturnType, superReturnType) &&
-          !changeClassTypeArgument(project, superReturnType, superMethod.getContainingClass(), editor)) {
+          !changeClassTypeArgument(myMethod, project, superReturnType, superMethod.getContainingClass(), editor)) {
         return;
       }
     }
@@ -117,8 +133,10 @@ public class MethodReturnTypeFix extends IntentionAndQuickFixAction {
 
     final PsiReturnStatement latestReturn = returnSelector.getReturnStatement();
     if (latestReturn != null) {
-      Editor editorForMethod = getEditorForMethod(project, editor, latestReturn.getContainingFile());
-      selectReturnValueInEditor(latestReturn, editorForMethod);
+      Editor editorForMethod = getEditorForMethod(myMethod, project, editor, latestReturn.getContainingFile());
+      if (editorForMethod != null) {
+        selectReturnValueInEditor(latestReturn, editorForMethod);
+      }
     }
   }
 
@@ -189,7 +207,8 @@ public class MethodReturnTypeFix extends IntentionAndQuickFixAction {
     }
   }
 
-  private Editor getEditorForMethod(@NotNull final Project project, final Editor editor, final PsiFile file) {
+  private static Editor getEditorForMethod(PsiMethod myMethod, @NotNull final Project project, final Editor editor, final PsiFile file) {
+
     PsiFile containingFile = myMethod.getContainingFile();
     if (containingFile != file) {
       OpenFileDescriptor descriptor = new OpenFileDescriptor(project, containingFile.getVirtualFile());
@@ -224,7 +243,7 @@ public class MethodReturnTypeFix extends IntentionAndQuickFixAction {
       methodSignatureChangeVisitor.addBase(targetMethod);
       ChangeSignatureProcessor processor = new UsagesAwareChangeSignatureProcessor(method.getProject(), targetMethod,
                                                                         false, null,
-                                                                        method.getName(),
+                                                                        myName,
                                                                         returnType,
                                                                         RemoveUnusedParameterFix.getNewParametersInfo(method, null),
                                                                         methodSignatureChangeVisitor);
@@ -305,7 +324,7 @@ public class MethodReturnTypeFix extends IntentionAndQuickFixAction {
     editor.getSelectionModel().setSelection(range.getEndOffset(), range.getStartOffset());
   }
 
-  private boolean changeClassTypeArgument(Project project, PsiType superReturnType, PsiClass superClass, Editor editor) {
+  private boolean changeClassTypeArgument(PsiMethod myMethod, Project project, PsiType superReturnType, PsiClass superClass, Editor editor) {
     if (superClass == null || !superClass.hasTypeParameters()) return true;
     final PsiClass superReturnTypeClass = PsiUtil.resolveClassInType(superReturnType);
     if (superReturnTypeClass == null || !(superReturnTypeClass instanceof PsiTypeParameter || superReturnTypeClass.hasTypeParameters())) return true;

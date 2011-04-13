@@ -28,27 +28,28 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgChange;
-import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.HgVcsMessages;
+import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.execution.HgCommandException;
 
+import javax.swing.*;
 import java.util.*;
 
 public class HgCheckinEnvironment implements CheckinEnvironment {
 
-  private final Project project;
+  private final Project myProject;
+  private boolean myNextCommitIsPushed;
 
   public HgCheckinEnvironment(Project project) {
-    this.project = project;
+    myProject = project;
   }
 
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {
+    myNextCommitIsPushed = false;
     return null;
   }
 
@@ -72,7 +73,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       VirtualFile repo = entry.getKey();
       Set<HgFile> selectedFiles = entry.getValue();
 
-      HgCommitCommand command = new HgCommitCommand(project, repo, preparedComment);
+      HgCommitCommand command = new HgCommitCommand(myProject, repo, preparedComment);
       
       if (isMergeCommit(repo)) {
         //partial commits are not allowed during merges
@@ -109,17 +110,27 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
         exceptions.add(e);
       }
     }
+
+    // push if needed
+    if (myNextCommitIsPushed && exceptions.isEmpty()) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        public void run() {
+          new HgPusher(myProject).showDialogAndPush();
+        }
+      });
+    }
+
     return exceptions;
   }
 
   private boolean isMergeCommit(VirtualFile repo) {
-    return new HgWorkingCopyRevisionsCommand(project).parents(repo).size() > 1;
+    return new HgWorkingCopyRevisionsCommand(myProject).parents(repo).size() > 1;
   }
 
   private Set<HgFile> getChangedFilesNotInCommit(VirtualFile repo, Set<HgFile> selectedFiles) {
-    List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(project).parents(repo);
+    List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(myProject).parents(repo);
 
-    HgStatusCommand statusCommand = new HgStatusCommand(project);
+    HgStatusCommand statusCommand = new HgStatusCommand(myProject);
     statusCommand.setBaseRevision(parents.get(0));
     statusCommand.setIncludeUnknown(false);
     statusCommand.setIncludeIgnored(false);
@@ -144,7 +155,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     Runnable runnable = new Runnable() {
       public void run() {
         choice[0] = Messages.showOkCancelDialog(
-          project, 
+          myProject,
           HgVcsMessages.message("hg4idea.commit.partial.merge.message", filesNotIncludedString),
           HgVcsMessages.message("hg4idea.commit.partial.merge.title"),
           null
@@ -165,9 +176,9 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
-    HgRemoveCommand command = new HgRemoveCommand(project);
+    HgRemoveCommand command = new HgRemoveCommand(myProject);
     for (FilePath filePath : files) {
-      VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, filePath);
+      VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, filePath);
       if (vcsRoot == null) {
         continue;
       }
@@ -177,9 +188,9 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
-    final HgAddCommand command = new HgAddCommand(project);
+    final HgAddCommand command = new HgAddCommand(myProject);
     for (final VirtualFile file : files) {
-      final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, file);
+      final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, file);
       if (vcsRoot == null) {
         continue;
       }
@@ -218,7 +229,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
       return;
     }
 
-    VirtualFile repo = VcsUtil.getVcsRootFor(project, filePath);
+    VirtualFile repo = VcsUtil.getVcsRootFor(myProject, filePath);
     if (repo == null || filePath.isDirectory()) {
       return;
     }
@@ -232,4 +243,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     hgFiles.add(new HgFile(repo, filePath));
   }
 
+  public void setNextCommitIsPushed(boolean pushed) {
+    myNextCommitIsPushed = true;
+  }
 }

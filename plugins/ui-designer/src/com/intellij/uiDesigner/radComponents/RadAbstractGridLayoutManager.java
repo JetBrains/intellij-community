@@ -28,13 +28,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
  */
 public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
+  protected final Map<RadComponent, MyPropertyChangeListener> myListenerMap = new HashMap<RadComponent, MyPropertyChangeListener>();
+
   @Override
   public boolean isGrid() {
     return true;
@@ -490,5 +496,40 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
 
   public int getMinCellCount() {
     return 1;
+  }
+
+  @Override
+  public void addComponentToContainer(RadContainer container, RadComponent component, int index) {
+    MyPropertyChangeListener listener = new MyPropertyChangeListener(component);
+    myListenerMap.put(component, listener);
+    component.addPropertyChangeListener(listener);
+  }
+
+  @Override
+  public void removeComponentFromContainer(final RadContainer container, final RadComponent component) {
+    final MyPropertyChangeListener listener = myListenerMap.get(component);
+    if (listener != null) {
+      component.removePropertyChangeListener(listener);
+      myListenerMap.remove(component);
+    }
+    super.removeComponentFromContainer(container, component);
+  }
+
+  protected void updateConstraints(RadComponent component) {
+    component.getParent().revalidate();
+  }
+
+  private class MyPropertyChangeListener implements PropertyChangeListener {
+    private final RadComponent myComponent;
+
+    public MyPropertyChangeListener(final RadComponent component) {
+      myComponent = component;
+    }
+
+    public void propertyChange(PropertyChangeEvent evt) {
+      if (evt.getPropertyName().equals(RadComponent.PROP_CONSTRAINTS)) {
+        updateConstraints(myComponent);
+      }
+    }
   }
 }

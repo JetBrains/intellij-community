@@ -144,6 +144,7 @@ public class AbstractPopup implements JBPopup {
   private boolean myNativePopup;
   private boolean myMayBeParent;
   private JLabel myAdCmp;
+  private AbstractPopup.SpeedSearchKeyListener mySearchKeyListener;
 
 
   AbstractPopup() {
@@ -786,19 +787,8 @@ public class AbstractPopup implements JBPopup {
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
 
-    myContent.addKeyListener(new KeyListener() {
-      public void keyTyped(final KeyEvent e) {
-        mySpeedSearch.process(e);
-      }
-
-      public void keyPressed(final KeyEvent e) {
-        mySpeedSearch.process(e);
-      }
-
-      public void keyReleased(final KeyEvent e) {
-        mySpeedSearch.process(e);
-      }
-    });
+    mySearchKeyListener = new SpeedSearchKeyListener();
+    myContent.addKeyListener(mySearchKeyListener);
 
     if (myCancelOnMouseOutCallback != null || myCancelOnWindow) {
       myMouseOutCanceller = new Canceller();
@@ -975,8 +965,10 @@ public class AbstractPopup implements JBPopup {
 
     if (myContent != null) {
       myContent.removeAll();
+      myContent.removeKeyListener(mySearchKeyListener);
     }
     myContent = null;
+    myPreferredFocusedComponent = null;
     myComponent = null;
     myFocusTrackback = null;
     myCallBack = null;
@@ -1348,5 +1340,19 @@ public class AbstractPopup implements JBPopup {
 
   public void setOk(boolean ok) {
     myOk = ok;
+  }
+
+  private class SpeedSearchKeyListener implements KeyListener {
+    public void keyTyped(final KeyEvent e) {
+      mySpeedSearch.process(e);
+    }
+
+    public void keyPressed(final KeyEvent e) {
+      mySpeedSearch.process(e);
+    }
+
+    public void keyReleased(final KeyEvent e) {
+      mySpeedSearch.process(e);
+    }
   }
 }

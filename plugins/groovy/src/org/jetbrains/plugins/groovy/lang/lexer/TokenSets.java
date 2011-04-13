@@ -16,14 +16,16 @@
 
 package org.jetbrains.plugins.groovy.lang.lexer;
 
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
  * Utility classdef, tha contains various useful TokenSets
  *
  * @author ilyas
  */
-public abstract class TokenSets implements GroovyTokenTypes {
+public abstract class TokenSets implements GroovyTokenTypes, GroovyElementTypes {
 
   public static TokenSet COMMENTS_TOKEN_SET = TokenSet.create(
       mSL_COMMENT,
@@ -41,14 +43,6 @@ public abstract class TokenSets implements GroovyTokenTypes {
   public static TokenSet WHITE_SPACE_TOKEN_SET = TokenSet.create(
       mWS,
       mGDOC_WHITESPACE
-  );
-
-  public static TokenSet SUSPICIOUS_EXPRESSION_STATEMENT_START_TOKEN_SET = TokenSet.create(
-      mMINUS,
-      mPLUS,
-      mLBRACK,
-      mLPAREN,
-      mLCURLY
   );
 
   public static final TokenSet NUMBERS = TokenSet.create(mNUM_INT,
@@ -87,6 +81,13 @@ public abstract class TokenSets implements GroovyTokenTypes {
   );
 
   public static final TokenSet PROPERTY_NAMES = TokenSet.create(mIDENT, mSTRING_LITERAL, mGSTRING_LITERAL);
+
+  public static final TokenSet KEYWORDS = TokenSet.create(kABSTRACT, kAS, kASSERT, kBOOLEAN, kBREAK, kBYTE, kCASE, kCATCH, kCHAR, kCLASS,
+                                                          kCONTINUE, kDEF, kDEFAULT, kDOUBLE, kELSE, kEXTENDS, kENUM, kFALSE, kFINAL,
+                                                          kFLOAT, kFOR, kFINALLY, kIF, kIMPLEMENTS, kIMPORT, kIN, kINSTANCEOF, kINT,
+                                                          kINTERFACE, kLONG, kNATIVE, kNEW, kNULL, kPACKAGE, kPRIVATE, kPROTECTED, kPUBLIC,
+                                                          kRETURN, kSHORT, kSTATIC, kSTRICTFP, kSUPER, kSWITCH, kSYNCHRONIZED, kTHIS,
+                                                          kTHROW, kTHROWS, kTRANSIENT, kTRUE, kTRY, kVOID, kVOLATILE, kWHILE);
 
   public static TokenSet REFERENCE_NAMES = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES, NUMBERS);
   public static TokenSet REFERENCE_NAMES_WITHOUT_NUMBERS = TokenSet.orSet(KEYWORDS, PROPERTY_NAMES);
@@ -133,4 +134,27 @@ public abstract class TokenSets implements GroovyTokenTypes {
           mGE,
           kIN
   );
+  public static final TokenSet WHITE_SPACES_SET = TokenSet.create(mWS, mNLS, TokenType.WHITE_SPACE);
+
+  public static final TokenSet COMMENT_SET = TokenSet.create(mML_COMMENT, mSH_COMMENT, mSL_COMMENT, GROOVY_DOC_COMMENT);
+
+  public static final TokenSet STRING_LITERAL_SET = TokenSet.create(mSTRING_LITERAL, mGSTRING_LITERAL);
+
+  public static final TokenSet BRACES = TokenSet.create(mLBRACK, mRBRACK, mLPAREN, mRPAREN, mLCURLY, mRCURLY);
+
+  public static final TokenSet ASSIGN_OP_SET = TokenSet.create(mASSIGN, mBAND_ASSIGN, mBOR_ASSIGN, mBSR_ASSIGN, mBXOR_ASSIGN, mDIV_ASSIGN,
+                                                               mMINUS_ASSIGN, mMOD_ASSIGN, mPLUS_ASSIGN, mSL_ASSIGN, mSR_ASSIGN,
+                                                               mSTAR_ASSIGN, mSTAR_STAR_ASSIGN);
+
+  public static final TokenSet UNARY_OP_SET = TokenSet.create(mBNOT, mLNOT, mMINUS, mDEC, mPLUS, mINC);
+
+  public static final TokenSet POSTFIX_UNARY_OP_SET = TokenSet.create(mDEC, mINC);
+
+  public static final TokenSet BINARY_OP_SET = TokenSet.create(mBAND, mBOR, mBXOR, mDIV, mEQUAL, mGE, mGT, mLAND, mLOR, mLT, mLE, mMINUS,
+                                                               mMOD, mPLUS, mSTAR, mSTAR_STAR, mNOT_EQUAL, mCOMPARE_TO,
+                                                               COMPOSITE_SHIFT_SIGN, kIN, kINSTANCEOF, kAS);
+
+  public static final TokenSet DOTS = TokenSet.create(mSPREAD_DOT, mOPTIONAL_DOT, mMEMBER_POINTER, mDOT);
+
+  public static final TokenSet WHITE_SPACES_OR_COMMENTS = TokenSet.orSet(WHITE_SPACES_SET, COMMENT_SET);
 }

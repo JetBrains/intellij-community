@@ -15,11 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.lang;
 
-import com.intellij.psi.PsiMethod;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
@@ -31,16 +33,29 @@ import java.util.Map;
 public class GroovySourceCodeNamedArgumentProvider extends GroovyNamedArgumentProvider {
   @Override
   public void getNamedArguments(@NotNull GrCall call,
-                                @Nullable PsiMethod method,
+                                @Nullable PsiElement resolve,
                                 @Nullable String argumentName,
                                 boolean forCompletion,
                                 Map<String, ArgumentDescriptor> result) {
-    if (forCompletion && method instanceof GrMethod) {
-      String[] namedParametersArray = ((GrMethod)method).getNamedParametersArray();
+    if (!forCompletion) return;
 
-      for (String parameter : namedParametersArray) {
-        result.put(parameter, TYPE_ANY);
-      }
+    String[] namedParametersArray;
+
+    if (resolve instanceof GrMethod) {
+      namedParametersArray = ((GrMethod)resolve).getNamedParametersArray();
+    }
+    else if (resolve instanceof GrField) {
+      namedParametersArray = ((GrField)resolve).getNamedParametersArray();
+    }
+    else if (resolve instanceof GrVariable) {
+      namedParametersArray = GrNamedArgumentSearchVisitor.find((GrVariable)resolve);
+    }
+    else {
+      return;
+    }
+
+    for (String parameter : namedParametersArray) {
+      result.put(parameter, TYPE_ANY);
     }
   }
 }

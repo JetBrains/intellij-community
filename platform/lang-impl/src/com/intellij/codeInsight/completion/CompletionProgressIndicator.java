@@ -358,6 +358,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
     }
 
+    LOG.assertTrue(myParameters.getPosition().isValid());
+
     myLookup.addItem(item);
     myCount++;
     if (unitTestMode) return;
@@ -569,6 +571,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void addWatchedPrefix(int startOffset, ElementPattern<String> restartCondition) {
+    int caret = myEditor.getCaretModel().getOffset();
+    if (caret < startOffset) {
+      LOG.error("caret=" + caret + "; start=" + startOffset);
+    }
     myRestartingPrefixConditions.add(Pair.create(startOffset, restartCondition));
   }
 
@@ -576,7 +582,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     final CharSequence text = myEditor.getDocument().getCharsSequence();
     final int caretOffset = myEditor.getCaretModel().getOffset();
     for (Pair<Integer, ElementPattern<String>> pair : myRestartingPrefixConditions) {
-      final String newPrefix = text.subSequence(pair.first, caretOffset).toString();
+      int start = pair.first;
+      if (caretOffset < start) {
+        LOG.error("caret=" + caretOffset + "; start=" + start);
+      }
+      final String newPrefix = text.subSequence(start, caretOffset).toString();
       if (pair.second.accepts(newPrefix)) {
         scheduleRestart();
         myRestartingPrefixConditions.clear();

@@ -625,7 +625,7 @@ of problems processing the schema using various tools
           <xs:simpleType>
             <xs:union memberTypes="xsl:avt">
               <xs:simpleType>
-                <xs:restriction base="string">
+                <xs:restriction base="xs:string">
                   <xs:enumeration value="text" />
                   <xs:enumeration value="number" />
                 </xs:restriction>
@@ -637,7 +637,7 @@ of problems processing the schema using various tools
           <xs:simpleType>
             <xs:union memberTypes="xsl:avt">
               <xs:simpleType>
-                <xs:restriction base="string">
+                <xs:restriction base="xs:string">
                   <xs:enumeration value="ascending" />
                   <xs:enumeration value="descending" />
                 </xs:restriction>
@@ -649,7 +649,7 @@ of problems processing the schema using various tools
           <xs:simpleType>
             <xs:union memberTypes="xsl:avt">
               <xs:simpleType>
-                <xs:restriction base="string">
+                <xs:restriction base="xs:string">
                   <xs:enumeration value="upp-first" />
                   <xs:enumeration value="lower-first" />
                 </xs:restriction>

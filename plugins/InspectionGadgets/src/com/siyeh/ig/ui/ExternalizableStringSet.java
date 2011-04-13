@@ -32,7 +32,6 @@ import java.util.List;
 public class ExternalizableStringSet extends OrderedSet<String>
         implements JDOMExternalizable {
 
-    private static final String SET = "set";
     private static final String ITEM = "item";
     private static final String VALUE = "value";
 
@@ -62,14 +61,12 @@ public class ExternalizableStringSet extends OrderedSet<String>
 
     public void readExternal(Element element) throws InvalidDataException {
         boolean dataFound = false;
-        for (Element set : (List<Element>) element.getChildren(SET)) {
+        for (Element item : (List<Element>) element.getChildren(ITEM)) {
             if (!dataFound) {
                 clear();
                 dataFound = true;
             }
-            for (Element item : (List<Element>) set.getChildren(ITEM)) {
-                add(StringUtil.unescapeXml(item.getAttributeValue(VALUE)));
-            }
+            add(StringUtil.unescapeXml(item.getAttributeValue(VALUE)));
         }
     }
 
@@ -77,13 +74,11 @@ public class ExternalizableStringSet extends OrderedSet<String>
         if (hasDefaultValues()) {
             return;
         }
-        final Element set = new Element(SET);
-        element.addContent(set);
         for (String value : this) {
             if (value != null) {
                 final Element item = new Element(ITEM);
                 item.setAttribute(VALUE, StringUtil.escapeXml(value));
-                set.addContent(item);
+                element.addContent(item);
             }
         }
     }

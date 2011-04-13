@@ -17,41 +17,43 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.IntentionAndQuickFixAction;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class MethodThrowsFix extends IntentionAndQuickFixAction {
+public class MethodThrowsFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix");
 
-  private final PsiMethod myMethod;
   private final String myThrowsCanonicalText;
   private final boolean myShouldThrow;
-  private final boolean myShowContainingClass;
+  private final String myMethodName;
 
   public MethodThrowsFix(PsiMethod method, PsiClassType exceptionType, boolean shouldThrow, boolean showContainingClass) {
-    myMethod = method;
+    super(method);
     myThrowsCanonicalText = exceptionType.getCanonicalText();
     myShouldThrow = shouldThrow;
-    myShowContainingClass = showContainingClass;
+    myMethodName = PsiFormatUtil.formatMethod(method,
+                                              PsiSubstitutor.EMPTY,
+                                              PsiFormatUtilBase.SHOW_NAME | (showContainingClass ? PsiFormatUtilBase.SHOW_CONTAINING_CLASS
+                                                                                                   : 0),
+                                              0);
   }
 
   @NotNull
-  public String getName() {
-    String methodName = PsiFormatUtil.formatMethod(myMethod,
-                                                   PsiSubstitutor.EMPTY,
-                                                   PsiFormatUtil.SHOW_NAME | (myShowContainingClass ? PsiFormatUtil.SHOW_CONTAINING_CLASS: 0),
-                                                   0);
+  @Override
+  public String getText() {
     return QuickFixBundle.message(myShouldThrow ? "fix.throws.list.add.exception" : "fix.throws.list.remove.exception",
                                   myThrowsCanonicalText,
-                                  methodName);
+                                  myMethodName);
   }
 
   @NotNull
@@ -59,13 +61,23 @@ public class MethodThrowsFix extends IntentionAndQuickFixAction {
     return QuickFixBundle.message("fix.throws.list.family");
   }
 
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return myMethod != null
-        && myMethod.isValid()
+  @Override
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    final PsiMethod myMethod = (PsiMethod)startElement;
+    return myMethod.isValid()
         && myMethod.getManager().isInProject(myMethod);
   }
 
-  public void applyFix(final Project project, final PsiFile file, final Editor editor) {
+  @Override
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable("is null when called from inspection") Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    final PsiMethod myMethod = (PsiMethod)startElement;
     if (!CodeInsightUtilBase.prepareFileForWrite(myMethod.getContainingFile())) return;
     PsiJavaCodeReferenceElement[] referenceElements = myMethod.getThrowsList().getReferenceElements();
     try {
@@ -92,4 +104,8 @@ public class MethodThrowsFix extends IntentionAndQuickFixAction {
     }
   }
 
+  @Override
+  public boolean startInWriteAction() {
+    return true;
+  }
 }

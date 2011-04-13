@@ -291,18 +291,20 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   private void installUpdateListeners(final SingleConfigurationConfigurable<RunConfiguration> info) {
+    final boolean[] changed = new boolean[]{false};
     info.getEditor().addSettingsEditorListener(new SettingsEditorListener<RunnerAndConfigurationSettings>() {
       public void stateChanged(final SettingsEditor<RunnerAndConfigurationSettings> editor) {
         update();
         final RunConfiguration configuration = info.getConfiguration();
         if (configuration instanceof LocatableConfiguration) {
           final LocatableConfiguration runtimeConfiguration = (LocatableConfiguration)configuration;
-          if (runtimeConfiguration.isGeneratedName()) {
+          if (runtimeConfiguration.isGeneratedName() && !changed[0]) {
             try {
               final LocatableConfiguration snapshot = (LocatableConfiguration)editor.getSnapshot().getConfiguration();
               final String generatedName = snapshot instanceof RuntimeConfiguration? ((RuntimeConfiguration)snapshot).getGeneratedName() : snapshot.suggestedName();
               if (generatedName != null && generatedName.length() > 0) {
                 info.setNameText(generatedName);
+                changed[0] = false;
               }
             }
             catch (ConfigurationException ignore) {
@@ -316,6 +318,7 @@ class RunConfigurable extends BaseConfigurable {
     info.addNameListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
+        changed[0] = true;
         update();
       }
     });

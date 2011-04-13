@@ -24,7 +24,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -164,7 +166,7 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     }
     final DefaultMutableTreeNode itemNode = new DefaultMutableTreeNode(itemWrapper, false);
     myItemNodes.put(itemWrapper, itemNode);
-    node.add(itemNode);
+    insertNode(itemNode, node);
     ((DefaultTreeModel)myTree.getModel()).nodeStructureChanged(node);
   }
 
@@ -182,6 +184,11 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
           return o1.toString().compareToIgnoreCase(o2.toString());
         }
         if (o1 instanceof ModuleGroup) return -1;
+        if (o1 instanceof DirectoryChooser.ItemWrapper && o2 instanceof DirectoryChooser.ItemWrapper) {
+          final VirtualFile virtualFile1 = ((DirectoryChooser.ItemWrapper)o1).getDirectory().getVirtualFile();
+          final VirtualFile virtualFile2 = ((DirectoryChooser.ItemWrapper)o2).getDirectory().getVirtualFile();
+          return Comparing.compare(virtualFile1.getPath(), virtualFile2.getPath());
+        }
         return 1;
       }
     });

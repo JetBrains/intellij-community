@@ -376,11 +376,11 @@ public class HighlightUtil {
     IElementType eqOpSign = operationSign.getTokenType();
     IElementType opSign = TypeConversionUtil.convertEQtoOperation(eqOpSign);
     if (opSign == null) return null;
-    HighlightInfo errorResult = null;
     final PsiType lType = assignment.getLExpression().getType();
     final PsiExpression rExpression = assignment.getRExpression();
     if (rExpression == null) return null;
     final PsiType rType = rExpression.getType();
+    HighlightInfo errorResult = null;
     if (!TypeConversionUtil.isBinaryOperatorApplicable(opSign, lType, rType, true) ||
         PsiType.getJavaLangObject(assignment.getManager(), assignment.getResolveScope()).equals(lType)) {
       String operatorText = operationSign.getText().substring(0, operationSign.getText().length() - 1);
@@ -564,10 +564,10 @@ public class HighlightUtil {
   @Nullable
   static HighlightInfo checkVariableAlreadyDefined(PsiVariable variable) {
     if (variable instanceof ExternallyDefinedPsiElement) return null;
-    boolean isIncorrect = false;
     PsiIdentifier identifier = variable.getNameIdentifier();
     assert identifier != null : variable;
     String name = variable.getName();
+    boolean isIncorrect = false;
     if (variable instanceof PsiLocalVariable ||
         variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiCatchSection ||
         variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement) {
@@ -1265,7 +1265,7 @@ public class HighlightUtil {
       return null;
     }
 
-    HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, JavaErrorMessages.message("expression.expected"));
+    HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, JavaErrorMessages.message("array.initializer.not.allowed"));
     QuickFixAction.registerQuickFixAction(info, new AddNewArrayExpressionFix(expression));
     return info;
   }

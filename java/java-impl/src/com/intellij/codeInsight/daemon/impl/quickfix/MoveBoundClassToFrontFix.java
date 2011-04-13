@@ -22,25 +22,25 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MoveBoundClassToFrontFix extends ExtendsListFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MoveBoundClassToFrontFix");
+  private final String myName;
 
   public MoveBoundClassToFrontFix(PsiClass aClass, PsiClassType classToExtendFrom) {
     super(aClass, classToExtendFrom, true);
+    myName = QuickFixBundle.message("move.bound.class.to.front.fix.text",
+                                    HighlightUtil.formatClass(myClassToExtendFrom),
+                                    HighlightUtil.formatClass(aClass));
   }
 
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("move.bound.class.to.front.fix.text",
-                                  HighlightUtil.formatClass(myClassToExtendFrom),
-                                  HighlightUtil.formatClass(myClass));
+    return myName;
   }
 
   @NotNull
@@ -48,7 +48,13 @@ public class MoveBoundClassToFrontFix extends ExtendsListFix {
     return QuickFixBundle.message("move.class.in.extend.list.family");
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+  @Override
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable("is null when called from inspection") Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    final PsiClass myClass = (PsiClass)startElement;
     if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
     PsiReferenceList extendsList = myClass.getExtendsList();
     if (extendsList == null) return;
@@ -62,13 +68,17 @@ public class MoveBoundClassToFrontFix extends ExtendsListFix {
     UndoUtil.markPsiFileForUndo(file);
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  @Override
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    final PsiClass myClass = (PsiClass)startElement;
     return
-        myClass != null
-        && myClass.isValid()
-        && myClass.getManager().isInProject(myClass)
-        && myClassToExtendFrom != null
-        && myClassToExtendFrom.isValid()
+      myClass.isValid()
+      && myClass.getManager().isInProject(myClass)
+      && myClassToExtendFrom != null
+      && myClassToExtendFrom.isValid()
     ;
   }
 }

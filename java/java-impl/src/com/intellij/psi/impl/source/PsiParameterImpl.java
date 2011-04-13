@@ -179,6 +179,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   public PsiElement getDeclarationScope() {
     final PsiElement parent = getParent();
     if (parent == null) return this;
+
     if (parent instanceof PsiParameterList) {
       return parent.getParent();
     }
@@ -188,20 +189,22 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
     if (parent instanceof PsiCatchSection) {
       return parent;
     }
+
     PsiElement[] children = parent.getChildren();
     //noinspection ConstantConditions
     if (children != null) {
+      ext:
       for (int i = 0; i < children.length; i++) {
         if (children[i].equals(this)) {
-          while (!(children[i] instanceof PsiCodeBlock)) {
-            //noinspection AssignmentToForLoopParameter
-            i++;
+          for (int j = i + 1; j < children.length; j++) {
+            if (children[j] instanceof PsiCodeBlock) return children[j];
           }
-          return children[i];
+          break ext;
         }
       }
     }
-    LOG.error("Code block not found among parameter' " + this + " parents children: " + Arrays.asList(children));
+
+    LOG.error("Code block not found among parameter' (" + this + ") parent' (" + parent + ") children: " + Arrays.asList(children));
     return null;
   }
 

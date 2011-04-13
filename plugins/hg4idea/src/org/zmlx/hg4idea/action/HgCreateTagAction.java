@@ -49,7 +49,7 @@ public class HgCreateTagAction extends HgAbstractGlobalAction {
         new HgTagCreateCommand(project, dialog.getRepository(), dialog.getTagName()).execute(new HgCommandResultHandler() {
           @Override
           public void process(@Nullable HgCommandResult result) {
-            new HgCommandResultNotifier(project).process(result);
+            new HgCommandResultNotifier(project).process(result, null, null);
           }
         });
       }

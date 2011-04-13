@@ -114,6 +114,9 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
     for (SurroundDescriptor descriptor : surroundDescriptors) {
       final PsiElement[] elements = descriptor.getElementsToSurround(file, startOffset, endOffset);
       if (elements.length > 0) {
+        for (PsiElement element : elements) {
+          assert element.isValid() : descriptor;
+        }
         List<AnAction> applicable = buildSurroundActions(project, editor, file, descriptor.getSurrounders(), elements);
         if (applicable != null) {
           return applicable;

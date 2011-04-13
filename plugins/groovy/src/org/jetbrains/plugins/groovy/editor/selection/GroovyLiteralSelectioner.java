@@ -46,10 +46,10 @@ public class GroovyLiteralSelectioner extends GroovyBasicSelectioner {
     if (!(element instanceof GrLiteral)) return false;
     ASTNode node = element.getNode();
     if (node == null) return false;
-    ASTNode[] children = node.getChildren(null);
-    return children.length == 1 &&
-           (children[0].getElementType() == GroovyTokenTypes.mSTRING_LITERAL ||
-            children[0].getElementType() == GroovyTokenTypes.mGSTRING_LITERAL);
+    ASTNode firstNode = node.getFirstChildNode();
+    return firstNode == node.getLastChildNode() &&
+           (firstNode.getElementType() == GroovyTokenTypes.mSTRING_LITERAL ||
+            firstNode.getElementType() == GroovyTokenTypes.mGSTRING_LITERAL);
   }
 
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {

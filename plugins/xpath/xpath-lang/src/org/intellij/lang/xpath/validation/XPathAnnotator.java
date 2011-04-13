@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.validation;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
@@ -24,20 +25,21 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.xpath.XPath2TokenTypes;
 import org.intellij.lang.xpath.XPathElementType;
-import org.intellij.lang.xpath.XPathFileType;
-import org.intellij.lang.xpath.context.functions.Function;
-import org.jetbrains.annotations.NotNull;
-
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.NamespaceContext;
 import org.intellij.lang.xpath.context.VariableContext;
+import org.intellij.lang.xpath.context.XPathVersion;
+import org.intellij.lang.xpath.context.functions.Function;
 import org.intellij.lang.xpath.context.functions.Parameter;
 import org.intellij.lang.xpath.psi.*;
 import org.intellij.lang.xpath.psi.impl.PrefixedNameImpl;
+import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.xml.namespace.QName;
 import java.util.Arrays;
@@ -104,25 +106,57 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
   }
 
   @Override
-  public void visitXPathBinaryExpression(final XPathBinaryExpression o) {
-    if (o.getContainingFile().getLanguage() == XPathFileType.XPATH2.getLanguage()) {
-      final XPathExpression operand = o.getLOperand();
-      final XPathElementType operator = o.getOperator();
-      if (operand instanceof XPathNumber) {
-        if (operator != XPathTokenTypes.STAR && XPath2TokenTypes.KEYWORDS.contains(operator)) {
-          final String op = o.getOperationSign();
-          if (o.getText().startsWith(operand.getText() + op)) {
-            final Annotation annotation =
-              myHolder.createErrorAnnotation(o, "Number literal must be followed by whitespace in XPath 2");
+  public void visitXPathNumber(XPathNumber number) {
+    if (number.getXPathVersion() == XPathVersion.V2) {
 
-            final XPathExpression rOperand = o.getROperand();
-            if (rOperand != null) {
-              final String replacement = operand.getText() + " " + op + " " + rOperand.getText();
-              annotation.registerFix(new ExpressionReplacementFix(replacement, o));
+      final PsiElement leaf = PsiTreeUtil.nextLeaf(number);
+      if (leaf != null) {
+        final IElementType elementType = leaf.getNode().getElementType();
+        if (elementType != XPathTokenTypes.STAR && XPath2TokenTypes.KEYWORDS.contains(elementType)) {
+          final TextRange range = TextRange.create(number.getTextRange().getStartOffset(), leaf.getTextRange().getEndOffset());
+          final Annotation annotation =
+            myHolder.createErrorAnnotation(range, "Number literal must be followed by whitespace in XPath 2");
+
+          final XPathBinaryExpression expression = PsiTreeUtil.getParentOfType(number, XPathBinaryExpression.class, true);
+          if (expression != null) {
+            final XPathExpression lOperand = expression.getLOperand();
+            if (number == lOperand) {
+              final XPathExpression rOperand = expression.getROperand();
+              if (rOperand != null) {
+                final String display = number.getText() + " " + expression.getOperationSign();
+                final String replacement = display + " " + rOperand.getText();
+
+                assert PsiEquivalenceUtil.areElementsEquivalent(expression, XPathChangeUtil.createExpression(expression, replacement));
+                annotation.registerFix(new ExpressionReplacementFix(replacement, display, expression));
+              }
+            } else if (number == expression.getROperand()) {
+              final PsiElement next = PsiTreeUtil.getParentOfType(PsiTreeUtil.nextLeaf(expression), XPathExpression.class, true);
+              if (next instanceof XPathBinaryExpression) {
+                final XPathBinaryExpression left = (XPathBinaryExpression)next;
+                final XPathExpression rOperand = left.getROperand();
+                if (rOperand != null && lOperand != null) {
+                  final String display = number.getText() + " " + left.getOperationSign();
+                  final String replacement = lOperand.getText() + " " + expression.getOperationSign() + " " + display + " " + rOperand.getText();
+
+                  assert PsiEquivalenceUtil.areElementsEquivalent(next, XPathChangeUtil.createExpression(next, replacement));
+                  annotation.registerFix(new ExpressionReplacementFix(replacement, display, (XPathExpression)next));
+                }
+              }
             }
           }
         }
       }
+    }
+
+    super.visitXPathNumber(number);
+  }
+
+  @Override
+  public void visitXPathBinaryExpression(final XPathBinaryExpression o) {
+    if (o.getXPathVersion() == XPathVersion.V2) {
+      final XPathElementType operator = o.getOperator();
+      final XPathExpression operand = o.getLOperand();
+
       if (XPath2TokenTypes.COMP_OPS.contains(operator)) {
         if (operand instanceof XPathBinaryExpression && XPath2TokenTypes.COMP_OPS.contains(((XPathBinaryExpression)operand).getOperator())) {
           final Annotation annotation = myHolder.createErrorAnnotation(o, "Consecutive comparison is not allowed in XPath 2");
@@ -224,14 +258,18 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
       if (call.getQName().getPrefix() != null && contextProvider.getFunctionContext().allowsExtensions()) {
         final PsiReference[] references = call.getReferences();
         if (references.length > 1 && references[1].resolve() == null) {
-          final Annotation ann = holder.createErrorAnnotation(qName.getPrefixNode(), "Extension namespace prefix '" + qName.getPrefix() + "' has not been declared");
+          final Annotation ann = holder.createErrorAnnotation(qName.getPrefixNode(), "Extension namespace prefix '" +
+                                                                                     qName.getPrefix() +
+                                                                                     "' has not been declared");
           ann.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
         }
       } else {
         if (name != null) {
           holder.createWarningAnnotation(node, "Unknown function '" + name + "'");
         } else if (qName.getPrefixNode() != null) {
-          final Annotation ann = holder.createErrorAnnotation(qName.getPrefixNode(), "Extension namespace prefix '" + qName.getPrefix() + "' has not been declared");
+          final Annotation ann = holder.createErrorAnnotation(qName.getPrefixNode(), "Extension namespace prefix '" +
+                                                                                     qName.getPrefix() +
+                                                                                     "' has not been declared");
           ann.setHighlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
         }
       }

@@ -32,6 +32,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -68,10 +69,6 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
 
   public <T extends GrStatement> T replaceWithStatement(T statement) {
     return GroovyPsiElementImpl.replaceWithStatement(this, statement);
-  }
-
-  public void removeStatement() throws IncorrectOperationException {
-    GroovyPsiElementImpl.removeStatement(this);
   }
 
   public void subtreeChanged() {
@@ -170,7 +167,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
     return element;
   }
   private static boolean isNls(PsiElement element) {
-    if (!GroovyTokenTypes.WHITE_SPACES_SET.contains(element.getNode().getElementType())) return false;
+    if (!TokenSets.WHITE_SPACES_SET.contains(element.getNode().getElementType())) return false;
     String text = element.getText();
     return text.contains("\n") || text.contains("\r");
   }

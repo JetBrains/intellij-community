@@ -45,24 +45,19 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author yole
  */
 public class RadFormLayoutManager extends RadAbstractGridLayoutManager implements AlignPropertyProvider {
   private FormLayoutColumnProperties myPropertiesPanel;
-  private final Map<RadComponent, MyPropertyChangeListener> myListenerMap = new HashMap<RadComponent, MyPropertyChangeListener>();
 
   @NonNls private static final String ENCODED_FORMSPEC_GROW = "d:grow";
   private static final Size DEFAULT_NOGROW_SIZE = new BoundedSize(Sizes.DEFAULT, new ConstantSize(4, ConstantSize.PIXEL), null);
@@ -165,9 +160,7 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
 
   @Override
   public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
-    MyPropertyChangeListener listener = new MyPropertyChangeListener(component);
-    myListenerMap.put(component, listener);
-    component.addPropertyChangeListener(listener);
+    super.addComponentToContainer(container, component, index);
     final CellConstraints cc = gridToCellConstraints(component);
     if (component.getCustomLayoutConstraints() instanceof CellConstraints) {
       CellConstraints customCellConstraints = (CellConstraints) component.getCustomLayoutConstraints();
@@ -175,16 +168,6 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     }
     component.setCustomLayoutConstraints(cc);
     container.getDelegee().add(component.getDelegee(), cc, index);
-  }
-
-  @Override
-  public void removeComponentFromContainer(final RadContainer container, final RadComponent component) {
-    final MyPropertyChangeListener listener = myListenerMap.get(component);
-    if (listener != null) {
-      component.removePropertyChangeListener(listener);
-      myListenerMap.remove(component);
-    }
-    super.removeComponentFromContainer(container, component);
   }
 
   private static CellConstraints gridToCellConstraints(final RadComponent component) {
@@ -861,10 +844,11 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     return al != CellConstraints.DEFAULT;
   }
 
-  private static void updateConstraints(final RadComponent component) {
+  @Override
+  protected void updateConstraints(final RadComponent component) {
     FormLayout layout = (FormLayout) component.getParent().getLayout();
     layout.setConstraints(component.getDelegee(), gridToCellConstraints(component));
-    component.getParent().revalidate();
+    super.updateConstraints(component);
   }
 
   public int getMinCellCount() {
@@ -960,20 +944,6 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     copyCellToGridConstraints(component.getConstraints(), cc);
     component.setCustomLayoutConstraints(cc);
     container.addComponent(component);
-  }
-
-  private static class MyPropertyChangeListener implements PropertyChangeListener {
-    private final RadComponent myComponent;
-
-    public MyPropertyChangeListener(final RadComponent component) {
-      myComponent = component;
-    }
-
-    public void propertyChange(PropertyChangeEvent evt) {
-      if (evt.getPropertyName().equals(RadComponent.PROP_CONSTRAINTS)) {
-        updateConstraints(myComponent);
-      }
-    }
   }
 
   private static class ComponentInsetsProperty extends AbstractInsetsProperty<RadComponent> {

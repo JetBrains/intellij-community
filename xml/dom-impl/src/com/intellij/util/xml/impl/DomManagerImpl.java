@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -106,7 +107,7 @@ public final class DomManagerImpl extends DomManager {
     final Runnable setupVfsListeners = new Runnable() {
       public void run() {
         final VirtualFileAdapter listener = new VirtualFileAdapter() {
-          private final List<XmlFile> myDeletedFiles = new SmartList<XmlFile>();
+          private final List<DomEvent> myDeletionEvents = new SmartList<DomEvent>();
 
           public void contentsChanged(VirtualFileEvent event) {
             if (event.isFromSave()) return;
@@ -119,12 +120,12 @@ public final class DomManagerImpl extends DomManager {
           }
 
           public void beforeFileDeletion(final VirtualFileEvent event) {
-            beforeFileDeletion(event.getFile());
+            if (!project.isDisposed()) {
+              beforeFileDeletion(event.getFile());
+            }
           }
 
           private void beforeFileDeletion(final VirtualFile file) {
-            if (project.isDisposed()) return;
-
             if (file.isDirectory() && file instanceof NewVirtualFile) {
               for (final VirtualFile child : ((NewVirtualFile)file).getCachedChildren()) {
                 beforeFileDeletion(child);
@@ -135,19 +136,19 @@ public final class DomManagerImpl extends DomManager {
             if (file.isValid() && StdFileTypes.XML.equals(file.getFileType())) {
               final PsiFile psiFile = psiManager.findFile(file);
               if (psiFile instanceof XmlFile) {
-                myDeletedFiles.add((XmlFile)psiFile);
+                Collections.addAll(myDeletionEvents, recomputeFileElement((XmlFile)psiFile));
               }
             }
           }
 
           public void fileDeleted(VirtualFileEvent event) {
-            if (!myDeletedFiles.isEmpty()) {
+            if (!myDeletionEvents.isEmpty()) {
               if (!project.isDisposed()) {
-                for (final XmlFile file : myDeletedFiles) {
-                  processXmlFileChange(file, true);
+                for (DomEvent domEvent : myDeletionEvents) {
+                  fireEvent(domEvent);
                 }
               }
-              myDeletedFiles.clear();
+              myDeletionEvents.clear();
             }
           }
 
@@ -193,18 +194,10 @@ public final class DomManagerImpl extends DomManager {
 
   private void processFileChange(final PsiFile file) {
     if (file != null && StdFileTypes.XML.equals(file.getFileType()) && file instanceof XmlFile) {
-      processXmlFileChange((XmlFile)file, true);
+      for (final DomEvent event : recomputeFileElement((XmlFile)file)) {
+        fireEvent(event);
+      }
     }
-  }
-
-  private boolean processXmlFileChange(@NotNull final XmlFile file, boolean fireChanged) {
-    if (!fireChanged) return false;
-
-    final DomEvent[] list = recomputeFileElement(file);
-    for (final DomEvent event : list) {
-      fireEvent(event);
-    }
-    return list.length > 0;
   }
 
   static DomEvent[] recomputeFileElement(final XmlFile file) {

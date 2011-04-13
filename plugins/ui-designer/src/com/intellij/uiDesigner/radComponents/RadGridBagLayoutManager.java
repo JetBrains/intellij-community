@@ -40,10 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author yole
@@ -53,7 +49,6 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
   private int myLastSnapshotCol = -1;
   private final int[] mySnapshotXMax = new int[512];
   private final int[] mySnapshotYMax = new int[512];
-  private final Map<RadComponent, MyPropertyChangeListener> myListenerMap = new HashMap<RadComponent, MyPropertyChangeListener>();
 
   @Override public String getName() {
     return UIFormXmlConstants.LAYOUT_GRIDBAG;
@@ -112,22 +107,10 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
 
   @Override
   public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
-    MyPropertyChangeListener listener = new MyPropertyChangeListener(component);
-    myListenerMap.put(component, listener);
-    component.addPropertyChangeListener(listener);
+    super.addComponentToContainer(container, component, index);
     GridBagConstraints gbc = GridBagConverter.getGridBagConstraints(component);
     component.setCustomLayoutConstraints(gbc);
     container.getDelegee().add(component.getDelegee(), gbc, index);
-  }
-
-  @Override
-  public void removeComponentFromContainer(final RadContainer container, final RadComponent component) {
-    final MyPropertyChangeListener listener = myListenerMap.get(component);
-    if (listener != null) {
-      component.removePropertyChangeListener(listener);
-      myListenerMap.remove(component);
-    }
-    super.removeComponentFromContainer(container, component);
   }
 
   @Override
@@ -211,11 +194,12 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
     destination.setLayout(new GridBagLayout());
   }
 
-  private static void updateConstraints(final RadComponent component) {
+  @Override
+  protected void updateConstraints(final RadComponent component) {
     GridBagLayout layout = (GridBagLayout) component.getParent().getLayout();
     GridBagConstraints gbc = GridBagConverter.getGridBagConstraints(component);
     layout.setConstraints(component.getDelegee(), gbc);
-    component.getParent().revalidate();
+    super.updateConstraints(component);
   }
 
   @Override
@@ -404,20 +388,6 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
       case GridBagConstraints.VERTICAL: return GridConstraints.FILL_VERTICAL;
       case GridBagConstraints.BOTH: return GridConstraints.FILL_BOTH;
       default: return GridConstraints.FILL_NONE;
-    }
-  }
-
-  private static class MyPropertyChangeListener implements PropertyChangeListener {
-    private final RadComponent myComponent;
-
-    public MyPropertyChangeListener(final RadComponent component) {
-      myComponent = component;
-    }
-
-    public void propertyChange(PropertyChangeEvent evt) {
-      if (evt.getPropertyName().equals(RadComponent.PROP_CONSTRAINTS)) {
-        updateConstraints(myComponent);
-      }
     }
   }
 

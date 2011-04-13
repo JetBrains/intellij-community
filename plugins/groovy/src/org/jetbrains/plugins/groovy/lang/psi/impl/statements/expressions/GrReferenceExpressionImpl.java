@@ -36,9 +36,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInsight.GroovyTargetElementEvaluator;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -69,6 +67,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
  * @author ilyas
@@ -282,7 +282,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     PsiElement nameElement = getReferenceNameElement();
     if (nameElement != null) {
       IElementType nodeType = nameElement.getNode().getElementType();
-      if (nodeType == GroovyElementTypes.mSTRING_LITERAL || nodeType == GroovyElementTypes.mGSTRING_LITERAL) {
+      if (nodeType == mSTRING_LITERAL || nodeType == mGSTRING_LITERAL) {
         return GrStringUtil.removeQuotes(nameElement.getText());
       }
 
@@ -403,7 +403,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     final GroovyResolveResult resolveResult = advancedResolve();
     PsiElement resolved = resolveResult.getElement();
-    if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
+    if (dotType == mMEMBER_POINTER) {
       if (resolved instanceof PsiMethod) {
         return GrClosureType.create((PsiMethod) resolved, resolveResult.getSubstitutor());
       }
@@ -427,7 +427,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       result = ((PsiVariable) resolved).getType();
     } else
     if (resolved instanceof PsiMethod) {
-      if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
+      if (dotType == mMEMBER_POINTER) {
         return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, this);
       }
       PsiMethod method = (PsiMethod) resolved;
@@ -498,7 +498,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       result = resolveResult.getSubstitutor().substitute(result);
       result = TypesUtil.boxPrimitiveType(result, getManager(), getResolveScope());
     }
-    if (dotType != GroovyTokenTypes.mSPREAD_DOT) {
+    if (dotType != mSPREAD_DOT) {
       return result;
     } else {
       return ResolveUtil.getListTypeForSpreadOperator(this, result);
@@ -621,7 +621,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         }
       }
     } else {
-      if (getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
+      if (getDotTokenType() != mSPREAD_DOT) {
         if (!processQualifier(processor, qualifier)) return false;
       } else {
         if (!processQualifierForSpreadDot(processor, qualifier)) return false;
@@ -771,7 +771,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   Kind getKind() {
-    if (getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER) return Kind.METHOD_OR_PROPERTY;
+    if (getDotTokenType() == mMEMBER_POINTER) return Kind.METHOD_OR_PROPERTY;
 
     PsiElement parent = getParent();
     if (parent instanceof GrMethodCallExpression || parent instanceof GrApplicationStatement) {
@@ -787,12 +787,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   public boolean hasAt() {
-    return findChildByType(GroovyTokenTypes.mAT) != null;
+    return findChildByType(mAT) != null;
   }
 
   @Override
   public boolean hasMemberPointer() {
-    return findChildByType(GroovyTokenTypes.mMEMBER_POINTER) != null;
+    return findChildByType(mMEMBER_POINTER) != null;
   }
 
   public boolean isReferenceTo(PsiElement element) {
@@ -803,7 +803,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     if (element instanceof PsiMethod && target instanceof PsiMethod) {
       PsiMethod[] superMethods = ((PsiMethod)target).findSuperMethods(false);
-      if (Arrays.asList(superMethods).contains((PsiMethod)element)) {
+      if (Arrays.asList(superMethods).contains(element)) {
         return true;
       }
     }
@@ -834,12 +834,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Nullable
   public PsiElement getDotToken() {
-    return findChildByType(GroovyTokenTypes.DOTS);
+    return findChildByType(TokenSets.DOTS);
   }
 
   public void replaceDotToken(PsiElement newDot) {
     if (newDot == null) return;
-    if (!GroovyTokenTypes.DOTS.contains(newDot.getNode().getElementType())) return;
+    if (!TokenSets.DOTS.contains(newDot.getNode().getElementType())) return;
     final PsiElement oldDot = getDotToken();
     if (oldDot == null) return;
 

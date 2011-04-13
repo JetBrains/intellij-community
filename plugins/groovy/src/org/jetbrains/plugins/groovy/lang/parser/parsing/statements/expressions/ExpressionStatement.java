@@ -28,8 +28,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.a
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.NUMBERS;
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.SEPARATORS;
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.*;
 import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression.Result.METHOD_CALL;
 import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression.Result.WRONG_WAY;
 
@@ -142,6 +141,7 @@ public class ExpressionStatement implements GroovyElementTypes {
   }
 
   private static GroovyElementType namePartParse(PsiBuilder builder, GroovyParser parser) {
+    if (BINARY_OP_SET.contains(builder.getTokenType())) return WRONGWAY;
     final GroovyElementType type = PathExpression.namePartParse(builder, parser);
     if (type == WRONGWAY && NUMBERS.contains(builder.getTokenType())) {
       builder.advanceLexer();

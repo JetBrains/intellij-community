@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.light.LightMethodBuilder;
@@ -555,9 +556,13 @@ public class GrClassImplUtil {
     builder.setNavigationElement(method);
     builder.addModifier(PsiModifier.PUBLIC);
     final PsiParameter[] originalParameters = method.getParameterList().getParameters();
-    for (PsiParameter originalParameter : originalParameters) {
+    for (int i = 0, originalParametersLength = originalParameters.length; i < originalParametersLength; i++) {
+      PsiParameter originalParameter = originalParameters[i];
       PsiType type = substitutor.substitute(originalParameter.getType());
-      builder.addParameter(originalParameter.getName(), type == null ? PsiType.getJavaLangObject(clazz.getManager(), clazz.getResolveScope()) : type);
+      if (type == null) {
+        type = PsiType.getJavaLangObject(clazz.getManager(), clazz.getResolveScope());
+      }
+      builder.addParameter(StringUtil.notNullize(originalParameter.getName(), "p" + i), type);
     }
     builder.setBaseIcon(GroovyIcons.METHOD);
     return builder;

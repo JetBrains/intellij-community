@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.IntentionAndQuickFixAction;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,41 +32,52 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.VisibilityUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ModifierFix extends IntentionAndQuickFixAction {
+public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix");
 
-  private final PsiModifierList myModifierList;
   @Modifier private final String myModifier;
   private final boolean myShouldHave;
   private final boolean myShowContainingClass;
-  private PsiVariable myVariable;
+  private final String myName;
+  private final SmartPsiElementPointer<PsiVariable> myVariable;
 
   public ModifierFix(PsiModifierList modifierList, @Modifier @NotNull String modifier, boolean shouldHave, boolean showContainingClass) {
-    myModifierList = modifierList;
+    super(modifierList);
     myModifier = modifier;
     myShouldHave = shouldHave;
     myShowContainingClass = showContainingClass;
+    myName = format(null, modifierList);
+    myVariable = null;
   }
 
   public ModifierFix(@NotNull PsiModifierListOwner owner, @Modifier @NotNull String modifier, boolean shouldHave, boolean showContainingClass) {
-    this(owner.getModifierList(), modifier, shouldHave, showContainingClass);
-    if (owner instanceof PsiVariable) {
-      myVariable = (PsiVariable)owner;
-    }
+    super(owner.getModifierList());
+    myModifier = modifier;
+    myShouldHave = shouldHave;
+    myShowContainingClass = showContainingClass;
+    PsiVariable variable = owner instanceof PsiVariable ? (PsiVariable)owner : null;
+    myName = format(variable, owner.getModifierList());
+
+    myVariable = variable == null ? null : SmartPointerManager.getInstance(owner.getProject()).createSmartPsiElementPointer(variable);
   }
 
   @NotNull
-  public String getName() {
+  @Override
+  public String getText() {
+    return myName;
+  }
+
+  private String format(PsiVariable variable, PsiModifierList modifierList) {
     String name = null;
-    PsiElement parent = myVariable == null ? myModifierList == null ? null : myModifierList.getParent() : myVariable;
+    PsiElement parent = variable == null ? modifierList == null ? null : modifierList.getParent() : variable;
     if (parent instanceof PsiClass) {
       name = ((PsiClass)parent).getName();
     }
@@ -98,12 +109,17 @@ public class ModifierFix extends IntentionAndQuickFixAction {
     return QuickFixBundle.message("fix.modifiers.family");
   }
 
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return myModifierList != null &&
-           myModifierList.isValid() &&
+  @Override
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    final PsiModifierList myModifierList = (PsiModifierList)startElement;
+    PsiVariable variable = myVariable == null ? null : myVariable.getElement();
+    return myModifierList.isValid() &&
            myModifierList.getManager().isInProject(myModifierList) &&
            myModifierList.hasExplicitModifier(myModifier) != myShouldHave &&
-           (myVariable == null || myVariable.isValid());
+           (variable == null || variable.isValid());
   }
 
   private void changeModifierList (PsiModifierList modifierList) {
@@ -115,23 +131,30 @@ public class ModifierFix extends IntentionAndQuickFixAction {
     }
   }
 
-  public void applyFix(final Project project, final PsiFile file, @Nullable final Editor editor) {
+  @Override
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable("is null when called from inspection") Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    final PsiModifierList myModifierList = (PsiModifierList)startElement;
+    final PsiVariable variable = myVariable == null ? null : myVariable.getElement();
     if (!CodeInsightUtilBase.preparePsiElementForWrite(myModifierList)) return;
     final List<PsiModifierList> modifierLists = new ArrayList<PsiModifierList>();
     final PsiFile containingFile = myModifierList.getContainingFile();
     final PsiModifierList modifierList;
-    if (myVariable != null && myVariable.isValid()) {
+    if (variable != null && variable.isValid()) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           try {
-            myVariable.normalizeDeclaration();
+            variable.normalizeDeclaration();
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
           }
         }
       });
-      modifierList = myVariable.getModifierList();
+      modifierList = variable.getModifierList();
       assert modifierList != null;
     }
     else {

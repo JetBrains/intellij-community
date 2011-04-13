@@ -91,6 +91,7 @@ public class FSRecords implements Forceable {
   private static final Object lock = new Object();
 
   private static volatile int ourLocalModificationCount = 0;
+  private static volatile boolean ourIsDisposed;
 
   private static final int FREE_RECORD_FLAG = 0x100;
   private static final int ALL_VALID_FLAGS = PersistentFS.ALL_VALID_FLAGS | FREE_RECORD_FLAG;
@@ -101,7 +102,7 @@ public class FSRecords implements Forceable {
   }
 
   private static class DbConnection {
-    private static int refCount = 0;
+    private static boolean ourInitialized;
     private static final TObjectIntHashMap<String> myAttributeIds = new TObjectIntHashMap<String>();
 
     private static PersistentStringEnumerator myNames;
@@ -114,17 +115,15 @@ public class FSRecords implements Forceable {
     private static ScheduledFuture<?> myFlushingFuture;
     private static boolean myCorrupted = false;
 
-    public static DbConnection connect() {
+    public static void connect() {
       synchronized (lock) {
-        if (refCount == 0) {
+        if (!ourInitialized) {
           init();
           scanFreeRecords();
           setupFlushing();
+          ourInitialized = true;
         }
-        refCount++;
       }
-
-      return new DbConnection();
     }
 
     private static void scanFreeRecords() {
@@ -384,15 +383,6 @@ public class FSRecords implements Forceable {
       return myRecords;
     }
 
-    public static void dispose() throws IOException {
-      synchronized (lock) {
-        refCount--;
-        if (refCount == 0) {
-          closeFiles();
-        }
-      }
-    }
-
     private static void closeFiles() throws IOException {
       if (myFlushingFuture != null) {
         myFlushingFuture.cancel(false);
@@ -440,10 +430,13 @@ public class FSRecords implements Forceable {
     }
 
     private static RuntimeException handleError(final Throwable e) {
-      if (!myCorrupted) {
-        createBrokenMarkerFile(e);
-        myCorrupted = true;
-        force();
+      if (!ourIsDisposed) {
+        // No need to forcibly mark VFS corrupted if it is already shut down
+        if (!myCorrupted) {
+          createBrokenMarkerFile(e);
+          myCorrupted = true;
+          force();
+        }
       }
 
       return new RuntimeException(e);
@@ -1200,6 +1193,9 @@ public class FSRecords implements Forceable {
       }
       catch (Throwable e) {
         throw DbConnection.handleError(e);
+      }
+      finally {
+        ourIsDisposed = true;
       }
     }
   }

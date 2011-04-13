@@ -26,6 +26,7 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -64,15 +65,10 @@ public interface XPathQuickFixFactory {
             return startElement.isValid() && startElement.getParent().isValid();
         }
 
-        @NotNull
-        public final String getText() {
-            return getName();
-        }
-
       @Override
       public void invoke(@NotNull Project project,
                          @NotNull PsiFile file,
-                         @NotNull PsiElement startElement,
+                         Editor editor, @NotNull PsiElement startElement,
                          @NotNull PsiElement endElement) {
         if(!CodeInsightUtilBase.prepareFileForWrite(file)) {
             return;

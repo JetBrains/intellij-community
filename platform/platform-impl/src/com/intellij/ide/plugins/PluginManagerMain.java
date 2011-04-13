@@ -387,12 +387,12 @@ public class PluginManagerMain implements Disposable {
     return main;
   }
 
-  public static boolean downloadPlugins(final List<PluginNode> plugins) throws IOException {
+  public static boolean downloadPlugins(final List<PluginNode> plugins, final List<IdeaPluginDescriptor> allPlugins) throws IOException {
     final boolean[] result = new boolean[1];
     try {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
-          result[0] = PluginInstaller.prepareToInstall(plugins);
+          result[0] = PluginInstaller.prepareToInstall(plugins, allPlugins);
         }
       }, IdeBundle.message("progress.download.plugins"), true, null);
     }

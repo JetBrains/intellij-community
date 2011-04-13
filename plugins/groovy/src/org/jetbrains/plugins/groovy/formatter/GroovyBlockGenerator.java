@@ -22,6 +22,7 @@ import com.intellij.formatting.Indent;
 import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -33,7 +34,7 @@ import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -181,6 +182,12 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
           innerAlignments.put(table.get(i), currentGroup.get(i));
         }
       } else {
+        if (psi instanceof PsiComment) {
+          PsiElement prev = psi.getPrevSibling();
+          if (prev != null && prev.getNode().getElementType() != mNLS) {
+            continue;
+          }
+        }
         currentGroup = null;
       }
     }
@@ -242,8 +249,8 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   }
 
   private static boolean isKeyword(ASTNode node) {
-    return node != null && (GroovyTokenTypes.KEYWORDS.contains(node.getElementType()) ||
-        GroovyTokenTypes.BRACES.contains(node.getElementType()));
+    return node != null && (TokenSets.KEYWORDS.contains(node.getElementType()) ||
+        TokenSets.BRACES.contains(node.getElementType()));
   }
 
 

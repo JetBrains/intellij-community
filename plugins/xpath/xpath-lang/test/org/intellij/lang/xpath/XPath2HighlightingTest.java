@@ -33,6 +33,10 @@ public class XPath2HighlightingTest extends XPath2HighlightingTestBase {
     doXPathHighlighting();
   }
 
+  public void testNumberFollowedByToken2() throws Throwable {
+    doXPathHighlighting();
+  }
+
   @Override
   protected String getSubPath() {
     return "xpath/highlighting";

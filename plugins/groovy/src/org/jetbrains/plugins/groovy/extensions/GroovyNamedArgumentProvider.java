@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
@@ -50,7 +51,7 @@ public abstract class GroovyNamedArgumentProvider {
   public static final ArgumentDescriptor TYPE_ANY_NOT_FIRST = new ArgumentDescriptor().setShowFirst(false);
 
   public abstract void getNamedArguments(@NotNull GrCall call,
-                                         @Nullable PsiMethod method,
+                                         @Nullable PsiElement resolve,
                                          @Nullable String argumentName,
                                          boolean forCompletion,
                                          Map<String, ArgumentDescriptor> result);
@@ -80,14 +81,18 @@ public abstract class GroovyNamedArgumentProvider {
     else {
       for (GroovyResolveResult result : callVariants) {
         PsiElement element = result.getElement();
+        if (element instanceof GrAccessorMethod) continue;
+
         if (element instanceof PsiMethod) {
           PsiMethod method = (PsiMethod)element;
           PsiParameter[] parameters = method.getParameterList().getParameters();
-          if (parameters.length == 0 ? method.isConstructor() : canBeMap(parameters[0])) {
-            for (GroovyNamedArgumentProvider namedArgumentProvider : GroovyNamedArgumentProvider.EP_NAME.getExtensions()) {
-              namedArgumentProvider.getNamedArguments(call, method, argumentName, forCompletion, namedArguments);
-            }
+          if (!(parameters.length == 0 ? method.isConstructor() : canBeMap(parameters[0]))) {
+            continue;
           }
+        }
+
+        for (GroovyNamedArgumentProvider namedArgumentProvider : GroovyNamedArgumentProvider.EP_NAME.getExtensions()) {
+          namedArgumentProvider.getNamedArguments(call, element, argumentName, forCompletion, namedArguments);
         }
       }
     }

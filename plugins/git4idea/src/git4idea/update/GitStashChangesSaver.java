@@ -235,7 +235,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   private class UnstashConflictResolver extends GitMergeConflictResolver {
     public UnstashConflictResolver() {
-      super(GitStashChangesSaver.this.myProject, false, new UnstashMergeDialogCustomizer(), "Local changes were not restored", "");
+      super(GitStashChangesSaver.this.myProject, true, new UnstashMergeDialogCustomizer(), "Local changes were not restored", "");
     }
 
     @Override
@@ -265,14 +265,20 @@ public class GitStashChangesSaver extends GitChangesSaver {
   }
 
   private static class UnstashMergeDialogCustomizer extends MergeDialogCustomizer {
+
     @Override
     public String getMultipleFileMergeDescription(Collection<VirtualFile> files) {
       return "Uncommitted changes that were stashed before update have conflicts with updated files.";
     }
 
     @Override
+    public String getLeftPanelTitle(VirtualFile file) {
+      return "Your uncommitted changes";
+    }
+
+    @Override
     public String getRightPanelTitle(VirtualFile file, VcsRevisionNumber lastRevisionNumber) {
-      return "Changes from stash";
+      return "Changes from remote";
     }
   }
 }

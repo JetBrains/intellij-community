@@ -46,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -87,6 +86,7 @@ import java.util.*;
 /**
  * @author ven
  */
+@SuppressWarnings({"StaticFieldReferencedViaSubclass"})
 public class PsiUtil {
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil");
   public static final Key<JavaIdentifier> NAME_IDENTIFIER = new Key<JavaIdentifier>("Java Identifier");
@@ -507,7 +507,7 @@ public class PsiUtil {
     return isInStaticContext(refExpression, null);
   }
 
-  public static boolean isInStaticContext(GrQualifiedReference refExpression, PsiClass targetClass) {
+  public static boolean isInStaticContext(GrQualifiedReference refExpression, @Nullable PsiClass targetClass) {
     if (refExpression.getQualifier() != null) {
       PsiElement qualifier = refExpression.getQualifier();
       if (qualifier instanceof GrReferenceExpression) return ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass;
@@ -832,7 +832,7 @@ public class PsiUtil {
     //noinspection ConstantConditions
     while (elem != null &&
            elem.getNode() != null &&
-           GroovyElementTypes.WHITE_SPACES_OR_COMMENTS.contains(elem.getNode().getElementType())) {
+           TokenSets.WHITE_SPACES_OR_COMMENTS.contains(elem.getNode().getElementType())) {
       if (forward) {
         elem = elem.getNextSibling();
       }
@@ -1066,10 +1066,6 @@ public class PsiUtil {
 
   public static boolean isLeafElementOfType(@Nullable PsiElement element, IElementType type) {
     return element instanceof LeafElement && ((LeafElement)element).getElementType() == type;
-  }
-
-  public static boolean isLeafElementOfType(@Nullable PsiElement element, TokenSet tokenSet) {
-    return element instanceof LeafElement && tokenSet.contains(((LeafElement)element).getElementType());
   }
 
   public static GrNamedArgument[] getFirstMapNamedArguments(GrCall grCall) {

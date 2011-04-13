@@ -38,8 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrNamedArgumentSearchVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -301,21 +299,8 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     if (stub != null) {
       return stub.getNamedParameters();
     }
-    final GrExpression initializerGroovy = getInitializerGroovy();
 
-    if (!(initializerGroovy instanceof GrClosableBlock)) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
-    }
-
-    final GrClosableBlock closure = (GrClosableBlock)initializerGroovy;
-    final PsiParameter[] parameters = closure.getAllParameters();
-    if (parameters.length == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
-
-    PsiParameter parameter = parameters[0];
-
-    GrNamedArgumentSearchVisitor visitor = new GrNamedArgumentSearchVisitor(parameter.getName());
-    closure.accept(visitor);
-    return visitor.getResult();
+    return GrNamedArgumentSearchVisitor.find(this);
   }
 
   public GrDocComment getDocComment() {

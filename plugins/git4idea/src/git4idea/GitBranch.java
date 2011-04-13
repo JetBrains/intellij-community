@@ -15,6 +15,7 @@
  */
 package git4idea;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -41,6 +42,7 @@ public class GitBranch extends GitReference {
 
   private final boolean myRemote;
   private boolean myActive;
+  private static final Logger LOG = Logger.getInstance(GitBranch.class);
 
   public GitBranch(@NotNull String name, boolean active, boolean remote) {
     super(name);
@@ -91,6 +93,29 @@ public class GitBranch extends GitReference {
   @Nullable
   public String getTrackedBranchName(Project project, VirtualFile root) throws VcsException {
     return GitConfigUtil.getValue(project, root, trackedBranchKey());
+  }
+
+  /**
+   * Checks if the branch exists in the repository.
+   * @return true if the branch exists, false otherwise.
+   */
+  public boolean exists(VirtualFile root) {
+    final VirtualFile remoteBranch = root.findFileByRelativePath(".git/refs/remotes/" + myName);
+    if (remoteBranch != null && remoteBranch.exists()) {
+      return true;
+    }
+    final VirtualFile packedRefs = root.findFileByRelativePath(".git/packed-refs");
+    if (packedRefs != null && packedRefs.exists()) {
+      final byte[] contents;
+      try {
+        contents = packedRefs.contentsToByteArray();
+        return new String(contents).contains(myName);
+      } catch (IOException e) {
+        LOG.info("exists ", e);
+        return false;
+      }
+    }
+    return false;
   }
 
   /**

@@ -16,11 +16,8 @@
 
 package org.jetbrains.plugins.groovy.lang.lexer;
 
-import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
  * Interface that contains all tokens returned by GroovyLexer
@@ -40,7 +37,6 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes {
 
   IElementType mWS = new GroovyElementType("white space");
   IElementType mNLS = new GroovyElementType("new line");
-  TokenSet WHITE_SPACES_SET = TokenSet.create(mWS, mNLS, TokenType.WHITE_SPACE);
 
   /* **************************************************************************************************
  *  Comments
@@ -49,7 +45,6 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes {
   IElementType mSH_COMMENT = new GroovyElementType("shell comment");
   IElementType mSL_COMMENT = new GroovyElementType("line comment");
   IElementType mML_COMMENT = new GroovyElementType("block comment");
-  TokenSet COMMENT_SET = TokenSet.create(mML_COMMENT, mSH_COMMENT, mSL_COMMENT, GROOVY_DOC_COMMENT);
 
   /* **************************************************************************************************
  *  Identifiers
@@ -74,7 +69,6 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes {
 
   IElementType mSTRING_LITERAL = new GroovyElementType("string");
   IElementType mGSTRING_LITERAL = new GroovyElementType("Gstring");
-  TokenSet STRING_LITERAL_SET = TokenSet.create(mSTRING_LITERAL, mGSTRING_LITERAL);
 
   IElementType mGSTRING_BEGIN = new GroovyElementType("Gstring begin");
   IElementType mGSTRING_CONTENT = new GroovyElementType("Gstring content");
@@ -211,27 +205,4 @@ public interface GroovyTokenTypes extends GroovyDocElementTypes {
   IElementType kVOID = new GroovyElementType("void");
   IElementType kVOLATILE = new GroovyElementType("volatile");
   IElementType kWHILE = new GroovyElementType("while");
-
-  TokenSet KEYWORDS = TokenSet
-    .create(kABSTRACT, kAS, kASSERT, kBOOLEAN, kBREAK, kBYTE, kCASE, kCATCH, kCHAR, kCLASS, kCONTINUE, kDEF, kDEFAULT, kDOUBLE, kELSE,
-            kEXTENDS, kENUM, kFALSE, kFINAL, kFLOAT, kFOR, kFINALLY, kIF, kIMPLEMENTS, kIMPORT, kIN, kINSTANCEOF, kINT, kINTERFACE, kLONG,
-            kNATIVE, kNEW, kNULL, kPACKAGE, kPRIVATE, kPROTECTED, kPUBLIC, kRETURN, kSHORT, kSTATIC, kSTRICTFP, kSUPER, kSWITCH,
-            kSYNCHRONIZED, kTHIS, kTHROW, kTHROWS, kTRANSIENT, kTRUE, kTRY, kVOID, kVOLATILE, kWHILE);
-
-  TokenSet BRACES = TokenSet.create(mLBRACK, mRBRACK, mLPAREN, mRPAREN, mLCURLY, mRCURLY);
-
-  TokenSet ASSIGN_OP_SET = TokenSet
-    .create(mASSIGN, mBAND_ASSIGN, mBOR_ASSIGN, mBSR_ASSIGN, mBXOR_ASSIGN, mDIV_ASSIGN, mMINUS_ASSIGN, mMOD_ASSIGN, mPLUS_ASSIGN,
-            mSL_ASSIGN, mSR_ASSIGN, mSTAR_ASSIGN, mSTAR_STAR_ASSIGN);
-
-  TokenSet UNARY_OP_SET = TokenSet.create(mBNOT, mLNOT, mMINUS, mDEC, mPLUS, mINC);
-  TokenSet POSTFIX_UNARY_OP_SET = TokenSet.create(mDEC, mINC);
-
-  TokenSet BINARY_OP_SET =
-    TokenSet.create(mBAND, mBOR, mBXOR, mDIV, mEQUAL, mGE, mGT, mLAND, mLOR, mLT, mLE, mMINUS, mMOD, mPLUS, mSTAR, mSTAR_STAR, mNOT_EQUAL,
-                    mCOMPARE_TO, GroovyElementTypes.COMPOSITE_SHIFT_SIGN);
-
-  TokenSet DOTS = TokenSet.create(mSPREAD_DOT, mOPTIONAL_DOT, mMEMBER_POINTER, mDOT);
-
-  TokenSet WHITE_SPACES_OR_COMMENTS = TokenSet.orSet(WHITE_SPACES_SET, COMMENT_SET);
 }

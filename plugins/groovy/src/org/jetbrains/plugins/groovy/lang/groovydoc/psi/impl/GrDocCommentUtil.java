@@ -22,9 +22,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+
+import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.*;
 
 /**
  * @author Maxim.Medvedev
@@ -41,8 +43,8 @@ public abstract class GrDocCommentUtil {
       if (element == null) return null;
       final ASTNode node = element.getNode();
       if (node == null) return null;
-      if (GroovyElementTypes.GROOVY_DOC_COMMENT.equals(node.getElementType()) ||
-          !GroovyElementTypes.WHITE_SPACES_OR_COMMENTS.contains(node.getElementType())) {
+      if (GROOVY_DOC_COMMENT.equals(node.getElementType()) ||
+          !WHITE_SPACES_OR_COMMENTS.contains(node.getElementType())) {
         break;
       }
     }
@@ -64,8 +66,8 @@ public abstract class GrDocCommentUtil {
       if (element == null) return null;
       final ASTNode node = element.getNode();
       if (node == null) return null;
-      if (GroovyElementTypes.GROOVY_DOC_COMMENT.equals(node.getElementType()) ||
-          !GroovyElementTypes.WHITE_SPACES_OR_COMMENTS.contains(node.getElementType())) {
+      if (GROOVY_DOC_COMMENT.equals(node.getElementType()) ||
+          !WHITE_SPACES_OR_COMMENTS.contains(node.getElementType())) {
         break;
       }
       element = element.getPrevSibling();

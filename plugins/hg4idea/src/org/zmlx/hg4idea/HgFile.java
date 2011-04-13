@@ -75,6 +75,9 @@ public class HgFile {
   }
 
   private static String buildRelativePath(File anchestor, File descendant) {
+    if (anchestor.equals(descendant)) {
+      return ".";
+    }
     if (anchestor.equals(descendant.getParentFile())) {
       return descendant.getName();
     }

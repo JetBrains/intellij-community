@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.ContinuationFinalTasksInserter;
-import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.text.DateFormatUtil;
 import git4idea.GitBranch;
 import git4idea.branch.GitBranchPair;
@@ -43,6 +42,7 @@ import java.util.*;
 
 import static git4idea.ui.GitUIUtil.notifyError;
 import static git4idea.ui.GitUIUtil.notifyImportantError;
+import static git4idea.ui.GitUIUtil.notifyMessage;
 
 /**
  * Handles update process (pull via merge or rebase) for several roots.
@@ -220,7 +220,8 @@ public class GitUpdateProcess {
   }
 
   /**
-   * For each root check that the repository is on branch, and this branch is tracking a remote branch.
+   * For each root check that the repository is on branch, and this branch is tracking a remote branch,
+   * and the remote branch exists.
    * If it is not true for at least one of roots, notify and return false.
    * If branch configuration is OK for all roots, return true.
    */
@@ -243,6 +244,14 @@ public class GitUpdateProcess {
                                "No tracked branch configured for branch " + branchName +
                                "<br/>To make your branch track a remote branch call, for example,<br/>" +
                                "<code>git branch --set-upstream " + branchName + " origin/" + branchName + "</code>");
+          return false;
+        }
+        if (!tracked.exists(root)) {
+          LOG.info("checkTrackedBranchesConfigured tracked branch " + tracked + "  doesn't exist.");
+          notifyMessage(myProject, "Can't update: tracked branch doesn't exist.",
+                        "Tracked branch <code>" + tracked.getName() + "</code> doesn't exist, so there is nothing to update.<br/>" +
+                        "The branch will be automatically created when you push to it.",
+                        NotificationType.WARNING, true, null);
           return false;
         }
         myTrackedBranches.put(root, new GitBranchPair(branch, tracked));
