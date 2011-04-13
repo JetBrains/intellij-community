@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android.dom.converters;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.xml.ConvertContext;
@@ -41,8 +42,11 @@ public class ConstantFieldConverter extends ResolvingConverter<String> {
         LookupClass lookupClass = element.getAnnotation(LookupClass.class);
         LookupPrefix lookupPrefix = element.getAnnotation(LookupPrefix.class);
         if (lookupClass != null && lookupPrefix != null) {
-            PsiClass psiClass = JavaPsiFacade.getInstance(context.getPsiManager().getProject()).findClass(lookupClass.value(),
-                    GlobalSearchScope.allScope(context.getModule().getProject()));
+          final Module module = context.getModule();
+          final GlobalSearchScope scope = module != null ?
+                                          GlobalSearchScope.allScope(module.getProject()) :
+                                          context.getInvocationElement().getResolveScope();
+          PsiClass psiClass = JavaPsiFacade.getInstance(context.getPsiManager().getProject()).findClass(lookupClass.value(), scope);
             if (psiClass != null) {
                 PsiField[] psiFields = psiClass.getFields();
                 for(PsiField field: psiFields) {

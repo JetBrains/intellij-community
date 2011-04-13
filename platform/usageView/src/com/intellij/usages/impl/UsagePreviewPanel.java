@@ -110,7 +110,7 @@ public class UsagePreviewPanel extends JPanel implements Disposable {
 
       TextRange elementRange = psiElement.getTextRange();
       TextRange infoRange = info.getRangeInElement();
-      TextRange textRange = elementRange.intersection(infoRange);
+      TextRange textRange = infoRange == null ? null : elementRange.intersection(infoRange);
       if (textRange == null) textRange = elementRange;
       // hack to determine element range to highlight
       if (psiElement instanceof PsiNamedElement && !(psiElement instanceof PsiFile)) {

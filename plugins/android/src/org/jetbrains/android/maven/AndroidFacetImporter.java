@@ -18,7 +18,9 @@ package org.jetbrains.android.maven;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.facet.FacetType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -34,6 +36,7 @@ import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidFacetType;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidSdk;
+import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.sdk.EmptySdkLog;
 import org.jetbrains.android.util.AndroidUtils;
@@ -55,6 +58,8 @@ import java.util.Map;
  * @author Eugene.Kudelevsky
  */
 public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFacetConfiguration, AndroidFacetType> {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.maven.AndroidFacetImporter");
+
   public AndroidFacetImporter() {
     super("com.jayway.maven.plugins.android.generation2", "maven-android-plugin", FacetType.findInstance(AndroidFacetType.class), "Android");
   }
@@ -116,6 +121,13 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
   @Nullable
   private Sdk findOrCreateAndroidPlatform(MavenProject project) {
     String sdkPath = System.getenv("ANDROID_HOME");
+    LOG.info("android home: " + sdkPath);
+
+    if (sdkPath == null) {
+      sdkPath = suggestAndroidSdkPath();
+      LOG.info("suggested sdk: " + sdkPath);
+    }
+
     String apiLevel = null;
     if (sdkPath != null) {
       Element sdkRoot = getConfig(project, "sdk");
@@ -148,6 +160,20 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
         }
       }
     }
+    return null;
+  }
+
+  @Nullable
+  private static String suggestAndroidSdkPath() {
+    final List<Sdk> androidSdks = ProjectJdkTable.getInstance().getSdksOfType(AndroidSdkType.getInstance());
+    for (Sdk androidSdk : androidSdks) {
+      final VirtualFile sdkHome = androidSdk.getHomeDirectory();
+
+      if (sdkHome != null && sdkHome.exists() && sdkHome.isValid() && sdkHome.isDirectory()) {
+        return sdkHome.getPath();
+      }
+    }
+
     return null;
   }
 

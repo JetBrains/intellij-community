@@ -51,6 +51,7 @@ import com.intellij.util.continuation.*;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.vcsUtil.FilesProgress;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -237,9 +238,9 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
   public List<ShelvedChangeList> importChangeLists(final Collection<VirtualFile> files, final Consumer<VcsException> exceptionConsumer) {
     final List<ShelvedChangeList> result = new ArrayList<ShelvedChangeList>(files.size());
     try {
+      final FilesProgress filesProgress = new FilesProgress(files.size(), "Processing ");
       for (VirtualFile file : files) {
-        ProgressManager.checkCanceled();
-
+        filesProgress.updateIndicator(file);
         final String description = file.getNameWithoutExtension().replace('_', ' ');
         final File patchPath = getPatchPath(description);
         final ShelvedChangeList list = new ShelvedChangeList(patchPath.getPath(), description, new SmartList<ShelvedBinaryFile>(),

@@ -34,11 +34,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -64,10 +62,17 @@ public class AndroidCompileUtil {
 
   private static final Pattern ourMessagePattern = Pattern.compile("(.+):(\\d+):.+");
 
+  private static final Key<Boolean> RELEASE_BUILD_KEY = new Key<Boolean>("RELEASE_BUILD_KEY");
+
   private AndroidCompileUtil() {
   }
 
   static void addMessages(final CompileContext context, final Map<CompilerMessageCategory, List<String>> messages) {
+    addMessages(context, messages, null);
+  }
+
+  static void addMessages(final CompileContext context, final Map<CompilerMessageCategory, List<String>> messages,
+                          @Nullable final Map<VirtualFile, VirtualFile> presentableFilesMap) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         if (context.getProject().isDisposed()) return;
@@ -80,7 +85,7 @@ public class AndroidCompileUtil {
             if (matcher.matches()) {
               String fileName = matcher.group(1);
               if (new File(fileName).exists()) {
-                url = "file://" + fileName;
+                url = getPresentableFile("file://" + fileName, presentableFilesMap);
                 line = Integer.parseInt(matcher.group(2));
               }
             }
@@ -89,6 +94,25 @@ public class AndroidCompileUtil {
         }
       }
     });
+  }
+
+  @NotNull
+  private static String getPresentableFile(@NotNull String url, @Nullable Map<VirtualFile, VirtualFile> presentableFilesMap) {
+    final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+    if (file == null) {
+      return url;
+    }
+
+    if (presentableFilesMap == null) {
+      return url;
+    }
+
+    for (Map.Entry<VirtualFile, VirtualFile> entry : presentableFilesMap.entrySet()) {
+      if (file == entry.getValue()) {
+        return entry.getKey().getUrl();
+      }
+    }
+    return url;
   }
 
   private static void collectChildrenRecursively(@NotNull VirtualFile root,
@@ -363,5 +387,14 @@ public class AndroidCompileUtil {
   public static boolean isFullBuild(@NotNull CompileContext context) {
     RunConfiguration runConfiguration = CompileStepBeforeRun.getRunConfiguration(context);
     return !(runConfiguration instanceof JUnitConfiguration);
+  }
+
+  public static boolean isReleaseBuild(@NotNull CompileContext context) {
+    final Boolean value = context.getCompileScope().getUserData(RELEASE_BUILD_KEY);
+    return value != null && value.booleanValue();
+  }
+
+  public static void setReleaseBuild(@NotNull CompileScope compileScope) {
+    compileScope.putUserData(RELEASE_BUILD_KEY, Boolean.TRUE);
   }
 }

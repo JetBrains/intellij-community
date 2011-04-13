@@ -33,9 +33,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 class UndoableGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoableGroup");
@@ -115,71 +117,56 @@ class UndoableGroup {
     }
   }
 
-  private static void doInBulkMode(@NotNull final Runnable action, @NotNull Collection<DocumentEx> documents) {
-    Runnable runnable = action;
-    for (final DocumentEx document : documents) {
-      final Runnable oldRunnable = runnable;
-      runnable = new Runnable() {
-        @Override
-        public void run() {
-          doInBulkMode(oldRunnable, document);
-        }
-      };
-    }
-    runnable.run();
-  }
-  private static void doInBulkMode(@NotNull Runnable action, @NotNull DocumentEx document) {
-    boolean wasInBulkUpdate = document.isInBulkUpdate();
-    document.setInBulkUpdate(true);
-    try {
-      action.run();
-    }
-    finally {
-      if (!wasInBulkUpdate) {
-        document.setInBulkUpdate(false);
-      }
-    }
-  }
-
-
   private void doUndoOrRedo(final boolean isUndo) {
-    Runnable runnable = new Runnable() {
+    final boolean wrapInBulkUpdate = myActions.size() > 50;
+    // perform undo action by action, setting bulk update flag if possible
+    // if multiple consecutive actions share a document, then set the bulk flag only once
+    final Set<DocumentEx> bulkDocuments = new THashSet<DocumentEx>();
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         try {
-          for (UndoableAction each : isUndo ? ContainerUtil.iterateBackward(myActions) : myActions) {
-            if (isUndo) {
-              each.undo();
+          for (final UndoableAction action : isUndo ? ContainerUtil.iterateBackward(myActions) : myActions) {
+            final Collection<DocumentEx> newDocuments;
+            if (wrapInBulkUpdate) {
+              newDocuments = new THashSet<DocumentEx>();
+              Set<DocumentEx> documentsToRemoveFromBulk = new THashSet<DocumentEx>(bulkDocuments);
+              DocumentReference[] affectedDocuments = action.getAffectedDocuments();
+              if (affectedDocuments != null) {
+                for (DocumentReference affectedDocument : affectedDocuments) {
+                  DocumentEx document = (DocumentEx)affectedDocument.getDocument();
+                  if (document == null) continue;
+                  documentsToRemoveFromBulk.remove(document);
+                  if (bulkDocuments.contains(document)) continue;
+                  newDocuments.add(document);
+                  document.setInBulkUpdate(true);
+                }
+              }
+              for (DocumentEx document : documentsToRemoveFromBulk) {
+                document.setInBulkUpdate(false);
+              }
+              bulkDocuments.removeAll(documentsToRemoveFromBulk);
+              bulkDocuments.addAll(newDocuments);
             }
             else {
-              each.redo();
+              newDocuments = Collections.emptyList();
             }
+
+            if (isUndo) {
+              action.undo();
+            }
+            else {
+              action.redo();
+            }
+          }
+          for (DocumentEx bulkDocument : bulkDocuments) {
+            bulkDocument.setInBulkUpdate(false);
           }
         }
         catch (UnexpectedUndoException e) {
           reportUndoProblem(e, isUndo);
         }
       }
-    };
-    if (myActions.size() > 50) {
-      final Collection<DocumentEx> documents = new THashSet<DocumentEx>();
-      for (UndoableAction action : myActions) {
-        DocumentReference[] affectedDocuments = action.getAffectedDocuments();
-        if (affectedDocuments != null) {
-          for (DocumentReference affectedDocument : affectedDocuments) {
-            documents.add((DocumentEx)affectedDocument.getDocument());
-          }
-        }
-      }
-      final Runnable oldRunnable = runnable;
-      runnable = new Runnable() {
-        @Override
-        public void run() {
-          doInBulkMode(oldRunnable, documents);
-        }
-      };
-    }
-
-    ApplicationManager.getApplication().runWriteAction(runnable);
+    });
     commitAllDocuments();
   }
 

@@ -16,6 +16,7 @@
 package org.jetbrains.android.dom.manifest;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.ExtendClass;
 import org.jetbrains.android.dom.AndroidAttributeValue;
@@ -53,6 +54,7 @@ public interface Application extends ManifestElement {
 
   @Convert(PackageClassConverter.class)
   @ExtendClass("android.app.Activity")
+  @Attribute("manageSpaceActivity")
   AndroidAttributeValue<PsiClass> getManageSpaceActivity();
 
   @Convert(PackageClassConverter.class)

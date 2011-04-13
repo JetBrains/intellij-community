@@ -28,7 +28,7 @@ import java.util.*;
 
 public abstract class GenericNotifierImpl<T, Key> {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.GenericNotifier");
-  private final Project myProject;
+  protected final Project myProject;
   @NotNull
   private final String myGroupId; //+- here
   @NotNull
@@ -180,5 +180,11 @@ public abstract class GenericNotifierImpl<T, Key> {
 
   private static void log(final String s) {
     LOG.debug(s);
+  }
+
+  public boolean isEmpty() {
+    synchronized (myLock) {
+      return myState.isEmpty();
+    }
   }
 }

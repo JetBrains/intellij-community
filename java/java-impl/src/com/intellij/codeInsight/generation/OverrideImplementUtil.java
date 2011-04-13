@@ -327,7 +327,7 @@ public class OverrideImplementUtil {
     }
   }
 
-  public static void annotate(PsiMethod result, String fqn, String... annosToRemove) throws IncorrectOperationException {
+  public static void annotate(@NotNull PsiMethod result, String fqn, String... annosToRemove) throws IncorrectOperationException {
     Project project = result.getProject();
     AddAnnotationFix fix = new AddAnnotationFix(fqn, result, annosToRemove);
     if (fix.isAvailable(project, null, result.getContainingFile())) {

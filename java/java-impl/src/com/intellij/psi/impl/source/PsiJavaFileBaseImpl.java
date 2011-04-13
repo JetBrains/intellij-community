@@ -304,11 +304,11 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       }
     }
 
-    if(classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.PACKAGE)){
-      final PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
-      processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, rootPackage);
-      if(rootPackage != null) rootPackage.processDeclarations(processor, state, null, place);
-    }
+    //if(classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.PACKAGE)){
+    //  final PsiPackage rootPackage = JavaPsiFacade.getInstance(getProject()).findPackage("");
+    //  processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, rootPackage);
+    //  if(rootPackage != null) rootPackage.processDeclarations(processor, state, null, place);
+    //}
 
     final PsiImportList importList = getImportList();
     final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();

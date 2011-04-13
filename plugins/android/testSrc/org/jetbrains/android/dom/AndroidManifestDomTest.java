@@ -150,6 +150,11 @@ public class AndroidManifestDomTest extends AndroidDomTest {
     doTestCompletion();
   }
 
+  public void testManageSpaceActivity() throws Throwable {
+    copyFileToProject("MyActivity.java", "src/p1/p2/MyActivity.java");
+    doTestCompletion();
+  }
+
   private void doTestCompletion() throws Throwable {
     toTestCompletion(getTestName(false) + ".xml", getTestName(false) + "_after.xml");
   }

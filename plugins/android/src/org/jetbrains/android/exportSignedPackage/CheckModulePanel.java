@@ -20,17 +20,12 @@ import com.intellij.openapi.compiler.DummyCompileContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.xml.converters.values.BooleanValueConverter;
-import org.jetbrains.android.dom.manifest.Application;
-import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 
 /**
  * @author Eugene.Kudelevsky
@@ -49,25 +44,24 @@ public class CheckModulePanel extends JPanel {
     final DummyCompileContext compileContext = DummyCompileContext.getInstance();
     VirtualFile outputDirectory = compileContext.getModuleOutputDirectory(module);
     if (outputDirectory != null) {
-      String outputOsPath = FileUtil.toSystemDependentName(outputDirectory.getPath());
-      String apkFilePath = outputOsPath + File.separator + module.getName() + ".apk";
+      /*String apkFilePath = facet.getApkPath();
       File f = new File(apkFilePath);
       if (!f.isFile()) {
         addError(AndroidBundle.message("android.file.not.exist.error", f.getPath()));
-      }
+      }*/
     }
     else {
       addError(AndroidBundle.message("android.unable.to.get.output.directory.error"));
     }
 
-    Manifest manifest = facet.getManifest();
+    /*Manifest manifest = facet.getManifest();
     assert manifest != null;
     Application application = manifest.getApplication();
     assert application != null;
     String debuggable = application.getDebuggable().getValue();
     if (debuggable != null && BooleanValueConverter.getInstance(true).isTrue(debuggable)) {
       addWarning(AndroidBundle.message("android.export.signed.package.debuggable.warning"));
-    }
+    }*/
   }
 
   public boolean hasError() {
