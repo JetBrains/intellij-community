@@ -25,11 +25,11 @@ import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.List;
 
-final class HgCommandResultNotifier {
+public final class HgCommandResultNotifier {
 
   private final Project myProject;
 
-  HgCommandResultNotifier(Project project) {
+  public HgCommandResultNotifier(Project project) {
     myProject = project;
   }
 

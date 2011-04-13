@@ -20,9 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -323,4 +321,18 @@ public abstract class HgUtil {
       return filePath;
     }
   }
+
+  /**
+   * Returns all HG roots in the project.
+   */
+  public static @NotNull List<VirtualFile> getHgRepositories(@NotNull Project project) {
+    final List<VirtualFile> repos = new LinkedList<VirtualFile>();
+    for (VcsRoot root : ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()) {
+      if (HgVcs.VCS_NAME.equals(root.vcs.getName())) {
+        repos.add(root.path);
+      }
+    }
+    return repos;
+  }
+
 }
