@@ -152,7 +152,7 @@ public abstract class TokenSets implements GroovyTokenTypes, GroovyElementTypes 
 
   public static final TokenSet BINARY_OP_SET = TokenSet.create(mBAND, mBOR, mBXOR, mDIV, mEQUAL, mGE, mGT, mLAND, mLOR, mLT, mLE, mMINUS,
                                                                mMOD, mPLUS, mSTAR, mSTAR_STAR, mNOT_EQUAL, mCOMPARE_TO,
-                                                               COMPOSITE_SHIFT_SIGN);
+                                                               COMPOSITE_SHIFT_SIGN, kIN, kINSTANCEOF, kAS);
 
   public static final TokenSet DOTS = TokenSet.create(mSPREAD_DOT, mOPTIONAL_DOT, mMEMBER_POINTER, mDOT);
 

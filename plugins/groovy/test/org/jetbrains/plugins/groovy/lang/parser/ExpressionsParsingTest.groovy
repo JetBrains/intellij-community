@@ -254,4 +254,10 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testcommandExpr$not() {doTest()}
   public void testcommandExpr$methodCall() {doTest()}
   public void testcommandExpr$indexProperty() {doTest()}
+
+  public void testcommandExpr$instanceof() {doTest()}
+  public void testcommandExpr$instanceof2() {doTest()}
+  public void testcommandExpr$in() {doTest()}
+  public void testcommandExpr$as() {doTest()}
+  public void testcommandExpr$arrayAccess() {doTest()}
 }
