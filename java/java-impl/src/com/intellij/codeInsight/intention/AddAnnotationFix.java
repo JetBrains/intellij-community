@@ -175,7 +175,7 @@ public class AddAnnotationFix extends PsiElementBaseIntentionAction implements L
           }
         }
 
-        PsiAnnotation inserted = modifierList.addAnnotation(myAnnotation);
+        final @NotNull PsiAnnotation inserted = modifierList.addAnnotation(myAnnotation);
         if (myPairs != null) {
           for (PsiNameValuePair pair : myPairs) {
             inserted.setDeclaredAttributeValue(pair.getName(), pair.getValue());
