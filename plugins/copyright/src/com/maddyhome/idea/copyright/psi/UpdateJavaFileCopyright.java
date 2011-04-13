@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.JavaOptions;
-import com.maddyhome.idea.copyright.options.LanguageOptions;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -84,13 +83,17 @@ public class UpdateJavaFileCopyright extends UpdatePsiFileCopyright
             final List<PsiComment> comments = new ArrayList<PsiComment>();
             collectComments(first, topclass, comments);
             collectComments(topclass.getFirstChild(), topclass.getModifierList(), comments);
-            checkComments(topclass.getModifierList(), location == JavaOptions.LOCATION_BEFORE_CLASS, comments);
+          checkCommentsForTopClass(topclass, location, comments);
         }
         else if (location == JavaOptions.LOCATION_BEFORE_CLASS)
         {
             // no package, no imports, no top level class
         }
     }
+
+  protected void checkCommentsForTopClass(PsiClass topclass, int location, List<PsiComment> comments) {
+    checkComments(topclass.getModifierList(), location == JavaOptions.LOCATION_BEFORE_CLASS, comments);
+  }
 
   @Nullable
   protected PsiElement[] getImportsList() {
