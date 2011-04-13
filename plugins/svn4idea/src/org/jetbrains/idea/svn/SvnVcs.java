@@ -21,6 +21,8 @@ import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.idea.RareLogger;
 import com.intellij.notification.*;
+import com.intellij.notification.impl.NotificationSettings;
+import com.intellij.notification.impl.NotificationsConfiguration;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -221,6 +223,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     myFrameStateListener = new MyFrameStateListener(changeListManager, vcsDirtyScopeManager);
     myWorkingCopiesContent = new WorkingCopiesContent(this);
+
+    // remove used some time before old notification group ids
+    NotificationsConfiguration.remove(new NotificationSettings[] {new NotificationSettings("SVN_NO_JNA", null),
+      new NotificationSettings("SVN_NO_CRYPT32", null), new NotificationSettings("SubversionId", null)});
   }
 
   public void postStartup() {
@@ -328,15 +334,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
   }
 
-  private final static String UPGRADE_SUBVERSION_FORMAT = "Subversion";
-
   private void upgradeToRecentVersion(final SvnConfiguration.SvnSupportOptions supportOptions) {
     if (! supportOptions.upgradeTo16Asked()) {
       final SvnWorkingCopyChecker workingCopyChecker = new SvnWorkingCopyChecker();
 
       if (workingCopyChecker.upgradeNeeded()) {
 
-        Notifications.Bus.notify(new Notification(UPGRADE_SUBVERSION_FORMAT, SvnBundle.message("upgrade.format.to16.question.title"),
+        Notifications.Bus.notify(new Notification(getDisplayName(), SvnBundle.message("upgrade.format.to16.question.title"),
                                                   "Old format Subversion working copies <a href=\"\">could be upgraded to version 1.6</a>.",
                                                   NotificationType.INFORMATION, new NotificationListener() {
             public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
@@ -374,10 +378,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     if (SystemInfo.isWindows) {
       if (! SVNJNAUtil.isJNAPresent()) {
-        Notifications.Bus.notify(new Notification("SVN_NO_JNA", "Subversion plugin: no JNA",
+        Notifications.Bus.notify(new Notification(getDisplayName(), "Subversion plugin: no JNA",
           "A problem with JNA initialization for svnkit library. Encryption is not available.", NotificationType.WARNING), NotificationDisplayType.BALLOON, myProject);
       } else if (! SVNJNAUtil.isWinCryptEnabled()) {
-        Notifications.Bus.notify(new Notification("SVN_NO_CRYPT32", "Subversion plugin: no encryption",
+        Notifications.Bus.notify(new Notification(getDisplayName(), "Subversion plugin: no encryption",
           "A problem with encryption module (Crypt32.dll) initialization for svnkit library. Encryption is not available.", NotificationType.WARNING), NotificationDisplayType.BALLOON, myProject);
       }
     }
