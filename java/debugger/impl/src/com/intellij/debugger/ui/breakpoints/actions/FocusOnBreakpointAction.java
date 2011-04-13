@@ -16,10 +16,10 @@
 package com.intellij.debugger.ui.breakpoints.actions;
 
 import com.intellij.execution.ui.actions.AbstractFocusOnAction;
-import com.intellij.debugger.ui.DebuggerSessionTab;
+import com.intellij.execution.ui.layout.LayoutViewOptions;
 
 public class FocusOnBreakpointAction extends AbstractFocusOnAction {
   public FocusOnBreakpointAction() {
-    super(DebuggerSessionTab.BREAKPOINT_CONDITION);
+    super(LayoutViewOptions.BREAKPOINT_CONDITION);
   }
 }
