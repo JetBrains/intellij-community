@@ -19,6 +19,8 @@ import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathNodeTest;
@@ -84,7 +86,7 @@ public class XsltQuickFixFactory implements XPathQuickFixFactory {
         }
 
         protected void invokeImpl(final Project project, final PsiFile file) throws IncorrectOperationException {
-            FileAssociationsConfigurable.editAssociations(project, file);
+            FileAssociationsConfigurable.editAssociations(project, PsiTreeUtil.getContextOfType(file, XmlFile.class, false));
         }
 
         @NotNull
