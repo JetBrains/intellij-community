@@ -73,7 +73,7 @@ public class AllClassesGetter {
         LOG.error(endOffset + " became invalid: " + context.getOffsetMap() + "; inserting " + qname);
       }
 
-      final RangeMarker toDelete = JavaCompletionUtil.insertSpace(endOffset, document);
+      final RangeMarker toDelete = JavaCompletionUtil.insertTemporary(endOffset, document, " ");
       psiDocumentManager.commitAllDocuments();
       PsiReference psiReference = file.findReferenceAt(endOffset - 1);
 
