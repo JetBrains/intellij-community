@@ -3,8 +3,9 @@ package com.jetbrains.python.psi.search;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.ReferenceRange;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyNames;
@@ -40,25 +41,6 @@ public class PyInitReferenceSearchExecutor extends QueryExecutorBase<PsiReferenc
       searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, PythonFileType.INSTANCE);
     }
 
-    final PsiSearchHelper helper = function.getManager().getSearchHelper();
-    final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
-      public boolean execute(PsiElement element, int offsetInElement) {
-        final PsiReference[] refs = element.getReferences();
-        for (PsiReference ref : refs) {
-          if (ReferenceRange.containsOffsetInElement(ref, offsetInElement)) {
-            if (ref.isReferenceTo(function)) {
-              return consumer.process(ref);
-            }
-          }
-        }
-        return true;
-      }
-    };
-
-    helper.processElementsWithWord(processor,
-                                   searchScope,
-                                   className,
-                                   UsageSearchContext.IN_CODE,
-                                   false);
+    queryParameters.getOptimizer().searchWord(className, searchScope, UsageSearchContext.IN_CODE, true, function);
   }
 }

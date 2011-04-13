@@ -1,11 +1,13 @@
 package com.jetbrains.python.psi.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
 import com.jetbrains.django.lang.template.psi.impl.DjangoTemplateFileImpl;
@@ -31,6 +33,11 @@ public class PyStringReferenceSearch extends QueryExecutorBase<PsiReference, Ref
       );
     }
 
-    PythonUtil.searchElementStringReferences(consumer, element, searchScope);
+    final String name = PythonUtil.computeElementNameForStringSearch(element);
+
+    if (StringUtil.isEmpty(name)) {
+      return;
+    }
+    params.getOptimizer().searchWord(name, searchScope, UsageSearchContext.IN_STRINGS, true, element);
   }
 }
