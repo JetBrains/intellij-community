@@ -1,8 +1,8 @@
 package com.jetbrains.python.documentation;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
-import com.intellij.lang.documentation.QuickDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.Extensions;
@@ -54,7 +54,7 @@ import java.util.regex.Pattern;
 /**
  * Provides quick docs for classes, methods, and functions.
  */
-public class PythonDocumentationProvider extends QuickDocumentationProvider implements ExternalDocumentationProvider {
+public class PythonDocumentationProvider extends AbstractDocumentationProvider implements ExternalDocumentationProvider {
 
   @NonNls private static final String LINK_TYPE_CLASS = "#class#";
   @NonNls private static final String LINK_TYPE_PARENT = "#parent#";
