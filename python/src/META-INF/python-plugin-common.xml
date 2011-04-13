@@ -612,7 +612,7 @@
       <group text="Sphinx actions" popup="true">
         <action id="com.jetbrains.rest.actions.sphinx.RunSphinxQuickStartAction"
                 class="com.jetbrains.rest.actions.sphinx.RunSphinxQuickStartAction"
-                text="Run sphinx quick-start..." description="Allows to run sphinx quick-start action">
+                text="Sphinx quickstart" description="Allows to run sphinx quick-start action">
         </action>
         <action id="com.jetbrains.rest.actions.sphinx.RunSphinxMakeAction"
                 class="com.jetbrains.rest.actions.sphinx.RunSphinxMakeAction"
