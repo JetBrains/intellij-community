@@ -38,9 +38,9 @@ import sys
 import socket
 import os
 if os.name == 'java':
-  from select import cpython_compatible_select as select
+    from select import cpython_compatible_select as select
 else:
-  from select import select
+    from select import select
 del os
 
 

@@ -46,7 +46,10 @@ class WeakValueDictionary(UserDict.UserDict):
         def remove(wr, selfref=ref(self)):
             self = selfref()
             if self is not None:
-                del self.data[wr.key]
+                try:
+                    del self.data[wr.key]
+                except KeyError:
+                    pass
         self._remove = remove
         UserDict.UserDict.__init__(self, *args, **kw)
 
@@ -232,7 +235,10 @@ class WeakKeyDictionary(UserDict.UserDict):
         def remove(k, selfref=ref(self)):
             self = selfref()
             if self is not None:
-                del self.data[k]
+                try:
+                    del self.data[k]
+                except KeyError:
+                    pass
         self._remove = remove
         if dict is not None: self.update(dict)
 

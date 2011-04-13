@@ -38,7 +38,7 @@ def _type_name(obj):
         type_name = '%s.' % obj_type.__module__
     type_name += obj_type.__name__
     return type_name
-        
+
 def dirname(path):
     """Return the directory component of a pathname"""
     path = _tostr(path, "dirname")
@@ -83,7 +83,7 @@ def splitext(path):
         return (path[:n], path[n:])
 
 def splitdrive(path):
-    """Split a pathname into drive and path specifiers. 
+    """Split a pathname into drive and path specifiers.
 
     Returns a 2-tuple "(drive,path)"; either part may be empty.
     """
@@ -260,7 +260,7 @@ def realpath(path):
     """Return an absolute path normalized and symbolic links eliminated"""
     path = _tostr(path, "realpath")
     return _realpath(path)
-    
+
 def _realpath(path):
     try:
         return asPyString(File(sys.getPath(path)).getCanonicalPath())
@@ -358,6 +358,3 @@ def expandvars(path):
             res = res + c
         index = index + 1
     return res
-
-
-

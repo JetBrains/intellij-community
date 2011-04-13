@@ -463,6 +463,23 @@ public class PyUtil {
     return null;
   }
 
+  public static boolean isInstanceAttribute(PyExpression target) {
+    if (!(target instanceof PyTargetExpression)) {
+      return false;
+    }
+    PyFunction method = PsiTreeUtil.getParentOfType(target, PyFunction.class);
+    if (method == null || method.getContainingClass() == null) {
+      return false;
+    }
+    final PyParameter[] params = method.getParameterList().getParameters();
+    if (params.length == 0) {
+      return false;
+    }
+    final PyTargetExpression targetExpr = (PyTargetExpression)target;
+    PyExpression qualifier = targetExpr.getQualifier();
+    return qualifier != null && qualifier.getText().equals(params[0].getName());
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 

@@ -3,11 +3,11 @@ from java.util import Collections, WeakHashMap
 from java.util.concurrent import Semaphore, CyclicBarrier
 from java.util.concurrent.locks import ReentrantLock
 from org.python.util import jython
+from org.python.core import Py
 from thread import _newFunctionThread
 from thread import _local as local
+from _threading import Lock, RLock, Condition, _Lock, _RLock, _threads, _active, _jthread_to_pythread, _register_thread, _unregister_thread
 import java.lang.Thread
-import weakref
-
 import sys as _sys
 from traceback import print_exc as _print_exc
 
@@ -55,77 +55,6 @@ def settrace(func):
     global _trace_hook
     _trace_hook = func
 
-def RLock(*args, **kwargs):
-    return _RLock(*args, **kwargs)
-
-class _RLock(object):
-    def __init__(self):
-        self._lock = ReentrantLock()
-        self.__owner = None
-
-    def acquire(self, blocking=1):
-        if blocking:
-            self._lock.lock()
-            self.__owner = currentThread()
-            return True
-        else:
-            return self._lock.tryLock()
-
-    def __enter__(self):
-        self.acquire()
-        return self
-
-    def release(self):
-        assert self._lock.isHeldByCurrentThread(), \
-            "release() of un-acquire()d lock"
-        self.__owner = None
-        self._lock.unlock()
-
-    def __exit__(self, t, v, tb):
-        self.release()
-
-    def locked(self):
-        return self._lock.isLocked()
-
-    def _is_owned(self):
-        return self._lock.isHeldByCurrentThread()
-
-Lock = _RLock
-
-class Condition(object):
-    def __init__(self, lock=None):
-        if lock is None:
-            lock = RLock()
-        self._lock = lock
-        self._condition = lock._lock.newCondition()
-
-    def acquire(self):
-        return self._lock.acquire()
-
-    def __enter__(self):
-        self.acquire()
-        return self
-    
-    def release(self):
-        return self._lock.release()
-
-    def __exit__(self, t, v, tb):
-        self.release()
-
-    def wait(self, timeout=None):
-        if timeout:
-            return self._condition.awaitNanos(int(timeout * 1e9))
-        else:
-            return self._condition.await()
-
-    def notify(self):
-        return self._condition.signal()
-
-    def notifyAll(self):
-        return self._condition.signalAll()
-
-    def _is_owned(self):
-        return self._lock._lock.isHeldByCurrentThread()
 
 class Semaphore(object):
     def __init__(self, value=1):
@@ -163,8 +92,7 @@ ThreadStates = {
 class JavaThread(object):
     def __init__(self, thread):
         self._thread = thread
-        _jthread_to_pythread[thread] = self
-        _threads[thread.getId()] = self
+        _register_thread(thread, self)
 
     def __repr__(self):
         _thread = self._thread
@@ -195,10 +123,10 @@ class JavaThread(object):
             self._thread.join(millis_int, nanos)
         else:
             self._thread.join()
-            
+
     def getName(self):
         return self._thread.getName()
-    
+
     def setName(self, name):
         self._thread.setName(str(name))
 
@@ -211,13 +139,17 @@ class JavaThread(object):
     def setDaemon(self, daemonic):
         self._thread.setDaemon(bool(daemonic))
 
-# relies on the fact that this is a CHM
-_threads = weakref.WeakValueDictionary()
-_active = _threads
-_jthread_to_pythread = Collections.synchronizedMap(WeakHashMap())
+    def __tojava__(self, c):
+        if isinstance(self._thread, c):
+            return self._thread
+        if isinstance(self, c):
+            return self
+        return Py.NoConversion
+
 
 class Thread(JavaThread):
     def __init__(self, group=None, target=None, name=None, args=None, kwargs=None):
+        assert group is None, "group argument must be None for now"
         _thread = self._create_thread()
         JavaThread.__init__(self, _thread)
         if args is None:
@@ -294,7 +226,7 @@ class Thread(JavaThread):
         pass
 
     def __delete(self):
-        del _threads[self._thread.getId()]
+        _unregister_thread(self._thread)
 
 
 class _MainThread(Thread):
@@ -310,7 +242,7 @@ class _MainThread(Thread):
         return False
 
     def __exitfunc(self):
-        del _threads[self._thread.getId()]
+        _unregister_thread(self._thread)
         t = _pickSomeNonDaemonThread()
         while t:
             t.join()

@@ -91,7 +91,7 @@ def name(unichr, default=None):
     if v is None:
         v = check_segments(codepoint, _segments)
         if v is not None:
-            return "%s-%X" % (v[8], codepoint) 
+            return "%s-%X" % (v[8], codepoint)
 
     if v is None:
         if default is not Nonesuch:
@@ -126,13 +126,13 @@ def get_eaw(unichr, default, fn):
     v = _eaw.get(codepoint, None)
     if v is None:
         v = check_segments(codepoint, _eaw_segments)
-    
+
     if v is None:
         if default is not Nonesuch:
             return default
         raise ValueError()
     return v
-    
+
 def get(unichr, default, fn, getter):
     codepoint = get_codepoint(unichr, fn)
     data = _codepoints.get(codepoint, None)
@@ -192,24 +192,24 @@ def jymirrored(unichr):
 try:
     from java.text import Normalizer
 
-    _forms = { 
-        'NFC':  Normalizer.Form.NFC, 
-        'NFKC': Normalizer.Form.NFKC, 
-        'NFD':  Normalizer.Form.NFD, 
-        'NFKD': Normalizer.Form.NFKD 
-        } 
+    _forms = {
+        'NFC':  Normalizer.Form.NFC,
+        'NFKC': Normalizer.Form.NFKC,
+        'NFD':  Normalizer.Form.NFD,
+        'NFKD': Normalizer.Form.NFKD
+        }
 
-    def normalize(form, unistr): 
-        """ 
-        Return the normal form 'form' for the Unicode string unistr.  Valid 
-        values for form are 'NFC', 'NFKC', 'NFD', and 'NFKD'. 
-        """ 
-        
+    def normalize(form, unistr):
+        """
+        Return the normal form 'form' for the Unicode string unistr.  Valid
+        values for form are 'NFC', 'NFKC', 'NFD', and 'NFKD'.
+        """
+
         try:
             normalizer_form = _forms[form]
         except KeyError:
             raise ValueError('invalid normalization form')
-        return Normalizer.normalize(unistr, normalizer_form) 
+        return Normalizer.normalize(unistr, normalizer_form)
 
 except ImportError:
     pass

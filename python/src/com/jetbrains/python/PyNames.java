@@ -42,6 +42,8 @@ public class PyNames {
   @NonNls public static final String SLOTS = "__slots__";
   @NonNls public static final String DEBUG = "__debug__";
 
+  @NonNls public static final String ISINSTANCE = "isinstance";
+
   /**
    * Contains all known predefined names of "__foo__" form.
    */

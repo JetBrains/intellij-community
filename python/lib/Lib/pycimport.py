@@ -1,7 +1,6 @@
-import sys
+import imp
 import os
-
-from org.python.core import imp as _imp, PyFrame as _Frame, Py as _Py
+import sys
 from marshal import Unmarshaller
 
 __debugging__ = False
@@ -16,11 +15,11 @@ def __readPycHeader(file):
     return magic, mtime
 
 def __makeModule(name, code, path):
-    module = _imp.addModule(name)
-    builtins = _Py.getSystemState().builtins
-    frame = _Frame(code, module.__dict__, module.__dict__, builtins)
+    module = sys.modules.get(name)
+    if not module:
+        module = sys.modules[name] = imp.new_module(name)
     module.__file__ = path
-    code.call(frame) # execute module code
+    exec code in module.__dict__
     return module
 
 class __Importer(object):

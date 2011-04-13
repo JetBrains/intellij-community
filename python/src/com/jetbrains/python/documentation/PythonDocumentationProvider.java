@@ -6,6 +6,8 @@ import com.intellij.lang.documentation.QuickDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -178,13 +180,24 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
     return cat;
   }
 
-  private static @NotNull List<String> combUpDocString(Project project, @NotNull String docstring) {
+  private static void addFormattedDocString(PsiElement element, @NotNull String docstring,
+                                            ChainIterable<String> formattedOutput, ChainIterable<String> unformattedOutput) {
+    Project project = element.getProject();
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
     List<String> result = new ArrayList<String>();
     if (documentationSettings.isEpydocFormat()) {
       final EpydocString epydocString = new EpydocString(docstring);
-      result.add(formatStructuredDocString(epydocString));
-      return result;
+      Module module = ModuleUtil.findModuleForPsiElement(element);
+      String formatted = null;
+      if (module != null) {
+        formatted = EpydocRunner.formatDocstring(module, docstring);
+      }
+      if (formatted == null) {
+        formatted = formatStructuredDocString(epydocString);
+      }
+      result.add(formatted);
+      unformattedOutput.add(result);
+      return;
     }
     // detect common indentation
     String[] lines = LineTokenizer.tokenize(docstring, false);
@@ -230,7 +243,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
       }
       result.add(combUp(line));
     }
-    return result;
+    formattedOutput.add(result);
   }
 
   private static String formatStructuredDocString(StructuredDocString docString) {
@@ -366,7 +379,8 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
         }
       }
       if (docString != null) {
-        doc_cat.add(BR).add(combUpDocString(element.getProject(), docString));
+        doc_cat.add(BR);
+        addFormattedDocString(element, docString, doc_cat, epilog_cat);
       }
     }
     else if (is_property) {
@@ -502,9 +516,11 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
               epilog_cat.add(PyBundle.message("QDOC.copied.from.$0.$1", ancestor_link, meth_name));
             }
             epilog_cat
-              .add(BR).add(BR)
-              .addWith(TagCode, combUpDocString(fun.getProject(), inherited_doc))
-            ;
+              .add(BR).add(BR);
+            ChainIterable<String> formatted = new ChainIterable<String>();
+            ChainIterable<String> unformatted = new ChainIterable<String>();
+            addFormattedDocString(fun, inherited_doc, formatted, unformatted);
+            epilog_cat.addWith(TagCode, formatted).add(unformatted);
             not_found = false;
             break;
           }
@@ -525,7 +541,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
                 PyStringLiteralExpression predefined_doc_expr = obj_underscored.getDocStringExpression();
                 String predefined_doc = predefined_doc_expr != null? predefined_doc_expr.getStringValue() : null;
                 if (predefined_doc != null && predefined_doc.length() > 1) { // only a real-looking doc string counts
-                  doc_cat.add(combUpDocString(fun.getProject(), predefined_doc));
+                  addFormattedDocString(fun, predefined_doc, doc_cat, doc_cat);
                   epilog_cat.add(BR).add(BR).add(PyBundle.message("QDOC.copied.from.builtin"));
                 }
               }
@@ -597,7 +613,7 @@ public class PythonDocumentationProvider extends QuickDocumentationProvider impl
       final String providerUrl = provider.getExternalDocumentationUrl(element, originalElement);
       if (providerUrl != null) {
         if (checkExistence && !pageExists(providerUrl)) {
-          return provider.getExternalDocumentationRoot(pyVersion);
+          return provider.getExternalDocumentationRoot(sdk);
         }
         return providerUrl;
       }

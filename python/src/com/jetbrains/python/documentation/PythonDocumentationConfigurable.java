@@ -47,7 +47,7 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable {
 
   @Override
   public String getHelpTopic() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return "preferences.ExternalDocumentation";
   }
 
   @Override

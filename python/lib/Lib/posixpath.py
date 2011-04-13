@@ -10,11 +10,8 @@ Some of this can actually be useful on non-Posix systems too, e.g.
 for manipulation of the pathname component of URLs.
 """
 
-import java.io.File
-import java.io.IOException
 import os
 import stat
-from org.python.core.Py import newString
 
 __all__ = ["normcase","isabs","join","splitdrive","split","splitext",
            "basename","dirname","commonprefix","getsize","getmtime",
@@ -217,6 +214,10 @@ def isfile(path):
 # Are two filenames really pointing to the same file?
 
 if not os._native_posix:
+    import java.io.File
+    import java.io.IOException
+    from org.python.core.Py import newString
+
     def samefile(f1, f2):
         """Test whether two pathnames reference the same actual file"""
         canon1 = newString(java.io.File(_ensure_str(f1)).getCanonicalPath())
@@ -227,7 +228,7 @@ else:
         """Test whether two pathnames reference the same actual file"""
         s1 = os.stat(f1)
         s2 = os.stat(f2)
-        return samestat(s1, s2)    
+        return samestat(s1, s2)
 
 
 # XXX: Jython currently lacks fstat
@@ -244,7 +245,7 @@ if hasattr(os, 'fstat'):
     __all__.append("sameopenfile")
 
 
-# XXX: Pure Java stat lacks st_ino/st_dev    
+# XXX: Pure Java stat lacks st_ino/st_dev
 if os._native_posix:
     # Are two stat buffers (obtained from stat, fstat or lstat)
     # describing the same file?

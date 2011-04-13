@@ -5,11 +5,9 @@ Instead of importing this module directly, import os and refer to this
 module as os.path.
 """
 
-import java.io.File
 import os
 import stat
 import sys
-from org.python.core.Py import newString
 
 __all__ = ["normcase","isabs","join","splitdrive","split","splitext",
            "basename","dirname","commonprefix","getsize","getmtime",
@@ -487,6 +485,9 @@ try:
     from nt import _getfullpathname
 
 except ImportError: # not running on Windows - mock up something sensible
+    import java.io.File
+    from org.python.core.Py import newString
+
     def abspath(path):
         """Return the absolute version of a path."""
         if not isabs(path):

@@ -169,7 +169,8 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   }
 
   @Nullable
-  private static String transformPattern(@NotNull String urlPattern, PyQualifiedName moduleQName, @Nullable PsiNamedElement element, String pyVersion) {
+  private static String transformPattern(@NotNull String urlPattern, PyQualifiedName moduleQName, @Nullable PsiNamedElement element,
+                                         String pyVersion) {
     Map<String, String> macros = new HashMap<String, String>();
     macros.put("element.name", element == null ? null : element.getName());
     PyClass pyClass = element == null ? null : PsiTreeUtil.getParentOfType(element, PyClass.class, false);
@@ -188,7 +189,11 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     macros.put("function.name", element instanceof PyFunction ? element.getName() : "");
     macros.put("module.name", moduleQName.toString());
     macros.put("python.version", pyVersion);
-    return transformPattern(urlPattern, macros);
+    final String pattern = transformPattern(urlPattern, macros);
+    if (pattern == null) {
+      return rootForPattern(urlPattern);
+    }
+    return pattern;
   }
 
   @Nullable

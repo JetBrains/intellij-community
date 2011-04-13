@@ -49,43 +49,43 @@ class NonStringOutput(ApplicationException): pass
 
 class exception_handler:
 
-	def handle(self, req, resp, environ, exc, exc_info):
-		pass
+    def handle(self, req, resp, environ, exc, exc_info):
+        pass
 
-	def get_status_and_message(self, req, resp, exc):
-		return resp.SC_INTERNAL_SERVER_ERROR, "Server configuration error"
+    def get_status_and_message(self, req, resp, exc):
+        return resp.SC_INTERNAL_SERVER_ERROR, "Server configuration error"
 
 #
-#	Special exception handler for testing
+#    Special exception handler for testing
 #
 
 class testing_handler(exception_handler):
 
-	def handle(self, req, resp, environ, exc, exc_info):
-		typ, value, tb = exc_info
-		err_msg = StringIO.StringIO()
-		err_msg.write("%s: %s\n" % (typ, value,) )
-		err_msg.write(">Environment\n")
-		for k in environ.keys():
-			err_msg.write("%s=%s\n" % (k, repr(environ[k])) )
-		err_msg.write("<Environment\n")
-		err_msg.write(">TraceBack\n")
-		for line in traceback.format_exception(typ, value, tb):
-			err_msg.write(line)
-		err_msg.write("<TraceBack\n")
-		try:
-			status, message = self.get_status_and_message(req, resp, exc)
-			resp.setStatus(status)
-			resp.setContentLength(len(err_msg.getvalue()))
-			resp.getOutputStream().write(err_msg.getvalue())
-		except IllegalStateException, ise:
-			raise exc # Let the container deal with it
+    def handle(self, req, resp, environ, exc, exc_info):
+        typ, value, tb = exc_info
+        err_msg = StringIO.StringIO()
+        err_msg.write("%s: %s\n" % (typ, value,) )
+        err_msg.write(">Environment\n")
+        for k in environ.keys():
+            err_msg.write("%s=%s\n" % (k, repr(environ[k])) )
+        err_msg.write("<Environment\n")
+        err_msg.write(">TraceBack\n")
+        for line in traceback.format_exception(typ, value, tb):
+            err_msg.write(line)
+        err_msg.write("<TraceBack\n")
+        try:
+            status, message = self.get_status_and_message(req, resp, exc)
+            resp.setStatus(status)
+            resp.setContentLength(len(err_msg.getvalue()))
+            resp.getOutputStream().write(err_msg.getvalue())
+        except IllegalStateException, ise:
+            raise exc # Let the container deal with it
 
 #
-#	Standard exception handler
+#    Standard exception handler
 #
 
 class standard_handler(exception_handler):
 
-	def handle(self, req, resp, environ, exc, exc_info):
-		raise exc_info[0], exc_info[1], exc_info[2]
+    def handle(self, req, resp, environ, exc, exc_info):
+        raise exc_info[0], exc_info[1], exc_info[2]

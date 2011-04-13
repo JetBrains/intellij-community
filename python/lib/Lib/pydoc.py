@@ -1623,7 +1623,11 @@ class Helper:
         self.input = input
         self.output = output
         self.docdir = None
-        execdir = os.path.dirname(sys.executable)
+        if sys.executable is None:
+            execdir = os.getcwd()
+        else:
+            execdir = os.path.dirname(sys.executable)
+        
         homedir = os.environ.get('PYTHONHOME')
         for dir in [os.environ.get('PYTHONDOCS'),
                     homedir and os.path.join(homedir, 'doc'),

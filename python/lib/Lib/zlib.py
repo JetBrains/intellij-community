@@ -13,7 +13,9 @@ decompressobj([wbits]) -- Return a decompressor object.
 Compressor objects support compress() and flush() methods; decompressor
 objects support decompress() and flush().
 """
-import jarray, binascii
+import array
+import binascii
+import jarray
 
 from java.util.zip import Adler32, Deflater, Inflater, DataFormatException
 from java.lang import Long, String
@@ -45,7 +47,7 @@ Z_FINISH = 4
 _valid_flush_modes = (Z_FINISH,)
 
 def adler32(s, value=1):
-    if value != 1: 
+    if value != 1:
         raise ValueError, "adler32 only support start value of 1"
     checksum = Adler32()
     checksum.update(String.getBytes(s, 'iso-8859-1'))
@@ -59,13 +61,14 @@ def compress(string, level=6):
     if level < Z_BEST_SPEED or level > Z_BEST_COMPRESSION:
         raise error, "Bad compression level"
     deflater = Deflater(level, 0)
+    string = _to_input(string)
     deflater.setInput(string, 0, len(string))
     deflater.finish()
     return _get_deflate_data(deflater)
 
 def decompress(string, wbits=0, bufsize=16384):
     inflater = Inflater(wbits < 0)
-    inflater.setInput(string)
+    inflater.setInput(_to_input(string))
 
     return _get_inflate_data(inflater)
 
@@ -84,9 +87,10 @@ class compressobj:
     def compress(self, string):
         if self._ended:
             raise error("compressobj may not be used after flush(Z_FINISH)")
+        string = _to_input(string)
         self.deflater.setInput(string, 0, len(string))
         return _get_deflate_data(self.deflater)
-        
+
     def flush(self, mode=Z_FINISH):
         if self._ended:
             raise error("compressobj may not be used after flush(Z_FINISH)")
@@ -111,7 +115,7 @@ class decompressobj:
     def decompress(self, string, max_length=0):
         if self._ended:
             raise error("decompressobj may not be used after flush()")
-        
+
         # unused_data is always "" until inflation is finished; then it is
         # the unused bytes of the input;
         # unconsumed_tail is whatever input was not used because max_length
@@ -123,6 +127,7 @@ class decompressobj:
         if max_length < 0:
             raise ValueError("max_length must be a positive integer")
 
+        string = _to_input(string)
         self.inflater.setInput(string)
         inflated = _get_inflate_data(self.inflater, max_length)
 
@@ -132,7 +137,7 @@ class decompressobj:
                 self.unconsumed_tail = string[-r:]
             else:
                 self.unused_data = string[-r:]
-        
+
         return inflated
 
     def flush(self, length=None):
@@ -146,6 +151,8 @@ class decompressobj:
         self.inflater.end()
         return last
 
+def _to_input(string):
+    return string.tostring() if isinstance(string, array.array) else string
 
 def _get_deflate_data(deflater):
     buf = jarray.zeros(1024, 'b')

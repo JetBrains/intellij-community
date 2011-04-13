@@ -525,11 +525,11 @@ def prepare_input_source(source, base = ""):
 def absolute_system_id(sysid, base=''):
     if os.path.exists(sysid):
         sysid = 'file:%s' % os.path.abspath(sysid)
-    elif base:        
+    elif base:
         sysid = Absolutize(sysid, base)
     assert IsAbsolute(sysid)
     return MakeUrllibSafe(sysid)
-    
+
 # ===========================================================================
 #
 # DEPRECATED SAX 1.0 CLASSES

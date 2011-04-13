@@ -1,13 +1,11 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.annotation.Annotation;
-import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.console.PydevConsoleRunner;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.documentation.EpydocUtil;
+import com.jetbrains.python.highlighting.PyHighlighter;
+import com.jetbrains.python.psi.*;
 
 /**
  * Highlights doc strings in classes, functions, and files.
@@ -27,6 +25,14 @@ public class DocStringAnnotator extends PyAnnotator {
   @Override
   public void visitPyClass(final PyClass node) {
     annotateDocStringStmt(PythonDocStringFinder.find(node.getStatementList()));
+  }
+
+  @Override
+  public void visitPyExpressionStatement(PyExpressionStatement node) {
+    if (node.getExpression() instanceof PyStringLiteralExpression &&
+        EpydocUtil.isVariableDocString((PyStringLiteralExpression)node.getExpression())) {
+      annotateDocStringStmt((PyStringLiteralExpression)node.getExpression());
+    }
   }
 
   private void annotateDocStringStmt(final PyStringLiteralExpression stmt) {
