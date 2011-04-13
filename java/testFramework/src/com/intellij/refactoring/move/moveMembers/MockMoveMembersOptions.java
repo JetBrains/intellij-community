@@ -17,6 +17,7 @@ package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiModifier;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -47,7 +48,7 @@ public class MockMoveMembersOptions implements MoveMembersOptions {
     return true;
   }
 
-  public void setMemberVisibility(String visibility) {
+  public void setMemberVisibility(@Nullable String visibility) {
     myMemberVisibility = visibility;
   }
 
@@ -60,5 +61,4 @@ public class MockMoveMembersOptions implements MoveMembersOptions {
   public String getTargetClassName() {
     return myTargetClassName;
   }
-
 }
