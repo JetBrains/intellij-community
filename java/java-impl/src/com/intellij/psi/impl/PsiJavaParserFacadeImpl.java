@@ -209,7 +209,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
   @NotNull
   @Override
   public PsiClass createClassFromText(@NotNull final String body, @Nullable final PsiElement context) throws IncorrectOperationException {
-    final PsiJavaFile aFile = createDummyJavaFile(StringUtil.join("class _Dummy_ { ", body, " }"));
+    final PsiJavaFile aFile = createDummyJavaFile(StringUtil.join("class _Dummy_ {\n", body, "\n}"));
     final PsiClass[] classes = aFile.getClasses();
     if (classes.length != 1) {
       throw new IncorrectOperationException("Incorrect class \"" + body + "\".");
