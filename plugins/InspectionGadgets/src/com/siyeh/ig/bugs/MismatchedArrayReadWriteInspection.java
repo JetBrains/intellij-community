@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ig.bugs;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -78,11 +77,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection{
                 return;
             }
             final PsiClass containingClass = PsiUtil.getTopLevelClass(field);
-            if(containingClass == null){
-                return;
-            }
-            final PsiType type = field.getType();
-            if(type.getArrayDimensions() == 0){
+            if(!checkVariable(field, containingClass)){
                 return;
             }
             final boolean written =
@@ -99,11 +94,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection{
             super.visitLocalVariable(variable);
             final PsiCodeBlock codeBlock =
                     PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-            if(codeBlock == null){
-                return;
-            }
-            final PsiType type = variable.getType();
-            if(type.getArrayDimensions() == 0){
+            if(!checkVariable(variable, codeBlock)){
                 return;
             }
             final boolean written =
@@ -115,6 +106,28 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection{
             registerVariableError(variable, Boolean.valueOf(written));
         }
 
+        private static boolean checkVariable(PsiVariable variable,
+                                             PsiElement context) {
+            if(context == null){
+                return false;
+            }
+            final PsiType type = variable.getType();
+            if(type.getArrayDimensions() == 0){
+                return false;
+            }
+            if(VariableAccessUtils.variableIsAssigned(variable, context)){
+                return false;
+            }
+            if(VariableAccessUtils.variableIsAssignedFrom(variable, context)){
+                return false;
+            }
+            if(VariableAccessUtils.variableIsReturned(variable, context)){
+                return false;
+            }
+            return !VariableAccessUtils.variableIsUsedInArrayInitializer(
+                    variable, context);
+        }
+
         private static boolean arrayContentsAreWritten(PsiVariable variable,
                                                        PsiElement context){
             if(VariableAccessUtils.arrayContentsAreAssigned(variable, context)){
@@ -124,20 +137,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection{
             if(initializer != null && !isDefaultArrayInitializer(initializer)){
                 return true;
             }
-            if(VariableAccessUtils.variableIsAssigned(variable, context)){
-                return true;
-            }
-            if(VariableAccessUtils.variableIsAssignedFrom(variable, context)){
-                return true;
-            }
-            if(VariableAccessUtils.variableIsReturned(variable, context)){
-                return true;
-            }
-            if(variableIsWrittenAsMethodArgument(variable, context)) {
-                return true;
-            }
-            return VariableAccessUtils.variableIsUsedInArrayInitializer(variable,
-                    context);
+            return variableIsWrittenAsMethodArgument(variable, context);
         }
 
         private static boolean arrayContentsAreRead(PsiVariable variable,
@@ -145,24 +145,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection{
             if(VariableAccessUtils.arrayContentsAreAccessed(variable, context)){
                 return true;
             }
-            final PsiExpression initializer = variable.getInitializer();
-            if(initializer != null && !isDefaultArrayInitializer(initializer)){
-                return true;
-            }
-            if(VariableAccessUtils.variableIsAssigned(variable, context)){
-                return true;
-            }
-            if(VariableAccessUtils.variableIsAssignedFrom(variable, context)){
-                return true;
-            }
-            if(VariableAccessUtils.variableIsReturned(variable, context)){
-                return true;
-            }
-            if(variableIsReadAsMethodArgument(variable, context)) {
-                return true;
-            }
-            return VariableAccessUtils.variableIsUsedInArrayInitializer(variable,
-                    context);
+            return variableIsReadAsMethodArgument(variable, context);
         }
 
         private static boolean isDefaultArrayInitializer(
@@ -170,21 +153,16 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection{
             if (initializer instanceof PsiNewExpression) {
                 final PsiNewExpression newExpression =
                         (PsiNewExpression) initializer;
-                return newExpression.getArrayInitializer() == null;
-            } else if (initializer instanceof PsiMethodCallExpression) {
-                final PsiMethodCallExpression methodCallExpression =
-                        (PsiMethodCallExpression) initializer;
-                final PsiReferenceExpression methodExpression =
-                        methodCallExpression.getMethodExpression();
-                final String methodName = methodExpression.getReferenceName();
-                if (!HardcodedMethodConstants.CLONE.equals(methodName)) {
-                    return false;
-                }
-                final PsiExpressionList argumentList =
-                        methodCallExpression.getArgumentList();
-                final PsiExpression[] expressions =
-                        argumentList.getExpressions();
-                return expressions.length == 0;
+                final PsiArrayInitializerExpression arrayInitializer =
+                        newExpression.getArrayInitializer();
+                return arrayInitializer == null ||
+                        isDefaultArrayInitializer(arrayInitializer);
+            } else if (initializer instanceof PsiArrayInitializerExpression) {
+                final PsiArrayInitializerExpression arrayInitializerExpression =
+                        (PsiArrayInitializerExpression) initializer;
+                final PsiExpression[] initializers =
+                        arrayInitializerExpression.getInitializers();
+                return initializers.length == 0;
             }
             return false;
         }
