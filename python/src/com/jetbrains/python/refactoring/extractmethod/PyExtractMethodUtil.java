@@ -71,7 +71,7 @@ public class PyExtractMethodUtil {
       return;
     }
 
-    final Pair<String, AbstractVariableData[]> data = getNameAndVariableData(project, fragment, statement1);
+    final Pair<String, AbstractVariableData[]> data = getNameAndVariableData(project, fragment, statement1, isClassMethod, isStaticMethod);
     if (data.first == null || data.second == null) {
       return;
     }
@@ -191,18 +191,19 @@ public class PyExtractMethodUtil {
                                           RefactoringBundle.message("error.title"), "refactoring.extractMethod");
       return;
     }
-    final Pair<String, AbstractVariableData[]> data = getNameAndVariableData(project, fragment, expression);
+
+    PyFunction function = PsiTreeUtil.getParentOfType(expression, PyFunction.class);
+    final PyUtil.MethodFlags flags = function == null ? null : PyUtil.MethodFlags.of(function);
+    final boolean isClassMethod = flags != null && flags.isClassMethod();
+    final boolean isStaticMethod = flags != null && flags.isClassMethod();
+
+    final Pair<String, AbstractVariableData[]> data = getNameAndVariableData(project, fragment, expression, isClassMethod, isStaticMethod);
     if (data.first == null || data.second == null) {
       return;
     }
 
     final String methodName = data.first;
     final AbstractVariableData[] variableData = data.second;
-
-    PyFunction function = PsiTreeUtil.getParentOfType(expression, PyFunction.class);
-    final PyUtil.MethodFlags flags = function == null ? null : PyUtil.MethodFlags.of(function);
-    final boolean isClassMethod = flags != null && flags.isClassMethod();
-    final boolean isStaticMethod = flags != null && flags.isClassMethod();
 
     if (fragment.getOutputVariables().isEmpty()) {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
@@ -390,7 +391,9 @@ public class PyExtractMethodUtil {
 
   private static Pair<String, AbstractVariableData[]> getNameAndVariableData(final Project project,
                                                                              final CodeFragment fragment,
-                                                                             final PsiElement element) {
+                                                                             final PsiElement element,
+                                                                             final boolean isClassMethod,
+                                                                             final boolean isStaticMethod) {
       final ExtractMethodValidator validator = new PyExtractMethodValidator(element, project);
     if (ApplicationManager.getApplication().isUnitTestMode()){
       String name = System.getProperty(NAME);
@@ -423,7 +426,10 @@ public class PyExtractMethodUtil {
     final ExtractMethodDecorator decorator = new ExtractMethodDecorator() {
       public String createMethodPreview(final String methodName, final AbstractVariableData[] variableDatas) {
         final StringBuilder builder = new StringBuilder();
-        if (isMethod) {
+        if (isClassMethod) {
+          builder.append("cls");
+        }
+        else if (isMethod && !isStaticMethod) {
           builder.append("self");
         }
         for (AbstractVariableData variableData : variableDatas) {
