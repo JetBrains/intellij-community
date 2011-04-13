@@ -64,6 +64,12 @@ public class PyToJavaResolveTest extends ResolveTestCase {
     Assert.assertEquals("size", ((PsiMethod) target).getName());
   }
 
+  public void testFieldType() throws Exception {
+    PsiElement target = resolve();
+    Assert.assertTrue(target instanceof PsiMethod);
+    Assert.assertEquals("println", ((PsiMethod) target).getName());
+  }
+
   @Override
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/resolve/pyToJava/";

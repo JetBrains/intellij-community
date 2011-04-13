@@ -30,13 +30,21 @@ public class PyJavaTypeProvider extends PyTypeProviderBase {
     }
     if (referenceTarget instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) referenceTarget;
-      final PsiType type = method.getReturnType();
-      if (type instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)type;
-        final PsiClass psiClass = classType.resolve();
-        if (psiClass != null) {
-          return new PyJavaClassType(psiClass);
-        }
+      return asPyType(method.getReturnType());
+    }
+    if (referenceTarget instanceof PsiField) {
+      return asPyType(((PsiField)referenceTarget).getType());
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType asPyType(PsiType type) {
+    if (type instanceof PsiClassType) {
+      final PsiClassType classType = (PsiClassType)type;
+      final PsiClass psiClass = classType.resolve();
+      if (psiClass != null) {
+        return new PyJavaClassType(psiClass);
       }
     }
     return null;
