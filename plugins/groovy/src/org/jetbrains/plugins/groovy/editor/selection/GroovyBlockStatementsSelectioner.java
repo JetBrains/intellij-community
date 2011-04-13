@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.editor.selection;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 
 import java.util.List;
@@ -68,6 +68,6 @@ public class GroovyBlockStatementsSelectioner extends GroovyBasicSelectioner {
   }
 
   private static boolean isWhiteSpace(PsiElement element) {
-    return element != null && GroovyTokenTypes.WHITE_SPACES_SET.contains(element.getNode().getElementType());
+    return element != null && TokenSets.WHITE_SPACES_SET.contains(element.getNode().getElementType());
   }
 }

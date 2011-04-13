@@ -22,6 +22,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * @see AbstractDocumentationProvider
+ */
+@Deprecated
 public abstract class QuickDocumentationProvider implements DocumentationProvider {
   @Nullable
 

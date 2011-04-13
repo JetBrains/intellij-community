@@ -73,7 +73,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses
 public abstract class GroovyRefactoringUtil {
 
   public static final Collection<String> KEYWORDS = ContainerUtil.map(
-      GroovyTokenTypes.KEYWORDS.getTypes(), StringUtil.createToStringFunction(IElementType.class));
+      TokenSets.KEYWORDS.getTypes(), StringUtil.createToStringFunction(IElementType.class));
 
   private static final String[] finalModifiers = new String[]{PsiModifier.FINAL};
 
@@ -102,11 +102,11 @@ public abstract class GroovyRefactoringUtil {
                                                             final Class<T> klass) {
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, file.getLanguage());
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, file.getLanguage());
-    if (GroovyTokenTypes.WHITE_SPACES_SET.contains(element1.getNode().getElementType())) {
+    if (TokenSets.WHITE_SPACES_SET.contains(element1.getNode().getElementType())) {
       startOffset = element1.getTextRange().getEndOffset();
       element1 = file.getViewProvider().findElementAt(startOffset, file.getLanguage());
     }
-    if (GroovyTokenTypes.WHITE_SPACES_SET.contains(element2.getNode().getElementType())) {
+    if (TokenSets.WHITE_SPACES_SET.contains(element2.getNode().getElementType())) {
       endOffset = element2.getTextRange().getStartOffset();
       element2 = file.getViewProvider().findElementAt(endOffset - 1, file.getLanguage());
     }
@@ -387,18 +387,6 @@ public abstract class GroovyRefactoringUtil {
         addContinueStatements(psiElement, vector);
       }
     }
-  }
-
-  public static boolean hasTailReturnExpression(GrMethod method) {
-    if (method.getReturnType() == PsiType.VOID) {
-      return false;
-    }
-    GrOpenBlock body = method.getBlock();
-    if (body == null) return false;
-    GrStatement[] statements = body.getStatements();
-    if (statements.length == 0) return false;
-    GrStatement last = statements[statements.length - 1];
-    return last instanceof GrExpression && PsiType.VOID != ((GrExpression) last).getType();
   }
 
 

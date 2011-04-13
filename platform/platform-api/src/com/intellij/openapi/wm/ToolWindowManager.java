@@ -18,6 +18,7 @@ package com.intellij.openapi.wm;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,5 +130,8 @@ public abstract class ToolWindowManager {
 
   public abstract void notifyByBalloon(@NotNull final String toolWindowId, @NotNull final MessageType type, @NotNull final String htmlBody, @Nullable final Icon icon,
                                        @Nullable HyperlinkListener listener);
+
+  @Nullable
+  public abstract Balloon getToolWindowBalloon(String id);
 
 }

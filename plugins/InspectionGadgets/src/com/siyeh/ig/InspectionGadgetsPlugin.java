@@ -633,6 +633,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ForCanBeForeachInspection.class);
         m_inspectionClasses.add(IfCanBeSwitchInspection.class);
         m_inspectionClasses.add(IndexOfReplaceableByContainsInspection.class);
+        m_inspectionClasses.add(MethodCanBeVariableArityMethodInspection.class);
         m_inspectionClasses.add(RawUseOfParameterizedTypeInspection.class);
         m_inspectionClasses.add(StringBufferReplaceableByStringBuilderInspection.class);
         m_inspectionClasses.add(TryFinallyCanBeTryWithResourcesInspection.class);

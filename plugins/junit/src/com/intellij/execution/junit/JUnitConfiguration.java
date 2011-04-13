@@ -200,7 +200,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
   public String getPackage() {
     final Data data = getPersistentData();
-    return data.TEST_OBJECT != TEST_PACKAGE ? null : data.getPackageName();
+    return !Comparing.strEqual(data.TEST_OBJECT, TEST_PACKAGE) ? null : data.getPackageName();
   }
 
 

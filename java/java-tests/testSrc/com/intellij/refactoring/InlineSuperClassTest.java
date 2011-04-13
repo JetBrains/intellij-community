@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.inlineSuperClass.InlineSuperClassRefactoringProcessor;
+import com.intellij.refactoring.util.DocCommentPolicy;
 
 public class InlineSuperClassTest extends MultiFileTestCase {
   @Override
@@ -42,7 +43,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
           if (superClass == null) superClass = myJavaFacade.findClass("p1.Super", GlobalSearchScope.allScope(myProject));
           assertNotNull("Class Super not found", superClass);
 
-          new InlineSuperClassRefactoringProcessor(getProject(), superClass, aClass).run();
+          new InlineSuperClassRefactoringProcessor(getProject(), superClass, DocCommentPolicy.ASIS, aClass).run();
 
           //LocalFileSystem.getInstance().refresh(false);
           //FileDocumentManager.getInstance().saveAllDocuments();
@@ -177,7 +178,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
         PsiClass superClass = myJavaFacade.findClass("Super", GlobalSearchScope.allScope(myProject));
         if (superClass == null) superClass = myJavaFacade.findClass("p1.Super", GlobalSearchScope.allScope(myProject));
         assertNotNull("Class Super not found", superClass);
-        new InlineSuperClassRefactoringProcessor(getProject(), superClass,
+        new InlineSuperClassRefactoringProcessor(getProject(), superClass, DocCommentPolicy.ASIS,
                                                  myJavaFacade.findClass("Test", GlobalSearchScope.allScope(myProject)),
                                                  myJavaFacade.findClass("Test1", GlobalSearchScope.allScope(myProject))).run();
       }

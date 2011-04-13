@@ -67,6 +67,10 @@ public abstract class GroovyPsiElementImpl extends ASTWrapperPsiElement implemen
     }
   }
 
+  /**
+   * don't remove. it is used by inheritors
+   */
+  @SuppressWarnings({"UnusedDeclaration"})
   public void removeElements(PsiElement[] elements) throws IncorrectOperationException {
     removeElements(this, elements);
   }
@@ -84,6 +88,10 @@ public abstract class GroovyPsiElementImpl extends ASTWrapperPsiElement implemen
     }
   }
 
+  /**
+   * don't remove. it is used by inheritors
+   */
+  @SuppressWarnings({"UnusedDeclaration"})
   public void removeStatement() throws IncorrectOperationException {
     removeStatement(this);
   }

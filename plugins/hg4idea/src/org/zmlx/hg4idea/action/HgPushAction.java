@@ -12,51 +12,16 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.command.HgPushCommand;
-import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgCommandResultHandler;
-import org.zmlx.hg4idea.ui.HgPushDialog;
+import org.zmlx.hg4idea.HgPusher;
 
-import java.util.Collection;
+public class HgPushAction extends HgAction {
+  private static final Logger LOG = Logger.getInstance(HgPushAction.class);
 
-public class HgPushAction extends HgAbstractGlobalAction {
-
-  protected HgGlobalCommandBuilder getHgGlobalCommandBuilder(final Project project) {
-    return new HgGlobalCommandBuilder() {
-      public HgGlobalCommand build(Collection<VirtualFile> repos) {
-        HgPushDialog dialog = new HgPushDialog(project);
-        dialog.setRoots(repos);
-        dialog.show();
-        if (dialog.isOK()) {
-          return buildCommand(dialog, project);
-        }
-        return null;
-      }
-    };
-  }
-
-  private HgGlobalCommand buildCommand(final HgPushDialog dialog, final Project project) {
-    return new HgGlobalCommand() {
-      public VirtualFile getRepo() {
-        return dialog.getRepository();
-      }
-
-      public void execute() {
-        HgPushCommand command = new HgPushCommand(project, dialog.getRepository(), dialog.getTarget());
-        command.setRevision(dialog.getRevision());
-        command.setForce(dialog.isForce());
-        command.setBranch(dialog.getBranch());
-        command.execute(new HgCommandResultHandler() {
-          @Override
-          public void process(@Nullable HgCommandResult result) {
-            new HgCommandResultNotifier(project).process(result);
-          }
-        });
-      }
-    };
+  @Override
+  public void execute(final Project project) {
+    new HgPusher(project).showDialogAndPush();
   }
 
 }

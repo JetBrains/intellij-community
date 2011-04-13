@@ -328,5 +328,7 @@ public class MoveClassesOrPackagesUtil {
         }
       }
     }
+    LOG.assertTrue(targetDirectories.size() <= contentSourceRoots.length);
+    LOG.assertTrue(relativePathsToCreate.size() <= contentSourceRoots.length);
   }
 }

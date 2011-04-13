@@ -1364,6 +1364,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   }
 
+  @Override
+  public Balloon getToolWindowBalloon(String id) {
+    return myWindow2Balloon.get(id);
+  }
+
   public boolean isEditorComponentActive() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 

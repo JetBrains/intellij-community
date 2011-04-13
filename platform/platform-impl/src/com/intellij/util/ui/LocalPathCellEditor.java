@@ -17,8 +17,10 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -29,11 +31,13 @@ import java.awt.event.ActionListener;
 
 public class LocalPathCellEditor extends AbstractTableCellEditor {
   private final String myTitle;
+  private final Project myProject;
 
   private CellEditorComponentWithBrowseButton<JTextField> myComponent;
 
-  public LocalPathCellEditor(String title) {
+  public LocalPathCellEditor(String title, Project project) {
     myTitle = title;
+    myProject = project;
   }
 
   public Object getCellEditorValue() {
@@ -44,8 +48,10 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final FileChooserDescriptor d = getFileChooserDescriptor();
-        VirtualFile initialFile = LocalFileSystem.getInstance().findFileByPath((String)getCellEditorValue());
-        VirtualFile[] files = FileChooser.chooseFiles(table, d, initialFile);
+        String initial = (String)getCellEditorValue();
+        VirtualFile initialFile = StringUtil.isNotEmpty(initial) ? LocalFileSystem.getInstance().findFileByPath(initial) : null;
+        VirtualFile[] files =
+          myProject != null ? FileChooser.chooseFiles(myProject, d, initialFile) : FileChooser.chooseFiles(table, d, initialFile);
         if (files.length == 1 && files[0] != null) {
           String path = files[0].getPresentableUrl();
           if (SystemInfo.isWindows && path.length() == 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':') {

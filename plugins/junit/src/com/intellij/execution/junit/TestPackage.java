@@ -21,41 +21,57 @@ import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
+import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
+import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 public class TestPackage extends TestObject {
   private BackgroundableProcessIndicator mySearchForTestsIndicator;
   private ServerSocket myServerSocket;
+  private boolean myFoundTests = true;
 
   public TestPackage(final Project project,
                      final JUnitConfiguration configuration,
@@ -249,6 +265,53 @@ public class TestPackage extends TestObject {
     return ApplicationManager.getApplication().isUnitTestMode();
   }
 
+  @Override
+  protected void notifyByBalloon(JUnitRunningModel model, final JUnitConsoleProperties consoleProperties) {
+    if (myFoundTests) {
+      super.notifyByBalloon(model, consoleProperties);
+    }
+    else {
+      final String packageName = myConfiguration.getPackage();
+      if (packageName == null) return;
+      final Project project = myConfiguration.getProject();
+      final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
+      if (aPackage == null) return;
+      final Module module = myConfiguration.getConfigurationModule().getModule();
+      if (module == null) return;
+      final Set<Module> modulesWithPackage = new HashSet<Module>();
+      final PsiDirectory[] directories = aPackage.getDirectories();
+      for (PsiDirectory directory : directories) {
+        final Module currentModule = ModuleUtil.findModuleForFile(directory.getVirtualFile(), project);
+        if (module != currentModule) {
+          modulesWithPackage.add(currentModule);
+        }
+      }
+      if (!modulesWithPackage.isEmpty()) {
+        final String testRunDebugId = consoleProperties.isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
+        final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+        final Function<Module, String> moduleNameRef = new Function<Module, String>() {
+          @Override
+          public String fun(Module module) {
+            final String moduleName = module.getName();
+            return "<a href=\"" + moduleName + "\">" + moduleName + "</a>";
+          }
+        };
+        String message = "Tests were not found in module \"" + module.getName() + "\".\n" +
+                         "Use ";
+        if (modulesWithPackage.size() == 1) {
+          message += "module \"" + moduleNameRef.fun(modulesWithPackage.iterator().next()) + "\" ";
+        }
+        else {
+          message += "one of\n" + StringUtil.join(modulesWithPackage, moduleNameRef, "\n") + "\n";
+        }
+        message += "instead";
+        toolWindowManager.notifyByBalloon(testRunDebugId, MessageType.WARNING, message, null,
+                                          new ResetConfigurationModuleAdapter(project, consoleProperties, toolWindowManager,
+                                                                              testRunDebugId));
+      }
+    }
+  }
+
   public interface FindCallback {
     /**
      * Invoked in dispatch thread
@@ -280,6 +343,7 @@ public class TestPackage extends TestObject {
         LOG.info(e);
       }
       myJunit4[0] = ConfigurationUtil.findAllTestClasses(myClassFilter, myClasses);
+      myFoundTests = !myClasses.isEmpty();
     }
 
     @Override
@@ -320,6 +384,46 @@ public class TestPackage extends TestObject {
         }
         catch (Throwable e) {
           LOG.info(e);
+        }
+      }
+    }
+  }
+
+  private class ResetConfigurationModuleAdapter extends HyperlinkAdapter {
+    private final Project myProject;
+    private final JUnitConsoleProperties myConsoleProperties;
+    private final ToolWindowManager myToolWindowManager;
+    private final String myTestRunDebugId;
+
+    public ResetConfigurationModuleAdapter(final Project project,
+                                           final JUnitConsoleProperties consoleProperties,
+                                           final ToolWindowManager toolWindowManager,
+                                           final String testRunDebugId) {
+      myProject = project;
+      myConsoleProperties = consoleProperties;
+      myToolWindowManager = toolWindowManager;
+      myTestRunDebugId = testRunDebugId;
+    }
+
+    @Override
+    protected void hyperlinkActivated(HyperlinkEvent e) {
+      final Module moduleByName = ModuleManager.getInstance(myProject).findModuleByName(e.getDescription());
+      if (moduleByName != null) {
+        myConfiguration.getConfigurationModule().setModule(moduleByName);
+        try {
+          final Executor executor = myConsoleProperties.isDebug() ? DefaultDebugExecutor.getDebugExecutorInstance()
+                                    : DefaultRunExecutor.getRunExecutorInstance();
+          final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), myConfiguration);
+          assert runner != null;
+          runner.execute(executor,
+                         new ExecutionEnvironment(myConfiguration, myProject, getRunnerSettings(), getConfigurationSettings(), null));
+          final Balloon balloon = myToolWindowManager.getToolWindowBalloon(myTestRunDebugId);
+          if (balloon != null) {
+            balloon.hide();
+          }
+        }
+        catch (ExecutionException e1) {
+          LOG.error(e1);
         }
       }
     }

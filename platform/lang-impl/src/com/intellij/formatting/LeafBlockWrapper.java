@@ -127,11 +127,6 @@ class LeafBlockWrapper extends AbstractBlockWrapper {
   }
 
   @Override
-  protected boolean indentAlreadyUsedBefore(final AbstractBlockWrapper child) {
-    return false;
-  }
-
-  @Override
   protected IndentData getNumberOfSymbolsBeforeBlock() {
     int spaces = getWhiteSpace().getSpaces();
     int indentSpaces = getWhiteSpace().getIndentSpaces();

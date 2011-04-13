@@ -21,7 +21,7 @@ import com.intellij.psi.impl.cache.impl.todo.LexerBasedTodoIndexer;
 import com.intellij.psi.impl.cache.impl.todo.TodoOccurrenceConsumer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyFilterLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
 /**
  * @author Maxim.Medvedev
@@ -30,6 +30,6 @@ public class GroovyTodoIndexer extends LexerBasedTodoIndexer {
   @Override
   protected Lexer createLexer(TodoOccurrenceConsumer consumer) {
     final GroovyFilterLexer groovyFilterLexer = new GroovyFilterLexer(new GroovyLexer(), consumer);
-    return new FilterLexer(groovyFilterLexer, new FilterLexer.SetFilter(GroovyTokenTypes.WHITE_SPACES_OR_COMMENTS));
+    return new FilterLexer(groovyFilterLexer, new FilterLexer.SetFilter(TokenSets.WHITE_SPACES_OR_COMMENTS));
   }
 }

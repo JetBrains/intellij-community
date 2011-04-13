@@ -19,6 +19,7 @@ package com.intellij.execution.junit2.ui.properties;
 import com.intellij.execution.Executor;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
+import com.intellij.execution.testframework.SourceScope;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.config.Storage;
@@ -43,6 +44,7 @@ public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties {
 
   @Override
   public GlobalSearchScope getScope() {
-    return myConfiguration.getPersistentData().getScope().getSourceScope(myConfiguration).getLibrariesScope();
+    final SourceScope sourceScope = myConfiguration.getPersistentData().getScope().getSourceScope(myConfiguration);
+    return sourceScope != null ? sourceScope.getLibrariesScope() : GlobalSearchScope.allScope(getProject());
   }
 }

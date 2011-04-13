@@ -51,12 +51,14 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   public static final Logger LOG = Logger.getInstance("#" + InlineSuperClassRefactoringProcessor.class.getName());
 
   private final PsiClass mySuperClass;
+  private final int myPolicy;
   private final PsiClass[] myTargetClasses;
   private final MemberInfo[] myMemberInfos;
 
-  public InlineSuperClassRefactoringProcessor(Project project, PsiClass superClass, final PsiClass... targetClasses) {
+  public InlineSuperClassRefactoringProcessor(Project project, PsiClass superClass, int policy, final PsiClass... targetClasses) {
     super(project);
     mySuperClass = superClass;
+    myPolicy = policy;
     myTargetClasses = targetClasses;
     MemberInfoStorage memberInfoStorage = new MemberInfoStorage(mySuperClass, new MemberInfo.Filter<PsiMember>() {
       public boolean includeMember(PsiMember element) {
@@ -205,7 +207,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
   }
 
   protected void performRefactoring(final UsageInfo[] usages) {
-    new PushDownProcessor(mySuperClass.getProject(), myMemberInfos, mySuperClass, new DocCommentPolicy(DocCommentPolicy.ASIS)){
+    new PushDownProcessor(mySuperClass.getProject(), myMemberInfos, mySuperClass, new DocCommentPolicy(myPolicy)){
       //push down conflicts are already collected
       @Override
       protected boolean showConflicts(MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {

@@ -88,7 +88,7 @@ public class DiffApplication implements ApplicationStarterEx {
   }
 
   private static VirtualFile findFile(final String path1) throws FileNotFoundException {
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(new File(path1));
+    final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path1));
     if (vFile == null) {
       throw new FileNotFoundException(DiffBundle.message("cannot.file.file.error.message", path1));
     }

@@ -38,6 +38,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -48,7 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -74,6 +75,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import java.util.List;
 import java.util.Set;
 
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.*;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.*;
 
 /**
@@ -104,7 +107,7 @@ public class GroovyCompletionUtil {
     while (elem != null &&
            (elem instanceof PsiWhiteSpace ||
             elem instanceof PsiComment ||
-            GroovyTokenTypes.mNLS.equals(elem.getNode().getElementType()))) {
+            mNLS.equals(elem.getNode().getElementType()))) {
       elem = elem.getPrevSibling();
     }
     return elem;
@@ -120,7 +123,7 @@ public class GroovyCompletionUtil {
   public static boolean isNewStatement(PsiElement element, boolean canBeAfterBrace) {
     PsiElement previousLeaf = getLeafByOffset(element.getTextRange().getStartOffset() - 1, element);
     previousLeaf = PsiImplUtil.realPrevious(previousLeaf);
-    if (previousLeaf != null && canBeAfterBrace && GroovyElementTypes.mLCURLY.equals(previousLeaf.getNode().getElementType())) {
+    if (previousLeaf != null && canBeAfterBrace && mLCURLY.equals(previousLeaf.getNode().getElementType())) {
       return true;
     }
     return (previousLeaf == null || SEPARATORS.contains(previousLeaf.getNode().getElementType()));
@@ -132,7 +135,7 @@ public class GroovyCompletionUtil {
       return null;
     }
     PsiElement candidate = element.getContainingFile();
-    while (candidate.getNode().getChildren(null).length > 0) {
+    while (candidate.getNode().getFirstChildNode() != null) {
       candidate = candidate.findElementAt(offset);
     }
     return candidate;
@@ -165,8 +168,8 @@ public class GroovyCompletionUtil {
     return variableDeclaration.getVariables()[0] == parent;
   }
 
-  private static final TokenSet SEPARATORS = TokenSet.create(GroovyElementTypes.mNLS,
-                                                             GroovyElementTypes.mSEMI);
+  private static final TokenSet SEPARATORS = TokenSet.create(mNLS,
+                                                             mSEMI);
 
   public static boolean asSimpleVariable(PsiElement context) {
     return isInTypeDefinitionBody(context) &&
@@ -314,8 +317,8 @@ public class GroovyCompletionUtil {
 
   private static LookupElementBuilder setTailText(PsiElement element, LookupElementBuilder builder, PsiSubstitutor substitutor) {
     if (element instanceof PsiMethod) {
-      builder = builder.setTailText(PsiFormatUtil.formatMethod((PsiMethod)element, substitutor, PsiFormatUtil.SHOW_PARAMETERS,
-                                                               PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE));
+      builder = builder.setTailText(PsiFormatUtil.formatMethod((PsiMethod)element, substitutor, PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                               PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE));
     }
     else if (element instanceof PsiClass) {
       String tailText = getPackageText((PsiClass)element);
@@ -459,11 +462,11 @@ public class GroovyCompletionUtil {
     final HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(oldTail);
     while (!iterator.atEnd()) {
       final IElementType tokenType = iterator.getTokenType();
-      if (GroovyTokenTypes.WHITE_SPACES_OR_COMMENTS.contains(tokenType)) {
+      if (WHITE_SPACES_OR_COMMENTS.contains(tokenType)) {
         iterator.advance();
         continue;
       }
-      if (tokenType == GroovyTokenTypes.mRPAREN) {
+      if (tokenType == mRPAREN) {
         offset = iterator.getEnd();
       }
       break;
