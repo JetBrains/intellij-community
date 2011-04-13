@@ -452,6 +452,7 @@
     <fileTypeFactory implementation="com.jetbrains.rest.RestFileTypeFactory"/>
     <lang.syntaxHighlighterFactory key="ReST"
                                    implementationClass="com.jetbrains.rest.RestHighlighterFactory"/>
+    <lang.parserDefinition language="ReST" implementationClass="com.jetbrains.rest.RestParserDefinition"/>
     <colorSettingsPage implementation="com.jetbrains.rest.RestColorsPage"/>
 
     <projectService serviceInterface="com.jetbrains.rest.ReSTService"
