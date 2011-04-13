@@ -240,8 +240,12 @@ public class PyQualifiedReferenceImpl extends PyReferenceImpl {
     if (element instanceof PyFunction && Comparing.equal(referencedName, ((PyFunction)element).getName()) &&
         ((PyFunction)element).getContainingClass() != null && !PyNames.INIT.equals(referencedName)) {
       final PyExpression qualifier = myElement.getQualifier();
-      if (qualifier != null && qualifier.getType(TypeEvalContext.fast()) == null) {
-        return true;
+      if (qualifier != null) {
+        final TypeEvalContext context = TypeEvalContext.fast();
+        PyType qualifierType = qualifier.getType(context);
+        if (qualifierType == null || qualifierType instanceof PyTypeReference) {
+          return true;
+        }
       }
     }
     return false;
