@@ -72,7 +72,9 @@ public class GitUIUtil {
     } else {
       errorMessages = new HashSet<String>(errors.size());
       for (VcsException error : errors) {
-        errorMessages.addAll(Arrays.asList(error.getMessages()));
+        for (String message : error.getMessages()) {
+          errorMessages.add(message.replace("\n", "<br/>"));
+        }
       }
     }
     notifyMessages(project, title, description, type, important, errorMessages);
