@@ -27,6 +27,8 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -48,8 +50,8 @@ public class JavaCharFilter extends CharFilter {
     LookupElement item = lookup.getCurrentItem();
     if (item == null) return null;
 
+    final Object o = item.getObject();
     if (c == '!') {
-      final Object o = item.getObject();
       if (o instanceof PsiVariable) {
         if (PsiType.BOOLEAN.isAssignableFrom(((PsiVariable)o).getType())) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
@@ -62,10 +64,25 @@ public class JavaCharFilter extends CharFilter {
     }
     if (c == '.' && isWithinLiteral(lookup)) return Result.ADD_TO_PREFIX;
     if (c == '[') return CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP;
-    if (c == '<' && item.getObject() instanceof PsiClass) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+    if (c == '<' && o instanceof PsiClass) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+    if (c == '(' && o instanceof PsiClass) {
+      if (PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.NEW).accepts(lookup.getPsiElement())) {
+        return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+      }
+      return Result.HIDE_LOOKUP;
+    }
+    if (c == ',' && o instanceof PsiVariable) {
+      int lookupStart = ((LookupImpl)lookup).getLookupStart();
+      String name = ((PsiVariable)o).getName();
+      if (lookupStart >= 0 &&
+          name != null &&
+          name.equals(item.getPrefixMatcher().getPrefix() + ((LookupImpl)lookup).getAdditionalPrefix())) {
+        return Result.HIDE_LOOKUP;
+      }
+    }
 
     if (c == '#' && PsiTreeUtil.getParentOfType(lookup.getPsiElement(), PsiDocComment.class) != null) {
-      if (item.getObject() instanceof PsiClass) {
+      if (o instanceof PsiClass) {
         return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
       }
     }
