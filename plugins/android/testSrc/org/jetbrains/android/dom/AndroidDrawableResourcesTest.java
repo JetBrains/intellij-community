@@ -19,11 +19,7 @@ package org.jetbrains.android.dom;
 import com.android.sdklib.SdkConstants;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: Aug 21, 2009
- * Time: 9:45:59 PM
- * To change this template use File | Settings | File Templates.
+ * @author Eugene.Kudelevsky
  */
 public class AndroidDrawableResourcesTest extends AndroidDomTest {
   public AndroidDrawableResourcesTest() {
@@ -43,9 +39,5 @@ public class AndroidDrawableResourcesTest extends AndroidDomTest {
 
   public void testHighlighting() throws Throwable {
     doTestHighlighting("1.xml");
-  }
-
-  public void testAttributeValueCompletion() throws Throwable {
-    doTestCompletionVariants("2.xml", "@drawable/picture1", "@drawable/picture2", "@drawable/picture3");
   }
 }

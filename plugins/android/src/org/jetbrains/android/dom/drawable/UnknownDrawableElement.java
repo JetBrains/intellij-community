@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.android.dom.drawable;
 
+import com.intellij.util.xml.DefinesXml;
 import org.jetbrains.android.dom.AndroidDomElement;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: Aug 22, 2009
- * Time: 1:36:56 PM
- * To change this template use File | Settings | File Templates.
+ * @author Eugene.Kudelevksy
  */
-public interface DrawableDomElement extends AndroidDomElement{
+@DefinesXml
+public interface UnknownDrawableElement extends AndroidDomElement {
 }

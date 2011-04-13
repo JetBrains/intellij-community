@@ -61,10 +61,18 @@ abstract class AndroidDomTest extends AndroidTestCase {
     return list;
   }
 
+  protected void doTestHighlighting() throws Throwable {
+    doTestHighlighting(getTestName(true) + ".xml");
+  }
+
   protected void doTestHighlighting(String file) throws Throwable {
     VirtualFile virtualFile = copyFileToProject(file);
     myFixture.configureFromExistingVirtualFile(virtualFile);
     myFixture.checkHighlighting(false, false, false);
+  }
+
+  protected void doTestCompletion() throws Throwable {
+    toTestCompletion(getTestName(true) + ".xml", getTestName(true) + "_after.xml");
   }
 
   protected void toTestCompletion(String fileBefore, String fileAfter) throws Throwable {

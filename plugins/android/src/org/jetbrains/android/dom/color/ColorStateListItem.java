@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.android.dom.color;
 
-package org.jetbrains.android.dom.drawable;
-
-import org.jetbrains.android.dom.AndroidDomElement;
+import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.Required;
+import org.jetbrains.android.dom.AndroidAttributeValue;
+import org.jetbrains.android.dom.ResourceType;
+import org.jetbrains.android.dom.converters.ResourceReferenceConverter;
+import org.jetbrains.android.dom.resources.ResourceValue;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: Aug 22, 2009
- * Time: 1:36:56 PM
- * To change this template use File | Settings | File Templates.
+ * @author Eugene.Kudelevsky
  */
-public interface DrawableDomElement extends AndroidDomElement{
+public interface ColorStateListItem extends ColorDomElement {
+  @Convert(ResourceReferenceConverter.class)
+  @ResourceType("color")
+  @Required
+  AndroidAttributeValue<ResourceValue> getColor();
 }

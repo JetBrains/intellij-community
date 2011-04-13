@@ -36,8 +36,11 @@ import org.jetbrains.android.dom.attrs.AttributeDefinition;
 import org.jetbrains.android.dom.attrs.AttributeDefinitions;
 import org.jetbrains.android.dom.attrs.AttributeFormat;
 import org.jetbrains.android.dom.attrs.StyleableDefinition;
+import org.jetbrains.android.dom.color.ColorDomElement;
+import org.jetbrains.android.dom.color.ColorStateListItem;
 import org.jetbrains.android.dom.converters.CompositeConverter;
 import org.jetbrains.android.dom.converters.ResourceReferenceConverter;
+import org.jetbrains.android.dom.drawable.*;
 import org.jetbrains.android.dom.layout.Fragment;
 import org.jetbrains.android.dom.layout.Include;
 import org.jetbrains.android.dom.layout.LayoutElement;
@@ -185,6 +188,15 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     AttributeDefinitions attrDefs = manager.getAttributeDefinitions();
     if (attrDefs == null) return;
     StyleableDefinition[] styleables = getStyleables(attrDefs, styleableNames);
+    registerAttributes(facet, element, styleables, resPackage, registrar, processor, skipNames);
+  }
+
+  private static void registerAttributes(AndroidFacet facet,
+                                         DomElement element,
+                                         StyleableDefinition[] styleables, String resPackage,
+                                         DomExtensionsRegistrar registrar,
+                                         MyAttributeProcessor processor,
+                                         String... skipNames) {
     String namespace = getNamespaceKeyByResourcePackage(facet, resPackage);
     registerStyleableAttributes(element, styleables, namespace, registrar, processor, skipNames);
   }
@@ -504,8 +516,14 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     else if (element instanceof XmlResourceElement) {
       registerExtensionsForXmlResources(facet, tagName, (XmlResourceElement)element, registrar, registeredSubtags);
     }
+    else if (element instanceof DrawableDomElement || element instanceof ColorDomElement) {
+      registerExtensionsForDrawable(facet, tagName, element, registrar);
+    }
     Collections.addAll(registeredSubtags, AndroidDomUtil.getStaticallyDefinedSubtags(element));
-    if (!(element instanceof LayoutElement)) {
+
+    if (!(element instanceof LayoutElement) &&
+        !(element instanceof ColorDomElement) &&
+        (!(element instanceof DrawableDomElement) || element instanceof UnknownDrawableElement)) {
       Processor<String> existingSubtagsFilter = element instanceof XmlResourceElement ?
                                                 new Processor<String>() {
                                                   public boolean process(String s) {
@@ -514,6 +532,31 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
                                                 } : null;
       registerExistingSubtags(tag, registrar, registeredSubtags, existingSubtagsFilter);
     }
+  }
+
+  private static void registerExtensionsForDrawable(AndroidFacet facet,
+                                                    String tagName,
+                                                    AndroidDomElement element,
+                                                    DomExtensionsRegistrar registrar) {
+    final String specialStyleableName = DrawableDomFileDescription.SPECIAL_STYLEABLE_NAMES.get(tagName);
+    if (specialStyleableName != null) {
+      registerAttributes(facet, element, specialStyleableName, SYSTEM_RESOURCE_PACKAGE, registrar);
+    }
+
+    if (element instanceof DrawableStateListItem || element instanceof ColorStateListItem) {
+      registerAttributes(facet, element, "DrawableStates", SYSTEM_RESOURCE_PACKAGE, registrar);
+
+      final AttributeDefinitions attrDefs = getAttrDefs(facet);
+      if (attrDefs != null) {
+        registerAttributes(facet, element, attrDefs.getStateStyleables(), SYSTEM_RESOURCE_PACKAGE, registrar, null);
+      }
+    }
+  }
+
+  @Nullable
+  private static AttributeDefinitions getAttrDefs(AndroidFacet facet) {
+    final SystemResourceManager manager = facet.getSystemResourceManager();
+    return manager != null ? manager.getAttributeDefinitions() : null;
   }
 
   private static void registerSubtags(@NotNull String name, Type type, DomExtensionsRegistrar registrar, Set<String> registeredTags) {

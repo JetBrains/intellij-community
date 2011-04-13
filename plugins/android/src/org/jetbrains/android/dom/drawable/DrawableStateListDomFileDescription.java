@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,46 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.android.dom.drawable;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.dom.AndroidResourceDomFileDescription;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-
 /**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: Aug 21, 2009
- * Time: 9:42:38 PM
- * To change this template use File | Settings | File Templates.
+ * @author Eugene.Kudelevsky
  */
-public class DrawableDomFileDescription extends AndroidResourceDomFileDescription<UnknownDrawableElement> {
-  public static final Map<String, String> SPECIAL_STYLEABLE_NAMES = new HashMap<String, String>();
+public class DrawableStateListDomFileDescription extends AndroidResourceDomFileDescription<DrawableSelector> {
 
-  public DrawableDomFileDescription() {
-    super(UnknownDrawableElement.class, "shape", "drawable");
+  @NonNls private static final String SELECTOR_TAG_NAME = "selector";
+
+  public DrawableStateListDomFileDescription() {
+    super(DrawableSelector.class, SELECTOR_TAG_NAME, "drawable");
   }
 
   @Override
   public boolean acceptsOtherRootTagNames() {
     return true;
-  }
-
-  public static boolean isDrawableResourceFile(final XmlFile file) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      public Boolean compute() {
-        return new DrawableDomFileDescription().isMyFile(file, null);
-      }
-    });
   }
 
   @Override
@@ -66,7 +50,6 @@ public class DrawableDomFileDescription extends AndroidResourceDomFileDescriptio
       return false;
     }
 
-    final String rootTagName = rootTag.getName();
-    return !"selector".equals(rootTagName);
+    return SELECTOR_TAG_NAME.equals(rootTag.getName());
   }
 }
