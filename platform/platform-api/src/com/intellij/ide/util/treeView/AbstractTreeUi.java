@@ -482,10 +482,13 @@ public class AbstractTreeUi {
   @Nullable
   private static NodeDescriptor getDescriptorFrom(Object node) {
     if (node instanceof DefaultMutableTreeNode) {
-      return (NodeDescriptor)((DefaultMutableTreeNode)node).getUserObject();
-    } else {
-      return null;
+      Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+      if (userObject instanceof NodeDescriptor) {
+        return (NodeDescriptor)userObject;
+      }
     }
+
+    return null;
   }
 
   @Nullable
