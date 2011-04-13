@@ -99,7 +99,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
             return new PyClassType(((PyFunction)target).getContainingClass(), false); // resolved to __init__, back to class
           }
           // TODO: look at well-known functions and their return types
-          final PyType providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context);
+          final PyType providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, this);
           if (providedType != null) {
             return providedType;
           }

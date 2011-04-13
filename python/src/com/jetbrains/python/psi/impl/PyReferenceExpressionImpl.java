@@ -279,7 +279,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   public static PyType getTypeFromTarget(@NotNull final PsiElement target,
                                          final TypeEvalContext context,
                                          @Nullable PyReferenceExpression anchor) {
-    final PyType pyType = getReferenceTypeFromProviders(target, context);
+    final PyType pyType = getReferenceTypeFromProviders(target, context, anchor);
     if (pyType != null) {
       return pyType;
     }
@@ -350,9 +350,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   @Nullable
-  public static PyType getReferenceTypeFromProviders(@NotNull final PsiElement target, TypeEvalContext context) {
+  public static PyType getReferenceTypeFromProviders(@NotNull final PsiElement target,
+                                                     TypeEvalContext context,
+                                                     @Nullable PsiElement anchor) {
     for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-      final PyType result = provider.getReferenceType(target, context);
+      final PyType result = provider.getReferenceType(target, context, anchor);
       if (result != null) return result;
     }
 
