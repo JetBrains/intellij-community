@@ -19,6 +19,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,6 +37,9 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
+
+  private static final Logger LOG = Logger.getInstance(HgRemoteChangesetsCommand.class);
+
   public HgRemoteChangesetsCommand(Project project, String command) {
     super(project, command);
   }
@@ -50,9 +54,17 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
     return true;
   }
 
+  protected String getRepositoryUrl(VirtualFile repo) {
+    return new HgShowConfigCommand(project).getDefaultPath(repo);
+  }
+
   @Override
   protected HgCommandResult executeCommand(VirtualFile repo, List<String> args) {
-    String repositoryURL = new HgShowConfigCommand(project).getDefaultPath(repo);
+    String repositoryURL = getRepositoryUrl(repo);
+    if (repositoryURL == null) {
+      LOG.info("executeCommand no default path configured");
+      return null;
+    }
     HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(repo, command, args);
     if (result == HgCommandResult.CANCELLED) {
       final HgVcs vcs = HgVcs.getInstance(project);
