@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.DocumentEvent;
+import java.net.URL;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -80,8 +81,14 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       ContainerUtil.addAll(myStopWords, stopWords);
 
       //index
+      final URL indexResource = ResourceUtil.getResource(SearchableOptionsRegistrar.class, "/search/", "searchableOptions.xml");
+      if (indexResource == null) {
+        LOG.info("No /search/searchableOptions.xml found, settings search won't work!");
+        return;
+      }
+
       Document document =
-        JDOMUtil.loadDocument(ResourceUtil.getResource(SearchableOptionsRegistrar.class, "/search/", "searchableOptions.xml"));
+        JDOMUtil.loadDocument(indexResource);
       Element root = document.getRootElement();
       List configurables = root.getChildren("configurable");
       for (final Object o : configurables) {
