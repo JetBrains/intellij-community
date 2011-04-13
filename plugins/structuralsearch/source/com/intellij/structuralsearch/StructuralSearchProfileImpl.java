@@ -448,6 +448,10 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
         return false;
       }
 
+      if (descriptor1.getCodeBlocks().size() != descriptor2.getCodeBlocks().size()) {
+        return false;
+      }
+
       if (descriptor1.getConstants().size() != descriptor2.getConstants().size()) {
         return false;
       }
@@ -470,12 +474,20 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
         }
       }
 
-
       for (int i = 0, n = descriptor1.getMultiChildDescriptors().size(); i < n; i++) {
         MultiChildDescriptor childDescriptor1 = descriptor1.getMultiChildDescriptors().get(i);
         MultiChildDescriptor childDescriptor2 = descriptor2.getMultiChildDescriptors().get(i);
 
         if (!match(childDescriptor1, childDescriptor2, g)) {
+          return false;
+        }
+      }
+
+      for (int i = 0, n = descriptor1.getCodeBlocks().size(); i < n; i++) {
+        final PsiElement[] codeBlock1 = descriptor1.getCodeBlocks().get(i);
+        final PsiElement[] codeBlock2 = descriptor2.getCodeBlocks().get(i);
+
+        if (!g.matchSequentially(codeBlock1, codeBlock2)) {
           return false;
         }
       }

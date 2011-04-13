@@ -146,8 +146,9 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
 
     final List<SingleChildDescriptor> singleChildren = equivalenceDescriptor.getSingleChildDescriptors();
     final List<MultiChildDescriptor> multiChildren = equivalenceDescriptor.getMultiChildDescriptors();
+    final List<PsiElement[]> codeBlocks = equivalenceDescriptor.getCodeBlocks();
 
-    if (singleChildren.size() + multiChildren.size() != 1) {
+    if (singleChildren.size() + multiChildren.size() + codeBlocks.size() != 1) {
       return null;
     }
 
@@ -167,12 +168,18 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
         }
       }
     }
-    else {
+    else if (multiChildren.size() > 0) {
       final MultiChildDescriptor descriptor = multiChildren.get(0);
       final PsiElement[] children = descriptor.getElements();
 
       if (children != null && children.length == 1 && descriptor.getType() != MultiChildDescriptor.MyType.OPTIONALLY) {
         return children[0];
+      }
+    }
+    else if (codeBlocks.size() > 0) {
+      final PsiElement[] codeBlock = codeBlocks.get(0);
+      if (codeBlock != null && codeBlock.length == 1) {
+        return codeBlock[0];
       }
     }
     return null;
