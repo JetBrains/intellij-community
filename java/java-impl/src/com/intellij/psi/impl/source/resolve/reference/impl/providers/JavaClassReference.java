@@ -52,6 +52,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -194,13 +195,17 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     }
     assert newName != null;
 
-    TextRange range =
-      new TextRange(myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset(), getRangeInElement().getEndOffset());
+    int end = getRangeInElement().getEndOffset();
+    String text = getElement().getText();
+    int lt = text.indexOf('<', getRangeInElement().getStartOffset());
+    if (lt >= 0) {
+      end = CharArrayUtil.shiftBackward(text, lt - 1, "\n\t ") + 1;
+    }
+    TextRange range = new TextRange(myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset(), end);
     final ElementManipulator<PsiElement> manipulator = getManipulator(getElement());
     if (manipulator != null) {
       final PsiElement finalElement = manipulator.handleContentChange(getElement(), range, newName);
-      range = new TextRange(range.getStartOffset(), range.getStartOffset() + newName.length());
-      myJavaClassReferenceSet.reparse(finalElement, range);
+      myJavaClassReferenceSet.reparse(finalElement, TextRange.from(range.getStartOffset(), newName.length()));
       return finalElement;
     }
     return element;
