@@ -65,6 +65,11 @@ public class RangeMarkerWindow implements RangeMarkerEx {
     myHostMarker.trackInvalidation(track);
   }
 
+  @Override
+  public boolean isTrackInvalidation() {
+    return myHostMarker.isTrackInvalidation();
+  }
+
   ////////////////////////////delegates
   public void setGreedyToLeft(final boolean greedy) {
     myHostMarker.setGreedyToLeft(greedy);

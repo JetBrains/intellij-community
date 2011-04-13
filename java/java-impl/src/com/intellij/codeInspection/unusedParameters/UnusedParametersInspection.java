@@ -122,7 +122,9 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
                   final boolean[] found = {false};
                   for (int i = 0; i < derived.length && !found[0]; i++) {
                     if (!scope.contains(derived[i])) {
-                      PsiParameter psiParameter = derived[i].getParameterList().getParameters()[idx];
+                      final PsiParameter[] parameters = derived[i].getParameterList().getParameters();
+                      if (parameters.length >= idx) continue;
+                      PsiParameter psiParameter = parameters[idx];
                       ReferencesSearch.search(psiParameter, helper.getUseScope(psiParameter), false).forEach(new PsiReferenceProcessorAdapter(
                         new PsiReferenceProcessor() {
                                           public boolean execute(PsiReference element) {

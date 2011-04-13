@@ -27,6 +27,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
@@ -81,7 +82,11 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
         }
 
         if (parentValue instanceof Project || parentValue instanceof Module) {
-          data.addText(" (" + directoryFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          if (parentValue instanceof Project) {
+            data.addText(" (" + ProjectUtil.getLocationRelativeToUserHome(directoryFile.getPresentableUrl()) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          } else {
+            data.addText(" (" + directoryFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
         }
         else if (ProjectRootsUtil.isSourceOrTestRoot(directoryFile, project)) {
           if (ProjectRootsUtil.isInTestSource(directoryFile, project)) {

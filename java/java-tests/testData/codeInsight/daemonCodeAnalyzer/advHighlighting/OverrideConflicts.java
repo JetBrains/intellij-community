@@ -86,3 +86,7 @@ interface Coll  {
 }
 class AbstrColl implements Coll {}
 
+interface InterfaceOverridesObject {
+    Object clone() throws java.io.IOException;
+}
+

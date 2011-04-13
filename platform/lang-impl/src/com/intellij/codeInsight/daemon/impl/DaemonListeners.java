@@ -288,7 +288,7 @@ class DaemonListeners implements Disposable {
     LOG.assertTrue(((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, Boolean.TRUE, null), "Daemon listeners already disposed for the project "+myProject);
   }
 
-  boolean canChangeFileSilently(PsiFileSystemItem file) {
+  boolean canChangeFileSilently(@NotNull PsiFileSystemItem file) {
     if (cutOperationJustHappened) return false;
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return false;
@@ -302,7 +302,7 @@ class DaemonListeners implements Disposable {
     return canUndo(virtualFile);
   }
 
-  private boolean canUndo(VirtualFile virtualFile) {
+  private boolean canUndo(@NotNull VirtualFile virtualFile) {
     for (FileEditor editor : FileEditorManager.getInstance(myProject).getEditors(virtualFile)) {
       if (UndoManager.getInstance(myProject).isUndoAvailable(editor)) return true;
     }
@@ -312,13 +312,14 @@ class DaemonListeners implements Disposable {
   private static enum Result {
     CHANGED, UNCHANGED, NOT_SURE
   }
+
   private Result vcsThinksItChanged(VirtualFile virtualFile, Project project) {
     AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(virtualFile);
     if (activeVcs == null) return Result.NOT_SURE;
     
     FilePath path = new FilePathImpl(virtualFile);
     boolean vcsIsThinking = !VcsDirtyScopeManager.getInstance(myProject).whatFilesDirty(Arrays.asList(path)).isEmpty();
-    if (vcsIsThinking) return Result.UNCHANGED; // do not modify file which is in the process of updating
+    if (vcsIsThinking) return Result.NOT_SURE; // do not modify file which is in the process of updating
 
     FileStatus status = FileStatusManager.getInstance(project).getStatus(virtualFile);
     if (status == FileStatus.UNKNOWN) return Result.NOT_SURE;

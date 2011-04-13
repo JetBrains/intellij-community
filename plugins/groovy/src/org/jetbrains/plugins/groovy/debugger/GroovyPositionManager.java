@@ -30,28 +30,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
-import com.intellij.util.Processor;
-import com.intellij.util.Query;
-import com.intellij.util.containers.HashSet;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -63,7 +55,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 public class GroovyPositionManager implements PositionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.PositionManagerImpl");
@@ -250,8 +241,8 @@ public class GroovyPositionManager implements PositionManager {
 
     final GlobalSearchScope searchScope = myDebugProcess.getSearchScope();
     try {
-      final PsiClass[] classes = GroovyPsiManager.getInstance(project).getNamesCache().getClassesByFQName(qName, searchScope);
-      PsiClass clazz = classes.length == 1 ? classes[0] : null;
+      final List<PsiClass> classes = GroovyPsiManager.getInstance(project).getNamesCache().getClassesByFQName(qName, searchScope);
+      PsiClass clazz = classes.size() == 1 ? classes.get(0) : null;
       if (clazz != null) return clazz.getContainingFile();
     }
     catch (ProcessCanceledException e) {
@@ -261,51 +252,6 @@ public class GroovyPositionManager implements PositionManager {
       return null;
     }
 
-    DirectoryIndex directoryIndex = DirectoryIndex.getInstance(project);
-    int dotIndex = qName.lastIndexOf(".");
-    String packageName = dotIndex > 0 ? qName.substring(0, dotIndex) : "";
-    Query<VirtualFile> query = directoryIndex.getDirectoriesByPackageName(packageName, true);
-    final String fileNameWithoutExtension = dotIndex > 0 ? qName.substring(dotIndex + 1) : qName;
-    final Set<String> extensions = getAllGroovyFileExtensions();
-    final Ref<PsiFile> result = new Ref<PsiFile>();
-    query.forEach(new Processor<VirtualFile>() {
-      public boolean process(VirtualFile vDir) {
-        for (final String extension : extensions) {
-          VirtualFile vFile = vDir.findChild(fileNameWithoutExtension + "." + extension);
-          if (vFile != null) {
-            PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
-            if (psiFile instanceof GroovyFileBase) {
-              result.set(psiFile);
-              return false;
-            }
-          }
-        }
-        return true;
-      }
-    });
-
-    PsiFile res = result.get();
-    if (res != null) {
-      return res;
-    }
-
-    if (StringUtil.isEmpty(packageName)) {
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      for (final String extension : extensions) {
-        for (final PsiFile file : FilenameIndex.getFilesByName(project, runtimeName + "." + extension, GlobalSearchScope.projectScope(project))) {
-          final VirtualFile vFile = file.getVirtualFile();
-          if (file instanceof GroovyFile && vFile != null && !fileIndex.isInSource(vFile)) {
-            for (PsiClass aClass : ((GroovyFile)file).getClasses()) {
-              if (qName.equals(aClass.getQualifiedName())) {
-                return file;
-              }
-            }
-          }
-        }
-      }
-    }
-
-
     for (ScriptPositionManagerHelper helper : ScriptPositionManagerHelper.EP_NAME.getExtensions()) {
       if (helper.isAppropriateRuntimeName(runtimeName)) {
         PsiFile file = helper.getExtraScriptIfNotFound(refType, runtimeName, project);
@@ -313,15 +259,6 @@ public class GroovyPositionManager implements PositionManager {
       }
     }
     return null;
-  }
-
-  private static Set<String> getAllGroovyFileExtensions() {
-    final Set<String> extensions = new HashSet<String>();
-    extensions.addAll(GroovyFileTypeLoader.getAllGroovyExtensions());
-    extensions.add("gvy");
-    extensions.add("gy");
-    extensions.add("gsh");
-    return extensions;
   }
 
   @NotNull

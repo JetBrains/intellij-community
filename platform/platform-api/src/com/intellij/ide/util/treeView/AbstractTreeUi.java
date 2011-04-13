@@ -1017,7 +1017,7 @@ public class AbstractTreeUi {
     invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        if (row >= getTree().getVisibleRowCount()) return;
+        if (row >= getTree().getRowCount()) return;
 
         TreePath path = getTree().getPathForRow(row);
         if (path != null) {

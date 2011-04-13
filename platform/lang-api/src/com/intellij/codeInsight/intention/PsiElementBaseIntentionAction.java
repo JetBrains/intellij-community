@@ -46,7 +46,7 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiElement element = getElement(editor, file);
-    return element == null ? false : isAvailable(project, editor, element);
+    return element != null && isAvailable(project, editor, element);
   }
 
   @Nullable

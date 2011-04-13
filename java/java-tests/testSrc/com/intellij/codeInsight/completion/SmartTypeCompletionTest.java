@@ -1029,6 +1029,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doFirstItemTest('\t');
   }
 
+  public void testNonStaticField() throws Exception { doAntiTest(); }
+
   private void doActionTest() throws Exception {
     configureByTestName();
     checkResultByTestName();

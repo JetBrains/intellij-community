@@ -552,6 +552,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         }
         m_inspectionClasses.add(MismatchedArrayReadWriteInspection.class);
         m_inspectionClasses.add(MismatchedCollectionQueryUpdateInspection.class);
+        m_inspectionClasses.add(MismatchedStringBuilderQueryUpdateInspection.class);
         m_inspectionClasses.add(MisspelledCompareToInspection.class);
         m_inspectionClasses.add(MisspelledHashcodeInspection.class);
         m_inspectionClasses.add(MisspelledEqualsInspection.class);

@@ -42,4 +42,33 @@
     <description>Contents of array &lt;code&gt;foo&lt;/code&gt; are written to, but never read #loc</description>
   </problem>
 
+  <problem>
+    <file>MismatchedArrayReadWrite.java</file>
+    <line>90</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Mismatched read and write of array</problem_class>
+    <description>Contents of array &lt;code&gt;barzoom&lt;/code&gt; are written to, but never read #loc</description>
+  </problem>
+
+  <problem>
+    <file>MismatchedArrayReadWrite.java</file>
+    <line>100</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Mismatched read and write of array</problem_class>
+    <description>Contents of array &lt;code&gt;arr&lt;/code&gt; are written to, but never read #loc</description>
+  </problem>
+
+  <problem>
+    <file>MismatchedArrayReadWrite.java</file>
+    <line>95</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Mismatched read and write of array</problem_class>
+    <description>Contents of array &lt;code&gt;barzoom&lt;/code&gt; are written to, but never read #loc</description>
+  </problem>
+
+  <problem>
+    <file>MismatchedArrayReadWrite.java</file>
+    <line>61</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Mismatched read and write of array</problem_class>
+    <description>Contents of array &lt;code&gt;rowData&lt;/code&gt; are written to, but never read #loc</description>
+  </problem>
+
+
 </problems>

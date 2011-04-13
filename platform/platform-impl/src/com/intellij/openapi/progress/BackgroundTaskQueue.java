@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.PlusMinus;
 import com.intellij.util.concurrency.QueueProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,21 +42,24 @@ import org.jetbrains.annotations.Nullable;
  */
 @SomeQueue
 public class BackgroundTaskQueue {
+  private final static String ourMonitorFlag = "monitor.background.queue.load";
   private static final Logger LOG = Logger.getInstance(BackgroundTaskQueue.class.getName());
   //private final Project myProject;
   private final QueueProcessor<Pair<Task.Backgroundable, Getter<ProgressIndicator>>> myProcessor;
   private Boolean myForcedTestMode;
+  private final PlusMinus<String> myMonitor;
 
   public BackgroundTaskQueue(@Nullable Project project, @NotNull String title) {
     this(project, title, null);
   }
 
   public BackgroundTaskQueue(@Nullable final Project project, @NotNull String title, final Boolean forcedHeadlessMode) {
+    myMonitor = Boolean.TRUE.equals(Boolean.getBoolean(ourMonitorFlag)) ? new BackgroundTasksMonitor(title) : new PlusMinus.Empty<String>();
     final boolean headless = forcedHeadlessMode != null ? forcedHeadlessMode : ApplicationManager.getApplication().isHeadlessEnvironment();
 
     final QueueProcessor.ThreadToUse threadToUse = headless ? QueueProcessor.ThreadToUse.POOLED : QueueProcessor.ThreadToUse.AWT;
     final PairConsumer<Pair<Task.Backgroundable, Getter<ProgressIndicator>>, Runnable> consumer
-      = headless ? new BackgroundableHeadlessRunner() : new BackgroundableUnderProgressRunner(title, project);
+      = headless ? new BackgroundableHeadlessRunner() : new BackgroundableUnderProgressRunner(title, project, myMonitor);
 
     myProcessor = new QueueProcessor<Pair<Task.Backgroundable, Getter<ProgressIndicator>>>(consumer, true,
                                                                                            threadToUse, new Condition<Object>() {
@@ -83,6 +87,7 @@ public class BackgroundTaskQueue {
   }
 
   public void run(Task.Backgroundable task, final ModalityState state, final Getter<ProgressIndicator> pi) {
+    myMonitor.plus(task.getTitle());
     if (isTestMode()) { // test tasks are executed in this thread without the progress manager
       RunBackgroundable.runIfBackgroundThread(task, new EmptyProgressIndicator(), null);
     } else {
@@ -103,14 +108,17 @@ public class BackgroundTaskQueue {
   private static class BackgroundableUnderProgressRunner implements PairConsumer<Pair<Task.Backgroundable, Getter<ProgressIndicator>>, Runnable> {
     private final String myTitle;
     private final Project myProject;
+    private final PlusMinus<String> myMonitor;
 
-    public BackgroundableUnderProgressRunner(String title, final Project project) {
+    public BackgroundableUnderProgressRunner(String title, final Project project, PlusMinus<String> monitor) {
       myTitle = title;
       myProject = project;
+      myMonitor = monitor;
     }
 
     @Override
     public void consume(final Pair<Task.Backgroundable, Getter<ProgressIndicator>> pair, final Runnable runnable) {
+      myMonitor.minus(pair.getFirst().getTitle());
       final Task.Backgroundable backgroundable = pair.getFirst();
       final ProgressIndicator[] pi = new ProgressIndicator[1];
       final boolean taskTitleIsEmpty = StringUtil.isEmptyOrSpaces(backgroundable.getTitle());
@@ -133,10 +141,10 @@ public class BackgroundTaskQueue {
           pi[0] = pair.getSecond().get();
         }
         if (pi[0] == null) {
+          if (taskTitleIsEmpty) {
+            backgroundable.setTitle(myTitle);
+          }
           pi[0] = new BackgroundableProcessIndicator(backgroundable);
-        }
-        if (taskTitleIsEmpty) {
-          ((BackgroundableProcessIndicator) pi[0]).setTitle(myTitle);
         }
 
         ProgressManagerImpl.runProcessWithProgressAsynchronously(backgroundable, pi[0], runnable);

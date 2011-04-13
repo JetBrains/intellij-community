@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,12 +43,13 @@ public class AntDomFileDescription extends AntFileDescription<AntDomProject> {
     final XmlDocument document = xmlFile.getDocument();
     if (document != null) {
       final XmlTag tag = document.getRootTag();
+      final VirtualFile vFile = xmlFile.getOriginalFile().getVirtualFile();
       if (tag != null && ROOT_TAG_NAME.equals(tag.getName()) && tag.getContext() instanceof XmlDocument) {
-        if (tag.getAttributeValue("name") != null && tag.getAttributeValue("default") != null) {
+        if (tag.getAttributeValue("name") != null && tag.getAttributeValue("default") != null
+            && vFile != null && ForcedAntFileAttribute.mayBeAntFile(vFile)) {
           return true;
         }
       }
-      final VirtualFile vFile = xmlFile.getOriginalFile().getVirtualFile();
       if (vFile != null && ForcedAntFileAttribute.isAntFile(vFile)) {
         return true;
       }

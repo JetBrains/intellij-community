@@ -48,8 +48,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -425,7 +423,7 @@ public class GroovyCompletionUtil {
     String name = aClass.getName();
     document.replaceString(startOffset, endOffset, name);
 
-    final RangeMarker toDelete = JavaCompletionUtil.insertSpace(endOffset, document);
+    final RangeMarker toDelete = JavaCompletionUtil.insertTemporary(endOffset, document, " ");
 
     PsiDocumentManager.getInstance(manager.getProject()).commitAllDocuments();
 

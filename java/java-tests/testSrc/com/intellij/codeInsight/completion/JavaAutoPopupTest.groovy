@@ -631,7 +631,7 @@ public interface Test {
     assert !lookup
   }
 
-  public void testTemplateSelection() {
+  public void testTemplateSelectionByComma() {
     myFixture.configureByText("a.java", """
 class Foo {
     int ITER = 2;
@@ -649,6 +649,45 @@ class Foo {
     type ','
     assert !lookup
     assert myFixture.editor.document.text.contains('iter,')
+  }
+
+  public void testTemplateSelectionBySpace() {
+    myFixture.configureByText("a.java", """
+class Foo {
+    int ITER = 2;
+    int itea = 2;
+
+    {
+        it<caret>
+    }
+}
+""")
+    type 'er '
+    assert myFixture.editor.document.text.contains('iter ')
+  }
+
+  public void testNewClassParenthesis() {
+    myFixture.configureByText("a.java", """ class Foo { { new <caret> } } """)
+    type 'fil('
+    assert myFixture.editor.document.text.contains('new File()')
+  }
+
+  public void testUnknownMethodParenthesis() {
+    myFixture.configureByText("a.java", """ class Foo { { <caret> } } """)
+    type 'filinpstr('
+    assert myFixture.editor.document.text.contains('filinpstr()')
+  }
+
+  public void testNonFinishedParameterComma() {
+    myFixture.configureByText("a.java", """ class Foo { void foo(int aaa, int aaaaa) { foo(<caret>) } } """)
+    type 'a,'
+    assert myFixture.editor.document.text.contains('foo(aaa, )')
+  }
+
+  public void testFinishedParameterComma() {
+    myFixture.configureByText("a.java", """ class Foo { void foo(int aaa, int aaaaa) { foo(<caret>) } } """)
+    type 'aaa,'
+    assert myFixture.editor.document.text.contains('foo(aaa,)')
   }
 
 }

@@ -763,7 +763,7 @@ public class JavaCompletionUtil {
     String name = psiClass.getName();
     document.replaceString(startOffset, endOffset, name);
 
-    final RangeMarker toDelete = insertSpace(startOffset + name.length(), document);
+    final RangeMarker toDelete = insertTemporary(startOffset + name.length(), document, ";");
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -812,12 +812,12 @@ public class JavaCompletionUtil {
     return psiReference.resolve();
   }
 
-  public static RangeMarker insertSpace(final int endOffset, final Document document) {
+  public static RangeMarker insertTemporary(final int endOffset, final Document document, final String temporary) {
     final CharSequence chars = document.getCharsSequence();
     final int length = chars.length();
     final RangeMarker toDelete;
     if (endOffset < length && Character.isJavaIdentifierPart(chars.charAt(endOffset))){
-      document.insertString(endOffset, " ");
+      document.insertString(endOffset, temporary);
       toDelete = document.createRangeMarker(endOffset, endOffset + 1);
     } else if (endOffset >= length) {
       toDelete = document.createRangeMarker(length, length);
