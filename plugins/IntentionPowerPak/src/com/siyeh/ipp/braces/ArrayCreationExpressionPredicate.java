@@ -27,7 +27,8 @@ class ArrayCreationExpressionPredicate implements PsiElementPredicate {
         if (!(element instanceof PsiArrayInitializerExpression)) {
             return false;
         }
-        final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)element;
+        final PsiArrayInitializerExpression arrayInitializerExpression =
+                (PsiArrayInitializerExpression)element;
         if (arrayInitializerExpression.getType() == null) {
             return false;
         }

@@ -26,30 +26,35 @@ import org.jetbrains.annotations.NotNull;
 
 public class AddArrayCreationExpressionIntention extends MutablyNamedIntention {
 
+    @Override
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
         return new ArrayCreationExpressionPredicate();
     }
 
+    @Override
     protected String getTextForElement(PsiElement element) {
         final PsiArrayInitializerExpression arrayInitializerExpression =
-            (PsiArrayInitializerExpression)element;
+                (PsiArrayInitializerExpression)element;
         final PsiType type = arrayInitializerExpression.getType();
         assert type != null;
-        return IntentionPowerPackBundle.message("add.array.creation.expression.intention.name", type.getPresentableText());
+        return IntentionPowerPackBundle.message(
+                "add.array.creation.expression.intention.name",
+                type.getPresentableText());
     }
 
+    @Override
     protected void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiArrayInitializerExpression arrayInitializerExpression =
-            (PsiArrayInitializerExpression)element;
+                (PsiArrayInitializerExpression)element;
         final PsiType type = arrayInitializerExpression.getType();
         if (type == null) {
             return;
         }
         final String typeText = type.getCanonicalText();
         final String newExpressionText =
-            "new " + typeText + arrayInitializerExpression.getText();
+                "new " + typeText + arrayInitializerExpression.getText();
         replaceExpression(newExpressionText, arrayInitializerExpression);
     }
 }
