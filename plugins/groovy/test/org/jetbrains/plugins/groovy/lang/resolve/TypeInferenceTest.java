@@ -171,7 +171,7 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   }
 
   public void testTupleWithNullInIt() {
-    assertTypeEquals("java.util.List", "A.groovy");
+    assertTypeEquals("java.util.ArrayList", "A.groovy");
   }
 
   public void testImplicitlyReturnedMethodCall() {
