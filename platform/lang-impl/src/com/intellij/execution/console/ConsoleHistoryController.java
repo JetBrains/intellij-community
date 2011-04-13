@@ -285,7 +285,7 @@ public class ConsoleHistoryController {
   }
 
   private void saveHistory(final XmlSerializer out) throws IOException {
-    out.startDocument(System.getProperty(CharsetToolkit.FILE_ENCODING_PROPERTY), null);
+    out.startDocument("UTF8", null);
     out.startTag(null, "console-history");
     out.attribute(null, "id", myId);
     for (String s : myModel.getHistory()) {
