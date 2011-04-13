@@ -225,8 +225,22 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     myWorkingCopiesContent = new WorkingCopiesContent(this);
 
     // remove used some time before old notification group ids
-    NotificationsConfiguration.remove(new NotificationSettings[] {new NotificationSettings("SVN_NO_JNA", null),
-      new NotificationSettings("SVN_NO_CRYPT32", null), new NotificationSettings("SubversionId", null)});
+    correctNotificationIds();
+  }
+
+  private void correctNotificationIds() {
+    boolean notEmpty = NotificationsConfiguration.getSettings("SVN_NO_JNA") != null ||
+                       NotificationsConfiguration.getSettings("SVN_NO_CRYPT32") != null ||
+                       NotificationsConfiguration.getSettings("SubversionId") != null;
+    if (notEmpty) {
+      NotificationsConfiguration.remove(new NotificationSettings[] {new NotificationSettings("SVN_NO_JNA", null),
+        new NotificationSettings("SVN_NO_CRYPT32", null), new NotificationSettings("SubversionId", null)});
+      // if group ids is being changed, set highest level first
+      final NotificationSettings settings = NotificationsConfiguration.getSettings(getDisplayName());
+      if (settings != null) {
+        settings.setDisplayType(NotificationDisplayType.STICKY_BALLOON);
+      }
+    }
   }
 
   public void postStartup() {
