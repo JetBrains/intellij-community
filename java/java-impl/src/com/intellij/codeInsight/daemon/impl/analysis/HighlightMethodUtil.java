@@ -247,6 +247,10 @@ public class HighlightMethodUtil {
       PsiMethod superMethod = superMethodSignature.getMethod();
       int index = getExtraExceptionNum(methodSignature, superMethodSignature, checkedExceptions, superSubstitutor);
       if (index != -1) {
+        if (aClass.isInterface()) {
+          final PsiClass superContainingClass = superMethod.getContainingClass();
+          if (superContainingClass != null && !superContainingClass.isInterface()) continue;
+        }
         PsiClassType exception = checkedExceptions.get(index);
         String message = JavaErrorMessages.message("overridden.method.does.not.throw",
                                                    createClashMethodMessage(method, superMethod, true),
