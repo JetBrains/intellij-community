@@ -24,6 +24,7 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgCatCommand;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.UnsupportedEncodingException;
 

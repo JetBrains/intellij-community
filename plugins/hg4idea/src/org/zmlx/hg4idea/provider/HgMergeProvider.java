@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgContentRevision;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;

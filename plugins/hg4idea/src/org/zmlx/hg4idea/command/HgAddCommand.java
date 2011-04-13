@@ -16,7 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
 import java.util.Arrays;

@@ -24,7 +24,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.HgVcsMessages;
 
 import javax.swing.*;

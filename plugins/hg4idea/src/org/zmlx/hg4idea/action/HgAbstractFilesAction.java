@@ -21,7 +21,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.TransactionRunnable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.HgVcs;
 
 import java.lang.reflect.InvocationTargetException;

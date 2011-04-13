@@ -18,7 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.execution.HgCommandException;
 
 import java.lang.reflect.InvocationTargetException;
@@ -42,7 +42,7 @@ abstract class HgAbstractGlobalAction extends AnAction {
     }
     try {
       command.execute();
-      HgUtil.markDirectoryDirty(project,command.getRepo());
+      HgUtil.markDirectoryDirty(project, command.getRepo());
     } catch (HgCommandException e) {
       handleException(project, e);
     } catch (InvocationTargetException e) {

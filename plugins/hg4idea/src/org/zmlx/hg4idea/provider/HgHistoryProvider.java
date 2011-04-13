@@ -23,7 +23,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
-import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 

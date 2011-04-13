@@ -59,6 +59,7 @@ import org.zmlx.hg4idea.provider.update.HgIntegrateEnvironment;
 import org.zmlx.hg4idea.provider.update.HgUpdateEnvironment;
 import org.zmlx.hg4idea.ui.HgChangesetStatus;
 import org.zmlx.hg4idea.ui.HgCurrentBranchStatus;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
 import java.io.File;

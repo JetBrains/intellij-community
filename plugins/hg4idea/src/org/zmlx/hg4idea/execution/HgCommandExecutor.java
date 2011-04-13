@@ -21,6 +21,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import javax.swing.*;
 import java.awt.*;
