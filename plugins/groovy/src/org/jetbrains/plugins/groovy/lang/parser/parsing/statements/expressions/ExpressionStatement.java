@@ -28,8 +28,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.a
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.NUMBERS;
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.SEPARATORS;
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.*;
 import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression.Result.METHOD_CALL;
 import static org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression.Result.WRONG_WAY;
 

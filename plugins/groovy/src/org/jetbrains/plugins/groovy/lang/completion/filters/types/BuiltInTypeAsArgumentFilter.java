@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -40,9 +41,9 @@ public class BuiltInTypeAsArgumentFilter implements ElementFilter {
     PsiElement previous = PsiImplUtil.realPrevious(parent.getPrevSibling());
     if (parent instanceof GrReferenceElement && parent.getParent() instanceof GrArgumentList) {
       PsiElement prevSibling = context.getPrevSibling();
-      if (parent instanceof GrReferenceElement && prevSibling != null && prevSibling.getNode() != null) {
+      if (prevSibling != null && prevSibling.getNode() != null) {
         ASTNode node = prevSibling.getNode();
-        return !GroovyTokenTypes.DOTS.contains(node.getElementType());
+        return !TokenSets.DOTS.contains(node.getElementType());
       } else {
         return !(previous != null && GroovyTokenTypes.mAT.equals(previous.getNode().getElementType()));
       }

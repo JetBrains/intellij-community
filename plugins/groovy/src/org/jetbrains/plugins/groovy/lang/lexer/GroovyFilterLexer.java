@@ -21,6 +21,7 @@ import com.intellij.psi.tree.IElementType;
 
 import static com.intellij.psi.search.UsageSearchContext.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.COMMENT_SET;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.STRING_LITERALS;
 
 /**
@@ -36,7 +37,7 @@ public class GroovyFilterLexer extends BaseFilterLexer {
   public void advance() {
     final IElementType tokenType = getDelegate().getTokenType();
 
-    if (tokenType == mIDENT || KEYWORDS.contains(tokenType)) {
+    if (tokenType == mIDENT || TokenSets.KEYWORDS.contains(tokenType)) {
       addOccurrenceInToken(IN_CODE);
     }
     else if (STRING_LITERALS.contains(tokenType)) {

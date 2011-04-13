@@ -21,6 +21,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
@@ -237,7 +238,7 @@ public class PathExpression implements GroovyElementTypes {
       PrimaryExpression.parenthesizedExprParse(builder, parser);
       return PATH_PROPERTY_REFERENCE;
     }
-    if (KEYWORDS.contains(builder.getTokenType())) {
+    if (TokenSets.KEYWORDS.contains(builder.getTokenType())) {
       builder.advanceLexer();
       return REFERENCE_EXPRESSION;
     }

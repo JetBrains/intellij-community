@@ -41,9 +41,6 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -65,6 +62,8 @@ import java.util.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.elementType;
 import static com.intellij.util.containers.CollectionFactory.hashMap;
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.*;
 
 /**
  * @author ilyas
@@ -138,24 +137,23 @@ public class GroovyCompletionContributor extends CompletionContributor {
   };
 
   private static final PsiElementPattern.Capture<PsiElement> STATEMENT_START =
-    psiElement(GroovyElementTypes.mIDENT).andOr(
+    psiElement(mIDENT).andOr(
       psiElement().afterLeaf(StandardPatterns.or(
         psiElement().isNull(),
-        psiElement().withElementType(TokenSets.SEPARATORS),
-        psiElement(GroovyElementTypes.mLCURLY),
-        psiElement(GroovyElementTypes.kELSE)
+        psiElement().withElementType(SEPARATORS),
+        psiElement(mLCURLY),
+        psiElement(kELSE)
       )).andNot(psiElement().withParent(GrTypeDefinitionBody.class))
         .andNot(psiElement(PsiErrorElement.class)),
-      psiElement().afterLeaf(psiElement(GroovyTokenTypes.mRPAREN)).withSuperParent(2, StandardPatterns.or(
+      psiElement().afterLeaf(psiElement(mRPAREN)).withSuperParent(2, StandardPatterns.or(
         psiElement(GrForStatement.class),
         psiElement(GrWhileStatement.class),
         psiElement(GrIfStatement.class)
       ))
     );
 
-  private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL =
-    psiElement().afterLeaf(psiElement().withElementType(
-      elementType().oneOf(GroovyElementTypes.mNUM_DOUBLE, GroovyElementTypes.mNUM_INT, GroovyElementTypes.mNUM_LONG, GroovyElementTypes.mNUM_FLOAT, GroovyElementTypes.mNUM_BIG_INT, GroovyElementTypes.mNUM_BIG_DECIMAL)));
+  private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL = psiElement().afterLeaf(
+    psiElement().withElementType(elementType().oneOf(mNUM_DOUBLE, mNUM_INT, mNUM_LONG, mNUM_FLOAT, mNUM_BIG_INT, mNUM_BIG_DECIMAL)));
   private static final ElementPattern<PsiElement> AFTER_AT = psiElement().afterLeaf("@");
   private static final ElementPattern<PsiElement> IN_CATCH_TYPE = psiElement().afterLeaf(psiElement().withText("(").withParent(GrCatchClause.class));
 
@@ -526,7 +524,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
   public static boolean isInPossibleClosureParameter(PsiElement position) { //Closure cl={String x, <caret>...
     if (position == null) return false;
 
-    if (position instanceof PsiWhiteSpace || position.getNode().getElementType() == GroovyElementTypes.mNLS) {
+    if (position instanceof PsiWhiteSpace || position.getNode().getElementType() == mNLS) {
       position = FilterPositionUtil.searchNonSpaceNonCommentBack(position);
     }
 
@@ -535,7 +533,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       PsiElement parent = position.getParent();
       if (parent instanceof GrVariable) {
         PsiElement prev = FilterPositionUtil.searchNonSpaceNonCommentBack(parent);
-        hasCommas = prev != null && prev.getNode().getElementType() == GroovyElementTypes.mCOMMA;
+        hasCommas = prev != null && prev.getNode().getElementType() == mCOMMA;
       }
 
       if (parent instanceof GrClosableBlock) {
@@ -545,7 +543,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
             return hasCommas;
           }
 
-          boolean isComma = sibling instanceof LeafPsiElement && GroovyElementTypes.mCOMMA == ((LeafPsiElement)sibling).getElementType();
+          boolean isComma = sibling instanceof LeafPsiElement && mCOMMA == ((LeafPsiElement)sibling).getElementType();
           hasCommas |= isComma;
 
           if (isComma ||
@@ -571,22 +569,22 @@ public class GroovyCompletionContributor extends CompletionContributor {
     HighlighterIterator iterator = ((EditorEx)context.getEditor()).getHighlighter().createIterator(context.getStartOffset());
     if (iterator.atEnd()) return false;
 
-    if (iterator.getTokenType() == GroovyTokenTypes.mIDENT) {
+    if (iterator.getTokenType() == mIDENT) {
       iterator.advance();
     }
 
-    if (!iterator.atEnd() && iterator.getTokenType() == GroovyTokenTypes.mLPAREN) {
+    if (!iterator.atEnd() && iterator.getTokenType() == mLPAREN) {
       return true;
     }
 
-    while (!iterator.atEnd() && GroovyTokenTypes.WHITE_SPACES_OR_COMMENTS.contains(iterator.getTokenType())) {
+    while (!iterator.atEnd() && WHITE_SPACES_OR_COMMENTS.contains(iterator.getTokenType())) {
       iterator.advance();
     }
 
-    if (iterator.atEnd() || iterator.getTokenType() != GroovyTokenTypes.mIDENT) return false;
+    if (iterator.atEnd() || iterator.getTokenType() != mIDENT) return false;
     iterator.advance();
 
-    while (!iterator.atEnd() && GroovyTokenTypes.WHITE_SPACES_OR_COMMENTS.contains(iterator.getTokenType())) {
+    while (!iterator.atEnd() && WHITE_SPACES_OR_COMMENTS.contains(iterator.getTokenType())) {
       iterator.advance();
     }
     return true;

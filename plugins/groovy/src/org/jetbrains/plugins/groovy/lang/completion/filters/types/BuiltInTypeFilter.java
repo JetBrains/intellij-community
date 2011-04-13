@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.InstanceOfFilter;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -63,7 +64,7 @@ public class BuiltInTypeFilter implements ElementFilter {
       PsiElement prevSibling = context.getPrevSibling();
       if (parent instanceof GrReferenceElement && prevSibling != null && prevSibling.getNode() != null) {
         ASTNode node = prevSibling.getNode();
-        return !GroovyTokenTypes.DOTS.contains(node.getElementType());
+        return !TokenSets.DOTS.contains(node.getElementType());
       } else {
         return true;
       }
