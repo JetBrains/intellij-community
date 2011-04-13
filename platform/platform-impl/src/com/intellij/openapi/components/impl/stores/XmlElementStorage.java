@@ -75,6 +75,8 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       myLocalVersionProvider.changeVersion(componentName,  System.currentTimeMillis());
     }
   };
+  
+  private boolean myDisposed;
 
 
   protected XmlElementStorage(@Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor,
@@ -113,6 +115,10 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     };
   }
 
+  protected boolean isDisposed() {
+    return myDisposed;
+  }
+  
   @Nullable
   protected abstract Document loadDocument() throws StateStorageException;
 
@@ -536,6 +542,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   }
 
   public void dispose() {
+    myDisposed = true;
   }
 
   protected static class StorageData {
