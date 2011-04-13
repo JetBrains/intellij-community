@@ -13,9 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes;
+package com.intellij.util;
 
 public interface PlusMinus<T> {
+  class Empty<T> implements PlusMinus<T> {
+    @Override
+    public void plus(T t) {
+    }
+    @Override
+    public void minus(T t) {
+    }
+  }
+
   void plus(final T t);
   void minus(final T t);
 }

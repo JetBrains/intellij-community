@@ -17,10 +17,13 @@ package com.intellij.openapi.progress;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbModeAction;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.util.LocaleServiceProviderPool;
 
 /**
  * Intended to run tasks, both modal and non-modal (backgroundable)
@@ -39,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
  * @see com.intellij.openapi.progress.ProgressManager#run(Task)
  */
 public abstract class Task implements TaskInfo, Progressive {
-
+  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.Task");
   protected final Project myProject;
   protected String myTitle;
   private final boolean myCanBeCancelled;
@@ -134,6 +137,9 @@ public abstract class Task implements TaskInfo, Progressive {
     public Backgroundable(@Nullable final Project project, @NotNull final String title, final boolean canBeCancelled, @Nullable final PerformInBackgroundOption backgroundOption) {
       super(project, title, canBeCancelled);
       myBackgroundOption = backgroundOption;
+      if (StringUtil.isEmptyOrSpaces(title)) {
+        LOG.warn("Empty title for backgroundable task.", new Throwable());
+      }
     }
 
     public Backgroundable(@Nullable final Project project, @NotNull final String title, final boolean canBeCancelled) {

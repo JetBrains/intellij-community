@@ -164,6 +164,12 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     LOG.assertTrue(element.isPhysical());
     LOG.assertTrue(element.isValid());
 
+    boolean isMultiRoot = viewProvider.getAllFiles().size() > 1;
+    VirtualFile virtualFile = containingFile.getVirtualFile();
+    boolean isElementInMainRoot = virtualFile == null || containingFile.getManager().findFile(virtualFile) == containingFile;
+    if (isMultiRoot && !isElementInMainRoot) {
+      return new MultiRootSelfElementInfo(project, element.getTextRange(), element.getClass(), containingFile, containingFile.getLanguage());
+    }
     return new SelfElementInfo(project, element.getTextRange(), element.getClass(), containingFile);
   }
 
