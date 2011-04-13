@@ -631,7 +631,7 @@ public interface Test {
     assert !lookup
   }
 
-  public void testTemplateSelection() {
+  public void testTemplateSelectionByComma() {
     myFixture.configureByText("a.java", """
 class Foo {
     int ITER = 2;
@@ -649,6 +649,21 @@ class Foo {
     type ','
     assert !lookup
     assert myFixture.editor.document.text.contains('iter,')
+  }
+
+  public void testTemplateSelectionBySpace() {
+    myFixture.configureByText("a.java", """
+class Foo {
+    int ITER = 2;
+    int itea = 2;
+
+    {
+        it<caret>
+    }
+}
+""")
+    type 'er '
+    assert myFixture.editor.document.text.contains('iter ')
   }
 
 }
