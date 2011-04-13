@@ -38,6 +38,7 @@ import org.jetbrains.android.dom.attrs.AttributeFormat;
 import org.jetbrains.android.dom.attrs.StyleableDefinition;
 import org.jetbrains.android.dom.converters.CompositeConverter;
 import org.jetbrains.android.dom.converters.ResourceReferenceConverter;
+import org.jetbrains.android.dom.layout.Fragment;
 import org.jetbrains.android.dom.layout.Include;
 import org.jetbrains.android.dom.layout.LayoutElement;
 import org.jetbrains.android.dom.layout.LayoutViewElement;
@@ -375,7 +376,8 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
   private static final MyAttributeProcessor ourLayoutAttrsProcessor = new MyAttributeProcessor() {
     @Override
     public void process(@NotNull XmlName attrName, @NotNull DomExtension extension, @NotNull DomElement element) {
-      if (element instanceof LayoutViewElement && SdkConstants.NS_RESOURCES.equals(attrName.getNamespaceKey())) {
+      if ((element instanceof LayoutViewElement || element instanceof Fragment) &&
+          SdkConstants.NS_RESOURCES.equals(attrName.getNamespaceKey())) {
         XmlElement xmlElement = element.getXmlElement();
         XmlTag tag = xmlElement instanceof XmlTag ? (XmlTag)xmlElement : null;
         String tagName = tag != null ? tag.getName() : null;
@@ -422,15 +424,21 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
       }
       return;
     }
-    String tagName = tag.getName();
-    if (!tagName.equals("view")) {
-      PsiClass c = map.get(tagName);
-      registerAttributesForClassAndSuperclasses(facet, element, c, registrar, ourLayoutAttrsProcessor);
+    else if (element instanceof Fragment) {
+      registerAttributes(facet, element, new String[]{"Fragment"}, registrar, ourLayoutAttrsProcessor);
     }
     else {
-      String[] styleableNames = getClassNames(map.values());
-      registerAttributes(facet, element, styleableNames, registrar, ourLayoutAttrsProcessor);
+      String tagName = tag.getName();
+      if (!tagName.equals("view")) {
+        PsiClass c = map.get(tagName);
+        registerAttributesForClassAndSuperclasses(facet, element, c, registrar, ourLayoutAttrsProcessor);
+      }
+      else {
+        String[] styleableNames = getClassNames(map.values());
+        registerAttributes(facet, element, styleableNames, registrar, ourLayoutAttrsProcessor);
+      }
     }
+
     registerLayoutAttributes(facet, element, tag, registrar, ourLayoutAttrsProcessor);
 
     for (String viewClassName : map.keySet()) {
