@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.platform.ProjectBaseDirectory;
@@ -27,7 +28,7 @@ public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
   public String getProjectTitle(final Project project) {
     final VirtualFile baseDir = project.getBaseDir();
     if (baseDir != null) {
-      return project.getName() + " - [" + baseDir.getPresentableUrl() + "]";
+      return project.getName() + " - [" + ProjectUtil.getLocationRelativeToUserHome(baseDir.getPresentableUrl()) + "]";
     }
     return project.getName();
   }
