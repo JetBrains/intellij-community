@@ -15,10 +15,6 @@
 
   <dirname property="basedir" file="${ant.file}"/>
   <property name="output" value="${basedir}/../dist"/>
-  <property name="test.output.dir" value="${output}/testClasses"/>
-  <property name="reports.dir" location="${output}/report"/>
-  <!--<property name="ruby.mock.sdk" value="${output}/mockSdk"/>-->
-  <!--<property name="rubystubs" value="${plugin.home}/rubystubs/rubystubs"/>-->
 
   <property name="zipdir" value="${output}/zip"/>
   <property name="plugindir" value="${zipdir}/python"/>
@@ -94,6 +90,12 @@
   </target>
 
   <target name="compile" description="Compile module python">
+    <loadfile srcfile="${idea.home}/build.txt" property="idea.build.number">
+      <filterchain>
+        <deletecharacters chars="IU-"/>
+      </filterchain>
+    </loadfile>
+
     <mkdir dir="${classes.dir}"/>
     <!-- compile -->
     <javac2 destdir="${classes.dir}"
@@ -129,8 +131,10 @@
     <copy todir="${classes.dir}/META-INF">
       <fileset dir="${plugin.home}/pluginSrc/META-INF"/>
     </copy>
-    <!-- adding revision version number to plugin version -->
-    <!--<replace file="${classes.dir}/META-INF/plugin.xml" token="VERSION" value="${plugin.version}"/>-->
+
+    <replaceregexp file="${classes.dir}/META-INF/plugin.xml"
+                   match="since-build=&quot;\d+\.\d+&quot;"
+                   replace="since-build=&quot;${idea.build.number}&quot;"/>
   </target>
 
   <target name="jar" description="Generate jar file" depends="compile">
