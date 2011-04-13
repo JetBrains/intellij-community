@@ -15,8 +15,17 @@
  */
 package com.intellij.ide.diff;
 
+import com.intellij.openapi.diff.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -27,20 +36,23 @@ import java.io.IOException;
  * @author Konstantin Bulenkov
  */
 public abstract class DiffElement<T> {
+  private DiffPanel myDiffPanel;
+  private Editor myEditor;
+
   public abstract String getPath();
 
+  @NotNull
   public abstract String getName();
 
   public abstract long getSize();
 
   public abstract long getModificationStamp();
 
-  public abstract FileType getFileType();
+  public FileType getFileType() {
+    return FileTypeManager.getInstance().getFileTypeByFileName(getName());
+  }
 
   public abstract boolean isContainer();
-
-  @Nullable
-  public abstract DiffElement getParent();
 
   public abstract DiffElement<T>[] getChildren();
 
@@ -50,19 +62,90 @@ public abstract class DiffElement<T> {
   /**
    * Returns content data as byte array. Can be null, if element for example is a container
    * @return content byte array
+   * @throws java.io.IOException when reading
    */
   @Nullable
   public abstract byte[] getContent() throws IOException;
 
-  public abstract boolean canCompareWith(DiffElement element);
+  @Nullable
+  public JComponent getViewComponent(Project project) {
+    disposeViewComponent();
+    try {
+      final T value = getValue();
+      final byte[] content = getContent();
+      final EditorFactory editorFactory = EditorFactory.getInstance();
+      final Document document = value instanceof VirtualFile
+                                ? FileDocumentManager.getInstance().getDocument((VirtualFile)value)
+                                : editorFactory.createDocument(new String(content));
+      if (document != null && getFileType() != null) {
+        myEditor = editorFactory.createEditor(document, project, getFileType(), true);
+        myEditor.getSettings().setFoldingOutlineShown(false);
+        return myEditor.getComponent();
+      }
+    }
+    catch (IOException e) {//
+    }
+    return null;
+  }
 
   @Nullable
-  public abstract JComponent getViewComponent(Project project);
+  public JComponent getDiffComponent(DiffElement element, Project project, Window parentWindow) {
+    disposeDiffComponent();
+
+    final DiffRequest request = createRequest(project, element);
+    if (request != null) {
+      myDiffPanel = DiffManager.getInstance().createDiffPanel(parentWindow, project);
+      myDiffPanel.setRequestFocus(false);
+      myDiffPanel.setDiffRequest(request);
+      return myDiffPanel.getComponent();
+    }
+
+    return null;
+  }
+
   @Nullable
-  public abstract JComponent getDiffComponent(DiffElement element, Project project, Window parentWindow);
+  protected DiffRequest createRequest(Project project, DiffElement element) {
+    final T src = getValue();
+    if (src instanceof VirtualFile) {
+      final Object trg = element.getValue();
+      if (trg instanceof VirtualFile) {
+        return SimpleDiffRequest.compareFiles((VirtualFile)src, (VirtualFile)trg, project);
+      }
+    }
+    final DiffContent srcContent = createDiffContent();
+    final DiffContent trgContent = element.createDiffContent();
+
+    if (srcContent != null && trgContent != null) {
+      final SimpleDiffRequest request = new SimpleDiffRequest(project, "");
+      request.setContents(srcContent, trgContent);
+      return request;
+    }
+    return null;
+  }
+
+  @Nullable
+  protected DiffContent createDiffContent() {
+    try {
+      return new SimpleContent(new String(getContent()), getFileType());
+    }
+    catch (IOException e) {//
+    }
+    return null;
+  }
 
   public abstract T getValue();
 
-  public void disposeViewComponent() {}
-  public void disposeDiffComponent() {}
+  public void disposeViewComponent() {
+    if (myEditor != null) {
+      EditorFactory.getInstance().releaseEditor(myEditor);
+      myEditor = null;
+    }
+  }
+
+  public void disposeDiffComponent() {
+    if (myDiffPanel != null) {
+      Disposer.dispose(myDiffPanel);
+      myDiffPanel = null;
+    }
+  }
 }
