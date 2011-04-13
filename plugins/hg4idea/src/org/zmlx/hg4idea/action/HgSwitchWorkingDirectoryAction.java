@@ -61,7 +61,7 @@ public class HgSwitchWorkingDirectoryAction extends HgAbstractGlobalAction {
           @Override
           public void run() {
             HgCommandResult result = command.execute();
-            new HgCommandResultNotifier(project).process(result);
+            new HgCommandResultNotifier(project).process(result, null, null);
             project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project);
           }
         });
