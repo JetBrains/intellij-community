@@ -93,9 +93,12 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
 
   @Nullable
   protected ContentEntry getContentEntry() {
-    final ContentEntry[] entries = getModel().getContentEntries();
-    for (ContentEntry entry : entries) {
-      if (entry.getUrl().equals(myContentEntryUrl)) return entry;
+    final ModifiableRootModel model = getModel();
+    if (model != null) {
+      final ContentEntry[] entries = model.getContentEntries();
+      for (ContentEntry entry : entries) {
+        if (entry.getUrl().equals(myContentEntryUrl)) return entry;
+      }
     }
 
     return null;
