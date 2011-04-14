@@ -32,11 +32,6 @@ public class JavaWordCompletionFilter implements WordCompletionElementFilter {
                                                                  JavaDocTokenType.DOC_COMMENT_DATA, JavaTokenType.STRING_LITERAL);
 
   public boolean isWordCompletionEnabledIn(final IElementType element) {
-    final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
-    if (process != null && process.isAutopopupCompletion()) {
-      return false;
-    }
-
     return ENABLED_TOKENS.contains(element);
   }
 }
