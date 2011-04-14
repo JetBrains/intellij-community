@@ -1372,7 +1372,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
           );
         }
         final boolean rBrace = isRBrace(child);
-        Indent childIndent = rBrace ? Indent.getNoneIndent() : getCodeBlockInternalIndent(childrenIndent, true);
+        Indent childIndent = rBrace ? Indent.getNoneIndent() : getCodeBlockInternalIndent(childrenIndent, false);
         if (!rBrace && child.getElementType() == JavaElementType.CODE_BLOCK 
             && (getBraceStyle() == CommonCodeStyleSettings.NEXT_LINE_SHIFTED 
                 || getBraceStyle() == CommonCodeStyleSettings.NEXT_LINE_SHIFTED2)) 
