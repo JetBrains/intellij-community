@@ -28,12 +28,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.Git;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -73,13 +72,14 @@ public class GitInit extends DumbAwareAction {
         return;
       }
     }
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.INIT);
-    h.setNoSSH(true);
-    GitHandlerUtil.doSynchronously(h, GitBundle.getString("initializing.title"), h.printableCommandLine());
-    if (!h.errors().isEmpty()) {
-      GitUIUtil.showOperationErrors(project, h.errors(), "git init");
+
+    try {
+      Git.init(project, root);
+    } catch (VcsException ex) {
+      GitUIUtil.showOperationErrors(project, Collections.singleton(ex), "git init");
       return;
     }
+
     if (project.isDefault()) return;
     int rc = Messages.showYesNoDialog(project, GitBundle.getString("init.add.root.message"), GitBundle.getString("init.add.root.title"),
                                       Messages.getQuestionIcon());

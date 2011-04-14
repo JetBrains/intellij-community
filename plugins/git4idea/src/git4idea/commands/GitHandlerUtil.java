@@ -181,7 +181,7 @@ public class GitHandlerUtil {
    * @param handler         a handler to run
    * @param postStartAction an action that is executed
    */
-  static void runInCurrentThread(final GitHandler handler, @Nullable final Runnable postStartAction) {
+  public static void runInCurrentThread(final GitHandler handler, @Nullable final Runnable postStartAction) {
     handler.runInCurrentThread(postStartAction);
   }
 
