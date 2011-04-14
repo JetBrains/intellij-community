@@ -45,10 +45,7 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlElementDescriptorWithCDataContent;
-import com.intellij.xml.XmlExtension;
+import com.intellij.xml.*;
 import com.intellij.xml.actions.GenerateXmlTagAction;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
@@ -209,7 +206,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
       if (inspection != null) {
         StringTokenizer tokenizer = new StringTokenizer(inspection.getAdditionalEntries(0));
-        notRequiredAttributes = new HashSet<String>(1);
+        notRequiredAttributes = new HashSet<String>();
 
         while(tokenizer.hasMoreElements()) notRequiredAttributes.add(tokenizer.nextToken());
       }
@@ -284,22 +281,42 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     else if (completionChar == ' ' && template.getSegmentsCount() == 0) {
       if (WebEditorOptions.getInstance().isAutomaticallyStartAttribute() &&
           (descriptor.getAttributesDescriptors(tag).length > 0 || isTagFromHtml(tag) && !HtmlUtil.isTagWithoutAttributes(tag.getName()))) {
-        template.addTextSegment(" ");
-        template.addVariable(new MacroCallNode(new CompleteMacro()), true);
-        template.addTextSegment("=\"");
-        template.addEndVariable();
-        template.addTextSegment("\"");
+        completeAttribute(template);
         return true;
       }
     }
     else if (completionChar == Lookup.AUTO_INSERT_SELECT_CHAR || completionChar == Lookup.NORMAL_SELECT_CHAR) {
-      if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag() &&
-             HtmlUtil.isSingleHtmlTag(tag.getName())) {
-
+      if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag() && HtmlUtil.isSingleHtmlTag(tag.getName())) {
         template.addTextSegment(tag instanceof HtmlTag ? ">" : "/>");
       }
       else {
-        completeTagTail(template, descriptor, tag.getContainingFile(), tag, true);
+        if (needAlLeastOneAttribute(tag) && WebEditorOptions.getInstance().isAutomaticallyStartAttribute()) {
+          completeAttribute(template);
+          return true;
+        }
+        else {
+          completeTagTail(template, descriptor, tag.getContainingFile(), tag, true);
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private static void completeAttribute(Template template) {
+    template.addTextSegment(" ");
+    template.addVariable(new MacroCallNode(new CompleteMacro()), true);
+    template.addTextSegment("=\"");
+    template.addEndVariable();
+    template.addTextSegment("\"");
+  }
+
+  private static boolean needAlLeastOneAttribute(XmlTag tag) {
+    for (XmlTagRuleProvider ruleProvider : XmlTagRuleProvider.EP_NAME.getExtensions()) {
+      for (XmlTagRuleProvider.Rule rule : ruleProvider.getTagRule(tag)) {
+        if (rule.needAtLeastOneAttribute(tag)) {
+          return true;
+        }
       }
     }
 
