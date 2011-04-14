@@ -61,6 +61,7 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
         return false;
       }
     };
+    myEditor.setCenterByHeight(false);
     setLayout(new BorderLayout());
     add(myEditor, BorderLayout.CENTER);
 
