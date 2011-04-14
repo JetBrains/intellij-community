@@ -372,8 +372,16 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (className == null) return null;
     final PsiMethod[] byName = clazz.findMethodsByName(className, true);
     if (byName.length == 0) return null;
+    Outer:
     for (PsiMethod method : byName) {
       if (method.getParameterList().getParametersCount() == 0) return method;
+      if (!(method instanceof GrMethod)) continue;
+      final GrParameter[] parameters = ((GrMethod)method).getParameterList().getParameters();
+
+      for (GrParameter parameter : parameters) {
+        if (!parameter.isOptional()) continue Outer;
+      }
+      return method;
     }
     return null;
   }
