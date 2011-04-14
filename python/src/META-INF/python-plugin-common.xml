@@ -23,6 +23,7 @@
     <lang.psiStructureViewFactory language="Python" implementationClass="com.jetbrains.python.structureView.PyStructureViewFactory"/>
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.documentation.PythonDocumentationProvider"/>
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.console.PydevDocumentationProvider"/>
+    <lang.emacs language="Python" implementationClass="com.jetbrains.python.editor.PyEmacsHandler"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDumbAwareAnnotator"/>
     <backspaceHandlerDelegate implementation="com.jetbrains.python.editor.PythonBackspaceHandler"/>
