@@ -39,7 +39,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 /**
@@ -62,11 +62,8 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
         PsiType returnType = null;
         final PsiManager manager = assignment.getManager();
         for (GroovyResolveResult result : results) {
-          final PsiElement element = result.getElement();
-          if (element instanceof PsiMethod) {
-            final PsiType substituted = result.getSubstitutor().substitute(PsiUtil.getSmartReturnType((PsiMethod)element));
-            returnType = TypesUtil.getLeastUpperBoundNullable(returnType, substituted, manager);
-          }
+          final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(result);
+          returnType = TypesUtil.getLeastUpperBoundNullable(returnType, substituted, manager);
         }
         return returnType;
       }

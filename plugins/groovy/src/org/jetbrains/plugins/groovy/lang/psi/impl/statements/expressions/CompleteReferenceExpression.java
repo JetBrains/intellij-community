@@ -46,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -438,7 +437,7 @@ public class CompleteReferenceExpression {
     @Override
     public GroovyResolveResult[] getCandidates() {
       if (!hasCandidates()) return GroovyResolveResult.EMPTY_ARRAY;
-      final GroovyResolveResult[] results = ResolveUtil.filterSameSignatureCandidates(getCandidatesInternal(), -1);
+      final GroovyResolveResult[] results = ResolveUtil.filterSameSignatureCandidates(getCandidatesInternal());
       List<GroovyResolveResult> list = new ArrayList<GroovyResolveResult>(results.length);
       myPropertyNames.removeAll(myPreferredFieldNames);
       for (GroovyResolveResult result : results) {

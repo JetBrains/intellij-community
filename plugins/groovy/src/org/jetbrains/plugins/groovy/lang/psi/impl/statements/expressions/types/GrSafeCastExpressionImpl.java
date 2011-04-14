@@ -21,14 +21,18 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -38,6 +42,15 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
  */
 public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafeCastExpression, PsiPolyVariantReference {
 
+  private static final Function<GrSafeCastExpressionImpl, PsiType> TYPE_CALCULATOR = new NullableFunction<GrSafeCastExpressionImpl, PsiType>() {
+    @Override
+    public PsiType fun(GrSafeCastExpressionImpl cast) {
+      GrTypeElement typeElement = cast.getCastTypeElement();
+      if (typeElement != null) return TypesUtil.boxPrimitiveType(typeElement.getType(), cast.getManager(), cast.getResolveScope());
+      return null;
+    }
+  };
+
   private static final class OurResolver implements ResolveCache.PolyVariantResolver<GrSafeCastExpressionImpl> {
     @Override
     public ResolveResult[] resolve(GrSafeCastExpressionImpl cast, boolean incompleteCode) {
@@ -46,11 +59,13 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
         return GroovyResolveResult.EMPTY_ARRAY;
       }
 
+      final GrTypeElement typeElement = cast.getCastTypeElement();
+      final PsiType toCast = typeElement == null ? null : typeElement.getType();
       return TypesUtil.getOverloadedOperatorCandidates(
         type,
         GroovyTokenTypes.kAS,
         cast,
-        new PsiType[]{TypesUtil.createJavaLangClassType(cast.getCastTypeElement().getType(), cast.getProject(), cast.getResolveScope())}
+        new PsiType[]{TypesUtil.createJavaLangClassType(toCast, cast.getProject(), cast.getResolveScope())}
       );
     }
   }
@@ -70,17 +85,17 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
   }
 
   public PsiType getType() {
-    GrTypeElement typeElement = getCastTypeElement();
-    if (typeElement != null) return TypesUtil.boxPrimitiveType(typeElement.getType(), getManager(), getResolveScope());
-    return null;
+    return GroovyPsiManager.getInstance(getProject()).getType(this, TYPE_CALCULATOR);
   }
 
+  @Nullable
   public GrTypeElement getCastTypeElement() {
     return findChildByClass(GrTypeElement.class);
   }
 
+  @NotNull
   public GrExpression getOperand() {
-    return findChildByClass(GrExpression.class);
+    return findNotNullChildByClass(GrExpression.class);
   }
 
   @Override
