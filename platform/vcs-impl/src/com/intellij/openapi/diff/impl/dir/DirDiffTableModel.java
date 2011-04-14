@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.diff.DiffElement;
+import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.HashSet;
@@ -29,26 +30,32 @@ import java.util.*;
  * @author Konstantin Bulenkov
  */
 public class DirDiffTableModel extends AbstractTableModel {
+  public static final String COLUMN_NAME = "Name";
+  public static final String COLUMN_SIZE = "Size";
+  public static final String COLUMN_DATE = "Date";
   private final Project myProject;
+  private final DirDiffSettings mySettings;
   private DiffElement mySrc;
+  private HashMap<String, DiffElement> mySrcPaths = new HashMap<String, DiffElement>();
+  private HashMap<String, DiffElement> myTrgPaths = new HashMap<String, DiffElement>();
   private DiffElement myTrg;
   final List<DirDiffElement> myElements = new ArrayList<DirDiffElement>();
-  private boolean showEqual = false;
-  private boolean showDifferent = true;
-  private boolean showNewOnSource = true;
-  private boolean showNewOnTarget = true;
 
-  public DirDiffTableModel(Project project, DiffElement src, DiffElement trg, ProgressIndicator indicator) {
+  public DirDiffTableModel(Project project, DiffElement src, DiffElement trg, ProgressIndicator indicator, DirDiffSettings settings) {
     myProject = project;
+    mySettings = settings;
     loadModel(src, trg, indicator);
   }
 
   public void loadModel(DiffElement src, DiffElement trg, ProgressIndicator indicator) {
     mySrc = src;
     myTrg = trg;
+    scan("", src, mySrcPaths, indicator, true);
+    scan("", trg, myTrgPaths, indicator, true);
+
     final HashSet<String> files = new HashSet<String>();
-    scan("", src, files, indicator, true);
-    scan("", trg, files, indicator, true);
+    files.addAll(mySrcPaths.keySet());
+    files.addAll(myTrgPaths.keySet());
     final ArrayList<String> pathes = new ArrayList<String>(files);
     Collections.sort(pathes, new Comparator<String>() {
       @Override
@@ -77,8 +84,8 @@ public class DirDiffTableModel extends AbstractTableModel {
     });
 
     for (String path : pathes) {
-      final DiffElement srcFile = src.findFileByRelativePath(path);
-      final DiffElement trgFile = trg.findFileByRelativePath(path);
+      final DiffElement srcFile = mySrcPaths.get(path);
+      final DiffElement trgFile = myTrgPaths.get(path);
       if (srcFile == null && trgFile != null) {
         myElements.add(DirDiffElement.createTargetOnly(trgFile));
       } else if (srcFile != null && trgFile == null) {
@@ -144,18 +151,23 @@ public class DirDiffTableModel extends AbstractTableModel {
     return myTrg;
   }
 
-  private static void scan(String prefix, DiffElement file, HashSet<String> files, ProgressIndicator indicator, boolean isRoot) {
+  private static void scan(String prefix, DiffElement file, HashMap<String, DiffElement> files, ProgressIndicator indicator, boolean isRoot) {
     if (file.isContainer()) {
       indicator.setText2(file.getPath());
       String p = isRoot ? "" : prefix + file.getName() + "/";
       if (!isRoot) {
-        files.add(p);
+        files.put(p, file);
       }
-      for (DiffElement f : file.getChildren()) {
-        scan(p, f, files, indicator, false);
+      try {
+        for (DiffElement f : file.getChildren()) {
+          scan(p, f, files, indicator, false);
+        }
+      }
+      catch (IOException e) {
+        //TODO: error message
       }
     } else {
-      files.add(prefix + file.getName());
+      files.put(prefix + file.getName(), file);
     }
   }
 
@@ -166,7 +178,10 @@ public class DirDiffTableModel extends AbstractTableModel {
 
   @Override
   public int getColumnCount() {
-    return 7;
+    int count = 3;
+    if (mySettings.showDate) count += 2;
+    if (mySettings.showSize) count += 2;
+    return count;
   }
 
   @Nullable
@@ -176,25 +191,30 @@ public class DirDiffTableModel extends AbstractTableModel {
     if (element.isSeparator()) {
       return columnIndex == 0 ? element.getName() : null;
     }
-    switch (columnIndex) {
-      case 0: return element.getSourceName();
-      case 1: return element.getSourceSize();
-      case 2: return element.getSourceModificationDate();
-      case 3: return "";
-      case 4: return element.getTargetModificationDate();
-      case 5: return element.getTargetSize();
-      case 6: return element.getTargetName();
+
+    final String name = getColumnName(columnIndex);
+    boolean isSrc = columnIndex < getColumnCount() / 2;
+    if (name.equals(COLUMN_NAME)) {
+      return isSrc ? element.getSourceName() : element.getTargetName();
+    } else if (name.equals(COLUMN_SIZE)) {
+      return isSrc ? element.getSourceSize() : element.getTargetSize();
+    } else  if (name.equals(COLUMN_DATE)) {
+      return isSrc ? element.getSourceModificationDate() : element.getTargetModificationDate();
     }
-    return null;
+    return "";
   }
 
   @Override
   public String getColumnName(int column) {
+    final int count = (getColumnCount() - 1) / 2;
+    if (column == count) return "*";
+    if (column > count) {
+      column = getColumnCount() - 1 - column;
+    }
     switch (column) {
-      case 0: case 6: return "Name";
-      case 1: case 5: return "Size";
-      case 2: case 4: return "Date";
-      case 3: return "*";
+      case 0: return COLUMN_NAME;
+      case 1: return mySettings.showSize ? COLUMN_SIZE : COLUMN_DATE;
+      case 2: return COLUMN_DATE;
     }
     return "";
   }
@@ -204,34 +224,34 @@ public class DirDiffTableModel extends AbstractTableModel {
   }
 
   public boolean isShowEqual() {
-    return showEqual;
+    return mySettings.showEqual;
   }
 
   public void setShowEqual(boolean show) {
-    this.showEqual = show;
+    mySettings.showEqual = show;
   }
 
   public boolean isShowDifferent() {
-    return showDifferent;
+    return mySettings.showDifferent;
   }
 
   public void setShowDifferent(boolean show) {
-    this.showDifferent = show;
+    mySettings.showDifferent = show;
   }
 
   public boolean isShowNewOnSource() {
-    return showNewOnSource;
+    return mySettings.showNewOnSource;
   }
 
   public void setShowNewOnSource(boolean show) {
-    this.showNewOnSource = show;
+    mySettings.showNewOnSource = show;
   }
 
   public boolean isShowNewOnTarget() {
-    return showNewOnTarget;
+    return mySettings.showNewOnTarget;
   }
 
   public void setShowNewOnTarget(boolean show) {
-    this.showNewOnTarget = show;
+    mySettings.showNewOnTarget = show;
   }
 }

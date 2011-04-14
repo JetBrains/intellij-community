@@ -78,19 +78,20 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
       }
 
       final DirDiffOperation op = element.getOperation();
-      if (column == 3) {
+      if (column == (table.getColumnCount() - 1) / 2) {
         label.setIcon(op.getIcon());
         label.setHorizontalAlignment(CENTER);
         return label;
       } else {
-        label.setIcon(null);
+        label.setIcon(element.getIcon());
       }
 
       Color fg = isSelected ? UIUtil.getTableSelectionForeground() : getForegroundColor(op);
       label.setForeground(fg);
-      if (column == 2 || column == 4) {
+      final String name = table.getColumnName(column);
+      if (DirDiffTableModel.COLUMN_DATE.equals(name)) {
         label.setHorizontalAlignment(CENTER);
-      } else if (column == 1 || column == 5) {
+      } else if (DirDiffTableModel.COLUMN_SIZE.equals(name)) {
         label.setHorizontalAlignment(RIGHT);
         label.setText(label.getText() + "  ");
       } else {
