@@ -1,5 +1,6 @@
 package com.jetbrains.python.sdk;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -15,6 +16,8 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -31,18 +34,25 @@ import java.util.List;
 public class PythonSdkUpdater implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkUpdater");
 
+  public static final @NotNull Key<Boolean> SKELETONS_ALREADY_UPDATED_FLAG = new Key<Boolean>("SKELETONS_ALREADY_UPDATED_FLAG");
+
   public PythonSdkUpdater(final Project project, StartupManager startupManager) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode()) {
       return;
     }
     startupManager.registerStartupActivity(new Runnable() {
       public void run() {
-        long start_time = System.currentTimeMillis();
-        final Module[] modules = ModuleManager.getInstance(project).getModules();
-        if (modules.length > 0) {
-          updateSysPath(project, modules[0]);
+        final Boolean flag = application.getUserData(SKELETONS_ALREADY_UPDATED_FLAG);
+        if (flag == null || !flag) {
+          long start_time = System.currentTimeMillis();
+          final Module[] modules = ModuleManager.getInstance(project).getModules();
+          if (modules.length > 0) {
+            updateSysPath(project, modules[0]);
+          }
+          LOG.info("Refreshing skeletons took " + (System.currentTimeMillis() - start_time) + " ms");
         }
-        LOG.info("Refreshing skeletons took " + (System.currentTimeMillis() - start_time) + " ms");
+        application.putUserData(SKELETONS_ALREADY_UPDATED_FLAG, true);
       }
     });
   }
