@@ -31,6 +31,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -112,10 +113,10 @@ public class DeleteHandler {
     if (safeDeleteApplicable && !dumb) {
       DeleteDialog dialog = new DeleteDialog(project, elements, new DeleteDialog.Callback() {
         public void run(final DeleteDialog dialog) {
-          if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements))) return;
+          if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), true)) return;
           SafeDeleteProcessor.createInstance(project, new Runnable() {
             public void run() {
-              dialog.close(DeleteDialog.CANCEL_EXIT_CODE);
+              dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
             }
           }, elements, dialog.isSearchInComments(), dialog.isSearchInNonJava(), true).run();
         }
@@ -174,7 +175,7 @@ public class DeleteHandler {
               ArrayList<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
               getReadOnlyVirtualFiles(virtualFile, readOnlyFiles, ftManager);
 
-              if (readOnlyFiles.size() > 0) {
+              if (!readOnlyFiles.isEmpty()) {
                 int _result = Messages.showYesNoDialog(project, IdeBundle.message("prompt.directory.contains.read.only.files",
                                                                                   virtualFile.getPresentableUrl()),
                                                        IdeBundle.message("title.delete"), Messages.getQuestionIcon());

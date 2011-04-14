@@ -119,7 +119,7 @@ public class GenericInlineHandler {
       elements.add(element);
     }
 
-    if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, elements)) {
+    if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, elements, true)) {
       return true;
     }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {

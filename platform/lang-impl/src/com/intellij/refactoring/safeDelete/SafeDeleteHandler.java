@@ -96,7 +96,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
       ContainerUtil.addAll(fullElementsSet, temptoDelete);
     }
 
-    if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, fullElementsSet)) return;
+    if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, fullElementsSet, true)) return;
 
     final PsiElement[] elementsToDelete = PsiUtilBase.toPsiElementArray(fullElementsSet);
 
