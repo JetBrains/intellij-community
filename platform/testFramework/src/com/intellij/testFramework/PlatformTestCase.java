@@ -234,8 +234,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   protected void runStartupActivities() {
-    ((StartupManagerImpl)StartupManager.getInstance(myProject)).runStartupActivities();
-    ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
+    final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(myProject);
+    startupManager.runStartupActivities();
+    startupManager.startCacheUpdate();
+    startupManager.runPostStartupActivities();
   }
 
   protected File getIprFile() throws IOException {
@@ -448,6 +450,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     mm.projectOpened();
     setUpJdk();
     sm.runStartupActivities();
+    sm.startCacheUpdate();
     // extra init for libraries
     sm.runPostStartupActivities();
   }
