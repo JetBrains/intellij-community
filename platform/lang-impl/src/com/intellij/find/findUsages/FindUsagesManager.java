@@ -380,6 +380,14 @@ public class FindUsagesManager implements JDOMExternalizable {
               }
             });
             handler.processElementUsages(element, usageInfoProcessor, options);
+            for (CustomUsageSearcher searcher : Extensions.getExtensions(CustomUsageSearcher.EP_NAME)) {
+              try {
+                searcher.processElementUsages(element, processor, options);
+              }
+              catch (Exception e) {
+                LOG.error(e);
+              }
+            }
           }
 
           Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
