@@ -240,6 +240,7 @@
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.FocusInJavadoc" id="javadoc" order="before javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.UnfocusedComments" id="javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup" id="javaTrue" order="last"/>
+    <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings" id="javaSkipAutopopupInStrings"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.BasicToClassNameDelegator" id="basic2ClassName"
                             order="first, before javaMemberName, after xml"/>

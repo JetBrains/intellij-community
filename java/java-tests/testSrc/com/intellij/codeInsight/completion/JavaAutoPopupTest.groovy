@@ -717,4 +717,11 @@ class Foo {
 
   }
 
+  public void testNoWordCompletionAutoPopup() {
+    myFixture.configureByText "a.java", 'class Bar { void foo() { "f<caret>" }}'
+    type 'o'
+    assert !lookup
+  }
+
+
 }
