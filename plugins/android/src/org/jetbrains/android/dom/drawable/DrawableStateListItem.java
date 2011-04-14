@@ -25,7 +25,7 @@ import org.jetbrains.android.dom.resources.ResourceValue;
 /**
  * @author Eugene.Kudelevsky
  */
-public interface DrawableStateListItem extends DrawableStateListElement {
+public interface DrawableStateListItem extends DrawableDomElement {
   @Convert(ResourceReferenceConverter.class)
   @ResourceType("drawable")
   @Required

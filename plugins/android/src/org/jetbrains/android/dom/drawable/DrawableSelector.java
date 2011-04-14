@@ -23,6 +23,6 @@ import java.util.List;
  * @author Eugene.Kudelevsky
  */
 @DefinesXml
-public interface DrawableSelector extends DrawableStateListElement {
+public interface DrawableSelector extends DrawableDomElement {
   List<DrawableStateListItem> getItems();
 }
