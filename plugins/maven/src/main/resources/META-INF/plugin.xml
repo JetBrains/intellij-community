@@ -7,6 +7,7 @@
 
   <extensionPoints>
     <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter"/>
+    <extensionPoint name="additional.importing.settings" interface="org.jetbrains.idea.maven.project.AdditionalMavenImportingSettings"/>
     <extensionPoint name="archetypesProvider" interface="org.jetbrains.idea.maven.indices.MavenArchetypesProvider"/>
   </extensionPoints>
 
