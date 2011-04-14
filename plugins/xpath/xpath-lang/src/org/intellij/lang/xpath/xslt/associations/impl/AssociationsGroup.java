@@ -36,7 +36,7 @@ public class AssociationsGroup extends ActionGroup {
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
         if (!isEnabled(e)) return AnAction.EMPTY_ARRAY;
 
-        final Project project = getProject(e);
+        final Project project = getEventProject(e);
         if (project == null) return AnAction.EMPTY_ARRAY;
         final PsiFile psiFile = getPsiFile(e);
         if (psiFile == null) return AnAction.EMPTY_ARRAY;
@@ -69,7 +69,7 @@ public class AssociationsGroup extends ActionGroup {
         final PsiFile psiFile = getPsiFile(e);
         if (psiFile == null) return false;
         if (!XsltSupport.isXsltFile(psiFile)) return false;
-        final Project project = getProject(e);
+        final Project project = getEventProject(e);
         if (project == null) return false;
         return PsiManager.getInstance(project).isInProject(psiFile);
     }

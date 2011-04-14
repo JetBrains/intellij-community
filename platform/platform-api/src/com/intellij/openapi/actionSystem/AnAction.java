@@ -306,7 +306,7 @@ public abstract class AnAction {
   }
 
   @Nullable
-  public static Project getProject(AnActionEvent e) {
+  public static Project getEventProject(AnActionEvent e) {
     return e == null ? null : e.getData(PlatformDataKeys.PROJECT);
   }
 }

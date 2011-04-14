@@ -33,7 +33,7 @@ public abstract class LocalHistoryAction extends AnAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
     Presentation p = e.getPresentation();
-    if (getProject(e) == null) {
+    if (getEventProject(e) == null) {
       p.setVisible(false);
       p.setEnabled(false);
       return;
