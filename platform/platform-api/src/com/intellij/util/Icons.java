@@ -110,6 +110,9 @@ public abstract class Icons {
   public static final Icon SYNCHRONIZE_ICON = IconLoader.getIcon("/actions/sync.png");
 
   public static final Icon CHECK_ICON = IconLoader.getIcon("/actions/checked.png");
+  public static final Icon CHECK_ICON_SELECTED = IconLoader.getIcon("/actions/checked_selected.png");
+  public static final Icon CHECK_ICON_SMALL = IconLoader.getIcon("/actions/checked_small.png");
+  public static final Icon CHECK_ICON_SMALL_SELECTED = IconLoader.getIcon("/actions/checked_small_selected.png");
 
   public static final Icon OPEN_EDIT_DIALOG_ICON = IconLoader.getIcon("/actions/showViewer.png");
   public static final Icon FLATTEN_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/flattenPackages.png");

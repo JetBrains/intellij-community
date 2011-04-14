@@ -42,17 +42,31 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
   private Object myValue;
 
   private ListCellRenderer myRenderer = new DefaultListCellRenderer() {
-    private Icon myCheckIcon = Icons.CHECK_ICON;
-    private Icon myEmptyIcon = EmptyIcon.create(Icons.CHECK_ICON.getIconWidth());
+    public Icon myEmptyIcon;
+
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       final JLabel label = (JLabel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       if (value == myValue) {
-        label.setIcon(myCheckIcon);
+        label.setIcon(getIcon(isSelected));
       } else {
-        label.setIcon(myEmptyIcon);
+        label.setIcon(getEmptyIcon());
       }
       return label;
+    }
+
+    private Icon getEmptyIcon() {
+      if (myEmptyIcon == null) {
+        myEmptyIcon = EmptyIcon.create(getIcon(true).getIconWidth());
+      }
+      return myEmptyIcon;
+    }
+
+    private Icon getIcon(boolean selected) {
+      final boolean small = "small".equals(JBComboBoxTableCellEditorComponent.this.getClientProperty("JComponent.sizeVariant"));
+      return small
+             ? selected ? Icons.CHECK_ICON_SMALL_SELECTED : Icons.CHECK_ICON_SMALL
+             : selected ? Icons.CHECK_ICON_SELECTED : Icons.CHECK_ICON;
     }
   };
 

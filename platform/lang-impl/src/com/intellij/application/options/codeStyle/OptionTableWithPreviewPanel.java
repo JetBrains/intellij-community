@@ -621,6 +621,7 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
         }
       });
       myBooleanEditor.putClientProperty("JComponent.sizeVariant", "small");
+      myOptionsEditor.putClientProperty("JComponent.sizeVariant", "small");
     }
 
     public Object getCellEditorValue() {
