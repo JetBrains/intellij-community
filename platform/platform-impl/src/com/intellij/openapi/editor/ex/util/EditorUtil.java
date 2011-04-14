@@ -349,7 +349,7 @@ public class EditorUtil {
     return calcColumnNumber(editor, text, start, offset, getTabSize(editor));
   }
 
-  public static int calcColumnNumber(Editor editor, CharSequence text, int start, int offset, int tabSize) {
+  public static int calcColumnNumber(Editor editor, CharSequence text, final int start, final int offset, final int tabSize) {
     boolean useOptimization = true;
     if (editor != null) {
       SoftWrap softWrap = editor.getSoftWrapModel().getSoftWrap(start);
@@ -375,8 +375,8 @@ public class EditorUtil {
       for (int i = start; i < offset; i++) {
         char c = text.charAt(i);
         assert c != '\n' && c != '\r' :
-          String.format("Symbol: %c, its index: %d, given start: %d, given offset: %d, given tab size: %d, text: '%s'",
-                        c, i, start, offset, tabSize, text);
+          String.format("Symbol: %c, its index: %d, given start: %d, given offset: %d, given tab size: %d, document info: %s%ntext: '%s'",
+                        c, i, start, offset, tabSize, editor.getDocument(), text);
         if (c == '\t') {
           shift += getTabLength(i + shift - start, tabSize) - 1;
         }

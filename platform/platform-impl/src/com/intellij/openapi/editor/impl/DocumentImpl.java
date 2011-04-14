@@ -784,6 +784,16 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     }
   }
 
+  @Override
+  public String toString() {
+    StringBuilder buffer = new StringBuilder();
+    int linesNumber = getLineCount();
+    for (int i = 0; i < linesNumber; i++) {
+      buffer.append(i).append(": ").append(getLineStartOffset(i)).append("-").append(getLineEndOffset(i)).append("\n");
+    }
+    return super.toString();
+  }
+
   private static class MyCharArray extends CharArray {
     public MyCharArray() {
       super(0);
