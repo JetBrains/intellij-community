@@ -29,14 +29,12 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
-import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -53,6 +51,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import org.jetbrains.annotations.NotNull;
@@ -418,7 +417,7 @@ public class XDebugSessionImpl implements XDebugSession {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        mySessionTab.getUi().clearAttractionBy(LayoutViewOptions.BREAKPOINT_CONDITION);
+        mySessionTab.getUi().clearAttractionBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
       }
     });
     myDispatcher.getMulticaster().sessionResumed();
@@ -587,7 +586,7 @@ public class XDebugSessionImpl implements XDebugSession {
           showSessionTab();
         }
         mySessionTab.toFront();
-        mySessionTab.getUi().attractBy(LayoutViewOptions.BREAKPOINT_CONDITION);
+        mySessionTab.getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
       }
     });
     myDispatcher.getMulticaster().sessionPaused();

@@ -16,17 +16,15 @@
 
 package com.intellij.execution.ui.layout;
 
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface LayoutViewOptions {
 
   String STARTUP = "startup";
-  String BREAKPOINT_CONDITION = "breakpoint";
 
   @NotNull
   LayoutViewOptions setTopToolbar(@NotNull ActionGroup actions, @NotNull String place);

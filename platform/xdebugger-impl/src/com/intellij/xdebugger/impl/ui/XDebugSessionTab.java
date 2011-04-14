@@ -72,7 +72,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myUi = RunnerLayoutUi.Factory.getInstance(project).create("Debug", "unknown!", sessionName, this);
     myUi.getDefaults()
       .initTabDefaults(0, XDebuggerBundle.message("xdebugger.debugger.tab.title"), null)
-      .initFocusContent(DebuggerContentInfo.FRAME_CONTENT, LayoutViewOptions.BREAKPOINT_CONDITION)
+      .initFocusContent(DebuggerContentInfo.FRAME_CONTENT, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION)
       .initFocusContent(DebuggerContentInfo.CONSOLE_CONTENT, LayoutViewOptions.STARTUP, new LayoutAttractionPolicy.FocusOnce(false));
   }
 

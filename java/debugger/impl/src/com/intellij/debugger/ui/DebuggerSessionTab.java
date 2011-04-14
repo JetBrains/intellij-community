@@ -106,7 +106,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     myUi = RunnerLayoutUi.Factory.getInstance(project).create("JavaDebugger", XDebuggerBundle.message("xdebugger.default.content.title"), sessionName, this);
 
     myUi.getDefaults().initTabDefaults(0, XDebuggerBundle.message("xdebugger.debugger.tab.title"), null).
-        initFocusContent(DebuggerContentInfo.FRAME_CONTENT, LayoutViewOptions.BREAKPOINT_CONDITION).
+        initFocusContent(DebuggerContentInfo.FRAME_CONTENT, XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION).
         initFocusContent(DebuggerContentInfo.CONSOLE_CONTENT, LayoutViewOptions.STARTUP, new LayoutAttractionPolicy.FocusOnce(false));
 
     final DefaultActionGroup focus = new DefaultActionGroup();
@@ -478,9 +478,9 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
   private void attractFramesOnPause(final int event) {
     if (DebuggerSession.EVENT_PAUSE == event) {
-      myUi.attractBy(LayoutViewOptions.BREAKPOINT_CONDITION);
+      myUi.attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
     } else if (DebuggerSession.EVENT_RESUME == event) {
-      myUi.clearAttractionBy(LayoutViewOptions.BREAKPOINT_CONDITION);
+      myUi.clearAttractionBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
     }
   }
 
