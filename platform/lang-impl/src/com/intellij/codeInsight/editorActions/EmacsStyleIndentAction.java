@@ -18,6 +18,8 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
+import com.intellij.codeInsight.editorActions.emacs.EmacsProcessingHandler;
+import com.intellij.codeInsight.editorActions.emacs.LanguageEmacsExtension;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -55,6 +57,14 @@ public class EmacsStyleIndentAction extends BaseCodeInsightAction implements Dum
 
       if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
         return;
+      }
+
+      EmacsProcessingHandler emacsProcessingHandler = LanguageEmacsExtension.INSTANCE.forLanguage(file.getLanguage());
+      if (emacsProcessingHandler != null) {
+        EmacsProcessingHandler.Result result = emacsProcessingHandler.changeIndent(project, editor, file);
+        if (result == EmacsProcessingHandler.Result.STOP) {
+          return;
+        }
       }
 
       final Document document = editor.getDocument();

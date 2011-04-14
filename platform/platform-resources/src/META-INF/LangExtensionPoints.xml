@@ -200,6 +200,8 @@
   <extensionPoint name="favoriteNodeProvider"
                   interface="com.intellij.ide.favoritesTreeView.FavoriteNodeProvider"
                   area="IDEA_PROJECT"/>
+  
+  <extensionPoint name="lang.emacs" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
   <!-- File-Based Index-->
   <extensionPoint name="fileBasedIndex" interface="com.intellij.util.indexing.FileBasedIndexExtension"/>
