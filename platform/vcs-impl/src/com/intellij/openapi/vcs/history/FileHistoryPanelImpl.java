@@ -609,30 +609,40 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   }
 
 
-  private void showDifferences(Project project, VcsFileRevision revision1, VcsFileRevision revision2) {
-    VcsFileRevision left = revision1;
-    VcsFileRevision right = revision2;
-    if (VcsHistoryUtil.compare(revision1, revision2) > 0) {
-      left = revision2;
-      right = revision1;
-    }
-
-    try {
-      final String leftTitle = left.getRevisionNumber().asString() + (left instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
-      final String rightTitle = right.getRevisionNumber().asString() + (right instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
-      VcsHistoryUtil.showDiff(project, myFilePath, left, right, leftTitle, rightTitle);
-    } catch (final VcsException e) {
-      WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-        public void run() {
-          Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e.getLocalizedMessage()),
-                                   VcsBundle.message("message.title.show.differences"));
+  private void showDifferences(final Project project, final VcsFileRevision revision1, final VcsFileRevision revision2) {
+    new Task.Backgroundable(project, "Loading revisions to compare") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        VcsFileRevision left = revision1;
+        VcsFileRevision right = revision2;
+        if (VcsHistoryUtil.compare(revision1, revision2) > 0) {
+          left = revision2;
+          right = revision1;
         }
-      }, null, project);
-    } catch (IOException e) {
-      LOG.error(e);
-    } catch (ProcessCanceledException ex) {
-      LOG.info(ex);
-    }
+
+        try {
+          final String leftTitle = left.getRevisionNumber().asString() +
+                                   (left instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
+          final String rightTitle = right.getRevisionNumber().asString() +
+                                    (right instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
+          VcsHistoryUtil.showDiff(project, myFilePath, left, right, leftTitle, rightTitle);
+        }
+        catch (final VcsException e) {
+          WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+            public void run() {
+              Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e.getLocalizedMessage()),
+                                       VcsBundle.message("message.title.show.differences"));
+            }
+          }, null, project);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+        catch (ProcessCanceledException ex) {
+          LOG.info(ex);
+        }
+      }
+    }.queue();
   }
 
   protected JComponent createCenterPanel() {
