@@ -12,31 +12,39 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.project.Project;
 import com.intellij.vcsUtil.VcsUtil;
 import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.util.HgErrorUtil;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.List;
 
-final class HgCommandResultNotifier {
+public final class HgCommandResultNotifier {
 
-  private final Project project;
+  private final Project myProject;
 
-  HgCommandResultNotifier(Project project) {
-    this.project = project;
+  public HgCommandResultNotifier(Project project) {
+    myProject = project;
   }
 
-  public void process(HgCommandResult result) {
+  public void process(HgCommandResult result, @Nullable String successTitle, @Nullable String successDescription) {
     List<String> out = result.getOutputLines();
     List<String> err = result.getErrorLines();
     if (!out.isEmpty()) {
-      VcsUtil.showStatusMessage(project, out.get(out.size() - 1));
+      VcsUtil.showStatusMessage(myProject, out.get(out.size() - 1));
     }
     if (!err.isEmpty()) {
       VcsUtil.showErrorMessage(
-        project, "<html>" + StringUtils.join(err, "<br>") + "</html>", "Error"
+        myProject, "<html>" + StringUtils.join(err, "<br>") + "</html>", "Error"
       );
+    } else if (!HgErrorUtil.isAbort(result) && successTitle != null && successDescription != null) {
+      Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID, successTitle, successDescription, NotificationType.INFORMATION), myProject);
     }
   }
 

@@ -17,21 +17,30 @@ package org.jetbrains.android.compiler;
 
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.compiler.tools.AndroidApt;
+import org.jetbrains.android.dom.manifest.Application;
+import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -39,6 +48,10 @@ import java.util.Map;
  * @author Eugene.Kudelevsky
  */
 public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCompiler {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.compiler.AndroidResourcesPackagingCompiler");
+
+  public static final String RELEASE_SUFFIX = ".release";
+
   @NotNull
   @Override
   public ProcessingItem[] getProcessingItems(CompileContext context) {
@@ -65,7 +78,9 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
               context.addMessage(CompilerMessageCategory.WARNING, "Resource directory not found for module " + module.getName(),
                                  null, -1, -1);
             }
-            items.add(new MyItem(module, target, manifestFile, resourcesDirPaths, assetsDirPath, outputPath));
+
+            items.add(new MyItem(module, target, manifestFile, resourcesDirPaths, assetsDirPath, outputPath, false));
+            items.add(new MyItem(module, target, manifestFile, resourcesDirPaths, assetsDirPath, outputPath + RELEASE_SUFFIX, true));
           }
         }
       }
@@ -92,12 +107,32 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
         continue;
       }
 
+      if (!AndroidPackagingCompiler.shouldGenerateApk(item.myModule, context, item.myReleasePackage)) {
+        continue;
+      }
+
+      final VirtualFile preprocessedManifestFile;
+      try {
+        preprocessedManifestFile = item.myReleasePackage
+                                   ? item.myManifestFile
+                                   : copyManifestAndSetDebuggableToTrue(item.myModule, item.myManifestFile);
+      }
+      catch (IOException e) {
+        LOG.info(e);
+        context.addMessage(CompilerMessageCategory.ERROR, "Cannot preprocess AndroidManifest.xml for debug build",
+                           item.myManifestFile.getUrl(), -1, -1);
+        continue;
+      }
+
+      final Map<VirtualFile, VirtualFile> presentableFilesMap = Collections.singletonMap(item.myManifestFile, preprocessedManifestFile);
+
       try {
         Map<CompilerMessageCategory, List<String>> messages = AndroidApt.packageResources(item.myAndroidTarget,
-                                                                                          item.myManifestFile.getPath(),
-                                                                                          item.myResourceDirPaths, item.myAssetsDirPath,
+                                                                                          preprocessedManifestFile.getPath(),
+                                                                                          item.myResourceDirPaths,
+                                                                                          item.myAssetsDirPath,
                                                                                           item.myOutputPath);
-        AndroidCompileUtil.addMessages(context, messages);
+        AndroidCompileUtil.addMessages(context, messages, presentableFilesMap);
       }
       catch (final IOException e) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -112,6 +147,58 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
       }
     }
     return result.toArray(new ProcessingItem[result.size()]);
+  }
+
+  private static VirtualFile copyManifestAndSetDebuggableToTrue(@NotNull final Module module, @NotNull final VirtualFile manifestFile)
+    throws IOException {
+
+    final File dir = FileUtil.createTempDirectory("android_manifest_copy", "tmp");
+    final VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(dir);
+    if (vDir == null) {
+      throw new IOException("Cannot create temp directory for manifest copy");
+    }
+
+    final VirtualFile[] manifestFileCopy = new VirtualFile[1];
+
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              try {
+                manifestFileCopy[0] = manifestFile.copy(module.getProject(), vDir, manifestFile.getName());
+              }
+              catch (IOException e) {
+                LOG.info(e);
+                return;
+              }
+
+              if (manifestFileCopy[0] == null) {
+                return;
+              }
+
+              final Manifest manifestInCopy = AndroidUtils.loadDomElement(module, manifestFileCopy[0], Manifest.class);
+              if (manifestInCopy == null) {
+                return;
+              }
+
+              final Application applicationInCopy = manifestInCopy.getApplication();
+              if (applicationInCopy == null) {
+                return;
+              }
+              applicationInCopy.getDebuggable().setValue(Boolean.TRUE.toString());
+            }
+          });
+
+          ApplicationManager.getApplication().saveAll();
+        }
+      }, ModalityState.defaultModalityState());
+
+    if (manifestFileCopy[0] == null) {
+      throw new IOException("Cannot copy manifest file to " + vDir.getPath());
+    }
+    return manifestFileCopy[0];
   }
 
   @NotNull
@@ -139,13 +226,15 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     final String myOutputPath;
 
     private final boolean myFileExists;
+    private final boolean myReleasePackage;
 
     private MyItem(Module module,
                    IAndroidTarget androidTarget,
                    VirtualFile manifestFile,
                    String[] resourceDirPaths,
                    String assetsDirPath,
-                   String outputPath) {
+                   String outputPath,
+                   boolean releasePackage) {
       myModule = module;
       myAndroidTarget = androidTarget;
       myManifestFile = manifestFile;
@@ -153,6 +242,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
       myAssetsDirPath = assetsDirPath;
       myOutputPath = outputPath;
       myFileExists = new File(outputPath).exists();
+      myReleasePackage = releasePackage;
     }
 
     @NotNull
@@ -164,20 +254,23 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
 
     @Override
     public ValidityState getValidityState() {
-      return new MyValidityState(myModule, myFileExists);
+      return new MyValidityState(myModule, myFileExists, myReleasePackage);
     }
   }
 
   private static class MyValidityState extends ResourcesValidityState {
     private final boolean myOutputFileExists;
+    private final boolean myReleaseBuild;
 
-    public MyValidityState(Module module, boolean outputFileExists) {
+    public MyValidityState(Module module, boolean outputFileExists, boolean releaseBuild) {
       super(module);
       myOutputFileExists = outputFileExists;
+      myReleaseBuild = releaseBuild;
     }
 
     public MyValidityState(DataInput is) throws IOException {
       super(is);
+      myReleaseBuild = is.readBoolean();
       myOutputFileExists = true;
     }
 
@@ -186,10 +279,20 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
       if (!(otherState instanceof MyValidityState)) {
         return false;
       }
-      if (myOutputFileExists != ((MyValidityState)otherState).myOutputFileExists) {
+      final MyValidityState otherState1 = (MyValidityState)otherState;
+      if (myOutputFileExists != otherState1.myOutputFileExists) {
+        return false;
+      }
+      if (myReleaseBuild != otherState1.myReleaseBuild) {
         return false;
       }
       return super.equalsTo(otherState);
+    }
+
+    @Override
+    public void save(DataOutput os) throws IOException {
+      super.save(os);
+      os.writeBoolean(myReleaseBuild);
     }
   }
 }

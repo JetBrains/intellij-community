@@ -48,6 +48,8 @@ import java.util.*;
  */
 public class AndroidPackagingCompiler implements PackagingCompiler {
 
+  public static final String UNSIGNED_SUFFIX = ".unsigned";
+
   public void processOutdatedItem(CompileContext context, String url, @Nullable ValidityState state) {
   }
 
@@ -125,18 +127,35 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
                                  AndroidBundle.message("android.compilation.error.apk.path.not.specified", module.getName()), null, -1, -1);
               continue;
             }
-            AptPackagingItem item =
-              new AptPackagingItem(sdkPath, manifestFile, resPackagePath, outputPath, configuration.GENERATE_UNSIGNED_APK, module);
-            item.setNativeLibsFolders(collectNativeLibsFolders(facet));
-            item.setClassesDexPath(classesDexPath);
-            item.setSourceRoots(sourceRoots);
-            item.setExternalLibraries(externalJars);
-            items.add(item);
+            items.add(createItem(module, facet, manifestFile, sourceRoots, externalJars, resPackagePath, classesDexPath, sdkPath,
+                                 outputPath, false));
+
+            items.add(createItem(module, facet, manifestFile, sourceRoots, externalJars,
+                                 resPackagePath + AndroidResourcesPackagingCompiler.RELEASE_SUFFIX, classesDexPath, sdkPath,
+                                 outputPath + UNSIGNED_SUFFIX, true));
           }
         }
       }
     }
     return items.toArray(new ProcessingItem[items.size()]);
+  }
+
+  private static AptPackagingItem createItem(Module module,
+                                             AndroidFacet facet,
+                                             VirtualFile manifestFile,
+                                             VirtualFile[] sourceRoots,
+                                             VirtualFile[] externalJars,
+                                             String resPackagePath,
+                                             String classesDexPath,
+                                             String sdkPath,
+                                             String outputPath,
+                                             boolean unsigned) {
+    AptPackagingItem item = new AptPackagingItem(sdkPath, manifestFile, resPackagePath, outputPath, unsigned, module);
+    item.setNativeLibsFolders(collectNativeLibsFolders(facet));
+    item.setClassesDexPath(classesDexPath);
+    item.setSourceRoots(sourceRoots);
+    item.setExternalLibraries(externalJars);
+    return item;
   }
 
   @NotNull
@@ -179,11 +198,13 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
         continue;
       }
 
+      if (!shouldGenerateApk(item.myModule, context, item.isUnsigned())) {
+        continue;
+      }
+
       try {
-
-        String[] externalLibPaths = getPaths(item.getExternalLibraries());
-
-        final Map<CompilerMessageCategory, List<String>> apkuBuilderMessages = AndroidApkBuilder
+        final String[] externalLibPaths = getPaths(item.getExternalLibraries());
+        final Map<CompilerMessageCategory, List<String>> messages = AndroidApkBuilder
           .execute(item.mySdkPath,
                    item.getResPackagePath(),
                    item.getClassesDexPath(),
@@ -191,9 +212,8 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
                    externalLibPaths,
                    item.getNativeLibsFolders(),
                    item.getFinalPath(),
-                   item.isGenerateUnsignedApk());
-
-        AndroidCompileUtil.addMessages(context, apkuBuilderMessages);
+                   item.isUnsigned());
+        AndroidCompileUtil.addMessages(context, messages);
       }
       catch (final IOException e) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -208,6 +228,29 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
       }
     }
     return result.toArray(new ProcessingItem[result.size()]);
+  }
+
+  public static boolean shouldGenerateApk(Module module, CompileContext context, boolean unsigned) {
+    final boolean releaseBuild = AndroidCompileUtil.isReleaseBuild(context);
+
+    if (!unsigned) {
+      return !releaseBuild;
+    }
+
+    final AndroidFacet facet = AndroidFacet.getInstance(module);
+    if (facet == null) {
+      return true;
+    }
+
+    if (releaseBuild) {
+      return true;
+    }
+
+    if (facet.getConfiguration().GENERATE_UNSIGNED_APK) {
+      return true;
+    }
+
+    return false;
   }
 
   @NotNull
@@ -232,20 +275,20 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
     private VirtualFile[] myNativeLibsFolders;
     private VirtualFile[] mySourceRoots;
     private VirtualFile[] myExternalLibraries;
-    private final boolean myGenerateUnsignedApk;
+    private final boolean myUnsigned;
     private final Module myModule;
 
     private AptPackagingItem(String sdkPath,
                              @NotNull VirtualFile manifestFile,
                              @NotNull String resPackagePath,
                              @NotNull String finalPath,
-                             boolean generateUnsignedApk,
+                             boolean unsigned,
                              @NotNull Module module) {
       mySdkPath = sdkPath;
       myManifestFile = manifestFile;
       myResPackagePath = resPackagePath;
       myFinalPath = finalPath;
-      myGenerateUnsignedApk = generateUnsignedApk;
+      myUnsigned = unsigned;
       myModule = module;
     }
 
@@ -302,12 +345,12 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
 
     @Nullable
     public ValidityState getValidityState() {
-      return new MyValidityState(myManifestFile, myResPackagePath, myClassesDexPath, myFinalPath, myGenerateUnsignedApk, mySourceRoots,
+      return new MyValidityState(myManifestFile, myResPackagePath, myClassesDexPath, myFinalPath, myUnsigned, mySourceRoots,
                                  myExternalLibraries, myNativeLibsFolders);
     }
 
-    public boolean isGenerateUnsignedApk() {
-      return myGenerateUnsignedApk;
+    public boolean isUnsigned() {
+      return myUnsigned;
     }
   }
 

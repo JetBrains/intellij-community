@@ -64,7 +64,7 @@ public class HgMqRebaseAction extends HgAbstractGlobalAction {
         pullCommand.execute(new HgCommandResultHandler() {
           @Override
           public void process(@Nullable HgCommandResult result) {
-            new HgCommandResultNotifier(project).process(result);
+            new HgCommandResultNotifier(project).process(result, null, null);
 
             String currentBranch = new HgTagBranchCommand(project, repository).getCurrentBranch();
             if (StringUtils.isBlank(currentBranch)) {

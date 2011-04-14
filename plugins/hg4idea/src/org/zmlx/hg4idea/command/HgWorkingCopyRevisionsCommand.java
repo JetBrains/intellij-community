@@ -22,9 +22,10 @@ import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.util.HgChangesetUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -165,7 +166,7 @@ public class HgWorkingCopyRevisionsCommand {
                                               boolean silent) {
     final List<String> args = new LinkedList<String>();
     args.add("--template");
-    args.add("{rev}|{node|short}\\n");
+    args.add(HgChangesetUtil.makeTemplate("{rev}", "{node|short}"));
     if (revision != null) {
       args.add("-r");
       args.add(revision.getChangeset());
@@ -180,10 +181,10 @@ public class HgWorkingCopyRevisionsCommand {
     if (result == null) {
       return new ArrayList<HgRevisionNumber>(0);
     }
-    final List<String> lines = result.getOutputLines();
+    final List<String> lines = Arrays.asList(result.getRawOutput().split(HgChangesetUtil.CHANGESET_SEPARATOR));
     final List<HgRevisionNumber> revisions = new ArrayList<HgRevisionNumber>(lines.size());
     for(String line: lines) {
-      final String[] parts = StringUtils.split(line, '|');
+      final String[] parts = StringUtils.split(line, HgChangesetUtil.ITEM_SEPARATOR);
       revisions.add(HgRevisionNumber.getInstance(parts[0], parts[1]));
     }
     

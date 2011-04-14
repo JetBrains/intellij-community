@@ -66,25 +66,28 @@ public class PackageClassConverter extends ResolvingConverter<PsiClass> implemen
     if (s == null) return null;
     DomElement domElement = context.getInvocationElement();
     Manifest manifest = domElement.getParentOfType(Manifest.class, true);
-    if (manifest != null) {
-      s = s.replace('$', '.');
-      String packageName = manifest.getPackage().getValue();
-      String className;
+    s = s.replace('$', '.');
+    String packageName = manifest != null ? manifest.getPackage().getValue() : null;
+    String className = null;
+
+    if (packageName != null) {
       if (s.startsWith(".")) {
         className = packageName + s;
       }
       else {
         className = packageName + "." + s;
       }
-      JavaPsiFacade facade = JavaPsiFacade.getInstance(context.getPsiManager().getProject());
-      GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(context.getModule());
-      PsiClass psiClass = facade.findClass(className, scope);
-      if (psiClass == null) {
-        psiClass = facade.findClass(s, scope);
-      }
-      return psiClass;
     }
-    return null;
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(context.getPsiManager().getProject());
+    final Module module = context.getModule();
+    GlobalSearchScope scope = module != null
+                              ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)
+                              : context.getInvocationElement().getResolveScope();
+    PsiClass psiClass = className != null ? facade.findClass(className, scope) : null;
+    if (psiClass == null) {
+      psiClass = facade.findClass(s, scope);
+    }
+    return psiClass;
   }
 
   @NotNull
@@ -264,7 +267,9 @@ public class PackageClassConverter extends ResolvingConverter<PsiClass> implemen
       if (!myStartsWithPoint) {
         final PsiElement element = myIsPackage ?
                                    facade.findPackage(value) :
-                                   facade.findClass(value, myModule.getModuleWithDependenciesScope());
+                                   facade.findClass(value, myModule != null
+                                                           ? myModule.getModuleWithDependenciesScope()
+                                                           : myElement.getResolveScope());
 
         if (element != null) {
           return element;
@@ -275,7 +280,9 @@ public class PackageClassConverter extends ResolvingConverter<PsiClass> implemen
       if (relativeName != null) {
         return myIsPackage ?
                facade.findPackage(relativeName) :
-               facade.findClass(relativeName, myModule.getModuleWithDependenciesScope());
+               facade.findClass(relativeName, myModule != null
+                                              ? myModule.getModuleWithDependenciesScope()
+                                              : myElement.getResolveScope());
       }
       return null;
     }

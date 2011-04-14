@@ -21,14 +21,49 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
+import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.io.IOException;
 
 public class ProjectUtil {
   private ProjectUtil() {
   }
 
+  @Nullable
+  public static String getProjectLocationString(@NotNull final Project project) {
+    String projectPath = project.getLocation();
+    return getLocationRelativeToUserHome(projectPath);
+  }
+  
+  @Nullable
+  public static String getLocationRelativeToUserHome(final String path) {
+    if (path == null) return null;
+    
+    String _path = path;
+    
+    if ((SystemInfo.isLinux || SystemInfo.isMac)) {
+      final File projectDir = new File(path);
+      final File userHomeDir = new File(SystemProperties.getUserHome());
+      try {
+        if (FileUtil.isAncestor(userHomeDir, projectDir, true)) {
+          _path = "~/" + FileUtil.getRelativePath(userHomeDir, projectDir);
+        }
+      }
+      catch (IOException e) {
+        // nothing
+      }
+    }
+
+    return _path;
+  }
+  
   public static String calcRelativeToProjectPath(final VirtualFile file, final Project project) {
     if (file instanceof VirtualFilePathWrapper) {
       return ((VirtualFilePathWrapper)file).getPresentablePath();

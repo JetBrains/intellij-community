@@ -20,7 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.impl.CollectionsDelta;
+import com.intellij.util.PlusMinus;
 
 import java.util.Collection;
 import java.util.HashSet;

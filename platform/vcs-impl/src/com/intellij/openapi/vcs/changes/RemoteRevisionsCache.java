@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.update.UpdateFilesHelper;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.util.Consumer;
+import com.intellij.util.PlusMinus;
 import com.intellij.util.messages.Topic;
 
 import java.util.Collection;

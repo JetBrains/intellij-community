@@ -45,7 +45,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   private final ReferenceQueue<T> myReferenceQueue = new ReferenceQueue<T>();
   private int deadReferenceCount;
 
-  protected class IntervalNode extends Node<T> implements MutableInterval/*, Iterable<T>, Iterator<T>*/ {
+  protected class IntervalNode extends Node<T> implements MutableInterval {
     private volatile int myStart;
     private volatile int myEnd;
     private volatile boolean isValid = true;
@@ -181,11 +181,11 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       return myEnd;
     }
 
-    public IntervalTreeImpl getTree() {
+    public IntervalTreeImpl<T> getTree() {
       return IntervalTreeImpl.this;
     }
-
   }
+
   private void pushDeltaFromRoot(IntervalNode node) {
     if (normalized) return;
     if (node != null) {
@@ -437,7 +437,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     }
   }
 
-  public IntervalNode addInterval(@NotNull T interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
+  public IntervalTreeImpl<T>.IntervalNode addInterval(@NotNull T interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
     try {
       l.writeLock().lock();
       checkMax(true);
@@ -502,7 +502,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     int maxRightStart = r.second;
     if (!root.isValid()) {
       allValid.set(false);
-      if (assertInvalid) assert false : (T)root;
+      if (assertInvalid) assert false : root;
       return Trinity.create(Math.min(minLeftStart, minRightStart), Math.max(maxLeftStart, maxRightStart), Math.max(maxRightEnd, maxLeftEnd));
     }
     IntervalNode parent = root.getParent();

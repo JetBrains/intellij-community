@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Container and tracker of git branches information.
@@ -55,11 +56,13 @@ public class GitBranches implements GitReferenceListener {
   private final Object myCurrentBranchesLock = new Object();
   private ChangeListManager myChangeListManager;
   private GitVcs myVcs;
+  private final AtomicBoolean mySoleUseControl;
 
   public GitBranches(Project project, ChangeListManager changeListManager, ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myChangeListManager = changeListManager;
     myVcsManager = vcsManager;
+    mySoleUseControl = new AtomicBoolean(false);
   }
 
   public static GitBranches getInstance(Project project) {
@@ -121,8 +124,10 @@ public class GitBranches implements GitReferenceListener {
       return;
     }
 
-    final Task.Backgroundable task = new Task.Backgroundable(myProject, "") {
+    final Task.Backgroundable task = new Task.Backgroundable(myProject, "Git: refresh current branch") {
       @Override public void run(@NotNull ProgressIndicator indicator) {
+        assert ! mySoleUseControl.get();
+        mySoleUseControl.set(true);
         try {
           GitBranch currentBranch = GitBranch.current(myProject, root);
           synchronized (myCurrentBranchesLock) {
@@ -132,6 +137,8 @@ public class GitBranches implements GitReferenceListener {
         } catch (VcsException e) {
           LOG.info("Exception while trying to get current branch for root " + root, e);
           // doing nothing - null will be set to myCurrentBranchName
+        } finally {
+          mySoleUseControl.set(false);
         }
       }
     };
@@ -140,8 +147,11 @@ public class GitBranches implements GitReferenceListener {
 
   private void fullyUpdateBranchesInfo(final Collection<VirtualFile> roots) {
     if (roots == null) { return; }
-    final Task.Backgroundable task = new Task.Backgroundable(myProject, "") {
+    final Task.Backgroundable task = new Task.Backgroundable(myProject, "Git: refresh current branches") {
       @Override public void run(@NotNull ProgressIndicator indicator) {
+        assert ! mySoleUseControl.get();
+        mySoleUseControl.set(true);
+        try {
         Map<VirtualFile, GitBranch> currentBranches = new HashMap<VirtualFile, GitBranch>();
         for (VirtualFile root : roots) {
           try {
@@ -155,6 +165,9 @@ public class GitBranches implements GitReferenceListener {
         }
         synchronized (myCurrentBranchesLock) {
           myCurrentBranches = currentBranches;
+        }
+        } finally {
+          mySoleUseControl.set(false);
         }
       }
     };

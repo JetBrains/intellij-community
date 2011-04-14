@@ -17,6 +17,7 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
 
 /**
  * @author peter
@@ -24,7 +25,11 @@ import com.intellij.codeInsight.lookup.Lookup;
 public class LiveTemplateCharFilter extends CharFilter {
   @Override
   public Result acceptChar(char c, int prefixLength, Lookup lookup) {
-    if (lookup.getCurrentItem() instanceof LiveTemplateLookupElement && c != ' ') {
+    LookupElement item = lookup.getCurrentItem();
+    if (item instanceof LiveTemplateLookupElement) {
+      if (c == ((LiveTemplateLookupElement)item).getTemplate().getShortcutChar()) {
+        return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
+      }
       return Result.HIDE_LOOKUP;
     }
 

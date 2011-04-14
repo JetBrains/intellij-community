@@ -48,6 +48,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
   public static final Key<Boolean> JAVA_COMPLETION = Key.create("JAVA_COMPLETION");
 
   private boolean myStatic = false;
+  private PsiElement myDeclarationHolder = null;
   private final Set<Object> myResultNames = new THashSet<Object>();
   private final List<CompletionElement> myResults;
   private final PsiElement myElement;
@@ -182,6 +183,9 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     if(event == JavaScopeProcessorEvent.CHANGE_LEVEL){
       myMembersFlag = true;
     }
+    if (event == JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT) {
+      myDeclarationHolder = (PsiElement)associated;
+    }
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
@@ -242,7 +246,8 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     if (!myCheckAccess) return true;
     if (!(element instanceof PsiMember)) return true;
 
-    return JavaPsiFacade.getInstance(element.getProject()).getResolveHelper().isAccessible((PsiMember)element, myElement, myQualifierClass);
+    PsiMember member = (PsiMember)element;
+    return JavaPsiFacade.getInstance(element.getProject()).getResolveHelper().isAccessible(member, member.getModifierList(), myElement, myQualifierClass, myDeclarationHolder);
   }
 
   public void setCompletionElements(@NotNull Object[] elements) {

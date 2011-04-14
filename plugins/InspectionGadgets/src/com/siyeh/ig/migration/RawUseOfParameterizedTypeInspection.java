@@ -72,8 +72,8 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       return "unchecked";
     }
 
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
+    @Override
+    public BaseInspectionVisitor buildVisitor() {
         return new RawUseOfParameterizedTypeVisitor();
     }
 

@@ -150,10 +150,19 @@ public class FileStatusMap implements Disposable {
   }
 
   public void markAllFilesDirty() {
-    assert myAllowDirt;
+    assertAllowModifications();
     LOG.debug("********************************* Mark all dirty");
     synchronized (myDocumentToStatusMap) {
       myDocumentToStatusMap.clear();
+    }
+  }
+
+  private void assertAllowModifications() {
+    try {
+      assert myAllowDirt;
+    }
+    finally {
+      myAllowDirt = true; //give next test a chance
     }
   }
 
@@ -204,7 +213,7 @@ public class FileStatusMap implements Disposable {
   }
   
   public void markFileScopeDirty(@NotNull Document document, int passId) {
-    assert myAllowDirt;
+    assertAllowModifications();
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null){
@@ -226,7 +235,7 @@ public class FileStatusMap implements Disposable {
   }
 
   public void markFileScopeDirtyDefensively(@NotNull PsiFile file) {
-    assert myAllowDirt;
+    assertAllowModifications();
     if (LOG.isDebugEnabled()) {
       LOG.debug("********************************* Mark dirty file defensively: "+file.getName());
     }
@@ -242,7 +251,7 @@ public class FileStatusMap implements Disposable {
   }
 
   public void markFileScopeDirty(@NotNull Document document, @NotNull TextRange scope, int fileLength) {
-    assert myAllowDirt;
+    assertAllowModifications();
     if (LOG.isDebugEnabled()) {
       LOG.debug("********************************* Mark dirty: "+scope);
     }

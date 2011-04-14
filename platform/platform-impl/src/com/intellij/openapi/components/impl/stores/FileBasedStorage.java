@@ -96,7 +96,7 @@ public class FileBasedStorage extends XmlElementStorage {
       final Listener listener = messageBus.syncPublisher(STORAGE_TOPIC);
       virtualFileTracker.addTracker(fileUrl, new VirtualFileAdapter() {
         public void contentsChanged(final VirtualFileEvent event) {
-          listener.storageFileChanged(event, FileBasedStorage.this);
+          if (!isDisposed()) listener.storageFileChanged(event, FileBasedStorage.this);
         }
       }, false, this);
     }

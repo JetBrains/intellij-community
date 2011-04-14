@@ -32,6 +32,8 @@ public class KnownElementWeigher extends ProximityWeigher {
     if (element instanceof PsiClass) {
       @NonNls final String qname = ((PsiClass)element).getQualifiedName();
       if (qname != null) {
+        if (qname.startsWith("java.lang")) return 4;
+        if (qname.startsWith("java.util")) return 3;
         if (qname.startsWith("java.")) return 2;
         if (qname.startsWith("javax.")) return 1;
         if (qname.startsWith("com.")) return -1;

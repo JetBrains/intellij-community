@@ -151,13 +151,17 @@ public class SelfElementInfo implements SmartPointerElementInfo {
 
   public PsiElement restoreElement() {
     if (!mySyncMarkerIsValid) return null;
-    PsiFile file = restoreFileFromVirtual(myVirtualFile, myProject);
+    PsiFile file = restoreFile();
     if (file == null || !file.isValid()) return null;
 
     final int syncStartOffset = getSyncStartOffset();
     final int syncEndOffset = getSyncEndOffset();
 
     return findElementInside(file, syncStartOffset, syncEndOffset, myType);
+  }
+
+  protected PsiFile restoreFile() {
+    return restoreFileFromVirtual(myVirtualFile, myProject);
   }
 
   protected static PsiElement findElementInside(PsiFile file, int syncStartOffset, int syncEndOffset, Class type) {

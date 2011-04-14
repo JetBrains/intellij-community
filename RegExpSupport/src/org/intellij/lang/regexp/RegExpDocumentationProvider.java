@@ -16,7 +16,7 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.documentation.QuickDocumentationProvider;
+import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import org.intellij.lang.regexp.psi.RegExpElement;
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author vnikolaenko
  */
-public class RegExpDocumentationProvider extends QuickDocumentationProvider {
+public class RegExpDocumentationProvider extends AbstractDocumentationProvider {
   @Override
   @Nullable
   public String generateDoc(PsiElement element, PsiElement originalElement) {

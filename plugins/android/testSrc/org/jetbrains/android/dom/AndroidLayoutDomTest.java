@@ -22,6 +22,10 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
   public void setUp() throws Exception {
     super.setUp();
     myFixture.copyFileToProject(SdkConstants.FN_ANDROID_MANIFEST_XML, SdkConstants.FN_ANDROID_MANIFEST_XML);
+
+    // copy mock fragment, because it is not included to old android.jar
+    // todo: create normal mock Android sdk
+    copyFileToProject("Fragment.java", "src/android/app/Fragment.java");
   }
 
   @Override
@@ -204,6 +208,24 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
 
   public void testMerge() throws Throwable {
     doTestHighlighting("merge.xml");
+  }
+
+  public void testFragmentHighlighting() throws Throwable {
+    copyFileToProject("MyFragmentActivity.java", "src/p1/p2/MyFragmentActivity.java");
+    doTestHighlighting(getTestName(true) + ".xml");
+  }
+
+  public void testFragmentCompletion1() throws Throwable {
+    copyFileToProject("MyFragmentActivity.java", "src/p1/p2/MyFragmentActivity.java");
+    toTestCompletion(getTestName(true) + ".xml", getTestName(true) + "_after.xml");
+  }
+
+  public void testFragmentCompletion2() throws Throwable {
+    toTestCompletion(getTestName(true) + ".xml", getTestName(true) + "_after.xml");
+  }
+
+  public void testFragmentCompletion3() throws Throwable {
+    toTestCompletion(getTestName(true) + ".xml", getTestName(true) + "_after.xml");
   }
 
   /*public void testCustomAttrsPerformance() throws Throwable {

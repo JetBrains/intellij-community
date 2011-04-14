@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.jetbrains.android.dom.drawable;
 
 import org.jetbrains.android.dom.AndroidDomElement;
-import com.intellij.util.xml.DefinesXml;
 
 /**
  * Created by IntelliJ IDEA.
@@ -26,6 +25,5 @@ import com.intellij.util.xml.DefinesXml;
  * Time: 1:36:56 PM
  * To change this template use File | Settings | File Templates.
  */
-@DefinesXml
 public interface DrawableDomElement extends AndroidDomElement{
 }

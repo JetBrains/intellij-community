@@ -19,7 +19,7 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.lang.documentation.QuickDocumentationProvider;
+import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public class PropertiesDocumentationProvider extends QuickDocumentationProvider {
+public class PropertiesDocumentationProvider extends AbstractDocumentationProvider {
   @Nullable
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof Property) {

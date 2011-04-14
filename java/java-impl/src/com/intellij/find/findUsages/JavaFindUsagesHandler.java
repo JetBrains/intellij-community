@@ -117,13 +117,16 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
     for (int i = 0; i < overrides.length; i++) {
       overrides[i] = (PsiMethod)overrides[i].getNavigationElement();
     }
-    PsiElement[] elementsToSearch = new PsiElement[overrides.length + 1];
-    elementsToSearch[0] = parameter;
+    List<PsiElement> elementsToSearch = new ArrayList<PsiElement>(overrides.length + 1);
+    elementsToSearch.add(parameter);
     int idx = method.getParameterList().getParameterIndex(parameter);
-    for (int i = 0; i < overrides.length; i++) {
-      elementsToSearch[i + 1] = overrides[i].getParameterList().getParameters()[idx];
+    for (PsiMethod override : overrides) {
+      final PsiParameter[] parameters = override.getParameterList().getParameters();
+      if (idx < parameters.length) {
+        elementsToSearch.add(parameters[idx]);
+      }
     }
-    return elementsToSearch;
+    return elementsToSearch.toArray(new PsiElement[elementsToSearch.size()]);
   }
 
 

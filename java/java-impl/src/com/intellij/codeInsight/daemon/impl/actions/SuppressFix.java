@@ -20,7 +20,10 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.codeInspection.SuppressManager;
+import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -33,7 +36,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -133,14 +135,14 @@ public class SuppressFix extends SuppressIntentionAction {
                                            final PsiElement container,
                                            final PsiModifierListOwner modifierOwner,
                                            final String id) throws IncorrectOperationException {
-    PsiAnnotation annotation = AnnotationUtil.findAnnotation(modifierOwner, SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+    PsiAnnotation annotation = AnnotationUtil.findAnnotation(modifierOwner, SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
     final PsiAnnotation newAnnotation = createNewAnnotation(project, editor, container, annotation, id);
     if (newAnnotation != null) {
       if (annotation != null && annotation.isPhysical()) {
         annotation.replace(newAnnotation);
       } else {
         final PsiNameValuePair[] attributes = newAnnotation.getParameterList().getAttributes();
-        new AddAnnotationFix(SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME, modifierOwner, attributes).invoke(project, editor, container.getContainingFile());
+        new AddAnnotationFix(SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME, modifierOwner, attributes).invoke(project, editor, container.getContainingFile());
       }
     }
   }
@@ -156,8 +158,8 @@ public class SuppressFix extends SuppressIntentionAction {
         final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
         if (attributes.length == 1) {
           final String suppressedWarnings = attributes[0].getText();
-          return JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText("@" + SuppressManagerImpl
-            .SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "({" + suppressedWarnings + ", \"" + id + "\"})", container);
+          return JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText("@" +
+                                                                                                 SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "({" + suppressedWarnings + ", \"" + id + "\"})", container);
         }
       }
       else {
@@ -174,7 +176,7 @@ public class SuppressFix extends SuppressIntentionAction {
     }
     else {
       return JavaPsiFacade.getInstance(project).getElementFactory()
-        .createAnnotationFromText("@" + SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "({\"" + id + "\"})", container);
+        .createAnnotationFromText("@" + SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "({\"" + id + "\"})", container);
     }
     return null;
   }

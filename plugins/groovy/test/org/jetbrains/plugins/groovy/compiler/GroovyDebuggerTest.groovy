@@ -37,6 +37,13 @@ import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.debugger.engine.ContextUtil
+import com.intellij.debugger.SourcePosition
 
 /**
  * @author peter
@@ -136,9 +143,61 @@ println 2""")
     }
   }
 
-  private def addBreakpoint(String fileName, int line) {
+  public void testClassOutOfSourceRoots() {
+    def tempDir = new TempDirTestFixtureImpl()
     edt {
-      def file = myFixture.tempDirFixture.getFile(fileName)
+      tempDir.setUp()
+      disposeOnTearDown({ tempDir.tearDown() } as Disposable)
+      ApplicationManager.application.runWriteAction {
+        def model = ModuleRootManager.getInstance(myModule).modifiableModel
+        model.addContentEntry(tempDir.getFile(''))
+        model.commit()
+      }
+    }
+
+    VirtualFile myClass = null
+
+    def mcText = """
+package foo //1
+
+class MyClass { //3
+static def foo(def a) {
+  println a //5
+}
+}
+"""
+
+
+    edt {
+      myClass = tempDir.createFile("MyClass.groovy", mcText)
+    }
+
+    addBreakpoint(myClass, 5)
+
+    myFixture.addFileToProject("Foo.groovy", """
+def cl = new GroovyClassLoader()
+cl.parseClass('''$mcText''', 'MyClass.groovy').foo(2)
+    """)
+    make()
+
+    runDebugger 'Foo', {
+      waitForBreakpoint()
+      SourcePosition position = managed { ContextUtil.getSourcePosition(evaluationContext()) }
+      assert myClass == position.file.virtualFile
+      eval 'a', '2'
+    }
+  }
+
+  private def addBreakpoint(String fileName, int line) {
+    VirtualFile file = null
+    edt {
+      file = myFixture.tempDirFixture.getFile(fileName)
+    }
+    addBreakpoint(file, line)
+  }
+
+  private def addBreakpoint(VirtualFile file, int line) {
+    edt {
       DebuggerManagerImpl.getInstanceEx(project).breakpointManager.addLineBreakpoint(FileDocumentManager.instance.getDocument(file), line)
     }
   }
@@ -180,7 +239,6 @@ println 2""")
   }
 
   private String eval(final String codeText, String expected) throws EvaluateException {
-    final SuspendContextImpl suspendContext = debugProcess.suspendManager.pausedContext
 
     Semaphore semaphore = new Semaphore()
     semaphore.down()
@@ -189,15 +247,18 @@ println 2""")
     EvaluationContextImpl ctx
     def item = new WatchItemDescriptor(project, new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, codeText))
     managed {
-      ctx = new EvaluationContextImpl(suspendContext, suspendContext.frameProxy, suspendContext.frameProxy.thisObject())
+      ctx = evaluationContext()
       item.setContext(ctx)
       item.updateRepresentation(ctx, { semaphore.up() } as DescriptorLabelListener)
     }
-    semaphore.waitFor()
+    assert semaphore.waitFor(10000):  "too long evaluation: $item.label"
 
     String result = managed { DebuggerUtils.getValueAsString(ctx, item.value) }
     assert result == expected
   }
 
-
+  private EvaluationContextImpl evaluationContext() {
+    final SuspendContextImpl suspendContext = debugProcess.suspendManager.pausedContext
+    new EvaluationContextImpl(suspendContext, suspendContext.frameProxy, suspendContext.frameProxy.thisObject())
+  }
 }

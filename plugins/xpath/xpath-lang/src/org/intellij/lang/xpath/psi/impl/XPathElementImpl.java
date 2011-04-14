@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.impl.PsiTreeDebugBuilder;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.XPath2ElementTypes;
 import org.intellij.lang.xpath.XPathElementTypes;
@@ -127,6 +128,11 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     public XPathVersion getXPathVersion() {
       return getContainingFile().getXPathVersion();
     }
+
+  protected String unexpectedPsiAssertion() {
+    final PsiTreeDebugBuilder builder = new PsiTreeDebugBuilder();
+    return "Unexpected PSI structure: " + builder.psiToString(this) + "--\ninside: " + builder.psiToString(getContainingFile());
+  }
 
   @Override
   public final void accept(@NotNull PsiElementVisitor visitor) {

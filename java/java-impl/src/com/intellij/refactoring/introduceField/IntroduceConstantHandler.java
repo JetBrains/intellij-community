@@ -149,7 +149,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
     if (editor != null && editor.getSettings().isVariableInplaceRenameEnabled()) {
       new InplaceIntroduceConstantPopup(project, editor, parentClass, expr, localVariable, occurences, typeSelectorManager,
                                         anchorElement, anchorElementIfAll,
-                                        createOccurenceManager(expr, parentClass)).performInplaceIntroduce();
+                                        expr != null ? createOccurenceManager(expr, parentClass) : null).performInplaceIntroduce();
       return null;
     }
 

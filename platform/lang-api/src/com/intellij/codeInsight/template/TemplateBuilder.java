@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Shows a live template-like chooser UI over a PSI element and offers the user to replace certain sub-elements of the
@@ -34,9 +35,9 @@ public interface TemplateBuilder {
    * @param element the element to replace.
    * @param replacementText the initial value for the replacement.
    */
-  void replaceElement(PsiElement element, String replacementText);
+  void replaceElement(@NotNull PsiElement element, String replacementText);
 
-  void replaceElement(PsiElement element, TextRange rangeWithinElement, String replacementText);
+  void replaceElement(@NotNull PsiElement element, TextRange rangeWithinElement, String replacementText);
 
   /**
    * Creates a replacement box for the specified element with the specified expression.
@@ -44,9 +45,9 @@ public interface TemplateBuilder {
    * @param element the element to replace.
    * @param expression the replacement expression.
    */
-  void replaceElement(PsiElement element, Expression expression);
+  void replaceElement(@NotNull PsiElement element, Expression expression);
 
-  void replaceElement(PsiElement element, TextRange rangeWithinElement, Expression expression);
+  void replaceElement(@NotNull PsiElement element, TextRange rangeWithinElement, Expression expression);
 
   /**
    * Creates a replacement box for the specified text range within the container element.

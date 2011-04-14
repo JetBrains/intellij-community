@@ -46,6 +46,16 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     return apply(presentation, null);
   }
 
+  @Override
+  public void applyFrom(NodeDescriptor desc) {
+    if (desc instanceof PresentableNodeDescriptor) {
+      PresentableNodeDescriptor pnd = (PresentableNodeDescriptor)desc;
+      apply(pnd.getPresentation());
+    } else {
+      super.applyFrom(desc);
+    }
+  }
+
   protected final boolean apply(PresentationData presentation, @Nullable PresentationData before) {
     myOpenIcon = presentation.getIcon(true);
     myClosedIcon = presentation.getIcon(false);

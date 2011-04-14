@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static java.util.Arrays.asList;
@@ -174,36 +175,66 @@ public abstract class AbstractBlockWrapper {
     {
       childIndent = getIndent(options, child, targetBlockStartOffset);
     }
+    else if (child.getIndent().isEnforceIndentToChildren() && !child.getWhiteSpace().containsLineFeeds()) {
+      // Enforce indent if child doesn't start new line, e.g. prefer the code below:
+      //    void test() {
+      //        foo("test", new Runnable() {
+      //                public void run() {
+      //                }
+      //            },
+      //            new Runnable() {
+      //                public void run() {
+      //                }
+      //            }
+      //        );
+      //    }
+      // to this one:
+      //    void test() {
+      //        foo("test", new Runnable() {
+      //            public void run() {
+      //            }
+      //        },
+      //            new Runnable() {
+      //                public void run() {
+      //                }
+      //            }
+      //        );
+      //    }
+      AlignmentImpl alignment = child.getAlignment();
+      if (alignment != null) {
+        // Generally, we want to handle situation like the one below:
+        //   test("text", new Runnable() { 
+        //            @Override
+        //            public void run() {
+        //            }
+        //        },
+        //        new Runnable() {
+        //            @Override
+        //            public void run() {
+        //            }
+        //        }
+        //   );
+        // I.e. we want 'run()' method from the first anonymous class to be aligned with the 'run()' method of the second anonymous class.
+
+        AbstractBlockWrapper anchorBlock = alignment.getOffsetRespBlockBefore(child);
+        if (anchorBlock == null) {
+          anchorBlock = this;
+          if (anchorBlock instanceof CompositeBlockWrapper) {
+            List<AbstractBlockWrapper> children = ((CompositeBlockWrapper)anchorBlock).getChildren();
+            for (AbstractBlockWrapper c : children) {
+              if (c.getStartOffset() != getStartOffset()) {
+                anchorBlock = c;
+                break;
+              }
+            }
+          }
+        }
+        return anchorBlock.getNumberOfSymbolsBeforeBlock();
+      }
+      childIndent = getIndent(options, child, getStartOffset());
+    }
     else {
       childIndent = new IndentData(0);
-    }
-
-    // Enforce indent if child doesn't start new line, e.g. prefer the code below:
-    //    void test() {
-    //        foo("test", new Runnable() {
-    //                public void run() {
-    //                }
-    //            },
-    //            new Runnable() {
-    //                public void run() {
-    //                }
-    //            }
-    //        );
-    //    }
-    // to this one:
-    //    void test() {
-    //        foo("test", new Runnable() {
-    //            public void run() {
-    //            }
-    //        },
-    //            new Runnable() {
-    //                public void run() {
-    //                }
-    //            }
-    //        );
-    //    }
-    if (child.getIndent().isEnforceParentIndent() && !child.getWhiteSpace().containsLineFeeds()) {
-      childIndent = childIndent.add(getIndent(options, child, getStartOffset()));
     }
 
     // Use child indent if it's absolute and the child is contained on new line.
@@ -310,9 +341,7 @@ public abstract class AbstractBlockWrapper {
     if (childIndent == null) childIndent = (IndentImpl)Indent.getContinuationWithoutFirstIndent(indentOption.USE_RELATIVE_INDENTS);
 
     IndentData indent = getIndent(indentOption, index, childIndent);
-    if (myParent == null) {
-      return indent.add(getWhiteSpace());
-    } else if ((myFlags & CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT) != 0 && getWhiteSpace().containsLineFeeds()) {
+    if (myParent == null || (myFlags & CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT) != 0 && getWhiteSpace().containsLineFeeds()) {
       return indent.add(getWhiteSpace());
     }
     else {

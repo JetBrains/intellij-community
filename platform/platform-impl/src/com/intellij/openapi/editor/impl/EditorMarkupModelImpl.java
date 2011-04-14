@@ -187,11 +187,18 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
   private void getNearestHighlighters(MarkupModelEx markupModel, MouseEvent e, final double width, final Collection<RangeHighlighter> nearest) {
     if (0 > e.getX() || e.getX() >= width) return;
-    int startOffset = yPositionToOffset(e.getY()-getMinHeight(), true);
-    int endOffset = yPositionToOffset(e.getY()+getMinHeight(), false);
+    final int y = e.getY();
+    int startOffset = yPositionToOffset(y -getMinHeight(), true);
+    int endOffset = yPositionToOffset(y +getMinHeight(), false);
     markupModel.processHighlightsOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
       public boolean process(RangeHighlighterEx highlighter) {
-        if (highlighter.getErrorStripeMarkColor() != null) nearest.add(highlighter);
+        if (highlighter.getErrorStripeMarkColor() != null) {
+          ProperTextRange range = offsetToYPosition(highlighter.getStartOffset(), highlighter.getEndOffset());
+          if (range.getStartOffset() >= y - getMinHeight() * 2 &&
+            range.getEndOffset() <= y + getMinHeight() * 2) {
+            nearest.add(highlighter);
+          }
+        }
         return true;
       }
     });
@@ -797,6 +804,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     if (line < 0) return 0;
     if (line >= document.getLineCount()) return document.getTextLength();
 
-    return beginLine ? document.getLineStartOffset(line) : document.getLineEndOffset(line);
+    final FoldingModelEx foldingModel = myEditor.getFoldingModel();
+    if (beginLine) {
+      final int offset = document.getLineStartOffset(line);
+      final FoldRegion startCollapsed = foldingModel.getCollapsedRegionAtOffset(offset);
+      return startCollapsed != null ? Math.min(offset, startCollapsed.getStartOffset()) : offset;
+    }
+    else {
+      final int offset = document.getLineEndOffset(line);
+      final FoldRegion startCollapsed = foldingModel.getCollapsedRegionAtOffset(offset);
+      return startCollapsed != null ? Math.max(offset, startCollapsed.getEndOffset()) : offset;
+    }
   }
 }

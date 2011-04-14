@@ -54,7 +54,7 @@ public class HgPullAction extends HgAbstractGlobalAction {
         command.execute(new HgCommandResultHandler() {
           @Override
           public void process(@Nullable HgCommandResult result) {
-            new HgCommandResultNotifier(project).process(result);
+            new HgCommandResultNotifier(project).process(result, null, null);
           }
         });
       }

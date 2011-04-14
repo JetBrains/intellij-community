@@ -44,6 +44,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
@@ -135,6 +136,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
                 Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
                 String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
                 document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
+
+                // avoid documents piling up during batch processing
+                if (areTooManyDocumentsInTheQueue(myUnsavedDocuments)) {
+                  saveAllDocuments();
+                }
               }
             }
           );
@@ -146,6 +152,16 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     }
 
     return document;
+  }
+
+  public static boolean areTooManyDocumentsInTheQueue(Collection<Document> documents) {
+    if (documents.size() > 100) return true;
+    int totalSize = 0;
+    for (Document document : documents) {
+      totalSize += document.getTextLength();
+      if (totalSize > 10 * FileUtil.MEGABYTE) return true;
+    }
+    return false;
   }
 
   private static Document createDocument(final CharSequence text) {

@@ -15,22 +15,9 @@
  */
 package com.intellij.ide.diff;
 
-import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.SimpleDiffRequest;
-import com.intellij.openapi.diff.impl.DiffPanelImpl;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.IOException;
 
 /**
@@ -38,8 +25,6 @@ import java.io.IOException;
  */
 public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   private final VirtualFile myFile;
-  private Editor myEditor;
-  private DiffPanelImpl myDiffPanel;
 
   public VirtualFileDiffElement(@NotNull VirtualFile file) {
     myFile = file;
@@ -50,6 +35,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
     return myFile.getPath();
   }
 
+  @NotNull
   @Override
   public String getName() {
     return myFile.getName();
@@ -66,21 +52,9 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   }
 
   @Override
-  public FileType getFileType() {
-    return myFile.getFileType();
-  }
-
-  @Override
   public boolean isContainer() {
     return myFile.isDirectory();
   }
-
-  @Override
-  public DiffElement getParent() {
-    final VirtualFile parent = myFile.getParent();
-    return parent == null ? null : new VirtualFileDiffElement(parent);
-  }
-
   @Override
   public VirtualFileDiffElement[] getChildren() {
     final VirtualFile[] children = myFile.getChildren();
@@ -103,55 +77,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   }
 
   @Override
-  public boolean canCompareWith(DiffElement element) {
-    return element instanceof VirtualFileDiffElement;
-  }
-
-  @Override
-  public JComponent getViewComponent(Project project) {
-    disposeViewComponent();
-    final Document document = FileDocumentManager.getInstance().getDocument(myFile);
-    if (document != null) {
-      myEditor = EditorFactory.getInstance().createEditor(document, project, myFile, true);
-      myEditor.getSettings().setFoldingOutlineShown(false);
-      return myEditor.getComponent();
-    }
-    return null;
-  }
-
-  @Override
-  public JComponent getDiffComponent(DiffElement element, Project project, Window parentWindow) {
-    disposeDiffComponent();
-    if (element instanceof VirtualFileDiffElement) {
-      final VirtualFileDiffElement diffElement = (VirtualFileDiffElement)element;
-      final DiffRequest request = SimpleDiffRequest.compareFiles(myFile, diffElement.getValue(), project);
-      myDiffPanel = (DiffPanelImpl)DiffManager.getInstance().createDiffPanel(parentWindow, project);
-      myDiffPanel.setIsRequestFocus(false);
-      myDiffPanel.setDiffRequest(request);
-      return myDiffPanel.getComponent();
-    }
-
-    return null;
-  }
-
-  @Override
   public VirtualFile getValue() {
     return myFile;
-  }
-
-  @Override
-  public void disposeViewComponent() {
-    if (myEditor != null) {
-      EditorFactory.getInstance().releaseEditor(myEditor);
-      myEditor = null;
-    }
-  }
-
-  @Override
-  public void disposeDiffComponent() {
-    if (myDiffPanel != null) {
-      Disposer.dispose(myDiffPanel);
-      myDiffPanel = null;
-    }
   }
 }

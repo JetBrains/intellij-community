@@ -175,12 +175,15 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
       mainPanel.add(innerPanel, BorderLayout.SOUTH);
     }
 
-    final ContentEntry[] contentEntries = getModel().getContentEntries();
-    if (contentEntries.length > 0) {
-      for (final ContentEntry contentEntry : contentEntries) {
-        addContentEntryPanel(contentEntry.getUrl());
+    final ModifiableRootModel model = getModel();
+    if (model != null) {
+      final ContentEntry[] contentEntries = model.getContentEntries();
+      if (contentEntries.length > 0) {
+        for (final ContentEntry contentEntry : contentEntries) {
+          addContentEntryPanel(contentEntry.getUrl());
+        }
+        selectContentEntry(contentEntries[0].getUrl());
       }
-      selectContentEntry(contentEntries[0].getUrl());
     }
 
     return mainPanel;

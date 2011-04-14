@@ -151,6 +151,11 @@
     -->
 
     <intentionAction>
+      <className>com.siyeh.ipp.braces.AddArrayCreationExpressionIntention</className>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
       <className>com.siyeh.ipp.decls.SimplifyVariableIntention</className>
       <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>

@@ -16,7 +16,6 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 
@@ -88,7 +87,7 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
   }
 
   public void testShiftedChainedIfElse() throws Exception {
-    getSettings().BRACE_STYLE = CodeStyleSettings.NEXT_LINE_SHIFTED2;
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
     getSettings().ELSE_ON_NEW_LINE = true;
     getSettings().getIndentOptions(StdFileTypes.JAVA).INDENT_SIZE = 4;
     doMethodTest(
@@ -331,6 +330,98 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       "        }                                                \n" +
       ");                                                       "
     );
+    
+    doMethodTest(
+      "foo(1,\n" +
+      "2, new Runnable() {\n" +
+      "@Override\n" +
+      "public void run() {\n" +
+      "}\n" +
+      "});",
+      "foo(1,\n" +
+      "        2, new Runnable() {\n" +
+      "    @Override\n" +
+      "    public void run() {\n" +
+      "    }\n" +
+      "}); "
+    );
+    
+    doMethodTest(
+      "foo(new Runnable() {\n" +
+      "@Override\n" +
+      "public void run() {\n" +
+      "}\n" +
+      "},\n" +
+      "new Runnable() {\n" +
+      "@Override\n" +
+      "public void run() {\n" +
+      "}\n" +
+      "});",
+      "foo(new Runnable() {\n" +
+      "            @Override\n" +
+      "            public void run() {\n" +
+      "            }\n" +
+      "        },\n" +
+      "        new Runnable() {\n" +
+      "            @Override\n" +
+      "            public void run() {\n" +
+      "            }\n" +
+      "        }\n" +
+      ");"
+    );
+  }
+
+  public void testAnonymousClassInstancesAsAlignedMethodCallArguments() throws Exception {
+    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+
+    doMethodTest(
+      "foo(new Runnable() {\n" +
+      "@Override\n" +
+      "public void run() {\n" +
+      "}\n" +
+      "},\n" +
+      "new Runnable() {\n" +
+      "@Override\n" +
+      "public void run() {\n" +
+      "}\n" +
+      "});",
+      "foo(new Runnable() {\n" +
+      "        @Override\n" +
+      "        public void run() {\n" +
+      "        }\n" +
+      "    },\n" +
+      "    new Runnable() {\n" +
+      "        @Override\n" +
+      "        public void run() {\n" +
+      "        }\n" +
+      "    }\n" +
+      ");"
+    );
+
+    doMethodTest(
+      "foo(123456789, new Runnable() {\n" +
+      "@Override\n" +
+      "public void run() {\n" +
+      "}\n" +
+      "},\n" +
+      "new Runnable() {\n" +
+      "@Override\n" +
+      "public void run() {\n" +
+      "}\n" +
+      "});",
+      "foo(123456789, new Runnable() {\n" +
+      "        @Override\n" +
+      "        public void run() {\n" +
+      "        }\n" +
+      "    },\n" +
+      "    new Runnable() {\n" +
+      "        @Override\n" +
+      "        public void run() {\n" +
+      "        }\n" +
+      "    }\n" +
+      ");"
+    );
+
   }
   
   public void testPackagePrivateAnnotation() {

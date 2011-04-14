@@ -36,23 +36,23 @@ class PersistentRangeMarker extends RangeMarkerImpl {
 
   PersistentRangeMarker(DocumentEx document, int startOffset, int endOffset, boolean register) {
     super(document, startOffset, endOffset, register);
-    storeLinesAndCols();
+    storeLinesAndCols(null);
   }
 
-  private void storeLinesAndCols() {
+  private void storeLinesAndCols(DocumentEvent e) {
     // document might have been changed already
     if (getStartOffset() < myDocument.getTextLength()) {
       myStartLine = myDocument.getLineNumber(getStartOffset());
       myStartColumn = getStartOffset() - myDocument.getLineStartOffset(myStartLine);
       if (myStartColumn < 0) {
-        invalidate();
+        invalidate(e);
       }
     }
     if (getEndOffset() < myDocument.getTextLength()) {
       myEndLine = myDocument.getLineNumber(getEndOffset());
       myEndColumn = getEndOffset() - myDocument.getLineStartOffset(myEndLine);
       if (myEndColumn < 0) {
-        invalidate();
+        invalidate(e);
       }
     }
   }
@@ -63,7 +63,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
     if (PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, this)){
       myStartLine = event.translateLineViaDiffStrict(myStartLine);
       if (myStartLine < 0 || myStartLine >= getDocument().getLineCount()){
-        invalidate();
+        invalidate(e);
       }
       else{
         setIntervalStart(getDocument().getLineStartOffset(myStartLine) + myStartColumn);
@@ -71,7 +71,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
 
       myEndLine = event.translateLineViaDiffStrict(myEndLine);
       if (myEndLine < 0 || myEndLine >= getDocument().getLineCount()){
-        invalidate();
+        invalidate(e);
       }
       else{
         setIntervalEnd(getDocument().getLineStartOffset(myEndLine) + myEndColumn);
@@ -80,11 +80,11 @@ class PersistentRangeMarker extends RangeMarkerImpl {
     else {
       super.changedUpdateImpl(e);
       if (isValid()){
-        storeLinesAndCols();
+        storeLinesAndCols(e);
       }
     }
     if (getEndOffset() < getStartOffset() || getEndOffset() > getDocument().getTextLength()) {
-      invalidate();
+      invalidate(e);
     }
   }
 

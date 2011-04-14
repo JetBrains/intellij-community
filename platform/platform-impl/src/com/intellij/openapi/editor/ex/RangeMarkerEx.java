@@ -35,5 +35,5 @@ public interface RangeMarkerEx extends RangeMarker, MutableInterval, Segment {
   long getId();
 
   void trackInvalidation(boolean track);
-
+  boolean isTrackInvalidation();
 }

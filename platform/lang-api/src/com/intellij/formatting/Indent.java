@@ -58,7 +58,7 @@ import org.jetbrains.annotations.NotNull;
  * In contrast, it's possible to specify that direct parent block that starts on a line before target child block is used as an anchor.
  * Initial formatting example illustrates such approach.
  * <p/>
- * <b>Parent indent enforcing</b>
+ * <b>Enforcing indent to children</b>
  * <p/>
  * It's possible to configure indent to enforce parent block indent to its children that start new line. Consider the following situation:
  * <pre>
@@ -74,7 +74,7 @@ import org.jetbrains.annotations.NotNull;
  * </pre>
  * We want the first {@code 'new Runnable() {...}'} block here to be indented to the method expression list element. However, formatter
  * uses indents only if the block starts new line. Here the block doesn't start new line ({@code 'new Runnable() ...'}), hence
- * we need to define <code>'enforce parent indent'</code> flag in order to instruct formatter to apply parent indent to the sub-blocks.
+ * we need to define <code>'enforce indent to children'</code> flag in order to instruct formatter to apply parent indent to the sub-blocks.
  *
  * @see com.intellij.formatting.Block#getIndent()
  * @see com.intellij.formatting.ChildAttributes#getChildIndent() 
@@ -244,12 +244,12 @@ public abstract class Indent {
    * @param type                      indent type
    * @param relativeToDirectParent    flag the indicates if current indent object anchors direct block parent (feel free
    *                                  to get more information about that at class-level javadoc)
-   * @param enforceParentIndent       flag the indicates if current indent object should be enforced for multiline block children
+   * @param enforceIndentToChildren   flag the indicates if current indent object should be enforced for multiline block children
    *                                  (feel free to get more information about that at class-level javadoc)
    * @return                          newly created indent configured in accordance with the given arguments
    */
-  public static Indent getIndent(@NotNull Type type, boolean relativeToDirectParent, boolean enforceParentIndent) {
-    return myFactory.getIndent(type, relativeToDirectParent, enforceParentIndent);
+  public static Indent getIndent(@NotNull Type type, boolean relativeToDirectParent, boolean enforceIndentToChildren) {
+    return myFactory.getIndent(type, relativeToDirectParent, enforceIndentToChildren);
   }
 
   public static class Type {

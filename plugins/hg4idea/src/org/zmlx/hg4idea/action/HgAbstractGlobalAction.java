@@ -15,19 +15,14 @@ package org.zmlx.hg4idea.action;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgUtil;
-import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.execution.HgCommandException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
 
 abstract class HgAbstractGlobalAction extends AnAction {
 
@@ -41,13 +36,13 @@ abstract class HgAbstractGlobalAction extends AnAction {
       return;
     }
 
-    HgGlobalCommand command = getHgGlobalCommandBuilder(project).build(findRepos(project));
+    HgGlobalCommand command = getHgGlobalCommandBuilder(project).build(HgUtil.getHgRepositories(project));
     if (command == null) {
       return;
     }
     try {
       command.execute();
-      HgUtil.markDirectoryDirty(project,command.getRepo());
+      HgUtil.markDirectoryDirty(project, command.getRepo());
     } catch (HgCommandException e) {
       handleException(project, e);
     } catch (InvocationTargetException e) {
@@ -67,19 +62,7 @@ abstract class HgAbstractGlobalAction extends AnAction {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
-      return;
     }
-  }
-
-  private List<VirtualFile> findRepos(Project project) {
-    List<VirtualFile> repos = new LinkedList<VirtualFile>();
-    VcsRoot[] roots = ProjectLevelVcsManager.getInstance(project).getAllVcsRoots();
-    for (VcsRoot root : roots) {
-      if (HgVcs.VCS_NAME.equals(root.vcs.getName())) {
-        repos.add(root.path);
-      }
-    }
-    return repos;
   }
 
   protected interface HgGlobalCommand {

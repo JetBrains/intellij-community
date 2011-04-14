@@ -79,6 +79,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
   public void testAlreadyImportedClass() throws Exception { doTest(BASE_PATH+"/alreadyImportedClass/pack/AlreadyImportedClass.java", BASE_PATH+"/alreadyImportedClass", false, false); }
   public void testImportDefaultPackage() throws Exception { doTest(BASE_PATH+"/importDefaultPackage/x/Usage.java", BASE_PATH+"/importDefaultPackage", false, false); }
   public void testImportDefaultPackage2() throws Exception { doTest(BASE_PATH+"/importDefaultPackage/x/ImportOnDemandUsage.java", BASE_PATH+"/importDefaultPackage", false, false); }
+  public void testImportDefaultPackageInvalid() throws Exception { doTest(BASE_PATH+"/importDefaultPackage/x/InvalidUse.java", BASE_PATH+"/importDefaultPackage", false, false); }
 
   public void testScopeBased() throws Exception {
     NamedScope xScope = new NamedScope("xxx", new PatternPackageSet("x..*", PatternPackageSet.SCOPE_SOURCE, null));

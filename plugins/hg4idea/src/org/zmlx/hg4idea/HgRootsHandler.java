@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.ArrayList;
 import java.util.List;

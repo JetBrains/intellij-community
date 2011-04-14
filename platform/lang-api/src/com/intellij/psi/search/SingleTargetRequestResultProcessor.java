@@ -7,6 +7,8 @@ import com.intellij.psi.ReferenceRange;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author peter
  */
@@ -20,7 +22,9 @@ public final class SingleTargetRequestResultProcessor extends RequestResultProce
   }
 
   public boolean processTextOccurrence(PsiElement element, int offsetInElement, final Processor<PsiReference> consumer) {
-    for (PsiReference ref : ourReferenceService.getReferences(element, new PsiReferenceService.Hints(myTarget, offsetInElement))) {
+    final List<PsiReference> references = ourReferenceService.getReferences(element,
+                                                                            new PsiReferenceService.Hints(myTarget, offsetInElement));
+    for (PsiReference ref : references) {
       if (ReferenceRange.containsOffsetInElement(ref, offsetInElement)) {
         if (ref.isReferenceTo(myTarget)) {
           if (!consumer.process(ref)) {

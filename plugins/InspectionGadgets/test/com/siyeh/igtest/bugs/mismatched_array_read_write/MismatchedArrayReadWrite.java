@@ -85,4 +85,19 @@ class Test{
         array[0][1]++;
         System.out.println(array[0][1]);
     }
+
+    void foo1() {
+        final int[] barzoom = {};
+        barzoom[2] = 3;
+    }
+
+    void foo2() {
+        final int[] barzoom = new int[]{};
+        barzoom[2] = 3;
+    }
+
+    void foo3(Object[] otherArr) {
+        Object[] arr = otherArr.clone();
+        for (int i = 0; i < 10; i++) arr[i] = i;
+    }
 }

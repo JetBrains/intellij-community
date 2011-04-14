@@ -22,7 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.HgUtil;
+import org.zmlx.hg4idea.util.HgUtil;
+import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
@@ -33,12 +34,10 @@ import java.util.*;
 abstract class HgRevisionsCommand {
 
   private static final Logger LOG = Logger.getInstance(HgRevisionsCommand.class.getName());
-  private static final String SEPARATOR_STRING = "\u0017"; //ascii: end of transmission block
 
-  private static final String SHORT_TEMPLATE = "{rev}|{node|short}|{parents}|{date|isodatesec}|{author}|{branches}|{desc}" + SEPARATOR_STRING;
-  private static final int SHORT_ITEM_COUNT = 7;
-  private static final String LONG_TEMPLATE = "{rev}|{node|short}|{parents}|{date|isodatesec}|{author}|{branches}|{desc}|{file_adds}|{file_mods}|{file_dels}|{file_copies}" + SEPARATOR_STRING;
-  private static final int LONG_ITEM_COUNT = 11;
+  private static final String[] SHORT_TEMPLATE_ITEMS = { "{rev}","{node|short}", "{parents}", "{date|isodatesec}", "{author}", "{branches}", "{desc}" };
+  private static final String[] LONG_TEMPLATE_ITEMS =
+    { "{rev}", "{node|short}", "{parents}", "{date|isodatesec}", "{author}", "{branches}", "{desc}", "{file_adds}", "{file_mods}", "{file_dels}", "{file_copies}" };
 
   private static final int REVISION_INDEX = 0;
   private static final int CHANGESET_INDEX = 1;
@@ -73,8 +72,8 @@ abstract class HgRevisionsCommand {
 
     HgCommandExecutor hgCommandExecutor = new HgCommandExecutor(project);
 
-    String template = includeFiles ? LONG_TEMPLATE : SHORT_TEMPLATE;
-    int itemCount = includeFiles ? LONG_ITEM_COUNT : SHORT_ITEM_COUNT;
+    String template = HgChangesetUtil.makeTemplate(includeFiles ? LONG_TEMPLATE_ITEMS : SHORT_TEMPLATE_ITEMS);
+    int itemCount = includeFiles ? LONG_TEMPLATE_ITEMS.length : SHORT_TEMPLATE_ITEMS.length;
 
     FilePath originalFileName = HgUtil.getOriginalFileName(hgFile.toFilePath(), ChangeListManager.getInstance(project));
     HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);
@@ -84,10 +83,10 @@ abstract class HgRevisionsCommand {
 
     List<HgFileRevision> revisions = new LinkedList<HgFileRevision>();
     String output = result.getRawOutput();
-    String[] changeSets = output.split(SEPARATOR_STRING);
+    String[] changeSets = output.split(HgChangesetUtil.CHANGESET_SEPARATOR);
     for (String line : changeSets) {
       try {
-        String[] attributes = StringUtils.splitPreserveAllTokens(line, '|');
+        String[] attributes = line.split(HgChangesetUtil.ITEM_SEPARATOR);
         if (attributes.length != itemCount) {
           LOG.debug("Wrong format. Skipping line " + line);
           continue;

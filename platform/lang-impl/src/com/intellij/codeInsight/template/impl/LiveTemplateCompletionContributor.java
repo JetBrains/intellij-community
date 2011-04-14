@@ -45,7 +45,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         final int offset = parameters.getOffset();
         if (Registry.is("show.live.templates.in.completion")) {
           for (final TemplateImpl possible : listApplicableTemplates(file, offset)) {
-            result.addElement(new LiveTemplateLookupElement(possible.getKey(), possible));
+            result.addElement(new LiveTemplateLookupElement(possible));
           }
           return;
         }
@@ -53,7 +53,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         final String prefix = result.getPrefixMatcher().getPrefix();
         final TemplateImpl template = findApplicableTemplate(file, offset, prefix);
         if (template != null) {
-          result.addElement(new LiveTemplateLookupElement(prefix, template));
+          result.addElement(new LiveTemplateLookupElement(template));
         } else {
           for (final TemplateImpl possible : listApplicableTemplates(file, offset)) {
             result.restartCompletionOnPrefixChange(possible.getKey());

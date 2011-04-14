@@ -45,14 +45,13 @@ import java.util.*;
 public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, SVNURL> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnAuthenticationNotifier");
 
-  private static final String ourGroupId = "SubversionId";
   private final SvnVcs myVcs;
   private final RootsToWorkingCopies myRootsToWorkingCopies;
   private final Map<SVNURL, Boolean> myCopiesPassiveResults;
   private Timer myTimer;
 
   public SvnAuthenticationNotifier(final SvnVcs svnVcs) {
-    super(svnVcs.getProject(), ourGroupId, "Not Logged In to Subversion", NotificationType.ERROR);
+    super(svnVcs.getProject(), svnVcs.getDisplayName(), "Not Logged In to Subversion", NotificationType.ERROR);
     myVcs = svnVcs;
     myRootsToWorkingCopies = myVcs.getRootsToWorkingCopies();
     myCopiesPassiveResults = Collections.synchronizedMap(new HashMap<SVNURL, Boolean>());

@@ -63,7 +63,7 @@ public class AndroidDexCompilerSettingsFactory implements CompilerSettingsFactor
 
     @Override
     public String getHelpTopic() {
-      return null;
+      return "settings.android.dx.compiler";
     }
 
     @Override

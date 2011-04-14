@@ -218,7 +218,9 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
   private static void replaceElements(XmlTag tag, TemplateBuilder builder) {
     for (XmlAttribute attribute : tag.getAttributes()) {
       XmlAttributeValue value = attribute.getValueElement();
-      builder.replaceElement(value, TextRange.from(1, 0), new MacroCallNode(new CompleteMacro()));
+      if (value != null) {
+        builder.replaceElement(value, TextRange.from(1, 0), new MacroCallNode(new CompleteMacro()));
+      }
     }
     if ("<".equals(tag.getText())) {
       builder.replaceElement(tag, TextRange.from(1, 0), new MacroCallNode(new CompleteSmartMacro()));

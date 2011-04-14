@@ -114,7 +114,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
         try {
           Map<CompilerMessageCategory, List<String>> messages = AndroidApt
-            .compile(aptItem.myAndroidTarget, aptItem.myManifestPath, aptItem.mySourceRootPath, aptItem.myResourcesPaths,
+            .compile(aptItem.myAndroidTarget, aptItem.myManifestFile.getPath(), aptItem.mySourceRootPath, aptItem.myResourcesPaths,
                      aptItem.myAssetsPath, aptItem.myCustomPackage ? aptItem.myPackage : null
             );
           AndroidCompileUtil.addMessages(context, messages);
@@ -169,7 +169,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
   final static class AptGenerationItem implements GenerationItem {
     final Module myModule;
-    final String myManifestPath;
+    final VirtualFile myManifestFile;
     final String[] myResourcesPaths;
     final String myAssetsPath;
     final String mySourceRootPath;
@@ -179,7 +179,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     final boolean myCustomPackage;
 
     private AptGenerationItem(@NotNull Module module,
-                              @NotNull String manifestPath,
+                              @NotNull VirtualFile manifestFile,
                               @NotNull String[] resourcesPaths,
                               @Nullable String assetsPath,
                               @NotNull String sourceRootPath,
@@ -187,7 +187,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
                               @NotNull String aPackage,
                               boolean customPackage) {
       myModule = module;
-      myManifestPath = manifestPath;
+      myManifestFile = manifestFile;
       myResourcesPaths = resourcesPaths;
       myAssetsPath = assetsPath;
       mySourceRootPath = sourceRootPath;
@@ -290,12 +290,11 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
           AndroidCompileUtil.createSourceRootIfNotExist(sourceRootPath, module);
           String assetsDirPath = assetsDir != null ? assetsDir.getPath() : null;
 
-          String manifestPath = manifestFile.getPath();
-          items.add(new AptGenerationItem(module, manifestPath, resPaths, assetsDirPath, sourceRootPath, target,
+          items.add(new AptGenerationItem(module, manifestFile, resPaths, assetsDirPath, sourceRootPath, target,
                                         packageName, false));
 
           for (String libPackage : AndroidUtils.getDepLibsPackages(module)) {
-            items.add(new AptGenerationItem(module, manifestPath, resPaths, assetsDirPath, sourceRootPath, target,
+            items.add(new AptGenerationItem(module, manifestFile, resPaths, assetsDirPath, sourceRootPath, target,
                                             libPackage, true));
           }
         }

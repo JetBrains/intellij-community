@@ -482,10 +482,13 @@ public class AbstractTreeUi {
   @Nullable
   private static NodeDescriptor getDescriptorFrom(Object node) {
     if (node instanceof DefaultMutableTreeNode) {
-      return (NodeDescriptor)((DefaultMutableTreeNode)node).getUserObject();
-    } else {
-      return null;
+      Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+      if (userObject instanceof NodeDescriptor) {
+        return (NodeDescriptor)userObject;
+      }
     }
+
+    return null;
   }
 
   @Nullable
@@ -1014,7 +1017,7 @@ public class AbstractTreeUi {
     invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        if (row >= getTree().getVisibleRowCount()) return;
+        if (row >= getTree().getRowCount()) return;
 
         TreePath path = getTree().getPathForRow(row);
         if (path != null) {
@@ -2873,6 +2876,11 @@ public class AbstractTreeUi {
               if (parentNode.getUserObject() instanceof NodeDescriptor) {
                 final NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
                 childDesc.set(getTreeStructure().createDescriptor(elementFromMap, parentDescriptor));
+                NodeDescriptor oldDesc = getDescriptorFrom(childNode);
+                if (oldDesc != null) {
+                  childDesc.get().applyFrom(oldDesc);
+                }
+
                 childNode.setUserObject(childDesc.get());
                 newElement.set(elementFromMap);
                 forceRemapping.set(true);
@@ -3132,7 +3140,8 @@ public class AbstractTreeUi {
   }
 
   protected static boolean doUpdateNodeDescriptor(final NodeDescriptor descriptor) {
-    return descriptor.update();
+    boolean update = descriptor.update();
+    return update;
   }
 
   private void makeLoadingOrLeafIfNoChildren(final DefaultMutableTreeNode node) {

@@ -58,7 +58,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   public boolean canOpenProject(final VirtualFile file) {
-    return file.isDirectory() || ! file.getFileType().isBinary();
+    return file.isDirectory();
   }
 
   @Override

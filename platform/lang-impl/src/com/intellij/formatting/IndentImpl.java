@@ -24,18 +24,18 @@ class IndentImpl extends Indent {
 
   private final Type myType;
   private final int mySpaces;
-  private final boolean myEnforceParentIndent;
+  private final boolean myEnforceIndentToChildren;
 
   public IndentImpl(final Type type, boolean absolute, boolean relativeToDirectParent) {
     this(type, absolute, 0, relativeToDirectParent, false);
   }
 
-  public IndentImpl(final Type type, boolean absolute, final int spaces, boolean relativeToDirectParent, boolean enforceParentIndent) {
+  public IndentImpl(final Type type, boolean absolute, final int spaces, boolean relativeToDirectParent, boolean enforceIndentToChildren) {
     myType = type;
     myIsAbsolute = absolute;
     mySpaces = spaces;
     myRelativeToDirectParent = relativeToDirectParent;
-    myEnforceParentIndent = enforceParentIndent;
+    myEnforceIndentToChildren = enforceIndentToChildren;
   }
 
   Type getType() {
@@ -74,8 +74,8 @@ class IndentImpl extends Indent {
    * @return      <code>true</code> if current indent object is configured to enforce indent for sub-blocks of composite block
    *              that doesn't start new line; <code>false</code> otherwise
    */
-  public boolean isEnforceParentIndent() {
-    return myEnforceParentIndent;
+  public boolean isEnforceIndentToChildren() {
+    return myEnforceIndentToChildren;
   }
 
   @NonNls
@@ -86,6 +86,6 @@ class IndentImpl extends Indent {
     }
     return "<Indent: " + myType + (myIsAbsolute ? ":ABSOLUTE " : "") 
            + (myRelativeToDirectParent ? " relative to direct parent " : "")
-           + (myEnforceParentIndent ? " enforce parent indent" : "") + ">";
+           + (myEnforceIndentToChildren ? " enforce indent to children" : "") + ">";
   }
 }

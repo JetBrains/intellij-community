@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -630,7 +631,12 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     if (commitNecessary && ApplicationManager.getApplication().getCurrentWriteAction(ExternalChangeAction.class) != null){
       commitDocument(document);
     }
+    // avoid documents piling up during batch processing
+    if (FileDocumentManagerImpl.areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
+      commitAllDocuments();
+    }
   }
+
 
   private boolean isRelevant(FileViewProvider viewProvider) {
     VirtualFile virtualFile = viewProvider.getVirtualFile();

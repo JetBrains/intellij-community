@@ -28,14 +28,18 @@ public class LiveTemplateLookupElement extends LookupElement {
   private final String myPrefix;
   private final TemplateImpl myTemplate;
 
-  public LiveTemplateLookupElement(String prefix, TemplateImpl template) {
-    myPrefix = prefix;
+  public LiveTemplateLookupElement(TemplateImpl template) {
+    myPrefix = template.getKey();
     myTemplate = template;
   }
   @NotNull
   @Override
   public String getLookupString() {
     return myPrefix;
+  }
+
+  public TemplateImpl getTemplate() {
+    return myTemplate;
   }
 
   @Override

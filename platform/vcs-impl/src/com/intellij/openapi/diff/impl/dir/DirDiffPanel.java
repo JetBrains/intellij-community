@@ -37,7 +37,6 @@ import java.awt.event.KeyEvent;
  * @author Konstantin Bulenkov
  */
 public class DirDiffPanel {
-  public static final JBLabel CANT_OPEN_LABEL = new JBLabel("Can't open file content", SwingConstants.CENTER);
   private JPanel myDiffPanel;
   private JBTable myTable;
   private JPanel myComponent;
@@ -51,6 +50,7 @@ public class DirDiffPanel {
   private JComboBox myFileFilter;
   private JPanel myToolBarPanel;
   private final DirDiffTableModel myModel;
+  public JLabel myErrorLabel;
   private final DirDiffDialog myDialog;
   private JComponent myDiffPanelComponent;
   private JComponent myViewComponent;
@@ -96,13 +96,10 @@ public class DirDiffPanel {
             if (myViewComponent != null) {
               myCurrentElement = object;
               myDiffPanel.add(myViewComponent, BorderLayout.CENTER);
-            } else {
-              myDiffPanel.add(CANT_OPEN_LABEL, BorderLayout.CENTER);
-            }
-
-            if (myViewComponent != null) {
               myViewComponent.revalidate();
             } else {
+              myDiffPanel.add(getErrorLabel(), BorderLayout.CENTER);
+              myDiffPanel.revalidate();
               myDiffPanel.repaint();
             }
           }
@@ -142,6 +139,10 @@ public class DirDiffPanel {
     myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
   }
 
+  private JLabel getErrorLabel() {
+    return myErrorLabel == null ? myErrorLabel = new JLabel("Can't recognize file type", SwingConstants.CENTER) : myErrorLabel;
+  }
+
   private void clearDiffPanel() {
     if (myDiffPanelComponent != null) {
       myDiffPanel.remove(myDiffPanelComponent);
@@ -158,7 +159,7 @@ public class DirDiffPanel {
       }
     }
     myCurrentElement = null;
-    myDiffPanel.remove(CANT_OPEN_LABEL);
+    myDiffPanel.remove(getErrorLabel());
   }
 
   private void createUIComponents() {
@@ -170,10 +171,6 @@ public class DirDiffPanel {
 
   public JBTable getTable() {
     return myTable;
-  }
-
-  public JSplitPane getSplitPanel() {
-    return mySplitPanel;
   }
 
   public void dispose() {

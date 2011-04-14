@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.InplaceButton;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
@@ -78,6 +79,8 @@ public class TabLabel extends JPanel {
     addMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
         if (myTabs.isSelectionClick(e, false) && myInfo.isEnabled()) {
+          Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
+          if (c instanceof InplaceButton) return;
           myTabs.select(info, true);
         }
         else {

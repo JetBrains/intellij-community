@@ -19,7 +19,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +32,6 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   protected final DocumentEx myDocument;
   RangeMarkerTree.RMNode myNode;
-  private boolean myTrackInvalidation;
 
   private final long myId;
   //private static long counter;
@@ -91,8 +92,21 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return intervalEnd() + (node == null ? 0 : node.computeDeltaUpToRoot());
   }
 
-  public void invalidate() {
+  public void invalidate(final DocumentEvent e) {
     setValid(false);
+    RangeMarkerTree<RangeMarkerEx>.RMNode node = myNode;
+
+    if (node != null) {
+      node.processAliveKeys(new Processor<RangeMarkerEx>() {
+        @Override
+        public boolean process(RangeMarkerEx markerEx) {
+          if (markerEx.isTrackInvalidation()) {
+            LOG.error("Range marker invalidated: "+markerEx +"; say thanks to the "+e);
+          }
+          return true;
+        }
+      });
+    }
   }
 
   @NotNull
@@ -133,7 +147,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     if (intervalStart() > intervalEnd() || intervalStart() < 0 || intervalEnd() > docLength - e.getNewLength() + e.getOldLength()) {
       LOG.error("RangeMarker" + (isGreedyToLeft() ? "[" : "(") + oldStart + ", " + oldEnd + (isGreedyToRight() ? "]" : ")") +
                 " is invalid before update. Event = " + e + ". Doc length=" + docLength + "; "+getClass());
-      invalidate();
+      invalidate(e);
       return;
     }
     changedUpdateImpl(e);
@@ -143,7 +157,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
                 "old doc length=" + docLength + "; real doc length = "+myDocument.getTextLength()+
                 "; "+getClass()+"." +
                 " Before update: '"+markerBefore+"'; After update: '"+this+"'");
-      invalidate();
+      invalidate(e);
     }
   }
 
@@ -192,7 +206,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       return;
     }
 
-    invalidate();
+    invalidate(e);
   }
 
   private void processIfOnePoint(DocumentEvent e) {
@@ -200,7 +214,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     int oldLength = e.getOldLength();
     int oldEnd = offset + oldLength;
     if (offset < intervalStart() && intervalStart() < oldEnd) {
-      invalidate();
+      invalidate(e);
       return;
     }
 
@@ -237,17 +251,17 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return node != null && node.isValid();
   }
 
+  private static final Key<Boolean> TRACK_INVALIDATION_KEY = new Key<Boolean>("TRACK_INVALIDATION_KEY");
   @Override
   public void trackInvalidation(boolean track) {
-    myTrackInvalidation = track;
+    putUserData(TRACK_INVALIDATION_KEY, track ? Boolean.TRUE : null);
+  }
+  public boolean isTrackInvalidation() {
+    return getUserData(TRACK_INVALIDATION_KEY) == Boolean.TRUE;
   }
 
   @Override
   public boolean setValid(boolean value) {
-    if (!value && myTrackInvalidation) {
-      LOG.error("Range marker invalidated");
-    }
-
     RangeMarkerTree.RMNode node = myNode;
     return node == null || node.setValid(value);
   }

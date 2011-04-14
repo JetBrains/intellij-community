@@ -287,19 +287,28 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
   @Override
   public Collection<RunnerAndConfigurationSettings> getSortedConfigurations() {
-    if (!myOrdered && !myOrder.isEmpty()) { //compatibility
+    if (!myOrdered) { //compatibility
       final HashMap<String, RunnerAndConfigurationSettings> settings =
-          new HashMap<String, RunnerAndConfigurationSettings>(myConfigurations); //sort shared and local configurations
+        new HashMap<String, RunnerAndConfigurationSettings>(myConfigurations); //sort shared and local configurations
       myConfigurations.clear();
+
       final List<String> order = new ArrayList<String>(settings.keySet());
-      Collections.sort(order, new Comparator<String>() {
-        public int compare(final String o1, final String o2) {
-          return myOrder.indexOf(o1) - myOrder.indexOf(o2);
-        }
-      });
-      for (String configName : order) {
+      if (myOrder.isEmpty()) {
+        // IDEA-63663 Sort run configurations alphabetically if clean checkout 
+        Collections.sort(order);
+      }
+      else {
+        Collections.sort(order, new Comparator<String>() {
+          public int compare(final String o1, final String o2) {
+            return myOrder.indexOf(o1) - myOrder.indexOf(o2);
+          }
+        });
+      }
+
+      for (final String configName : order) {
         myConfigurations.put(configName, settings.get(configName));
       }
+
       myOrdered = true;
     }
     return myConfigurations.values();

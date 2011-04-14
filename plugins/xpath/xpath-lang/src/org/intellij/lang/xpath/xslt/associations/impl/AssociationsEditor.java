@@ -10,19 +10,22 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.uiDesigner.core.GridConstraints;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,7 +37,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 class AssociationsEditor {
@@ -51,7 +55,7 @@ class AssociationsEditor {
     private final TransactionalManager myManager;
     private final ProjectTreeBuilder myBuilder;
 
-    public AssociationsEditor(final Project project, TreeState oldState) {
+    public AssociationsEditor(final Project project, final TreeState oldState) {
         myManager = ((FileAssociationsManagerImpl)FileAssociationsManager.getInstance(project)).getTempManager();
 
         final DefaultActionGroup group = new DefaultActionGroup();
@@ -62,16 +66,29 @@ class AssociationsEditor {
         myToolbar.add(toolbar.getComponent(), new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null));
 
         final DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode());
+        myTree.setModel(treeModel);
+
         myBuilder = new ProjectTreeBuilder(project, myTree, treeModel, new MyGroupByTypeComparator(), new MyProjectStructure(project));
 
-        myTree.setModel(treeModel);
+        myTree.expandRow(0);
         myTree.setCellRenderer(new MyNodeRenderer(myManager));
+        new TreeSpeedSearch(myTree);
 
-        if (oldState == null) {
-            expandTree(treeModel, project, myBuilder);
-        } else {
-            oldState.applyTo(myTree);
-        }
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                if (oldState == null) {
+                  expandTree(treeModel);
+                } else {
+                  oldState.applyTo(myTree);
+                }
+              }
+            });
+          }
+        });
 
         myListModel = new AssociationsModel(myTree, myManager);
         myListModel.addListDataListener(new ListDataListener() {
@@ -103,25 +120,20 @@ class AssociationsEditor {
         myList.getEmptyText().setText("No associated files");
     }
 
-    private void expandTree(DefaultTreeModel newModel, Project project, ProjectTreeBuilder builder) {
-        final TreePath rootPath = new TreePath(newModel.getRoot());
-        myTree.setSelectionPath(rootPath);
+    private void expandTree(DefaultTreeModel newModel) {
+      final TreePath rootPath = new TreePath(newModel.getRoot());
 
-        final PsiManager psiManager = PsiManager.getInstance(project);
-        final Set<VirtualFile> files = myManager.getAssociations().keySet();
-        if (files.size() > 0) {
-            for (VirtualFile file : files) {
-                builder.select(psiManager.findFile(file), file, true);
-            }
-        } else {
-            final Enumeration<?> enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).children();
-            while (enumeration.hasMoreElements()) {
-                DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
-                myTree.expandPath(new TreePath(node.getPath()));
-            }
+      final Object element = myBuilder.getTreeStructure().getRootElement();
+      myBuilder.batch(new Progressive() {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          myBuilder.expand(element, null);
+          myBuilder.expand(myBuilder.getTreeStructure().getChildElements(element), null);
         }
-        myTree.setSelectionPath(rootPath);
-        myTree.scrollRectToVisible(new Rectangle(new Point(0, 0)));
+      });
+
+      myTree.setSelectionPath(rootPath);
+      myTree.scrollRectToVisible(new Rectangle(new Point(0, 0)));
     }
 
     public TreeState getState() {
@@ -169,8 +181,13 @@ class AssociationsEditor {
         myManager.dispose();
     }
 
-    public void select(PsiFile file) {
-        myBuilder.select(file, file.getVirtualFile(), true);
+    public void select(final PsiFile file) {
+      myBuilder.getReady(this).doWhenDone(new Runnable() {
+        @Override
+        public void run() {
+          myBuilder.select(file, file.getVirtualFile(), true);
+        }
+      });
     }
 
     class AddAssociationActionWrapper extends AddAssociationAction {

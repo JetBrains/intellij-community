@@ -552,6 +552,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         }
         m_inspectionClasses.add(MismatchedArrayReadWriteInspection.class);
         m_inspectionClasses.add(MismatchedCollectionQueryUpdateInspection.class);
+        m_inspectionClasses.add(MismatchedStringBuilderQueryUpdateInspection.class);
         m_inspectionClasses.add(MisspelledCompareToInspection.class);
         m_inspectionClasses.add(MisspelledHashcodeInspection.class);
         m_inspectionClasses.add(MisspelledEqualsInspection.class);
@@ -633,6 +634,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         m_inspectionClasses.add(ForCanBeForeachInspection.class);
         m_inspectionClasses.add(IfCanBeSwitchInspection.class);
         m_inspectionClasses.add(IndexOfReplaceableByContainsInspection.class);
+        m_inspectionClasses.add(MethodCanBeVariableArityMethodInspection.class);
         m_inspectionClasses.add(RawUseOfParameterizedTypeInspection.class);
         m_inspectionClasses.add(StringBufferReplaceableByStringBuilderInspection.class);
         m_inspectionClasses.add(TryFinallyCanBeTryWithResourcesInspection.class);

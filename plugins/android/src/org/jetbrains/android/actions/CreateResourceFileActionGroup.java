@@ -33,6 +33,7 @@ public class CreateResourceFileActionGroup extends DefaultActionGroup {
     CreateResourceFileAction a = new CreateResourceFileAction();
     a.add(new CreateTypedResourceFileAction("Layout", "layout", "LinearLayout"));
     a.add(new CreateTypedResourceFileAction("XML", "xml", "PreferenceScreen"));
+    a.add(new CreateTypedResourceFileAction("Drawable", "drawable", "selector"));
     a.add(new CreateTypedResourceFileAction("Values", "values", "resources", true, false));
     a.add(new CreateTypedResourceFileAction("Menu", "menu", "menu", false, false));
     a.add(new CreateTypedResourceFileAction("Animation", "anim", "set"));

@@ -486,7 +486,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     ExtensionPoint<ApplicationLoadListener> point = Extensions.getRootArea().getExtensionPoint("com.intellij.ApplicationLoadListener");
     final ApplicationLoadListener[] objects = point.getExtensions();
     for (ApplicationLoadListener object : objects) {
-      object.beforeApplicationLoaded(this);
+      try {
+        object.beforeApplicationLoaded(this);
+      }
+      catch(Exception e) {
+        LOG.error(e);
+      }
     }
   }
 

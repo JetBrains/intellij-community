@@ -59,6 +59,9 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <dom.fileDescription implementation="org.jetbrains.android.dom.drawable.DrawableStateListDomFileDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.android.dom.color.ColorDomFileDescription"/>
+
     <dom.fileDescription implementation="org.jetbrains.android.dom.manifest.ManifestDomFileDescription"/>
     <dom.fileDescription implementation="org.jetbrains.android.dom.drawable.DrawableDomFileDescription"/>
     <dom.fileDescription implementation="org.jetbrains.android.dom.layout.LayoutDomFileDescription"/>

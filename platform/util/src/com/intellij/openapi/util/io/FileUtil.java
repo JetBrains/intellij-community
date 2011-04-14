@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,7 +120,7 @@ public class FileUtil {
    * @param strict   if {@code false} then this method returns {@code true} if {@code ancestor}
    *                 and {@code file} are equal
    * @return {@code true} if {@code ancestor} is parent of {@code file}; {@code false} otherwise
-   * @throws IOException this exception is never thrown and left here for backward compatibilty 
+   * @throws IOException this exception is never thrown and left here for backward compatibilty
    */
   public static boolean isAncestor(@NotNull File ancestor, @NotNull File file, boolean strict) throws IOException {
     File parent = strict ? getParentFile(file) : file;
@@ -902,7 +902,7 @@ public class FileUtil {
 
   /**
    * Has duplicate: {@link com.intellij.coverage.listeners.CoverageListener#sanitize(java.lang.String, java.lang.String)}
-   * as FileUtil is not available in client's vm 
+   * as FileUtil is not available in client's vm
    */
   @NotNull
   public static String sanitizeFileName(@NotNull String name) {
@@ -1015,5 +1015,52 @@ public class FileUtil {
       }
     }
     return found;
+  }
+
+  /**
+   * Returns empty string for empty path.
+   * First checks whether provided path is a path of a file with sought-for name.
+   * Unless found, checks if provided file was a directory. In this case checks existance
+   * of child files with given names in order "as provided". Finally checks filename among
+   * brother-files of provided. Returns null if nothing found.
+   *
+   * @return path of the first of found files or empty string or null.
+   */
+  @Nullable
+  public static String findFileInProvidedPath(String providedPath, String... fileNames) {
+    if (StringUtil.isEmpty(providedPath)) {
+      return "";
+    }
+
+    File providedFile = new File(providedPath);
+    if (providedFile.exists()) {
+      String name = providedFile.getName();
+      for (String fileName : fileNames) {
+        if (name.equals(fileName)) {
+          return toSystemDependentName(providedFile.getPath());
+        }
+      }
+    }
+
+    if (providedFile.isDirectory()) {  //user chose folder with file
+      for (String fileName : fileNames) {
+        File file = new File(providedFile, fileName);
+        if (fileName.equals(file.getName()) && file.exists()) {
+          return toSystemDependentName(file.getPath());
+        }
+      }
+    }
+
+    providedFile = providedFile.getParentFile();  //users chose wrong file in same directory
+    if (providedFile != null && providedFile.exists()) {
+      for (String fileName : fileNames) {
+        File file = new File(providedFile, fileName);
+        if (fileName.equals(file.getName()) && file.exists()) {
+          return toSystemDependentName(file.getPath());
+        }
+      }
+    }
+
+    return null;
   }
 }

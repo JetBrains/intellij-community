@@ -386,7 +386,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
 
-  public void setIsRequestFocus(boolean isRequestFocus) {
+  public void setRequestFocus(boolean isRequestFocus) {
     myIsRequestFocus = isRequestFocus;
   }
 

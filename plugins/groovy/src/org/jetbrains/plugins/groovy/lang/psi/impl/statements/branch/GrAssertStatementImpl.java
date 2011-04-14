@@ -42,4 +42,10 @@ public class GrAssertStatementImpl extends GroovyPsiElementImpl implements GrAss
   public GrExpression getAssertion() {
     return findChildByClass(GrExpression.class);
   }
+
+  @Override
+  public GrExpression getErrorMessage() {
+    GrExpression[] exprs = findChildrenByClass(GrExpression.class);
+    return exprs.length >= 2 ? exprs[1] : null;
+  }
 }

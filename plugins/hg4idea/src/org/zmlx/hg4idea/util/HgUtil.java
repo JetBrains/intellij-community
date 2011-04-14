@@ -10,7 +10,7 @@
 // the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 // either express or implied. See the License for the specific language governing permissions and
 // limitations under the License.
-package org.zmlx.hg4idea;
+package org.zmlx.hg4idea.util;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -20,9 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -33,6 +31,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgRemoveCommand;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
@@ -323,4 +322,18 @@ public abstract class HgUtil {
       return filePath;
     }
   }
+
+  /**
+   * Returns all HG roots in the project.
+   */
+  public static @NotNull List<VirtualFile> getHgRepositories(@NotNull Project project) {
+    final List<VirtualFile> repos = new LinkedList<VirtualFile>();
+    for (VcsRoot root : ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()) {
+      if (HgVcs.VCS_NAME.equals(root.vcs.getName())) {
+        repos.add(root.path);
+      }
+    }
+    return repos;
+  }
+
 }

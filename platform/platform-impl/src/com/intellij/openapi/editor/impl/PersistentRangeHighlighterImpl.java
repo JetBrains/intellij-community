@@ -45,7 +45,7 @@ class PersistentRangeHighlighterImpl extends RangeHighlighterImpl implements Ran
     if (PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, this)) {
       setLine(event.translateLineViaDiff(getLine()));
       if (getLine() < 0 || getLine() >= getDocument().getLineCount()) {
-        invalidate();
+        invalidate(e);
       }
       else {
         DocumentEx document = getDocument();

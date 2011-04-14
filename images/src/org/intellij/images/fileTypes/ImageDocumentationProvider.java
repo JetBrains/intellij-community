@@ -15,7 +15,7 @@
  */
 package org.intellij.images.fileTypes;
 
-import com.intellij.lang.documentation.QuickDocumentationProvider;
+import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -30,12 +30,8 @@ import java.net.URISyntaxException;
 /**
  * @author spleaner
  */
-public class ImageDocumentationProvider extends QuickDocumentationProvider {
+public class ImageDocumentationProvider extends AbstractDocumentationProvider {
   private static final int MAX_IMAGE_SIZE = 300;
-
-  public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
-    return null;
-  }
 
   @Override
   public String generateDoc(PsiElement element, PsiElement originalElement) {

@@ -207,11 +207,14 @@ public class PsiSuperMethodImplUtil {
     if (!PsiUtil.isAccessible(hierarchicalMethodSignature.getMethod(), aClass, aClass)) return;
     HierarchicalMethodSignatureImpl existing = map.get(signature);
     if (existing == null) {
-      map.put(signature, copy(hierarchicalMethodSignature));
+      HierarchicalMethodSignatureImpl copy = copy(hierarchicalMethodSignature);
+      LOG.assertTrue(copy.getMethod().isValid());
+      map.put(signature, copy);
     }
     else if (isReturnTypeIsMoreSpecificThan(hierarchicalMethodSignature, existing) && isSuperMethod(aClass, hierarchicalMethodSignature, existing)) {
       HierarchicalMethodSignatureImpl newSuper = copy(hierarchicalMethodSignature);
       mergeSupers(newSuper, existing);
+      LOG.assertTrue(newSuper.getMethod().isValid());
       map.put(signature, newSuper);
     }
     else if (isSuperMethod(aClass, existing, hierarchicalMethodSignature)) {
