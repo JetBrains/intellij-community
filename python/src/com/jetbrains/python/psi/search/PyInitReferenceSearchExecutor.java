@@ -1,12 +1,13 @@
 package com.jetbrains.python.psi.search;
 
+import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.ReferenceRange;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Processor;
-import com.intellij.util.QueryExecutor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyClass;
@@ -16,23 +17,23 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class PyInitReferenceSearchExecutor implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
-  public boolean execute(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<PsiReference> consumer) {
+public class PyInitReferenceSearchExecutor extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+  public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<PsiReference> consumer) {
     PsiElement element = queryParameters.getElementToSearch();
     if (!(element instanceof PyFunction)) {
-      return true;
+      return;
     }
     final PyFunction function = (PyFunction)element;
     if (!PyNames.INIT.equals(function.getName())) {
-      return true;
+      return;
     }
     final PyClass pyClass = function.getContainingClass();
     if (pyClass == null) {
-      return true;
+      return;
     }
     final String className = pyClass.getName();
     if (className == null) {
-      return true;
+      return;
     }
 
     SearchScope searchScope = queryParameters.getEffectiveSearchScope();
@@ -40,25 +41,6 @@ public class PyInitReferenceSearchExecutor implements QueryExecutor<PsiReference
       searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, PythonFileType.INSTANCE);
     }
 
-    final PsiSearchHelper helper = function.getManager().getSearchHelper();
-    final TextOccurenceProcessor processor = new TextOccurenceProcessor() {
-      public boolean execute(PsiElement element, int offsetInElement) {
-        final PsiReference[] refs = element.getReferences();
-        for (PsiReference ref : refs) {
-          if (ReferenceRange.containsOffsetInElement(ref, offsetInElement)) {
-            if (ref.isReferenceTo(function)) {
-              return consumer.process(ref);
-            }
-          }
-        }
-        return true;
-      }
-    };
-
-    return helper.processElementsWithWord(processor,
-                                          searchScope,
-                                          className,
-                                          UsageSearchContext.IN_CODE,
-                                          false);
+    queryParameters.getOptimizer().searchWord(className, searchScope, UsageSearchContext.IN_CODE, true, function);
   }
 }

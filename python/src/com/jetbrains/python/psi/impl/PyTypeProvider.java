@@ -21,7 +21,7 @@ public interface PyTypeProvider {
   PyType getReferenceExpressionType(PyReferenceExpression referenceExpression, TypeEvalContext context);
   
   @Nullable
-  PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context);
+  PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor);
 
   @Nullable
   PyType getParameterType(PyNamedParameter param, final PyFunction func, TypeEvalContext context);

@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
   private PyCallExpression myElement;
   private PyReferenceExpression myReference;
+
   public UnresolvedRefCreateFunctionQuickFix(PyCallExpression element, PyReferenceExpression reference) {
     myElement = element;
     myReference = reference;
@@ -42,18 +43,26 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
 
     PyFunctionBuilder functionBuilder = new PyFunctionBuilder(myReference.getText());
 
-    for (PyExpression param : myElement.getArgumentList().getArguments()) {
-      if (param instanceof PyKeywordArgument) {
-        functionBuilder.parameter(((PyKeywordArgument)param).getKeyword());
-      }
-      else if (param instanceof PyReferenceExpression) {
-        PyReferenceExpression refex = (PyReferenceExpression)param;
-        functionBuilder.parameter(refex.getReferencedName());
-      }
-      else {
-        functionBuilder.parameter("param");
+    // if function is actually an argument of a call, don't use other arguments of the call to create parameter list of new function
+    final PyArgumentList argumentList = myElement.getArgumentList();
+    if (argumentList != null && !PsiTreeUtil.isAncestor(argumentList, myReference, false)) {
+      for (PyExpression param : argumentList.getArguments()) {
+        if (param instanceof PyKeywordArgument) {
+          functionBuilder.parameter(((PyKeywordArgument)param).getKeyword());
+        }
+        else if (param instanceof PyReferenceExpression) {
+          PyReferenceExpression refex = (PyReferenceExpression)param;
+          functionBuilder.parameter(refex.getReferencedName());
+        }
+        else {
+          functionBuilder.parameter("param");
+        }
       }
     }
+    else {
+      functionBuilder.parameter("args");
+    }
+
     PyFunction function = functionBuilder.buildFunction(project, LanguageLevel.getDefault());
     PyFunction parentFunction = PsiTreeUtil.getTopmostParentOfType(myElement, PyFunction.class);
     if (parentFunction != null ) {

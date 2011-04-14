@@ -18,6 +18,7 @@ import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyClassImpl;
+import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.ResolveProcessor;
@@ -128,10 +129,24 @@ public class PyClassType extends UserDataHolderBase implements PyType {
         return new SmartList<PsiElement>(classMember);
       }
 
-      for (PyClass superClass : myClass.iterateAncestorClasses()) {
-        PsiElement superMember = resolveClassMember(new PyClassType(superClass, isDefinition()), name, null);
-        if (superMember != null) {
-          return new SmartList<PsiElement>(superMember);
+      for (PyClassRef superClass : myClass.iterateAncestors()) {
+        final PyClass pyClass = superClass.getPyClass();
+        if (pyClass != null) {
+          PsiElement superMember = resolveClassMember(new PyClassType(pyClass, isDefinition()), name, null);
+          if (superMember != null) {
+            return new SmartList<PsiElement>(superMember);
+          }
+        }
+        else {
+          final PsiElement element = superClass.getElement();
+          if (element != null) {
+            for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+              final PyType refType = typeProvider.getReferenceType(element, resolveContext.getTypeEvalContext(), myClass);
+              if (refType != null) {
+                return refType.resolveMember(name, location, direction, resolveContext);
+              }
+            }
+          }
         }
       }
       return Collections.emptyList();
