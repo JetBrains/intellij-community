@@ -181,7 +181,11 @@ public final class HgCommandExecutor {
 
   // logging to the Version Control console (without extensions and configs)
   private void log(String operation, List<String> arguments, HgCommandResult result) {
-    final String executable = mySettings.isRunViaBash() ? "bash -c " + HgVcs.HG_EXECUTABLE_FILE_NAME : HgVcs.HG_EXECUTABLE_FILE_NAME;
+    String exeName;
+    final int lastSlashIndex = mySettings.getHgExecutable().lastIndexOf("/");
+    exeName = mySettings.getHgExecutable().substring(lastSlashIndex + 1);
+
+    final String executable = mySettings.isRunViaBash() ? "bash -c " + exeName : exeName;
     final String cmdString = String.format("%s %s %s", executable, operation, StringUtils.join(arguments, " "));
 
     // log command
