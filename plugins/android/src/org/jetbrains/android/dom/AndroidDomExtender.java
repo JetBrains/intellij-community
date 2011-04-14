@@ -538,7 +538,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
                                                     String tagName,
                                                     AndroidDomElement element,
                                                     DomExtensionsRegistrar registrar) {
-    final String specialStyleableName = DrawableDomFileDescription.SPECIAL_STYLEABLE_NAMES.get(tagName);
+    final String specialStyleableName = DrawableStateListDomFileDescription.SPECIAL_STYLEABLE_NAMES.get(tagName);
     if (specialStyleableName != null) {
       registerAttributes(facet, element, specialStyleableName, SYSTEM_RESOURCE_PACKAGE, registrar);
     }

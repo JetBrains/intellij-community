@@ -16,17 +16,12 @@
 
 package org.jetbrains.android.dom.drawable;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.dom.AndroidResourceDomFileDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -36,7 +31,6 @@ import java.util.Map;
  * To change this template use File | Settings | File Templates.
  */
 public class DrawableDomFileDescription extends AndroidResourceDomFileDescription<UnknownDrawableElement> {
-  public static final Map<String, String> SPECIAL_STYLEABLE_NAMES = new HashMap<String, String>();
 
   public DrawableDomFileDescription() {
     super(UnknownDrawableElement.class, "shape", "drawable");
@@ -45,14 +39,6 @@ public class DrawableDomFileDescription extends AndroidResourceDomFileDescriptio
   @Override
   public boolean acceptsOtherRootTagNames() {
     return true;
-  }
-
-  public static boolean isDrawableResourceFile(final XmlFile file) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      public Boolean compute() {
-        return new DrawableDomFileDescription().isMyFile(file, null);
-      }
-    });
   }
 
   @Override

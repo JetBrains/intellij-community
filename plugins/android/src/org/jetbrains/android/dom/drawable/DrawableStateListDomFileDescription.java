@@ -18,17 +18,26 @@ package org.jetbrains.android.dom.drawable;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.dom.AndroidResourceDomFileDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author Eugene.Kudelevsky
  */
 public class DrawableStateListDomFileDescription extends AndroidResourceDomFileDescription<DrawableSelector> {
+  @NonNls public static final String SELECTOR_TAG_NAME = "selector";
+  public static final Map<String, String> SPECIAL_STYLEABLE_NAMES = new HashMap<String, String>();
 
-  @NonNls private static final String SELECTOR_TAG_NAME = "selector";
+  static {
+    DrawableStateListDomFileDescription.SPECIAL_STYLEABLE_NAMES.put("selector", "StateListDrawable");
+  }
 
   public DrawableStateListDomFileDescription() {
     super(DrawableSelector.class, SELECTOR_TAG_NAME, "drawable");
@@ -51,5 +60,9 @@ public class DrawableStateListDomFileDescription extends AndroidResourceDomFileD
     }
 
     return SELECTOR_TAG_NAME.equals(rootTag.getName());
+  }
+
+  public static List<String> getPossibleRoots() {
+    return Arrays.asList(SELECTOR_TAG_NAME);
   }
 }
