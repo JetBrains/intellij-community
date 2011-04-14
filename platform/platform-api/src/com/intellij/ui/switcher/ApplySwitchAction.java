@@ -48,9 +48,6 @@ public class ApplySwitchAction extends AnAction {
     }
   }
 
-  private static Project getProject(AnActionEvent e) {
-    return PlatformDataKeys.PROJECT.getData(e.getDataContext());
-  }
 
   @Override
   public void actionPerformed(AnActionEvent e) {

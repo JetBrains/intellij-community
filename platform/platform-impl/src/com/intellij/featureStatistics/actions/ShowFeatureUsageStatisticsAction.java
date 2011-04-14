@@ -30,8 +30,4 @@ public class ShowFeatureUsageStatisticsAction extends AnAction implements DumbAw
     super.update(e);
     e.getPresentation().setEnabled(getProject(e) != null);
   }
-
-  private Project getProject(AnActionEvent e) {
-    return PlatformDataKeys.PROJECT.getData(e.getDataContext());
-  }
 }

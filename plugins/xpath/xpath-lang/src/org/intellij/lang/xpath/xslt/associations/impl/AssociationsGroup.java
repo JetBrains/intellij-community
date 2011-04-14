@@ -81,11 +81,6 @@ public class AssociationsGroup extends ActionGroup {
     }
 
     @Nullable
-    static Project getProject(@Nullable AnActionEvent e) {
-        return e != null ? LangDataKeys.PROJECT.getData(e.getDataContext()) : null;
-    }
-
-    @Nullable
     static PsiFile getPsiFile(@Nullable AnActionEvent e) {
         return e != null ? LangDataKeys.PSI_FILE.getData(e.getDataContext()) : null;
     }

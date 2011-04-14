@@ -90,10 +90,4 @@ public class NewModuleAction extends AnAction implements DumbAware {
     super.update(e);
     e.getPresentation().setEnabled(getProject(e) != null);
   }
-
-  @Nullable
-  private static Project getProject(AnActionEvent e) {
-    return e.getData(PlatformDataKeys.PROJECT);
-  }
-
 }

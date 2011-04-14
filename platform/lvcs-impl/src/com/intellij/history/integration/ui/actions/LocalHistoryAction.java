@@ -74,8 +74,4 @@ public abstract class LocalHistoryAction extends AnAction implements DumbAware {
     }
     return commonParent;
   }
-
-  protected Project getProject(AnActionEvent e) {
-    return e.getData(PlatformDataKeys.PROJECT);
-  }
 }

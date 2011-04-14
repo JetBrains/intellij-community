@@ -73,10 +73,6 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
     WindowManager.getInstance().getStatusBar(project).setInfo(message);
   }
 
-  private static Project getProject(AnActionEvent e) {
-    return e.getData(PlatformDataKeys.PROJECT);
-  }
-
   private static VirtualFile[] getFiles(AnActionEvent e) {
     return e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
   }
