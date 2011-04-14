@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import org.zmlx.hg4idea.command.HgTagBranch;
 import org.zmlx.hg4idea.command.HgTagBranchCommand;
 
@@ -118,8 +119,13 @@ public class HgSwitchDialog extends DialogWrapper {
   private void loadBranches(VirtualFile root) {
     new HgTagBranchCommand(project, root).listBranches(new Consumer<List<HgTagBranch>>() {
       @Override
-      public void consume(List<HgTagBranch> branches) {
-        branchSelector.setModel(new DefaultComboBoxModel(branches.toArray()));
+      public void consume(final List<HgTagBranch> branches) {
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            branchSelector.setModel(new DefaultComboBoxModel(branches.toArray()));
+          }
+        });
       }
     });
   }
@@ -127,8 +133,13 @@ public class HgSwitchDialog extends DialogWrapper {
   private void loadTags(VirtualFile root) {
     new HgTagBranchCommand(project, root).listTags(new Consumer<List<HgTagBranch>>() {
       @Override
-      public void consume(List<HgTagBranch> tags) {
-        tagSelector.setModel(new DefaultComboBoxModel(tags.toArray()));
+      public void consume(final List<HgTagBranch> tags) {
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            tagSelector.setModel(new DefaultComboBoxModel(tags.toArray()));
+          }
+        });
       }
     });
   }
