@@ -943,56 +943,71 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
     private void getVersion(final VcsFileRevision revision) {
       final VirtualFile file = getVirtualFile();
+      final Project project = myVcs.getProject();
       if ((file != null) && !file.isWritable()) {
-        if (ReadonlyStatusHandler.getInstance(myVcs.getProject()).ensureFilesWritable(file).hasReadonlyFiles()) {
+        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file).hasReadonlyFiles()) {
           return;
         }
       }
 
-      LocalHistoryAction action = file != null ? startLocalHistoryAction(revision) : LocalHistoryAction.NULL;
-
-      final byte[] revisionContent;
-      try {
-        revisionContent = VcsHistoryUtil.loadRevisionContent(revision);
-      }
-      catch (IOException e) {
-        LOG.info(e);
-        Messages.showMessageDialog(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()),
-                                   VcsBundle.message("message.title.get.revision.content"), Messages.getInformationIcon());
-        return;
-      }
-      catch (VcsException e) {
-        Messages.showMessageDialog(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()),
-                                   VcsBundle.message("message.title.get.revision.content"), Messages.getInformationIcon());
-        return;
-      }
-      catch (ProcessCanceledException ex) {
-        return;
-      }
-      final byte[] finalRevisionContent = revisionContent;
-      try {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            CommandProcessor.getInstance().executeCommand(myVcs.getProject(), new Runnable() {
-                public void run() {
-                  try {
-                    write(finalRevisionContent);
-                  }
-                  catch (IOException e) {
-                    Messages.showMessageDialog(VcsBundle.message("message.text.cannot.save.content", e.getLocalizedMessage()),
-                                               VcsBundle.message("message.title.get.revision.content"), Messages.getErrorIcon());
-                  }
-                }
-              }, createGetActionTitle(revision), null);
+      new Task.Backgroundable(project, VcsBundle.message("show.diff.progress.title")) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          LocalHistoryAction action = file != null ? startLocalHistoryAction(revision) : LocalHistoryAction.NULL;
+          final byte[] revisionContent;
+          try {
+            revisionContent = VcsHistoryUtil.loadRevisionContent(revision);
+          } catch (final IOException e) {
+            LOG.info(e);
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override public void run() {
+                Messages.showMessageDialog(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()),
+                                           VcsBundle.message("message.title.get.revision.content"), Messages.getInformationIcon());
+              }
+            });
+            return;
+          } catch (final VcsException e) {
+            LOG.info(e);
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override public void run() {
+                Messages.showMessageDialog(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()),
+                                           VcsBundle.message("message.title.get.revision.content"), Messages.getInformationIcon());
+              }
+            });
+            return;
+          } catch (ProcessCanceledException ex) {
+            return;
           }
-        });
-        if (file != null) {
-          VcsDirtyScopeManager.getInstance(myVcs.getProject()).fileDirty(file);
+
+          try {
+            UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+              @Override public void run() {
+                ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                  public void run() {
+                    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+                      public void run() {
+                        try {
+                          write(revisionContent);
+                        } catch (IOException e) {
+                          Messages.showMessageDialog(VcsBundle.message("message.text.cannot.save.content", e.getLocalizedMessage()),
+                                                     VcsBundle.message( "message.title.get.revision.content"), Messages.getErrorIcon());
+                        }
+                      }
+                    }, createGetActionTitle(revision), null);
+                  }
+                });
+              }
+            });
+
+            if (file != null) {
+              VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+            }
+          }
+          finally {
+            action.finish();
+          }
         }
-      }
-      finally {
-        action.finish();
-      }
+      }.queue();
     }
 
     private LocalHistoryAction startLocalHistoryAction(final VcsFileRevision revision) {
