@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.psi.PropertyUtils;
@@ -149,7 +150,18 @@ public class RemoveUnusedVariableFix implements IntentionAction {
                                             PsiVariable variable,
                                             Editor editor,
                                             boolean canCopeWithSideEffects) {
-    String text = sideEffects.isEmpty() ? "" : sideEffects.get(0).getText();
+    String text;
+    if (sideEffects.isEmpty()) {
+      text = "";
+    }
+    else {
+      final PsiElement sideEffect = sideEffects.get(0);
+      if (sideEffect instanceof PsiExpression) {
+        text = PsiExpressionTrimRenderer.render((PsiExpression)sideEffect);
+      } else {
+        text = sideEffect.getText();
+      }
+    }
     return showSideEffectsWarning(sideEffects, variable, editor, canCopeWithSideEffects, text, text);
   }
 
