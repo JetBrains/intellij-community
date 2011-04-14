@@ -11,6 +11,7 @@ import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -982,6 +983,12 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     configureByTestName();
     performAction();
     assertStringItems("Bar", "Goo");
+  }
+
+  public void testNoWrongSubstitutorFromStats() throws Throwable {
+    doTest();
+    FileDocumentManager.getInstance().saveDocument(myFixture.getEditor().getDocument());
+    doTest(); // stats are changed now
   }
 
   public void testCommonPrefixWithSelection() throws Throwable {
