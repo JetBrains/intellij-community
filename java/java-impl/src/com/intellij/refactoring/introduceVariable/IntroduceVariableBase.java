@@ -478,7 +478,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                   final boolean cantChangeFinalModifier = hasWriteAccess || (inFinalContext && choice == OccurrencesChooser.ReplaceChoice.ALL);
                   final VariableInplaceRenamer renamer =
                     new VariableInplaceIntroducer(project, expression, editor, elementToRename, cantChangeFinalModifier,
-                                                  typeSelectorManager.getTypesForAll().length > 1, exprMarker, occurrenceMarkers);
+                                                  typeSelectorManager.getTypesForAll().length > 1, exprMarker, occurrenceMarkers, IntroduceVariableBase.REFACTORING_NAME);
                   PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
                   renamer.performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)));
                 }
