@@ -604,13 +604,6 @@ def foo(def a) {2}
 return foo()"""
   }
 
-  void checkCompletion(String before, String type, String after) {
-    myFixture.configureByText("a.groovy", before)
-    myFixture.completeBasic()
-    myFixture.type(type)
-    myFixture.checkResult(after)
-  }
-
   public void testFinishClassNameWithSquareBracket() {
     myFixture.addClass("class AbcdClass {}; class AbcdeClass {}")
     checkCompletion("Abcd<caret>", '[', "AbcdClass[<caret>]")
@@ -674,6 +667,9 @@ a.<caret>""")
     return completion.find {println it.lookupString;itemToCheck == it.lookupString}
   }
 
+  public void testWordCompletionInLiterals() {
+    checkSingleItemCompletion('def foo = "fo<caret>"', 'def foo = "foo<caret>"')
+  }
 
   public void testShowAccessor() {
     assertNotNull doContainsTest("getFoo", """

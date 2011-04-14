@@ -50,10 +50,7 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.patterns.PsiJavaPatterns.*;
 
@@ -198,7 +195,6 @@ public class JavaCompletionContributor extends CompletionContributor {
       return;
     }
 
-
     final CompletionResultSet result = JavaCompletionSorting.addJavaSorting(parameters, _result);
 
     if (ANNOTATION_ATTRIBUTE_NAME.accepts(position)) {
@@ -216,9 +212,16 @@ public class JavaCompletionContributor extends CompletionContributor {
       result.addElement(LookupElementBuilder.create("*"));
     }
 
-    addReferenceVariants(parameters, result, inheritors);
+    Set<String> usedWords = addReferenceVariants(parameters, result, inheritors);
 
     addKeywords(parameters, result);
+
+    if (psiElement().inside(PsiLiteralExpression.class).accepts(position)) {
+      PsiReference reference = position.getContainingFile().findReferenceAt(parameters.getOffset());
+      if (reference == null || reference.isSoft()) {
+        WordCompletionContributor.addWordCompletionVariants(result, parameters, usedWords);
+      }
+    }
 
     addAllClasses(parameters, result, inheritors);
     result.stopHere();
@@ -239,7 +242,8 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static void addReferenceVariants(final CompletionParameters parameters, CompletionResultSet result, final InheritorsHolder inheritors) {
+  private static Set<String> addReferenceVariants(final CompletionParameters parameters, CompletionResultSet result, final InheritorsHolder inheritors) {
+    final Set<String> usedWords = new HashSet<String>();
     final PsiElement position = parameters.getPosition();
     final boolean checkAccess = parameters.getInvocationCount() <= 1;
     LegacyCompletionContributor.processReferences(parameters, result, new PairConsumer<PsiReference, CompletionResultSet>() {
@@ -291,19 +295,25 @@ public class JavaCompletionContributor extends CompletionContributor {
             LOG.error("Position=" + position + "\n;Reference=" + reference + "\n;variants=" + Arrays.toString(variants));
           }
           if (completion instanceof LookupElement && !inheritors.alreadyProcessed((LookupElement)completion)) {
+            usedWords.add(((LookupElement)completion).getLookupString());
             result.addElement((LookupElement)completion);
           }
           else if (completion instanceof PsiClass) {
             if (!inheritors.alreadyProcessed((PsiClass)completion)) {
-              result.addElement(JavaClassNameCompletionContributor.createClassLookupItem((PsiClass)completion, true));
+              JavaPsiClassReferenceElement item = JavaClassNameCompletionContributor.createClassLookupItem((PsiClass)completion, true);
+              usedWords.add(item.getLookupString());
+              result.addElement(item);
             }
           }
           else {
-            result.addElement(LookupItemUtil.objectToLookupItem(completion));
+            LookupElement element = LookupItemUtil.objectToLookupItem(completion);
+            usedWords.add(element.getLookupString());
+            result.addElement(element);
           }
         }
       }
     });
+    return usedWords;
   }
 
   private static void addKeywords(CompletionParameters parameters, CompletionResultSet result) {
