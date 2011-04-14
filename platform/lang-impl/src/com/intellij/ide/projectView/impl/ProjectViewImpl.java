@@ -269,17 +269,22 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
   private void constructUi() {
     myActionGroupPanel = new JPanel(new BorderLayout());
 
-    myLabel = new JLabel("View as:");
-    if (!SystemInfo.isMac) { // See IDEADEV-41315
+    myLabel = SystemInfo.isMac ? null : new JLabel("View as:");
+    if (myLabel != null && !SystemInfo.isMac) { // See IDEADEV-41315
       myLabel.setDisplayedMnemonic('a');
     }
+
     myCombo = new ComboBox();
     myCombo.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
-    myLabel.setLabelFor(myCombo);
 
     final JPanel combo = new JPanel(new BorderLayout());
     combo.setBorder(new EmptyBorder(4, 4, 4, 4));
-    combo.add(myLabel, BorderLayout.WEST);
+
+    if(myLabel != null) {
+      myLabel.setLabelFor(myCombo);
+      combo.add(myLabel, BorderLayout.WEST);
+    }
+    
     combo.add(myCombo, BorderLayout.CENTER);
 
 
@@ -655,11 +660,11 @@ public final class ProjectViewImpl extends ProjectView implements PersistentStat
   };
 
   private void installLabelFocusListener() {
-    myLabel.addFocusListener(myLabelFocusListener);
+    if (myLabel != null) myLabel.addFocusListener(myLabelFocusListener);
   }
 
   private void removeLabelFocusListener() {
-    myLabel.removeFocusListener(myLabelFocusListener);
+    if (myLabel != null) myLabel.removeFocusListener(myLabelFocusListener);
   }
 
   private boolean viewSelectionChanged() {
