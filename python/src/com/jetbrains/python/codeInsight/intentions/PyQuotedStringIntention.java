@@ -89,7 +89,7 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
       else if (ch == '\'') {
         stringBuilder.append("\\\'");
       }
-      else if (ch == '\\' && charArr[i+1] == '\"') {
+      else if (ch == '\\' && charArr[i+1] == '\"' && !(i+2 == charArr.length)) {
         skipNext = true;
         stringBuilder.append(charArr[i+1]);
       }
@@ -119,7 +119,7 @@ public class PyQuotedStringIntention extends BaseIntentionAction {
       else if (ch == '"') {
         stringBuilder.append("\\\"");
       }
-      else if (ch == '\\' && charArr[i+1] == '\'') {
+      else if (ch == '\\' && charArr[i+1] == '\'' && !(i+2 == charArr.length)) {
         skipNext = true;
         stringBuilder.append(charArr[i+1]);
       }

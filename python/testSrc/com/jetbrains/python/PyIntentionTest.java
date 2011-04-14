@@ -149,6 +149,10 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
     doTest(PyBundle.message("INTN.quoted.string.double.to.single"));
   }
 
+  public void testQuotedStringDoubleSlash() {      //PY-3295
+    doTest(PyBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
   public void testEscapedQuotedString() { //PY-2656
     doTest(PyBundle.message("INTN.quoted.string.single.to.double"));
   }
