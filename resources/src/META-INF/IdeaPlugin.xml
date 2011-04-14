@@ -781,6 +781,7 @@
     <stacktrace.fold substring="at sun.reflect."/>
     <stacktrace.fold substring="at java.rmi."/>
     <stacktrace.fold substring="at sun.rmi."/>
+    <stacktrace.fold substring="at com.intellij.rt.execution."/>
 
     <debuggerEditorTextProvider language="JAVA" implementationClass="com.intellij.debugger.impl.JavaEditorTextProviderImpl"/>
 
