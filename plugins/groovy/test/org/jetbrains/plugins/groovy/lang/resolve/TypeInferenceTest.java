@@ -181,4 +181,16 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   public void testInferWithClosureType() {
     assertTypeEquals("java.util.Date", "A.groovy");
   }
+
+  public void testPlusEquals1() {
+    assertTypeEquals("Test", "A.groovy");
+  }
+
+  public void testPlusEquals2() {
+    assertTypeEquals("java.lang.String", "A.groovy");
+  }
+
+  public void testPlusEquals3() {
+    assertTypeEquals("java.lang.String", "A.groovy");
+  }
 }
