@@ -212,6 +212,7 @@ public class InplaceIntroduceConstantPopup {
     visibilityCombo.setRenderer(new ListCellRendererWrapper<String>(visibilityCombo.getRenderer()) {
       @Override
       public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
+        if (value == null) return;
         setText(PsiBundle.visibilityPresentation(value));
       }
     });
