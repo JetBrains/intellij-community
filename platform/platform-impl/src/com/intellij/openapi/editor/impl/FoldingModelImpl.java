@@ -38,6 +38,7 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -219,6 +220,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return myFoldTree.fetchAllRegions();
   }
 
+  @Nullable
   public FoldRegion getCollapsedRegionAtOffset(int offset) {
     return myFoldTree.fetchOutermost(offset);
   }
@@ -227,6 +229,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return myFoldTree.getLastTopLevelIndexBefore(offset);
   }
 
+  @Nullable
   public FoldRegion getFoldingPlaceholderAt(Point p) {
     assertReadAccess();
     LogicalPosition pos = myEditor.xyToLogicalPosition(p);
@@ -410,10 +413,12 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     return myFoldTree.getFoldedLinesCountBefore(offset);
   }
 
+  @Nullable
   public FoldRegion[] fetchTopLevel() {
     return myFoldTree.fetchTopLevel();
   }
 
+  @Nullable
   public FoldRegion fetchOutermost(int offset) {
     return myFoldTree.fetchOutermost(offset);
   }
@@ -477,5 +482,10 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     for (FoldingListener listener : myListeners) {
       listener.onFoldRegionStateChange(foldRegion);
     }
+  }
+
+  @Override
+  public String toString() {
+    return Arrays.toString(myFoldTree.fetchTopLevel());
   }
 }
