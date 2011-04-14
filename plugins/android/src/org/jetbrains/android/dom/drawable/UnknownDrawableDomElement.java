@@ -17,12 +17,9 @@ package org.jetbrains.android.dom.drawable;
 
 import com.intellij.util.xml.DefinesXml;
 
-import java.util.List;
-
 /**
  * @author Eugene.Kudelevsky
  */
 @DefinesXml
-public interface DrawableSelector extends DrawableStateListElement {
-  List<DrawableStateListItem> getItems();
+public interface UnknownDrawableDomElement extends DrawableDomElement {
 }

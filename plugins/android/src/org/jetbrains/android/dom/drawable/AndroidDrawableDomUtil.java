@@ -16,17 +16,35 @@
 package org.jetbrains.android.dom.drawable;
 
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.dom.AndroidResourceDomFileDescription;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class AndroidDrawableDomUtil {
+  public static final Map<String, String> SPECIAL_STYLEABLE_NAMES = new HashMap<String, String>();
+  private static final String[] POSSIBLE_DRAWABLE_ROOTS = new String[] {"selector", "bitmap", "nine-patch"};
+
+  static {
+    SPECIAL_STYLEABLE_NAMES.put("selector", "StateListDrawable");
+    SPECIAL_STYLEABLE_NAMES.put("bitmap", "BitmapDrawable");
+    SPECIAL_STYLEABLE_NAMES.put("nine-patch", "NinePatchDrawable");
+  }
+
   private AndroidDrawableDomUtil() {
   }
 
   public static boolean isDrawableResourceFile(@NotNull XmlFile file) {
-    return AndroidResourceDomFileDescription.doIsMyFile(file, new String[] {"drawable"});
+    return AndroidResourceDomFileDescription.doIsMyFile(file, new String[]{"drawable"});
+  }
+
+  public static List<String> getPossibleRoots() {
+    return Arrays.asList(POSSIBLE_DRAWABLE_ROOTS);
   }
 }

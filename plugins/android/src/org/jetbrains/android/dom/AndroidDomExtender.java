@@ -517,13 +517,13 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
       registerExtensionsForXmlResources(facet, tagName, (XmlResourceElement)element, registrar, registeredSubtags);
     }
     else if (element instanceof DrawableDomElement || element instanceof ColorDomElement) {
-      registerExtensionsForDrawable(facet, tagName, element, registrar);
+      registerExtensionsForStateList(facet, tagName, element, registrar);
     }
     Collections.addAll(registeredSubtags, AndroidDomUtil.getStaticallyDefinedSubtags(element));
 
     if (!(element instanceof LayoutElement) &&
         !(element instanceof ColorDomElement) &&
-        (!(element instanceof DrawableDomElement) || element instanceof UnknownDrawableElement)) {
+        (!(element instanceof DrawableDomElement) || element instanceof UnknownDrawableDomElement)) {
       Processor<String> existingSubtagsFilter = element instanceof XmlResourceElement ?
                                                 new Processor<String>() {
                                                   public boolean process(String s) {
@@ -534,11 +534,11 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     }
   }
 
-  private static void registerExtensionsForDrawable(AndroidFacet facet,
-                                                    String tagName,
-                                                    AndroidDomElement element,
-                                                    DomExtensionsRegistrar registrar) {
-    final String specialStyleableName = DrawableStateListDomFileDescription.SPECIAL_STYLEABLE_NAMES.get(tagName);
+  private static void registerExtensionsForStateList(AndroidFacet facet,
+                                                     String tagName,
+                                                     AndroidDomElement element,
+                                                     DomExtensionsRegistrar registrar) {
+    final String specialStyleableName = AndroidDrawableDomUtil.SPECIAL_STYLEABLE_NAMES.get(tagName);
     if (specialStyleableName != null) {
       registerAttributes(facet, element, specialStyleableName, SYSTEM_RESOURCE_PACKAGE, registrar);
     }

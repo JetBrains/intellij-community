@@ -18,22 +18,19 @@ package org.jetbrains.android.dom.drawable;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.dom.AndroidResourceDomFileDescription;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class DrawableStateListDomFileDescription extends AndroidResourceDomFileDescription<DrawableSelector> {
-  @NonNls public static final String SELECTOR_TAG_NAME = "selector";
+public class BitmapOrNinePatchDomFileDescription extends AndroidResourceDomFileDescription<BitmapOrNinePatchElement> {
+  static final String[] ROOT_TAG_NAMES = new String[] {"bitmap", "nine-patch"};
 
-  public DrawableStateListDomFileDescription() {
-    super(DrawableSelector.class, SELECTOR_TAG_NAME, "drawable");
+  public BitmapOrNinePatchDomFileDescription() {
+    super(BitmapOrNinePatchElement.class, ROOT_TAG_NAMES[0], "drawable");
   }
 
   @Override
@@ -52,6 +49,6 @@ public class DrawableStateListDomFileDescription extends AndroidResourceDomFileD
       return false;
     }
 
-    return SELECTOR_TAG_NAME.equals(rootTag.getName());
+    return ArrayUtil.find(ROOT_TAG_NAMES, rootTag.getName()) >= 0;
   }
 }

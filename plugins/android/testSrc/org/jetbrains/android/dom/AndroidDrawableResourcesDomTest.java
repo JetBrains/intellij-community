@@ -15,6 +15,12 @@
  */
 package org.jetbrains.android.dom;
 
+import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.openapi.vfs.VirtualFile;
+
+import java.io.IOException;
+import java.util.List;
+
 /**
  * @author Eugene.Kudelevsky
  */
@@ -27,6 +33,7 @@ public class AndroidDrawableResourcesDomTest extends AndroidDomTest {
   public void setUp() throws Exception {
     super.setUp();
     copyFileToProject("myDrawable.png", "res/drawable/myDrawable.png");
+    copyFileToProject("otherResource.xml", "res/values/strings1.xml");
   }
 
   @Override
@@ -58,7 +65,52 @@ public class AndroidDrawableResourcesDomTest extends AndroidDomTest {
     doTestCompletion();
   }
 
-  public void testStateListCompletion6() throws Throwable {
+  public void testBitmapHighlighting1() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testBitmapHighlighting2() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testBitmapCompletion1() throws Throwable {
     doTestCompletion();
+  }
+
+  public void testBitmapCompletion2() throws Throwable {
+    doTestOnlyDrawableReferences();
+  }
+
+  public void testNinePatchHighlighting1() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testNinePatchHighlighting2() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testNinePatchCompletion1() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testNinePatchCompletion2() throws Throwable {
+    doTestOnlyDrawableReferences();
+  }
+
+  private void doTestOnlyDrawableReferences() throws IOException {
+    VirtualFile file = copyFileToProject(getTestName(true) + ".xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+    assertNotNull(lookupElementStrings);
+    for (String s : lookupElementStrings) {
+      if (!s.startsWith("@android") && !s.startsWith("@drawable")) {
+        fail("Variant " + s + " shouldn't be threre");
+      }
+    }
+  }
+
+  public void testRootTagCompletion() throws Throwable {
+    doTestCompletionVariants(getTestName(true) + ".xml", "selector", "bitmap", "nine-patch");
   }
 }

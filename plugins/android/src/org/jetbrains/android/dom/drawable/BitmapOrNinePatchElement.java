@@ -15,14 +15,20 @@
  */
 package org.jetbrains.android.dom.drawable;
 
+import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.DefinesXml;
-
-import java.util.List;
+import com.intellij.util.xml.Required;
+import org.jetbrains.android.dom.AndroidAttributeValue;
+import org.jetbrains.android.dom.ResourceType;
+import org.jetbrains.android.dom.converters.ResourceReferenceConverter;
 
 /**
  * @author Eugene.Kudelevsky
  */
 @DefinesXml
-public interface DrawableSelector extends DrawableStateListElement {
-  List<DrawableStateListItem> getItems();
+public interface BitmapOrNinePatchElement extends DrawableDomElement {
+  @Required
+  @Convert(ResourceReferenceConverter.class)
+  @ResourceType("drawable")
+  AndroidAttributeValue<String> getSrc();
 }

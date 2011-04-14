@@ -19,6 +19,7 @@ package org.jetbrains.android.dom.drawable;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.dom.AndroidResourceDomFileDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,10 +31,10 @@ import org.jetbrains.annotations.Nullable;
  * Time: 9:42:38 PM
  * To change this template use File | Settings | File Templates.
  */
-public class DrawableDomFileDescription extends AndroidResourceDomFileDescription<UnknownDrawableElement> {
+public class DrawableDomFileDescription extends AndroidResourceDomFileDescription<UnknownDrawableDomElement> {
 
   public DrawableDomFileDescription() {
-    super(UnknownDrawableElement.class, "shape", "drawable");
+    super(UnknownDrawableDomElement.class, "shape", "bitmap", "nine-patch", "drawable");
   }
 
   @Override
@@ -53,6 +54,7 @@ public class DrawableDomFileDescription extends AndroidResourceDomFileDescriptio
     }
 
     final String rootTagName = rootTag.getName();
-    return !"selector".equals(rootTagName);
+    return !DrawableStateListDomFileDescription.SELECTOR_TAG_NAME.equals(rootTagName) &&
+           ArrayUtil.find(BitmapOrNinePatchDomFileDescription.ROOT_TAG_NAMES, rootTag) < 0;
   }
 }

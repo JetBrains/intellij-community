@@ -86,7 +86,7 @@ public class AndroidCompletionContributor extends CompletionContributor {
           }
           else if (AndroidDrawableDomUtil.isDrawableResourceFile(xmlFile) ||
                    ColorDomFileDescription.isColorResourceFile(xmlFile)) {
-            addAll(DrawableStateListDomFileDescription.getPossibleRoots(), resultSet);
+            addAll(AndroidDrawableDomUtil.getPossibleRoots(), resultSet);
           }
         }
       }
