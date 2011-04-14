@@ -3,6 +3,7 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.editorActions.EmacsStyleIndentAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 
 /**
  * @author Denis Zhdanov
@@ -283,16 +284,21 @@ public class PyEmacsTabTest extends PyLightFixtureTestCase {
       "        print <caret>123"
     );
     
-    // With.
-    // !!!!!!!!! 'with' block is not parsed correctly at test environment. Don't have an idea on why it is so for now.
-    //doTest(
-    //  "def test(value):\n" +
-    //  "    with 1 + 1 as a:\n" +
-    //  "   print <caret>a",
-    //  "def test(value):\n" +
-    //  "    with 1 + 1 as a:\n" +
-    //  "        print <caret>a"
-    //);
+    //With.
+    setLanguageLevel(LanguageLevel.PYTHON26);
+    try {
+      doTest(
+        "def test(value):\n" +
+        "    with 1 + 1 as a:\n" +
+        "   print <caret>a",
+        "def test(value):\n" +
+        "    with 1 + 1 as a:\n" +
+        "        print <caret>a"
+      );
+    }
+    finally {
+      setLanguageLevel(null);
+    }
   }
   
   private void doTest(String before, String after) {
