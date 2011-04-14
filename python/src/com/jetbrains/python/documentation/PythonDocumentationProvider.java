@@ -199,6 +199,16 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       unformattedOutput.add(result);
       return;
     }
+    else if (documentationSettings.isReSTFormat()) {
+      Module module = ModuleUtil.findModuleForPsiElement(element);
+      String formatted = null;
+      if (module != null) {
+        formatted = ReSTRunner.formatDocstring(module, docstring);
+      }
+      result.add(formatted);
+      unformattedOutput.add(result);
+      return;
+    }
     // detect common indentation
     String[] lines = LineTokenizer.tokenize(docstring, false);
     Pattern spaces_pat = Pattern.compile("^\\s+");

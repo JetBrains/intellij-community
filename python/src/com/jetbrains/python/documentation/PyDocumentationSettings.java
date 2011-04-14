@@ -19,6 +19,9 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
   public boolean isEpydocFormat() {
     return DocStringFormat.EPYDOC.equals(myDocStringFormat);
   }
+  public boolean isReSTFormat() {
+    return DocStringFormat.SPHINX.equals(myDocStringFormat);
+  }
 
   public static PyDocumentationSettings getInstance(Project project) {
     return ServiceManager.getService(project, PyDocumentationSettings.class);
