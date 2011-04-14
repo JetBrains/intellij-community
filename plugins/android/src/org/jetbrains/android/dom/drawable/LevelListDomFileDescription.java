@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,33 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.android.dom.drawable;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.dom.AndroidResourceDomFileDescription;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: Aug 21, 2009
- * Time: 9:42:38 PM
- * To change this template use File | Settings | File Templates.
+ * @author Eugene.Kudelevsky
  */
-public class DrawableDomFileDescription extends AndroidResourceDomFileDescription<UnknownDrawableDomElement> {
+public class LevelListDomFileDescription extends AndroidResourceDomFileDescription<LevelList> {
+  @NonNls static final String LEVEL_LIST_TAG = "level-list";
 
-  public DrawableDomFileDescription() {
-    super(UnknownDrawableDomElement.class, "shape", "bitmap", "nine-patch", "drawable");
-  }
-
-  @Override
-  public boolean acceptsOtherRootTagNames() {
-    return true;
+  public LevelListDomFileDescription() {
+    super(LevelList.class, LEVEL_LIST_TAG, "drawable");
   }
 
   @Override
@@ -53,8 +44,6 @@ public class DrawableDomFileDescription extends AndroidResourceDomFileDescriptio
       return false;
     }
 
-    final String rootTagName = rootTag.getName();
-    return !DrawableStateListDomFileDescription.SELECTOR_TAG_NAME.equals(rootTagName) &&
-           ArrayUtil.find(BitmapOrNinePatchDomFileDescription.ROOT_TAG_NAMES, rootTag) < 0;
+    return LEVEL_LIST_TAG.equals(rootTag.getName());
   }
 }

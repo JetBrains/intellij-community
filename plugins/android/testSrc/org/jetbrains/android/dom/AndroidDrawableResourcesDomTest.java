@@ -73,6 +73,10 @@ public class AndroidDrawableResourcesDomTest extends AndroidDomTest {
     doTestHighlighting();
   }
 
+  public void testBitmapHighlighting3() throws Throwable {
+    doTestHighlighting();
+  }
+
   public void testBitmapCompletion1() throws Throwable {
     doTestCompletion();
   }
@@ -97,6 +101,123 @@ public class AndroidDrawableResourcesDomTest extends AndroidDomTest {
     doTestOnlyDrawableReferences();
   }
 
+  public void testLayerListHighlighting() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testLayerListCompletion1() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testLayerListCompletion2() throws Throwable {
+    doTestOnlyDrawableReferences();
+  }
+
+  public void testLayerListCompletion3() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testLevelListHighlighting() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testLevelListCompletion1() throws Throwable {
+    doTestOnlyDrawableReferences();
+  }
+
+  public void testLevelListCompletion2() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testLevelListCompletion3() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testTransitionHighlighting1() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testTransitionHighlighting2() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testTransitionCompletion1() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testTransitionCompletion2() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testInsetHighlighting1() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testInsetHighlighting2() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testInsetCompletion1() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testInsetCompletion2() throws Throwable {
+    doTestOnlyDrawableReferences();
+  }
+
+  public void testClipHighlighting() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testClipCompletion1() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testClipCompletion2() throws Throwable {
+    doTestOnlyDrawableReferences();
+  }
+
+  public void testScaleHighlighting1() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testScaleHighlighting2() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testScaleHighlighting3() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testScaleCompletion1() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testScaleCompletion2() throws Throwable {
+    doTestOnlyDrawableReferences();
+  }
+
+  public void testShapeHighlighting() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testShapeCompletion1() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testShapeCompletion2() throws Throwable {
+    doTestCompletionVariants(getTestName(true) + ".xml", "gradient", "solid", "size", "stroke", "padding", "corners");
+  }
+
+  public void testIncorrectRootTag() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testRootTagCompletion() throws Throwable {
+    doTestCompletionVariants(getTestName(true) + ".xml", "selector", "bitmap", "nine-patch", "layer-list", "level-list", "transition",
+                             "inset", "clip", "scale", "shape");
+  }
+
   private void doTestOnlyDrawableReferences() throws IOException {
     VirtualFile file = copyFileToProject(getTestName(true) + ".xml");
     myFixture.configureFromExistingVirtualFile(file);
@@ -104,13 +225,9 @@ public class AndroidDrawableResourcesDomTest extends AndroidDomTest {
     List<String> lookupElementStrings = myFixture.getLookupElementStrings();
     assertNotNull(lookupElementStrings);
     for (String s : lookupElementStrings) {
-      if (!s.startsWith("@android") && !s.startsWith("@drawable")) {
+      if (!s.startsWith("@android") && !s.startsWith("@drawable") && !s.startsWith("@color")) {
         fail("Variant " + s + " shouldn't be threre");
       }
     }
-  }
-
-  public void testRootTagCompletion() throws Throwable {
-    doTestCompletionVariants(getTestName(true) + ".xml", "selector", "bitmap", "nine-patch");
   }
 }

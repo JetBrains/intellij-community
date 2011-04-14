@@ -38,6 +38,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
@@ -84,9 +85,11 @@ public class AndroidCompletionContributor extends CompletionContributor {
             addAll(AndroidXmlResourcesUtil.getPossibleRoots(facet), resultSet);
             return false;
           }
-          else if (AndroidDrawableDomUtil.isDrawableResourceFile(xmlFile) ||
-                   ColorDomFileDescription.isColorResourceFile(xmlFile)) {
+          else if (AndroidDrawableDomUtil.isDrawableResourceFile(xmlFile)) {
             addAll(AndroidDrawableDomUtil.getPossibleRoots(), resultSet);
+          }
+          else if (ColorDomFileDescription.isColorResourceFile(xmlFile)) {
+            addAll(Arrays.asList(DrawableStateListDomFileDescription.SELECTOR_TAG_NAME), resultSet);
           }
         }
       }

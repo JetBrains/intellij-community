@@ -29,12 +29,25 @@ import java.util.Map;
  */
 public class AndroidDrawableDomUtil {
   public static final Map<String, String> SPECIAL_STYLEABLE_NAMES = new HashMap<String, String>();
-  private static final String[] POSSIBLE_DRAWABLE_ROOTS = new String[] {"selector", "bitmap", "nine-patch"};
+  private static final String[] POSSIBLE_DRAWABLE_ROOTS =
+    new String[]{"selector", "bitmap", "nine-patch", "layer-list", "level-list", "transition", "inset", "clip", "scale", "shape"};
 
   static {
     SPECIAL_STYLEABLE_NAMES.put("selector", "StateListDrawable");
     SPECIAL_STYLEABLE_NAMES.put("bitmap", "BitmapDrawable");
     SPECIAL_STYLEABLE_NAMES.put("nine-patch", "NinePatchDrawable");
+    SPECIAL_STYLEABLE_NAMES.put("layer-list", "LayerDrawable");
+    SPECIAL_STYLEABLE_NAMES.put("inset", "InsetDrawable");
+    SPECIAL_STYLEABLE_NAMES.put("clip", "ClipDrawable");
+    SPECIAL_STYLEABLE_NAMES.put("scale", "ScaleDrawable");
+
+    SPECIAL_STYLEABLE_NAMES.put("shape", "GradientDrawable");
+    SPECIAL_STYLEABLE_NAMES.put("corners", "DrawableCorners");
+    SPECIAL_STYLEABLE_NAMES.put("gradient", "GradientDrawableGradient");
+    SPECIAL_STYLEABLE_NAMES.put("padding", "GradientDrawablePadding");
+    SPECIAL_STYLEABLE_NAMES.put("size", "GradientDrawableSize");
+    SPECIAL_STYLEABLE_NAMES.put("solid", "GradientDrawableSolid");
+    SPECIAL_STYLEABLE_NAMES.put("stroke", "GradientDrawableStroke");
   }
 
   private AndroidDrawableDomUtil() {

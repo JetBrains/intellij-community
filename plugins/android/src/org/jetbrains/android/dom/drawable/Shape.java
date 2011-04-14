@@ -17,9 +17,17 @@ package org.jetbrains.android.dom.drawable;
 
 import com.intellij.util.xml.DefinesXml;
 
+import java.util.List;
+
 /**
  * @author Eugene.Kudelevsky
  */
 @DefinesXml
-public interface UnknownDrawableDomElement extends DrawableDomElement {
+public interface Shape extends DrawableDomElement {
+  List<DrawableDomElement> getCornerss();
+  List<DrawableDomElement> getGradients();
+  List<DrawableDomElement> getPaddings();
+  List<DrawableDomElement> getSizes();
+  List<DrawableDomElement> getSolids();
+  List<DrawableDomElement> getStrokes();
 }
