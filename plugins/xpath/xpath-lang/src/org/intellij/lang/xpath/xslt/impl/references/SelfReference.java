@@ -37,7 +37,7 @@ class SelfReference implements PsiReference {
     myStartOffset = startOffset;
   }
 
-  public SelfReference(XmlAttribute element, PsiElement target) {
+  SelfReference(XmlAttribute element, PsiElement target) {
     this(element, target, 0);
   }
 
@@ -78,5 +78,12 @@ class SelfReference implements PsiReference {
 
   public boolean isSoft() {
     return false;
+  }
+
+  public static SelfReference create(XmlAttribute element, PsiElement target) {
+    if (element.getValue().contains(":")) {
+      return new SelfReference(element, target, element.getValue().indexOf(':') + 1);
+    }
+    return new SelfReference(element, target);
   }
 }
