@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.MessageBus;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
@@ -71,7 +72,9 @@ public class HgCommitCommand {
         parameters.add(hgFile.getRelativePath());
       }
       ensureSuccess(new HgCommandExecutor(project).executeInCurrentThread(repo, "commit", parameters));
-      project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
+      final MessageBus messageBus = project.getMessageBus();
+      messageBus.syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
+      messageBus.syncPublisher(HgVcs.BRANCH_TOPIC).update(project);
     } catch (IOException e) {
       LOG.info(e);
     }
