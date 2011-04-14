@@ -283,9 +283,13 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       }
 
       for(Map.Entry<FileType, IndentOptionsEditor> entry : myAdditionalIndentOptions.entrySet()) {
-        IndentOptionsEditor editor = entry.getValue();
         FileType fileType = entry.getKey();
-        if (editor.isModified(settings, settings.getAdditionalIndentOptions(fileType))) {
+        CodeStyleSettings.IndentOptions additionalIndentOptions = settings.getAdditionalIndentOptions(fileType);
+        if (additionalIndentOptions == null) {
+          continue;
+        }
+        IndentOptionsEditor editor = entry.getValue();
+        if (editor.isModified(settings, additionalIndentOptions)) {
           return true;
         }
       }
