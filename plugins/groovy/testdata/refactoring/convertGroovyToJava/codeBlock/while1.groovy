@@ -1,2 +1,2 @@
 def a = 5;
-while (a < 20) a--
+while (a < 20) a=a+2

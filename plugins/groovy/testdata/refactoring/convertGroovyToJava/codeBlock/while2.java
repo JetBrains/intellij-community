@@ -8,4 +8,4 @@ while (!org.codehaus.groovy.runtime.DefaultGroovyMethods.find(list, new groovy.l
   boolean doCall(java.lang.Integer it) {
     return a.equals(it);
   }
-})) a--;
+})) a=a-1;

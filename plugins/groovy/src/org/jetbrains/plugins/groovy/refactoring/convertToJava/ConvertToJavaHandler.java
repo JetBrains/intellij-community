@@ -49,7 +49,7 @@ public class ConvertToJavaHandler implements RefactoringActionHandler {
     invokeInner(project, elements, editor);
   }
 
-  private void invokeInner(Project project, PsiElement[] elements, Editor editor) {
+  private static void invokeInner(Project project, PsiElement[] elements, Editor editor) {
     for (PsiElement element : elements) {
       if (!(element instanceof GroovyFile)) {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
