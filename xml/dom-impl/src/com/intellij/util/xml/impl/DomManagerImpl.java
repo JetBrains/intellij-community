@@ -338,7 +338,7 @@ public final class DomManagerImpl extends DomManager {
   @Nullable
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file) {
     if (file == null) return null;
-    if (file.getFileType() instanceof DomSupportEnabled) return null;
+    if (!(file.getFileType() instanceof DomSupportEnabled)) return null;
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null && virtualFile.isDirectory()) return null;
     return this.<T>getOrCreateCachedValueProvider(file).getFileElement();
