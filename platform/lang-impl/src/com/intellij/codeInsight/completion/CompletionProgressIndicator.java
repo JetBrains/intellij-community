@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
+import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
@@ -62,6 +63,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -103,6 +105,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   };
   private volatile int myCount;
+  private final ConcurrentHashMap<LookupElement, CompletionSorterImpl> myItemSorters = new ConcurrentHashMap<LookupElement, CompletionSorterImpl>();
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap, LookupImpl lookup, boolean hasModifiers) {
@@ -113,7 +116,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myOffsetMap = offsetMap;
     myLookup = lookup;
 
-    myLookup.setArranger(new CompletionLookupArranger(parameters));
+    myLookup.setArranger(new CompletionLookupArranger(parameters, this));
 
     myLookup.addLookupListener(myLookupListener);
     myLookup.setCalculating(true);
@@ -185,6 +188,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
       contributor.duringCompletion(initContext);
     }
+  }
+
+  public void setItemSorter(LookupElement element, CompletionSorterImpl sorter) {
+    myItemSorters.putIfAbsent(element, sorter);
+  }
+
+  @NotNull
+  public CompletionSorterImpl getSorter(LookupElement element) {
+    return myItemSorters.get(element);
   }
 
   private static int findReplacementOffset(int selectionEndOffset, PsiReference reference) {
