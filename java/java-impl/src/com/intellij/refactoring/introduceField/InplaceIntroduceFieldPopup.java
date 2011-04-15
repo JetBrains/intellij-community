@@ -312,6 +312,10 @@ public class InplaceIntroduceFieldPopup {
       if (element instanceof PsiWhiteSpace) {
         element = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
       }
+      if (element instanceof PsiField) return (PsiVariable)element;
+      final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false);
+      if (field != null) return field;
+      element = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
       return PsiTreeUtil.getParentOfType(element, PsiField.class, false);
     }
 
