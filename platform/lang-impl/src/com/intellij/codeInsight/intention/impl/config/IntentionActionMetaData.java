@@ -158,6 +158,9 @@ public final class IntentionActionMetaData {
       catch (URISyntaxException e) {
         children = null;
       }
+      catch (IllegalArgumentException e) {
+        children = null;
+      }
       LOG.error("URLs not found for prefix: '"+prefix+"', suffix: '"+suffix+"'; in directory: '"+descriptionDirectory+"'; directory contents: "+
                 (children == null ? null : Arrays.asList(children)));
       return new TextDescriptor[0];
