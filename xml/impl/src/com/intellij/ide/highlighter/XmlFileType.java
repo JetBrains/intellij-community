@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class XmlFileType extends XmlLikeFileType {
+public class XmlFileType extends XmlLikeFileType implements DomSupportEnabled {
   public static final XmlFileType INSTANCE = new XmlFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "xml";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;
