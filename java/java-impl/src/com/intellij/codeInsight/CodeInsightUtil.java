@@ -302,17 +302,19 @@ public class CodeInsightUtil {
 
         return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
           public Boolean compute() {
-            if (!context.isValid() || !inheritor.isValid() || !facade.getResolveHelper().isAccessible(inheritor, context, null)) return true;
+            if (!context.isValid() || !inheritor.isValid() || !facade.getResolveHelper().isAccessible(inheritor, context, null))
+              return true;
 
-            if(inheritor.getQualifiedName() == null && !manager.areElementsEquivalent(inheritor.getContainingFile(), context.getContainingFile().getOriginalFile())){
+            if (inheritor.getQualifiedName() == null &&
+                !manager.areElementsEquivalent(inheritor.getContainingFile(), context.getContainingFile().getOriginalFile())) {
               return true;
             }
 
             if (JavaCompletionUtil.isInExcludedPackage(inheritor)) return true;
 
             PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, inheritor, PsiSubstitutor.EMPTY);
-            if(superSubstitutor == null) return true;
-            if(getRawSubtypes){
+            if (superSubstitutor == null) return true;
+            if (getRawSubtypes) {
               result.add(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
               return true;
             }
@@ -322,7 +324,10 @@ public class CodeInsightUtil {
               for (PsiTypeParameter baseParameter : PsiUtil.typeParametersIterable(baseClass)) {
                 final PsiType substituted = superSubstitutor.substitute(baseParameter);
                 PsiType arg = baseSubstitutor.substitute(baseParameter);
-                if (arg instanceof PsiWildcardType) arg = ((PsiWildcardType)arg).getExtendsBound();
+                if (arg instanceof PsiWildcardType) {
+                  PsiType bound = ((PsiWildcardType)arg).getBound();
+                  arg = bound != null ? bound : ((PsiWildcardType)arg).getExtendsBound();
+                }
                 PsiType substitution = resolveHelper.getSubstitutionForTypeParameter(inheritorParameter,
                                                                                      substituted,
                                                                                      arg,

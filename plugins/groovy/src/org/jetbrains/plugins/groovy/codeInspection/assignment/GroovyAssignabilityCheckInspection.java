@@ -19,8 +19,6 @@ package org.jetbrains.plugins.groovy.codeInspection.assignment;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -55,7 +52,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -328,55 +324,64 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       checkNamedArgumentsType(call);
     }
 
-    private void highlightInapplicableMethodUsage(GroovyResolveResult methodResolveResult, PsiElement place,
-                                                  PsiMethod method, PsiType[] argumentTypes) {
+    private void highlightInapplicableMethodUsage(GroovyResolveResult methodResolveResult,
+                                                  PsiElement place,
+                                                  PsiMethod method,
+                                                  PsiType[] argumentTypes) {
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        registerCannotApplyError(place, argumentTypes, method.getName());
+        return;
+      }
+      final String typesString = buildArgTypesList(argumentTypes);
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+      final PsiClassType containingType = factory.createType(containingClass, methodResolveResult.getSubstitutor());
+      final String canonicalText = containingType.getInternalCanonicalText();
+      String message = GroovyBundle.message("cannot.apply.method1", method.getName(), canonicalText, typesString);
       PsiElement elementToHighlight = PsiUtil.getArgumentsList(place);
       if (elementToHighlight == null || elementToHighlight.getTextRange().getLength() == 0) {
         elementToHighlight = place;
       }
-
-      final String typesString = buildArgTypesList(argumentTypes);
-      String message;
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null) {
-        final PsiClassType containingType = JavaPsiFacade.getInstance(method.getProject()).getElementFactory()
-          .createType(containingClass, methodResolveResult.getSubstitutor());
-        message = GroovyBundle.message("cannot.apply.method1", method.getName(), containingType.getInternalCanonicalText(), typesString);
-      }
-      else {
-        message = GroovyBundle.message("cannot.apply.method.or.closure", method.getName(), typesString);
-      }
-
       registerError(elementToHighlight, message);
     }
 
+
     private boolean checkCallApplicability(PsiType type, GroovyPsiElement place) {
+
+      PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, true);
       if (type instanceof GrClosureType) {
-        PsiType[] argumentTypes = PsiUtil.getArgumentTypes(place, true);
         if (argumentTypes == null) return true;
 
         if (PsiUtil.isApplicable(argumentTypes, (GrClosureType)type, place)) return true;
 
-        final String typesString = buildArgTypesList(argumentTypes);
-        String message = GroovyBundle.message("cannot.apply.method.or.closure", place.getText(), typesString);
-        PsiElement elementToHighlight = PsiUtil.getArgumentsList(place);
-        if (elementToHighlight == null || elementToHighlight.getTextRange().getLength() == 0) elementToHighlight = place;
-        registerError(elementToHighlight, message);
+        registerCannotApplyError(place, argumentTypes, place.getText());
         return false;
       }
       else if (type != null) {
-        final GroovyResolveResult[] calls =
-          ResolveUtil.getMethodCandidates(type, "call", place, PsiUtil.getArgumentTypes(place, true));
+        final GroovyResolveResult[] calls = ResolveUtil.getMethodCandidates(type, "call", place, argumentTypes);
         for (GroovyResolveResult result : calls) {
           PsiElement resolved = result.getElement();
           if (resolved instanceof PsiMethod) {
             if (!checkMethodApplicability(result, place)) return false;
           }
+          else if (resolved instanceof PsiField) {
+            if (!checkCallApplicability(((PsiField)resolved).getType(), place)) return false;
+          }
         }
-
+        if (calls.length == 0) {
+          registerCannotApplyError(place, argumentTypes, place.getText());
+        }
         return true;
       }
       return true;
+    }
+
+    private void registerCannotApplyError(PsiElement place, PsiType[] argumentTypes, String invokedText) {
+      final String typesString = buildArgTypesList(argumentTypes);
+      String message = GroovyBundle.message("cannot.apply.method.or.closure", invokedText, typesString);
+      PsiElement elementToHighlight = PsiUtil.getArgumentsList(place);
+      if (elementToHighlight == null || elementToHighlight.getTextRange().getLength() == 0) elementToHighlight = place;
+      registerError(elementToHighlight, message);
     }
 
     private static String buildArgTypesList(PsiType[] argTypes) {

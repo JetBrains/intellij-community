@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -54,6 +55,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  * @author dimaskin
  */
 public abstract class GroovyPsiElementFactory {
+
+  @NonNls public static final String DUMMY_FILE_NAME = "DUMMY__";
 
   public static GroovyPsiElementFactory getInstance(Project project) {
     return ServiceManager.getService(project, GroovyPsiElementFactory.class);

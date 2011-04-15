@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -69,11 +68,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
   public final DomFileElementImpl<T> getFileElement() {
     if (myComputed) return myLastResult;
 
-    final StringBuilder log = ApplicationManager.getApplication().isUnitTestMode() ? new StringBuilder() :  null;
-    DomFileElementImpl<T> result = _computeFileElement(false, getRootTag(), log);
-    if (log != null && result == null) {
-      System.out.println(log);
-    }
+    DomFileElementImpl<T> result = _computeFileElement(false, getRootTag(), null);
 
     synchronized (myCondition) {
       if (myComputed) return myLastResult;

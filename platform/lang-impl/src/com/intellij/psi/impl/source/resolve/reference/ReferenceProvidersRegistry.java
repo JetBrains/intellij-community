@@ -121,20 +121,17 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
     final PsiNamePatternCondition<?> nameCondition =
       ContainerUtil.findInstance(pattern.getCondition().getConditions(), PsiNamePatternCondition.class);
     if (nameCondition != null) {
-      final ValuePatternCondition<String> valueCondition =
-        ContainerUtil.findInstance(nameCondition.getNamePattern().getCondition().getConditions(), ValuePatternCondition.class);
-      if (valueCondition != null) {
-        final Collection<String> strings = valueCondition.getValues();
-        registerNamedReferenceProvider(ArrayUtil.toStringArray(strings), nameCondition, scope, true, provider, priority, pattern);
-        return;
-      }
-
-      final CaseInsensitiveValuePatternCondition ciCondition =
-        ContainerUtil
-          .findInstance(nameCondition.getNamePattern().getCondition().getConditions(), CaseInsensitiveValuePatternCondition.class);
-      if (ciCondition != null) {
-        registerNamedReferenceProvider(ciCondition.getValues(), nameCondition, scope, false, provider, priority, pattern);
-        return;
+      for (PatternCondition<? super String> condition : nameCondition.getNamePattern().getCondition().getConditions()) {
+        if (condition instanceof ValuePatternCondition) {
+          final Collection<String> strings = ((ValuePatternCondition)condition).getValues();
+          registerNamedReferenceProvider(ArrayUtil.toStringArray(strings), nameCondition, scope, true, provider, priority, pattern);
+          return;
+        }
+        if (condition instanceof CaseInsensitiveValuePatternCondition) {
+          final String[] strings = ((CaseInsensitiveValuePatternCondition)condition).getValues();
+          registerNamedReferenceProvider(strings, nameCondition, scope, false, provider, priority, pattern);
+          return;
+        }
       }
     }
 

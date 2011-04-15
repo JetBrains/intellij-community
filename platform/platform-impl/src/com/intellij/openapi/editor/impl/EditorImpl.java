@@ -306,7 +306,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         int start = highlighter.getAffectedAreaStartOffset();
         int end = highlighter.getAffectedAreaEndOffset();
         int startLine = myDocument.getLineNumber(start);
-        int endLine = myDocument.getLineNumber(end);
+        int endLine = end < myDocument.getTextLength() ? myDocument.getLineNumber(end) : myDocument.getLineCount() - 1;
         repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
         ((EditorMarkupModelImpl)getMarkupModel()).markDirtied();
         ((EditorMarkupModelImpl)getMarkupModel()).repaint(start, end);

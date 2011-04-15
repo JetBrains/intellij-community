@@ -1,5 +1,6 @@
 package com.intellij.util.xml.impl;
 
+import com.intellij.ide.highlighter.DomSupportEnabled;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
@@ -337,7 +338,7 @@ public final class DomManagerImpl extends DomManager {
   @Nullable
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file) {
     if (file == null) return null;
-    if (!StdFileTypes.XML.equals(file.getFileType())) return null;
+    if (!(file.getFileType() instanceof DomSupportEnabled)) return null;
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null && virtualFile.isDirectory()) return null;
     return this.<T>getOrCreateCachedValueProvider(file).getFileElement();

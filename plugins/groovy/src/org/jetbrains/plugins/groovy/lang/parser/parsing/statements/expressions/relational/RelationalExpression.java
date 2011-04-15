@@ -82,7 +82,7 @@ public class RelationalExpression implements GroovyElementTypes {
       for (int i = 0; i < 2; i++) {
         builder.advanceLexer();
       }
-      marker.done(COMPOSITE_SHIFT_SIGN);
+      marker.done(MORE_OR_EQUALS_SIGN);
       return true;
     } else {
       return false;

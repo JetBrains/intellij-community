@@ -1,3 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<select<caret>
+<selector xmlns:android="http://schemas.android.com/apk/res/android" constantS<caret>>
+</selector>

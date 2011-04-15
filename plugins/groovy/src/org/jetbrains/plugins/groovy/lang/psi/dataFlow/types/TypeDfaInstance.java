@@ -72,16 +72,12 @@ public class TypeDfaInstance implements DfaInstance<Map<String, PsiType>> {
     if (element instanceof GrReferenceExpression && ((GrReferenceExpression) element).getQualifierExpression() == null) {
       final PsiElement parent = element.getParent();
       if (parent instanceof GrAssignmentExpression) {
-        final GrExpression initializer = ((GrAssignmentExpression)parent).getRValue();
-        if (initializer != null) {
-          return new Computable<PsiType>() {
-            @Nullable
-            public PsiType compute() {
-              return initializer.getType();
-            }
-          };
-        }
-        return null;
+        return new Computable<PsiType>() {
+          @Nullable
+          public PsiType compute() {
+            return ((GrAssignmentExpression)parent).getType();
+          }
+        };
       }
 
       if (parent instanceof GrTupleExpression) {

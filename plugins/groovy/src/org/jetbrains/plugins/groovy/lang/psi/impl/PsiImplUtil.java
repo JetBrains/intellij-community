@@ -62,8 +62,7 @@ import java.util.List;
 
 import static com.intellij.psi.impl.source.tree.Factory.createSingleLeafElement;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
-import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.RELATIONS;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.COMPOSITE_SHIFT_SIGN;
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.*;
 
 /**
  *
@@ -176,7 +175,7 @@ public class PsiImplUtil {
     }
     return RELATIONS.contains(opToken) || opToken == mCOMPARE_TO
            || opToken == mREGEX_FIND || opToken == mREGEX_MATCH
-           || opToken == COMPOSITE_SHIFT_SIGN
+           || SHIFT_SIGNS.contains(opToken)
            || opToken==mSTAR;
   }
 
@@ -263,7 +262,7 @@ public class PsiImplUtil {
       if (opToken == mSTAR_STAR) priority = 7;
       else if (opToken == mSTAR || opToken == mDIV) priority = 8;
       else if (opToken == mPLUS || opToken == mMINUS) priority = 9;
-      else if (opToken == COMPOSITE_SHIFT_SIGN) priority = 10;
+      else if (SHIFT_SIGNS.contains(opToken)) priority = 10;
       else if (RELATIONS.contains(opToken)) priority = 12;
       else if (opToken == mEQUAL || opToken == mNOT_EQUAL || opToken == mCOMPARE_TO) priority = 13;
       else if (opToken == mREGEX_FIND || opToken == mREGEX_MATCH) priority = 14;

@@ -35,6 +35,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
@@ -243,7 +244,10 @@ public class DefUseInspection extends BaseLocalInspectionTool {
       int res = SideEffectWarningDialog.DELETE_ALL;
       if (hasSideEffects) {
         hasSideEffects = PsiUtil.isStatement(psiInitializer);
-        res = RemoveUnusedVariableFix.showSideEffectsWarning(sideEffects, variable, FileEditorManager.getInstance(project).getSelectedTextEditor(), hasSideEffects, sideEffects.get(0).getText(), variable.getTypeElement().getText() + " " + variable.getName() + ";<br>" + psiInitializer.getText());
+        res = RemoveUnusedVariableFix.showSideEffectsWarning(sideEffects, variable,
+                                                             FileEditorManager.getInstance(project).getSelectedTextEditor(),
+                                                             hasSideEffects, sideEffects.get(0).getText(),
+                                                             variable.getTypeElement().getText() + " " + variable.getName() + ";<br>" + PsiExpressionTrimRenderer.render((PsiExpression)psiInitializer));
       }
       try {
         if (res == SideEffectWarningDialog.DELETE_ALL) {

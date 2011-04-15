@@ -23,15 +23,11 @@ import com.intellij.openapi.project.DumbAware;
 
 public class ShowFeatureUsageStatisticsAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    new ShowFeatureUsageStatisticsDialog(getProject(e)).show();
+    new ShowFeatureUsageStatisticsDialog(getEventProject(e)).show();
   }
 
   public void update(AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(getProject(e) != null);
-  }
-
-  private Project getProject(AnActionEvent e) {
-    return PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    e.getPresentation().setEnabled(getEventProject(e) != null);
   }
 }

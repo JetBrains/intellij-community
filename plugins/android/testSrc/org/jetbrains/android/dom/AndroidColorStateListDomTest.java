@@ -53,5 +53,13 @@ public class AndroidColorStateListDomTest extends AndroidDomTest {
   public void testStateListCompletion4() throws Throwable {
     doTestCompletion();
   }
+
+  public void testStateListCompletion5() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testRootTagCompletion() throws Throwable {
+    doTestCompletionVariants(getTestName(false) + ".xml", "selector");
+  }
 }
 

@@ -14,10 +14,13 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.CompletionConfidence;
 import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.SkipAutopopupInStrings;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.gpp.GppTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -60,5 +63,11 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
       return ThreeState.YES;
     }
     return ThreeState.UNSURE;
+  }
+
+  @NotNull
+  @Override
+  public ThreeState shouldSkipAutopopup(@Nullable PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+    return new SkipAutopopupInStrings().shouldSkipAutopopup(contextElement, psiFile, offset);
   }
 }

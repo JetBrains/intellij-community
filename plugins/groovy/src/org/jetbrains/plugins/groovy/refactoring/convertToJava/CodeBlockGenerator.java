@@ -17,10 +17,8 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
@@ -31,17 +29,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrFlowInterruptingStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+
+import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
@@ -51,28 +49,15 @@ public class CodeBlockGenerator extends Generator {
   private final StringBuilder builder;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.CodeBlockGenerator");
 
-  private final boolean insertStatementsFromExpr;
-
   private final ExpressionContext context;
 
-  public CodeBlockGenerator(StringBuilder builder, Project project) {
-    this(builder, project, false);
-  }
-
-  public CodeBlockGenerator(StringBuilder builder, Project project, boolean insertStatementsFromExpr) {
-    this(builder, insertStatementsFromExpr, new ExpressionContext(project));
-  }
-
-  public CodeBlockGenerator(StringBuilder builder,
-                            boolean insertStatementsFromExpr,
-                            ExpressionContext context) {
+  public CodeBlockGenerator(StringBuilder builder, ExpressionContext context) {
     this.builder = builder;
-    this.insertStatementsFromExpr = insertStatementsFromExpr;
     this.context = context;
   }
 
-  public CodeBlockGenerator(StringBuilder builder, ExpressionContext context) {
-    this(builder, false, context);
+  public CodeBlockGenerator(StringBuilder builder, Project project) {
+    this(builder, new ExpressionContext(project));
   }
 
   @Override
@@ -88,13 +73,16 @@ public class CodeBlockGenerator extends Generator {
   @Override
   public void visitOpenBlock(GrOpenBlock block) {
     builder.append("{\n");
-    super.visitOpenBlock(block);
+    final GrStatement[] statements = block.getStatements();
+    for (GrStatement statement : statements) {
+      statement.accept(this);
+      builder.append('\n');
+    }
     builder.append("}\n");
   }
 
-  @Override
   public void visitStatement(GrStatement statement) {
-    super.visitStatement(statement);    //To change body of overridden methods use File | Settings | File Templates.
+    LOG.assertTrue(false, "all statements must be overloaded");
   }
 
   @Override
@@ -126,32 +114,10 @@ public class CodeBlockGenerator extends Generator {
     writeStatement(statementBuilder, statement, null);
   }
 
-  private void writeStatement(StringBuilder statementBuilder, GrStatement statement, @Nullable ExpressionContext context) {
-    final PsiElement parent = statement.getParent();
-
-    final boolean addParentheses =
-      insertStatementsFromExpr && context != null && context.myStatements.size() > 0 && parent instanceof GrControlStatement;
-    if (addParentheses) {
-      builder.append("{\n");
-    }
-
-    if (insertStatementsFromExpr) {
-      if (context != null) {
-        for (String st : context.myStatements) {
-          builder.append(st).append("\n");
-        }
-      }
-    }
-    else {
-      LOG.assertTrue(context != null);
-      LOG.assertTrue(context.myStatements.size() == 0);
-      context.myStatements.addAll(context.myStatements);
-    }
-
-    builder.append(statementBuilder);
-    if (addParentheses) {
-      builder.append("}\n");
-    }
+  private void writeStatement(StringBuilder statementBuilder,
+                              GrStatement statement,
+                              @Nullable ExpressionContext context) {
+    GenerationUtil.writeStatement(builder, statementBuilder, statement, context);
   }
 
   @Override
@@ -191,7 +157,13 @@ public class CodeBlockGenerator extends Generator {
     final StringBuilder statementBuilder = new StringBuilder();
     final ExpressionContext context = new ExpressionContext(this.context.project, this.context.myUsedVarNames);
     expression.accept(new ExpressionGenerator(statementBuilder, context));
+    statementBuilder.append(";");
     writeStatement(statementBuilder, expression, context);
+  }
+
+  @Override
+  public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
+    visitExpression(applicationStatement);
   }
 
   @Override
@@ -222,6 +194,7 @@ public class CodeBlockGenerator extends Generator {
   @Override
   public void visitForStatement(GrForStatement forStatement) {
     final StringBuilder builder = new StringBuilder();
+    builder.append("for(");
 
     final GrForClause clause = forStatement.getClause();
     ExpressionContext forContext = context.extend();
@@ -230,16 +203,14 @@ public class CodeBlockGenerator extends Generator {
       final GrVariable declaredVariable = clause.getDeclaredVariable();
       LOG.assertTrue(declaredVariable != null);
 
-      builder.append("for(");
-      writeVariableWithoutColon(builder, declaredVariable);
+      writeVariableWithoutSemicolonAndInitializer(builder, declaredVariable);
       builder.append(" : ");
       if (expression != null) {
         final ExpressionContext context = forContext.copy();
         expression.accept(new ExpressionGenerator(builder, context));
       }
-      builder.append(")");
     }
-    else {
+    else if (clause instanceof GrTraditionalForClause) {
       final GrTraditionalForClause cl = (GrTraditionalForClause)clause;
       final GrCondition initialization = cl.getInitialization();
       final GrExpression condition = cl.getCondition();
@@ -247,7 +218,7 @@ public class CodeBlockGenerator extends Generator {
 
       if (initialization instanceof GrParameter) {
         StringBuilder partBuilder = new StringBuilder();
-        writeVariableWithoutColon(partBuilder, (GrParameter)initialization);
+        writeVariableWithoutSemicolonAndInitializer(partBuilder, (GrParameter)initialization);
         final GrExpression initializer = ((GrParameter)initialization).getDefaultInitializer();
         if (initializer != null) {
           final ExpressionContext partContext = forContext.copy();
@@ -275,10 +246,13 @@ public class CodeBlockGenerator extends Generator {
       if (update != null) {
         genForPart(builder, update, forContext.copy());
       }
-      builder.append(")");
     }
+    builder.append(")");
 
-    forStatement.getBody().accept(new CodeBlockGenerator(builder, forContext));
+    final GrStatement body = forStatement.getBody();
+    if (body != null) {
+      body.accept(new CodeBlockGenerator(builder, forContext));
+    }
   }
 
   private static void genForPart(StringBuilder builder, GrExpression part, final ExpressionContext context) {
@@ -293,11 +267,11 @@ public class CodeBlockGenerator extends Generator {
     builder.append(visitor.getBuilder());
   }
 
-  private static void writeVariableWithoutColon(StringBuilder builder, GrVariable var) {
-    if (GenerationUtil.writeModifiers(builder, var.getModifierList(), GenerationUtil.JAVA_MODIFIERS)) {
+  private static void writeVariableWithoutSemicolonAndInitializer(StringBuilder builder, GrVariable var) {
+    if (GenerationUtil.writeModifiers(builder, var.getModifierList())) {
       builder.append(" ");
     }
-    GenerationUtil.writeType(builder, var.getDeclaredType());
+    GenerationUtil.writeType(builder, getVarType(var));
     builder.append(" ").append(var.getName());
   }
 
@@ -321,7 +295,10 @@ public class CodeBlockGenerator extends Generator {
 
   @Override
   public void visitSwitchStatement(GrSwitchStatement switchStatement) {
-    //todo
+    final StringBuilder builder = new StringBuilder();
+    final ExpressionContext copy = context.copy();
+    SwitchStatementGenerator.generate(builder, copy, switchStatement);
+    writeStatement(builder, switchStatement, copy);
   }
 
   @Override
@@ -343,7 +320,7 @@ public class CodeBlockGenerator extends Generator {
   public void visitCatchClause(GrCatchClause catchClause) {
     final GrParameter parameter = catchClause.getParameter();
     builder.append("catch (");
-    writeVariableWithoutColon(builder, parameter);
+    writeVariableWithoutSemicolonAndInitializer(builder, parameter);
     builder.append(") ");
     final GrOpenBlock body = catchClause.getBody();
     if (body != null) {
@@ -379,58 +356,145 @@ public class CodeBlockGenerator extends Generator {
 
   @Override
   public void visitVariableDeclaration(GrVariableDeclaration variableDeclaration) {
-    final GrModifierList modifierList = variableDeclaration.getModifierList();
-    final GrVariable[] variables = variableDeclaration.getVariables();
 
     StringBuilder builder = new StringBuilder();
     ExpressionContext expressionContext = context.copy();
-    final ExpressionGenerator expressionGenerator = new ExpressionGenerator(builder, expressionContext);
 
 
     if (variableDeclaration.isTuple()) {
-      final GrTupleDeclaration tuple = variableDeclaration.getTupleDeclaration();
-      final GrExpression tupleInitializer = tuple.getInitializerGroovy();
-      if (tupleInitializer instanceof GrListOrMap) {
-        final GrExpression[] initializers = ((GrListOrMap)tupleInitializer).getInitializers();
-        for (int i = 0; i < variables.length; i++) {
-          final GrVariable v = variables[i];
-          final PsiType type = v.getDeclaredType();
-          GenerationUtil.writeModifiers(builder, modifierList);
-          GenerationUtil.writeType(builder, type);
-          builder.append(" ").append(v.getName());
-          if (i < initializers.length) {
-            builder.append(" = ");
-            initializers[i].accept(expressionGenerator);
+      writeTupleDeclaration(variableDeclaration, builder, expressionContext);
+    }
+    else {
+      writeSimpleVarDeclaration(variableDeclaration, builder, expressionContext);
+    }
+
+    writeStatement(builder, variableDeclaration, expressionContext);
+  }
+
+  private static void writeSimpleVarDeclaration(GrVariableDeclaration variableDeclaration,
+                                                StringBuilder builder,
+                                                ExpressionContext expressionContext) {
+    GrVariable[] variables = variableDeclaration.getVariables();
+
+    final GrTypeElement typeElement = variableDeclaration.getTypeElementGroovy();
+    PsiType type = null;
+    Set<String> types = new HashSet<String>(variables.length);
+    if (typeElement == null) {
+      if (variables.length > 1) {
+        for (GrVariable variable : variables) {
+          final GrExpression initializer = variable.getInitializerGroovy();
+          if (initializer != null) {
+            final PsiType varType = initializer.getType();
+            if (varType != null) {
+              types.add(getTypeText(varType));
+              type = varType;
+            }
           }
-          builder.append(";\n");
+        }
+        if (type == null) {
+          type = PsiType.getJavaLangObject(variableDeclaration.getManager(), variableDeclaration.getResolveScope());
         }
       }
       else {
-        final PsiType iteratorType =
-          JavaPsiFacade.getElementFactory(context.project).createTypeFromText(CommonClassNames.JAVA_UTIL_ITERATOR, variableDeclaration);
-        final String iteratorName = GenerationUtil.suggestVarName(iteratorType, variableDeclaration, expressionContext);
-        builder.append("final ").append(CommonClassNames.JAVA_UTIL_ITERATOR).append(" ").append(iteratorName).append(" = ");
-
-        GenerationUtil.invokeMethodByName(tupleInitializer, "iterator", GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY,
-                                          GrClosableBlock.EMPTY_ARRAY, expressionGenerator, variableDeclaration);
-        for (final GrVariable v : variables) {
-          GenerationUtil.writeModifiers(builder, modifierList);
-          final PsiType type = v.getDeclaredType();
-          GenerationUtil.writeType(builder, type);
-          builder.append(" ").append(v.getName());
-          builder.append(" = ").append(iteratorName).append(".hasNext() ? ").append(iteratorName).append(".next() : null;");
-        }
+        type = getVarType(variables[0]);
       }
     }
     else {
-      GenerationUtil.writeModifiers(builder, modifierList);
-      final GrTypeElement typeElement = variableDeclaration.getTypeElementGroovy();
-      PsiType type = typeElement == null
-                     ? PsiType.getJavaLangObject(variableDeclaration.getManager(), variableDeclaration.getResolveScope())
-                     : typeElement.getType();
-      GenerationUtil.writeType(builder, type);
+      type = typeElement.getType();
     }
-    writeStatement(builder, variableDeclaration, expressionContext);
+
+    if (types.size() > 1) {
+      if (variableDeclaration.getParent() instanceof GrControlStatement) {
+        expressionContext.setInsertCurlyBrackets();
+      }
+      for (GrVariable variable : variables) {
+        writeVariableSeparately(variable, builder, expressionContext);
+        builder.append(";\n");
+      }
+      return;
+    }
+
+    GenerationUtil.writeType(builder, type);
+
+    builder.append(" ");
+    for (GrVariable variable : variables) {
+      writeVariableWithoutType(builder, expressionContext, variable);
+      builder.append(", ");
+    }
+    if (variables.length > 0) {
+      builder.delete(builder.length() - 2, builder.length());
+    }
+    builder.append(";");
+  }
+
+  private static void writeVariableWithoutType(StringBuilder builder, ExpressionContext expressionContext, GrVariable variable) {
+    builder.append(variable.getName());
+    final GrExpression initializer = variable.getInitializerGroovy();
+    if (initializer != null) {
+      builder.append(" = ");
+      initializer.accept(new ExpressionGenerator(builder, expressionContext));
+    }
+  }
+
+  private static void writeVariableSeparately(GrVariable variable, StringBuilder builder, ExpressionContext expressionContext) {
+    PsiType type = getVarType(variable);
+
+    if (GenerationUtil.writeModifiers(builder, variable.getModifierList())) {
+      builder.append(" ");
+    }
+
+    GenerationUtil.writeType(builder, type);
+    builder.append(" ");
+
+    writeVariableWithoutType(builder, expressionContext, variable);
+  }
+
+  private static PsiType getVarType(GrVariable variable) {
+    PsiType type = variable.getDeclaredType();
+    if (type == null) {
+      type = variable.getTypeGroovy();
+    }
+    if (type == null) {
+      type = variable.getType();
+    }
+    return type;
+  }
+
+  private void writeTupleDeclaration(GrVariableDeclaration variableDeclaration,
+                                     StringBuilder builder,
+                                     ExpressionContext expressionContext) {
+    GrVariable[] variables = variableDeclaration.getVariables();
+    final GrExpression tupleInitializer = variableDeclaration.getTupleDeclaration().getInitializerGroovy();
+    if (tupleInitializer instanceof GrListOrMap) {
+      for (GrVariable variable : variables) {
+        writeVariableSeparately(variable, builder, expressionContext);
+        builder.append(";\n");
+      }
+    }
+    else {
+      final PsiType iteratorType =
+        JavaPsiFacade.getElementFactory(context.project).createTypeFromText(CommonClassNames.JAVA_UTIL_ITERATOR, variableDeclaration);
+      final String iteratorName = GenerationUtil.suggestVarName(iteratorType, variableDeclaration, expressionContext);
+      builder.append("final ").append(CommonClassNames.JAVA_UTIL_ITERATOR).append(" ").append(iteratorName).append(" = ");
+
+      GenerationUtil.invokeMethodByName(tupleInitializer, "iterator", GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY,
+                                        GrClosableBlock.EMPTY_ARRAY, new ExpressionGenerator(builder, expressionContext),
+                                        variableDeclaration);
+      final GrModifierList modifierList = variableDeclaration.getModifierList();
+      for (final GrVariable v : variables) {
+        GenerationUtil.writeModifiers(builder, modifierList);
+        final PsiType type = getVarType(v);
+        GenerationUtil.writeType(builder, type);
+        builder.append(" ").append(v.getName());
+        builder.append(" = ").append(iteratorName).append(".hasNext() ? ").append(iteratorName).append(".next() : null;");
+      }
+    }
+  }
+
+  private static String getTypeText(PsiType varType) {
+    final StringBuilder builder = new StringBuilder();
+    GenerationUtil.writeType(builder, varType);
+    return builder.toString();
   }
 
   @Override

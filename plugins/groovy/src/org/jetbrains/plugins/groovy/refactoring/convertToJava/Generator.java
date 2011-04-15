@@ -15,12 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author Maxim.Medvedev
  */
-public abstract class Generator extends GroovyRecursiveElementVisitor {
+public abstract class Generator extends GroovyElementVisitor {
   public abstract StringBuilder getBuilder();
 
   public abstract ExpressionContext getContext();

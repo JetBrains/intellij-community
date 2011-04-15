@@ -80,18 +80,28 @@ public class ShiftExpression implements GroovyElementTypes {
         builder.getTokenText(); //todo[peter] remove look-ahead assertion
         builder.advanceLexer();
       }
-      marker.done(COMPOSITE_SHIFT_SIGN);
+      marker.done(COMPOSITE_TRIPLE_SHIFT_SIGN);
       return true;
-    } else if (ParserUtils.lookAhead(builder, mLT, mLT) ||
-            ParserUtils.lookAhead(builder, mGT, mGT)) {
+    }
+    else if (ParserUtils.lookAhead(builder, mLT, mLT)) {
       PsiBuilder.Marker marker = builder.mark();
       for (int i = 0; i < 2; i++) {
         builder.getTokenText(); //todo[peter] remove look-ahead assertion
         builder.advanceLexer();
       }
-      marker.done(COMPOSITE_SHIFT_SIGN);
+      marker.done(COMPOSITE_LSHIFT_SIGN);
       return true;
-    } else {
+    }
+    else if (ParserUtils.lookAhead(builder, mGT, mGT)) {
+      PsiBuilder.Marker marker = builder.mark();
+      for (int i = 0; i < 2; i++) {
+        builder.getTokenText(); //todo[peter] remove look-ahead assertion
+        builder.advanceLexer();
+      }
+      marker.done(COMPOSITE_RSHIFT_SIGN);
+      return true;
+    }
+    else {
       return false;
     }
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.TextChange;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,6 +34,7 @@ import java.util.List;
 public class BulkChangesMerger {
 
   public static final BulkChangesMerger INSTANCE = new BulkChangesMerger();
+  private static final Logger LOG = Logger.getInstance("#" + BulkChangesMerger.class.getName());
 
   /**
    * Merges given changes within the given text and returns result as a new char sequence.
@@ -105,7 +107,7 @@ public class BulkChangesMerger {
     throws IllegalArgumentException
   {
     // Consider two corner cases:
-    //     1. Every given change increase text length, i.e. change text length is more than changed region length. We can calculate
+    //     1. Every given change increases text length, i.e. change text length is more than changed region length. We can calculate
     //        resulting text length and start merging the changes from the right end then;
     //     2. Every given change reduces text length, start from the left end then;
     // The general idea is to group all of the given changes by 'add text'/ 'remove text' criteria and process them sequentially.
@@ -118,7 +120,7 @@ public class BulkChangesMerger {
     //     6) replace one symbol by three (diff +2);
     // Algorithm:
     //     1. Define the first group of change. First change diff is '+3', hence, iterate all changes until the resulting diff becomes
-    //        equal or less to the zero. So, the first four changes conduct the first group. Initial change increased text length, hence,
+    //        less or equal to the zero. So, the first four changes conduct the first group. Initial change increased text length, hence,
     //        we process the changes from right to left starting at offset '4-th change start + 1';
     //     2. Current diff is '-2' (4-th change diff is '-3' and one slot was necessary for previous group completion), so, that means
     //        that we should process the 4-th and 5-th changes as the second group. Initial change direction is negative, hence, we
@@ -138,12 +140,22 @@ public class BulkChangesMerger {
         + "minimum size: %d", data.length, length + diff
       ));
     }
-    
-    for (Context context = new Context(changes, data, length, length + diff); !context.isComplete();) {
-      if (!context.startGroup()) {
-        return;
+
+    try {
+      for (Context context = new Context(changes, data, length, length + diff); !context.isComplete();) {
+        if (!context.startGroup()) {
+          return;
+        }
+        context.endGroup();
       }
-      context.endGroup();
+    }
+    catch (RuntimeException e) {
+      LOG.error(String.format(
+        "Invalid attempt to perform in-place document changes merge detected. Initial text length: %d, changes: %s, "
+        + "changes diff: %d, initial text: '%s'", length, changes, diff, Arrays.toString(data)
+      ), e);
+      char[] merged = mergeToCharArray(data, length, changes);
+      System.arraycopy(merged, 0, data, 0, length + diff);
     }
   }
   

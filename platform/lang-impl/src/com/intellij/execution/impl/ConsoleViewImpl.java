@@ -563,7 +563,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         addToken(deferredToken.getLength(), deferredToken.getHyperlinkInfo(), deferredToken.contentType);
       }
       deferredTokensSize = deferredTokens.size();
-      myBuffer.clear();
+      myBuffer.clear(false);
     }
     final Document document = myEditor.getDocument();
     final int oldLineCount = document.getLineCount();

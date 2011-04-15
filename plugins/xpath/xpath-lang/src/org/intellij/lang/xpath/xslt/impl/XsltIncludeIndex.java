@@ -54,10 +54,15 @@ public class XsltIncludeIndex {
     }
 
   public static boolean processBackwardDependencies(@NotNull XmlFile file, Processor<XmlFile> processor) {
-      Project project = file.getProject();
+      final VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile == null) {
+        return true;
+      }
+      final Project project = file.getProject();
       final PsiManager psiManager = PsiManager.getInstance(project);
-      VirtualFile[] files = FileIncludeManager.getManager(project).getIncludingFiles(file.getVirtualFile(), true);
-      PsiFile[] psiFiles = ContainerUtil.map2Array(files, PsiFile.class, new NullableFunction<VirtualFile, PsiFile>() {
+
+      final VirtualFile[] files = FileIncludeManager.getManager(project).getIncludingFiles(virtualFile, true);
+      final PsiFile[] psiFiles = ContainerUtil.map2Array(files, PsiFile.class, new NullableFunction<VirtualFile, PsiFile>() {
         public PsiFile fun(VirtualFile file) {
           return psiManager.findFile(file);
         }

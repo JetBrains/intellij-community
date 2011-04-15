@@ -16,8 +16,6 @@
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.codeInsight.completion.CompletionProcess;
-import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -238,12 +236,6 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
 
   @NotNull
   public Object[] getVariants() {
-    final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
-    if (process != null && process.isAutopopupCompletion() && isSoft()) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-
-
     final String s = getText();
     if (s != null && s.equals("/")) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;

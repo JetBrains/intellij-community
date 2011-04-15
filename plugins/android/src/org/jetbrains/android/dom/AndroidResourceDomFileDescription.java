@@ -49,12 +49,16 @@ public abstract class AndroidResourceDomFileDescription<T extends DomElement> ex
 
   @Override
   public boolean isMyFile(@NotNull final XmlFile file, @Nullable Module module) {
+    return doIsMyFile(file, myResourceTypes);
+  }
+
+  public static boolean doIsMyFile(final XmlFile file, final String[] resourceTypes) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
         if (file.getProject().isDisposed()) {
           return false;
         }
-        for (String resourceType : myResourceTypes) {
+        for (String resourceType : resourceTypes) {
           if (ResourceManager.isInResourceSubdirectory(file, resourceType)) {
             return AndroidFacet.getInstance(file) != null;
           }

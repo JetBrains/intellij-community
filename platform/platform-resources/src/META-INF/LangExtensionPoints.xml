@@ -313,6 +313,7 @@
   <extensionPoint name="renameInputValidator" interface="com.intellij.refactoring.rename.RenameInputValidator"/>
 
   <extensionPoint name="findUsagesHandlerFactory" interface="com.intellij.find.findUsages.FindUsagesHandlerFactory" area="IDEA_PROJECT"/>
+  <extensionPoint name="customUsageSearcher" interface="com.intellij.find.findUsages.CustomUsageSearcher"/>
 
   <extensionPoint name="readWriteAccessDetector" interface="com.intellij.codeInsight.highlighting.ReadWriteAccessDetector"/>
 

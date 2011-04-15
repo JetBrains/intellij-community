@@ -38,7 +38,6 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -52,7 +51,6 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.TitlePanel;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -87,7 +85,8 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
                                    final boolean cantChangeFinalModifier,
                                    final boolean hasTypeSuggestion,
                                    final RangeMarker exprMarker,
-                                   final List<RangeMarker> occurrenceMarkers) {
+                                   final List<RangeMarker> occurrenceMarkers,
+                                   final String commandName) {
     super(elementToRename, editor);
     myProject = project;
     myEditor = editor;
@@ -110,7 +109,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
       myCanBeFinal = new NonFocusableCheckBox("Declare final");
       myCanBeFinal.setSelected(createFinals());
       myCanBeFinal.setMnemonic('f');
-      myCanBeFinal.addActionListener(new FinalListener(project));
+      myCanBeFinal.addActionListener(new FinalListener(project, commandName));
     }
   }
 
@@ -381,9 +380,11 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
 
   public class FinalListener implements ActionListener {
     private final Project myProject;
+    private final String myCommandName;
 
-    public FinalListener(Project project) {
+    public FinalListener(Project project, String commandName) {
       myProject = project;
+      myCommandName = commandName;
     }
 
     @Override
@@ -396,7 +397,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     }
 
     public void perform(final boolean generateFinal, final String modifier) {
-      new WriteCommandAction(myProject){
+      new WriteCommandAction(myProject, myCommandName, myCommandName){
         @Override
         protected void run(com.intellij.openapi.application.Result result) throws Throwable {
           final Document document = myEditor.getDocument();

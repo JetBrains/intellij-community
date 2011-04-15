@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.ide.diff.DiffElement;
+import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ public abstract class DirDiffManager {
     return ServiceManager.getService(project, DirDiffManager.class);
   }
 
-  public abstract void showDiff(@NotNull DiffElement dir1, @NotNull DiffElement dir2);
+  public abstract void showDiff(@NotNull DiffElement dir1, @NotNull DiffElement dir2, DirDiffSettings settings);
 
   public abstract boolean canShow(@NotNull DiffElement dir1, @NotNull DiffElement dir2);
 }

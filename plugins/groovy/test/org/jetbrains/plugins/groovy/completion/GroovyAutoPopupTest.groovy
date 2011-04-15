@@ -95,4 +95,10 @@ class GroovyAutoPopupTest extends CompletionAutoPopupTestCase {
     assert myFixture.lookupElementStrings == [ArrayIndexOutOfBoundsException.simpleName]
   }
 
+  public void testNoWordCompletionAutoPopup() {
+    myFixture.configureByText "a.groovy", 'def foo = "f<caret>"'
+    type 'o'
+    assert !lookup
+  }
+
 }

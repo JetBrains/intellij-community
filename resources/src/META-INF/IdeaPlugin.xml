@@ -147,8 +147,6 @@
 
     <extensionPoint name="debuggerEditorTextProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" />
 
-    <extensionPoint name="stackFrameFilter" interface="com.intellij.execution.filters.StackFrameFilter"/>
-
     <extensionPoint name="paletteItemProvider" area="IDEA_PROJECT" interface="com.intellij.ide.palette.PaletteItemProvider"/>
 
     <extensionPoint name="javadocTagInfo" area="IDEA_PROJECT" interface="com.intellij.psi.javadoc.JavadocTagInfo"/>
@@ -240,6 +238,7 @@
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.FocusInJavadoc" id="javadoc" order="before javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.UnfocusedComments" id="javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup" id="javaTrue" order="last"/>
+    <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings" id="javaSkipAutopopupInStrings"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.BasicToClassNameDelegator" id="basic2ClassName"
                             order="first, before javaMemberName, after xml"/>
@@ -496,17 +495,17 @@
       <category>Control Flow</category>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix</className>
+      <className>com.intellij.codeInsight.intention.impl.AddNotNullAnnotationIntention</className>
       <category>Control Flow</category>
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.AddDeprecationAnnotationFix</className>
+      <className>com.intellij.codeInsight.intention.impl.AddDeprecationAnnotationIntention</className>
       <category>Control Flow</category>
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix</className>
+      <className>com.intellij.codeInsight.intention.impl.AddNullableAnnotationIntention</className>
       <category>Control Flow</category>
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
@@ -724,8 +723,6 @@
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.IconLineMarkerProvider"/>
 
-    <codeInsight.wordCompletionFilter language="JAVA" implementationClass="com.intellij.lang.java.JavaWordCompletionFilter"/>
-
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.StatementMover" id="statement"
                           order="before declaration"/>
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.DeclarationMover" id="declaration"
@@ -778,10 +775,13 @@
     <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.ProjectBaseDirNavigationContributor"/>
 
     <consoleFilterProvider implementation="com.intellij.execution.filters.DefaultConsoleFiltersProvider"/>
-    <console.folding implementation="com.intellij.execution.filters.AuxiliaryCallsFolding"/>
 
-    <stackFrameFilter implementation="com.intellij.execution.filters.ReflectionStackFrameFilter"/>
-    <stackFrameFilter implementation="com.intellij.execution.filters.RmiStackFrameFilter"/>
+    <stacktrace.fold substring="at java.lang.reflect.Method.invoke("/>
+    <stacktrace.fold substring="at java.lang.reflect.Constructor.newInstance("/>
+    <stacktrace.fold substring="at sun.reflect."/>
+    <stacktrace.fold substring="at java.rmi."/>
+    <stacktrace.fold substring="at sun.rmi."/>
+    <stacktrace.fold substring="at com.intellij.rt.execution."/>
 
     <debuggerEditorTextProvider language="JAVA" implementationClass="com.intellij.debugger.impl.JavaEditorTextProviderImpl"/>
 

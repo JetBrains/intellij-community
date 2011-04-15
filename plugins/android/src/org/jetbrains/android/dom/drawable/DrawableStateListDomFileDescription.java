@@ -23,12 +23,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * @author Eugene.Kudelevsky
  */
 public class DrawableStateListDomFileDescription extends AndroidResourceDomFileDescription<DrawableSelector> {
-
-  @NonNls private static final String SELECTOR_TAG_NAME = "selector";
+  @NonNls public static final String SELECTOR_TAG_NAME = "selector";
 
   public DrawableStateListDomFileDescription() {
     super(DrawableSelector.class, SELECTOR_TAG_NAME, "drawable");

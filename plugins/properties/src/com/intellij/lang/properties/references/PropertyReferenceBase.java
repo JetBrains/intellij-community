@@ -182,11 +182,6 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
 
   @NotNull
   public Object[] getVariants() {
-    final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
-    if (process != null && process.isAutopopupCompletion() && isSoft()) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-
     final Set<Object> variants = new THashSet<Object>(new TObjectHashingStrategy<Object>() {
       public int computeHashCode(final Object object) {
         if (object instanceof Property) {

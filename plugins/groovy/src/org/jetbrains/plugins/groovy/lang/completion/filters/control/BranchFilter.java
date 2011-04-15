@@ -19,11 +19,8 @@ package org.jetbrains.plugins.groovy.lang.completion.filters.control;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
@@ -34,31 +31,7 @@ public class BranchFilter implements ElementFilter {
   public boolean isAcceptable(Object element, PsiElement context) {
     if (context.getParent() != null) {
       PsiElement parent = context.getParent();
-
-      if (parent instanceof GrReferenceExpression &&
-          treeWalkUp(parent)) {
-        PsiElement superParent = parent.getParent();
-        if ((superParent instanceof GrOpenBlock ||
-            superParent instanceof GrCaseSection ||
-            superParent instanceof GrClosableBlock)) {
-          return true;
-        }
-
-        if (superParent instanceof GrWhileStatement) {
-          PsiElement elem = parent.getPrevSibling();
-          while (elem != null &&
-              !GroovyElementTypes.mRPAREN.equals(elem.getNode().getElementType())) {
-            elem = elem.getPrevSibling();
-          }
-          if (elem != null) {
-            return true;
-          } else {
-            return false;
-          }
-        }
-      }
-
-      return false;
+      return parent instanceof GrReferenceExpression && treeWalkUp(parent);
     }
     return false;
   }

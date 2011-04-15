@@ -26,6 +26,7 @@ class ExpressionContext {
   List<String> myStatements = new ArrayList<String>();
   Set<String> myUsedVarNames;
   Project project;
+  private boolean myShouldInsertCurlyBrackets = false;
 
   ExpressionContext(Project project, Set<String> usedVarNames) {
     this.project = project;
@@ -44,5 +45,13 @@ class ExpressionContext {
     final HashSet<String> usedVarNames = new HashSet<String>();
     usedVarNames.addAll(myUsedVarNames);
     return new ExpressionContext(project, usedVarNames);
+  }
+
+  public void setInsertCurlyBrackets() {
+    myShouldInsertCurlyBrackets = true;
+  }
+
+  public boolean shouldInsertCurlyBrackets() {
+    return myShouldInsertCurlyBrackets;
   }
 }

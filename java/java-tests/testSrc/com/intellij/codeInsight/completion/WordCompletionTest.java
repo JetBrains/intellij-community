@@ -40,15 +40,10 @@ public class WordCompletionTest extends CompletionTestCase {
       @Override
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-        return new PsiReference[]{new PsiReferenceBase<PsiElement>(element) {
+        return new PsiReference[]{new PsiReferenceBase<PsiElement>(element, true) {
           @Override
           public PsiElement resolve() {
             return null;
-          }
-
-          @Override
-          public boolean isSoft() {
-            return true;
           }
 
           @Override
@@ -63,15 +58,10 @@ public class WordCompletionTest extends CompletionTestCase {
       @Override
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-        return new PsiReference[]{new PsiReferenceBase<PsiElement>(element) {
+        return new PsiReference[]{new PsiReferenceBase<PsiElement>(element, false) {
           @Override
           public PsiElement resolve() {
             return null;
-          }
-
-          @Override
-          public boolean isSoft() {
-            return false;
           }
 
           @Override
@@ -87,6 +77,11 @@ public class WordCompletionTest extends CompletionTestCase {
 
     configureByFile(BASE_PATH + "3.java");
     checkResultByFile(BASE_PATH + "3_after.java");
+  }
+
+  public void testInJavaLiterals() throws Exception {
+    configureByFile(BASE_PATH + "InJavaLiterals.java");
+    checkResultByFile(BASE_PATH + "InJavaLiterals_after.java");
   }
 
   public void testComments() throws Throwable {

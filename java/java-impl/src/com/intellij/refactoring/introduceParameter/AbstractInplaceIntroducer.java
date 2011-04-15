@@ -57,8 +57,8 @@ public abstract class AbstractInplaceIntroducer extends VariableInplaceIntroduce
                                    boolean cantChangeFinalModifier,
                                    boolean hasTypeSuggestion,
                                    RangeMarker exprMarker,
-                                   List<RangeMarker> occurrenceMarkers) {
-    super(project, expression, editor, elementToRename, cantChangeFinalModifier, hasTypeSuggestion, exprMarker, occurrenceMarkers);
+                                   List<RangeMarker> occurrenceMarkers, String commandName) {
+    super(project, expression, editor, elementToRename, cantChangeFinalModifier, hasTypeSuggestion, exprMarker, occurrenceMarkers, commandName);
   }
 
   protected abstract boolean isReplaceAllOccurrences();
@@ -143,16 +143,18 @@ public abstract class AbstractInplaceIntroducer extends VariableInplaceIntroduce
 
   protected abstract class VisibilityListener implements ChangeListener {
     private Project myProject;
+    private final String myCommandName;
     private Editor myEditor;
 
-    protected VisibilityListener(Project project, Editor editor) {
+    protected VisibilityListener(Project project, String commandName, Editor editor) {
       myProject = project;
+      myCommandName = commandName;
       myEditor = editor;
     }
 
     @Override
     public void stateChanged(ChangeEvent e) {
-      new WriteCommandAction(myProject) {
+      new WriteCommandAction(myProject, myCommandName, myCommandName) {
         @Override
         protected void run(Result result) throws Throwable {
           final Document document = myEditor.getDocument();

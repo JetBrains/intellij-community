@@ -10,7 +10,7 @@ def List getMethodArguments(def methodCall) {
     return testMethod(methodCall)
 }
 
-private List<Integer> testMethod(methodCall) {
+private ArrayList<Integer> testMethod(methodCall) {
     def argumentsExpression = methodCall.arguments
     if (respondsTo(argumentsExpression, 'getExpressions')) {
         return [1, 2, 3]

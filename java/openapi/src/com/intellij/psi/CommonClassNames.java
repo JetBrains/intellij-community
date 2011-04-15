@@ -79,4 +79,5 @@ public interface CommonClassNames {
   @NonNls String CLASS_FILE_EXTENSION = ".class";
 
   @NonNls String JAVA_UTIL_CONCURRENT_FUTURE = "java.util.concurrent.Future";
+  @NonNls String JAVA_UTIL_ARRAY_LIST = "java.util.ArrayList";
 }

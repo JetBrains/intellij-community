@@ -18,8 +18,8 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
-import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.TupleParse;
@@ -31,22 +31,6 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class AssignmentExpression implements GroovyElementTypes {
 
-  private static final TokenSet ASSIGNMENTS = TokenSet.create(
-          mASSIGN,
-          mPLUS_ASSIGN,
-          mMINUS_ASSIGN,
-          mSTAR_ASSIGN,
-          mDIV_ASSIGN,
-          mMOD_ASSIGN,
-          mSL_ASSIGN,
-          mBAND_ASSIGN,
-          mBOR_ASSIGN,
-          mBXOR_ASSIGN,
-          mSTAR_STAR_ASSIGN,
-          mSR_ASSIGN,
-          mBSR_ASSIGN
-  );
-
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
     return parse(builder, parser, false);
   }
@@ -55,7 +39,7 @@ public class AssignmentExpression implements GroovyElementTypes {
     Marker marker = builder.mark();
     final boolean isTuple = ParserUtils.lookAhead(builder, mLPAREN, mIDENT, mCOMMA);
     if (parseSide(builder, parser, isTuple,comExprAllowed)) {
-      if (ParserUtils.getToken(builder, ASSIGNMENTS)) {
+      if (ParserUtils.getToken(builder, TokenSets.ASSIGNMENTS)) {
         ParserUtils.getToken(builder, mNLS);
         if (!parse(builder, parser, comExprAllowed)) {
           builder.error(GroovyBundle.message("expression.expected"));

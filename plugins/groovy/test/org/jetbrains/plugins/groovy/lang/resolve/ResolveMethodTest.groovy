@@ -648,4 +648,10 @@ class Zoo {
   public void resoleAsType() {
     assertInstanceOf resolve("A.groovy"), GrMethod
   }
+
+  public void testPlusAssignment() {
+    final PsiElement resolved = resolve("A.groovy")
+    assertInstanceOf resolved, GrMethod
+    assertEquals("plus", resolved.name)
+  }
 }

@@ -25,11 +25,9 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import sun.util.LocaleServiceProviderPool;
 
 /**
  * User: anna
@@ -111,7 +109,9 @@ public class PossibleHeapPollutionVarargsInspection extends BaseJavaLocalInspect
       final PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement instanceof PsiIdentifier) {
         final PsiMethod psiMethod = (PsiMethod)psiElement.getParent();
-        new AddAnnotationFix("java.lang.SafeVarargs", psiMethod).applyFix(project, descriptor);
+        if (psiMethod != null) {
+          new AddAnnotationFix("java.lang.SafeVarargs", psiMethod).applyFix(project, descriptor);
+        }
       }
     }
   }

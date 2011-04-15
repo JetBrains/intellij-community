@@ -632,7 +632,10 @@ public abstract class GroovyRefactoringUtil {
       argText.append(argument.getText()).append(", ");
       argument.delete();
     }
-    argText.replace(argText.length() - 2, argText.length(), "]");
+    if (arguments.size() > 0) {
+      argText.delete(argText.length() - 2, argText.length());
+    }
+    argText.append("]");
     if (type instanceof PsiArrayType) {
       type = substitutor.substitute(type);
       String typeText = type.getCanonicalText();

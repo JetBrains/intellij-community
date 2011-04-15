@@ -40,7 +40,7 @@ public class NewModuleAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = getProject(e);
+    final Project project = getEventProject(e);
     if (project == null) {
       return;
     }
@@ -88,12 +88,6 @@ public class NewModuleAction extends AnAction implements DumbAware {
 
   public void update(AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(getProject(e) != null);
+    e.getPresentation().setEnabled(getEventProject(e) != null);
   }
-
-  @Nullable
-  private static Project getProject(AnActionEvent e) {
-    return e.getData(PlatformDataKeys.PROJECT);
-  }
-
 }

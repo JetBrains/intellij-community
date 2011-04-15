@@ -96,30 +96,27 @@ public class FindUtil {
   }
 
   public static void configureFindModel(boolean replace, Editor editor, FindModel model) {
-    String selectedText = editor.getSelectionModel().getSelectedText();
-    model.setReplaceState(replace);
-    if (selectedText != null) {
-      if (replace) {
-        if (!StringUtil.isEmpty(selectedText)) {
-          if (selectedText.indexOf('\n') >= 0) {
-            model.setGlobal(false);
-          }
-          else {
-            model.setStringToFind(selectedText);
-            model.setGlobal(true);
-          }
-        } else {
-          model.setGlobal(true);
-        }
-      } else {
-        model.setStringToFind(selectedText);
-        model.setGlobal(true);
-      }
+    final String selectedText = editor.getSelectionModel().getSelectedText();
 
-      if (model.isGlobal()) {
-        model.setStringToFind(selectedText);
+    boolean isGlobal = true;
+    String stringToFind = null;
+    if (!StringUtil.isEmpty(selectedText)) {
+      if (selectedText.indexOf('\n') >= 0) {
+        if (replace){
+          isGlobal = false;
+          stringToFind = model.getStringToFind();
+        }
       }
+      if (stringToFind == null) {
+        stringToFind = selectedText;
+      }
+    } else {
+      stringToFind = model.getStringToFind();
     }
+
+    model.setReplaceState(replace);
+    model.setStringToFind(stringToFind);
+    model.setGlobal(isGlobal);
     model.setPromptOnReplace(false);
   }
 

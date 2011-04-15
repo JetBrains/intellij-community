@@ -46,6 +46,8 @@ public class MavenImportingSettingsForm {
   private JCheckBox myDownloadSourcesCheckBox;
   private JCheckBox myDownloadDocsCheckBox;
 
+  private JPanel myAdditionalSettingsPanel;
+
   public MavenImportingSettingsForm(boolean isImportStep) {
     if (!isImportStep) {
       mySearchRecursivelyCheckBox.setVisible(false);
@@ -135,5 +137,9 @@ public class MavenImportingSettingsForm {
 
   public void updateData(WizardContext wizardContext) {
     myProjectFormatPanel.updateData(wizardContext);
+  }
+
+  public JPanel getAdditionalSettingsPanel() {
+    return myAdditionalSettingsPanel;
   }
 }

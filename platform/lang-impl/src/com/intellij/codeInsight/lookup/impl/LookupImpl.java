@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.*;
@@ -124,6 +125,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private JLabel mySortingLabel;
   private final JScrollPane myScrollPane;
   private JButton myScrollBarIncreaseButton;
+  private boolean myStartCompletionWhenNothingMatches;
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger){
     super(new JPanel(new BorderLayout()));
@@ -328,6 +330,13 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myFrozenItems.clear();
     refreshUi();
     ensureSelectionVisible();
+    if (myStartCompletionWhenNothingMatches && myList.getModel().getSize() == 1 && myList.getModel().getElementAt(0) instanceof EmptyLookupItem) {
+      CompletionAutoPopupHandler.scheduleAutoPopup(myProject, myEditor, getPsiFile());
+    }
+  }
+
+  public void setStartCompletionWhenNothingMatches(boolean startCompletionWhenNothingMatches) {
+    myStartCompletionWhenNothingMatches = startCompletionWhenNothingMatches;
   }
 
   private void ensureSelectionVisible() {

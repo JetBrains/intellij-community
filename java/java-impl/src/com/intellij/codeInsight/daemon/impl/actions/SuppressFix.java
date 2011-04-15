@@ -140,7 +140,8 @@ public class SuppressFix extends SuppressIntentionAction {
     if (newAnnotation != null) {
       if (annotation != null && annotation.isPhysical()) {
         annotation.replace(newAnnotation);
-      } else {
+      }
+      else {
         final PsiNameValuePair[] attributes = newAnnotation.getParameterList().getAttributes();
         new AddAnnotationFix(SuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME, modifierOwner, attributes).invoke(project, editor, container.getContainingFile());
       }

@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -25,19 +26,23 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.ValueMarkup;
+import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.HashMap;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +53,7 @@ import java.util.Map;
  */
 public class MarkObjectAction extends DebuggerAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.MarkObjectAction");
+  public static final long AUTO_MARKUP_REFERRING_OBJECTS_LIMIT = 100L; // todo: some reasonable limit
   private final String MARK_TEXT = ActionsBundle.message("action.Debugger.MarkObject.text");
   private final String UNMARK_TEXT = ActionsBundle.message("action.Debugger.MarkObject.unmark.text");
 
@@ -79,13 +85,17 @@ public class MarkObjectAction extends DebuggerAction {
             valueDescriptor.setMarkup(debugProcess, null);
           }
           else {
-            final ValueMarkup suggestedMarkup = new ValueMarkup(valueDescriptor.getName(), Color.RED);
+            final String defaultText = valueDescriptor.getName();
             final Ref<Pair<ValueMarkup,Boolean>> result = new Ref<Pair<ValueMarkup, Boolean>>(null);
             try {
               final boolean suggestAdditionalMarkup = canSuggestAdditionalMarkup(debugProcess, valueDescriptor.getValue());
               SwingUtilities.invokeAndWait(new Runnable() {
                 public void run() {
-                  result.set(ObjectMarkupPropertiesDialog.chooseMarkup(suggestedMarkup, suggestAdditionalMarkup));
+                  ObjectMarkupPropertiesDialog dialog = new ObjectMarkupPropertiesDialog(defaultText, suggestAdditionalMarkup);
+                  dialog.show();
+                  if (dialog.isOK()) {
+                    result.set(Pair.create(dialog.getConfiguredMarkup(), dialog.isMarkAdditionalFields()));
+                  }
                 }
               });
             }
@@ -176,7 +186,7 @@ public class MarkObjectAction extends DebuggerAction {
         final ValueMarkup markup = result.get((ObjectReference)fieldValue);
 
         final String fieldName = field.name();
-        final Color autoMarkupColor = ValueMarkup.getAutoMarkupColor();
+        final Color autoMarkupColor = getAutoMarkupColor();
         if (markup == null) {
           result.put((ObjectReference)fieldValue, new ValueMarkup(fieldName, autoMarkupColor, createMarkupTooltipText(null, refType, fieldName)));
         }
@@ -197,8 +207,9 @@ public class MarkObjectAction extends DebuggerAction {
     // invoke the following method using Reflection in order to remain compilable on jdk 1.5
     //  java.util.List<com.sun.jdi.ObjectReference> referringObjects(long l);
     try {
-      final java.lang.reflect.Method apiMethod = ObjectReference.class.getMethod("referringObjects", long.class);
-      return (List<ObjectReference>)apiMethod.invoke(value, ValueMarkup.AUTO_MARKUP_REFERRING_OBJECTS_LIMIT);
+      final Method apiMethod = ObjectReference.class.getMethod("referringObjects", long.class);
+      //noinspection unchecked
+      return (List<ObjectReference>)apiMethod.invoke(value, AUTO_MARKUP_REFERRING_OBJECTS_LIMIT);
     }
     catch (IllegalAccessException e) {
       LOG.error(e); // should not happen
@@ -211,7 +222,7 @@ public class MarkObjectAction extends DebuggerAction {
     return Collections.emptyList();
   }
 
-  private static String createMarkupTooltipText(String prefix, ReferenceType refType, String fieldName) {
+  private static String createMarkupTooltipText(@Nullable String prefix, ReferenceType refType, String fieldName) {
     final StringBuilder builder = new StringBuilder();
     if (prefix == null) {
       builder.append("Value referenced from:");
@@ -240,5 +251,11 @@ public class MarkObjectAction extends DebuggerAction {
     final Presentation presentation = e.getPresentation();
     presentation.setVisible(enable);
     presentation.setText(text);
+  }
+
+  public static Color getAutoMarkupColor() {
+    final EditorColorsManager manager = EditorColorsManager.getInstance();
+    final TextAttributes textAttributes = manager.getGlobalScheme().getAttributes(HighlightInfoType.STATIC_FIELD.getAttributesKey());
+    return textAttributes.getForegroundColor();
   }
 }

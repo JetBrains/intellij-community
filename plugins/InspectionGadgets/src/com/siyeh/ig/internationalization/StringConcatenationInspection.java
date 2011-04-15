@@ -88,9 +88,11 @@ public class StringConcatenationInspection extends BaseInspection {
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(expressionParent,
                             PsiMethod.class);
+          if (method != null) {
             final InspectionGadgetsFix fix = new DelegatingFix(
                     new AddAnnotationFix(AnnotationUtil.NON_NLS, method));
             result.add(fix);
+          }
         }
         return result.toArray(new InspectionGadgetsFix[result.size()]);
     }

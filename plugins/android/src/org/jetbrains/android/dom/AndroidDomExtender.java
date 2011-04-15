@@ -100,12 +100,16 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
                                                     String... skipNames) {
     Set<String> skippedAttrSet = new HashSet<String>();
     Collections.addAll(skippedAttrSet, skipNames);
-    XmlAttribute[] existingAttrs = element.getXmlTag().getAttributes();
-    for (XmlAttribute attr : existingAttrs) {
-      if (attr.getNamespace().equals(namespace)) {
-        skippedAttrSet.add(attr.getLocalName());
+
+    if (!shouldValidateAttributes(element)) {
+      XmlAttribute[] existingAttrs = element.getXmlTag().getAttributes();
+      for (XmlAttribute attr : existingAttrs) {
+        if (attr.getNamespace().equals(namespace)) {
+          skippedAttrSet.add(attr.getLocalName());
+        }
       }
     }
+
     for (StyleableDefinition styleable : styleables) {
       for (AttributeDefinition attrDef : styleable.getAttributes()) {
         String attrName = attrDef.getName();
@@ -115,6 +119,10 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
         }
       }
     }
+  }
+
+  private static boolean shouldValidateAttributes(DomElement element) {
+    return element instanceof DrawableDomElement;
   }
 
   private static boolean mustBeSoft(@NotNull Converter converter, Collection<AttributeFormat> formats) {
@@ -494,7 +502,11 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     AndroidFacet facet = AndroidFacet.getInstance(element);
     if (facet == null) return;
     XmlTag tag = element.getXmlTag();
-    registerExistingAttributes(facet, tag, registrar, element);
+
+    if (!shouldValidateAttributes(element)) {
+      registerExistingAttributes(facet, tag, registrar, element);
+    }
+
     String tagName = tag.getName();
     Set<String> registeredSubtags = new HashSet<String>();
     if (element instanceof ManifestElement) {
@@ -523,7 +535,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
 
     if (!(element instanceof LayoutElement) &&
         !(element instanceof ColorDomElement) &&
-        (!(element instanceof DrawableDomElement) || element instanceof UnknownDrawableElement)) {
+        !(element instanceof DrawableDomElement)) {
       Processor<String> existingSubtagsFilter = element instanceof XmlResourceElement ?
                                                 new Processor<String>() {
                                                   public boolean process(String s) {
@@ -538,7 +550,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
                                                     String tagName,
                                                     AndroidDomElement element,
                                                     DomExtensionsRegistrar registrar) {
-    final String specialStyleableName = DrawableDomFileDescription.SPECIAL_STYLEABLE_NAMES.get(tagName);
+    final String specialStyleableName = AndroidDrawableDomUtil.SPECIAL_STYLEABLE_NAMES.get(tagName);
     if (specialStyleableName != null) {
       registerAttributes(facet, element, specialStyleableName, SYSTEM_RESOURCE_PACKAGE, registrar);
     }
@@ -550,6 +562,12 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
       if (attrDefs != null) {
         registerAttributes(facet, element, attrDefs.getStateStyleables(), SYSTEM_RESOURCE_PACKAGE, registrar, null);
       }
+    }
+    else if (element instanceof LayerListItem) {
+      registerAttributes(facet, element, "LayerDrawableItem", SYSTEM_RESOURCE_PACKAGE, registrar);
+    }
+    else if (element instanceof LevelListItem) {
+      registerAttributes(facet, element, "LevelListDrawableItem", SYSTEM_RESOURCE_PACKAGE, registrar);
     }
   }
 

@@ -171,7 +171,7 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   }
 
   public void testTupleWithNullInIt() {
-    assertTypeEquals("java.util.List", "A.groovy");
+    assertTypeEquals("java.util.ArrayList", "A.groovy");
   }
 
   public void testImplicitlyReturnedMethodCall() {
@@ -180,5 +180,28 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
 
   public void testInferWithClosureType() {
     assertTypeEquals("java.util.Date", "A.groovy");
+  }
+
+  public void testPlusEquals1() {
+    assertTypeEquals("Test", "A.groovy");
+  }
+
+  public void testPlusEquals2() {
+    assertTypeEquals("java.lang.String", "A.groovy");
+  }
+
+  public void testPlusEquals3() {
+    assertTypeEquals("java.lang.String", "A.groovy");
+  }
+  public void testPlusEqualsClosure() {
+    assertTypeEquals("java.lang.String", "A.groovy");
+  }
+
+  public void testGetAtClosure() {
+    assertTypeEquals("java.lang.String", "A.groovy");
+  }
+
+  public void testPreferMethodOverloader() {
+    assertTypeEquals("java.lang.String", "A.groovy");
   }
 }

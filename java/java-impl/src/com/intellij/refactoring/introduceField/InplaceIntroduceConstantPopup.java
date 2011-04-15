@@ -212,6 +212,7 @@ public class InplaceIntroduceConstantPopup {
     visibilityCombo.setRenderer(new ListCellRendererWrapper<String>(visibilityCombo.getRenderer()) {
       @Override
       public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
+        if (value == null) return;
         setText(PsiBundle.visibilityPresentation(value));
       }
     });
@@ -283,7 +284,7 @@ public class InplaceIntroduceConstantPopup {
           renamer.performInplaceRename(false, nameSuggestions);
         }
       }
-    }, IntroduceConstantHandler.REFACTORING_NAME, null);
+    }, IntroduceConstantHandler.REFACTORING_NAME, IntroduceConstantHandler.REFACTORING_NAME);
   }
 
   private PsiField createFieldToStartTemplateOn(final String[] names, final PsiType psiType) {
@@ -339,7 +340,8 @@ public class InplaceIntroduceConstantPopup {
       super(myProject, new TypeExpression(myProject, myTypeSelectorManager.getTypesForAll()),
             myEditor, field, false,
             myTypeSelectorManager.getTypesForAll().length > 1,
-            myExpr != null && myExpr.isPhysical() ? myEditor.getDocument().createRangeMarker(myExpr.getTextRange()) : null, InplaceIntroduceConstantPopup.this.getOccurrenceMarkers());
+            myExpr != null && myExpr.isPhysical() ? myEditor.getDocument().createRangeMarker(myExpr.getTextRange()) : null, InplaceIntroduceConstantPopup.this.getOccurrenceMarkers(),
+            IntroduceConstantHandler.REFACTORING_NAME);
 
       myDefaultParameterTypePointer =
         SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(myTypeSelectorManager.getDefaultType());
@@ -436,7 +438,7 @@ public class InplaceIntroduceConstantPopup {
     protected JComponent getComponent() {
       if (!myInitListeners) {
         myInitListeners = true;
-        final VisibilityListener visibilityListener = new VisibilityListener(myProject, myEditor) {
+        final VisibilityListener visibilityListener = new VisibilityListener(myProject, IntroduceConstantHandler.REFACTORING_NAME, myEditor) {
           @Override
           protected String getVisibility() {
             return getSelectedVisibility();

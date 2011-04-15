@@ -43,11 +43,11 @@ public class GrTupleType extends GrLiteralClassType {
 
   @Override
   protected String getJavaClassName() {
-    return CommonClassNames.JAVA_UTIL_LIST;
+    return CommonClassNames.JAVA_UTIL_ARRAY_LIST;
   }
 
   public String getClassName() {
-    return "List";
+    return "ArrayList";
   }
 
   @NotNull

@@ -176,7 +176,7 @@ public class InplaceIntroduceFieldPopup {
             renamer.performInplaceRename(false, nameSuggestions);
           }
         }
-      }, IntroduceFieldHandler.REFACTORING_NAME, null);
+      }, IntroduceFieldHandler.REFACTORING_NAME, IntroduceFieldHandler.REFACTORING_NAME);
   }
 
   private PsiField createFieldToStartTemplateOn(final String[] names,
@@ -230,7 +230,8 @@ public class InplaceIntroduceFieldPopup {
       super(myProject, new TypeExpression(myProject, myTypeSelectorManager.getTypesForAll()),
             myEditor, psiVariable, false,
             myTypeSelectorManager.getTypesForAll().length > 1,
-            myInitializerExpression != null && myInitializerExpression.isPhysical() ? myEditor.getDocument().createRangeMarker(myInitializerExpression.getTextRange()) : null, InplaceIntroduceFieldPopup.this.getOccurrenceMarkers());
+            myInitializerExpression != null && myInitializerExpression.isPhysical() ? myEditor.getDocument().createRangeMarker(myInitializerExpression.getTextRange()) : null, InplaceIntroduceFieldPopup.this.getOccurrenceMarkers(),
+            IntroduceFieldHandler.REFACTORING_NAME);
       myDefaultParameterTypePointer =
         SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(myTypeSelectorManager.getDefaultType());
       myFieldRangeStart = myEditor.getDocument().createRangeMarker(psiVariable.getTextRange());
@@ -276,13 +277,13 @@ public class InplaceIntroduceFieldPopup {
     protected JComponent getComponent() {
       if (!myInitListeners) {
         myInitListeners = true;
-        myIntroduceFieldPanel.addVisibilityListener(new VisibilityListener(myProject, myEditor){
+        myIntroduceFieldPanel.addVisibilityListener(new VisibilityListener(myProject, IntroduceFieldHandler.REFACTORING_NAME, myEditor){
           @Override
           protected String getVisibility() {
             return myIntroduceFieldPanel.getFieldVisibility();
           }
         });
-        final FinalListener finalListener = new FinalListener(myProject);
+        final FinalListener finalListener = new FinalListener(myProject, IntroduceFieldHandler.REFACTORING_NAME);
         myIntroduceFieldPanel.addFinalListener(new ItemListener() {
           @Override
           public void itemStateChanged(ItemEvent e) {
@@ -311,6 +312,10 @@ public class InplaceIntroduceFieldPopup {
       if (element instanceof PsiWhiteSpace) {
         element = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
       }
+      if (element instanceof PsiField) return (PsiVariable)element;
+      final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false);
+      if (field != null) return field;
+      element = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
       return PsiTreeUtil.getParentOfType(element, PsiField.class, false);
     }
 

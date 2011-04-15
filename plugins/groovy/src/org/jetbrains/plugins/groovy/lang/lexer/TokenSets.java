@@ -17,15 +17,20 @@
 package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.psi.TokenType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import com.intellij.util.containers.hash.HashMap;
+
+import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
+
+import java.util.Map;
 
 /**
  * Utility classdef, tha contains various useful TokenSets
  *
  * @author ilyas
  */
-public abstract class TokenSets implements GroovyTokenTypes, GroovyElementTypes {
+public abstract class TokenSets {
 
   public static TokenSet COMMENTS_TOKEN_SET = TokenSet.create(
       mSL_COMMENT,
@@ -150,11 +155,45 @@ public abstract class TokenSets implements GroovyTokenTypes, GroovyElementTypes 
 
   public static final TokenSet POSTFIX_UNARY_OP_SET = TokenSet.create(mDEC, mINC);
 
-  public static final TokenSet BINARY_OP_SET = TokenSet.create(mBAND, mBOR, mBXOR, mDIV, mEQUAL, mGE, mGT, mLAND, mLOR, mLT, mLE, mMINUS,
-                                                               mMOD, mPLUS, mSTAR, mSTAR_STAR, mNOT_EQUAL, mCOMPARE_TO,
-                                                               COMPOSITE_SHIFT_SIGN, kIN, kINSTANCEOF, kAS);
+  public static final TokenSet BINARY_OP_SET = TokenSet.create(mBAND, mBOR, mBXOR, mDIV, mEQUAL, mGE, mGT, mLOR, mLT, mLE, mMINUS, kAS, kIN,
+                                                               mMOD, mPLUS, mSTAR, mSTAR_STAR, mNOT_EQUAL, mCOMPARE_TO, mLAND, kINSTANCEOF,
+                                                               COMPOSITE_LSHIFT_SIGN, COMPOSITE_RSHIFT_SIGN, COMPOSITE_TRIPLE_SHIFT_SIGN);
 
   public static final TokenSet DOTS = TokenSet.create(mSPREAD_DOT, mOPTIONAL_DOT, mMEMBER_POINTER, mDOT);
 
   public static final TokenSet WHITE_SPACES_OR_COMMENTS = TokenSet.orSet(WHITE_SPACES_SET, COMMENT_SET);
+
+  public static final Map<IElementType, IElementType> ASSIGNMENTS_TO_OPERATORS = new HashMap<IElementType, IElementType>();
+  static {
+    ASSIGNMENTS_TO_OPERATORS.put(mMINUS_ASSIGN, mMINUS);
+    ASSIGNMENTS_TO_OPERATORS.put(mPLUS_ASSIGN, mPLUS);
+    ASSIGNMENTS_TO_OPERATORS.put(mDIV_ASSIGN, mDIV);
+    ASSIGNMENTS_TO_OPERATORS.put(mSTAR_ASSIGN, mSTAR);
+    ASSIGNMENTS_TO_OPERATORS.put(mMOD_ASSIGN, mMOD);
+    ASSIGNMENTS_TO_OPERATORS.put(mSL_ASSIGN, COMPOSITE_LSHIFT_SIGN);
+    ASSIGNMENTS_TO_OPERATORS.put(mSR_ASSIGN, COMPOSITE_RSHIFT_SIGN);
+    ASSIGNMENTS_TO_OPERATORS.put(mBSR_ASSIGN, COMPOSITE_TRIPLE_SHIFT_SIGN);
+    ASSIGNMENTS_TO_OPERATORS.put(mBAND_ASSIGN, mBAND);
+    ASSIGNMENTS_TO_OPERATORS.put(mBOR_ASSIGN, mBOR);
+    ASSIGNMENTS_TO_OPERATORS.put(mBXOR_ASSIGN, mBXOR);
+    ASSIGNMENTS_TO_OPERATORS.put(mSTAR_STAR_ASSIGN, mSTAR_STAR);
+  }
+
+  public static final TokenSet ASSIGNMENTS = TokenSet.create(
+          mASSIGN,
+          mPLUS_ASSIGN,
+          mMINUS_ASSIGN,
+          mSTAR_ASSIGN,
+          mDIV_ASSIGN,
+          mMOD_ASSIGN,
+          mSL_ASSIGN,
+          mSR_ASSIGN,
+          mBSR_ASSIGN,
+          mBAND_ASSIGN,
+          mBOR_ASSIGN,
+          mBXOR_ASSIGN,
+          mSTAR_STAR_ASSIGN
+  );
+
+  public static final TokenSet SHIFT_SIGNS = TokenSet.create(COMPOSITE_LSHIFT_SIGN, COMPOSITE_RSHIFT_SIGN, COMPOSITE_TRIPLE_SHIFT_SIGN);
 }

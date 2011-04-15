@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -113,7 +114,7 @@ public class AccessStaticViaInstanceFix implements LocalQuickFix {
       qualifiedWithClassName.setQualifierExpression(factory.createReferenceExpression(containingClass));
       final boolean canCopeWithSideEffects = hasSideEffects;
       final SideEffectWarningDialog dialog =
-        new SideEffectWarningDialog(project, false, null, sideEffects.get(0).getText(), qualifierExpression.getText(),
+        new SideEffectWarningDialog(project, false, null, sideEffects.get(0).getText(), PsiExpressionTrimRenderer.render(qualifierExpression),
                                     canCopeWithSideEffects){
           @Override
           protected String sideEffectsDescription() {

@@ -366,4 +366,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testAnonymousClassArgList() {
     doTest(new GroovyAssignabilityCheckInspection());
   }
+
+  public void testConstructorWithAllParametersOptional() {
+    doTest();
+  }
 }

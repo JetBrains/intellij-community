@@ -654,7 +654,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       return new AnAction() {
         public void actionPerformed(AnActionEvent e) {
           ENABLED = !ENABLED;
-          DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().fireBreakpointChanged(BreakpointWithHighlighter.this);
+          DebuggerManagerEx.getInstanceEx(BreakpointWithHighlighter.this.getProject()).getBreakpointManager().fireBreakpointChanged(BreakpointWithHighlighter.this);
           updateUI();
         }
       };

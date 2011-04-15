@@ -36,7 +36,7 @@ public class RedundantTypeConversion extends XPathInspection {
     @NonNls
     private static final String SHORT_NAME = "RedundantTypeConversion";
 
-    public boolean CHECK_ANY = true;
+    public boolean CHECK_ANY = false;
 
     @NotNull
     public String getDisplayName() {
@@ -46,7 +46,7 @@ public class RedundantTypeConversion extends XPathInspection {
     @NotNull
     @NonNls
     public String getShortName() {
-        return RedundantTypeConversion.SHORT_NAME;
+        return SHORT_NAME;
     }
 
     public boolean isEnabledByDefault() {

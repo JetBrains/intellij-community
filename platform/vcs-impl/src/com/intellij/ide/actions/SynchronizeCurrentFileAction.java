@@ -30,7 +30,7 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
   public void update(AnActionEvent e) {
     VirtualFile[] files = getFiles(e);
 
-    if (getProject(e) == null || files == null || files.length == 0) {
+    if (getEventProject(e) == null || files == null || files.length == 0) {
       e.getPresentation().setEnabled(false);
       return;
     }
@@ -48,7 +48,7 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = getProject(e);
+    final Project project = getEventProject(e);
     final VirtualFile[] files = getFiles(e);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -71,10 +71,6 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
 
     String message = IdeBundle.message("action.sync.completed.successfully", getMessage(files));
     WindowManager.getInstance().getStatusBar(project).setInfo(message);
-  }
-
-  private static Project getProject(AnActionEvent e) {
-    return e.getData(PlatformDataKeys.PROJECT);
   }
 
   private static VirtualFile[] getFiles(AnActionEvent e) {

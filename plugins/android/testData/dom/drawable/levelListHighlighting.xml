@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<level-list xmlns:android="http://schemas.android.com/apk/res/android">
+  <item android:drawable="@drawable/myDrawable"/>
+  <item android:drawable="<error>@drawable/aba</error>" android:maxLevel="1"/>
+  <<error>item</error>/>
+</level-list>
