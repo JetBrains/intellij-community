@@ -34,13 +34,16 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -181,7 +184,8 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     List<GrStatement> returnStatementsCopy = new ArrayList<GrStatement>(returnStatements.size());
     returnStatementsCopy.addAll(returnStatements);
     boolean isReturnStatement = ExtractMethodUtil.isReturnStatement(statements[statements.length - 1], returnStatementsCopy);
-    if (!isReturnStatement && hasReturns || hasInterruptingStatements) {
+    boolean isLastStatementOfMethod = isLastStatementOfMethodOrClosure(statements);
+    if (hasReturns && !isLastStatementOfMethod && !isReturnStatement || hasInterruptingStatements) {
       String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow");
       showErrorMessage(message, project, editor);
       return false;
@@ -208,6 +212,21 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     runRefactoring(methodName, helper, owner, declarationOwner, editor, statement0);
 
     return true;
+  }
+
+  private static boolean isLastStatementOfMethodOrClosure(GrStatement[] statements) {
+    final GrStatement statement0 = statements[0];
+
+    PsiElement returnFrom = PsiTreeUtil.getParentOfType(statement0, GrMethod.class, GrClosableBlock.class, GroovyFile.class);
+    if (returnFrom instanceof GrMethod) {
+      returnFrom = ((GrMethod)returnFrom).getBlock();
+    }
+    LOG.assertTrue(returnFrom instanceof GrStatementOwner);
+
+    final GrStatement[] blockStatements = ((GrStatementOwner)returnFrom).getStatements();
+    final GrStatement lastFromBlock = ArrayUtil.getLastElement(blockStatements);
+    final GrStatement lastStatement = ArrayUtil.getLastElement(statements);
+    return statement0.getManager().areElementsEquivalent(lastFromBlock, lastStatement);
   }
 
   private void runRefactoring(final String methodName,
