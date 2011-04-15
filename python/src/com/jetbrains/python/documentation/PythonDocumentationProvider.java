@@ -107,7 +107,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     final String name = fun.getName();
     cat.add("def ").addWith(func_name_wrapper, $(name));
     cat.add(escaper.apply(PyUtil.getReadableRepr(fun.getParameterList(), false)));
-    if (!PyNames.INIT.equals(name)) {
+    if (!PyNames.INIT.equals(name) && !specifiesReturnType(fun.getDocStringExpression())) {
       final PyType returnType = fun.getReturnType(TypeEvalContext.slow(), null);
       cat.add(escaper.apply("\nInferred return type: "));
       if (returnType == null) cat.add("unknown");
@@ -184,6 +184,21 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     return cat;
   }
 
+  private static boolean specifiesReturnType(PyStringLiteralExpression docStringExpression) {
+    String value = PyUtil.strValue(docStringExpression);
+    if (value == null) {
+      return false;
+    }
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(docStringExpression.getProject());
+    if (documentationSettings.isEpydocFormat()) {
+      return value.contains("@rtype");
+    }
+    else if (documentationSettings.isReSTFormat()) {
+      return value.contains(":rtype:");
+    }
+    return false;
+  }
+
   private static void addFormattedDocString(PsiElement element, @NotNull String docstring,
                                             ChainIterable<String> formattedOutput, ChainIterable<String> unformattedOutput) {
     Project project = element.getProject();
@@ -197,9 +212,10 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         formatted = EpydocRunner.formatDocstring(module, docstring);
       }
       if (formatted == null) {
-        formatted = formatStructuredDocString(epydocString);
+        formatted = epydocString.getDescription();
       }
       result.add(formatted);
+      result.add(formatStructuredDocString(epydocString));
       unformattedOutput.add(result);
       return;
     }
@@ -261,16 +277,41 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   private static String formatStructuredDocString(StructuredDocString docString) {
-    StringBuilder result = new StringBuilder(docString.getDescription());
+    StringBuilder result = new StringBuilder();
     final List<String> parameters = docString.getParameters();
     if (parameters.size() > 0) {
       result.append("<br><b>Parameters:</b><br>");
       for (String parameter : parameters) {
-        result.append("<b>").append(parameter).append("</b>: ").append(docString.getParamDescription(parameter)).append("<br>");
+        result.append("<b>").append(parameter).append("</b>: ").append(docString.getParamDescription(parameter));
+        final String paramType = docString.getParamType(parameter);
+        if (paramType != null) {
+          result.append(" <i>Type: ").append(paramType).append("</i>");
+        }
+        result.append("<br>");
       }
     }
-    return result.toString();
 
+    final String returnDescription = docString.getReturnDescription();
+    final String returnType = docString.getReturnType();
+    if (returnDescription != null || returnType != null) {
+      result.append("<br><b>Return value:</b><br>");
+      if (returnDescription != null) {
+        result.append(returnDescription);
+      }
+      if (returnType != null) {
+        result.append(" <i>Type: ").append(returnType).append("</i>");
+      }
+    }
+
+    final List<String> raisedException = docString.getRaisedExceptions();
+    if (raisedException.size() > 0) {
+      result.append("<br><b>Raises:</b><br>");
+      for (String s : raisedException) {
+        result.append("<b>").append(s).append("</b> - ").append(docString.getRaisedExceptionDescription(s)).append("<br>");
+      }
+    }
+
+    return result.toString();
   }
 
   // provides ctrl+Q doc

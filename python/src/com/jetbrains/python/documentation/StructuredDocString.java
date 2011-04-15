@@ -6,6 +6,8 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -66,7 +68,7 @@ public abstract class StructuredDocString {
       String arg = tagValue.substring(0, pos).trim();
       Map<String, String> argValues = myArgTagValues.get(tagName);
       if (argValues == null) {
-        argValues = Maps.newHashMap();
+        argValues = Maps.newLinkedHashMap();
         myArgTagValues.put(tagName, argValues);
       }
       argValues.put(arg, value);
@@ -88,6 +90,27 @@ public abstract class StructuredDocString {
     return argValues == null ? null : argValues.get(argName);
   }
 
+  @Nullable
+  public String getTagValue(String[] tagNames, String argName) {
+    for (String tagName : tagNames) {
+      Map<String, String> argValues = myArgTagValues.get(tagName);
+      if (argValues != null) {
+        return argValues.get(argName);
+      }
+    }
+    return null;
+  }
+
+  public List<String> getTagArguments(String... tagNames) {
+    for (String tagName : tagNames) {
+      final Map<String, String> map = myArgTagValues.get(tagName);
+      if (map != null) {
+        return new ArrayList<String>(map.keySet());
+      }
+    }
+    return Collections.emptyList();
+  }
+
   public List<String> getParameters() {
     return myParameters;
   }
@@ -96,8 +119,15 @@ public abstract class StructuredDocString {
   public abstract String getReturnType();
 
   @Nullable
+  public abstract String getReturnDescription();
+
+  @Nullable
   public abstract String getParamType(String paramName);
 
   @Nullable
   public abstract String getParamDescription(String paramName);
+
+  public abstract List<String> getRaisedExceptions();
+
+  public abstract String getRaisedExceptionDescription(String exceptionName);
 }

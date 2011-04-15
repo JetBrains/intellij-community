@@ -82,7 +82,7 @@ public abstract class PyLightFixtureTestCase extends UsefulTestCase {
     return PsiDocumentManager.getInstance(myFixture.getProject()).getDocument(myFixture.getFile()).getText().indexOf(signature);
   }
 
-  protected void setLanguageLevel(LanguageLevel languageLevel) {
+  protected void setLanguageLevel(@Nullable LanguageLevel languageLevel) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
   }
 

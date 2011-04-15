@@ -86,4 +86,9 @@ public class EpydocStringTest extends UsefulTestCase {
   public void testParagraph() {
     assertEquals("foo<p>bar", EpydocString.inlineMarkupToHTML("foo\n\nbar"));
   }
+
+  public void testRemoveNestedInlineMarkup() {
+    assertEquals("(ParsedDocstring, list of Field)",
+                 EpydocString.removeInlineMarkup("C{(L{ParsedDocstring}, list of L{Field})}"));
+  }
 }
