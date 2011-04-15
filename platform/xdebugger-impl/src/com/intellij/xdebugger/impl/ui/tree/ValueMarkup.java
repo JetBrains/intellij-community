@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.ui.tree;
+package com.intellij.xdebugger.impl.ui.tree;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,8 +25,6 @@ import java.awt.*;
  *         Date: Jan 27, 2007
  */
 public class ValueMarkup {
-  public static final long AUTO_MARKUP_REFERRING_OBJECTS_LIMIT = 100L; // todo: some reasonable limit
-
   private final String myText;
   private final Color myColor;
   @Nullable
@@ -39,7 +34,7 @@ public class ValueMarkup {
     this(text, color, null);
   }
 
-  public ValueMarkup(final String text, final Color color, String toolTipText) {
+  public ValueMarkup(final String text, final Color color, @Nullable String toolTipText) {
     myText = text;
     myColor = color;
     myToolTipText = toolTipText;
@@ -57,11 +52,5 @@ public class ValueMarkup {
   @Nullable
   public String getToolTipText() {
     return myToolTipText;
-  }
-
-  public static Color getAutoMarkupColor() {
-    final EditorColorsManager manager = EditorColorsManager.getInstance();
-    final TextAttributes textAttributes = manager.getGlobalScheme().getAttributes(HighlightInfoType.STATIC_FIELD.getAttributesKey());
-    return textAttributes.getForegroundColor();
   }
 }

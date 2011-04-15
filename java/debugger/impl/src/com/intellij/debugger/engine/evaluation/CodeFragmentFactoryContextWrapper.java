@@ -18,7 +18,7 @@ package com.intellij.debugger.engine.evaluation;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.debugger.ui.tree.ValueMarkup;
+import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
