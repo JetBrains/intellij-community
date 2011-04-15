@@ -56,7 +56,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  */
 public abstract class GroovyPsiElementFactory {
 
-  @NonNls public static final String DUMMY_FILE_NAME = "DUMMY__.";
+  @NonNls public static final String DUMMY_FILE_NAME = "DUMMY__";
 
   public static GroovyPsiElementFactory getInstance(Project project) {
     return ServiceManager.getService(project, GroovyPsiElementFactory.class);

@@ -259,7 +259,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   private GroovyFileImpl createDummyFile(String text, boolean physical) {
-    final String fileName = DUMMY_FILE_NAME + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension();
+    final String fileName = DUMMY_FILE_NAME + '.' + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension();
     final long stamp = System.currentTimeMillis();
     final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
     return (GroovyFileImpl) factory.createFileFromText(fileName, GroovyFileType.GROOVY_FILE_TYPE, text, stamp, physical);
