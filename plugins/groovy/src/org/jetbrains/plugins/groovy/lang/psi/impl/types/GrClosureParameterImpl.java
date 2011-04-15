@@ -49,7 +49,7 @@ public class GrClosureParameterImpl implements GrClosureParameter {
   }
 
   public static boolean isParameterOptional(PsiParameter parameter) {
-    return parameter instanceof GrParameter ? ((GrParameter)parameter).isOptional() : false;
+    return parameter instanceof GrParameter && ((GrParameter)parameter).isOptional();
   }
 
   public static boolean isVararg(GrClosureParameter[] closureParams) {

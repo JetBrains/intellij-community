@@ -204,4 +204,8 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   public void testPreferMethodOverloader() {
     assertTypeEquals("java.lang.String", "A.groovy");
   }
+
+  public void testReturnTypeFromMethodClosure() {
+    assertTypeEquals("java.lang.String","A.groovy");
+  }
 }
