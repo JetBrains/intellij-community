@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -34,6 +35,9 @@ public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressio
     final GrReferenceExpression qualifier = getQualifier();
     if (qualifier == null) {
       GroovyPsiElement context = PsiTreeUtil.getContextOfType(this, GrTypeDefinition.class, GroovyFile.class);
+      if (context instanceof GroovyFile && GroovyPsiElementFactory.DUMMY_FILE_NAME.equals(((GroovyFile)context).getName())) {
+        context = PsiTreeUtil.getContextOfType(context, true, GrTypeDefinition.class, GroovyFile.class);
+      }
       if (context instanceof GrTypeDefinition) {
         return createType((PsiClass)context);
       }
