@@ -232,6 +232,11 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     return allowFinal;
   }
 
+  @Override
+  protected boolean shouldUpdateTypeSelector() {
+    return false;
+  }
+
   protected JPanel composeWholePanel(JComponent initializerPlacePanel, JPanel checkboxPanel) {
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints constraints =

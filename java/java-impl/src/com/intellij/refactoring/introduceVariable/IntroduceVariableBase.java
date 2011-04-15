@@ -456,8 +456,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         final IntroduceVariableSettings settings =
           getSettings(project, editor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, choice);
         if (!settings.isOK()) return;
-        typeSelectorManager.setAllOccurences(choice != OccurrencesChooser.ReplaceChoice.NO);
-        final TypeExpression expression = new TypeExpression(project, typeSelectorManager.getTypesForAll());
+        final boolean allOccurences = choice != OccurrencesChooser.ReplaceChoice.NO;
+        typeSelectorManager.setAllOccurences(allOccurences);
+        final TypeExpression expression = new TypeExpression(project, allOccurences ? typeSelectorManager.getTypesForAll() : typeSelectorManager.getTypesForOne());
         final RangeMarker exprMarker = editor.getDocument().createRangeMarker(expr.getTextRange());
         final SuggestedNameInfo suggestedName = getSuggestedName(settings.getSelectedType(), expr);
         final List<RangeMarker> occurrenceMarkers = new ArrayList<RangeMarker>();
