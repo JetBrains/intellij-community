@@ -681,4 +681,13 @@ def a = new MyClass()
 a.g<caret>
 """)
   }
+
+  public void testContinue() {
+    assertNotNull doContainsTest("continue", """
+def conti = 4
+while(true) {
+  if (tst) cont<caret>
+}""")
+
+  }
 }
