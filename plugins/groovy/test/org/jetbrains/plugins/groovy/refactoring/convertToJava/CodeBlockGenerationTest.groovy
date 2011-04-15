@@ -88,4 +88,20 @@ public class CodeBlockGenerationTest extends LightCodeInsightFixtureTestCase {
   void _testWhile2() {doTest()}
   void _testWhile3() {doTest()}
 
+  void testRefExpr() {
+    myFixture.addFileToProject "Bar.groovy", """
+class Bar {
+  def foo = 2
+
+  def getBar() {3}
+}
+class MyCat {
+  static getAbc(Bar b) {
+    return 4
+  }
+}
+"""
+
+    doTest()
+  }
 }

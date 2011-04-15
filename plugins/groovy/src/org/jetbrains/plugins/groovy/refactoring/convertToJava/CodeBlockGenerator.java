@@ -73,13 +73,16 @@ public class CodeBlockGenerator extends Generator {
   @Override
   public void visitOpenBlock(GrOpenBlock block) {
     builder.append("{\n");
-    super.visitOpenBlock(block);
+    final GrStatement[] statements = block.getStatements();
+    for (GrStatement statement : statements) {
+      statement.accept(this);
+      builder.append('\n');
+    }
     builder.append("}\n");
   }
 
-  @Override
   public void visitStatement(GrStatement statement) {
-    super.visitStatement(statement);    //To change body of overridden methods use File | Settings | File Templates.
+    LOG.assertTrue(false, "all statements must be overloaded");
   }
 
   @Override
@@ -191,6 +194,7 @@ public class CodeBlockGenerator extends Generator {
   @Override
   public void visitForStatement(GrForStatement forStatement) {
     final StringBuilder builder = new StringBuilder();
+    builder.append("for(");
 
     final GrForClause clause = forStatement.getClause();
     ExpressionContext forContext = context.extend();
@@ -199,16 +203,14 @@ public class CodeBlockGenerator extends Generator {
       final GrVariable declaredVariable = clause.getDeclaredVariable();
       LOG.assertTrue(declaredVariable != null);
 
-      builder.append("for(");
       writeVariableWithoutSemicolonAndInitializer(builder, declaredVariable);
       builder.append(" : ");
       if (expression != null) {
         final ExpressionContext context = forContext.copy();
         expression.accept(new ExpressionGenerator(builder, context));
       }
-      builder.append(")");
     }
-    else {
+    else if (clause instanceof GrTraditionalForClause) {
       final GrTraditionalForClause cl = (GrTraditionalForClause)clause;
       final GrCondition initialization = cl.getInitialization();
       final GrExpression condition = cl.getCondition();
@@ -244,10 +246,13 @@ public class CodeBlockGenerator extends Generator {
       if (update != null) {
         genForPart(builder, update, forContext.copy());
       }
-      builder.append(")");
     }
+    builder.append(")");
 
-    forStatement.getBody().accept(new CodeBlockGenerator(builder, forContext));
+    final GrStatement body = forStatement.getBody();
+    if (body != null) {
+      body.accept(new CodeBlockGenerator(builder, forContext));
+    }
   }
 
   private static void genForPart(StringBuilder builder, GrExpression part, final ExpressionContext context) {
@@ -484,11 +489,6 @@ public class CodeBlockGenerator extends Generator {
         builder.append(" = ").append(iteratorName).append(".hasNext() ? ").append(iteratorName).append(".next() : null;");
       }
     }
-  }
-
-  private void writeVariable(GrVariable variable) {
-    //todo
-    throw new UnsupportedOperationException();
   }
 
   private static String getTypeText(PsiType varType) {

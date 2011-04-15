@@ -70,6 +70,16 @@ public class GenerationUtil {
     builder.replace(builder.length() - 2, builder.length(), ">");
   }
 
+  static String suggestVarName(GrExpression expr, ExpressionContext expressionContext) {
+    final DefaultGroovyVariableNameValidator nameValidator =
+      new DefaultGroovyVariableNameValidator(expr, expressionContext.myUsedVarNames, true);
+    final String[] varNames = GroovyNameSuggestionUtil.suggestVariableNames(expr, nameValidator);
+
+    LOG.assertTrue(varNames.length > 0);
+    expressionContext.myUsedVarNames.add(varNames[0]);
+    return varNames[0];
+  }
+
   static String suggestVarName(PsiType type, GroovyPsiElement context, ExpressionContext expressionContext) {
     final DefaultGroovyVariableNameValidator nameValidator =
       new DefaultGroovyVariableNameValidator(context, expressionContext.myUsedVarNames, true);
@@ -85,7 +95,20 @@ public class GenerationUtil {
   }
 
   public static void writeCodeReferenceElement(StringBuilder builder, GrCodeReferenceElement referenceElement) {
-    builder.append(referenceElement.getText());
+    final GroovyResolveResult resolveResult = referenceElement.advancedResolve();
+    final PsiElement resolved = resolveResult.getElement();
+    if (resolved == null) {
+      builder.append(referenceElement.getText());
+      return;
+    }
+    LOG.assertTrue(resolved instanceof PsiClass || resolved instanceof PsiPackage);
+    if (resolved instanceof PsiClass) {
+      builder.append(((PsiClass)resolved).getQualifiedName());
+    }
+    else {
+      builder.append(((PsiPackage)resolved).getQualifiedName());
+    }
+    writeTypeParameters(builder, referenceElement.getTypeArguments());
   }
 
   public static void invokeMethodByName(GrExpression caller,
