@@ -449,7 +449,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     int minPrefixLength = items.isEmpty() ? 0 : Integer.MAX_VALUE;
     for (final LookupElement item : items) {
-      minPrefixLength = Math.min(item.getPrefixMatcher().getPrefix().length(), minPrefixLength);
+      minPrefixLength = Math.min(itemMatcher(item).getPrefix().length(), minPrefixLength);
     }
 
     updateLookupStart(minPrefixLength);
@@ -560,8 +560,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     return ContainerUtil.flatten(classifier.classify(better));
   }
 
-  String itemPrefix(LookupElement element) {
-    return element.getPrefixMatcher().getPrefix() + myAdditionalPrefix;
+  @Override
+  public String itemPattern(LookupElement element) {
+    return itemMatcher(element).getPrefix() + myAdditionalPrefix;
   }
 
   private LookupArranger getActualArranger() {
@@ -572,7 +573,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   private boolean isExactPrefixItem(LookupElement item) {
-    return item.getAllLookupStrings().contains(itemPrefix(item));
+    return item.getAllLookupStrings().contains(itemPattern(item));
   }
 
   private boolean prefixMatches(final LookupElement item) {
@@ -580,7 +581,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     if (myAdditionalPrefix.length() == 0) return item.isPrefixMatched();
 
-    return item.getPrefixMatcher().cloneWithPrefix(itemPrefix(item)).prefixMatches(item);
+    return itemMatcher(item).cloneWithPrefix(itemPattern(item)).prefixMatches(item);
+  }
+
+  @Override
+  public PrefixMatcher itemMatcher(LookupElement item) {
+    return item.getPrefixMatcher();
   }
 
   /**
@@ -658,11 +664,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       public void run() {
         EditorModificationUtil.deleteSelectedText(myEditor);
         final int caretOffset = myEditor.getCaretModel().getOffset();
-        final String prefix = item.getPrefixMatcher().getPrefix();
-        int lookupStart = caretOffset - prefix.length() - myAdditionalPrefix.length();
+        final String prefix = itemPattern(item);
+        int lookupStart = caretOffset - prefix.length();
 
         final String lookupString = item.getLookupString();
-        if (!StringUtil.startsWithConcatenationOf(lookupString, prefix, myAdditionalPrefix)) {
+        if (!lookupString.startsWith(prefix)) { //todo another lookup string may match the prefix
           FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.camelHumps");
         }
 
@@ -963,7 +969,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     final LookupElement firstItem = (LookupElement)listModel.getElementAt(0);
     if (listModel.getSize() == 1 && firstItem instanceof EmptyLookupItem) return false;
 
-    final PrefixMatcher firstItemMatcher = firstItem.getPrefixMatcher();
+    final PrefixMatcher firstItemMatcher = itemMatcher(firstItem);
     final String oldPrefix = firstItemMatcher.getPrefix();
     final String presentPrefix = oldPrefix + myAdditionalPrefix;
     final PrefixMatcher matcher = firstItemMatcher.cloneWithPrefix(presentPrefix);
@@ -977,10 +983,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     for (int i = 1; i < listModel.getSize(); i++) {
       LookupElement item = (LookupElement)listModel.getElementAt(i);
-      if (!oldPrefix.equals(item.getPrefixMatcher().getPrefix())) return false;
+      if (!oldPrefix.equals(itemMatcher(item).getPrefix())) return false;
 
       lookupString = item.getLookupString();
-      div = divideString(lookupString, item.getPrefixMatcher().cloneWithPrefix(presentPrefix));
+      div = divideString(lookupString, itemMatcher(item).cloneWithPrefix(presentPrefix));
       if (div < 0) return false;
 
       String _afterCaret = lookupString.substring(div);
@@ -1031,7 +1037,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myEditor.getDocument().insertString(offset, afterCaret);
 
     final String newPrefix = presentPrefix + afterCaret;
-    myModel.retainMatchingItems(newPrefix);
+    myModel.retainMatchingItems(newPrefix, this);
     myAdditionalPrefix = "";
 
     offset += afterCaret.length();

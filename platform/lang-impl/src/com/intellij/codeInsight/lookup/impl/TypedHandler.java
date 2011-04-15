@@ -110,13 +110,13 @@ public class TypedHandler implements TypedActionHandler {
     if (currentItem != null && charTyped != ' ') {
       if (charTyped != '*' || filtersDecision != CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP) {
         String postfix = lookup.getAdditionalPrefix() + charTyped;
-        final PrefixMatcher matcher = currentItem.getPrefixMatcher();
+        final PrefixMatcher matcher = lookup.itemMatcher(currentItem);
         if (matcher.cloneWithPrefix(matcher.getPrefix() + postfix).prefixMatches(currentItem)) {
           return CharFilter.Result.ADD_TO_PREFIX;
         }
         for (final LookupElement element : lookup.getItems()) {
-          if (element.isPrefixMatched() &&
-              element.getPrefixMatcher().cloneWithPrefix(element.getPrefixMatcher().getPrefix() + postfix).prefixMatches(element)) {
+          PrefixMatcher elementMatcher = lookup.itemMatcher(element);
+          if (elementMatcher.cloneWithPrefix(elementMatcher.getPrefix() + postfix).prefixMatches(element)) {
             return CharFilter.Result.ADD_TO_PREFIX;
           }
         }
@@ -132,7 +132,7 @@ public class TypedHandler implements TypedActionHandler {
   @Nullable
   private static CharFilter.Result getFiltersDecision(char charTyped, LookupImpl lookup) {
     LookupElement item = lookup.getCurrentItem();
-    int prefixLength = (item == null ? 0 : item.getPrefixMatcher().getPrefix().length()) + lookup.getAdditionalPrefix().length();
+    int prefixLength = item == null ? lookup.getAdditionalPrefix().length(): lookup.itemPattern(item).length();
 
     for (final CharFilter extension : getFilters()) {
       final CharFilter.Result result = extension.acceptChar(charTyped, prefixLength, lookup);

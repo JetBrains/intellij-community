@@ -111,12 +111,12 @@ public class LookupModel {
     }
   }
 
-  void retainMatchingItems(final String newPrefix) {
+  void retainMatchingItems(final String newPrefix, final LookupImpl lookup) {
     synchronized (lock) {
       final List<LookupElement> newItems = ContainerUtil.findAll(myItems, new Condition<LookupElement>() {
         @Override
         public boolean value(LookupElement item) {
-          return item.isValid() && item.setPrefixMatcher(item.getPrefixMatcher().cloneWithPrefix(newPrefix));
+          return item.isValid() && item.setPrefixMatcher(lookup.itemMatcher(item).cloneWithPrefix(newPrefix));
         }
       });
 

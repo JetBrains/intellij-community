@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.UserDataHolder;
@@ -24,7 +25,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
 
 public interface Lookup extends UserDataHolder{
@@ -67,4 +67,8 @@ public interface Lookup extends UserDataHolder{
   void showItemPopup(JBPopup hint);
 
   boolean showElementActions();
+
+  String itemPattern(LookupElement element);
+
+  PrefixMatcher itemMatcher(LookupElement item);
 }

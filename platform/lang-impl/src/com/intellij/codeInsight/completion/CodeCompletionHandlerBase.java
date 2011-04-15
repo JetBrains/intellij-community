@@ -429,7 +429,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       indicator.closeAndFinish(true);
       final Runnable restorePrefix = rememberDocumentState(indicator.getEditor());
       indicator.getOffsetMap()
-        .addOffset(CompletionInitializationContext.START_OFFSET, (offset1 - item.getPrefixMatcher().getPrefix().length()));
+        .addOffset(CompletionInitializationContext.START_OFFSET, (offset1 - indicator.getLookup().itemPattern(item).length()));
       handleSingleItem(offset2, indicator, items, item.getLookupString(), item);
 
       // the insert handler may have started a live template with completion
@@ -453,7 +453,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           uniqueText = item.getLookupString(); // text may be not ready yet
         }
 
-        if (!StringUtil.startsWithIgnoreCase(uniqueText, item.getPrefixMatcher().getPrefix())) {
+        if (!StringUtil.startsWithIgnoreCase(uniqueText, context.getLookup().itemPattern(item))) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CAMEL_HUMPS);
         }
 
