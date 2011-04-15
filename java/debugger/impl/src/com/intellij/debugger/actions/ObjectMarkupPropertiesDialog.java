@@ -17,7 +17,7 @@ package com.intellij.debugger.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
-import com.intellij.xdebugger.impl.ui.tree.ValueMarkerPresentationDialog;
+import com.intellij.xdebugger.impl.ui.tree.ValueMarkerPresentationDialogBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +28,7 @@ import java.awt.*;
  * @author Eugene Zhuravlev
  *         Date: Feb 4, 2007
  */
-public class ObjectMarkupPropertiesDialog extends ValueMarkerPresentationDialog {
+public class ObjectMarkupPropertiesDialog extends ValueMarkerPresentationDialogBase {
   @NonNls private static final String MARK_ALL_REFERENCED_VALUES_KEY = "debugger.mark.all.referenced.values";
   private JCheckBox myCbMarkAdditionalFields;
   private final boolean mySuggestAdditionalMarkup;

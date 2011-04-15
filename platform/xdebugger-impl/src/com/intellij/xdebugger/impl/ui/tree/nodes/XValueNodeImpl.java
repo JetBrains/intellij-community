@@ -20,8 +20,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +51,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   private String mySeparator;
   private boolean myChanged;
 
-  public XValueNodeImpl(XDebuggerTree tree, final XDebuggerTreeNode parent, String name, final XValue value) {
+  public XValueNodeImpl(XDebuggerTree tree, final XDebuggerTreeNode parent, String name, final @NotNull XValue value) {
     super(tree, parent, value);
     myName = name;
     if (myName != null) {
@@ -106,6 +109,13 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   private void updateText() {
     myText.clear();
+    XValueMarkers<?,?> markers = ((XDebugSessionImpl)myTree.getSession()).getValueMarkers();
+    if (markers != null) {
+      ValueMarkup markup = markers.getMarkup(myValueContainer);
+      if (markup != null) {
+        myText.append("[" + markup.getText() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
+      }
+    }
     myText.append(myName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
     myText.append(mySeparator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     if (myType != null) {
