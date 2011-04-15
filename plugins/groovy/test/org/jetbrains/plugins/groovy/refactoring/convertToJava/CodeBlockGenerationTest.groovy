@@ -60,7 +60,7 @@ public class CodeBlockGenerationTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void doTest() {
-    final String testName = getTestName(false)
+    final String testName = getTestName(true)
     final PsiFile file = myFixture.configureByFile(testName + ".groovy");
     assertInstanceOf file, GroovyFile
 
@@ -104,4 +104,6 @@ class MyCat {
 
     doTest()
   }
+
+  void testMemberPointer() {doTest()}
 }

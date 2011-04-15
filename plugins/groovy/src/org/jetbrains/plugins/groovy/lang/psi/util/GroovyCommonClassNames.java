@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author Maxim.Medvedev
  */
@@ -32,6 +34,7 @@ public final class GroovyCommonClassNames {
   public static final String JAVA_UTIL_REGEX_PATTERN = "java.util.regex.Pattern";
   public static final String JAVA_MATH_BIG_DECIMAL = "java.math.BigDecimal";
   public static final String JAVA_MATH_BIG_INTEGER = "java.math.BigInteger";
+  @NonNls public static final String ORG_CODEHAUS_GROOVY_RUNTIME_METHOD_CLOSURE = "org.codehaus.groovy.runtime.MethodClosure";
 
   private GroovyCommonClassNames() {
   }

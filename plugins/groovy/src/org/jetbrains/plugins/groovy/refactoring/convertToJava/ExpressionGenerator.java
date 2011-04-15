@@ -486,6 +486,14 @@ public class ExpressionGenerator extends Generator {
 
     GrExpression qualifierToUse = qualifier;
 
+    if (type == GroovyTokenTypes.mMEMBER_POINTER) {
+      LOG.assertTrue(qualifier != null);
+      builder.append("new ").append(GroovyCommonClassNames.ORG_CODEHAUS_GROOVY_RUNTIME_METHOD_CLOSURE).append("(");
+      qualifier.accept(this);
+      builder.append(", ").append(referenceExpression.getReferenceName()).append(')');
+      return;
+    }
+
     if (type == GroovyTokenTypes.mOPTIONAL_DOT) {
       LOG.assertTrue(qualifier != null);
 
