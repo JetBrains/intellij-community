@@ -22,7 +22,6 @@ import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packageDependencies.DefaultScopesProvider;
@@ -33,8 +32,13 @@ import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.PanelWithButtons;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.ui.*;
+import com.intellij.util.Function;
+import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.UIUtil;
 import com.maddyhome.idea.copyright.CopyrightManager;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import org.jetbrains.annotations.NotNull;
@@ -51,8 +55,6 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
 
@@ -334,17 +336,9 @@ public class ProjectSettingsPanel extends PanelWithButtons {
     }
   }
 
-  private class SettingColumn extends ColumnInfo<ScopeSetting, CopyrightProfile> {
+  private class SettingColumn extends MyColumnInfo<CopyrightProfile> {
     private SettingColumn() {
-      super(("Copyright"));
-    }
-
-    public CopyrightProfile valueOf(final ScopeSetting object) {
-      return object.getProfile();
-    }
-
-    public boolean isCellEditable(final ScopeSetting o) {
-      return true;
+      super("Copyright");
     }
 
     public TableCellRenderer getRenderer(final ScopeSetting scopeSetting) {
@@ -352,7 +346,8 @@ public class ProjectSettingsPanel extends PanelWithButtons {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
           final Component rendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           if (!isSelected) {
-            setForeground(myProfilesModel.getAllProfiles().get(scopeSetting.getProfileName()) == null ? Color.red : UIUtil.getTableForeground());
+            final CopyrightProfile profile = myProfilesModel.getAllProfiles().get(scopeSetting.getProfileName());
+            setForeground(profile == null ? Color.RED : UIUtil.getTableForeground());
           }
           setText(scopeSetting.getProfileName());
           return rendererComponent;
@@ -362,13 +357,13 @@ public class ProjectSettingsPanel extends PanelWithButtons {
 
     public TableCellEditor getEditor(final ScopeSetting scopeSetting) {
       return new AbstractTableCellEditor() {
-        private ComboBox myProfilesCombo;
+        private final JBComboBoxTableCellEditorComponent myProfilesChooser = new JBComboBoxTableCellEditorComponent();
 
         public Object getCellEditorValue() {
-          return myProfilesCombo.getSelectedItem();
+          return myProfilesChooser.getEditorValue();
         }
 
-        public Component getTableCellEditorComponent(final JTable table, Object value, boolean isSelected, int row, int column) {
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
           final List<CopyrightProfile> copyrights = new ArrayList<CopyrightProfile>(myProfilesModel.getAllProfiles().values());
           Collections.sort(copyrights, new Comparator<CopyrightProfile>() {
             @Override
@@ -376,45 +371,37 @@ public class ProjectSettingsPanel extends PanelWithButtons {
               return o1.getName().compareToIgnoreCase(o2.getName());
             }
           });
-          myProfilesCombo = new ComboBox(copyrights.toArray(new CopyrightProfile[copyrights.size()]), 60);
-          myProfilesCombo.setBorder(null);
-          myProfilesCombo.setSelectedItem(scopeSetting.getProfile());
-          myProfilesCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(final ItemEvent e) {
-              if (table.isEditing()) {
-                stopCellEditing();
-              }
+          myProfilesChooser.setCell(table, row, column);
+          myProfilesChooser.setOptions(copyrights.toArray());
+          myProfilesChooser.setDefaultValue(scopeSetting.getProfile());
+          myProfilesChooser.setToString(new Function<Object, String>() {
+            @Override
+            public String fun(Object o) {
+              return ((CopyrightProfile)o).getName();
             }
           });
-          myProfilesCombo.setRenderer(new DefaultListCellRenderer() {
-            public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-              Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-              setText(((CopyrightProfile)value).getName());
-              return rendererComponent;
-            }
-          });
-          return myProfilesCombo;
+          return myProfilesChooser;
         }
       };
     }
 
-    public void setValue(ScopeSetting scopeSetting, CopyrightProfile copyrightProfile) {
+    public CopyrightProfile valueOf(final ScopeSetting object) {
+      return object.getProfile();
+    }
+
+    public void setValue(final ScopeSetting scopeSetting, final CopyrightProfile copyrightProfile) {
       if (copyrightProfile != null) {
         scopeSetting.setProfile(copyrightProfile);
       }
     }
   }
 
-  private class ScopeColumn extends ColumnInfo<ScopeSetting, NamedScope> {
+  private class ScopeColumn extends MyColumnInfo<NamedScope> {
     private ScopeColumn() {
-      super(("Scope"));
+      super("Scope");
     }
 
-    public boolean isCellEditable(ScopeSetting mapping) {
-      return true;
-    }
-
-    public TableCellRenderer getRenderer(ScopeSetting mapping) {
+    public TableCellRenderer getRenderer(final ScopeSetting mapping) {
       return new DefaultTableCellRenderer() {
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
           super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -425,9 +412,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
             final String scopeName = ((NamedScope)value).getName();
             if (!isSelected) {
               final NamedScope scope = NamedScopesHolder.getScope(myProject, scopeName);
-              if (scope == null) {
-                setForeground(Color.red);
-              }
+              if (scope == null) setForeground(Color.RED);
             }
             setText(scopeName);
           }
@@ -436,34 +421,40 @@ public class ProjectSettingsPanel extends PanelWithButtons {
       };
     }
 
-    public TableCellEditor getEditor(ScopeSetting mapping) {
+    public TableCellEditor getEditor(final ScopeSetting mapping) {
       return new AbstractTableCellEditor() {
-        private PackageSetChooserCombo myCombo;
+        private PackageSetChooserCombo myScopeChooser;
 
+        @Nullable
         public Object getCellEditorValue() {
-          return myCombo.getSelectedScope();
+          return myScopeChooser.getSelectedScope();
         }
 
         public Component getTableCellEditorComponent(final JTable table, Object value, boolean isSelected, int row, int column) {
-          myCombo = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope)value).getName(), false);
-          myCombo.getComboBox().addItemListener(new ItemListener() {
-            public void itemStateChanged(final ItemEvent e) {
-              if (table.isEditing()) {
-                stopCellEditing();
-              }
-            }
-          });
-          return new CellEditorComponentWithBrowseButton(myCombo, this);
+          myScopeChooser = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope)value).getName(), false, false);
+          ((JBComboBoxTableCellEditorComponent)myScopeChooser.getChildComponent()).setCell(table, row, column);
+          return myScopeChooser;
         }
       };
     }
 
-    public NamedScope valueOf(ScopeSetting mapping) {
+    public NamedScope valueOf(final ScopeSetting mapping) {
       return mapping.getScope();
     }
 
-    public void setValue(ScopeSetting mapping, NamedScope set) {
+    public void setValue(final ScopeSetting mapping, final NamedScope set) {
       mapping.setScope(set);
+    }
+  }
+
+  private static abstract class MyColumnInfo<T> extends ColumnInfo<ScopeSetting, T> {
+    protected MyColumnInfo(final String name) {
+      super(name);
+    }
+
+    @Override
+    public boolean isCellEditable(final ScopeSetting item) {
+      return true;
     }
   }
 }
