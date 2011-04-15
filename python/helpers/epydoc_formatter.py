@@ -14,6 +14,7 @@ try:
             return identifier
 
     docstring = parse_docstring(src, errors)
+    docstring, fields = docstring.split_fields()
     html = docstring.to_html(EmptyLinker())
 
     if errors and not html:

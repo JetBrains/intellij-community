@@ -1,5 +1,7 @@
 package com.jetbrains.python.documentation;
 
+import java.util.List;
+
 /**
  * @author yole
  */
@@ -21,5 +23,20 @@ public class SphinxDocString extends StructuredDocString {
   @Override
   public String getParamDescription(String paramName) {
     return getTagValue("param", paramName);
+  }
+
+  @Override
+  public String getReturnDescription() {
+    return getTagValue("return");
+  }
+
+  @Override
+  public List<String> getRaisedExceptions() {
+    return getTagArguments(EpydocString.RAISES_TAGS);
+  }
+
+  @Override
+  public String getRaisedExceptionDescription(String exceptionName) {
+    return getTagValue(EpydocString.RAISES_TAGS, exceptionName);
   }
 }
