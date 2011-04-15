@@ -95,7 +95,8 @@ public class ContextComputationProcessor {
     else if (expression instanceof PsiExpression) {
       final SmartList<PsiExpression> uncomputables = new SmartList<PsiExpression>();
       final Object o = myEvaluationHelper.computeExpression((PsiExpression)expression, uncomputables);
-      addStringFragment(String.valueOf(o), result);
+      // in many languages 'null' is a reserved word
+      addStringFragment(o == null? "missingValue" : String.valueOf(o), result);
       if (uncomputables.size() > 0) {
         unparsable.set(Boolean.TRUE);
       }
