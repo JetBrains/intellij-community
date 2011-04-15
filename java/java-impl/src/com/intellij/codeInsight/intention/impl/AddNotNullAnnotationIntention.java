@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,27 +18,28 @@
  * Created by IntelliJ IDEA.
  * User: cdr
  * Date: Jul 20, 2007
- * Time: 2:57:59 PM
+ * Time: 2:57:38 PM
  */
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class AddNullableAnnotationFix extends AddNullableNotNullAnnotationFix {
-  public AddNullableAnnotationFix(@NotNull PsiModifierListOwner owner) {
-    super(NullableNotNullManager.getInstance(owner.getProject()).getDefaultNullable(),
-          owner,
-          getNotNulls(owner));
+public class AddNotNullAnnotationIntention extends AddAnnotationIntention {
+  @NotNull
+  @Override
+  public Pair<String, String[]> getAnnotations(@NotNull Project project) {
+    return new Pair<String, String[]>(NullableNotNullManager.getInstance(project).getDefaultNotNull(), getNullables(project));
   }
 
   @NotNull
-  private static String[] getNotNulls(@NotNull PsiModifierListOwner owner) {
-    final List<String> notnulls = NullableNotNullManager.getInstance(owner.getProject()).getNotNulls();
-    return ArrayUtil.toStringArray(notnulls);
+  private static String[] getNullables(@NotNull Project project) {
+    final List<String> nullables = NullableNotNullManager.getInstance(project).getNullables();
+    return ArrayUtil.toStringArray(nullables);
   }
 }

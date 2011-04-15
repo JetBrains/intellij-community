@@ -61,7 +61,9 @@ public class AddOverrideAnnotationAction implements IntentionAction {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiMethod method = findMethod(file, editor.getCaretModel().getOffset());
-    new AddAnnotationFix(JAVA_LANG_OVERRIDE, method).invoke(project, editor, file);
+    if (method != null) {
+      new AddAnnotationFix(JAVA_LANG_OVERRIDE, method).invoke(project, editor, file);
+    }
   }
 
   private static PsiMethod findMethod(PsiFile file, int offset) {

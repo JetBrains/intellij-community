@@ -109,7 +109,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
     return getName();
   }
 
-  private void annotateMethod(final PsiMethod method) {
+  private void annotateMethod(@NotNull PsiMethod method) {
     try {
       new AddAnnotationFix(myAnnotation, method, myAnnotationsToRemove).invoke(method.getProject(), null, method.getContainingFile());
     }

@@ -495,17 +495,17 @@
       <category>Control Flow</category>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix</className>
+      <className>com.intellij.codeInsight.intention.impl.AddNotNullAnnotationIntention</className>
       <category>Control Flow</category>
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.AddDeprecationAnnotationFix</className>
+      <className>com.intellij.codeInsight.intention.impl.AddDeprecationAnnotationIntention</className>
       <category>Control Flow</category>
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix</className>
+      <className>com.intellij.codeInsight.intention.impl.AddNullableAnnotationIntention</className>
       <category>Control Flow</category>
       <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
