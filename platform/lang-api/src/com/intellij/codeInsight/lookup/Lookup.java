@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.List;
 
-public interface Lookup extends UserDataHolder{
+public interface Lookup {
   char NORMAL_SELECT_CHAR = '\n';
   char REPLACE_SELECT_CHAR = '\t';
   char COMPLETE_STATEMENT_SELECT_CHAR = '\r';
