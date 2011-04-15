@@ -17,19 +17,15 @@ package org.jetbrains.android.maven;
 
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.facet.FacetType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
@@ -48,10 +44,7 @@ import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.project.*;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -100,20 +93,13 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
                                Map<MavenProject, String> mavenProjectToModuleName,
                                List<MavenProjectsProcessorTask> postTasks) {
     configurePaths(facet, mavenProject);
-    configureAndroidPlatform(facet, mavenProject);
+    configureAndroidPlatform(facet, mavenProject, modelsProvider);
   }
 
-  private void configureAndroidPlatform(AndroidFacet facet, MavenProject project) {
+  private void configureAndroidPlatform(AndroidFacet facet, MavenProject project, MavenModifiableModelsProvider modelsProvider) {
     Sdk platformLib = findOrCreateAndroidPlatform(project);
     if (platformLib != null) {
-      final ModifiableRootModel model = ModuleRootManager.getInstance(facet.getModule()).getModifiableModel();
-      model.setSdk(platformLib);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          model.commit();
-        }
-      });
+      modelsProvider.getRootModel(facet.getModule()).setSdk(platformLib);
     }
     //facet.getConfiguration().ADD_ANDROID_LIBRARY = false;
   }
@@ -123,11 +109,27 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
     String sdkPath = System.getenv("ANDROID_HOME");
     LOG.info("android home: " + sdkPath);
 
-    if (sdkPath == null) {
-      sdkPath = suggestAndroidSdkPath();
-      LOG.info("suggested sdk: " + sdkPath);
+    if (sdkPath != null) {
+      final Sdk sdk = findOrCreateAndroidPlatform(project, sdkPath);
+      if (sdk != null) {
+        return sdk;
+      }
     }
 
+    final Collection<String> candidates = suggestAndroidSdkPaths();
+    LOG.info("suggested sdks: " + candidates);
+
+    for (String candidate : candidates) {
+      final Sdk sdk = findOrCreateAndroidPlatform(project, candidate);
+      if (sdk != null) {
+        return sdk;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private Sdk findOrCreateAndroidPlatform(MavenProject project, String sdkPath) {
     String apiLevel = null;
     if (sdkPath != null) {
       Element sdkRoot = getConfig(project, "sdk");
@@ -148,13 +150,7 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
         if (target != null) {
           Sdk library = AndroidUtils.findAppropriateAndroidPlatform(target, sdk);
           if (library == null) {
-            final LibraryTable.ModifiableModel model = LibraryTablesRegistrar.getInstance().getLibraryTable().getModifiableModel();
             library = AndroidSdkUtils.createNewAndroidPlatform(target, sdkPath, true);
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                model.commit();
-              }
-            });
           }
           return library;
         }
@@ -163,18 +159,23 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
     return null;
   }
 
-  @Nullable
-  private static String suggestAndroidSdkPath() {
+  @NotNull
+  private static Collection<String> suggestAndroidSdkPaths() {
     final List<Sdk> androidSdks = ProjectJdkTable.getInstance().getSdksOfType(AndroidSdkType.getInstance());
+    final Set<String> result = new HashSet<String>(androidSdks.size());
+
     for (Sdk androidSdk : androidSdks) {
       final VirtualFile sdkHome = androidSdk.getHomeDirectory();
 
       if (sdkHome != null && sdkHome.exists() && sdkHome.isValid() && sdkHome.isDirectory()) {
-        return sdkHome.getPath();
+        final String path = sdkHome.getPath();
+        if (path != null) {
+          result.add(path);
+        }
       }
     }
 
-    return null;
+    return result;
   }
 
   private void configurePaths(AndroidFacet facet, MavenProject project) {

@@ -203,9 +203,9 @@ public class Cache {
     }
   }
 
-  public int[] getReferencedClasses(int classId) throws CacheCorruptedException {
+  public int[] getReferencedClasses(int qName) throws CacheCorruptedException {
     try {
-      return myQNameToReferencedClassesMap.getValues(classId);
+      return myQNameToReferencedClassesMap.getValues(qName);
     }
     catch (Throwable e) {
       throw new CacheCorruptedException(e);

@@ -672,6 +672,7 @@
               icon="/debugger/muteBreakpoints.png"/>
       <action id="XDebugger.AutoTooltip" class="com.intellij.xdebugger.impl.actions.ValueTooltipAutoShowAction"/>
       <action id="XDebugger.ToggleSortValues" class="com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction" icon="/objectBrowser/sorted.png"/>
+      <action id="Debugger.MarkObject" class="com.intellij.xdebugger.impl.actions.MarkObjectAction"/>
     </group>
 
     <group id="XDebugger.ToolWindow.TopToolbar">
@@ -699,12 +700,14 @@
       <reference ref="XDebugger.Inspect"/>
       <reference ref="XDebugger.SetValue"/>
       <reference ref="XDebugger.CopyValue"/>
+      <reference ref="Debugger.MarkObject"/>
     </group>
 
     <group id="XDebugger.Variables.Tree.Popup">
       <reference ref="XDebugger.Inspect"/>
       <reference ref="XDebugger.SetValue"/>
       <reference ref="XDebugger.CopyValue"/>
+      <reference ref="Debugger.MarkObject"/>
       <reference ref="XDebugger.JumpToSource"/>
       <reference ref="XDebugger.AddToWatches"/>
     </group>
@@ -717,6 +720,7 @@
       <reference ref="XDebugger.Inspect"/>
       <reference ref="XDebugger.SetValue"/>
       <reference ref="XDebugger.CopyValue"/>
+      <reference ref="Debugger.MarkObject"/>
     </group>
 
     <group id="XDebugger.Watches.Tree.Toolbar">
@@ -727,6 +731,7 @@
     <group id="XDebugger.Inspect.Tree.Popup">
       <reference ref="XDebugger.Inspect"/>
       <reference ref="XDebugger.CopyValue"/>
+      <reference ref="Debugger.MarkObject"/>
     </group>
 
     <group id="XDebugger.Value.Hint.Tree.Popup">

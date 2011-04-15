@@ -29,6 +29,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,8 +47,10 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
+import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
@@ -78,6 +81,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private XSourcePosition myCurrentPosition;
   private boolean myPaused;
   private MyDependentBreakpointListener myDependentBreakpointListener;
+  private XValueMarkers<?,?> myValueMarkers;
   private String mySessionName;
   private XDebugSessionTab mySessionTab;
   private XDebugSessionData mySessionData;
@@ -253,6 +257,17 @@ public class XDebugSessionImpl implements XDebugSession {
   public void showSessionTab() {
     RunContentDescriptor descriptor = getRunContentDescriptor();
     ExecutionManager.getInstance(getProject()).getContentManager().showRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
+  }
+
+  public XValueMarkers<?, ?> getValueMarkers() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myValueMarkers == null) {
+      XValueMarkerProvider<?,?> provider = myDebugProcess.createValueMarkerProvider();
+      if (provider != null) {
+        myValueMarkers = XValueMarkers.createValueMarkers(provider);
+      }
+    }
+    return myValueMarkers;
   }
 
   private static <B extends XBreakpoint<?>> XBreakpointType<?, ?> getBreakpointTypeClass(final XBreakpointHandler<B> handler) {

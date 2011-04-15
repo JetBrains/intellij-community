@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -281,17 +282,22 @@ public class ChangeSignatureGestureDetector extends PsiTreeChangeAdapter impleme
       return myCurrentInfo;
     }
 
+    private final @NonNls String PASTE_COMMAND_NAME = EditorBundle.message("paste.command.name");
+    private final @NonNls String TYPING_COMMAND_NAME = EditorBundle.message("typing.in.editor.command.name");
+
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
       if (myDeaf) return;
       if (myInitialText == null) {
         final Document document = e.getDocument();
         final PsiDocumentManager documentManager = myPsiDocumentManager;
+
         if (!documentManager.isUncommited(document)) {
           final CommandProcessor processor = CommandProcessor.getInstance();
           final String currentCommandName = processor.getCurrentCommandName();
-          if (!Comparing.strEqual(EditorBundle.message("typing.in.editor.command.name"), currentCommandName) &&
-              !Comparing.strEqual(EditorBundle.message("paste.command.name"), currentCommandName) &&
+
+          if (!Comparing.strEqual(TYPING_COMMAND_NAME, currentCommandName) &&
+              !Comparing.strEqual(PASTE_COMMAND_NAME, currentCommandName) &&
               !Comparing.strEqual("Cut", currentCommandName) &&
               !Comparing.strEqual(LanguageChangeSignatureDetector.MOVE_PARAMETER, currentCommandName) &&
               !Comparing.equal(EditorActionUtil.DELETE_COMMAND_GROUP, processor.getCurrentCommandGroupId())) {

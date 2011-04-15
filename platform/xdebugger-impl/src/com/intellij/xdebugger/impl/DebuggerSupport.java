@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
+import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import com.intellij.xdebugger.impl.settings.DebuggerSettingsPanelProvider;
@@ -33,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class DebuggerSupport {
   private static final ExtensionPointName<DebuggerSupport> EXTENSION_POINT = ExtensionPointName.create("com.intellij.xdebugger.debuggerSupport");
 
-  @NotNull 
+  @NotNull
   public static DebuggerSupport[] getDebuggerSupports() {
     return Extensions.getExtensions(EXTENSION_POINT);
   }
@@ -95,6 +96,10 @@ public abstract class DebuggerSupport {
 
   @NotNull
   public abstract DebuggerToggleActionHandler getMuteBreakpointsHandler();
+
+  @NotNull
+  public abstract MarkObjectActionHandler getMarkObjectHandler();
+
 
   @Nullable
   public abstract AbstractDebuggerSession getCurrentSession(@NotNull Project project);

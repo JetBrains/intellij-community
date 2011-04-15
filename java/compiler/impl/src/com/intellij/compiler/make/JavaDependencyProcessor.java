@@ -31,10 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.ClsUtil;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectIterator;
-import gnu.trove.TIntObjectProcedure;
+import gnu.trove.*;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -304,11 +301,13 @@ class JavaDependencyProcessor {
     extractMethods(myAddedMembers, methodsToCheck, false);
 
     if (!MakeUtil.isAnonymous(myDependencyCache.resolve(myQName))) {
-      // these checks make no sence for anonymous classes
+      // these checks make no sense for anonymous classes
+      
       final TIntHashSet fieldNames = new TIntHashSet();
       extractFieldNames(myAddedMembers, fieldNames);
       int addedFieldsCount = fieldNames.size();
       extractFieldNames(myRemovedMembers, fieldNames);
+      
       if (!fieldNames.isEmpty()) {
         cacheNavigator.walkSuperClasses(myQName, new ClassInfoProcessor() {
           public boolean process(final int classQName) throws CacheCorruptedException {
@@ -317,6 +316,7 @@ class JavaDependencyProcessor {
           }
         });
       }
+      
       if (addedFieldsCount > 0 && MakeUtil.isInterface(oldCache.getFlags(myQName))) {
         final TIntHashSet visitedClasses = new TIntHashSet();
         visitedClasses.add(myQName);
@@ -354,7 +354,59 @@ class JavaDependencyProcessor {
           }
         });
       }
+      // check referencing members in subclasses
+      
+      final TIntHashSet addedOrRemovedFields = new TIntHashSet();
+      final TIntHashSet addedOrRemovedMethods = new TIntHashSet();
+      for (Set<MemberInfo> infos : Arrays.asList(myAddedMembers, myRemovedMembers)) {
+        for (MemberInfo member : infos) {
+          if (!member.isPrivate()) {
+            if (member instanceof FieldInfo) {
+              addedOrRemovedFields.add(member.getName());
+            }
+            else if (member instanceof MethodInfo){
+              addedOrRemovedMethods.add(member.getName());
+            }
+          }
+        }
+        
+      }
+      if (!addedOrRemovedFields.isEmpty() || !addedOrRemovedMethods.isEmpty()) {
+        cacheNavigator.walkSubClasses(myQName, new ClassInfoProcessor() {
+          public boolean process(final int subclassQName) throws CacheCorruptedException {
+            if (!myDependencyCache.isClassInfoMarked(subclassQName)) {
+              if (referencesMembersWithNames(oldCache, subclassQName, addedOrRemovedFields, addedOrRemovedMethods)) {
+                final boolean marked = myDependencyCache.markClass(subclassQName);
+                if (marked && LOG.isDebugEnabled()) {
+                  LOG.debug("Mark dependent class " + myDependencyCache.resolve(subclassQName) + "; Reason: members were added/removed in superclass with names, that may clash with the names of members of another classes that this class references");
+                }
+              }
+            }
+            return true;
+          }
+        });
+      }
     }
+  }
+  
+  private static boolean referencesMembersWithNames(Cache cache, final int qName, TIntHashSet fieldNames, TIntHashSet methodNames) throws CacheCorruptedException {
+    for (final int referencedClass : cache.getReferencedClasses(qName)) {
+      for (Dependency dependency : cache.getBackDependencies(referencedClass)) {
+        if (dependency.getClassQualifiedName() == qName) {
+          for (Dependency.FieldRef ref : dependency.getFieldRefs()) {
+            if (fieldNames.contains(ref.name)) {
+              return true;
+            }
+          }
+          for (Dependency.MethodRef ref : dependency.getMethodRefs()) {
+            if (methodNames.contains(ref.name)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private void markAnnotationDependenciesRecursively(final Dependency[] dependencies, final @NonNls String reason, final TIntHashSet visitedAnnotations)
@@ -585,7 +637,9 @@ class JavaDependencyProcessor {
   private void markUseDependenciesOnEquivalentMethods(final int checkedInfoQName, Set<MethodInfo> methodsToCheck, int methodsClassName) throws CacheCorruptedException {
     final Dependency[] backDependencies = myDependencyCache.getCache().getBackDependencies(checkedInfoQName);
     for (Dependency dependency : backDependencies) {
-      if (myDependencyCache.isTargetClassInfoMarked(dependency)) continue;
+      if (myDependencyCache.isTargetClassInfoMarked(dependency)) {
+        continue;
+      }
       if (isDependentOnEquivalentMethods(dependency.getMethodRefs(), methodsToCheck)) {
         if (myDependencyCache.markTargetClassInfo(dependency)) {
           if (LOG.isDebugEnabled()) {
@@ -600,8 +654,7 @@ class JavaDependencyProcessor {
 
   private void markUseDependenciesOnFields(final int classQName, TIntHashSet fieldNames) throws CacheCorruptedException {
     final Cache oldCache = myDependencyCache.getCache();
-    final Dependency[] backDependencies = oldCache.getBackDependencies(classQName);
-    for (Dependency useDependency : backDependencies) {
+    for (Dependency useDependency : oldCache.getBackDependencies(classQName)) {
       if (!myDependencyCache.isTargetClassInfoMarked(useDependency)) {
         for (Dependency.FieldRef field : useDependency.getFieldRefs()) {
           if (fieldNames.contains(field.name)) {

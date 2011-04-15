@@ -16,6 +16,7 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
@@ -26,17 +27,18 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
+import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -51,14 +53,13 @@ import java.util.Map;
  * Class SetValueAction
  * @author Jeka
  */
-public class MarkObjectAction extends DebuggerAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.MarkObjectAction");
+public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.JavaMarkObjectActionHandler");
   public static final long AUTO_MARKUP_REFERRING_OBJECTS_LIMIT = 100L; // todo: some reasonable limit
-  private final String MARK_TEXT = ActionsBundle.message("action.Debugger.MarkObject.text");
-  private final String UNMARK_TEXT = ActionsBundle.message("action.Debugger.MarkObject.unmark.text");
 
-  public void actionPerformed(final AnActionEvent event) {
-    final DebuggerTreeNodeImpl node = getSelectedNode(event.getDataContext());
+  @Override
+  public void perform(@NotNull Project project, AnActionEvent event) {
+    final DebuggerTreeNodeImpl node = DebuggerAction.getSelectedNode(event.getDataContext());
     if (node == null) {
       return;
     }
@@ -233,24 +234,27 @@ public class MarkObjectAction extends DebuggerAction {
     return builder.append("<br><b>").append(refType.name()).append(".").append(fieldName).append("</b>").toString();
   }
 
+  @Override
+  public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
+    final DebuggerTreeNodeImpl node = DebuggerAction.getSelectedNode(event.getDataContext());
+    return node != null && node.getDescriptor() instanceof ValueDescriptor;
+  }
 
-  public void update(AnActionEvent e) {
-    boolean enable = false;
-    String text = MARK_TEXT;
-    final DebuggerTreeNodeImpl node = getSelectedNode(e.getDataContext());
-    if (node != null) {
-      final NodeDescriptorImpl descriptor = node.getDescriptor();
-      enable = (descriptor instanceof ValueDescriptor);
-      if (enable) {
-        final ValueMarkup markup = ((ValueDescriptor)descriptor).getMarkup(node.getTree().getDebuggerContext().getDebugProcess());
-        if (markup != null) { // already exists
-          text = UNMARK_TEXT; 
-        }
-      }
-    }
-    final Presentation presentation = e.getPresentation();
-    presentation.setVisible(enable);
-    presentation.setText(text);
+  @Override
+  public boolean isHidden(@NotNull Project project, AnActionEvent event) {
+    return DebuggerAction.getSelectedNode(event.getDataContext()) == null;
+  }
+
+  @Override
+  public boolean isMarked(@NotNull Project project, @NotNull AnActionEvent event) {
+    final DebuggerTreeNodeImpl node = DebuggerAction.getSelectedNode(event.getDataContext());
+    if (node == null) return false;
+
+    final NodeDescriptorImpl descriptor = node.getDescriptor();
+    if (!(descriptor instanceof ValueDescriptor)) return false;
+
+    DebugProcess debugProcess = node.getTree().getDebuggerContext().getDebugProcess();
+    return ((ValueDescriptor)descriptor).getMarkup(debugProcess) != null;
   }
 
   public static Color getAutoMarkupColor() {

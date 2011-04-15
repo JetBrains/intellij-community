@@ -24,6 +24,7 @@ import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -34,7 +35,7 @@ import javax.swing.*;
 public class XInspectDialog extends DialogWrapper {
   private final XDebuggerTreePanel myTreePanel;
 
-  public XInspectDialog(final XDebugSession session, XDebuggerEditorsProvider editorsProvider, XSourcePosition sourcePosition, String nodeName, XValue value) {
+  public XInspectDialog(final XDebugSession session, XDebuggerEditorsProvider editorsProvider, XSourcePosition sourcePosition, @NotNull String nodeName, @NotNull XValue value) {
     super(session.getProject(), false);
     setTitle(XDebuggerBundle.message("inspect.value.dialog.title", nodeName));
     setModal(false);

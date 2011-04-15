@@ -19,7 +19,6 @@
  */
 package com.intellij.debugger.ui.impl;
 
-import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
@@ -30,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.PopupHandler;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 
 import javax.swing.*;
 import java.awt.*;
@@ -68,7 +68,7 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
 
     final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts("ToggleBookmark");
     final CustomShortcutSet shortcutSet = shortcuts.length > 0? new CustomShortcutSet(shortcuts) : new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0));
-    overrideShortcut(myTree, DebuggerActions.MARK_OBJECT, shortcutSet);
+    overrideShortcut(myTree, XDebuggerActions.MARK_OBJECT, shortcutSet);
   }
 
   protected abstract DebuggerTree createTreeView();
