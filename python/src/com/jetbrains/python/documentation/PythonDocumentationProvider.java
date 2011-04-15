@@ -818,7 +818,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   private String generateContent(PyFunction element, String offset, String prefix) {
     PyParameter[] list = element.getParameterList().getParameters();
-    StringBuilder builder = new StringBuilder();
+    StringBuilder builder = new StringBuilder(offset);
     for(PyParameter p : list) {
       builder.append(prefix);
       builder.append("param ");
