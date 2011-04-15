@@ -340,13 +340,17 @@ public class AbstractTreeUi {
     }
   }
 
-  private ActionCallback invokeLaterIfNeeded(@NotNull final Runnable runnable) {
+  public ActionCallback invokeLaterIfNeeded(@NotNull final Runnable runnable) {
     final ActionCallback result = new ActionCallback();
 
     Runnable actual = new Runnable() {
       public void run() {
-        runnable.run();
-        result.setDone();
+        if (isReleased()) {
+          result.setRejected();
+        } else {
+          runnable.run();
+          result.setDone();
+        }
       }
     };
 
@@ -880,7 +884,7 @@ public class AbstractTreeUi {
     }
   }
 
-  private void assertIsDispatchThread() {
+  public void assertIsDispatchThread() {
     if (isPassthroughMode()) return;
 
     if ((isTreeShowing() || myWasEverShown) && !isEdt()) {
@@ -923,6 +927,8 @@ public class AbstractTreeUi {
   }
 
   public ActionCallback queueUpdate(Object element, boolean updateStructure) {
+    assertIsDispatchThread();
+
     try {
       AbstractTreeUpdater updater = getUpdater();
       if (updater == null) {
@@ -3387,15 +3393,24 @@ public class AbstractTreeUi {
           TreeBuilderUtil.restorePaths(getBuilder(), pathsToExpand, selectionPaths, false);
         }
         else {
-          myTreeModel.nodeChanged(node);
+          nodeChanged(node);
         }
       }
       else {
-        myTreeModel.nodeChanged(node);
+        nodeChanged(node);
       }
     } else if (nodeChanged) {
-      myTreeModel.nodeChanged(node);
+      nodeChanged(node);
     }
+  }
+
+  private void nodeChanged(final DefaultMutableTreeNode node) {
+    invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        myTreeModel.nodeChanged(node);
+      }
+    });
   }
 
   public DefaultTreeModel getTreeModel() {
@@ -3598,6 +3613,8 @@ public class AbstractTreeUi {
                final boolean deferred,
                final boolean canSmartExpand,
                final boolean mayQueue) {
+
+    assertIsDispatchThread();
 
     AbstractTreeUpdater updater = getUpdater();
     if (mayQueue && updater != null) {

@@ -29,8 +29,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.xdebugger.AbstractDebuggerSession;
 import com.intellij.xdebugger.impl.DebuggerSupport;
-import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
-import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
+import com.intellij.xdebugger.impl.actions.*;
+import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
@@ -63,6 +63,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   private final MuteBreakpointsActionHandler myMuteBreakpointsHandler = new MuteBreakpointsActionHandler();
   private final DebuggerActionHandler mySmartStepIntoHandler = new SmartStepIntoActionHandler();
   private final DebuggerActionHandler myAddToWatchedActionHandler = new AddToWatchActionHandler();
+  private JavaMarkObjectActionHandler myMarkObjectActionHandler = new JavaMarkObjectActionHandler();
 
   @NotNull
   public BreakpointPanelProvider<?> getBreakpointPanelProvider() {
@@ -148,6 +149,12 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   @NotNull
   public DebuggerToggleActionHandler getMuteBreakpointsHandler() {
     return myMuteBreakpointsHandler;
+  }
+
+  @NotNull
+  @Override
+  public MarkObjectActionHandler getMarkObjectHandler() {
+    return myMarkObjectActionHandler;
   }
 
   @Override

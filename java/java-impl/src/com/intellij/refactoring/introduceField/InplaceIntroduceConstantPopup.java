@@ -48,6 +48,8 @@ import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.TitlePanel;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -261,14 +263,24 @@ public class InplaceIntroduceConstantPopup {
   }
 
   public void performInplaceIntroduce() {
-    startIntroduceTemplate(false);
+    startIntroduceTemplate(false, null);
   }
 
-  private void startIntroduceTemplate(final boolean replaceAllOccurrences) {
+  private void startIntroduceTemplate(final boolean replaceAllOccurrences, @Nullable final PsiType fieldDefaultType) {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         myTypeSelectorManager.setAllOccurences(replaceAllOccurrences);
-        final PsiType defaultType = myTypeSelectorManager.getTypeSelector().getSelectedType();
+        PsiType defaultType = myTypeSelectorManager.getTypeSelector().getSelectedType();
+        if (fieldDefaultType != null) {
+          if (replaceAllOccurrences) {
+            if (ArrayUtil.find(myTypeSelectorManager.getTypesForAll(), fieldDefaultType) != -1) {
+              defaultType = fieldDefaultType;
+            }
+          }
+          else if (ArrayUtil.find(myTypeSelectorManager.getTypesForOne(), fieldDefaultType) != -1) {
+            defaultType = fieldDefaultType;
+          }
+        }
         final String propName = myLocalVariable != null ? JavaCodeStyleManager
           .getInstance(myProject).variableNameToPropertyName(myLocalVariable.getName(), VariableKind.LOCAL_VARIABLE) : null;
         final String[] names = IntroduceConstantDialog.createNameSuggestionGenerator(propName, myExpr, JavaCodeStyleManager.getInstance(myProject))
@@ -337,7 +349,7 @@ public class InplaceIntroduceConstantPopup {
     private SmartTypePointer myFieldTypePointer;
 
     public FieldInplaceIntroducer(PsiField field) {
-      super(myProject, new TypeExpression(myProject, myTypeSelectorManager.getTypesForAll()),
+      super(myProject, new TypeExpression(myProject, myReplaceAllCb.isSelected() ? myTypeSelectorManager.getTypesForAll() : myTypeSelectorManager.getTypesForOne()),
             myEditor, field, false,
             myTypeSelectorManager.getTypesForAll().length > 1,
             myExpr != null && myExpr.isPhysical() ? myEditor.getDocument().createRangeMarker(myExpr.getTextRange()) : null, InplaceIntroduceConstantPopup.this.getOccurrenceMarkers(),
@@ -456,8 +468,8 @@ public class InplaceIntroduceConstantPopup {
             final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
             if (templateState != null) {
               templateState.gotoEnd(true);
-              myTypeSelectorManager = new TypeSelectorManagerImpl(myProject, myFieldTypePointer.getType(), null, myExpr, myOccurrences);
-              startIntroduceTemplate(isReplaceAllOccurrences());
+              myTypeSelectorManager = new TypeSelectorManagerImpl(myProject, myDefaultParameterTypePointer.getType(), null, myExpr, myOccurrences);
+              startIntroduceTemplate(isReplaceAllOccurrences(), myFieldTypePointer.getType());
             }
           }
         });

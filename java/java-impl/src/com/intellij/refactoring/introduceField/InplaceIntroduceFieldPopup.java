@@ -35,6 +35,8 @@ import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.ui.TitlePanel;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -151,15 +153,24 @@ public class InplaceIntroduceFieldPopup {
   }
 
   public void startTemplate() {
-    startTemplate(false);
+    startTemplate(false, null);
   }
 
-  public void startTemplate(final boolean replaceAllOccurrences) {
+  public void startTemplate(final boolean replaceAllOccurrences, @Nullable final PsiType fieldDefaultType) {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         public void run() {
           myTypeSelectorManager.setAllOccurences(replaceAllOccurrences);
 
-          final PsiType defaultType = myTypeSelectorManager.getTypeSelector().getSelectedType();
+          PsiType defaultType = myTypeSelectorManager.getTypeSelector().getSelectedType();
+          if (fieldDefaultType != null) {
+            if (replaceAllOccurrences) {
+              if (ArrayUtil.find(myTypeSelectorManager.getTypesForAll(), fieldDefaultType) != -1) {
+                defaultType = fieldDefaultType;
+              }
+            } else if (ArrayUtil.find(myTypeSelectorManager.getTypesForOne(), fieldDefaultType) != -1){
+              defaultType = fieldDefaultType;
+            }
+          }
 
           final SuggestedNameInfo suggestedNameInfo =
             IntroduceFieldDialog.createGenerator(myStatic, myLocalVariable, myInitializerExpression, myLocalVariable != null)
@@ -227,7 +238,7 @@ public class InplaceIntroduceFieldPopup {
     private SmartTypePointer myFieldTypePointer;
 
     public FieldInplaceIntroducer(PsiVariable psiVariable) {
-      super(myProject, new TypeExpression(myProject, myTypeSelectorManager.getTypesForAll()),
+      super(myProject, new TypeExpression(myProject, myIntroduceFieldPanel.isReplaceAllOccurrences() ? myTypeSelectorManager.getTypesForAll() : myTypeSelectorManager.getTypesForOne()),
             myEditor, psiVariable, false,
             myTypeSelectorManager.getTypesForAll().length > 1,
             myInitializerExpression != null && myInitializerExpression.isPhysical() ? myEditor.getDocument().createRangeMarker(myInitializerExpression.getTextRange()) : null, InplaceIntroduceFieldPopup.this.getOccurrenceMarkers(),
@@ -296,8 +307,8 @@ public class InplaceIntroduceFieldPopup {
             final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
             if (templateState != null) {
               templateState.gotoEnd(true);
-              myTypeSelectorManager = new TypeSelectorManagerImpl(myProject, myFieldTypePointer.getType(), null, myInitializerExpression, myOccurrences);
-              startTemplate(myIntroduceFieldPanel.isReplaceAllOccurrences());
+              myTypeSelectorManager = new TypeSelectorManagerImpl(myProject, myDefaultParameterTypePointer.getType(), null, myInitializerExpression, myOccurrences);
+              startTemplate(myIntroduceFieldPanel.isReplaceAllOccurrences(), myFieldTypePointer.getType());
             }
           }
         });
@@ -312,6 +323,10 @@ public class InplaceIntroduceFieldPopup {
       if (element instanceof PsiWhiteSpace) {
         element = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
       }
+      if (element instanceof PsiField) return (PsiVariable)element;
+      final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false);
+      if (field != null) return field;
+      element = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
       return PsiTreeUtil.getParentOfType(element, PsiField.class, false);
     }
 

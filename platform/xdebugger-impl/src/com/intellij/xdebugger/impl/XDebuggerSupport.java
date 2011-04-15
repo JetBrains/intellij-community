@@ -22,6 +22,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
+import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
 import com.intellij.xdebugger.impl.actions.handlers.*;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
@@ -54,6 +55,7 @@ public class XDebuggerSupport extends DebuggerSupport {
   private final XAddToWatchesFromEditorActionHandler myAddToWatchesActionHandler;
   private final DebuggerToggleActionHandler myMuteBreakpointsHandler;
   private final DebuggerActionHandler mySmartStepIntoHandler;
+  private final XMarkObjectActionHandler myMarkObjectActionHandler;
 
   public XDebuggerSupport() {
     myBreakpointPanelProvider = new XBreakpointPanelProvider();
@@ -106,6 +108,7 @@ public class XDebuggerSupport extends DebuggerSupport {
     myEvaluateHandler = new XDebuggerEvaluateActionHandler();
     myQuickEvaluateHandler = new XQuickEvaluateHandler();
     mySettingsPanelProvider = new XDebuggerSettingsPanelProviderImpl();
+    myMarkObjectActionHandler = new XMarkObjectActionHandler();
   }
 
   @NotNull
@@ -192,6 +195,12 @@ public class XDebuggerSupport extends DebuggerSupport {
   @NotNull
   public DebuggerToggleActionHandler getMuteBreakpointsHandler() {
     return myMuteBreakpointsHandler;
+  }
+
+  @NotNull
+  @Override
+  public MarkObjectActionHandler getMarkObjectHandler() {
+    return myMarkObjectActionHandler;
   }
 
   @Override

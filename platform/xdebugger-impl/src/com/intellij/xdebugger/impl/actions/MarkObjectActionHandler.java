@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.xdebugger.impl.ui.tree;
+package com.intellij.xdebugger.impl.actions;
 
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
-public class ValueMarkerPresentationDialog extends ValueMarkerPresentationDialogBase {
-  public ValueMarkerPresentationDialog(@Nullable String defaultText) {
-    super(defaultText);
-    init();
-  }
+public abstract class MarkObjectActionHandler extends DebuggerActionHandler {
+  public abstract boolean isMarked(@NotNull Project project, @NotNull AnActionEvent event);
 }

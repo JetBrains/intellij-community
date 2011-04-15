@@ -46,7 +46,7 @@ import java.util.ArrayList;
 public class CompletionServiceImpl extends CompletionService{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.impl.CompletionServiceImpl");
   private Throwable myTrace = null;
-  private CompletionProgressIndicator myCurrentCompletion;
+  private volatile CompletionProgressIndicator myCurrentCompletion;
   private static volatile CompletionPhase ourPhase = CompletionPhase.NoCompletion;
   private static String ourPhaseTrace;
 
@@ -82,7 +82,11 @@ public class CompletionServiceImpl extends CompletionService{
     final PsiElement position = parameters.getPosition();
     final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
     final String textBeforePosition = parameters.getPosition().getContainingFile().getText().substring(0, parameters.getOffset());
-    return new CompletionResultSetImpl(consumer, textBeforePosition, new CamelHumpMatcher(prefix, true, parameters.relaxMatching()), contributor, parameters, defaultSorter(parameters), null);
+    CompletionProgressIndicator process = myCurrentCompletion;
+    LOG.assertTrue(process != null, "createResultSet may be invoked only during completion");
+    CamelHumpMatcher matcher = new CamelHumpMatcher(prefix, true, parameters.relaxMatching());
+    CompletionSorterImpl sorter = defaultSorter(parameters);
+    return new CompletionResultSetImpl(consumer, textBeforePosition, matcher, contributor,parameters, sorter, process, null);
   }
 
   @Override
@@ -110,6 +114,7 @@ public class CompletionServiceImpl extends CompletionService{
     private final String myTextBeforePosition;
     private final CompletionParameters myParameters;
     private final CompletionSorterImpl mySorter;
+    private final CompletionProgressIndicator myProcess;
     @Nullable private final CompletionResultSetImpl myOriginal;
 
     public CompletionResultSetImpl(final Consumer<LookupElement> consumer, final String textBeforePosition,
@@ -117,18 +122,21 @@ public class CompletionServiceImpl extends CompletionService{
                                    CompletionContributor contributor,
                                    CompletionParameters parameters,
                                    @NotNull CompletionSorterImpl sorter,
+                                   @NotNull CompletionProgressIndicator process,
                                    CompletionResultSetImpl original) {
       super(prefixMatcher, consumer, contributor);
       myTextBeforePosition = textBeforePosition;
       myParameters = parameters;
       mySorter = sorter;
+      myProcess = process;
       myOriginal = original;
     }
 
-    @Override
-    public void addElement(@NotNull LookupElement element) {
-      element.putUserDataIfAbsent(CompletionLookupArranger.SORTER_KEY, mySorter);
-      super.addElement(element);
+    public void addElement(@NotNull final LookupElement element) {
+      if (myCompletionService.prefixMatches(element, getPrefixMatcher())) {
+        myProcess.setItemSorter(element, mySorter);
+        getConsumer().consume(element);
+      }
     }
 
     @NotNull
@@ -142,7 +150,7 @@ public class CompletionServiceImpl extends CompletionService{
                   "\ninjected=" + (InjectedLanguageUtil.getTopLevelFile(positionFile) != positionFile) +
                   "\nlang=" + positionFile.getLanguage());
       }
-      return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, matcher, myContributor, myParameters, mySorter, this);
+      return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, matcher, myContributor, myParameters, mySorter, myProcess, this);
     }
 
     @Override
@@ -162,7 +170,7 @@ public class CompletionServiceImpl extends CompletionService{
     @NotNull
     @Override
     public CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter) {
-      return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, getPrefixMatcher(), myContributor, myParameters, (CompletionSorterImpl)sorter, this);
+      return new CompletionResultSetImpl(getConsumer(), myTextBeforePosition, getPrefixMatcher(), myContributor, myParameters, (CompletionSorterImpl)sorter, myProcess, this);
     }
 
     @NotNull

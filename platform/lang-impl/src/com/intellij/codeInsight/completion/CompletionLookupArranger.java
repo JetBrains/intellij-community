@@ -23,7 +23,6 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupArranger;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -38,13 +37,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class CompletionLookupArranger extends LookupArranger {
-  public static final Key<CompletionSorterImpl> SORTER_KEY = Key.create("SORTER_KEY");
   private static final String SELECTED = "selected";
   static final String IGNORED = "ignored";
   private final CompletionLocation myLocation;
   private final Map<LookupElement, Comparable> mySortingWeights = new THashMap<LookupElement, Comparable>(TObjectHashingStrategy.IDENTITY);
+  private final CompletionProgressIndicator myProcess;
 
-  public CompletionLookupArranger(final CompletionParameters parameters) {
+  public CompletionLookupArranger(final CompletionParameters parameters, CompletionProgressIndicator process) {
+    myProcess = process;
     myLocation = new CompletionLocation(parameters);
   }
 
@@ -150,7 +150,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
       @NotNull
       private CompletionSorterImpl obtainSorter(LookupElement element) {
-        return element.getUserData(SORTER_KEY);
+        return myProcess.getSorter(element);
       }
 
       @Override

@@ -57,6 +57,11 @@ public class TreeState implements JDOMExternalizable {
       myUserObject = null;
     }
 
+    @Override
+    public String toString() {
+      return myItemId + ":" + myItemType;
+    }
+
     public boolean matchedWith(NodeDescriptor nodeDescriptor) {
       return Comparing.equal(myItemId, getDescriptorKey(nodeDescriptor)) &&
              Comparing.equal(myItemType, getDescriptorType(nodeDescriptor));
@@ -318,7 +323,9 @@ public class TreeState implements JDOMExternalizable {
 
   }
 
-  private static boolean applyTo(final int positionInPath, final List<PathElement> path, final Object root, final TreeFacade tree, final ProgressIndicator indicator) {
+  private TreeNode requestedExpand;
+
+  private  boolean applyTo(final int positionInPath, final List<PathElement> path, final Object root, final TreeFacade tree, final ProgressIndicator indicator) {
     if (!(root instanceof DefaultMutableTreeNode)) return false;
 
     final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)root;
@@ -439,7 +446,7 @@ public class TreeState implements JDOMExternalizable {
 
       myBuilder.expand(element, new Runnable() {
         public void run() {
-          myBuilder.getUi().getReady(this).notify(result);
+          result.setDone();
         }
       });
 

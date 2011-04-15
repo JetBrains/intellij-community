@@ -23,17 +23,15 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public abstract class NotNullLazyValue<T> {
-  private boolean myComputed;
-  @NotNull private T myValue;
+  private T myValue;
 
   @NotNull
   protected abstract T compute();
 
   @NotNull
   public T getValue() {
-    if (!myComputed) {
+    if (myValue == null) {
       myValue = compute();
-      myComputed = true;
     }
     return myValue;
   }

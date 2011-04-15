@@ -299,7 +299,6 @@
       <action id="Debugger.RemoveAllWatches" class="com.intellij.debugger.actions.RemoveAllWatchesAction"/>
       <action id="Debugger.RemoveWatch" class="com.intellij.debugger.actions.RemoveWatchAction" icon="/actions/delete.png"/>
       <action id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup"/>
-      <action id="Debugger.MarkObject" class="com.intellij.debugger.actions.MarkObjectAction"/>
       <action id="Debugger.SetValue" class="com.intellij.debugger.actions.SetValueAction"/>
       <!--<action id="Debugger.ShowAsHex" class="com.intellij.debugger.actions.ShowAsHexAction" text="Show as Hex"/>-->
       <action id="Debugger.ShowFrame" class="com.intellij.debugger.actions.ShowFrameAction"/>

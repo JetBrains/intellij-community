@@ -62,4 +62,5 @@ public interface XDebuggerActions {
   @NonNls String TOGGLE_SORT_VALUES = "XDebugger.ToggleSortValues";
 
   @NonNls String AUTO_TOOLTIP = "XDebugger.AutoTooltip";
+  @NonNls String MARK_OBJECT = "Debugger.MarkObject";
 }

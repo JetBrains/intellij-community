@@ -190,7 +190,7 @@ public class CompileDriver {
     }
     scope = addAdditionalRoots(scope, ALL_EXCEPT_SOURCE_PROCESSING);
 
-    final CompilerTask task = new CompilerTask(myProject, true, "", true);
+    final CompilerTask task = new CompilerTask(myProject, true, "Classes up-to-date check", true);
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, createDependencyCache(), true, false);
 
     checkCachesVersion(compileContext, ((PersistentFS)ManagingFS.getInstance()).getCreationTimestamp());

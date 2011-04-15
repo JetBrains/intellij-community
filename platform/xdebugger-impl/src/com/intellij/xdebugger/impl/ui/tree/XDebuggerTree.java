@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.ui.tree;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.ui.PopupHandler;
@@ -210,6 +211,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     actionManager.getAction(XDebuggerActions.SET_VALUE).unregisterCustomShortcutSet(this);
     actionManager.getAction(XDebuggerActions.COPY_VALUE).unregisterCustomShortcutSet(this);
     actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE).unregisterCustomShortcutSet(this);
+    actionManager.getAction(XDebuggerActions.MARK_OBJECT).unregisterCustomShortcutSet(this);
   }
 
   private void registerShortcuts() {
@@ -217,6 +219,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     actionManager.getAction(XDebuggerActions.SET_VALUE).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0)), this);
     actionManager.getAction(XDebuggerActions.COPY_VALUE).registerCustomShortcutSet(CommonShortcuts.getCopy(), this);
     actionManager.getAction(XDebuggerActions.JUMP_TO_SOURCE).registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
+    actionManager.getAction(XDebuggerActions.MARK_OBJECT).registerCustomShortcutSet(new CustomShortcutSet( KeymapManager.getInstance().getActiveKeymap().getShortcuts("ToggleBookmark")), this);
   }
 
   private static void markNodesObsolete(final XValueContainerNode<?> node) {

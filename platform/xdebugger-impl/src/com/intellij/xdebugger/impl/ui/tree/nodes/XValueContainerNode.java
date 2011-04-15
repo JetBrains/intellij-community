@@ -39,7 +39,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   protected final ValueContainer myValueContainer;
   private volatile boolean myObsolete;
 
-  protected XValueContainerNode(XDebuggerTree tree, final XDebuggerTreeNode parent, ValueContainer valueContainer) {
+  protected XValueContainerNode(XDebuggerTree tree, final XDebuggerTreeNode parent, @NotNull ValueContainer valueContainer) {
     super(tree, parent, true);
     myValueContainer = valueContainer;
     myText.append(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
@@ -162,6 +162,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     return myCachedAllChildren;
   }
 
+  @NotNull
   public ValueContainer getValueContainer() {
     return myValueContainer;
   }
