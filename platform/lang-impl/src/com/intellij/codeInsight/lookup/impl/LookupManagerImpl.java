@@ -103,7 +103,7 @@ public class LookupManagerImpl extends LookupManager {
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener, myProject);
   }
 
-  public Lookup showLookup(final Editor editor,
+  public LookupEx showLookup(final Editor editor,
                            @NotNull LookupElement[] items,
                            final String prefix,
                            @NotNull final LookupArranger arranger) {
@@ -222,7 +222,7 @@ public class LookupManagerImpl extends LookupManager {
     }
   }
 
-  public Lookup getActiveLookup() {
+  public LookupEx getActiveLookup() {
     return myActiveLookup;
   }
 

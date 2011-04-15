@@ -23,7 +23,7 @@ import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
@@ -54,7 +54,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    final Lookup lookup = LookupManagerImpl.getActiveLookup(editor);
+    final LookupEx lookup = LookupManagerImpl.getActiveLookup(editor);
     if (lookup != null) {
       lookup.showElementActions();
       return;

@@ -15,8 +15,16 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.openapi.ui.popup.JBPopup;
+
 /**
  * @author peter
  */
 public interface LookupEx extends Lookup {
+  void setCurrentItem(LookupElement item);
+  void showItemPopup(JBPopup hint);
+
+  boolean showElementActions();
+
+
 }

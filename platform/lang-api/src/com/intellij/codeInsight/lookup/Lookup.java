@@ -18,8 +18,6 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +33,6 @@ public interface Lookup {
 
   @Nullable
   LookupElement getCurrentItem();
-  void setCurrentItem(LookupElement item);
 
   void addLookupListener(LookupListener listener);
   void removeLookupListener(LookupListener listener);
@@ -63,10 +60,6 @@ public interface Lookup {
   List<LookupElement> getItems();
 
   boolean isFocused();
-
-  void showItemPopup(JBPopup hint);
-
-  boolean showElementActions();
 
   String itemPattern(LookupElement element);
 
