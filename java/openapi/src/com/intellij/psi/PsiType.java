@@ -124,13 +124,20 @@ public abstract class PsiType implements PsiAnnotationOwner {
   }
 
   /**
+   * @deprecated use {@linkplain #getJavaLangThrowable(PsiManager, com.intellij.psi.search.GlobalSearchScope)} (todo: to remove in IDEA 12)
+   */
+  public static PsiClassType getJavaLangTrowable(PsiManager manager, GlobalSearchScope resolveScope) {
+    return getJavaLangThrowable(manager, resolveScope);
+  }
+
+  /**
    * Returns the class type for the java.lang.Throwable class.
    *
    * @param manager      the PSI manager used to create the class type.
    * @param resolveScope the scope in which the class is searched.
    * @return the class instance.
    */
-  public static PsiClassType getJavaLangTrowable(PsiManager manager, GlobalSearchScope resolveScope) {
+  public static PsiClassType getJavaLangThrowable(PsiManager manager, GlobalSearchScope resolveScope) {
     return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, resolveScope);
   }
 

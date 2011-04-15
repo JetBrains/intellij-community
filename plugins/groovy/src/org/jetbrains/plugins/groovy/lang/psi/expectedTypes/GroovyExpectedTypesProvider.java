@@ -259,8 +259,8 @@ public class GroovyExpectedTypesProvider {
 
     @Override
     public void visitThrowStatement(GrThrowStatement throwStatement) {
-      final PsiClassType trowable = PsiType.getJavaLangTrowable(myExpression.getManager(), throwStatement.getResolveScope());
-      myResult = new TypeConstraint[]{SubtypeConstraint.create(trowable)};
+      final PsiClassType throwable = PsiType.getJavaLangThrowable(myExpression.getManager(), throwStatement.getResolveScope());
+      myResult = new TypeConstraint[]{SubtypeConstraint.create(throwable)};
     }
 
     @Override
