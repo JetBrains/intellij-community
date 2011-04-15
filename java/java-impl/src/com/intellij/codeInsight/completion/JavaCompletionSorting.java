@@ -73,7 +73,7 @@ public class JavaCompletionSorting {
     }
     afterProximity.add(new PreferShorter(expectedTypes, prefix));
 
-    CompletionSorter sorter = CompletionSorter.defaultSorter(parameters);
+    CompletionSorter sorter = CompletionSorter.defaultSorter(parameters, result.getPrefixMatcher());
     if (!smart && afterNew) {
       sorter = sorter.weighBefore("liftShorter", new PreferExpected(true, expectedTypes));
     }

@@ -122,7 +122,7 @@ public abstract class CompletionService {
     return lookupSet.toArray(new LookupElement[lookupSet.size()]);
   }
 
-  public abstract CompletionSorter defaultSorter(CompletionParameters parameters);
+  public abstract CompletionSorter defaultSorter(CompletionParameters parameters, PrefixMatcher matcher);
 
   public abstract CompletionSorter emptySorter();
 

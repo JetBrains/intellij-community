@@ -87,7 +87,7 @@ public class CompletionServiceImpl extends CompletionService{
     CompletionProgressIndicator process = myCurrentCompletion;
     LOG.assertTrue(process != null, "createResultSet may be invoked only during completion");
     CamelHumpMatcher matcher = new CamelHumpMatcher(prefix, true, parameters.relaxMatching());
-    CompletionSorterImpl sorter = defaultSorter(parameters);
+    CompletionSorterImpl sorter = defaultSorter(parameters, matcher);
     return new CompletionResultSetImpl(consumer, textBeforePosition, matcher, contributor,parameters, sorter, process, null);
   }
 
@@ -243,28 +243,28 @@ public class CompletionServiceImpl extends CompletionService{
     return phase;
   }
 
-  public CompletionSorterImpl defaultSorter(CompletionParameters parameters) {
+  public CompletionSorterImpl defaultSorter(CompletionParameters parameters, final PrefixMatcher matcher) {
     final CompletionLocation location = new CompletionLocation(parameters);
 
-    CompletionSorterImpl sorter = emptySorter().weigh(new LookupElementWeigher("prefixHumps") {
-      @NotNull
-      @Override
-      public Boolean weigh(@NotNull LookupElement element) {
-        final String prefix = element.getPrefixMatcher().getPrefix();
-        if (!prefix.isEmpty()) {
-          final String prefixHumps = StringUtil.capitalsOnly(prefix);
-          if (prefixHumps.length() > 0) {
+    CompletionSorterImpl sorter = emptySorter();
+    final String prefix = matcher.getPrefix();
+    if (!prefix.isEmpty()) {
+      final String prefixHumps = StringUtil.capitalsOnly(prefix);
+      if (prefixHumps.length() > 0) {
+        sorter = sorter.weigh(new LookupElementWeigher("prefixHumps") {
+          @NotNull
+          @Override
+          public Comparable weigh(@NotNull LookupElement element) {
             for (String itemString : element.getAllLookupStrings()) {
               if (StringUtil.capitalsOnly(itemString).startsWith(prefixHumps)) {
                 return false;
               }
             }
+            return true;
           }
-        }
-        return true;
+        });
       }
-    });
-
+    }
 
     for (final Weigher weigher : WeighingService.getWeighers(CompletionService.RELEVANCE_KEY)) {
       sorter = sorter.weigh(new LookupElementWeigher(weigher.toString()) {
