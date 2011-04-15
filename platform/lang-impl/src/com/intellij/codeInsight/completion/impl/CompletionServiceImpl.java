@@ -16,10 +16,7 @@
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.Classifier;
-import com.intellij.codeInsight.lookup.ClassifierFactory;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementWeigher;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -133,9 +130,21 @@ public class CompletionServiceImpl extends CompletionService{
     }
 
     public void addElement(@NotNull final LookupElement element) {
-      if (myCompletionService.prefixMatches(element, getPrefixMatcher())) {
-        myProcess.setItemSorter(element, mySorter);
+      if (element instanceof MatchedLookupElement) {
         getConsumer().consume(element);
+        return;
+      }
+
+      MatchedLookupElement matched = element.as(MatchedLookupElement.CLASS_CONDITION_KEY);
+      if (matched != null) {
+        getConsumer().consume(new MatchedLookupElement(element, matched.getMatcher(), matched.getSorter()));
+        return;
+      }
+
+      PrefixMatcher matcher = getPrefixMatcher();
+      if (matcher.prefixMatches(element)) {
+        element.setPrefixMatcher(matcher);
+        getConsumer().consume(new MatchedLookupElement(element, matcher, mySorter));
       }
     }
 

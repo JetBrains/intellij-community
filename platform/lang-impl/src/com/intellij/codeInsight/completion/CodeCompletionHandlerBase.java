@@ -19,6 +19,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
+import com.intellij.codeInsight.completion.impl.MatchedLookupElement;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -294,7 +295,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
                   Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
                     public void consume(final LookupElement lookupElement) {
-                      indicator.addItem(lookupElement);
+                      indicator.addItem((MatchedLookupElement)lookupElement);
                     }
                   };
                   data.set(CompletionService.getCompletionService().performCompletion(parameters, consumer));

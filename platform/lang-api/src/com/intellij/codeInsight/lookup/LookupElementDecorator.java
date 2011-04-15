@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.PrefixMatcher;
@@ -35,8 +34,8 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
     myDelegate.copyUserDataTo(this);
     final PrefixMatcher matcher = delegate.getPrefixMatcher();
     if (matcher != PrefixMatcher.FALSE_MATCHER) {
-      final boolean prefixStillMatches = CompletionService.getCompletionService().prefixMatches(this, matcher);
-      assert prefixStillMatches;
+      assert matcher.prefixMatches(this);
+      setPrefixMatcher(matcher);
     }
   }
 

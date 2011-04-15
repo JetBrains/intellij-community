@@ -19,6 +19,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
+import com.intellij.codeInsight.completion.impl.MatchedLookupElement;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
@@ -190,12 +191,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  public void setItemSorter(LookupElement element, CompletionSorterImpl sorter) {
-    myItemSorters.putIfAbsent(element, sorter);
-  }
-
   @NotNull
-  public CompletionSorterImpl getSorter(LookupElement element) {
+  CompletionSorterImpl getSorter(LookupElement element) {
     return myItemSorters.get(element);
   }
 
@@ -215,15 +212,16 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         if (isOutdated()) return; //tests?
-        final List<CompletionContributor> list = ApplicationManager.getApplication().runReadAction(new Computable<List<CompletionContributor>>() {
-          public List<CompletionContributor> compute() {
-            if (isOutdated()) {
-              return Collections.emptyList();
-            }
+        final List<CompletionContributor> list =
+          ApplicationManager.getApplication().runReadAction(new Computable<List<CompletionContributor>>() {
+            public List<CompletionContributor> compute() {
+              if (isOutdated()) {
+                return Collections.emptyList();
+              }
 
-            return CompletionContributor.forParameters(myParameters);
-          }
-        });
+              return CompletionContributor.forParameters(myParameters);
+            }
+          });
         for (final CompletionContributor contributor : list) {
           if (myLookup.getAdvertisementText() != null) return;
           if (!myLookup.isCalculating() && !myLookup.isVisible()) return;
@@ -243,20 +241,20 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           if (s != null) {
             myLookup.setAdvertisementText(s);
             ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                if (isAutopopupCompletion() && !myLookup.isShown()) {
-                  return;
-                }
-                if (!CompletionServiceImpl.isPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class)) {
-                  return;
-                }
-                if (CompletionServiceImpl.getCompletionPhase().indicator != CompletionProgressIndicator.this) {
-                  return;
-                }
+                public void run() {
+                  if (isAutopopupCompletion() && !myLookup.isShown()) {
+                    return;
+                  }
+                  if (!CompletionServiceImpl.isPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class)) {
+                    return;
+                  }
+                  if (CompletionServiceImpl.getCompletionPhase().indicator != CompletionProgressIndicator.this) {
+                    return;
+                  }
 
-                updateLookup();
-              }
-            }, myQueue.getModalityState());
+                  updateLookup();
+                }
+              }, myQueue.getModalityState());
             return;
           }
         }
@@ -293,7 +291,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
           if (phase instanceof CompletionPhase.BgCalculation) {
             ((CompletionPhase.BgCalculation)phase).modifiersChanged = true;
-          } else if (phase instanceof CompletionPhase.InsertedSingleItem) {
+          }
+          else if (phase instanceof CompletionPhase.InsertedSingleItem) {
             CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
           }
         }
@@ -360,8 +359,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myOffsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
   }
 
-
-  public synchronized void addItem(final LookupElement item) {
+  public synchronized void addItem(final MatchedLookupElement item) {
     if (!isRunning()) return;
     ProgressManager.checkCanceled();
 
@@ -372,7 +370,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     LOG.assertTrue(myParameters.getPosition().isValid());
 
-    myLookup.addItem(item);
+    LookupElement delegate = item.getDelegate();
+    myItemSorters.put(delegate, item.getSorter());
+    myLookup.addItem(delegate);
     myCount++;
     if (unitTestMode) return;
 

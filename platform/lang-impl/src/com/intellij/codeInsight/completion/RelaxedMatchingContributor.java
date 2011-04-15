@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.completion.impl.MatchedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.patterns.PatternCondition;
@@ -33,27 +34,27 @@ public class RelaxedMatchingContributor extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet result) {
-    final Set<LookupElement> elements = new HashSet<LookupElement>();
+    final Set<MatchedLookupElement> elements = new HashSet<MatchedLookupElement>();
     result.runRemainingContributors(parameters, new Consumer<LookupElement>() {
       @Override
       public void consume(LookupElement element) {
-        elements.add(element);
+        elements.add((MatchedLookupElement)element);
         result.addElement(element);
       }
     });
 
     if (!elements.isEmpty() && parameters.getInvocationCount() == 0) {
       Set<String> prefixes = new HashSet<String>();
-      for (LookupElement element : elements) {
-        prefixes.add(element.getPrefixMatcher().getPrefix());
+      for (MatchedLookupElement element : elements) {
+        prefixes.add(element.getMatcher().getPrefix());
       }
       for (String prefix : prefixes) {
         result.withPrefixMatcher(prefix)
           .restartCompletionOnPrefixChange(StandardPatterns.string().with(new PatternCondition<String>("noneMatch") {
             @Override
             public boolean accepts(@NotNull String s, ProcessingContext context) {
-              for (LookupElement element : elements) {
-                if (element.getPrefixMatcher().cloneWithPrefix(s).prefixMatches(element)) {
+              for (MatchedLookupElement element : elements) {
+                if (element.getMatcher().cloneWithPrefix(s).prefixMatches(element)) {
                   return false;
                 }
               }
@@ -64,7 +65,7 @@ public class RelaxedMatchingContributor extends CompletionContributor {
     }
 
     CompletionParameters relaxed;
-    if (parameters.getInvocationCount() == 0 && (elements.isEmpty() || elements.size() == 1 && elements.iterator().next() instanceof LiveTemplateLookupElement)) {
+    if (parameters.getInvocationCount() == 0 && (elements.isEmpty() || elements.size() == 1 && elements.iterator().next().as(LiveTemplateLookupElement.class) != null)) {
       relaxed = parameters.withRelaxedMatching();
     }
     else if (parameters.getInvocationCount() >= 2) {

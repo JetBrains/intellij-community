@@ -103,30 +103,6 @@ public abstract class CompletionService {
   public abstract CompletionProcess getCurrentCompletion();
 
   /**
-   * Checks if a lookup element matches a given prefix matcher. If this element has already been matched successfully during this completion,
-   * returns true. If it was matched successfully during another completion, forget about this and re-match with (possibly) new prefix.
-   * @param element
-   * @param matcher
-   * @return should a lookup element be presented to user based on entered prefix?
-   */
-  public boolean prefixMatches(@NotNull LookupElement element, @NotNull PrefixMatcher matcher) {
-    final SoftReference<CompletionProcess> data = element.getUserData(INVOLVED_IN_COMPLETION_KEY);
-    final CompletionProcess currentCompletion = getCurrentCompletion();
-    if (currentCompletion != null) {
-      element.putUserData(INVOLVED_IN_COMPLETION_KEY, new SoftReference<CompletionProcess>(currentCompletion));
-      if (data != null) {
-        final CompletionProcess oldCompletion = data.get();
-        if (oldCompletion != null && oldCompletion != currentCompletion) {
-          return element.setPrefixMatcher(matcher);
-        }
-      }
-    } else {
-      element.putUserData(INVOLVED_IN_COMPLETION_KEY, null);
-    }
-    return element.isPrefixMatched() || element.setPrefixMatcher(matcher);
-  }
-
-  /**
    * The main method that is invoked to collect all the completion variants
    * @param parameters Parameters specifying current completion environment
    * @param consumer This consumer will directly add lookup elements to the lookup
