@@ -74,4 +74,12 @@ public class MembersChangeTest extends CompilerTestCase {
   public void testDeleteInner() throws Exception  {doTest();}
 
   public void testChangeStaticMethodSignature() throws Exception  {doTest();}
+  
+  public void testAddHidingMethod() throws Exception  {doTest();}
+  
+  public void testAddHidingField() throws Exception  {doTest();}
+
+  public void testRemoveHidingMethod() throws Exception  {doTest();}
+  
+  public void testRemoveHidingField() throws Exception  {doTest();}
 }
