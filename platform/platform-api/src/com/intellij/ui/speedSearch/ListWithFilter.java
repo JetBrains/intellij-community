@@ -19,6 +19,8 @@
  */
 package com.intellij.ui.speedSearch;
 
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightColors;
@@ -100,6 +102,14 @@ public class ListWithFilter<T> extends JPanel {
         searchFieldShown = false;
         revalidate();
       }
+    }
+
+    private void revalidate() {
+      JBPopup popup = PopupUtil.getPopupContainerFor(mySpeedSearchPatternField);
+      if (popup != null) {
+        popup.pack(false, true);
+      }
+      ListWithFilter.this.revalidate();
     }
   }
 

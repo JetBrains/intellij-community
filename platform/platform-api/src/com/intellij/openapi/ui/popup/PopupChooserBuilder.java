@@ -219,7 +219,6 @@ public class PopupChooserBuilder {
     }
 
     scrollPane.getViewport().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    ((JComponent)scrollPane.getViewport().getView()).setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
     if (myChooserComponent instanceof ListWithFilter) {
       contentPane.add(myChooserComponent, BorderLayout.CENTER);

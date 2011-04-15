@@ -182,4 +182,6 @@ public interface JBPopup extends Disposable, LightweightWindow {
   void moveToFitScreen();
 
   Point getLocationOnScreen();
+
+  void pack(boolean with, boolean height);
 }

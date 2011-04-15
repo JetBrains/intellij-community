@@ -692,6 +692,7 @@ public class AbstractPopup implements JBPopup {
     }
 
     myPopup.setRequestFocus(myRequestFocus);
+    pack(true, true);
     myPopup.show();
 
     final Window window = SwingUtilities.getWindowAncestor(myContent);
@@ -939,6 +940,28 @@ public class AbstractPopup implements JBPopup {
     wnd.setLocation(p.getScreenPoint());
   }
 
+  @Override
+  public void pack(boolean width, boolean height) {
+    if (!isVisible() || (!width && !height)) return;
+
+    Dimension size = getSize();
+    Dimension prefSize = myContent.computePreferredSize();
+
+
+    if (width) {
+      size.width = prefSize.width;
+    }
+
+    if (height) {
+      size.height = prefSize.height;
+    }
+
+    size = computeWindowSize(size);
+
+    final Window window = SwingUtilities.getWindowAncestor(myContent);
+    window.setSize(size);
+  }
+
   public void pack() {
     final Window window = SwingUtilities.getWindowAncestor(myContent);
 
@@ -1046,6 +1069,18 @@ public class AbstractPopup implements JBPopup {
                     this);
       }
     }
+
+    public Dimension computePreferredSize() {
+      if (isPreferredSizeSet()) {
+        Dimension setSize;
+        setSize = getPreferredSize();
+        setPreferredSize(null);
+        Dimension result = getPreferredSize();
+        setPreferredSize(setSize);
+        return result;
+      }
+      return getPreferredSize();
+    }
   }
 
   public boolean isCancelOnClickOutside() {
@@ -1122,17 +1157,25 @@ public class AbstractPopup implements JBPopup {
   }
 
   private void setSize(Dimension size, boolean adjustByContent) {
+    Dimension toSet = size;
     if (myPopup == null) {
-      myForcedSize = size;
+      myForcedSize = toSet;
     }
     else {
       if (adjustByContent) {
-        if (myAdCmp != null) {
-          size.height += myAdCmp.getPreferredSize().height;
-        }
+        toSet = computeWindowSize(toSet);
       }
-      updateMaskAndAlpha(setSize(myContent, size));
+      updateMaskAndAlpha(setSize(myContent, toSet));
     }
+  }
+
+  private Dimension computeWindowSize(Dimension size) {
+    Dimension result = new Dimension(size);
+    if (myAdCmp != null && myAdCmp.isVisible()) {
+      result.height += myAdCmp.getPreferredSize().height;
+    }
+
+    return result;
   }
 
   @Override
