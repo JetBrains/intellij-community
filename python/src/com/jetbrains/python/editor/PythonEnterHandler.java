@@ -1,5 +1,6 @@
 package com.jetbrains.python.editor;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.AutoHardWrapHandler;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.ide.DataManager;
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +60,20 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
     if (element == null) {
       return Result.Continue;
     }
+    CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
+    if (codeInsightSettings.JAVADOC_STUB_ON_ENTER && inDocComment(element)) {
+      PythonDocumentationProvider provider = new PythonDocumentationProvider();
+      PyFunction fun = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+      if (fun != null) {
+        PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(fun.getStatementList(), PsiWhiteSpace.class);
+        String docStub = provider.generateDocumentationContentStub(fun, element.getParent().getText().substring(0,3), whitespace.getText());
+        if (docStub != null && docStub.length() != 0) {
+          editor.getDocument().insertString(editor.getCaretModel().getOffset(), docStub);
+          return Result.Continue;
+        }
+      }
+    }
+
     if (offset > 0) {
       final PsiElement beforeCaret = file.findElementAt(offset-1);
       if (beforeCaret instanceof PsiWhiteSpace && beforeCaret.getText().indexOf('\\') > 0) {
@@ -115,6 +131,27 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
       caretOffset.set(offset+1);
     }
     return Result.Continue;
+  }
+
+  private boolean inDocComment(PsiElement element) {
+    PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class);
+    if (string != null) {
+      PyFunction func = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+      if (func != null) {
+        String text = string.getText();
+        if (text.startsWith("\"\"\"") || text.startsWith("'''")) {
+          if (!text.endsWith("\"\"\"") && !text.endsWith("'''"))
+            return true;
+          PsiErrorElement error = PsiTreeUtil.getNextSiblingOfType(string, PsiErrorElement.class);
+          if (error != null)
+            return true;
+          error = PsiTreeUtil.getNextSiblingOfType(string.getParent(), PsiErrorElement.class);
+          if (error != null)
+            return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Nullable

@@ -53,11 +53,15 @@ import java.util.regex.Pattern;
 
 /**
  * Provides quick docs for classes, methods, and functions.
+ * Generates documentation stub
  */
 public class PythonDocumentationProvider extends AbstractDocumentationProvider implements ExternalDocumentationProvider {
 
   @NonNls private static final String LINK_TYPE_CLASS = "#class#";
   @NonNls private static final String LINK_TYPE_PARENT = "#parent#";
+
+  @NonNls private static final String RST_PREFIX = ":";
+  @NonNls private static final String EPYDOC_PREFIX = "@";
 
   // provides ctrl+hover info
   public String getQuickNavigateInfo(final PsiElement element, PsiElement originalElement) {
@@ -799,4 +803,31 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     }
     return ret;
   }
+
+  public String generateDocumentationContentStub(PyFunction element, String substring, String offset) {
+    Project project = element.getProject();
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
+    String result = "";
+    if (documentationSettings.isEpydocFormat())
+      result += generateContent(element, offset, EPYDOC_PREFIX);
+    else if (documentationSettings.isReSTFormat())
+      result += generateContent(element, offset, RST_PREFIX);
+    result += substring;
+    return result;
+  }
+
+  private String generateContent(PyFunction element, String offset, String prefix) {
+    PyParameter[] list = element.getParameterList().getParameters();
+    StringBuilder builder = new StringBuilder();
+    for(PyParameter p : list) {
+      builder.append(prefix);
+      builder.append("param ");
+      builder.append(p.getName());
+      builder.append(": ");
+      builder.append(offset);
+    }
+    builder.append(prefix).append("return:").append(offset);
+    return builder.toString();
+  }
+
 }
