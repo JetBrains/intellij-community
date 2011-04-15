@@ -66,7 +66,8 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
       PyFunction fun = PsiTreeUtil.getParentOfType(element, PyFunction.class);
       if (fun != null) {
         PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(fun.getStatementList(), PsiWhiteSpace.class);
-        String docStub = provider.generateDocumentationContentStub(fun, element.getParent().getText().substring(0,3), whitespace.getText());
+        String docStub = provider.generateDocumentationContentStub(fun, (whitespace != null ? whitespace.getText() : "\n"));
+        docStub += element.getParent().getText().substring(0,3);
         if (docStub != null && docStub.length() != 0) {
           editor.getDocument().insertString(editor.getCaretModel().getOffset(), docStub);
           return Result.Continue;

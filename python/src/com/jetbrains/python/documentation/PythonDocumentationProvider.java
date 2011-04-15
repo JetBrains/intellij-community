@@ -804,7 +804,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     return ret;
   }
 
-  public String generateDocumentationContentStub(PyFunction element, String substring, String offset) {
+  public String generateDocumentationContentStub(PyFunction element, String offset) {
     Project project = element.getProject();
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
     String result = "";
@@ -812,7 +812,6 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       result += generateContent(element, offset, EPYDOC_PREFIX);
     else if (documentationSettings.isReSTFormat())
       result += generateContent(element, offset, RST_PREFIX);
-    result += substring;
     return result;
   }
 
