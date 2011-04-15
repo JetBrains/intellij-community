@@ -241,12 +241,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     final CompletionParameters parameters = createCompletionParameters(invocationCount, initContext);
 
-    final LookupImpl lookup = obtainLookup(editor);
-
     final Semaphore freezeSemaphore = new Semaphore();
     freezeSemaphore.down();
     final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, parameters, this, freezeSemaphore,
-                                                                                  initContext.getOffsetMap(), lookup, hasModifiers);
+                                                                                  initContext.getOffsetMap(), hasModifiers);
 
     boolean sync =
       (invokedExplicitly || ApplicationManager.getApplication().isUnitTestMode()) && !CompletionAutoPopupHandler.ourTestingAutopopup;
@@ -350,12 +348,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       LOG.error("wrong text: copy='" + fileCopy.getText() + "'; element='" + insertedElement.getText() + "'; range=" + range);
     }
 
-    return new CompletionParameters(insertedElement, fileCopy.getOriginalFile(), myCompletionType, offset, invocationCount, false);
+    return new CompletionParameters(insertedElement, fileCopy.getOriginalFile(), myCompletionType, offset, invocationCount, obtainLookup(initContext.getEditor()), false);
   }
 
-  private AutoCompletionDecision shouldAutoComplete(
-    final CompletionProgressIndicator indicator,
-    final LookupElement[] items) {
+  private AutoCompletionDecision shouldAutoComplete(final CompletionProgressIndicator indicator, final LookupElement[] items) {
     if (!invokedExplicitly) {
       return AutoCompletionDecision.SHOW_LOOKUP;
     }
@@ -376,8 +372,9 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       return AutoCompletionDecision.insertItem(item);
     }
 
+    AutoCompletionContext context = new AutoCompletionContext(parameters, items, indicator.getOffsetMap(), indicator.getLookup());
     for (final CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
-      final AutoCompletionDecision decision = contributor.handleAutoCompletionPossibility(new AutoCompletionContext(parameters, items, indicator.getOffsetMap()));
+      final AutoCompletionDecision decision = contributor.handleAutoCompletionPossibility(context);
       if (decision != null) {
         return decision;
       }

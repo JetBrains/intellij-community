@@ -109,13 +109,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final ConcurrentHashMap<LookupElement, CompletionSorterImpl> myItemSorters = new ConcurrentHashMap<LookupElement, CompletionSorterImpl>();
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
-                                     final OffsetMap offsetMap, LookupImpl lookup, boolean hasModifiers) {
+                                     final OffsetMap offsetMap, boolean hasModifiers) {
     myEditor = editor;
     myParameters = parameters;
     myHandler = handler;
     myFreezeSemaphore = freezeSemaphore;
     myOffsetMap = offsetMap;
-    myLookup = lookup;
+    myLookup = (LookupImpl)parameters.getLookup();
 
     myLookup.setArranger(new CompletionLookupArranger(parameters, this));
 
@@ -131,7 +131,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       return;
     }
 
-    if (!lookup.isShown()) {
+    if (!myLookup.isShown()) {
       scheduleAdvertising();
     }
 

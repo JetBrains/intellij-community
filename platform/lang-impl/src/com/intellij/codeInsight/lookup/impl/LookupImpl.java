@@ -77,7 +77,7 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
-public class LookupImpl extends LightweightHint implements Lookup, Disposable {
+public class LookupImpl extends LightweightHint implements LookupEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
   private static final int MAX_PREFERRED_COUNT = 5;
 
