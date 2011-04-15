@@ -119,7 +119,7 @@ public class GrClosureSignatureUtil {
     };
   }
 
-  public static GrClosureSignature createSignature(PsiParameter[] parameters, PsiType returnType) {
+  public static GrClosureSignature createSignature(PsiParameter[] parameters, @Nullable PsiType returnType) {
     return new GrClosureSignatureImpl(parameters, returnType);
   }
 

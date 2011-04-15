@@ -429,7 +429,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      XDebuggerUtil.getInstance().removeBreakpoint(getProject(), XLineBreakpointImpl.this);
+      XDebuggerUtil.getInstance().removeBreakpoint(XLineBreakpointImpl.this.getProject(), XLineBreakpointImpl.this);
     }
   }
 

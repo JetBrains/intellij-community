@@ -31,4 +31,6 @@ public interface GrStatementOwner extends GroovyPsiElement {
 
   void removeElements(PsiElement[] elements) throws IncorrectOperationException;
 
+  @NotNull
+  GrStatement[] getStatements();
 }

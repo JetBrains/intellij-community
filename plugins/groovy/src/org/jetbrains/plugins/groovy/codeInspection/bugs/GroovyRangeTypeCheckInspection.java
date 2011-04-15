@@ -130,6 +130,7 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
     for (GroovyResolveResult method : methods) {
       final PsiElement el = method.getElement();
       if (el instanceof PsiMethod && !((PsiMethod)el).hasModifierProperty(GrModifier.ABSTRACT)) result++;
+      else if (el instanceof PsiField) result++;
     }
     return result;
   }

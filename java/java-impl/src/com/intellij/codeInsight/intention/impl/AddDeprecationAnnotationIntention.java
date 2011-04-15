@@ -22,32 +22,15 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class AddDeprecationAnnotationFix extends AddAnnotationFix {
-  public AddDeprecationAnnotationFix() {
-    super("java.lang.annotation.Deprecated");
-  }
-
-
+public class AddDeprecationAnnotationIntention extends AddAnnotationIntention {
+  @NotNull
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
-    if (!super.isAvailable(project, editor, element)) {
-      return false;
-    }
-    PsiModifierListOwner owner = getContainer(element);
-    if (owner == null) {
-      return false;
-    }
-    if (owner instanceof PsiMethod) {
-      PsiType returnType = ((PsiMethod)owner).getReturnType();
-
-      return returnType != null && !(returnType instanceof PsiPrimitiveType);
-    }
-    return true;
+  public Pair<String, String[]> getAnnotations(@NotNull Project project) {
+    return new Pair<String, String[]>("java.lang.annotation.Deprecated", ArrayUtil.EMPTY_STRING_ARRAY);
   }
 }

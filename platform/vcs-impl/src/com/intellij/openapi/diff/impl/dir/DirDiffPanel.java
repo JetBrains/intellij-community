@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.diff.DiffElement;
+import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
@@ -29,6 +30,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -56,7 +58,7 @@ public class DirDiffPanel {
   private JComponent myViewComponent;
   private DiffElement myCurrentElement;
 
-  public DirDiffPanel(DirDiffTableModel model, DirDiffDialog dirDiffDialog) {
+  public DirDiffPanel(DirDiffTableModel model, DirDiffDialog dirDiffDialog, DirDiffSettings settings) {
     myModel = model;
     myDialog = dirDiffDialog;
     mySourceDirField.setText(model.getSourceDir().getPath());
@@ -128,11 +130,12 @@ public class DirDiffPanel {
         }
         if (0 <= row && row < rows && !myModel.getElementAt(row).isSeparator()) {
           e.consume();
-          myTable.changeSelection(row, 3, false, false);
+          myTable.changeSelection(row, (myModel.getColumnCount() - 1) / 2, false, false);
         }
       }
     });
-    final TableColumn operationColumn = myTable.getColumnModel().getColumn(3);
+    final TableColumnModel columnModel = myTable.getColumnModel();
+    final TableColumn operationColumn = columnModel.getColumn((columnModel.getColumnCount() - 1) / 2);
     operationColumn.setMaxWidth(25);
     operationColumn.setMinWidth(25);
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DirDiff", new DirDiffToolbarActions(myModel), true);

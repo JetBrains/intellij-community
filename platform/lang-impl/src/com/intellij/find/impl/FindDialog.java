@@ -97,7 +97,7 @@ class FindDialog extends DialogWrapper {
   private final FindModel myModel;
   private final Runnable myOkHandler;
   private FixedSizeButton mySelectDirectoryButton;
-  private StateRestoringCheckBox useFileFilter;
+  private StateRestoringCheckBox myUseFileFilter;
   private ComboBox myFileFilter;
   private JCheckBox myCbToSkipResultsWhenOneUsage;
   private final Project myProject;
@@ -405,7 +405,7 @@ class FindDialog extends DialogWrapper {
 
     myFileFilter = new ComboBox(100);
     initCombobox(myFileFilter);
-    filterPanel.add(useFileFilter = createCheckbox(FindBundle.message("find.filter.file.mask.checkbox")),BorderLayout.WEST);
+    filterPanel.add(myUseFileFilter = createCheckbox(FindBundle.message("find.filter.file.mask.checkbox")),BorderLayout.WEST);
     filterPanel.add(myFileFilter,BorderLayout.CENTER);
     myFileFilter.setEditable(true);
     String[] fileMasks = FindSettings.getInstance().getRecentFileMasks();
@@ -414,10 +414,10 @@ class FindDialog extends DialogWrapper {
     }
     myFileFilter.setEnabled(false);
 
-    useFileFilter.addActionListener(
+    myUseFileFilter.addActionListener(
       new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          if (!useFileFilter.isSelected()) {
+          if (!myUseFileFilter.isSelected()) {
             myFileFilter.setEnabled(false);
           } else {
             myFileFilter.setEnabled(true);
@@ -533,7 +533,7 @@ class FindDialog extends DialogWrapper {
       }
     }
 
-    final String mask = myFileFilter == null ? null : (String)myFileFilter.getSelectedItem();
+    final String mask = (myFileFilter == null || !myUseFileFilter.isSelected()) ? null : (String)myFileFilter.getSelectedItem();
 
     if (mask != null) {
       if (mask.length() == 0) {
@@ -1031,7 +1031,7 @@ class FindDialog extends DialogWrapper {
     model.setFindAll(findAll);
 
     String mask = null;
-    if (useFileFilter!=null && useFileFilter.isSelected()) {
+    if (myUseFileFilter !=null && myUseFileFilter.isSelected()) {
       mask = (String)myFileFilter.getSelectedItem();
     }
     model.setFileFilter(mask);
@@ -1109,7 +1109,7 @@ class FindDialog extends DialogWrapper {
       if (myModel.getFileFilter()!=null && myModel.getFileFilter().length() > 0) {
         myFileFilter.setSelectedItem(myModel.getFileFilter());
         myFileFilter.setEnabled(true);
-        useFileFilter.setSelected(true);
+        myUseFileFilter.setSelected(true);
       }
     }
     else {

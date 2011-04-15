@@ -47,7 +47,7 @@ class AddAssociationAction extends AnAction {
     }
 
     protected void addAssociation(AnActionEvent e, PsiFile psiFile) {
-        final Project project = AssociationsGroup.getProject(e);
+        final Project project = AssociationsGroup.getEventProject(e);
         if (project == null) return;
 
         final VirtualFile virtualFile = psiFile.getVirtualFile();

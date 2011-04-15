@@ -62,7 +62,8 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
 
     List<PsiClass> classes = null;
     for (PsiFile file : dir.getFiles()) {
-      if (file instanceof PsiClassOwner) {
+      FileViewProvider viewProvider = file.getViewProvider();
+      if (file instanceof PsiClassOwner && file == viewProvider.getPsi(viewProvider.getBaseLanguage())) {
         PsiClass[] psiClasses = ((PsiClassOwner)file).getClasses();
         if (psiClasses.length == 0) continue;
         if (classes == null) classes = new ArrayList<PsiClass>();

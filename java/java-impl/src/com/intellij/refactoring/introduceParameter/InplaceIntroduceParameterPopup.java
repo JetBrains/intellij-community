@@ -20,7 +20,9 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
@@ -202,7 +204,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
           renamer.performInplaceRename(false, nameSuggestions);
         }
       }
-    }, IntroduceParameterHandler.REFACTORING_NAME, null);
+    }, IntroduceParameterHandler.REFACTORING_NAME, IntroduceParameterHandler.REFACTORING_NAME);
   }
 
   @Override
@@ -234,7 +236,8 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     public ParameterInplaceIntroducer(PsiParameter parameter) {
       super(myProject, new TypeExpression(myProject, myTypeSelectorManager.getTypesForAll()),
             myEditor, parameter, myMustBeFinal,
-            myTypeSelectorManager.getTypesForAll().length > 1, myExprMarker, InplaceIntroduceParameterPopup.this.getOccurrenceMarkers());
+            myTypeSelectorManager.getTypesForAll().length > 1, myExprMarker, InplaceIntroduceParameterPopup.this.getOccurrenceMarkers(),
+            IntroduceParameterHandler.REFACTORING_NAME);
       myDefaultParameterTypePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(parameter.getType());
     }
 

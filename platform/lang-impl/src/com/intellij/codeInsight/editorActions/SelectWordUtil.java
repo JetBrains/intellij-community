@@ -34,6 +34,9 @@ public class SelectWordUtil {
 
   private static boolean ourExtensionsLoaded = false;
 
+  private SelectWordUtil() {
+  }
+
   public static void registerSelectioner(ExtendWordSelectionHandler selectioner) {
     SELECTIONERS = ArrayUtil.append(SELECTIONERS, selectioner);
   }
@@ -60,7 +63,11 @@ public class SelectWordUtil {
     }
   }
 
+  @Nullable
   private static TextRange getCamelSelectionRange(CharSequence editorText, int cursorOffset) {
+    if (cursorOffset < 0 || cursorOffset >= editorText.length()) {
+      return null;
+    }
     if (cursorOffset > 0 && !Character.isJavaIdentifierPart(editorText.charAt(cursorOffset)) &&
         Character.isJavaIdentifierPart(editorText.charAt(cursorOffset - 1))) {
       cursorOffset--;

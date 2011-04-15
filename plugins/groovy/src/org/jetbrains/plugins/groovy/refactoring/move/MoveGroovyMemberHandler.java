@@ -20,17 +20,16 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.refactoring.move.moveMembers.MoveMemberHandler;
+import com.intellij.refactoring.move.moveMembers.MoveJavaMemberHandler;
 import com.intellij.refactoring.move.moveMembers.MoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 import com.intellij.refactoring.util.EnumConstantsUtil;
-import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -48,55 +47,19 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author Maxim.Medvedev
  */
-public class MoveGroovyMemberHandler implements MoveMemberHandler {
-  public MoveMembersProcessor.MoveMembersUsageInfo getUsage(PsiMember member,
-                                                            PsiReference psiReference,
-                                                            Set<PsiMember> membersToMove,
-                                                            PsiClass targetClass) {
-    PsiElement ref = psiReference.getElement();
-    if (ref instanceof GrReferenceExpression) {
-      GrReferenceExpression refExpr = (GrReferenceExpression)ref;
-      GrExpression qualifier = refExpr.getQualifierExpression();
-      if (RefactoringHierarchyUtil.willBeInTargetClass(refExpr, membersToMove, targetClass, true)) {
-        // both member and the reference to it will be in target class
-        if (!isInMovedElement(refExpr, membersToMove)) {
-          if (qualifier != null) {
-            return new MoveMembersProcessor.MoveMembersUsageInfo(member, refExpr, null, qualifier, psiReference);  // remove qualifier
-          }
-        }
-        else {
-          if (qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).isReferenceTo(member.getContainingClass())) {
-            return new MoveMembersProcessor.MoveMembersUsageInfo(member, refExpr, null, qualifier, psiReference);  // change qualifier
-          }
-        }
-      }
-      else {
-        // member in target class, the reference will be outside target class
-        if (qualifier == null) {
-          return new MoveMembersProcessor.MoveMembersUsageInfo(member, refExpr, targetClass, refExpr, psiReference); // add qualifier
-        }
-        else {
-          return new MoveMembersProcessor.MoveMembersUsageInfo(member, refExpr, targetClass, qualifier, psiReference); // change qualifier
-        }
-      }
-    }
-    return null;
-  }
-
-  private static boolean isInMovedElement(PsiElement element, Set<PsiMember> membersToMove) {
-    for (PsiMember member : membersToMove) {
-      if (PsiTreeUtil.isAncestor(member, element, false)) return true;
-    }
-    return false;
-  }
-
-  public boolean changeExternalUsage(MoveMembersOptions options, MoveMembersProcessor.MoveMembersUsageInfo usage) {
-    if (!usage.getElement().isValid()) return true;
+public class MoveGroovyMemberHandler extends MoveJavaMemberHandler {
+  @Override
+  public boolean changeExternalUsage(@NotNull MoveMembersOptions options, @NotNull MoveMembersProcessor.MoveMembersUsageInfo usage) {
+    final PsiElement element = usage.getElement();
+    if (element == null || !element.isValid()) return true;
 
     if (usage.reference instanceof GrReferenceExpression) {
       GrReferenceExpression refExpr = (GrReferenceExpression)usage.reference;
@@ -119,14 +82,14 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
     return false;
   }
 
-  public PsiMember doMove(MoveMembersOptions options, PsiMember member, PsiElement anchor, PsiClass targetClass) {
-
-    PsiMember memberCopy;
-
+  @Override
+  @NotNull
+  public PsiMember doMove(@NotNull MoveMembersOptions options, @NotNull PsiMember member, PsiElement anchor, @NotNull PsiClass targetClass) {
     GroovyChangeContextUtil.encodeContextInfo(member);
 
+    PsiMember memberCopy;
     if (options.makeEnumConstant() &&
-        member instanceof PsiVariable &&
+        member instanceof GrVariable &&
         EnumConstantsUtil.isSuitableForEnumConstant(((PsiVariable)member).getType(), targetClass)) {
       memberCopy = createEnumConstant(member.getName(), ((GrVariable)member).getInitializerGroovy(), member.getProject());
       member.delete();
@@ -186,7 +149,8 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
     return memberCopy;
   }
 
-  public void decodeContextInfo(PsiElement scope) {
+  @Override
+  public void decodeContextInfo(@NotNull PsiElement scope) {
     GroovyChangeContextUtil.decodeContextInfo(scope, null, null);
   }
 
@@ -222,7 +186,7 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
     return false;
   }
 
-  public static boolean hasOnDemandStaticImport(final PsiElement element, final PsiClass aClass) {
+  private static boolean hasOnDemandStaticImport(final PsiElement element, final PsiClass aClass) {
     if (element.getContainingFile() instanceof GroovyFile) {
       final GrImportStatement[] importStatements = ((GroovyFile)element.getContainingFile()).getImportStatements();
       for (GrImportStatement stmt : importStatements) {
@@ -235,8 +199,9 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
     return false;
   }
 
+  @Override
   @Nullable
-  public PsiElement getAnchor(final PsiMember member, final PsiClass targetClass) {
+  public PsiElement getAnchor(@NotNull final PsiMember member, @NotNull final PsiClass targetClass) {
     if (member instanceof GrField && member.hasModifierProperty(PsiModifier.STATIC)) {
       final List<PsiField> referencedFields = new ArrayList<PsiField>();
       final GrExpression psiExpression = ((GrField)member).getInitializerGroovy();
@@ -274,13 +239,13 @@ public class MoveGroovyMemberHandler implements MoveMemberHandler {
     return elementFactory.createEnumConstantFromText(enumConstantText);
   }
 
-  private static PsiElement addEnumConstant(PsiClass targetClass, GrEnumConstant constant, PsiElement anchor) {
+  private static PsiElement addEnumConstant(PsiClass targetClass, GrEnumConstant constant, @Nullable PsiElement anchor) {
     if (targetClass instanceof GrEnumTypeDefinition) {
       final GrEnumTypeDefinition enumeration = (GrEnumTypeDefinition)targetClass;
       final GrEnumConstantList constantList = enumeration.getEnumConstantList();
       if (constantList != null) {
         ASTNode node = constantList.getNode();
-        node.addLeaf(GroovyElementTypes.mCOMMA, ",", node.getFirstChildNode());
+        node.addLeaf(GroovyTokenTypes.mCOMMA, ",", node.getFirstChildNode());
         return constantList.addBefore(constant, constantList.getFirstChild());
       }
       else {

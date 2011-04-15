@@ -1,0 +1,96 @@
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Created by IntelliJ IDEA.
+ * User: cdr
+ * Date: Jul 20, 2007
+ * Time: 2:57:38 PM
+ */
+package com.intellij.codeInsight.intention.impl;
+
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+
+public abstract class AddAnnotationIntention extends BaseIntentionAction {
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return CodeInsightBundle.message("intention.add.annotation.family");
+  }
+
+  @NotNull
+  public abstract Pair<String, String[]> getAnnotations(@NotNull Project project);
+
+  // include not in project files
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    CaretModel caretModel = editor.getCaretModel();
+    int position = caretModel.getOffset();
+    PsiElement element = file.findElementAt(position);
+    return element != null && isAvailable(project, element);
+  }
+
+  public boolean isAvailable(@NotNull final Project project, @NotNull final PsiElement element) {
+    if (!element.isValid()) return false;
+    if (!PsiUtil.isLanguageLevel5OrHigher(element)) return false;
+    final PsiModifierListOwner owner;
+    if (!element.getManager().isInProject(element) || CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS) {
+      owner = AddAnnotationFix.getContainer(element);
+    }
+    else {
+      return false;
+    }
+    if (owner == null) return false;
+    Pair<String, String[]> annotations = getAnnotations(project);
+    String toAdd = annotations.first;
+    String[] toRemove = annotations.second;
+    if (toRemove.length > 0 && AnnotationUtil.isAnnotated(owner, toRemove[0], false)) return false;
+    setText(AddAnnotationFix.calcText(owner, toAdd));
+    if (AnnotationUtil.isAnnotated(owner, toAdd, false)) return false;
+
+    if (owner instanceof PsiMethod) {
+      PsiType returnType = ((PsiMethod)owner).getReturnType();
+
+      return returnType != null && !(returnType instanceof PsiPrimitiveType);
+    }
+    return true;
+  }
+
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    CaretModel caretModel = editor.getCaretModel();
+    int position = caretModel.getOffset();
+    PsiElement element = file.findElementAt(position);
+
+    PsiModifierListOwner owner = AddAnnotationFix.getContainer(element);
+    if (owner == null || !owner.isValid()) return;
+    Pair<String, String[]> annotations = getAnnotations(project);
+    String toAdd = annotations.first;
+    String[] toRemove = annotations.second;
+    AddAnnotationFix fix = new AddAnnotationFix(toAdd, owner, toRemove);
+    fix.invoke(project, editor, file);
+  }
+}

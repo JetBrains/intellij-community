@@ -69,6 +69,6 @@ class ToggleAssociationAction extends ToggleAction {
     public void setSelected(AnActionEvent e, boolean state) {
         assert !state;
         myFileAssociationsManager.removeAssociation(myPsiFile, myAssoc);
-        DaemonCodeAnalyzer.getInstance(AssociationsGroup.getProject(e)).restart();
+        DaemonCodeAnalyzer.getInstance(AssociationsGroup.getEventProject(e)).restart();
     }
 }

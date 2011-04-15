@@ -20,7 +20,8 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -41,14 +42,14 @@ import java.util.List;
 public class GenerationUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil");
   public static final String[] JAVA_MODIFIERS = new String[]{
-      PsiModifier.PUBLIC,
-      PsiModifier.PROTECTED,
-      PsiModifier.PRIVATE,
-      PsiModifier.PACKAGE_LOCAL,
-      PsiModifier.STATIC,
-      PsiModifier.ABSTRACT,
-      PsiModifier.FINAL,
-      PsiModifier.NATIVE,
+    PsiModifier.PUBLIC,
+    PsiModifier.PROTECTED,
+    PsiModifier.PRIVATE,
+    PsiModifier.PACKAGE_LOCAL,
+    PsiModifier.STATIC,
+    PsiModifier.ABSTRACT,
+    PsiModifier.FINAL,
+    PsiModifier.NATIVE,
   };
 
   private GenerationUtil() {
@@ -69,6 +70,16 @@ public class GenerationUtil {
     builder.replace(builder.length() - 2, builder.length(), ">");
   }
 
+  static String suggestVarName(GrExpression expr, ExpressionContext expressionContext) {
+    final DefaultGroovyVariableNameValidator nameValidator =
+      new DefaultGroovyVariableNameValidator(expr, expressionContext.myUsedVarNames, true);
+    final String[] varNames = GroovyNameSuggestionUtil.suggestVariableNames(expr, nameValidator);
+
+    LOG.assertTrue(varNames.length > 0);
+    expressionContext.myUsedVarNames.add(varNames[0]);
+    return varNames[0];
+  }
+
   static String suggestVarName(PsiType type, GroovyPsiElement context, ExpressionContext expressionContext) {
     final DefaultGroovyVariableNameValidator nameValidator =
       new DefaultGroovyVariableNameValidator(context, expressionContext.myUsedVarNames, true);
@@ -79,9 +90,25 @@ public class GenerationUtil {
     return varNames[0];
   }
 
+  public static String validateName(String name, GroovyPsiElement context, ExpressionContext expressionContext) {
+    return new DefaultGroovyVariableNameValidator(context, expressionContext.myUsedVarNames, true).validateName(name, true);
+  }
+
   public static void writeCodeReferenceElement(StringBuilder builder, GrCodeReferenceElement referenceElement) {
-    //todo
-    throw new UnsupportedOperationException();
+    final GroovyResolveResult resolveResult = referenceElement.advancedResolve();
+    final PsiElement resolved = resolveResult.getElement();
+    if (resolved == null) {
+      builder.append(referenceElement.getText());
+      return;
+    }
+    LOG.assertTrue(resolved instanceof PsiClass || resolved instanceof PsiPackage);
+    if (resolved instanceof PsiClass) {
+      builder.append(((PsiClass)resolved).getQualifiedName());
+    }
+    else {
+      builder.append(((PsiPackage)resolved).getQualifiedName());
+    }
+    writeTypeParameters(builder, referenceElement.getTypeArguments());
   }
 
   public static void invokeMethodByName(GrExpression caller,
@@ -146,9 +173,9 @@ public class GenerationUtil {
   }
 
   public static void writeClassModifiers(StringBuilder text,
-                                          @Nullable PsiModifierList modifierList,
-                                          boolean isInterface,
-                                          boolean toplevel) {
+                                         @Nullable PsiModifierList modifierList,
+                                         boolean isInterface,
+                                         boolean toplevel) {
     if (modifierList == null) {
       text.append("public ");
       return;
@@ -165,5 +192,46 @@ public class GenerationUtil {
     }
 
     writeModifiers(text, modifierList, allowedModifiers.toArray(new String[allowedModifiers.size()]));
+  }
+
+  static void writeStatement(final StringBuilder codeBlockBuilder,
+                             StringBuilder statementBuilder,
+                             @Nullable GrStatement statement,
+                             @Nullable ExpressionContext context) {
+    final PsiElement parent = statement == null ? null : statement.getParent();
+
+    final boolean addParentheses;
+    if (statement == null) {
+      addParentheses = context != null && context.shouldInsertCurlyBrackets();
+    }
+    else {
+      addParentheses =
+        context != null && (context.shouldInsertCurlyBrackets() || context.myStatements.size() > 0) && parent instanceof GrControlStatement;
+    }
+
+    if (addParentheses) {
+      codeBlockBuilder.append("{\n");
+    }
+
+    if (context != null) {
+      insertStatementFromContextBefore(codeBlockBuilder, context);
+    }
+    codeBlockBuilder.append(statementBuilder);
+    if (addParentheses) {
+      codeBlockBuilder.append("}\n");
+    }
+  }
+
+  public static void insertStatementFromContextBefore(StringBuilder codeBlockBuilder, ExpressionContext context) {
+    for (String st : context.myStatements) {
+      codeBlockBuilder.append(st).append("\n");
+    }
+  }
+
+  public static void writeStatement(final StringBuilder builder, ExpressionContext context, @Nullable GrStatement statement, StatementWriter writer) {
+    StringBuilder statementBuilder = new StringBuilder();
+    ExpressionContext statementContext = context.copy();
+    writer.writeStatement(statementBuilder, statementContext);
+    writeStatement(builder, statementBuilder, statement, statementContext);
   }
 }

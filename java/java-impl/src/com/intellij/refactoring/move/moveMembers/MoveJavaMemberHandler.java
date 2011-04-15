@@ -16,16 +16,21 @@
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.refactoring.util.EnumConstantsUtil;
-import com.intellij.refactoring.util.RefactoringHierarchyUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -33,12 +38,13 @@ import java.util.*;
 /**
  * @author Maxim.Medvedev
  */
-
 public class MoveJavaMemberHandler implements MoveMemberHandler {
-  public MoveMembersProcessor.MoveMembersUsageInfo getUsage(PsiMember member,
-                                                            PsiReference psiReference,
-                                                            Set<PsiMember> membersToMove,
-                                                            PsiClass targetClass) {
+  @Override
+  @Nullable
+  public MoveMembersProcessor.MoveMembersUsageInfo getUsage(@NotNull PsiMember member,
+                                                            @NotNull PsiReference psiReference,
+                                                            @NotNull Set<PsiMember> membersToMove,
+                                                            @NotNull PsiClass targetClass) {
     PsiElement ref = psiReference.getElement();
     if (ref instanceof PsiReferenceExpression) {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
@@ -70,15 +76,102 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
     return null;
   }
 
-  private static boolean isInMovedElement(PsiElement element, Set<PsiMember> membersToMove) {
+  protected static boolean isInMovedElement(PsiElement element, Set<PsiMember> membersToMove) {
     for (PsiMember member : membersToMove) {
       if (PsiTreeUtil.isAncestor(member, element, false)) return true;
     }
     return false;
   }
 
-  public boolean changeExternalUsage(MoveMembersOptions options, MoveMembersProcessor.MoveMembersUsageInfo usage) {
-    if (!usage.getElement().isValid()) return true;
+  @Override
+  public void checkConflictsOnUsage(@NotNull MoveMembersProcessor.MoveMembersUsageInfo usageInfo,
+                                    @Nullable String newVisibility,
+                                    @Nullable PsiModifierList modifierListCopy,
+                                    @NotNull PsiClass targetClass,
+                                    @NotNull Set<PsiMember> membersToMove,
+                                    @NotNull MultiMap<PsiElement, String> conflicts) {
+    final PsiElement element = usageInfo.getElement();
+    if (element == null) return;
+
+    final PsiMember member = usageInfo.member;
+    if (element instanceof PsiReferenceExpression) {
+      PsiExpression qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
+      PsiClass accessObjectClass = null;
+      if (qualifier != null) {
+        accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
+      }
+
+      if (!JavaResolveUtil.isAccessible(member, targetClass, modifierListCopy, element, accessObjectClass, null)) {
+        String visibility = newVisibility != null ? newVisibility : VisibilityUtil.getVisibilityStringToDisplay(member);
+        String message = RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
+                                                   RefactoringUIUtil.getDescription(member, false),
+                                                   visibility,
+                                                   RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
+        conflicts.putValue(member, CommonRefactoringUtil.capitalize(message));
+      }
+    }
+
+    if (member instanceof PsiField && targetClass.isInterface()) {
+      ReadWriteAccessDetector accessDetector = ReadWriteAccessDetector.findDetector(member);
+      if (accessDetector != null) {
+        ReadWriteAccessDetector.Access access = accessDetector.getExpressionAccess(element);
+        if (access != ReadWriteAccessDetector.Access.Read) {
+          String message = RefactoringUIUtil.getDescription(member, true) + " has write access but is moved to an interface";
+          conflicts.putValue(element, CommonRefactoringUtil.capitalize(message));
+        }
+      }
+    }
+
+    final PsiReference reference = usageInfo.getReference();
+    if (reference != null) {
+      RefactoringConflictsUtil.checkAccessibilityConflicts(reference, member, modifierListCopy, targetClass, membersToMove, conflicts);
+    }
+  }
+
+  @Override
+  public void checkConflictsOnMember(@NotNull PsiMember member,
+                                     @Nullable String newVisibility,
+                                     @Nullable PsiModifierList modifierListCopy,
+                                     @NotNull PsiClass targetClass,
+                                     @NotNull Set<PsiMember> membersToMove,
+                                     @NotNull MultiMap<PsiElement, String> conflicts) {
+    if (member instanceof PsiMethod && hasMethod(targetClass, (PsiMethod)member) ||
+        member instanceof PsiField && hasField(targetClass, (PsiField)member)) {
+      String message = RefactoringBundle.message("0.already.exists.in.the.target.class", RefactoringUIUtil.getDescription(member, false));
+      conflicts.putValue(member, CommonRefactoringUtil.capitalize(message));
+    }
+
+    RefactoringConflictsUtil.checkUsedElements(member, member, membersToMove, null, targetClass, targetClass, conflicts);
+  }
+
+  protected static boolean hasMethod(PsiClass targetClass, PsiMethod method) {
+    PsiMethod[] targetClassMethods = targetClass.getMethods();
+    for (PsiMethod candidate : targetClassMethods) {
+      if (candidate != method &&
+          MethodSignatureUtil.areSignaturesEqual(method.getSignature(PsiSubstitutor.EMPTY),
+                                                 candidate.getSignature(PsiSubstitutor.EMPTY))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  protected static boolean hasField(PsiClass targetClass, PsiField field) {
+    String fieldName = field.getName();
+    PsiField[] targetClassFields = targetClass.getFields();
+    for (PsiField candidate : targetClassFields) {
+      if (candidate != field &&
+          fieldName.equals(candidate.getName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public boolean changeExternalUsage(@NotNull MoveMembersOptions options, @NotNull MoveMembersProcessor.MoveMembersUsageInfo usage) {
+    final PsiElement element = usage.getElement();
+    if (element == null || !element.isValid()) return true;
 
     if (usage.reference instanceof PsiReferenceExpression) {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)usage.reference;
@@ -101,14 +194,24 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
     return false;
   }
 
-  public PsiMember doMove(MoveMembersOptions options, PsiMember member, PsiElement anchor, PsiClass targetClass) {
+  protected static void changeQualifier(PsiReferenceExpression refExpr, PsiClass aClass, PsiMember member) throws IncorrectOperationException {
+    if (RefactoringUtil.hasOnDemandStaticImport(refExpr, aClass)) {
+      refExpr.setQualifierExpression(null);
+    }
+    else if (!RefactoringUtil.hasStaticImportOn(refExpr, member)){
+      PsiElementFactory factory = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory();
+      refExpr.setQualifierExpression(factory.createReferenceExpression(aClass));
+    }
+  }
+
+  @Override
+  @NotNull
+  public PsiMember doMove(@NotNull MoveMembersOptions options, @NotNull PsiMember member, PsiElement anchor, @NotNull PsiClass targetClass) {
     if (member instanceof PsiVariable) {
       ((PsiVariable)member).normalizeDeclaration();
     }
 
     ChangeContextUtil.encodeContextInfo(member, true);
-    if (targetClass == null) return null;
-
 
     final PsiMember memberCopy;
     if (options.makeEnumConstant() &&
@@ -118,8 +221,9 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
     }
     else {
       memberCopy = (PsiMember)member.copy();
-      if (member.getContainingClass().isInterface() && !targetClass.isInterface()) {
-        //might need to make modifiers explicit, see IDEADEV-11416
+      final PsiClass containingClass = member.getContainingClass();
+      if (containingClass != null && containingClass.isInterface() && !targetClass.isInterface()) {
+        // might need to make modifiers explicit, see IDEADEV-11416
         final PsiModifierList list = memberCopy.getModifierList();
         assert list != null;
         list.setModifierProperty(PsiModifier.STATIC, member.hasModifierProperty(PsiModifier.STATIC));
@@ -131,22 +235,14 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
     return anchor != null ? (PsiMember)targetClass.addAfter(memberCopy, anchor) : (PsiMember)targetClass.add(memberCopy);
   }
 
-  public void decodeContextInfo(PsiElement scope) {
+  @Override
+  public void decodeContextInfo(@NotNull PsiElement scope) {
     ChangeContextUtil.decodeContextInfo(scope, null, null);
   }
 
-  private static void changeQualifier(PsiReferenceExpression refExpr, PsiClass aClass, PsiMember member) throws IncorrectOperationException {
-    if (RefactoringUtil.hasOnDemandStaticImport(refExpr, aClass)) {
-      refExpr.setQualifierExpression(null);
-    }
-    else if (!RefactoringUtil.hasStaticImportOn(refExpr, member)){
-      PsiElementFactory factory = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory();
-      refExpr.setQualifierExpression(factory.createReferenceExpression(aClass));
-    }
-  }
-
+  @Override
   @Nullable
-  public PsiElement getAnchor(final PsiMember member, final PsiClass targetClass) {
+  public PsiElement getAnchor(@NotNull final PsiMember member, @NotNull final PsiClass targetClass) {
     if (member instanceof PsiField && member.hasModifierProperty(PsiModifier.STATIC)) {
       final List<PsiField> afterFields = new ArrayList<PsiField>();
       final PsiExpression psiExpression = ((PsiField)member).getInitializer();

@@ -21,12 +21,20 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import static java.util.Arrays.asList;
 
 /**
  * @author lesya
  */
 public abstract class AbstractBlockWrapper {
+
+  private static final Set<IndentImpl.Type> RELATIVE_INDENT_TYPES = new HashSet<IndentImpl.Type>(asList(
+    Indent.Type.NORMAL, Indent.Type.CONTINUATION, Indent.Type.CONTINUATION_WITHOUT_FIRST
+  ));
 
   protected WhiteSpace myWhiteSpace;
   protected CompositeBlockWrapper myParent;
@@ -158,41 +166,40 @@ public abstract class AbstractBlockWrapper {
 
   public IndentData getChildOffset(AbstractBlockWrapper child, CodeStyleSettings.IndentOptions options, int targetBlockStartOffset) {
     final boolean childStartsNewLine = child.getWhiteSpace().containsLineFeeds();
+    IndentImpl.Type childIndentType = child.getIndent().getType();
     IndentData childIndent;
 
     // Calculate child indent.
-    if (childStartsNewLine) {
+    if (childStartsNewLine
+        || (!getWhiteSpace().containsLineFeeds() && RELATIVE_INDENT_TYPES.contains(childIndentType) && indentAlreadyUsedBefore(child)))
+    {
       childIndent = getIndent(options, child, targetBlockStartOffset);
     }
-    else {
-      childIndent = new IndentData(0);
-    }
-
-    // Enforce indent if child doesn't start new line, e.g. prefer the code below:
-    //    void test() {
-    //        foo("test", new Runnable() {
-    //                public void run() {
-    //                }
-    //            },
-    //            new Runnable() {
-    //                public void run() {
-    //                }
-    //            }
-    //        );
-    //    }
-    // to this one:
-    //    void test() {
-    //        foo("test", new Runnable() {
-    //            public void run() {
-    //            }
-    //        },
-    //            new Runnable() {
-    //                public void run() {
-    //                }
-    //            }
-    //        );
-    //    }
-    if (child.getIndent().isEnforceIndentToChildren() && !child.getWhiteSpace().containsLineFeeds()) {
+    else if (child.getIndent().isEnforceIndentToChildren() && !child.getWhiteSpace().containsLineFeeds()) {
+      // Enforce indent if child doesn't start new line, e.g. prefer the code below:
+      //    void test() {
+      //        foo("test", new Runnable() {
+      //                public void run() {
+      //                }
+      //            },
+      //            new Runnable() {
+      //                public void run() {
+      //                }
+      //            }
+      //        );
+      //    }
+      // to this one:
+      //    void test() {
+      //        foo("test", new Runnable() {
+      //            public void run() {
+      //            }
+      //        },
+      //            new Runnable() {
+      //                public void run() {
+      //                }
+      //            }
+      //        );
+      //    }
       AlignmentImpl alignment = child.getAlignment();
       if (alignment != null) {
         // Generally, we want to handle situation like the one below:
@@ -209,7 +216,7 @@ public abstract class AbstractBlockWrapper {
         //   );
         // I.e. we want 'run()' method from the first anonymous class to be aligned with the 'run()' method of the second anonymous class.
 
-      AbstractBlockWrapper anchorBlock = alignment.getOffsetRespBlockBefore(child);
+        AbstractBlockWrapper anchorBlock = alignment.getOffsetRespBlockBefore(child);
         if (anchorBlock == null) {
           anchorBlock = this;
           if (anchorBlock instanceof CompositeBlockWrapper) {
@@ -224,7 +231,10 @@ public abstract class AbstractBlockWrapper {
         }
         return anchorBlock.getNumberOfSymbolsBeforeBlock();
       }
-      childIndent = childIndent.add(getIndent(options, child, getStartOffset()));
+      childIndent = getIndent(options, child, getStartOffset());
+    }
+    else {
+      childIndent = new IndentData(0);
     }
 
     // Use child indent if it's absolute and the child is contained on new line.
@@ -286,6 +296,15 @@ public abstract class AbstractBlockWrapper {
       }
     }
   }
+
+  /**
+   * Allows to answer if current wrapped block has a child block that is located before given block and has line feed.
+   *
+   * @param child   target child block to process
+   * @return        <code>true</code> if current block has a child that is located before the given block and contains line feed;
+   *                <code>false</code> otherwise
+   */
+  protected abstract boolean indentAlreadyUsedBefore(final AbstractBlockWrapper child);
 
   /**
    * Allows to retrieve object that encapsulates information about number of symbols before the current block starting

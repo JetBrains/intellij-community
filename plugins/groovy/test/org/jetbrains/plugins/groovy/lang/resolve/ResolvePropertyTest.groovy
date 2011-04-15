@@ -654,7 +654,15 @@ set<caret>Foo(2)
     assertInstanceOf resolved, GrParameter
   }
 
-  public void dontResolveForVarOutsideOfFor(){
+  public void testDontResolveForVarOutsideOfFor(){
     assertNull resolve("A.groovy")
+  }
+
+  public void testOperatorOverloading() {
+    assertInstanceOf resolve("A.groovy"), GrAccessorMethod
+  }
+
+  public void testResolveClosureOverloader() {
+    assertInstanceOf resolve("A.groovy"), GrAccessorMethod
   }
 }

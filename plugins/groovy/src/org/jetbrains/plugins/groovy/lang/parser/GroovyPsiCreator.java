@@ -23,6 +23,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.IGroovyDocElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.GroovyDocPsiCreator;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
@@ -212,7 +213,7 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(RELATIONAL_EXPRESSION)) return new GrRelationalExpressionImpl(node);
     if (elem.equals(SHIFT_EXPRESSION)) return new GrShiftExpressionImpl(node);
     if (elem.equals(RANGE_EXPRESSION)) return new GrRangeExpressionImpl(node);
-    if (elem.equals(COMPOSITE_SHIFT_SIGN)) return new GrOperationSignImpl(node);
+    if (TokenSets.SHIFT_SIGNS.contains(elem)) return new GrOperationSignImpl(node);
     if (elem.equals(ADDITIVE_EXPRESSION)) return new GrAdditiveExpressionImpl(node);
     if (elem.equals(MULTIPLICATIVE_EXPRESSION)) return new GrMultiplicativeExpressionImpl(node);
     if (elem.equals(POWER_EXPRESSION)) return new GrPowerExpressionImpl(node);

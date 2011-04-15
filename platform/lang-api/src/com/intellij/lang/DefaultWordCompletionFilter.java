@@ -25,11 +25,6 @@ import com.intellij.psi.tree.IElementType;
 
 public class DefaultWordCompletionFilter implements WordCompletionElementFilter {
   public boolean isWordCompletionEnabledIn(final IElementType element) {
-    final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
-    if (process != null && process.isAutopopupCompletion()) {
-      return false;
-    }
-
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
     return parserDefinition != null && parserDefinition.getCommentTokens().contains(element);
   }

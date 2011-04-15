@@ -157,6 +157,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
         StartupManagerImpl sm = (StartupManagerImpl)StartupManager.getInstance(myProject);
         sm.runStartupActivities();
+        sm.startCacheUpdate();
         sm.runPostStartupActivities();
 
         ProjectManagerEx.getInstanceEx().setCurrentTestProject(myProject);

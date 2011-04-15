@@ -24,26 +24,24 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class AddNullableNotNullAnnotationFix extends AddAnnotationFix {
-  public AddNullableNotNullAnnotationFix(final String annotation, final String... annotationToRemove) {
-    super(annotation, annotationToRemove);
-  }
-
-  public AddNullableNotNullAnnotationFix(final String fqn, final PsiModifierListOwner owner, final String... annotationToRemove) {
+  public AddNullableNotNullAnnotationFix(@NotNull String fqn, @NotNull PsiModifierListOwner owner, @NotNull String... annotationToRemove) {
     super(fqn, owner, annotationToRemove);
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
-     if (!super.isAvailable(project, editor, element)) {
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+     if (!super.isAvailable(project, file, startElement, endElement)) {
       return false;
     }
-    PsiModifierListOwner owner = getContainer(element);
+    PsiModifierListOwner owner = getContainer(startElement);
     if (owner == null || AnnotationUtil.isAnnotated(owner, getAnnotationsToRemove()[0], false)) {
       return false;
     }

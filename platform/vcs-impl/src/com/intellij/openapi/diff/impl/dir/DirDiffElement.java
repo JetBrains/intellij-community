@@ -19,6 +19,7 @@ import com.intellij.ide.diff.DiffElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.sql.Date;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -150,4 +151,8 @@ public class DirDiffElement {
   }
 
   public static enum ElementType {SOURCE, TARGET, SEPARATOR, CHANGED}
+
+  public Icon getIcon() {
+    return mySource != null ? mySource.getIcon() : myTarget.getIcon();
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.filters;
+package com.intellij.codeInsight.editorActions.emacs;
+
+import com.intellij.lang.LanguageExtension;
 
 /**
- * @author Gregory.Shrago
+ * @author Denis Zhdanov
+ * @since 4/11/11 2:21 PM
  */
-public class RmiStackFrameFilter extends StackFrameFilter {
-  public boolean isAuxiliaryFrame(String className, String methodName) {
-    if (className.startsWith("java.rmi.") && methodName.startsWith("invoke")) {
-      return true;
-    }
-    return className.startsWith("sun.rmi.");
+public class LanguageEmacsExtension extends LanguageExtension<EmacsProcessingHandler> {
+  
+  public static final String EP_NAME = "com.intellij.lang.emacs";
+  public static final LanguageEmacsExtension INSTANCE = new LanguageEmacsExtension();
+
+  public LanguageEmacsExtension() {
+    super(EP_NAME, new DefaultEmacsProcessingHandler());
   }
 }

@@ -22,6 +22,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 public class RecentChangesAction extends LocalHistoryAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    new RecentChangesPopup(getProject(e), getGateway(), getVcs()).show();
+    new RecentChangesPopup(getEventProject(e), getGateway(), getVcs()).show();
   }
 }

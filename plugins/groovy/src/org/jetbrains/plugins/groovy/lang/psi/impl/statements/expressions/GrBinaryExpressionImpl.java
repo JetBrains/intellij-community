@@ -19,7 +19,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -36,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author ilyas
@@ -70,13 +69,8 @@ public abstract class GrBinaryExpressionImpl extends GrExpressionImpl implements
       }
 
       final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(binary.multiResolve(false));
-      final PsiElement resolved = resolveResult.getElement();
-      if (resolved instanceof PsiMethod) {
-        final PsiType returnType = PsiUtil.getSmartReturnType((PsiMethod)resolved);
-        final PsiType substituted = resolveResult.getSubstitutor().substitute(returnType);
-        return TypesUtil.boxPrimitiveType(substituted, binary.getManager(), binary.getResolveScope());
-      }
-      return null;
+      final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(resolveResult);
+      return TypesUtil.boxPrimitiveType(substituted, binary.getManager(), binary.getResolveScope());
     }
   };
 

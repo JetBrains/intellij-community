@@ -95,7 +95,9 @@ public class ConsoleBuffer {
   private int myDeferredOutputLength;
 
   /**
-   * Buffer for deferred stdin and stderr output.
+   * Buffer for deferred stdin output.
+   * <p/>
+   * Is assumed to store user input data until it's delivered to the target process. That activity is driven from outside this class.
    */
   private StringBuffer myDeferredUserInput = new StringBuffer();
 
@@ -201,6 +203,10 @@ public class ConsoleBuffer {
   }
 
   public void clear() {
+    clear(true);
+  }
+  
+  public void clear(boolean clearUserInputAsWell) {
     if (myUseCyclicBuffer) {
       myDeferredOutput.clear();
       myDeferredOutput.add(new StringBuilder(myCyclicBufferUnitSize));
@@ -212,8 +218,10 @@ public class ConsoleBuffer {
     }
     myDeferredOutputLength = 0;
     myDeferredTypes.clear();
-    myDeferredUserInput = new StringBuffer();
     myDeferredTokens.clear();
+    if (clearUserInputAsWell) {
+      myDeferredUserInput = new StringBuffer();
+    }
   }
 
   @Nullable

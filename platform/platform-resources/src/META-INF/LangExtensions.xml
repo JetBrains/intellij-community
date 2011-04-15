@@ -396,10 +396,6 @@
   <applicationService serviceInterface="com.intellij.execution.console.ConsoleFoldingSettings" serviceImplementation="com.intellij.execution.console.ConsoleFoldingSettings"/>
   <console.folding implementation="com.intellij.execution.console.SubstringConsoleFolding"/>
 
-  <stacktrace.fold substring="at java.lang.reflect.Method.invoke("/>
-  <stacktrace.fold substring="at java.lang.reflect.Constructor.newInstance("/>
-  <stacktrace.fold substring="at sun.reflect."/>
-
   <psi.referenceContributor implementation="com.intellij.psi.PsiReferenceContributorImpl"/>
 
   <lookup.charFilter implementation="com.intellij.codeInsight.template.impl.LiveTemplateCharFilter" order="first" id="liveTemplate"/>

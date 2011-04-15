@@ -321,7 +321,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
               new File(outputPath).mkdirs();
               final File file = new File(outputPath, toolName + ext);
               if (isLocalTool) {
-                FileUtil.writeToFile(file, "</" + InspectionsBundle.message("inspection.problems") + ">");
+                FileUtil.writeToFile(file, ("</" + InspectionsBundle.message("inspection.problems") + ">").getBytes("UTF-8"), true);
               }
               else {
                 PathMacroManager.getInstance(getProject()).collapsePaths(doc.getRootElement());

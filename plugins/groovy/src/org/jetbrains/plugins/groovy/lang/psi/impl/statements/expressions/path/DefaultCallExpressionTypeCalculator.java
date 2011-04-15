@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -105,11 +106,8 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
       returnType = null;
       final PsiManager manager = callExpression.getManager();
       for (GroovyResolveResult call : calls) {
-        final PsiElement element = call.getElement();
-        if (element instanceof PsiMethod) {
-          final PsiType substituted = call.getSubstitutor().substitute(PsiUtil.getSmartReturnType((PsiMethod)element));
-          returnType = TypesUtil.getLeastUpperBoundNullable(returnType, substituted, manager);
-        }
+        final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(call);
+        returnType = TypesUtil.getLeastUpperBoundNullable(returnType, substituted, manager);
       }
     }
     return returnType;

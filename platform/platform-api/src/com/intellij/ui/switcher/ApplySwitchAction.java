@@ -26,7 +26,7 @@ public class ApplySwitchAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    Project project = getProject(e);
+    Project project = getEventProject(e);
     if (project == null) {
       e.getPresentation().setEnabled(false);
       return;
@@ -48,13 +48,10 @@ public class ApplySwitchAction extends AnAction {
     }
   }
 
-  private static Project getProject(AnActionEvent e) {
-    return PlatformDataKeys.PROJECT.getData(e.getDataContext());
-  }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    Project project = getProject(e);
+    Project project = getEventProject(e);
 
     SwitchManager switchManager = SwitchManager.getInstance(project);
     if (switchManager.canApplySwitch()) {

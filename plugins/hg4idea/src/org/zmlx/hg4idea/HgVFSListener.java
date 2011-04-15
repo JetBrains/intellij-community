@@ -27,6 +27,7 @@ import com.intellij.util.ui.VcsBackgroundTask;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.*;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;

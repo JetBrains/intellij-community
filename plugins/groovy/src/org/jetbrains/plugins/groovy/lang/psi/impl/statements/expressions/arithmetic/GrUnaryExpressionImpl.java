@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author ilyas
@@ -54,16 +54,13 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
       PsiType opType = operand.getType();
       if (opType == null) return null;
 
-      IElementType opToken = unary.getOperationTokenType();
-
       final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(unary.multiResolve(false));
-      final PsiElement resolved = resolveResult.getElement();
-      if (resolved instanceof PsiMethod) {
-        final PsiType smartReturnType = PsiUtil.getSmartReturnType((PsiMethod)resolved);
-        final PsiType substituted = resolveResult.getSubstitutor().substitute(smartReturnType);
+      final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(resolveResult);
+      if (substituted != null) {
         return TypesUtil.boxPrimitiveType(substituted, unary.getManager(), unary.getResolveScope());
       }
 
+      IElementType opToken = unary.getOperationTokenType();
       if (opToken == GroovyTokenTypes.mBNOT && opType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return unary.getTypeByFQName(GroovyCommonClassNames.JAVA_UTIL_REGEX_PATTERN);
       }

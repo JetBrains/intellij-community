@@ -80,7 +80,7 @@ public final class UIFormEditor extends UserDataHolderBase implements /*Navigata
   }
 
   public boolean isModified(){
-    return FileDocumentManager.getInstance().isFileModified(myFile);
+    return false;
   }
 
   public boolean isValid(){

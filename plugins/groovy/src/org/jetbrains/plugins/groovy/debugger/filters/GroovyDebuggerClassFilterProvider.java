@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.debugger.filters;
 
-import com.intellij.execution.filters.StackFrameFilter;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,7 +26,7 @@ import java.util.List;
 /**
  * @author ilyas
  */
-public class GroovyDebuggerClassFilterProvider extends StackFrameFilter implements DebuggerClassFilterProvider {
+public class GroovyDebuggerClassFilterProvider implements DebuggerClassFilterProvider {
   private static final ClassFilter[] FILTERS = {new ClassFilter("org.codehaus.groovy.*"), new ClassFilter("groovy.*")};
 
   public List<ClassFilter> getFilters() {

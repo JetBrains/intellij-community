@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.zmlx.hg4idea.command.HgCatCommand;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;

@@ -50,6 +50,7 @@ public class XDebuggerUIConstants {
   public static final Icon WATCHES_TAB_ICON = IconLoader.getIcon("/debugger/watches.png");
   public static final Icon CONSOLE_TAB_ICON = IconLoader.getIcon("/debugger/console.png");
   public static final SimpleTextAttributes TYPE_ATTRIBUTES = SimpleTextAttributes.GRAY_ATTRIBUTES;
+  public static final String LAYOUT_VIEW_BREAKPOINT_CONDITION = "breakpoint";
 
   private XDebuggerUIConstants() {
   }

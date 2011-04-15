@@ -24,18 +24,22 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 /**
  * @author Konstantin Bulenkov
  */
 public abstract class DiffElement<T> {
+  public static final DiffElement[] EMPTY_ARRAY = new DiffElement[0];
   private DiffPanel myDiffPanel;
   private Editor myEditor;
 
@@ -54,7 +58,7 @@ public abstract class DiffElement<T> {
 
   public abstract boolean isContainer();
 
-  public abstract DiffElement<T>[] getChildren();
+  public abstract DiffElement[] getChildren() throws IOException;
 
   @Nullable
   public abstract DiffElement<T> findFileByRelativePath(String path);
@@ -67,6 +71,10 @@ public abstract class DiffElement<T> {
   @Nullable
   public abstract byte[] getContent() throws IOException;
 
+  public Charset getCharset() {
+    return EncodingManager.getInstance().getDefaultCharset();
+  }
+
   @Nullable
   public JComponent getViewComponent(Project project) {
     disposeViewComponent();
@@ -76,7 +84,7 @@ public abstract class DiffElement<T> {
       final EditorFactory editorFactory = EditorFactory.getInstance();
       final Document document = value instanceof VirtualFile
                                 ? FileDocumentManager.getInstance().getDocument((VirtualFile)value)
-                                : editorFactory.createDocument(new String(content));
+                                : editorFactory.createDocument(StringUtil.convertLineSeparators(new String(content)));
       if (document != null && getFileType() != null) {
         myEditor = editorFactory.createEditor(document, project, getFileType(), true);
         myEditor.getSettings().setFoldingOutlineShown(false);
@@ -97,6 +105,8 @@ public abstract class DiffElement<T> {
       myDiffPanel = DiffManager.getInstance().createDiffPanel(parentWindow, project);
       myDiffPanel.setRequestFocus(false);
       myDiffPanel.setDiffRequest(request);
+      myDiffPanel.setTitle1(getName());
+      myDiffPanel.setTitle2(element.getName());
       return myDiffPanel.getComponent();
     }
 
@@ -126,7 +136,7 @@ public abstract class DiffElement<T> {
   @Nullable
   protected DiffContent createDiffContent() {
     try {
-      return new SimpleContent(new String(getContent()), getFileType());
+      return new SimpleContent(new String(getContent(), getCharset()), getFileType());
     }
     catch (IOException e) {//
     }
@@ -147,5 +157,14 @@ public abstract class DiffElement<T> {
       Disposer.dispose(myDiffPanel);
       myDiffPanel = null;
     }
+  }
+
+  public String getSeparator() {
+    return "/";
+  }
+
+  @Nullable
+  public Icon getIcon() {
+    return null;
   }
 }

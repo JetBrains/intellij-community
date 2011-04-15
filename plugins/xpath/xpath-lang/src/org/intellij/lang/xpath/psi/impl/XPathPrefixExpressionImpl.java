@@ -49,7 +49,7 @@ public class XPathPrefixExpressionImpl extends XPathElementImpl implements XPath
   public XPathElementType getOperator() {
     final ASTNode node = getNode().findChildByType(XPathTokenTypes.ADD_OPS);
     final XPathElementType elementType = (XPathElementType)(node != null ? node.getElementType() : null);
-    assert elementType != null;
+    assert elementType != null : unexpectedPsiAssertion();
     return elementType;
   }
 

@@ -16,10 +16,9 @@
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.lang.LanguageExtension;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
+import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -30,17 +29,36 @@ import java.util.Set;
 public interface MoveMemberHandler {
   LanguageExtension<MoveMemberHandler> EP_NAME = new LanguageExtension<MoveMemberHandler>("com.intellij.refactoring.moveMemberHandler");
 
-  MoveMembersProcessor.MoveMembersUsageInfo getUsage(PsiMember member,
-                                                     PsiReference ref,
-                                                     Set<PsiMember> membersToMove,
-                                                     PsiClass targetClass);
+  @Nullable
+  MoveMembersProcessor.MoveMembersUsageInfo getUsage(@NotNull PsiMember member,
+                                                     @NotNull PsiReference ref,
+                                                     @NotNull Set<PsiMember> membersToMove,
+                                                     @NotNull PsiClass targetClass);
 
-  boolean changeExternalUsage(MoveMembersOptions options, MoveMembersProcessor.MoveMembersUsageInfo usage);
+  void checkConflictsOnUsage(@NotNull MoveMembersProcessor.MoveMembersUsageInfo usageInfo,
+                             @Nullable String newVisibility,
+                             @Nullable PsiModifierList modifierListCopy,
+                             @NotNull PsiClass targetClass,
+                             @NotNull Set<PsiMember> membersToMove,
+                             @NotNull MultiMap<PsiElement, String> conflicts);
 
-  PsiMember doMove(MoveMembersOptions options, PsiMember member, PsiElement anchor, PsiClass targetClass);
-
-  void decodeContextInfo(PsiElement scope);
+  void checkConflictsOnMember(@NotNull PsiMember member,
+                              @Nullable String newVisibility,
+                              @Nullable PsiModifierList modifierListCopy,
+                              @NotNull PsiClass targetClass,
+                              @NotNull Set<PsiMember> membersToMove,
+                              @NotNull MultiMap<PsiElement, String> conflicts);
 
   @Nullable
-  PsiElement getAnchor(PsiMember member, PsiClass targetClass);
+  PsiElement getAnchor(@NotNull PsiMember member, @NotNull PsiClass targetClass);
+
+  boolean changeExternalUsage(@NotNull MoveMembersOptions options, @NotNull MoveMembersProcessor.MoveMembersUsageInfo usage);
+
+  @NotNull
+  PsiMember doMove(@NotNull MoveMembersOptions options,
+                   @NotNull PsiMember member,
+                   @Nullable PsiElement anchor,
+                   @NotNull PsiClass targetClass);
+
+  void decodeContextInfo(@NotNull PsiElement scope);
 }

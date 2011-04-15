@@ -55,7 +55,11 @@ public class DocumentWrapper {
   }
 
   private String getLine(final int i) {
-    return myDocument.getText(new TextRange(myDocument.getLineStartOffset(i), myDocument.getLineEndOffset(i)));
+    TextRange range = new TextRange(myDocument.getLineStartOffset(i), myDocument.getLineEndOffset(i));
+    if (range.getLength() < 0) {
+      assert false : myDocument;
+    }
+    return myDocument.getText(range);
   }
 }
 

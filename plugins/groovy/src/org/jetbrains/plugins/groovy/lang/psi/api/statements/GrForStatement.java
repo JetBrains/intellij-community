@@ -16,9 +16,9 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import com.intellij.psi.PsiElement;
 
 /**
@@ -26,12 +26,14 @@ import com.intellij.psi.PsiElement;
  */
 public interface GrForStatement extends GrControlStatement, GrLoopStatement {
 
-  public GrForClause getClause();
+  @Nullable
+  GrForClause getClause();
 
-  public GrStatement getBody();
+  @Nullable
+  GrStatement getBody();
 
-  public PsiElement getRParenth();
+  PsiElement getRParenth();
 
-  public PsiElement getLParenth();
+  PsiElement getLParenth();
 
 }
