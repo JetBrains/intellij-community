@@ -228,7 +228,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
         if (descriptor != null && append) {
           buf.append("<br>");
           buf.append(XmlBundle.message("html.quickdoc.additional.template",
-                                       HtmlDocumentationProvider.getBaseHtmlExtDocUrl() + descriptor.getHelpRef(),
+                                       descriptor.getHelpRef(),
                                        BASE_SITEPOINT_URL + tag.getName()));
         }
       }
