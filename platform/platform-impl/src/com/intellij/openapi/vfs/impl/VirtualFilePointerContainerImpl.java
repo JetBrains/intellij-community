@@ -125,7 +125,7 @@ public class VirtualFilePointerContainerImpl implements VirtualFilePointerContai
 
   @NotNull
   public List<VirtualFilePointer> getList() {
-    assert !myDisposed;
+      assert !myDisposed;
     return myReadOnlyList;
   }
 
