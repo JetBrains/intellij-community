@@ -63,7 +63,7 @@ public class LocalSearchScope extends SearchScope {
     Set<PsiElement> localScope = new LinkedHashSet<PsiElement>(scope.length);
 
     for (final PsiElement element : scope) {
-      LOG.assertTrue(element.getContainingFile() != null);
+      LOG.assertTrue(element.getContainingFile() != null, element.getClass().getName());
       if (element instanceof PsiFile) {
         ContainerUtil.addAll(localScope, ((PsiFile)element).getPsiRoots());
       }
