@@ -17,8 +17,6 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 
 public class PyStackFrame extends XStackFrame {
 
@@ -86,7 +84,7 @@ public class PyStackFrame extends XStackFrame {
         try {
           final XValueChildrenList values = myDebugProcess.loadFrame();
           if (!node.isObsolete()) {
-            node.addChildren(values, true);
+            node.addChildren(values != null ? values : XValueChildrenList.EMPTY, true);
           }
         }
         catch (PyDebuggerException e) {
