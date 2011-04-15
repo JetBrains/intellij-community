@@ -76,14 +76,13 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
       if (hasFocus || isSelected) {
         label.setBorder(noFocusBorder);
       }
+      label.setIcon(null);
 
       final DirDiffOperation op = element.getOperation();
       if (column == (table.getColumnCount() - 1) / 2) {
         label.setIcon(op.getIcon());
         label.setHorizontalAlignment(CENTER);
         return label;
-      } else {
-        label.setIcon(element.getIcon());
       }
 
       Color fg = isSelected ? UIUtil.getTableSelectionForeground() : getForegroundColor(op);
@@ -96,7 +95,11 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
         label.setText(label.getText() + "  ");
       } else {
         label.setHorizontalAlignment(LEFT);
-        label.setText("  " + label.getText());
+        final String text = label.getText();
+        label.setText("  " + text);
+        if (text != null && text.trim().length() > 0) {
+          label.setIcon(element.getIcon());
+        }
       }
     }
     return c;
