@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +84,7 @@ public abstract class DiffElement<T> {
       final EditorFactory editorFactory = EditorFactory.getInstance();
       final Document document = value instanceof VirtualFile
                                 ? FileDocumentManager.getInstance().getDocument((VirtualFile)value)
-                                : editorFactory.createDocument(new String(content));
+                                : editorFactory.createDocument(StringUtil.convertLineSeparators(new String(content)));
       if (document != null && getFileType() != null) {
         myEditor = editorFactory.createEditor(document, project, getFileType(), true);
         myEditor.getSettings().setFoldingOutlineShown(false);
