@@ -68,6 +68,7 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
     return findChildByClass(GrCaseLabel.class);
   }
 
+  @NotNull
   public GrStatement[] getStatements() {
     return findChildrenByClass(GrStatement.class);
   }
