@@ -579,9 +579,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private boolean prefixMatches(final LookupElement item) {
     if (!item.isValid()) return false;
 
-    if (myAdditionalPrefix.length() == 0) return item.isPrefixMatched();
-
-    return itemMatcher(item).cloneWithPrefix(itemPattern(item)).prefixMatches(item);
+    PrefixMatcher matcher = itemMatcher(item);
+    if (myAdditionalPrefix.length() > 0) {
+      matcher = matcher.cloneWithPrefix(itemPattern(item));
+    }
+    return matcher.prefixMatches(item);
   }
 
   @Override

@@ -18,7 +18,6 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.CharTailType;
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -189,10 +188,6 @@ public class LookupItem<T> extends MutableLookupElement<T> implements Comparable
 
   @Override
   public void handleInsert(final InsertionContext context) {
-    if (Boolean.TRUE.equals(getAttribute(CASE_INSENSITIVE))) {
-      CompletionService.getCompletionService().correctCaseInsensitiveString(this, context);
-    }
-
     final InsertHandler<? extends LookupElement> handler = getInsertHandler();
     if (handler != null) {
       //noinspection unchecked

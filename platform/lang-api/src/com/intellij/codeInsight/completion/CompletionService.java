@@ -122,8 +122,6 @@ public abstract class CompletionService {
     return lookupSet.toArray(new LookupElement[lookupSet.size()]);
   }
 
-  public abstract void correctCaseInsensitiveString(@NotNull final LookupElement element, InsertionContext context);
-
   public abstract CompletionSorter defaultSorter(CompletionParameters parameters);
 
   public abstract CompletionSorter emptySorter();
