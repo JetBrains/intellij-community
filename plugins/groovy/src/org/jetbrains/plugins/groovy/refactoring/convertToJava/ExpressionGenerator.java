@@ -420,8 +420,16 @@ public class ExpressionGenerator extends Generator {
     final PsiElement resolved = resolveResult.getElement();
     final GrExpression operand = expression.getOperand();
 
+    IElementType opType = expression.getOperationTokenType();
+
     if (resolved instanceof PsiMethod) {
-      if (generatePrefixIncDec(postfix, (PsiMethod)resolved, operand, expression)) return;
+      if (opType == mLNOT) {
+        builder.append('!');
+      }
+      else if (!postfix && (opType == mINC || opType == mDEC)) {
+        if (generatePrefixIncDec((PsiMethod)resolved, operand, expression)) return;
+      }
+
       invokeMethodOn(
         ((PsiMethod)resolved),
         operand,
@@ -442,15 +450,11 @@ public class ExpressionGenerator extends Generator {
         operand.accept(this);
       }
     }
-    //todo implement ~"dfjkd" case
   }
 
-  private boolean generatePrefixIncDec(boolean postfix,
-                                       PsiMethod method,
+  private boolean generatePrefixIncDec(PsiMethod method,
                                        GrExpression operand,
                                        GrUnaryExpression unary) {
-    IElementType opType = unary.getOperationTokenType();
-    if (postfix || opType != mINC && opType != mDEC) return false;
     if (!(operand instanceof GrReferenceExpression)) return false;
 
     final GrExpression qualifier = ((GrReferenceExpression)operand).getQualifier();

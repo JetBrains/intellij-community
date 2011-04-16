@@ -271,7 +271,7 @@ public class GroovyExpectedTypesProvider {
           final PsiType boxed = TypesUtil.boxPrimitiveType(type, manager, scope);
           final IElementType opToken = expression.getOperationTokenType();
           final GroovyResolveResult[] candidates =
-            TypesUtil.getOverloadedOperatorCandidates(boxed, opToken, expression, PsiType.EMPTY_ARRAY);
+            TypesUtil.getOverloadedUnaryOperatorCandidates(boxed, opToken, expression, PsiType.EMPTY_ARRAY);
           return candidates.length > 0;
         }
 

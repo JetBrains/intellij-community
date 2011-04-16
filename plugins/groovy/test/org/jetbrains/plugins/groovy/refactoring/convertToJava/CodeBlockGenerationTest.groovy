@@ -139,4 +139,13 @@ class Test {
 """
     doTest()
   }
+
+  void testUnaryMethods() {
+    addFile """
+class Bar {
+  def positive(){}
+  def negative(){}
+  def bitwiseNegate(){}
+}"""
+  }
 }
