@@ -87,9 +87,9 @@ public class DirDiffTableModel extends AbstractTableModel {
       final DiffElement srcFile = mySrcPaths.get(path);
       final DiffElement trgFile = myTrgPaths.get(path);
       if (srcFile == null && trgFile != null) {
-        myElements.add(DirDiffElement.createTargetOnly(trgFile));
+        myElements.add(trgFile.isContainer() ? DirDiffElement.createDirElement(srcFile, trgFile, path) : DirDiffElement.createTargetOnly(trgFile));
       } else if (srcFile != null && trgFile == null) {
-        myElements.add(DirDiffElement.createSourceOnly(srcFile));
+        myElements.add(srcFile.isContainer() ? DirDiffElement.createDirElement(srcFile, trgFile, path) : DirDiffElement.createSourceOnly(srcFile));
       } else if (srcFile != null && trgFile != null) {
         indicator.setText2("Comparing " + path);
         if (srcFile.isContainer() && trgFile.isContainer()) {
@@ -117,15 +117,15 @@ public class DirDiffTableModel extends AbstractTableModel {
     boolean prevItemIsSeparator = true;
     for (int i = tmp.length - 1; i >= 0; i--) {
       final boolean isSeparator = tmp[i].isSeparator();
-      if (isSeparator) {
-        if (prevItemIsSeparator) {
-          elements.remove(i);
+        if (isSeparator) {
+          if (prevItemIsSeparator) {
+            elements.remove(i);
+          }
+          prevItemIsSeparator = true;
+        } else {
+          prevItemIsSeparator = false;
         }
-        prevItemIsSeparator = true;
-      } else {
-        prevItemIsSeparator = false;
       }
-    }
   }
 
   private static boolean isEqual(DiffElement file1, DiffElement file2) {

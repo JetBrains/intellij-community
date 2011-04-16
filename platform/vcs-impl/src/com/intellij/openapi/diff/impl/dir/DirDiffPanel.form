@@ -22,13 +22,12 @@
             <border type="none"/>
             <children/>
           </grid>
-          <scrollpane id="90582" class="com.intellij.ui.components.JBScrollPane">
+          <scrollpane id="90582" class="com.intellij.ui.components.JBScrollPane" binding="myScrollPane">
             <constraints>
               <splitpane position="left"/>
             </constraints>
             <properties>
-              <minimumSize width="456" height="200"/>
-              <preferredSize width="456" height="200"/>
+              <minimumSize width="21" height="200"/>
             </properties>
             <border type="none"/>
             <children>
@@ -36,8 +35,6 @@
                 <constraints/>
                 <properties>
                   <intercellSpacing width="0" height="0"/>
-                  <minimumSize width="30" height="32"/>
-                  <preferredSize width="150" height="32"/>
                   <showHorizontalLines value="false"/>
                   <showVerticalLines value="false"/>
                 </properties>
