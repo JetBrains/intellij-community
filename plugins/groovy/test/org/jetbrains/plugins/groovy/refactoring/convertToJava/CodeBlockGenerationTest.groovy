@@ -79,6 +79,10 @@ public class CodeBlockGenerationTest extends LightCodeInsightFixtureTestCase {
     assertEquals expected, text
   }
 
+  private addFile(String text) {
+    myFixture.addFileToProject("Bar.groovy", text)
+  }
+
   void testSwitch1() {doTest()}
   void testSwitch2() {doTest()}
   void testSwitch3() {doTest()}
@@ -106,4 +110,11 @@ class MyCat {
   }
 
   void testMemberPointer() {doTest()}
+
+  void testCompareMethods() {
+    addFile """
+class Bar {
+  def compareTo(def other) {1}
+}"""
+  }
 }

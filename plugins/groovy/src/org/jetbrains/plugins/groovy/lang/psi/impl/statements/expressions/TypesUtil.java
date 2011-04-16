@@ -124,6 +124,11 @@ public class TypesUtil {
     ourOperationsToOperatorNames.put(mDEC, "previous");
     ourOperationsToOperatorNames.put(mINC, "next");
     ourOperationsToOperatorNames.put(kAS, "asType");
+    ourOperationsToOperatorNames.put(mCOMPARE_TO, "compareTo");
+    ourOperationsToOperatorNames.put(mGT, "compareTo");
+    ourOperationsToOperatorNames.put(mGE, "compareTo");
+    ourOperationsToOperatorNames.put(mLT, "compareTo");
+    ourOperationsToOperatorNames.put(mLE, "compareTo");
   }
 
   private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<String>();

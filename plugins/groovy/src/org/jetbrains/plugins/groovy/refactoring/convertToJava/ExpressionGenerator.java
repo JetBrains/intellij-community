@@ -24,7 +24,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.conversions.ConvertGStringToStringIntention;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -61,6 +60,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
+import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.*;
 
 /**
@@ -330,7 +330,7 @@ public class ExpressionGenerator extends Generator {
     final IElementType token = expression.getOperationToken();
 
 
-    if (token == GroovyTokenTypes.mASSIGN) {
+    if (token == mASSIGN) {
       lValue.accept(this);
       builder.append(" = ");
       if (rValue != null) {
@@ -368,10 +368,12 @@ public class ExpressionGenerator extends Generator {
     final GrExpression left = expression.getLeftOperand();
     GrExpression right = expression.getRightOperand();
     final PsiType ltype = left.getType();
+    final PsiElement token = expression.getOperationToken();
+    final IElementType op = expression.getOperationTokenType();
     if (GenerationSettings.dontReplaceOperatorsWithMethodsForNumbers &&
         (TypesUtil.isNumericType(ltype) && (right == null || TypesUtil.isNumericType(right.getType())) ||
-         ltype != null && TypesUtil.typeEqualsToText(ltype, CommonClassNames.JAVA_LANG_STRING))) {
-      writeSimpleBinaryExpression(expression.getOperationToken(), left, right);
+         op == mPLUS && ltype != null && TypesUtil.typeEqualsToText(ltype, CommonClassNames.JAVA_LANG_STRING))) {
+      writeSimpleBinaryExpression(token, left, right);
       return;
     }
 
@@ -390,9 +392,13 @@ public class ExpressionGenerator extends Generator {
         resolveResult.getSubstitutor(),
         expression
       );
+      if (op == mGE) builder.append(" >= 0");
+      else if (op == mGT) builder.append(" > 0");
+      else if (op == mLT) builder.append(" < 0");
+      else if (op == mLE) builder.append(" <= 0");
     }
     else {
-      writeSimpleBinaryExpression(expression.getOperationToken(), left, right);
+      writeSimpleBinaryExpression(token, left, right);
     }
   }
 
@@ -476,8 +482,6 @@ public class ExpressionGenerator extends Generator {
 
   @Override
   public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
-    LOG.assertTrue(!(referenceExpression.getParent() instanceof GrMethodCall));
-
     final GrExpression qualifier = referenceExpression.getQualifier();
     final GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
@@ -486,15 +490,15 @@ public class ExpressionGenerator extends Generator {
 
     GrExpression qualifierToUse = qualifier;
 
-    if (type == GroovyTokenTypes.mMEMBER_POINTER) {
+    if (type == mMEMBER_POINTER) {
       LOG.assertTrue(qualifier != null);
       builder.append("new ").append(GroovyCommonClassNames.ORG_CODEHAUS_GROOVY_RUNTIME_METHOD_CLOSURE).append("(");
       qualifier.accept(this);
-      builder.append(", ").append(referenceExpression.getReferenceName()).append(')');
+      builder.append(", \"").append(referenceExpression.getReferenceName()).append("\")");
       return;
     }
 
-    if (type == GroovyTokenTypes.mOPTIONAL_DOT) {
+    if (type == mOPTIONAL_DOT) {
       LOG.assertTrue(qualifier != null);
 
       String qualifierName = createVarByInitializer(qualifier);
