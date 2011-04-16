@@ -79,7 +79,7 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
         final PsiType type = operand.getType();
         if (type == null) return GroovyResolveResult.EMPTY_ARRAY;
 
-        return TypesUtil.getOverloadedOperatorCandidates(type, unary.getOperationTokenType(), unary, PsiType.EMPTY_ARRAY);
+        return TypesUtil.getOverloadedUnaryOperatorCandidates(type, unary.getOperationTokenType(), unary, PsiType.EMPTY_ARRAY);
       }
     };
 

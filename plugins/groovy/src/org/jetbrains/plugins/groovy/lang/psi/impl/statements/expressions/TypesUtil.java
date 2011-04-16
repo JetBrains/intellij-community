@@ -92,6 +92,13 @@ public class TypesUtil {
     return ResolveUtil.getMethodCandidates(thisType, ourOperationsToOperatorNames.get(tokenType), place, argumentTypes);
   }
 
+  public static GroovyResolveResult[] getOverloadedUnaryOperatorCandidates(@NotNull PsiType thisType,
+                                                                      IElementType tokenType,
+                                                                      @NotNull GroovyPsiElement place,
+                                                                      PsiType[] argumentTypes) {
+    return ResolveUtil.getMethodCandidates(thisType, ourUnaryOperationsToOperatorNames.get(tokenType), place, argumentTypes);
+  }
+
   private static final Map<IElementType, String> ourPrimitiveTypesToClassNames = new HashMap<IElementType, String>();
   private static final String NULL = "null";
 
@@ -111,6 +118,7 @@ public class TypesUtil {
   }
 
   private static final Map<IElementType, String> ourOperationsToOperatorNames = new HashMap<IElementType, String>();
+  private static final Map<IElementType, String> ourUnaryOperationsToOperatorNames = new HashMap<IElementType, String>();
 
   static {
     ourOperationsToOperatorNames.put(mPLUS, "plus");
@@ -121,14 +129,19 @@ public class TypesUtil {
     ourOperationsToOperatorNames.put(mDIV, "div");
     ourOperationsToOperatorNames.put(mMOD, "mod");
     ourOperationsToOperatorNames.put(mSTAR, "multiply");
-    ourOperationsToOperatorNames.put(mDEC, "previous");
-    ourOperationsToOperatorNames.put(mINC, "next");
     ourOperationsToOperatorNames.put(kAS, "asType");
     ourOperationsToOperatorNames.put(mCOMPARE_TO, "compareTo");
     ourOperationsToOperatorNames.put(mGT, "compareTo");
     ourOperationsToOperatorNames.put(mGE, "compareTo");
     ourOperationsToOperatorNames.put(mLT, "compareTo");
     ourOperationsToOperatorNames.put(mLE, "compareTo");
+
+    ourUnaryOperationsToOperatorNames.put(mLNOT, "asBoolean");
+    ourUnaryOperationsToOperatorNames.put(mPLUS, "positive");
+    ourUnaryOperationsToOperatorNames.put(mMINUS, "negative");
+    ourUnaryOperationsToOperatorNames.put(mDEC, "previous");
+    ourUnaryOperationsToOperatorNames.put(mINC, "next");
+    ourUnaryOperationsToOperatorNames.put(mBNOT, "bitwiseNegate");
   }
 
   private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<String>();
