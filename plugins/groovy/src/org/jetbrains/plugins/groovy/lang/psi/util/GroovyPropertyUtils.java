@@ -23,9 +23,16 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorResolverProcessor;
 
 import java.beans.Introspector;
 import java.util.ArrayList;
@@ -66,7 +73,21 @@ public class GroovyPropertyUtils {
     final Project project = field.getProject();
     final String propertyName = PropertyUtil.suggestPropertyName(project, field);
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-    return PropertyUtil.findPropertyGetter(containingClass, propertyName, isStatic, true);
+    return findPropertyGetter(containingClass, propertyName, isStatic, true);
+  }
+
+  @Nullable
+  public static PsiMethod findPropertySetter(@Nullable PsiType type, String propertyName, @NotNull GroovyPsiElement context) {
+    final String setterName = getSetterName(propertyName);
+    if (type == null) {
+      final GrExpression fromText = GroovyPsiElementFactory.getInstance(context.getProject()).createExpressionFromText("this", context);
+      return findPropertySetter(fromText.getType(), propertyName, context);
+    }
+
+    final AccessorResolverProcessor processor = new AccessorResolverProcessor(setterName, context, false);
+    ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), context);
+    final GroovyResolveResult[] setterCandidates = processor.getCandidates();
+    return PsiImplUtil.extractUniqueElement(setterCandidates);
   }
 
   @Nullable
@@ -145,6 +166,19 @@ public class GroovyPropertyUtils {
 
 
   @Nullable
+  public static PsiMethod findPropertyGetter(@NotNull PsiType type, @NotNull String propertyName, @NotNull GroovyPsiElement context) {
+    final String[] getterNames = suggestGettersName(propertyName);
+    for (String getterName : getterNames) {
+      final AccessorResolverProcessor processor = new AccessorResolverProcessor(getterName, context, true);
+      ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), context);
+      final GroovyResolveResult[] getterCandidates = processor.getCandidates();
+      final PsiMethod method = PsiImplUtil.extractUniqueElement(getterCandidates);
+      if (method != null) return method;
+    }
+    return null;
+  }
+
+  @Nullable
   public static PsiMethod findPropertyGetter(@Nullable PsiClass aClass,
                                              String propertyName,
                                              @Nullable Boolean isStatic,
@@ -179,7 +213,7 @@ public class GroovyPropertyUtils {
     return isSimplePropertyGetter(method, null);
   }//do not check return type
 
-  public static boolean isSimplePropertyGetter(PsiMethod method, String propertyName) {
+  public static boolean isSimplePropertyGetter(PsiMethod method, @Nullable String propertyName) {
     return isSimplePropertyGetter(method, propertyName, false);
   }
 
@@ -203,7 +237,7 @@ public class GroovyPropertyUtils {
     return isSimplePropertySetter(method, null);
   }
 
-  public static boolean isSimplePropertySetter(PsiMethod method, String propertyName) {
+  public static boolean isSimplePropertySetter(PsiMethod method, @Nullable String propertyName) {
     return isSimplePropertySetter(method, propertyName, false);
   }
 

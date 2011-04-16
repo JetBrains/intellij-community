@@ -414,11 +414,14 @@ public class ExpressionGenerator extends Generator {
 
   @Override
   public void visitUnaryExpression(GrUnaryExpression expression) {
+    final boolean postfix = expression instanceof GrPostfixExpression;
+
     final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(expression.multiResolve(false));
     final PsiElement resolved = resolveResult.getElement();
-
     final GrExpression operand = expression.getOperand();
+
     if (resolved instanceof PsiMethod) {
+      if (generatePrefixIncDec(postfix, (PsiMethod)resolved, operand, expression)) return;
       invokeMethodOn(
         ((PsiMethod)resolved),
         operand,
@@ -430,7 +433,7 @@ public class ExpressionGenerator extends Generator {
       );
     }
     else if (operand != null) {
-      if (expression instanceof GrPostfixExpression) {
+      if (postfix) {
         operand.accept(this);
         builder.append(expression.getOperationToken().getText());
       }
@@ -440,6 +443,66 @@ public class ExpressionGenerator extends Generator {
       }
     }
     //todo implement ~"dfjkd" case
+  }
+
+  private boolean generatePrefixIncDec(boolean postfix,
+                                       PsiMethod method,
+                                       GrExpression operand,
+                                       GrUnaryExpression unary) {
+    IElementType opType = unary.getOperationTokenType();
+    if (postfix || opType != mINC && opType != mDEC) return false;
+    if (!(operand instanceof GrReferenceExpression)) return false;
+
+    final GrExpression qualifier = ((GrReferenceExpression)operand).getQualifier();
+    final GroovyResolveResult resolveResult = ((GrReferenceExpression)operand).advancedResolve();
+    final PsiElement resolved = resolveResult.getElement();
+    if (resolved instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertyGetter((PsiMethod)resolved)) {
+      final PsiMethod getter = (PsiMethod)resolved;
+      final String propertyName = GroovyPropertyUtils.getPropertyNameByGetter(getter);
+      final PsiType type;
+      if (qualifier == null) {
+        type = null;
+      }
+      else {
+        type = qualifier.getType();
+        if (type == null) return false;
+      }
+      final PsiMethod setter = GroovyPropertyUtils.findPropertySetter(type, propertyName, unary);
+      if (setter == null) return false;
+
+      StringBuilder builder = new StringBuilder();
+      final ExpressionGenerator generator = new ExpressionGenerator(builder, context);
+      generator.invokeMethodOn(
+        method,
+        operand,
+        GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
+        resolveResult.getSubstitutor(),
+        unary
+      );
+
+      final GrExpression fromText = factory.createExpressionFromText(builder.toString(), unary);
+      invokeMethodOn(
+        setter,
+        qualifier,
+        new GrExpression[]{fromText}, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
+        resolveResult.getSubstitutor(),
+        unary
+      );
+    }
+    else if (resolved instanceof PsiVariable) {
+      builder.append('(');
+      operand.accept(this);
+      builder.append(" = ");
+      invokeMethodOn(
+        method,
+        operand,
+        GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
+        resolveResult.getSubstitutor(),
+        unary
+      );
+      builder.append(')');
+    }
+    return true;
   }
 
   @Override

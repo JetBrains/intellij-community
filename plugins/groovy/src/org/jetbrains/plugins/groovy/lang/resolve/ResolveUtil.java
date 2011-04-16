@@ -27,7 +27,6 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -141,11 +140,14 @@ public class ResolveUtil {
     if (type instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass psiClass = resolveResult.getElement();
+      final PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
+      state = state.put(PsiSubstitutor.KEY, substitutor.putAll(resolveResult.getSubstitutor()));
       if (psiClass != null) {
         if (!psiClass.processDeclarations(processor, state, null, place)) return false;
       }
     }
-    return processNonCodeMethods(type, processor, place, state);
+    if (!processNonCodeMethods(type, processor, place, state)) return false;
+    return processCategoryMembers(place, processor);
   }
 
   public static boolean processNonCodeMethods(PsiType type,
@@ -357,7 +359,7 @@ public class ResolveUtil {
     return resolveLabelTargets(labelName, element, isBreak).first;
   }
 
-  public static boolean processCategoryMembers(PsiElement place, ResolverProcessor processor) {
+  public static boolean processCategoryMembers(PsiElement place, PsiScopeProcessor processor) {
     PsiElement prev = null;
     Ref<Boolean> result = new Ref<Boolean>(null);
     while (place != null) {
@@ -371,7 +373,7 @@ public class ResolveUtil {
     return true;
   }
 
-  private static boolean categoryIteration(PsiElement place, ResolverProcessor processor, PsiElement prev, Ref<Boolean> result) {
+  private static boolean categoryIteration(PsiElement place, PsiScopeProcessor processor, PsiElement prev, Ref<Boolean> result) {
     if (!(place instanceof GrMethodCall)) return false;
 
     final GrMethodCall call = (GrMethodCall)place;
@@ -587,18 +589,33 @@ public class ResolveUtil {
                                                           @Nullable String methodName,
                                                           @NotNull GroovyPsiElement place,
                                                           @Nullable PsiType... argumentTypes) {
+    return getMethodCandidates(thisType, methodName, place, true, argumentTypes);
+  }
+
+  @NotNull
+  public static GroovyResolveResult[] getMethodCandidates(@NotNull PsiType thisType,
+                                                          @Nullable String methodName,
+                                                          @NotNull GroovyPsiElement place,
+                                                          boolean resolveClosures,
+                                                          @Nullable PsiType... argumentTypes) {
     if (methodName == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     MethodResolverProcessor processor =
       new MethodResolverProcessor(methodName, place, false, thisType, argumentTypes, PsiType.EMPTY_ARRAY);
-    processCandidatesInner(thisType, place, processor);
+    processAllDeclarations(thisType, processor, ResolveState.initial(), place);
     boolean hasApplicableMethods = processor.hasApplicableCandidates();
     final GroovyResolveResult[] methodCandidates = processor.getCandidates();
     if (hasApplicableMethods && methodCandidates.length == 1) return methodCandidates;
 
-    PropertyResolverProcessor propertyResolver = new PropertyResolverProcessor(methodName, place);
-    processCandidatesInner(thisType, place, propertyResolver);
-    final GroovyResolveResult[] allPropertyCandidates = propertyResolver.getCandidates();
+    final GroovyResolveResult[] allPropertyCandidates;
+    if (resolveClosures) {
+      PropertyResolverProcessor propertyResolver = new PropertyResolverProcessor(methodName, place);
+      processAllDeclarations(thisType, propertyResolver, ResolveState.initial(), place);
+      allPropertyCandidates = propertyResolver.getCandidates();
+    }
+    else {
+      allPropertyCandidates = GroovyResolveResult.EMPTY_ARRAY;
+    }
 
     List<GroovyResolveResult> propertyCandidates = new ArrayList<GroovyResolveResult>(allPropertyCandidates.length);
     for (GroovyResolveResult candidate : allPropertyCandidates) {
@@ -629,7 +646,7 @@ public class ResolveUtil {
     //search for getters
     for (String getterName : GroovyPropertyUtils.suggestGettersName(methodName)) {
       AccessorResolverProcessor getterResolver = new AccessorResolverProcessor(getterName, place, true);
-      processCandidatesInner(thisType, place, getterResolver);
+      processAllDeclarations(thisType, getterResolver, ResolveState.initial(), place);
       final GroovyResolveResult[] candidates = getterResolver.getCandidates(); //can be only one candidate
       final List<GroovyResolveResult> applicable = new ArrayList<GroovyResolveResult>();
       for (GroovyResolveResult candidate : candidates) {
@@ -655,25 +672,6 @@ public class ResolveUtil {
 
     final GrClosureSignature signature = ((GrClosureType)type).getSignature();
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argTypes, place);
-  }
-
-  private static void processCandidatesInner(PsiType thisType, GroovyPsiElement place, ResolverProcessor processor) {
-    final ResolveState state;
-    if (thisType instanceof PsiClassType) {
-      final PsiClassType classtype = (PsiClassType)thisType;
-      final PsiClassType.ClassResolveResult resolveResult = classtype.resolveGenerics();
-      final PsiClass lClass = resolveResult.getElement();
-      state = ResolveState.initial().put(PsiSubstitutor.KEY, resolveResult.getSubstitutor());
-      if (lClass != null) {
-        lClass.processDeclarations(processor, state, null, place);
-      }
-    }
-    else {
-      state = ResolveState.initial();
-    }
-
-    processNonCodeMethods(thisType, processor, place, state);
-    processCategoryMembers(place, processor);
   }
 
   @Nullable

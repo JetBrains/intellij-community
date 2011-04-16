@@ -117,4 +117,26 @@ class Bar {
   def compareTo(def other) {1}
 }"""
   }
+
+  void testPrefixInc() {
+    addFile """
+class Bar {
+    def next() {
+        new Bar(state:state+1)
+    }
+}
+
+class Upper {
+    private test=new Test()
+    def getTest(){println "getTEst"; test}
+}
+
+class Test {
+    public state = new Bar()
+    def getBar() {println "get"; state}
+    void setBar(def bar) {println "set";state = bar}
+}
+"""
+    doTest()
+  }
 }
