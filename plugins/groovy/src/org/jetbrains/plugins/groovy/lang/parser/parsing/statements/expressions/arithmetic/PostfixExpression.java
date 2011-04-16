@@ -17,7 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -27,35 +27,26 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class PostfixExpression implements GroovyElementTypes {
 
-
-  private static final TokenSet POSTFIXES = TokenSet.create(
-          mINC,
-          mDEC
-  );
-
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
-
     PsiBuilder.Marker marker = builder.mark();
     if (PathExpression.parse(builder, parser)) {
       subParse(builder, marker);
       return true;
-    } else {
+    }
+    else {
       marker.drop();
       return false;
     }
   }
 
-  private static void subParse(PsiBuilder builder,
-                               PsiBuilder.Marker marker
-  ) {
-    if (ParserUtils.getToken(builder, POSTFIXES)) {
+  private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker) {
+    if (ParserUtils.getToken(builder, TokenSets.POSTFIXES)) {
       PsiBuilder.Marker newMarker = marker.precede();
       marker.done(POSTFIX_EXPRESSION);
       subParse(builder, newMarker);
-    } else {
+    }
+    else {
       marker.drop();
     }
   }
-
-
 }

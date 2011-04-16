@@ -196,4 +196,14 @@ public abstract class TokenSets {
   );
 
   public static final TokenSet SHIFT_SIGNS = TokenSet.create(COMPOSITE_LSHIFT_SIGN, COMPOSITE_RSHIFT_SIGN, COMPOSITE_TRIPLE_SHIFT_SIGN);
+
+  public static final TokenSet POSTFIXES = TokenSet.create(mINC,mDEC);
+  public static final TokenSet PREFIXES = TokenSet.create(
+          mPLUS,
+          mMINUS,
+          mINC,
+          mDEC,
+          mBNOT,
+          mLNOT
+  );
 }
