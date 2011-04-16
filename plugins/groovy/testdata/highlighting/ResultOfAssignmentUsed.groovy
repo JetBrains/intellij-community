@@ -6,4 +6,14 @@ public class AssResult {
     print <warning descr="Result of assignment expression used">vs = 4</warning>
     println ps
   }
+
+  def assUsed() {
+    def a = 2
+    <warning descr="Result of assignment expression used">a = 3</warning>
+  }
+
+  void assIsNotUsed() {
+    def a = 2
+    a = 3
+  }
 }
