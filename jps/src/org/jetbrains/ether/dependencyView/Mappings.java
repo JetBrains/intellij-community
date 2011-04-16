@@ -179,14 +179,14 @@ public class Mappings {
 
     public Callbacks.Backend getCallback() {
         return new Callbacks.Backend() {
-
-            public void associate(final String classFileName, final String sourceFileName, final ClassReader cr) {
+            public void associate(final String classFileName, final Callbacks.SourceFileNameLookup sourceFileName, final ClassReader cr) {
                 final StringCache.S classFileNameS = StringCache.get(project.getRelativePath(classFileName));
-                final StringCache.S sourceFileNameS = StringCache.get(project.getRelativePath(sourceFileName));
-
                 final Pair<ClassRepr, Set<UsageRepr.Usage>> result = ClassfileAnalyzer.analyze(classFileNameS, cr);
                 final ClassRepr repr = result.fst;
                 final Set<UsageRepr.Usage> localUsages = result.snd;
+
+                final StringCache.S sourceFileNameS =
+                        StringCache.get(project.getRelativePath(sourceFileName.get(repr == null ? null : repr.getSourceFileName ().value)));
 
                 for (UsageRepr.Usage u : localUsages) {
                     updateDependency(sourceFileNameS, u.getOwner());

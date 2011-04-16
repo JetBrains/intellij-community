@@ -52,6 +52,9 @@ public class StringCache {
     private static int index = 0;
 
     public static S get (final String s) {
+//        if (s == null)
+//            return null;
+//
         S r = map.get(s);
 
         if (r == null) {

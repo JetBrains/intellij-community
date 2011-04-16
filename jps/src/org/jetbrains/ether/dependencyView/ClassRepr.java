@@ -16,6 +16,7 @@ import java.util.*;
  * To change this template use File | Settings | File Templates.
  */
 public class ClassRepr extends Proto {
+    public final StringCache.S sourceFileName;
     public final StringCache.S fileName;
     public final TypeRepr.AbstractType superClass;
     public final Set<TypeRepr.AbstractType> interfaces;
@@ -88,9 +89,10 @@ public class ClassRepr extends Proto {
         }
     }
 
-    public ClassRepr(final int a, final StringCache.S fn, final StringCache.S n, final StringCache.S sig, final String sup, final String[] i, final Collection<String> ns, final Set<FieldRepr> f, final Set<MethodRepr> m) {
+    public ClassRepr (final int a, final StringCache.S sn, final StringCache.S fn, final StringCache.S n, final StringCache.S sig, final String sup, final String[] i, final Collection<String> ns, final Set<FieldRepr> f, final Set<MethodRepr> m) {
         super(a, sig, n);
         fileName = fn;
+        sourceFileName = sn;
         superClass = TypeRepr.createClassType(sup);
         interfaces = (Set<TypeRepr.AbstractType>) TypeRepr.createClassType(i, new HashSet<TypeRepr.AbstractType>());
         nestedClasses = (Set<TypeRepr.AbstractType>) TypeRepr.createClassType(ns, new HashSet<TypeRepr.AbstractType>());
@@ -101,6 +103,7 @@ public class ClassRepr extends Proto {
     public ClassRepr(final BufferedReader r) {
         super(r);
         fileName = StringCache.get(RW.readString(r));
+        sourceFileName = null;
         superClass = TypeRepr.reader.read(r);
         interfaces = (Set<TypeRepr.AbstractType>) RW.readMany(r, TypeRepr.reader, new HashSet<TypeRepr.AbstractType>());
         nestedClasses = (Set<TypeRepr.AbstractType>) RW.readMany(r, TypeRepr.reader, new HashSet<TypeRepr.AbstractType>());
@@ -146,5 +149,9 @@ public class ClassRepr extends Proto {
 
     public UsageRepr.Usage createUsage () {
         return UsageRepr.createClassUsage(name);
+    }
+
+    public StringCache.S getSourceFileName() {
+        return sourceFileName;
     }
 }

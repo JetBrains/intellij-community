@@ -96,6 +96,7 @@ public class ClassfileAnalyzer {
         String superClass;
         String[] interfaces;
         String signature;
+        StringCache.S sourceFile;
 
         final Set<MethodRepr> methods = new HashSet<MethodRepr>();
         final Set<FieldRepr> fields = new HashSet<FieldRepr>();
@@ -112,7 +113,7 @@ public class ClassfileAnalyzer {
 
         public Pair<ClassRepr, Set<UsageRepr.Usage>> getResult() {
             final ClassRepr repr = takeIntoAccount ?
-                    new ClassRepr(access, fileName, name, StringCache.get(signature), superClass, interfaces, nestedClasses, fields, methods) : null;
+                    new ClassRepr(access, sourceFile, fileName, name, StringCache.get(signature), superClass, interfaces, nestedClasses, fields, methods) : null;
 
             if (repr != null) {
                 repr.updateClassUsages(usages);
@@ -132,6 +133,11 @@ public class ClassfileAnalyzer {
             interfaces = i;
 
             processSignature(sig);
+        }
+
+        @Override
+        public void visitSource(String source, String debug) {
+            sourceFile = StringCache.get (source);
         }
 
         @Override

@@ -3,6 +3,11 @@ package org.jetbrains.jps.builders
 import org.jetbrains.jps.*
 import org.jetbrains.jps.builders.javacApi.Java16ApiCompilerRunner
 import org.jetbrains.ether.dependencyView.Callbacks
+import org.apache.tools.ant.BuildListener
+import org.apache.tools.ant.BuildEvent
+import java.util.regex.Pattern
+import java.util.regex.Matcher
+import org.jetbrains.ether.dependencyView.AntListener
 
 /**
  * @author max
@@ -52,6 +57,7 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     params.debug = String.valueOf(debugInfo);
     params.nowarn = String.valueOf(nowarn);
     params.deprecation = String.valueOf(deprecation);
+    params.verbose = "true"
 
     def javacExecutable = getJavacExecutable(module)
     if (javacExecutable != null) {
@@ -59,6 +65,10 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     }
 
     def ant = module.project.binding.ant
+
+    final BuildListener listener = new AntListener (state.targetFolder, state.sourceRoots, state.callback);
+
+    ant.project.addBuildListener (listener);
 
     ant.javac(params) {
       if (customArgs) {
@@ -83,6 +93,8 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
         }
       }
     }
+
+    ant.project.removeBuildListener (listener);
   }
 
   private String getJavacExecutable(ModuleChunk module) {

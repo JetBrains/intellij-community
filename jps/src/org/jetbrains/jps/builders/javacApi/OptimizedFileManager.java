@@ -182,16 +182,16 @@ public class OptimizedFileManager extends DefaultFileManager {
                     }
 
                     public void write(int b) throws IOException {
-                        throw new RuntimeException();
+                        assert (false);
                     }
 
                     public void write(byte[] b) throws IOException {
-                        throw new RuntimeException();
+                        assert (false);
                     }
 
                     public void write(byte[] b, int off, int len) throws IOException {
                         if (kind.equals(JavaFileObject.Kind.CLASS) && callback != null) {
-                            callback.associate(classFileName, sourceFileName, new ClassReader(b, off, len));
+                            callback.associate(classFileName, Callbacks.getDefaultLookup(sourceFileName), new ClassReader(b, off, len));
                         }
                         result.write(b, off, len);
                     }

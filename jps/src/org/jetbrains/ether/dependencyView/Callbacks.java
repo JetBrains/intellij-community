@@ -12,8 +12,20 @@ import java.util.Set;
  * To change this template use File | Settings | File Templates.
  */
 public class Callbacks {
+    public interface SourceFileNameLookup {
+        public String get (String sourceAttribute);
+    }
+
+    public static SourceFileNameLookup getDefaultLookup (final String name) {
+        return new SourceFileNameLookup() {
+            public String get(final String sourceAttribute) {
+                return name;
+            }
+        };
+    }
+
     public interface Backend {
-        public void associate (String classFileName, String sourceFileName, ClassReader cr);
+        public void associate (String classFileName, SourceFileNameLookup sourceLookup, ClassReader cr);
         public void associate (Set<ClassRepr> classes, Set<UsageRepr.Usage> usages, String sourceFileName);
     }
 }
