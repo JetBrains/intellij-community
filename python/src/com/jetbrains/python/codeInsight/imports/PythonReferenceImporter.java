@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -120,6 +121,9 @@ public class PythonReferenceImporter implements ReferenceImporter {
           }
         }
       }
+    }
+    for(PyImportCandidateProvider provider: Extensions.getExtensions(PyImportCandidateProvider.EP_NAME)) {
+      provider.addImportCandidates(reference, ref_text, fix);
     }
     if (fix.getCandidatesCount() > 0) {
       fix.sortCandidates();

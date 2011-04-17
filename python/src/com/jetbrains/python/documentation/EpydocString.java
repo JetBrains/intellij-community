@@ -4,10 +4,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xml.util.XmlTagUtilBase;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author yole
  */
 public class EpydocString extends StructuredDocString {
+  public static String[] RAISES_TAGS = new String[] { "raises", "raise", "except", "exception" };
+
   public EpydocString(String docstringText) {
     super(docstringText, "@");
   }
@@ -24,6 +28,11 @@ public class EpydocString extends StructuredDocString {
   public String getReturnType() {
     String value = getTagValue("rtype");
     return removeInlineMarkup(value);
+  }
+
+  @Override
+  public String getReturnDescription() {
+    return inlineMarkupToHTML(getTagValue("return"));
   }
 
   @Override
@@ -44,6 +53,16 @@ public class EpydocString extends StructuredDocString {
       value = getTagValue("param", "**" + paramName);
     }
     return inlineMarkupToHTML(value);
+  }
+
+  @Override
+  public List<String> getRaisedExceptions() {
+    return getTagArguments(RAISES_TAGS);
+  }
+
+  @Override
+  public String getRaisedExceptionDescription(String exceptionName) {
+    return removeInlineMarkup(getTagValue(RAISES_TAGS, exceptionName));
   }
 
   @Nullable
@@ -92,7 +111,7 @@ public class EpydocString extends StructuredDocString {
     }
 
     protected void appendMarkup(char markupChar, String markupContent) {
-      myResult.append(markupContent);
+      appendWithMarkup(markupContent);
     }
 
     public String result() {

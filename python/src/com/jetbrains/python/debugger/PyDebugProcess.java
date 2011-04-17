@@ -250,6 +250,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return myDebugger.consoleExec(frame.getThreadId(), frame.getFrameId(), command);
   }
 
+  @Nullable
   public XValueChildrenList loadFrame() throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
     //do not reload frame every time it is needed, because due to bug in pdb, reloading frame clears all variable changes

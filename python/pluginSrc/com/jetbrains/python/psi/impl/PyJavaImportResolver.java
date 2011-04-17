@@ -11,16 +11,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PyJavaImportResolver implements PyImportResolver {
   @Nullable
-  public PsiElement resolveImportReference(final PyElement importElement, final String importText, PsiElement importFrom) {
-    String fqn = importText;
-    if (importFrom instanceof PsiDirectory) {
-      PsiPackage fromPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory) importFrom);
-      if (fromPackage != null) {
-        importFrom = fromPackage;
-      }
-    }
-    if (importFrom instanceof PsiPackage) {
-      fqn = ((PsiPackage) importFrom).getQualifiedName() + "." + fqn;
+  public PsiElement resolveImportReference(final PyElement importElement, final PyQualifiedName importText, PyQualifiedName importFrom) {
+    String fqn = importText.toString();
+    if (importFrom != null) {
+      fqn = importFrom.toString() + "." + fqn;
     }
 
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(importElement.getProject());

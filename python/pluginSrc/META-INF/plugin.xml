@@ -23,12 +23,14 @@
     <moduleConfigurationEditorProvider implementation="com.jetbrains.python.module.PythonModuleConfigurationEditorProvider"/>
     <applicationService serviceInterface="com.jetbrains.python.run.PyCommonOptionsFormFactory"
                         serviceImplementation="com.jetbrains.python.run.PyPluginCommonOptionsFormFactory"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.python.psi.impl.PyConstructorArgumentCompletionContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
     <importResolver implementation="com.jetbrains.python.psi.impl.PyJavaImportResolver"/>
     <typeProvider implementation="com.jetbrains.python.psi.impl.PyJavaTypeProvider"/>
     <pySuperMethodsSearch implementation="com.jetbrains.python.psi.impl.PyJavaSuperMethodsSearchExecutor"/>
+    <importCandidateProvider implementation="com.jetbrains.python.psi.impl.PyJavaImportCandidateProvider"/>
   </extensions>
 
   <application-components>

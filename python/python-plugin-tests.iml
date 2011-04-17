@@ -11,6 +11,10 @@
     <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="python-tests" />
+    <orderEntry type="module" module-name="ultimate-resources" scope="RUNTIME" />
+    <orderEntry type="module" module-name="jam-support-impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="python-plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="yaml-plugin" scope="RUNTIME" />
   </component>
 </module>
 

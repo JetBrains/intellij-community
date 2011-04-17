@@ -1,11 +1,11 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.*;
 import com.intellij.util.Processor;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameterList;
-import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
@@ -21,19 +21,30 @@ import java.util.List;
  */
 public class PyJavaTypeProvider extends PyTypeProviderBase {
   @Nullable
-  public PyType getReferenceType(@NotNull final PsiElement referenceTarget, TypeEvalContext context) {
+  public PyType getReferenceType(@NotNull final PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PsiClass) {
       return new PyJavaClassType((PsiClass) referenceTarget);
     }
+    if (referenceTarget instanceof PsiPackage) {
+      return new PyJavaPackageType((PsiPackage) referenceTarget, anchor == null ? null : ModuleUtil.findModuleForPsiElement(anchor));
+    }
     if (referenceTarget instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) referenceTarget;
-      final PsiType type = method.getReturnType();
-      if (type instanceof PsiClassType) {
-        final PsiClassType classType = (PsiClassType)type;
-        final PsiClass psiClass = classType.resolve();
-        if (psiClass != null) {
-          return new PyJavaClassType(psiClass);
-        }
+      return asPyType(method.getReturnType());
+    }
+    if (referenceTarget instanceof PsiField) {
+      return asPyType(((PsiField)referenceTarget).getType());
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType asPyType(PsiType type) {
+    if (type instanceof PsiClassType) {
+      final PsiClassType classType = (PsiClassType)type;
+      final PsiClass psiClass = classType.resolve();
+      if (psiClass != null) {
+        return new PyJavaClassType(psiClass);
       }
     }
     return null;

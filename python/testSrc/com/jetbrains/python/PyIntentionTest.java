@@ -1,6 +1,9 @@
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.jetbrains.python.documentation.DocStringFormat;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -149,6 +152,10 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
     doTest(PyBundle.message("INTN.quoted.string.double.to.single"));
   }
 
+  public void testQuotedStringDoubleSlash() {      //PY-3295
+    doTest(PyBundle.message("INTN.quoted.string.single.to.double"));
+  }
+
   public void testEscapedQuotedString() { //PY-2656
     doTest(PyBundle.message("INTN.quoted.string.single.to.double"));
   }
@@ -169,5 +176,13 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
 
   public void testTransformConditionalExpression() { //PY-3094
     doTest(PyBundle.message("INTN.transform.into.if.else.statement"));
+  }
+
+  public void testDocStub() {
+    CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
+    codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    documentationSettings.setFormat(DocStringFormat.REST);
+    doTest(PyBundle.message("INTN.doc.string.stub"));
   }
 }

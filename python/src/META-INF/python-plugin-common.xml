@@ -23,6 +23,7 @@
     <lang.psiStructureViewFactory language="Python" implementationClass="com.jetbrains.python.structureView.PyStructureViewFactory"/>
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.documentation.PythonDocumentationProvider"/>
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.console.PydevDocumentationProvider"/>
+    <lang.emacs language="Python" implementationClass="com.jetbrains.python.editor.PyEmacsHandler"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDumbAwareAnnotator"/>
     <backspaceHandlerDelegate implementation="com.jetbrains.python.editor.PythonBackspaceHandler"/>
@@ -191,6 +192,11 @@
 
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.PyTransformConditionalExpressionIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyDocStubIntention</className>
       <category>Python</category>
     </intentionAction>
 
@@ -477,6 +483,7 @@
                     interface="com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStubType"/>
     <extensionPoint qualifiedName="Pythonid.knownDecoratorProvider" interface="com.jetbrains.python.psi.PyKnownDecoratorProvider"/>
     <extensionPoint qualifiedName="Pythonid.documentationLinkProvider" interface="com.jetbrains.python.documentation.PythonDocumentationLinkProvider"/>
+    <extensionPoint qualifiedName="Pythonid.importCandidateProvider" interface="com.jetbrains.python.codeInsight.imports.PyImportCandidateProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">

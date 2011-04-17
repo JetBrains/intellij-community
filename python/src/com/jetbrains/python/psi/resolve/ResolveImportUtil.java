@@ -138,16 +138,14 @@ public class ResolveImportUtil {
       }
     }
     else if (importStatement instanceof PyImportStatement) { // "import foo"
-      return resolveModule(qName, file, absolute_import_enabled, 0);
+      final List<PsiElement> result = resolveModule(qName, file, absolute_import_enabled, 0);
+      if (result.size() > 0) {
+        return result;
+      }
     }
     // in-python resolution failed
-    if (moduleQName != null) {
-      final List<PsiElement> importFrom = resolveModule(moduleQName, file, false, 0);
-      final PsiElement result = resolveForeignImport(import_element, StringUtil.join(qName.getComponents(), "."),
-                                                     importFrom.isEmpty() ? null : importFrom.get(0));
-      return result != null ? Collections.singletonList(result) : Collections.<PsiElement>emptyList();
-    }
-    return Collections.emptyList();
+    final PsiElement result = resolveForeignImport(import_element, qName, moduleQName);
+    return result != null ? Collections.singletonList(result) : Collections.<PsiElement>emptyList();
   }
 
   @NotNull
@@ -500,7 +498,7 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PsiElement resolveForeignImport(final PyElement importElement, final String importText, final PsiElement importFrom) {
+  private static PsiElement resolveForeignImport(final PyElement importElement, final PyQualifiedName importText, final PyQualifiedName importFrom) {
     for (PyImportResolver resolver : Extensions.getExtensions(PyImportResolver.EP_NAME)) {
       PsiElement result = resolver.resolveImportReference(importElement, importText, importFrom);
       if (result != null) {

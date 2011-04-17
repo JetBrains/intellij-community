@@ -6,6 +6,8 @@ import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.impl.rules.UsageTypeProvider;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeReference;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 
 /**
@@ -19,13 +21,16 @@ public class PyUsageTypeProvider implements UsageTypeProvider {
 
   public UsageType getUsageType(PsiElement element) {
     if (element instanceof PyElement) {
-      if (PsiTreeUtil.getParentOfType(element, PyImportStatement.class, PyFromImportStatement.class) != null) {
+      if (PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class) != null) {
         return IN_IMPORT;
       }
       if (element instanceof PyQualifiedExpression) {
         final PyExpression qualifier = ((PyQualifiedExpression)element).getQualifier();
-        if (qualifier != null && qualifier.getType(TypeEvalContext.fast()) == null) {
-          return UNTYPED;
+        if (qualifier != null) {
+          final PyType type = qualifier.getType(TypeEvalContext.fast());
+          if (type == null || type instanceof PyTypeReference) {
+            return UNTYPED;
+          }
         }
       }
       if (element instanceof PyReferenceExpression) {

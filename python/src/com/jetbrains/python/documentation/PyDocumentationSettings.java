@@ -17,11 +17,18 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
   public String myDocStringFormat = DocStringFormat.PLAIN;
 
   public boolean isEpydocFormat() {
-    return DocStringFormat.EPYDOC.equals(myDocStringFormat);
+    return DocStringFormat.EPYTEXT.equals(myDocStringFormat);
+  }
+  public boolean isReSTFormat() {
+    return DocStringFormat.REST.equals(myDocStringFormat);
   }
 
   public static PyDocumentationSettings getInstance(Project project) {
     return ServiceManager.getService(project, PyDocumentationSettings.class);
+  }
+
+  public void setFormat(String format) {
+    myDocStringFormat = format;
   }
 
   @Override

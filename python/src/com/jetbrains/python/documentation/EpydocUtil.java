@@ -28,7 +28,7 @@ public class EpydocUtil {
       if (prevElement instanceof PyAssignmentStatement) {
         final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)prevElement;
         final ScopeOwner scope = PsiTreeUtil.getParentOfType(prevElement, ScopeOwner.class);
-        if (scope instanceof PyClass) {
+        if (scope instanceof PyClass || scope instanceof PyFile) {
           return true;
         }
         if (scope instanceof PyFunction) {

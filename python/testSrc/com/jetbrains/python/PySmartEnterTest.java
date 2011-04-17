@@ -1,11 +1,14 @@
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.jetbrains.python.documentation.DocStringFormat;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
 import java.util.List;
@@ -98,6 +101,22 @@ public class PySmartEnterTest extends PyLightFixtureTestCase {
   }
 
   public void testPy3209() {
+    doTest();
+  }
+
+  public void testDocRest() {
+    CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
+    codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    documentationSettings.setFormat(DocStringFormat.REST);
+    doTest();
+  }
+
+  public void testDocEpytext() {
+    CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
+    codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    documentationSettings.setFormat(DocStringFormat.EPYTEXT);
     doTest();
   }
 }

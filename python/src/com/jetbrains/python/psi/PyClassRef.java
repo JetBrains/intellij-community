@@ -29,6 +29,11 @@ public class PyClassRef {
   }
 
   @Nullable
+  public PsiElement getElement() {
+    return myElement;
+  }
+
+  @Nullable
   public String getClassName() {
     return myElement instanceof PyClass ? ((PyClass) myElement).getName() : null;
   }
