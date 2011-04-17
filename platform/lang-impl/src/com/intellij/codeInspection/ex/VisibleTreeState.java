@@ -53,12 +53,12 @@ public class VisibleTreeState{
   public VisibleTreeState() {
   }
 
-  public void expandNode(String nodeTitle) {
-    myExpandedNodes.add(new State(nodeTitle));
+  public void expandNode(InspectionConfigTreeNode node) {
+    myExpandedNodes.add(getState(node));
   }
 
-  public void collapseNode(String nodeTitle) {
-    myExpandedNodes.remove(new State(nodeTitle));
+  public void collapseNode(InspectionConfigTreeNode node) {
+    myExpandedNodes.remove(getState(node));
   }
 
   public void restoreVisibleState(Tree tree) {
@@ -77,25 +77,13 @@ public class VisibleTreeState{
   }
 
   private void traverseNodes(final DefaultMutableTreeNode root, List<TreePath> pathsToExpand, List<TreePath> toSelect) {
-    final Descriptor descriptor = ((InspectionConfigTreeNode)root).getDesriptor();
+    final State state = getState((InspectionConfigTreeNode)root);
     final TreeNode[] rootPath = root.getPath();
-    if (descriptor != null) {
-      final String shortName = descriptor.getKey().toString();
-      if (mySelectedNodes.contains(new State(descriptor))) {
-        toSelect.add(new TreePath(rootPath));
-      }
-      if (myExpandedNodes.contains(new State(descriptor))) {
-        pathsToExpand.add(new TreePath(rootPath));
-      }
+    if (mySelectedNodes.contains(state)) {
+      toSelect.add(new TreePath(rootPath));
     }
-    else {
-      final String str = ((InspectionConfigTreeNode)root).getGroupName();
-      if (mySelectedNodes.contains(new State(str))) {
-        toSelect.add(new TreePath(rootPath));
-      }
-      if (myExpandedNodes.contains(new State(str))) {
-        pathsToExpand.add(new TreePath(rootPath));
-      }
+    if (myExpandedNodes.contains(state)) {
+      pathsToExpand.add(new TreePath(rootPath));
     }
     for (int i = 0; i < root.getChildCount(); i++) {
       traverseNodes((DefaultMutableTreeNode)root.getChildAt(i), pathsToExpand, toSelect);
@@ -110,21 +98,26 @@ public class VisibleTreeState{
       while (expanded.hasMoreElements()) {
         final TreePath treePath = expanded.nextElement();
         final InspectionConfigTreeNode node = (InspectionConfigTreeNode)treePath.getLastPathComponent();
-        final Descriptor descriptor = node.getDesriptor();
-        myExpandedNodes.add(getState(node, descriptor));
+        myExpandedNodes.add(getState(node));
       }
     }
 
     setSelectionPaths(tree.getSelectionPaths());
   }
 
-  private static State getState(InspectionConfigTreeNode node, Descriptor descriptor) {
+  private static State getState(InspectionConfigTreeNode node) {
+    Descriptor descriptor = node.getDesriptor();
     final State expandedNode;
     if (descriptor != null) {
       expandedNode = new State(descriptor);
     }
     else {
-      expandedNode = new State(node.getGroupName());
+      final StringBuilder buf = new StringBuilder();
+      while (node.getParent() != null) {
+        buf.append(node.getGroupName());
+        node = (InspectionConfigTreeNode)node.getParent();
+      }
+      expandedNode = new State(buf.toString());
     }
     return expandedNode;
   }
@@ -134,8 +127,7 @@ public class VisibleTreeState{
     if (selectionPaths != null) {
       for (TreePath selectionPath : selectionPaths) {
         final InspectionConfigTreeNode node = (InspectionConfigTreeNode)selectionPath.getLastPathComponent();
-        final Descriptor descriptor = node.getDesriptor();
-        mySelectedNodes.add(getState(node, descriptor));
+        mySelectedNodes.add(getState(node));
       }
     }
   }
