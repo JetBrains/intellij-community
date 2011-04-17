@@ -31,6 +31,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ui.Table;
@@ -61,7 +62,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   private String[] myNewNames;
   private PsiNamedElement[] myRenames;
   private MyTableModel myTableModel;
-  private Table myTable;
+  private JBTable myTable;
   private JPanel myPanelForPreview;
   private JButton mySelectAllButton;
   private JButton myUnselectAllButton;
@@ -231,6 +232,11 @@ public class AutomaticRenamingDialog extends DialogWrapper {
         myRenamer.doNotRename(element);
       }
     }
+  }
+
+  private void createUIComponents() {
+    myTable = new JBTable();
+    myTable.setRowHeight(myTable.getFontMetrics(UIManager.getFont("Table.font").deriveFont(Font.BOLD)).getHeight() + 4);
   }
 
   private class MyTableModel extends AbstractTableModel {
