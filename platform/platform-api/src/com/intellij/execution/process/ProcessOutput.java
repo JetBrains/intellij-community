@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.List;
@@ -29,6 +30,7 @@ public class ProcessOutput {
   private boolean myTimeout;
 
   public ProcessOutput() {
+    myExitCode = -1; // until set explicitly, exit code denotes an error.
   }
 
   void appendStdout(String text) {
@@ -74,5 +76,19 @@ public class ProcessOutput {
   private List<String> splitLines(String s) {
     String converted = StringUtil.convertLineSeparators(s);
     return StringUtil.split(converted, "\n");
+  }
+
+  /**
+   * If exit code is nonzero or the process timed out, logs stdout and exit code and returns false,
+   * else just returns true.
+   * @param logger where to put error information
+   * @return true iff exit code is zero
+   */
+  public boolean checkSuccess(Logger logger) {
+    if (getExitCode() != 0) {
+      logger.error(getStderr() + (isTimeout()? "\nTimed out" : "\nExit code " + getExitCode()));
+      return false;
+    }
+    return true;
   }
 }
