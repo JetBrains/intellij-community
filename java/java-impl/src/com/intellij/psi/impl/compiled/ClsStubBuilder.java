@@ -66,7 +66,7 @@ public class ClsStubBuilder {
       }
     }
 
-    final PsiJavaFileStubImpl file = new PsiJavaFileStubImpl("dont.know.yet", true);
+    final PsiJavaFileStubImpl file = new PsiJavaFileStubImpl("do.not.know.yet", true);
     try {
       final PsiClassStub result = buildClass(vFile, bytes, file, 0);
       if (result == null) return null;
@@ -341,6 +341,7 @@ public class ClsStubBuilder {
       return myLexer.getTokenType() == null;
     }
 
+    @Nullable
     public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
       if ((access & Opcodes.ACC_SYNTHETIC) != 0) return null;
       if (!isCorrectName(name)) return null;
@@ -611,6 +612,7 @@ public class ClsStubBuilder {
       });
     }
 
+    @Nullable
     public AnnotationVisitor visitParameterAnnotation(final int parameter, final String desc, final boolean visible) {
       return new AnnotationTextCollector(desc, new AnnotationResultCallback() {
         public void callback(final String text) {
@@ -661,6 +663,7 @@ public class ClsStubBuilder {
       }
     }
 
+    @Nullable
     public AnnotationVisitor visitParameterAnnotation(final int parameter, String desc, boolean visible) {
       return (parameter < myParamIgnoreCount) ? null : super.visitParameterAnnotation(parameter - myParamIgnoreCount, desc, visible);
     }
