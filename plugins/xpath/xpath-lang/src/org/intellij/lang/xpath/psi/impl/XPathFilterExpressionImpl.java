@@ -51,7 +51,7 @@ public class XPathFilterExpressionImpl extends XPathElementImpl implements XPath
     @NotNull
     public XPathPredicate getPredicate() {
         final ASTNode[] nodes = getNode().getChildren(TokenSet.create(XPathElementTypes.PREDICATE));
-        assert nodes.length == 1;
+        assert nodes.length == 1 : unexpectedPsiAssertion();
         return (XPathPredicate)nodes[0].getPsi();
     }
 

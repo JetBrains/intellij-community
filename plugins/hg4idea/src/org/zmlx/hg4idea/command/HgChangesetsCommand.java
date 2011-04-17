@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.util.HgChangesetUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,8 +34,6 @@ public abstract class HgChangesetsCommand {
 
   private static final Logger LOG = Logger.getInstance(HgChangesetsCommand.class.getName());
 
-  private static final String SEPARATOR_STRING = "\u0017"; //ascii: end of transmission block
-  
   protected final Project project;
   protected final String command;
 
@@ -50,7 +49,7 @@ public abstract class HgChangesetsCommand {
   protected List<HgRevisionNumber> getRevisions(VirtualFile repo) {
     List<String> args = new ArrayList<String>(Arrays.asList(
       "--template",
-      "{rev}|{node|short}|{author}|{desc|firstline}" + SEPARATOR_STRING,
+      HgChangesetUtil.makeTemplate("{rev}", "{node|short}", "{author}", "{desc|firstline}"),
       "--quiet"
     ));
 
@@ -67,11 +66,11 @@ public abstract class HgChangesetsCommand {
       return Collections.emptyList();
     }
     
-    String[] changesets = output.split(SEPARATOR_STRING);
+    String[] changesets = output.split(HgChangesetUtil.CHANGESET_SEPARATOR);
     List<HgRevisionNumber> revisions = new ArrayList<HgRevisionNumber>(changesets.length);
     
     for(String changeset: changesets) {
-      String[] parts = StringUtils.split(changeset, "|", 4);
+      String[] parts = StringUtils.split(changeset, HgChangesetUtil.ITEM_SEPARATOR, 4);
       if (parts.length == 4) {
         revisions.add(HgRevisionNumber.getInstance(parts[0], parts[1], parts[2], parts[3]));
       } else {

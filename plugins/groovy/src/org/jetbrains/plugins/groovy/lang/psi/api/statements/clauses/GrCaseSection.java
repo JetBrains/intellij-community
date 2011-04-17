@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
@@ -26,9 +25,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
  * @author ilyas
  */
 public interface GrCaseSection extends GroovyPsiElement, GrVariableDeclarationOwner, GrStatementOwner, GrDeclarationHolder {
-
   GrCaseLabel getCaseLabel();
-
-  GrStatement[] getStatements();
-
 }

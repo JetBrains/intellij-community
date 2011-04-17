@@ -83,6 +83,8 @@
       <xs:element ref="xhtml:span"/>
       <xs:element ref="xhtml:bdo"/>
       <xs:element ref="xhtml:br"/>
+      <xs:element ref="xhtml:wbr"/>
+      <xs:element ref="xhtml:s"/>
       <xs:group ref="xhtml:ins.elem.phrasing"/>
       <xs:group ref="xhtml:del.elem.phrasing"/>
       <xs:element ref="xhtml:img"/>
@@ -200,6 +202,7 @@
     <xs:attribute ref="xml:id"/>
     <xs:attribute name="class" type="common.data.tokens"/>
     <xs:attribute name="title"/>
+    <xs:attribute name="role"/>
     <xs:attribute ref="xml:base"/>
     <xs:attribute ref="xml:space"/>
   </xs:attributeGroup>
@@ -1167,6 +1170,18 @@
       <xs:attributeGroup ref="xhtml:br.attrs"/>
     </xs:complexType>
   </xs:element>
+  <xs:element name="wbr">
+    <xs:complexType>
+      <xs:attributeGroup ref="xhtml:common.attrs"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="s">
+    <xs:complexType>
+      <xs:attributeGroup ref="xhtml:common.attrs"/>
+    </xs:complexType>
+  </xs:element>
+
   <xs:attributeGroup name="br.attrs">
     <xs:attributeGroup ref="common.attrs"/>
   </xs:attributeGroup>

@@ -345,43 +345,37 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
     if (tabSize < 0) {
       tabSize = 0;
     }
-    final StringBuffer buf = new StringBuffer();
-    try {
-      boolean special = false;
-      for (int idx = 0; idx < text.length(); idx++) {
-        char c = text.charAt(idx);
-        if (special) {
-          if (c == 't') { // convert tabs to spaces
-            for (int i = 0; i < tabSize; i++) {
-              buf.append(' ');
-            }
+    final StringBuilder buf = new StringBuilder();
+    boolean special = false;
+    for (int idx = 0; idx < text.length(); idx++) {
+      char c = text.charAt(idx);
+      if (special) {
+        if (c == 't') { // convert tabs to spaces
+          for (int i = 0; i < tabSize; i++) {
+            buf.append(' ');
           }
-          else if (c == 'r') { // remove occurrences of '\r'
-          }
-          else if (c == 'n') {
-            buf.append('\n');
-          }
-          else {
-            buf.append('\\');
-            buf.append(c);
-          }
-          special = false;
+        }
+        else if (c == 'r') { // remove occurrences of '\r'
+        }
+        else if (c == 'n') {
+          buf.append('\n');
         }
         else {
-          if (c == '\\') {
-            special = true;
-          }
-          else {
-            buf.append(c);
-          }
+          buf.append('\\');
+          buf.append(c);
+        }
+        special = false;
+      }
+      else {
+        if (c == '\\') {
+          special = true;
+        }
+        else {
+          buf.append(c);
         }
       }
-
-      return buf.toString();
     }
-    finally {
-
-    }
+    return buf.toString();
   }
 
   public void dispose() {

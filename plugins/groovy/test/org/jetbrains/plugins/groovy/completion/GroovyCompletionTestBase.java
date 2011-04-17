@@ -48,4 +48,18 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
     assertNotNull(list);
     UsefulTestCase.assertOrderedEquals(list, variants);
   }
+
+  public void checkCompletion(String before, String type, String after) {
+    myFixture.configureByText("a.groovy", before);
+    myFixture.completeBasic();
+    myFixture.type(type);
+    myFixture.checkResult(after);
+  }
+
+  public void checkSingleItemCompletion(String before, String after) {
+    myFixture.configureByText("a.groovy", before);
+    myFixture.completeBasic();
+    myFixture.checkResult(after);
+  }
+
 }

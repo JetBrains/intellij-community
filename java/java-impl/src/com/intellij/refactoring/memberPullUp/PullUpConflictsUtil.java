@@ -179,10 +179,12 @@ public class PullUpConflictsUtil {
         }
       });
       if (abstractMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && toDifferentPackage) {
-        String message = "Can't make " + RefactoringUIUtil.getDescription(abstractMethod, false) +
-                         " abstract as it won't be accessible from the subclass.";
-        message = CommonRefactoringUtil.capitalize(message);
-        conflicts.putValue(abstractMethod, message);
+        if (!isInterfaceTarget) {
+          String message = "Can't make " + RefactoringUIUtil.getDescription(abstractMethod, false) +
+                           " abstract as it won't be accessible from the subclass.";
+          message = CommonRefactoringUtil.capitalize(message);
+          conflicts.putValue(abstractMethod, message);
+        }
       }
     }
     return conflicts;

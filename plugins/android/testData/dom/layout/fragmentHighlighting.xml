@@ -1,0 +1,19 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+  <fragment class="p1.p2.MyFragmentActivity$MyFragment" android:layout_weight="1"
+            android:layout_width="0px" android:layout_height="match_parent" />
+
+  <fragment class="<error>aba</error>" android:layout_weight="1"
+            android:layout_width="0px" android:layout_height="match_parent" />
+
+  <fragment android:name="p1.p2.MyFragmentActivity$MyFragment" android:layout_weight="1"
+            android:layout_width="0px" android:layout_height="match_parent" />
+
+  <fragment android:name="<error>aba</error>" android:layout_weight="1"
+            android:layout_width="0px" android:layout_height="match_parent" />
+
+  <<error>fragment</error> class="p1.p2.MyFragmentActivity$MyFragment"/>
+
+</LinearLayout>

@@ -244,8 +244,6 @@ public class DynamicMemberUtils {
 
   private static class GrDynamicMethodWithCache extends GrDynamicMethodImpl implements DynamicElement {
 
-    private PsiType myInferredReturnType;
-    private PsiType myReturnType;
     private PsiTypeParameter[] myTypeParameters;
     private GrParameterList myParameterList;
     private String[] namedParameters;
@@ -254,8 +252,6 @@ public class DynamicMemberUtils {
 
     public GrDynamicMethodWithCache(GrMethod method, String source) {
       super(method);
-      myInferredReturnType = super.getInferredReturnType();
-      myReturnType = super.getReturnType();
       myTypeParameters = super.getTypeParameters();
       myParameterList = super.getParameterList();
       namedParameters = super.getNamedParametersArray();
@@ -265,16 +261,6 @@ public class DynamicMemberUtils {
     @Override
     public String getText() {
       return myMethod.getText();
-    }
-
-    @Override
-    public PsiType getInferredReturnType() {
-      return myInferredReturnType;
-    }
-
-    @Override
-    public PsiType getReturnType() {
-      return myReturnType;
     }
 
     @NotNull

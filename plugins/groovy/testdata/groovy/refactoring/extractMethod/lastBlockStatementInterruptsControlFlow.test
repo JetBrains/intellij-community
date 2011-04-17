@@ -1,0 +1,15 @@
+def foo() {
+    <begin>if (abc) {
+        println 'def'
+    }<end>
+}
+-----
+def foo() {
+    testMethod()
+}
+
+private def testMethod() {
+    if (abc) {
+        println 'def'
+    }
+}

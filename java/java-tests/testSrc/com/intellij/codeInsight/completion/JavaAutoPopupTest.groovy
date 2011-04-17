@@ -19,6 +19,8 @@ import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.IdeActions
@@ -631,7 +633,7 @@ public interface Test {
     assert !lookup
   }
 
-  public void testTemplateSelection() {
+  public void testTemplateSelectionByComma() {
     myFixture.configureByText("a.java", """
 class Foo {
     int ITER = 2;
@@ -650,5 +652,76 @@ class Foo {
     assert !lookup
     assert myFixture.editor.document.text.contains('iter,')
   }
+
+  public void testTemplateSelectionBySpace() {
+    myFixture.configureByText("a.java", """
+class Foo {
+    int ITER = 2;
+    int itea = 2;
+
+    {
+        it<caret>
+    }
+}
+""")
+    type 'er '
+    assert myFixture.editor.document.text.contains('iter ')
+  }
+
+  public void testNewClassParenthesis() {
+    myFixture.configureByText("a.java", """ class Foo { { new <caret> } } """)
+    type 'fil('
+    assert myFixture.editor.document.text.contains('new File()')
+  }
+
+  public void testUnknownMethodParenthesis() {
+    myFixture.configureByText("a.java", """ class Foo { { <caret> } } """)
+    type 'filinpstr('
+    assert myFixture.editor.document.text.contains('filinpstr()')
+  }
+
+  public void testNonFinishedParameterComma() {
+    myFixture.configureByText("a.java", """ class Foo { void foo(int aaa, int aaaaa) { foo(<caret>) } } """)
+    type 'a,'
+    assert myFixture.editor.document.text.contains('foo(aaa, )')
+  }
+
+  public void testFinishedParameterComma() {
+    myFixture.configureByText("a.java", """ class Foo { void foo(int aaa, int aaaaa) { foo(<caret>) } } """)
+    type 'aaa,'
+    assert myFixture.editor.document.text.contains('foo(aaa,)')
+  }
+
+  public void testCompletionWhenLiveTemplateAreNotSufficient() {
+    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
+    try {
+      myFixture.configureByText("a.java", """
+  class Foo {
+      {
+          Iterable<String> l1 = null;
+          Iterable<String> l2 = null;
+          Object asdf = null;
+          iter<caret>
+      }
+  }
+  """)
+      type '\t'
+      assert myFixture.lookupElementStrings == ['l2', 'l1']
+      type 'as'
+      assert lookup
+      assert myFixture.lookupElementStrings == ['asdf', 'assert']
+    }
+    finally {
+      ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
+    }
+
+  }
+
+  public void testNoWordCompletionAutoPopup() {
+    myFixture.configureByText "a.java", 'class Bar { void foo() { "f<caret>" }}'
+    type 'o'
+    assert !lookup
+  }
+
 
 }

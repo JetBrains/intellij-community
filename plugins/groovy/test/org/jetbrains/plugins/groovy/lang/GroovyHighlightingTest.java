@@ -306,7 +306,7 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testMapParamWithNoArgs() {doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testGroovyEnumInJavaFile() {
-    myFixture.copyFileToProject(getTestName(false)+".groovy");
+    myFixture.copyFileToProject(getTestName(false) + ".groovy");
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
   }
 
@@ -359,9 +359,15 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest(new GroovyUnresolvedAccessInspection(), new GroovyUntypedAccessInspection());
   }
 
+  public void testUsageInInjection() { doTest(new UnusedDefInspection()); }
+
   public void testDuplicatedNamedArgs() {doTest();}
 
   public void testAnonymousClassArgList() {
     doTest(new GroovyAssignabilityCheckInspection());
+  }
+
+  public void testConstructorWithAllParametersOptional() {
+    doTest();
   }
 }

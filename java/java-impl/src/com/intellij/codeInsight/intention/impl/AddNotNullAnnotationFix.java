@@ -22,25 +22,22 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class AddNotNullAnnotationFix extends AddNullableNotNullAnnotationFix {
-  @Deprecated
-  public AddNotNullAnnotationFix() {
-    super(AnnotationUtil.NOT_NULL, AnnotationUtil.NULLABLE);
-  }
-  public AddNotNullAnnotationFix(PsiModifierListOwner owner) {
+  public AddNotNullAnnotationFix(@NotNull PsiModifierListOwner owner) {
     super(NullableNotNullManager.getInstance(owner.getProject()).getDefaultNotNull(),
           owner,
           getNullables(owner));
   }
 
-  private static String[] getNullables(PsiModifierListOwner owner) {
+  @NotNull
+  private static String[] getNullables(@NotNull PsiModifierListOwner owner) {
     final List<String> nullables = NullableNotNullManager.getInstance(owner.getProject()).getNullables();
     return ArrayUtil.toStringArray(nullables);
   }

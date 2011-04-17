@@ -34,6 +34,8 @@ public class AttributeDefinitions {
   private Map<String, AttributeDefinition> myAttrs = new HashMap<String, AttributeDefinition>();
   private Map<String, StyleableDefinition> myStyleables = new HashMap<String, StyleableDefinition>();
 
+  private final List<StyleableDefinition> myStateStyleables = new ArrayList<StyleableDefinition>();
+
   public AttributeDefinitions() {
   }
 
@@ -150,6 +152,11 @@ public class AttributeDefinitions {
       parentMap.put(def, parentNames);
     }
     myStyleables.put(name, def);
+
+    if (name.endsWith("State")) {
+      myStateStyleables.add(def);
+    }
+
     for (XmlTag subTag : tag.findSubTags("attr")) {
       parseStyleableAttr(def, subTag);
     }
@@ -195,5 +202,9 @@ public class AttributeDefinitions {
   @NotNull
   public Set<String> getStyleableNames() {
     return myStyleables.keySet();
+  }
+
+  public StyleableDefinition[] getStateStyleables() {
+    return myStateStyleables.toArray(new StyleableDefinition[myStateStyleables.size()]);
   }
 }

@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.vcsUtil.VcsUtil;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgErrorUtil;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 

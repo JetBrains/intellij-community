@@ -28,7 +28,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +53,8 @@ public class ClassFileReader {
   private final SymbolTable mySymbolTable;
   private AnnotationConstantValue[] myRuntimeVisibleAnnotations;
   private AnnotationConstantValue[] myRuntimeInvisibleAnnotations;
-  @NonNls private static final String CONSTRUCTOR_NAME = "<init>";
+  private static final String CONSTRUCTOR_NAME = "<init>";
+  private boolean myParsingDone;
 
   public ClassFileReader(@NotNull File file, SymbolTable symbolTable, @Nullable final byte[] fileContent) {
     mySymbolTable = symbolTable;
@@ -72,20 +72,19 @@ public class ClassFileReader {
   }
 
   public MethodInfo[] getMethods() throws ClsFormatException{
-    if (myMethods == null) {
-      parseMembers();
-    }
+    parseMembers();
     return myMethods.toArray(new MethodInfo[myMethods.size()]);
   }
 
   public FieldInfo[] getFields() throws ClsFormatException{
-    if (myFields == null) {
-      parseMembers();
-    }
+    parseMembers();
     return myFields.toArray(new FieldInfo[myFields.size()]);
   }
 
   private void parseMembers() throws ClsFormatException {
+    if (myParsingDone) {
+      return;
+    }
     initConstantPool();
     myMethods = new ArrayList<MethodInfo>();
     myFields = new ArrayList<FieldInfo>();
@@ -121,6 +120,7 @@ public class ClassFileReader {
     myGenericSignature = attributeTable.genericSignature;
     myRuntimeVisibleAnnotations = attributeTable.runtimeVisibleAnnotations;
     myRuntimeInvisibleAnnotations = attributeTable.runtimeInvisibleAnnotations;
+    myParsingDone = true;
   }
 
   private String getSymbol(final int id) throws ClsFormatException {
@@ -253,43 +253,27 @@ public class ClassFileReader {
 
 
   public String getSourceFileName() throws ClsFormatException {
-    if (mySourceFileName == null) {
-      parseMembers();
-      if (mySourceFileName == null) {
-        mySourceFileName = "";
-      }
-    }
-    return mySourceFileName;
+    parseMembers();
+    final String fName = mySourceFileName;
+    return fName != null? fName : "";
   }
 
   public String getGenericSignature() throws ClsFormatException {
-    if (myGenericSignature == null) {
-      parseMembers();
-      if (myGenericSignature == null) {
-        myGenericSignature = "";
-      }
-    }
-    return myGenericSignature.length() == 0 ? null : myGenericSignature;
+    parseMembers();
+    final String genericSignature = myGenericSignature;
+    return genericSignature != null && !genericSignature.isEmpty() ? genericSignature : null;
   }
 
   public AnnotationConstantValue[] getRuntimeVisibleAnnotations() throws ClsFormatException {
-    if (myRuntimeVisibleAnnotations == null) {
-      parseMembers();
-      if (myRuntimeVisibleAnnotations == null) {
-        myRuntimeVisibleAnnotations = AnnotationConstantValue.EMPTY_ARRAY;
-      }
-    }
-    return myRuntimeVisibleAnnotations;
+    parseMembers();
+    final AnnotationConstantValue[] annotations = myRuntimeVisibleAnnotations;
+    return annotations != null? annotations : AnnotationConstantValue.EMPTY_ARRAY;
   }
 
   public AnnotationConstantValue[] getRuntimeInvisibleAnnotations() throws ClsFormatException {
-    if (myRuntimeInvisibleAnnotations == null) {
-      parseMembers();
-      if (myRuntimeInvisibleAnnotations == null) {
-        myRuntimeInvisibleAnnotations = AnnotationConstantValue.EMPTY_ARRAY;
-      }
-    }
-    return myRuntimeInvisibleAnnotations;
+    parseMembers();
+    final AnnotationConstantValue[] annotations = myRuntimeInvisibleAnnotations;
+    return annotations != null? annotations : AnnotationConstantValue.EMPTY_ARRAY;
   }
 
   private boolean isInterface(){

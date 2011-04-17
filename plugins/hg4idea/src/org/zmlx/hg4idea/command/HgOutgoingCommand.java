@@ -13,11 +13,16 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 
 public class HgOutgoingCommand extends HgRemoteChangesetsCommand {
 
   public HgOutgoingCommand(Project project) {
     super(project, "outgoing");
+  }
+
+  protected String getRepositoryUrl(VirtualFile repo) {
+    return new HgShowConfigCommand(project).getDefaultPushPath(repo);
   }
 
 }

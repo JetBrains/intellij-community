@@ -27,11 +27,6 @@ import com.intellij.psi.tree.IElementType;
 
 public class PropertiesWordCompletionFilter extends DefaultWordCompletionFilter {
   public boolean isWordCompletionEnabledIn(final IElementType element) {
-    final CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
-    if (process != null && process.isAutopopupCompletion()) {
-      return false;
-    }
-
     return super.isWordCompletionEnabledIn(element) || element == PropertiesElementTypes.PROPERTY;
   }
 }

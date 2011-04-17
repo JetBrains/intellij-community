@@ -46,4 +46,6 @@ public interface LayoutViewElement extends LayoutElement {
   GenericAttributeValue<PsiClass> getViewClass();
 
   List<Include> getIncludes();
+
+  List<Fragment> getFragments();
 }

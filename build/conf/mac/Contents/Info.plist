@@ -4,7 +4,26 @@
   <dict>
     <key>CFBundleDevelopmentRegion</key>
     <string>English</string>
-    @@doc_types@@
+    <key>CFBundleDocumentTypes</key>
+    <array>
+      @@doc_types@@
+      <dict>
+          <key>CFBundleTypeExtensions</key>
+          <array>
+              <string>*</string>
+          </array>
+          <key>CFBundleTypeName</key>
+          <string>All documents</string>
+          <key>CFBundleTypeOSTypes</key>
+          <array>
+              <string>****</string>
+          </array>
+          <key>CFBundleTypeRole</key>
+          <string>Editor</string>
+          <key>LSTypeIsPackage</key>
+          <false/>
+      </dict>
+    </array>
     <key>CFBundleExecutable</key>
     <string>@@executable@@</string>
     <key>CFBundleIconFile</key>

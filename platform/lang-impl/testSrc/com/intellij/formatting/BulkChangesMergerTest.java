@@ -116,6 +116,12 @@ public class BulkChangesMergerTest {
   public void insufficientLengthForInplaceMerge() {
     doTest("0123", "", c("", 1, 3), c("abc", 4));
   }
+
+  @Config(inplace = true)
+  @Test
+  public void overlapWithPositiveGroupOnStart() {
+    doTest("0123456789ABC", "0abc1358d9eBC", c("abc", 1), c("", 2, 3), c("", 4, 5), c("", 6, 8), c("d", 9), c("e", 10, 11));
+  }
   
   private static TextChangeImpl c(String text, int offset) {
     return c(text, offset, offset);

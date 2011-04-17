@@ -16,19 +16,21 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.diff.DiffElement;
+import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.Icons;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -37,7 +39,6 @@ import java.awt.event.KeyEvent;
  * @author Konstantin Bulenkov
  */
 public class DirDiffPanel {
-  public static final JBLabel CANT_OPEN_LABEL = new JBLabel("Can't open file content", SwingConstants.CENTER);
   private JPanel myDiffPanel;
   private JBTable myTable;
   private JPanel myComponent;
@@ -50,19 +51,22 @@ public class DirDiffPanel {
   private JPanel myActionsCenterPanel;
   private JComboBox myFileFilter;
   private JPanel myToolBarPanel;
+  private JBScrollPane myScrollPane;
   private final DirDiffTableModel myModel;
+  public JLabel myErrorLabel;
   private final DirDiffDialog myDialog;
   private JComponent myDiffPanelComponent;
   private JComponent myViewComponent;
   private DiffElement myCurrentElement;
 
-  public DirDiffPanel(DirDiffTableModel model, DirDiffDialog dirDiffDialog) {
+  public DirDiffPanel(DirDiffTableModel model, DirDiffDialog dirDiffDialog, DirDiffSettings settings) {
+    mySplitPanel.setDividerLocation(0.5);
     myModel = model;
     myDialog = dirDiffDialog;
     mySourceDirField.setText(model.getSourceDir().getPath());
     myTargetDirField.setText(model.getTargetDir().getPath());
-    mySourceDirLabel.setIcon(Icons.FOLDER_ICON);
-    myTargetDirLabel.setIcon(Icons.FOLDER_ICON);
+    mySourceDirLabel.setIcon(model.getSourceDir().getIcon());
+    myTargetDirLabel.setIcon(model.getTargetDir().getIcon());
     myTable.setModel(myModel);
     final DirDiffTableCellRenderer renderer = new DirDiffTableCellRenderer(myTable);
     myTable.setDefaultRenderer(Object.class, renderer);
@@ -96,13 +100,10 @@ public class DirDiffPanel {
             if (myViewComponent != null) {
               myCurrentElement = object;
               myDiffPanel.add(myViewComponent, BorderLayout.CENTER);
-            } else {
-              myDiffPanel.add(CANT_OPEN_LABEL, BorderLayout.CENTER);
-            }
-
-            if (myViewComponent != null) {
               myViewComponent.revalidate();
             } else {
+              myDiffPanel.add(getErrorLabel(), BorderLayout.CENTER);
+              myDiffPanel.revalidate();
               myDiffPanel.repaint();
             }
           }
@@ -131,15 +132,20 @@ public class DirDiffPanel {
         }
         if (0 <= row && row < rows && !myModel.getElementAt(row).isSeparator()) {
           e.consume();
-          myTable.changeSelection(row, 3, false, false);
+          myTable.changeSelection(row, (myModel.getColumnCount() - 1) / 2, false, false);
         }
       }
     });
-    final TableColumn operationColumn = myTable.getColumnModel().getColumn(3);
+    final TableColumnModel columnModel = myTable.getColumnModel();
+    final TableColumn operationColumn = columnModel.getColumn((columnModel.getColumnCount() - 1) / 2);
     operationColumn.setMaxWidth(25);
     operationColumn.setMinWidth(25);
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DirDiff", new DirDiffToolbarActions(myModel), true);
     myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
+  }
+
+  private JLabel getErrorLabel() {
+    return myErrorLabel == null ? myErrorLabel = new JLabel("Can't recognize file type", SwingConstants.CENTER) : myErrorLabel;
   }
 
   private void clearDiffPanel() {
@@ -158,10 +164,7 @@ public class DirDiffPanel {
       }
     }
     myCurrentElement = null;
-    myDiffPanel.remove(CANT_OPEN_LABEL);
-  }
-
-  private void createUIComponents() {
+    myDiffPanel.remove(getErrorLabel());
   }
 
   public JComponent getPanel() {
@@ -170,10 +173,6 @@ public class DirDiffPanel {
 
   public JBTable getTable() {
     return myTable;
-  }
-
-  public JSplitPane getSplitPanel() {
-    return mySplitPanel;
   }
 
   public void dispose() {

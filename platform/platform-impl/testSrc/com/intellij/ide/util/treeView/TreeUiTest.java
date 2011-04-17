@@ -2120,13 +2120,18 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     buildStructure(myRoot);
 
     final boolean[] done = new boolean[] {false};
-    getBuilder().select(new NodeElement("jetbrains"), new Runnable() {
+    invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        getBuilder().expand(new NodeElement("fabrique"), new Runnable() {
+        getBuilder().select(new NodeElement("jetbrains"), new Runnable() {
           @Override
           public void run() {
-            done[0] = true;
+            getBuilder().expand(new NodeElement("fabrique"), new Runnable() {
+              @Override
+              public void run() {
+                done[0] = true;
+              }
+            });
           }
         });
       }

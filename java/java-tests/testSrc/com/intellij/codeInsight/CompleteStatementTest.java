@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.EditorActionTestCase;
@@ -184,6 +183,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testIDEA22385() throws Exception { doTest(); }
 
   public void testIDEADEV40479() throws Exception { doTest(); }
+
+  public void testMultilineReturn() throws Exception { doTest(); }
 
   public void testIDEADEV13019() throws Exception {
     doTestBracesNextLineStyle();

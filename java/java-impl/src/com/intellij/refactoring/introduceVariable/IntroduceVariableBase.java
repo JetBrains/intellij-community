@@ -456,8 +456,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         final IntroduceVariableSettings settings =
           getSettings(project, editor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, choice);
         if (!settings.isOK()) return;
-        typeSelectorManager.setAllOccurences(choice != OccurrencesChooser.ReplaceChoice.NO);
-        final TypeExpression expression = new TypeExpression(project, typeSelectorManager.getTypesForAll());
+        final boolean allOccurences = choice != OccurrencesChooser.ReplaceChoice.NO;
+        typeSelectorManager.setAllOccurences(allOccurences);
+        final TypeExpression expression = new TypeExpression(project, allOccurences ? typeSelectorManager.getTypesForAll() : typeSelectorManager.getTypesForOne());
         final RangeMarker exprMarker = editor.getDocument().createRangeMarker(expr.getTextRange());
         final SuggestedNameInfo suggestedName = getSuggestedName(settings.getSelectedType(), expr);
         final List<RangeMarker> occurrenceMarkers = new ArrayList<RangeMarker>();
@@ -478,7 +479,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                   final boolean cantChangeFinalModifier = hasWriteAccess || (inFinalContext && choice == OccurrencesChooser.ReplaceChoice.ALL);
                   final VariableInplaceRenamer renamer =
                     new VariableInplaceIntroducer(project, expression, editor, elementToRename, cantChangeFinalModifier,
-                                                  typeSelectorManager.getTypesForAll().length > 1, exprMarker, occurrenceMarkers);
+                                                  typeSelectorManager.getTypesForAll().length > 1, exprMarker, occurrenceMarkers, IntroduceVariableBase.REFACTORING_NAME);
                   PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
                   renamer.performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)));
                 }

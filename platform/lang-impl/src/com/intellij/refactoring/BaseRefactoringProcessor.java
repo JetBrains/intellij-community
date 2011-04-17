@@ -149,7 +149,7 @@ public abstract class BaseRefactoringProcessor {
     final Ref<UsageInfo[]> refUsages = new Ref<UsageInfo[]>();
     final Ref<Language> refErrorLanguage = new Ref<Language>();
     final Ref<Boolean> refProcessCanceled = new Ref<Boolean>();
-    final Ref<Boolean> dumbModeOccured = new Ref<Boolean>();
+    final Ref<Boolean> dumbModeOccurred = new Ref<Boolean>();
 
     final Runnable findUsagesRunnable = new Runnable() {
       public void run() {
@@ -163,7 +163,7 @@ public abstract class BaseRefactoringProcessor {
           refProcessCanceled.set(Boolean.TRUE);
         }
         catch (IndexNotReadyException e) {
-          dumbModeOccured.set(Boolean.TRUE);
+          dumbModeOccurred.set(Boolean.TRUE);
         }
       }
     };
@@ -176,13 +176,12 @@ public abstract class BaseRefactoringProcessor {
       Messages.showErrorDialog(myProject, RefactoringBundle.message("unsupported.refs.found", refErrorLanguage.get().getDisplayName()), RefactoringBundle.message("error.title"));
       return;
     }
-    if (!dumbModeOccured.isNull()) {
+    if (!dumbModeOccurred.isNull()) {
       DumbService.getInstance(myProject).showDumbModeNotification("Usage search is not available until indices are ready");
       return;
     }
     if (!refProcessCanceled.isNull()) {
-      Messages.showErrorDialog(myProject, "Index corruption detected. Please retry the refactoring - indexes will be rebuilt automatically",
-                               RefactoringBundle.message("error.title"));
+      Messages.showErrorDialog(myProject, "Index corruption detected. Please retry the refactoring - indexes will be rebuilt automatically", RefactoringBundle.message("error.title"));
       return;
     }
 

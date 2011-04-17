@@ -33,7 +33,7 @@ public abstract class LocalHistoryAction extends AnAction implements DumbAware {
   @Override
   public void update(AnActionEvent e) {
     Presentation p = e.getPresentation();
-    if (getProject(e) == null) {
+    if (getEventProject(e) == null) {
       p.setVisible(false);
       p.setEnabled(false);
       return;
@@ -73,9 +73,5 @@ public abstract class LocalHistoryAction extends AnAction implements DumbAware {
       if (commonParent == null) break;
     }
     return commonParent;
-  }
-
-  protected Project getProject(AnActionEvent e) {
-    return e.getData(PlatformDataKeys.PROJECT);
   }
 }

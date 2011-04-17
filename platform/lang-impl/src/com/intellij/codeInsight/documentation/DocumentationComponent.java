@@ -511,6 +511,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = colorsManager.getGlobalScheme();
     StyleConstants.setFontSize(myFontSizeStyle, scheme.getQuickDocFontSize().getSize());
+    StyleConstants.setFontFamily(myFontSizeStyle, scheme.getEditorFontName());
     styledDocument.setCharacterAttributes(0, document.getLength(), myFontSizeStyle, false);
   }
   

@@ -116,7 +116,9 @@ public abstract class IntroduceFieldCentralPanel {
         if (myCbReplaceAll != null && myAllowInitInMethod) {
           updateInitializerSelection();
         }
-        updateTypeSelector();
+        if (shouldUpdateTypeSelector()) {
+          updateTypeSelector();
+        }
       }
     };
     ItemListener finalUpdater = new ItemListener() {
@@ -135,6 +137,10 @@ public abstract class IntroduceFieldCentralPanel {
   protected abstract JPanel composeWholePanel(JComponent initializerPlacePanel, JPanel checkboxPanel);
 
   protected void updateInitializerSelection() {
+  }
+
+  protected boolean shouldUpdateTypeSelector() {
+    return true;
   }
 
   private JPanel appendCheckboxes(ItemListener itemListener) {

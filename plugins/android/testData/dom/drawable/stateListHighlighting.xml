@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_window_focused="false" android:drawable="@drawable/myDrawable" />
+    <item android:state_pressed="" android:drawable="@drawable/myDrawable" />
+    <item android:state_focused="true" android:drawable="@drawable/myDrawable" />
+    <<error>item</error> android:state_middle="true"/>
+    <item android:drawable="<error>@drawable/myDrawab</error>" />
+</selector>

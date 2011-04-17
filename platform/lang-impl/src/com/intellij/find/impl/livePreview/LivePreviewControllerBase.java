@@ -138,7 +138,9 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     myLivePreviewAlarm.cancelAllRequests();
     if (findModel == null) return;
     final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    final FindModel copy = (FindModel)findModel.clone();
+    final FindModel copy = new FindModel();
+    copy.copyFrom(findModel);
+    
     final ModalityState modalityState = ModalityState.current();
     Runnable request = new Runnable() {
       @Override
@@ -219,9 +221,21 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
   public void performReplaceAll(Editor e) {
     if (!Utils.ensureOkToWrite(e)) return;
     if (mySearchResults.getFindModel() != null) {
-      FindUtil.replace(e.getProject(), e,
-                       mySearchResults.getFindModel().isGlobal() ? 0 : mySearchResults.getEditor().getSelectionModel().getSelectionStart(),
-                       mySearchResults.getFindModel(), this);
+      final FindModel copy = new FindModel();
+      copy.copyFrom(mySearchResults.getFindModel());
+
+      final SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
+
+      int offset;
+      if (selectionModel.getSelectedText() != null) {
+        offset = selectionModel.getSelectionStart();
+      } else {
+        offset = 0;
+        copy.setGlobal(true);
+      }
+
+      FindUtil.replace(e.getProject(), e, offset, copy, this);
+
       if (myReplaceListener != null) {
         myReplaceListener.replaceAllPerformed(e);
       }

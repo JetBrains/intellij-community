@@ -92,9 +92,7 @@ public class HtmlDescriptorsTable {
   private static void loadHtmlElements(final String resourceName, List<String> htmlTagNames) throws JDOMException, IOException {
     final Document document = JDOMUtil.loadDocument(HtmlDescriptorsTable.class.getResourceAsStream(resourceName));
     final List elements = document.getRootElement().getChildren(TAG_ELEMENT_NAME);
-    HtmlDocumentationProvider.setBaseHtmlExtDocUrl(
-      document.getRootElement().getAttribute(BASE_HELP_REF_ATTR).getValue()
-    );
+    final String baseHtmlExtDocUrl = document.getRootElement().getAttribute(BASE_HELP_REF_ATTR).getValue();
 
     for (Object object : elements) {
       final Element element = (Element)object;
@@ -103,7 +101,7 @@ public class HtmlDescriptorsTable {
 
       HtmlTagDescriptor value = new HtmlTagDescriptor();
       ourTagTable.put(htmlTagName, value);
-      value.setHelpRef(element.getAttributeValue(HELPREF_ATTR));
+      value.setHelpRef(baseHtmlExtDocUrl + element.getAttributeValue(HELPREF_ATTR));
       value.setDescription(element.getAttributeValue(DESCRIPTION_ATTR));
       value.setName(htmlTagName);
 

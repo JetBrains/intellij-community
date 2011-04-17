@@ -76,7 +76,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
   public String getFunctionName() {
     final ASTNode node = getNameNode();
     final String name = node != null ? node.getText() : null;
-    assert name != null;
+    assert name != null : unexpectedPsiAssertion();
     return name;
   }
 
@@ -93,7 +93,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
   @NotNull
   public PrefixedName getQName() {
     final ASTNode node = getNameNode();
-    assert node != null;
+    assert node != null : unexpectedPsiAssertion();
     return new PrefixedNameImpl(getPrefixNode(), node);
   }
 

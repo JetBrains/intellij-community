@@ -41,7 +41,6 @@ import java.util.List;
  * @author maxim
  */
 public class HtmlDocumentationProvider implements DocumentationProvider {
-  private static String ourBaseHtmlExtDocUrl;
   private static DocumentationProvider ourStyleProvider;
   private static DocumentationProvider ourScriptProvider;
 
@@ -75,7 +74,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     final EntityDescriptor descriptor = findDocumentationDescriptor(element, context);
 
     if (descriptor!=null) {
-      return ourBaseHtmlExtDocUrl + descriptor.getHelpRef();
+      return descriptor.getHelpRef();
     } else {
       return null;
     }
@@ -309,14 +308,6 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     }
 
     return PsiTreeUtil.getParentOfType(context,XmlTag.class,false);
-  }
-
-  public static void setBaseHtmlExtDocUrl(String baseHtmlExtDocUrl) {
-    ourBaseHtmlExtDocUrl = baseHtmlExtDocUrl;
-  }
-
-  static String getBaseHtmlExtDocUrl() {
-    return ourBaseHtmlExtDocUrl;
   }
 
   public static void registerScriptDocumentationProvider(final DocumentationProvider provider) {

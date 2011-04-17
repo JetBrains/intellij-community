@@ -19,7 +19,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageWordCompletion;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PlainTextTokenTypes;
@@ -71,6 +70,10 @@ public class WordCompletionContributor extends CompletionContributor implements 
       return true;
     }
 
+    if (parameters.getInvocationCount() == 0) {
+      return false;
+    }
+
     final PsiFile file = insertedElement.getContainingFile();
     final CompletionData data = CompletionUtil.getCompletionDataByElement(insertedElement, file);
     if (data != null && !(data instanceof SyntaxTableCompletionData)) {
@@ -95,8 +98,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
     ASTNode textContainer = element != null ? element.getNode() : null;
     while (textContainer != null) {
       final IElementType elementType = textContainer.getElementType();
-      if (LanguageWordCompletion.INSTANCE.isEnabledIn(elementType) ||
-          isPlainText(parameters, elementType)) {
+      if (LanguageWordCompletion.INSTANCE.isEnabledIn(elementType) || elementType == PlainTextTokenTypes.PLAIN_TEXT) {
         return true;
       }
       textContainer = textContainer.getTreeParent();
@@ -104,19 +106,4 @@ public class WordCompletionContributor extends CompletionContributor implements 
     return false;
   }
 
-  private static boolean isPlainText(CompletionParameters parameters, IElementType elementType) {
-    if (elementType != PlainTextTokenTypes.PLAIN_TEXT) {
-      return false;
-    }
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return true;
-    }
-
-    if (parameters.getInvocationCount() > 0) {
-      return true;
-    }
-
-    return parameters.getOriginalFile().getViewProvider().getVirtualFile().isInLocalFileSystem();
-  }
 }

@@ -249,7 +249,7 @@ public class AndroidCompileUtil {
       public void run() {
         Project project = module.getProject();
         if (project.isDisposed()) return;
-        CompilerTask task = new CompilerTask(project, true, "", true);
+        CompilerTask task = new CompilerTask(project, true, "Android auto-generation", true);
         CompileScope scope = new ModuleCompileScope(module, false);
         contextWrapper[0] = new CompileContextImpl(project, task, scope, null, false, false);
       }

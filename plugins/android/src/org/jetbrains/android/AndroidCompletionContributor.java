@@ -27,6 +27,9 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.android.dom.AndroidDomExtender;
 import org.jetbrains.android.dom.animation.AndroidAnimationUtils;
 import org.jetbrains.android.dom.animation.AnimationDomFileDescription;
+import org.jetbrains.android.dom.color.ColorDomFileDescription;
+import org.jetbrains.android.dom.drawable.AndroidDrawableDomUtil;
+import org.jetbrains.android.dom.drawable.DrawableStateListDomFileDescription;
 import org.jetbrains.android.dom.layout.LayoutDomFileDescription;
 import org.jetbrains.android.dom.manifest.ManifestDomFileDescription;
 import org.jetbrains.android.dom.xml.AndroidXmlResourcesUtil;
@@ -35,6 +38,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
@@ -80,6 +84,12 @@ public class AndroidCompletionContributor extends CompletionContributor {
           else if (XmlResourceDomFileDescription.isXmlResourceFile(xmlFile)) {
             addAll(AndroidXmlResourcesUtil.getPossibleRoots(facet), resultSet);
             return false;
+          }
+          else if (AndroidDrawableDomUtil.isDrawableResourceFile(xmlFile)) {
+            addAll(AndroidDrawableDomUtil.getPossibleRoots(), resultSet);
+          }
+          else if (ColorDomFileDescription.isColorResourceFile(xmlFile)) {
+            addAll(Arrays.asList(DrawableStateListDomFileDescription.SELECTOR_TAG_NAME), resultSet);
           }
         }
       }

@@ -24,7 +24,6 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.refactoring.convertToJava.ConvertToJavaHandler;
 
 /**
@@ -49,14 +48,11 @@ public class ConvertToJavaAction extends BaseRefactoringAction {
 
   @Override
   protected boolean isEnabledOnElements(PsiElement[] elements) {
+
     for (PsiElement element : elements) {
-      if (element instanceof GrTypeDefinition) {
         final PsiFile containingFile = element.getContainingFile();
-        if (containingFile instanceof GroovyFile && ((GroovyFile)containingFile).getClasses().length == 1) continue;
+        if (containingFile instanceof GroovyFile) continue;
         return false;
-      }
-      if (element instanceof GroovyFile) continue;
-      return false;
     }
     return true;
   }

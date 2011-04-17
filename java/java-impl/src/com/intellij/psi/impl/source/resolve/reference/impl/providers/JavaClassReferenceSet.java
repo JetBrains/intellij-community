@@ -32,10 +32,10 @@ import java.util.Map;
  * @author peter
 */
 public class JavaClassReferenceSet {
-  public static final char SEPARATOR = '.';
-  public static final char SEPARATOR2 = '$';
-  private static final char SEPARATOR3 = '<';
-  private static final char SEPARATOR4 = ',';
+  public static final char DOT = '.';
+  public static final char DOLLAR = '$';
+  private static final char LT = '<';
+  private static final char COMMA = ',';
 
   private JavaClassReference[] myReferences;
   private List<JavaClassReferenceSet> myNestedGenericParameterReferences;
@@ -75,14 +75,12 @@ public class JavaClassReferenceSet {
       for(int curIndex = currentDot + 1; curIndex < str.length(); ++curIndex) {
         final char ch = str.charAt(curIndex);
 
-        if (ch == SEPARATOR ||
-            (ch == SEPARATOR2 && allowDollarInNames)
-           ) {
+        if (ch == DOT || ch == DOLLAR && allowDollarInNames) {
           nextDotOrDollar = curIndex;
           break;
         }
         
-        if (((ch == SEPARATOR3 || ch == SEPARATOR4))) {
+        if (ch == LT || ch == COMMA) {
           if (!allowGenericsCalculated) {
             allowGenerics = !isStaticImport && PsiUtil.getLanguageLevel(element).hasEnumKeywordAndAutoboxing();
             allowGenericsCalculated = true;
@@ -131,7 +129,7 @@ public class JavaClassReferenceSet {
 
       if (nextDotOrDollar != -1 && nextDotOrDollar < str.length()) {
         final char c = str.charAt(nextDotOrDollar);
-        if (c == SEPARATOR3) {
+        if (c == LT) {
           int end = str.lastIndexOf('>');
           if (end != -1 && end > nextDotOrDollar) {
             if (myNestedGenericParameterReferences == null) myNestedGenericParameterReferences = new ArrayList<JavaClassReferenceSet>(1);
@@ -149,7 +147,7 @@ public class JavaClassReferenceSet {
           } else {
             nextDotOrDollar = -1; // nonsensible characters anyway, don't do resolve
           }
-        } else if (SEPARATOR4 == c && myContext != null) {
+        } else if (COMMA == c && myContext != null) {
           if (myContext.myNestedGenericParameterReferences == null) myContext.myNestedGenericParameterReferences = new ArrayList<JavaClassReferenceSet>(1);
           myContext.myNestedGenericParameterReferences.add(
             new JavaClassReferenceSet(
@@ -194,7 +192,7 @@ public class JavaClassReferenceSet {
   }
 
   protected boolean isStaticSeparator(char c, boolean strict) {
-    return isAllowDollarInNames() ? c == SEPARATOR2 : c == SEPARATOR;
+    return isAllowDollarInNames() ? c == DOLLAR : c == DOT;
   }
 
   public void reparse(PsiElement element, final TextRange range) {

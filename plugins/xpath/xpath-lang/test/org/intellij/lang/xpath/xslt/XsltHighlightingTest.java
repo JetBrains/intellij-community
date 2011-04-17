@@ -15,6 +15,8 @@
  */
 package org.intellij.lang.xpath.xslt;
 
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnusedNamespaceInspection;
+import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -34,6 +36,7 @@ public class XsltHighlightingTest extends TestBase {
     protected void setUp() throws Exception {
         super.setUp();
         myFixture.enableInspections(XsltStuffProvider.INSPECTION_CLASSES);
+        ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:my");
     }
 
     public void xtestBackwardIncludedVariable() throws Throwable {
@@ -105,6 +108,15 @@ public class XsltHighlightingTest extends TestBase {
     }
 
     public void testInvalidPattern6() throws Throwable {
+        doXsltHighlighting();
+    }
+
+    public void testEmptyExpression() throws Throwable {
+        doXsltHighlighting();
+    }
+
+    public void testTemplateWithPrefix() throws Throwable {
+        myFixture.enableInspections(XmlUnusedNamespaceInspection.class);
         doXsltHighlighting();
     }
 

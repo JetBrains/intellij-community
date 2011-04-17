@@ -45,6 +45,8 @@
     <extensionPoint name="xml.zenCodingFilter" interface="com.intellij.codeInsight.template.zencoding.filters.ZenCodingFilter"/>
 
     <extensionPoint name="xml.relatedToHtmlFilesContributor" interface="com.intellij.navigation.RelatedToHtmlFilesContributor"/>
+
+    <extensionPoint name="xml.xmlTagRuleProvider" interface="com.intellij.xml.XmlTagRuleProvider"/>
   </extensionPoints>
 
   <project-components>

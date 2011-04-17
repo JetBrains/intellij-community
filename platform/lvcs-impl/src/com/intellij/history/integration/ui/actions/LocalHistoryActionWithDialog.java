@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 public abstract class LocalHistoryActionWithDialog extends LocalHistoryAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    showDialog(getProject(e), getGateway(), getFile(e), e);
+    showDialog(getEventProject(e), getGateway(), getFile(e), e);
   }
 
   protected abstract void showDialog(Project p, IdeaGateway gw, VirtualFile f, AnActionEvent e);

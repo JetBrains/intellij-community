@@ -59,8 +59,15 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <dom.fileDescription implementation="org.jetbrains.android.dom.drawable.DrawableStateListDomFileDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.android.dom.drawable.BitmapOrNinePatchDomFileDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.android.dom.drawable.LayerListDomFileDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.android.dom.drawable.LevelListDomFileDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.android.dom.drawable.InsetOrClipOrScaleDomFileDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.android.dom.drawable.ShapeDomFileDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.android.dom.color.ColorDomFileDescription"/>
+
     <dom.fileDescription implementation="org.jetbrains.android.dom.manifest.ManifestDomFileDescription"/>
-    <dom.fileDescription implementation="org.jetbrains.android.dom.drawable.DrawableDomFileDescription"/>
     <dom.fileDescription implementation="org.jetbrains.android.dom.layout.LayoutDomFileDescription"/>
     <dom.fileDescription implementation="org.jetbrains.android.dom.animation.AnimationDomFileDescription"/>
     <dom.fileDescription implementation="org.jetbrains.android.dom.menu.MenuDomFileDescription"/>

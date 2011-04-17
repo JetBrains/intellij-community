@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
@@ -24,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.FieldConflictsResolver;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ChangeContextUtil {
@@ -112,28 +112,28 @@ public class ChangeContextUtil {
     }
   }
 
-  public static PsiElement decodeContextInfo(PsiElement scope,
-                                             PsiClass thisClass,
+  public static PsiElement decodeContextInfo(@NotNull PsiElement scope,
+                                             @Nullable PsiClass thisClass,
                                              @Nullable PsiExpression thisAccessExpr) throws IncorrectOperationException {
-    if (scope.getCopyableUserData(ENCODED_KEY) != null){
+    if (scope.getCopyableUserData(ENCODED_KEY) != null) {
       scope.putCopyableUserData(ENCODED_KEY, null);
 
-      if (scope instanceof PsiThisExpression){
+      if (scope instanceof PsiThisExpression) {
         PsiThisExpression thisExpr = (PsiThisExpression)scope;
         scope = decodeThisExpression(thisExpr, thisClass, thisAccessExpr);
       }
-      else if (scope instanceof PsiReferenceExpression){
+      else if (scope instanceof PsiReferenceExpression) {
         scope = decodeReferenceExpression((PsiReferenceExpression)scope, thisAccessExpr, thisClass);
       }
       else {
         PsiClass refClass = scope.getCopyableUserData(REF_CLASS_KEY);
         scope.putCopyableUserData(REF_CLASS_KEY, null);
 
-        if (refClass != null && refClass.isValid()){
+        if (refClass != null && refClass.isValid()) {
           PsiReference ref = scope.getReference();
           if (ref != null) {
             final String qualifiedName = refClass.getQualifiedName();
-            if (qualifiedName != null){
+            if (qualifiedName != null) {
               if (JavaPsiFacade.getInstance(refClass.getProject()).findClass(qualifiedName, scope.getResolveScope()) != null) {
                 scope = ref.bindToElement(refClass);
               }
@@ -143,14 +143,15 @@ public class ChangeContextUtil {
       }
     }
 
-    if (scope instanceof PsiClass){
-      if (thisAccessExpr != null){
+    if (scope instanceof PsiClass) {
+      if (thisAccessExpr != null) {
         thisAccessExpr = (PsiExpression)qualifyThis(thisAccessExpr, thisClass);
       }
     }
 
-    for(PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()){
-      child = decodeContextInfo(child, thisClass, thisAccessExpr);
+    PsiElement child = scope.getFirstChild();
+    while (child != null) {
+      child = decodeContextInfo(child, thisClass, thisAccessExpr).getNextSibling();
     }
 
     return scope;

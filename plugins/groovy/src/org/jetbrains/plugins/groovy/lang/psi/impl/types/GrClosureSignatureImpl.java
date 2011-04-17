@@ -48,7 +48,7 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
     mySubstitutor = substitutor;
   }
 
-  public GrClosureSignatureImpl(PsiParameter[] parameters, PsiType returnType) {
+  public GrClosureSignatureImpl(PsiParameter[] parameters, @Nullable PsiType returnType) {
     this(parameters, returnType, PsiSubstitutor.EMPTY);
   }
 

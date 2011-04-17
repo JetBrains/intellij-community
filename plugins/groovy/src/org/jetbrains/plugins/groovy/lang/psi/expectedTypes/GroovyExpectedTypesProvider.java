@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -258,8 +259,8 @@ public class GroovyExpectedTypesProvider {
 
     @Override
     public void visitThrowStatement(GrThrowStatement throwStatement) {
-      final PsiClassType trowable = PsiType.getJavaLangTrowable(myExpression.getManager(), throwStatement.getResolveScope());
-      myResult = new TypeConstraint[]{SubtypeConstraint.create(trowable)};
+      final PsiClassType throwable = PsiType.getJavaLangThrowable(myExpression.getManager(), throwStatement.getResolveScope());
+      myResult = new TypeConstraint[]{SubtypeConstraint.create(throwable)};
     }
 
     @Override
@@ -267,9 +268,11 @@ public class GroovyExpectedTypesProvider {
       TypeConstraint constraint = new TypeConstraint(PsiType.INT) {
         @Override
         public boolean satisfied(PsiType type, PsiManager manager, GlobalSearchScope scope) {
-          return TypesUtil
-            .getOverloadedOperatorCandidates(TypesUtil.boxPrimitiveType(type, manager, scope), expression.getOperationTokenType(),
-                                             expression, PsiType.EMPTY_ARRAY).length > 0;
+          final PsiType boxed = TypesUtil.boxPrimitiveType(type, manager, scope);
+          final IElementType opToken = expression.getOperationTokenType();
+          final GroovyResolveResult[] candidates =
+            TypesUtil.getOverloadedUnaryOperatorCandidates(boxed, opToken, expression, PsiType.EMPTY_ARRAY);
+          return candidates.length > 0;
         }
 
         @NotNull

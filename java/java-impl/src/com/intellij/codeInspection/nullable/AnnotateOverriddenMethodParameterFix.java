@@ -80,6 +80,7 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
     CodeInsightUtilBase.preparePsiElementsForWrite(toAnnotate);
     for (PsiParameter psiParam : toAnnotate) {
       try {
+        assert psiParam != null : toAnnotate;
         new AddAnnotationFix(myAnnotation, psiParam, myAnnosToRemove).invoke(project, null, psiParam.getContainingFile());
       }
       catch (IncorrectOperationException e) {

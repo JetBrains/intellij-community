@@ -55,14 +55,14 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
         packageGroupDisplayNameMap.put("assignment", GroupNames.ASSIGNMENT_GROUP_NAME);
         packageGroupDisplayNameMap.put("bitwise", GroupNames.BITWISE_GROUP_NAME);
         packageGroupDisplayNameMap.put("bugs", GroupNames.BUGS_GROUP_NAME);
-        packageGroupDisplayNameMap.put("classlayout", GroupNames.CLASSLAYOUT_GROUP_NAME);
-        packageGroupDisplayNameMap.put("classmetrics", GroupNames.CLASSMETRICS_GROUP_NAME);
+        packageGroupDisplayNameMap.put("classlayout", GroupNames.CLASS_LAYOUT_GROUP_NAME);
+        packageGroupDisplayNameMap.put("classmetrics", GroupNames.CLASS_METRICS_GROUP_NAME);
         packageGroupDisplayNameMap.put("cloneable", GroupNames.CLONEABLE_GROUP_NAME);
         packageGroupDisplayNameMap.put("controlflow", GroupNames.CONTROL_FLOW_GROUP_NAME);
         packageGroupDisplayNameMap.put("dataflow", GroupNames.DATA_FLOW_ISSUES);
         packageGroupDisplayNameMap.put("dependency", GroupNames.DEPENDENCY_GROUP_NAME);
         packageGroupDisplayNameMap.put("encapsulation", GroupNames.ENCAPSULATION_GROUP_NAME);
-        packageGroupDisplayNameMap.put("errorhandling", GroupNames.ERRORHANDLING_GROUP_NAME);
+        packageGroupDisplayNameMap.put("errorhandling", GroupNames.ERROR_HANDLING_GROUP_NAME);
         packageGroupDisplayNameMap.put("finalization", GroupNames.FINALIZATION_GROUP_NAME);
         packageGroupDisplayNameMap.put("imports", GroupNames.IMPORTS_GROUP_NAME);
         packageGroupDisplayNameMap.put("inheritance", GroupNames.INHERITANCE_GROUP_NAME);
@@ -77,7 +77,7 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
         packageGroupDisplayNameMap.put("logging", GroupNames.LOGGING_GROUP_NAME);
         packageGroupDisplayNameMap.put("maturity", GroupNames.MATURITY_GROUP_NAME);
         packageGroupDisplayNameMap.put("memory", GroupNames.MEMORY_GROUP_NAME);
-        packageGroupDisplayNameMap.put("methodmetrics", GroupNames.METHODMETRICS_GROUP_NAME);
+        packageGroupDisplayNameMap.put("methodmetrics", GroupNames.METHOD_METRICS_GROUP_NAME);
         packageGroupDisplayNameMap.put("modularization", GroupNames.MODULARIZATION_GROUP_NAME);
         packageGroupDisplayNameMap.put("naming", GroupNames.NAMING_CONVENTIONS_GROUP_NAME);
         packageGroupDisplayNameMap.put("numeric", GroupNames.NUMERIC_GROUP_NAME);

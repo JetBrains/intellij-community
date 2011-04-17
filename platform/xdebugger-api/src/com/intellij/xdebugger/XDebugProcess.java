@@ -22,9 +22,9 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.util.Ref;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,7 +134,7 @@ public abstract class XDebugProcess {
 
   /**
    * Check is it is possible to perform commands such as resume, step etc. And notify user if necessary
-   * @return true if process can actually perform user requests at this moment
+   * @return {@code true} if process can actually perform user requests at this moment
    */
   public boolean checkCanPerformCommands() {
     return true;
@@ -160,6 +160,15 @@ public abstract class XDebugProcess {
   public ExecutionConsole createConsole() {
     final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(getSession().getProject());
     return consoleBuilder.getConsole();
+  }
+
+  /**
+   * Override this method to enable 'Mark Object' action
+   * @return new instance of {@link XValueMarkerProvider}'s implementation or {@code null} if 'Mark Object' feature isn't supported
+   */
+  @Nullable
+  public XValueMarkerProvider<?,?> createValueMarkerProvider() {
+    return null;
   }
 
   /**

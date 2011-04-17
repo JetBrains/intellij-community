@@ -19,16 +19,15 @@ import org.apache.commons.lang.StringUtils;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.util.HgChangesetUtil;
 
 import java.util.*;
 
 class HgTrackFileNamesAccrossRevisionsCommand {
 
   private static final Logger LOG = Logger.getInstance(HgTrackFileNamesAccrossRevisionsCommand.class.getName());
-  private static final String SEPARATOR_STRING = "\u0027"; //ascii: end of transmission block
 
-  private static final String TEMPLATE = "{rev}|{file_dels}|{file_copies}" + SEPARATOR_STRING;
-  private static final int ITEM_COUNT = 3;
+  private static final String[] TEMPLATE_ITEMS = { "{rev}", "{file_dels}", "{file_copies}" };
 
   private static final int REVISION_INDEX = 0;
   private static final int FILES_DELETED_INDEX = 1;
@@ -48,7 +47,7 @@ class HgTrackFileNamesAccrossRevisionsCommand {
 
     arguments.add("--follow");
     arguments.add("--template");
-    arguments.add(TEMPLATE);
+    arguments.add(HgChangesetUtil.makeTemplate(TEMPLATE_ITEMS));
 
     if (limit != -1) {
       arguments.add("--limit");
@@ -69,15 +68,15 @@ class HgTrackFileNamesAccrossRevisionsCommand {
     HgCommandResult result = execute(hgCommandExecutor, hgFile.getRepo(), limit, hgFile, currentRevision, givenRevision);
 
     String output = result.getRawOutput();
-    String[] changeSets = output.split(SEPARATOR_STRING);
+    String[] changeSets = output.split(HgChangesetUtil.CHANGESET_SEPARATOR);
     String currentFileName = hgFile.getRelativePath();
     // needed on windows machines
     currentFileName = currentFileName.replaceAll("\\\\", "/");
 
     for (String line : changeSets) {
       try {
-        String[] attributes = StringUtils.splitPreserveAllTokens(line, '|');
-        if (attributes.length != ITEM_COUNT) {
+        String[] attributes = line.split(HgChangesetUtil.ITEM_SEPARATOR);
+        if (attributes.length != TEMPLATE_ITEMS.length) {
           LOG.debug("Wrong format. Skipping line " + line);
           continue;
         }

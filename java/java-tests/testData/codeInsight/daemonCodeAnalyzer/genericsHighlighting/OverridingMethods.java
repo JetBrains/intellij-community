@@ -511,3 +511,7 @@ class sOk implements C {
 }
 
 }
+
+interface OverrideObject {
+   <T> void notify();
+}

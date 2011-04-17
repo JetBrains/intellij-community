@@ -105,7 +105,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
                 }
 
                 @SuppressWarnings({ "SSBasedInspection" })
-                public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
+                public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
                   return super.isAvailable(project, editor, element) && getTarget(element).getText().startsWith("grammar ");
                 }
               }
@@ -123,7 +123,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
             action.invoke(project, editor, element);
           }
 
-          public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
+          public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
             return element != null && element.getContainingFile().getFileType() == StdFileTypes.XML &&
                     action.isAvailable(project, editor, element);
           }
@@ -210,7 +210,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
       suppress(element.getContainingFile(), getTarget(element));
     }
 
-    public boolean isAvailable(@NotNull Project project, Editor editor, @Nullable PsiElement element) {
+    public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
       return getTarget(element) != null;
     }
 

@@ -16,7 +16,6 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
@@ -49,7 +48,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   private final FixedSizeButton myBrowseButton;
   private boolean myButtonEnabled = true;
 
-  public ComponentWithBrowseButton(Comp component, ActionListener browseActionListener) {
+  public ComponentWithBrowseButton(Comp component, @Nullable ActionListener browseActionListener) {
     super(new BorderLayout(SystemInfo.isMac? 0 : 2, 0));
     myComponent = component;
     add(myComponent, BorderLayout.CENTER);

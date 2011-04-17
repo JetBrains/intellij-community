@@ -33,18 +33,18 @@ public class MissingReturnExpressionFixer implements Fixer {
       throws IncorrectOperationException {
     if (psiElement instanceof PsiReturnStatement) {
       PsiReturnStatement retStatement = (PsiReturnStatement) psiElement;
-      if (retStatement.getReturnValue() != null &&
-          startLine(editor, retStatement) == startLine(editor, retStatement.getReturnValue())) {
+      PsiExpression returnValue = retStatement.getReturnValue();
+      if (returnValue != null &&
+          lineNumber(editor, editor.getCaretModel().getOffset()) == lineNumber(editor, returnValue.getTextRange().getStartOffset())) {
         return;
       }
 
       PsiElement parent = PsiTreeUtil.getParentOfType(psiElement, PsiClassInitializer.class, PsiMethod.class);
       if (parent instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod) parent;
-        final PsiType returnType = method.getReturnType();
+        final PsiType returnType = ((PsiMethod) parent).getReturnType();
         if (returnType != null && returnType != PsiType.VOID) {
           final int startOffset = retStatement.getTextRange().getStartOffset();
-          if (retStatement.getReturnValue() != null) {
+          if (returnValue != null) {
             editor.getDocument().insertString(startOffset + "return".length(), ";");
           }
 
@@ -54,7 +54,7 @@ public class MissingReturnExpressionFixer implements Fixer {
     }
   }
 
-  private int startLine(Editor editor, PsiElement psiElement) {
-    return editor.getDocument().getLineNumber(psiElement.getTextRange().getStartOffset());
+  private static int lineNumber(Editor editor, int offset) {
+    return editor.getDocument().getLineNumber(offset);
   }
 }

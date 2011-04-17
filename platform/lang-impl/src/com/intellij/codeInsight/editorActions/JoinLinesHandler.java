@@ -28,7 +28,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
@@ -43,7 +42,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -96,6 +94,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       if (i >= doc.getLineCount() - 1) break;
       int lineEndOffset = doc.getLineEndOffset(startLine);
 
+      docManager.doPostponedOperationsAndUnblockDocument(doc);
       docManager.commitDocument(doc);
       CharSequence text = doc.getCharsSequence();
       int firstNonSpaceOffsetInNextLine = doc.getLineStartOffset(startLine + 1);
@@ -120,7 +119,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       TextRange limits = findStartAndEnd(text, lastNonSpaceOffsetInStartLine, firstNonSpaceOffsetInNextLine, doc.getTextLength());
       start = limits.getStartOffset(); end = limits.getEndOffset();
       // run raw joiners
-      for(JoinLinesHandlerDelegate delegate: Extensions.getExtensions(JoinRawLinesHandlerDelegate.EP_NAME)) {
+      for(JoinLinesHandlerDelegate delegate: Extensions.getExtensions(JoinLinesHandlerDelegate.EP_NAME)) {
         if (delegate instanceof JoinRawLinesHandlerDelegate) {
           rc = ((JoinRawLinesHandlerDelegate)delegate).tryJoinRawLines(doc, psiFile, start, end);
           if (rc != CANNOT_JOIN) {
@@ -239,16 +238,16 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
   }
 
   private static void doPostponedOperationsAndUnblockDocument(@NotNull PsiDocumentManager docManager, @NotNull DocumentEx document) {
-    boolean restore = CodeEditUtil.isSuspendedNodesReformattingAllowed();
-    CodeEditUtil.setAllowSuspendNodesReformatting(false);
-    try {
+    //boolean restore = CodeEditUtil.isSuspendedNodesReformattingAllowed();
+    //CodeEditUtil.setAllowSuspendNodesReformatting(false);
+    //try {
       docManager.doPostponedOperationsAndUnblockDocument(document);
-    }
-    finally {
-      if (restore) {
-        CodeEditUtil.setAllowSuspendNodesReformatting(true);
-      }
-    }
+    //}
+    //finally {
+    //  if (restore) {
+    //    CodeEditUtil.setAllowSuspendNodesReformatting(true);
+    //  }
+    //}
   }
   
   private static boolean isCommentElement(final PsiElement element) {

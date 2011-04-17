@@ -16,9 +16,11 @@
 package com.intellij.ui.components.editors;
 
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.Function;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.EmptyIcon;
 
@@ -40,19 +42,35 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
   private final JBList myList = new JBList();
   private Object[] myOptions = {};
   private Object myValue;
+  private Function<Object, String> myToString = StringUtil.createToStringFunction(Object.class);
 
+  @SuppressWarnings({"GtkPreferredJComboBoxRenderer"})
   private ListCellRenderer myRenderer = new DefaultListCellRenderer() {
-    private Icon myCheckIcon = Icons.CHECK_ICON;
-    private Icon myEmptyIcon = EmptyIcon.create(Icons.CHECK_ICON.getIconWidth());
+    public Icon myEmptyIcon;
+
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      final JLabel label = (JLabel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      final JLabel label = (JLabel)super.getListCellRendererComponent(list, myToString.fun(value), index, isSelected, cellHasFocus);
       if (value == myValue) {
-        label.setIcon(myCheckIcon);
+        label.setIcon(getIcon(isSelected));
       } else {
-        label.setIcon(myEmptyIcon);
+        label.setIcon(getEmptyIcon());
       }
       return label;
+    }
+
+    private Icon getEmptyIcon() {
+      if (myEmptyIcon == null) {
+        myEmptyIcon = EmptyIcon.create(getIcon(true).getIconWidth());
+      }
+      return myEmptyIcon;
+    }
+
+    private Icon getIcon(boolean selected) {
+      final boolean small = "small".equals(JBComboBoxTableCellEditorComponent.this.getClientProperty("JComponent.sizeVariant"));
+      return small
+             ? selected ? Icons.CHECK_ICON_SMALL_SELECTED : Icons.CHECK_ICON_SMALL
+             : selected ? Icons.CHECK_ICON_SELECTED : Icons.CHECK_ICON;
     }
   };
 
@@ -63,14 +81,14 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
     myTable = table;
   }
 
-  public void setTable(JTable table) {
-    myTable = table;
-  }
-
   public void setCell(JTable table, int row, int column) {
     setTable(table);
     setRow(row);
     setColumn(column);
+  }
+
+  public void setTable(JTable table) {
+    myTable = table;
   }
 
   public void setRow(int row) {
@@ -79,6 +97,10 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
 
   public void setColumn(int column) {
     myColumn = column;
+  }
+
+  public Object[] getOptions() {
+    return myOptions;
   }
 
   public void setOptions(Object... options) {
@@ -120,5 +142,9 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
 
   public void setDefaultValue(Object value) {
     myValue = value;
+  }
+
+  public void setToString(Function<Object, String> toString) {
+    myToString = toString;
   }
 }

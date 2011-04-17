@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -27,7 +29,7 @@ import java.lang.reflect.Field;
 public class ColorChooser {
   private ColorChooser() {}
 
-  public static Color chooseColor(Component parent, String caption, Color preselectedColor) {
+  public static Color chooseColor(Component parent, String caption, @Nullable Color preselectedColor) {
     Color c = JColorChooser.showDialog(parent, caption, preselectedColor);
     try {
       // JColorChooser.ColorChooserDialog.cancelButton static field leaks parent dialogs thus finally Project. sigh...
@@ -51,8 +53,6 @@ public class ColorChooser {
     catch (Exception e) {
       // Do nothing. Something changed in JColorChooser so we've failed to avoid memory leak in worst case.
     }
-    finally {
-      return c;
-    }
+    return c;
   }
 }

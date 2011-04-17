@@ -109,7 +109,7 @@ public class GithubCheckoutProvider implements CheckoutProvider {
     final String repositoryName = name;
     final String repositoryOwner = owner;
     final String checkoutUrl = host + repositoryOwner + "/" + repositoryName + ".git";
-    GitCheckoutProvider.checkout(project, listener, selectedPathFile, checkoutUrl, projectName, selectedPath);
+    GitCheckoutProvider.clone(project, listener, selectedPathFile, checkoutUrl, projectName, selectedPath);
   }
 
   @Override

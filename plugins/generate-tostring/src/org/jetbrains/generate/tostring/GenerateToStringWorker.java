@@ -33,6 +33,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.config.*;
 import org.jetbrains.generate.tostring.element.*;
@@ -389,7 +390,7 @@ public class GenerateToStringWorker {
     PsiAdapterFactory.getPsiAdapter().executeCommand(clazz.getProject(), writeCommand);
   }
 
-  private static void annotate(final PsiMethod result, String fqn) throws IncorrectOperationException {
+  private static void annotate(@NotNull PsiMethod result, String fqn) throws IncorrectOperationException {
     Project project = result.getProject();
     AddAnnotationFix fix = new AddAnnotationFix(fqn, result);
     if (fix.isAvailable(project, null, result.getContainingFile())) {

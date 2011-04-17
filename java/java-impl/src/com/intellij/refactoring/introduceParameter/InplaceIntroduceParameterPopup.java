@@ -182,6 +182,11 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
   }
 
   private void startIntroduceTemplate(final boolean replaceAllOccurrences) {
+    startIntroduceTemplate(replaceAllOccurrences, hasFinalModifier());
+  }
+
+  private void startIntroduceTemplate(final boolean replaceAllOccurrences,
+                                      final boolean hasFinalModifier) {
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         myTypeSelectorManager.setAllOccurences(replaceAllOccurrences);
@@ -190,7 +195,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
           .getInstance(myProject).variableNameToPropertyName(myLocalVar.getName(), VariableKind.LOCAL_VARIABLE) : null;
         final String[] names = IntroduceParameterHandler.createNameSuggestionGenerator(myExpr, propName, myProject)
           .getSuggestedNameInfo(defaultType).names;
-        final PsiParameter parameter = createParameterToStartTemplateOn(names, defaultType);
+        final PsiParameter parameter = createParameterToStartTemplateOn(names, defaultType, hasFinalModifier);
         if (parameter != null) {
           myParameterIndex = myMethod.getParameterList().getParameterIndex(parameter);
           myEditor.getCaretModel().moveToOffset(parameter.getTextOffset());
@@ -202,7 +207,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
           renamer.performInplaceRename(false, nameSuggestions);
         }
       }
-    }, IntroduceParameterHandler.REFACTORING_NAME, null);
+    }, IntroduceParameterHandler.REFACTORING_NAME, IntroduceParameterHandler.REFACTORING_NAME);
   }
 
   @Override
@@ -234,7 +239,8 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     public ParameterInplaceIntroducer(PsiParameter parameter) {
       super(myProject, new TypeExpression(myProject, myTypeSelectorManager.getTypesForAll()),
             myEditor, parameter, myMustBeFinal,
-            myTypeSelectorManager.getTypesForAll().length > 1, myExprMarker, InplaceIntroduceParameterPopup.this.getOccurrenceMarkers());
+            myTypeSelectorManager.getTypesForAll().length > 1, myExprMarker, InplaceIntroduceParameterPopup.this.getOccurrenceMarkers(),
+            IntroduceParameterHandler.REFACTORING_NAME);
       myDefaultParameterTypePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(parameter.getType());
     }
 
@@ -396,14 +402,17 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     if (myParameterIndex < 0) return;
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
     if (templateState != null) {
+      PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
+      final PsiParameter parameter = getParameter();
+      final boolean hasFinalModifier = parameter.hasModifierProperty(PsiModifier.FINAL);
       templateState.gotoEnd(true);
-      startIntroduceTemplate(isReplaceAllOccurences());
+      startIntroduceTemplate(isReplaceAllOccurences(), hasFinalModifier);
     }
   }
 
 
   private PsiParameter createParameterToStartTemplateOn(final String[] names,
-                                                        final PsiType defaultType) {
+                                                        final PsiType defaultType, final boolean hasFinalModifier) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myMethod.getProject());
     return ApplicationManager.getApplication().runWriteAction(new Computable<PsiParameter>() {
       @Override
@@ -412,7 +421,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
         final PsiParameter anchor = JavaIntroduceParameterMethodUsagesProcessor.getAnchorParameter(myMethod);
         final PsiParameter psiParameter = (PsiParameter)myMethod.getParameterList()
           .addAfter(elementFactory.createParameter(name, defaultType), anchor);
-        PsiUtil.setModifierProperty(psiParameter, PsiModifier.FINAL, hasFinalModifier());
+        PsiUtil.setModifierProperty(psiParameter, PsiModifier.FINAL, hasFinalModifier);
         return psiParameter;
       }
     });

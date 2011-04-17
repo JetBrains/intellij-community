@@ -18,10 +18,12 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -301,5 +303,10 @@ public abstract class AnAction {
 
   public interface TransparentUpdate {
 
+  }
+
+  @Nullable
+  public static Project getEventProject(AnActionEvent e) {
+    return e == null ? null : e.getData(PlatformDataKeys.PROJECT);
   }
 }

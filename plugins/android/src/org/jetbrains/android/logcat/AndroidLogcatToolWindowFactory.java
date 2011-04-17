@@ -49,23 +49,11 @@ import java.util.List;
 public class AndroidLogcatToolWindowFactory implements ToolWindowFactory, Condition<Project> {
   public static final String TOOL_WINDOW_ID = AndroidBundle.message("android.logcat.title");
 
-  public void createToolWindowContent(Project project, final ToolWindow toolWindow) {
+  public void createToolWindowContent(final Project project, final ToolWindow toolWindow) {
     toolWindow.setIcon(AndroidUtils.ANDROID_ICON);
     toolWindow.setAvailable(true, null);
     toolWindow.setToHideOnEmptyContent(true);
     toolWindow.setTitle(TOOL_WINDOW_ID);
-
-    List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
-    if (facets.size() == 0) {
-      Messages.showErrorDialog(project, AndroidBundle.message("android.logcat.no.android.facets.error"), CommonBundle.getErrorTitle());
-      return;
-    }
-    AndroidFacet facet = facets.get(0);
-    AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
-    if (platform == null) {
-      Messages.showErrorDialog(project, AndroidBundle.message("specify.platform.error"), CommonBundle.getErrorTitle());
-      return;
-    }
 
     final AndroidLogcatToolWindowView view = new AndroidLogcatToolWindowView(project) {
       @Override
@@ -85,6 +73,9 @@ public class AndroidLogcatToolWindowFactory implements ToolWindowFactory, Condit
           if (visible != myToolWindowVisible) {
             myToolWindowVisible = visible;
             view.activate();
+            if (visible) {
+              checkFacetAndSdk(project);
+            }
           }
         }
       }
@@ -102,6 +93,20 @@ public class AndroidLogcatToolWindowFactory implements ToolWindowFactory, Condit
         view.activate();
       }
     });
+  }
+
+  private static void checkFacetAndSdk(Project project) {
+    List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
+    if (facets.size() == 0) {
+      Messages.showErrorDialog(project, AndroidBundle.message("android.logcat.no.android.facets.error"), CommonBundle.getErrorTitle());
+      return;
+    }
+
+    AndroidFacet facet = facets.get(0);
+    AndroidPlatform platform = facet.getConfiguration().getAndroidPlatform();
+    if (platform == null) {
+      Messages.showErrorDialog(project, AndroidBundle.message("specify.platform.error"), CommonBundle.getErrorTitle());
+    }
   }
 
   public boolean value(Project project) {

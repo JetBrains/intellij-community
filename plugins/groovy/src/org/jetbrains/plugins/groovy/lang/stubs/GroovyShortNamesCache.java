@@ -57,8 +57,9 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
     return allClasses.toArray(new PsiClass[allClasses.size()]);
   }
 
-  public List<PsiClass> getScriptClassesByFQName(final String name, final GlobalSearchScope scope) {
-    final Collection<GroovyFile> files = StubIndex.getInstance().get(GrFullScriptNameIndex.KEY, name.hashCode(), myProject, new GrSourceFilterScope(scope));
+  public List<PsiClass> getScriptClassesByFQName(final String name, final GlobalSearchScope scope, final boolean srcOnly) {
+    GlobalSearchScope actualScope = srcOnly ? new GrSourceFilterScope(scope) : scope;
+    final Collection<GroovyFile> files = StubIndex.getInstance().get(GrFullScriptNameIndex.KEY, name.hashCode(), myProject, actualScope);
     if (files.isEmpty()) {
       return Collections.emptyList();
     }
@@ -76,10 +77,22 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   }
 
   @NotNull
-  public PsiClass[] getClassesByFQName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
-    final Collection<PsiClass> result = new ArrayList<PsiClass>(getScriptClassesByFQName(name, scope));
+  public List<PsiClass> getClassesByFQName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
+    final List<PsiClass> result = addClasses(name, scope, true);
+    if (result.isEmpty()) {
+      result.addAll(addClasses(name, scope, false));
+    }
+    if (result.isEmpty()) {
+      result.addAll(addClasses(name, GlobalSearchScope.projectScope(myProject), false));
+    }
+    return result;
+  }
 
-    final Collection<? extends PsiElement> classes = StubIndex.getInstance().get(GrFullClassNameIndex.KEY, name.hashCode(), myProject, new GrSourceFilterScope(scope));
+  private List<PsiClass> addClasses(String name, GlobalSearchScope scope, boolean inSource) {
+    final List<PsiClass> result = new ArrayList<PsiClass>(getScriptClassesByFQName(name, scope, inSource));
+
+    final Collection<? extends PsiElement> classes = StubIndex
+      .getInstance().get(GrFullClassNameIndex.KEY, name.hashCode(), myProject, inSource ? new GrSourceFilterScope(scope) : scope);
     if (!classes.isEmpty()) {
       //hashcode doesn't guarantee equals
       for (PsiElement psiClass : classes) {
@@ -88,8 +101,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
         }
       }
     }
-
-    return result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
+    return result;
   }
 
   private Collection<PsiClass> getAllScriptClasses(String shortName, GlobalSearchScope scope) {

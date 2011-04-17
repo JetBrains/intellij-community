@@ -39,7 +39,7 @@ public class MethodReturnAlwaysConstantInspection extends BaseGlobalInspection {
 
     @NotNull
     public String getGroupDisplayName() {
-        return GroupNames.CLASSLAYOUT_GROUP_NAME;
+        return GroupNames.CLASS_LAYOUT_GROUP_NAME;
     }
 
     public CommonProblemDescriptor[] checkElement(

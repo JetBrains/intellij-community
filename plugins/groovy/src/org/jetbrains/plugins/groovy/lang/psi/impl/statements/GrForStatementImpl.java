@@ -18,12 +18,12 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -52,10 +52,12 @@ public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForSta
     return "For statement";
   }
 
+  @Nullable
   public GrForClause getClause() {
     return findChildByClass(GrForClause.class);
   }
 
+  @Nullable
   public GrStatement getBody() {
     return findChildByClass(GrStatement.class);
   }
@@ -67,15 +69,11 @@ public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForSta
     GrForClause forClause = getClause();
     final GrVariable varScope = PsiTreeUtil.getParentOfType(place, GrVariable.class);
     if (forClause == null) return true;
+    if (lastParent == null || lastParent instanceof GrForInClause) return true;
 
     GrVariable var = forClause.getDeclaredVariable();
-    if (var == null) return true;
-
-    final PsiModifierList modifierList = var.getModifierList();
-    boolean isAvailableOutsideOfFor = modifierList == null || modifierList.getTextLength() == 0;
-    if (lastParent != null && !(lastParent instanceof GrForInClause) || lastParent == null && isAvailableOutsideOfFor) {
-      if (!var.equals(varScope) && !ResolveUtil.processElement(processor, var, state)) return false;
-    }
+    if (var == null || var.equals(varScope)) return true;
+    if (!ResolveUtil.processElement(processor, var, state)) return false;
 
     return true;
   }

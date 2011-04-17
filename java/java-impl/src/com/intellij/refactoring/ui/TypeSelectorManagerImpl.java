@@ -133,6 +133,10 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     return myTypesForAll;
   }
 
+  public PsiType[] getTypesForOne() {
+    return myTypesForMain;
+  }
+
   public PsiType getDefaultType() {
     if (myDefaultType.isValid()) {
       return myDefaultType;

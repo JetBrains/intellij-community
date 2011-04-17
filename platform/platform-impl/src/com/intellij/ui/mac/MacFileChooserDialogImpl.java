@@ -54,7 +54,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
       public boolean callback(ID self, String selector, ID panel, ID filename) {
         if (filename == null || filename.intValue() == 0) return false;
         final String fileName = Foundation.toStringViaUTF8(filename);
-        final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(fileName);
+        final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(fileName);
         return virtualFile != null && (virtualFile.isDirectory() || getDescriptor().isFileSelectable(virtualFile));
       }
     };
@@ -63,7 +63,7 @@ public class MacFileChooserDialogImpl implements MacFileChooserDialog {
       public boolean callback(ID self, String selector, ID panel, ID filename) {
         if (filename == null || filename.intValue() == 0) return false;
         final String fileName = Foundation.toStringViaUTF8(filename);
-        final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(fileName);
+        final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(fileName);
         return virtualFile != null && (!virtualFile.isDirectory() || getDescriptor().isFileSelectable(virtualFile));
       }
     };

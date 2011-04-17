@@ -15,13 +15,15 @@
  */
 package com.intellij.openapi.diff;
 
-public interface DiffPanel extends DiffViewer {
+import com.intellij.openapi.Disposable;
 
+/**
+ * @author Konstantin Bulenkov
+ */
+public interface DiffPanel extends DiffViewer, Disposable {
   void setTitle1(String title);
   void setTitle2(String title);
   void setContents(DiffContent content1, DiffContent content2);
-
+  void setRequestFocus(boolean requestFocus);
   boolean hasDifferences();
-
-  void dispose();
 }
