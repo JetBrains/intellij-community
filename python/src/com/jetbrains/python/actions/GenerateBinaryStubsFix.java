@@ -15,6 +15,7 @@ import com.intellij.psi.PsiReference;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportReferenceImpl;
 import com.jetbrains.python.sdk.IronPythonSdkFlavor;
+import com.jetbrains.python.sdk.PySkeletonRefresher;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
       public void run() {
         List<String> assemblyRefs = collectAssemblyReferences(descriptor.getPsiElement().getContainingFile());
         final String skeletonPath = PythonSdkType.findSkeletonsPath(mySdk);
-        PythonSdkType.generateSkeleton(mySdk.getHomePath(), skeletonPath, myQualifiedName, "", assemblyRefs);
+        PySkeletonRefresher.generateSkeleton(mySdk.getHomePath(), skeletonPath, myQualifiedName, "", assemblyRefs);
         final VirtualFile skeletonDir = LocalFileSystem.getInstance().findFileByPath(skeletonPath);
         if (skeletonDir != null) {
           skeletonDir.refresh(true, true);

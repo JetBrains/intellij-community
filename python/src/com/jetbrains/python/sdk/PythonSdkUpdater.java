@@ -29,6 +29,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
+ * A component that initiates a refresh of all project's Python SDKs.
+ * Delegates most of the work to PythonSdkType.
+ * <br/>
  * @author yole
  */
 public class PythonSdkUpdater implements ProjectComponent {

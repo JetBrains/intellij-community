@@ -27,6 +27,7 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -46,7 +47,6 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -61,7 +61,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
-import static com.jetbrains.python.sdk.PythonSdkType.SkeletonVersionChecker.versionFromString;
+import static com.jetbrains.python.sdk.SkeletonVersionChecker.versionFromString;
 
 /**
  * @author yole
@@ -71,6 +71,9 @@ public class PythonSdkType extends SdkType {
   private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
 
   static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
+
+  @NonNls public static final String BLACKLIST_FILE_NAME = ".blacklist";
+  final static Pattern BLACKLIST_LINE = Pattern.compile("^([^:]+): (\\d+\\.\\d+) (\\d+)\\s*$");
   private List<String> myCachedSysPath;
 
   public static PythonSdkType getInstance() {
@@ -424,7 +427,7 @@ public class PythonSdkType extends SdkType {
           sdkModificator.removeAllRoots();
           updateSdkRootsFromSysPath(sdkModificator, indicator, (PythonSdkType)sdk.getSdkType());
           if (!ApplicationManager.getApplication().isUnitTestMode()) {
-            regenerateSkeletons(indicator, sdk, getSkeletonsPath(sdk.getHomePath()), null, success);
+            new PySkeletonRefresher(sdk, getSkeletonsPath(sdk.getHomePath()), indicator).regenerateSkeletons(null);
           }
           //sdkModificator.commitChanges() must happen outside, in dispatch thread.
         }
@@ -528,159 +531,6 @@ public class PythonSdkType extends SdkType {
       LOG.info("Bogus sys.path entry " + path);
     }
   }
-  static List<String> regenerateSkeletons(
-    @Nullable ProgressIndicator indicator, Sdk sdk, final String skeletonsPath,
-    SkeletonVersionChecker cached_checker,
-    Ref<Boolean> migration_flag
-  ) {
-    List<String> error_list = new SmartList<String>();
-    String home_path = sdk.getHomePath();
-    final String parent_dir = new File(home_path).getParent();
-    final File skel_dir = new File(skeletonsPath);
-    if (!skel_dir.exists()) skel_dir.mkdirs();
-    final String readable_path = shortenDirName(home_path);
-
-    if (indicator != null) {
-      indicator.checkCanceled();
-      indicator.setText(String.format("Querying skeleton generator for %s...", readable_path));
-      indicator.setText2("");
-    }
-    // get generator version and binary libs list in one go
-    final ProcessOutput run_result = SdkUtil.getProcessOutput(parent_dir,
-      new String[]{home_path, PythonHelpersLocator.getHelperPath(GENERATOR3), "-L"},
-      getVirtualEnvAdditionalEnv(home_path),
-      MINUTE
-    );
-    if (run_result.getExitCode() != 0) {
-      StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3)
-        .append(" for ").append(home_path)
-        .append(", exit code ").append(run_result.getExitCode())
-        .append(", stderr: \n-----\n");
-      for (String err_line : run_result.getStderrLines()) sb.append(err_line).append("\n");
-      sb.append("-----");
-      throw new InvalidSdkException(sb.toString());
-    }
-    // stdout contains version in the first line and then the list of binaries
-    final List<String> binaries_output = run_result.getStdoutLines();
-    if (binaries_output.size() < 1) {
-      throw new InvalidSdkException("Empty output from " + GENERATOR3 + " for " + home_path);
-    }
-    int generator_version = versionFromString(binaries_output.get(0).trim());
-
-    if (indicator != null) {
-      indicator.checkCanceled();
-      indicator.setText("Reading versions file...");
-    }
-    SkeletonVersionChecker checker;
-    if (cached_checker != null) checker = cached_checker.withDefaultVersionIfUnknown(generator_version);
-    else checker = new SkeletonVersionChecker(generator_version);
-
-    // check builtins
-    String builtins_fname = getBuiltinsFileName(sdk);
-    File builtins_file = new File(skel_dir, builtins_fname);
-
-    Matcher header_matcher = getParseHeader(builtins_file);
-    final boolean old_or_non_existing = header_matcher == null || // no file
-                                        !header_matcher.matches(); // no version line
-    if (migration_flag != null && !migration_flag.get() && old_or_non_existing) {
-      migration_flag.set(true);
-      Notifications.Bus.notify(
-        new Notification(
-          "Skeletons", "Converting old skeletons",
-          "Skeletons of binary modules seem to be from an older version.<br/>"+
-          "These will be fully re-generated, which will take some time, but will happen <i>only once</i>.<br/>"+
-          "Next time you open the project, only skeletons of new or updated binary modules will be re-generated.",
-          NotificationType.INFORMATION
-        )
-      );
-    }
-    if (old_or_non_existing || versionFromString(header_matcher.group(2)) < checker.getBuiltinVersion()) {
-      if (indicator != null) {
-        indicator.setText("Updating skeletons of builtins for " + readable_path);
-        indicator.setText2("");
-      }
-      generateBuiltinSkeletons(home_path, skeletonsPath);
-    }
-
-    if (indicator != null) indicator.setText("Cleaning up skeletons for " + readable_path);
-    cleanUpSkeletons(skel_dir, indicator);
-    if (indicator != null) indicator.setText2("");
-
-    if (indicator != null) indicator.setText("Updating skeletons for " + readable_path);
-    error_list.addAll(updateOrCreateSkeletons(home_path, skeletonsPath, checker, binaries_output, indicator));
-
-    if (indicator != null) indicator.setText("Reloading generated skeletons...");
-    VirtualFile skeletonsVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(skeletonsPath);
-    assert skeletonsVFile != null;
-    skeletonsVFile.refresh(false, true);
-    return error_list;
-  }
-
-  /**
-   * For every existing skeleton file, take its module file name,
-   * and remove the skeleton if the module file does not exist.
-   * Works recursively starting from dir. Removes dirs that become empty.
-   */
-  private static void cleanUpSkeletons(final File dir, @Nullable ProgressIndicator indicator) {
-    if (indicator != null) {
-      indicator.checkCanceled();
-      indicator.setText2("Cleaning up skeletons in " + dir.getPath());
-    }
-    for (File item : dir.listFiles()) {
-      if (item.isDirectory()) {
-        cleanUpSkeletons(item, indicator);
-        // was the dir emptied?
-        File[] remaining = item.listFiles();
-        if (remaining.length == 1) {
-          File last_file = remaining[0];
-          if (PyNames.INIT_DOT_PY.equals(last_file.getName()) && last_file.length() == 0) {
-            boolean deleted = deleteOrLog(last_file);
-            if (deleted) deleteOrLog(item);
-          }
-        }
-      }
-      else if (item.isFile()) {
-        // clean up an individual file
-        if (PyNames.INIT_DOT_PY.equals(item.getName()) && item.length() == 0) continue; // these are versionless
-        Matcher header_matcher = getParseHeader(item);
-        boolean can_live = header_matcher != null && header_matcher.matches();
-        if (can_live) {
-          String fname = header_matcher.group(1);
-          can_live = fname != null && (SkeletonVersionChecker.BUILTIN_NAME.equals(fname) || new File(fname).exists());
-        }
-        if (! can_live) deleteOrLog(item);
-      }
-    }
-  }
-
-  private static boolean deleteOrLog(File item) {
-    boolean deleted = item.delete();
-    if (! deleted) LOG.warn("Failed to delete skeleton file " + item.getAbsolutePath());
-    return deleted;
-  }
-
-  static final Pattern ourVersionLinePat = Pattern.compile("# from (\\S+) by generator (\\S+)\\s*");
-
-  @Nullable
-  private static Matcher getParseHeader(File infile) {
-    try {
-      Reader input = new FileReader(infile);
-      LineNumberReader lines = new LineNumberReader(input);
-      try {
-        String line = null;
-        for (int i=0; i < 3; i+=1) { // read three lines, skip first two
-          line = lines.readLine();
-          if (line == null) return null;
-        }
-        return ourVersionLinePat.matcher(line);
-      }
-      finally {
-        lines.close();
-      }
-    }
-    catch (IOException ignore) {}
-    return null;
-  }
 
   private static String getSkeletonsPath(String bin_path) {
     String sep = File.separator;
@@ -715,13 +565,6 @@ public class PythonSdkType extends SdkType {
     else return getSysPath(bin_path);
   }
 
-  protected static boolean checkSuccess(ProcessOutput run_result) {
-    if (run_result.getExitCode() != 0) {
-      LOG.error(run_result.getStderr() + (run_result.isTimeout()? "\nTimed out" : "\nExit code " + run_result.getExitCode()));
-      return false;
-    }
-    return true;
-  }
 
   @Nullable
   protected static List<String> getSysPathsFromScript(String bin_path) {
@@ -734,12 +577,12 @@ public class PythonSdkType extends SdkType {
       new String[]{bin_path, scriptFile},
       add_environment, MINUTE
     );
-    return checkSuccess(run_result) ? run_result.getStdoutLines() : null;
+    return run_result.checkSuccess(LOG) ? run_result.getStdoutLines() : null;
   }
 
   // Returns a piece of env good as additional env for getProcessOutput.
   @Nullable
-  private static String[] getVirtualEnvAdditionalEnv(String bin_path) {
+  static String[] getVirtualEnvAdditionalEnv(String bin_path) {
     File virtualenv_root = getVirtualEnvRoot(bin_path);
     String[] add_environment = null;
     if (virtualenv_root != null) {
@@ -752,123 +595,6 @@ public class PythonSdkType extends SdkType {
   public String getVersionString(final String sdkHome) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
     return flavor != null ? flavor.getVersionString(sdkHome) : null;
-  }
-
-  private final static String GENERATOR3 = "generator3.py";
-
-  public static void generateBuiltinSkeletons(String binary_path, final String skeletonsRoot) {
-    new File(skeletonsRoot).mkdirs();
-
-
-    final ProcessOutput run_result = SdkUtil.getProcessOutput(
-      new File(binary_path).getParent(),
-      new String[]{
-        binary_path,
-        PythonHelpersLocator.getHelperPath(GENERATOR3),
-        "-d", skeletonsRoot, // output dir
-        "-b", // for builtins
-      },
-      getVirtualEnvAdditionalEnv(binary_path), MINUTE *5
-    );
-    checkSuccess(run_result);
-  }
-
-  /**
-   * (Re-)generates skeletons for all binary python modules. Up-to-date skeletons are not regenerated.
-   * Does one module at a time: slower, but avoids certain conflicts.
-   *
-   *
-   *
-   *
-   * @param binaryPath   where to find interpreter.
-   * @param skeletonsRoot where to put results (expected to exist).
-   * @param checker   to check if a skeleton is up to date.
-   * @param binaries
-   * @param indicator ProgressIndicator to update, or null.
-   * @return number of generation errors
-   */
-  public static List<String> updateOrCreateSkeletons(final String binaryPath,
-                                                     final String skeletonsRoot,
-                                                     SkeletonVersionChecker checker,
-                                                     List<String> binaries, ProgressIndicator indicator) {
-    List<String> error_list = new SmartList<String>();
-    Iterator<String> bin_iter = binaries.iterator();
-    bin_iter.next(); // skip version number. if it weren't here, we'd already die up in regenerateSkeletons()
-    while (bin_iter.hasNext()) {
-      if (indicator != null) indicator.checkCanceled();
-
-      String line = bin_iter.next(); // line = "mod_name path"
-      int cutpos = line.indexOf(' ');
-      if (cutpos < 0) LOG.error("Bad binaries line: '" + line + "', SDK " + binaryPath); // but don't die yet
-      else {
-        String module_name = line.substring(0, cutpos);
-        String module_lib_name = line.substring(cutpos+1);
-        final String module_path = module_name.replace('.', '/');
-        File skeleton_file = new File(skeletonsRoot, module_path + ".py");
-        if (!skeleton_file.exists()) {
-          skeleton_file = new File(new File(skeletonsRoot, module_path), PyNames.INIT_DOT_PY);
-        }
-        File lib_file = new File(module_lib_name);
-        Matcher matcher = getParseHeader(skeleton_file);
-        boolean must_rebuild = true; // guilty unless proven fresh enough
-        if (matcher != null && matcher.matches()) {
-          int file_version = SkeletonVersionChecker.versionFromString(matcher.group(2));
-          int required_version = checker.getRequiredVersion(module_name);
-          must_rebuild = file_version < required_version;
-        }
-        if (!must_rebuild) { // ...but what if the lib was updated?
-          must_rebuild = (lib_file.exists() && skeleton_file.exists() && lib_file.lastModified() > skeleton_file.lastModified());
-        }
-        if (must_rebuild) {
-          if (indicator != null) indicator.setText2(module_name);
-          LOG.info("Skeleton for " + module_name);
-          if (!generateSkeleton(binaryPath, skeletonsRoot, module_name, module_lib_name, Collections.<String>emptyList())) {
-            error_list.add(module_name);
-          }
-        }
-      }
-    }
-    return error_list;
-  }
-
-  public static boolean generateSkeleton(String binaryPath, String stubsRoot, String modname, String modfilename, List<String> assemblyRefs) {
-    boolean ret = true;
-    final String parent_dir = new File(binaryPath).getParent();
-    List<String> commandLine = new ArrayList<String>();
-    commandLine.add(binaryPath);
-    commandLine.add(PythonHelpersLocator.getHelperPath(GENERATOR3));
-    commandLine.add("-d");
-    commandLine.add(stubsRoot);
-    if (!assemblyRefs.isEmpty()) {
-      commandLine.add("-c");
-      commandLine.add(StringUtil.join(assemblyRefs, ";"));
-    }
-    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-      commandLine.add("-x");
-    }
-    commandLine.add(modname);
-    if (modfilename != null) commandLine.add(modfilename);
-
-    final ProcessOutput gen_result = SdkUtil.getProcessOutput(
-      parent_dir,
-      ArrayUtil.toStringArray(commandLine),
-      getVirtualEnvAdditionalEnv(binaryPath),
-      MINUTE * 10
-    );
-    if (gen_result.getExitCode() != 0) {
-      ret = false;
-      StringBuilder sb = new StringBuilder("Skeleton for ");
-      sb.append(modname).append(" failed on ").append(binaryPath).append(". stderr: --\n");
-      for (String err_line : gen_result.getStderrLines()) sb.append(err_line).append("\n");
-      sb.append("--");
-      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-        LOG.warn(sb.toString());
-      }
-      else {
-        LOG.info(sb.toString());
-      }
-    }
-    return ret;
   }
 
   public static List<Sdk> getAllSdks() {
@@ -937,7 +663,7 @@ public class PythonSdkType extends SdkType {
         LOG.info("Refreshing skeletons for " + homePath);
         try {
           SkeletonVersionChecker checker = new SkeletonVersionChecker(0); // this default version won't be used
-          sdk_errors = regenerateSkeletons(indicator, sdk, skeletonsPath, checker, migration_flag);
+          sdk_errors = new PySkeletonRefresher(sdk, skeletonsPath, indicator).regenerateSkeletons(checker, migration_flag);
           if (sdk_errors.size() > 0) {
             String sdk_name = sdk.getName();
             List<String> known_errors = errors.get(sdk_name);
@@ -976,154 +702,8 @@ public class PythonSdkType extends SdkType {
               new SkeletonErrorsDialog(errors, failed_sdks).setVisible(true);
             }
           }
-        ));
-    }
-  }
-
-  /**
-   * Parses required_gen_version file.
-   * Efficiently checks file versions against it.
-   * Is immutable.
-   * <br/>
-   * User: dcheryasov
-   * Date: 2/23/11 5:32 PM
-   */
-  static class SkeletonVersionChecker {
-    private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkType.SkeletonVersionChecker");
-
-    final static Pattern ONE_LINE = Pattern.compile("^(?:(\\w+(?:\\.\\w+)*|\\(built-in\\)|\\(default\\))\\s+(\\d+\\.\\d+))?\\s*(?:#.*)?$");
-
-    @NonNls static final String REQUIRED_VERSION_FNAME = "required_gen_version";
-    @NonNls static final String DEFAULT_NAME = "(default)"; // version required if a package is not explicitly mentioned
-    @NonNls static final String BUILTIN_NAME = "(built-in)"; // version required for built-ins
-    private TreeMap<PyQualifiedName, Integer> myExplicitVersion; // versions of regularly named packages
-    private Integer myDefaultVersion; // version of (default)
-    private Integer myBuiltinsVersion; // version of (built-it)
-
-    /**
-     * Creates an instance, loads requirements file.
-     */
-    public SkeletonVersionChecker(int defaultVersion) {
-      myExplicitVersion = createTreeMap();
-      myDefaultVersion = defaultVersion;
-      load();
-    }
-
-    private static TreeMap<PyQualifiedName, Integer> createTreeMap() {
-      return new TreeMap<PyQualifiedName, Integer>(new Comparator<PyQualifiedName>() {
-        @Override
-        public int compare(PyQualifiedName left, PyQualifiedName right) {
-          Iterator<String> lefts = left.getComponents().iterator();
-          Iterator<String> rights = right.getComponents().iterator();
-          while (lefts.hasNext() && rights.hasNext()) {
-            int res = lefts.next().compareTo(rights.next());
-            if (res != 0) return res;
-          }
-          if (lefts.hasNext()) return 1;
-          if (rights.hasNext()) return -1;
-          return 0;  // equal
-        }
-      });
-    }
-
-    private SkeletonVersionChecker(TreeMap<PyQualifiedName, Integer> explicit, Integer builtins) {
-      myExplicitVersion = explicit;
-      myBuiltinsVersion = builtins;
-    }
-
-    /**
-     * @param version the new default version
-     * @return a shallow copy of this with different default version.
-     */
-    public SkeletonVersionChecker withDefaultVersionIfUnknown(int version) {
-      SkeletonVersionChecker ret = new SkeletonVersionChecker(myExplicitVersion, myBuiltinsVersion);
-      ret.myDefaultVersion = myDefaultVersion != 0 ? myDefaultVersion : version;
-      return ret;
-    }
-
-    private void load() {
-      // load the required versions file
-      File infile = PythonHelpersLocator.getHelperFile(REQUIRED_VERSION_FNAME);
-      try {
-        if (infile.canRead()) {
-          Reader input = new FileReader(infile);
-          LineNumberReader lines = new LineNumberReader(input);
-          try {
-            String line;
-            do {
-              line = lines.readLine();
-              if (line != null) {
-                Matcher matcher = ONE_LINE.matcher(line);
-                if (matcher.matches()) {
-                  String package_name = matcher.group(1);
-                  String ver = matcher.group(2);
-                  if (package_name != null) {
-                    final int version = versionFromString(ver);
-                    if (DEFAULT_NAME.equals(package_name)) {
-                      myDefaultVersion = version;
-                    }
-                    else if (BUILTIN_NAME.equals(package_name)) {
-                      myBuiltinsVersion = version;
-                    }
-                    else {
-                      myExplicitVersion.put(PyQualifiedName.fromDottedString(package_name), version);
-                    }
-                  } // else the whole line is a valid comment, and both catch groups are null
-                }
-                else LOG.warn(REQUIRED_VERSION_FNAME + ":" + lines.getLineNumber() + " Incorrect line, ignored" );
-              }
-            } while (line != null);
-            if (myBuiltinsVersion == null) {
-              myBuiltinsVersion = myDefaultVersion;
-              LOG.warn("Assuming default version for built-ins");
-            }
-            assert (myDefaultVersion != null) : "Default version not known somehow!";
-          }
-          finally {
-            lines.close();
-          }
-        }
-      }
-      catch (IOException e) {
-        throw new LoadException(e);
-      }
-    }
-
-    public int getRequiredVersion(String package_name) {
-      PyQualifiedName qname = PyQualifiedName.fromDottedString(package_name);
-      Map.Entry<PyQualifiedName,Integer> found = myExplicitVersion.floorEntry(qname);
-      if (found != null && qname.matchesPrefix(found.getKey())) {
-        return found.getValue();
-      }
-      return myDefaultVersion;
-    }
-
-    public int getBuiltinVersion() {
-      return myBuiltinsVersion;
-    }
-
-    /**
-     * Transforms a string like "1.2" into an integer representing it.
-     * @param input
-     * @return an int representing the version: major number shifted 8 bit and minor number added. or 0 if version can't be parsed.
-     */
-    public static int versionFromString(final String input) {
-      int dot_pos = input.indexOf('.');
-      try {
-        if (dot_pos > 0) {
-          int major = Integer.parseInt(input.substring(0, dot_pos));
-          int minor = Integer.parseInt(input.substring(dot_pos+1));
-          return (major << 8) + minor;
-        }
-      }
-      catch (NumberFormatException ignore) { }
-      return 0;
-    }
-
-    public static class LoadException extends RuntimeException {
-      public LoadException(Throwable e) {
-        super(e);
-      }
+        )
+      );
     }
   }
 
