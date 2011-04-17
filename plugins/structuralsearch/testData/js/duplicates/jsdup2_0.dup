@@ -1,0 +1,8 @@
+occurence 0:
+for each (var a in array)
+    print("aba");
+
+occurence 1:
+for each (var obj in array) {
+    print("123");
+}

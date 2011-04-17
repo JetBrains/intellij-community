@@ -8,11 +8,11 @@ import com.intellij.psi.PsiReferenceList;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
+import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
+import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.DelegatingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
-import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
-import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
@@ -27,7 +27,7 @@ import java.util.Map;
  * Visitor class to manage pattern matching
  */
 @SuppressWarnings({"RefusedBequest"})
-public class GlobalMatchingVisitor {
+public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor");
 
   // the pattern element for visitor check
@@ -68,7 +68,7 @@ public class GlobalMatchingVisitor {
   }
 
   protected boolean matchInAnyOrder(final PsiReferenceList elements, final PsiReferenceList elements2) {
-    if ((elements == null && matchContext.getOptions().isLooseMatching()) ||
+    if ((elements == null && isLeftLooseMatching()) ||
         elements == elements2 // null
       ) {
       return true;
@@ -80,39 +80,19 @@ public class GlobalMatchingVisitor {
     );
   }
 
-  public final boolean matchInAnyOrder(final PsiElement[] elements, final PsiElement[] elements2) {
-    if (elements == elements2) return true;
-
-    return matchInAnyOrder(
-      new ArrayBackedNodeIterator(elements),
-      new ArrayBackedNodeIterator(elements2)
-    );
-  }
-
-  public final boolean matchSonsInAnyOrder(PsiElement element1, PsiElement element2) {
-    if (element1 == null && matchContext.getOptions().isLooseMatching()) {
-      return true;
-    }
-    if (element1 == null || element2 == null) {
-      return element1 == element2;
-    }
-    PsiElement e = element1.getFirstChild();
-    return (e == null && matchContext.getOptions().isLooseMatching()) ||
-           matchInAnyOrder(new FilteringNodeIterator(e), new FilteringNodeIterator(element2.getFirstChild()));
-  }
-
-  protected final boolean matchInAnyOrder(final NodeIterator elements, final NodeIterator elements2) {
-    if ((!elements.hasNext() && matchContext.getOptions().isLooseMatching()) ||
-        (!elements.hasNext() && !elements2.hasNext())
-      ) {
-      return true;
-    }
-
+  @Override
+  protected boolean doMatchInAnyOrder(NodeIterator elements, NodeIterator elements2) {
     return matchContext.getPattern().getHandler(elements.current()).matchInAnyOrder(
       elements,
       elements2,
       matchContext
     );
+  }
+
+  @NotNull
+  @Override
+  protected NodeFilter getNodeFilter() {
+    return LexicalNodesFilter.getInstance();
   }
 
   public final boolean handleTypedElement(final PsiElement typedElement, final PsiElement match) {
@@ -221,16 +201,6 @@ public class GlobalMatchingVisitor {
   // @param el1 the pattern element for matching
   // @param el2 the tree element for matching
   // @return if they are equal and false otherwise
-
-  protected boolean matchSequentially(PsiElement el1, PsiElement el2) {
-    //if (el1==null || el2==null) return el1 == el2;
-    return matchSequentially(new FilteringNodeIterator(el1), new FilteringNodeIterator(el2));
-  }
-
-  private boolean matchSequentiallyOptionally(PsiElement el1, PsiElement el2) {
-    return (el1 == null && matchContext.getOptions().isLooseMatching()) ||
-           matchSequentially(new FilteringNodeIterator(el1), new FilteringNodeIterator(el2));
-  }
 
   /**
    * Descents the tree in depth finding matches
@@ -354,33 +324,13 @@ public class GlobalMatchingVisitor {
   // @param el2 the tree element for matching
   // @return if they are equal and false otherwise
 
-  public boolean matchSons(final PsiElement el1, final PsiElement el2) {
-    if (el1 == null || el2 == null) return el1 == el2;
-    return matchSequentially(el1.getFirstChild(), el2.getFirstChild());
+  @Override
+  protected boolean isLeftLooseMatching() {
+    return matchContext.getOptions().isLooseMatching();
   }
 
-  public boolean matchSonsOptionally(final PsiElement element, final PsiElement element2) {
-    if (element == null && matchContext.getOptions().isLooseMatching()) {
-      return true;
-    }
-    if (element == null || element2 == null) {
-      return element == element2;
-    }
-    return matchSequentiallyOptionally(element.getFirstChild(), element2.getFirstChild());
-  }
-
-  public boolean matchOptionally(@NotNull PsiElement[] elements1, @NotNull PsiElement[] elements2) {
-    return (elements1.length == 0 && matchContext.getOptions().isLooseMatching()) ||
-           matchSequentially(elements1, elements2);
-  }
-
-  public boolean matchOptionally(@Nullable PsiElement element1, @Nullable PsiElement element2) {
-    return element1 == null && matchContext.getOptions().isLooseMatching() ||
-           match(element1, element2);
-  }
-
-  public boolean matchSequentially(@NotNull PsiElement[] elements1, @NotNull PsiElement[] element2) {
-    return matchSequentially(new FilteringNodeIterator(new ArrayBackedNodeIterator(elements1)),
-                             new FilteringNodeIterator(new ArrayBackedNodeIterator(element2)));
+  @Override
+  protected boolean isRightLooseMatching() {
+    return false;
   }
 }

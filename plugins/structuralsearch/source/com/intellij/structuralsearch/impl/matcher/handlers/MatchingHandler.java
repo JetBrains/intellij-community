@@ -97,7 +97,7 @@ public abstract class MatchingHandler extends MatchPredicate {
     return false;
   }
 
-  private void skipIfNeccessary(NodeIterator nodes, NodeIterator nodes2, MatchingStrategy strategy) {
+  private static void skipIfNeccessary(NodeIterator nodes, NodeIterator nodes2, MatchingStrategy strategy) {
     while (strategy.shouldSkip(nodes2.current(), nodes.current())) {
       nodes2.advance();
     }

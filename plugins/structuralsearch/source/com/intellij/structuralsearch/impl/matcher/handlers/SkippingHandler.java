@@ -7,6 +7,7 @@ import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
 import com.intellij.structuralsearch.equivalence.MultiChildDescriptor;
 import com.intellij.structuralsearch.equivalence.SingleChildDescriptor;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.SiblingNodeIterator;
@@ -117,7 +118,14 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
   }
 
   private static PsiElement getOnlyNonLexicalChild(PsiElement element) {
-    FilteringNodeIterator it = new FilteringNodeIterator(new SiblingNodeIterator(element.getFirstChild()));
+    return getOnlyChild(element, null);
+  }
+
+  public static PsiElement getOnlyChild(PsiElement element, NodeFilter filter) {
+    FilteringNodeIterator it = filter != null ?
+                               new FilteringNodeIterator(new SiblingNodeIterator(element.getFirstChild()), filter) :
+                               new FilteringNodeIterator(element.getFirstChild());
+
     PsiElement child = it.current();
     if (child != null) {
       it.advance();
@@ -140,6 +148,11 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
       return null;
     }
 
+    return getOnlyChild(equivalenceDescriptor);
+  }
+
+  @Nullable
+  public static PsiElement getOnlyChild(EquivalenceDescriptor equivalenceDescriptor) {
     if (equivalenceDescriptor.getConstants().size() > 0) {
       return null;
     }

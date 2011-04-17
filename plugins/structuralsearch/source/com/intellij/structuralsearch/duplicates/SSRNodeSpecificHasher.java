@@ -9,13 +9,18 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.structuralsearch.StructuralSearchProfileImpl;
+import com.intellij.structuralsearch.equivalence.ChildRole;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
-import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
+import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
+import com.intellij.structuralsearch.impl.matcher.iterators.SiblingNodeIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
@@ -23,11 +28,35 @@ import java.util.List;
 public class SSRNodeSpecificHasher extends NodeSpecificHasher {
   private final SSRTreeHasher myTreeHasher;
   private final DuplocatorSettings mySettings;
+  private final Set<ChildRole> mySkippedRoles;
+  private final NodeFilter myNodeFilter;
 
   public SSRNodeSpecificHasher(@NotNull final DuplocatorSettings settings,
                                @NotNull DuplocatorHashCallback callback) {
+    myNodeFilter = new NodeFilter() {
+      @Override
+      public boolean accepts(PsiElement element) {
+        return StructuralSearchProfileImpl.isLexicalNode(element);
+      }
+    };
     myTreeHasher = new SSRTreeHasher(callback, settings);
     mySettings = settings;
+    mySkippedRoles = getSkippedRoles(settings);
+  }
+
+  private static Set<ChildRole> getSkippedRoles(DuplocatorSettings settings) {
+    final Set<ChildRole> result = EnumSet.noneOf(ChildRole.class);
+
+    if (!settings.DISTINGUISH_FIELDS) {
+      result.add(ChildRole.FIELD_NAME);
+    }
+    if (!settings.DISTINGUISH_METHODS) {
+      result.add(ChildRole.FUNCTION_NAME);
+    }
+    if (!settings.DISTINGUISH_VARIABLES) {
+      result.add(ChildRole.VARIABLE_NAME);
+    }
+    return result;
   }
 
   @Override
@@ -71,7 +100,7 @@ public class SSRNodeSpecificHasher extends NodeSpecificHasher {
   public List<PsiElement> getNodeChildren(PsiElement node) {
     final List<PsiElement> result = new ArrayList<PsiElement>();
 
-    final FilteringNodeIterator it = new FilteringNodeIterator(node.getFirstChild());
+    final FilteringNodeIterator it = new FilteringNodeIterator(new SiblingNodeIterator(node.getFirstChild()), myNodeFilter);
     while (it.hasNext()) {
       result.add(it.current());
       it.advance();
@@ -88,7 +117,7 @@ public class SSRNodeSpecificHasher extends NodeSpecificHasher {
   @Override
   public boolean areTreesEqual(@NotNull PsiElement root1, @NotNull PsiElement root2, int discardCost) {
     // todo: support discard cost
-    return new GlobalMatchingVisitor().match(root1, root2);
+    return new DuplicatesMatchingVisitor(this, mySkippedRoles, myNodeFilter).match(root1, root2);
   }
 
   @Override

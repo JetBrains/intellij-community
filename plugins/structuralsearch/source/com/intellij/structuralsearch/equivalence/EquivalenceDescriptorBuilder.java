@@ -114,6 +114,7 @@ public class EquivalenceDescriptorBuilder implements EquivalenceDescriptor {
 
   @NotNull
   public EquivalenceDescriptorBuilder role(@Nullable PsiElement element, @NotNull ChildRole role) {
+    //element = SkippingHandler.skipNodeIfNeccessary(element);
     if (element != null) {
       myRoles.put(element, role);
     }
@@ -121,12 +122,17 @@ public class EquivalenceDescriptorBuilder implements EquivalenceDescriptor {
   }
 
   private EquivalenceDescriptorBuilder add(MultiChildDescriptor.MyType type, PsiElement[] elements) {
+    /*PsiElement[] elements1 = new PsiElement[elements.length];
+    for (int i = 0; i < elements.length; i++) {
+      elements1[i] = SkippingHandler.skipNodeIfNeccessary(elements[i]);
+    }*/
     myMultiChildDescriptors.add(new MultiChildDescriptor(type, elements));
     return this;
   }
 
   private EquivalenceDescriptorBuilder add(SingleChildDescriptor.MyType type, PsiElement element) {
-    mySingleChildDescriptors.add(new SingleChildDescriptor(type, element));
+    //element = SkippingHandler.skipNodeIfNeccessary(element);
+    mySingleChildDescriptors.add(new SingleChildDescriptor(type, element, this));
     return this;
   }
 }

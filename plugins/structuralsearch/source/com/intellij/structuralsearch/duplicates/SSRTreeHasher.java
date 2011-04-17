@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.equivalence.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.SkippingHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,9 +23,9 @@ import java.util.List;
  */
 class SSRTreeHasher extends AbstractTreeHasher {
   private final DuplocatorSettings mySettings;
-  private DuplocatorHashCallback myCallback;
+  private final DuplocatorHashCallback myCallback;
 
-  SSRTreeHasher(DuplocatorHashCallback callback, DuplocatorSettings settings) {
+  SSRTreeHasher(@Nullable DuplocatorHashCallback callback, DuplocatorSettings settings) {
     super(callback, -1);
     myCallback = callback;
     mySettings = settings;
@@ -67,7 +68,7 @@ class SSRTreeHasher extends AbstractTreeHasher {
     int cost = canSkip ? 0 : nodeSpecificHasher.getNodeCost(element);
 
     for (SingleChildDescriptor childDescriptor : descriptor.getSingleChildDescriptors()) {
-      final TreeHashResult childHashResult = computeHash(childDescriptor, descriptor, fragment, nodeSpecificHasher);
+      final TreeHashResult childHashResult = computeHash(childDescriptor, fragment, nodeSpecificHasher);
       hash = hash * 31 + childHashResult.getHash();
       cost += childHashResult.getCost();
     }
@@ -89,13 +90,14 @@ class SSRTreeHasher extends AbstractTreeHasher {
       cost += childHashResult.getCost();
     }
 
-    myCallback.add(hash, cost, fragment);
+    if (myCallback != null) {
+      myCallback.add(hash, cost, fragment);
+    }
     return new TreeHashResult(hash, cost, fragment);
   }
 
   @NotNull
   private TreeHashResult computeHash(SingleChildDescriptor childDescriptor,
-                                     @NotNull EquivalenceDescriptor descriptor,
                                      PsiFragment parentFragment,
                                      NodeSpecificHasher nodeSpecificHasher) {
 
@@ -106,7 +108,7 @@ class SSRTreeHasher extends AbstractTreeHasher {
     final TreeHashResult result = doComputeHash(childDescriptor, parentFragment, nodeSpecificHasher);
 
     if (result != null) {
-      final ChildRole role = descriptor.getRole(element);
+      final ChildRole role = childDescriptor.getRole();
       if (role != null) {
         switch (role) {
           case VARIABLE_NAME:

@@ -80,7 +80,7 @@ public class JSEquivalenceDescriptorProvider extends EquivalenceDescriptorProvid
 
   @Override
   public int getNodeCost(@NotNull PsiElement element) {
-    if (element instanceof JSStatement) {
+    if (element instanceof JSStatement || element instanceof JSFunction || element instanceof JSClass) {
       return 2;
     }
     else if (element instanceof JSExpression) {

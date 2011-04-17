@@ -10,12 +10,12 @@ import org.jetbrains.annotations.Nullable;
 public class SingleChildDescriptor {
   private final MyType myType;
   private final PsiElement myElement;
+  private final EquivalenceDescriptor myParentDescriptor;
 
-  private ChildRole myRole;
-
-  public SingleChildDescriptor(@NotNull MyType type, @Nullable PsiElement element) {
+  public SingleChildDescriptor(@NotNull MyType type, @Nullable PsiElement element, @NotNull EquivalenceDescriptor parentDescriptor) {
     myType = type;
     myElement = element;
+    myParentDescriptor = parentDescriptor;
   }
 
   @NotNull
@@ -26,6 +26,11 @@ public class SingleChildDescriptor {
   @Nullable
   public PsiElement getElement() {
     return myElement;
+  }
+
+  @Nullable
+  public ChildRole getRole() {
+    return myParentDescriptor.getRole(myElement);
   }
 
   public static enum MyType {

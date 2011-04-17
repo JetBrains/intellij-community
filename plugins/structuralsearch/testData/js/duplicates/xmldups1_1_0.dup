@@ -1,0 +1,8 @@
+occurence 0:
+<person age="20" name="Name1" surname="Surname1"/>
+
+occurence 1:
+<person name="Name1" age="20" surname="Surname1"/>
+
+occurence 2:
+<person surname="Surname2" age="20" name="Name2"/>

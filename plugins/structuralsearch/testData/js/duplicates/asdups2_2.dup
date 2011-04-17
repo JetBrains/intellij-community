@@ -1,0 +1,7 @@
+occurence 0:
+class B implements I1, I2, I3 {
+}
+
+occurence 1:
+public class B implements I2, I1, I3 {
+}

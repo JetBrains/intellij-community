@@ -7,6 +7,7 @@ import com.intellij.dupLocator.DuplocateManager;
 import com.intellij.dupLocator.DuplocatorSettings;
 import com.intellij.dupLocator.treeHash.DuplocatorHashCallback;
 import com.intellij.dupLocator.util.PsiFragment;
+import com.intellij.lang.javascript.JavaScriptSupportLoader;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.structuralsearch.duplicates.SSRDuplicatesProfile;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NonNls;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -96,32 +98,48 @@ public class JSDuplicatesTest extends LightCodeInsightTestCase {
   private static String toString(DupInfo info, int index) {
     StringBuffer buffer = new StringBuffer();
     PsiFragment[] frags = info.getFragmentOccurences(index);
-    for (int j = 0; j < frags.length; j++) {
-      buffer.append("occurence ").append(j).append(":\n").append(frags[j]);
+    String[] strFrags = new String[frags.length];
+
+    for (int i = 0; i < frags.length; i++) {
+      strFrags[i] = frags[i].toString();
+    }
+    Arrays.sort(strFrags);
+
+    for (int i = 0; i < strFrags.length; i++) {
+      buffer.append("occurence ").append(i).append(":\n").append(strFrags[i]);
     }
     return buffer.toString();
   }
 
-  private void doTest(String fileName, boolean distinguishVars, boolean distinguishMethods, boolean distinguishListerals, int patternCount, String suffix)
+  private void doTest(String fileName,
+                      boolean distinguishVars,
+                      boolean distinguishMethods,
+                      boolean distinguishListerals,
+                      int patternCount,
+                      String suffix,
+                      int lowerBound)
     throws Exception {
     DuplocatorSettings settings = DuplocatorSettings.getInstance();
     boolean oldMethods = settings.DISTINGUISH_METHODS;
     boolean oldLits = settings.DISTINGUISH_LITERALS;
     boolean oldVars = settings.DISTINGUISH_VARIABLES;
     int oldLowerBound = settings.LOWER_BOUND;
+    Set<String> oldSet = settings.SELECTED_PROFILES;
     try{
       settings.DISTINGUISH_METHODS = distinguishMethods;
       settings.DISTINGUISH_LITERALS = distinguishListerals;
       settings.DISTINGUISH_VARIABLES = distinguishVars;
-      settings.LOWER_BOUND = 10;
+      settings.LOWER_BOUND = lowerBound;
+      settings.SELECTED_PROFILES = new com.intellij.util.containers.HashSet<String>();
+      settings.SELECTED_PROFILES.add(JavaScriptSupportLoader.JAVASCRIPT.getLanguage().getDisplayName());
+      settings.SELECTED_PROFILES.add(JavaScriptSupportLoader.ECMA_SCRIPT_L4.getDisplayName());
 
       DuplicatesProfile[] profiles = {new SSRDuplicatesProfile()};
 
       configureByFile(BASE_PATH + fileName);
       String testName = FileUtil.getNameWithoutExtension(fileName);
 
-      int lowerBound = settings.LOWER_BOUND;
-      DuplocatorHashCallback collector = new DuplocatorHashCallback(lowerBound);
+      DuplocatorHashCallback collector = new DuplocatorHashCallback(settings.LOWER_BOUND);
       DuplocateManager.hash(new AnalysisScope(getFile()), collector, profiles, DuplocatorSettings.getInstance());
 
       DupInfo info = collector.getInfo();
@@ -135,6 +153,7 @@ public class JSDuplicatesTest extends LightCodeInsightTestCase {
       }
     }
     finally {
+      settings.SELECTED_PROFILES = oldSet;
       settings.DISTINGUISH_METHODS = oldMethods;
       settings.DISTINGUISH_LITERALS = oldLits;
       settings.DISTINGUISH_VARIABLES = oldVars;
@@ -143,10 +162,40 @@ public class JSDuplicatesTest extends LightCodeInsightTestCase {
   }
 
   public void test1() throws Exception {
-    doTest("jsdup1.js", true, true, true, 1, "_0");
-    doTest("jsdup1.js", true, false, true, 1, "_1");
-    doTest("jsdup1.js", false, false, true, 1, "_2");
-    doTest("jsdup1.js", false, false, false, 1, "_3");
+    doTest("jsdup1.js", true, true, true, 1, "_0", 10);
+    doTest("jsdup1.js", true, false, true, 1, "_1", 10);
+    doTest("jsdup1.js", false, false, true, 1, "_2", 10);
+    doTest("jsdup1.js", false, false, false, 1, "_3", 10);
+  }
+
+  public void test2() throws Exception {
+    doTest("jsdup2.js", false, true, false, 1, "", 10);
+  }
+
+  public void testAs1() throws Exception {
+    doTest("asdups1.as", false, false, true, 1, "", 2);
+  }
+
+  public void testAs2() throws Exception {
+    doTest("asdups2.as", false, false, true, 3, "", 2);
+  }
+
+  public void testXml1() throws Exception {
+    doTest("xmldups1.xml", true, true, true, 1, "_0", 2);
+    doTest("xmldups1.xml", true, true, false, 1, "_1", 2);
+  }
+
+  public void testXml2() throws Exception {
+    doTest("xmldups2.xml", true, true, true, 1, "", 2);
+  }
+
+  public void testHtml1() throws Exception {
+    doTest("htmldups1.html", true, true, false, 1, "_1", 5);
+    doTest("htmldups1.html", true, true, true, 1, "_0", 5);
+  }
+
+  public void testHtml2() throws Exception {
+    doTest("htmldups2.html", true, true, true, 1, "", 5);
   }
 
   @Override

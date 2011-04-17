@@ -11,10 +11,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.structuralsearch.equivalence.EquivalenceDescriptor;
-import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
-import com.intellij.structuralsearch.equivalence.MultiChildDescriptor;
-import com.intellij.structuralsearch.equivalence.SingleChildDescriptor;
+import com.intellij.structuralsearch.equivalence.*;
+import com.intellij.structuralsearch.impl.matcher.AbstractMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
@@ -25,6 +23,9 @@ import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterato
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
@@ -93,21 +94,25 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
 
       @Override
       public boolean shouldSkip(PsiElement element, PsiElement elementToMatchWith) {
-        if (element == null || elementToMatchWith == null) {
-          return false;
-        }
-
-        if (element.getClass() == elementToMatchWith.getClass()) {
-          return false;
-        }
-
-        if (element.getFirstChild() == null && element.getTextLength() == 0 && !(element instanceof LeafElement)) {
-          return true;
-        }
-
-        return false;
+        return StructuralSearchProfileImpl.shouldSkip(element, elementToMatchWith);
       }
     });
+  }
+
+  public static boolean shouldSkip(PsiElement element, PsiElement elementToMatchWith) {
+    if (element == null || elementToMatchWith == null) {
+      return false;
+    }
+
+    if (element.getClass() == elementToMatchWith.getClass()) {
+      return false;
+    }
+
+    if (element.getFirstChild() == null && element.getTextLength() == 0 && !(element instanceof LeafElement)) {
+      return true;
+    }
+
+    return false;
   }
 
   @NotNull
@@ -133,7 +138,7 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
     return myLexicalNodesFilter;
   }
 
-  private static boolean isLexicalNode(PsiElement element) {
+  public static boolean isLexicalNode(PsiElement element) {
     // ex. "var i = 0" in AS: empty JSAttributeList should be skipped
     /*if (element.getText().length() == 0) {
       return true;
@@ -253,6 +258,136 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
       return provider.canBeVariableDelimeter(element);
     }
     return super.canBeVarDelimeter(element);
+  }
+
+  public static boolean match(@NotNull EquivalenceDescriptor descriptor1,
+                              @NotNull EquivalenceDescriptor descriptor2,
+                              @NotNull AbstractMatchingVisitor g,
+                              @NotNull Set<ChildRole> skippedRoles) {
+
+    if (descriptor1.getSingleChildDescriptors().size() != descriptor2.getSingleChildDescriptors().size()) {
+      return false;
+    }
+
+    if (descriptor1.getMultiChildDescriptors().size() != descriptor2.getMultiChildDescriptors().size()) {
+      return false;
+    }
+
+    if (descriptor1.getCodeBlocks().size() != descriptor2.getCodeBlocks().size()) {
+      return false;
+    }
+
+    if (descriptor1.getConstants().size() != descriptor2.getConstants().size()) {
+      return false;
+    }
+
+    for (int i = 0, n = descriptor1.getConstants().size(); i < n; i++) {
+      Object childDescriptor1 = descriptor1.getConstants().get(i);
+      Object childDescriptor2 = descriptor2.getConstants().get(i);
+
+      if (!Comparing.equal(childDescriptor1, childDescriptor2)) {
+        return false;
+      }
+    }
+
+    for (int i = 0, n = descriptor1.getSingleChildDescriptors().size(); i < n; i++) {
+      SingleChildDescriptor childDescriptor1 = descriptor1.getSingleChildDescriptors().get(i);
+      SingleChildDescriptor childDescriptor2 = descriptor2.getSingleChildDescriptors().get(i);
+
+      if (!match(childDescriptor1, childDescriptor2, g, skippedRoles)) {
+        return false;
+      }
+    }
+
+    for (int i = 0, n = descriptor1.getMultiChildDescriptors().size(); i < n; i++) {
+      MultiChildDescriptor childDescriptor1 = descriptor1.getMultiChildDescriptors().get(i);
+      MultiChildDescriptor childDescriptor2 = descriptor2.getMultiChildDescriptors().get(i);
+
+      if (!match(childDescriptor1, childDescriptor2, g)) {
+        return false;
+      }
+    }
+
+    for (int i = 0, n = descriptor1.getCodeBlocks().size(); i < n; i++) {
+      final PsiElement[] codeBlock1 = descriptor1.getCodeBlocks().get(i);
+      final PsiElement[] codeBlock2 = descriptor2.getCodeBlocks().get(i);
+
+      if (!g.matchSequentially(codeBlock1, codeBlock2)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private static boolean match(@NotNull SingleChildDescriptor childDescriptor1,
+                               @NotNull SingleChildDescriptor childDescriptor2,
+                               @NotNull AbstractMatchingVisitor g,
+                               @NotNull Set<ChildRole> skippedRoles) {
+    if (childDescriptor1.getType() != childDescriptor2.getType()) {
+      return false;
+    }
+
+    final PsiElement element1 = childDescriptor1.getElement();
+    final PsiElement element2 = childDescriptor2.getElement();
+
+    final ChildRole role1 = childDescriptor1.getRole();
+    final ChildRole role2 = childDescriptor2.getRole();
+
+    if (role1 == role2 && skippedRoles.contains(role1)) {
+      return true;
+    }
+
+    switch (childDescriptor1.getType()) {
+
+      case DEFAULT:
+        return g.match(element1, element2);
+
+      case OPTIONALLY_IN_PATTERN:
+      case OPTIONALLY:
+        return g.matchOptionally(element1, element2);
+
+      case CHILDREN:
+        return g.matchSons(element1, element2);
+
+      case CHILDREN_OPTIONALLY_IN_PATTERN:
+      case CHILDREN_OPTIONALLY:
+        return g.matchSonsOptionally(element1, element2);
+
+      case CHILDREN_IN_ANY_ORDER:
+        return g.matchSonsInAnyOrder(element1, element2);
+
+      default:
+        return false;
+    }
+  }
+
+  private static boolean match(@NotNull MultiChildDescriptor childDescriptor1,
+                               @NotNull MultiChildDescriptor childDescriptor2,
+                               @NotNull AbstractMatchingVisitor g) {
+
+    if (childDescriptor1.getType() != childDescriptor2.getType()) {
+      return false;
+    }
+
+    final PsiElement[] elements1 = childDescriptor1.getElements();
+    final PsiElement[] elements2 = childDescriptor2.getElements();
+
+    switch (childDescriptor1.getType()) {
+
+      case DEFAULT:
+        return g.matchSequentially(elements1, elements2);
+
+      case OPTIONALLY_IN_PATTERN:
+      case OPTIONALLY:
+        return g.matchOptionally(elements1, elements2);
+
+      case IN_ANY_ORDER:
+        return g.matchInAnyOrder(elements1, elements2);
+
+      default:
+        return false;
+    }
   }
 
   // todo: support expression patterns
@@ -397,7 +532,7 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
         final EquivalenceDescriptor descriptor2 = descriptorProvider.buildDescriptor(myGlobalVisitor.getElement());
 
         if (descriptor1 != null && descriptor2 != null) {
-          final boolean result = match(descriptor1, descriptor2, myGlobalVisitor);
+          final boolean result = match(descriptor1, descriptor2, myGlobalVisitor, Collections.<ChildRole>emptySet());
           myGlobalVisitor.setResult(result);
           return;
         }
@@ -433,127 +568,6 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
 
         boolean matched = myGlobalVisitor.matchSequentially(patternIterator, matchedIterator);
         myGlobalVisitor.setResult(matched);
-      }
-    }
-
-    private static boolean match(@NotNull EquivalenceDescriptor descriptor1,
-                                 @NotNull EquivalenceDescriptor descriptor2,
-                                 @NotNull GlobalMatchingVisitor g) {
-
-      if (descriptor1.getSingleChildDescriptors().size() != descriptor2.getSingleChildDescriptors().size()) {
-        return false;
-      }
-
-      if (descriptor1.getMultiChildDescriptors().size() != descriptor2.getMultiChildDescriptors().size()) {
-        return false;
-      }
-
-      if (descriptor1.getCodeBlocks().size() != descriptor2.getCodeBlocks().size()) {
-        return false;
-      }
-
-      if (descriptor1.getConstants().size() != descriptor2.getConstants().size()) {
-        return false;
-      }
-
-      for (int i = 0, n = descriptor1.getConstants().size(); i < n; i++) {
-        Object childDescriptor1 = descriptor1.getConstants().get(i);
-        Object childDescriptor2 = descriptor2.getConstants().get(i);
-
-        if (!Comparing.equal(childDescriptor1, childDescriptor2)) {
-          return false;
-        }
-      }
-
-      for (int i = 0, n = descriptor1.getSingleChildDescriptors().size(); i < n; i++) {
-        SingleChildDescriptor childDescriptor1 = descriptor1.getSingleChildDescriptors().get(i);
-        SingleChildDescriptor childDescriptor2 = descriptor2.getSingleChildDescriptors().get(i);
-
-        if (!match(childDescriptor1, childDescriptor2, g)) {
-          return false;
-        }
-      }
-
-      for (int i = 0, n = descriptor1.getMultiChildDescriptors().size(); i < n; i++) {
-        MultiChildDescriptor childDescriptor1 = descriptor1.getMultiChildDescriptors().get(i);
-        MultiChildDescriptor childDescriptor2 = descriptor2.getMultiChildDescriptors().get(i);
-
-        if (!match(childDescriptor1, childDescriptor2, g)) {
-          return false;
-        }
-      }
-
-      for (int i = 0, n = descriptor1.getCodeBlocks().size(); i < n; i++) {
-        final PsiElement[] codeBlock1 = descriptor1.getCodeBlocks().get(i);
-        final PsiElement[] codeBlock2 = descriptor2.getCodeBlocks().get(i);
-
-        if (!g.matchSequentially(codeBlock1, codeBlock2)) {
-          return false;
-        }
-      }
-
-      return true;
-    }
-
-    private static boolean match(@NotNull SingleChildDescriptor childDescriptor1,
-                                 @NotNull SingleChildDescriptor childDescriptor2,
-                                 @NotNull GlobalMatchingVisitor g) {
-      if (childDescriptor1.getType() != childDescriptor2.getType()) {
-        return false;
-      }
-
-      final PsiElement element1 = childDescriptor1.getElement();
-      final PsiElement element2 = childDescriptor2.getElement();
-
-      switch (childDescriptor1.getType()) {
-
-        case DEFAULT:
-          return g.match(element1, element2);
-
-        case OPTIONALLY_IN_PATTERN:
-        case OPTIONALLY:
-          return g.matchOptionally(element1, element2);
-
-        case CHILDREN:
-          return g.matchSons(element1, element2);
-
-        case CHILDREN_OPTIONALLY_IN_PATTERN:
-        case CHILDREN_OPTIONALLY:
-          return g.matchSonsOptionally(element1, element2);
-
-        case CHILDREN_IN_ANY_ORDER:
-          return g.matchSonsInAnyOrder(element1, element2);
-
-        default:
-          return false;
-      }
-    }
-
-    private static boolean match(@NotNull MultiChildDescriptor childDescriptor1,
-                                 @NotNull MultiChildDescriptor childDescriptor2,
-                                 @NotNull GlobalMatchingVisitor g) {
-
-      if (childDescriptor1.getType() != childDescriptor2.getType()) {
-        return false;
-      }
-
-      final PsiElement[] elements1 = childDescriptor1.getElements();
-      final PsiElement[] elements2 = childDescriptor2.getElements();
-
-      switch (childDescriptor1.getType()) {
-
-        case DEFAULT:
-          return g.matchSequentially(elements1, elements2);
-
-        case OPTIONALLY_IN_PATTERN:
-        case OPTIONALLY:
-          return g.matchOptionally(elements1, elements2);
-
-        case IN_ANY_ORDER:
-          return g.matchInAnyOrder(elements1, elements2);
-
-        default:
-          return false;
       }
     }
 

@@ -21,6 +21,17 @@ function f() {
 }
 
 occurence 2:
+function f1() {
+    for each (var obj in arguments) {
+        print("123");
+        print("123");
+        print("123");
+        print("123");
+        print("123");
+    }
+}
+
+occurence 3:
 function g() {
     for each (var obj in arguments) {
         print("Hello!");
@@ -31,7 +42,7 @@ function g() {
     }
 }
 
-occurence 3:
+occurence 4:
 function h() {
     for each (var a in arguments) {
         print("Hello!");
@@ -39,16 +50,5 @@ function h() {
         print("Hello!");
         print("Hello!");
         print("Hello!");
-    }
-}
-
-occurence 4:
-function f1() {
-    for each (var obj in arguments) {
-        print("123");
-        print("123");
-        print("123");
-        print("123");
-        print("123");
     }
 }

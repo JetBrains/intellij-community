@@ -1,0 +1,9 @@
+<root>
+  <person name="Name1" age="20" surname="Surname1"/>
+  <person name="Name2" age="21" surname="Surname2"/>
+  <person name="Name3" age="22" surname="Surname3"/>
+
+  <person age="20" name="Name1"  surname="Surname1"/>
+  <person name="Name2" age="21" surname="Surname2"/>
+  <person name="Name3" surname="Surname3" age="22"/>
+</root>

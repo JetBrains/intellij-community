@@ -1,0 +1,5 @@
+occurence 0:
+var a = "hello";
+
+occurence 1:
+var b: String = "hello";

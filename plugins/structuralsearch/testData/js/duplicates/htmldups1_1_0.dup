@@ -1,0 +1,17 @@
+occurence 0:
+<div class="c1">
+  <div class="c2">some text</div>
+  <div class="c2">a</div>
+</div>
+
+occurence 1:
+<div class="c1">
+  <div class="c2">some text</div>
+  <div class="c2">a</div>
+</div>
+
+occurence 2:
+<div class="c3">
+  <div class="c4">a</div>
+  <div class="c4">some text</div>
+</div>
