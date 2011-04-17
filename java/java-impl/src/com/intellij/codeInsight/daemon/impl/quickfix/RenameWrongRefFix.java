@@ -177,36 +177,34 @@ public class RenameWrongRefFix implements IntentionAction {
   public void invoke(@NotNull Project project, final Editor editor, PsiFile file) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PsiReferenceExpression[] refs = CreateFromUsageUtils.collectExpressions(myRefExpr, PsiMember.class, PsiFile.class);
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      PsiElement element = PsiTreeUtil.getParentOfType(myRefExpr, PsiMember.class, PsiFile.class);
-      LookupElement[] items = collectItems();
-      ReferenceNameExpression refExpr = new ReferenceNameExpression(items, myRefExpr.getReferenceName());
+    PsiElement element = PsiTreeUtil.getParentOfType(myRefExpr, PsiMember.class, PsiFile.class);
+    LookupElement[] items = collectItems();
+    ReferenceNameExpression refExpr = new ReferenceNameExpression(items, myRefExpr.getReferenceName());
 
-      TemplateBuilderImpl builder = new TemplateBuilderImpl(element);
-      for (PsiReferenceExpression expr : refs) {
-        if (!expr.equals(myRefExpr)) {
-          builder.replaceElement(expr.getReferenceNameElement(), OTHER_VARIABLE_NAME, INPUT_VARIABLE_NAME, false);
-        }
-        else {
-          builder.replaceElement(expr.getReferenceNameElement(), INPUT_VARIABLE_NAME, refExpr, true);
-        }
+    TemplateBuilderImpl builder = new TemplateBuilderImpl(element);
+    for (PsiReferenceExpression expr : refs) {
+      if (!expr.equals(myRefExpr)) {
+        builder.replaceElement(expr.getReferenceNameElement(), OTHER_VARIABLE_NAME, INPUT_VARIABLE_NAME, false);
       }
-
-      final float proportion = EditorUtil.calcVerticalScrollProportion(editor);
-      editor.getCaretModel().moveToOffset(element.getTextRange().getStartOffset());
-
-      /*for (int i = refs.length - 1; i >= 0; i--) {
-        TextRange range = refs[i].getReferenceNameElement().getTextRange();
-        document.deleteString(range.getStartOffset(), range.getEndOffset());
+      else {
+        builder.replaceElement(expr.getReferenceNameElement(), INPUT_VARIABLE_NAME, refExpr, true);
       }
-*/
-      Template template = builder.buildInlineTemplate();
-      editor.getCaretModel().moveToOffset(element.getTextRange().getStartOffset());
-
-      TemplateManager.getInstance(project).startTemplate(editor, template);
-
-      EditorUtil.setVerticalScrollProportion(editor, proportion);
     }
+
+    final float proportion = EditorUtil.calcVerticalScrollProportion(editor);
+    editor.getCaretModel().moveToOffset(element.getTextRange().getStartOffset());
+
+    /*for (int i = refs.length - 1; i >= 0; i--) {
+      TextRange range = refs[i].getReferenceNameElement().getTextRange();
+      document.deleteString(range.getStartOffset(), range.getEndOffset());
+    }
+*/
+    Template template = builder.buildInlineTemplate();
+    editor.getCaretModel().moveToOffset(element.getTextRange().getStartOffset());
+
+    TemplateManager.getInstance(project).startTemplate(editor, template);
+
+    EditorUtil.setVerticalScrollProportion(editor, proportion);
   }
 
   public boolean startInWriteAction() {
