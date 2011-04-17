@@ -19,8 +19,6 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.DeclarationParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.CharFilter;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
@@ -31,9 +29,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -45,23 +41,6 @@ public class ClsParsingUtil {
     @Override
     public void parse(final PsiBuilder builder) {
       DeclarationParser.parseAnnotationValue(builder);
-    }
-  };
-
-  private static final Map<String, String> INDETERMINATE_MAP;
-  static {
-    INDETERMINATE_MAP = new HashMap<String, String>();
-    INDETERMINATE_MAP.put("-1.0/0.0", "NEGATIVE_INFINITY");
-    INDETERMINATE_MAP.put("0.0/0.0", "NaN");
-    INDETERMINATE_MAP.put("1.0/0.0", "POSITIVE_INFINITY");
-  }
-
-  private static final CharFilter INDETERMINATE_FILTER = new CharFilter() {
-    private static final String UNWANTED = " fFdD";
-
-    @Override
-    public boolean accept(final char ch) {
-      return UNWANTED.indexOf(ch) == -1;
     }
   };
 
@@ -84,31 +63,17 @@ public class ClsParsingUtil {
 
   @NotNull
   public static PsiAnnotationMemberValue createMemberValueFromText(final String text, final PsiManager manager, final ClsElementImpl parent) {
-    final String exprText = mapIndeterminate(text);
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     final PsiJavaFile context = ((PsiElementFactoryImpl)factory).getDummyJavaFile(); // to resolve classes from java.lang
     final LanguageLevel level = PsiUtil.getLanguageLevel(parent);
-    final DummyHolder holder = DummyHolderFactory.createHolder(manager, new JavaDummyElement(exprText, ANNOTATION_VALUE, level), context);
+    final DummyHolder holder = DummyHolderFactory.createHolder(manager, new JavaDummyElement(text, ANNOTATION_VALUE, level), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiAnnotationMemberValue)) {
-      LOG.error("Could not parse initializer:'" + exprText + "'");
+      LOG.error("Could not parse initializer:'" + text + "'");
       return null;
     }
 
     return getMemberValue(element, parent);
-  }
-
-  private static String mapIndeterminate(final String original) {
-    final int divPos = original.indexOf('/');
-    if (divPos > 0) {
-      final String symbol = INDETERMINATE_MAP.get(StringUtil.strip(original, INDETERMINATE_FILTER));
-      if (symbol != null) {
-        final int fPos = original.toLowerCase().indexOf('f');
-        final String type = (0 < fPos && fPos < divPos) ? CommonClassNames.JAVA_LANG_FLOAT : CommonClassNames.JAVA_LANG_DOUBLE;
-        return type + "." + symbol;
-      }
-    }
-    return original;
   }
 
   @NotNull
@@ -152,7 +117,7 @@ public class ClsParsingUtil {
   }
 
   @NotNull
-  private static PsiExpression psiToClsExpression(final PsiExpression expr, final ClsElementImpl parent) {
+  private static PsiExpression psiToClsExpression(final PsiExpression expr, @Nullable final ClsElementImpl parent) {
     if (expr instanceof PsiLiteralExpression) {
       return new ClsLiteralExpressionImpl(parent, expr.getText(), expr.getType(), ((PsiLiteralExpression)expr).getValue());
     }

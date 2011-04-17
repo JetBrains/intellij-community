@@ -676,25 +676,26 @@ public class ClsStubBuilder {
     if (value instanceof Long) return value.toString() + "L";
 
     if (value instanceof Double) {
-      final double d = ((Double)value).doubleValue();
-      if (Double.isInfinite(d)) {
-        return d > 0 ? "1.0 / 0.0" : "-1.0 / 0.0";
-      } else if (Double.isNaN(d)) {
-        return "0.0d / 0.0";
+      final double v = ((Double)value).doubleValue();
+      if (Double.isInfinite(v)) {
+        return StringUtil.join(CommonClassNames.JAVA_LANG_DOUBLE, ".", (v > 0 ? "POSITIVE_INFINITY" : "NEGATIVE_INFINITY"));
       }
-      return Double.toString(d);
+      else if (Double.isNaN(v)) {
+        return StringUtil.join(CommonClassNames.JAVA_LANG_DOUBLE, ".", "NaN");
+      }
+      return Double.toString(v);
     }
 
     if (value instanceof Float) {
       final float v = ((Float)value).floatValue();
 
       if (Float.isInfinite(v)) {
-        return v > 0 ? "1.0f / 0.0" : "-1.0f / 0.0";
-      } else if (Float.isNaN(v)) {
-        return "0.0f / 0.0";
-      } else {
-        return Float.toString(v) + "f";
+        return StringUtil.join(CommonClassNames.JAVA_LANG_FLOAT, ".", (v > 0 ? "POSITIVE_INFINITY" : "NEGATIVE_INFINITY"));
       }
+      else if (Float.isNaN(v)) {
+        return StringUtil.join(CommonClassNames.JAVA_LANG_FLOAT, ".", "NaN");
+      }
+      return Float.toString(v) + "f";
     }
 
     return null;
@@ -717,5 +718,4 @@ public class ClsStubBuilder {
     //   Leading and trailing $ chars should be left unchanged.
     return raw.contains("$")? REGEX_PATTERN.matcher(raw).replaceAll("\\.") : raw;
   }
-
 }
