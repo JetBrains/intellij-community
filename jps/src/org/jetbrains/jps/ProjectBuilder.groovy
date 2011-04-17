@@ -238,7 +238,16 @@ class ProjectBuilder {
     List<String> sourceFiles = []
 
     if (files != null) {
-      files.each {sourceFiles << new File (pw.getAbsolutePath(it.value))}
+      files.each {
+        String path = pw.getAbsolutePath(it.value)
+
+        for (String root : chunkSources) {
+          if (path.startsWith (root)) {
+            sourceFiles << new File (path.substring(root.length() + 1))
+            break;
+          }
+        }
+      }
     }
 
     if (!project.dryRun) {

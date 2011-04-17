@@ -75,6 +75,12 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
         compilerarg(line: customArgs)
       }
 
+      if (state.sourceFiles != null) {
+        state.sourceFiles.each {
+          include(name: it)
+        }
+      }
+
       state.sourceRoots.each {
         src(path: it)
       }
@@ -95,6 +101,10 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     }
 
     ant.project.removeBuildListener (listener);
+
+    if (state.sourceFiles != null) {
+        module.project.builder.listeners*.onJavaFilesCompiled(module, state.sourceFiles.size())
+    }
   }
 
   private String getJavacExecutable(ModuleChunk module) {
