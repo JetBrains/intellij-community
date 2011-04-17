@@ -18,6 +18,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.canBeFinal.CanBeFinalInspection;
+import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.concurrencyAnnotations.*;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
@@ -117,7 +118,9 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
       UnknownGuardInspection.class,
 
       ExplicitTypeCanBeDiamondInspection.class,
-      PossibleHeapPollutionVarargsInspection.class
+      PossibleHeapPollutionVarargsInspection.class,
+
+      JavacQuirksInspection.class
     };
   }
 }

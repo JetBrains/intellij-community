@@ -28,6 +28,7 @@ public interface GroupNames {
   String BITWISE_GROUP_NAME = InspectionsBundle.message("group.names.bitwise.operation.issues");
   String CLASSLAYOUT_GROUP_NAME = InspectionsBundle.message("group.names.class.structure");
   String CLASSMETRICS_GROUP_NAME = InspectionsBundle.message("group.names.class.metrics");
+  String COMPILER_ISSUES = InspectionsBundle.message("group.names.compiler.issues");
   String CONFUSING_GROUP_NAME = InspectionsBundle.message("group.names.potentially.confusing.code.constructs");
   String ENCAPSULATION_GROUP_NAME = InspectionsBundle.message("group.names.encapsulation.issues");
   String ERRORHANDLING_GROUP_NAME = InspectionsBundle.message("group.names.error.handling");

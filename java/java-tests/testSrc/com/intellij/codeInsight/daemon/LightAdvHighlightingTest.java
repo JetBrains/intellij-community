@@ -59,15 +59,15 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    myUnusedSymbolLocalInspection = new UnusedSymbolLocalInspection();
     return new LocalInspectionTool[]{
       new SillyAssignmentInspection(),
       new AccessStaticViaInstance(),
       new DeprecationInspection(),
       new RedundantThrowsDeclaration(),
-      myUnusedSymbolLocalInspection,
+      myUnusedSymbolLocalInspection = new UnusedSymbolLocalInspection(),
       new UnusedImportLocalInspection(),
-      new UncheckedWarningLocalInspection()};
+      new UncheckedWarningLocalInspection()
+    };
   }
 
   public void testCanHaveBody() throws Exception { doTest(false, false); }

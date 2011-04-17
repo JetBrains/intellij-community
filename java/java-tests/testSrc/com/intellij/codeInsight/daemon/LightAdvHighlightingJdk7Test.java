@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.defUse.DefUseInspection;
 import com.intellij.codeInspection.reference.EntryPoint;
@@ -32,7 +33,11 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
 
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new UnusedSymbolLocalInspection(), new UncheckedWarningLocalInspection()};
+    return new LocalInspectionTool[]{
+      new UnusedSymbolLocalInspection(),
+      new UncheckedWarningLocalInspection(),
+      new JavacQuirksInspection()
+    };
   }
 
   public void testDuplicateAnnotations() throws Exception {
@@ -206,5 +211,9 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
 
   public void testPreciseRethrow() throws Exception {
     doTest(false, false);
+  }
+
+  public void testJavacQuirks() throws Exception {
+    doTest(true, false);
   }
 }
