@@ -32,32 +32,32 @@ public abstract class LookupManager {
   }
 
   @Nullable
-  public static Lookup getActiveLookup(@Nullable Editor editor) {
+  public static LookupEx getActiveLookup(@Nullable Editor editor) {
     if (editor == null) return null;
 
     final Project project = editor.getProject();
     if (project == null || project.isDisposed()) return null;
 
-    final Lookup lookup = getInstance(project).getActiveLookup();
+    final LookupEx lookup = getInstance(project).getActiveLookup();
     if (lookup == null) return null;
 
     return InjectedLanguageUtil.getTopLevelEditor(lookup.getEditor()) == InjectedLanguageUtil.getTopLevelEditor(editor) ? lookup : null;
   }
 
-  public Lookup showLookup(Editor editor, @NotNull LookupElement... items) {
+  public LookupEx showLookup(Editor editor, @NotNull LookupElement... items) {
     return showLookup(editor, items, "", LookupArranger.DEFAULT);
   }
 
-  public Lookup showLookup(Editor editor, @NotNull LookupElement[] items, String prefix) {
+  public LookupEx showLookup(Editor editor, @NotNull LookupElement[] items, String prefix) {
     return showLookup(editor, items, prefix, LookupArranger.DEFAULT);
   }
 
-  public abstract Lookup showLookup(Editor editor, @NotNull LookupElement[] items, String prefix, @NotNull LookupArranger arranger);
+  public abstract LookupEx showLookup(Editor editor, @NotNull LookupElement[] items, String prefix, @NotNull LookupArranger arranger);
 
   public abstract void hideActiveLookup();
 
   @Nullable
-  public abstract Lookup getActiveLookup();
+  public abstract LookupEx getActiveLookup();
 
   @NonNls public static final String PROP_ACTIVE_LOOKUP = "activeLookup";
 

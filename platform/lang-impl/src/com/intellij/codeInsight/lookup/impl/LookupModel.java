@@ -15,14 +15,14 @@
  */
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -111,23 +111,27 @@ public class LookupModel {
     }
   }
 
-  void retainMatchingItems(final String newPrefix) {
+  @Nullable
+  Map<LookupElement, PrefixMatcher> retainMatchingItems(final String newPrefix, final LookupImpl lookup) {
     synchronized (lock) {
-      final List<LookupElement> newItems = ContainerUtil.findAll(myItems, new Condition<LookupElement>() {
-        @Override
-        public boolean value(LookupElement item) {
-          return item.isValid() && item.setPrefixMatcher(item.getPrefixMatcher().cloneWithPrefix(newPrefix));
+      LinkedHashMap<LookupElement, PrefixMatcher> map = new LinkedHashMap<LookupElement, PrefixMatcher>();
+      for (LookupElement item : myItems) {
+        if (item.isValid()) {
+          PrefixMatcher matcher = lookup.itemMatcher(item).cloneWithPrefix(newPrefix);
+          if (matcher.prefixMatches(item)) {
+            map.put(item, matcher);
+          }
         }
-      });
-
-      if (newItems.size() == myItems.size()) {
-        return;
       }
 
-      clearItems();
-      for (LookupElement newItem : newItems) {
-        addItem(newItem);
+      if (map.size() != myItems.size()) {
+        clearItems();
+        for (LookupElement newItem : map.keySet()) {
+          addItem(newItem);
+        }
       }
+
+      return map;
     }
   }
 

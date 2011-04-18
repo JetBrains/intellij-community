@@ -50,6 +50,7 @@ public class JavaCompletionSorting {
   }
 
   public static CompletionResultSet addJavaSorting(final CompletionParameters parameters, CompletionResultSet result) {
+    String prefix = result.getPrefixMatcher().getPrefix();
     final PsiElement position = parameters.getPosition();
     final ExpectedTypeInfo[] expectedTypes = PsiJavaPatterns.psiElement().beforeLeaf(PsiJavaPatterns.psiElement().withText(".")).accepts(position) ? ExpectedTypeInfo.EMPTY_ARRAY : JavaSmartCompletionContributor.getExpectedTypes(parameters);
     final CompletionType type = parameters.getCompletionType();
@@ -63,16 +64,16 @@ public class JavaCompletionSorting {
     if (!smart && !afterNew) {
       afterNegativeStats.add(new PreferExpected(false, expectedTypes));
     }
-    afterNegativeStats.add(new PreferSimilarlyEnding(expectedTypes));
+    afterNegativeStats.add(new PreferSimilarlyEnding(expectedTypes, prefix));
 
     List<LookupElementWeigher> afterProximity = new ArrayList<LookupElementWeigher>();
     afterProximity.add(new PreferContainingSameWords(expectedTypes));
     if (smart) {
       afterProximity.add(new PreferFieldsAndGetters());
     }
-    afterProximity.add(new PreferShorter(expectedTypes));
+    afterProximity.add(new PreferShorter(expectedTypes, prefix));
 
-    CompletionSorter sorter = CompletionSorter.defaultSorter(parameters);
+    CompletionSorter sorter = CompletionSorter.defaultSorter(parameters, result.getPrefixMatcher());
     if (!smart && afterNew) {
       sorter = sorter.weighBefore("liftShorter", new PreferExpected(true, expectedTypes));
     }
@@ -510,17 +511,19 @@ public class JavaCompletionSorting {
 
   private static class PreferSimilarlyEnding extends LookupElementWeigher {
     private final ExpectedTypeInfo[] myExpectedTypes;
+    private final String myPrefix;
 
-    public PreferSimilarlyEnding(ExpectedTypeInfo[] expectedTypes) {
+    public PreferSimilarlyEnding(ExpectedTypeInfo[] expectedTypes, String prefix) {
       super("nameEnd");
       myExpectedTypes = expectedTypes;
+      myPrefix = prefix;
     }
 
     @NotNull
     @Override
     public Comparable weigh(@NotNull LookupElement element) {
       final String name = getLookupObjectName(element.getObject());
-      return -getNameEndMatchingDegree(name, myExpectedTypes, element.getPrefixMatcher().getPrefix());
+      return -getNameEndMatchingDegree(name, myExpectedTypes, myPrefix);
     }
   }
 
@@ -572,10 +575,12 @@ public class JavaCompletionSorting {
 
   private static class PreferShorter extends LookupElementWeigher {
     private final ExpectedTypeInfo[] myExpectedTypes;
+    private final String myPrefix;
 
-    public PreferShorter(ExpectedTypeInfo[] expectedTypes) {
+    public PreferShorter(ExpectedTypeInfo[] expectedTypes, String prefix) {
       super("shorter");
       myExpectedTypes = expectedTypes;
+      myPrefix = prefix;
     }
 
     @NotNull
@@ -584,7 +589,7 @@ public class JavaCompletionSorting {
       final Object object = element.getObject();
       final String name = getLookupObjectName(object);
 
-      if (name != null && getNameEndMatchingDegree(name, myExpectedTypes, element.getPrefixMatcher().getPrefix()) != 0) {
+      if (name != null && getNameEndMatchingDegree(name, myExpectedTypes, myPrefix) != 0) {
         return NameUtil.nameToWords(name).length - 1000;
       }
       return 0;

@@ -126,7 +126,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
           fixes.add(new AddAssertStatementFix(binary));
         }
         SurroundWithIfFix ifFix = new SurroundWithIfFix(qualifier);
-        if (ifFix.isAvailable()) {
+        if (ifFix.isAvailable(qualifier)) {
           fixes.add(ifFix);
         }
         return fixes.toArray(new LocalQuickFix[fixes.size()]);

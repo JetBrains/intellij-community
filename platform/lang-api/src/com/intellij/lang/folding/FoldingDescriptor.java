@@ -147,4 +147,9 @@ public class FoldingDescriptor {
   public boolean isNonExpandable() {
     return myNeverExpands;
   }
+
+  @Override
+  public String toString() {
+    return myRange + " for AST: " + myElement;
+  }
 }

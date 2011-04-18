@@ -49,8 +49,8 @@ public class TooBroadThrowsInspection extends BaseInspection {
 
     @Override @NotNull
     protected String buildErrorString(Object... infos) {
-        final List<PsiType> typesMasked = (List<PsiType>)infos[0];
-        String typesMaskedString = typesMasked.get(0).getPresentableText();
+        final List<PsiClass> typesMasked = (List<PsiClass>)infos[0];
+        String typesMaskedString = typesMasked.get(0).getName();
         if (typesMasked.size() == 1) {
             return InspectionGadgetsBundle.message(
                     "overly.broad.throws.clause.problem.descriptor1",
@@ -59,10 +59,10 @@ public class TooBroadThrowsInspection extends BaseInspection {
             final int lastTypeIndex = typesMasked.size() - 1;
             for (int i = 1; i < lastTypeIndex; i++) {
                 typesMaskedString += ", ";
-                typesMaskedString += typesMasked.get(i).getPresentableText();
+                typesMaskedString += typesMasked.get(i).getName();
             }
             final String lastTypeString =
-                    typesMasked.get(lastTypeIndex).getPresentableText();
+                    typesMasked.get(lastTypeIndex).getName();
             return InspectionGadgetsBundle.message(
                     "overly.broad.throws.clause.problem.descriptor2",
                     typesMaskedString, lastTypeString);
@@ -79,21 +79,23 @@ public class TooBroadThrowsInspection extends BaseInspection {
     @NotNull
     @Override
     protected InspectionGadgetsFix buildFix(Object... infos) {
-        final Collection<PsiClassType> maskedExceptions =
-                (Collection<PsiClassType>)infos[0];
+        final Collection<PsiClass> maskedExceptions =
+                (Collection<PsiClass>)infos[0];
         final Boolean originalNeeded = (Boolean) infos[1];
         return new AddThrowsClauseFix(maskedExceptions,
                 originalNeeded.booleanValue());
     }
 
     private static class AddThrowsClauseFix extends InspectionGadgetsFix {
-
-        private final Collection<PsiClassType> types;
+        private final Collection<SmartPsiElementPointer<PsiClass>> types;
         private final boolean originalNeeded;
 
-        AddThrowsClauseFix(Collection<PsiClassType> types,
+        AddThrowsClauseFix(@NotNull Collection<PsiClass> classes,
                            boolean originalNeeded) {
-            this.types = types;
+            types = new ArrayList<SmartPsiElementPointer<PsiClass>>();
+          for (PsiClass type : classes) {
+            types.add(SmartPointerManager.getInstance(type.getProject()).createSmartPsiElementPointer(type));
+          }
             this.originalNeeded = originalNeeded;
         }
 
@@ -122,9 +124,11 @@ public class TooBroadThrowsInspection extends BaseInspection {
             if (!originalNeeded) {
                 element.delete();
             }
-            for (PsiClassType type : types) {
-                final PsiJavaCodeReferenceElement referenceElement =
-                        factory.createReferenceElementByType(type);
+            for (SmartPsiElementPointer<PsiClass> type : types) {
+              PsiClass aClass = type.getElement();
+              if (aClass == null) continue;
+              final PsiJavaCodeReferenceElement referenceElement =
+                        factory.createReferenceExpression(aClass);
                 referenceList.add(referenceElement);
             }
         }
@@ -168,11 +172,14 @@ public class TooBroadThrowsInspection extends BaseInspection {
                         continue;
                     }
                 }
-                final List<PsiClassType> exceptionsMasked = new ArrayList();
+                final List<PsiClass> exceptionsMasked = new ArrayList<PsiClass>();
                 for (PsiClassType exceptionThrown : exceptionsThrown) {
                     if (referencedException.isAssignableFrom(exceptionThrown) &&
                             !exceptionsDeclared.contains(exceptionThrown)) {
-                        exceptionsMasked.add(exceptionThrown);
+                      PsiClass aClass = exceptionThrown.resolve();
+                      if (aClass != null) {
+                        exceptionsMasked.add(aClass);
+                      }
                     }
                 }
                 if (!exceptionsMasked.isEmpty()) {

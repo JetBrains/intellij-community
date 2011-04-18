@@ -56,7 +56,7 @@ public abstract class CompletionTestCase extends DaemonAnalyzerTestCase {
 
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
     myItems = lookup == null ? null : lookup.getItems().toArray(new LookupElement[lookup.getItems().size()]);
-    myPrefix = lookup == null ? "" : lookup.getItems().get(0).getPrefixMatcher().getPrefix();
+    myPrefix = lookup == null ? "" : lookup.itemPattern(lookup.getItems().get(0));
   }
 
   public void setType(CompletionType type) {

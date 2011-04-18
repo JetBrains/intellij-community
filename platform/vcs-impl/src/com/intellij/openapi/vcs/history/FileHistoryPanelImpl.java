@@ -609,30 +609,40 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
   }
 
 
-  private void showDifferences(Project project, VcsFileRevision revision1, VcsFileRevision revision2) {
-    VcsFileRevision left = revision1;
-    VcsFileRevision right = revision2;
-    if (VcsHistoryUtil.compare(revision1, revision2) > 0) {
-      left = revision2;
-      right = revision1;
-    }
-
-    try {
-      final String leftTitle = left.getRevisionNumber().asString() + (left instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
-      final String rightTitle = right.getRevisionNumber().asString() + (right instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
-      VcsHistoryUtil.showDiff(project, myFilePath, left, right, leftTitle, rightTitle);
-    } catch (final VcsException e) {
-      WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-        public void run() {
-          Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e.getLocalizedMessage()),
-                                   VcsBundle.message("message.title.show.differences"));
+  private void showDifferences(final Project project, final VcsFileRevision revision1, final VcsFileRevision revision2) {
+    new Task.Backgroundable(project, "Loading revisions to compare") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        VcsFileRevision left = revision1;
+        VcsFileRevision right = revision2;
+        if (VcsHistoryUtil.compare(revision1, revision2) > 0) {
+          left = revision2;
+          right = revision1;
         }
-      }, null, project);
-    } catch (IOException e) {
-      LOG.error(e);
-    } catch (ProcessCanceledException ex) {
-      LOG.info(ex);
-    }
+
+        try {
+          final String leftTitle = left.getRevisionNumber().asString() +
+                                   (left instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
+          final String rightTitle = right.getRevisionNumber().asString() +
+                                    (right instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
+          VcsHistoryUtil.showDiff(project, myFilePath, left, right, leftTitle, rightTitle);
+        }
+        catch (final VcsException e) {
+          WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+            public void run() {
+              Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e.getLocalizedMessage()),
+                                       VcsBundle.message("message.title.show.differences"));
+            }
+          }, null, project);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+        catch (ProcessCanceledException ex) {
+          LOG.info(ex);
+        }
+      }
+    }.queue();
   }
 
   protected JComponent createCenterPanel() {
@@ -933,56 +943,71 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
 
     private void getVersion(final VcsFileRevision revision) {
       final VirtualFile file = getVirtualFile();
+      final Project project = myVcs.getProject();
       if ((file != null) && !file.isWritable()) {
-        if (ReadonlyStatusHandler.getInstance(myVcs.getProject()).ensureFilesWritable(file).hasReadonlyFiles()) {
+        if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(file).hasReadonlyFiles()) {
           return;
         }
       }
 
-      LocalHistoryAction action = file != null ? startLocalHistoryAction(revision) : LocalHistoryAction.NULL;
-
-      final byte[] revisionContent;
-      try {
-        revisionContent = VcsHistoryUtil.loadRevisionContent(revision);
-      }
-      catch (IOException e) {
-        LOG.info(e);
-        Messages.showMessageDialog(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()),
-                                   VcsBundle.message("message.title.get.revision.content"), Messages.getInformationIcon());
-        return;
-      }
-      catch (VcsException e) {
-        Messages.showMessageDialog(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()),
-                                   VcsBundle.message("message.title.get.revision.content"), Messages.getInformationIcon());
-        return;
-      }
-      catch (ProcessCanceledException ex) {
-        return;
-      }
-      final byte[] finalRevisionContent = revisionContent;
-      try {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            CommandProcessor.getInstance().executeCommand(myVcs.getProject(), new Runnable() {
-                public void run() {
-                  try {
-                    write(finalRevisionContent);
-                  }
-                  catch (IOException e) {
-                    Messages.showMessageDialog(VcsBundle.message("message.text.cannot.save.content", e.getLocalizedMessage()),
-                                               VcsBundle.message("message.title.get.revision.content"), Messages.getErrorIcon());
-                  }
-                }
-              }, createGetActionTitle(revision), null);
+      new Task.Backgroundable(project, VcsBundle.message("show.diff.progress.title")) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          LocalHistoryAction action = file != null ? startLocalHistoryAction(revision) : LocalHistoryAction.NULL;
+          final byte[] revisionContent;
+          try {
+            revisionContent = VcsHistoryUtil.loadRevisionContent(revision);
+          } catch (final IOException e) {
+            LOG.info(e);
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override public void run() {
+                Messages.showMessageDialog(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()),
+                                           VcsBundle.message("message.title.get.revision.content"), Messages.getInformationIcon());
+              }
+            });
+            return;
+          } catch (final VcsException e) {
+            LOG.info(e);
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override public void run() {
+                Messages.showMessageDialog(VcsBundle.message("message.text.cannot.load.revision", e.getLocalizedMessage()),
+                                           VcsBundle.message("message.title.get.revision.content"), Messages.getInformationIcon());
+              }
+            });
+            return;
+          } catch (ProcessCanceledException ex) {
+            return;
           }
-        });
-        if (file != null) {
-          VcsDirtyScopeManager.getInstance(myVcs.getProject()).fileDirty(file);
+
+          try {
+            UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+              @Override public void run() {
+                ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                  public void run() {
+                    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+                      public void run() {
+                        try {
+                          write(revisionContent);
+                        } catch (IOException e) {
+                          Messages.showMessageDialog(VcsBundle.message("message.text.cannot.save.content", e.getLocalizedMessage()),
+                                                     VcsBundle.message( "message.title.get.revision.content"), Messages.getErrorIcon());
+                        }
+                      }
+                    }, createGetActionTitle(revision), null);
+                  }
+                });
+              }
+            });
+
+            if (file != null) {
+              VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+            }
+          }
+          finally {
+            action.finish();
+          }
         }
-      }
-      finally {
-        action.finish();
-      }
+      }.queue();
     }
 
     private LocalHistoryAction startLocalHistoryAction(final VcsFileRevision revision) {

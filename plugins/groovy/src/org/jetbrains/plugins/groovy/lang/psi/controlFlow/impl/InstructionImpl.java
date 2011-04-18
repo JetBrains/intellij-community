@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.CallEnvironment;
@@ -29,8 +28,6 @@ import java.util.Stack;
  * @author ven
  */
 public class InstructionImpl implements Instruction, Cloneable {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl");
-
   ArrayList<InstructionImpl> myPred = new ArrayList<InstructionImpl>();
 
   ArrayList<InstructionImpl> mySucc = new ArrayList<InstructionImpl>();
@@ -43,7 +40,7 @@ public class InstructionImpl implements Instruction, Cloneable {
     return myPsiElement;
   }
 
-  public InstructionImpl(PsiElement element, int num) {
+  public InstructionImpl(@Nullable PsiElement element, int num) {
     myPsiElement = element;
     myNumber = num;
   }

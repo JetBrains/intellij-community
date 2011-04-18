@@ -20,8 +20,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,32 +37,36 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class AccessStaticViaInstanceFix implements LocalQuickFix {
+public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AccessStaticViaInstanceFix");
-  private final PsiReferenceExpression myExpression;
   private final boolean myOnTheFly;
-  private final PsiMember myMember;
-  private final JavaResolveResult myResult;
+  private final String myText;
 
   public AccessStaticViaInstanceFix(PsiReferenceExpression expression, JavaResolveResult result, boolean onTheFly) {
-    myExpression = expression;
+    super(expression);
     myOnTheFly = onTheFly;
-    myMember = (PsiMember)result.getElement();
-    myResult = result;
+    PsiMember member = (PsiMember)result.getElement();
+    myText = calcText(member, result.getSubstitutor());
   }
 
   @NotNull
-  public String getName() {
-    PsiClass aClass = myMember.getContainingClass();
+  @Override
+  public String getText() {
+    return myText;
+  }
+
+  private static String calcText(PsiMember member, PsiSubstitutor substitutor) {
+    PsiClass aClass = member.getContainingClass();
     if (aClass == null) return "";
     return QuickFixBundle.message("access.static.via.class.reference.text",
-                                  HighlightMessageUtil.getSymbolName(myMember, myResult.getSubstitutor()),
+                                  HighlightMessageUtil.getSymbolName(member, substitutor),
                                   HighlightUtil.formatClass(aClass),
-                                  HighlightUtil.formatClass(aClass,false));
+                                  HighlightUtil.formatClass(aClass, false));
   }
 
   @NotNull
@@ -71,16 +74,28 @@ public class AccessStaticViaInstanceFix implements LocalQuickFix {
     return QuickFixBundle.message("access.static.via.class.reference.family");
   }
 
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    if (!myExpression.isValid() || !myMember.isValid()) return;
+  @Override
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable("is null when called from inspection") Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    final PsiReferenceExpression myExpression = (PsiReferenceExpression)startElement;
+
+    if (!myExpression.isValid()) return;
     if (!CodeInsightUtilBase.prepareFileForWrite(myExpression.getContainingFile())) return;
+    PsiElement element = myExpression.resolve();
+    if (!(element instanceof PsiMember)) return;
+    PsiMember myMember = (PsiMember)element;
+    if (!myMember.isValid()) return;
+
     PsiClass containingClass = myMember.getContainingClass();
     if (containingClass == null) return;
     try {
       final PsiExpression qualifierExpression = myExpression.getQualifierExpression();
       PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
       if (qualifierExpression != null) {
-        if (!checkSideEffects(project, containingClass, qualifierExpression, factory)) return;
+        if (!checkSideEffects(project, containingClass, qualifierExpression, factory, myExpression)) return;
         PsiElement newQualifier = qualifierExpression.replace(factory.createReferenceExpression(containingClass));
         PsiElement qualifiedWithClassName = myExpression.copy();
         newQualifier.delete();
@@ -95,7 +110,7 @@ public class AccessStaticViaInstanceFix implements LocalQuickFix {
   }
 
   private boolean checkSideEffects(final Project project, PsiClass containingClass, final PsiExpression qualifierExpression,
-                                   PsiElementFactory factory) {
+                                   PsiElementFactory factory, final PsiElement myExpression) {
     final List<PsiElement> sideEffects = new ArrayList<PsiElement>();
     boolean hasSideEffects = RemoveUnusedVariableFix.checkSideEffects(qualifierExpression, null, sideEffects);
     if (hasSideEffects && !myOnTheFly) return false;

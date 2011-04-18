@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
+import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class JavaPsiClassReferenceElement extends LookupItem<Object> {
+  public static final ClassConditionKey<JavaPsiClassReferenceElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaPsiClassReferenceElement.class);
   private final Object myClass;
   private final String myQualifiedName;
 

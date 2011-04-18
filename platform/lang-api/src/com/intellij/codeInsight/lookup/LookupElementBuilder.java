@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.psi.PsiNamedElement;
@@ -200,10 +199,6 @@ public class LookupElementBuilder extends LookupElement {
 
   @Override
   public void handleInsert(InsertionContext context) {
-    if (!myCaseSensitive) {
-      CompletionService.getCompletionService().correctCaseInsensitiveString(this, context);
-    }
-
     if (myInsertHandler != null) {
       myInsertHandler.handleInsert(context, this);
     }

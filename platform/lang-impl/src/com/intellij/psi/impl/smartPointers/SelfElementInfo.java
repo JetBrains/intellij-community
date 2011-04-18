@@ -15,11 +15,13 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -206,42 +208,51 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   }
 
   @Nullable
-  public static PsiFile restoreFileFromVirtual(VirtualFile virtualFile, @NotNull Project project) {
+  public static PsiFile restoreFileFromVirtual(final VirtualFile virtualFile, @NotNull final Project project) {
     if (virtualFile == null) return null;
 
-    VirtualFile child;
-    if (virtualFile.isValid()) {
-      child = virtualFile;
-    }
-    else {
-      VirtualFile vParent = virtualFile.getParent();
-      if (vParent == null || !vParent.isDirectory()) return null;
-      String name = virtualFile.getName();
-      child = vParent.findChild(name);
-    }
-    if (child == null || !child.isValid()) return null;
-    PsiFile file = PsiManager.getInstance(project).findFile(child);
-    if (file == null || !file.isValid()) return null;
-    return file;
+    return ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+      public PsiFile compute() {
+        VirtualFile child;
+        if (virtualFile.isValid()) {
+          child = virtualFile;
+        }
+        else {
+          VirtualFile vParent = virtualFile.getParent();
+          if (vParent == null || !vParent.isDirectory()) return null;
+          String name = virtualFile.getName();
+          child = vParent.findChild(name);
+        }
+        if (child == null || !child.isValid()) return null;
+        PsiFile file = PsiManager.getInstance(project).findFile(child);
+        if (file == null || !file.isValid()) return null;
+        return file;
+      }
+    });
   }
+
   @Nullable
-  public static PsiDirectory restoreDirectoryFromVirtual(VirtualFile virtualFile, @NotNull Project project) {
+  public static PsiDirectory restoreDirectoryFromVirtual(final VirtualFile virtualFile, @NotNull final Project project) {
     if (virtualFile == null) return null;
 
-    VirtualFile child;
-    if (virtualFile.isValid()) {
-      child = virtualFile;
-    }
-    else {
-      VirtualFile vParent = virtualFile.getParent();
-      if (vParent == null || !vParent.isDirectory()) return null;
-      String name = virtualFile.getName();
-      child = vParent.findChild(name);
-    }
-    if (child == null || !child.isValid()) return null;
-    PsiDirectory file = PsiManager.getInstance(project).findDirectory(child);
-    if (file == null || !file.isValid()) return null;
-    return file;
+    return ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
+      public PsiDirectory compute() {
+        VirtualFile child;
+        if (virtualFile.isValid()) {
+          child = virtualFile;
+        }
+        else {
+          VirtualFile vParent = virtualFile.getParent();
+          if (vParent == null || !vParent.isDirectory()) return null;
+          String name = virtualFile.getName();
+          child = vParent.findChild(name);
+        }
+        if (child == null || !child.isValid()) return null;
+        PsiDirectory file = PsiManager.getInstance(project).findDirectory(child);
+        if (file == null || !file.isValid()) return null;
+        return file;
+      }
+    });
   }
 
   protected int getSyncEndOffset() {

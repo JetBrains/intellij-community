@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
@@ -35,27 +34,12 @@ import java.util.Set;
  */
 public abstract class LookupElement extends UserDataHolderBase {
   public static final LookupElement[] EMPTY_ARRAY = new LookupElement[0];
-  private PrefixMatcher myPrefixMatcher = PrefixMatcher.FALSE_MATCHER;
 
   @NotNull
   public abstract String getLookupString();
 
   public Set<String> getAllLookupStrings() {
     return Collections.singleton(getLookupString());
-  }
-
-  public boolean setPrefixMatcher(@NotNull final PrefixMatcher matcher) {
-    myPrefixMatcher = matcher;
-    return isPrefixMatched();
-  }
-
-  public final boolean isPrefixMatched() {
-    return myPrefixMatcher.prefixMatches(this);
-  }
-
-  @NotNull
-  public final PrefixMatcher getPrefixMatcher() {
-    return myPrefixMatcher;
   }
 
   @NotNull

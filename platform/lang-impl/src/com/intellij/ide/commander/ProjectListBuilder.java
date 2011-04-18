@@ -74,6 +74,11 @@ public class ProjectListBuilder extends AbstractListBuilder {
     }
   }
 
+  @Override
+  protected boolean shouldEnterSingleTopLevelElement(Object rootChild) {
+    return true;
+  }
+
   protected boolean nodeIsAcceptableForElement(AbstractTreeNode node, Object element) {
     return Comparing.equal(node.getValue(), element);
   }

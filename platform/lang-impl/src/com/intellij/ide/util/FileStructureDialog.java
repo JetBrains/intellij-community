@@ -183,6 +183,11 @@ public class FileStructureDialog extends DialogWrapper {
     PsiFile psiFile = getPsiFile(myProject);
     boolean showRoot = isShowRoot(psiFile);
     ProjectListBuilder projectListBuilder = new ProjectListBuilder(myProject, myCommanderPanel, myTreeStructure, null, showRoot) {
+      @Override
+      protected boolean shouldEnterSingleTopLevelElement(Object rootChild) {
+        return myBaseTreeModel.shouldEnterElement(((StructureViewTreeElement)((AbstractTreeNode)rootChild).getValue()).getValue());
+      }
+
       protected boolean nodeIsAcceptableForElement(AbstractTreeNode node, Object element) {
         return Comparing.equal(((StructureViewTreeElement)node.getValue()).getValue(), element);
       }

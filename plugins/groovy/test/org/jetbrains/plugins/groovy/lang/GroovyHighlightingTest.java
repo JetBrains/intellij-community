@@ -370,4 +370,9 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   public void testConstructorWithAllParametersOptional() {
     doTest();
   }
+
+  public void testUnusedDefsForArgs() {
+    doTest(new UnusedDefInspection());
+  }
+
 }

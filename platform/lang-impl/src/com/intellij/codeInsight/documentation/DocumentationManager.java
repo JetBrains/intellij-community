@@ -22,6 +22,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
@@ -905,7 +906,7 @@ public class DocumentationManager {
   }
 
   void showHint(final JBPopup hint) {
-    final Lookup lookup = LookupManager.getActiveLookup(myEditor);
+    final LookupEx lookup = LookupManager.getActiveLookup(myEditor);
     if (lookup != null && lookup.getCurrentItem() != null) {
       lookup.showItemPopup(hint);
       return;

@@ -26,4 +26,8 @@ public class DirDiffSettings {
   public boolean showDifferent = true;
   public boolean showNewOnSource = true;
   public boolean showNewOnTarget = true;
+
+  public boolean compareByContent = true;
+
+  public String filter = "*.*";
 }

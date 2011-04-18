@@ -22,18 +22,18 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class CompletionResultSet {
   private final PrefixMatcher myPrefixMatcher;
-  private final Consumer<LookupElement> myConsumer;
+  private final Consumer<CompletionResult> myConsumer;
   protected final CompletionService myCompletionService = CompletionService.getCompletionService();
   protected final CompletionContributor myContributor;
   private boolean myStopped;
 
-  protected CompletionResultSet(final PrefixMatcher prefixMatcher, Consumer<LookupElement> consumer, CompletionContributor contributor) {
+  protected CompletionResultSet(final PrefixMatcher prefixMatcher, Consumer<CompletionResult> consumer, CompletionContributor contributor) {
     myPrefixMatcher = prefixMatcher;
     myConsumer = consumer;
     myContributor = contributor;
   }
 
-  protected Consumer<LookupElement> getConsumer() {
+  protected Consumer<CompletionResult> getConsumer() {
     return myConsumer;
   }
 
@@ -42,6 +42,10 @@ public abstract class CompletionResultSet {
    * @param element
    */
   public abstract void addElement(@NotNull final LookupElement element);
+
+  public void passResult(@NotNull CompletionResult result) {
+    myConsumer.consume(result);
+  }
 
   public void addAllElements(@NotNull final Iterable<LookupElement> elements) {
     for (LookupElement element : elements) {
@@ -79,11 +83,11 @@ public abstract class CompletionResultSet {
     myStopped = true;
   }
 
-  public void runRemainingContributors(CompletionParameters parameters, Consumer<LookupElement> consumer) {
+  public void runRemainingContributors(CompletionParameters parameters, Consumer<CompletionResult> consumer) {
     runRemainingContributors(parameters, consumer, true);
   }
 
-  public void runRemainingContributors(CompletionParameters parameters, Consumer<LookupElement> consumer, final boolean stop) {
+  public void runRemainingContributors(CompletionParameters parameters, Consumer<CompletionResult> consumer, final boolean stop) {
     if (stop) {
       stopHere();
     }

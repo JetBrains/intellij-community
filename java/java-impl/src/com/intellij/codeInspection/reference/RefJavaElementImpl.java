@@ -76,14 +76,6 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     setIsFinal(elem.hasModifierProperty(PsiModifier.FINAL));
   }
 
-  protected SmartPsiElementPointer<PsiElement> createPointer(final PsiElement element, final RefManager manager) {
-    if (element instanceof JspHolderMethod || element instanceof JspClass) {
-      return SmartPointerManager.getInstance(manager.getProject()).createSmartPsiElementPointer(element);
-    }
-
-    return super.createPointer(element, manager);
-  }
-
   @NotNull
   public Collection<RefClass> getOutTypeReferences() {
     if (myOutTypeReferences == null){

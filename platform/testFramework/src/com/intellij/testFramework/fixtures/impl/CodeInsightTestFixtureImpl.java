@@ -99,6 +99,8 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
@@ -1037,6 +1039,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }, ModalityState.NON_MODAL);
       UIUtil.pump();
     }
+
+    ((StatisticsManagerImpl)StatisticsManager.getInstance()).clearStatistics();
 
     FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     VirtualFile[] openFiles = editorManager.getOpenFiles();

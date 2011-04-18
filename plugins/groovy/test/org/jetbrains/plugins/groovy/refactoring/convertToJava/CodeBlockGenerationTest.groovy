@@ -42,7 +42,7 @@ public class CodeBlockGenerationTest extends LightCodeInsightFixtureTestCase {
     @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
-      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/");
+      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath("$TestUtils.mockGroovy1_7LibraryName!/");
       modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
       modifiableModel.commit();
     }
@@ -56,12 +56,12 @@ public class CodeBlockGenerationTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return TestUtils.testDataPath + "refactoring/convertGroovyToJava/codeBlock";
+    return "${TestUtils.testDataPath}refactoring/convertGroovyToJava/codeBlock";
   }
 
   private void doTest() {
     final String testName = getTestName(true)
-    final PsiFile file = myFixture.configureByFile(testName + ".groovy");
+    final PsiFile file = myFixture.configureByFile("${testName}.groovy");
     assertInstanceOf file, GroovyFile
 
     GrTopStatement[] statements = file.topStatements
@@ -69,13 +69,13 @@ public class CodeBlockGenerationTest extends LightCodeInsightFixtureTestCase {
     def generator = new CodeBlockGenerator(builder, new ExpressionContext(project));
     for (def statement: statements) {
       statement.accept(generator);
-      builder.append("\n")
+      builder.append('\n')
     }
 
-    final PsiFile result = createLightFile(testName + ".java", StdLanguages.JAVA, builder.toString())
+    final PsiFile result = createLightFile("${testName}.java", StdLanguages.JAVA, builder.toString())
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     final String text = result.text
-    final String expected = psiManager.findFile(myFixture.copyFileToProject(testName + ".java")).text
+    final String expected = psiManager.findFile(myFixture.copyFileToProject("${testName}.java")).text
     assertEquals expected, text
   }
 
@@ -93,7 +93,7 @@ public class CodeBlockGenerationTest extends LightCodeInsightFixtureTestCase {
   void _testWhile3() {doTest()}
 
   void testRefExpr() {
-    myFixture.addFileToProject "Bar.groovy", """
+    myFixture.addFileToProject 'Bar.groovy', '''
 class Bar {
   def foo = 2
 
@@ -104,7 +104,7 @@ class MyCat {
     return 4
   }
 }
-"""
+'''
 
     doTest()
   }
@@ -112,10 +112,10 @@ class MyCat {
   void testMemberPointer() {doTest()}
 
   void testCompareMethods() {
-    addFile """
+    addFile '''
 class Bar {
   def compareTo(def other) {1}
-}"""
+}'''
   }
 
   void testPrefixInc() {
@@ -128,7 +128,7 @@ class Bar {
 
 class Upper {
     private test=new Test()
-    def getTest(){println "getTEst"; test}
+    def getTest(){println "getTest"; test}
 }
 
 class Test {
@@ -147,5 +147,26 @@ class Bar {
   def negative(){}
   def bitwiseNegate(){}
 }"""
+  }
+
+  void testRegex() {
+    myFixture.addFileToProject("java/util/regex/Pattern.java", """
+package java.util.regex;
+
+final class Pattern {
+  public static Pattern compile(String regex) {return new Pattern();}
+  public Matcher matcher(CharSequence input){return new Matcher();}
+  public static boolean matches(String regex, CharSequence input) {return true;}
+}""")
+
+    myFixture.addFileToProject("java/util/regex/Matcher.java", """
+package java.util.regex;
+
+final class Matcher {
+  public boolean matches() {return true;}
+}
+
+""")
+    doTest()
   }
 }

@@ -16,18 +16,17 @@
 
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
 
-public interface Lookup extends UserDataHolder{
+public interface Lookup {
   char NORMAL_SELECT_CHAR = '\n';
   char REPLACE_SELECT_CHAR = '\t';
   char COMPLETE_STATEMENT_SELECT_CHAR = '\r';
@@ -35,7 +34,6 @@ public interface Lookup extends UserDataHolder{
 
   @Nullable
   LookupElement getCurrentItem();
-  void setCurrentItem(LookupElement item);
 
   void addLookupListener(LookupListener listener);
   void removeLookupListener(LookupListener listener);
@@ -64,7 +62,9 @@ public interface Lookup extends UserDataHolder{
 
   boolean isFocused();
 
-  void showItemPopup(JBPopup hint);
+  @NotNull
+  String itemPattern(LookupElement element);
 
-  boolean showElementActions();
+  @NotNull
+  PrefixMatcher itemMatcher(LookupElement item);
 }

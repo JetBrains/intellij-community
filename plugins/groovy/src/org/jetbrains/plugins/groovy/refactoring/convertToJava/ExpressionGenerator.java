@@ -39,7 +39,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -259,6 +258,11 @@ public class ExpressionGenerator extends Generator {
     context.myStatements.add(builder.toString());
   }
 
+  @Override
+  public String toString() {
+    return builder.toString();
+  }
+
   private static boolean hasFieldInitialization(GrNewExpression newExpression) {
     final GrArgumentList argumentList = newExpression.getArgumentList();
     if (argumentList == null) return false;
@@ -370,6 +374,27 @@ public class ExpressionGenerator extends Generator {
     final PsiType ltype = left.getType();
     final PsiElement token = expression.getOperationToken();
     final IElementType op = expression.getOperationTokenType();
+
+    if (op == mREGEX_FIND) {
+      builder.append(GroovyCommonClassNames.JAVA_UTIL_REGEX_PATTERN).append(".compile(");
+      if (right != null) {
+        right.accept(this);
+      }
+      builder.append(").matcher(");
+      left.accept(this);
+      builder.append(")");
+      return;
+    }
+    if (op == mREGEX_MATCH) {
+      builder.append(GroovyCommonClassNames.JAVA_UTIL_REGEX_PATTERN).append(".matches(");
+      if (right != null) {
+        right.accept(this);
+      }
+      builder.append(", ");
+      left.accept(this);
+      builder.append(')');
+      return;
+    }
     if (GenerationSettings.dontReplaceOperatorsWithMethodsForNumbers &&
         (TypesUtil.isNumericType(ltype) && (right == null || TypesUtil.isNumericType(right.getType())) ||
          op == mPLUS && ltype != null && TypesUtil.typeEqualsToText(ltype, CommonClassNames.JAVA_LANG_STRING))) {
@@ -474,8 +499,7 @@ public class ExpressionGenerator extends Generator {
       final PsiMethod setter = GroovyPropertyUtils.findPropertySetter(type, propertyName, unary);
       if (setter == null) return false;
 
-      StringBuilder builder = new StringBuilder();
-      final ExpressionGenerator generator = new ExpressionGenerator(builder, context);
+      final ExpressionGenerator generator = new ExpressionGenerator(new StringBuilder(), context);
       generator.invokeMethodOn(
         method,
         operand,
@@ -484,7 +508,7 @@ public class ExpressionGenerator extends Generator {
         unary
       );
 
-      final GrExpression fromText = factory.createExpressionFromText(builder.toString(), unary);
+      final GrExpression fromText = factory.createExpressionFromText(generator.toString(), unary);
       invokeMethodOn(
         setter,
         qualifier,
@@ -507,11 +531,6 @@ public class ExpressionGenerator extends Generator {
       builder.append(')');
     }
     return true;
-  }
-
-  @Override
-  public void visitRegexExpression(GrRegex expression) {
-    //todo
   }
 
   @Override
@@ -592,9 +611,25 @@ public class ExpressionGenerator extends Generator {
         qualifierToUse.accept(this);
         builder.append('.');
       }
-      final String refName =
-        resolved instanceof PsiNamedElement ? ((PsiNamedElement)resolved).getName() : referenceExpression.getReferenceName();
-      builder.append(refName);
+      if (resolved instanceof PsiNamedElement) {
+        final String refName = ((PsiNamedElement)resolved).getName();
+        builder.append(refName);
+      }
+      else {
+        final String refName = referenceExpression.getReferenceName();
+        if (refName != null) {
+          builder.append(refName);
+        }
+        else {
+          final PsiElement nameElement = referenceExpression.getReferenceNameElement();
+          if (nameElement instanceof GrExpression) {
+            ((GrExpression)nameElement).accept(this);
+          }
+          else if (nameElement != null) {
+            builder.append(nameElement.toString());
+          }
+        }
+      }
     }
   }
 
@@ -713,11 +748,6 @@ public class ExpressionGenerator extends Generator {
       operand.accept(this);
     }
     builder.append(")");
-  }
-
-  @Override
-  public void visitPropertySelection(GrPropertySelection expression) {
-    //todo
   }
 
   @Override

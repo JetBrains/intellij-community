@@ -34,10 +34,13 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.ide.KillRingTransferable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EditorPopupHandler;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -645,6 +648,21 @@ public class EditorActionUtil {
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
   }
 
+  /**
+   * Copies target region from the given offset to the kill ring, i.e. combines it with the previously
+   * copied/cut adjacent text if necessary and puts to the clipboard. 
+   * 
+   * @param document        target document
+   * @param startOffset     start offset of the target region within the given document
+   * @param endOffset       end offset of the target region within the given document
+   * @param cut             flag that identifies if target text region will be cut from the given document
+   */
+  public static void copyToKillRing(@NotNull final Document document, int startOffset, int endOffset, boolean cut) {
+    String s = document.getCharsSequence().subSequence(startOffset, endOffset).toString();
+    s = StringUtil.convertLineSeparators(s);
+    CopyPasteManager.getInstance().setContents(new KillRingTransferable(s, document, startOffset, endOffset, cut));
+  }
+  
   public static EditorPopupHandler createEditorPopupHandler(final String groupId) {
     return new EditorPopupHandler() {
       public void invokePopup(final EditorMouseEvent event) {

@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.sql.Date;
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 
 import static com.intellij.openapi.diff.impl.dir.DirDiffOperation.*;
 
@@ -30,7 +29,7 @@ import static com.intellij.openapi.diff.impl.dir.DirDiffOperation.*;
  * @author Konstantin Bulenkov
  */
 public class DirDiffElement {
-  private final ElementType myType;
+  private final DType myType;
   private final DiffElement mySource;
   private final long mySourceLength;
   private final DiffElement myTarget;
@@ -38,7 +37,7 @@ public class DirDiffElement {
   private final String myName;
   private DirDiffOperation myOperation;
 
-  private DirDiffElement(@Nullable DiffElement source, @Nullable DiffElement target, ElementType type, String name) {
+  private DirDiffElement(@Nullable DiffElement source, @Nullable DiffElement target, DType type, String name) {
     myType = type;
     mySource = source;
     mySourceLength = source == null || source.isContainer() ? -1 : source.getSize();
@@ -51,7 +50,7 @@ public class DirDiffElement {
     else if (isTarget()) {
       myOperation = DirDiffOperation.COPY_FROM;
     }
-    else if (type == ElementType.CHANGED) {
+    else if (type == DType.CHANGED) {
       assert source != null;
       myOperation = source.getFileType().isBinary() ? NONE : DirDiffOperation.MERGE;
     }
@@ -66,26 +65,30 @@ public class DirDiffElement {
   }
 
   private static String getLastModification(DiffElement file) {
-    return SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(new Date(file.getModificationStamp()));
+    return DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(new Date(file.getModificationStamp()));
   }
 
   public static DirDiffElement createChange(@NotNull DiffElement source, @NotNull DiffElement target) {
-    return new DirDiffElement(source, target, ElementType.CHANGED, source.getName());
+    return new DirDiffElement(source, target, DType.CHANGED, source.getName());
   }
 
   public static DirDiffElement createSourceOnly(@NotNull DiffElement source) {
-    return new DirDiffElement(source, null, ElementType.SOURCE, null);
+    return new DirDiffElement(source, null, DType.SOURCE, null);
   }
 
   public static DirDiffElement createTargetOnly(@NotNull DiffElement target) {
-    return new DirDiffElement(null, target, ElementType.TARGET, null);
+    return new DirDiffElement(null, target, DType.TARGET, null);
   }
 
   public static DirDiffElement createDirElement(DiffElement src, DiffElement trg, String name) {
-    return new DirDiffElement(src, trg, ElementType.SEPARATOR, name);
+    return new DirDiffElement(src, trg, DType.SEPARATOR, name);
   }
 
-  public ElementType getType() {
+  public static DirDiffElement createEqual(@NotNull DiffElement source, @NotNull DiffElement target) {
+    return new DirDiffElement(source, target, DType.EQUAL, source.getName());
+  }
+
+  public DType getType() {
     return myType;
   }
 
@@ -103,7 +106,7 @@ public class DirDiffElement {
 
   @Nullable
   public String getSourceName() {
-    return myType == ElementType.CHANGED || myType == ElementType.SOURCE
+    return myType == DType.CHANGED || myType == DType.SOURCE
            ? mySource.getName() : null;
   }
 
@@ -114,7 +117,7 @@ public class DirDiffElement {
 
   @Nullable
   public String getTargetName() {
-    return myType == ElementType.CHANGED || myType == ElementType.TARGET
+    return myType == DType.CHANGED || myType == DType.TARGET
            ? myTarget.getName() : null;
   }
 
@@ -124,19 +127,23 @@ public class DirDiffElement {
   }
 
   public boolean isSeparator() {
-    return myType == ElementType.SEPARATOR;
+    return myType == DType.SEPARATOR;
   }
 
   public boolean isSource() {
-    return myType == ElementType.SOURCE;
+    return myType == DType.SOURCE;
   }
 
   public boolean isTarget() {
-    return myType == ElementType.TARGET;
+    return myType == DType.TARGET;
   }
 
   public DirDiffOperation getOperation() {
     return myOperation;
+  }
+
+  public boolean isContainer() {
+    return mySource == null ? myTarget.isContainer() : mySource.isContainer();
   }
 
   public void setNextOperation() {
@@ -149,8 +156,6 @@ public class DirDiffElement {
       myOperation = o == MERGE ? COPY_TO : o == COPY_TO ? COPY_FROM : o == COPY_FROM ? NONE : MERGE;
     }
   }
-
-  public static enum ElementType {SOURCE, TARGET, SEPARATOR, CHANGED}
 
   public Icon getIcon() {
     return mySource != null ? mySource.getIcon() : myTarget.getIcon();

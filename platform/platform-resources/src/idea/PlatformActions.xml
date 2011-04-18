@@ -60,6 +60,7 @@
       <action id="EditorMoveDownAndScrollWithSelection" class="com.intellij.openapi.editor.actions.MoveDownWithSelectionAndScrollAction"/>
       <action id="EditorLineStart" class="com.intellij.openapi.editor.actions.LineStartAction"/>
       <action id="EditorLineEnd" class="com.intellij.openapi.editor.actions.LineEndAction"/>
+      <action id="EditorCutLineBackward" class="com.intellij.openapi.editor.actions.CutLineBackwardAction"/>
       <action id="EditorCutLineEnd" class="com.intellij.openapi.editor.actions.CutLineEndAction"/>
       <action id="EditorDeleteToLineEnd" class="com.intellij.openapi.editor.actions.DeleteToLineEndAction"/>
       <action id="EditorTextStart" class="com.intellij.openapi.editor.actions.TextStartAction"/>

@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
@@ -70,6 +72,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   private JSplitPane mySplitPane;
   private final Project myProject;
   private final UsagePreviewPanel myUsagePreviewPanel;
+  private final JLabel myUsageFileLabel;
   private ListSelectionListener myListSelectionListener;
 
   public AutomaticRenamingDialog(Project project, AutomaticRenamer renamer) {
@@ -77,6 +80,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     myProject = project;
     myRenamer = renamer;
     myUsagePreviewPanel = new UsagePreviewPanel(myProject);
+    myUsageFileLabel = new JLabel();
     populateData();
     setTitle(myRenamer.getDialogTitle());
     init();
@@ -171,11 +175,19 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     });
     myListSelectionListener = new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
+        myUsageFileLabel.setText("");
         int index = myTable.getSelectionModel().getLeadSelectionIndex();
         if (index != -1) {
           PsiNamedElement element = myRenames[index];
           UsageInfo usageInfo = new UsageInfo(element);
           myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
+          final PsiFile containingFile = element.getContainingFile();
+          if (containingFile != null) {
+            final VirtualFile virtualFile = containingFile.getVirtualFile();
+            if (virtualFile != null) {
+              myUsageFileLabel.setText(virtualFile.getName());
+            }
+          }
         }
         else {
           myUsagePreviewPanel.updateLayout(null);
@@ -186,6 +198,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
     myPanelForPreview.add(myUsagePreviewPanel, BorderLayout.CENTER);
     myUsagePreviewPanel.updateLayout(null);
+    myPanelForPreview.add(myUsageFileLabel, BorderLayout.NORTH);
     mySplitPane.setDividerLocation(0.5);
     
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);

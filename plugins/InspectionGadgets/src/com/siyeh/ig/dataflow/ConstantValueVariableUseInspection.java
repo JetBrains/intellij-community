@@ -53,27 +53,31 @@ public class ConstantValueVariableUseInspection extends BaseInspection {
 
     private static class ReplaceReferenceWithExpressionFix
             extends InspectionGadgetsFix {
+      private final SmartPsiElementPointer<PsiExpression> expression;
+      private final String myText;
 
-        private final PsiExpression expression;
-
-        ReplaceReferenceWithExpressionFix(
+      ReplaceReferenceWithExpressionFix(
                 PsiExpression expression) {
-            this.expression = expression;
-        }
+          this.expression = SmartPointerManager.getInstance(expression.getProject()).createSmartPsiElementPointer(expression);
+        myText = expression.getText();
+      }
 
 
         @NotNull
         public String getName() {
             return InspectionGadgetsBundle.message(
                     "replace.reference.with.expression.quickfix",
-                    expression.getText());
+                    myText);
         }
 
         @Override
         protected void doFix(Project project, ProblemDescriptor descriptor)
                 throws IncorrectOperationException {
             final PsiElement element = descriptor.getPsiElement();
-            element.replace(expression);
+
+          PsiExpression exp  = expression.getElement();
+          if (exp == null) return;
+          element.replace(exp );
         }
     }
 

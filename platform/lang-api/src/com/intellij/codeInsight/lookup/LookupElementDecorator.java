@@ -15,10 +15,8 @@
  */
 package com.intellij.codeInsight.lookup;
 
-import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.openapi.util.ClassConditionKey;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,21 +31,10 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   protected LookupElementDecorator(T delegate) {
     myDelegate = delegate;
     myDelegate.copyUserDataTo(this);
-    final PrefixMatcher matcher = delegate.getPrefixMatcher();
-    if (matcher != PrefixMatcher.FALSE_MATCHER) {
-      final boolean prefixStillMatches = CompletionService.getCompletionService().prefixMatches(this, matcher);
-      assert prefixStillMatches;
-    }
   }
 
   public T getDelegate() {
     return myDelegate;
-  }
-
-  @Override
-  public boolean setPrefixMatcher(@NotNull PrefixMatcher matcher) {
-    myDelegate.setPrefixMatcher(matcher);
-    return super.setPrefixMatcher(matcher);
   }
 
   @NotNull

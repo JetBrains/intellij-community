@@ -20,7 +20,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.Weigher;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +34,6 @@ import java.util.List;
  * @author peter
  */
 public abstract class CompletionService {
-  private static final Key<SoftReference<CompletionProcess>> INVOLVED_IN_COMPLETION_KEY = Key.create("INVOLVED_IN_COMPLETION_KEY");
   public static final Key<CompletionStatistician> STATISTICS_KEY = Key.create("completion");
   /**
    * A "weigher" extension key (see {@link Weigher}) to sort completion items by priority and move the heaviest to the top of the Lookup.
@@ -72,7 +70,7 @@ public abstract class CompletionService {
    */
   public void getVariantsFromContributors(final CompletionParameters parameters,
                                           @Nullable final CompletionContributor from,
-                                          final Consumer<LookupElement> consumer) {
+                                          final Consumer<CompletionResult> consumer) {
     final List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
     final boolean dumb = DumbService.getInstance(parameters.getPosition().getProject()).isDumb();
 
@@ -96,35 +94,11 @@ public abstract class CompletionService {
    * @param contributor
    * @return
    */
-  public abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<LookupElement> consumer,
+  public abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<CompletionResult> consumer,
                                                       @NotNull CompletionContributor contributor);
 
   @Nullable
   public abstract CompletionProcess getCurrentCompletion();
-
-  /**
-   * Checks if a lookup element matches a given prefix matcher. If this element has already been matched successfully during this completion,
-   * returns true. If it was matched successfully during another completion, forget about this and re-match with (possibly) new prefix.
-   * @param element
-   * @param matcher
-   * @return should a lookup element be presented to user based on entered prefix?
-   */
-  public boolean prefixMatches(@NotNull LookupElement element, @NotNull PrefixMatcher matcher) {
-    final SoftReference<CompletionProcess> data = element.getUserData(INVOLVED_IN_COMPLETION_KEY);
-    final CompletionProcess currentCompletion = getCurrentCompletion();
-    if (currentCompletion != null) {
-      element.putUserData(INVOLVED_IN_COMPLETION_KEY, new SoftReference<CompletionProcess>(currentCompletion));
-      if (data != null) {
-        final CompletionProcess oldCompletion = data.get();
-        if (oldCompletion != null && oldCompletion != currentCompletion) {
-          return element.setPrefixMatcher(matcher);
-        }
-      }
-    } else {
-      element.putUserData(INVOLVED_IN_COMPLETION_KEY, null);
-    }
-    return element.isPrefixMatched() || element.setPrefixMatcher(matcher);
-  }
 
   /**
    * The main method that is invoked to collect all the completion variants
@@ -133,22 +107,20 @@ public abstract class CompletionService {
    * @return all suitable lookup elements
    */
   @NotNull
-  public LookupElement[] performCompletion(final CompletionParameters parameters, final Consumer<LookupElement> consumer) {
+  public LookupElement[] performCompletion(final CompletionParameters parameters, final Consumer<CompletionResult> consumer) {
     final Collection<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
 
-    getVariantsFromContributors(parameters, null, new Consumer<LookupElement>() {
-      public void consume(final LookupElement lookupElement) {
-        if (lookupSet.add(lookupElement)) {
-          consumer.consume(lookupElement);
+    getVariantsFromContributors(parameters, null, new Consumer<CompletionResult>() {
+      public void consume(final CompletionResult result) {
+        if (lookupSet.add(result.getLookupElement())) {
+          consumer.consume(result);
         }
       }
     });
     return lookupSet.toArray(new LookupElement[lookupSet.size()]);
   }
 
-  public abstract void correctCaseInsensitiveString(@NotNull final LookupElement element, InsertionContext context);
-
-  public abstract CompletionSorter defaultSorter(CompletionParameters parameters);
+  public abstract CompletionSorter defaultSorter(CompletionParameters parameters, PrefixMatcher matcher);
 
   public abstract CompletionSorter emptySorter();
 
