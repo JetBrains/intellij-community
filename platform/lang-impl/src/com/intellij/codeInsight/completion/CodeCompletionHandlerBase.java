@@ -436,19 +436,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  protected static void selectLookupItem(final LookupElement item, final char completionChar, final CompletionProgressIndicator context, final List<LookupElement> items) {
-    final int caretOffset = context.getEditor().getCaretModel().getOffset();
-
-    context.getOffsetMap().addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);
-    final int idEnd = context.getIdentifierEndOffset();
-    final int identifierEndOffset =
-      CompletionUtil.isOverwrite(item, completionChar) && context.getSelectionEndOffset() == idEnd ?
-      caretOffset :
-      Math.max(caretOffset, idEnd);
-    context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, identifierEndOffset);
-    lookupItemSelected(context, item, completionChar, items);
-  }
-
   private CompletionContext insertDummyIdentifier(CompletionInitializationContext initContext) {
     final PsiFile originalFile = initContext.getFile();
     PsiFile fileCopy = createFileCopy(originalFile);
@@ -500,17 +487,21 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return invokedExplicitly && CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX;
   }
 
-  private static void lookupItemSelected(final CompletionProgressIndicator indicator, @NotNull final LookupElement item, final char completionChar,
+  protected static void lookupItemSelected(final CompletionProgressIndicator indicator, @NotNull final LookupElement item, final char completionChar,
                                          final List<LookupElement> items) {
-    if (indicator.getHandler().autopopup) {
+    if (indicator.isAutopopupCompletion()) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_BASIC);
     }
 
     final Editor editor = indicator.getEditor();
+    final int caretOffset = editor.getCaretModel().getOffset();
+    indicator.getOffsetMap().addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);
+
     final WatchingInsertionContext context = new WatchingInsertionContext(indicator, completionChar, items, editor);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        final int idEndOffset = indicator.getIdentifierEndOffset();
+        final int idEndOffset = Math.max(caretOffset, indicator.getIdentifierEndOffset());
+        indicator.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, idEndOffset);
         if (idEndOffset != indicator.getSelectionEndOffset() && CompletionUtil.isOverwrite(item, completionChar)) {
           editor.getDocument().deleteString(indicator.getSelectionEndOffset(), idEndOffset);
         }
@@ -521,7 +512,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         PsiDocumentManager.getInstance(indicator.getProject()).commitAllDocuments();
         item.handleInsert(context);
         PostprocessReformattingAspect.getInstance(indicator.getProject()).doPostponedFormatting();
-
 
         final int tailOffset = context.getTailOffset();
         if (tailOffset >= 0) {

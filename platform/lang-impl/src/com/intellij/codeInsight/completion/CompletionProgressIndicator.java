@@ -97,7 +97,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
       myOffsetMap.addOffset(CompletionInitializationContext.START_OFFSET,
                             myEditor.getCaretModel().getOffset() - item.getLookupString().length());
-      CodeCompletionHandlerBase.selectLookupItem(item, event.getCompletionChar(), CompletionProgressIndicator.this, myLookup.getItems());
+      CodeCompletionHandlerBase.lookupItemSelected(CompletionProgressIndicator.this, item, event.getCompletionChar(), myLookup.getItems());
     }
 
 
