@@ -210,11 +210,7 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitPropertySelection(GrPropertySelection expression) {
-    visitExpression(expression);
-  }
-
-  public void visitPropertySelector(GrPropertySelector selector) {
-    visitElement(selector);
+    visitReferenceExpression(expression);
   }
 
   public void visitIndexProperty(GrIndexProperty expression) {

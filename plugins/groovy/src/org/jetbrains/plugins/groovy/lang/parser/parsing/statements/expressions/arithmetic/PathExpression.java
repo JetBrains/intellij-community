@@ -219,7 +219,7 @@ public class PathExpression implements GroovyElementTypes {
 
     final IElementType tokenType = builder.getTokenType();
     if (mREGEX_LITERAL.equals(tokenType)) {
-      ParserUtils.eatElement(builder, PATH_PROPERTY);
+      ParserUtils.eatElement(builder, REGEX);
       return PATH_PROPERTY_REFERENCE;
     }
     if (mGSTRING_BEGIN.equals(tokenType)) {
@@ -242,14 +242,6 @@ public class PathExpression implements GroovyElementTypes {
       builder.advanceLexer();
       return REFERENCE_EXPRESSION;
     }
-    /*else if (GroovyElementTypes.kTHIS.equals(tokenType)) {
-      builder.advanceLexer();
-      return THIS_REFERENCE_EXPRESSION;
-    }
-    else if (GroovyElementTypes.kSUPER.equals(tokenType)) {
-      builder.advanceLexer();
-      return SUPER_REFERENCE_EXPRESSION;
-    }*/
     return WRONGWAY;
   }
 
