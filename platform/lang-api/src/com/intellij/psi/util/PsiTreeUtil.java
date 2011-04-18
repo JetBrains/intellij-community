@@ -764,14 +764,14 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static PsiElement prevLeaf(@NotNull final PsiErrorElement element, final boolean skipEmptyElements) {
+  public static PsiElement prevLeaf(@NotNull final PsiElement element, final boolean skipEmptyElements) {
     PsiElement prevLeaf = prevLeaf(element);
     while (skipEmptyElements && prevLeaf != null && prevLeaf.getTextLength() == 0) prevLeaf = prevLeaf(prevLeaf);
     return prevLeaf;
   }
 
   @Nullable
-  public static PsiElement nextLeaf(final PsiErrorElement element, final boolean skipEmptyElements) {
+  public static PsiElement nextLeaf(final PsiElement element, final boolean skipEmptyElements) {
     PsiElement nextLeaf = nextLeaf(element);
     while (skipEmptyElements && nextLeaf != null && nextLeaf.getTextLength() == 0) nextLeaf = nextLeaf(nextLeaf);
     return nextLeaf;
