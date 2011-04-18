@@ -18,7 +18,6 @@ package com.intellij.find.impl;
 
 import com.intellij.find.*;
 import com.intellij.find.ngrams.TrigramIndex;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -39,6 +38,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.ui.MessageType;

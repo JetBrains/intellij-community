@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class WorkspaceFileType implements FileType {
+public class WorkspaceFileType implements InternalFileType {
   private static final Icon ICON = IconLoader.getIcon("/nodes/ideaWorkspace.png");
   @NonNls public static final String DEFAULT_EXTENSION = "iws";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "." + DEFAULT_EXTENSION;
