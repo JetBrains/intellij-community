@@ -36,8 +36,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 @SuppressWarnings({"OverlyComplexMethod",
@@ -302,8 +302,10 @@ public class EquivalenceChecker {
     return statementsAreEquivalent(body1, body2);
   }
 
-  private static boolean forClausesAreEquivalent(@NotNull GrForClause statement1,
-                                                 @NotNull GrForClause statement2) {
+  private static boolean forClausesAreEquivalent(@Nullable GrForClause statement1,
+                                                 @Nullable GrForClause statement2) {
+    if (statement1 == null && statement2 == null) return true;
+    if (statement1 == null || statement2 == null) return false;
     final GrVariable var1 = statement1.getDeclaredVariable();
     final GrVariable var2 = statement2.getDeclaredVariable();
     if (var1 == null && var2 == null) return true;
@@ -313,9 +315,9 @@ public class EquivalenceChecker {
 
   private static boolean switchStatementsAreEquivalent(@NotNull GrSwitchStatement statement1,
                                                        @NotNull GrSwitchStatement statement2) {
-    final GrExpression switchExpression1 = (GrExpression) statement1.getCondition();
-    final GrExpression swithcExpression2 = (GrExpression) statement2.getCondition();
-    if (!expressionsAreEquivalent(switchExpression1, swithcExpression2)) {
+    final GrExpression switchExpression1 = statement1.getCondition();
+    final GrExpression switchExpression2 = statement2.getCondition();
+    if (!expressionsAreEquivalent(switchExpression1, switchExpression2)) {
       return false;
     }
     final GrCaseSection[] clauses1 = statement1.getCaseSections();
@@ -405,6 +407,7 @@ public class EquivalenceChecker {
     return expressionsAreEquivalent(exception1, exception2);
   }
 
+  @SuppressWarnings({"ConstantConditions"})
   public static boolean expressionsAreEquivalent(@Nullable GrExpression exp1,
                                                  @Nullable GrExpression exp2) {
     if (exp1 == null && exp2 == null) {
@@ -561,8 +564,10 @@ public class EquivalenceChecker {
     if (!expressionsAreEquivalent(operand1, operand2)) {
       return false;
     }
-    final PsiType safe1 = expression1.getCastTypeElement().getType();
-    final PsiType safe2 = expression2.getCastTypeElement().getType();
+    final GrTypeElement typeElement1 = expression1.getCastTypeElement();
+    final GrTypeElement typeElement2 = expression2.getCastTypeElement();
+    final PsiType safe1 = typeElement1 == null ? null : typeElement1.getType();
+    final PsiType safe2 = typeElement2 == null ? null : typeElement2.getType();
     return typesAreEquivalent(safe1, safe2);
   }
 
@@ -859,10 +864,6 @@ public class EquivalenceChecker {
     if (exp instanceof GrClosableBlock) {
       return CLOSABLE_BLOCK_EXPRESSION;
     }
-    if (exp instanceof GrPropertySelection) {
-      return PROPERTY_SELECTION_EXPRESSION;
-    }
-
     return -1; // Type of expression can be defined in thirdparty plugins. See issue #IDEA-59846
   }
 
