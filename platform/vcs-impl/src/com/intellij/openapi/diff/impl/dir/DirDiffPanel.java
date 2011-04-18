@@ -86,7 +86,7 @@ public class DirDiffPanel {
           final DirDiffElement element = myModel.getElementAt(myTable.getSelectedRow());
           final Project project = myModel.getProject();
           clearDiffPanel();
-          if (element.getType() == DirDiffElement.ElementType.CHANGED) {
+          if (element.getType() == DType.CHANGED) {
             myDiffPanelComponent = element.getSource().getDiffComponent(element.getTarget(), project, myDialog.getWindow());
             if (myDiffPanelComponent != null) {
               myDiffPanel.add(myDiffPanelComponent, BorderLayout.CENTER);
