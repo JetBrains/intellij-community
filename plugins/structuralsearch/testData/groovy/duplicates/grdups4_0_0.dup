@@ -1,0 +1,11 @@
+occurence 0:
+var v = 10
+for (int i = 0; i < v; i++) {
+  System.out.println(i + 1);
+}
+
+occurence 1:
+var v = 10
+for (int i = 0; i < v; i++) {
+  System.out.println(i + 1);
+}

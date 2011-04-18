@@ -86,7 +86,7 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
   public static PsiElement getOnlyNonWhitespaceChild(PsiElement element) {
     PsiElement onlyChild = null;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof PsiWhiteSpace) {
+      if (child instanceof PsiWhiteSpace || child.getTextLength() == 0) {
         continue;
       }
       if (onlyChild != null) {
@@ -120,18 +120,11 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
         descriptor = provider.buildDescriptor(element);
       }
     }
-    else {
-      final PsiElement child = getOnlyChildFromDescriptor(descriptor, filter);
-      return child != null ? child : element;
-    }
 
     if (descriptor != null) {
       final PsiElement onlyChild = getOnlyChildFromDescriptor(descriptor, filter);
-      if (onlyChild != null) {
-        return onlyChild;
-      }
+      return onlyChild != null ? onlyChild : element;
     }
-
     return getOnlyChild(element, filter);
   }
 

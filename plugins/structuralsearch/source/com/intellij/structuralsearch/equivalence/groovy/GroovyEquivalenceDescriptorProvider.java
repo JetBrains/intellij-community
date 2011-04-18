@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
@@ -70,6 +71,9 @@ public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorPr
         .element(f.getDeclaredVariable())
         .element(f.getIteratedExpression());
     }
+    else if (e instanceof GrReferenceList) {
+      return builder.inAnyOrder(((GrReferenceList)e).getReferenceElements());
+    }
     else if (e instanceof GrCodeBlock) {
       return builder.codeBlock(((GrStatementOwner)e).getStatements());
     }
@@ -100,6 +104,6 @@ public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorPr
 
   @Override
   public TokenSet getIgnoredTokens() {
-    return TokenSets.WHITE_SPACES_OR_COMMENTS;
+    return IGNORED_TOKENS;
   }
 }

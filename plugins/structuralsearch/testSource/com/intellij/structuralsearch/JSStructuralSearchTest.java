@@ -229,12 +229,13 @@ public class JSStructuralSearchTest extends StructuralSearchTestCase {
     String s = "function sum(a, b) {}\n" +
                "function f(a, c) {}\n" +
                "function g(b, c) {}\n" +
-               "function func(a) {}";
+               "function func(a) {}\n" +
+               "function func1() {}";
     doTest(s, "function sum($param1$, $param2$) {}", 1);
     doTest(s, "function $name$($param1$, $param2$) {}", 3);
     doTest(s, "function $name$(a, $param2$) {}", 2);
     doTest(s, "function $name$($param1$, c) {}", 2);
-    doTest(s, "function '_T('_T1*) {}", 4);
+    doTest(s, "function '_T('_T1*) {}", 5);
   }
 
   public void testInHtml() throws IOException {
