@@ -6,6 +6,9 @@
     <action id="EditorEscape">
       <keyboard-shortcut first-keystroke="ESCAPE" second-keystroke="ESCAPE"/>
     </action>
+    <action id="EditorCutLineBackward">
+      <keyboard-shortcut first-keystroke="alt MINUS" second-keystroke="control K"/>
+    </action>
     <action id="EditorCutLineEnd">
       <keyboard-shortcut first-keystroke="control K"/>
     </action>
