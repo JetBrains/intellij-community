@@ -114,12 +114,25 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
 
     // todo optimize! (this method is often invokated for the same node)
 
-    final PsiElement onlyChild = getOnlyChildFromDescriptor(element, descriptor);
-    if (onlyChild != null) {
-      return onlyChild;
+    if (descriptor == null) {
+      final EquivalenceDescriptorProvider provider = EquivalenceDescriptorProvider.getInstance(element);
+      if (provider != null) {
+        descriptor = provider.buildDescriptor(element);
+      }
+    }
+    else {
+      final PsiElement child = getOnlyChildFromDescriptor(descriptor, filter);
+      return child != null ? child : element;
     }
 
-    return getOnlyChild(element, null);
+    if (descriptor != null) {
+      final PsiElement onlyChild = getOnlyChildFromDescriptor(descriptor, filter);
+      if (onlyChild != null) {
+        return onlyChild;
+      }
+    }
+
+    return getOnlyChild(element, filter);
   }
 
   public static PsiElement getOnlyChild(PsiElement element, NodeFilter filter) {
@@ -135,23 +148,6 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
       }
     }
     return element;
-  }
-
-  @Nullable
-  private static PsiElement getOnlyChildFromDescriptor(PsiElement element, EquivalenceDescriptor descriptor) {
-    if (descriptor == null) {
-      final EquivalenceDescriptorProvider provider = EquivalenceDescriptorProvider.getInstance(element);
-      if (provider == null) {
-        return null;
-      }
-
-      descriptor = provider.buildDescriptor(element);
-      if (descriptor == null) {
-        return null;
-      }
-    }
-
-    return getOnlyChildFromDescriptor(descriptor, null);
   }
 
   @Nullable

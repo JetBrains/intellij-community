@@ -4,6 +4,7 @@ import com.intellij.lang.javascript.JSTokenTypes;
 import com.intellij.lang.javascript.JavascriptLanguage;
 import com.intellij.lang.javascript.psi.*;
 import com.intellij.lang.javascript.psi.ecmal4.JSClass;
+import com.intellij.lang.javascript.psi.ecmal4.JSReferenceList;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -30,11 +31,16 @@ public class JSEquivalenceDescriptorProvider extends EquivalenceDescriptorProvid
 
     if (element instanceof JSClass) {
       final JSClass c = (JSClass)element;
+
+      // todo: make simplier api
+      final JSReferenceList extendsList = c.getExtendsList();
+      final JSReferenceList implementsList = c.getImplementsList();
+
       return builder
         .element(c.getNameIdentifier())
         .childrenOptionally(c.getAttributeList())
-        .childrenInAnyOrder(c.getExtendsList())
-        .childrenInAnyOrder(c.getImplementsList())
+        .inAnyOrder(extendsList != null ? extendsList.getExpressions() : PsiElement.EMPTY_ARRAY)
+        .inAnyOrder(implementsList != null ? implementsList.getExpressions() : PsiElement.EMPTY_ARRAY)
         .inAnyOrder(c.getFields())
         .inAnyOrder(c.getFunctions());
     }

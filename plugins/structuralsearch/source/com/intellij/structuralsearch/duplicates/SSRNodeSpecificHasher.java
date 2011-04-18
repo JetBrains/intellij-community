@@ -32,7 +32,8 @@ public class SSRNodeSpecificHasher extends NodeSpecificHasher {
   private static final NodeFilter ourNodeFilter = new NodeFilter() {
       @Override
       public boolean accepts(PsiElement element) {
-        return StructuralSearchProfileImpl.isLexicalNode(element);
+        return StructuralSearchProfileImpl.isLexicalNode(element) ||
+               !DuplocatorSettings.getInstance().DISTINGUISH_LITERALS && isLiteral(element);
       }
     };
 
@@ -72,18 +73,26 @@ public class SSRNodeSpecificHasher extends NodeSpecificHasher {
       return 0;
     }
     else if (node instanceof LeafElement) {
-      if (!mySettings.DISTINGUISH_LITERALS) {
-        final EquivalenceDescriptorProvider descriptorProvider = EquivalenceDescriptorProvider.getInstance(node);
-        if (descriptorProvider != null) {
-          final IElementType elementType = ((LeafElement)node).getElementType();
-          if (descriptorProvider.getLiterals().contains(elementType)) {
-            return 0;
-          }
-        }
+      if (!mySettings.DISTINGUISH_LITERALS && isLiteral(node)) {
+        return 0;
       }
       return node.getText().hashCode();
+
     }
     return node.getClass().getName().hashCode();
+  }
+
+  private static boolean isLiteral(PsiElement node) {
+    if (node instanceof LeafElement) {
+      final EquivalenceDescriptorProvider descriptorProvider = EquivalenceDescriptorProvider.getInstance(node);
+      if (descriptorProvider != null) {
+        final IElementType elementType = ((LeafElement)node).getElementType();
+        if (descriptorProvider.getLiterals().contains(elementType)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override

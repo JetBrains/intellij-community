@@ -7,6 +7,7 @@ import com.intellij.dupLocator.treeHash.DuplocatorHashCallback;
 import com.intellij.dupLocator.treeHash.TreeHashResult;
 import com.intellij.dupLocator.treeHash.TreePsiFragment;
 import com.intellij.dupLocator.util.PsiFragment;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.equivalence.*;
@@ -33,13 +34,6 @@ class SSRTreeHasher extends AbstractTreeHasher {
 
   @Override
   protected TreeHashResult hash(@NotNull PsiElement root, PsiFragment upper, @NotNull NodeSpecificHasher hasher) {
-    final PsiElement element = SkippingHandler.getOnlyChild(root, SSRNodeSpecificHasher.getNodeFilter());
-    if (element != root) {
-      final TreeHashResult result = hash(element, upper, hasher);
-      final int cost = hasher.getNodeCost(root);
-      return new TreeHashResult(result.getHash(), result.getCost() + cost, upper);
-    }
-
     final EquivalenceDescriptorProvider descriptorProvider = EquivalenceDescriptorProvider.getInstance(root);
 
     if (descriptorProvider != null) {
@@ -52,6 +46,13 @@ class SSRTreeHasher extends AbstractTreeHasher {
 
     if (root instanceof PsiFile) {
       return hashCodeBlock(hasher.getNodeChildren(root), upper, hasher, true);
+    }
+
+    final PsiElement element = SkippingHandler.getOnlyChild(root, SSRNodeSpecificHasher.getNodeFilter());
+    if (element != root) {
+      final TreeHashResult result = hash(element, upper, hasher);
+      final int cost = hasher.getNodeCost(root);
+      return new TreeHashResult(result.getHash(), result.getCost() + cost, result.getFragment());
     }
 
     return computeElementHash(element, upper, hasher);
@@ -75,15 +76,15 @@ class SSRTreeHasher extends AbstractTreeHasher {
     int cost = nodeSpecificHasher.getNodeCost(element);
 
     for (SingleChildDescriptor childDescriptor : descriptor.getSingleChildDescriptors()) {
-      final TreeHashResult childHashResult = computeHash(childDescriptor, fragment, nodeSpecificHasher);
-      hash = hash * 31 + childHashResult.getHash();
-      cost += childHashResult.getCost();
+      final Pair<Integer, Integer> childHashResult = computeHash(childDescriptor, fragment, nodeSpecificHasher);
+      hash = hash * 31 + childHashResult.first;
+      cost += childHashResult.second;
     }
 
     for (MultiChildDescriptor childDescriptor : descriptor.getMultiChildDescriptors()) {
-      final TreeHashResult childHashResult = computeHash(childDescriptor, fragment, nodeSpecificHasher);
-      hash = hash * 31 + childHashResult.getHash();
-      cost += childHashResult.getCost();
+      final Pair<Integer, Integer> childHashResult = computeHash(childDescriptor, fragment, nodeSpecificHasher);
+      hash = hash * 31 + childHashResult.first;
+      cost += childHashResult.second;
     }
 
     for (Object constant : descriptor.getConstants()) {
@@ -104,15 +105,15 @@ class SSRTreeHasher extends AbstractTreeHasher {
   }
 
   @NotNull
-  private TreeHashResult computeHash(SingleChildDescriptor childDescriptor,
-                                     PsiFragment parentFragment,
-                                     NodeSpecificHasher nodeSpecificHasher) {
+  private Pair<Integer, Integer> computeHash(SingleChildDescriptor childDescriptor,
+                                             PsiFragment parentFragment,
+                                             NodeSpecificHasher nodeSpecificHasher) {
 
     final PsiElement element = childDescriptor.getElement();
     if (element == null) {
-      return new TreeHashResult(0, 0, parentFragment);
+      return new Pair<Integer, Integer>(0, 0);
     }
-    final TreeHashResult result = doComputeHash(childDescriptor, parentFragment, nodeSpecificHasher);
+    final Pair<Integer, Integer> result = doComputeHash(childDescriptor, parentFragment, nodeSpecificHasher);
 
     if (result != null) {
       final ChildRole role = childDescriptor.getRole();
@@ -120,17 +121,17 @@ class SSRTreeHasher extends AbstractTreeHasher {
         switch (role) {
           case VARIABLE_NAME:
             if (!mySettings.DISTINGUISH_VARIABLES) {
-              return new TreeHashResult(0, result.getCost(), result.getFragment());
+              return new Pair<Integer, Integer>(0, result.second);
             }
             break;
           case FIELD_NAME:
             if (!mySettings.DISTINGUISH_FIELDS) {
-              return new TreeHashResult(0, result.getCost(), result.getFragment());
+              return new Pair<Integer, Integer>(0, result.second);
             }
             break;
           case FUNCTION_NAME:
             if (!mySettings.DISTINGUISH_METHODS) {
-              return new TreeHashResult(0, result.getCost(), result.getFragment());
+              return new Pair<Integer, Integer>(0, result.second);
             }
             break;
         }
@@ -139,15 +140,17 @@ class SSRTreeHasher extends AbstractTreeHasher {
     return result;
   }
 
-  private TreeHashResult doComputeHash(SingleChildDescriptor childDescriptor,
-                                       PsiFragment parentFragment,
-                                       NodeSpecificHasher nodeSpecificHasher) {
+  @NotNull
+  private Pair<Integer, Integer> doComputeHash(SingleChildDescriptor childDescriptor,
+                                               PsiFragment parentFragment,
+                                               NodeSpecificHasher nodeSpecificHasher) {
     final PsiElement element = childDescriptor.getElement();
 
     switch (childDescriptor.getType()) {
       case OPTIONALLY_IN_PATTERN:
       case DEFAULT:
-        return hash(element, parentFragment, nodeSpecificHasher);
+        final TreeHashResult result = hash(element, parentFragment, nodeSpecificHasher);
+        return new Pair<Integer, Integer>(result.getHash(), result.getCost());
 
       case CHILDREN_OPTIONALLY_IN_PATTERN:
       case CHILDREN:
@@ -158,7 +161,7 @@ class SSRTreeHasher extends AbstractTreeHasher {
         int hash = AbstractTreeHasher.vector(hashes, 31);
         int cost = AbstractTreeHasher.vector(costs);
 
-        return new TreeHashResult(hash, cost, parentFragment);
+        return new Pair<Integer, Integer>(hash, cost);
 
       case CHILDREN_IN_ANY_ORDER:
         childResults = computeHashesForChildren(element, parentFragment, nodeSpecificHasher);
@@ -168,21 +171,21 @@ class SSRTreeHasher extends AbstractTreeHasher {
         hash = AbstractTreeHasher.vector(hashes);
         cost = AbstractTreeHasher.vector(costs);
 
-        return new TreeHashResult(hash, cost, parentFragment);
+        return new Pair<Integer, Integer>(hash, cost);
 
       default:
-        return new TreeHashResult(0, 0, parentFragment);
+        return new Pair<Integer, Integer>(0, 0);
     }
   }
 
   @NotNull
-  private TreeHashResult computeHash(MultiChildDescriptor childDescriptor,
+  private Pair<Integer, Integer> computeHash(MultiChildDescriptor childDescriptor,
                                      PsiFragment parentFragment,
                                      NodeSpecificHasher nodeSpecificHasher) {
     final PsiElement[] elements = childDescriptor.getElements();
 
     if (elements == null) {
-      return new TreeHashResult(0, 0, parentFragment);
+      return new Pair<Integer, Integer>(0, 0);
     }
 
     switch (childDescriptor.getType()) {
@@ -196,7 +199,7 @@ class SSRTreeHasher extends AbstractTreeHasher {
         int hash = AbstractTreeHasher.vector(hashes, 31);
         int cost = AbstractTreeHasher.vector(costs);
 
-        return new TreeHashResult(hash, cost, parentFragment);
+        return new Pair<Integer, Integer>(hash, cost);
 
       case IN_ANY_ORDER:
         childResults = computeHashes(elements, parentFragment, nodeSpecificHasher);
@@ -206,10 +209,10 @@ class SSRTreeHasher extends AbstractTreeHasher {
         hash = AbstractTreeHasher.vector(hashes);
         cost = AbstractTreeHasher.vector(costs);
 
-        return new TreeHashResult(hash, cost, parentFragment);
+        return new Pair<Integer, Integer>(hash, cost);
 
       default:
-        return new TreeHashResult(0, 0, parentFragment);
+        return new Pair<Integer, Integer>(0, 0);
     }
   }
 
