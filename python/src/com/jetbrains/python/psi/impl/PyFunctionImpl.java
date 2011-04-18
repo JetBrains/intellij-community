@@ -20,7 +20,6 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.documentation.EpydocString;
 import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyClassStub;

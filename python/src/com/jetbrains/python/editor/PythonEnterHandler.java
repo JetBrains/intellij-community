@@ -73,6 +73,11 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
           return Result.Continue;
         }
       }
+      PyElement klass = PsiTreeUtil.getParentOfType(element, PyClass.class, PyFile.class);
+      if (klass != null) {
+        editor.getDocument().insertString(editor.getCaretModel().getOffset(), "\n"+element.getParent().getText().substring(0,3));
+        return Result.Continue;
+      }
     }
 
     if (offset > 0) {
@@ -137,18 +142,20 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
   private boolean inDocComment(PsiElement element) {
     PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class);
     if (string != null) {
-      PyFunction func = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+      PyElement func = PsiTreeUtil.getParentOfType(element, PyFunction.class, PyClass.class, PyFile.class);
       if (func != null) {
-        String text = string.getText();
-        if (text.startsWith("\"\"\"") || text.startsWith("'''")) {
-          if (!text.endsWith("\"\"\"") && !text.endsWith("'''"))
-            return true;
-          PsiErrorElement error = PsiTreeUtil.getNextSiblingOfType(string, PsiErrorElement.class);
-          if (error != null)
-            return true;
-          error = PsiTreeUtil.getNextSiblingOfType(string.getParent(), PsiErrorElement.class);
-          if (error != null)
-            return true;
+        final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(element,
+                                                                            PyDocStringOwner.class);
+        if (docStringOwner == func) {
+          PyStringLiteralExpression str = docStringOwner.getDocStringExpression();
+          if (str != null && element.getText().equals(str.getText())) {
+            PsiErrorElement error = PsiTreeUtil.getNextSiblingOfType(string, PsiErrorElement.class);
+            if (error != null)
+              return true;
+            error = PsiTreeUtil.getNextSiblingOfType(string.getParent(), PsiErrorElement.class);
+            if (error != null)
+              return true;
+          }
         }
       }
     }
