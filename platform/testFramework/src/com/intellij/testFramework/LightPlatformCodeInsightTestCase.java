@@ -500,6 +500,10 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     doAction("EditorNextWordWithSelection");
   }
   
+  protected static void cutToLineEnd() {
+    doAction("EditorCutLineEnd");
+  }
+  
   protected static void lineComment() {
     new CommentByLineCommentHandler().invoke(getProject(), getEditor(), getFile());
   }

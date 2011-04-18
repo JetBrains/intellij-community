@@ -24,14 +24,13 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.openapi.ide.KillRingTransferable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class CutLineEndAction extends EditorAction {
   public CutLineEndAction() {
@@ -47,37 +46,35 @@ public class CutLineEndAction extends EditorAction {
 
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       final Document doc = editor.getDocument();
-      if (doc.getLineCount() == 0) return;
       int caretOffset = editor.getCaretModel().getOffset();
+      if (caretOffset >= doc.getTextLength()) {
+        return;
+      }
       final int lineNumber = doc.getLineNumber(caretOffset);
       int lineEndOffset = doc.getLineEndOffset(lineNumber);
 
+      int start;
+      int end;
       if (caretOffset >= lineEndOffset) {
-        if (myCopyToClipboard) {
-          copyToClipboard(doc, lineEndOffset, lineEndOffset + 1);
-        }
-        doc.deleteString(lineEndOffset, lineEndOffset + 1);
-        return;
-      }
-
-      if (myCopyToClipboard) {
-        copyToClipboard(doc, caretOffset, lineEndOffset);
-      }
-
-      final int lineStartOffset = doc.getLineStartOffset(lineNumber);
-      if (StringUtil.isEmptyOrSpaces(doc.getCharsSequence().subSequence(lineStartOffset, lineEndOffset).toString())) {
-        DeleteLineAction.deleteLineAtCaret(editor);
+        start = lineEndOffset;
+        end = lineEndOffset + 1;
       }
       else {
-        doc.deleteString(caretOffset, lineEndOffset);
+        start = caretOffset;
+        end = lineEndOffset;
+        if (lineEndOffset < doc.getTextLength() && CharArrayUtil.isEmptyOrSpaces(doc.getCharsSequence(), caretOffset, lineEndOffset)) {
+          end++;
+        }
       }
+
+      delete(doc, start, end);
     }
 
-    private static void copyToClipboard(final Document doc, int startOffset, int endOffset) {
-      String s = doc.getCharsSequence().subSequence(startOffset, endOffset).toString();
-
-      s = StringUtil.convertLineSeparators(s);
-      CopyPasteManager.getInstance().setContents(new KillRingTransferable(s, doc, startOffset, startOffset, true));
+    private void delete(@NotNull Document document, int start, int end) {
+      if (myCopyToClipboard) {
+        EditorActionUtil.copyToKillRing(document, start, end, true);
+      }
+      document.deleteString(start, end);
     }
   }
 }
