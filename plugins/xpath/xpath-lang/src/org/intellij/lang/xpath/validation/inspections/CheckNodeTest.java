@@ -74,7 +74,7 @@ public class CheckNodeTest extends XPathInspection {
             if (nodeTest.isNameTest() && contextNode != null) {
                 final PrefixedName prefixedName = nodeTest.getQName();
                 assert prefixedName != null;
-                if (!"*".equals(prefixedName.getLocalName())) {
+                if (!"*".equals(prefixedName.getLocalName()) && !"*".equals(prefixedName.getPrefix())) {
                     boolean found;
 
                     if (nodeTest.getPrincipalType() == XPathNodeTest.PrincipalType.ELEMENT) {
