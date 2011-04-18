@@ -15,6 +15,7 @@ import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil.ReplaceDelegate, SearchResults.SearchResultsListener {
 
@@ -226,11 +227,12 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
 
       final SelectionModel selectionModel = mySearchResults.getEditor().getSelectionModel();
 
-      int offset;
+      int offset = 0;
       if (selectionModel.getSelectedText() != null) {
-        offset = selectionModel.getSelectionStart();
+        if (!mySearchResults.getFindModel().isGlobal()) {
+          offset = selectionModel.getSelectionStart();
+        }
       } else {
-        offset = 0;
         copy.setGlobal(true);
       }
 
