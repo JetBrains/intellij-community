@@ -30,11 +30,22 @@ public class XPathNumberImpl extends XPathElementImpl implements XPathNumber {
 
     @NotNull
     public XPathType getType() {
-        return getXPathVersion() == XPathVersion.V1 ? XPathType.NUMBER :
-                (textContains('.') ? XPath2Type.DOUBLE : XPath2Type.INTEGER);
+      if (getXPathVersion() == XPathVersion.V1) {
+        return XPathType.NUMBER;
+      } else {
+        if (textContains('.')) {
+          return isScientificNotation() ? XPath2Type.DOUBLE : XPath2Type.DECIMAL;
+        } else {
+          return XPath2Type.INTEGER;
+        }
+      }
     }
 
-    public double getValue() {
+  public boolean isScientificNotation() {
+    return textContains('e') || textContains('E');
+  }
+
+  public double getValue() {
         return Double.parseDouble(getText());
     }
 

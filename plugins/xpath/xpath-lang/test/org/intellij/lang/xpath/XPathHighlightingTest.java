@@ -60,6 +60,10 @@ public class XPathHighlightingTest extends TestBase {
       doXPathHighlighting();
     }
 
+    public void testScientificNotationNumber() throws Throwable {
+      doXPathHighlighting();
+    }
+
     private void doXPathHighlighting(String... moreFiles) throws Throwable {
         final String name = getTestFileName();
         myFixture.testHighlighting(true, false, false, ArrayUtil.append(moreFiles, name + ".xpath"));

@@ -44,7 +44,7 @@ QName=({NCName} ":")? {NCName}
 
 STRING_LITERAL= "\"" ([^\"]|"\"\"")* "\""? | "'" ([^\']|"''")* "'"?
 DIGITS=[:digit:]+
-NUMBER= {DIGITS} ("." {DIGITS}?)? | "." {DIGITS}
+NUMBER= ({DIGITS} ("." {DIGITS}?)? | "." {DIGITS}) ([eE] [+-]? {DIGITS})?
 
 AXIS= "ancestor"
     | "ancestor-or-self"
