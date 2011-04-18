@@ -21,6 +21,34 @@ class ExceptionBreakpoint:
         self.type = exctype
         self.notify = {NOTIFY_ALWAYS: notify_always, NOTIFY_ON_TERMINATE: notify_on_terminate}
 
+class LineBreakpoint:
+    def __init__(self, type, flag, condition, func_name, expression):
+        self.type = type
+        self.condition = condition
+        self.func_name = func_name
+        self.expression = expression
+
+    def get_break_dict(self, breakpoints, file):
+        if DictContains(breakpoints, file):
+            breakDict = breakpoints[file]
+        else:
+            breakDict = {}
+        breakpoints[file] = breakDict
+        return breakDict
+
+    def trace(self, file, line, func_name):
+        if DEBUG_TRACE_BREAKPOINTS > 0:
+            sys.stderr.write('Added breakpoint:%s - line:%s - func_name:%s\n' % (file, line, func_name))
+            sys.stderr.flush()
+
+    def add(self, breakpoints, file, line, func_name):
+      self.trace(file, line, func_name)
+
+      breakDict = self.get_break_dict(breakpoints, file)
+
+      breakDict[line] = self
+
+
 def get_exception_breakpoint(exctype, exceptions, notify_class):
     exc = None
     if exceptions is not None:

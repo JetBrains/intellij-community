@@ -191,11 +191,11 @@ if PATHS_FROM_ECLIPSE_TO_PYTHON:
         except KeyError:
             #used to translate a path from the debug server to the client
             translated = _NormFile(filename)
-            for eclipse_prefix, pyhon_prefix in PATHS_FROM_ECLIPSE_TO_PYTHON:
-                if translated.startswith(pyhon_prefix):
+            for eclipse_prefix, python_prefix in PATHS_FROM_ECLIPSE_TO_PYTHON:
+                if translated.startswith(python_prefix):
                     if DEBUG_CLIENT_SERVER_TRANSLATION:
                         sys.stderr.write('pydev debugger: replacing to client: %s\n' % (translated,))
-                    translated = translated.replace(pyhon_prefix, eclipse_prefix)
+                    translated = translated.replace(python_prefix, eclipse_prefix)
                     if DEBUG_CLIENT_SERVER_TRANSLATION:
                         sys.stderr.write('pydev debugger: sent to client: %s\n' % (translated,))
                     break
