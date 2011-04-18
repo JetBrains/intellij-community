@@ -28,7 +28,6 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -373,7 +372,7 @@ public class PsiUtil {
     return isStaticsOK(owner, place, null);
   }
 
-  public static boolean isStaticsOK(PsiModifierListOwner owner, PsiElement place, PsiElement resolveContext) {
+  public static boolean isStaticsOK(PsiModifierListOwner owner, PsiElement place, @Nullable PsiElement resolveContext) {
     if (owner instanceof PsiMember) {
       if (place instanceof GrReferenceExpression) {
         GrExpression qualifier = ((GrReferenceExpression)place).getQualifierExpression();
@@ -626,7 +625,7 @@ public class PsiUtil {
       return true;
     }
     if (expr instanceof GrTupleExpression) return true;
-    if (expr instanceof GrReferenceExpression || expr instanceof GrIndexProperty || expr instanceof GrPropertySelection) return true;
+    if (expr instanceof GrReferenceExpression || expr instanceof GrIndexProperty) return true;
 
     if ((expr instanceof GrThisReferenceExpression || expr instanceof GrSuperReferenceExpression) &&
         GroovyConfigUtils.getInstance().isVersionAtLeast(expr, GroovyConfigUtils.GROOVY1_8)) {
@@ -1085,7 +1084,9 @@ public class PsiUtil {
   public static boolean seemsToBeQualifiedClassName(@Nullable GrExpression qualifier) {
     if (qualifier == null) return false;
     while (qualifier instanceof GrReferenceExpression) {
-      if (((GrReferenceExpression)qualifier).getReferenceNameElement() instanceof GrLiteral) return false;
+      final PsiElement nameElement = ((GrReferenceExpression)qualifier).getReferenceNameElement();
+      if (((GrReferenceExpression)qualifier).getTypeArguments().length > 0) return false;
+      if (nameElement == null || nameElement.getNode().getElementType() != GroovyTokenTypes.mIDENT) return false;
       qualifier = ((GrReferenceExpression)qualifier).getQualifierExpression();
     }
     return qualifier == null;
