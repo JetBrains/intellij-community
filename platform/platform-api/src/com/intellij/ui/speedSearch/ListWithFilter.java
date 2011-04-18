@@ -25,7 +25,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.Function;
+import com.intellij.util.ui.ComponentWithEmptyText;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,6 +51,10 @@ public class ListWithFilter<T> extends JPanel {
 
   private ListWithFilter(JList list, JScrollPane scroller, Function<T, String> namer) {
     super(new BorderLayout());
+
+    if (list instanceof ComponentWithEmptyText) {
+      ((ComponentWithEmptyText)list).getEmptyText().setText(UIBundle.message("message.noMatchesFound"));
+    }
 
     myList = list;
     myScroller = scroller;
@@ -95,13 +101,13 @@ public class ListWithFilter<T> extends JPanel {
       if (isHoldingFilter() && !searchFieldShown) {
         mySpeedSearchPatternField.setVisible(true);
         searchFieldShown = true;
-        revalidate();
       }
       else if (!isHoldingFilter() && searchFieldShown) {
         mySpeedSearchPatternField.setVisible(false);
         searchFieldShown = false;
-        revalidate();
       }
+
+      revalidate();
     }
 
     private void revalidate() {
@@ -127,6 +133,7 @@ public class ListWithFilter<T> extends JPanel {
     }
     else {
       mySpeedSearchPatternField.setBackground(LightColors.RED);
+      revalidate();
     }
   }
 

@@ -71,6 +71,21 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
     myEmptyText.paint(this, g);
   }
 
+  @Override
+  public Dimension getPreferredSize() {
+    if (getModel().getSize() == 0) {
+      Dimension s = getEmptyText().getPreferredSize();
+      Insets insets = getInsets();
+      if (insets != null) {
+        s.width += (insets.left + insets.right);
+        s.height += (insets.top + insets.bottom);
+      }
+      return s;
+    } else {
+      return super.getPreferredSize();
+    }
+  }
+
   private void init() {
     setSelectionBackground(UIUtil.getListSelectionBackground());
     setSelectionForeground(UIUtil.getListSelectionForeground());

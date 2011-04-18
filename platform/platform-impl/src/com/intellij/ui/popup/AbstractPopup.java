@@ -692,7 +692,6 @@ public class AbstractPopup implements JBPopup {
     }
 
     myPopup.setRequestFocus(myRequestFocus);
-    pack(true, true);
     myPopup.show();
 
     final Window window = SwingUtilities.getWindowAncestor(myContent);
@@ -946,7 +945,6 @@ public class AbstractPopup implements JBPopup {
 
     Dimension size = getSize();
     Dimension prefSize = myContent.computePreferredSize();
-
 
     if (width) {
       size.width = prefSize.width;
