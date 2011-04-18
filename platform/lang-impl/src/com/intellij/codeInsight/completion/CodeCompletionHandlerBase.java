@@ -426,7 +426,15 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       final Runnable restorePrefix = rememberDocumentState(indicator.getEditor());
 
       final LookupElement item = ((AutoCompletionDecision.InsertItem)decision).getElement();
-      indicator.getLookup().finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR, item);
+      CommandProcessor.getInstance().executeCommand(indicator.getProject(), new Runnable() {
+                                                      @Override
+                                                      public void run() {
+                                                        indicator.setMergeCommand();
+                                                        indicator.getLookup().finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR, item);
+                                                      }
+                                                    }, "Autocompletion", null);
+
+
 
       // the insert handler may have started a live template with completion
       if (CompletionService.getCompletionService().getCurrentCompletion() == null &&

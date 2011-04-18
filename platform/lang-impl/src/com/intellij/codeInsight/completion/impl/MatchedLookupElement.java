@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion.impl;
 
+import com.intellij.codeInsight.completion.CompletionSorter;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
@@ -26,9 +27,9 @@ import com.intellij.openapi.util.ClassConditionKey;
 public class MatchedLookupElement extends LookupElementDecorator<LookupElement> {
   public static final ClassConditionKey<MatchedLookupElement> CLASS_CONDITION_KEY = ClassConditionKey.create(MatchedLookupElement.class);
   private final PrefixMatcher myMatcher;
-  private final CompletionSorterImpl mySorter;
+  private final CompletionSorter mySorter;
 
-  MatchedLookupElement(LookupElement delegate, PrefixMatcher matcher, CompletionSorterImpl sorter) {
+  MatchedLookupElement(LookupElement delegate, PrefixMatcher matcher, CompletionSorter sorter) {
     super(delegate);
     myMatcher = matcher;
     mySorter = sorter;
@@ -38,7 +39,7 @@ public class MatchedLookupElement extends LookupElementDecorator<LookupElement> 
     return myMatcher;
   }
 
-  public CompletionSorterImpl getSorter() {
+  public CompletionSorter getSorter() {
     return mySorter;
   }
 
