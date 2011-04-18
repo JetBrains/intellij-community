@@ -80,11 +80,6 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
   }
 
   @Override
-  public PsiElement getContext() {
-    return myClosure;
-  }
-
-  @Override
   public GrExpression getDefaultInitializer() {
     return GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText("null");
   }

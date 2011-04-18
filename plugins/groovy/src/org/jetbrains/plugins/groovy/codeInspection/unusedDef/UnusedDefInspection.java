@@ -33,6 +33,7 @@ import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionBase;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -146,7 +147,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     });
   }
 
-  private boolean isUsedInToplevelFlowOnly(PsiElement element) {
+  private static boolean isUsedInToplevelFlowOnly(PsiElement element) {
     GrVariable var = null;
     if (element instanceof GrVariable) {
       var = (GrVariable) element;
@@ -159,7 +160,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
       final GroovyPsiElement scope = getScope(var);
       if (scope == null) {
         PsiFile file = var.getContainingFile();
-        LOG.error(file == null ? "no file???" : DebugUtil.psiToString(file, true, false));
+        LOG.error(file == null ? "no file??? var of type"+ var.getClass().getCanonicalName() : DebugUtil.psiToString(file, true, false));
       }
 
       return ReferencesSearch.search(var, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
@@ -172,11 +173,12 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     return true;
   }
 
-  private GroovyPsiElement getScope(PsiElement var) {
-    return PsiTreeUtil.getParentOfType(var, GrClosableBlock.class, GrMethod.class, GrClassInitializer.class, GroovyFileBase.class);
+  @Nullable
+  private static GroovyPsiElement getScope(PsiElement var) {
+    return PsiTreeUtil.getContextOfType(var, GrClosableBlock.class, GrMethod.class, GrClassInitializer.class, GroovyFileBase.class);
   }
 
-  private boolean isLocalAssignment(PsiElement element) {
+  private static boolean isLocalAssignment(PsiElement element) {
     if (element instanceof GrVariable) {
       return isLocalVariable((GrVariable) element, false);
     } else if (element instanceof GrReferenceExpression) {
@@ -187,11 +189,8 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     return false;
   }
 
-  private boolean isLocalVariable(GrVariable var, boolean parametersAllowed) {
-    if (var instanceof GrField) return false;
-    else if (var instanceof GrParameter && !parametersAllowed) return false;
-
-    return true;
+  private static boolean isLocalVariable(GrVariable var, boolean parametersAllowed) {
+    return !(var instanceof GrField || var instanceof GrParameter && !parametersAllowed);
   }
 
   public boolean isEnabledByDefault() {
