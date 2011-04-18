@@ -79,7 +79,7 @@ public class CompletionServiceImpl extends CompletionService{
     }
   }
 
-  public CompletionResultSet createResultSet(final CompletionParameters parameters, final Consumer<LookupElement> consumer,
+  public CompletionResultSet createResultSet(final CompletionParameters parameters, final Consumer<CompletionResult> consumer,
                                              @NotNull final CompletionContributor contributor) {
     final PsiElement position = parameters.getPosition();
     final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
@@ -119,7 +119,7 @@ public class CompletionServiceImpl extends CompletionService{
     private final CompletionProgressIndicator myProcess;
     @Nullable private final CompletionResultSetImpl myOriginal;
 
-    public CompletionResultSetImpl(final Consumer<LookupElement> consumer, final String textBeforePosition,
+    public CompletionResultSetImpl(final Consumer<CompletionResult> consumer, final String textBeforePosition,
                                    final PrefixMatcher prefixMatcher,
                                    CompletionContributor contributor,
                                    CompletionParameters parameters,
@@ -135,20 +135,9 @@ public class CompletionServiceImpl extends CompletionService{
     }
 
     public void addElement(@NotNull final LookupElement element) {
-      if (element instanceof MatchedLookupElement) {
-        getConsumer().consume(element);
-        return;
-      }
-
-      MatchedLookupElement matched = element.as(MatchedLookupElement.CLASS_CONDITION_KEY);
+      CompletionResult matched = CompletionResult.wrap(element, getPrefixMatcher(), mySorter);
       if (matched != null) {
-        getConsumer().consume(new MatchedLookupElement(element, matched.getPrefixMatcher(), matched.getSorter()));
-        return;
-      }
-
-      PrefixMatcher matcher = getPrefixMatcher();
-      if (matcher.prefixMatches(element)) {
-        getConsumer().consume(new MatchedLookupElement(element, matcher, mySorter));
+        passResult(matched);
       }
     }
 

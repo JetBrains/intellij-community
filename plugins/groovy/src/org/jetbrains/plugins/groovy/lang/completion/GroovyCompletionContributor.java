@@ -300,10 +300,10 @@ public class GroovyCompletionContributor extends CompletionContributor {
                                     ProcessingContext context,
                                     @NotNull final CompletionResultSet result) {
         final Set<String> usedWords = new THashSet<String>();
-        result.runRemainingContributors(parameters, new Consumer<LookupElement>() {
-          public void consume(LookupElement element) {
-            result.addElement(element);
-            usedWords.add(element.getLookupString());
+        result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
+          public void consume(CompletionResult element) {
+            result.passResult(element);
+            usedWords.add(element.getLookupElement().getLookupString());
           }
         });
         PsiReference reference = parameters.getPosition().getContainingFile().findReferenceAt(parameters.getOffset());

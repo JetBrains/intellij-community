@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.util.Ref;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
@@ -40,10 +39,10 @@ public class NullSmartCompletionContributor extends CompletionContributor{
       protected void addCompletions(final CompletionParameters parameters,
                                     final CompletionResultSet result, final Collection<ExpectedTypeInfo> infos) {
         final Ref<Boolean> empty = Ref.create(true);
-        result.runRemainingContributors(parameters, new Consumer<LookupElement>() {
-          public void consume(final LookupElement lookupElement) {
+        result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
+          public void consume(final CompletionResult lookupElement) {
             empty.set(false);
-            result.addElement(lookupElement);
+            result.passResult(lookupElement);
           }
         });
 

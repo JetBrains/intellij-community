@@ -19,7 +19,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
-import com.intellij.codeInsight.completion.impl.MatchedLookupElement;
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
@@ -359,7 +358,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myOffsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
   }
 
-  public synchronized void addItem(final MatchedLookupElement item) {
+  public synchronized void addItem(final CompletionResult item) {
     if (!isRunning()) return;
     ProgressManager.checkCanceled();
 
@@ -370,8 +369,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     LOG.assertTrue(myParameters.getPosition().isValid());
 
-    myItemSorters.put(item.getDelegate(), (CompletionSorterImpl) item.getSorter());
-    myLookup.addItem(item.getDelegate(), item.getPrefixMatcher());
+    myItemSorters.put(item.getLookupElement(), (CompletionSorterImpl) item.getSorter());
+    myLookup.addItem(item.getLookupElement(), item.getPrefixMatcher());
     myCount++;
     if (unitTestMode) return;
 

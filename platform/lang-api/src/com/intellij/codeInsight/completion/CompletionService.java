@@ -20,7 +20,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.Weigher;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +34,6 @@ import java.util.List;
  * @author peter
  */
 public abstract class CompletionService {
-  private static final Key<SoftReference<CompletionProcess>> INVOLVED_IN_COMPLETION_KEY = Key.create("INVOLVED_IN_COMPLETION_KEY");
   public static final Key<CompletionStatistician> STATISTICS_KEY = Key.create("completion");
   /**
    * A "weigher" extension key (see {@link Weigher}) to sort completion items by priority and move the heaviest to the top of the Lookup.
@@ -72,7 +70,7 @@ public abstract class CompletionService {
    */
   public void getVariantsFromContributors(final CompletionParameters parameters,
                                           @Nullable final CompletionContributor from,
-                                          final Consumer<LookupElement> consumer) {
+                                          final Consumer<CompletionResult> consumer) {
     final List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
     final boolean dumb = DumbService.getInstance(parameters.getPosition().getProject()).isDumb();
 
@@ -96,7 +94,7 @@ public abstract class CompletionService {
    * @param contributor
    * @return
    */
-  public abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<LookupElement> consumer,
+  public abstract CompletionResultSet createResultSet(CompletionParameters parameters, Consumer<CompletionResult> consumer,
                                                       @NotNull CompletionContributor contributor);
 
   @Nullable
@@ -109,13 +107,13 @@ public abstract class CompletionService {
    * @return all suitable lookup elements
    */
   @NotNull
-  public LookupElement[] performCompletion(final CompletionParameters parameters, final Consumer<LookupElement> consumer) {
+  public LookupElement[] performCompletion(final CompletionParameters parameters, final Consumer<CompletionResult> consumer) {
     final Collection<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
 
-    getVariantsFromContributors(parameters, null, new Consumer<LookupElement>() {
-      public void consume(final LookupElement lookupElement) {
-        if (lookupSet.add(lookupElement)) {
-          consumer.consume(lookupElement);
+    getVariantsFromContributors(parameters, null, new Consumer<CompletionResult>() {
+      public void consume(final CompletionResult result) {
+        if (lookupSet.add(result.getLookupElement())) {
+          consumer.consume(result);
         }
       }
     });

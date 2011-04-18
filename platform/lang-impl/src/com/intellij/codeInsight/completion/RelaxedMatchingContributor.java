@@ -15,8 +15,6 @@
  */
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.impl.MatchedLookupElement;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.StandardPatterns;
@@ -34,18 +32,18 @@ public class RelaxedMatchingContributor extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet result) {
-    final Set<MatchedLookupElement> elements = new HashSet<MatchedLookupElement>();
-    result.runRemainingContributors(parameters, new Consumer<LookupElement>() {
+    final Set<CompletionResult> elements = new HashSet<CompletionResult>();
+    result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
       @Override
-      public void consume(LookupElement element) {
-        elements.add((MatchedLookupElement)element);
-        result.addElement(element);
+      public void consume(CompletionResult element) {
+        elements.add(element);
+        result.passResult(element);
       }
     });
 
     if (!elements.isEmpty() && parameters.getInvocationCount() == 0) {
       Set<String> prefixes = new HashSet<String>();
-      for (MatchedLookupElement element : elements) {
+      for (CompletionResult element : elements) {
         prefixes.add(element.getPrefixMatcher().getPrefix());
       }
       for (String prefix : prefixes) {
@@ -53,8 +51,8 @@ public class RelaxedMatchingContributor extends CompletionContributor {
           .restartCompletionOnPrefixChange(StandardPatterns.string().with(new PatternCondition<String>("noneMatch") {
             @Override
             public boolean accepts(@NotNull String s, ProcessingContext context) {
-              for (MatchedLookupElement element : elements) {
-                if (element.getPrefixMatcher().cloneWithPrefix(s).prefixMatches(element)) {
+              for (CompletionResult element : elements) {
+                if (element.getPrefixMatcher().cloneWithPrefix(s).prefixMatches(element.getLookupElement())) {
                   return false;
                 }
               }
@@ -65,7 +63,8 @@ public class RelaxedMatchingContributor extends CompletionContributor {
     }
 
     CompletionParameters relaxed;
-    if (parameters.getInvocationCount() == 0 && (elements.isEmpty() || elements.size() == 1 && elements.iterator().next().as(LiveTemplateLookupElement.class) != null)) {
+    if (parameters.getInvocationCount() == 0 && (elements.isEmpty() || elements.size() == 1 && elements.iterator().next().getLookupElement().as(
+      LiveTemplateLookupElement.class) != null)) {
       relaxed = parameters.withRelaxedMatching();
     }
     else if (parameters.getInvocationCount() >= 2) {
@@ -75,10 +74,10 @@ public class RelaxedMatchingContributor extends CompletionContributor {
       return;
     }
 
-    result.runRemainingContributors(relaxed, new Consumer<LookupElement>() {
+    result.runRemainingContributors(relaxed, new Consumer<CompletionResult>() {
       @Override
-      public void consume(LookupElement element) {
-        result.addElement(element);
+      public void consume(CompletionResult element) {
+        result.passResult(element);
       }
     });
   }
