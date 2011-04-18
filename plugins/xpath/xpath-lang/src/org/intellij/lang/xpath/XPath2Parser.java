@@ -516,6 +516,21 @@ public class XPath2Parser extends XPathParser {
   }
 
   @Override
+  protected boolean parseWildcard(PsiBuilder builder) {
+    builder.advanceLexer();
+
+    if (builder.getTokenType() == XPathTokenTypes.COL) {
+      builder.advanceLexer();
+      if (builder.getTokenType() != XPathTokenTypes.NCNAME) {
+        builder.error("NCName expected");
+        builder.advanceLexer();
+      }
+    }
+
+    return true;
+  }
+
+  @Override
   protected TokenSet unionOps() {
     return XPath2TokenTypes.UNION_OPS;
   }

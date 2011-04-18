@@ -67,6 +67,14 @@ public class XPath2ParsingTest extends TestBase {
     doXPathHighlighting();
   }
 
+  public void testWildcardNamespace() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testInvalidWildcard() throws Throwable {
+    doXPathHighlighting();
+  }
+
   private void doXPathHighlighting(String... moreFiles) throws Throwable {
     final String name = getTestFileName();
     myFixture.testHighlighting(false, false, false, ArrayUtil.append(moreFiles, name + ".xpath2"));
