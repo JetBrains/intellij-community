@@ -131,7 +131,7 @@ public class XPathCompletionContributor extends CompletionContributor {
 
     if (element.getParent() instanceof XPathVariableReference) {
       final String text = element.getText();
-      prefix = "$" + text.substring(0, text.indexOf(CompletionLists.INTELLIJ_IDEA_RULEZ));
+      prefix = "$" + prefix;
     }
 
     if (element.getParent() instanceof XPathNodeTest) {
