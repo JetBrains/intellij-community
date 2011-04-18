@@ -612,10 +612,16 @@
     </group>
 
     <group text="Restructured Text" popup="true">
-      <action id="com.jetbrains.rest.actions.docutils.RunDocutilAction"
-              class="com.jetbrains.rest.actions.docutils.RunDocutilAction"
-              text="Run docutils task..." description="Allows to run docutils tasks">
-      </action>
+      <group text="Docutils" popup="true">
+        <action id="com.jetbrains.rest.actions.docutils.RunDocutilAction"
+                class="com.jetbrains.rest.actions.docutils.RunDocutilAction"
+                text="Run docutils task..." description="Allows to run docutils tasks">
+        </action>
+        <action id="com.jetbrains.rest.actions.docutils.DryRunDocutilAction"
+                class="com.jetbrains.rest.actions.docutils.DryRunDocutilAction"
+                text="Dry run ..." description="Print output to console">
+        </action>
+      </group>
       <group text="Sphinx actions" popup="true">
         <action id="com.jetbrains.rest.actions.sphinx.RunSphinxQuickStartAction"
                 class="com.jetbrains.rest.actions.sphinx.RunSphinxQuickStartAction"
