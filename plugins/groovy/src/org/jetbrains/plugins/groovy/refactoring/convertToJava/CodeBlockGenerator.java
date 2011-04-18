@@ -173,7 +173,7 @@ public class CodeBlockGenerator extends Generator {
 
   @Override
   public void visitIfStatement(GrIfStatement ifStatement) {
-    final GrCondition condition = ifStatement.getCondition();
+    final GrExpression condition = ifStatement.getCondition();
     final GrStatement thenBranch = ifStatement.getThenBranch();
     final GrStatement elseBranch = ifStatement.getElseBranch();
 
