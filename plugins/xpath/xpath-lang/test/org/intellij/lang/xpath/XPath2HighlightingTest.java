@@ -51,6 +51,6 @@ public class XPath2HighlightingTest extends XPath2HighlightingTestBase {
 
   @Override
   protected String getSubPath() {
-    return "xpath/highlighting";
+    return "xpath2/highlighting";
   }
 }

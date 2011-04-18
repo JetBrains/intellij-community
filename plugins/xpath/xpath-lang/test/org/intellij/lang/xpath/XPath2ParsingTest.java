@@ -74,6 +74,6 @@ public class XPath2ParsingTest extends TestBase {
 
   @Override
   protected String getSubPath() {
-    return "xpath/parsing";
+    return "xpath2/parsing";
   }
 }

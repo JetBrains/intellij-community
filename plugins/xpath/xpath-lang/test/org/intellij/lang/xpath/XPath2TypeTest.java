@@ -99,6 +99,6 @@ public class XPath2TypeTest extends XPath2HighlightingTestBase {
 
   @Override
   protected String getSubPath() {
-    return "xpath/highlighting/types";
+    return "xpath2/highlighting/types";
   }
 }
