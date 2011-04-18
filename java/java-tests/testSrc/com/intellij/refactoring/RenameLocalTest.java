@@ -7,19 +7,13 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.java.JavaRefactoringSupportProvider;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.introduceField.InplaceIntroduceFieldPopup;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameWrongRefHandler;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import sun.misc.Ref;
 
 /**
  * @author ven
@@ -103,7 +97,7 @@ public class RenameLocalTest extends LightCodeInsightTestCase {
   }
 
   private void doRenameWrongRef(final String newName) throws Exception {
-    final String name = getTestName(true);
+    final String name = getTestName(false);
     configureByFile(BASE_PATH + name + ".java");
 
     final TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(getProject());

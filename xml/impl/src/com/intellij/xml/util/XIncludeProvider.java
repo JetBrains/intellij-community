@@ -16,8 +16,8 @@
 package com.intellij.xml.util;
 
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.include.FileIncludeInfo;
 import com.intellij.psi.impl.include.FileIncludeProvider;
@@ -27,7 +27,6 @@ import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 
 /**

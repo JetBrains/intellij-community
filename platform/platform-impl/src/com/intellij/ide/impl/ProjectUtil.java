@@ -18,13 +18,10 @@ package com.intellij.ide.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -42,7 +39,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +51,6 @@ import java.io.IOException;
  */
 public class ProjectUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.ProjectUtil");
-  @NonNls public static final String DIRECTORY_BASED_PROJECT_DIR = ".idea";
 
   private ProjectUtil() {
   }
@@ -109,7 +104,7 @@ public class ProjectUtil {
     }
 
     if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) ||
-        virtualFile.isDirectory() && virtualFile.findChild(DIRECTORY_BASED_PROJECT_DIR) != null) {
+        virtualFile.isDirectory() && virtualFile.findChild(com.intellij.openapi.project.ProjectUtil.DIRECTORY_BASED_PROJECT_DIR) != null) {
       return openProject(path, projectToClose, forceOpenInNewFrame);
     }
 
@@ -138,8 +133,8 @@ public class ProjectUtil {
       return null;
     }
 
-    if (file.isDirectory() && !new File(file, DIRECTORY_BASED_PROJECT_DIR).exists()) {
-      Messages.showMessageDialog(IdeBundle.message("error.project.file.does.not.exist", new File(file, DIRECTORY_BASED_PROJECT_DIR).getPath()), CommonBundle.getErrorTitle(),
+    if (file.isDirectory() && !new File(file, com.intellij.openapi.project.ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).exists()) {
+      Messages.showMessageDialog(IdeBundle.message("error.project.file.does.not.exist", new File(file, com.intellij.openapi.project.ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).getPath()), CommonBundle.getErrorTitle(),
                                  Messages.getErrorIcon());
       return null;
     }
@@ -237,23 +232,5 @@ public class ProjectUtil {
     } else {
       IdeFocusManager.getInstance(p).requestFocus(cmd, false);
     }
-  }
-
-  public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {
-    return isProjectOrWorkspaceFile(file, file.getFileType());
-  }
-
-  public static boolean isProjectOrWorkspaceFile(final VirtualFile file,
-                                                 final FileType fileType) {
-    final boolean iprBased = fileType instanceof WorkspaceFileType || fileType instanceof ProjectFileType || fileType instanceof ModuleFileType;
-    if (iprBased) return true;
-    VirtualFile parent = file.getParent();
-    if (parent != null) {
-      if (parent.getName().equals(DIRECTORY_BASED_PROJECT_DIR)) return true;
-      parent = parent.getParent();
-      if (parent != null && parent.getName().equals(DIRECTORY_BASED_PROJECT_DIR)) return true;
-    }
-
-    return false;
   }
 }

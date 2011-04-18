@@ -122,11 +122,10 @@ public class ClsParsingUtil {
       return new ClsLiteralExpressionImpl(parent, expr.getText(), expr.getType(), ((PsiLiteralExpression)expr).getValue());
     }
     else if (expr instanceof PsiPrefixExpression) {
-      final PsiExpression operand = ((PsiPrefixExpression) expr).getOperand();
-      final ClsLiteralExpressionImpl literal = (ClsLiteralExpressionImpl) psiToClsExpression(operand, null);
-      final ClsPrefixExpressionImpl prefixExpression = new ClsPrefixExpressionImpl(parent, literal);
-      literal.setParent(prefixExpression);
-      return prefixExpression;
+      final PsiPrefixExpression prefixExpr = (PsiPrefixExpression)expr;
+      final ClsJavaTokenImpl operation = new ClsJavaTokenImpl(null, prefixExpr.getOperationTokenType(), prefixExpr.getOperationSign().getText());
+      final ClsLiteralExpressionImpl literal = (ClsLiteralExpressionImpl) psiToClsExpression(prefixExpr.getOperand(), null);
+      return new ClsPrefixExpressionImpl(parent, operation, literal);
     }
     else if (expr instanceof PsiClassObjectAccessExpression) {
       final String canonicalClassText = ((PsiClassObjectAccessExpression)expr).getOperand().getType().getCanonicalText();
@@ -135,14 +134,27 @@ public class ClsParsingUtil {
     else if (expr instanceof PsiReferenceExpression) {
       return new ClsReferenceExpressionImpl(parent, (PsiReferenceExpression)expr);
     }
+    else if (expr instanceof PsiBinaryExpression) {
+      final PsiBinaryExpression binaryExpr = (PsiBinaryExpression)expr;
+      final PsiExpression lOperand = psiToClsExpression(binaryExpr.getLOperand(), null);
+      final ClsJavaTokenImpl operation = new ClsJavaTokenImpl(null, binaryExpr.getOperationTokenType(), binaryExpr.getOperationSign().getText());
+      final PsiExpression rOperand = psiToClsExpression(binaryExpr.getROperand(), null);
+      if (lOperand instanceof ClsLiteralExpressionImpl) {
+        return new ClsBinaryExpressionImpl(parent, (ClsLiteralExpressionImpl)lOperand, operation, (ClsLiteralExpressionImpl)rOperand);
+      }
+      else if (lOperand instanceof ClsPrefixExpressionImpl) {
+        return new ClsBinaryExpressionImpl(parent, (ClsPrefixExpressionImpl)lOperand, operation, (ClsLiteralExpressionImpl)rOperand);
+      }
+    }
     else {
       final PsiConstantEvaluationHelper evaluator = JavaPsiFacade.getInstance(expr.getProject()).getConstantEvaluationHelper();
       final Object value = evaluator.computeConstantExpression(expr);
       if (value != null) {
         return new ClsLiteralExpressionImpl(parent, expr.getText(), expr.getType(), value);
       }
-      LOG.error("Unable to compute expression value: " + expr);
-      return null;
     }
+
+    LOG.error("Unable to compute expression value: " + expr);
+    return null;
   }
 }

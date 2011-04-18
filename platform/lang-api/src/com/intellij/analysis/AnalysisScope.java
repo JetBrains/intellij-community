@@ -16,13 +16,9 @@
 
 package com.intellij.analysis;
 
-import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -322,11 +318,7 @@ public class AnalysisScope {
                               final FileIndex projectFileIndex,
                               final PsiManager psiManager, final boolean needReadAction) {
     if (fileOrDir.isDirectory()) return true;
-    final FileType fileType = fileOrDir.getFileType();
-    if (fileType instanceof WorkspaceFileType ||
-        fileType instanceof ProjectFileType ||
-        fileType instanceof ModuleFileType ||
-        fileOrDir.getPath().contains("/.idea/")) return true;
+    if (ProjectUtil.isProjectOrWorkspaceFile(fileOrDir)) return true;
     if (projectFileIndex.isInContent(fileOrDir) && (myIncludeTestSource || !projectFileIndex.isInTestSourceContent(fileOrDir))) {
       return processFile(fileOrDir, visitor, psiManager, needReadAction);
     }

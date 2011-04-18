@@ -664,9 +664,9 @@ public class ClsRepositoryUseTest extends PsiTestCase{
       assert method instanceof PsiAnnotationMethod : method;
       try {
         final PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)method).getDefaultValue();
-        assert defaultValue instanceof PsiReferenceExpression : defaultValue;
-        final String type = method.getName().startsWith("f") ? "Float." : "Double";
-        assert defaultValue.getText().contains(type) : defaultValue;
+        assert defaultValue instanceof PsiBinaryExpression : defaultValue;
+        final PsiPrimitiveType type = method.getName().startsWith("f") ? PsiType.FLOAT : PsiType.DOUBLE;
+        assertEquals(type, ((PsiBinaryExpression)defaultValue).getType());
       }
       catch (Exception e) {
         final String valueText = ((PsiMethodStub)((StubBasedPsiElement)method).getStub()).getDefaultValueText();

@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.diff.impl.mergeTool;
 
-import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -31,6 +28,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -93,8 +91,7 @@ public interface MergeVersion {
       FileDocumentManager.getInstance().saveDocument(myDocument);
       final VirtualFile file = getFile();
       if (file != null) {
-        final FileType fileType = file.getFileType();
-        if (fileType instanceof ProjectFileType || fileType instanceof WorkspaceFileType || fileType instanceof ModuleFileType) {
+        if (ProjectUtil.isProjectOrWorkspaceFile(file)) {
           ProjectManagerEx.getInstanceEx().saveChangedProjectFile(file, project);
         }
       }
