@@ -523,8 +523,8 @@ public class XPath2Parser extends XPathParser {
       builder.advanceLexer();
       if (builder.getTokenType() != XPathTokenTypes.NCNAME) {
         builder.error("NCName expected");
-        builder.advanceLexer();
       }
+      builder.advanceLexer();
     }
 
     return true;
