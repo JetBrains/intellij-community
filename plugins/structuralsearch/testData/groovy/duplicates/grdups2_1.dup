@@ -1,0 +1,8 @@
+occurence 0:
+def g1(int x) {System.out.println("Hello!");}
+
+occurence 1:
+def g2(x) {System.out.println("Hello!");}
+
+occurence 2:
+public def g3(def int y) {System.out.println("Hello!");}

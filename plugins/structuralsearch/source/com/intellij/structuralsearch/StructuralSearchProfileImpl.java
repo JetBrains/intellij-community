@@ -144,9 +144,21 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
       return true;
     }*/
 
-    return element instanceof PsiWhiteSpace ||
-           element instanceof PsiErrorElement/* ||
-           (element instanceof LeafElement && containsOnlyDelimeters(element.getText()))*/;
+    if (element instanceof PsiWhiteSpace || element instanceof PsiErrorElement) {
+      return true;
+    }
+
+    if (!(element instanceof LeafElement)) {
+      return false;
+    }
+
+    EquivalenceDescriptorProvider descriptorProvider = EquivalenceDescriptorProvider.getInstance(element);
+    if (descriptorProvider == null) {
+      return false;
+    }
+
+    final IElementType elementType = ((LeafElement)element).getElementType();
+    return descriptorProvider.getIgnoredTokens().contains(elementType);
   }
 
   public static boolean containsOnlyDelimeters(String s) {

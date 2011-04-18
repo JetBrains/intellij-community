@@ -99,6 +99,11 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
 
   @Nullable
   public static PsiElement skipNodeIfNeccessary(PsiElement element) {
+    return skipNodeIfNeccessary(element, null, null);
+  }
+
+  @Nullable
+  public static PsiElement skipNodeIfNeccessary(PsiElement element, EquivalenceDescriptor descriptor, NodeFilter filter) {
     if (element == null) {
       return null;
     }
@@ -109,15 +114,11 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
 
     // todo optimize! (this method is often invokated for the same node)
 
-    final PsiElement onlyChild = getOnlyChildFromDescriptor(element);
+    final PsiElement onlyChild = getOnlyChildFromDescriptor(element, descriptor);
     if (onlyChild != null) {
       return onlyChild;
     }
 
-    return getOnlyNonLexicalChild(element);
-  }
-
-  private static PsiElement getOnlyNonLexicalChild(PsiElement element) {
     return getOnlyChild(element, null);
   }
 
@@ -137,22 +138,24 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
   }
 
   @Nullable
-  private static PsiElement getOnlyChildFromDescriptor(PsiElement element) {
-    final EquivalenceDescriptorProvider provider = EquivalenceDescriptorProvider.getInstance(element);
-    if (provider == null) {
-      return null;
+  private static PsiElement getOnlyChildFromDescriptor(PsiElement element, EquivalenceDescriptor descriptor) {
+    if (descriptor == null) {
+      final EquivalenceDescriptorProvider provider = EquivalenceDescriptorProvider.getInstance(element);
+      if (provider == null) {
+        return null;
+      }
+
+      descriptor = provider.buildDescriptor(element);
+      if (descriptor == null) {
+        return null;
+      }
     }
 
-    final EquivalenceDescriptor equivalenceDescriptor = provider.buildDescriptor(element);
-    if (equivalenceDescriptor == null) {
-      return null;
-    }
-
-    return getOnlyChild(equivalenceDescriptor);
+    return getOnlyChildFromDescriptor(descriptor, null);
   }
 
   @Nullable
-  public static PsiElement getOnlyChild(EquivalenceDescriptor equivalenceDescriptor) {
+  private static PsiElement getOnlyChildFromDescriptor(EquivalenceDescriptor equivalenceDescriptor, NodeFilter filter) {
     if (equivalenceDescriptor.getConstants().size() > 0) {
       return null;
     }
@@ -177,7 +180,7 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
         }
         else if (type == SingleChildDescriptor.MyType.CHILDREN ||
                  type == SingleChildDescriptor.MyType.CHILDREN_IN_ANY_ORDER) {
-          return getOnlyNonLexicalChild(child);
+          return getOnlyChild(child, filter);
         }
       }
     }

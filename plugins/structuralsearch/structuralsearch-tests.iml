@@ -7,11 +7,14 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="module" module-name="structuralsearch" />
     <orderEntry type="module" module-name="idea-tests" />
     <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module" module-name="JavaScriptLanguage" />
     <orderEntry type="module" module-name="duplicates" />
+    <orderEntry type="module" module-name="jetgroovy" />
+    <orderEntry type="module" module-name="xml" />
   </component>
 </module>
 

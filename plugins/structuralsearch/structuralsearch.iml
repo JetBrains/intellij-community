@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="JavaScriptLanguage" />
     <orderEntry type="module" module-name="duplicates" />
+    <orderEntry type="module" module-name="jetgroovy" />
   </component>
   <component name="copyright">
     <Base>

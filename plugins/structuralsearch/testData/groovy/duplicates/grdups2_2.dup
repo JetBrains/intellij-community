@@ -1,0 +1,11 @@
+occurence 0:
+def m2(int x, def y) {
+  System.out.println("Hello!");
+  System.out.println("Hello!");
+}
+
+occurence 1:
+static Object m3(x, y) {
+  System.out.println("Hello!");
+  System.out.println("Hello!");
+}

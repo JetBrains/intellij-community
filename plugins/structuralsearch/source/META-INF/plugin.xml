@@ -6,10 +6,13 @@
   <vendor logo="/general/ijLogo.png">JetBrains</vendor>
   <depends>com.intellij.modules.ultimate</depends>
   <depends optional="true" config-file="javascript.xml">JavaScript</depends>
+  <depends optional="true" config-file="groovy.xml">org.intellij.groovy</depends>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.structuralsearch.profile"
                     interface="com.intellij.structuralsearch.StructuralSearchProfile"/>
+    <extensionPoint qualifiedName="com.intellij.equivalenceDescriptorProvider"
+                    interface="com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider"/>
     <extensionPoint qualifiedName="com.intellij.tokenindex.tokenizer" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   </extensionPoints>
 
@@ -18,6 +21,7 @@
     <inspectionToolProvider implementation="com.intellij.structuralsearch.inspection.highlightTemplate.SSRInspectionsLoader"/>
     <!--<fileBasedIndex implementation="com.intellij.tokenindex.TokenIndex"/>-->
     <duplicates.profile implementation="com.intellij.structuralsearch.duplicates.SSRDuplicatesProfile" order="last"/>
+    <equivalenceDescriptorProvider implementation="com.intellij.structuralsearch.equivalence.xml.XmlEquivalenceDescriptorProvider"/>
   </extensions>
 
   <resource-bundle>messages.SSRBundle</resource-bundle>

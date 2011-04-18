@@ -1,8 +1,7 @@
 <!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin url="http://www.jetbrains.com/idea">
   <extensions xmlns="com.intellij">
-    <tokenindex.tokenizer language="JavaScript" implementationClass="com.intellij.tokenindex.JavaScriptTokenizer"/>
     <structuralsearch.profile implementation="com.intellij.structuralsearch.JSStructuralSearchProfile"/>
-    <equivalenceDescriptorProvider implementation="com.intellij.structuralsearch.equivalence.js.JSEquivalenceDescriptorProvider"/>
+    <equivalenceDescriptorProvider implementation="com.intellij.structuralsearch.equivalence.groovy.GroovyEquivalenceDescriptorProvider"/>
   </extensions>
 </idea-plugin>

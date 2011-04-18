@@ -38,6 +38,26 @@ public class JSUniversalStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "location.host.$method$($arg$) ;", 1);
     doTest(s, "host.indexOf(\"name\");", 1);
     doTest(s, "location.$var$.indexOf( $arg$ )", 1);
+
+    if (s == null) {
+      System.out.println("hello");
+      System.out.println("hello");
+      System.out.println("hello");
+      System.out.println("hello");
+      System.out.println("hello");
+      System.out.println("hello");
+      System.out.println("hello");
+    }
+
+    if (s == null) {
+      System.out.println("aba");
+      System.out.println("hello");
+      System.out.println("hello");
+      System.out.println("hello");
+      System.out.println("hello");
+      System.out.println("hello");
+      System.out.println("hello");
+    }
   }
 
   public void test2() {

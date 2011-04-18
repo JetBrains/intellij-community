@@ -1,0 +1,9 @@
+occurence 0:
+for (a : b) {
+  System.out.println("hi");
+}
+
+occurence 1:
+for (a in b) {
+  System.out.println("hi");
+}

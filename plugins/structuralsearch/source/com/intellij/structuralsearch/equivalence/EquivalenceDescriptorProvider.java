@@ -1,12 +1,11 @@
 package com.intellij.structuralsearch.equivalence;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.structuralsearch.StructuralSearchProfileImpl;
-import com.intellij.structuralsearch.equivalence.js.JSEquivalenceDescriptorProvider;
-import com.intellij.structuralsearch.equivalence.xml.XmlEquivalenceDescriptorProvider;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,11 +14,8 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene.Kudelevsky
  */
 public abstract class EquivalenceDescriptorProvider {
-
-  public static final EquivalenceDescriptorProvider[] DESCRIPTOR_PROVIDERS = new EquivalenceDescriptorProvider[] {
-    new JSEquivalenceDescriptorProvider(),
-    new XmlEquivalenceDescriptorProvider(),
-  };
+  public static final ExtensionPointName<EquivalenceDescriptorProvider> EP_NAME =
+    ExtensionPointName.create("com.intellij.equivalenceDescriptorProvider");
 
   public abstract boolean isMyContext(@NotNull PsiElement context);
 
@@ -49,6 +45,11 @@ public abstract class EquivalenceDescriptorProvider {
     return getDefaultNodeCost(element);
   }
 
+  // by default only PsiWhitespace ignored
+  public TokenSet getIgnoredTokens() {
+    return TokenSet.EMPTY;
+  }
+
   public static int getDefaultNodeCost(PsiElement element) {
     if (!(element instanceof LeafElement)) {
       return 0;
@@ -63,7 +64,7 @@ public abstract class EquivalenceDescriptorProvider {
 
   @Nullable
   public static EquivalenceDescriptorProvider getInstance(@NotNull PsiElement context) {
-    for (EquivalenceDescriptorProvider descriptorProvider : DESCRIPTOR_PROVIDERS) {
+    for (EquivalenceDescriptorProvider descriptorProvider : EquivalenceDescriptorProvider.EP_NAME.getExtensions()) {
       if (descriptorProvider.isMyContext(context)) {
         return descriptorProvider;
       }

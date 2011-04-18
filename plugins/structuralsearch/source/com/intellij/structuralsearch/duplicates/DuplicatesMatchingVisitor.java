@@ -69,14 +69,6 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
     }
   }
 
-  private PsiElement skipNodeIfNeccessary(PsiElement element, EquivalenceDescriptor descriptor) {
-    if (descriptor == null) {
-      return SkippingHandler.getOnlyChild(element, myNodeFilter);
-    }
-    PsiElement child = SkippingHandler.getOnlyChild(descriptor);
-    return child != null ? child : element;
-  }
-
   @Override
   public boolean match(PsiElement element1, PsiElement element2) {
     if (element1 == null || element2 == null) {
@@ -87,14 +79,14 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
     EquivalenceDescriptor descriptor1 = descriptorProvider != null ? descriptorProvider.buildDescriptor(element1) : null;
     EquivalenceDescriptor descriptor2 = descriptorProvider != null ? descriptorProvider.buildDescriptor(element2) : null;
 
-    PsiElement newElement1 = skipNodeIfNeccessary(element1, descriptor1);
-    PsiElement newElement2 = skipNodeIfNeccessary(element2, descriptor2);
+    PsiElement newElement1 = SkippingHandler.skipNodeIfNeccessary(element1, descriptor1, myNodeFilter);
+    PsiElement newElement2 = SkippingHandler.skipNodeIfNeccessary(element2, descriptor2, myNodeFilter);
 
-    if (newElement1 == null || newElement2 == null) {
-      return newElement1 == newElement2;
+    if (newElement1 != element1 || newElement2 != element2) {
+      return match(newElement1, newElement2);
     }
 
-    if (descriptorProvider != null) {
+    /*if (descriptorProvider != null) {
       if (newElement1 != element1) {
         descriptor1 = descriptorProvider.buildDescriptor(newElement1);
         element1 = newElement1;
@@ -103,7 +95,7 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
         descriptor2 = descriptorProvider.buildDescriptor(newElement2);
         element2 = newElement2;
       }
-    }
+    }*/
 
     if (!element1.getClass().equals(element2.getClass())) {
       return false;

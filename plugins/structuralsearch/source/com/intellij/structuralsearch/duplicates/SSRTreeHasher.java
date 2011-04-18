@@ -33,6 +33,12 @@ class SSRTreeHasher extends AbstractTreeHasher {
 
   @Override
   protected TreeHashResult hash(@NotNull PsiElement root, PsiFragment upper, @NotNull NodeSpecificHasher hasher) {
+    final PsiElement element = SkippingHandler.getOnlyChild(root, SSRNodeSpecificHasher.getNodeFilter());
+    if (element != root) {
+      final TreeHashResult result = hash(element, upper, hasher);
+      final int cost = hasher.getNodeCost(root);
+      return new TreeHashResult(result.getHash(), result.getCost() + cost, upper);
+    }
 
     final EquivalenceDescriptorProvider descriptorProvider = EquivalenceDescriptorProvider.getInstance(root);
 
@@ -45,10 +51,10 @@ class SSRTreeHasher extends AbstractTreeHasher {
     }
 
     if (root instanceof PsiFile) {
-      return hashCodeBlock(hasher.getNodeChildren(root), upper, hasher);
+      return hashCodeBlock(hasher.getNodeChildren(root), upper, hasher, true);
     }
 
-    return computeElementHash(root, upper, hasher);
+    return computeElementHash(element, upper, hasher);
   }
 
   private TreeHashResult computeHash(PsiElement element,
@@ -56,7 +62,8 @@ class SSRTreeHasher extends AbstractTreeHasher {
                                      EquivalenceDescriptor descriptor,
                                      NodeSpecificHasher nodeSpecificHasher) {
 
-    final boolean canSkip = SkippingHandler.skipNodeIfNeccessary(element) != element;
+    final PsiElement element2 = SkippingHandler.skipNodeIfNeccessary(element, descriptor, SSRNodeSpecificHasher.getNodeFilter());
+    final boolean canSkip = element2 != element;
 
     final PsiFragment fragment = new TreePsiFragment(nodeSpecificHasher, element, 0);
 
@@ -65,7 +72,7 @@ class SSRTreeHasher extends AbstractTreeHasher {
     }
 
     int hash = canSkip ? 0 : nodeSpecificHasher.getNodeHash(element);
-    int cost = canSkip ? 0 : nodeSpecificHasher.getNodeCost(element);
+    int cost = nodeSpecificHasher.getNodeCost(element);
 
     for (SingleChildDescriptor childDescriptor : descriptor.getSingleChildDescriptors()) {
       final TreeHashResult childHashResult = computeHash(childDescriptor, fragment, nodeSpecificHasher);
