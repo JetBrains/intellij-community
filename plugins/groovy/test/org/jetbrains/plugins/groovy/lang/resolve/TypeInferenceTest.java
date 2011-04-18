@@ -208,4 +208,8 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   public void testReturnTypeFromMethodClosure() {
     assertTypeEquals("java.lang.String","A.groovy");
   }
+
+  public void testNoSOF() {
+    assertTypeEquals("java.lang.Object", "A.groovy");
+  }
 }
