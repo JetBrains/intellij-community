@@ -29,8 +29,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,9 +56,9 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   private static final String RETURN_VALUE_UNDEFINED = "#";
 
-  private ArrayList<RefMethod> mySuperMethods;
-  private ArrayList<RefMethod> myDerivedMethods;
-  private ArrayList<PsiClass> myUnThrownExceptions;
+  private List<RefMethod> mySuperMethods;
+  private List<RefMethod> myDerivedMethods;
+  private List<String> myUnThrownExceptions;
 
   private RefParameter[] myParameters;
   private String myReturnValueTemplate;
@@ -288,7 +290,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     getRefManager().fireBuildReferences(this);
   }
 
-  private void collectUncaughtExceptions(PsiMethod method) {
+  private void collectUncaughtExceptions(@NotNull PsiMethod method) {
     if (isExternalOverride()) return;
     @NonNls final String name = method.getName();
     if (getOwnerClass().isTestCase() && name.startsWith("test")) return;
@@ -296,9 +298,13 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     if (getSuperMethods().isEmpty()) {
       PsiClassType[] throwsList = method.getThrowsList().getReferencedTypes();
       if (throwsList.length > 0) {
-        myUnThrownExceptions = new ArrayList<PsiClass>(throwsList.length);
+        myUnThrownExceptions = throwsList.length == 1 ? new SmartList<String>() : new ArrayList<String>(throwsList.length);
         for (final PsiClassType type : throwsList) {
-          myUnThrownExceptions.add(type.resolve());
+          PsiClass aClass = type.resolve();
+          String fqn = aClass == null ? null : aClass.getQualifiedName();
+          if (fqn != null) {
+            myUnThrownExceptions.add(fqn);
+          }
         }
       }
     }
@@ -314,7 +320,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   public void removeUnThrownExceptions(PsiClass unThrownException) {
     if (myUnThrownExceptions != null) {
-      myUnThrownExceptions.remove(unThrownException);
+      myUnThrownExceptions.remove(unThrownException.getQualifiedName());
     }
   }
 
@@ -413,8 +419,8 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
           else {
             result[0] = PsiFormatUtil.formatMethod(psiMethod,
                                                    PsiSubstitutor.EMPTY,
-                                                   PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
-                                                   PsiFormatUtil.SHOW_TYPE
+                                                   PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                   PsiFormatUtilBase.SHOW_TYPE
             );
           }
         }
@@ -525,7 +531,9 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
           if (psiField.hasModifierProperty(PsiModifier.STATIC) &&
               psiField.hasModifierProperty(PsiModifier.FINAL) &&
               refUtil.compareAccess(refUtil.getAccessModifier(psiField), getAccessModifier()) >= 0) {
-            newTemplate = PsiFormatUtil.formatVariable(psiField, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
+            newTemplate = PsiFormatUtil.formatVariable(psiField, PsiFormatUtilBase.SHOW_NAME |
+                                                                 PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+                                                                 PsiFormatUtilBase.SHOW_FQ_NAME, PsiSubstitutor.EMPTY);
           }
         }
       } else if (refUtil.isCallToSuperMethod(expression, (PsiMethod) getElement())) return;
@@ -573,17 +581,19 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       for (RefMethod refSuper : getSuperMethods()) {
         ((RefMethodImpl)refSuper).updateThrowsList(exceptionType);
       }
-    } else if (myUnThrownExceptions != null) {
+    }
+    else if (myUnThrownExceptions != null) {
       if (exceptionType == null) {
         myUnThrownExceptions = null;
         return;
       }
-
-      PsiClass[] arrayed = myUnThrownExceptions.toArray(new PsiClass[myUnThrownExceptions.size()]);
-      for (int i = arrayed.length - 1; i >= 0; i--) {
-        PsiClass classType = arrayed[i];
-        if (InheritanceUtil.isInheritorOrSelf(exceptionType.resolve(), classType, true) ||
-            InheritanceUtil.isInheritorOrSelf(classType, exceptionType.resolve(), true)) {
+      PsiClass exceptionClass = exceptionType.resolve();
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(myManager.getProject());
+      for (int i = myUnThrownExceptions.size() - 1; i >= 0; i--) {
+        String exceptionFqn = myUnThrownExceptions.get(i);
+        PsiClass classType = facade.findClass(exceptionFqn, GlobalSearchScope.allScope(getRefManager().getProject()));
+        if (InheritanceUtil.isInheritorOrSelf(exceptionClass, classType, true) ||
+            InheritanceUtil.isInheritorOrSelf(classType, exceptionClass, true)) {
           myUnThrownExceptions.remove(i);
         }
       }
@@ -595,7 +605,13 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Nullable
   public PsiClass[] getUnThrownExceptions() {
     if (myUnThrownExceptions == null) return null;
-    return myUnThrownExceptions.toArray(new PsiClass[myUnThrownExceptions.size()]);
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(myManager.getProject());
+    List<PsiClass> result = new ArrayList<PsiClass>(myUnThrownExceptions.size());
+    for (String exception : myUnThrownExceptions) {
+      PsiClass element = facade.findClass(exception, GlobalSearchScope.allScope(myManager.getProject()));
+      if (element != null) result.add(element);
+    }
+    return result.toArray(new PsiClass[result.size()]);
   }
 
 

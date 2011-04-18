@@ -94,7 +94,7 @@ public class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool 
   public static class AddDtdDeclarationFix implements LocalQuickFix {
     private final String myMessageKey;
     private final String myElementDeclarationName;
-    private final PsiReference myReference;
+    private final String myReference;
 
     public AddDtdDeclarationFix(
       @PropertyKey(resourceBundle=XmlBundle.PATH_TO_BUNDLE) String messageKey,
@@ -103,12 +103,12 @@ public class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool 
     {
       myMessageKey = messageKey;
       myElementDeclarationName = elementDeclarationName;
-      myReference = reference;
+      myReference = reference.getCanonicalText();
     }
 
     @NotNull
     public String getName() {
-      return XmlBundle.message(myMessageKey, myReference.getCanonicalText());
+      return XmlBundle.message(myMessageKey, myReference);
     }
 
     @NotNull
@@ -169,7 +169,7 @@ public class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool 
       final Template t = templateManager.createTemplate("","");
 
       if (prefixToInsert.length() > 0) t.addTextSegment(prefixToInsert);
-      t.addTextSegment("<!" + myElementDeclarationName + " " + myReference.getCanonicalText()+ " ");
+      t.addTextSegment("<!" + myElementDeclarationName + " " + myReference+ " ");
       t.addEndVariable();
       t.addTextSegment(">\n");
       if (suffixToInsert.length() > 0) t.addTextSegment(suffixToInsert);

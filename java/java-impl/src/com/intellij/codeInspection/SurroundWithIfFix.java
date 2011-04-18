@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SurroundWithIfFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.SurroundWithIfFix");
-  private final PsiExpression myExpression;
   private final String myText;
 
   @NotNull
@@ -44,8 +43,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
   }
 
   public SurroundWithIfFix(@NotNull PsiExpression expressionToAssert) {
-    myExpression = expressionToAssert;
-    myText = myExpression.getText();
+    myText = expressionToAssert.getText();
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
@@ -83,11 +81,11 @@ public class SurroundWithIfFix implements LocalQuickFix {
     return InspectionsBundle.message("inspection.surround.if.family");
   }
 
-  public boolean isAvailable() {
-    if (!myExpression.isValid() || myText == null) {
+  public boolean isAvailable(PsiExpression qualifier) {
+    if (!qualifier.isValid() || myText == null) {
       return false;
     }
-    PsiStatement statement = PsiTreeUtil.getParentOfType(myExpression, PsiStatement.class);
+    PsiStatement statement = PsiTreeUtil.getParentOfType(qualifier, PsiStatement.class);
     if (statement == null) return false;
     PsiElement parent = statement.getParent();
     return !(parent instanceof PsiForStatement);
