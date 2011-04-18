@@ -66,7 +66,7 @@ public class GrPropertySelectionImpl extends GrReferenceExpressionImpl implement
   @Override
   public GrExpression getReferenceNameElement() {
     final PsiElement last = getLastChild();
-    assert last instanceof GrExpression;
+//    assert last instanceof GrExpression;
     return (GrExpression)last;
   }
 }

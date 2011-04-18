@@ -35,6 +35,7 @@ public final class GroovyCommonClassNames {
   public static final String JAVA_MATH_BIG_DECIMAL = "java.math.BigDecimal";
   public static final String JAVA_MATH_BIG_INTEGER = "java.math.BigInteger";
   @NonNls public static final String ORG_CODEHAUS_GROOVY_RUNTIME_METHOD_CLOSURE = "org.codehaus.groovy.runtime.MethodClosure";
+  @NonNls public static final String JAVA_UTIL_REGEX_MATCHER = "java.util.regex.Matcher";
 
   private GroovyCommonClassNames() {
   }

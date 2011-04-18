@@ -21,16 +21,16 @@ import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrBinaryExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 /**
  * @author ilyas
  */
 public class GrRegexFindExpressionImpl extends GrBinaryExpressionImpl {
-  private static final String MATCHER_FQ_NAME = "java.util.regex.Matcher";
-  private Function<GrBinaryExpressionImpl, PsiType> TYPE_CALCULATOR = new Function<GrBinaryExpressionImpl, PsiType>() {
+  private static final Function<GrBinaryExpressionImpl, PsiType> TYPE_CALCULATOR = new Function<GrBinaryExpressionImpl, PsiType>() {
     @Override
     public PsiType fun(GrBinaryExpressionImpl binary) {
-      return binary.getTypeByFQName(MATCHER_FQ_NAME);
+      return binary.getTypeByFQName(GroovyCommonClassNames.JAVA_UTIL_REGEX_MATCHER);
     }
   };
 
