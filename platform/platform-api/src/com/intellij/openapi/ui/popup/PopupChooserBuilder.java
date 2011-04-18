@@ -222,7 +222,8 @@ public class PopupChooserBuilder {
     }
 
     scrollPane.getViewport().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    ((JComponent)scrollPane.getViewport().getView()).setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    int hPadding = UIUtil.isUnderAquaLookAndFeel() ? 0 : 5;
+    ((JComponent)scrollPane.getViewport().getView()).setBorder(BorderFactory.createEmptyBorder(5, hPadding, 5, hPadding));
 
     if (myChooserComponent instanceof ListWithFilter) {
       contentPane.add(myChooserComponent, BorderLayout.CENTER);
@@ -403,6 +404,7 @@ public class PopupChooserBuilder {
     private final JList myList;
 
     private MyListWrapper(final JList list) {
+      super(UIUtil.isUnderAquaLookAndFeel() ? 0 : -1);
       JBViewport viewport = new JBViewport() {
         @Override
         protected LayoutManager createLayoutManager() {

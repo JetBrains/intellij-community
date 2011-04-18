@@ -63,7 +63,7 @@ public abstract class ColoredListCellRenderer extends SimpleColoredComponent imp
       }
     }
 
-    setPaintFocusBorder(hasFocus);
+    setPaintFocusBorder(hasFocus && !UIUtil.isUnderAquaLookAndFeel());
 
     customizeCellRenderer(list, value, index, selected, hasFocus);
 
