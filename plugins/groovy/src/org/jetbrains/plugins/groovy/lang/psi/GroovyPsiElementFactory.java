@@ -98,13 +98,13 @@ public abstract class GroovyPsiElementFactory {
     return createReferenceElementFromText(refName, null);
   }
 
-  public abstract GrCodeReferenceElement createReferenceElementFromText(String refName, PsiElement context);
+  public abstract GrCodeReferenceElement createReferenceElementFromText(String refName, @Nullable PsiElement context);
 
   public GrExpression createExpressionFromText(String exprText) {
     return createExpressionFromText(exprText, null);
   }
 
-  public abstract GrExpression createExpressionFromText(String exprText, PsiElement context);
+  public abstract GrExpression createExpressionFromText(String exprText, @Nullable PsiElement context);
 
   public abstract GrVariableDeclaration createFieldDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type);
   public abstract GrVariableDeclaration createFieldDeclarationFromText(String text);
@@ -126,13 +126,13 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract GrClosableBlock createClosureFromText(String s) throws IncorrectOperationException;
 
-  public GrParameter createParameter(String name, @Nullable String typeText, GroovyPsiElement context) throws IncorrectOperationException {
+  public GrParameter createParameter(String name, @Nullable String typeText, @Nullable GroovyPsiElement context) throws IncorrectOperationException {
     return createParameter(name, typeText, null, context);
   }
 
   public abstract GrParameter createParameter(String name,
                                               @Nullable String typeText,
-                                              String initializer,
+                                              @Nullable String initializer,
                                               GroovyPsiElement context) throws IncorrectOperationException;
 
   public abstract GrCodeReferenceElement createTypeOrPackageReference(String qName);
@@ -146,7 +146,7 @@ public abstract class GroovyPsiElementFactory {
     return createTypeElement(typeText, null);
   }
 
-  public abstract GrTypeElement createTypeElement(String typeText, PsiElement context);
+  public abstract GrTypeElement createTypeElement(String typeText, @Nullable PsiElement context);
 
   public abstract GrParenthesizedExpression createParenthesizedExpr(GrExpression newExpr);
 
@@ -162,7 +162,7 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract PsiElement createDotToken(String newDot);
 
-  public abstract GrMethod createMethodFromText(String methodText, PsiElement context);
+  public abstract GrMethod createMethodFromText(String methodText, @Nullable PsiElement context);
 
   public GrMethod createMethodFromText(String methodText) {
     return createMethodFromText(methodText, null);
@@ -170,7 +170,7 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract GrAnnotation createAnnotationFromText(String annoText);
 
-  public abstract GroovyFile createGroovyFile(String text, boolean isPhisical, PsiElement context);
+  public abstract GroovyFile createGroovyFile(String text, boolean isPhysical, PsiElement context);
 
   public abstract GrMethod createMethodFromText(String modifier, String name, String type, String[] paramTypes, PsiElement context);
 
@@ -178,7 +178,7 @@ public abstract class GroovyPsiElementFactory {
                                                      String[] paramTypes,
                                                      String[] paramNames,
                                                      String body,
-                                                     PsiElement context);
+                                                     @Nullable PsiElement context);
 
   public GrMethod createConstructorFromText(@NotNull String constructorName, String[] paramTypes, String[] paramNames, String body) {
     return createConstructorFromText(constructorName, paramTypes, paramNames, body, null);
