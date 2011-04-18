@@ -1573,16 +1573,12 @@ public class FileBasedIndex implements ApplicationComponent {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
                 for (ID<?, ?> indexId : affectedIndices) {
-                  IndexingStamp.update(file, indexId, -1L);
+                  IndexingStamp.update(file, indexId, -2L);
                 }
               }
             });
-            iterateIndexableFiles(file, new Processor<VirtualFile>() {
-              public boolean process(final VirtualFile file) {
-                scheduleForUpdate(file);
-                return true;
-              }
-            });
+            // the file is for sure not a dir and it was previously indexed by at least one index
+            scheduleForUpdate(file);
           }
           else {
             final InvalidationTask invalidator = new InvalidationTask(file) {
@@ -1631,7 +1627,9 @@ public class FileBasedIndex implements ApplicationComponent {
 
     public void ensureAllInvalidateTasksCompleted() {
       final int size = getNumberOfPendingInvalidations();
-      if (size == 0) return;
+      if (size == 0) {
+        return;
+      }
       final ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
       final ProgressIndicator indicator = current != null ? current : new EmptyProgressIndicator();
       indicator.setText("");

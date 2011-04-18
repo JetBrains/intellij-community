@@ -60,6 +60,7 @@ import com.intellij.util.PatchedSoftReference;
 import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.IndexingStamp;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -605,7 +606,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final IElementType contentElementType = getContentElementType();
     if (!(contentElementType instanceof IStubFileElementType)) {
       final FileViewProvider viewProvider = getViewProvider();
-      throw new AssertionError("A stub in a non-stub file '" + vFile +"'; isValid()=" + vFile.isValid() +
+      throw new AssertionError("A stub in a non-stub file '" + vFile +"'; isValid()=" + vFile.isValid() + 
+                               "; IndexStamp="+ IndexingStamp.getIndexStamp(vFile, StubUpdatingIndex.INDEX_ID) +
                                "; Type: " + contentElementType + "; " +
                                "Psi roots: " + viewProvider.getAllFiles() + "; " +
                                " StubUpdatingIndex.canHaveStub(vFile)=" + StubUpdatingIndex.canHaveStub(vFile) + 
