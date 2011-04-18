@@ -47,5 +47,8 @@ public interface ToolWindowEx extends ToolWindow {
 
   InternalDecorator getDecorator();
 
+  void setUseLastFocusedOnActivation(boolean focus);
+
+  boolean isUseLastFocusedOnActivation();
 
 }
