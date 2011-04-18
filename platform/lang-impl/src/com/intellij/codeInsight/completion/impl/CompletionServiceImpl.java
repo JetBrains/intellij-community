@@ -85,7 +85,9 @@ public class CompletionServiceImpl extends CompletionService{
     final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
     final String textBeforePosition = parameters.getPosition().getContainingFile().getText().substring(0, parameters.getOffset());
     CompletionProgressIndicator process = myCurrentCompletion;
-    LOG.assertTrue(process != null, "createResultSet may be invoked only during completion");
+    if (process == null) {
+      throw new AssertionError("createResultSet may be invoked only during completion: " + ourPhase + "; set at " + ourPhaseTrace);
+    }
     CamelHumpMatcher matcher = new CamelHumpMatcher(prefix, true, parameters.relaxMatching());
     CompletionSorterImpl sorter = defaultSorter(parameters, matcher);
     return new CompletionResultSetImpl(consumer, textBeforePosition, matcher, contributor,parameters, sorter, process, null);
