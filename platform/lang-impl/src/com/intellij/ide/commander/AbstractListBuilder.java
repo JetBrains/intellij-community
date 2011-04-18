@@ -77,13 +77,15 @@ public abstract class AbstractListBuilder {
     final Object rootElement = myTreeStructure.getRootElement();
     final Object[] rootChildren = myTreeStructure.getChildElements(rootElement);
 
-    if (!showRoot && rootChildren.length == 1) {
+    if (!showRoot && rootChildren.length == 1 && shouldEnterSingleTopLevelElement(rootChildren[0])) {
       myShownRoot = (AbstractTreeNode)rootChildren[0];
     }
     else {
       myShownRoot = (AbstractTreeNode)rootElement;
     }
   }
+
+  protected abstract boolean shouldEnterSingleTopLevelElement(Object rootChild);
 
   public final void setParentTitle(final JLabel parentTitle) {
     myParentTitle = parentTitle;
