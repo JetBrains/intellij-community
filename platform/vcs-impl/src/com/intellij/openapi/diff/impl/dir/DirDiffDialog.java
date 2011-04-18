@@ -32,6 +32,7 @@ public class DirDiffDialog extends DialogWrapper {
 
   public DirDiffDialog(Project project, DirDiffTableModel model, DirDiffSettings settings) {
     super(project);
+    setModal(false);
     myModel = model;
     mySettings = settings;
     setSize(600, 600);

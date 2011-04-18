@@ -31,8 +31,7 @@ public class EnableEqual extends DirDiffAction {
     return getModel().isShowEqual();
   }
 
-  @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void updateState(boolean state) {
     getModel().setShowEqual(state);
   }
 }

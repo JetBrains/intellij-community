@@ -33,7 +33,6 @@ public class RefreshDirDiffAction extends DirDiffAction {
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
-    //TODO getModel().refresh();
+  protected void updateState(boolean state) {
   }
 }

@@ -38,6 +38,7 @@ public class DirDiffTableModel extends AbstractTableModel {
   private DiffElement mySrc;
   private DiffElement myTrg;
   final List<DirDiffElement> myElements = new ArrayList<DirDiffElement>();
+  private boolean myUpdating = false;
 
   public DirDiffTableModel(Project project, DiffElement src, DiffElement trg, ProgressIndicator indicator, DirDiffSettings settings) {
     myProject = project;
@@ -48,6 +49,8 @@ public class DirDiffTableModel extends AbstractTableModel {
   }
 
   public void reloadModel(ProgressIndicator indicator) {
+    myUpdating = true;
+    clear();
     final DTree tree = new DTree(null, "", true);
     scan(mySrc, tree, true);
     scan(myTrg, tree, false);
@@ -59,6 +62,8 @@ public class DirDiffTableModel extends AbstractTableModel {
 
     myElements.clear();
     fillElements(tree);
+    fireTableDataChanged();
+    myUpdating = false;
   }
 
   private void fillElements(DTree tree) {
@@ -91,6 +96,14 @@ public class DirDiffTableModel extends AbstractTableModel {
     }
   }
 
+  public void clear() {
+    if (!myElements.isEmpty()) {
+      final int size = myElements.size();
+      myElements.clear();
+      fireTableRowsDeleted(0, size - 1);
+    }
+  }
+
   private static void scan(DiffElement element, DTree root, boolean source) {
     if (element.isContainer()) {
       try {
@@ -108,7 +121,7 @@ public class DirDiffTableModel extends AbstractTableModel {
   }
 
   public DirDiffElement getElementAt(int index) {
-    return myElements.get(index);
+    return 0 <= index && index < myElements.size() ? myElements.get(index) : null;
   }
 
   public DiffElement getSourceDir() {
@@ -201,5 +214,9 @@ public class DirDiffTableModel extends AbstractTableModel {
 
   public void setShowNewOnTarget(boolean show) {
     mySettings.showNewOnTarget = show;
+  }
+
+  public boolean isUpdating() {
+    return myUpdating;
   }
 }

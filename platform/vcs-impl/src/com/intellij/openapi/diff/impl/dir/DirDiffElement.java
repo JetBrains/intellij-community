@@ -50,6 +50,9 @@ public class DirDiffElement {
     else if (isTarget()) {
       myOperation = DirDiffOperation.COPY_FROM;
     }
+    else if (type == DType.EQUAL) {
+      myOperation = DirDiffOperation.EQUAL;
+    }
     else if (type == DType.CHANGED) {
       assert source != null;
       myOperation = source.getFileType().isBinary() ? NONE : DirDiffOperation.MERGE;
@@ -106,7 +109,7 @@ public class DirDiffElement {
 
   @Nullable
   public String getSourceName() {
-    return myType == DType.CHANGED || myType == DType.SOURCE
+    return myType == DType.CHANGED || myType == DType.SOURCE || myType == DType.EQUAL
            ? mySource.getName() : null;
   }
 
@@ -117,7 +120,7 @@ public class DirDiffElement {
 
   @Nullable
   public String getTargetName() {
-    return myType == DType.CHANGED || myType == DType.TARGET
+    return myType == DType.CHANGED || myType == DType.TARGET || myType == DType.EQUAL
            ? myTarget.getName() : null;
   }
 

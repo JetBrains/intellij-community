@@ -76,6 +76,7 @@ public class DirDiffPanel {
       public void valueChanged(ListSelectionEvent e) {
         final DirDiffElement last = myModel.getElementAt(e.getLastIndex());
         final DirDiffElement first = myModel.getElementAt(e.getFirstIndex());
+        if (last == null || first == null) return;
         if (last.isSeparator()) {
           myTable.getSelectionModel().setLeadSelectionIndex(e.getFirstIndex());
         }

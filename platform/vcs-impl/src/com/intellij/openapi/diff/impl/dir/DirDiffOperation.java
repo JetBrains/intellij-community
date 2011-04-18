@@ -24,7 +24,7 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public enum DirDiffOperation {
-  COPY_TO, COPY_FROM, REMOVE, MERGE, NONE;
+  COPY_TO, COPY_FROM, REMOVE, MERGE, NONE, EQUAL;
 
   public Icon getIcon() {
     switch (this) {
@@ -32,6 +32,7 @@ public enum DirDiffOperation {
       case COPY_FROM: return IconLoader.getIcon("/vcs/arrow_left.png");
       case REMOVE:    return IconLoader.getIcon("/vcs/remove.png");
       case MERGE:     return IconLoader.getIcon("/vcs/merge.png");
+      case EQUAL:     return IconLoader.getIcon("/vcs/equal.png");
       case NONE:      return EmptyIcon.create(12);
     }
     return null;

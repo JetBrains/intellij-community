@@ -31,8 +31,7 @@ public class EnableLeft extends DirDiffAction {
     return getModel().isShowNewOnSource();
   }
 
-  @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void updateState(boolean state) {
     getModel().setShowNewOnSource(state);
   }
 }
