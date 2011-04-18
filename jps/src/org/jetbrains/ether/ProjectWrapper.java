@@ -451,14 +451,6 @@ public class ProjectWrapper {
             return myTest.getRemovedFiles(myHistory.getModule(myName).myTest);
         }
 
-        public Set<StringCache.S> getSources() {
-            return mySource.getFiles();
-        }
-
-        public Set<StringCache.S> getTests() {
-            return myTest.getFiles();
-        }
-
         public void updateOutputStatus() {
             mySource.updateOutputStatus();
             myTest.updateOutputStatus();
@@ -545,6 +537,18 @@ public class ProjectWrapper {
 
         public Set<FileWrapper> getSourceFiles() {
             return mySource.getSources();
+        }
+
+        public Set<FileWrapper> getTestFiles() {
+            return myTest.getSources();
+        }
+
+        public Set<StringCache.S> getSources() {
+            return mySource.getFiles();
+        }
+
+        public Set<StringCache.S> getTests() {
+            return myTest.getFiles();
         }
 
         public String getOutputPath() {
@@ -1020,6 +1024,11 @@ public class ProjectWrapper {
                         }
 
                         builder.buildChunk(c, tests, null, backendCallback, null);
+
+                        for (Module m : c.getElements()) {
+                            final ModuleWrapper module = getModule(m.getName());
+                            affectedFiles.removeAll(tests ? module.getTests () : module.getSources());
+                        }
                     }
                 }
             }
@@ -1147,7 +1156,6 @@ public class ProjectWrapper {
           if (flags.tests ()) {
               beaver.build(modules, true, flags.incremental());
           }
-
         }
         catch (Exception e) {
             e.printStackTrace();
