@@ -15,7 +15,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
@@ -27,7 +26,6 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -41,7 +39,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.facet.PythonFacetSettings;
@@ -57,11 +54,9 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.io.*;
 import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.jetbrains.python.psi.PyUtil.sure;
-import static com.jetbrains.python.sdk.SkeletonVersionChecker.versionFromString;
 
 /**
  * @author yole
@@ -71,9 +66,8 @@ public class PythonSdkType extends SdkType {
   private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
 
   static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
+  @NonNls public static final String SKELETONS_TOPIC = "Skeletons";
 
-  @NonNls public static final String BLACKLIST_FILE_NAME = ".blacklist";
-  final static Pattern BLACKLIST_LINE = Pattern.compile("^([^:]+): (\\d+\\.\\d+) (\\d+)\\s*$");
   private List<String> myCachedSysPath;
 
   public static PythonSdkType getInstance() {
@@ -654,8 +648,8 @@ public class PythonSdkType extends SdkType {
     List<String> sdk_errors;
     Ref<Boolean> migration_flag = new Ref<Boolean>(false);
     for (Sdk sdk : sdkList) {
-      final String skeletonsPath = findSkeletonsPath(sdk);
       final String homePath = sdk.getHomePath();
+      final String skeletonsPath = findSkeletonsPath(sdk);
       if (skeletonsPath == null) {
         LOG.info("Could not find skeletons path for SDK path " + homePath);
       }
@@ -671,8 +665,9 @@ public class PythonSdkType extends SdkType {
             else known_errors.addAll(sdk_errors);
           }
         }
-        catch (InvalidSdkException ignore) {
+        catch (InvalidSdkException ex) {
           failed_sdks.add(sdk.getName());
+          LOG.warn("Problems with SDK " + sdk.getHomePath(), ex);
         }
       }
     }
@@ -681,20 +676,14 @@ public class PythonSdkType extends SdkType {
       for (String sdk_name : errors.keySet()) module_errors += errors.get(sdk_name).size();
       String message;
       if (failed_sdks.size() > 0) {
-        message = String.format(
-            "%d modules failed in %d SDKs, %d SDKs failed <i>completely</i>. <a href='#'>Details...</a>",
-            module_errors, errors.size(), failed_sdks.size()
-          );
+        message = PyBundle.message("sdk.errorlog.$0.mods.fail.in.$1.sdks.$2.completely", module_errors, errors.size(), failed_sdks.size());
       }
       else {
-          message = String.format(
-            "%d modules failed in %d SDKs. <a href='#'>Details...</a>",
-            module_errors, errors.size()
-          );
+          message = PyBundle.message("sdk.errorlog.$0.mods.fail.in.$1.sdks", module_errors, errors.size());
       }
       Notifications.Bus.notify(
         new Notification(
-          "Skeletons", "Some skeletons failed to generate", message,
+          SKELETONS_TOPIC, PyBundle.message("sdk.some.skeletons.failed"), message,
           NotificationType.WARNING,
           new NotificationListener() {
             @Override

@@ -91,7 +91,7 @@ class SkeletonVersionChecker {
                 String package_name = matcher.group(1);
                 String ver = matcher.group(2);
                 if (package_name != null) {
-                  final int version = versionFromString(ver);
+                  final int version = fromVersionString(ver);
                   if (DEFAULT_NAME.equals(package_name)) {
                     myDefaultVersion = version;
                   }
@@ -140,7 +140,7 @@ class SkeletonVersionChecker {
    * @param input
    * @return an int representing the version: major number shifted 8 bit and minor number added. or 0 if version can't be parsed.
    */
-  public static int versionFromString(final String input) {
+  public static int fromVersionString(final String input) {
     int dot_pos = input.indexOf('.');
     try {
       if (dot_pos > 0) {
@@ -151,6 +151,12 @@ class SkeletonVersionChecker {
     }
     catch (NumberFormatException ignore) { }
     return 0;
+  }
+
+  public static String toVersionString(final int input) {
+    int major = input >> 8;
+    int minor = input - (major << 8);
+    return new StringBuilder().append(major).append(".").append(minor).toString();
   }
 
   public static class LoadException extends RuntimeException {

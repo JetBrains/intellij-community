@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -76,7 +77,7 @@ public class PythonSdkUpdater implements ProjectComponent {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
-                ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating skeletons", false) {
+                ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.skels"), false) {
                   @Override
                   public void run(@NotNull ProgressIndicator indicator) {
                     PythonSdkType.refreshSkeletonsOfAllSDKs(project); // NOTE: whole thing would need a rename

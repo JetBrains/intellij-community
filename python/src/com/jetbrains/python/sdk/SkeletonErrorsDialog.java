@@ -1,6 +1,8 @@
 package com.jetbrains.python.sdk;
 
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBScrollPane;
+import com.jetbrains.python.PyBundle;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -37,7 +39,7 @@ public class SkeletonErrorsDialog extends JDialog {
     sb.append("bgcolor='").append(getHTMLColor(getParent().getBackground())).append("'>");
 
     if (failed_sdks.size() > 0) {
-      sb.append("<h1>").append("Failed SDKs").append("</h1>");
+      sb.append("<h1>").append(PyBundle.message("sdk.error.dialog.failed.sdks")).append("</h1>");
       sb.append("<ul>");
       for (String sdk_name : failed_sdks) {
         sb.append("<li>").append(sdk_name).append("</li>");
@@ -46,7 +48,7 @@ public class SkeletonErrorsDialog extends JDialog {
     }
 
     if (errors.size() > 0) {
-      sb.append("<h1>").append("Failed modules").append("</h1>");
+      sb.append("<h1>").append(PyBundle.message("sdk.error.dialog.failed.modules")).append("</h1>");
       for (String sdk_name : errors.keySet()) {
         sb.append("<b>").append(sdk_name).append("</b><br>");
         sb.append("<ul>");
@@ -55,12 +57,13 @@ public class SkeletonErrorsDialog extends JDialog {
         }
         sb.append("</ul>");
       }
+      sb.append(PyBundle.message("sdk.error.dialog.were.blacklisted"));
     }
 
     sb.append("</body></html>");
     myMessagePane.setText(sb.toString());
 
-    setTitle("Skeleton Generation Problems");
+    setTitle(PyBundle.message("sdk.error.dialog.problems"));
 
     pack();
     setLocationRelativeTo(getParent());

@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonHelpersLocator;
 import org.jetbrains.annotations.NonNls;
@@ -22,11 +23,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.jetbrains.python.sdk.SkeletonVersionChecker.versionFromString;
+import static com.jetbrains.python.sdk.SkeletonVersionChecker.fromVersionString;
 
 /**
  * Handles a refresh of SDK's skeletons.
@@ -44,7 +46,8 @@ public class PySkeletonRefresher {
   final static String GENERATOR3 = "generator3.py";
 
   @NonNls public static final String BLACKLIST_FILE_NAME = ".blacklist";
-  final static Pattern BLACKLIST_LINE = Pattern.compile("^([^:]+): (\\d+\\.\\d+) (\\d+)\\s*$");
+  final static Pattern BLACKLIST_LINE = Pattern.compile("^([^=]+) = (\\d+\\.\\d+) (\\d+)\\s*$");
+  // we use the equals sign after filename so that we can freely include space in the filename
 
   private static final Logger LOG = Logger.getInstance("#" + PySkeletonRefresher.class.getName());
 
@@ -54,17 +57,17 @@ public class PySkeletonRefresher {
     mySkeletonsPath = skeletonsPath;
   }
   
-  private void indicate(String msg, String... args) {
+  private void indicate(String msg) {
     if (myIndicator != null) {
       myIndicator.checkCanceled();
-      myIndicator.setText(String.format(msg, args));
+      myIndicator.setText(msg);
       myIndicator.setText2("");
     }
   }
 
-  private void indicateMinor(String msg, String... args) {
+  private void indicateMinor(String msg) {
     if (myIndicator != null) {
-      myIndicator.setText2(String.format(msg, args));
+      myIndicator.setText2(msg);
     }
   }
 
@@ -89,9 +92,9 @@ public class PySkeletonRefresher {
     if (!skel_dir.exists()) skel_dir.mkdirs();
     final String readable_path = PythonSdkType.shortenDirName(home_path);
 
-    Map<String, Pair<Integer, Integer>> blacklist = retrieveBlackList(skel_dir);
+    Map<String, Pair<Integer, Long>> blacklist = loadBlacklist(skel_dir);
 
-    indicate("Querying skeleton generator for %s...", readable_path);
+    indicate(PyBundle.message("sdk.gen.querying.$0", readable_path));
     // get generator version and binary libs list in one go
     final ProcessOutput run_result = SdkUtil.getProcessOutput(parent_dir,
       new String[]{home_path, PythonHelpersLocator.getHelperPath(GENERATOR3), "-L"},
@@ -112,9 +115,9 @@ public class PySkeletonRefresher {
     if (binaries_output.size() < 1) {
       throw new InvalidSdkException("Empty output from " + GENERATOR3 + " for " + home_path);
     }
-    int generator_version = versionFromString(binaries_output.get(0).trim());
+    int generator_version = fromVersionString(binaries_output.get(0).trim());
 
-    indicate("Reading versions file...");
+    indicate(PyBundle.message("sdk.gen.reading.versions.file"));
     SkeletonVersionChecker checker;
     if (cached_checker != null) checker = cached_checker.withDefaultVersionIfUnknown(generator_version);
     else checker = new SkeletonVersionChecker(generator_version);
@@ -130,26 +133,34 @@ public class PySkeletonRefresher {
       migration_flag.set(true);
       Notifications.Bus.notify(
         new Notification(
-          "Skeletons", "Converting old skeletons",
-          "Skeletons of binary modules seem to be from an older version.<br/>"+
-          "These will be fully re-generated, which will take some time, but will happen <i>only once</i>.<br/>"+
-          "Next time you open the project, only skeletons of new or updated binary modules will be re-generated.",
+          PythonSdkType.SKELETONS_TOPIC, PyBundle.message("sdk.gen.notify.converting.old.skels"),
+          PyBundle.message("sdk.gen.notify.converting.text"),
           NotificationType.INFORMATION
         )
       );
     }
-    if (old_or_non_existing || versionFromString(header_matcher.group(2)) < checker.getBuiltinVersion()) {
-      indicate("Updating skeletons of builtins for {0}", readable_path);
+    if (old_or_non_existing || fromVersionString(header_matcher.group(2)) < checker.getBuiltinVersion()) {
+      indicate(PyBundle.message("sdk.gen.updating.builtins.$0", readable_path));
       generateBuiltinSkeletons(home_path, mySkeletonsPath);
     }
 
-    indicate("Cleaning up skeletons for {0}", readable_path);
+    indicate(PyBundle.message("sdk.gen.cleaning.$0", readable_path));
     cleanUpSkeletons(skel_dir);
 
-    indicate("Updating skeletons for {0}", readable_path);
-    error_list.addAll(updateOrCreateSkeletons(home_path, generator_version, checker, binaries_output, blacklist));
+    indicate(PyBundle.message("sdk.gen.updating.$0", readable_path));
+    List<Triplet> skel_errors = updateOrCreateSkeletons(home_path, generator_version, checker, binaries_output, blacklist);
 
-    indicate("Reloading generated skeletons...");
+    if (skel_errors.size() > 0) {
+      indicateMinor(BLACKLIST_FILE_NAME);
+      for (Triplet error : skel_errors) {
+        error_list.add(error.getName());
+        blacklist.put(error.getPath(), new Pair<Integer, Long>(generator_version, error.getTimestamp()));
+      }
+      storeBlacklist(skel_dir, blacklist);
+    }
+    else removeBlacklist(skel_dir);
+
+    indicate(PyBundle.message("sdk.gen.reloading"));
     VirtualFile skeletonsVFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(mySkeletonsPath);
     assert skeletonsVFile != null;
     skeletonsVFile.refresh(false, true);
@@ -179,8 +190,8 @@ public class PySkeletonRefresher {
     return null;
   }
 
-  private static Map<String, Pair<Integer, Integer>> retrieveBlackList(File skel_dir) {
-    Map<String, Pair<Integer, Integer>> ret = new HashMap<String, Pair<Integer, Integer>>();
+  private static Map<String, Pair<Integer, Long>> loadBlacklist(File skel_dir) {
+    Map<String, Pair<Integer, Long>> ret = new HashMap<String, Pair<Integer, Long>>();
     File blacklist_file = new File(skel_dir, BLACKLIST_FILE_NAME);
     if (blacklist_file.exists() && blacklist_file.canRead()) {
       Reader input;
@@ -195,12 +206,12 @@ public class PySkeletonRefresher {
               Matcher matcher = BLACKLIST_LINE.matcher(line);
               boolean not_parsed = true;
               if (matcher.matches()) {
-                final int version = versionFromString(matcher.group(2));
+                final int version = fromVersionString(matcher.group(2));
                 if (version > 0) {
                   try {
-                    final int timestamp = Integer.parseInt(matcher.group(3));
+                    final long timestamp = Long.parseLong(matcher.group(3));
                     final String filename = matcher.group(1);
-                    ret.put(filename, new Pair<Integer, Integer>(version, timestamp));
+                    ret.put(filename, new Pair<Integer, Long>(version, timestamp));
                     not_parsed = false;
                   }
                   catch (NumberFormatException ignore) {}
@@ -220,6 +231,43 @@ public class PySkeletonRefresher {
       catch (IOException ignore) {  }
     }
     return ret;
+  }
+
+  private static void storeBlacklist(File skel_dir, Map<String, Pair<Integer, Long>> blacklist) {
+    File blacklist_file = new File(skel_dir, BLACKLIST_FILE_NAME);
+    PrintWriter output;
+    try {
+      output = new PrintWriter(blacklist_file);
+      try {
+        output.println("# PyCharm failed to generate skeletons for these modules.");
+        output.println("# These skeletons will be re-generated automatically");
+        output.println("# when a newer module version or an updated generator becomes available.");
+        // each line:   filename = version.string timestamp
+        for (String fname : blacklist.keySet()) {
+          Pair<Integer, Long> data = blacklist.get(fname);
+          output.print(fname);
+          output.print(" = ");
+          output.print(SkeletonVersionChecker.toVersionString(data.getFirst()));
+          output.print(" ");
+          output.print(data.getSecond());
+          output.println();
+        }
+      }
+      finally {
+        output.close();
+      }
+    }
+    catch (IOException ex) {
+      LOG.warn("Failed to store blacklist in " + skel_dir.getPath(), ex);
+    }
+  }
+
+  private static void removeBlacklist(File skel_dir) {
+    File blacklist_file = new File(skel_dir, BLACKLIST_FILE_NAME);
+    if (blacklist_file.exists()) {
+      boolean okay = blacklist_file.delete();
+      if (! okay) LOG.warn("Could not delete blacklist file in " + skel_dir.getPath());
+    }
   }
 
   public static void generateBuiltinSkeletons(String binary_path, final String skeletonsRoot) {
@@ -245,7 +293,7 @@ public class PySkeletonRefresher {
    * Works recursively starting from dir. Removes dirs that become empty.
    */
   private void cleanUpSkeletons(final File dir) {
-    indicateMinor("Cleaning up skeletons in {0}", dir.getPath());
+    indicateMinor(dir.getPath());
     for (File item : dir.listFiles()) {
       if (item.isDirectory()) {
         cleanUpSkeletons(item);
@@ -261,12 +309,14 @@ public class PySkeletonRefresher {
       }
       else if (item.isFile()) {
         // clean up an individual file
-        if (PyNames.INIT_DOT_PY.equals(item.getName()) && item.length() == 0) continue; // these are versionless
+        final String item_name = item.getName();
+        if (PyNames.INIT_DOT_PY.equals(item_name) && item.length() == 0) continue; // these are versionless
+        if (BLACKLIST_FILE_NAME.equals(item_name)) continue; // don't touch the blacklist
         Matcher header_matcher = getParseHeader(item);
         boolean can_live = header_matcher != null && header_matcher.matches();
         if (can_live) {
-          String fname = header_matcher.group(1);
-          can_live = fname != null && (SkeletonVersionChecker.BUILTIN_NAME.equals(fname) || new File(fname).exists());
+          String source_name = header_matcher.group(1);
+          can_live = source_name != null && (SkeletonVersionChecker.BUILTIN_NAME.equals(source_name) || new File(source_name).exists());
         }
         if (! can_live) deleteOrLog(item);
       }
@@ -279,23 +329,46 @@ public class PySkeletonRefresher {
     return deleted;
   }
 
+  private static class Triplet {
+    private final String myPath;
+    private final String myName;
+    private final Long myTimestamp;
+
+    private Triplet(String name, String path, Long timestamp) {
+      myName = name;
+      myPath = path;
+      myTimestamp = timestamp;
+    }
+
+    public String getName() {
+      return myName;
+    }
+
+    public String getPath() {
+      return myPath;
+    }
+
+    public Long getTimestamp() {
+      return myTimestamp;
+    }
+  }
+
   /**
    * (Re-)generates skeletons for all binary python modules. Up-to-date skeletons are not regenerated.
    * Does one module at a time: slower, but avoids certain conflicts.
    *
+   *
    * @param binaryPath   where to find interpreter.
-   * @param skeletonsRoot where to put results (expected to exist).
    * @param checker   to check if a skeleton is up to date.
    * @param binaries
-   * @param indicator ProgressIndicator to update, or null.
    * @return number of generation errors
    */
-  private List<String> updateOrCreateSkeletons(
+  private List<Triplet> updateOrCreateSkeletons(
     final String binaryPath, int generator_version,
     SkeletonVersionChecker checker, List<String> binaries,
-    Map<String, Pair<Integer, Integer>> blacklist
+    Map<String, Pair<Integer, Long>> blacklist
   ) {
-    List<String> error_list = new SmartList<String>();
+    List<Triplet> error_list = new SmartList<Triplet>();
     Iterator<String> bin_iter = binaries.iterator();
     bin_iter.next(); // skip version number. if it weren't here, we'd already die up in regenerateSkeletons()
     while (bin_iter.hasNext()) {
@@ -316,28 +389,28 @@ public class PySkeletonRefresher {
         Matcher matcher = getParseHeader(skeleton_file);
         boolean must_rebuild = true; // guilty unless proven fresh enough
         if (matcher != null && matcher.matches()) {
-          int file_version = SkeletonVersionChecker.versionFromString(matcher.group(2));
+          int file_version = SkeletonVersionChecker.fromVersionString(matcher.group(2));
           int required_version = checker.getRequiredVersion(module_name);
           must_rebuild = file_version < required_version;
         }
+        final long lib_file_timestamp = lib_file.lastModified();
         if (!must_rebuild) { // ...but what if the lib was updated?
-          must_rebuild = (lib_file.exists() && skeleton_file.exists() && lib_file.lastModified() > skeleton_file.lastModified());
-          // really we can omit these exists() but I keep these to make the logic clearer
+          must_rebuild = (lib_file.exists() && skeleton_file.exists() && lib_file_timestamp > skeleton_file.lastModified());
+          // really we can omit both exists() calls but I keep these to make the logic clear
         }
         if (blacklist != null) {
-          Pair<Integer, Integer> version_info = blacklist.get(module_lib_name);
+          Pair<Integer, Long> version_info = blacklist.get(module_lib_name);
           if (version_info != null) {
             int failed_generator_version = version_info.getFirst();
-            int failed_timestamp = version_info.getSecond();
-            must_rebuild &= failed_generator_version < generator_version || failed_timestamp < lib_file.lastModified();
+            long failed_timestamp = version_info.getSecond();
+            must_rebuild &= failed_generator_version < generator_version || failed_timestamp < lib_file_timestamp;
           }
         }
         if (must_rebuild) {
           indicateMinor(module_name);
           LOG.info("Skeleton for " + module_name);
-          if (!generateSkeleton(binaryPath, mySkeletonsPath, module_name, module_lib_name, Collections.<String>emptyList())) {
-            error_list.add(module_name);
-            // TODO: create blacklist out of error_list
+          if (!generateSkeleton(binaryPath, mySkeletonsPath, module_name, module_lib_name, null)) {
+            error_list.add(new Triplet(module_name, module_lib_name, lib_file_timestamp));
           }
         }
       }
