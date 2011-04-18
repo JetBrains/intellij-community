@@ -55,6 +55,14 @@ import java.util.regex.Pattern;
 public class ClsStubBuilder {
   private static final Pattern REGEX_PATTERN = Pattern.compile("(?<=[^\\$])\\${1}(?=[^\\$])");
 
+  public static final String DOUBLE_POSITIVE_INF = "1.0 / 0.0";
+  public static final String DOUBLE_NEGATIVE_INF = "-1.0 / 0.0";
+  public static final String DOUBLE_NAN = "0.0d / 0.0";
+
+  public static final String FLOAT_POSITIVE_INF = "1.0f / 0.0";
+  public static final String FLOAT_NEGATIVE_INF = "-1.0f / 0.0";
+  public static final String FLOAT_NAN = "0.0f / 0.0";
+
   private ClsStubBuilder() { }
 
   @Nullable
@@ -679,26 +687,28 @@ public class ClsStubBuilder {
     if (value instanceof Long) return value.toString() + "L";
 
     if (value instanceof Double) {
-      final double v = ((Double)value).doubleValue();
-      if (Double.isInfinite(v)) {
-        return StringUtil.join(CommonClassNames.JAVA_LANG_DOUBLE, ".", (v > 0 ? "POSITIVE_INFINITY" : "NEGATIVE_INFINITY"));
+      final double d = ((Double)value).doubleValue();
+      if (Double.isInfinite(d)) {
+        return d > 0 ? DOUBLE_POSITIVE_INF : DOUBLE_NEGATIVE_INF;
       }
-      else if (Double.isNaN(v)) {
-        return StringUtil.join(CommonClassNames.JAVA_LANG_DOUBLE, ".", "NaN");
+      else if (Double.isNaN(d)) {
+        return DOUBLE_NAN;
       }
-      return Double.toString(v);
+      return Double.toString(d);
     }
 
     if (value instanceof Float) {
       final float v = ((Float)value).floatValue();
 
       if (Float.isInfinite(v)) {
-        return StringUtil.join(CommonClassNames.JAVA_LANG_FLOAT, ".", (v > 0 ? "POSITIVE_INFINITY" : "NEGATIVE_INFINITY"));
+        return v > 0 ? FLOAT_POSITIVE_INF : FLOAT_NEGATIVE_INF;
       }
       else if (Float.isNaN(v)) {
-        return StringUtil.join(CommonClassNames.JAVA_LANG_FLOAT, ".", "NaN");
+        return FLOAT_NAN;
       }
-      return Float.toString(v) + "f";
+      else {
+        return Float.toString(v) + "f";
+      }
     }
 
     return null;

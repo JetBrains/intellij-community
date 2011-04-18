@@ -16,7 +16,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,7 +58,7 @@ public class ClsLiteralExpressionImpl extends ClsElementImpl implements PsiLiter
   }
 
   public void setMirror(@NotNull TreeElement element) {
-    setMirrorCheckingType(element, ElementType.LITERAL_EXPRESSION);
+    setMirrorCheckingType(element, JavaElementType.LITERAL_EXPRESSION);
   }
 
   @NotNull

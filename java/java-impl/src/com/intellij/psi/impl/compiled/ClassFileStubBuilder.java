@@ -53,7 +53,7 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   }
 
   public int getStubVersion() {
-    return JavaFileElementType.STUB_VERSION + 2;
+    return JavaFileElementType.STUB_VERSION + 3;
   }
 
 

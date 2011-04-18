@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,67 +15,45 @@
  */
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefixExpression {
+public class ClsJavaTokenImpl extends ClsElementImpl implements PsiJavaToken {
   private ClsElementImpl myParent;
-  private final PsiJavaToken myOperation;
-  private final PsiExpression myOperand;
+  private final IElementType myTokenType;
+  private final String myTokenText;
 
-  public ClsPrefixExpressionImpl(ClsElementImpl parent, ClsJavaTokenImpl operation, ClsLiteralExpressionImpl operand) {
+  public ClsJavaTokenImpl(ClsElementImpl parent, IElementType tokenType, String tokenText) {
     myParent = parent;
-    myOperation = operation;
-    myOperand = operand;
-    operation.setParent(this);
-    operand.setParent(this);
+    myTokenType = tokenType;
+    myTokenText = tokenText;
   }
 
   void setParent(ClsElementImpl parent) {
     myParent = parent;
   }
 
-  @NotNull
   @Override
-  public PsiExpression getOperand() {
-    return myOperand;
-  }
-
-  @NotNull
-  @Override
-  public PsiJavaToken getOperationSign() {
-    return myOperation;
-  }
-
-  @NotNull
-  @Override
-  public IElementType getOperationTokenType() {
-    return myOperation.getTokenType();
+  public IElementType getTokenType() {
+    return myTokenType;
   }
 
   @Override
-  public PsiType getType() {
-    return myOperand.getType();
-  }
-
-  @Override
-  public PsiElement getParent() {
-    return myParent;
+  public String getText() {
+    return myTokenText;
   }
 
   @NotNull
   @Override
   public PsiElement[] getChildren() {
-    return new PsiElement[]{myOperation, myOperand};
+    return EMPTY_ARRAY;
   }
 
   @Override
-  public String getText() {
-    return StringUtil.join(myOperation.getText(), myOperand.getText());
+  public PsiElement getParent() {
+    return myParent;
   }
 
   @Override
@@ -85,21 +63,16 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
 
   @Override
   public void setMirror(@NotNull TreeElement element) {
-    setMirrorCheckingType(element, JavaElementType.PREFIX_EXPRESSION);
+    setMirrorCheckingType(element, myTokenType);
   }
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor)visitor).visitPrefixExpression(this);
+      ((JavaElementVisitor)visitor).visitJavaToken(this);
     }
     else {
       visitor.visitElement(this);
     }
-  }
-
-  @Override
-  public String toString() {
-    return "PsiPrefixExpression:" + getText();
   }
 }
