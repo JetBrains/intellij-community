@@ -88,4 +88,9 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
   public GrExpression getDefaultInitializer() {
     return GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText("null");
   }
+
+  @Override
+  public boolean isValid() {
+    return myClosure.isValid();
+  }
 }
