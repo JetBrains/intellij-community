@@ -106,7 +106,8 @@ public class PasteHandler extends EditorActionHandler {
                               final Project project,
                               final PsiFile file,
                               final Document document) {
-    Transferable content = CopyPasteManager.getInstance().getContents();
+    CopyPasteManager copyPasteManager = CopyPasteManager.getInstance();
+    Transferable content = copyPasteManager.getContents();
     if (content != null) {
       String text = null;
       try {
@@ -116,6 +117,7 @@ public class PasteHandler extends EditorActionHandler {
         editor.getComponent().getToolkit().beep();
       }
       if (text == null) return;
+      copyPasteManager.stopKillRings();
 
       final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 

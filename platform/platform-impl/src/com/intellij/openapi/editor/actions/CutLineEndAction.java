@@ -24,6 +24,7 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.ide.KillRingTransferable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -31,8 +32,6 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
-
-import java.awt.datatransfer.StringSelection;
 
 public class CutLineEndAction extends EditorAction {
   public CutLineEndAction() {
@@ -54,7 +53,10 @@ public class CutLineEndAction extends EditorAction {
       int lineEndOffset = doc.getLineEndOffset(lineNumber);
 
       if (caretOffset >= lineEndOffset) {
-        DeleteLineAction.deleteLineAtCaret(editor);
+        if (myCopyToClipboard) {
+          copyToClipboard(doc, lineEndOffset, lineEndOffset + 1);
+        }
+        doc.deleteString(lineEndOffset, lineEndOffset + 1);
         return;
       }
 
@@ -71,12 +73,11 @@ public class CutLineEndAction extends EditorAction {
       }
     }
 
-    private static void copyToClipboard(final Document doc, int caretOffset, int lineEndOffset) {
-      String s = doc.getCharsSequence().subSequence(caretOffset, lineEndOffset).toString();
+    private static void copyToClipboard(final Document doc, int startOffset, int endOffset) {
+      String s = doc.getCharsSequence().subSequence(startOffset, endOffset).toString();
 
       s = StringUtil.convertLineSeparators(s);
-      StringSelection contents = new StringSelection(s);
-      CopyPasteManager.getInstance().setContents(contents);
+      CopyPasteManager.getInstance().setContents(new KillRingTransferable(s, doc, startOffset, startOffset, true));
     }
   }
 }
