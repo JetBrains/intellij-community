@@ -794,7 +794,7 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  public static PyQualifiedName findShortestImportableQName(PsiElement foothold, @NotNull VirtualFile vfile) {
+  public static PyQualifiedName findShortestImportableQName(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
     PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
     visitRoots(foothold, visitor);
     return visitor.getResult();
@@ -818,7 +818,7 @@ public class ResolveImportUtil {
    * @return the qualified name, or null if it wasn't possible to calculate one
    */
   @Nullable
-  public static PyQualifiedName findCanonicalImportPath(PsiElement symbol, PsiElement foothold) {
+  public static PyQualifiedName findCanonicalImportPath(@NotNull PsiElement symbol, @Nullable PsiElement foothold) {
     PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? (PsiFileSystemItem)symbol : symbol.getContainingFile();
     if (srcfile == null) {
       return null;
@@ -847,7 +847,7 @@ public class ResolveImportUtil {
         dir = dir.getParentDirectory();
       }
     }
-    return findShortestImportableQName(foothold, virtualFile);
+    return findShortestImportableQName(foothold != null ? foothold : symbol, virtualFile);
   }
 
   public static class SdkRootVisitingPolicy extends RootPolicy<PsiElement> {
