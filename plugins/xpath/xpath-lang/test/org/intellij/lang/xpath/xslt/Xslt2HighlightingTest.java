@@ -49,6 +49,10 @@ public class Xslt2HighlightingTest extends TestBase {
     doXsltHighlighting();
   }
 
+  public void testEscapedXPathString() throws Throwable {
+    doXsltHighlighting();
+  }
+
   private void doXsltHighlighting(String... moreFiles) throws Throwable {
     final String name = getTestFileName();
     myFixture.testHighlighting(true, false, false, ArrayUtil.append(moreFiles, name + ".xsl"));

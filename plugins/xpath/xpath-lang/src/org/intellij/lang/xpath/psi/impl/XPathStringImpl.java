@@ -16,8 +16,7 @@
 package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import org.intellij.lang.xpath.XPath2Language;
+import org.intellij.lang.xpath.context.XPathVersion;
 import org.intellij.lang.xpath.psi.XPathElementVisitor;
 import org.intellij.lang.xpath.psi.XPathString;
 import org.intellij.lang.xpath.psi.XPathType;
@@ -34,32 +33,52 @@ public class XPathStringImpl extends XPathElementImpl implements XPathString {
   }
 
   public boolean isWellFormed() {
-    final boolean xpath2 = getContainingFile().getLanguage() == Language.findInstance(XPath2Language.class);
-    final String text = getText();
-    if (text.startsWith("'")) {
-      if (!text.endsWith("'")) {
-        return false;
-      }
-      if (!xpath2 && getValue().indexOf('\'') != getValue().lastIndexOf('\'')) {
-        return false;
-      }
-    } else if (text.startsWith("\"")) {
-      if (!text.endsWith("\"")) {
-        return false;
-      }
-      if (!xpath2 && getValue().indexOf('\"') != getValue().lastIndexOf('"')) {
+    final String text = getUnescapedText();
+    final char quoteChar = getQuoteChar();
+    if (!text.endsWith(String.valueOf(quoteChar))) {
+      return false;
+    }
+
+    if (getXPathVersion() == XPathVersion.V2) {
+      final String value = getStringBetweenQuotes();
+      final String unescaped = unescape(quoteChar, value);
+      return escape(quoteChar, unescaped).equals(value);
+    } else {
+      if (getValue().indexOf(quoteChar) != getValue().lastIndexOf(quoteChar)) {
         return false;
       }
     }
-    return xpath2 || text.indexOf('\n') == -1 && text.indexOf("\r") == -1;
+
+    return text.indexOf('\n') == -1 && text.indexOf('\r') == -1;
   }
 
   public String getValue() {
-    final String value = getText().substring(0, getTextLength() - 1);
-    if (getContainingFile().getLanguage() == Language.findInstance(XPath2Language.class)) {
-      return value.replaceAll("\"\"", "\"").replaceAll("''", "'");
+    final String value = getStringBetweenQuotes();
+    if (getXPathVersion() == XPathVersion.V2) {
+      return unescape(getQuoteChar(), value);
     }
     return value;
+  }
+
+  private String getStringBetweenQuotes() {
+    final String text = getUnescapedText();
+    return text.endsWith(String.valueOf(getQuoteChar())) ? text.substring(1, text.length() - 1) : text.substring(1, text.length());
+  }
+
+  private char getQuoteChar() {
+    return getUnescapedText().charAt(0);
+  }
+
+  private static String unescape(char quote, String value) {
+    final String singleQuote = String.valueOf(quote);
+    final String escapedQuote = singleQuote + quote;
+    return value.replaceAll(escapedQuote, singleQuote);
+  }
+
+  private static String escape(char quote, String value) {
+    final String singleQuote = String.valueOf(quote);
+    final String escapedQuote = singleQuote + quote;
+    return value.replaceAll(singleQuote, escapedQuote);
   }
 
   public void accept(XPathElementVisitor visitor) {
