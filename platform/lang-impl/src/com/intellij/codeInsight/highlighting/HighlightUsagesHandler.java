@@ -19,8 +19,6 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.find.EditorSearchComponent;
-import com.intellij.find.FindManager;
-import com.intellij.find.FindModel;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -384,12 +382,17 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     List<TextRange> answer = new ArrayList<TextRange>(relativeRanges.size());
     for (TextRange relativeRange : relativeRanges) {
       PsiElement element = ref.getElement();
-      TextRange range = element.getTextRange().cutOut(relativeRange);
+      TextRange range = safeCut(element.getTextRange(), relativeRange);
       // injection occurs
       answer.add(InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, range));
-
     }
     return answer;
+  }
+
+  private static TextRange safeCut(TextRange range, TextRange relative) {
+    int start = Math.min(range.getEndOffset(), range.getStartOffset() + relative.getStartOffset());
+    int end = Math.min(range.getEndOffset(), range.getStartOffset() + relative.getEndOffset());
+    return new TextRange(start, end);
   }
 
   @Nullable
