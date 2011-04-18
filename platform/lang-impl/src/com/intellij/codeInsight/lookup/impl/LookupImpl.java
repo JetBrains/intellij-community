@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
@@ -40,6 +41,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
@@ -76,6 +78,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
@@ -120,6 +123,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private boolean myReused;
   private boolean myChangeGuard;
   private LookupModel myModel = new LookupModel();
+  private final Map<LookupElement, PrefixMatcher> myMatchers = new ConcurrentHashMap<LookupElement, PrefixMatcher>();
   private LookupHint myElementHint = null;
   private Alarm myHintAlarm = new Alarm();
   private JLabel mySortingLabel;
@@ -253,14 +257,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     final List<LookupElement> items = myModel.getItems();
     myModel.clearItems();
     for (final LookupElement item : items) {
-      addItem(item);
+      addItem(item, itemMatcher(item));
     }
     checkReused();
     updateList();
     ensureSelectionVisible();
   }
 
-  public void addItem(LookupElement item) {
+  public void addItem(LookupElement item, PrefixMatcher matcher) {
+    myMatchers.put(item, matcher);
     myModel.addItem(item);
 
     updateLookupWidth(item);
@@ -495,7 +500,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   private void addEmptyItem(DefaultListModel model) {
     LookupItem<String> item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"));
-    item.setPrefixMatcher(new CamelHumpMatcher(""));
+    myMatchers.put(item, new CamelHumpMatcher(""));
     if (!myCalculating) {
       myList.setFixedCellWidth(Math.max(myCellRenderer.updateMaximumWidth(renderItemApproximately(item)), myLookupTextWidth));
     }
@@ -560,6 +565,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return ContainerUtil.flatten(classifier.classify(better));
   }
 
+  @NotNull
   @Override
   public String itemPattern(LookupElement element) {
     return itemMatcher(element).getPrefix() + myAdditionalPrefix;
@@ -587,8 +593,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   @Override
+  @NotNull
   public PrefixMatcher itemMatcher(LookupElement item) {
-    return item.getPrefixMatcher();
+    PrefixMatcher matcher = myMatchers.get(item);
+    if (matcher == null) {
+      throw new AssertionError("Item not in lookup: item=" + item + "; lookup items=" + getItems());
+    }
+    return matcher;
   }
 
   /**
@@ -645,7 +656,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void finishLookup(final char completionChar) {
-    final LookupElement item = (LookupElement)myList.getSelectedValue();
+    finishLookup(completionChar, (LookupElement)myList.getSelectedValue());
+  }
+
+  public void finishLookup(char completionChar, @Nullable final LookupElement item) {
     doHide(false, true);
     if (item == null ||
         item instanceof EmptyLookupItem ||
@@ -662,28 +676,61 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       return;
     }
 
+    final String prefix = itemPattern(item);
+    boolean plainMatch = ContainerUtil.or(item.getAllLookupStrings(), new Condition<String>() {
+      @Override
+      public boolean value(String s) {
+        return StringUtil.startsWithIgnoreCase(s, prefix);
+      }
+    });
+    if (!plainMatch) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CAMEL_HUMPS);
+    }
+
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        EditorModificationUtil.deleteSelectedText(myEditor);
-        final int caretOffset = myEditor.getCaretModel().getOffset();
-        final String prefix = itemPattern(item);
-        int lookupStart = caretOffset - prefix.length();
-
-        final String lookupString = item.getLookupString();
-        if (!lookupString.startsWith(prefix)) { //todo another lookup string may match the prefix
-          FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.camelHumps");
-        }
-
-        myEditor.getDocument().replaceString(lookupStart, caretOffset, lookupString);
-
-        int offset = lookupStart + lookupString.length();
-        myEditor.getCaretModel().moveToOffset(offset);
-        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        myEditor.getSelectionModel().removeSelection();
+        insertLookupString(item, prefix);
       }
     });
 
     fireItemSelected(item, completionChar);
+  }
+
+  private void insertLookupString(LookupElement item, final String prefix) {
+    PrefixMatcher matcher = itemMatcher(item);
+
+    String lookupString = item.getLookupString();
+    if (!item.isCaseSensitive() && matcher.prefixMatches(item) && StringUtil.startsWithIgnoreCase(lookupString, prefix)) {
+      lookupString = handleCaseInsensitiveVariant(prefix, lookupString);
+    }
+
+    EditorModificationUtil.deleteSelectedText(myEditor);
+    final int caretOffset = myEditor.getCaretModel().getOffset();
+    int lookupStart = caretOffset - prefix.length();
+    myEditor.getDocument().replaceString(lookupStart, caretOffset, lookupString);
+
+    int offset = lookupStart + lookupString.length();
+    myEditor.getCaretModel().moveToOffset(offset);
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    myEditor.getSelectionModel().removeSelection();
+  }
+
+  private static String handleCaseInsensitiveVariant(final String prefix, @NotNull final String lookupString) {
+    final int length = prefix.length();
+    if (length == 0) return lookupString;
+    boolean isAllLower = true;
+    boolean isAllUpper = true;
+    boolean sameCase = true;
+    for (int i = 0; i < length && (isAllLower || isAllUpper || sameCase); i++) {
+      final char c = prefix.charAt(i);
+      isAllLower = isAllLower && Character.isLowerCase(c);
+      isAllUpper = isAllUpper && Character.isUpperCase(c);
+      sameCase = sameCase && Character.isLowerCase(c) == Character.isLowerCase(lookupString.charAt(i));
+    }
+    if (sameCase) return lookupString;
+    if (isAllLower) return lookupString.toLowerCase();
+    if (isAllUpper) return lookupString.toUpperCase();
+    return lookupString;
   }
 
   public int getLookupStart() {
@@ -900,7 +947,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return itmBounds;
   }
 
-  public void fireItemSelected(final LookupElement item, char completionChar){
+  public void fireItemSelected(@Nullable final LookupElement item, char completionChar){
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     if (item != null) {
@@ -1039,7 +1086,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myEditor.getDocument().insertString(offset, afterCaret);
 
     final String newPrefix = presentPrefix + afterCaret;
-    myModel.retainMatchingItems(newPrefix, this);
+
+    Map<LookupElement, PrefixMatcher> newItems = myModel.retainMatchingItems(newPrefix, this);
+    myMatchers.clear();
+    myMatchers.putAll(newItems);
+
     myAdditionalPrefix = "";
 
     offset += afterCaret.length();

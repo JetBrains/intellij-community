@@ -46,7 +46,7 @@ public class RelaxedMatchingContributor extends CompletionContributor {
     if (!elements.isEmpty() && parameters.getInvocationCount() == 0) {
       Set<String> prefixes = new HashSet<String>();
       for (MatchedLookupElement element : elements) {
-        prefixes.add(element.getMatcher().getPrefix());
+        prefixes.add(element.getPrefixMatcher().getPrefix());
       }
       for (String prefix : prefixes) {
         result.withPrefixMatcher(prefix)
@@ -54,7 +54,7 @@ public class RelaxedMatchingContributor extends CompletionContributor {
             @Override
             public boolean accepts(@NotNull String s, ProcessingContext context) {
               for (MatchedLookupElement element : elements) {
-                if (element.getMatcher().cloneWithPrefix(s).prefixMatches(element)) {
+                if (element.getPrefixMatcher().cloneWithPrefix(s).prefixMatches(element)) {
                   return false;
                 }
               }

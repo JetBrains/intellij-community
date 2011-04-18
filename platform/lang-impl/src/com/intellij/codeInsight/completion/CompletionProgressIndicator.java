@@ -370,9 +370,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     LOG.assertTrue(myParameters.getPosition().isValid());
 
-    LookupElement delegate = item.getDelegate();
-    myItemSorters.put(delegate, item.getSorter());
-    myLookup.addItem(delegate);
+    myItemSorters.put(item.getDelegate(), item.getSorter());
+    myLookup.addItem(item.getDelegate(), item.getPrefixMatcher());
     myCount++;
     if (unitTestMode) return;
 

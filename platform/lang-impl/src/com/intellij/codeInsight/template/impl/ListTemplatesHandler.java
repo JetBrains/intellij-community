@@ -89,17 +89,12 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
   }
 
   public static void showTemplatesLookup(final Project project, final Editor editor, Map<TemplateImpl, String> template2Argument) {
-    ArrayList<LookupItem> array = new ArrayList<LookupItem>();
+    final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, null, LookupArranger.DEFAULT);
     for (TemplateImpl template : template2Argument.keySet()) {
-      String argument = template2Argument.get(template);
-      String prefix = computePrefix(template, argument);
-      LookupItem item = new LookupItem(template, prefix);
-      item.setPrefixMatcher(new CamelHumpMatcher(prefix));
-      array.add(item);
+      String prefix = computePrefix(template, template2Argument.get(template));
+      lookup.addItem(new LookupItem(template, prefix), new CamelHumpMatcher(prefix));
     }
-    LookupElement[] items = array.toArray(new LookupElement[array.size()]);
 
-    final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).createLookup(editor, items, null, LookupArranger.DEFAULT);
     lookup.addLookupListener(new MyLookupAdapter(project, editor, template2Argument));
     lookup.show();
   }

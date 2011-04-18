@@ -29,11 +29,9 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -49,7 +47,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -67,7 +64,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -291,12 +287,16 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                   indicator.duringCompletion(initContext);
                   ProgressManager.checkCanceled();
 
+                  final List<LookupElement> items = new ArrayList<LookupElement>();
                   Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
                     public void consume(final LookupElement lookupElement) {
-                      indicator.addItem((MatchedLookupElement)lookupElement);
+                      MatchedLookupElement matched = (MatchedLookupElement)lookupElement;
+                      indicator.addItem(matched);
+                      items.add(matched.getDelegate());
                     }
                   };
-                  data.set(CompletionService.getCompletionService().performCompletion(parameters, consumer));
+                  CompletionService.getCompletionService().performCompletion(parameters, consumer);
+                  data.set(items.toArray(new LookupElement[items.size()]));
                 }
               });
             }
@@ -423,12 +423,10 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
       }
     }
     else if (decision instanceof AutoCompletionDecision.InsertItem) {
-      final LookupElement item = ((AutoCompletionDecision.InsertItem)decision).getElement();
-      indicator.closeAndFinish(true);
       final Runnable restorePrefix = rememberDocumentState(indicator.getEditor());
-      indicator.getOffsetMap()
-        .addOffset(CompletionInitializationContext.START_OFFSET, (offset1 - indicator.getLookup().itemPattern(item).length()));
-      handleSingleItem(offset2, indicator, items, item.getLookupString(), item);
+
+      final LookupElement item = ((AutoCompletionDecision.InsertItem)decision).getElement();
+      indicator.getLookup().finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR, item);
 
       // the insert handler may have started a live template with completion
       if (CompletionService.getCompletionService().getCurrentCompletion() == null &&
@@ -436,37 +434,6 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
         CompletionServiceImpl.setCompletionPhase(hasModifiers? new CompletionPhase.InsertedSingleItem(indicator, restorePrefix) : CompletionPhase.NoCompletion);
       }
     }
-  }
-
-  protected static void handleSingleItem(final int offset2, final CompletionProgressIndicator context, final LookupElement[] items, final String _uniqueText, final LookupElement item) {
-    new WriteCommandAction(context.getProject()) {
-      protected void run(Result result) throws Throwable {
-        String uniqueText = _uniqueText;
-
-        if (item.getObject() instanceof DeferredUserLookupValue && item.as(LookupItem.CLASS_CONDITION_KEY) != null) {
-          if (!((DeferredUserLookupValue)item.getObject()).handleUserSelection(item.as(LookupItem.CLASS_CONDITION_KEY), context.getProject())) {
-            return;
-          }
-
-          uniqueText = item.getLookupString(); // text may be not ready yet
-        }
-
-        if (!StringUtil.startsWithIgnoreCase(uniqueText, context.getLookup().itemPattern(item))) {
-          FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CAMEL_HUMPS);
-        }
-
-        insertLookupString(offset2, uniqueText, context.getEditor(), context.getOffsetMap());
-        context.getEditor().getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-
-        lookupItemSelected(context, item, Lookup.AUTO_INSERT_SELECT_CHAR, Arrays.asList(items));
-      }
-    }.execute();
-  }
-
-  private static void insertLookupString(final int currentOffset, final String newText, final Editor editor, final OffsetMap offsetMap) {
-    editor.getDocument().replaceString(offsetMap.getOffset(CompletionInitializationContext.START_OFFSET), currentOffset, newText);
-    editor.getCaretModel().moveToOffset(offsetMap.getOffset(CompletionInitializationContext.START_OFFSET) + newText.length());
-    editor.getSelectionModel().removeSelection();
   }
 
   protected static void selectLookupItem(final LookupElement item, final char completionChar, final CompletionProgressIndicator context, final List<LookupElement> items) {

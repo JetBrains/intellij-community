@@ -200,12 +200,10 @@ public class LookupManagerImpl extends LookupManager {
       }
     });
 
+    CamelHumpMatcher matcher = new CamelHumpMatcher(prefix == null ? "" : prefix);
     if (items.length > 0) {
       for (final LookupElement item : items) {
-        if (prefix != null) {
-          item.setPrefixMatcher(new CamelHumpMatcher(prefix));
-        }
-        myActiveLookup.addItem(item);
+        myActiveLookup.addItem(item, matcher);
       }
       myActiveLookup.refreshUi();
     } else {

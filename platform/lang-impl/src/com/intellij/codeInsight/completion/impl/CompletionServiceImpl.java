@@ -142,13 +142,12 @@ public class CompletionServiceImpl extends CompletionService{
 
       MatchedLookupElement matched = element.as(MatchedLookupElement.CLASS_CONDITION_KEY);
       if (matched != null) {
-        getConsumer().consume(new MatchedLookupElement(element, matched.getMatcher(), matched.getSorter()));
+        getConsumer().consume(new MatchedLookupElement(element, matched.getPrefixMatcher(), matched.getSorter()));
         return;
       }
 
       PrefixMatcher matcher = getPrefixMatcher();
       if (matcher.prefixMatches(element)) {
-        element.setPrefixMatcher(matcher);
         getConsumer().consume(new MatchedLookupElement(element, matcher, mySorter));
       }
     }

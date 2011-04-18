@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -61,7 +62,9 @@ public interface Lookup {
 
   boolean isFocused();
 
+  @NotNull
   String itemPattern(LookupElement element);
 
+  @NotNull
   PrefixMatcher itemMatcher(LookupElement item);
 }
