@@ -225,7 +225,7 @@ public class GithubUtil {
     return checkCredentials(project, null, null, null);
   }
   public static boolean checkCredentials(final Project project, @Nullable final String url, @Nullable final String login, @Nullable final String password) {
-    if (login == null && password == null && areCredentialsEmpty()){
+    if (login == null && password == null && StringUtil.isEmptyOrSpaces(GithubSettings.getInstance().getLogin())){
       return false;
     }
     try {
@@ -244,11 +244,6 @@ public class GithubUtil {
     catch (CancelledException e) {
       return false;
     }
-  }
-
-  public static boolean areCredentialsEmpty() {
-    final GithubSettings settings = GithubSettings.getInstance();
-    return StringUtil.isEmptyOrSpaces(settings.getLogin()) || StringUtil.isEmptyOrSpaces(settings.getPassword());
   }
 
   public static class CancelledException extends RuntimeException {}
