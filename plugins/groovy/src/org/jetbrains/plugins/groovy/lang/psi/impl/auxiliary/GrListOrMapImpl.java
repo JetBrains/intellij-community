@@ -68,8 +68,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
 
   @Override
   public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
-    final GrExpression[] initializers = getInitializers();
-    if (initializers.length == 0) {
+    if (getInitializers().length == 0) {
       return super.addInternal(first, last, getNode().getFirstChildNode(), false);
     }
     final ASTNode lastChild = getNode().getLastChildNode();

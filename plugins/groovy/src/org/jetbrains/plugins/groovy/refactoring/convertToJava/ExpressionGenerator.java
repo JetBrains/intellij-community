@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SubtypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
@@ -822,58 +823,64 @@ public class ExpressionGenerator extends Generator {
     //can be PsiArrayType or GrLiteralClassType
     LOG.assertTrue(type instanceof GrLiteralClassType || type instanceof PsiArrayType);
 
-    String varName = generateListOrMapVariableDeclaration(listOrMap, type);
-    generateListOrMapElementInsertions(listOrMap, varName);
-    builder.append(varName);
+    if (listOrMap.isMap()) {
+      String varName = generateMapVariableDeclaration(listOrMap, type);
+      generateMapElementInsertions(listOrMap, varName);              //todo generate array if possible
+      builder.append(varName);
+    }
+    else {
+      boolean isActuallyList = type instanceof GrTupleType;
+      builder.append("new ");
+      writeType(builder, type);
+      if (isActuallyList) {
+        builder.append("(Arrays.asList(");
+      }
+      else {
+        builder.append('{');
+      }
+      genInitializers(listOrMap);
+      if (isActuallyList) {
+        builder.append("))");
+      }
+      else {
+        builder.append('}');
+      }
+    }
   }
 
-  private void generateListOrMapElementInsertions(GrListOrMap listOrMap, String varName) {
-    if (listOrMap.isMap()) {
-      for (GrNamedArgument arg : listOrMap.getNamedArguments()) {
-        StringBuilder insertion = new StringBuilder();
-        insertion.append(varName).append(".put(");
-        final String stringKey = arg.getLabelName();
-        if (stringKey != null) {
-          insertion.append('"').append(stringKey).append('"');
-        }
-        else {
-          final GrArgumentLabel label = arg.getLabel();
-          final GrExpression expression = label == null ? null : label.getExpression();
-          if (expression != null) {
-            expression.accept(new ExpressionGenerator(insertion, context));
-          }
-          else {
-            //todo should we generate an exception?
-          }
-        }
-        insertion.append(", ");
-        final GrExpression expression = arg.getExpression();
+  private void generateMapElementInsertions(GrListOrMap listOrMap, String varName) {
+    for (GrNamedArgument arg : listOrMap.getNamedArguments()) {
+      StringBuilder insertion = new StringBuilder();
+      insertion.append(varName).append(".put(");
+      final String stringKey = arg.getLabelName();
+      if (stringKey != null) {
+        insertion.append('"').append(stringKey).append('"');
+      }
+      else {
+        final GrArgumentLabel label = arg.getLabel();
+        final GrExpression expression = label == null ? null : label.getExpression();
         if (expression != null) {
           expression.accept(new ExpressionGenerator(insertion, context));
         }
         else {
           //todo should we generate an exception?
         }
-
-        insertion.append(");");
-        context.myStatements.add(insertion.toString());
       }
-    }
-    else {
-      for (GrExpression arg : listOrMap.getInitializers()) {
-        StringBuilder insertion = new StringBuilder();
-        insertion.append(varName).append(".add(");
-        arg.accept(new ExpressionGenerator(insertion, context));
-
-        insertion.append(");");
-        context.myStatements.add(insertion.toString());
+      insertion.append(", ");
+      final GrExpression expression = arg.getExpression();
+      if (expression != null) {
+        expression.accept(new ExpressionGenerator(insertion, context));
+      }
+      else {
+        //todo should we generate an exception?
       }
 
+      insertion.append(");");
+      context.myStatements.add(insertion.toString());
     }
-    //todo for list
   }
 
-  private String generateListOrMapVariableDeclaration(GrListOrMap listOrMap, PsiType type) {
+  private String generateMapVariableDeclaration(GrListOrMap listOrMap, PsiType type) {
     StringBuilder declaration = new StringBuilder();
 
     writeType(declaration, type);
@@ -883,10 +890,25 @@ public class ExpressionGenerator extends Generator {
 
     declaration.append("(");
     //insert count of elements in list or map
-    declaration.append(listOrMap.isMap() ? listOrMap.getNamedArguments().length : listOrMap.getInitializers().length);
+
+    declaration.append(listOrMap.getNamedArguments().length);
     declaration.append(");");
     context.myStatements.add(declaration.toString());
     return varName;
+  }
+
+  private void genInitializers(GrListOrMap list) {
+    LOG.assertTrue(!list.isMap());
+
+    final GrExpression[] initializers = list.getInitializers();
+    for (GrExpression expr : initializers) {
+      expr.accept(this);
+      builder.append(", ");
+    }
+
+    if (initializers.length > 0) {
+      builder.delete(builder.length() - 2, builder.length());
+    }
   }
 
   @Override
