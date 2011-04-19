@@ -20,6 +20,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.XSLTReportConverter;
 import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
 import com.intellij.ide.impl.PatchProjectUtil;
@@ -198,10 +199,10 @@ public class InspectionApplication {
         logMessageLn(1, InspectionsBundle.message("inspection.application.chosen.profile.log message", inspectionProfile.getName()));
       }
 
-      final InspectionsReportConverter reportConverter = getReportConverter(myOutputFormat);
+      InspectionsReportConverter reportConverter = getReportConverter(myOutputFormat);
       if (reportConverter == null && myOutputFormat.endsWith(".xsl")) {
-        // TODO: xslt output format support
-        throw new UnsupportedOperationException("Not implemented.");
+        // xslt converter
+        reportConverter = new XSLTReportConverter(myOutputFormat);
       }
 
       final String resultsDataPath;
