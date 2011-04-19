@@ -7,10 +7,14 @@
   <depends>com.intellij.modules.ultimate</depends>
   <depends optional="true" config-file="javascript.xml">JavaScript</depends>
   <depends optional="true" config-file="groovy.xml">org.intellij.groovy</depends>
+  <depends optional="true" config-file="php.xml">com.jetbrains.php</depends>
+  <depends optional="true" config-file="css.xml">com.intellij.css</depends>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.structuralsearch.profile"
                     interface="com.intellij.structuralsearch.StructuralSearchProfile"/>
+    <extensionPoint qualifiedName="com.intellij.structuralsearch.contextProvider"
+                    interface="com.intellij.structuralsearch.context.SSRContextProvider"/>
     <extensionPoint qualifiedName="com.intellij.equivalenceDescriptorProvider"
                     interface="com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider"/>
     <extensionPoint qualifiedName="com.intellij.tokenindex.tokenizer" beanClass="com.intellij.lang.LanguageExtensionPoint"/>

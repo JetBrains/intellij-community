@@ -6,9 +6,13 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.tokenindex.LanguageTokenizer;
 import com.intellij.tokenindex.Tokenizer;
+import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +26,7 @@ public class StructuralSearchUtil {
   public static final FileType DEFAULT_FILE_TYPE = StdFileTypes.JAVA;
 
   public static boolean ourUseUniversalMatchingAlgorithm = false;
+  public static final String PATTERN_PLACEHOLDER = "$$PATTERN_PLACEHOLDER$$";
 
   private static final StructuralSearchProfile ourUniversalMatchingProfile = new StructuralSearchProfileImpl();
 
@@ -128,5 +133,57 @@ public class StructuralSearchUtil {
     }
 
     return result.toArray(new FileType[result.size()]);
+  }
+
+  public static PsiElement[] parsePattern(Project project,
+                                          String context,
+                                          String pattern,
+                                          FileType fileType,
+                                          Language language,
+                                          String extension,
+                                          boolean physical) {
+    int offset = context.indexOf(PATTERN_PLACEHOLDER);
+
+    final int patternLength = pattern.length();
+    final String patternInContext = context.replace(PATTERN_PLACEHOLDER, pattern);
+
+    final String ext = extension != null ? extension : fileType.getDefaultExtension();
+    final String name = "__dummy." + ext;
+    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
+
+    final PsiFile file = language == null
+                         ? factory.createFileFromText(name, fileType, patternInContext, LocalTimeCounter.currentTime(), physical, true)
+                         : factory.createFileFromText(name, language, patternInContext, physical, true);
+    if (file == null) {
+      return PsiElement.EMPTY_ARRAY;
+    }
+
+    final List<PsiElement> result = new ArrayList<PsiElement>();
+
+    PsiElement element = file.findElementAt(offset);
+    if (element == null) {
+      return PsiElement.EMPTY_ARRAY;
+    }
+
+    PsiElement topElement = element;
+    element = element.getParent();
+
+    while (element != null) {
+      if (element.getTextOffset() == offset && element.getTextLength() <= patternLength) {
+        topElement = element;
+      }
+      element = element.getParent();
+    }
+
+    final int endOffset = offset + patternLength;
+    result.add(topElement);
+    topElement = topElement.getNextSibling();
+
+    while (topElement != null && topElement.getTextRange().getEndOffset() <= endOffset) {
+      result.add(topElement);
+      topElement = topElement.getNextSibling();
+    }
+
+    return result.toArray(new PsiElement[result.size()]);
   }
 }

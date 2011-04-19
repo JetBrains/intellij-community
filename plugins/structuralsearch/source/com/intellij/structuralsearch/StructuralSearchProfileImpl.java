@@ -6,16 +6,19 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.structuralsearch.context.SSRContextProvider;
 import com.intellij.structuralsearch.equivalence.*;
 import com.intellij.structuralsearch.impl.matcher.AbstractMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
+import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
@@ -32,14 +35,14 @@ import java.util.Set;
  * @author Eugene.Kudelevsky
  */
 public class StructuralSearchProfileImpl extends StructuralSearchProfile {
-  private static final String TYPED_VAR_PREFIX = "__$_";
+  private static final String TYPED_VAR_PREFIX = "aaaaaaaaaaaaaaaaaaa";
 
   private static final String DELIMETER_CHARS = ",;.[]{}():";
   private PsiElementVisitor myLexicalNodesFilter;
 
   @Override
   public void compile(PsiElement element, @NotNull final GlobalCompilingVisitor globalVisitor) {
-    element.accept(new MyCompilingVisitor(globalVisitor));
+    element.accept(new MyCompilingVisitor(globalVisitor, element));
 
     element.accept(new PsiRecursiveElementVisitor() {
       @Override
@@ -220,6 +223,25 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
   @Override
   public boolean isMyLanguage(@NotNull Language language) {
     return true;
+  }
+
+  @NotNull
+  @Override
+  public PsiElement[] createPatternTree(@NotNull String text,
+                                        @NotNull PatternTreeContext context,
+                                        @NotNull FileType fileType,
+                                        @Nullable Language language,
+                                        @Nullable String extension,
+                                        @NotNull Project project,
+                                        boolean physical) {
+    for (SSRContextProvider contextProvider : SSRContextProvider.EP_NAME.getExtensions()) {
+      final String strContext = contextProvider.getContext(fileType, text);
+      if (strContext != null) {
+        return StructuralSearchUtil.parsePattern(project, strContext, text, fileType, language, extension, physical);
+      }
+    }
+
+    return super.createPatternTree(text, context, fileType, language, extension, project, physical);
   }
 
   private static boolean canBePatternVariable(PsiElement element) {
@@ -412,9 +434,11 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
 
   private static class MyCompilingVisitor extends PsiRecursiveElementVisitor {
     private final GlobalCompilingVisitor myGlobalVisitor;
+    private final PsiElement myTopElement;
 
-    private MyCompilingVisitor(GlobalCompilingVisitor globalVisitor) {
+    private MyCompilingVisitor(GlobalCompilingVisitor globalVisitor, PsiElement topElement) {
       myGlobalVisitor = globalVisitor;
+      myTopElement = topElement;
     }
 
     @Override
@@ -512,7 +536,7 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
             el.accept(this);
 
             MatchingHandler matchingHandler = pattern.getHandler(el);
-            pattern.setHandler(el, element instanceof PsiFile ? new TopLevelMatchingHandler(matchingHandler) :
+            pattern.setHandler(el, element == myTopElement ? new TopLevelMatchingHandler(matchingHandler) :
                                    new LightTopLevelMatchingHandler(matchingHandler));
 
             /*

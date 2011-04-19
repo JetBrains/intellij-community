@@ -22,6 +22,8 @@
     <orderEntry type="module" module-name="JavaScriptLanguage" />
     <orderEntry type="module" module-name="duplicates" />
     <orderEntry type="module" module-name="jetgroovy" />
+    <orderEntry type="module" module-name="CSS" />
+    <orderEntry type="module" module-name="php" />
   </component>
   <component name="copyright">
     <Base>
