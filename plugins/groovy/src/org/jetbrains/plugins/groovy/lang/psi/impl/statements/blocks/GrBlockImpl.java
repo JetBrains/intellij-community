@@ -71,8 +71,9 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
     return GroovyPsiElementImpl.replaceWithStatement(this, statement);
   }
 
-  public void subtreeChanged() {
-    super.subtreeChanged();
+  @Override
+  public void clearCaches() {
+    super.clearCaches();
     putUserData(CONTROL_FLOW, null);
   }
 
@@ -106,7 +107,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
       putUserData(CONTROL_FLOW, controlFlow);
     }
 
-    return controlFlow.getValue();
+    return ControlFlowBuilder.assertValidPsi(controlFlow.getValue());
   }
 
   public void removeVariable(GrVariable variable) {
