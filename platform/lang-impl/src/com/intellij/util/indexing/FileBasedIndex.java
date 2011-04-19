@@ -100,6 +100,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private final Map<ID<?, ?>, Semaphore> myUnsavedDataIndexingSemaphores = new HashMap<ID<?,?>, Semaphore>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
   private final Set<ID<?, ?>> myNotRequiringContentIndices = new HashSet<ID<?, ?>>();
+  private final Set<ID<?, ?>> myRequiringContentIndices = new HashSet<ID<?, ?>>();
   private final Set<FileType> myNoLimitCheckTypes = new HashSet<FileType>();
 
   private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
@@ -356,6 +357,9 @@ public class FileBasedIndex implements ApplicationComponent {
     final int version = extension.getVersion();
     if (!extension.dependsOnFileContent()) {
       myNotRequiringContentIndices.add(name);
+    }
+    else {
+      myRequiringContentIndices.add(name);
     }
     myIndexIdToVersionMap.put(name, version);
     final File versionFile = IndexInfrastructure.getVersionFile(name);
@@ -1581,22 +1585,32 @@ public class FileBasedIndex implements ApplicationComponent {
             scheduleForUpdate(file);
           }
           else {
-            final InvalidationTask invalidator = new InvalidationTask(file) {
+            myFutureInvalidations.offer(new InvalidationTask(file) {
               public void run() {
                 removeFileDataFromIndices(affectedIndices, file);
               }
-            };
-            myFutureInvalidations.offer(invalidator);
+            });
           }
         }
         if (!markForReindex) {
-          myFilesToUpdate.remove(file); // no need to update it anymore
+          final boolean removedFromUpdateQueue = myFilesToUpdate.remove(file);// no need to update it anymore
+          if (removedFromUpdateQueue && affectedIndices.isEmpty()) {
+            // Currently the file is about to be deleted and previously it was scheduled for update and not processed up to now.
+            // Because the file was scheduled for update, at the moment of scheduling it was marked as unindexed, 
+            // so, to be on the safe side, we have to schedule data invalidation from all content-requiring indices for this file
+            myFutureInvalidations.offer(new InvalidationTask(file) {
+              public void run() {
+                removeFileDataFromIndices(myRequiringContentIndices, file);
+              }
+            });
+          }
         }
+        
         IndexingStamp.flushCache();
       }
     }
 
-    private void removeFileDataFromIndices(List<ID<?, ?>> affectedIndices, VirtualFile file) {
+    private void removeFileDataFromIndices(Collection<ID<?, ?>> affectedIndices, VirtualFile file) {
       Throwable unexpectedError = null;
       for (ID<?, ?> indexId : affectedIndices) {
         try {
