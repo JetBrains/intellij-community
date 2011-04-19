@@ -3,6 +3,8 @@ package com.jetbrains.python;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.types.*;
 
+import java.util.List;
+
 /**
  * @author yole
  */
@@ -37,5 +39,14 @@ public class PyTypeParserTest extends PyLightFixtureTestCase {
     final PyCollectionType type = (PyCollectionType) PyTypeParser.getTypeByName(myFixture.getFile(), "dict from string to MyObject");
     assertClassType(type, "dict");
     assertClassType(type.getElementType(TypeEvalContext.fast()), "MyObject");
+  }
+
+  public void testUnionType() {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PyUnionType type = (PyUnionType)PyTypeParser.getTypeByName(myFixture.getFile(), "MyObject or str");
+    final List<PyType> members = type.getMembers();
+    assertEquals(2, members.size());
+    assertClassType(members.get(0), "MyObject");
+    assertClassType(members.get(1), "str");
   }
 }

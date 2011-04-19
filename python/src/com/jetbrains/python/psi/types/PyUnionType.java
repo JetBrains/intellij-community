@@ -84,7 +84,7 @@ public class PyUnionType implements PyType {
         return new PyTupleType(tupleType1, members);
       }
     }
-    Set<PyType> members = new HashSet<PyType>();
+    Set<PyType> members = new LinkedHashSet<PyType>();
     if (type1 instanceof PyUnionType) {
       members.addAll(((PyUnionType)type1).myMembers);
     }
@@ -110,5 +110,9 @@ public class PyUnionType implements PyType {
       }
     }
     return false;
+  }
+
+  public List<PyType> getMembers() {
+    return myMembers;
   }
 }

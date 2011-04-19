@@ -544,6 +544,11 @@
       <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
     </action>
 
+    <action id="Devmode.AnalyzeTypeParser" class="com.jetbrains.python.devmode.AnalyzeTypeParserAction" text="Analyze type parser"
+            internal="true">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+    </action>
+
     <group id="PyTypeHierarchyPopupMenu">
       <reference ref="TypeHierarchyBase.BaseOnThisType"/>
       <reference ref="TypeHierarchy.Class"/>
