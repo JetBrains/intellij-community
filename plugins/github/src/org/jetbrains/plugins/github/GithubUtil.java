@@ -229,13 +229,23 @@ public class GithubUtil {
       return false;
     }
     try {
-      return accessToGithubWithModalProgress(project, new Computable<Boolean>() {
+      if (accessToGithubWithModalProgress(project, new Computable<Boolean>() {
         @Override
         public Boolean compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
           if (url != null && login != null && password != null){
             return testConnection(url, login, password);
           }
+          return false;
+        }
+      })) {
+        return true;
+      }
+
+      return accessToGithubWithModalProgress(project, new Computable<Boolean>() {
+        @Override
+        public Boolean compute() {
+          ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
           final GithubSettings settings = GithubSettings.getInstance();
           return testConnection(settings.getHost(), settings.getLogin(), settings.getPassword());
         }
@@ -256,13 +266,14 @@ public class GithubUtil {
   @Nullable
   public static List<RepositoryInfo> getAvailableRepos(final Project project, final boolean ownOnly) {
     final GithubSettings settings = GithubSettings.getInstance();
+    final String password = settings.getPassword();
     final boolean validCredentials;
     try {
       validCredentials = accessToGithubWithModalProgress(project, new Computable<Boolean>() {
         @Override
         public Boolean compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
-          return testConnection(settings.getHost(), settings.getLogin(), settings.getPassword());
+          return testConnection(settings.getHost(), settings.getLogin(), password);
         }
       });
     }
@@ -278,11 +289,12 @@ public class GithubUtil {
     }
     // Otherwise our credentials are valid and they are successfully stored in settings
     try {
+      final String validPassword = settings.getPassword();
       return accessToGithubWithModalProgress(project, new Computable<List<RepositoryInfo>>() {
         @Override
         public List<RepositoryInfo> compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Extracting info about available repositories");
-          return getAvailableRepos(settings.getHost(), settings.getLogin(), settings.getPassword(), ownOnly);
+          return getAvailableRepos(settings.getHost(), settings.getLogin(), validPassword, ownOnly);
         }
       });
     }
@@ -299,13 +311,14 @@ public class GithubUtil {
   @Nullable
   public static RepositoryInfo getDetailedRepositoryInfo(final Project project, final String owner, final String name) {
     final GithubSettings settings = GithubSettings.getInstance();
+    final String password = settings.getPassword();
     final boolean validCredentials;
     try {
       validCredentials = accessToGithubWithModalProgress(project, new Computable<Boolean>() {
         @Override
         public Boolean compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Trying to login to GitHub");
-          return testConnection(settings.getHost(), settings.getLogin(), settings.getPassword());
+          return testConnection(settings.getHost(), settings.getLogin(), password);
         }
       });
     }
@@ -321,11 +334,12 @@ public class GithubUtil {
     }
     // Otherwise our credentials are valid and they are successfully stored in settings
     try {
+      final String validPassword = settings.getPassword();
       return accessToGithubWithModalProgress(project, new Computable<RepositoryInfo>() {
         @Override
         public RepositoryInfo compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Extracting detailed info about repository ''" + name + "''");
-          return getDetailedRepoInfo(settings.getHost(), settings.getLogin(), settings.getPassword(), owner, name);
+          return getDetailedRepoInfo(settings.getHost(), settings.getLogin(), validPassword, owner, name);
         }
       });
     }
@@ -365,11 +379,12 @@ public class GithubUtil {
 
   public static boolean isWriteAccessAllowed(final Project project, final RepositoryInfo repo) {
     final GithubSettings settings = GithubSettings.getInstance();
+    final String password = settings.getPassword();
     return accessToGithubWithModalProgress(project, new Computable<Boolean>() {
         @Override
         public Boolean compute() {
           ProgressManager.getInstance().getProgressIndicator().setText("Extracting info about pushable repositories");
-          return isPushableRepo(settings.getHost(), settings.getLogin(), settings.getPassword(), repo);
+          return isPushableRepo(settings.getHost(), settings.getLogin(), password, repo);
         }
       });
   }
