@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.Set;
 
@@ -172,23 +173,33 @@ public class CodeBlockGenerator extends Generator {
   }
 
   @Override
-  public void visitIfStatement(GrIfStatement ifStatement) {
-    final GrExpression condition = ifStatement.getCondition();
-    final GrStatement thenBranch = ifStatement.getThenBranch();
-    final GrStatement elseBranch = ifStatement.getElseBranch();
-
-    StringBuilder statementBuilder = new StringBuilder();
-    final CodeBlockGenerator innerGenerator = new CodeBlockGenerator(statementBuilder, context.project);
-    final ExpressionContext expressionContext = new ExpressionContext(context.project, context.myUsedVarNames);
-
-    statementBuilder.append("if (");
-    if (condition != null) condition.accept(new ExpressionGenerator(statementBuilder, expressionContext));
-    statementBuilder.append(")");
-    if (thenBranch != null) thenBranch.accept(innerGenerator);
-    if (ifStatement.getElseKeyword() != null) statementBuilder.append("else");
-    if (elseBranch != null) elseBranch.accept(innerGenerator);
-
-    writeStatement(statementBuilder, ifStatement, expressionContext);
+  public void visitIfStatement(final GrIfStatement ifStatement) {
+    GenerationUtil.writeStatement(builder, context, ifStatement, new StatementWriter() {
+      @Override
+      public void writeStatement(StringBuilder builder, ExpressionContext context) {
+        final GrExpression condition = ifStatement.getCondition();
+        final GrStatement thenBranch = ifStatement.getThenBranch();
+        final GrStatement elseBranch = ifStatement.getElseBranch();
+        builder.append("if (");
+        if (condition != null) {
+          final PsiType type = condition.getType();
+          if (TypesUtil.unboxPrimitiveTypeWrapper(type) == PsiType.BOOLEAN) {
+            condition.accept(new ExpressionGenerator(builder, context));
+          }
+          else {
+            GenerationUtil.invokeMethodByName(
+              condition,
+              "asBoolean",
+              GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
+              new ExpressionGenerator(builder, context), ifStatement);
+          }
+        }
+        builder.append(")");
+        if (thenBranch != null) thenBranch.accept(new CodeBlockGenerator(builder, context.extend()));
+        if (ifStatement.getElseKeyword() != null) builder.append(" else ");
+        if (elseBranch != null) elseBranch.accept(new CodeBlockGenerator(builder, context.extend()));
+      }
+    });
   }
 
   @Override
@@ -336,7 +347,7 @@ public class CodeBlockGenerator extends Generator {
 
   @Override
   public void visitBlockStatement(GrBlockStatement blockStatement) {
-    //todo
+    blockStatement.getBlock().accept(this);
   }
 
   @Override

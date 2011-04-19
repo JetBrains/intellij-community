@@ -41,6 +41,6 @@ public class GrBlockStatementImpl extends GroovyPsiElementImpl implements GrBloc
 
   @NotNull
   public GrOpenBlock getBlock() {
-    return findChildByClass(GrOpenBlock.class);
+    return findNotNullChildByClass(GrOpenBlock.class);
   }
 }
