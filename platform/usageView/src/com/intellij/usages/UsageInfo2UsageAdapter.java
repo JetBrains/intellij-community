@@ -134,7 +134,13 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
 
   public boolean isValid() {
     PsiElement element = getElement();
-    return element != null && element.isValid();
+    if (element == null || !element.isValid()) {
+      return false;
+    }
+    for (UsageInfo usageInfo : myMergedUsageInfos) {
+      if (usageInfo.getSegment() == null) return false;
+    }
+    return true;
   }
 
   public boolean isReadOnly() {
