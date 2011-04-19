@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Bas Leijdekkers
+ * Copyright 2006-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ class ConvertVarargParameterToArrayPredicate
         implements PsiElementPredicate {
 
     public boolean satisfiedBy(@NotNull PsiElement element) {
-      if (!StdLanguages.JAVA.equals(element.getLanguage())) return false;
+        if (!StdLanguages.JAVA.equals(element.getLanguage())) {
+            return false;
+        }
         if (!(element instanceof PsiParameterList)) {
             return false;
         }
