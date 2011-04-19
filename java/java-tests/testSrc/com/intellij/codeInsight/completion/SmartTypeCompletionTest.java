@@ -584,7 +584,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testSuggestAnythingWhenWildcardExpected() throws Throwable {
     configureByTestName();
-    assertStringItems("X<java.lang.Object>", "Y", "Z<java.lang.Object>"); 
+    assertStringItems("X", "Y", "Z");
   }
 
   public void testNewVararg() throws Throwable {

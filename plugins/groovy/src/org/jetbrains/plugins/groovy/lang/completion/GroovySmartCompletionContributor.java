@@ -39,7 +39,6 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.completion.handlers.AfterNewClassInsertHandler;
-import org.jetbrains.plugins.groovy.lang.completion.handlers.ArrayInsertHandler;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -240,8 +239,12 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
         final LookupItem item = PsiTypeLookupItem.createLookupItem(JavaCompletionUtil.eliminateWildcards(type), identifierCopy);
         if (item.getObject() instanceof PsiClass) {
           JavaCompletionUtil.setShowFQN(item);
+          item.setInsertHandler(new InsertHandler<LookupItem>() {
+            public void handleInsert(InsertionContext context, LookupItem item) {
+              GroovyCompletionUtil.addImportForItem(context.getFile(), context.getStartOffset(), item);
+            }
+          });
         }
-        item.setInsertHandler(new ArrayInsertHandler());
         consumer.consume(item);
       }
     }

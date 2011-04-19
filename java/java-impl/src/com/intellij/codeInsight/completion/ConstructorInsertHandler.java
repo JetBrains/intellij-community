@@ -17,7 +17,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -52,9 +51,10 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
     final PsiExpression enclosing = PsiTreeUtil.getContextOfType(position, PsiExpression.class, true);
     final PsiAnonymousClass anonymousClass = PsiTreeUtil.getParentOfType(position, PsiAnonymousClass.class);
     final boolean inAnonymous = anonymousClass != null && anonymousClass.getParent() == enclosing;
+    PsiClass psiClass = (PsiClass)item.getObject();
 
     boolean withTail = item.getUserData(LookupItem.BRACKETS_COUNT_ATTR) == null && !inAnonymous;
-    boolean isAbstract = ((PsiClass)item.getObject()).hasModifierProperty(PsiModifier.ABSTRACT);
+    boolean isAbstract = psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
 
     if (Lookup.REPLACE_SELECT_CHAR == context.getCompletionChar()) {
       final int plStart = context.getOffset(PARAM_LIST_START);
@@ -67,15 +67,20 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
 
     OffsetKey insideRef = context.trackOffset(context.getTailOffset(), false);
 
-    insertParentheses(context, delegate, delegate.getObject(), withTail && isAbstract);
+    boolean fillTypeArgs = false;
+    if (delegate instanceof PsiTypeLookupItem) {
+      fillTypeArgs = psiClass.getTypeParameters().length > 0 && ((PsiTypeLookupItem)delegate).calcGenerics().isEmpty();
+      delegate.handleInsert(context);
+      PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting(context.getFile().getViewProvider());
+    }
+
+    insertParentheses(context, delegate, psiClass, withTail && isAbstract);
 
     DefaultInsertHandler.addImportForItem(context, delegate);
-
 
     if (!withTail) {
       return;
     }
-
 
     if (isAbstract) {
       if (mySmart) {
@@ -89,27 +94,11 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
       editor.getDocument().insertString(offset, " {}");
       editor.getCaretModel().moveToOffset(offset + 2);
 
-      if (delegate instanceof PsiTypeLookupItem) {
-        PsiType type = JavaCompletionUtil.getLookupElementType(delegate);
-        if (type instanceof PsiClassType) {
-          PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
-          PsiClass psiClass = result.getElement();
-          if (psiClass != null) {
-            for (PsiTypeParameter parameter : psiClass.getTypeParameters()) {
-              PsiType substitution = result.getSubstitutor().substitute(parameter);
-              if (substitution instanceof PsiClassType && parameter.equals(((PsiClassType)substitution).resolve())) {
-                PsiReferenceParameterList paramList = PsiTreeUtil
-                  .findElementOfClassAtOffset(context.getFile(), context.getOffset(insideRef) - 1, PsiReferenceParameterList.class, false);
-                if (paramList != null && paramList.getTextLength() > 0) {
-                  TextRange range = paramList.getTextRange();
-                  context.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "<>");
-                  editor.getCaretModel().moveToOffset(range.getStartOffset() + 1);
-                }
-                return;
-              }
-            }
-          }
-        }
+      if (fillTypeArgs) {
+        int refEnd = context.getOffset(insideRef);
+        context.getDocument().insertString(refEnd, "<>");
+        editor.getCaretModel().moveToOffset(refEnd + 1);
+        return;
       }
 
       context.setLaterRunnable(generateAnonymousBody(editor, context.getFile()));

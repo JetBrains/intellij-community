@@ -69,7 +69,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     }
 
     handleParentheses(false, false, tailType, context, state);
-    handleBrackets(item, document, state);
 
     context.setTailOffset(state.tailOffset);
     state.caretOffset = processTail(tailType, state.caretOffset, state.tailOffset, editor);
@@ -110,20 +109,6 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     catch(IncorrectOperationException e){
       LOG.error(e);
     }                                                                       
-  }
-
-  private static void handleBrackets(LookupElement item, Document document, InsertHandlerState myState){
-    // brackets
-    final Integer bracketsAttr = (Integer)item.getUserData(LookupItem.BRACKETS_COUNT_ATTR);
-    if (bracketsAttr != null){
-      int count = bracketsAttr.intValue();
-      if(count > 0)
-        myState.caretOffset = myState.tailOffset + 1;
-      for(int i = 0; i < count; i++){
-        document.insertString(myState.tailOffset, "[]");
-        myState.tailOffset += 2;
-      }
-    }
   }
 
   private static void handleParentheses(final boolean hasParams, final boolean needParenth, TailType tailType, InsertionContext context, InsertHandlerState myState){

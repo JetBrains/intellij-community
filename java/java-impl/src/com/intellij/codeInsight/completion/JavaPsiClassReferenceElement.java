@@ -91,16 +91,15 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
   public void renderElement(LookupElementPresentation presentation) {
     LookupItem item = this;
     PsiClass psiClass = getObject();
-    renderClassItem(presentation, item, psiClass);
+    renderClassItem(presentation, item, psiClass, false);
   }
 
-  public static void renderClassItem(LookupElementPresentation presentation, LookupItem item, PsiClass psiClass) {
+  public static void renderClassItem(LookupElementPresentation presentation, LookupItem item, PsiClass psiClass, boolean diamond) {
     presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item, presentation.isReal()));
 
     final boolean bold = item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null;
     boolean strikeout = JavaElementLookupRenderer.isToStrikeout(item);
-    final boolean forceLookupString = item.getAttribute(LookupItem.FORCE_LOOKUP_STRING) != null;
-    presentation.setItemText(forceLookupString ? item.getLookupString() : getName(psiClass, item));
+    presentation.setItemText(getName(psiClass, item, diamond));
     presentation.setStrikeout(strikeout);
     presentation.setItemTextBold(bold);
 
@@ -111,7 +110,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
         (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT))) {
       tailText = "{...}" + tailText;
     }
-    if (substitutor == null && !forceLookupString && psiClass.getTypeParameters().length > 0) {
+    if (substitutor == null && !diamond && psiClass.getTypeParameters().length > 0) {
       tailText = "<" + StringUtil.join(psiClass.getTypeParameters(), new Function<PsiTypeParameter, String>() {
         public String fun(PsiTypeParameter psiTypeParameter) {
           return psiTypeParameter.getName();
@@ -121,13 +120,17 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
     presentation.setTailText(tailText, true);
   }
 
-  private static String getName(final PsiClass psiClass, final LookupItem<?> item) {
+  private static String getName(final PsiClass psiClass, final LookupItem<?> item, boolean diamond) {
     String name = PsiUtilBase.getName(psiClass);
 
     if (item.getAttribute(LookupItem.FORCE_QUALIFY) != null) {
       if (psiClass.getContainingClass() != null) {
         name = psiClass.getContainingClass().getName() + "." + name;
       }
+    }
+
+    if (diamond) {
+      return name + "<>";
     }
 
     PsiSubstitutor substitutor = (PsiSubstitutor)item.getAttribute(LookupItem.SUBSTITUTOR);

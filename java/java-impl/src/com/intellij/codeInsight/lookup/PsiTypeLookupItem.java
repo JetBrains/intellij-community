@@ -16,11 +16,16 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.DefaultInsertHandler;
+import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.ClassConditionKey;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,9 +35,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PsiTypeLookupItem extends LookupItem {
   public static final ClassConditionKey<PsiTypeLookupItem> CLASS_CONDITION_KEY = ClassConditionKey.create(PsiTypeLookupItem.class);
+  private final boolean myDiamond;
 
-  public PsiTypeLookupItem(Object o, @NotNull @NonNls String lookupString) {
+  private PsiTypeLookupItem(Object o, @NotNull @NonNls String lookupString, boolean diamond) {
     super(o, lookupString);
+    myDiamond = diamond;
   }
 
   @Override
@@ -42,8 +49,51 @@ public class PsiTypeLookupItem extends LookupItem {
 
   @Override
   public void handleInsert(InsertionContext context) {
+    context.getDocument().insertString(context.getTailOffset(), calcGenerics());
     DefaultInsertHandler.addImportForItem(context, this);
-    super.handleInsert(context);
+
+    int tail = context.getTailOffset();
+    String braces = StringUtil.repeat("[]", getBracketsCount());
+    Editor editor = context.getEditor();
+    if (!braces.isEmpty()) {
+      context.getDocument().insertString(tail, braces);
+      editor.getCaretModel().moveToOffset(tail + 1);
+    } else {
+      editor.getCaretModel().moveToOffset(tail);
+    }
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+
+    InsertHandler handler = getInsertHandler();
+    if (handler != null && !(handler instanceof DefaultInsertHandler)) {
+      //noinspection unchecked
+      handler.handleInsert(context, this);
+    }
+  }
+
+  public String calcGenerics() {
+    if (myDiamond) {
+      return "<>";
+    }
+
+    if (getObject() instanceof PsiClass) {
+      PsiClass psiClass = (PsiClass)getObject();
+      PsiSubstitutor substitutor = getSubstitutor();
+      StringBuilder builder = new StringBuilder();
+      for (PsiTypeParameter parameter : psiClass.getTypeParameters()) {
+        PsiType substitute = substitutor.substitute(parameter);
+        if (substitute == null || PsiUtil.resolveClassInType(substitute) == parameter) {
+          return "";
+        }
+        if (builder.length() > 0) {
+          builder.append(", ");
+        }
+        builder.append(substitute.getCanonicalText());
+      }
+      if (builder.length() > 0) {
+        return "<" + builder + ">";
+      }
+    }
+    return "";
   }
 
   @Override
@@ -58,7 +108,7 @@ public class PsiTypeLookupItem extends LookupItem {
     return integer == null ? 0 : integer;
   }
 
-  public static LookupItem createLookupItem(@NotNull PsiType type, @Nullable PsiElement context) {
+  public static PsiTypeLookupItem createLookupItem(@NotNull PsiType type, @Nullable PsiElement context) {
     final PsiType original = type;
     int dim = 0;
     while (type instanceof PsiArrayType) {
@@ -66,14 +116,10 @@ public class PsiTypeLookupItem extends LookupItem {
       dim++;
     }
 
-    LookupItem item = doCreateItem(type, context);
+    PsiTypeLookupItem item = doCreateItem(type, context);
 
     if (dim > 0) {
-      final StringBuilder tail = new StringBuilder();
-      for (int i = 0; i < dim; i++) {
-        tail.append("[]");
-      }
-      item.setAttribute(TAIL_TEXT_ATTR, " " + tail.toString());
+      item.setAttribute(TAIL_TEXT_ATTR, " " + StringUtil.repeat("[]", dim));
       item.setAttribute(TAIL_TEXT_SMALL_ATTR, "");
       item.putUserData(BRACKETS_COUNT_ATTR, dim);
     }
@@ -81,64 +127,53 @@ public class PsiTypeLookupItem extends LookupItem {
     return item;
   }
 
-  private static LookupItem doCreateItem(final PsiType type, PsiElement context) {
-    final String presentableText = type.getPresentableText();
+  private static PsiTypeLookupItem doCreateItem(final PsiType type, PsiElement context) {
     if (type instanceof PsiClassType) {
       PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass psiClass = classResolveResult.getElement();
-      if (type instanceof PsiClassReferenceType && psiClass != null) {
-        final PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)type).getReference();
-        final PsiReferenceParameterList parameterList = reference.getParameterList();
-        if (parameterList != null) {
-          final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
-          if (typeParameterElements.length == 1 && typeParameterElements[0].getType() instanceof PsiDiamondType) {
-            final String lookupString = psiClass.getName() + "<>";
-            final PsiTypeLookupItem item = new PsiTypeLookupItem(psiClass, lookupString);
-            item.setAttribute(FORCE_LOOKUP_STRING, lookupString);
-            return item;
+
+      if (psiClass != null) {
+        final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
+
+        boolean diamond = false;
+        if (type instanceof PsiClassReferenceType) {
+          final PsiReferenceParameterList parameterList = ((PsiClassReferenceType)type).getReference().getParameterList();
+          if (parameterList != null) {
+            final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
+            diamond = typeParameterElements.length == 1 && typeParameterElements[0].getType() instanceof PsiDiamondType;
           }
         }
-      }
-      final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
-      String text = type.getCanonicalText();
-      if (text == null) {
-        text = presentableText;
-      }
-      String typeString = text;
-      String typeParams = "";
-      if (text.indexOf('<') > 0 && text.endsWith(">")) {
-        typeString = text.substring(0, text.indexOf('<'));
-        typeParams = text.substring(text.indexOf('<'));
-      }
-
-      String lookupString = text.substring(typeString.lastIndexOf('.') + 1);
-      if (psiClass != null) {
-        PsiClass resolved =
-          JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().resolveReferencedClass(psiClass.getName(), context);
+        PsiClass resolved = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().resolveReferencedClass(psiClass.getName(), context);
+        String lookupString = psiClass.getName();
         if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass)) {
           // inner class name should be shown qualified if its not accessible by single name
-          PsiClass aClass = psiClass;
-          lookupString = "";
+          PsiClass aClass = psiClass.getContainingClass();
           while (aClass != null) {
-            lookupString = aClass.getName() + (lookupString == "" ? "" : ".") + lookupString;
+            lookupString = aClass.getName() + '.' + lookupString;
             aClass = aClass.getContainingClass();
           }
-          lookupString += typeParams;
         }
-        LookupItem item = new PsiTypeLookupItem(psiClass, lookupString);
+
+        PsiTypeLookupItem item = new PsiTypeLookupItem(psiClass, lookupString, diamond);
         item.setAttribute(SUBSTITUTOR, substitutor);
         return item;
       }
 
     }
-    return new PsiTypeLookupItem(type, presentableText);
+    return new PsiTypeLookupItem(type, type.getPresentableText(), false);
+  }
+
+  @NotNull
+  private PsiSubstitutor getSubstitutor() {
+    PsiSubstitutor attribute = (PsiSubstitutor)getAttribute(SUBSTITUTOR);
+    return attribute != null ? attribute : PsiSubstitutor.EMPTY;
   }
 
   @Override
   public void renderElement(LookupElementPresentation presentation) {
     final Object object = getObject();
     if (object instanceof PsiClass) {
-      JavaPsiClassReferenceElement.renderClassItem(presentation, this, (PsiClass)object);
+      JavaPsiClassReferenceElement.renderClassItem(presentation, this, (PsiClass)object, myDiamond);
     } else {
       assert object instanceof PsiType;
 

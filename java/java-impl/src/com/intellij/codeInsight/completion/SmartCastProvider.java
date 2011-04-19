@@ -3,7 +3,10 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.simple.RParenthTailType;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -11,7 +14,6 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -84,7 +86,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
   }
 
   private static LookupElement createSmartCastElement(final CompletionParameters parameters, final boolean overwrite, final PsiType type) {
-    return AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE.applyPolicy(new LookupElementDecorator<LookupItem>(
+    return AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE.applyPolicy(new LookupElementDecorator<PsiTypeLookupItem>(
       PsiTypeLookupItem.createLookupItem(type, parameters.getPosition())) {
 
       @Override
@@ -102,18 +104,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
         final int oldTail = context.getTailOffset();
         context.setTailOffset(RParenthTailType.addRParenth(editor, oldTail, csSettings.SPACE_WITHIN_CAST_PARENTHESES));
 
-        //todo let the delegate handle insertion itself
-        final LookupItem typeItem = getDelegate();
-        final InsertionContext typeContext = CompletionUtil.newContext(context, typeItem, context.getStartOffset(), oldTail);
-        new DefaultInsertHandler().handleInsert(typeContext, typeItem);
-        final PsiTypeCastExpression castExpression =
-          PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiTypeCastExpression.class, false);
-        if (castExpression != null) {
-          final PsiTypeElement typeElement = castExpression.getCastType();
-          if (typeElement != null) {
-            CodeStyleManager.getInstance(context.getProject()).reformat(typeElement);
-          }
-        }
+        getDelegate().handleInsert(CompletionUtil.newContext(context, getDelegate(), context.getStartOffset(), oldTail));
 
         PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
         if (csSettings.SPACE_AFTER_TYPE_CAST) {
