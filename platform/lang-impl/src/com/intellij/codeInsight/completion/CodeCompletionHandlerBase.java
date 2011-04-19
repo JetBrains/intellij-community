@@ -52,6 +52,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -554,6 +555,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   public static final Key<SoftReference<Pair<PsiFile, Document>>> FILE_COPY_KEY = Key.create("CompletionFileCopy");
 
   protected PsiFile createFileCopy(PsiFile file) {
+    ((PsiModificationTrackerImpl) file.getManager().getModificationTracker()).incCounter();
     final VirtualFile virtualFile = file.getVirtualFile();
     if (file.isPhysical() && virtualFile != null && virtualFile.getFileSystem() == LocalFileSystem.getInstance()
         // must not cache injected file copy, since it does not reflect changes in host document
