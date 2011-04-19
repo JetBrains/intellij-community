@@ -31,7 +31,6 @@ import com.intellij.lang.ant.config.impl.configuration.BuildFilePropertiesPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -76,25 +75,22 @@ import java.util.Collections;
 import java.util.List;
 
 public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, Disposable {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.explorer.AntExplorer");
-
   private Project myProject;
   private AntExplorerTreeBuilder myBuilder;
   private Tree myTree;
   private KeymapListener myKeymapListener;
   private final AntBuildFilePropertiesAction myAntBuildFilePropertiesAction;
   private final MergingUpdateQueue myQueue;
+  private AntConfiguration myConfig;
   
-
   private final TreeExpander myTreeExpander = new TreeExpander() {
     public void expandAll() {
       myBuilder.expandAll();
     }
 
     public boolean canExpand() {
-      final Project project = myProject;
-      return project != null && AntConfiguration.getInstance(project).getBuildFiles().length != 0;
+      final AntConfiguration config = myConfig;
+      return config != null && config.getBuildFiles().length != 0;
     }
 
     public void collapseAll() {
@@ -113,6 +109,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   public AntExplorer(final Project project) {
     super(true, true);
     myProject = project;
+    myConfig = AntConfiguration.getInstance(project);
     final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode());
     myTree = new Tree(model);
     myTree.setRootVisible(false);
@@ -172,23 +169,29 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   }
 
   public void dispose() {
-    myProject = null;
-    if (myKeymapListener != null) {
-      myKeymapListener.stopListen();
+    final KeymapListener listener = myKeymapListener;
+    if (listener != null) {
       myKeymapListener = null;
+      listener.stopListen();
     }
-    if (myBuilder != null) {
-      Disposer.dispose(myBuilder);
+    
+    final AntExplorerTreeBuilder builder = myBuilder;
+    if (builder != null) {
+      Disposer.dispose(builder);
+      myBuilder = null;
     }
-    myBuilder = null;
-    if (myTree != null) {
-      ToolTipManager.sharedInstance().unregisterComponent(myTree);
-      final KeyStroke[] strokes = myTree.getRegisteredKeyStrokes();
-      for (KeyStroke keyStroke : strokes) {
-        myTree.unregisterKeyboardAction(keyStroke);
+    
+    final Tree tree = myTree;
+    if (tree != null) {
+      ToolTipManager.sharedInstance().unregisterComponent(tree);
+      for (KeyStroke keyStroke : tree.getRegisteredKeyStrokes()) {
+        tree.unregisterKeyboardAction(keyStroke);
       }
       myTree = null;
     }
+
+    myProject = null;
+    myConfig = null;
   }
 
   private JPanel createToolbarPanel() {
@@ -222,8 +225,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        final AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
-        final ArrayList<VirtualFile> ignoredFiles = new ArrayList<VirtualFile>();
+        final AntConfiguration antConfiguration = myConfig;
+        if (antConfiguration == null) {
+          return;
+        }
+        final List<VirtualFile> ignoredFiles = new ArrayList<VirtualFile>();
         for (VirtualFile file : files) {
           try {
             antConfiguration.addBuildFile(file);
@@ -264,14 +270,13 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     if (result != 0) {
       return;
     }
-    AntConfiguration.getInstance(myProject).removeBuildFile(buildFile);
+    myConfig.removeBuildFile(buildFile);
   }
 
-  public void setBuildFileProperties(DataContext dataContext) {
-    final AntBuildFile buildFile = getCurrentBuildFile();
-    if (BuildFilePropertiesPanel.editBuildFile(getCurrentBuildFile())) {
-      final AntConfiguration antConfiguration = AntConfiguration.getInstance(myProject);
-      antConfiguration.updateBuildFile(buildFile);
+  public void setBuildFileProperties() {
+    final AntBuildFileBase buildFile = getCurrentBuildFile();
+    if (buildFile != null && BuildFilePropertiesPanel.editBuildFile(buildFile)) {
+      myConfig.updateBuildFile(buildFile);
       myBuilder.refresh();
       myTree.repaint();
     }
@@ -282,9 +287,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       return;
     }
     final AntBuildFileBase buildFile = getCurrentBuildFile();
-    final TreePath[] paths = myTree.getSelectionPaths();
-    final String[] targets = getTargetNamesFromPaths(paths);
-    ExecutionHandler.runBuild(buildFile, targets, null, dataContext, Collections.<BuildFileProperty>emptyList(), AntBuildListener.NULL);
+    if (buildFile != null) {
+      final TreePath[] paths = myTree.getSelectionPaths();
+      final String[] targets = getTargetNamesFromPaths(paths);
+      ExecutionHandler.runBuild(buildFile, targets, null, dataContext, Collections.<BuildFileProperty>emptyList(), AntBuildListener.NULL);
+    }
   }
 
   private boolean canRunSelection() {

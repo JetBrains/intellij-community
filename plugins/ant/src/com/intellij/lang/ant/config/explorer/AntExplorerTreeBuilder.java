@@ -31,23 +31,31 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
+import java.util.List;
 
 final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
 
+  private static final TreePath[] EMPTY_TREE_PATH = new TreePath[0];
   private final AntConfigurationListener myAntBuildListener;
   private final Project myProject;
-  
+  private AntConfiguration myConfig;
+
   public AntExplorerTreeBuilder(Project project, JTree tree, DefaultTreeModel treeModel) {
     super(tree, treeModel, new AntExplorerTreeStructure(project), IndexComparator.INSTANCE);
     myProject = project;
     myAntBuildListener = new ConfigurationListener();
-    AntConfiguration.getInstance(myProject).addAntConfigurationListener(myAntBuildListener);
+    myConfig = AntConfiguration.getInstance(myProject);
+    myConfig.addAntConfigurationListener(myAntBuildListener);
     initRootNode();
   }
 
   public void dispose() {
+    final AntConfiguration config = myConfig;
+    if (config != null) {
+      config.removeAntConfigurationListener(myAntBuildListener);
+      myConfig = null;
+    }
     super.dispose();
-    AntConfiguration.getInstance(myProject).removeAntConfigurationListener(myAntBuildListener);
   }
 
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
@@ -59,33 +67,22 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
   }
 
   public void setTargetsFiltered(boolean value) {
-    ArrayList pathsToExpand = new ArrayList();
-    ArrayList selectionPaths = new ArrayList();
-    TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, true);
     ((AntExplorerTreeStructure)getTreeStructure()).setFilteredTargets(value);
-    ApplicationManager.getApplication().runReadAction(
-      new Runnable() {
-        public void run() {
-          updateFromRoot();
-        }
-      }
-    );
-    getTree().setSelectionPaths(new TreePath[0]);
-    TreeBuilderUtil.restorePaths(this, pathsToExpand, selectionPaths, true);
+    refresh();
   }
 
-  public void refresh() {
-    ArrayList pathsToExpand = new ArrayList();
-    ArrayList selectionPaths = new ArrayList();
+  public final void refresh() {
+    final List<Object> pathsToExpand = new ArrayList<Object>();
+    final List<Object> selectionPaths = new ArrayList<Object>();
     TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, true);
     ApplicationManager.getApplication().runReadAction(
       new Runnable() {
         public void run() {
-          updateFromRoot();
+          queueUpdate();
         }
       }
     );
-    getTree().setSelectionPaths(new TreePath[0]);
+    getTree().setSelectionPaths(EMPTY_TREE_PATH);
     TreeBuilderUtil.restorePaths(this, pathsToExpand, selectionPaths, true);
   }
 
@@ -95,41 +92,41 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
 
   private final class ConfigurationListener implements AntConfigurationListener {
     public void configurationLoaded() {
-      getUpdater().addSubtreeToUpdate(getRootNode());
+      queueUpdate();
     }
 
     public void buildFileAdded(AntBuildFile buildFile) {
-      getUpdater().addSubtreeToUpdate(getRootNode());
+      queueUpdate();
     }
 
     public void buildFileChanged(AntBuildFile buildFile) {
-      getUpdater().addSubtreeToUpdateByElement(buildFile);
+      queueUpdateFrom(buildFile, false);
     }
 
     public void buildFileRemoved(AntBuildFile buildFile) {
-      getUpdater().addSubtreeToUpdate(getRootNode());
+      queueUpdate();
     }
   }
 
   public void expandAll() {
-    ArrayList pathsToExpand = new ArrayList();
-    ArrayList selectionPaths = new ArrayList();
+    final List<Object> pathsToExpand = new ArrayList<Object>();
+    final List<Object> selectionPaths = new ArrayList<Object>();
     TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, true);
     int row = 0;
     while (row < getTree().getRowCount()) {
       getTree().expandRow(row);
       row++;
     }
-    getTree().setSelectionPaths(new TreePath[0]);
+    getTree().setSelectionPaths(EMPTY_TREE_PATH);
     TreeBuilderUtil.restorePaths(this, pathsToExpand, selectionPaths, true);
   }
 
   void collapseAll() {
-    ArrayList pathsToExpand = new ArrayList();
-    ArrayList selectionPaths = new ArrayList();
+    final List<Object> pathsToExpand = new ArrayList<Object>();
+    final List<Object> selectionPaths = new ArrayList<Object>();
     TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, true);
     TreeUtil.collapseAll(getTree(), 1);
-    getTree().setSelectionPaths(new TreePath[0]);
+    getTree().setSelectionPaths(EMPTY_TREE_PATH);
     pathsToExpand.clear();
     TreeBuilderUtil.restorePaths(this, pathsToExpand, selectionPaths, true);
   }
