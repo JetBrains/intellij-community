@@ -38,11 +38,13 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
@@ -316,6 +318,24 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
 
   @Override
   public boolean isSuitableSdk(final Sdk sdk) {
+    final List<ModuleDescriptor> suggestedModules = myModuleInsight.getSuggestedModules();
+    if (suggestedModules != null) {
+      for (ModuleDescriptor moduleDescriptor : suggestedModules) {
+        try {
+          final File file = new File(moduleDescriptor.computeModuleFilePath());
+          if (file.exists()) {
+            final Element rootElement = JDOMUtil.loadDocument(file).getRootElement();
+            final String type = rootElement.getAttributeValue("type");
+            if (type != null) {
+              final ModuleType moduleType = ModuleTypeManager.getInstance().findByID(type);
+              if (moduleType != null && !moduleType.createModuleBuilder().isSuitableSdk(sdk)) return false;
+            }
+          }
+        }
+        catch (Exception ignore) {
+        }
+      }
+    }
     return sdk.getSdkType() == JavaSdk.getInstance();
   }
 }
