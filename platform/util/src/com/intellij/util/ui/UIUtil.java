@@ -1463,6 +1463,21 @@ public class UIUtil {
     }
   }
 
+  public static void addKeyboardShortcut(final JComponent target,
+                                         final AbstractButton button, final KeyStroke keyStroke) {
+    target.registerKeyboardAction(
+      new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          if (button.isEnabled()) {
+            button.doClick();
+          }
+        }
+      },
+      keyStroke,
+      JComponent.WHEN_FOCUSED
+    );
+  }
+
   public static class MacTreeUI extends BasicTreeUI {
     public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
 

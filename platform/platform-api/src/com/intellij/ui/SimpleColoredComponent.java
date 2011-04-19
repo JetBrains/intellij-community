@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -180,7 +181,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
   /**
    * Sets a new component icon
    */
-  public final void setIcon(final Icon icon) {
+  public final void setIcon(final @Nullable Icon icon) {
     myIcon = icon;
     revalidateAndRepaint();
   }
