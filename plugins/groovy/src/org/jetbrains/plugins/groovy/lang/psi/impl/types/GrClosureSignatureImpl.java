@@ -82,6 +82,11 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
     return result;
   }
 
+  @Override
+  public int getParameterCount() {
+    return myParameters.length;
+  }
+
   @Nullable
   public GrClosureSignature curry(int count) {
     if (count > myParameters.length) {

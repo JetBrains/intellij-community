@@ -29,6 +29,8 @@ public interface GrClosureSignature {
   @NotNull
   GrClosureParameter[] getParameters();
 
+  int getParameterCount();
+
   boolean isVarargs();
 
   @Nullable

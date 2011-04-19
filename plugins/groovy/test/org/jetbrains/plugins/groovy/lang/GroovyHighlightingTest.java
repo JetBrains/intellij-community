@@ -375,4 +375,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest(new UnusedDefInspection());
   }
 
+  public void testStringAssignableToChar() {
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
+
 }
