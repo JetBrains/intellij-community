@@ -304,11 +304,13 @@ public class InjectedLanguageUtil {
     PsiFile hostPsiFile = documentManager.getPsiFile(hostDocument);
     assert hostPsiFile != null;
     for (RangeMarker rangeMarker : injected) {
+      ProgressManager.checkCanceled();
       PsiElement element = rangeMarker.isValid() ? hostPsiFile.findElementAt(rangeMarker.getStartOffset()) : null;
       if (element == null) {
         injected.remove(rangeMarker);
         continue;
       }
+      ProgressManager.checkCanceled();
       // it is here reparse happens and old file contents replaced
       enumerate(element, hostPsiFile, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {

@@ -62,11 +62,11 @@ public final class XPathLanguage extends Language {
         }
 
         public int getCodeConstructStart(PsiFile file, int openingBraceOffset) {
-            return openingBraceOffset + 1; // TODO: verify
+            return openingBraceOffset;
         }
 
         public boolean isPairedBracesAllowedBeforeType(@NotNull IElementType lbraceType, @Nullable IElementType contextType) {
-            return false;
+            return true;
         }
     }
 

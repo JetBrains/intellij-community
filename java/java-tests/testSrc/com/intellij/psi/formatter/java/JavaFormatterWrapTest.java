@@ -16,7 +16,6 @@
 package com.intellij.psi.formatter.java;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
@@ -29,7 +28,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   public void testWrappingAnnotationArrayParameters() throws Exception {
     getSettings().RIGHT_MARGIN = 80;
-    getSettings().ARRAY_INITIALIZER_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().ARRAY_INITIALIZER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     doTextTest(
       "@AttributeOverrides( { @AttributeOverride(name = \"id\", column = @Column(name = \"recovery_id\"))," +
       "@AttributeOverride(name = \"transactionReference\", column = @Column(name = \"deal_reference\"))," +
@@ -120,7 +119,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   public void testEnumConstantsWrapping() {
     // Inspired by IDEA-54667
-    getSettings().ENUM_CONSTANTS_WRAP = CodeStyleSettings.WRAP_AS_NEEDED;
+    getSettings().ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().RIGHT_MARGIN = 80;
 
     // Don't expect the constants to be placed on new line.
@@ -141,7 +140,7 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
   public void testMethodAnnotationFollowedBySingleLineComment() throws Exception {
     // Inspired by IDEA-22808
-    getSettings().METHOD_ANNOTATION_WRAP = CodeStyleSettings.WRAP_ALWAYS;
+    getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
 
     String text =
       "@Test//mycomment\n" +
@@ -159,24 +158,24 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
 
     doTextTest(
       "class TestClass {\n" +
-      "    // Single line comment that exceeds right margin\n" +
-      "    /* Multi line comment that exceeds right margin*/\n" +
+      "    // Single line comment that is long enough to exceed right margin\n" +
+      "    /* Multi line comment that is long enough to exceed right margin*/\n" +
       "    /**\n" +
-      "      Javadoc comment that exceeds right margin" +
+      "      Javadoc comment that is long enough to exceed right margin" +
       "     */\n" +
-      "     public String s = \"this is a long string to be wrapped\"\n" +
+      "     public String s = \"this is a string that is long enough to be wrapped\"\n" +
       "}",
       "class TestClass {\n" +
-      "    // Single line comment that exceeds right\n" +
-      "    // margin\n" +
-      "    /* Multi line comment that exceeds right\n" +
-      "    margin*/\n" +
+      "    // Single line comment that is long enough\n" +
+      "    // to exceed right margin\n" +
+      "    /* Multi line comment that is long enough\n" +
+      "    to exceed right margin*/\n" +
       "    /**\n" +
-      "     * Javadoc comment that exceeds right\n" +
-      "     * margin\n" +
+      "     * Javadoc comment that is long enough to\n" +
+      "     * exceed right margin\n" +
       "     */\n" +
-      "    public String s = \"this is a long string to\" +\n" +
-      "            \" be wrapped\"\n" +
+      "    public String s = \"this is a string that is\" +\n" +
+      "            \" long enough to be wrapped\"\n" +
       "}"
     );
   }

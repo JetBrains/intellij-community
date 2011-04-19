@@ -23,6 +23,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
@@ -30,7 +31,6 @@ import git4idea.GitRemote;
 import git4idea.GitUtil;
 
 import javax.swing.*;
-import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -53,7 +53,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
     try {
       final Project project = e.getData(PlatformDataKeys.PROJECT);
       final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-      if (GithubUtil.areCredentialsEmpty() ||
+      if (StringUtil.isEmptyOrSpaces(GithubSettings.getInstance().getLogin()) ||
           project == null || project.isDefault() || virtualFile == null ||
           GithubUtil.getGithubBoundRepository(project) == null) {
         e.getPresentation().setVisible(false);

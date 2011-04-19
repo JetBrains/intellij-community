@@ -78,6 +78,14 @@ import java.util.*;
 public final class Configuration implements PersistentStateComponent<Element>, ModificationTracker {
   static final Logger LOG = Logger.getInstance(Configuration.class.getName());
 
+  public enum InstrumentationType {
+    NONE, ASSERT, EXCEPTION
+  }
+
+  public enum DfaOption {
+    OFF, RESOLVE, ASSIGNMENTS, DFA
+  }
+
   @NonNls public static final String COMPONENT_NAME = "LanguageInjectionConfiguration";
 
   // element names
@@ -90,6 +98,7 @@ public final class Configuration implements PersistentStateComponent<Element>, M
   @NonNls private static final String SUBST_ANNOTATION_NAME = "SUBST_ANNOTATION";
   @NonNls private static final String ENTRY_NAME = "entry";
   @NonNls private static final String RESOLVE_REFERENCES = "RESOLVE_REFERENCES";
+  @NonNls private static final String LOOK_FOR_VAR_ASSIGNMENTS = "LOOK_FOR_VAR_ASSIGNMENTS";
   @NonNls private static final String USE_DFA_IF_AVAILABLE = "USE_DFA_IF_AVAILABLE";
   @NonNls private static final String INCLUDE_UNCOMPUTABLES_AS_LITERALS = "INCLUDE_UNCOMPUTABLES_AS_LITERALS";
 
@@ -109,19 +118,17 @@ public final class Configuration implements PersistentStateComponent<Element>, M
   @NotNull private String myPatternAnnotation;
   @NotNull private String mySubstAnnotation;
 
-  private boolean myResolveReferences;
   private boolean myIncludeUncomputablesAsLiterals;
-  private boolean myUseDfaIfAvailable;
+  private DfaOption myDfaOption = DfaOption.RESOLVE;
 
   // cached annotation name pairs
   private Pair<String, ? extends Set<String>> myLanguageAnnotationPair;
   private Pair<String, ? extends Set<String>> myPatternAnnotationPair;
-  private Pair<String, ? extends Set<String>> mySubstAnnotationPair;
 
+  private Pair<String, ? extends Set<String>> mySubstAnnotationPair;
   private volatile long myModificationCount;
 
   public Configuration() {
-    setResolveReferences(true);
     setLanguageAnnotation("org.intellij.lang.annotations.Language");
     setPatternAnnotation("org.intellij.lang.annotations.Pattern");
     setSubstAnnotation("org.intellij.lang.annotations.Subst");
@@ -148,8 +155,15 @@ public final class Configuration implements PersistentStateComponent<Element>, M
     setLanguageAnnotation(JDOMExternalizerUtil.readField(element, LANGUAGE_ANNOTATION_NAME));
     setPatternAnnotation(JDOMExternalizerUtil.readField(element, PATTERN_ANNOTATION_NAME));
     setSubstAnnotation(JDOMExternalizerUtil.readField(element, SUBST_ANNOTATION_NAME));
-    setResolveReferences(readBoolean(element, RESOLVE_REFERENCES, true));
-    setUseDfaIfAvailable(readBoolean(element, USE_DFA_IF_AVAILABLE, false));
+    if (readBoolean(element, RESOLVE_REFERENCES, true)) {
+      setDfaOption(DfaOption.RESOLVE);
+    }
+    if (readBoolean(element, LOOK_FOR_VAR_ASSIGNMENTS, false)) {
+      setDfaOption(DfaOption.ASSIGNMENTS);
+    }
+    if (readBoolean(element, USE_DFA_IF_AVAILABLE, false)) {
+      setDfaOption(DfaOption.DFA);
+    }
     setIncludeUncomputablesAsLiterals(readBoolean(element, INCLUDE_UNCOMPUTABLES_AS_LITERALS, false));
 
     if (mergeWithOriginalAndCompile) {
@@ -253,7 +267,19 @@ public final class Configuration implements PersistentStateComponent<Element>, M
     JDOMExternalizerUtil.writeField(element, LANGUAGE_ANNOTATION_NAME, myLanguageAnnotation);
     JDOMExternalizerUtil.writeField(element, PATTERN_ANNOTATION_NAME, myPatternAnnotation);
     JDOMExternalizerUtil.writeField(element, SUBST_ANNOTATION_NAME, mySubstAnnotation);
-    JDOMExternalizerUtil.writeField(element, RESOLVE_REFERENCES, String.valueOf(myResolveReferences));
+    switch (myDfaOption) {
+      case OFF:
+        break;
+      case RESOLVE:
+        JDOMExternalizerUtil.writeField(element, RESOLVE_REFERENCES, Boolean.TRUE.toString());
+        break;
+      case ASSIGNMENTS:
+        JDOMExternalizerUtil.writeField(element, LOOK_FOR_VAR_ASSIGNMENTS, Boolean.TRUE.toString());
+        break;
+      case DFA:
+        JDOMExternalizerUtil.writeField(element, USE_DFA_IF_AVAILABLE, Boolean.TRUE.toString());
+        break;
+    }
 
     final List<String> injectorIds = new ArrayList<String>(myInjections.keySet());
     Collections.sort(injectorIds);
@@ -434,14 +460,6 @@ public final class Configuration implements PersistentStateComponent<Element>, M
     return myModificationCount;
   }
 
-  public boolean isResolveReferences() {
-    return myResolveReferences;
-  }
-
-  public void setResolveReferences(final boolean resolveReferences) {
-    myResolveReferences = resolveReferences;
-  }
-
   public boolean isIncludeUncomputablesAsLiterals() {
     return myIncludeUncomputablesAsLiterals;
   }
@@ -450,12 +468,13 @@ public final class Configuration implements PersistentStateComponent<Element>, M
     myIncludeUncomputablesAsLiterals = flag;
   }
 
-  public boolean isUseDfaIfAvailable() {
-    return myUseDfaIfAvailable;
+  @NotNull
+  public DfaOption getDfaOption() {
+    return myDfaOption;
   }
 
-  public void setUseDfaIfAvailable(boolean flag) {
-    myUseDfaIfAvailable = flag;
+  public void setDfaOption(@NotNull final DfaOption dfaOption) {
+    myDfaOption = dfaOption;
   }
 
   @Nullable
@@ -497,10 +516,6 @@ public final class Configuration implements PersistentStateComponent<Element>, M
       return true;
     }
     return false;
-  }
-
-  public enum InstrumentationType {
-    NONE, ASSERT, EXCEPTION
   }
 
   public InstrumentationType getInstrumentation() {

@@ -95,10 +95,11 @@ public class ExternalizablePropertyContainer
   public void writeExternal(Element element) throws WriteExternalException {
     List<AbstractProperty> properties = new ArrayList<AbstractProperty>(myExternalizers.keySet());
     Collections.sort(properties, AbstractProperty.NAME_COMPARATOR);
-    for (Iterator<AbstractProperty> iterator = properties.iterator(); iterator.hasNext();) {
-      AbstractProperty property = iterator.next();
+    for (AbstractProperty property : properties) {
       Externalizer externalizer = myExternalizers.get(property);
-      if (externalizer == null) continue;
+      if (externalizer == null) {
+        continue;
+      }
       Element child = new Element(property.getName());
       externalizer.writeValue(child, getValueOf(property));
       element.addContent(child);

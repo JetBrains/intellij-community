@@ -55,15 +55,19 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     if (element == myRoot) {
       return new RootNodeDescriptor(myProject, parentDescriptor);
     }
-    else if (element instanceof String) {
+    
+    if (element instanceof String) {
       return new TextInfoNodeDescriptor(myProject, parentDescriptor, (String)element);
     }
-    else if (element instanceof AntBuildFile) {
+    
+    if (element instanceof AntBuildFileBase) {
       return new AntBuildFileNodeDescriptor(myProject, parentDescriptor, (AntBuildFileBase)element);
     }
-    else if (element instanceof AntBuildTarget) {
+    
+    if (element instanceof AntBuildTargetBase) {
       return new AntTargetNodeDescriptor(myProject, parentDescriptor, (AntBuildTargetBase)element);
     }
+    
     LOG.error("Unknown element for this tree structure " + element);
     return null;
   }
@@ -90,7 +94,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
       Collections.sort(metaTargets, ourTargetComparator);
       targets.addAll(metaTargets);
 
-      return targets.toArray(new AntBuildTargetBase[targets.size()]);
+      return targets.toArray(new AntBuildTarget[targets.size()]);
     }
 
     if (element instanceof AntBuildTarget) {
@@ -106,12 +110,13 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
       if (element instanceof MetaTarget) {
         return ((MetaTarget)element).getBuildFile();
       }
-      AntBuildTargetBase buildTarget = (AntBuildTargetBase)element;
-      return buildTarget.getModel().getBuildFile();
+      return ((AntBuildTarget)element).getModel().getBuildFile();
     }
-    else if (element instanceof AntBuildFile) {
+    
+    if (element instanceof AntBuildFile) {
       return myRoot;
     }
+    
     return null;
   }
 

@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
@@ -54,7 +55,7 @@ public class GithubRebaseAction extends DumbAwareAction {
 
   public void update(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (GithubUtil.areCredentialsEmpty() ||
+    if (StringUtil.isEmptyOrSpaces(GithubSettings.getInstance().getLogin()) ||
         project == null || project.isDefault() ||
         GithubUtil.getGithubBoundRepository(project) == null) {
       e.getPresentation().setEnabled(false);

@@ -211,7 +211,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         }
 
         public boolean visitVariable(PsiVariable variable) {
-          if (myConfiguration.isResolveReferences() && visitedVars.add(variable)) {
+          if (myConfiguration.getDfaOption() != Configuration.DfaOption.OFF && visitedVars.add(variable)) {
             ReferencesSearch.search(variable, searchScope).forEach(new Processor<PsiReference>() {
               @Override
               public boolean process(PsiReference psiReference) {
@@ -247,7 +247,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         }
 
         public boolean visitReference(PsiReferenceExpression expression) {
-          if (!myConfiguration.isResolveReferences()) return true;
+          if (myConfiguration.getDfaOption() == Configuration.DfaOption.OFF) return true;
           final PsiElement e = expression.resolve();
           if (e instanceof PsiVariable) {
             if (e instanceof PsiParameter) {

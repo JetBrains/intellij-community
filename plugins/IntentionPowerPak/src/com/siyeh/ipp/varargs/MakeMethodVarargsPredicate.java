@@ -15,7 +15,6 @@
  */
 package com.siyeh.ipp.varargs;
 
-import com.intellij.lang.StdLanguages;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -24,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 class MakeMethodVarargsPredicate implements PsiElementPredicate {
 
     public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (!StdLanguages.JAVA.equals(element.getLanguage())) {
-            return false;
-        }
         if (!(element instanceof PsiParameterList)) {
             return false;
         }
