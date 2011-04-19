@@ -10,10 +10,12 @@ import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeParser;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -164,6 +166,16 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
             return new PyClassType(pyClass, false);
           }
         }
+
+        final String docString = PyUtil.strValue(func.getDocStringExpression());
+        if (docString != null) {
+          StructuredDocString epydocString = StructuredDocString.parse(docString);
+          String typeName = epydocString.getParamType(getName());
+          if (typeName != null) {
+            return PyTypeParser.getTypeByName(this, typeName);
+          }
+        }
+
         for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
           PyType result = provider.getParameterType(this, func, context);
           if (result != null) return result;
