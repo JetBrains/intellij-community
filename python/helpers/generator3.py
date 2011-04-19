@@ -24,14 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.84" # Must be a number-dot-number string, updated with each change that affects generated skeletons
-
-from datetime import datetime # TODO: remove
-
-# TODO: remove
-OUR_OWN_DATETIME = datetime(2011, 2, 17, 15, 30, 0) # datetime.now() of edit time
-# we could use script's ctime, but the actual running copy may have it all wrong.
-#
+VERSION = "1.85" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -1033,14 +1026,21 @@ class ModuleRedeclarator(object):
     # modules that seem to re-export names but surely don't
     # ("qualified_module_name",..)
     KNOWN_FAKE_REEXPORTERS = (
-      "gtk._gtk",
-      "gobject._gobject",
-      "numpy.core.multiarray",
-      "numpy.core._dotblas",
-      "numpy.core.umath",
-      "_collections",
-      "_functools"
+        "gtk._gtk",
+        "gobject._gobject",
+        "numpy.core.multiarray",
+        "numpy.core._dotblas",
+        "numpy.core.umath",
+        "_collections",
+        "_functools"
     )
+
+    # names that look genuinely exported but aren't.
+    # e.g. 'xml.parsers.expat.ExpatError' is actually defined in pyexpat, and xml.parsers.expat imports it from there.
+    # {'qualified_purported_module': ('name',..)}
+    KNOWN_FAKE_EXPORTS = {
+        'xml.parsers.expat': ('ExpatError', 'error'),
+    }
 
     # Some builtin classes effectively change __init__ signature without overriding it.
     # This callable serves as a placeholder to be replaced via REDEFINED_BUILTIN_SIGS
@@ -1738,7 +1738,7 @@ class ModuleRedeclarator(object):
                 item = self.module.__dict__[item_name]
             except:
                 continue
-            if isinstance(item, module_type):
+            if type(item) is module_type: # not isinstance, py2.7 + PyQt4.QtCore on windows have a bug here
                 self.imported_modules[item_name] = item
                 self.addImportHeaderIfNeeded()
                 ref_notice = getattr(item, "__file__", str(item))
@@ -1769,18 +1769,9 @@ class ModuleRedeclarator(object):
             pass
 
         action("redoing innards of module %r %r", p_name, str(self.module))
+        
         module_type = type(sys)
-        for item_name, item in self.module.__dict__.items():
-            if type(item) is module_type: # not isinstance, py2.7 + PyQt4.QtCore on windows have a bug here
-                self.imported_modules[item_name] = item
-                self.addImportHeaderIfNeeded()
-                ref_notice = getattr(item, "__file__", str(item))
-                if hasattr(item, "__name__"):
-                    self.imports_buf.out(0, "import ", item.__name__, " as ", item_name, " # ", ref_notice)
-                else:
-                    self.imports_buf.out(0, item_name, " = None # ??? name unknown; ", ref_notice)
-
-        # group what else we have into buckets
+        # group what we have into buckets
         vars_simple = {}
         vars_complex = {}
         funcs = {}
@@ -1830,8 +1821,13 @@ class ModuleRedeclarator(object):
                 # NOTE: if we fail to import, we define 'imported' names here lest we lose them at all
                 if want_to_import:
                     import_list = self.used_imports[mod_name]
-                    if item_name not in import_list:
-                        import_list.append(item_name)
+                    excluded = self.KNOWN_FAKE_EXPORTS.get(mod_name, ())
+                    if item_name not in excluded:
+                        if item_name not in import_list:
+                            import_list.append(item_name)
+                    else:
+                        note("not fake-importing %r from %r", item_name, mod_name)
+                        want_to_import = False
             if not want_to_import:
                 if isinstance(item, type): # some classes are callable, check them before functions
                     classes[item_name] = item
