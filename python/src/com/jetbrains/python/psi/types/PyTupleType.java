@@ -15,8 +15,8 @@ import java.util.Arrays;
 public class PyTupleType extends PyClassType implements PySubscriptableType {
   private final PyType[] myElementTypes;
 
-  public PyTupleType(PsiElement tuple, PyType[] elementTypes) {
-    super(PyBuiltinCache.getInstance(tuple).getClass("tuple"), false);
+  public PyTupleType(PsiElement anchor, PyType[] elementTypes) {
+    super(PyBuiltinCache.getInstance(anchor).getClass("tuple"), false);
     myElementTypes = elementTypes;
   }
 

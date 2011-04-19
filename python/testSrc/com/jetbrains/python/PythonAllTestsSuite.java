@@ -69,7 +69,8 @@ public class PythonAllTestsSuite {
     PythonRunConfigurationTest.class,
     PyFoldingTest.class,
     EpydocStringTest.class,
-    PyEmacsTabTest.class
+    PyEmacsTabTest.class,
+    PyTypeParserTest.class
   };
 
   public static TestSuite suite() {
