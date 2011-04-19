@@ -45,21 +45,22 @@ public class ClassLiteralGetter {
     PsiType classParameter = PsiUtil.substituteTypeParameter(parameters.getExpectedType(), CommonClassNames.JAVA_LANG_CLASS, 0, false);
 
     boolean addInheritors = false;
+    PsiElement position = parameters.getPosition();
     if (classParameter instanceof PsiWildcardType) {
       final PsiWildcardType wildcardType = (PsiWildcardType)classParameter;
       classParameter = wildcardType.getBound();
       addInheritors = wildcardType.isExtends() && classParameter instanceof PsiClassType;
+    } else if (!matcher.getPrefix().isEmpty()) {
+      addInheritors = true;
+      classParameter = PsiType.getJavaLangObject(position.getManager(), position.getResolveScope());
     }
-    if (classParameter == null) {
-      return;
+    if (classParameter != null) {
+      PsiFile file = position.getContainingFile();
+      addClassLiteralLookupElement(classParameter, result, file);
+      if (addInheritors) {
+        addInheritorClassLiterals(file, shortNameCondition, classParameter, result, matcher);
+      }
     }
-
-    PsiFile file = parameters.getPosition().getContainingFile();
-    addClassLiteralLookupElement(classParameter, result, file);
-    if (addInheritors) {
-      addInheritorClassLiterals(file, shortNameCondition, classParameter, result, matcher);
-    }
-
   }
 
   private static void addInheritorClassLiterals(PsiFile context,

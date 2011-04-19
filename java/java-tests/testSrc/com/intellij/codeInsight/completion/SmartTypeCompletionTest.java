@@ -801,6 +801,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testCastWith2TypeParameters() throws Throwable { doTest(); }
+  public void testClassLiteralInArrayAnnoInitializer() throws Throwable { doTest(); }
+  public void testClassLiteralInArrayAnnoInitializer2() throws Throwable { doTest(); }
 
   public void testAnnotation() throws Exception {
     doTest();
