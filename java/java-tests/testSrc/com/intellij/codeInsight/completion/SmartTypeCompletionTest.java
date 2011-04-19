@@ -1032,6 +1032,12 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByTestName();
   }
 
+  public void testQualifiedAfterNew() throws Exception {
+    myFixture.addClass("package foo; public interface Foo<T> {}");
+    myFixture.addClass("package bar; public class Bar implements foo.Foo {}");
+    doTest();
+  }
+
   public void testTabAfterNew() throws Exception {
     doFirstItemTest('\t');
   }

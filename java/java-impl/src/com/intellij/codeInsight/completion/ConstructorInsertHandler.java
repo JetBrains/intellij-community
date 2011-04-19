@@ -76,7 +76,9 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
 
     insertParentheses(context, delegate, psiClass, withTail && isAbstract);
 
-    DefaultInsertHandler.addImportForItem(context, delegate);
+    if (item.getDelegate() instanceof JavaPsiClassReferenceElement) {
+      DefaultInsertHandler.addImportForItem(context, delegate);
+    }
 
     if (!withTail) {
       return;
