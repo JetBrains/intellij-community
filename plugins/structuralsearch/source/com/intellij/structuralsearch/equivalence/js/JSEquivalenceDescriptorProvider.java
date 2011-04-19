@@ -6,7 +6,6 @@ import com.intellij.lang.javascript.psi.*;
 import com.intellij.lang.javascript.psi.ecmal4.JSClass;
 import com.intellij.lang.javascript.psi.ecmal4.JSReferenceList;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.structuralsearch.equivalence.ChildRole;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptor;
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene.Kudelevsky
  */
 public class JSEquivalenceDescriptorProvider extends EquivalenceDescriptorProvider {
-  private static final IElementType[] VARIABLE_DELIMETERS = {JSTokenTypes.COMMA, JSTokenTypes.SEMICOLON};
+  private static final TokenSet VARIABLE_DELIMETERS = TokenSet.create(JSTokenTypes.COMMA, JSTokenTypes.SEMICOLON);
 
   @Override
   public boolean isMyContext(@NotNull PsiElement context) {
@@ -75,7 +74,7 @@ public class JSEquivalenceDescriptorProvider extends EquivalenceDescriptorProvid
 
   @NotNull
   @Override
-  public IElementType[] getVariableDelimeters() {
+  public TokenSet getVariableDelimeters() {
     return VARIABLE_DELIMETERS;
   }
 

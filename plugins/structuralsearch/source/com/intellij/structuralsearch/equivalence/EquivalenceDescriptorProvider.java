@@ -6,7 +6,6 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.structuralsearch.StructuralSearchProfileImpl;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,12 +28,12 @@ public abstract class EquivalenceDescriptorProvider {
     }
 
     final IElementType elementType = ((LeafElement)element).getElementType();
-    return ArrayUtil.find(getVariableDelimeters(), elementType) >= 0;
+    return getVariableDelimeters().contains(elementType);
   }
 
   @NotNull
-  public IElementType[] getVariableDelimeters() {
-    return IElementType.EMPTY_ARRAY;
+  public TokenSet getVariableDelimeters() {
+    return TokenSet.EMPTY;
   }
 
   public TokenSet getLiterals() {
