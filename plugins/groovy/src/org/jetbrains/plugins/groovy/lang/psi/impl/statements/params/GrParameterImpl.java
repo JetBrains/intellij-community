@@ -215,7 +215,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
   public PsiElement getDeclarationScope() {
     final GrParametersOwner owner = PsiTreeUtil.getParentOfType(this, GrParametersOwner.class);
     assert owner != null;
-    if (owner instanceof GrForInClause) return owner.getParent();
+    if (owner instanceof GrForClause) return owner.getParent();
     return owner;
   }
 
