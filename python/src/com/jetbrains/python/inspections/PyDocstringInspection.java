@@ -1,12 +1,10 @@
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
