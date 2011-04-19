@@ -331,7 +331,7 @@ public class AbstractPopup implements JBPopup {
 
   public void setAdText(@NotNull final String s, int alignment) {
     if (myAdComponent == null) {
-      myAdComponent = HintUtil.createAdComponent(s, BorderFactory.createEmptyBorder(3, 5, 3, 5), alignment);
+      myAdComponent = HintUtil.createAdComponent(s, BorderFactory.createEmptyBorder(1, 5, 1, 5), alignment);
       JPanel wrapper = new JPanel(new BorderLayout()) {
         @Override
         protected void paintComponent(Graphics g) {
