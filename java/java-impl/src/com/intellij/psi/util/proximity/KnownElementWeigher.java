@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.util.proximity;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -29,6 +30,10 @@ import org.jetbrains.annotations.NotNull;
 public class KnownElementWeigher extends ProximityWeigher {
 
   public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
+    for (ForcedElementWeigher weigher : Extensions.getExtensions(ForcedElementWeigher.EP_NAME)) {
+      final Comparable weigh = weigher.getForcedWeigh(element);
+      if (weigh != null) return weigh;
+    }
     if (element instanceof PsiClass) {
       @NonNls final String qname = ((PsiClass)element).getQualifiedName();
       if (qname != null) {

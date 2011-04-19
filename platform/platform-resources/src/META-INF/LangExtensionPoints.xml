@@ -270,6 +270,7 @@
 
   <extensionPoint name="statistician" beanClass="com.intellij.psi.statistics.StatisticsExtensionPoint"/>
   <extensionPoint name="weigher" beanClass="com.intellij.psi.WeigherExtensionPoint"/>
+  <extensionPoint name="forcedElementWeigher" interface="com.intellij.psi.util.proximity.ForcedElementWeigher"/>
   <extensionPoint name="completion.contributor" beanClass="com.intellij.codeInsight.completion.CompletionContributorEP"/>
   <extensionPoint name="completion.confidence" beanClass="com.intellij.codeInsight.completion.CompletionConfidenceEP"/>
   <extensionPoint name="completion.skip" interface="com.intellij.codeInsight.completion.CompletionPreselectSkipper"/>

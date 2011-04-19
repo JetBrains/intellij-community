@@ -20,6 +20,7 @@
         <testFramework implementation="com.theoryinpractice.testng.TestNGFramework"/>
       <standardResourceProvider implementation="com.theoryinpractice.testng.TestNGPlugin"/>
       <overrideImplementsAnnotationsHandler implementation="com.theoryinpractice.testng.intention.OverrideImplementsTestNGAnnotationsHandler"/>
+      <forcedElementWeigher implementation="com.theoryinpractice.testng.TestNGForcedElementWeigher"/>
     </extensions>
     <extensionPoints >
       <extensionPoint qualifiedName="com.theoryinpractice.testng.listener" interface="org.testng.IDEATestNGListener"/>
