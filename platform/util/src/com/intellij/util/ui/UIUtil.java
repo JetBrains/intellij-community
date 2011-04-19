@@ -639,6 +639,26 @@ public class UIUtil {
     return isUnderAquaLookAndFeel() || isUnderQuaquaLookAndFeel();
   }
 
+  public static int getListCellHPadding() {
+    return isUnderNativeMacLookAndFeel() ? 7 : 2;
+  }
+
+  public static int getListCellVPadding() {
+    return 1;
+  }
+
+  public static Insets getListCellPadding() {
+    return new Insets(getListCellVPadding(), getListCellHPadding(), getListCellVPadding(), getListCellHPadding());
+  }
+
+  public static Insets getListViewportPadding() {
+    return isUnderNativeMacLookAndFeel() ? new Insets(1, 0, 1, 0) : new Insets(5, 5, 5, 5);
+  }
+
+  public static boolean isToUseDottedCellBorder() {
+    return !isUnderNativeMacLookAndFeel();
+  }
+
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void removeQuaquaVisualMarginsIn(Component component) {
     if (component instanceof JComponent) {

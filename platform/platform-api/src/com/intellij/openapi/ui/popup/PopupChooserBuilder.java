@@ -222,8 +222,8 @@ public class PopupChooserBuilder {
     }
 
     scrollPane.getViewport().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    int hPadding = UIUtil.isUnderAquaLookAndFeel() ? 0 : 5;
-    ((JComponent)scrollPane.getViewport().getView()).setBorder(BorderFactory.createEmptyBorder(5, hPadding, 5, hPadding));
+    Insets viewportPadding = UIUtil.getListViewportPadding();
+    ((JComponent)scrollPane.getViewport().getView()).setBorder(BorderFactory.createEmptyBorder(viewportPadding.top, viewportPadding.left, viewportPadding.bottom, viewportPadding.right));
 
     if (myChooserComponent instanceof ListWithFilter) {
       contentPane.add(myChooserComponent, BorderLayout.CENTER);
