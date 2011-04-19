@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.intentions.utils.BoolUtils;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
@@ -53,11 +52,11 @@ public class GroovyNegatedIfInspection extends BaseInspection {
 
     public void visitIfStatement(GrIfStatement grIfStatement) {
       super.visitIfStatement(grIfStatement);
-      final GrCondition condition = grIfStatement.getCondition();
-      if (!(condition instanceof GrExpression)) {
+      final GrExpression condition = grIfStatement.getCondition();
+      if (condition == null) {
         return;
       }
-      if (!BoolUtils.isNegation((GrExpression) condition)) {
+      if (!BoolUtils.isNegation(condition)) {
         return;
       }
       if (grIfStatement.getElseBranch() == null || grIfStatement.getThenBranch() == null) {

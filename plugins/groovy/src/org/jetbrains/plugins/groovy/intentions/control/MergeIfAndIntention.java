@@ -42,12 +42,11 @@ public class MergeIfAndIntention extends Intention {
       throws IncorrectOperationException {
     final GrIfStatement parentStatement =
         (GrIfStatement) element;
-    assert parentStatement != null;
-    final GrStatement parentThenBranch = (GrStatement) parentStatement.getThenBranch();
+    final GrStatement parentThenBranch = parentStatement.getThenBranch();
     final GrIfStatement childStatement =
         (GrIfStatement) ConditionalUtils.stripBraces(parentThenBranch);
 
-    final GrExpression childCondition = (GrExpression) childStatement.getCondition();
+    final GrExpression childCondition = childStatement.getCondition();
     final String childConditionText;
     if (ParenthesesUtils.getPrecendence(childCondition)
         > ParenthesesUtils.AND_PRECEDENCE) {
@@ -56,7 +55,7 @@ public class MergeIfAndIntention extends Intention {
       childConditionText = childCondition.getText();
     }
 
-    final GrExpression parentCondition = (GrExpression) parentStatement.getCondition();
+    final GrExpression parentCondition = parentStatement.getCondition();
     final String parentConditionText;
     if (ParenthesesUtils.getPrecendence(parentCondition)
         > ParenthesesUtils.AND_PRECEDENCE) {
@@ -65,7 +64,7 @@ public class MergeIfAndIntention extends Intention {
       parentConditionText = parentCondition.getText();
     }
 
-    final GrStatement childThenBranch = (GrStatement) childStatement.getThenBranch();
+    final GrStatement childThenBranch = childStatement.getThenBranch();
     @NonNls final String statement =
         "if(" + parentConditionText + "&&" + childConditionText + ')' +
             childThenBranch.getText();

@@ -58,13 +58,22 @@ public class RequestHint {
     private final JVMName myDeclaringClassName;
     private final @NonNls String myTargetMethodName;
     private final JVMName myTargetMethodSignature;
+    private boolean myMethodExecuted;
 
     public SmartStepFilter(PsiMethod psiMethod) {
       myDeclaringClassName = JVMNameUtil.getJVMQualifiedName(psiMethod.getContainingClass());
       myTargetMethodName = psiMethod.isConstructor()? "<init>" : psiMethod.getName();
       myTargetMethodSignature = JVMNameUtil.getJVMSignature(psiMethod);
     }
-                  
+
+    public String getTargetMethodName() {
+      return myTargetMethodName;
+    }
+
+    public boolean wasMethodExecuted() {
+      return myMethodExecuted;
+    }
+
     public boolean shouldStopAtLocation(final SuspendContextImpl context) {
       try {
         final StackFrameProxyImpl frameProxy = context.getFrameProxy();
@@ -80,6 +89,7 @@ public class RequestHint {
         if (!signatureMatches(method, myTargetMethodSignature.getName(process))) {
           return false;
         }
+        myMethodExecuted = true;
         final ObjectReference thisObject = frameProxy.thisObject();
         final ReferenceType locationClass = thisObject != null? thisObject.referenceType() : method.declaringType();
         return DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(process), locationClass);
@@ -166,6 +176,11 @@ public class RequestHint {
 
   public int getDepth() {
     return mySkipThisMethod ? StepRequest.STEP_OUT : myDepth;
+  }
+
+  @Nullable
+  public SmartStepFilter getSmartStepFilter() {
+    return myTargetMethodSignature;
   }
 
   public int getNextStepDepth(final SuspendContextImpl context) {

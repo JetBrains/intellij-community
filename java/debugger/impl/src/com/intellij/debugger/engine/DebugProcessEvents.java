@@ -36,8 +36,11 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VMDisconnectedException;
@@ -388,6 +391,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
         myReturnValueWatcher.disable();
       }
       getSuspendManager().voteSuspend(suspendContext);
+      if (hint != null) {
+        final RequestHint.SmartStepFilter smartStepFilter = hint.getSmartStepFilter();
+        if (smartStepFilter != null && !smartStepFilter.wasMethodExecuted()) {
+          ToolWindowManager.getInstance(getProject()).notifyByBalloon(ToolWindowId.DEBUG, MessageType.INFO, "Method <b>" + smartStepFilter.getTargetMethodName() + "()</b> has not been called");
+        }
+      }
     }
   }
 

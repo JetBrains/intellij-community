@@ -24,6 +24,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 public interface GrBlockStatement extends GrStatement {
 
   @NotNull
-  public GrOpenBlock getBlock();
-
+  GrOpenBlock getBlock();
 }

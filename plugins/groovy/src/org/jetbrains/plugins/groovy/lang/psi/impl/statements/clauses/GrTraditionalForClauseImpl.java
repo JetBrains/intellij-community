@@ -19,13 +19,13 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -44,7 +44,7 @@ public class GrTraditionalForClauseImpl extends GroovyPsiElementImpl implements 
     return "Traditional FOR clause";
   }
 
-  public GrVariable getDeclaredVariable() {
+  public GrParameter getDeclaredVariable() {
     return findChildByClass(GrParameter.class);
   }
 
@@ -85,7 +85,7 @@ public class GrTraditionalForClauseImpl extends GroovyPsiElementImpl implements 
   @Nullable
   private ASTNode getFirstSemicolon() {
     for (ASTNode child = getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      if (child.getElementType() == GroovyElementTypes.mSEMI) {
+      if (child.getElementType() == GroovyTokenTypes.mSEMI) {
         return child;
       }
     }
@@ -97,7 +97,7 @@ public class GrTraditionalForClauseImpl extends GroovyPsiElementImpl implements 
   private ASTNode getSecondSemicolon() {
     boolean firstPassed = false;
     for (ASTNode child = getNode().getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      if (child.getElementType() == GroovyElementTypes.mSEMI) {
+      if (child.getElementType() == GroovyTokenTypes.mSEMI) {
         if (firstPassed) {
           return child;
         } else {
@@ -105,6 +105,17 @@ public class GrTraditionalForClauseImpl extends GroovyPsiElementImpl implements 
         }
       }
     }
+    return null;
+  }
+
+  @Override
+  public GrParameter[] getParameters() {
+    final GrParameter declaredVariable = getDeclaredVariable();
+    return declaredVariable == null ? GrParameter.EMPTY_ARRAY : new GrParameter[]{declaredVariable};
+  }
+
+  @Override
+  public GrParameterList getParameterList() {
     return null;
   }
 }

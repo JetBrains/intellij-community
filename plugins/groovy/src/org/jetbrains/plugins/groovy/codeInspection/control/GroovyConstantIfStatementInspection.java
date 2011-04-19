@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -72,7 +71,7 @@ public class GroovyConstantIfStatementInspection extends BaseInspection {
       assert ifStatement != null;
       final GrStatement thenBranch = ifStatement.getThenBranch();
       final GrStatement elseBranch = ifStatement.getElseBranch();
-      final GrExpression condition = (GrExpression) ifStatement.getCondition();
+      final GrExpression condition = ifStatement.getCondition();
       // todo still needs some handling for conflicting declarations
       if (isFalse(condition)) {
         if (elseBranch != null) {
@@ -91,16 +90,15 @@ public class GroovyConstantIfStatementInspection extends BaseInspection {
 
     public void visitIfStatement(GrIfStatement statement) {
       super.visitIfStatement(statement);
-      final GrCondition condition = statement.getCondition();
-      if (!(condition instanceof GrExpression)) {
+      final GrExpression condition = statement.getCondition();
+      if (condition == null) {
         return;
       }
       final GrStatement thenBranch = statement.getThenBranch();
       if (thenBranch == null) {
         return;
       }
-      final GrExpression conditionExpression = (GrExpression) condition;
-      if (isTrue(conditionExpression) || isFalse(conditionExpression)) {
+      if (isTrue(condition) || isFalse(condition)) {
         registerStatementError(statement);
       }
     }

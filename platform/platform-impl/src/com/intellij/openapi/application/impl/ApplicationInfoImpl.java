@@ -29,10 +29,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
+import java.util.*;
 import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExternalizable, ApplicationComponent {
 
@@ -318,6 +318,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       String dateString = buildElement.getAttributeValue(ATTRIBUTE_DATE);
       if (dateString.equals("__BUILD_DATE__")) {
         myBuildDate = new GregorianCalendar();
+        final JarFile bootJar;
+        try {
+          bootJar = new JarFile(PathManager.getHomePath() + File.separator + "lib" + File.separator + "boot.jar");
+          final JarEntry jarEntry = bootJar.entries().nextElement(); // /META-INF is always updated on build
+          myBuildDate.setTime(new Date(jarEntry.getTime()));
+          bootJar.close();
+        } catch (Exception e) {//
+        }
       }
       else {
         myBuildDate = parseDate(dateString);

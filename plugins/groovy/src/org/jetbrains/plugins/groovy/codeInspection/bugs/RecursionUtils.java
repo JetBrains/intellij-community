@@ -167,12 +167,10 @@ class RecursionUtils {
 
   private static boolean ifStatementMayReturnBeforeRecursing(
       GrIfStatement ifStatement, GrMethod method) {
-    GrCondition condition = ifStatement.getCondition();
-    if (!(condition instanceof GrExpression)) {
-      return false;
-    }
-    final GrExpression test = (GrExpression) condition;
-    if (expressionDefinitelyRecurses(test, method)) {
+    GrExpression condition = ifStatement.getCondition();
+    if (condition == null) return false;
+
+    if (expressionDefinitelyRecurses(condition, method)) {
       return false;
     }
     final GrStatement thenBranch = ifStatement.getThenBranch();
@@ -476,9 +474,8 @@ class RecursionUtils {
     }
   }
 
-  private static boolean switchStatementDefinitelyRecurses(
-      GrSwitchStatement switchStatement, GrMethod method) {
-    final GrExpression switchExpression = (GrExpression) switchStatement.getCondition();
+  private static boolean switchStatementDefinitelyRecurses(GrSwitchStatement switchStatement, GrMethod method) {
+    final GrExpression switchExpression = switchStatement.getCondition();
     return expressionDefinitelyRecurses(switchExpression, method);
   }
 
@@ -511,11 +508,10 @@ class RecursionUtils {
 
   private static boolean ifStatementDefinitelyRecurses(
       GrIfStatement ifStatement, GrMethod method) {
-    final GrCondition condition = ifStatement.getCondition();
-    if (!(condition instanceof GrExpression)) {
-      return false;
-    }
-    if (expressionDefinitelyRecurses((GrExpression) condition, method)) {
+    final GrExpression condition = ifStatement.getCondition();
+    if (condition == null) return false;
+
+    if (expressionDefinitelyRecurses(condition, method)) {
       return true;
     }
     final GrStatement thenBranch = ifStatement.getThenBranch();
@@ -527,9 +523,9 @@ class RecursionUtils {
         statementDefinitelyRecurses(elseBranch, method);
   }
 
-  private static boolean forStatementDefinitelyRecurses(
-      GrForStatement forStatement, GrMethod method) {
+  private static boolean forStatementDefinitelyRecurses(GrForStatement forStatement, GrMethod method) {
     final GrForClause clause = forStatement.getClause();
+    if (clause == null) return false;
     final GrVariable var = clause.getDeclaredVariable();
     if (var != null) {
       final GrExpression initializer = var.getInitializerGroovy();

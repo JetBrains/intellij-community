@@ -38,11 +38,11 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author Maxim.Medvedev
  */
 public class CodeBlockGenerationTest extends LightCodeInsightFixtureTestCase {
-  public static final DefaultLightProjectDescriptor GROOVY_17_PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+  public static final DefaultLightProjectDescriptor GROOVY_18_PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
-      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath("$TestUtils.mockGroovy1_7LibraryName!/");
+      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath("$TestUtils.mockGroovy1_8LibraryName!/");
       modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
       modifiableModel.commit();
     }
@@ -51,7 +51,7 @@ public class CodeBlockGenerationTest extends LightCodeInsightFixtureTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return GROOVY_17_PROJECT_DESCRIPTOR;
+    return GROOVY_18_PROJECT_DESCRIPTOR;
   }
 
   @Override
@@ -169,4 +169,7 @@ final class Matcher {
 """)
     doTest()
   }
+
+  void testAsBoolean() {doTest()}
+  void testCharInitializer() {doTest()}
 }
