@@ -225,12 +225,16 @@ public class CompletionServiceImpl extends CompletionService{
 
   public static CompletionPhase getCompletionPhase() {
 //    ApplicationManager.getApplication().assertIsDispatchThread();
-    CompletionPhase phase = ourPhase;
+    CompletionPhase phase = getPhaseRaw();
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.checkCanceled();
     }
     return phase;
+  }
+
+  public static CompletionPhase getPhaseRaw() {
+    return ourPhase;
   }
 
   public CompletionSorterImpl defaultSorter(CompletionParameters parameters, final PrefixMatcher matcher) {

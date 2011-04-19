@@ -594,7 +594,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     for (Pair<Integer, ElementPattern<String>> pair : myRestartingPrefixConditions) {
       int start = pair.first;
       if (caretOffset < start) {
-        LOG.error("caret=" + caretOffset + "; start=" + start);
+        LOG.error("caret=" + caretOffset + "; start=" + start + "; phase=" + CompletionServiceImpl.getPhaseRaw() + "; running=" + isRunning() + "; canceled=" + isCanceled());
       }
       final String newPrefix = text.subSequence(start, caretOffset).toString();
       if (pair.second.accepts(newPrefix)) {
