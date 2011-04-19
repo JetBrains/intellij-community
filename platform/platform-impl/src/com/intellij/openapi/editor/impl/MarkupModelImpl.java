@@ -142,11 +142,11 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   IntervalTreeImpl.IntervalNode addRangeHighlighter(RangeHighlighterEx marker,
-                                                                        int start,
-                                                                        int end,
-                                                                        boolean greedyToLeft,
-                                                                        boolean greedyToRight,
-                                                                        int layer) {
+                                                    int start,
+                                                    int end,
+                                                    boolean greedyToLeft,
+                                                    boolean greedyToRight,
+                                                    int layer) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myHighlighterTree.addInterval(marker, start, end, greedyToLeft, greedyToRight, layer);
   }
