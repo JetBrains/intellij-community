@@ -83,12 +83,12 @@ public class PlainTextFormatter implements InspectionsReportConverter {
     }
 
     try {
-      for (File inspectionResultData : inspectionsResults) {
-        if (inspectionResultData.isDirectory()) {
-          warn("Folder isn't expected here: " + inspectionResultData.getName());
+      for (File inspectionData : inspectionsResults) {
+        if (inspectionData.isDirectory()) {
+          warn("Folder isn't expected here: " + inspectionData.getName());
           continue;
         }
-        final String fileNameWithoutExt = FileUtil.getNameWithoutExtension(inspectionResultData);
+        final String fileNameWithoutExt = FileUtil.getNameWithoutExtension(inspectionData);
         if (InspectionApplication.DESCRIPTIONS.equals(fileNameWithoutExt)) {
           continue;
         }
@@ -108,13 +108,13 @@ public class PlainTextFormatter implements InspectionsReportConverter {
         final SAXBuilder builder = new SAXBuilder();
 
         try {
-          final Document doc = builder.build(inspectionResultData);
+          final Document doc = builder.build(inspectionData);
           final Element root = doc.getRootElement();
 
           final List problems = root.getChildren(PROBLEM_ELEMENT);
 
           // let's count max file path & line_number length to align problem descriptions
-          final int maxFileColonLineLength = getMaxFileColonLineNumLength(inspectionResultData, tool, problems);
+          final int maxFileColonLineLength = getMaxFileColonLineNumLength(inspectionData, tool, problems);
 
           for (Object problem : problems) {
             // Format:
@@ -124,7 +124,7 @@ public class PlainTextFormatter implements InspectionsReportConverter {
             final String filePath = getPath(fileElement);
 
             // skip suppressed results
-            if (resultsIgnored(inspectionResultData, tool)) {
+            if (resultsIgnored(inspectionData, tool)) {
               continue;
             }
 
@@ -143,7 +143,7 @@ public class PlainTextFormatter implements InspectionsReportConverter {
           }
         }
         catch (JDOMException e) {
-          throw new ConversionException("Unknown results format, file = " + inspectionResultData.getPath() + ". Error: " + e.getMessage());
+          throw new ConversionException("Unknown results format, file = " + inspectionData.getPath() + ". Error: " + e.getMessage());
         }
 
         // separator between neighbour inspections
@@ -158,7 +158,7 @@ public class PlainTextFormatter implements InspectionsReportConverter {
           w.close();
         }
         catch (IOException e) {
-          throw new ConversionException("Cannot save inspection results: " + e.getMessage());
+          warn("Cannot save inspection results: " + e.getMessage());
         }
       }
     }
