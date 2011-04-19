@@ -46,7 +46,7 @@ public class PsiClassWriter extends ClassWriter {
     final Sdk projectJdk = ModuleRootManager.getInstance(module).getSdk();
     if (projectJdk == null) return false;
     String versionString = projectJdk.getVersionString();
-    return versionString.contains("1.6") || versionString.contains("6.0");
+    return versionString.contains("1.6") || versionString.contains("6.0") || versionString.contains("1.7") || versionString.contains("7.0");
   }
 
   protected String getCommonSuperClass(final String type1, final String type2) {

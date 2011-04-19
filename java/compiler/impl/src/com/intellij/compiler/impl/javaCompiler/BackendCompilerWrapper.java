@@ -948,7 +948,7 @@ public class BackendCompilerWrapper {
     if (jdk != null) {
       final String versionString = jdk.getVersionString();
       if (versionString != null) {
-        isJDK16 = versionString.contains("1.6") || versionString.contains("6.0");
+        isJDK16 = versionString.contains("1.6") || versionString.contains("6.0") || versionString.contains("1.7") || versionString.contains("7.0");
       }
     }
     return isJDK16;
