@@ -70,12 +70,12 @@ public abstract class MatchingHandler extends MatchPredicate {
     if (nodes2.hasNext() &&
         (handler = context.getPattern().getHandler(nodes.current())).match(patternElement = nodes.current(),nodes2.current(),context)) {
 
+      nodes.advance();
+
       if (shouldAdvanceTheMatchFor(patternElement, nodes2.current())) {
         nodes2.advance();
         skipIfNeccessary(nodes, nodes2, strategy);
       }
-
-      nodes.advance();
       skipIfNeccessary(nodes2, nodes, strategy);
 
       if (nodes.hasNext()) {

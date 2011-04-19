@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.structuralsearch.equivalence.*;
 import com.intellij.structuralsearch.impl.matcher.AbstractMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
@@ -255,7 +256,11 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
     }
     final IElementType elementType = astNode.getElementType();
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
-    return parserDefinition.getStringLiteralElements().contains(elementType);
+    if (parserDefinition != null) {
+      final TokenSet literals = parserDefinition.getStringLiteralElements();
+      return literals.contains(elementType);
+    }
+    return false;
   }
 
   private static boolean canBePatternVariableValue(PsiElement element) {

@@ -297,12 +297,13 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     searchOptions.add(
       UIUtil.createOptionLine(
         new JComponent[]{
+          (JComponent)Box.createHorizontalStrut(8),
           jLabel,
           fileTypes,
-          new Box.Filler(new Dimension(8, 0), new Dimension(8, 0), new Dimension(8, 0)),
+          (JComponent)Box.createHorizontalStrut(8),
           jLabel2,
           dialects,
-          (JComponent)Box.createHorizontalGlue()
+          new Box.Filler(new Dimension(0, 0), new Dimension(Short.MAX_VALUE, 0), new Dimension(Short.MAX_VALUE, 0))
         }
       )
     );
