@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="org.intellij.plugins.intelliLang.AdvancedSettingsUI">
-  <grid id="27dc6" binding="myRoot" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="myRoot" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="562" height="446"/>
+      <xy x="20" y="20" width="562" height="489"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -107,38 +107,41 @@
           </component>
         </children>
       </grid>
-      <vspacer id="5c670">
-        <constraints>
-          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-        </constraints>
-      </vspacer>
-      <grid id="a5863" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="a5863" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
-        <border type="none" title="General Hints"/>
+        <border type="none" title="Performance"/>
         <children>
-          <component id="34215" class="javax.swing.JCheckBox" binding="myAnalyzeReferencesCheckBox">
+          <component id="8aa19" class="javax.swing.JRadioButton" binding="myDfaOff">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="&amp;Do not analyze anything (fast)"/>
+            </properties>
+          </component>
+          <component id="8aa20" class="javax.swing.JRadioButton" binding="myAnalyzeReferences">
+            <constraints>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text value="&amp;Analyze references"/>
             </properties>
           </component>
-          <component id="eae73" class="javax.swing.JCheckBox" binding="myIncludeUncomputableOperandsAsCheckBox">
+          <component id="a0eca" class="javax.swing.JRadioButton" binding="myLookForAssignments">
             <constraints>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Include uncomputable operands as literals"/>
+              <text value="&amp;Look for variable assignments"/>
             </properties>
           </component>
-          <component id="b63a5" class="javax.swing.JCheckBox" binding="myUseDataflowAnalysisIfCheckBox">
+          <component id="1c9a1" class="javax.swing.JRadioButton" binding="myUseDfa">
             <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <selected value="false"/>
@@ -147,6 +150,19 @@
           </component>
         </children>
       </grid>
+      <component id="eae73" class="javax.swing.JCheckBox" binding="myIncludeUncomputableOperandsAsCheckBox">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Convert undefined operands to text in concatenations"/>
+        </properties>
+      </component>
+      <vspacer id="5c670">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+        </constraints>
+      </vspacer>
     </children>
   </grid>
   <buttonGroups>
@@ -154,6 +170,12 @@
       <member id="633b5"/>
       <member id="a7682"/>
       <member id="a7ed5"/>
+    </group>
+    <group name="myPerfomanceGroup">
+      <member id="8aa19"/>
+      <member id="8aa20"/>
+      <member id="1c9a1"/>
+      <member id="a0eca"/>
     </group>
   </buttonGroups>
 </form>
