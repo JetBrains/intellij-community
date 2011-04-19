@@ -93,7 +93,8 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
 
     public boolean canExpand() {
-      return AntConfiguration.getInstance(myProject).getBuildFiles().length != 0;
+      final Project project = myProject;
+      return project != null && AntConfiguration.getInstance(project).getBuildFiles().length != 0;
     }
 
     public void collapseAll() {
@@ -453,7 +454,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       return HelpID.ANT;
     }
     else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-      return myTreeExpander;
+      return myProject != null? myTreeExpander : null;
     }
     else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       final TreePath[] paths = myTree.getSelectionPaths();
