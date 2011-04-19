@@ -29,7 +29,6 @@ import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
-import com.intellij.structuralsearch.impl.matcher.handlers.SimpleHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
@@ -391,7 +390,9 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
     public void visitElement(final PsiElement element) {
       doVisitElement(element);
       if (myGlobalVisitor.getContext().getSearchHelper().doOptimizing()) {
-        if (element instanceof LeafElement && ((LeafElement)element).getElementType() == JSTokenTypes.IDENTIFIER) {
+        if (element instanceof LeafElement &&
+            ((LeafElement)element).getElementType() == JSTokenTypes.IDENTIFIER &&
+             !myGlobalVisitor.getContext().getPattern().isTypedVar(element.getText())) {
           OptimizingSearchHelper helper = myGlobalVisitor.getContext().getSearchHelper();
           boolean added = helper.addWordToSearchInText(element.getText());
           added = helper.addWordToSearchInCode(element.getText()) || added;
