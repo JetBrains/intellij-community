@@ -1,4 +1,4 @@
-from pydev.django_debug import DjangoTemplateFrame, DjangoLineBreakpoint, is_django_render_call, get_template_file_name, get_template_line
+from pydev.django_debug import DjangoTemplateFrame, DjangoLineBreakpoint, is_django_render_call, get_template_file_name, get_template_line, is_django_suspended, suspend_django
 import pydevd_vars
 from pydevd_comm import * #@UnusedWildImport
 from pydevd_constants import * #@UnusedWildImport
@@ -107,15 +107,11 @@ class PyDBFrame:
                         django_breakpoint = django_breakpoints_for_file[template_line]
 
                         if django_breakpoint.is_triggered(frame):
-                            frame = DjangoTemplateFrame(frame)
-
-                            mainDebugger.additional_frames.addAdditionalFrameById(GetThreadId(thread), {id(frame): frame})
+                            frame = suspend_django(self, mainDebugger, thread, frame)
                             flag = True
 
-                            self.setSuspend(thread, CMD_SET_BREAK)
-
-                if not flag:
-                    return self.trace_dispatch
+                #if not flag:
+                #    return self.trace_dispatch
 
 
             #return is not taken into account for breakpoint hit because we'd have a double-hit in this case
@@ -159,17 +155,25 @@ class PyDBFrame:
 
         #step handling. We stop when we hit the right frame
         try:
+            django_stop = False
             if info.pydev_step_cmd == CMD_STEP_INTO:
                 stop = event in ('line', 'return')
 
             elif info.pydev_step_cmd == CMD_STEP_OVER:
-                stop = info.pydev_step_stop is frame and event in ('line', 'return')
+                if is_django_suspended(thread):
+
+                    django_stop = event == 'call' and is_django_render_call(frame)
+
+                    stop = False
+                else:
+                    stop = info.pydev_step_stop is frame and event in ('line', 'return')
 
             elif info.pydev_step_cmd == CMD_STEP_RETURN:
                 stop = event == 'return' and info.pydev_step_stop is frame
 
             elif info.pydev_step_cmd == CMD_RUN_TO_LINE:
                 stop = False
+
                 if event == 'line':
                     #Yes, we can only act on line events (weird hum?)
                     #Note: This code is duplicated at pydevd.py
@@ -193,7 +197,11 @@ class PyDBFrame:
             else:
                 stop = False
 
-            if stop:
+            if django_stop:
+                frame = suspend_django(self, mainDebugger, thread, frame)
+                if frame:
+                    self.doWaitSuspend(thread, frame, event, arg)
+            elif stop:
                 #event is always == line or return at this point
                 if event == 'line':
                     self.setSuspend(thread, info.pydev_step_cmd)

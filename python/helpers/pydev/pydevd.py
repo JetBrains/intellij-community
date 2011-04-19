@@ -690,6 +690,7 @@ class PyDB:
             thread.additionalInfo.pydev_notify_kill = True
 
     def setSuspend(self, thread, stop_reason):
+        thread.additionalInfo.suspend_type = PYTHON_SUSPEND
         thread.additionalInfo.pydev_state = STATE_SUSPEND
         thread.stop_reason = stop_reason
 
