@@ -15,7 +15,6 @@
  */
 package com.siyeh.ipp.varargs;
 
-import com.intellij.lang.StdLanguages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameterList;
@@ -26,9 +25,6 @@ class ConvertVarargParameterToArrayPredicate
         implements PsiElementPredicate {
 
     public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (!StdLanguages.JAVA.equals(element.getLanguage())) {
-            return false;
-        }
         if (!(element instanceof PsiParameterList)) {
             return false;
         }
