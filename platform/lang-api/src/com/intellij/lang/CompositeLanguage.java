@@ -33,6 +33,10 @@ public class CompositeLanguage extends Language{
     super(ID, mimeTypes);
   }
 
+  protected CompositeLanguage(Language baseLanguage,final String ID, final String... mimeTypes) {
+    super(baseLanguage, ID, mimeTypes);
+  }
+
   public void registerLanguageExtension(LanguageFilter filter){
     if(!myFilters.contains(filter)) myFilters.add(filter);
   }
