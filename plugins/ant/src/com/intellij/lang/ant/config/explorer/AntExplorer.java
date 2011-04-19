@@ -139,7 +139,6 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         runSelection(DataManager.getInstance().getDataContext(myTree));
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), WHEN_FOCUSED);
-    myTree.expandRow(0);
     myTree.setLineStyleAngled();
     myAntBuildFilePropertiesAction = new AntBuildFilePropertiesAction(this);
     setToolbar(createToolbarPanel());

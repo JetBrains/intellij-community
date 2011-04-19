@@ -151,7 +151,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   private final ExternalizablePropertyContainer myProjectOptions;
   private final AbstractProperty.AbstractPropertyContainer myAllOptions;
   private final ClassLoaderHolder myClassloaderHolder;
-  private boolean myExpandFirstTime = true;
+  private boolean myShouldExpand = true;
 
   public AntBuildFileImpl(final XmlFile antFile, final AntConfigurationBase configuration) {
     myVFile = antFile.getOriginalFile().getVirtualFile();
@@ -175,8 +175,9 @@ public class AntBuildFileImpl implements AntBuildFileBase {
     myProjectOptions.registerProperty(ADDITIONAL_CLASSPATH, "entry", SinglePathEntry.EXTERNALIZER);
     myProjectOptions.registerProperty(ANT_REFERENCE, AntReference.EXTERNALIZER);
 
-    myAllOptions = new CompositePropertyContainer(new AbstractProperty.AbstractPropertyContainer[]{myWorkspaceOptions, myProjectOptions,
-      GlobalAntConfiguration.getInstance().getProperties(getProject())});
+    myAllOptions = new CompositePropertyContainer(new AbstractProperty.AbstractPropertyContainer[]{
+        myWorkspaceOptions, myProjectOptions, GlobalAntConfiguration.getInstance().getProperties(getProject())
+    });
 
     myClassloaderHolder = new AntBuildFileClassLoaderHolder(myAllOptions);
   }
@@ -248,9 +249,11 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   public boolean shouldExpand() {
-    boolean expandFirstTime = myExpandFirstTime;
-    myExpandFirstTime = false;
-    return expandFirstTime;
+    return myShouldExpand;
+  }
+
+  public void setShouldExpand(boolean expand) {
+    myShouldExpand = expand;
   }
 
   public boolean isTargetVisible(final AntBuildTarget target) {
@@ -324,12 +327,19 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   public void readWorkspaceProperties(final Element parentNode) throws InvalidDataException {
     synchronized (this) {
       myWorkspaceOptions.readExternal(parentNode);
+      final Element expanded = parentNode.getChild("expanded");
+      if (expanded != null) {
+        myShouldExpand = Boolean.valueOf(expanded.getAttributeValue("value"));
+      }
     }
   }
 
   public void writeWorkspaceProperties(final Element parentNode) throws WriteExternalException {
     synchronized (this) {
       myWorkspaceOptions.writeExternal(parentNode);
+      final Element expandedElem = new Element("expanded");
+      expandedElem.setAttribute("value", Boolean.toString(myShouldExpand));
+      parentNode.addContent(expandedElem);
     }
   }
 

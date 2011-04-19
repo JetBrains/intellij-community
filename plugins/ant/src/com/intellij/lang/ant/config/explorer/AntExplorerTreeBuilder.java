@@ -15,11 +15,9 @@
  */
 package com.intellij.lang.ant.config.explorer;
 
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.IndexComparator;
-import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.ide.util.treeView.TreeBuilderUtil;
+import com.intellij.ide.util.treeView.*;
 import com.intellij.lang.ant.config.AntBuildFile;
+import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,6 +26,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
   private final AntConfigurationListener myAntBuildListener;
   private final Project myProject;
   private AntConfiguration myConfig;
+  private ExpandedStateUpdater myExpansionListener;
 
   public AntExplorerTreeBuilder(Project project, JTree tree, DefaultTreeModel treeModel) {
     super(tree, treeModel, new AntExplorerTreeStructure(project), IndexComparator.INSTANCE);
@@ -46,8 +48,11 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
     myAntBuildListener = new ConfigurationListener();
     myConfig = AntConfiguration.getInstance(myProject);
     myConfig.addAntConfigurationListener(myAntBuildListener);
+    myExpansionListener = new ExpandedStateUpdater();
+    tree.addTreeExpansionListener(myExpansionListener);
     initRootNode();
   }
+
 
   public void dispose() {
     final AntConfiguration config = myConfig;
@@ -55,6 +60,14 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
       config.removeAntConfigurationListener(myAntBuildListener);
       myConfig = null;
     }
+    
+    final ExpandedStateUpdater expansionListener = myExpansionListener;
+    final JTree tree = getTree();
+    if (expansionListener != null && tree != null) {
+      tree.removeTreeExpansionListener(expansionListener);
+      myExpansionListener = null;
+    }
+    
     super.dispose();
   }
 
@@ -129,5 +142,27 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
     getTree().setSelectionPaths(EMPTY_TREE_PATH);
     pathsToExpand.clear();
     TreeBuilderUtil.restorePaths(this, pathsToExpand, selectionPaths, true);
+  }
+
+  private class ExpandedStateUpdater implements TreeExpansionListener {
+    public void treeExpanded(TreeExpansionEvent event) {
+      setExpandedState(event, true);
+    }
+
+    public void treeCollapsed(TreeExpansionEvent event) {
+      setExpandedState(event, false);
+    }
+
+    private void setExpandedState(TreeExpansionEvent event, boolean shouldExpand) {
+      final TreePath path = event.getPath();
+      final AbstractTreeUi ui = getUi();
+      final Object lastPathComponent = path.getLastPathComponent();
+      if (lastPathComponent != null) {
+        final Object element = ui.getElementFor(lastPathComponent);
+        if (element instanceof AntBuildFileBase) {
+          ((AntBuildFileBase)element).setShouldExpand(shouldExpand);
+        }
+      }
+    }
   }
 }
