@@ -59,6 +59,7 @@ import java.util.List;
 public class MemberChooser<T extends ClassMember> extends DialogWrapper implements TypeSafeDataProvider {
   protected Tree myTree;
   private DefaultTreeModel myTreeModel;
+  protected JCheckBox[] myCheckboxes;
   private JCheckBox myCopyJavadocCheckbox;
   private JCheckBox myInsertOverrideAnnotationCheckbox;
 
@@ -93,6 +94,14 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
                        boolean allowEmptySelection,
                        boolean allowMultiSelection,
                        @NotNull Project project,
+                       JCheckBox[] checkboxes) {
+    this(elements, allowEmptySelection, allowMultiSelection, project, false, null, checkboxes);
+  }
+
+  public MemberChooser(T[] elements,
+                       boolean allowEmptySelection,
+                       boolean allowMultiSelection,
+                       @NotNull Project project,
                        boolean isInsertOverrideVisible) {
     this(elements, allowEmptySelection, allowMultiSelection, project, isInsertOverrideVisible, null);
   }
@@ -104,6 +113,17 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
                        boolean isInsertOverrideVisible,
                        JComponent headerPanel
                        ) {
+    this(elements, allowEmptySelection, allowMultiSelection, project, isInsertOverrideVisible, headerPanel, null);
+  }
+
+  private MemberChooser(T[] elements,
+                       boolean allowEmptySelection,
+                       boolean allowMultiSelection,
+                       @NotNull Project project,
+                       boolean isInsertOverrideVisible,
+                       JComponent headerPanel,
+                       @Nullable JCheckBox[] checkboxes
+                       ) {
     super(project, true);
     myAllowEmptySelection = allowEmptySelection;
     myAllowMultiSelection = allowMultiSelection;
@@ -111,6 +131,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     myIsInsertOverrideVisible = isInsertOverrideVisible;
     myHeaderPanel = headerPanel;
     myTree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode()));
+    myCheckboxes = checkboxes;
     resetElements(elements);
     init();
   }
@@ -134,12 +155,17 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     doSort();
 
     TreeUtil.expandAll(myTree);
-    myCopyJavadocCheckbox = new NonFocusableCheckBox(IdeBundle.message("checkbox.copy.javadoc"));
-    if (myIsInsertOverrideVisible) {
-      myInsertOverrideAnnotationCheckbox = new NonFocusableCheckBox(IdeBundle.message("checkbox.insert.at.override"));
+
+    if (myCheckboxes == null) {
+      myCopyJavadocCheckbox = new NonFocusableCheckBox(IdeBundle.message("checkbox.copy.javadoc"));
+      if (myIsInsertOverrideVisible) {
+        myInsertOverrideAnnotationCheckbox = new NonFocusableCheckBox(IdeBundle.message("checkbox.insert.at.override"));
+      }
+      myCheckboxes = new JCheckBox[] {myCopyJavadocCheckbox, myInsertOverrideAnnotationCheckbox};
     }
 
     myTree.doLayout();
+    setOKActionEnabled(myElements != null && myElements.length > 0);
   }
 
   /**
@@ -196,25 +222,22 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   protected void doHelpAction() {
   }
 
-  protected List<JComponent> customizeOptionsPanel() {
-    final SmartList<JComponent> list = new SmartList<JComponent>();
-
-    if (myIsInsertOverrideVisible) {
+  protected void customizeOptionsPanel() {
+    if (myInsertOverrideAnnotationCheckbox != null && myIsInsertOverrideVisible) {
       CodeStyleSettings styleSettings = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings();
       myInsertOverrideAnnotationCheckbox.setSelected(styleSettings.INSERT_OVERRIDE_ANNOTATION);
-      list.add(myInsertOverrideAnnotationCheckbox);
     }
-
-    myCopyJavadocCheckbox.setSelected(PropertiesComponent.getInstance().isTrueValue(PROP_COPYJAVADOC));
-    list.add(myCopyJavadocCheckbox);
-    return list;
+    if (myCopyJavadocCheckbox != null) {
+      myCopyJavadocCheckbox.setSelected(PropertiesComponent.getInstance().isTrueValue(PROP_COPYJAVADOC));
+    }
   }
 
   protected JComponent createSouthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
+    customizeOptionsPanel();
     JPanel optionsPanel = new JPanel(new VerticalFlowLayout());
-    for (final JComponent component : customizeOptionsPanel()) {
+    for (final JComponent component : myCheckboxes) {
       optionsPanel.add(component);
     }
 
@@ -349,6 +372,10 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   public JComponent getPreferredFocusedComponent() {
     return myTree;
+  }
+
+  public JCheckBox[] getCheckboxes() {
+    return myCheckboxes;
   }
 
   @Nullable
@@ -530,7 +557,10 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     PropertiesComponent instance = PropertiesComponent.getInstance();
     instance.setValue(PROP_SORTED, Boolean.toString(isSorted()));
     instance.setValue(PROP_SHOWCLASSES, Boolean.toString(myShowClasses));
-    instance.setValue(PROP_COPYJAVADOC, Boolean.toString(myCopyJavadocCheckbox.isSelected()));
+
+    if (myCopyJavadocCheckbox != null) {
+      instance.setValue(PROP_COPYJAVADOC, Boolean.toString(myCopyJavadocCheckbox.isSelected()));
+    }
 
     final Container contentPane = getContentPane();
     if (contentPane != null) {
