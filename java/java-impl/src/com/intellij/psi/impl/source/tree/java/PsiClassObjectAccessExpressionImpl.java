@@ -92,6 +92,12 @@ public class PsiClassObjectAccessExpressionImpl extends ExpressionPsiElement imp
     return "PsiClassObjectAccessExpression:" + getText();
   }
 
+  @Override
+  protected Icon computeBaseIcon(int flags) {
+    return getElementIcon(flags);
+  }
+
+  @NotNull
   public Icon getElementIcon(final int flags) {
     final RowIcon rowIcon = createLayeredIcon(Icons.FIELD_ICON, 0);
     rowIcon.setIcon(Icons.PUBLIC_ICON, 1);
