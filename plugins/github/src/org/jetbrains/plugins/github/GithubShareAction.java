@@ -17,15 +17,20 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.actions.RefreshAction;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
 import git4idea.GitRemote;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.actions.BasicAction;
 import git4idea.actions.GitInit;
 import git4idea.checkin.GitPushUtils;
@@ -199,7 +204,7 @@ public class GithubShareAction extends DumbAwareAction {
       return;
     }
     // In this case we should create sample commit for binding project
-    performFirstCommit(project, root);
+    performFirstCommitIfRequired(project, root);
 
     //git push origin master
     final ProgressManager manager = ProgressManager.getInstance();
@@ -223,7 +228,26 @@ public class GithubShareAction extends DumbAwareAction {
     RefreshAction.doRefresh(project);
   }
 
-  private boolean performFirstCommit(final Project project, final VirtualFile root) {
+  private boolean performFirstCommitIfRequired(final Project project, final VirtualFile root) {
+    final GitVcs gitVcs = GitVcs.getInstance(project);
+    if (gitVcs == null){
+      Messages.showErrorDialog(project, "Cannot find git initialized", "Failed to share");
+      return false;
+    }
+    final VcsOutgoingChangesProvider<CommittedChangeList> provider = gitVcs.getOutgoingChangesProvider();
+    if (provider == null) {
+      Messages.showErrorDialog(project, "Cannot find git initialized", "Failed to share");
+      return false;
+    }
+    try {
+      if (!provider.getOutgoingChanges(root, false).getSecond().isEmpty()){
+        return true;
+      }
+    }
+    catch (VcsException e) {
+      Messages.showErrorDialog(project, e.getMessage(), "Failed to share");
+      return false;
+    }
     final Ref<Exception> exceptionRef = new Ref<Exception>();
     // Creating or modifying readme file
     LOG.info("Touching file 'README' for initial commit");
