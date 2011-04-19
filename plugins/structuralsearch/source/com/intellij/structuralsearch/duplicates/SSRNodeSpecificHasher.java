@@ -102,11 +102,15 @@ public class SSRNodeSpecificHasher extends NodeSpecificHasher {
     }
 
     EquivalenceDescriptorProvider descriptorProvider = EquivalenceDescriptorProvider.getInstance(node);
-    if (descriptorProvider == null) {
-      return 0;
+    if (descriptorProvider != null) {
+      return descriptorProvider.getNodeCost(node);
     }
 
-    return descriptorProvider.getNodeCost(node);
+    if (node instanceof LeafElement && !ourNodeFilter.accepts(node)) {
+      return node.getTextLength() / 5 + 1;
+    }
+
+    return 0;
   }
 
   @Override
@@ -130,7 +134,7 @@ public class SSRNodeSpecificHasher extends NodeSpecificHasher {
   @Override
   public boolean areTreesEqual(@NotNull PsiElement root1, @NotNull PsiElement root2, int discardCost) {
     // todo: support discard cost
-    return new DuplicatesMatchingVisitor(this, mySkippedRoles, ourNodeFilter).match(root1, root2);
+    return new DuplicatesMatchingVisitor(this, mySkippedRoles, ourNodeFilter, discardCost).match(root1, root2);
   }
 
   @Override

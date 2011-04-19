@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.duplicates;
 import com.intellij.dupLocator.DuplocatorSettings;
 import com.intellij.dupLocator.NodeSpecificHasher;
 import com.intellij.dupLocator.treeHash.TreeHashResult;
+import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
@@ -16,13 +17,11 @@ import com.intellij.structuralsearch.impl.matcher.handlers.SkippingHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.SiblingNodeIterator;
+import com.intellij.util.containers.HashMap;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene.Kudelevsky
@@ -32,12 +31,30 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
   private final DuplocatorSettings mySettings;
   private final Set<ChildRole> mySkippedRoles;
   private final NodeFilter myNodeFilter;
+  private final int myDiscardCost;
+  private final SSRTreeHasher myTreeHasher;
+  private final Map<PsiElement, TreeHashResult> myPsiElement2HashAndCost = new HashMap<PsiElement, TreeHashResult>();
 
-  public DuplicatesMatchingVisitor(NodeSpecificHasher nodeSpecificHasher, Set<ChildRole> skippedRoles, NodeFilter nodeFilter) {
+  public DuplicatesMatchingVisitor(NodeSpecificHasher nodeSpecificHasher,
+                                   Set<ChildRole> skippedRoles,
+                                   NodeFilter nodeFilter,
+                                   int discardCost) {
     myNodeSpecificHasher = nodeSpecificHasher;
     mySkippedRoles = skippedRoles;
     mySettings = DuplocatorSettings.getInstance();
     myNodeFilter = nodeFilter;
+    myDiscardCost = discardCost;
+    myTreeHasher = new SSRTreeHasher(null, mySettings) {
+      @Override
+      protected TreeHashResult hash(@NotNull PsiElement root, PsiFragment upper, @NotNull NodeSpecificHasher hasher) {
+        TreeHashResult result = myPsiElement2HashAndCost.get(root);
+        if (result == null) {
+          result = super.hash(root, upper, hasher);
+          myPsiElement2HashAndCost.put(root, result);
+        }
+        return result;
+      }
+    };
   }
 
   @Override
@@ -73,6 +90,13 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
   public boolean match(PsiElement element1, PsiElement element2) {
     if (element1 == null || element2 == null) {
       return element1 == element2;
+    }
+
+    final int cost1 = myTreeHasher.hash(element1, null, myNodeSpecificHasher).getCost();
+    final int cost2 = myTreeHasher.hash(element2, null, myNodeSpecificHasher).getCost();
+
+    if (cost1 < myDiscardCost || cost2 < myDiscardCost) {
+      return true;
     }
 
     final EquivalenceDescriptorProvider descriptorProvider = EquivalenceDescriptorProvider.getInstance(element1);
@@ -151,11 +175,10 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
       return false;
     }
 
-    final SSRTreeHasher hasher = new SSRTreeHasher(null, mySettings);
     final TIntObjectHashMap<List<PsiElement>> hash2element = new TIntObjectHashMap<List<PsiElement>>(elements1.size());
 
     for (PsiElement element : elements1) {
-      final TreeHashResult result = hasher.hash(element, null, myNodeSpecificHasher);
+      final TreeHashResult result = myTreeHasher.hash(element, null, myNodeSpecificHasher);
       if (result != null) {
         final int hash = result.getHash();
 
@@ -169,7 +192,7 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
     }
 
     for (PsiElement element : elements2) {
-      final TreeHashResult result = hasher.hash(element, null, myNodeSpecificHasher);
+      final TreeHashResult result = myTreeHasher.hash(element, null, myNodeSpecificHasher);
       if (result != null) {
         final int hash = result.getHash();
         final List<PsiElement> list = hash2element.get(hash);

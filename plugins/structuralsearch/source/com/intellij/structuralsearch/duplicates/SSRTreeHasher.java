@@ -27,13 +27,24 @@ class SSRTreeHasher extends AbstractTreeHasher {
   private final DuplocatorHashCallback myCallback;
 
   SSRTreeHasher(@Nullable DuplocatorHashCallback callback, DuplocatorSettings settings) {
-    super(callback, -1);
+    super(callback, settings.DISCARD_COST);
     myCallback = callback;
     mySettings = settings;
   }
 
   @Override
   protected TreeHashResult hash(@NotNull PsiElement root, PsiFragment upper, @NotNull NodeSpecificHasher hasher) {
+    final TreeHashResult result = computeHash(root, upper, hasher);
+
+    // todo: try to optimize (ex. compute cost and hash separately)
+    if (result.getCost() < myDiscardCost) {
+      return new TreeHashResult(0, result.getCost(), result.getFragment());
+    }
+
+    return result;
+  }
+
+  private TreeHashResult computeHash(PsiElement root, PsiFragment upper, NodeSpecificHasher hasher) {
     final EquivalenceDescriptorProvider descriptorProvider = EquivalenceDescriptorProvider.getInstance(root);
 
     if (descriptorProvider != null) {
