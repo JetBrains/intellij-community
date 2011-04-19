@@ -15,9 +15,12 @@
  */
 package com.intellij.tasks.trac;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.tasks.impl.BaseRepositoryType;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,5 +52,18 @@ public class TracRepositoryType extends BaseRepositoryType<TracRepository> {
   @Override
   public Class<TracRepository> getRepositoryClass() {
     return TracRepository.class;
+  }
+
+  @Override
+  protected int getFeatures() {
+    return BASIC_HTTP_AUTHORIZATION;
+  }
+
+  @NotNull
+  @Override
+  public TaskRepositoryEditor createEditor(TracRepository repository,
+                                           Project project,
+                                           Consumer<TracRepository> changeListener) {
+    return new TracRepositoryEditor(project, repository, changeListener);
   }
 }

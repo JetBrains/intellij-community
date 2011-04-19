@@ -15,31 +15,50 @@
  */
 package com.intellij.tasks.trac;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskType;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.xmlrpc.*;
+import com.intellij.util.xmlb.annotations.Tag;
+import org.apache.xmlrpc.CommonsXmlRpcTransport;
+import org.apache.xmlrpc.XmlRpcClient;
+import org.apache.xmlrpc.XmlRpcException;
+import org.apache.xmlrpc.XmlRpcRequest;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
  */
-public class TracRepository extends BaseRepositoryImpl implements XmlRpcTransportFactory {
+@Tag("Trac")
+@SuppressWarnings({"UseOfObsoleteCollectionType", "unchecked"})
+public class TracRepository extends BaseRepositoryImpl {
+
+  private String myDefaultSearch = "status!=closed&owner={username}&summary~={query}";
 
   @Override
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
+    Transport transport = new Transport();
+    return getIssues(query, max, transport);
+  }
+
+  private Task[] getIssues(String query, int max, final Transport transport) throws Exception {
     final XmlRpcClient client = getRpcClient();
-    Object[] result = (Object[])client.execute("ticket.query", new Vector<Object>(Arrays.asList(query == null ? "" : query)));
+    String search = myDefaultSearch + "&max=" + max;
+    if (query != null) {
+      search = search.replace("{query}", query);
+    }
+    search = search.replace("{username}", getUsername());
+    XmlRpcRequest request = new XmlRpcRequest("ticket.query", new Vector<Object>(Arrays.asList(search)));
+    Vector<Object> result = (Vector<Object>)client.execute(request, transport);
 
     if (result == null) throw new Exception("Cannot connect to " + getUrl());
 
@@ -47,7 +66,7 @@ public class TracRepository extends BaseRepositoryImpl implements XmlRpcTranspor
       @Override
       public Task fun(Object o) {
         try {
-          return getTask((Integer)o, client);
+          return getTask((Integer)o, client, transport);
         }
         catch (Exception e) {
           return null;
@@ -58,23 +77,65 @@ public class TracRepository extends BaseRepositoryImpl implements XmlRpcTranspor
   }
 
   private XmlRpcClient getRpcClient() throws MalformedURLException {
-    return new XmlRpcClient(new URL(getUrl()), this);
+    return new XmlRpcClient(new URL(getUrl()));
   }
 
   @Override
   public Task findTask(String id) throws Exception {
-    return getTask(Integer.parseInt(id), getRpcClient());
+    return getTask(Integer.parseInt(id), getRpcClient(), new Transport());
   }
 
-  private static Task getTask(int id, XmlRpcClient client) throws IOException, XmlRpcException {
-    Object response = client.execute("ticket.get", new Vector(Arrays.asList(id)));
+  public String getDefaultSearch() {
+    return myDefaultSearch;
+  }
+
+  public void setDefaultSearch(String defaultSearch) {
+    myDefaultSearch = defaultSearch;
+  }
+
+  @Nullable
+  private static Task getTask(int id, XmlRpcClient client, Transport transport) throws IOException, XmlRpcException {
+    XmlRpcRequest request = new XmlRpcRequest("ticket.get", new Vector(Arrays.asList(id)));
+    Object response = client.execute(request, transport);
+    if (response == null) return null;
+    Vector<Object> vector = (Vector<Object>)response;
     LocalTaskImpl task = new LocalTaskImpl();
+    task.setId(vector.get(0).toString());
+    task.setCreated((Date)vector.get(1));
+    task.setUpdated((Date)vector.get(2));
+
+    Hashtable<String, String> map = (Hashtable<String, String>)vector.get(3);
+    task.setSummary(map.get("summary"));
+
+    TaskType taskType = TaskType.OTHER;
+    String type = map.get("type");
+    if ("Feature".equals(type)) taskType = TaskType.FEATURE;
+    else if ("Bug".equals(type)) taskType = TaskType.BUG;
+    else if ("Exception".equals(type)) taskType = TaskType.EXCEPTION;
+    task.setType(taskType);
+
+    task.setIssue(true);
     return task;
   }
 
   @Override
-  public void testConnection() throws Exception {
-    getIssues("", 0, 0);
+  public CancellableConnection createCancellableConnection() {
+
+    return new CancellableConnection() {
+
+      Transport myTransport;
+
+      @Override
+      protected void doTest() throws Exception {
+        myTransport = new Transport();
+        getIssues("", 1, myTransport);
+      }
+
+      @Override
+      public void cancel() {
+        myTransport.cancel();
+      }
+    };
   }
 
   @Override
@@ -82,25 +143,35 @@ public class TracRepository extends BaseRepositoryImpl implements XmlRpcTranspor
     return new TracRepository(this);
   }
 
+  @SuppressWarnings({"UnusedDeclaration"})
+  public TracRepository() {
+    // for serialization
+  }
+
   public TracRepository(TracRepositoryType repositoryType) {
     super(repositoryType);
+    setUrl("http://myserver.com/login/rpc");
+    myUseHttpAuthentication = true;
   }
 
   private TracRepository(TracRepository other) {
     super(other);
+    myDefaultSearch = other.myDefaultSearch;
   }
 
-  @Override
-  public XmlRpcTransport createTransport() throws XmlRpcClientException {
-    try {
-      return new CommonsXmlRpcTransport(new URL(getUrl()), getHttpClient());
+  private class Transport extends CommonsXmlRpcTransport {
+    public Transport() throws MalformedURLException {
+      super(new URL(getUrl()), getHttpClient());
     }
-    catch (MalformedURLException e) {
-      throw new XmlRpcClientException(e.getMessage(), e);
+
+    void cancel() {
+      method.abort();
     }
   }
 
+  @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
   @Override
-  public void setProperty(String propertyName, Object value) {
+  public boolean equals(Object o) {
+    return super.equals(o) && Comparing.equal(((TracRepository)o).getDefaultSearch(), getDefaultSearch());
   }
 }
