@@ -278,18 +278,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   private static String formatStructuredDocString(StructuredDocString docString) {
     StringBuilder result = new StringBuilder();
-    final List<String> parameters = docString.getParameters();
-    if (parameters.size() > 0) {
-      result.append("<br><b>Parameters:</b><br>");
-      for (String parameter : parameters) {
-        result.append("<b>").append(parameter).append("</b>: ").append(docString.getParamDescription(parameter));
-        final String paramType = docString.getParamType(parameter);
-        if (paramType != null) {
-          result.append(" <i>Type: ").append(paramType).append("</i>");
-        }
-        result.append("<br>");
-      }
-    }
+    formatParameterDescriptions(docString, result, false);
+    formatParameterDescriptions(docString, result, true);
 
     final String returnDescription = docString.getReturnDescription();
     final String returnType = docString.getReturnType();
@@ -312,6 +302,24 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     }
 
     return result.toString();
+  }
+
+  private static void formatParameterDescriptions(StructuredDocString docString,
+                                                  StringBuilder result,
+                                                  boolean keyword) {
+    List<String> parameters = keyword ? docString.getKeywordArguments() : docString.getParameters();
+    if (parameters.size() > 0) {
+      result.append("<br><b>").append(keyword ? "Keyword arguments:" : "Parameters").append("</b><br>");
+      for (String parameter : parameters) {
+        final String description = keyword ? docString.getKeywordArgumentDescription(parameter) : docString.getParamDescription(parameter);
+        result.append("<b>").append(parameter).append("</b>: ").append(description);
+        final String paramType = docString.getParamType(parameter);
+        if (paramType != null) {
+          result.append(" <i>Type: ").append(paramType).append("</i>");
+        }
+        result.append("<br>");
+      }
+    }
   }
 
   // provides ctrl+Q doc

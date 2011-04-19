@@ -1,6 +1,5 @@
 package com.jetbrains.python.documentation;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,7 +15,6 @@ import java.util.Map;
  */
 public abstract class StructuredDocString {
   protected final String myDescription;
-  protected final List<String> myParameters = Lists.newArrayList();
   protected final Map<String, String> mySimpleTagValues = Maps.newHashMap();
   protected final Map<String, Map<String, String>> myArgTagValues = Maps.newHashMap();
 
@@ -72,16 +70,19 @@ public abstract class StructuredDocString {
         myArgTagValues.put(tagName, argValues);
       }
       argValues.put(arg, value);
-      if (tagName.equals("param")) {
-        myParameters.add(arg);
-      }
     }
     return index;
   }
 
   @Nullable
-  public String getTagValue(String tagName) {
-    return mySimpleTagValues.get(tagName);
+  public String getTagValue(String... tagNames) {
+    for (String tagName : tagNames) {
+      final String value = mySimpleTagValues.get(tagName);
+      if (value != null) {
+        return value;
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -111,9 +112,8 @@ public abstract class StructuredDocString {
     return Collections.emptyList();
   }
 
-  public List<String> getParameters() {
-    return myParameters;
-  }
+  public abstract List<String> getParameters();
+  public abstract List<String> getKeywordArguments();
 
   @Nullable
   public abstract String getReturnType();
@@ -126,6 +126,7 @@ public abstract class StructuredDocString {
 
   @Nullable
   public abstract String getParamDescription(String paramName);
+  public abstract String getKeywordArgumentDescription(String paramName);
 
   public abstract List<String> getRaisedExceptions();
 
