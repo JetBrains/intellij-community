@@ -171,4 +171,5 @@ final class Matcher {
   }
 
   void testAsBoolean() {doTest()}
+  void testCharInitializer() {doTest()}
 }

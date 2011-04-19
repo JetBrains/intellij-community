@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SubtypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
@@ -536,7 +537,17 @@ public class ExpressionGenerator extends Generator {
     else {
       value = literal.getValue();
     }
-    if (value instanceof String) {
+
+    boolean isChar = false;
+    for (TypeConstraint constraint : constraints) {
+      if (constraint instanceof SubtypeConstraint && TypesUtil.unboxPrimitiveTypeWrapper(constraint.getDefaultType()) == PsiType.CHAR) {
+        isChar = true;
+      }
+    }
+    if (isChar) {
+      builder.append('\'').append(StringUtil.escapeQuotes(String.valueOf(value))).append('\'');
+    }
+    else if (value instanceof String) {
       builder.append('"').append(StringUtil.escapeQuotes((String)value)).append('"');
     }
     else {
