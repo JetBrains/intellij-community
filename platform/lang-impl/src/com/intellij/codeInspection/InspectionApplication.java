@@ -34,6 +34,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -59,6 +60,7 @@ import java.util.*;
 public class InspectionApplication {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionApplication");
 
+  public InspectionToolCmdlineOptionHelpProvider myHelpProvider = null;
   public String myProjectPath = null;
   public String myOutPath = null;
   public String mySourceDirectory = null;
@@ -67,6 +69,7 @@ public class InspectionApplication {
   public boolean myRunGlobalToolsOnly = false;
   private Project myProject;
   private int myVerboseLevel = 0;
+  public String myOutputFormat = null;
 
   public boolean myErrorCodeRequired = true;
   
@@ -76,9 +79,9 @@ public class InspectionApplication {
   @NonNls public static final String XML_EXTENSION = ".xml";
 
   public void startup() {
-    if (myProjectPath == null || myOutPath == null || myProfileName == null) {
-      logError(myProjectPath + myOutPath + myProfileName);
-      InspectionMain.printHelp();
+    if (myProjectPath == null || myProfileName == null) {
+      logError(myProjectPath + myProfileName);
+      printHelp();
     }
 
     final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
@@ -102,13 +105,21 @@ public class InspectionApplication {
     });
   }
 
+  private void printHelp() {
+    assert myHelpProvider != null;
+
+    myHelpProvider.printHelpAndExit();
+  }
+
   private void run() {
+
+    File tmpDir = null;
     try {
       myProjectPath = myProjectPath.replace(File.separatorChar, '/');
       VirtualFile vfsProject = LocalFileSystem.getInstance().findFileByPath(myProjectPath);
       if (vfsProject == null) {
         logError(InspectionsBundle.message("inspection.application.file.cannot.be.found", myProjectPath));
-        InspectionMain.printHelp();
+        printHelp();
       }
 
       logMessage(1, InspectionsBundle.message("inspection.application.opening.project"));
@@ -174,7 +185,7 @@ public class InspectionApplication {
         VirtualFile vfsDir = LocalFileSystem.getInstance().findFileByPath(mySourceDirectory);
         if (vfsDir == null) {
           logError(InspectionsBundle.message("inspection.application.directory.cannot.be.found", mySourceDirectory));
-          InspectionMain.printHelp();
+          printHelp();
         }
 
         PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(vfsDir);
@@ -187,13 +198,38 @@ public class InspectionApplication {
         logMessageLn(1, InspectionsBundle.message("inspection.application.chosen.profile.log message", inspectionProfile.getName()));
       }
 
+      final InspectionsReportConverter reportConverter = getReportConverter(myOutputFormat);
+      if (reportConverter == null && myOutputFormat.endsWith(".xsl")) {
+        // TODO: xslt output format support
+        throw new UnsupportedOperationException("Not implemented.");
+      }
+
+      final String resultsDataPath;
+      if ((reportConverter == null || !reportConverter.useTmpDirForRawData()) // use default xml converter(if null( or don't store default xml report in tmp dir
+          && myOutPath != null) {  // and don't use STDOUT stream
+        resultsDataPath = myOutPath;
+      }
+      else {
+        try {
+          tmpDir = FileUtil.createTempDirectory("inspections", "data");
+          resultsDataPath = tmpDir.getPath();
+        }
+        catch (IOException e) {
+          LOG.error(e);
+          System.err.println("Cannot create tmp directory.");
+          System.exit(1);
+          return;
+        }
+      }
+
+      final List<File> inspectionsResults = new ArrayList<File>();
       ProgressManager.getInstance().runProcess(new Runnable() {
         public void run() {
           if (!InspectionManagerEx.canRunInspections(myProject, false)) {
             if (myErrorCodeRequired) System.exit(1);
             return;
           }
-          inspectionContext.launchInspectionsOffline(scope, myOutPath, myRunGlobalToolsOnly, im);
+          inspectionContext.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, im, inspectionsResults);
           logMessageLn(1, "\n" +
                           InspectionsBundle.message("inspection.capitalized.done") +
                           "\n");
@@ -238,19 +274,48 @@ public class InspectionApplication {
           logMessageLn(2, text);
         }
       });
-      describeInspections(myOutPath + File.separatorChar + DESCRIPTIONS + XML_EXTENSION,
+      final String descriptionsFile = resultsDataPath + File.separatorChar + DESCRIPTIONS + XML_EXTENSION;
+      describeInspections(descriptionsFile,
                           myRunWithEditorSettings ? null : inspectionProfile.getName());
+      inspectionsResults.add(new File(descriptionsFile));
+      // convert report
+      if (reportConverter != null) {
+        try {
+          reportConverter.convert(resultsDataPath, myOutPath, inspectionContext.getTools(), inspectionsResults);
+        }
+        catch (InspectionsReportConverter.ConversionException e) {
+          logError(e.getMessage());
+          printHelp();
+        }
+      }
     }
     catch (IOException e) {
       LOG.error(e);
       logError(e.getMessage());
-      InspectionMain.printHelp();
+      printHelp();
     }
     catch (Throwable e) {
       LOG.error(e);
       logError(e.getMessage());
       if (myErrorCodeRequired) System.exit(1);
     }
+    finally {
+      // delete tmp dir
+      if (tmpDir != null) {
+        FileUtil.delete(tmpDir);
+      }
+    }
+  }
+
+
+  @Nullable
+  private InspectionsReportConverter getReportConverter(@Nullable final String outputFormat) {
+    for (InspectionsReportConverter converter : InspectionsReportConverter.EP_NAME.getExtensions()) {
+      if (converter.getFormatName().equals(outputFormat)) {
+        return converter;
+      }
+    }
+    return null;
   }
 
   private ConversionListener createConversionListener() {

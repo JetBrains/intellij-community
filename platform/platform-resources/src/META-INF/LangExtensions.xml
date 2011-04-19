@@ -620,4 +620,6 @@
   <refactoring.elementListenerProvider implementation="com.intellij.execution.impl.RunConfigurationRefactoringElementListenerProvider"/>
 
   <keymapExtension implementation="com.intellij.tools.ToolKeymapExtension"/>
+
+  <inspectionsReportConverter implementation="com.intellij.codeInspection.ex.PlainTextFormatter" />
 </extensions>
