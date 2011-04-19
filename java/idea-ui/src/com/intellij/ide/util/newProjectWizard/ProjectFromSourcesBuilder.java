@@ -19,6 +19,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.importProject.LibraryDescriptor;
 import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ModuleInsight;
+import com.intellij.ide.util.newProjectWizard.modes.ImportImlMode;
+import com.intellij.ide.util.projectWizard.ExistingModuleLoader;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
@@ -131,7 +133,14 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
         try {
           final ModifiableModuleModel moduleModel = model != null ? model : ModuleManager.getInstance(project).getModifiableModel();
           for (final ModuleDescriptor moduleDescriptor : myChosenModules) {
-            final Module module = createModule(project, moduleDescriptor, sourceRootToPrefixMap, projectLibs, moduleModel);
+            final Module module;
+            if (moduleDescriptor.isReuseExistingElement()) {
+              final ExistingModuleLoader moduleLoader = ImportImlMode.setUpLoader(FileUtil.toSystemIndependentName(moduleDescriptor.computeModuleFilePath()));
+              module = moduleLoader.createModule(moduleModel);
+            }
+            else {
+              module = createModule(project, moduleDescriptor, sourceRootToPrefixMap, projectLibs, moduleModel);
+            }
             result.add(module);
             descriptorToModuleMap.put(moduleDescriptor, module);
           }

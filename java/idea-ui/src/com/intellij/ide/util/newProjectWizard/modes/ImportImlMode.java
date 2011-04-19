@@ -66,8 +66,11 @@ public class ImportImlMode extends WizardMode {
   }
 
   public ProjectBuilder getModuleBuilder() {
+    return setUpLoader(FileUtil.toSystemIndependentName(myModulePathFieldPanel.getText().trim()));
+  }
+
+  public static ExistingModuleLoader setUpLoader(final String moduleFilePath) {
     final ExistingModuleLoader moduleLoader = new ExistingModuleLoader();
-    final String moduleFilePath = FileUtil.toSystemIndependentName(myModulePathFieldPanel.getText().trim());
     moduleLoader.setModuleFilePath(moduleFilePath);
     final int startIndex = moduleFilePath.lastIndexOf('/');
     final int endIndex = moduleFilePath.lastIndexOf(".");
