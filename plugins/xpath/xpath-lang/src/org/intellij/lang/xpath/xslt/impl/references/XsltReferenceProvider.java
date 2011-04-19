@@ -4,6 +4,7 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
@@ -19,6 +20,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex;
@@ -26,11 +28,18 @@ import org.intellij.lang.xpath.xslt.psi.*;
 import org.intellij.lang.xpath.xslt.util.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class XsltReferenceProvider extends PsiReferenceProvider {
   private static final Key<CachedValue<PsiReference[]>> CACHED_XSLT_REFS = Key.create("CACHED_XSLT_REFS");
 
   private final CachedValuesManager myCacheManager;
   private final XsltElementFactory myXsltElementFactory = XsltElementFactory.getInstance();
+
+  private static final Pattern ELEMENT_PATTERN = Pattern.compile("(?:(\\w+):)?(?:\\w+|\\*)");
+  private static final Pattern PREFIX_PATTERN = Pattern.compile("(?:^|\\s)(\\w+)");
 
   public XsltReferenceProvider(Project project) {
     myCacheManager = CachedValuesManager.getManager(project);
@@ -128,6 +137,17 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
         }
       } else if (XsltSupport.isMode(attribute)) {
         psiReferences = ModeReference.create(attribute, XsltSupport.isTemplate(tag, false));
+      } else if ((attribute.getLocalName().equals("extension-element-prefixes") ||
+                  attribute.getLocalName().equals("exclude-result-prefixes")) && XsltSupport.isXsltRootTag(tag)) {
+        psiReferences = createPrefixReferences(attribute, PREFIX_PATTERN);
+      } else if (attribute.getLocalName().equals("stylesheet-prefix") && tag.getLocalName().equals("namespace-alias")) {
+        psiReferences = createPrefixReferences(attribute, PREFIX_PATTERN);
+      } else if ("elements".equals(attribute.getLocalName())) {
+        if (("strip-space".equals(tag.getLocalName()) || "preserve-space".equals(tag.getLocalName()))) {
+          psiReferences = createPrefixReferences(attribute, ELEMENT_PATTERN);
+        } else {
+          psiReferences = PsiReference.EMPTY_ARRAY;
+        }
       } else {
         psiReferences = PsiReference.EMPTY_ARRAY;
       }
@@ -192,6 +212,24 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
         return XsltIncludeIndex.isReachableFrom(myFile, xmlFile);
       }
     }
+  }
+
+  private static PsiReference[] createPrefixReferences(XmlAttribute attribute, Pattern pattern) {
+    final Matcher matcher = pattern.matcher(attribute.getValue());
+
+    if (matcher.find()) {
+      final List<PsiReference> refs = new SmartList<PsiReference>();
+      do {
+        final int start = matcher.start(1);
+        if (start >= 0) {
+          refs.add(new PrefixReference(attribute, TextRange.create(start, matcher.end(1))));
+        }
+      }
+      while (matcher.find());
+
+      return refs.toArray(new PsiReference[refs.size()]);
+    }
+    return PsiReference.EMPTY_ARRAY;
   }
 
   private static boolean isInsideUnnamedTemplate(XmlTag tag) {

@@ -18,7 +18,6 @@ package org.intellij.lang.xpath.xslt.impl;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
@@ -28,6 +27,7 @@ import org.intellij.lang.xpath.xslt.impl.references.PrefixReference;
 import org.intellij.lang.xpath.xslt.impl.references.XsltReferenceProvider;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.patterns.XmlPatterns.xmlAttribute;
 import static com.intellij.patterns.XmlPatterns.xmlTag;
 
@@ -37,7 +37,9 @@ import static com.intellij.patterns.XmlPatterns.xmlTag;
 public class XsltReferenceContributor extends PsiReferenceContributor {
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(
-            PlatformPatterns.psiElement(XmlAttributeValue.class).and(new FilterPattern(new XsltAttributeFilter())),
+            PlatformPatterns.psiElement(XmlAttributeValue.class).withParent(xmlAttribute().withLocalName(string().oneOf(
+              "name", "href", "mode", "elements", "exclude-result-prefixes", "extension-element-prefixes", "stylesheet-prefix"
+            )).withParent(xmlTag().withNamespace(XsltSupport.XSLT_NS))),
             new XsltReferenceProvider(registrar.getProject()));
 
 // TODO: 1. SchemaReferencesProvider doesn't know about "as" attribute / 2. what to do with non-schema types (xs:yearMonthDuretion, xs:dayTimeDuration)?
