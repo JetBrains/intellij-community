@@ -48,6 +48,25 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "def '_T1('_T2*) {'_T3+}", 2);
   }
 
+  public void test3() throws Exception {
+    String s = "public class C implements I1, I2 {\n" +
+               "  void f() {\n" +
+               "    def a = 1;\n" +
+               "    def int b = 2;\n" +
+               "  }\n" +
+               "}";
+
+    doTest(s, "class $name$", 1);
+    doTest(s, "class $name$ implements I1, I2", 1);
+    doTest(s, "class $name$ implements $interface$", 1);
+    doTest(s, "class '_T1 implements '_T2*", 1);
+    doTest(s, "class '_T1 implements '_T2+", 1);
+    doTest(s, "class $name$ implements I2, I1", 1);
+    doTest(s, "class C implements I1, I2 {}", 1);
+    doTest(s, "def a = 1;\n def b = 2;", 1);
+    doTest(s, "def a = 1\n def b = 2", 1);
+  }
+
   private void doTest(String source,
                       String pattern,
                       int expectedOccurences) {

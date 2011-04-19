@@ -51,4 +51,8 @@ public class GroovyDuplicatesTest1 extends DuplicatesTestCase {
     doTest("grdups4.groovy", true, true, true, 1, "_0", 8);
     doTest("grdups4.groovy", true, true, false, 1, "_1", 8);
   }
+
+  public void test5() throws Exception {
+    doTest("grdups5.groovy", true, true, true, 1, "", 10);
+  }
 }

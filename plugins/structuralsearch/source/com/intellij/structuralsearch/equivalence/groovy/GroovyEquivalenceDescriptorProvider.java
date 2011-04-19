@@ -1,7 +1,6 @@
 package com.intellij.structuralsearch.equivalence.groovy;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.structuralsearch.equivalence.ChildRole;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptor;
@@ -18,6 +17,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 
@@ -25,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
  * @author Eugene.Kudelevsky
  */
 public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorProvider {
-  private static final IElementType[] VARIABLE_DELIMETERS = {GroovyTokenTypes.mCOMMA, GroovyTokenTypes.mSEMI};
+  private static final TokenSet VARIABLE_DELIMETERS = TokenSet.create(GroovyTokenTypes.mCOMMA, GroovyTokenTypes.mSEMI);
   private static final TokenSet IGNORED_TOKENS = TokenSet.orSet(TokenSets.WHITE_SPACES_OR_COMMENTS, TokenSets.SEPARATORS);
 
   @Override
@@ -65,6 +66,21 @@ public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorPr
         .optionallyInPattern(m.getBlock())
         .role(m.getNameIdentifierGroovy(), ChildRole.FUNCTION_NAME);
     }
+    else if (e instanceof GrTypeDefinitionBody) {
+      final GrTypeDefinitionBody b = (GrTypeDefinitionBody)e;
+      return builder
+        .inAnyOrder(b.getFields())
+        .inAnyOrder(b.getGroovyMethods())
+        .inAnyOrder(b.getInitializers())
+        .inAnyOrder(b.getInnerClasses());
+    }
+    else if (e instanceof GrTypeDefinition) {
+      GrTypeDefinition d = (GrTypeDefinition)e;
+      return builder.element(d.getNameIdentifierGroovy())
+        .optionallyInPattern(d.getExtendsClause())
+        .optionallyInPattern(d.getImplementsClause())
+        .optionallyInPattern(d.getBody());
+    }
     else if (e instanceof GrForInClause) {
       final GrForInClause f = (GrForInClause)e;
       return builder
@@ -85,7 +101,7 @@ public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorPr
 
   @NotNull
   @Override
-  public IElementType[] getVariableDelimeters() {
+  public TokenSet getVariableDelimeters() {
     return VARIABLE_DELIMETERS;
   }
 
