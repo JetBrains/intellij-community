@@ -53,7 +53,7 @@ public class PyTypeParser {
     }
 
     final PsiFile anchorFile = anchor.getContainingFile();
-    if (anchor instanceof PyFile) {
+    if (anchorFile instanceof PyFile) {
       final PyClass aClass = ((PyFile)anchorFile).findTopLevelClass(type);
       if (aClass != null) {
         return new PyClassType(aClass, false);
