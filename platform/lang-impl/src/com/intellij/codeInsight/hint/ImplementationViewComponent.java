@@ -36,14 +36,13 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiBinaryFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
@@ -95,9 +94,19 @@ public class ImplementationViewComponent extends JPanel {
 
   private static class FileDescriptor {
     public final PsiFile myFile;
+    public final String myElementPresentation;
 
-    public FileDescriptor(PsiFile file) {
+    public FileDescriptor(PsiFile file, PsiElement element) {
       myFile = file;
+      myElementPresentation = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : null;
+    }
+
+    public String getPresentableName(VirtualFile vFile) {
+      final String presentableName = vFile.getPresentableName();
+      if (myElementPresentation == null || Comparing.strEqual(presentableName, myElementPresentation + "." + vFile.getExtension())) {
+        return presentableName;
+      }
+      return presentableName + " (" + myElementPresentation + ")";
     }
   }
 
@@ -108,7 +117,7 @@ public class ImplementationViewComponent extends JPanel {
     for (PsiElement element : elements) {
       PsiFile file = getContainingFile(element);
       if (file == null) continue;
-      files.add(new FileDescriptor(file));
+      files.add(new FileDescriptor(file, element));
       candidates.add(element.getNavigationElement());
     }
     myElements = PsiUtilBase.toPsiElementArray(candidates);
@@ -181,7 +190,7 @@ public class ImplementationViewComponent extends JPanel {
           final VirtualFile vFile = file.getVirtualFile();
           setForeground(FileStatusManager.getInstance(project).getStatus(vFile).getColor());
           //noinspection ConstantConditions
-          setText(vFile.getPresentableName());
+          setText(value.getPresentableName(vFile));
         }
       });
 

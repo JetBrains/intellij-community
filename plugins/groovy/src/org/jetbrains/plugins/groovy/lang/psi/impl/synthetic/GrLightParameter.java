@@ -92,4 +92,9 @@ public class GrLightParameter extends LightParameter implements GrParameter {
   public void acceptChildren(GroovyElementVisitor visitor) {
 
   }
+
+  @Override
+  public boolean isValid() {
+    return getDeclarationScope().isValid();
+  }
 }

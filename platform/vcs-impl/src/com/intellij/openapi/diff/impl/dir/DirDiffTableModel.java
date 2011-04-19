@@ -120,6 +120,7 @@ public class DirDiffTableModel extends AbstractTableModel {
     return "Diff for " + mySrc.getPath() + " and " + myTrg.getPath();
   }
 
+  @Nullable
   public DirDiffElement getElementAt(int index) {
     return 0 <= index && index < myElements.size() ? myElements.get(index) : null;
   }

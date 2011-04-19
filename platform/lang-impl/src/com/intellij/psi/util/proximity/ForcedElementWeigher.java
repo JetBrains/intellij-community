@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,31 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.api.types;
+package com.intellij.psi.util.proximity;
 
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Maxim.Medvedev
- */
-public interface GrClosureSignature {
-  @NotNull PsiSubstitutor getSubstitutor();
-
-  @NotNull
-  GrClosureParameter[] getParameters();
-
-  int getParameterCount();
-
-  boolean isVarargs();
+* User: anna
+* Date: 4/19/11
+*/
+public interface ForcedElementWeigher {
+  ExtensionPointName<ForcedElementWeigher> EP_NAME = ExtensionPointName.create("com.intellij.forcedElementWeigher");
 
   @Nullable
-  PsiType getReturnType();
-
-  @Nullable
-  GrClosureSignature curry(int count);
-
-  boolean isValid();
+  Comparable getForcedWeigh(PsiElement element);
 }

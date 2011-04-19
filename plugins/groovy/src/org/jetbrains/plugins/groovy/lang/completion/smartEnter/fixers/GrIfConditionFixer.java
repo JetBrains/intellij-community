@@ -15,15 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers;
 
-import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.GrFixer;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -36,7 +35,7 @@ public class GrIfConditionFixer implements GrFixer {
       final GrIfStatement ifStatement = (GrIfStatement) psiElement;
       final PsiElement rParen = ifStatement.getRParenth();
       final PsiElement lParen = ifStatement.getLParenth();
-      final GrCondition condition = ifStatement.getCondition();
+      final GrExpression condition = ifStatement.getCondition();
 
       if (condition == null) {
         if (lParen == null || rParen == null) {

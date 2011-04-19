@@ -46,7 +46,7 @@ def constructElementTypeArg(def psiType) {
   def typeText = psiType.canonicalText ?: psiType.presentableText
   if (!typeText || typeText == 'null') return ""
   def arg = extractTypeParameter(typeText)
-  if (!arg) return ""
+  if (!arg || arg == "null") return ""
   return "<$arg>"
 }
 

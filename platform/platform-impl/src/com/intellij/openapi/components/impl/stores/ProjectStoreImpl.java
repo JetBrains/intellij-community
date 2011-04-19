@@ -36,10 +36,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
@@ -52,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -166,11 +164,15 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       return;
     }
     final IFile iFile = FileSystem.FILE_SYSTEM.createFile(filePath);
-    final IFile dir_store =
-      iFile.isDirectory() ? iFile.getChild(Project.DIRECTORY_STORE_FOLDER) : iFile.getParentFile().getChild(Project.DIRECTORY_STORE_FOLDER);
 
     final StateStorageManager stateStorageManager = getStateStorageManager();
-    if (dir_store.exists() && iFile.isDirectory()) {
+    
+    if (!isIprPath(iFile)) {
+      final IFile dir_store =
+        iFile.isDirectory()
+        ? iFile.getChild(Project.DIRECTORY_STORE_FOLDER)
+        : iFile.getParentFile().getChild(Project.DIRECTORY_STORE_FOLDER);
+
       FileBasedStorage.syncRefreshPathRecursively(dir_store.getPath(), null);
 
       myScheme = StorageScheme.DIRECTORY_BASED;
@@ -184,8 +186,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       }
 
       stateStorageManager.addMacro(PROJECT_CONFIG_DIR, dir_store.getPath());
-    }
-    else {
+    } else {
       myScheme = StorageScheme.DEFAULT;
       stateStorageManager.addMacro(PROJECT_FILE_MACRO, filePath);
 
@@ -198,8 +199,13 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
       LocalFileSystem.getInstance().refreshAndFindFileByPath(workspacePath);
       stateStorageManager.addMacro(WS_FILE_MACRO, workspacePath);
     }
-
+    
     myCachedLocation = null;
+  }
+  
+  private static boolean isIprPath(final IFile file) {
+    return file.exists() && (file.getName().indexOf(".") > 0 && ProjectFileType.DEFAULT_EXTENSION.equals(
+      FileUtil.getExtension(file.getName())));
   }
 
   private static void useOldWsContent(final String filePath, final IFile ws) {
@@ -239,7 +245,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
     final VirtualFile projectFile = getProjectFile();
     if (projectFile != null) return myScheme == StorageScheme.DEFAULT ? projectFile.getParent() : projectFile.getParent().getParent();
 
-    //we are not yet initialized completely
+    //we are not yet initialized completely ("open directory", etc)
     final StateStorage s = getStateStorageManager().getFileStateStorage(PROJECT_FILE_STORAGE);
     if (!(s instanceof FileBasedStorage)) return null;
     final FileBasedStorage storage = (FileBasedStorage)s;
@@ -512,6 +518,12 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
           final List<IFile> filesToSave;
           try {
             filesToSave = getAllStorageFilesToSave(true);
+            final Iterator<IFile> iterator = filesToSave.iterator();
+            while (iterator.hasNext()) {
+              if (!iterator.next().exists()) {
+                iterator.remove();
+              }
+            }
           }
           catch (IOException e) {
             LOG.error(e);
@@ -533,7 +545,35 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
             if (virtualFile != null) {
               virtualFile.refresh(false, false);
-              if (virtualFile.isValid() && !virtualFile.isWritable()) readonlyFiles.add(virtualFile);
+              if (virtualFile.isValid() && !virtualFile.isWritable()) {
+                readonlyFiles.add(virtualFile);
+              }
+            }
+          }
+          
+          if (readonlyFiles.size() == 0) {
+            final VirtualFile projectBaseDir = getProjectBaseDir();
+            if (projectBaseDir != null && projectBaseDir.isValid()) {
+              if (!projectBaseDir.isWritable()) {
+                readonlyFiles.add(projectBaseDir);
+              }
+
+              final LocalFileSystem instance = LocalFileSystem.getInstance();
+              final VirtualFile ideaDir1 =
+                instance.findFileByIoFile(new File(projectBaseDir.getPath(), Project.DIRECTORY_STORE_FOLDER));
+              if (ideaDir1 != null && ideaDir1.isValid()) {
+                if (!ideaDir1.isWritable()) {
+                  readonlyFiles.add(ideaDir1);
+                }
+              } else {
+                final VirtualFile ideaDir2 =
+                  instance.findFileByIoFile(new File(new File(projectBaseDir.getPath()).getParent(), Project.DIRECTORY_STORE_FOLDER));
+                if (ideaDir2 != null && ideaDir2.isValid()) {
+                  if (!ideaDir2.isWritable()) {
+                    readonlyFiles.add(ideaDir2);
+                  }
+                }
+              }
             }
           }
 

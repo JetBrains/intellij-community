@@ -1095,7 +1095,7 @@
     <applicationService serviceInterface="com.intellij.usages.impl.ImportFilteringUsageViewSetting"
                         serviceImplementation="com.intellij.usages.impl.ImportFilteringUsageViewSetting"/>
 
-    <treeStructureProvider implementation="com.intellij.ide.projectView.impl.ClassesTreeStructureProvider"/>
+    <treeStructureProvider implementation="com.intellij.ide.projectView.impl.ClassesTreeStructureProvider" order="last"/>
 
     <defaultLiveTemplatesProvider implementation="com.intellij.codeInsight.template.impl.JavaDefaultLiveTemplatesProvider"/>
 

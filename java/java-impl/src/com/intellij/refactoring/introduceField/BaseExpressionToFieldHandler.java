@@ -583,6 +583,11 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     public PsiClass getTargetClass() {
       if (myTargetClass != null) return myTargetClass;
       final String packageName = StringUtil.getPackageName(myQualifiedName);
+      final String shortName = StringUtil.getShortName(myQualifiedName);
+      if (Comparing.strEqual(myParentClass.getQualifiedName(), packageName)) {
+        myTargetClass = (PsiClass)myParentClass.add(JavaPsiFacade.getElementFactory(myProject).createClass(shortName));
+        return myTargetClass;
+      }
       PsiPackage psiPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
       final PsiDirectory psiDirectory;
       if (psiPackage != null) {
@@ -591,7 +596,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       } else {
         psiDirectory = PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, myParentClass.getContainingFile().getContainingDirectory(), false);
       }
-      final String shortName = StringUtil.getShortName(myQualifiedName);
       myTargetClass = psiDirectory != null ? JavaDirectoryService.getInstance().createClass(psiDirectory, shortName) : null;
       return myTargetClass;
     }

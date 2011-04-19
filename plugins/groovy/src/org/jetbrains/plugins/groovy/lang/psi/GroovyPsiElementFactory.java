@@ -69,7 +69,7 @@ public abstract class GroovyPsiElementFactory {
    * @param alias
    * @return import statement for given class
    */
-  public abstract GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand, String alias);
+  public abstract GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand, @Nullable String alias);
 
   public abstract GrImportStatement createImportStatementFromText(String text);
 
@@ -109,7 +109,7 @@ public abstract class GroovyPsiElementFactory {
   public abstract GrVariableDeclaration createFieldDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type);
   public abstract GrVariableDeclaration createFieldDeclarationFromText(String text);
 
-  public abstract GrVariableDeclaration createVariableDeclaration(String[] modifiers, GrExpression initializer, PsiType type, String... identifiers);
+  public abstract GrVariableDeclaration createVariableDeclaration(String[] modifiers, @Nullable GrExpression initializer, PsiType type, String... identifiers);
 
   public abstract GrEnumConstant createEnumConstantFromText(String text);
 

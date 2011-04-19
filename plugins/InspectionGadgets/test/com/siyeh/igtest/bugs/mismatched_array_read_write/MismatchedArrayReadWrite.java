@@ -59,7 +59,7 @@ public class MismatchedArrayReadWrite {
         final int[][] allResults = new int[10][10];
         for (int row = 0; row < allResults.length; row++) {
             final int[] rowData = allResults[row];
-            for (int col = 0; col < rowData.length; col++) {
+            for (int col = 0; col < 10; col++) {
                 rowData[col] = 100 * 7;
 
             }
@@ -99,5 +99,10 @@ class Test{
     void foo3(Object[] otherArr) {
         Object[] arr = otherArr.clone();
         for (int i = 0; i < 10; i++) arr[i] = i;
+    }
+
+    void foo4() {
+        int[] array = {1, 2, 4};
+        assert array.length == 3;
     }
 }

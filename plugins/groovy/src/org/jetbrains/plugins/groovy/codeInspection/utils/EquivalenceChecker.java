@@ -377,8 +377,8 @@ public class EquivalenceChecker {
 
   private static boolean ifStatementsAreEquivalent(@NotNull GrIfStatement statement1,
                                                    @NotNull GrIfStatement statement2) {
-    final GrExpression condition1 = (GrExpression) statement1.getCondition();
-    final GrExpression condition2 = (GrExpression) statement2.getCondition();
+    final GrExpression condition1 = statement1.getCondition();
+    final GrExpression condition2 = statement2.getCondition();
     final GrStatement thenBranch1 = statement1.getThenBranch();
     final GrStatement thenBranch2 = statement2.getThenBranch();
     final GrStatement elseBranch1 = statement1.getElseBranch();

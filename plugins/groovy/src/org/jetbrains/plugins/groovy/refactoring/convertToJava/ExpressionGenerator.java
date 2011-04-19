@@ -42,11 +42,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
+import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SubtypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
@@ -56,7 +56,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
@@ -273,8 +272,7 @@ public class ExpressionGenerator extends Generator {
     final GroovyResolveResult resolveResult = newExpression.resolveConstructorGenerics();
     final PsiElement constructor = resolveResult.getElement();
     if (constructor instanceof PsiMethod) {
-      final PsiParameter[] parameters = ((PsiMethod)constructor).getParameterList().getParameters();
-      return parameters.length == 0;
+      return ((PsiMethod)constructor).getParameterList().getParametersCount() == 0;
     }
 
     final PsiElement resolved = refElement.resolve();
@@ -302,23 +300,13 @@ public class ExpressionGenerator extends Generator {
       condition.accept(this);
     }
     else {
-      final GroovyResolveResult resolveResult =
-        PsiImplUtil.extractUniqueResult(ResolveUtil.getMethodCandidates(type, "asBoolean", expression, PsiType.EMPTY_ARRAY));
-      final PsiElement resolved = resolveResult.getElement();
-      if (resolved instanceof PsiMethod) {
-        invokeMethodOn(
-          (PsiMethod)resolved,
-          condition,
-          GrExpression.EMPTY_ARRAY,
-          GrNamedArgument.EMPTY_ARRAY,
-          GrClosableBlock.EMPTY_ARRAY,
-          resolveResult.getSubstitutor(),
-          expression
-        );
-      }
-      else {
-        condition.accept(this);
-      }
+      GenerationUtil.invokeMethodByName(
+        condition,
+        "asBoolean",
+        GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
+        this,
+        expression
+      );
     }
 
     builder.append("?");
@@ -549,7 +537,17 @@ public class ExpressionGenerator extends Generator {
     else {
       value = literal.getValue();
     }
-    if (value instanceof String) {
+
+    boolean isChar = false;
+    for (TypeConstraint constraint : constraints) {
+      if (constraint instanceof SubtypeConstraint && TypesUtil.unboxPrimitiveTypeWrapper(constraint.getDefaultType()) == PsiType.CHAR) {
+        isChar = true;
+      }
+    }
+    if (isChar) {
+      builder.append('\'').append(StringUtil.escapeQuotes(String.valueOf(value))).append('\'');
+    }
+    else if (value instanceof String) {
       builder.append('"').append(StringUtil.escapeQuotes((String)value)).append('"');
     }
     else {

@@ -30,7 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection {
+public class MismatchedStringBuilderQueryUpdateInspection
+        extends BaseInspection {
 
     @NonNls
     private static final Set<String> returnSelfNames = new HashSet();
@@ -148,6 +149,10 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
                 return false;
             }
             if(VariableAccessUtils.variableIsReturned(variable, context)){
+                return false;
+            }
+            if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable,
+                    context)) {
                 return false;
             }
             return !VariableAccessUtils.variableIsUsedInArrayInitializer(
