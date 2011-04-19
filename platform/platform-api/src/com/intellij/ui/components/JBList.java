@@ -17,6 +17,7 @@ package com.intellij.ui.components;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ExpandableItemsHandlerFactory;
@@ -73,7 +74,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
 
   @Override
   public Dimension getPreferredSize() {
-    if (getModel().getSize() == 0) {
+    if (getModel().getSize() == 0 && !StringUtil.isEmpty(getEmptyText().getText())) {
       Dimension s = getEmptyText().getPreferredSize();
       Insets insets = getInsets();
       if (insets != null) {
@@ -147,5 +148,9 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
 
   public void setDataProvider(DataProvider provider) {
     putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, provider);
+  }
+
+  public void disableEmptyText() {
+    getEmptyText().setText("");
   }
 }
