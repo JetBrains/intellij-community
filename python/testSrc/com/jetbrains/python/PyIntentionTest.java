@@ -183,6 +183,11 @@ public class PyIntentionTest extends PyLightFixtureTestCase {
     codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
     documentationSettings.setFormat(DocStringFormat.REST);
-    doTest(PyBundle.message("INTN.doc.string.stub"));
+    try {
+      doTest(PyBundle.message("INTN.doc.string.stub"));
+    }
+    finally {
+      documentationSettings.setFormat(DocStringFormat.PLAIN);
+    }
   }
 }

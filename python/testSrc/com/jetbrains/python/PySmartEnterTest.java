@@ -109,7 +109,12 @@ public class PySmartEnterTest extends PyLightFixtureTestCase {
     codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
     documentationSettings.setFormat(DocStringFormat.REST);
-    doTest();
+    try {
+      doTest();
+    }
+    finally {
+      documentationSettings.setFormat(DocStringFormat.PLAIN);
+    }
   }
 
   public void testDocEpytext() {
@@ -117,6 +122,11 @@ public class PySmartEnterTest extends PyLightFixtureTestCase {
     codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
     documentationSettings.setFormat(DocStringFormat.EPYTEXT);
-    doTest();
+    try {
+      doTest();
+    }
+    finally {
+      documentationSettings.setFormat(DocStringFormat.PLAIN);
+    }
   }
 }

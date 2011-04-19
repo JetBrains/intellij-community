@@ -148,12 +148,16 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
                                                                             PyDocStringOwner.class);
         if (docStringOwner == func) {
           PyStringLiteralExpression str = docStringOwner.getDocStringExpression();
-          if (str != null && element.getText().equals(str.getText())) {
+          String text = element.getText();
+          if (str != null && text.equals(str.getText())) {
             PsiErrorElement error = PsiTreeUtil.getNextSiblingOfType(string, PsiErrorElement.class);
             if (error != null)
               return true;
             error = PsiTreeUtil.getNextSiblingOfType(string.getParent(), PsiErrorElement.class);
             if (error != null)
+              return true;
+
+            if (text.length() < 6 || (!text.endsWith("\"\"\"") && !text.endsWith("'''")))
               return true;
           }
         }
