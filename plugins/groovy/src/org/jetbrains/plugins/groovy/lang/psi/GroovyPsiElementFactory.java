@@ -69,7 +69,7 @@ public abstract class GroovyPsiElementFactory {
    * @param alias
    * @return import statement for given class
    */
-  public abstract GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand, String alias);
+  public abstract GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand, @Nullable String alias);
 
   public abstract GrImportStatement createImportStatementFromText(String text);
 
