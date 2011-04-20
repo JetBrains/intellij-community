@@ -26,6 +26,7 @@ import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -33,6 +34,7 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
@@ -60,14 +62,18 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
 
   private final LightModifierList myModifierList;
 
-  private static final String MAIN_METHOD_TEXT = "public static final void main(java.lang.String[] args) {}";
-  private static final String RUN_METHOD_TEXT = "public java.lang.Object run() {return null;}";
-
   public GroovyScriptClass(GroovyFile file) {
     super(file.getManager(), file.getLanguage());
     myFile = file;
-    myMainMethod = new GroovyScriptMethod(this, MAIN_METHOD_TEXT);
-    myRunMethod = new GroovyScriptMethod(this, RUN_METHOD_TEXT);
+    myMainMethod = new LightMethodBuilder(getManager(), GroovyFileType.GROOVY_LANGUAGE, "main").
+      setContainingClass(this).
+      setReturnType(PsiType.VOID).
+      addParameter("args", new PsiArrayType(PsiType.getJavaLangString(getManager(), getResolveScope()))).
+      addModifiers(PsiModifier.PUBLIC, PsiModifier.STATIC);
+    myRunMethod = new LightMethodBuilder(getManager(), GroovyFileType.GROOVY_LANGUAGE, "run").
+      setContainingClass(this).
+      setReturnType(PsiType.getJavaLangObject(getManager(), getResolveScope())).
+      addModifier(PsiModifier.PUBLIC);
 
     myModifierList = new LightModifierList(myManager, Collections.singleton(GrModifier.PUBLIC));
   }
@@ -348,6 +354,10 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
       if (!(definition instanceof PsiClass)) {
         if (!ResolveUtil.processElement(processor, definition, state)) return false;
       }
+    }
+
+    if (!ResolveUtil.processElement(processor, myMainMethod, state) || !ResolveUtil.processElement(processor, myRunMethod, state)) {
+      return false;
     }
 
     final PsiClass scriptClass = getSuperClass();
