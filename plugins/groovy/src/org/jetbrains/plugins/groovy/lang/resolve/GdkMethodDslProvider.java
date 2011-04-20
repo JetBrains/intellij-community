@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -113,7 +114,13 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
             PsiType targetType = TypesUtil.boxPrimitiveType(TypeConversionUtil.erasure(parameterType), manager, scope);
             map.putValue(targetType.getCanonicalText(), converter.fun(m));
           }
-          return Result.create(map, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, ProjectRootManager.getInstance(project));
+          final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
+          final VirtualFile vfile = categoryClass.getContainingFile().getVirtualFile();
+          if (vfile != null && (rootManager.getFileIndex().isInLibraryClasses(vfile) || rootManager.getFileIndex().isInLibrarySource(vfile))) {
+            return Result.create(map, rootManager);
+          }
+
+          return Result.create(map, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, rootManager);
         }
       }, false);
   }
