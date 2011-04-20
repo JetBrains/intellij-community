@@ -13,26 +13,23 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
-import com.jetbrains.python.PythonFileType;
+import com.jetbrains.django.util.DjangoUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class PyLineBreakpointType extends XLineBreakpointType<XBreakpointProperties> {
-  public static final String ID = "python-line";
-  private static final String NAME = "Python Line Breakpoint";
-
+public class DjangoTemplateLineBreakpointType extends XLineBreakpointType<XBreakpointProperties> {
   private final PyDebuggerEditorsProvider myEditorsProvider = new PyDebuggerEditorsProvider();
 
-  public PyLineBreakpointType() {
-    super(ID, NAME);
+  public DjangoTemplateLineBreakpointType() {
+    super("django-line", "Django Line Breakpoint");
   }
 
   public boolean canPutAt(@NotNull final VirtualFile file, final int line, @NotNull final Project project) {
     final Ref<Boolean> stoppable = Ref.create(false);
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
-      if (file.getFileType() == PythonFileType.INSTANCE) {
+      if (DjangoUtil.isDjangoTemplateDocument(document, project)) {
         XDebuggerUtil.getInstance().iterateLine(project, document, line, new Processor<PsiElement>() {
           public boolean process(PsiElement psiElement) {
             if (psiElement instanceof PsiWhiteSpace || psiElement instanceof PsiComment) return true;
@@ -41,10 +38,6 @@ public class PyLineBreakpointType extends XLineBreakpointType<XBreakpointPropert
             return false;
           }
         });
-
-        if (PyDebugSupportUtils.isContinuationLine(document, line - 1)) {
-          stoppable.set(false);
-        }
       }
     }
 

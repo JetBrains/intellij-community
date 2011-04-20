@@ -7,7 +7,7 @@ import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
  */
 public class PyFoldingTest extends PyLightFixtureTestCase {
   private void doTest() {
-    myFixture.testFolding(getTestDataPath() + "/folding/" + getTestName(false) + ".py");
+    myFixture.testFolding(getTestDataPath() + "/folding/" + getTestName(true) + ".py");
   }
 
   public void testClassTrailingSpace() {  // PY-2544

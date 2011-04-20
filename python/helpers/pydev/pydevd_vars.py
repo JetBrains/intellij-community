@@ -1,6 +1,7 @@
 """ pydevd_vars deals with variables:
     resolution/conversion to XML.
 """
+import pickle
 from pydevd_constants import * #@UnusedWildImport
 from types import * #@UnusedWildImport
 from console import pydevconsole
@@ -13,6 +14,7 @@ try:
 except ImportError:
     from io import StringIO
 import sys #@Reimport
+
 try:
     from urllib import quote
 except:
@@ -32,30 +34,32 @@ try:
     __setFalse = False
 except:
     import __builtin__
+
     setattr(__builtin__, 'True', 1)
     setattr(__builtin__, 'False', 0)
 
 #------------------------------------------------------------------------------------------------------ class for errors
 
-class VariableError(RuntimeError):pass
-class FrameNotFoundError(RuntimeError):pass
+class VariableError(RuntimeError): pass
+
+class FrameNotFoundError(RuntimeError): pass
 
 
 #------------------------------------------------------------------------------------------------------ resolvers in map
 
 if not sys.platform.startswith("java"):
     typeMap = [
-        #None means that it should not be treated as a compound variable
+            #None means that it should not be treated as a compound variable
 
-        #isintance does not accept a tuple on some versions of python, so, we must declare it expanded
-        (type(None), None,),
-        (int, None),
-        (float, None),
-        (complex, None),
-        (str, None),
-        (tuple, pydevd_resolver.tupleResolver),
-        (list, pydevd_resolver.tupleResolver),
-        (dict, pydevd_resolver.dictResolver),
+            #isintance does not accept a tuple on some versions of python, so, we must declare it expanded
+            (type(None), None,),
+            (int, None),
+            (float, None),
+            (complex, None),
+            (str, None),
+            (tuple, pydevd_resolver.tupleResolver),
+            (list, pydevd_resolver.tupleResolver),
+            (dict, pydevd_resolver.dictResolver),
     ]
 
     try:
@@ -80,17 +84,18 @@ if not sys.platform.startswith("java"):
 
 else: #platform is java   
     from org.python import core #@UnresolvedImport
+
     typeMap = [
-        (core.PyNone, None),
-        (core.PyInteger, None),
-        (core.PyLong, None),
-        (core.PyFloat, None),
-        (core.PyComplex, None),
-        (core.PyString, None),
-        (core.PyTuple, pydevd_resolver.tupleResolver),
-        (core.PyList, pydevd_resolver.tupleResolver),
-        (core.PyDictionary, pydevd_resolver.dictResolver),
-        (core.PyStringMap, pydevd_resolver.dictResolver),
+            (core.PyNone, None),
+            (core.PyInteger, None),
+            (core.PyLong, None),
+            (core.PyFloat, None),
+            (core.PyComplex, None),
+            (core.PyString, None),
+            (core.PyTuple, pydevd_resolver.tupleResolver),
+            (core.PyList, pydevd_resolver.tupleResolver),
+            (core.PyDictionary, pydevd_resolver.dictResolver),
+            (core.PyStringMap, pydevd_resolver.dictResolver),
     ]
 
     if hasattr(core, 'PyJavaInstance'):
@@ -115,7 +120,6 @@ def getType(o):
         return 'Unable to get Type', 'Unable to get Type', None
 
     try:
-
         if type_name == 'org.python.core.PyJavaInstance':
             return (type_object, type_name, pydevd_resolver.instanceResolver)
 
@@ -134,8 +138,9 @@ def getType(o):
 
 try:
     from xml.sax.saxutils import escape
+
     def makeValidXmlValue(s):
-        return escape(s, {'"':'&quot;'})
+        return escape(s, {'"': '&quot;'})
 except:
     #Simple replacement if it's not there.
     def makeValidXmlValue(s):
@@ -177,7 +182,7 @@ def varToXML(val, name, doTrim=True):
         except:
             value = 'Unable to get repr for %s' % v.__class__
 
-    xml = '<var name="%s" type="%s"' % (makeValidXmlValue(name),makeValidXmlValue(typeName))
+    xml = '<var name="%s" type="%s"' % (makeValidXmlValue(name), makeValidXmlValue(typeName))
 
     if value:
         #cannot be too big... communication may not handle it.
@@ -214,6 +219,7 @@ def varToXML(val, name, doTrim=True):
 if USE_PSYCO_OPTIMIZATION:
     try:
         import psyco
+
         varToXML = psyco.proxy(varToXML)
     except ImportError:
         if hasattr(sys, 'exc_clear'): #jython does not have it
@@ -255,44 +261,68 @@ def iterFrames(initialFrame):
 
 def dumpFrames(thread_id):
     sys.stdout.write('dumping frames\n')
-    if thread_id != GetThreadId(threading.currentThread()) :
+    if thread_id != GetThreadId(threading.currentThread()):
         raise VariableError("findFrame: must execute on same thread")
 
     curFrame = GetFrame()
     for frame in iterFrames(curFrame):
-        sys.stdout.write('%s\n' % id(frame))
+        sys.stdout.write('%s\n' % pickle.dumps(frame))
 
 
 #===============================================================================
 # AdditionalFramesContainer
 #===============================================================================
 class AdditionalFramesContainer:
-    lock = threading.Lock()
-    additional_frames = {} #dict of dicts
+    __instance__ = None
 
+    @staticmethod
+    def getInstance():
+        if AdditionalFramesContainer.__instance__ is None:
+            AdditionalFramesContainer.__instance__ = AdditionalFramesContainer()
+        return AdditionalFramesContainer.__instance__
 
-def addAdditionalFrameById(thread_id, frames_by_id):
-    AdditionalFramesContainer.additional_frames[thread_id] = frames_by_id
+    def __init__(self):
+        self.additional_frames = {} #dict of dicts
+        self.lock = threading.Lock()
 
+    def addAdditionalFrameById(self, thread_id, frames_by_id):
+        self.lock.acquire()
+        self.additional_frames[thread_id] = frames_by_id
+        self.lock.release()
 
-def removeAdditionalFrameById(thread_id):
-    del AdditionalFramesContainer.additional_frames[thread_id]
+    def findFrameById(self, thread_id, frame_id):
+        self.lock.acquire()
+        frame = None
+        if self.additional_frames:
+            if DictContains(self.additional_frames, thread_id):
+                frame = self.additional_frames[thread_id].get(frame_id)
 
+        self.lock.release()
+        return frame
 
+    def removeAdditionalFrameById(self, thread_id):
+        #del self.additional_frames[thread_id]
+        pass
+
+additional_frames_container = AdditionalFramesContainer()
+
+def getAdditionalFramesContainer():
+    global additional_frames_container
+
+    return additional_frames_container
 
 
 def findFrame(thread_id, frame_id):
     """ returns a frame on the thread that has a given frame_id """
-    if thread_id != GetThreadId(threading.currentThread()) :
+    if thread_id != GetThreadId(threading.currentThread()):
         raise VariableError("findFrame: must execute on same thread")
 
     lookingFor = int(frame_id)
 
-    if AdditionalFramesContainer.additional_frames:
-        if DictContains(AdditionalFramesContainer.additional_frames, thread_id):
-            frame = AdditionalFramesContainer.additional_frames[thread_id].get(lookingFor)
-            if frame is not None:
-                return frame
+    frame = getAdditionalFramesContainer().findFrameById(thread_id, lookingFor)
+
+    if frame is not None:
+        return frame
 
     curFrame = GetFrame()
     if frame_id == "*":
@@ -349,9 +379,9 @@ def resolveCompoundVariable(thread_id, frame_id, scope, attrs):
         var = frame.f_locals
         type, _typeName, resolver = getType(var)
         try:
-          resolver.resolve(var, attrList[0])
+            resolver.resolve(var, attrList[0])
         except:
-          var = frame.f_globals
+            var = frame.f_globals
 
     for k in attrList:
         type, _typeName, resolver = getType(var)
@@ -384,7 +414,6 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
     updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
 
     try:
-
         if doExec:
             try:
                 #try to make it an eval (if it is an eval we can print it, otherwise we'll exec it and
@@ -427,12 +456,13 @@ def evaluateExpression(thread_id, frame_id, expression, doExec):
 
 class ConsoleWriter(InteractiveInterpreter):
     skip = 0
+
     def __init__(self, locals=None):
         InteractiveInterpreter.__init__(self, locals)
 
     def write(self, data):
         #if (data.find("global_vars") == -1 and data.find("pydevd") == -1):
-        if self.skip>0:
+        if self.skip > 0:
             self.skip = self.skip - 1
         else:
             if data == "Traceback (most recent call last):\n":
@@ -478,7 +508,6 @@ def consoleExec(thread_id, frame_id, expression):
     return False
 
 
-
 def changeAttrExpression(thread_id, frame_id, attr, expression):
     '''Changes some attribute in a given frame.
     @note: it will not (currently) work if we're not in the topmost frame (that's a python
@@ -489,16 +518,16 @@ def changeAttrExpression(thread_id, frame_id, attr, expression):
 
     try:
         expression = expression.replace('@LINE@', '\n')
-#tests (needs proposed patch in python accepted)
-#        if hasattr(frame, 'savelocals'):
-#            if attr in frame.f_locals:
-#                frame.f_locals[attr] = eval(expression, frame.f_globals, frame.f_locals)
-#                frame.savelocals()
-#                return
-#
-#            elif attr in frame.f_globals:
-#                frame.f_globals[attr] = eval(expression, frame.f_globals, frame.f_locals)
-#                return
+        #tests (needs proposed patch in python accepted)
+        #        if hasattr(frame, 'savelocals'):
+        #            if attr in frame.f_locals:
+        #                frame.f_locals[attr] = eval(expression, frame.f_globals, frame.f_locals)
+        #                frame.savelocals()
+        #                return
+        #
+        #            elif attr in frame.f_globals:
+        #                frame.f_globals[attr] = eval(expression, frame.f_globals, frame.f_locals)
+        #                return
 
 
         if attr[:7] == "Globals":

@@ -30,7 +30,7 @@ public class JythonUnitTestUtil {
     File jythonJar = new File(PathManager.getHomePath(), "python/lib/jython.jar");
     parameters.getClassPath().add(jythonJar.getPath());
 
-    parameters.getProgramParametersList().add("-Dpython.path=" + pythonPath + ";" + workDir);
+    parameters.getProgramParametersList().add("-Dpython.path=" + pythonPath + File.pathSeparator + workDir);
     parameters.getProgramParametersList().addAll(args);
     parameters.setWorkingDirectory(workDir);
 

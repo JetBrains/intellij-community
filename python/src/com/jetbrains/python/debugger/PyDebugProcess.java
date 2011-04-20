@@ -68,7 +68,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     super(session);
     session.setPauseActionSupported(true);
     myDebugger = new RemoteDebugger(this, serverSocket, 10);
-    myBreakpointHandlers = new XBreakpointHandler[]{new PyLineBreakpointHandler(this), new PyExceptionBreakpointHandler(this)};
+    myBreakpointHandlers = new XBreakpointHandler[]{new PyLineBreakpointHandler(this), new PyExceptionBreakpointHandler(this), new DjangoLineBreakpointHandler(this)};
     myEditorsProvider = new PyDebuggerEditorsProvider();
     myProcessHandler = processHandler;
     myExecutionConsole = executionConsole;
@@ -156,7 +156,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     printToConsole("Connected to pydev debugger (build " + remoteVersion + ")\n", ConsoleViewContentType.SYSTEM_OUTPUT);
 
     if (!remoteVersion.equals(currentBuild)) {
-      printToConsole("Warning: wrong debugger version. Use pycharm-debugger.egg from PyCharm installation folder.\n", ConsoleViewContentType.ERROR_OUTPUT);
+      printToConsole("Warning: wrong debugger version. Use pycharm-debugger.egg from PyCharm installation folder.\n",
+                     ConsoleViewContentType.ERROR_OUTPUT);
     }
   }
 
@@ -228,7 +229,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     dropFrameCaches();
     if (myDebugger.isConnected() && !mySuspendedThreads.isEmpty()) {
       final PySourcePosition pyPosition = myPositionConverter.convert(position);
-      final SetBreakpointCommand command = new SetBreakpointCommand(myDebugger, pyPosition.getFile(), pyPosition.getLine());
+      final SetBreakpointCommand command =
+        new SetBreakpointCommand(myDebugger, PyLineBreakpointType.ID, pyPosition.getFile(), pyPosition.getLine());
       myDebugger.execute(command);  // set temp. breakpoint
       resume(ResumeCommand.Mode.RESUME);
     }
@@ -322,17 +324,21 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     myRegisteredBreakpoints.put(position, breakpoint);
     if (myDebugger.isConnected()) {
       final SetBreakpointCommand command =
-        new SetBreakpointCommand(myDebugger, position.getFile(), position.getLine(), breakpoint.getCondition(),
+        new SetBreakpointCommand(myDebugger, breakpoint.getType().getId(), position.getFile(), position.getLine(),
+                                 breakpoint.getCondition(),
                                  breakpoint.getLogExpression());
       myDebugger.execute(command);
     }
   }
 
   public void removeBreakpoint(final PySourcePosition position) {
-    myRegisteredBreakpoints.remove(position);
-    if (myDebugger.isConnected()) {
-      final RemoveBreakpointCommand command = new RemoveBreakpointCommand(myDebugger, position.getFile(), position.getLine());
-      myDebugger.execute(command);
+    XLineBreakpoint breakpoint = myRegisteredBreakpoints.get(position);
+    if (breakpoint != null) {
+      myRegisteredBreakpoints.remove(position);
+      if (myDebugger.isConnected()) {
+        final RemoveBreakpointCommand command = new RemoveBreakpointCommand(myDebugger, breakpoint.getType().getId(), position.getFile(), position.getLine());
+        myDebugger.execute(command);
+      }
     }
   }
 
@@ -375,7 +381,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           final PySourcePosition position = frames.get(0).getPosition();
           breakpoint = myRegisteredBreakpoints.get(position);
           if (breakpoint == null) {
-            final RemoveBreakpointCommand command = new RemoveBreakpointCommand(myDebugger, position.getFile(), position.getLine());
+            final RemoveBreakpointCommand command = new RemoveBreakpointCommand(myDebugger, "all", position.getFile(), position.getLine());
             myDebugger.execute(command);  // remove temp. breakpoint
           }
         }

@@ -1,4 +1,5 @@
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
+from pydev.django_debug import DjangoLineBreakpoint
 from pydevd_constants import * #@UnusedWildImport
 from pydevd_breakpoints import * #@UnusedWildImport
 
@@ -48,6 +49,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
 
 from pydevd_file_utils import NormFileToServer, GetFilenameAndBase
 import pydevd_vars
+from pydevd_vars import getAdditionalFramesContainer
 import traceback
 import pydevd_vm_type
 import pydevd_tracing
@@ -194,6 +196,8 @@ class PyDB:
         self.cmdFactory = NetCommandFactory()
         self.cmdQueue = {}     # the hash of Queues. Key is thread id, value is thread
         self.breakpoints = {}
+        self.django_breakpoints = {}
+        self.additional_frames = getAdditionalFramesContainer()
         self.readyToRun = False
         self.lock = threading.RLock()
         self.internalQueueLock = threading.Lock()
@@ -529,7 +533,8 @@ class PyDB:
 
                     #command to add some breakpoint.
                     # text is file\tline. Add to breakpoints dictionary
-                    file, line, condition, expression = text.split('\t', 3)
+                    type, file, line, condition, expression = text.split('\t', 4)
+
                     if condition.startswith('**FUNC**'):
                         func_name, condition = condition.split('\t', 1)
 
@@ -552,32 +557,29 @@ class PyDB:
 
                     line = int(line)
 
-                    if DEBUG_TRACE_BREAKPOINTS > 0:
-                        sys.stderr.write('Added breakpoint:%s - line:%s - func_name:%s\n' % (file, line, func_name))
-                        sys.stderr.flush()
-
-                    if DictContains(self.breakpoints, file):
-                        breakDict = self.breakpoints[file]
-                    else:
-                        breakDict = {}
-
                     if len(condition) <= 0 or condition is None or condition == "None":
                         condition = None
 
                     if len(expression) <= 0 or expression is None or expression == "None":
                         expression = None
 
-                    breakDict[line] = (True, condition, func_name, expression)
+                    if type == 'python-line':
+                        breakpoint = LineBreakpoint(type, True, condition, func_name, expression)
+                        breakpoint.add(self.breakpoints, file, line, func_name)
+                    elif type == 'django-line':
+                        breakpoint = DjangoLineBreakpoint(type, file, line, True, condition, func_name, expression)
+                        breakpoint.add(self.django_breakpoints, file, line, func_name)
+                    else:
+                        raise NameError(type)
 
 
-                    self.breakpoints[file] = breakDict
 
                     self.enable_tracing()
 
                 elif cmd_id == CMD_REMOVE_BREAK:
                     #command to remove some breakpoint
                     #text is file\tline. Remove from breakpoints dictionary
-                    file, line = text.split('\t', 1)
+                    type, file, line = text.split('\t', 2)
                     file = NormFileToServer(file)
                     try:
                         line = int(line)
@@ -586,7 +588,10 @@ class PyDB:
 
                     else:
                         try:
-                            del self.breakpoints[file][line] #remove the breakpoint in that line
+                            if type == 'django-line':
+                                del self.django_breakpoints[file][line]
+                            else:
+                                del self.breakpoints[file][line] #remove the breakpoint in that line
                             if DEBUG_TRACE_BREAKPOINTS > 0:
                                 sys.stderr.write('Removed breakpoint:%s\n' % (file,))
                                 sys.stderr.flush()
@@ -685,6 +690,7 @@ class PyDB:
             thread.additionalInfo.pydev_notify_kill = True
 
     def setSuspend(self, thread, stop_reason):
+        thread.additionalInfo.suspend_type = PYTHON_SUSPEND
         thread.additionalInfo.pydev_state = STATE_SUSPEND
         thread.stop_reason = stop_reason
 
@@ -816,13 +822,13 @@ class PyDB:
                     self.force_post_mortem_stop -= 1
                     frame, frames_byid = additionalInfo.pydev_force_stop_at_exception
                     thread_id = GetThreadId(t)
-                    used_id = pydevd_vars.addAdditionalFrameById(thread_id, frames_byid)
+                    used_id = pydev_vars.additional_frames_container.addAdditionalFrameById(thread_id, frames_byid)
                     try:
                         self.setSuspend(t, CMD_ADD_EXCEPTION_BREAK)
                         self.doWaitSuspend(t, frame, 'exception', None)
                     finally:
                         additionalInfo.pydev_force_stop_at_exception = None
-                        pydevd_vars.removeAdditionalFrameById(thread_id)
+                        pydev_vars.additional_frames_container.removeAdditionalFrameById(thread_id)
 
             # if thread is not alive, cancel trace_dispatch processing
             if not t.isAlive():

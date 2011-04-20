@@ -9,17 +9,19 @@ public class SetBreakpointCommand extends LineBreakpointCommand {
   private @Nullable final String myLogExpression;
 
   public SetBreakpointCommand(@NotNull final RemoteDebugger debugger,
+                              @NotNull final String type,
                               @NotNull final String file,
                               @NotNull final int line) {
-    this(debugger, file, line, null, null);
+    this(debugger, type, file, line, null, null);
   }
 
   public SetBreakpointCommand(@NotNull final RemoteDebugger debugger,
+                              @NotNull final String type,
                               @NotNull final String file,
                               @NotNull final int line,
                               @Nullable final String condition,
                               @Nullable final String logExpression) {
-    super(debugger, SET_BREAKPOINT, file, line);
+    super(debugger, type, SET_BREAKPOINT, file, line);
     myCondition = condition;
     myLogExpression = logExpression;
   }

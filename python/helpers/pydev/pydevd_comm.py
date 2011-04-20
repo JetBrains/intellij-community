@@ -481,38 +481,41 @@ class NetCommandFactory:
         try:
             cmdTextList = ["<xml>"]
             cmdTextList.append('<thread id="%s" stop_reason="%s" message="%s">' % (thread_id, stop_reason, message))
-            
-            curFrame = frame
-            while curFrame:
-                #print cmdText
-                myId = str(id(curFrame))
-                #print "id is ", myId
-                
-                if curFrame.f_code is None:
-                    break #Iron Python sometimes does not have it!
-                
-                myName = curFrame.f_code.co_name #method name (if in method) or ? if global
-                if myName is None:
-                    break #Iron Python sometimes does not have it!
-                
-                #print "name is ", myName
-                
-                myFile = pydevd_file_utils.NormFileToClient(curFrame.f_code.co_filename)                
-                #print "file is ", myFile
-                #myFile = inspect.getsourcefile(curFrame) or inspect.getfile(frame)
-                
-                myLine = str(curFrame.f_lineno)
-                #print "line is ", myLine
-                
-                #the variables are all gotten 'on-demand'
-                #variables = pydevd_vars.frameVarsToXML(curFrame)
 
-                variables = ''
-                cmdTextList.append('<frame id="%s" name="%s" ' % (myId , pydevd_vars.makeValidXmlValue(myName))) 
-                cmdTextList.append('file="%s" line="%s">"' % (quote(myFile, '/>_= \t'), myLine)) 
-                cmdTextList.append(variables) 
-                cmdTextList.append("</frame>") 
-                curFrame = curFrame.f_back
+            curFrame = frame
+            try:
+                while curFrame:
+                    #print cmdText
+                    myId = str(id(curFrame))
+                    #print "id is ", myId
+
+                    if curFrame.f_code is None:
+                        break #Iron Python sometimes does not have it!
+
+                    myName = curFrame.f_code.co_name #method name (if in method) or ? if global
+                    if myName is None:
+                        break #Iron Python sometimes does not have it!
+
+                    #print "name is ", myName
+
+                    myFile = pydevd_file_utils.NormFileToClient(curFrame.f_code.co_filename)
+                    #print "file is ", myFile
+                    #myFile = inspect.getsourcefile(curFrame) or inspect.getfile(frame)
+
+                    myLine = str(curFrame.f_lineno)
+                    #print "line is ", myLine
+
+                    #the variables are all gotten 'on-demand'
+                    #variables = pydevd_vars.frameVarsToXML(curFrame)
+
+                    variables = ''
+                    cmdTextList.append('<frame id="%s" name="%s" ' % (myId , pydevd_vars.makeValidXmlValue(myName)))
+                    cmdTextList.append('file="%s" line="%s">"' % (quote(myFile, '/>_= \t'), myLine))
+                    cmdTextList.append(variables)
+                    cmdTextList.append("</frame>")
+                    curFrame = curFrame.f_back
+            except :
+                traceback.print_exc()
             
             cmdTextList.append("</thread></xml>")
             cmdText = ''.join(cmdTextList)
@@ -778,7 +781,7 @@ class InternalGetCompletions(InternalThreadCommand):
             try:
                 
                 frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
-            
+
                 #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
                 #(Names not resolved in generator expression in method)
                 #See message: http://mail.python.org/pipermail/python-list/2009-January/526522.html
