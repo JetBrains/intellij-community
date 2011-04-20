@@ -39,9 +39,11 @@ public class HtmlTagTreeHighlightingConfigurable implements UnnamedConfigurable 
   private JSpinner myLevelsSpinner;
   private JPanel myLevelsPanel;
   private JPanel myContentPanel;
+  private JSpinner myOpacitySpinner;
 
   public HtmlTagTreeHighlightingConfigurable() {
     myLevelsSpinner.setModel(new SpinnerNumberModel(1, 1, 50, 1));
+    myOpacitySpinner.setModel(new SpinnerNumberModel(0.0, 0.0, 1.0, 0.05));
 
     myEnableTagTreeHighlightingCheckBox.addActionListener(new ActionListener() {
       @Override
@@ -69,6 +71,10 @@ public class HtmlTagTreeHighlightingConfigurable implements UnnamedConfigurable 
       return true;
     }
 
+    if (getOpacity() != options.getTagTreeHighlightingOpacity()) {
+      return true;
+    }
+
     return false;
   }
 
@@ -78,12 +84,17 @@ public class HtmlTagTreeHighlightingConfigurable implements UnnamedConfigurable 
 
     options.setTagTreeHighlightingEnabled(myEnableTagTreeHighlightingCheckBox.isSelected());
     options.setTagTreeHighlightingLevelCount(getLevelCount());
+    options.setTagTreeHighlightingOpacity(getOpacity());
 
     clearTagTreeHighlighting();
   }
 
   private int getLevelCount() {
     return ((Integer)myLevelsSpinner.getValue()).intValue();
+  }
+
+  private int getOpacity() {
+    return (int)(((Double)myOpacitySpinner.getValue()).doubleValue() * 100);
   }
 
   private static void clearTagTreeHighlighting() {
@@ -109,6 +120,7 @@ public class HtmlTagTreeHighlightingConfigurable implements UnnamedConfigurable 
 
     myEnableTagTreeHighlightingCheckBox.setSelected(enabled);
     myLevelsSpinner.setValue(options.getTagTreeHighlightingLevelCount());
+    myOpacitySpinner.setValue(options.getTagTreeHighlightingOpacity() * 0.01);
     UIUtil.setEnabled(myLevelsPanel, enabled, true);
   }
 

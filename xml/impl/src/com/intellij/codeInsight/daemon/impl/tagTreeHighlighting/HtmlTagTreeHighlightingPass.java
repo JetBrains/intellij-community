@@ -272,7 +272,7 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
     final Color[] resultColors = new Color[baseColors.length];
     // todo: make configurable
-    final double transparency = 0.1;
+    final double transparency = WebEditorOptions.getInstance().getTagTreeHighlightingOpacity() * 0.01;
 
     for (int i = 0; i < resultColors.length; i++) {
       final Color color = baseColors[i];
