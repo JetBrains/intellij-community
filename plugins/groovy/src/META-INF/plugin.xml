@@ -311,8 +311,6 @@
     <renameInputValidator implementation="org.jetbrains.plugins.groovy.GroovyRenameInputValidator"/>
     <lang.namesValidator implementationClass="org.jetbrains.plugins.groovy.lang.GroovyNamesValidator" language="Groovy"/>
 
-    <!-- Groovy DSL support -->
-    <indexedRootsProvider implementation="org.jetbrains.plugins.groovy.dsl.StandardDslIndexedRootsProvider"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex"/>
 
     <patterns.patternClass className="org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns" alias="groovy"/>
