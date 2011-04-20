@@ -16,6 +16,12 @@ public class EpydocString extends StructuredDocString {
   public static String[] RTYPE_TAGS = new String[] { "rtype", "returntype" };
   public static String[] KEYWORD_ARGUMENT_TAGS = new String[] { "keyword", "kwarg", "kwparam" };
 
+  public static String[] ALL_TAGS = new String[] {
+    "@param", "@type", "@return", "@rtype", "@keyword", "@raise", "@ivar", "@cvar", "@var", "@group", "@sort", "@note", "@attention",
+    "@bug", "@warning", "@version", "@todo", "@deprecated", "@since", "@status", "@change", "@permission", "@requires",
+    "@precondition", "@postcondition", "@invariant", "@author", "@organization", "@copyright", "@license", "@contact", "@summary", "@see"
+  };
+
   public EpydocString(String docstringText) {
     super(docstringText, "@");
   }
