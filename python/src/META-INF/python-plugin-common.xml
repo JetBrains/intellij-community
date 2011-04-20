@@ -287,6 +287,7 @@
     <applicationConfigurable implementation="com.jetbrains.python.documentation.PythonDocumentationConfigurable"/>
     <projectService serviceInterface="com.jetbrains.python.documentation.PyDocumentationSettings"
                     serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings"/>
+    <psi.referenceContributor implementation="com.jetbrains.python.documentation.DocStringReferenceContributor"/>
 
     <!-- Django -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.ViewMethodLineMarkerProvider"/>

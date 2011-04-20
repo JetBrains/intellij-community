@@ -320,4 +320,8 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
   public void testReexportModules() {  // PY-2385
     doMultiFileTest();
   }
+
+  public void testEpydocParamTag() {
+    doTest();
+  }
 }
