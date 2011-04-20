@@ -17,7 +17,6 @@ package com.intellij.codeInspection.duplicatePropertyInspection;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.concurrency.JobUtil;
 import com.intellij.lang.properties.PropertiesBundle;
@@ -141,11 +140,6 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
         lineAnchor.append("</a>");
       }
     }
-  }
-
-  @NotNull
-  public JobDescriptor[] getJobDescriptors() {
-    return JobDescriptor.EMPTY_ARRAY;
   }
 
   private void checkFile(final PsiFile file, final InspectionManager manager, GlobalInspectionContextImpl context, final RefManager refManager, final ProblemDescriptionsProcessor processor) {
