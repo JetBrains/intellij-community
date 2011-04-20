@@ -106,6 +106,7 @@ class ConstructorInsertHandler implements InsertHandler<LookupElementDecorator<L
       context.setLaterRunnable(generateAnonymousBody(editor, context.getFile()));
     }
     else {
+      PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
       final PsiNewExpression newExpression =
         PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiNewExpression.class, false);
       if (newExpression != null) {
