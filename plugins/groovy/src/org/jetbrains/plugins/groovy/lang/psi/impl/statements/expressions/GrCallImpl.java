@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -36,7 +37,10 @@ public abstract class GrCallImpl extends GroovyPsiElementImpl implements GrCall 
   }
 
   public GrArgumentList getArgumentList() {
-    return findChildByClass(GrArgumentList.class);
+    for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrArgumentList) return (GrArgumentList)cur;
+    }
+    return null;
   }
 
   public GrNamedArgument[] getNamedArguments() {

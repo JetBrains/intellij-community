@@ -18,10 +18,11 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.branch;
 
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author ilyas
@@ -39,7 +40,8 @@ public class GrReturnStatementImpl extends GroovyPsiElementImpl implements GrRet
     return "RETURN statement";
   }
 
+  @Nullable
   public GrExpression getReturnValue() {
-    return findChildByClass(GrExpression.class);
+    return findExpressionChild(this);
   }
 }

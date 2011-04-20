@@ -24,10 +24,12 @@ import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 /**
  * @author ilyas
@@ -54,6 +56,14 @@ public abstract class GroovyPsiElementImpl extends ASTWrapperPsiElement implemen
 
   public void acceptChildren(GroovyElementVisitor visitor) {
     acceptGroovyChildren(this, visitor);
+  }
+
+  @Nullable
+  public static GrExpression findExpressionChild(final PsiElement element) {
+    for (PsiElement cur = element.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrExpression) return (GrExpression)cur;
+    }
+    return null;
   }
 
   public static void acceptGroovyChildren(PsiElement parent, GroovyElementVisitor visitor) {
