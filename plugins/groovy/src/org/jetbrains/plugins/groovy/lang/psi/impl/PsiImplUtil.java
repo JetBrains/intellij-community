@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.AstBufferUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -35,6 +36,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -456,5 +458,9 @@ public class PsiImplUtil {
     }
     if (candidates.length == 1) return candidates[0];
     return GroovyResolveResult.EMPTY_RESULT;
+  }
+
+  public static String getTextSkipWhiteSpaceAndComments(ASTNode node) {
+    return AstBufferUtil.getTextSkippingTokens(node, TokenSets.WHITE_SPACES_OR_COMMENTS);
   }
 }

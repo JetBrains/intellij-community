@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -41,13 +42,15 @@ public class GrTupleType extends GrLiteralClassType {
     myComponentTypes = componentTypes;
   }
 
+  @NotNull
   @Override
   protected String getJavaClassName() {
     return CommonClassNames.JAVA_UTIL_ARRAY_LIST;
   }
 
+  @NotNull
   public String getClassName() {
-    return "ArrayList";
+    return StringUtil.getShortName(getJavaClassName());
   }
 
   @NotNull
