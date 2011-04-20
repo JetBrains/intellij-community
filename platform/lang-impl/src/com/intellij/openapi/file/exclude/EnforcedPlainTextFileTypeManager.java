@@ -60,8 +60,8 @@ public class EnforcedPlainTextFileTypeManager extends PersistentFileSetManager {
     });
   }
 
+  private final static EnforcedPlainTextFileTypeManager ourInstance = ServiceManager.getService(EnforcedPlainTextFileTypeManager.class);
   public static EnforcedPlainTextFileTypeManager getInstance() {
-    return ServiceManager.getService(EnforcedPlainTextFileTypeManager.class);
+    return ourInstance;
   }
-
 }
