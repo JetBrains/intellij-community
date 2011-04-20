@@ -7,9 +7,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.PydevConsoleRunner;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Alexey.Ivanov
@@ -79,6 +83,53 @@ public class PyDocstringInspection extends PyInspection {
       }
       else if (StringUtil.isEmptyOrSpaces(docStringExpression.getStringValue())) {
         registerProblem(docStringExpression, PyBundle.message("INSP.empty.docstring"));
+      }
+      else {
+        checkParameters(node, docStringExpression);
+      }
+    }
+
+    private void checkParameters(PyDocStringOwner pyDocStringOwner, PyStringLiteralExpression node) {
+      String str = node.getStringValue();
+      PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(node.getProject());
+      String prefix;
+      if (documentationSettings.isEpydocFormat())
+        prefix = "@param";
+      else if (documentationSettings.isReSTFormat())
+        prefix = ":param";
+      else
+        return;
+
+      Set<String> params = new HashSet<String>();
+      String[] strs = str.split("[\n ]");
+
+      int i = 0;
+      while (i != strs.length) {
+        if (strs[i].equals(prefix) && strs[i+1].endsWith(":")) {
+          ++i;
+          params.add(strs[i].substring(0, strs[i].length()-1));
+        }
+        ++i;
+      }
+      if (pyDocStringOwner instanceof PyFunction) {
+        PyParameter[] realParams = ((PyFunction)pyDocStringOwner).getParameterList().getParameters();
+        StringBuilder missingParams = new StringBuilder("Missing parameters ");
+        boolean hasProblem = false;
+        for (PyParameter p : realParams) {
+          if (!params.contains(p.getText())) {
+            hasProblem = true;
+            missingParams.append(p.getText()).append(", ");
+          }
+        }
+        missingParams.delete(missingParams.length()-2, missingParams.length());
+        missingParams.append(" in docstring.");
+        if (realParams.length >= params.size()) {
+          if (hasProblem)
+            registerProblem(node, missingParams.toString());
+        }
+        else {
+          registerProblem(node, "Unexpected parameters in docstring");
+        }
       }
     }
   }
