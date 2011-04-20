@@ -92,6 +92,14 @@ public class PsiDiamondType extends PsiType {
       return PsiDiamondType.DiamondInferenceResult.NULL_RESULT;
     }
 
+    final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
+    if (anonymousClass != null) {
+      final PsiElement resolve = anonymousClass.getBaseClassReference().resolve();
+      if (resolve instanceof PsiClass && ((PsiClass)resolve).getContainingClass() != null) {
+        return PsiDiamondType.DiamondInferenceResult.ANONYMOUS_INNER_RESULT;
+      }
+
+    }
     return resolveInferredTypes(newExpression);
   }
 
@@ -238,6 +246,18 @@ public class PsiDiamondType extends PsiType {
       }
     };
 
+    public static final DiamondInferenceResult ANONYMOUS_INNER_RESULT = new DiamondInferenceResult() {
+      @Override
+      public PsiType[] getTypes() {
+        return PsiType.EMPTY_ARRAY;
+      }
+
+      @Override
+      public String getErrorMessage() {
+        return "Cannot use ''<>'' with anonymous inner classes";
+      }
+    };
+
     private List<PsiType> myInferredTypes = new ArrayList<PsiType>();
     private String myErrorMessage;
 
@@ -285,10 +305,10 @@ public class PsiDiamondType extends PsiType {
       if (myErrorMessage != null) return;
       if (psiType == null) {
         myErrorMessage = "Cannot infer type arguments for " + myNewExpressionPresentableText;
-      } else if (!isValid(psiType)) {
+      } /*else if (!isValid(psiType)) {
         myErrorMessage = "Cannot infer type arguments for " +
                          myNewExpressionPresentableText + " because type " + psiType.getPresentableText() + " inferred is not allowed in current context";
-      } else {
+      }*/ else {
         myInferredTypes.add(psiType);
       }
     }

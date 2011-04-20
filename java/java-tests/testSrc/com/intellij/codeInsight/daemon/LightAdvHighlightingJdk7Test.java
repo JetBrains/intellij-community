@@ -68,6 +68,17 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     doTest(false, false);
   }
 
+ /*
+  should be negative?
+  intersection types are not allowed in <>?!
+  public void testDiamondPos6() throws Exception {
+    doTest(false, false);
+  }
+
+  public void testDiamondPos7() throws Exception {
+    doTest(false, false);
+  }*/
+
   public void testDiamondNeg1() throws Exception {
     doTest(false, false);
   }

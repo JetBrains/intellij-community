@@ -5,5 +5,4 @@ class Neg07 {
    }
 
    SuperFoo<String> sf1 = new Foo<<error descr="Type parameter 'java.lang.String' is not within its bound; should extend 'java.lang.Number'"></error>>("");
-   SuperFoo<String> sf2 = new Foo<<error descr="Type parameter 'java.lang.String' is not within its bound; should extend 'java.lang.Number'"></error>>("") {};
 }

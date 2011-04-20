@@ -3,5 +3,5 @@ class Neg10 {
         Foo(X x) {}
     }
 
-    <error descr="Incompatible types. Found: 'Neg10.Foo<java.lang.Integer>', required: 'Neg10.Foo<java.lang.Number>'">Foo<Number> fw = new Foo<>(1);</error>    
+    <error descr="Incompatible types. Found: 'Neg10.Foo<java.lang.Integer>', required: 'Neg10.Foo<java.lang.Number>'">Foo<Number> fw = new Foo<>(1);</error>
 }
