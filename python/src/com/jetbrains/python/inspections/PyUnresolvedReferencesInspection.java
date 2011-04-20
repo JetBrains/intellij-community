@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -18,8 +19,8 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.*;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
+import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.codeInsight.imports.PythonReferenceImporter;
 import com.jetbrains.python.console.PydevConsoleRunner;
@@ -358,7 +359,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
       PsiElement point = node.getLastChild(); // usually the identifier at the end of qual ref
       if (point == null) point = node;
-      registerProblem(point, description, hl_type, null, actions.toArray(new LocalQuickFix[actions.size()]));
+      TextRange range = reference.getRangeInElement().shiftRight(-point.getStartOffsetInParent());
+      registerProblem(point, description, hl_type, null, range, actions.toArray(new LocalQuickFix[actions.size()]));
     }
 
     private static boolean isCall(PyElement node) {

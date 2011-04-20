@@ -7,7 +7,7 @@ import java.util.List;
  */
 public class SphinxDocString extends StructuredDocString {
   public static String[] KEYWORD_ARGUMENT_TAGS = new String[] { "keyword", "key" };
-  public static String[] ALL_TAGS = new String[] { ":param", ":keyword", ":type", ":raises", ":var", ":cvar", ":ivar", ":returns", ":rtype" };
+  public static String[] ALL_TAGS = new String[] { ":param", ":keyword", ":type", ":raise", ":raises", ":var", ":cvar", ":ivar", ":returns", ":rtype" };
 
   public SphinxDocString(String docstringText) {
     super(docstringText, ":");

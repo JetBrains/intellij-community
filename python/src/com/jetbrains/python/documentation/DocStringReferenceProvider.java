@@ -10,6 +10,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,18 +32,18 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
 
   @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
     final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(element, PyDocStringOwner.class);
     if (docStringOwner != null && element == docStringOwner.getDocStringExpression()) {
-      List<PsiReference> result = new ArrayList<PsiReference>();
+      final List<PsiReference> result = new ArrayList<PsiReference>();
       String docString = element.getText();
       int pos = 0;
       while (pos < docString.length()) {
-        pos = findNextTag(docString, pos, ALL_PARAM_TAGS);
-        if (pos < 0) {
+        final TextRange tagRange = findNextTag(docString, pos, ALL_PARAM_TAGS);
+        if (tagRange == null) {
           break;
         }
-        pos = CharMatcher.anyOf(" \t*").negate().indexIn(docString, pos);
+        pos = CharMatcher.anyOf(" \t*").negate().indexIn(docString, tagRange.getEndOffset());
         int endPos = CharMatcher.JAVA_LETTER_OR_DIGIT.negate().indexIn(docString, pos);
         if (endPos < 0) {
           endPos = docString.length();
@@ -56,16 +57,21 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
     return PsiReference.EMPTY_ARRAY;
   }
 
-  private static int findNextTag(String docString, int pos, String[] paramTags) {
+  @Nullable
+  public static TextRange findNextTag(String docString, int pos, String[] paramTags) {
     int result = Integer.MAX_VALUE;
     String foundTag = null;
     for (String paramTag : paramTags) {
-      int tagPos = docString.indexOf(paramTag + " ", pos);
+      int tagPos = docString.indexOf(paramTag, pos);
+      while(tagPos >= 0 && tagPos + paramTag.length() < docString.length() &&
+            Character.isLetterOrDigit(docString.charAt(tagPos + paramTag.length()))) {
+        tagPos = docString.indexOf(paramTag, tagPos+1);
+      }
       if (tagPos >= 0 && tagPos < result) {
         foundTag = paramTag;
         result = tagPos;
       }
     }
-    return foundTag == null ? -1 : result + foundTag.length();
+    return foundTag == null ? null : new TextRange(result, result + foundTag.length());
   }
 }

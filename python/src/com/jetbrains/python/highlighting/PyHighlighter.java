@@ -62,6 +62,8 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
   public static final TextAttributesKey PY_DOC_COMMENT = _copy("PY.DOC_COMMENT", DOC_COMMENT);
 
+  public static final TextAttributesKey PY_DOC_COMMENT_TAG = _copy("PY.DOC_COMMENT_TAG", DOC_COMMENT_TAG);
+
   public static final TextAttributesKey PY_DECORATOR = TextAttributesKey.createTextAttributesKey(
     "PY.DECORATOR", new TextAttributes(Color.blue.darker(), null, null, null, Font.PLAIN)
   );

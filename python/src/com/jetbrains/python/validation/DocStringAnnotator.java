@@ -1,9 +1,10 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.annotation.Annotation;
+import com.intellij.openapi.util.TextRange;
 import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.console.PydevConsoleRunner;
-import com.jetbrains.python.documentation.EpydocUtil;
+import com.jetbrains.python.documentation.*;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 
@@ -42,6 +43,19 @@ public class DocStringAnnotator extends PyAnnotator {
       }
       Annotation ann = getHolder().createInfoAnnotation(stmt, null);
       ann.setTextAttributes(PyHighlighter.PY_DOC_COMMENT);
+
+      final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(stmt.getProject());
+      if (settings.isEpydocFormat() || settings.isReSTFormat()) {
+        String[] tags = settings.isEpydocFormat() ? EpydocString.ALL_TAGS : SphinxDocString.ALL_TAGS;
+        int pos = 0;
+        while(true) {
+          TextRange textRange = DocStringReferenceProvider.findNextTag(stmt.getText(), pos, tags);
+          if (textRange == null) break;
+          Annotation annotation = getHolder().createInfoAnnotation(textRange.shiftRight(stmt.getTextRange().getStartOffset()), null);
+          annotation.setTextAttributes(PyHighlighter.PY_DOC_COMMENT_TAG);
+          pos = textRange.getEndOffset();
+        }
+      }
     }
   }
 }
