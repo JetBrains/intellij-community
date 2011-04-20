@@ -20,6 +20,7 @@ import com.intellij.openapi.ide.KillRingTransferable;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 
@@ -30,6 +31,10 @@ import java.awt.datatransfer.Transferable;
 public class KillRingSaveActionTest extends AbstractRegionToKillRingTest {
 
   protected void doTest(@NotNull String text) throws Exception {
+    if (GraphicsEnvironment.isHeadless()) {
+      // Don't perform actions that may try to access system clipboard in headless environment.
+      return;
+    }
     configureFromFileText(getTestName(false) + ".java", text);
     Pair<String,String> parseResult = parse();
     String textBefore = myEditor.getDocument().getText();

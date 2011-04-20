@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.io.IOException;
 
 /**
@@ -85,6 +86,10 @@ public class KillToWordStartActionTest extends LightPlatformCodeInsightTestCase 
   }
   
   private void doTest(@NotNull String before, @NotNull String after) throws IOException {
+    if (GraphicsEnvironment.isHeadless()) {
+      // Don't perform actions that may try to access system clipboard in headless environment.
+      return;
+    }
     configureFromFileText(getTestName(false) + ".java", before);
     killToWordStart();
     checkResultByText(after);
