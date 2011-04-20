@@ -41,8 +41,9 @@ public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
 
   
   private final FileTypeIdentifiableByVirtualFile myFileType;
-  
-  
+  private static final EnforcedPlainTextFileTypeManager ourManager = EnforcedPlainTextFileTypeManager.getInstance();
+
+
   public EnforcedPlainTextFileTypeFactory() {
     
     
@@ -101,9 +102,7 @@ public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
   }
   
   private static boolean isMarkedAsPlainText(VirtualFile file) {
-    EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
-    if (typeManager == null) return false;
-    return typeManager.isMarkedAsPlainText(file);
+    return ourManager != null && ourManager.isMarkedAsPlainText(file);
   }
 
 }
