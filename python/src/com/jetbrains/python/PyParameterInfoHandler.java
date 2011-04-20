@@ -100,9 +100,9 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     final Callable callable = marked.getCallable();
     if (callable == null) return; // resolution failed
 
-    PyParameter[] raw_params = callable.getParameterList().getParameters();
-    final List<PyNamedParameter> n_param_list = new ArrayList<PyNamedParameter>(raw_params.length);
-    final List<String> hint_texts = new ArrayList<String>(raw_params.length);
+    final List<PyParameter> raw_params = Arrays.asList(callable.getParameterList().getParameters());
+    final List<PyNamedParameter> n_param_list = new ArrayList<PyNamedParameter>(raw_params.size());
+    final List<String> hint_texts = new ArrayList<String>(raw_params.size());
 
     // param -> hint index. indexes are not contiguous, because some hints are parentheses.
     final Map<PyNamedParameter, Integer> param_indexes = new HashMap<PyNamedParameter, Integer>();
@@ -153,50 +153,60 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       hint_flags.get(param_indexes.get(n_param_list.get(i))).add(ParameterInfoUIContextEx.Flag.DISABLE); // show but mark as absent
     }
 
-    // highlight current param(s)
-    final List<PyExpression> args = PyUtil.flattenedParensAndLists(arglist.getArguments());
-    for (PyExpression arg : args) {
-      if (arg.getTextRange().contains(current_param_offset)) {
-        PsiElement seeker = arg;
-        while (seeker != arglist && seeker != null && !result.getPlainMappedParams().containsKey(seeker)) {
-          seeker = seeker.getParent(); // flattener may have flattened a tuple arg that is mapped to a plain param; find it.
-        }
-        if (seeker instanceof PyExpression) {
-          PyNamedParameter param = result.getPlainMappedParams().get((PyExpression)seeker);
-          if (param != null) {
-            final Integer param_index = param_indexes.get(param);
-            if  (param_index < hint_flags.size()) {
-              hint_flags.get(param_index).add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
-            }
+    // match params to available args, highlight current param(s)
+    boolean can_offer_next = true; // can we highlight next unfilled parameter
+    int last_param_index = marked.getImplicitOffset();
+    final List<PyExpression> flat_args = PyUtil.flattenedParensAndLists(arglist.getArguments());
+    for (PyExpression arg : flat_args) {
+      can_offer_next &= !(arg instanceof  PyKeywordArgument);
+      final boolean must_highlight = arg.getTextRange().contains(current_param_offset);
+      PsiElement seeker = arg;
+      while (seeker != arglist && seeker != null && !result.getPlainMappedParams().containsKey(seeker)) {
+        seeker = seeker.getParent(); // flattener may have flattened a tuple arg that is mapped to a plain param; find it.
+      }
+      if (seeker instanceof PyExpression) {
+        PyNamedParameter param = result.getPlainMappedParams().get((PyExpression)seeker);
+        last_param_index = Math.max(last_param_index, raw_params.indexOf(param));
+        if (must_highlight && param != null) {
+          final Integer param_index = param_indexes.get(param);
+          if  (param_index < hint_flags.size()) {
+            hint_flags.get(param_index).add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+            can_offer_next = false;
           }
         }
-        else if (arg == result.getTupleArg()) {
-          // mark all params that map to *arg
-          for (PyNamedParameter tpar : result.getTupleMappedParams()) {
+      }
+      else if (arg == result.getTupleArg()) {
+        // mark all params that map to *arg
+        for (PyNamedParameter tpar : result.getTupleMappedParams()) {
+          last_param_index = Math.max(last_param_index, raw_params.indexOf(tpar));
+          final Integer param_index = param_indexes.get(tpar);
+          if (must_highlight && param_index != null && param_index < hint_flags.size()) {
+            hint_flags.get(param_index).add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+            can_offer_next = false;
+          }
+        }
+      }
+      else if (arg == result.getKwdArg()) {
+        // mark all n_params that map to **arg
+        for (PyNamedParameter tpar : result.getKwdMappedParams()) {
+          last_param_index = Math.max(last_param_index, raw_params.indexOf(tpar));
+          final Integer param_index = param_indexes.get(tpar);
+          if (must_highlight && param_index != null && param_index < hint_flags.size()) {
+            hint_flags.get(param_index).add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+            can_offer_next = false;
+          }
+        }
+      }
+      else {
+        // maybe it's mapped to a nested tuple?
+        List<PyNamedParameter> nparams = result.getNestedMappedParams().get(arg);
+        if (nparams != null) {
+          for (PyNamedParameter tpar : nparams) {
+            last_param_index = Math.max(last_param_index, raw_params.indexOf(tpar));
             final Integer param_index = param_indexes.get(tpar);
-            if (param_index != null && param_index < hint_flags.size()) {
+            if (must_highlight && param_index != null && param_index < hint_flags.size()) {
               hint_flags.get(param_index).add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
-            }
-          }
-        }
-        else if (arg == result.getKwdArg()) {
-          // mark all n_params that map to **arg
-          for (PyNamedParameter tpar : result.getKwdMappedParams()) {
-            final Integer param_index = param_indexes.get(tpar);
-            if (param_index != null && param_index < hint_flags.size()) {
-              hint_flags.get(param_index).add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
-            }
-          }
-        }
-        else {
-          // maybe it's mapped to a nested tuple?
-          List<PyNamedParameter> nparams = result.getNestedMappedParams().get(arg);
-          if (nparams != null) {
-            for (PyNamedParameter tpar : nparams) {
-              final Integer param_index = param_indexes.get(tpar);
-              if (param_index != null && param_index < hint_flags.size()) {
-                hint_flags.get(param_index).add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
-              }
+              can_offer_next = false;
             }
           }
         }
@@ -204,9 +214,9 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       // else: stay unhilited
     }
 
-    // highlight the parameter to be filled
-    if (current_param_offset < 0 && args.size() < n_param_list.size() - marked.getImplicitOffset()) {
-      hint_flags.get(param_indexes.get(n_param_list.get(args.size() + marked.getImplicitOffset()))).add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+    // highlight the next parameter to be filled
+    if (can_offer_next && last_param_index < raw_params.size()-1) {
+      hint_flags.get(param_indexes.get(n_param_list.get(last_param_index+1))).add(ParameterInfoUIContextEx.Flag.HIGHLIGHT);
     }
 
     final String NO_PARAMS_MSG = "<No parameters>";
