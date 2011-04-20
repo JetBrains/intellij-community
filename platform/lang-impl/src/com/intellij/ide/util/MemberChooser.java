@@ -160,8 +160,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       myCopyJavadocCheckbox = new NonFocusableCheckBox(IdeBundle.message("checkbox.copy.javadoc"));
       if (myIsInsertOverrideVisible) {
         myInsertOverrideAnnotationCheckbox = new NonFocusableCheckBox(IdeBundle.message("checkbox.insert.at.override"));
+        myCheckboxes = new JCheckBox[] {myCopyJavadocCheckbox, myInsertOverrideAnnotationCheckbox};
       }
-      myCheckboxes = new JCheckBox[] {myCopyJavadocCheckbox, myInsertOverrideAnnotationCheckbox};
+      else {
+        myCheckboxes = new JCheckBox[] {myCopyJavadocCheckbox};
+      }
     }
 
     myTree.doLayout();
