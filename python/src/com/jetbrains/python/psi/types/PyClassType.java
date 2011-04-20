@@ -96,6 +96,7 @@ public class PyClassType extends UserDataHolderBase implements PyType {
   @Nullable
   public List<? extends PsiElement> resolveMember(final String name, @Nullable PyExpression location, AccessDirection direction,
                                                   PyResolveContext resolveContext) {
+    if (myClass == null) return null;
     final Set<Pair<PyClass, String>> resolving = ourResolveMemberStack.get();
     final Pair<PyClass, String> key = Pair.create(myClass, name);
     if (resolving.contains(key)) {
@@ -103,7 +104,6 @@ public class PyClassType extends UserDataHolderBase implements PyType {
     }
     resolving.add(key);
     try {
-      assert myClass != null;
       if (resolveContext.allowProperties()) {
         Property property = myClass.findProperty(name);
         if (property != null) {
