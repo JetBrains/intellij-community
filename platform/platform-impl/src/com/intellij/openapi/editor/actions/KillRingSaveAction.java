@@ -18,46 +18,51 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.ide.KillRingTransferable;
 
 /**
- * Stands for emacs 'reverse-kill-line' action, i.e.
- * <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Killing-by-Lines.html">'kill-line' action</a>
- * with negative argument.
+ * Stands for emacs <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Other-Kill-Commands.html">kill-ring-save</a> command.
+ * <p/>
+ * Generally, it puts currently selected text to the {@link KillRingTransferable kill ring}.
+ * <p/>
+ * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 4/18/11 1:22 PM
+ * @since 4/19/11 6:06 PM
  */
-public class CutLineBackwardAction extends EditorAction {
+public class KillRingSaveAction extends TextComponentEditorAction {
 
-  public CutLineBackwardAction() {
-    super(new Handler());
+  public KillRingSaveAction() {
+    super(new Handler(false));
   }
 
   static class Handler extends EditorWriteActionHandler {
     
+    private final boolean myRemove;
+
+    Handler(boolean remove) {
+      myRemove = remove;
+    }
+
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-      final Document document = editor.getDocument();
-      int caretOffset = editor.getCaretModel().getOffset();
-      if (caretOffset <= 0) {
+      SelectionModel selectionModel = editor.getSelectionModel();
+      if (!selectionModel.hasSelection()) {
         return;
       }
-      
-      // The main idea is to kill everything between the current line start and caret and the whole previous line.
-      
-      final int caretLine = document.getLineNumber(caretOffset);
-      int start;
-      
-      if (caretLine <= 0) {
-        start = 0;
+
+      int start = selectionModel.getSelectionStart();
+      int end = selectionModel.getSelectionEnd();
+      if (start >= end) {
+        return;
       }
-      else {
-        start = document.getLineStartOffset(caretLine - 1);
+      Document document = editor.getDocument();
+      KillRingUtil.copyToKillRing(document, start, end, false);
+      if (myRemove) {
+        document.deleteString(start, end);
       }
-      KillRingUtil.cut(document, start, caretOffset);
     }
   }
 }

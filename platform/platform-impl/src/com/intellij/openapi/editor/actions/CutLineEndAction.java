@@ -72,7 +72,7 @@ public class CutLineEndAction extends EditorAction {
 
     private void delete(@NotNull Document document, int start, int end) {
       if (myCopyToClipboard) {
-        EditorActionUtil.copyToKillRing(document, start, end, true);
+        KillRingUtil.copyToKillRing(document, start, end, true);
       }
       document.deleteString(start, end);
     }
