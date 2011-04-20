@@ -2,6 +2,8 @@ package com.jetbrains.python;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.jetbrains.python.documentation.DocStringFormat;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -171,6 +173,17 @@ public class PythonInspectionsTest extends PyLightFixtureTestCase {
   public void testPyDocstringInspection() {
     LocalInspectionTool inspection = new PyDocstringInspection();
     doTest(getTestName(false), inspection);
+  }
+
+  public void testPyDocstringParametersInspection() {     //PY-3373
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    documentationSettings.setFormat(DocStringFormat.EPYTEXT);
+    try {
+      doHighlightingTest(PyDocstringInspection.class);
+    }
+    finally {
+      documentationSettings.setFormat(DocStringFormat.PLAIN);
+    }
   }
 
   public void testPyStatementEffectInspection() {
