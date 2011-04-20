@@ -50,8 +50,7 @@ public class ProjectConfigurablesGroup extends ConfigurablesGroupBase implements
   protected ConfigurableFilter getConfigurableFilter() {
     return new ConfigurableFilter() {
       public boolean isIncluded(final Configurable configurable) {
-        if (isDefault() && configurable instanceof NonDefaultProjectConfigurable) return false;
-        return true;
+        return !isDefault() || !(configurable instanceof NonDefaultProjectConfigurable);
       }
     };
   }

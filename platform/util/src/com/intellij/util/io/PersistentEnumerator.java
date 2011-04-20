@@ -66,7 +66,7 @@ public class PersistentEnumerator<Data> implements Forceable {
 
   private static final CacheKey ourFlyweight = new FlyweightKey();
 
-  private final File myFile;
+  protected final File myFile;
   private static final int COLLISION_OFFSET = 0;
   private static final int KEY_HASHCODE_OFFSET = COLLISION_OFFSET + 4;
   private static final int KEY_REF_OFFSET = KEY_HASHCODE_OFFSET + 4;

@@ -12,6 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
@@ -22,15 +23,12 @@ import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.util.HgUtil;
-import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgChangesetUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Commands to get revision numbers. These are: parents, id, tip.
@@ -38,6 +36,7 @@ import java.util.List;
 public class HgWorkingCopyRevisionsCommand {
 
   private final Project myProject;
+  private static final Logger LOG = Logger.getInstance(HgWorkingCopyRevisionsCommand.class);
 
   public HgWorkingCopyRevisionsCommand(Project project) {
     myProject = project;
@@ -181,10 +180,24 @@ public class HgWorkingCopyRevisionsCommand {
     if (result == null) {
       return new ArrayList<HgRevisionNumber>(0);
     }
-    final List<String> lines = Arrays.asList(result.getRawOutput().split(HgChangesetUtil.CHANGESET_SEPARATOR));
+
+    final List<String> lines = new ArrayList<String>();
+    for (String line : result.getRawOutput().split(HgChangesetUtil.CHANGESET_SEPARATOR)) {
+      if (!line.trim().isEmpty()) {     // filter out empty lines
+        lines.add(line);
+      }
+    }
+    if (lines.isEmpty()) {
+      return new ArrayList<HgRevisionNumber>();
+    }
+
     final List<HgRevisionNumber> revisions = new ArrayList<HgRevisionNumber>(lines.size());
     for(String line: lines) {
       final String[] parts = StringUtils.split(line, HgChangesetUtil.ITEM_SEPARATOR);
+      if (parts.length < 2) {
+        LOG.error("getRevisions output parse error in line [" + line + "]\n All lines: \n" + lines);
+        continue;
+      }
       revisions.add(HgRevisionNumber.getInstance(parts[0], parts[1]));
     }
     

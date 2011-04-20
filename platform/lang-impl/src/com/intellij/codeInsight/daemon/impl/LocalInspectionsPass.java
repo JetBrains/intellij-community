@@ -448,6 +448,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   private void appendDescriptors(PsiFile file, List<ProblemDescriptor> descriptors, LocalInspectionTool tool) {
+    for (ProblemDescriptor descriptor : descriptors) {
+      if (descriptor == null) {
+        LOG.error("null descriptor. " + descriptors.size() + "; file: " + file + "; tool: " + tool);
+      }
+    }
     InspectionResult res = new InspectionResult(tool, descriptors);
     appendResult(file, res);
   }
@@ -693,8 +698,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       tool.inspectionFinished(injSession,holder);
       List<ProblemDescriptor> problems = holder.getResults();
       if (problems != null && !problems.isEmpty()) {
-        InspectionResult res = new InspectionResult(tool, problems);
-        appendResult(injectedPsi, res);
+        appendDescriptors(injectedPsi, problems, tool);
       }
     }
   }

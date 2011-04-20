@@ -52,7 +52,7 @@ public class UnusedPropertyInspection extends PropertySuppressableInspectionBase
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
                                         final boolean isOnTheFly,
-                                        final LocalInspectionToolSession session) {
+                                        @NotNull final LocalInspectionToolSession session) {
     final PsiFile file = session.getFile();
     Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module == null) return super.buildVisitor(holder, isOnTheFly, session);

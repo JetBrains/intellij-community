@@ -15,14 +15,11 @@
  */
 package com.intellij.uiDesigner.inspections;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
@@ -59,16 +56,10 @@ public class Java15FormInspection extends BaseFormInspection {
 
     for(final IProperty prop: component.getModifiedProperties()) {
       final PsiMethod getter = PropertyUtil.findPropertyGetter(aClass, prop.getName(), false, true);
-      InspectionProfileEntry profileEntry =
-        InspectionProjectProfileManager.getInstance(aClass.getProject()).getInspectionProfile()
-          .getInspectionTool(Java15APIUsageInspection.SHORT_NAME, aClass);
-      if (profileEntry instanceof LocalInspectionToolWrapper) {
-        profileEntry = ((LocalInspectionToolWrapper) profileEntry).getTool();
-      }
-      final Java15APIUsageInspection tool = (Java15APIUsageInspection)profileEntry;
+      if (getter == null) continue;
       final LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
       if (Java15APIUsageInspection.isForbiddenApiUsage(getter, languageLevel)) {
-        registerError(component, collector, prop, "@since " + tool.getPresentable(languageLevel));
+        registerError(component, collector, prop, "@since " + Java15APIUsageInspection.getShortName(languageLevel));
       }
     }
   }
