@@ -173,11 +173,53 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
             annotation.registerFix(new ExpressionReplacementFix(replacement, o));
           }
         }
+
+        if (XPath2TokenTypes.NODE_COMP_OPS.contains(operator)) {
+          checkApplicability(o, XPath2Type.NODE);
+        } else if (operator == XPath2TokenTypes.WEQ || operator == XPath2TokenTypes.WNE || operator == XPathTokenTypes.EQ || operator == XPathTokenTypes.NE) {
+          checkApplicability(o,
+                             XPath2Type.NUMERIC,XPath2Type.BOOLEAN,XPath2Type.STRING,
+                             XPath2Type.DATE,XPath2Type.TIME,XPath2Type.DATETIME,XPath2Type.DURATION,
+                             XPath2Type.HEXBINARY,XPath2Type.BASE64BINARY,XPath2Type.ANYURI,XPath2Type.QNAME);
+        } else if (operator == XPath2TokenTypes.WGT || operator == XPath2TokenTypes.WGE || operator == XPath2TokenTypes.WLE || operator == XPath2TokenTypes.WLT ||
+                   operator == XPathTokenTypes.GT || operator == XPathTokenTypes.GE || operator == XPathTokenTypes.LE || operator == XPathTokenTypes.LT) {
+          checkApplicability(o,
+                             XPath2Type.NUMERIC,XPath2Type.BOOLEAN,XPath2Type.STRING,
+                             XPath2Type.DATE,XPath2Type.TIME,XPath2Type.DATETIME,XPath2Type.DURATION,
+                             XPath2Type.ANYURI);
+        }
+      } else if (XPath2TokenTypes.UNION_OPS.contains(operator) || XPath2TokenTypes.INTERSECT_EXCEPT.contains(operator)) {
+        checkApplicability(o, XPath2SequenceType.create(XPath2Type.NODE, XPath2SequenceType.Cardinality.ZERO_OR_MORE));
+      } else if (operator == XPath2TokenTypes.TO) {
+        checkApplicability(o, XPath2Type.INTEGER);
+      } else if (operator == XPathTokenTypes.AND || operator == XPathTokenTypes.OR) {
+        checkApplicability(o, XPath2Type.BOOLEAN);
+      } else if (XPathTokenTypes.ADD_OPS.contains(operator)) {
+        checkApplicability(o, XPath2Type.NUMERIC, XPath2Type.DURATION, XPath2Type.DATE, XPath2Type.TIME, XPath2Type.DATETIME);
+      } else if (XPath2TokenTypes.MULT_OPS.contains(operator)) {
+        if (operator == XPath2TokenTypes.IDIV || operator == XPathTokenTypes.MOD) {
+          checkApplicability(o, XPath2Type.NUMERIC);
+        } else if (operator == XPathTokenTypes.DIV) {
+          checkApplicability(o, XPath2Type.NUMERIC, XPath2Type.DURATION);
+        } else {
+          assert operator == XPathTokenTypes.MULT;
+          checkApplicability(o, XPath2Type.NUMERIC, XPath2Type.DURATION);
+        }
       }
     }
 
     checkExpression(myHolder, o);
     super.visitXPathBinaryExpression(o);
+  }
+
+  private void checkApplicability(XPathBinaryExpression o, XPath2Type... applicableTypes) {
+    final XPathType leftType = XPath2Type.mapType(o.getLOperand().getType());
+    for (XPath2Type applicableType : applicableTypes) {
+      if (XPathType.isAssignable(applicableType, leftType)) {
+        return;
+      }
+    }
+    myHolder.createErrorAnnotation(o, "Operator '" + o.getOperationSign() + "' cannot to applied to expressions of type '" + leftType.getName() + "'");
   }
 
   @Override
@@ -482,6 +524,18 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
         holder.createWarningAnnotation(typeTest, "Silly node type test on axis '" + nodeTest.getPrincipalType().getType() + "'");
       }
     }
+  }
+
+  @Override
+  public void visitXPathPredicate(XPathPredicate o) {
+    final XPathExpression expression = o.getPredicateExpression();
+    if (expression instanceof XPathLocationPath) {
+      final XPathExpression parentOfType = PsiTreeUtil.getParentOfType(o, XPathExpression.class, true);
+      if (XPath2Type.ANYATOMICTYPE.isAssignableFrom(parentOfType.getType())) {
+        myHolder.createErrorAnnotation(expression, "Axis step cannot be used here: the context item is an atomic value");
+      }
+    }
+    super.visitXPathPredicate(o);
   }
 
   private static void checkExpression(AnnotationHolder holder, @NotNull XPathExpression expression) {
