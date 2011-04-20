@@ -19,6 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import groovy.lang.Closure;
 import org.codehaus.groovy.runtime.InvokerInvocationException;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter;
@@ -29,15 +30,17 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  */
 public class GroovyDslScript {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.dsl.GroovyDslScript");
-  public final Project project;
-  public final VirtualFile file;
-  public final GroovyDslExecutor executor;
+  private final Project project;
+  @Nullable private final VirtualFile file;
+  private final GroovyDslExecutor executor;
+  private final String myPath;
   private final CachedValue<FactorTree> myMaps;
 
-  public GroovyDslScript(final Project project, VirtualFile file, GroovyDslExecutor executor) {
+  public GroovyDslScript(final Project project, @Nullable VirtualFile file, GroovyDslExecutor executor, String path) {
     this.project = project;
     this.file = file;
     this.executor = executor;
+    myPath = path;
     myMaps = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<FactorTree>() {
       @Override
       public Result<FactorTree> compute() {
@@ -65,7 +68,7 @@ public class GroovyDslScript {
       return holder.processMembers(descriptor, processor, state);
     }
     catch (IncorrectOperationException e) {
-      LOG.error("Error while processing dsl script '" + file.getUrl()+ "'", e);
+      LOG.error("Error while processing dsl script '" + myPath + "'", e);
       return false;
     }
   }
@@ -118,12 +121,14 @@ public class GroovyDslScript {
     if (project.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
       return true;
     }
-    GroovyDslFileIndex.invokeDslErrorPopup(e, project, file);
+    if (file != null) {
+      GroovyDslFileIndex.invokeDslErrorPopup(e, project, file);
+    }
     return false;
   }
 
   @Override
   public String toString() {
-    return "GroovyDslScript: " + file.getPath();
+    return "GroovyDslScript: " + myPath;
   }
 }
