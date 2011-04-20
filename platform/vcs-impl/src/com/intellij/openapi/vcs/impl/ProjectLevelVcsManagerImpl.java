@@ -561,6 +561,10 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
     return myMappingsToRoots.getRootsUnderVcs(vcs);
   }
 
+  public List<VirtualFile> getDetailedVcsMappings(final AbstractVcs vcs) {
+    return myMappingsToRoots.getDetailedVcsMappings(vcs);
+  }
+
   public VirtualFile[] getAllVersionedRoots() {
     List<VirtualFile> vFiles = new ArrayList<VirtualFile>();
     final AbstractVcs[] vcses = myMappings.getActiveVcses();

@@ -223,6 +223,11 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract VirtualFile[] getRootsUnderVcs(AbstractVcs vcs);
 
+  /**
+   * Also includes into list all modules under roots
+   */
+  public abstract List<VirtualFile> getDetailedVcsMappings(final AbstractVcs vcs);
+
   public abstract VirtualFile[] getAllVersionedRoots();
 
   @NotNull
