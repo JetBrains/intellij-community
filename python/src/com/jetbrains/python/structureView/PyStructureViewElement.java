@@ -149,6 +149,24 @@ public class PyStructureViewElement implements StructureViewTreeElement {
           ParamHelper.appendParameterList(argList, result);
           return result.toString();
         }
+        else if (myElement instanceof PyClass) {
+          PyClass c = (PyClass) myElement;
+          StringBuilder result = new StringBuilder(c.getName());
+          PyClass[] superClasses = c.getSuperClasses();
+          int n = superClasses.length;
+          if (n > 0) {
+            result.append("(");
+            for (int i = 0; i < n; i++) {
+              c = superClasses[i];
+              result.append(c.getName());
+              if (i != n - 1) {
+                result.append(", ");
+              }
+            }
+            result.append(")");
+          }
+          return result.toString();
+        }
         return myElement.getName();
       }
 
