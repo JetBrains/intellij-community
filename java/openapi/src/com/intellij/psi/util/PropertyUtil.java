@@ -191,10 +191,11 @@ public class PropertyUtil {
     return ContainerUtil.concat(getGetters(psiClass, propertyName), getSetters(psiClass, propertyName));
   }
 
-  @Nullable public static PsiMethod findPropertyGetter(PsiClass aClass,
-                                                       String propertyName,
-                                                       boolean isStatic,
-                                                       boolean checkSuperClasses) {
+  @Nullable
+  public static PsiMethod findPropertyGetter(PsiClass aClass,
+                                             String propertyName,
+                                             boolean isStatic,
+                                             boolean checkSuperClasses) {
     if (aClass == null) return null;
     PsiMethod[] methods;
     if (checkSuperClasses) {
