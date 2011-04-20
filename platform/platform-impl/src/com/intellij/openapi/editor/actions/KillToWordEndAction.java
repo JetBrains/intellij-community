@@ -55,7 +55,7 @@ public class KillToWordEndAction extends TextComponentEditorAction {
       boolean camel = editor.getSettings().isCamelWords();
       for (int i = caretOffset + 1; i < lineEndOffset; i++) {
         if (EditorActionUtil.isWordEnd(text, i, camel)) {
-          KillRingUtil.cut(document, caretOffset, i);
+          KillRingUtil.cut(editor, caretOffset, i);
           return;
         }
       }
@@ -67,7 +67,7 @@ public class KillToWordEndAction extends TextComponentEditorAction {
       }
 
       if (end > caretOffset) {
-        KillRingUtil.cut(document, caretOffset, end);
+        KillRingUtil.cut(editor, caretOffset, end);
       }
     }
   }

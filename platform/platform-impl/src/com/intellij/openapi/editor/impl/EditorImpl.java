@@ -151,7 +151,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private final Key<Object> MOUSE_DRAGGED_GROUP = Key.create("MouseDraggedGroup");
 
-  private final DocumentListener           myEditorDocumentAdapter;
+  private final DocumentListener myEditorDocumentAdapter;
 
   private final SettingsImpl mySettings;
 
@@ -263,6 +263,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Nullable
   private CharSequence myPlaceholderText;
   private int myLastPaintedPlaceholderWidth;
+  
+  private boolean myStickySelection;
+  private int myStickySelectionStart;
 
   static {
     ourCaretBlinkingCommand = new RepaintCursorCommand();
@@ -335,6 +338,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       private IndentGuideDescriptor myCurrentCaretGuide = null;
 
       public void caretPositionChanged(CaretEvent e) {
+        if (myStickySelection) {
+          int selectionStart = Math.min(myStickySelectionStart, getDocument().getTextLength() - 1);
+          mySelectionModel.setSelection(selectionStart, myCaretModel.getVisualPosition(), myCaretModel.getOffset());
+        }
+        
         final IndentGuideDescriptor newGuide = myIndentsModel.getCaretIndentGuide();
         if (!Comparing.equal(myCurrentCaretGuide, newGuide)) {
           repaintGuide(newGuide);
@@ -1383,6 +1391,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
   
   private void beforeChangedUpdate(DocumentEvent e) {
+    if (isStickySelection()) {
+      setStickySelection(false);
+    }
     if (myDocument.isInBulkUpdate()) {
       // Assuming that the job is done at bulk listener callback methods.
       return;
@@ -1513,6 +1524,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void removeEditorMouseMotionListener(@NotNull EditorMouseMotionListener listener) {
     boolean success = myMouseMotionListeners.remove(listener);
     LOG.assertTrue(success);
+  }
+
+  @Override
+  public boolean isStickySelection() {
+    return myStickySelection;
+  }
+
+  @Override
+  public void setStickySelection(boolean enable) {
+    myStickySelection = enable;
+    if (enable) {
+      myStickySelectionStart = getCaretModel().getOffset();
+    }
+    else {
+      mySelectionModel.removeSelection();
+    }
   }
 
   public boolean isDisposed() {

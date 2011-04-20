@@ -16,48 +16,34 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.editor.ex.EditorEx;
 
 /**
- * Stands for emacs 'reverse-kill-line' action, i.e.
- * <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Killing-by-Lines.html">'kill-line' action</a>
- * with negative argument.
+ * Allows to toggle {@link EditorEx#isStickySelection() sticky selection} for editors.
+ * <p/>
+ * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 4/18/11 1:22 PM
+ * @since 4/20/11 3:28 PM
  */
-public class CutLineBackwardAction extends EditorAction {
+public class ToggleStickySelectionModeAction extends EditorAction {
 
-  public CutLineBackwardAction() {
+  public ToggleStickySelectionModeAction() {
     super(new Handler());
   }
 
   static class Handler extends EditorWriteActionHandler {
-    
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-      final Document document = editor.getDocument();
-      int caretOffset = editor.getCaretModel().getOffset();
-      if (caretOffset <= 0) {
+      if (!(editor instanceof EditorEx)) {
         return;
       }
       
-      // The main idea is to kill everything between the current line start and caret and the whole previous line.
-      
-      final int caretLine = document.getLineNumber(caretOffset);
-      int start;
-      
-      if (caretLine <= 0) {
-        start = 0;
-      }
-      else {
-        start = document.getLineStartOffset(caretLine - 1);
-      }
-      KillRingUtil.cut(editor, start, caretOffset);
+      EditorEx ex = (EditorEx)editor;
+      ex.setStickySelection(!ex.isStickySelection());
     }
   }
 }

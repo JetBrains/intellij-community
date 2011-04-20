@@ -40,6 +40,9 @@
     <action id="EditorSelectWord">
       <keyboard-shortcut first-keystroke="control alt W"/>
     </action>
+    <action id="EditorToggleStickySelection">
+      <keyboard-shortcut first-keystroke="control shift 2"/>
+    </action>
     <action id="AutoIndentLines">
       <keyboard-shortcut first-keystroke="control alt I"/>
       <keyboard-shortcut first-keystroke="control alt Q"/>
