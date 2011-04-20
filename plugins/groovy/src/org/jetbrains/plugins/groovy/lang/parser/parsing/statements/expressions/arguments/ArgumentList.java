@@ -47,10 +47,8 @@ public class ArgumentList implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
     while (!builder.eof() && !closingBrace.equals(builder.getTokenType())) {
-      if (!hasFirstArg) {
-        ParserUtils.getToken(builder, mCOMMA);
-      } else {
-        ParserUtils.getToken(builder, mCOMMA, "',' or '" + closingBrace + "' expected");
+      if (!ParserUtils.getToken(builder, mCOMMA) && hasFirstArg) {
+        builder.error("',' or '" + closingBrace + "' expected");
       }
       ParserUtils.getToken(builder, mNLS);
       if (!argumentParse(builder, closingBrace, parser)) {
