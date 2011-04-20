@@ -41,7 +41,6 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   private PersistentHashMapValueStorage myValueStorage;
   private final DataExternalizer<Value> myValueExternalizer;
   private static final long NULL_ADDR = 0;
-  private static final int NULL_SIZE = 0;
   private static final int INITIAL_INDEX_SIZE;
   static {
     String property = System.getProperty("idea.initialIndexSize");
@@ -50,7 +49,6 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
 
   @NonNls
   public static final String DATA_FILE_EXTENSION = ".values";
-  private final File myFile;
   private int myGarbageSize;
   private static final int VALUE_REF_OFFSET = RECORD_SIZE;
   private final byte[] myRecordBuffer = new byte[RECORD_SIZE + 8 + 4];
@@ -123,7 +121,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
       //System.out.println("Flushing caches: " + myFile.getPath());
       synchronized (PersistentHashMap.this) {
         synchronized (ourLock) {
-          PersistentHashMap.this.clearAppenderCaches();
+          clearAppenderCaches();
         }
       }
     }
@@ -136,9 +134,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   public PersistentHashMap(final File file, KeyDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
     super(checkDataFiles(file), keyDescriptor, initialSize);
     try {
-      myFile = file;
       myValueExternalizer = valueExternalizer;
-      myValueStorage = PersistentHashMapValueStorage.create(getDataFile(myFile).getPath());
+      myValueStorage = PersistentHashMapValueStorage.create(getDataFile(file).getPath());
       myGarbageSize = getMetaData();
 
       if (makesSenseToCompact()) {
@@ -247,12 +244,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     synchronized (ourLock) {
       return processAllDataObject(processor, new DataFilter() {
         public boolean accept(final int id) {
-          try {
-            return readValueId(id).address != NULL_ADDR;
-          }
-          catch (IOException ignored) {
-          }
-          return true;
+          return readValueId(id).address != NULL_ADDR;
         }
       });
     }
@@ -319,7 +311,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     }
   }
 
-  public synchronized final void markDirty() throws IOException {
+  public final synchronized void markDirty() throws IOException {
     markDirty(true);
   }
 
@@ -389,14 +381,14 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     }
   }
 
-  private HeaderRecord readValueId(final int keyId) throws IOException {
+  private HeaderRecord readValueId(final int keyId) {
     HeaderRecord result = new HeaderRecord();
     result.address = myStorage.getLong(keyId + VALUE_REF_OFFSET);
     result.size = myStorage.getInt(keyId + VALUE_REF_OFFSET + 8);
     return result;
   }
 
-  private void updateValueId(final int keyId, HeaderRecord value) throws IOException {
+  private void updateValueId(final int keyId, HeaderRecord value) {
     myStorage.putLong(keyId + VALUE_REF_OFFSET, value.address);
     myStorage.putInt(keyId + VALUE_REF_OFFSET + 8, value.size);
   }

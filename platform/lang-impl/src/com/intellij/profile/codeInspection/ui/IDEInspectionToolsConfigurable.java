@@ -32,7 +32,7 @@ public class IDEInspectionToolsConfigurable extends InspectionToolsConfigurable 
   }
 
   protected InspectionProfileImpl getCurrentProfile() {
-    return (InspectionProfileImpl)((InspectionProfileManager)myProfileManager).getRootProfile();
+    return (InspectionProfileImpl)myProfileManager.getRootProfile();
   }
 
   @Override
