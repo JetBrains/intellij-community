@@ -24,9 +24,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class AlienChangeListBrowser extends ChangesBrowser implements ChangesBrowserExtender {
   private final List<Change> myChanges;
@@ -67,7 +65,7 @@ public class AlienChangeListBrowser extends ChangesBrowser implements ChangesBro
     // does nothing - only one change list so far
   }
 
-  public List<AbstractVcs> getAffectedVcses() {
+  public Collection<AbstractVcs> getAffectedVcses() {
     return Collections.singletonList(myVcs);
   }
 
