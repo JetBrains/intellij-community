@@ -132,7 +132,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
     return createAnnotation(range, HighlightSeverity.INFORMATION, message);
   }
 
-  protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, String message) {
+  protected Annotation createAnnotation(TextRange range, HighlightSeverity severity, @Nullable String message) {
     //noinspection HardCodedStringLiteral
     //TODO: FIXME
     @NonNls
