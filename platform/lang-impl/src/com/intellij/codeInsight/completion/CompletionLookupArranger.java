@@ -54,7 +54,7 @@ public class CompletionLookupArranger extends LookupArranger {
     return new Comparator<LookupElement>() {
       public int compare(LookupElement o1, LookupElement o2) {
         //noinspection unchecked
-        return getSortingWeight(o1).compareTo(getSortingWeight(o2));
+        return mySortingWeights.get(o1).compareTo(mySortingWeights.get(o2));
       }
     };
   }
@@ -98,17 +98,6 @@ public class CompletionLookupArranger extends LookupArranger {
     return info.getContext() + "###" + info.getValue();
   }
 
-  public Comparable getSortingWeight(final LookupElement item) {
-    final Comparable comparable = mySortingWeights.get(item);
-    if (comparable != null) return comparable;
-
-    final Comparable result = WeighingService.weigh(CompletionService.SORTING_KEY, item, myLocation);
-    mySortingWeights.put(item, result);
-
-    return result;
-  }
-
-
   public Classifier<LookupElement> createRelevanceClassifier() {
     return new Classifier<LookupElement>() {
       @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
@@ -126,6 +115,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
       @Override
       public void addElement(LookupElement element) {
+        mySortingWeights.put(element, WeighingService.weigh(CompletionService.SORTING_KEY, element, myLocation));
         myClassifiers.get(obtainSorter(element)).addElement(element);
       }
 

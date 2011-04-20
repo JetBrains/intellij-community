@@ -26,6 +26,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.ObjectPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementFilter;
@@ -48,6 +49,7 @@ import static com.intellij.patterns.StandardPatterns.not;
  */
 public class CompletionData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionData");
+  public static final ObjectPattern.Capture<Character> NOT_JAVA_ID = not(character().javaIdentifierPart());
   private final Set<Class> myFinalScopes = new HashSet<Class>();
   private final List<CompletionVariant> myCompletionVariants = new ArrayList<CompletionVariant>();
 
@@ -214,7 +216,7 @@ public class CompletionData {
   }
 
   public static String findPrefixStatic(final PsiElement insertedElement, final int offsetInFile) {
-    return findPrefixStatic(insertedElement, offsetInFile, not(character().javaIdentifierPart()));
+    return findPrefixStatic(insertedElement, offsetInFile, NOT_JAVA_ID);
   }
 
   protected static String findPrefixDefault(final PsiElement insertedElement, final int offset, @NotNull final ElementPattern trimStart) {

@@ -28,6 +28,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nls;
@@ -156,11 +157,22 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
                   if (info.severity == HighlightInfoType.INJECTED_FRAGMENT_SEVERITY) return true;
                   if (info.severity == HighlightSeverity.INFORMATION) return true;
                   ProblemHighlightType problemHighlightType = HighlightInfo.convertType(info.type);
+                  TextRange range = new TextRange(info.startOffset, info.endOffset);
+                  PsiElement element = file.findElementAt(info.startOffset);
+
+                  while (element != null && !element.getTextRange().contains(range)) {
+                    element = element.getParent();
+                  }
+
+                  if (element == null) {
+                    element = file;
+                  }
+
                   GlobalInspectionUtil.createProblem(
-                    file,
+                    element,
                     info.description,
                     problemHighlightType,
-                    new TextRange(info.startOffset, info.endOffset),
+                    range.shiftRight(-element.getTextOffset()),
                     myManager,
                     myProblemDescriptionsProcessor,
                     myGlobalContext

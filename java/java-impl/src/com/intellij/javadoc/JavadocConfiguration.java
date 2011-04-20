@@ -36,6 +36,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.ContentEntry;
@@ -158,13 +159,13 @@ public class JavadocConfiguration implements ModuleRunProfile, JDOMExternalizabl
       if (jdkPath == null) {
         throw new CantRunException(JavadocBundle.message("javadoc.generate.no.jdk.path"));
       }
-      String versionString = jdk.getVersionString();
+      JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
       if (HEAP_SIZE != null && HEAP_SIZE.trim().length() != 0) {
-        if (versionString.indexOf("1.1") > -1) {
-          cmdLine.getParametersList().prepend("-J-mx" + HEAP_SIZE + "m");
+        if (version == null || version.isAtLeast(JavaSdkVersion.JDK_1_2)) {
+          cmdLine.getParametersList().prepend("-J-Xmx" + HEAP_SIZE + "m");
         }
         else {
-          cmdLine.getParametersList().prepend("-J-Xmx" + HEAP_SIZE + "m");
+          cmdLine.getParametersList().prepend("-J-mx" + HEAP_SIZE + "m");
         }
       }
       cmdLine.setWorkingDirectory(null);

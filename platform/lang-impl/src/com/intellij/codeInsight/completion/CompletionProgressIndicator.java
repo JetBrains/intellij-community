@@ -24,6 +24,8 @@ import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,6 +45,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.util.PsiUtilBase;
@@ -441,6 +444,15 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
         final CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
         if (!(phase instanceof CompletionPhase.BgCalculation) || phase.indicator != CompletionProgressIndicator.this) return;
 
+        LOG.assertTrue(!getProject().isDisposed(), "editor disposed");
+        LOG.assertTrue(!myEditor.isDisposed(), "editor disposed");
+        if (myEditor instanceof EditorWindow) {
+          LOG.assertTrue(((EditorWindow)myEditor).getInjectedFile().isValid(), "injected file !valid");
+          LOG.assertTrue(((DocumentWindow)myEditor.getDocument()).isValid(), "docWindow !valid");
+        }
+        PsiFile file = myLookup.getPsiFile();
+        LOG.assertTrue(file == null || file.isValid(), "file !valid");
+
         myLookup.setCalculating(false);
 
         if (hideAutopopupIfMeaningless()) {
@@ -594,7 +606,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     for (Pair<Integer, ElementPattern<String>> pair : myRestartingPrefixConditions) {
       int start = pair.first;
       if (caretOffset < start) {
-        LOG.error("caret=" + caretOffset + "; start=" + start);
+        LOG.error("caret=" + caretOffset + "; start=" + start + "; phase=" + CompletionServiceImpl.getPhaseRaw() + "; running=" + isRunning() + "; canceled=" + isCanceled());
       }
       final String newPrefix = text.subSequence(start, caretOffset).toString();
       if (pair.second.accepts(newPrefix)) {

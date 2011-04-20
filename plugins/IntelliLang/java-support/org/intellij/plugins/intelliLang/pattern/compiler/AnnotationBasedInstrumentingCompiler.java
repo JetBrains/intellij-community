@@ -25,6 +25,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -105,14 +107,7 @@ public abstract class AnnotationBasedInstrumentingCompiler implements ClassInstr
     final Module module = index.getModuleForFile(sourceFile);
     if (module != null) {
       final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
-      final boolean jdk6;
-      if (jdk != null) {
-        final String versionString = jdk.getVersionString();
-        jdk6 = versionString != null && (versionString.contains("1.6") || versionString.contains("6.0") || versionString.contains("1.7") || versionString.contains("7.0"));
-      }
-      else {
-        jdk6 = false;
-      }
+      final boolean jdk6 = jdk != null && JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_6);
 
       final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
       final VirtualFile compilerOutputPath = extension != null ? extension.getCompilerOutputPath() : null;

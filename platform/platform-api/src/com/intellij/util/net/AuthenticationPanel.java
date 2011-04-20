@@ -51,8 +51,8 @@ public class AuthenticationPanel extends JPanel {
     return myLoginTextField.getText();
   }
 
-  public String getPassword () {
-    return new String (myPasswordTextField.getPassword());
+  public char[] getPassword () {
+    return myPasswordTextField.getPassword();
   }
 
   public boolean isRememberPassword () {

@@ -57,12 +57,7 @@ public class CutLineBackwardAction extends EditorAction {
       else {
         start = document.getLineStartOffset(caretLine - 1);
       }
-      delete(document, start, caretOffset);
-    }
-    
-    private static void delete(@NotNull Document document, int start, int end) {
-      EditorActionUtil.copyToKillRing(document, start, end, true);
-      document.deleteString(start, end);
+      KillRingUtil.cut(document, start, caretOffset);
     }
   }
 }

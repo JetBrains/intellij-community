@@ -43,7 +43,9 @@ import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
@@ -944,14 +946,7 @@ public class BackendCompilerWrapper {
   }
 
   private static boolean isJdk6(final Sdk jdk) {
-    boolean isJDK16 = false;
-    if (jdk != null) {
-      final String versionString = jdk.getVersionString();
-      if (versionString != null) {
-        isJDK16 = versionString.contains("1.6") || versionString.contains("6.0") || versionString.contains("1.7") || versionString.contains("7.0");
-      }
-    }
-    return isJDK16;
+    return jdk != null && JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_6);
   }
   
   private static final class CompileStatistics {

@@ -11,6 +11,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.psi.JavaPsiFacade;
 
 /**
@@ -58,6 +59,15 @@ public class HeavyNormalCompletionTest extends CompletionTestCase{
     assertEquals(2, myItems.length);
     assertEquals("AxBxCxDxEx", myItems[1].getLookupString());
     assertEquals("AyByCyDyEy", myItems[0].getLookupString());
+  }
+
+  public void testMapsInvalidation() throws Exception {
+    configureByFile("/codeInsight/completion/normal/" + getTestName(false) + ".java");
+    assert myFile.getVirtualFile().getFileSystem() instanceof LocalFileSystem; // otherwise the completion copy won't be preserved which is critical here
+    assertStringItems("finalize", "foo");
+    myEditor.getCaretModel().moveToOffset(myEditor.getCaretModel().getOffset() + 2);
+    complete();
+    assertNull(myItems);
   }
 
 }

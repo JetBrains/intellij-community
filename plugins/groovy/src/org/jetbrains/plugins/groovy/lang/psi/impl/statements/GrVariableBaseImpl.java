@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -253,7 +254,7 @@ public abstract class GrVariableBaseImpl<T extends StubElement> extends GrStubEl
         return initializers[varNumber];
       }
     }
-    return findChildByClass(GrExpression.class);
+    return GroovyPsiElementImpl.findExpressionChild(this);
   }
 
   public int getTextOffset() {

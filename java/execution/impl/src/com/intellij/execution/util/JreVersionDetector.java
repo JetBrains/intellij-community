@@ -25,10 +25,12 @@ package com.intellij.execution.util;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import org.jetbrains.annotations.Nullable;
 
 public class JreVersionDetector {
   private String myLastAlternativeJrePath = null; //awful hack
@@ -51,7 +53,7 @@ public class JreVersionDetector {
     if (configuration.isAlternativeJrePathEnabled()) {
       if (configuration.getAlternativeJrePath().equals(myLastAlternativeJrePath)) return myLastIsJre50;
       myLastAlternativeJrePath = configuration.getAlternativeJrePath();
-      final String versionString = JavaSdkImpl.getJdkVersion(myLastAlternativeJrePath);
+      final String versionString = JavaSdk.getJdkVersion(myLastAlternativeJrePath);
       myLastIsJre50 = versionString != null && isJre50(versionString);
       return myLastIsJre50;
     }
@@ -60,11 +62,12 @@ public class JreVersionDetector {
 
   private static boolean isJre50(final Sdk jdk) {
     if (jdk == null) return false;
-    final String versionString = jdk.getVersionString();
-    return versionString != null && isJre50(versionString);
+    return JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_5);
   }
 
-  private static boolean isJre50(final String versionString) {
-    return versionString.contains("5.0") || versionString.contains("1.5") || versionString.contains("1.6") || versionString.contains("1.7");
+  private static boolean isJre50(final @Nullable String versionString) {
+    if (versionString == null) return false;
+    JavaSdkVersion version = JavaSdk.getInstance().getVersion(versionString);
+    return version != null && version.isAtLeast(JavaSdkVersion.JDK_1_5);
   }
 }

@@ -277,7 +277,11 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
 
   public GrImportStatement[] getImportStatements() {
-    return findChildrenByClass(GrImportStatement.class);
+    List<GrImportStatement> result = new ArrayList<GrImportStatement>();
+    for (PsiElement child : getChildren()) {
+      if (child instanceof GrImportStatement) result.add((GrImportStatement)child);
+    }
+    return result.toArray(new GrImportStatement[result.size()]);
   }
 
   @Nullable

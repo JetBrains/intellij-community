@@ -95,6 +95,7 @@ public class HgStatusCommand {
     }
 
     HgCommandExecutor executor = new HgCommandExecutor(project);
+    executor.setSilent(true);
 
     List<String> arguments = new LinkedList<String>();
     if (includeAdded) {

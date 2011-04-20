@@ -27,6 +27,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
@@ -61,9 +62,7 @@ public class ReplaceAddAllArrayToCollectionFix implements IntentionAction {
     final Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module == null) return false;
     final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
-    if (jdk == null) return false;
-    final String versionString = jdk.getVersionString();
-    if (versionString == null || JavaSdk.getInstance().compareTo(versionString, "1.5") < 0) return false;
+    if (jdk == null || !JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_5)) return false;
 
     final PsiReferenceExpression expression = myMethodCall.getMethodExpression();
     final PsiElement element = expression.resolve();

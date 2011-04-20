@@ -44,7 +44,7 @@ public abstract class AntDomTimestampTask extends AntDomPropertyDefiningElement 
     }
     return Arrays.asList(prefix + DSTAMP, prefix + TSTAMP, prefix + TODAY);
   }
-  // todo: provode real values if that is really needed
+  // todo: provide real values if that is really needed
   protected String calcPropertyValue(String propertyName) {
     return super.calcPropertyValue(propertyName);
   }

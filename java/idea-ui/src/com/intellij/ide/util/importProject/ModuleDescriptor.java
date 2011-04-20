@@ -36,10 +36,19 @@ public class ModuleDescriptor {
   private static final String[] ourModuleNameStoplist = new String[] {
       "java", "src", "source", "sources", "C:", "D:", "E:", "F:", "temp", "tmp"
   };
-  
+  private boolean myReuseExistingElement;
+
   public ModuleDescriptor(final File contentRoot, final Set<File> sourceRoots) {
     myName = suggestModuleName(contentRoot);
     myContentToSourceRoots.put(contentRoot, sourceRoots);
+  }
+
+  public void reuseExisting(boolean reuseExistingElement) {
+    myReuseExistingElement = reuseExistingElement;
+  }
+
+  public boolean isReuseExistingElement() {
+    return myReuseExistingElement;
   }
 
   private static String suggestModuleName(final File contentRoot) {
