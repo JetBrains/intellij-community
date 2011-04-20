@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.structuralsearch.StructuralSearchProfileImpl;
+import com.intellij.structuralsearch.StructuralSearchProfileBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +54,7 @@ public abstract class EquivalenceDescriptorProvider {
       return 0;
     }
 
-    if (StructuralSearchProfileImpl.containsOnlyDelimeters(element.getText())) {
+    if (StructuralSearchProfileBase.containsOnlyDelimeters(element.getText())) {
       return 0;
     }
 

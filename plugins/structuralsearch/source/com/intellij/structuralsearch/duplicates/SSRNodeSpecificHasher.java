@@ -8,7 +8,7 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.structuralsearch.StructuralSearchProfileImpl;
+import com.intellij.structuralsearch.StructuralSearchProfileBase;
 import com.intellij.structuralsearch.equivalence.ChildRole;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
@@ -32,7 +32,7 @@ public class SSRNodeSpecificHasher extends NodeSpecificHasher {
   private static final NodeFilter ourNodeFilter = new NodeFilter() {
       @Override
       public boolean accepts(PsiElement element) {
-        return StructuralSearchProfileImpl.isLexicalNode(element) ||
+        return StructuralSearchProfileBase.isLexicalNode(element) ||
                !DuplocatorSettings.getInstance().DISTINGUISH_LITERALS && isLiteral(element);
       }
     };

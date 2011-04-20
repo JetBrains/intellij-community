@@ -13,7 +13,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.structuralsearch.context.SSRContextProvider;
 import com.intellij.structuralsearch.equivalence.*;
 import com.intellij.structuralsearch.impl.matcher.AbstractMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
@@ -25,19 +24,25 @@ import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
+import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class StructuralSearchProfileImpl extends StructuralSearchProfile {
-  private static final String TYPED_VAR_PREFIX = "aaaaaaaaaaaaaaaaaaa";
+public abstract class StructuralSearchProfileBase extends StructuralSearchProfile {
+  private static final String TYPED_VAR_PREFIX = "aaaaaa";
+  private static final Pattern ourSubstitutionPattern = Pattern.compile("\\b(aaaaaa\\w+)\\b");
 
   private static final String DELIMETER_CHARS = ",;.[]{}():";
+  protected static final String PATTERN_PLACEHOLDER = "$$PATTERN_PLACEHOLDER$$";
   private PsiElementVisitor myLexicalNodesFilter;
 
   @Override
@@ -98,7 +103,7 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
 
       @Override
       public boolean shouldSkip(PsiElement element, PsiElement elementToMatchWith) {
-        return StructuralSearchProfileImpl.shouldSkip(element, elementToMatchWith);
+        return StructuralSearchProfileBase.shouldSkip(element, elementToMatchWith);
       }
     });
   }
@@ -217,13 +222,17 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
 
   @Override
   public boolean canProcess(@NotNull FileType fileType) {
-    return fileType instanceof LanguageFileType;
+    return fileType instanceof LanguageFileType &&
+           isMyLanguage(((LanguageFileType)fileType).getLanguage());
   }
 
   @Override
   public boolean isMyLanguage(@NotNull Language language) {
-    return true;
+    return language.isKindOf(getFileType().getLanguage());
   }
+
+  @NotNull
+  protected abstract LanguageFileType getFileType();
 
   @NotNull
   @Override
@@ -234,14 +243,18 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
                                         @Nullable String extension,
                                         @NotNull Project project,
                                         boolean physical) {
-    for (SSRContextProvider contextProvider : SSRContextProvider.EP_NAME.getExtensions()) {
-      final String strContext = contextProvider.getContext(fileType, text);
-      if (strContext != null) {
-        return StructuralSearchUtil.parsePattern(project, strContext, text, fileType, language, extension, physical);
-      }
+    if (context == PatternTreeContext.Block) {
+      final String strContext = getContext(text);
+      return strContext != null ?
+             parsePattern(project, strContext, text, fileType, language, extension, physical) :
+             PsiElement.EMPTY_ARRAY;
     }
-
     return super.createPatternTree(text, context, fileType, language, extension, project, physical);
+  }
+
+  @Nullable
+  protected String getContext(@NotNull String pattern) {
+    return PATTERN_PLACEHOLDER;
   }
 
   private static boolean canBePatternVariable(PsiElement element) {
@@ -429,6 +442,62 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
     }
   }
 
+  public static PsiElement[] parsePattern(Project project,
+                                          String context,
+                                          String pattern,
+                                          FileType fileType,
+                                          Language language,
+                                          String extension,
+                                          boolean physical) {
+    int offset = context.indexOf(PATTERN_PLACEHOLDER);
+
+    final int patternLength = pattern.length();
+    final String patternInContext = context.replace(PATTERN_PLACEHOLDER, pattern);
+
+    final String ext = extension != null ? extension : fileType.getDefaultExtension();
+    final String name = "__dummy." + ext;
+    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
+
+    final PsiFile file = language == null
+                         ? factory.createFileFromText(name, fileType, patternInContext, LocalTimeCounter.currentTime(), physical, true)
+                         : factory.createFileFromText(name, language, patternInContext, physical, true);
+    if (file == null) {
+      return PsiElement.EMPTY_ARRAY;
+    }
+
+    final List<PsiElement> result = new ArrayList<PsiElement>();
+
+    PsiElement element = file.findElementAt(offset);
+    if (element == null) {
+      return PsiElement.EMPTY_ARRAY;
+    }
+
+    PsiElement topElement = element;
+    element = element.getParent();
+
+    while (element != null) {
+      if (element.getTextOffset() == offset && element.getTextLength() <= patternLength) {
+        topElement = element;
+      }
+      element = element.getParent();
+    }
+
+    if (topElement instanceof PsiFile) {
+      return topElement.getChildren();
+    }
+
+    final int endOffset = offset + patternLength;
+    result.add(topElement);
+    topElement = topElement.getNextSibling();
+
+    while (topElement != null && topElement.getTextRange().getEndOffset() <= endOffset) {
+      result.add(topElement);
+      topElement = topElement.getNextSibling();
+    }
+
+    return result.toArray(new PsiElement[result.size()]);
+  }
+
   // todo: support expression patterns
   // todo: support {statement;} = statement; (node has only non-lexical child)
 
@@ -505,7 +574,7 @@ public class StructuralSearchProfileImpl extends StructuralSearchProfile {
 
       if (value.length() > 2 && value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
         @Nullable MatchingHandler handler =
-          myGlobalVisitor.processPatternStringWithFragments(value, GlobalCompilingVisitor.OccurenceKind.LITERAL);
+          myGlobalVisitor.processPatternStringWithFragments(value, GlobalCompilingVisitor.OccurenceKind.LITERAL, ourSubstitutionPattern);
 
         if (handler != null) {
           literal.putUserData(CompiledPattern.HANDLER_KEY, handler);

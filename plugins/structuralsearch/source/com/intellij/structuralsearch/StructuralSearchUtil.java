@@ -6,13 +6,9 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
 import com.intellij.tokenindex.LanguageTokenizer;
 import com.intellij.tokenindex.Tokenizer;
-import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,13 +22,11 @@ public class StructuralSearchUtil {
   public static final FileType DEFAULT_FILE_TYPE = StdFileTypes.JAVA;
 
   public static boolean ourUseUniversalMatchingAlgorithm = false;
-  public static final String PATTERN_PLACEHOLDER = "$$PATTERN_PLACEHOLDER$$";
-
-  private static final StructuralSearchProfile ourUniversalMatchingProfile = new StructuralSearchProfileImpl();
+  private static StructuralSearchProfile[] ourNewStyleProfiles;
 
   static {
     Collections
-      .addAll(myRegisteredProfiles, new JavaStructuralSearchProfile(), new XmlStructuralSearchProfile(), ourUniversalMatchingProfile);
+      .addAll(myRegisteredProfiles, new JavaStructuralSearchProfile(), new XmlStructuralSearchProfile());
   }
 
   private StructuralSearchUtil() {
@@ -43,13 +37,30 @@ public class StructuralSearchUtil {
     return getProfileByLanguage(element.getLanguage());
   }
 
+  private static StructuralSearchProfile[] getNewStyleProfiles() {
+    if (ourNewStyleProfiles == null) {
+      final List<StructuralSearchProfile> list = new ArrayList<StructuralSearchProfile>();
+
+      for (StructuralSearchProfile profile : StructuralSearchProfile.EP_NAME.getExtensions()) {
+        if (profile instanceof StructuralSearchProfileBase) {
+          list.add(profile);
+        }
+      }
+      ourNewStyleProfiles = list.toArray(new StructuralSearchProfile[list.size()]);
+    }
+    return ourNewStyleProfiles;
+  }
+
+  private static StructuralSearchProfile[] getProfiles() {
+    return ourUseUniversalMatchingAlgorithm
+           ? getNewStyleProfiles()
+           :  StructuralSearchProfile.EP_NAME.getExtensions();
+  }
+
   @Nullable
   public static StructuralSearchProfile getProfileByLanguage(@NotNull Language language) {
-    if (ourUseUniversalMatchingAlgorithm && ourUniversalMatchingProfile.isMyLanguage(language)) {
-      return ourUniversalMatchingProfile;
-    }
 
-    for (StructuralSearchProfile profile : StructuralSearchProfile.EP_NAME.getExtensions()) {
+    for (StructuralSearchProfile profile : getProfiles()) {
       if (profile.isMyLanguage(language)) {
         return profile;
       }
@@ -60,18 +71,15 @@ public class StructuralSearchUtil {
       }
     }
 
-    if (ourUniversalMatchingProfile.isMyLanguage(language)) {
-      return ourUniversalMatchingProfile;
-    }
     return null;
   }
 
-  public static List<StructuralSearchProfile> getAllProfiles() {
+  /*public static List<StructuralSearchProfile> getAllProfiles() {
     List<StructuralSearchProfile> profiles = new ArrayList<StructuralSearchProfile>();
     Collections.addAll(profiles, StructuralSearchProfile.EP_NAME.getExtensions());
     profiles.addAll(myRegisteredProfiles);
     return profiles;
-  }
+  }*/
 
   @Nullable
   public static Tokenizer getTokenizerForLanguage(@NotNull Language language) {
@@ -84,11 +92,8 @@ public class StructuralSearchUtil {
 
   @Nullable
   public static StructuralSearchProfile getProfileByFileType(FileType fileType) {
-    if (ourUseUniversalMatchingAlgorithm && ourUniversalMatchingProfile.canProcess(fileType)) {
-      return ourUniversalMatchingProfile;
-    }
 
-    for (StructuralSearchProfile profile : StructuralSearchProfile.EP_NAME.getExtensions()) {
+    for (StructuralSearchProfile profile : getProfiles()) {
       if (profile.canProcess(fileType)) {
         return profile;
       }
@@ -99,9 +104,6 @@ public class StructuralSearchUtil {
       }
     }
 
-    if (ourUniversalMatchingProfile.canProcess(fileType)) {
-      return ourUniversalMatchingProfile;
-    }
     return null;
   }
 
@@ -133,57 +135,5 @@ public class StructuralSearchUtil {
     }
 
     return result.toArray(new FileType[result.size()]);
-  }
-
-  public static PsiElement[] parsePattern(Project project,
-                                          String context,
-                                          String pattern,
-                                          FileType fileType,
-                                          Language language,
-                                          String extension,
-                                          boolean physical) {
-    int offset = context.indexOf(PATTERN_PLACEHOLDER);
-
-    final int patternLength = pattern.length();
-    final String patternInContext = context.replace(PATTERN_PLACEHOLDER, pattern);
-
-    final String ext = extension != null ? extension : fileType.getDefaultExtension();
-    final String name = "__dummy." + ext;
-    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
-
-    final PsiFile file = language == null
-                         ? factory.createFileFromText(name, fileType, patternInContext, LocalTimeCounter.currentTime(), physical, true)
-                         : factory.createFileFromText(name, language, patternInContext, physical, true);
-    if (file == null) {
-      return PsiElement.EMPTY_ARRAY;
-    }
-
-    final List<PsiElement> result = new ArrayList<PsiElement>();
-
-    PsiElement element = file.findElementAt(offset);
-    if (element == null) {
-      return PsiElement.EMPTY_ARRAY;
-    }
-
-    PsiElement topElement = element;
-    element = element.getParent();
-
-    while (element != null) {
-      if (element.getTextOffset() == offset && element.getTextLength() <= patternLength) {
-        topElement = element;
-      }
-      element = element.getParent();
-    }
-
-    final int endOffset = offset + patternLength;
-    result.add(topElement);
-    topElement = topElement.getNextSibling();
-
-    while (topElement != null && topElement.getTextRange().getEndOffset() <= endOffset) {
-      result.add(topElement);
-      topElement = topElement.getNextSibling();
-    }
-
-    return result.toArray(new PsiElement[result.size()]);
   }
 }

@@ -143,6 +143,11 @@ public class GlobalCompilingVisitor {
 
   @Nullable
   public MatchingHandler processPatternStringWithFragments(String pattern, OccurenceKind kind) {
+    return processPatternStringWithFragments(pattern, kind, ourSubstitutionPattern);
+  }
+
+  @Nullable
+  public MatchingHandler processPatternStringWithFragments(String pattern, OccurenceKind kind, Pattern substitutionPattern) {
     String content;
 
     if (kind == OccurenceKind.LITERAL) {
@@ -156,7 +161,7 @@ public class GlobalCompilingVisitor {
     }
 
     StringBuffer buf = new StringBuffer(content.length());
-    Matcher matcher = ourSubstitutionPattern.matcher(content);
+    Matcher matcher = substitutionPattern.matcher(content);
     List<SubstitutionHandler> handlers = null;
     int start = 0;
     String word;

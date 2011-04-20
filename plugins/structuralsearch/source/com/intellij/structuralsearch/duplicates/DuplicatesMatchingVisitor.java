@@ -7,7 +7,7 @@ import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.structuralsearch.StructuralSearchProfileImpl;
+import com.intellij.structuralsearch.StructuralSearchProfileBase;
 import com.intellij.structuralsearch.equivalence.ChildRole;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptor;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
@@ -81,7 +81,7 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
   }
 
   private static void skipIfNeccessary(NodeIterator nodes, NodeIterator nodes2) {
-    while (StructuralSearchProfileImpl.shouldSkip(nodes2.current(), nodes.current())) {
+    while (StructuralSearchProfileBase.shouldSkip(nodes2.current(), nodes.current())) {
       nodes2.advance();
     }
   }
@@ -126,7 +126,7 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
     }
 
     if (descriptor1 != null && descriptor2 != null) {
-      return StructuralSearchProfileImpl.match(descriptor1, descriptor2, this, mySkippedRoles);
+      return StructuralSearchProfileBase.match(descriptor1, descriptor2, this, mySkippedRoles);
     }
 
     if (element1 instanceof LeafElement) {
