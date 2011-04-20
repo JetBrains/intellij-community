@@ -84,20 +84,13 @@ public abstract class Intention implements IntentionAction {
 
 
   @Nullable
-  PsiElement findMatchingElement(PsiFile file,
-                                 Editor editor) {
-    final CaretModel caretModel = editor.getCaretModel();
-    final int position = caretModel.getOffset();
+  PsiElement findMatchingElement(PsiFile file, Editor editor) {
+    final int position = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(position);
     while (element != null) {
-      if (predicate.satisfiedBy(element)) {
-        return element;
-      } else {
-        element = element.getParent();
-        if (isStopElement(element)) {
-          break;
-        }
-      }
+      if (predicate.satisfiedBy(element)) return element;
+      if (isStopElement(element)) return null;
+      element = element.getParent();
     }
     return null;
   }
