@@ -97,4 +97,8 @@ public class ExtractMethodObjectWithMultipleExitPointsTest extends LightCodeInsi
   public void testWithInnerClasses() throws Exception {
     doTest();
   }
+
+  public void testNonCanonicalNaming() throws Exception {
+    doTest();
+  }
 }

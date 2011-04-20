@@ -822,10 +822,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   public GrExpression getQualifierExpression() {
-    for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (cur instanceof GrExpression) return (GrExpression)cur;
-    }
-    return null;
+    return findExpressionChild(this);
   }
 
   public boolean isQualified() {

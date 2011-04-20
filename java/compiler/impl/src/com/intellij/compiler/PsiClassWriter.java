@@ -18,6 +18,8 @@ package com.intellij.compiler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
@@ -45,8 +47,7 @@ public class PsiClassWriter extends ClassWriter {
   private static boolean isJdk6(final Module module) {
     final Sdk projectJdk = ModuleRootManager.getInstance(module).getSdk();
     if (projectJdk == null) return false;
-    String versionString = projectJdk.getVersionString();
-    return versionString.contains("1.6") || versionString.contains("6.0");
+    return JavaSdk.getInstance().isOfVersionOrHigher(projectJdk, JavaSdkVersion.JDK_1_6);
   }
 
   protected String getCommonSuperClass(final String type1, final String type2) {

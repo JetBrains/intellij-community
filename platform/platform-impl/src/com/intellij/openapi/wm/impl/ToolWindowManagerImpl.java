@@ -478,6 +478,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         public void run() {
           ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
             public void run() {
+              if (toolWindow.isDisposed()) return;
+
               toolWindow.ensureContentInitialized();
               activation.setDone();
             }

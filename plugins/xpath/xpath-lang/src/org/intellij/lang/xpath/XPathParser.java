@@ -453,10 +453,9 @@ public class XPathParser implements PsiParser {
   /**
    * [37]    NameTest    ::=    '*' | NCName ':' '*' | QName
    */
-  private static boolean parseNameTest(PsiBuilder builder) {
+  protected boolean parseNameTest(PsiBuilder builder) {
     if (builder.getTokenType() == XPathTokenTypes.STAR) {
-      builder.advanceLexer();
-      return true;
+      return parseWildcard(builder);
     } else if (builder.getTokenType() == XPathTokenTypes.NCNAME) {
       builder.advanceLexer();
 
@@ -475,6 +474,11 @@ public class XPathParser implements PsiParser {
       return true;
     }
     return false;
+  }
+
+  protected boolean parseWildcard(PsiBuilder builder) {
+    builder.advanceLexer();
+    return true;
   }
 
   /**

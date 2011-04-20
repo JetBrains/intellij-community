@@ -16,6 +16,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
@@ -522,5 +523,23 @@ public class CharArrayUtil {
       if (c == '\n' || c == '\r') return true;
     }
     return false;
+  }
+
+  /**
+   * Allows to answer if target region of the given text contains only white space symbols (tabulations, white spaces and line feeds).
+   * 
+   * @param text      text to check
+   * @param start     start offset within the given text to check (inclusive)
+   * @param end       end offset within the given text to check (exclusive)
+   * @return          <code>true</code> if target region of the given text contains white space symbols only; <code>false</code> otherwise
+   */
+  public static boolean isEmptyOrSpaces(@NotNull CharSequence text, int start, int end) {
+    for (int i = start; i < end; i++) {
+      char c = text.charAt(i);
+      if (c != ' ' && c != '\t' && c != '\n') {
+        return false;
+      }
+    }
+    return true;
   }
 }

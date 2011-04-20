@@ -147,7 +147,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrExpression createExpressionFromText(String text, PsiElement context) {
     GroovyFileImpl file = (GroovyFileImpl)createGroovyFile(text, false, context);
     assert file.getTopStatements()[0] instanceof GrExpression;
-    return (GrExpression) ((GroovyFileBase) file).getTopStatements()[0];
+    return (GrExpression) file.getTopStatements()[0];
   }
 
   public GrVariableDeclaration createVariableDeclaration(@Nullable String[] modifiers,
@@ -182,6 +182,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
           !GroovyConfigUtils.getInstance().isVersionAtLeast(initializer, GroovyConfigUtils.GROOVY1_8)) {
         initializer = createMethodCallByAppCall((GrApplicationStatement)initializer);
       }
+      assert initializer != null;
       text.append(" = ").append(initializer.getText());
     }
 
@@ -399,7 +400,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return ((GrLabeledStatement)definition).getLabel();
   }
 
-  public GrMethod createMethodFromText(@NotNull String methodText, PsiElement context) {
+  public GrMethod createMethodFromText(@NotNull String methodText, @Nullable PsiElement context) {
     GroovyFileImpl file = createDummyFile(methodText);
     if (context != null) {
       file.setContext(context);
@@ -424,7 +425,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return createGroovyFile(idText, false, null);
   }
 
-  public GroovyFile createGroovyFile(String idText, boolean isPhysical, PsiElement context) {
+  public GroovyFile createGroovyFile(String idText, boolean isPhysical, @Nullable PsiElement context) {
     GroovyFileImpl file = createDummyFile(idText, isPhysical);
     file.setContext(context);
     return file;
@@ -519,12 +520,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
 
-  private static String generateMethodText(String modifier,
+  private static String generateMethodText(@Nullable String modifier,
                                            String name,
-                                           String type,
+                                           @Nullable String type,
                                            String[] paramTypes,
                                            String[] paramNames,
-                                           String body,
+                                           @Nullable String body,
                                            boolean isConstructor) {
     StringBuilder builder = new StringBuilder();
 
@@ -590,8 +591,6 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrDocComment createDocCommentFromText(String text) {
-    StringBuilder builder = new StringBuilder();
-    builder.append(text);
     return (GrDocComment)createGroovyFile(text).getFirstChild();
   }
 

@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.light.LightParameter;
 import com.intellij.util.IncorrectOperationException;
@@ -34,7 +35,7 @@ public class GrLightParameter extends LightParameter implements GrParameter {
   public static final GrLightParameter[] EMPTY_ARRAY = new GrLightParameter[0];
   private volatile boolean myOptional;
 
-  public GrLightParameter(@NotNull String name, @NotNull PsiType type, PsiElement scope) {
+  public GrLightParameter(@NotNull String name, @NotNull PsiType type, @NotNull PsiElement scope) {
     super(name, type, scope, GroovyFileType.GROOVY_LANGUAGE);
   }
 
@@ -44,6 +45,16 @@ public class GrLightParameter extends LightParameter implements GrParameter {
 
   public GrExpression getDefaultInitializer() {
     return null;
+  }
+
+  @Override
+  public PsiElement getContext() {
+    return getDeclarationScope();
+  }
+
+  @Override
+  public PsiFile getContainingFile() {
+    return getDeclarationScope().getContainingFile();
   }
 
   public GrLightParameter setOptional(boolean optional) {
@@ -80,5 +91,10 @@ public class GrLightParameter extends LightParameter implements GrParameter {
 
   public void acceptChildren(GroovyElementVisitor visitor) {
 
+  }
+
+  @Override
+  public boolean isValid() {
+    return getDeclarationScope().isValid();
   }
 }

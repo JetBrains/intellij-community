@@ -56,22 +56,16 @@ public class IfStatementWithIdenticalBranchesInspection
     public InspectionGadgetsFix buildFix(Object... infos){
         if (infos.length > 0) {
             final PsiIfStatement elseIfStatement = (PsiIfStatement) infos[0];
-            return new CollapseIfFix(elseIfStatement);
+            return new CollapseIfFix();
         }
         return new CollapseIfFix();
     }
 
     private static class CollapseIfFix extends InspectionGadgetsFix{
 
-        private final PsiIfStatement elseIfStatement;
+      public CollapseIfFix() {
+      }
 
-        public CollapseIfFix(PsiIfStatement elseIfStatement) {
-            this.elseIfStatement = elseIfStatement;
-        }
-
-        private CollapseIfFix() {
-            elseIfStatement = null;
-        }
 
         @NotNull
         public String getName(){
@@ -97,6 +91,7 @@ public class IfStatementWithIdenticalBranchesInspection
                 statement.delete();
                 return;
             }
+          PsiIfStatement elseIfStatement = elseBranch instanceof PsiIfStatement ? (PsiIfStatement)elseBranch : null;
             if (elseIfStatement == null) {
                 final PsiElement parent = statement.getParent();
                 if (thenBranch instanceof PsiBlockStatement) {

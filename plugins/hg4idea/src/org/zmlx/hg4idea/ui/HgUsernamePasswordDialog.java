@@ -45,7 +45,7 @@ public class HgUsernamePasswordDialog extends DialogWrapper {
   }
 
   public String getPassword() {
-    return authPanel.getPassword();
+    return String.valueOf(authPanel.getPassword());
   }
 
   public boolean isRememberPassword() {

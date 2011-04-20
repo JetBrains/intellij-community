@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.psi.util.proximity;
 
-package com.intellij.codeInsight.lookup;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.EventListener;
+/**
+* User: anna
+* Date: 4/19/11
+*/
+public interface ForcedElementWeigher {
+  ExtensionPointName<ForcedElementWeigher> EP_NAME = ExtensionPointName.create("com.intellij.forcedElementWeigher");
 
-public interface LookupListener extends EventListener {
-  /**
-   * Note: this event comes inside the command that performs inserting of text into the editor.
-   */
-  void itemSelected(LookupEvent event);
-
-  void lookupCanceled(LookupEvent event);
-
-  void currentItemChanged(LookupEvent event);
+  @Nullable
+  Comparable getForcedWeigh(PsiElement element);
 }

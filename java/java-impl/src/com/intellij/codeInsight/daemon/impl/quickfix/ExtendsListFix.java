@@ -54,14 +54,14 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     myTypeToExtendFrom = typeToExtendFrom;
 
     @NonNls final String messageKey;
-    if (aClass.isInterface() == classToExtendFrom.isInterface()) {
+    if (classToExtendFrom != null && aClass.isInterface() == classToExtendFrom.isInterface()) {
       messageKey = toAdd ? "add.class.to.extends.list" : "remove.class.from.extends.list";
     }
     else {
       messageKey = toAdd ? "add.interface.to.implements.list" : "remove.interface.from.implements.list";
     }
 
-    myName = QuickFixBundle.message(messageKey, aClass.getName(), classToExtendFrom.getQualifiedName());
+    myName = QuickFixBundle.message(messageKey, aClass.getName(), classToExtendFrom == null ? "" : classToExtendFrom.getQualifiedName());
   }
 
 

@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
@@ -65,7 +66,9 @@ public class HgUpdateCommand {
 
     final HgCommandExecutor executor = new HgCommandExecutor(project);
     executor.setShowOutput(true);
-    return executor.executeInCurrentThread(repo, "update", arguments);
+    final HgCommandResult result = executor.executeInCurrentThread(repo, "update", arguments);
+    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project);
+    return result;
   }
 
 }

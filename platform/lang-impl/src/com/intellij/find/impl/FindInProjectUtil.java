@@ -18,7 +18,6 @@ package com.intellij.find.impl;
 
 import com.intellij.find.*;
 import com.intellij.find.ngrams.TrigramIndex;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -39,12 +38,14 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
@@ -58,10 +59,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.CacheManager;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchScopeUtil;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.search.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.CommonProcessors;
@@ -222,13 +220,6 @@ public class FindInProjectUtil {
       final UsageViewManager usageViewManager = UsageViewManager.getInstance(project);
       for (final PsiFile psiFile : psiFiles) {
         usageViewManager.checkSearchCanceled();
-        if (customScope != null && !ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          public Boolean compute() {
-            return PsiSearchScopeUtil.isInScope(customScope, psiFile);
-          }
-        })) {
-          continue;
-        }
         final VirtualFile virtualFile = psiFile.getVirtualFile();
         final int index = i++;
         if (virtualFile == null) continue;
@@ -584,6 +575,11 @@ public class FindInProjectUtil {
       FindResult result = findManager.findString(text, offset, findModel, psiFile.getVirtualFile());
       if (!result.isStringFound()) break;
 
+      final SearchScope customScope = findModel.getCustomScope();
+      if (customScope instanceof LocalSearchScope) {
+        final TextRange range = new TextRange(result.getStartOffset(), result.getEndOffset());
+        if (!((LocalSearchScope)customScope).containsRange(psiFile, range)) break;
+      }
       UsageInfo info = new UsageInfo(psiFile, result.getStartOffset(), result.getEndOffset());
       if (!consumer.process(info)) break;
       count++;

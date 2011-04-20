@@ -29,13 +29,14 @@ public class BasicToClassNameDelegator extends AbstractBasicToClassNameDelegator
 
   @Override
   protected boolean isClassNameCompletionSupported(CompletionResultSet result, PsiFile file, PsiElement position) {
-    return file.getLanguage() == StdLanguages.XML && StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix());
+    return file.getLanguage().isKindOf(StdLanguages.XML) && StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix());
   }
 
   @Override
   protected void updateProperties(LookupElement lookupElement) {
-    if (lookupElement instanceof JavaPsiClassReferenceElement) {
-      ((JavaPsiClassReferenceElement)lookupElement).setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+    JavaPsiClassReferenceElement classElement = lookupElement.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
+    if (classElement != null) {
+      classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
     }
     lookupElement.putUserData(XmlCompletionContributor.WORD_COMPLETION_COMPATIBLE, Boolean.TRUE); //todo think of a less dirty interaction
   }

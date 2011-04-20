@@ -23,8 +23,8 @@ import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.Icons;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -51,6 +51,7 @@ public class DirDiffPanel {
   private JPanel myActionsCenterPanel;
   private JComboBox myFileFilter;
   private JPanel myToolBarPanel;
+  private JBScrollPane myScrollPane;
   private final DirDiffTableModel myModel;
   public JLabel myErrorLabel;
   private final DirDiffDialog myDialog;
@@ -59,12 +60,13 @@ public class DirDiffPanel {
   private DiffElement myCurrentElement;
 
   public DirDiffPanel(DirDiffTableModel model, DirDiffDialog dirDiffDialog, DirDiffSettings settings) {
+    mySplitPanel.setDividerLocation(0.5);
     myModel = model;
     myDialog = dirDiffDialog;
     mySourceDirField.setText(model.getSourceDir().getPath());
     myTargetDirField.setText(model.getTargetDir().getPath());
-    mySourceDirLabel.setIcon(Icons.FOLDER_ICON);
-    myTargetDirLabel.setIcon(Icons.FOLDER_ICON);
+    mySourceDirLabel.setIcon(model.getSourceDir().getIcon());
+    myTargetDirLabel.setIcon(model.getTargetDir().getIcon());
     myTable.setModel(myModel);
     final DirDiffTableCellRenderer renderer = new DirDiffTableCellRenderer(myTable);
     myTable.setDefaultRenderer(Object.class, renderer);
@@ -74,6 +76,7 @@ public class DirDiffPanel {
       public void valueChanged(ListSelectionEvent e) {
         final DirDiffElement last = myModel.getElementAt(e.getLastIndex());
         final DirDiffElement first = myModel.getElementAt(e.getFirstIndex());
+        if (last == null || first == null) return;
         if (last.isSeparator()) {
           myTable.getSelectionModel().setLeadSelectionIndex(e.getFirstIndex());
         }
@@ -82,9 +85,10 @@ public class DirDiffPanel {
         }
         else {
           final DirDiffElement element = myModel.getElementAt(myTable.getSelectedRow());
+          if (element == null) return;
           final Project project = myModel.getProject();
           clearDiffPanel();
-          if (element.getType() == DirDiffElement.ElementType.CHANGED) {
+          if (element.getType() == DType.CHANGED) {
             myDiffPanelComponent = element.getSource().getDiffComponent(element.getTarget(), project, myDialog.getWindow());
             if (myDiffPanelComponent != null) {
               myDiffPanel.add(myDiffPanelComponent, BorderLayout.CENTER);
@@ -117,18 +121,24 @@ public class DirDiffPanel {
         int row = myTable.getSelectedRow();
         if (keyCode == KeyEvent.VK_DOWN && row != rows - 1) {
           row++;
-          if (myModel.getElementAt(row).isSeparator()) {
+          final DirDiffElement element = myModel.getElementAt(row);
+          if (element == null) return;
+          if (element.isSeparator()) {
             row++;
           }
         } else if (keyCode == KeyEvent.VK_UP && row != 0) {
           row--;
-          if (myModel.getElementAt(row).isSeparator()) {
+          final DirDiffElement element = myModel.getElementAt(row);
+          if (element == null) return;
+          if (element.isSeparator()) {
             row--;
           }
         } else {
           return;
         }
-        if (0 <= row && row < rows && !myModel.getElementAt(row).isSeparator()) {
+        final DirDiffElement element = myModel.getElementAt(row);
+        if (element == null) return;
+        if (!element.isSeparator()) {
           e.consume();
           myTable.changeSelection(row, (myModel.getColumnCount() - 1) / 2, false, false);
         }
@@ -163,9 +173,6 @@ public class DirDiffPanel {
     }
     myCurrentElement = null;
     myDiffPanel.remove(getErrorLabel());
-  }
-
-  private void createUIComponents() {
   }
 
   public JComponent getPanel() {

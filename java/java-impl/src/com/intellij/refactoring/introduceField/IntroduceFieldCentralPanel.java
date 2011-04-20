@@ -131,6 +131,7 @@ public abstract class IntroduceFieldCentralPanel {
     JPanel panel = composeWholePanel(initializerPlacePanel, checkboxes);
 
     updateTypeSelector();
+    updateCbFinal();
     return panel;
   }
 

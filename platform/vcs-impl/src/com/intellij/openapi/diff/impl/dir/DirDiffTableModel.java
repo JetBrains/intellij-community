@@ -19,12 +19,12 @@ import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.AbstractTableModel;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -36,111 +36,93 @@ public class DirDiffTableModel extends AbstractTableModel {
   private final Project myProject;
   private final DirDiffSettings mySettings;
   private DiffElement mySrc;
-  private HashMap<String, DiffElement> mySrcPaths = new HashMap<String, DiffElement>();
-  private HashMap<String, DiffElement> myTrgPaths = new HashMap<String, DiffElement>();
   private DiffElement myTrg;
   final List<DirDiffElement> myElements = new ArrayList<DirDiffElement>();
+  private boolean myUpdating = false;
 
   public DirDiffTableModel(Project project, DiffElement src, DiffElement trg, ProgressIndicator indicator, DirDiffSettings settings) {
     myProject = project;
     mySettings = settings;
-    loadModel(src, trg, indicator);
-  }
-
-  public void loadModel(DiffElement src, DiffElement trg, ProgressIndicator indicator) {
     mySrc = src;
     myTrg = trg;
-    scan("", src, mySrcPaths, indicator, true);
-    scan("", trg, myTrgPaths, indicator, true);
+    reloadModel(indicator);
+  }
 
-    final HashSet<String> files = new HashSet<String>();
-    files.addAll(mySrcPaths.keySet());
-    files.addAll(myTrgPaths.keySet());
-    final ArrayList<String> pathes = new ArrayList<String>(files);
-    Collections.sort(pathes, new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        final boolean b1 = o1.endsWith("/");
-        final boolean b2 = o2.endsWith("/");
-        final String[] dirs1 = o1.split("/");
-        final String[] dirs2 = o2.split("/");
-        final int len1 = dirs1.length;
-        final int len2 = dirs2.length;
+  public void reloadModel(ProgressIndicator indicator) {
+    myUpdating = true;
+    clear();
+    final DTree tree = new DTree(null, "", true);
+    scan(mySrc, tree, true);
+    scan(myTrg, tree, false);
 
-        if ((!b1 && len1 == 1) || (!b2 && len2 == 1)) {
-          if ((!b1 && len1 == 1) && (!b2 && len2 == 1)) {
-            return dirs1[0].toLowerCase().compareTo(dirs2[0].toLowerCase());
-          } else {
-            return len1 == 1 ? -1 : 1;
+    tree.setSource(mySrc);
+    tree.setTarget(myTrg);
+    tree.update(mySettings);
+    tree.updateVisibility(mySettings);
+
+    myElements.clear();
+    fillElements(tree);
+    fireTableDataChanged();
+    myUpdating = false;
+  }
+
+  private void fillElements(DTree tree) {
+    boolean separatorAdded = tree.getParent() == null;
+    for (DTree child : tree.getChildren()) {
+      if (!child.isContainer()) {
+        if (child.isVisible()) {
+          if (!separatorAdded) {
+            myElements.add(DirDiffElement.createDirElement(tree.getSource(), tree.getTarget(), tree.getPath()));
+            separatorAdded = true;
+          }
+          switch (child.getType()) {
+            case SOURCE:
+              myElements.add(DirDiffElement.createSourceOnly(child.getSource()));
+              break;
+            case TARGET:
+              myElements.add(DirDiffElement.createTargetOnly(child.getTarget()));
+              break;
+            case CHANGED:
+              myElements.add(DirDiffElement.createChange(child.getSource(), child.getTarget()));
+              break;
+            case EQUAL:
+              myElements.add(DirDiffElement.createEqual(child.getSource(), child.getTarget()));
+              break;
           }
         }
-        for (int i = 0; i < Math.min(len1, len2); i++) {
-          final int cmp = dirs1[i].toLowerCase().compareTo(dirs2[i].toLowerCase());
-          if (cmp != 0) return cmp;
-        }
-
-        return len1 - len2;
-      }
-    });
-
-    for (String path : pathes) {
-      final DiffElement srcFile = mySrcPaths.get(path);
-      final DiffElement trgFile = myTrgPaths.get(path);
-      if (srcFile == null && trgFile != null) {
-        myElements.add(DirDiffElement.createTargetOnly(trgFile));
-      } else if (srcFile != null && trgFile == null) {
-        myElements.add(DirDiffElement.createSourceOnly(srcFile));
-      } else if (srcFile != null && trgFile != null) {
-        indicator.setText2("Comparing " + path);
-        if (srcFile.isContainer() && trgFile.isContainer()) {
-          myElements.add(DirDiffElement.createDirElement(srcFile, trgFile, path));
-        } else if (srcFile.isContainer() && !trgFile.isContainer()) {
-          myElements.add(DirDiffElement.createDirElement(srcFile, null, path));
-          myElements.add(DirDiffElement.createTargetOnly(trgFile));
-        } else if (!srcFile.isContainer() && trgFile.isContainer()) {
-          myElements.add(DirDiffElement.createDirElement(null, trgFile, path));
-          myElements.add(DirDiffElement.createSourceOnly(srcFile));
-        } else if (!isEqual(srcFile, trgFile)) {
-            myElements.add(DirDiffElement.createChange(srcFile, trgFile));
-        }
+      } else {
+        fillElements(child);
       }
     }
-    removeEmptyDirs(myElements);
+  }
+
+  public void clear() {
+    if (!myElements.isEmpty()) {
+      final int size = myElements.size();
+      myElements.clear();
+      fireTableRowsDeleted(0, size - 1);
+    }
+  }
+
+  private static void scan(DiffElement element, DTree root, boolean source) {
+    if (element.isContainer()) {
+      try {
+        for (DiffElement child : element.getChildren()) {
+          scan(child, root.addChild(child, source), source);
+        }
+      }
+      catch (IOException e) {//
+      }
+    }
   }
 
   public String getTitle() {
     return "Diff for " + mySrc.getPath() + " and " + myTrg.getPath();
   }
 
-  private static void removeEmptyDirs(List<DirDiffElement> elements) {
-    final DirDiffElement[] tmp = elements.toArray(new DirDiffElement[elements.size()]);
-    boolean prevItemIsSeparator = true;
-    for (int i = tmp.length - 1; i >= 0; i--) {
-      final boolean isSeparator = tmp[i].isSeparator();
-      if (isSeparator) {
-        if (prevItemIsSeparator) {
-          elements.remove(i);
-        }
-        prevItemIsSeparator = true;
-      } else {
-        prevItemIsSeparator = false;
-      }
-    }
-  }
-
-  private static boolean isEqual(DiffElement file1, DiffElement file2) {
-    if (file1.isContainer() || file2.isContainer()) return false;
-    if (file1.getSize() != file2.getSize()) return false;
-    try {
-      return Arrays.equals(file1.getContent(), file2.getContent());
-    }
-    catch (IOException e) {
-      return false;
-    }
-  }
-
+  @Nullable
   public DirDiffElement getElementAt(int index) {
-    return myElements.get(index);
+    return 0 <= index && index < myElements.size() ? myElements.get(index) : null;
   }
 
   public DiffElement getSourceDir() {
@@ -149,26 +131,6 @@ public class DirDiffTableModel extends AbstractTableModel {
 
   public DiffElement getTargetDir() {
     return myTrg;
-  }
-
-  private static void scan(String prefix, DiffElement file, HashMap<String, DiffElement> files, ProgressIndicator indicator, boolean isRoot) {
-    if (file.isContainer()) {
-      indicator.setText2(file.getPath());
-      String p = isRoot ? "" : prefix + file.getName() + "/";
-      if (!isRoot) {
-        files.put(p, file);
-      }
-      try {
-        for (DiffElement f : file.getChildren()) {
-          scan(p, f, files, indicator, false);
-        }
-      }
-      catch (IOException e) {
-        //TODO: error message
-      }
-    } else {
-      files.put(prefix + file.getName(), file);
-    }
   }
 
   @Override
@@ -253,5 +215,9 @@ public class DirDiffTableModel extends AbstractTableModel {
 
   public void setShowNewOnTarget(boolean show) {
     mySettings.showNewOnTarget = show;
+  }
+
+  public boolean isUpdating() {
+    return myUpdating;
   }
 }

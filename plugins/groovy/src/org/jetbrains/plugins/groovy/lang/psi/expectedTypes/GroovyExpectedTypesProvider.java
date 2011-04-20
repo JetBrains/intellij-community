@@ -259,8 +259,8 @@ public class GroovyExpectedTypesProvider {
 
     @Override
     public void visitThrowStatement(GrThrowStatement throwStatement) {
-      final PsiClassType trowable = PsiType.getJavaLangTrowable(myExpression.getManager(), throwStatement.getResolveScope());
-      myResult = new TypeConstraint[]{SubtypeConstraint.create(trowable)};
+      final PsiClassType throwable = PsiType.getJavaLangThrowable(myExpression.getManager(), throwStatement.getResolveScope());
+      myResult = new TypeConstraint[]{SubtypeConstraint.create(throwable)};
     }
 
     @Override
@@ -271,7 +271,7 @@ public class GroovyExpectedTypesProvider {
           final PsiType boxed = TypesUtil.boxPrimitiveType(type, manager, scope);
           final IElementType opToken = expression.getOperationTokenType();
           final GroovyResolveResult[] candidates =
-            TypesUtil.getOverloadedOperatorCandidates(boxed, opToken, expression, PsiType.EMPTY_ARRAY);
+            TypesUtil.getOverloadedUnaryOperatorCandidates(boxed, opToken, expression, PsiType.EMPTY_ARRAY);
           return candidates.length > 0;
         }
 

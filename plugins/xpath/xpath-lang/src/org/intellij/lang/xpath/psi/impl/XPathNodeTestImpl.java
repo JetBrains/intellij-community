@@ -49,9 +49,10 @@ public class XPathNodeTestImpl extends XPathElementImpl implements XPathNodeTest
                 return new PrefixedNameImpl(null, node);
             }
         } else if (nodes.length == 1) {
-            final ASTNode node = getNode().findChildByType(XPathTokenTypes.STAR);
-            if (node != null) {
-                return new PrefixedNameImpl(nodes[0], node);
+            final ASTNode star = getNode().findChildByType(XPathTokenTypes.STAR);
+            if (star != null) {
+                return star.getTextRange().getStartOffset() > nodes[0].getTextRange().getStartOffset() ?
+                       new PrefixedNameImpl(nodes[0], star) : new PrefixedNameImpl(star, nodes[0]);
             } else {
                 return new PrefixedNameImpl(nodes[0]);
             }

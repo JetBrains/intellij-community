@@ -337,7 +337,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
       parametersToRemove.forEach(new TIntProcedure() {
         @Override
         public boolean execute(int value) {
-          if (myParameterIndex > value) {
+          if (myParameterIndex >= value) {
             myParameterIndex--;
           }
           return true;

@@ -946,6 +946,15 @@ public class StringUtil {
   }
 
   @NotNull
+  public static String repeat(final String s, final int count) {
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < count; i++) {
+      sb.append(s);
+    }
+    return sb.toString();
+  }
+
+  @NotNull
   public static List<String> splitHonorQuotes(@NotNull String s, char separator) {
     final ArrayList<String> result = new ArrayList<String>();
     final StringBuilder builder = new StringBuilder();

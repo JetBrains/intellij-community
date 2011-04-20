@@ -71,6 +71,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
       return myComponent != null && myComponent.isShowing();
     }
   };
+  private boolean myUseLastFocused = true;
 
   ToolWindowImpl(final ToolWindowManagerImpl toolWindowManager, final String id, boolean canCloseContent, @Nullable final JComponent component) {
     myToolWindowManager = toolWindowManager;
@@ -426,5 +427,15 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   public void showContentPopup(InputEvent inputEvent) {
     myContentUI.showContentPopup(inputEvent);
+  }
+
+  @Override
+  public void setUseLastFocusedOnActivation(boolean focus) {
+    myUseLastFocused = focus;
+  }
+
+  @Override
+  public boolean isUseLastFocusedOnActivation() {
+    return myUseLastFocused;
   }
 }

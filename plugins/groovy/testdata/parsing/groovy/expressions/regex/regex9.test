@@ -50,7 +50,7 @@ Groovy script
             Reference expression
               PsiElement(identifier)('frg')
             PsiElement(.)('.')
-            Property selector
+            Compound regular expression
               PsiElement(regexp)('/sdf/')
           Arguments
             PsiElement(()('(')

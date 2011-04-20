@@ -88,7 +88,7 @@ public class IdeRepaintManager extends RepaintManager {
     if (!SwingUtilities.isEventDispatchThread() && c.isShowing()) {
       boolean repaint = false;
       boolean fromSwing = false;
-      boolean imageUpdate = false;
+      boolean swingKnownNonAwtOperations = false;
       final Exception exception = new Exception();
       StackTraceElement[] stackTrace = exception.getStackTrace();
       for (StackTraceElement st : stackTrace) {
@@ -96,16 +96,20 @@ public class IdeRepaintManager extends RepaintManager {
           fromSwing = true;
         }
         if (repaint && "imageUpdate".equals(st.getMethodName())) {
-          imageUpdate = true;
+          swingKnownNonAwtOperations = true;
         }
+
+        if (st.getClassName().startsWith("javax.swing.JEditorPane") && st.getMethodName().equals("read")) {
+          swingKnownNonAwtOperations = true;
+          break;
+        }
+
         if ("repaint".equals(st.getMethodName())) {
           repaint = true;
           fromSwing = false;
         }
       }
-      if (imageUpdate) {
-        //assuming it is java.awt.image.ImageObserver.imageUpdate(...)
-        //image was asynchronously updated, that's ok
+      if (swingKnownNonAwtOperations) {
         return;
       }
       if (repaint && !fromSwing) {

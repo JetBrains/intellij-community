@@ -37,7 +37,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * User: cdr
  */
 public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<T> implements IntervalTree<T> {
-  protected int keySize; // number of all keys
+  private int keySize; // number of all intervals, counting all duplicates, some of them maybe gced
   protected final ReadWriteLock l = new ReentrantReadWriteLock();
   private IntervalNode minNode; // left most node in the tree
 
@@ -101,6 +101,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     }
 
     // removes interval and the node, if node become empty
+    // returns true if node was removed
     public boolean removeInterval(@NotNull T key) {
       checkBelongsToTheTree(key, true);
       assertUnderWriteLock();
@@ -120,12 +121,6 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       }
       assert false: "interval not found: "+key +"; "+ intervals;
       return false;
-    }
-
-    private void assertUnderWriteLock() {
-      if (!VERIFY) return;
-      String s = l.writeLock().toString();
-      assert s.contains("Locked by thread") : s;
     }
 
     public void addInterval(@NotNull T interval) {
@@ -184,6 +179,11 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     public IntervalTreeImpl<T> getTree() {
       return IntervalTreeImpl.this;
     }
+  }
+
+  private void assertUnderWriteLock() {
+    String s = l.writeLock().toString();
+    assert s.contains("Locked by thread") : s;
   }
 
   private void pushDeltaFromRoot(IntervalNode node) {
@@ -373,6 +373,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     linkNode(node);
     correctMaxUp(node);
     onInsertNode();
+    assertUnderWriteLock();
     keySize += node.intervals.size();
     insertCase1(node);
     verifyProperties();
@@ -596,6 +597,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
     super.deleteNode(n);
 
+    assertUnderWriteLock();
     keySize -= node.intervals.size();
     assert keySize >= 0 : keySize;
   }

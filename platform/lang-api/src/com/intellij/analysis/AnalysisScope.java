@@ -16,13 +16,9 @@
 
 package com.intellij.analysis;
 
-import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -322,11 +318,7 @@ public class AnalysisScope {
                               final FileIndex projectFileIndex,
                               final PsiManager psiManager, final boolean needReadAction) {
     if (fileOrDir.isDirectory()) return true;
-    final FileType fileType = fileOrDir.getFileType();
-    if (fileType instanceof WorkspaceFileType ||
-        fileType instanceof ProjectFileType ||
-        fileType instanceof ModuleFileType ||
-        fileOrDir.getPath().contains("/.idea/")) return true;
+    if (ProjectUtil.isProjectOrWorkspaceFile(fileOrDir)) return true;
     if (projectFileIndex.isInContent(fileOrDir) && (myIncludeTestSource || !projectFileIndex.isInTestSourceContent(fileOrDir))) {
       return processFile(fileOrDir, visitor, psiManager, needReadAction);
     }
@@ -448,10 +440,12 @@ public class AnalysisScope {
         return AnalysisScopeBundle.message("scope.project", myProject.getName());
 
       case FILE:
-        return AnalysisScopeBundle.message("scope.file", ProjectUtil.calcRelativeToProjectPath(((PsiFileSystemItem)myElement).getVirtualFile(), myElement.getProject()));
+        final String relativePath = getRelativePath();
+        return relativePath != null ? AnalysisScopeBundle.message("scope.file", relativePath) : "Current File";
 
       case DIRECTORY:
-        return AnalysisScopeBundle.message("scope.directory", ProjectUtil.calcRelativeToProjectPath(((PsiFileSystemItem)myElement).getVirtualFile(), myElement.getProject()));
+        final String relativeDirPath = getRelativePath();
+        return relativeDirPath != null ? AnalysisScopeBundle.message("scope.directory", relativeDirPath) : "Current Directory";
 
 
       case VIRTUAL_FILES:
@@ -459,6 +453,15 @@ public class AnalysisScope {
     }
 
     return "";
+  }
+
+  @Nullable
+  private String getRelativePath() {
+    final String relativePath = ProjectUtil.calcRelativeToProjectPath(((PsiFileSystemItem)myElement).getVirtualFile(), myElement.getProject());
+    if (relativePath.length() > 100) {
+      return null;
+    }
+    return relativePath;
   }
 
   private static String pathToName(String path) {

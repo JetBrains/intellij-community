@@ -51,15 +51,14 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
     return true;
   }
 
-  protected boolean isPropertyNameUsed() {
-    return true;
+  protected String getPropertyName(final String s, final ConvertContext context) {
+    return s;
   }
 
   public PsiMember fromString(final String s, final ConvertContext context) {
     if (s == null) return null;
     final PsiClass psiClass = getTargetClass(context);
     if (psiClass == null) return null;
-    final String propertyName = isPropertyNameUsed() ? s : PropertyUtil.getPropertyName(s);
     for (PropertyMemberType type : getMemberTypes(context)) {
       switch (type) {
         case FIELD:
@@ -67,11 +66,11 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
           if (field != null) return field;
           break;
         case GETTER:
-          final PsiMethod getter = PropertyUtil.findPropertyGetter(psiClass, propertyName, false, isLookDeep());
+          final PsiMethod getter = PropertyUtil.findPropertyGetter(psiClass, getPropertyName(s, context), false, isLookDeep());
           if (getter != null) return getter;
           break;
         case SETTER:
-          final PsiMethod setter = PropertyUtil.findPropertySetter(psiClass, propertyName, false, isLookDeep());
+          final PsiMethod setter = PropertyUtil.findPropertySetter(psiClass, getPropertyName(s, context), false, isLookDeep());
           if (setter != null) return setter;
           break;
       }
@@ -80,9 +79,8 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
   }
 
 
-
   public String toString(final PsiMember t, final ConvertContext context) {
-    return t == null? null : isPropertyNameUsed()? PropertyUtil.getPropertyName(t) : t.getName();
+    return t == null? null : getPropertyName(t.getName(), context);
   }
 
   public String getErrorMessage(final String s, final ConvertContext context) {
@@ -131,13 +129,13 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
   }
 
   public void handleElementRename(final GenericDomValue<PsiMember> genericValue, final ConvertContext context, final String newElementName) {
-    super.handleElementRename(genericValue, context, isPropertyNameUsed()? PropertyUtil.getPropertyName(newElementName) : newElementName);
+    super.handleElementRename(genericValue, context, getPropertyName(newElementName, context));
   }
 
   public void bindReference(final GenericDomValue<PsiMember> genericValue, final ConvertContext context, final PsiElement newTarget) {
     if (newTarget instanceof PsiMember) {
       final String elementName = ((PsiMember)newTarget).getName();
-      genericValue.setStringValue(isPropertyNameUsed() ? PropertyUtil.getPropertyName(elementName) : elementName);
+      genericValue.setStringValue(getPropertyName(elementName, context));
     }
   }
 }

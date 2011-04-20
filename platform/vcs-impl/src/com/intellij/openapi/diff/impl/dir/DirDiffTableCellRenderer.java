@@ -18,7 +18,6 @@ package com.intellij.openapi.diff.impl.dir;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
-import com.intellij.util.Icons;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 
@@ -65,7 +64,7 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
           }
           int width = columnModel.getColumn(column).getWidth();
           int height = table.getRowHeight(row);
-          final BufferedImage image = getOrCreate(element.getName());
+          final BufferedImage image = getOrCreate(element.getName(), element.getIcon());
           g.drawImage(image, 0, 0, width, height, offset, 0, offset + width, height, null);
         }
       };
@@ -92,7 +91,6 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
         label.setHorizontalAlignment(CENTER);
       } else if (DirDiffTableModel.COLUMN_SIZE.equals(name)) {
         label.setHorizontalAlignment(RIGHT);
-        label.setText(label.getText() + "  ");
       } else {
         label.setHorizontalAlignment(LEFT);
         final String text = label.getText();
@@ -110,7 +108,7 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
            ? FileStatus.COLOR_ADDED : FileStatus.COLOR_MODIFIED;
   }
 
-  private BufferedImage getOrCreate(String path) {
+  private BufferedImage getOrCreate(String path, Icon icon) {
     final BufferedImage image = cache.get(path);
     if (image != null) {
       return image;
@@ -118,11 +116,12 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
     final int w = myTable.getWidth();
     final int h = myTable.getRowHeight();
     final BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-    final Icon icon = Icons.FOLDER_ICON;
     final Graphics g = img.getGraphics();
-    g.drawImage(IconUtil.toImage(icon), 2, (h - icon.getIconHeight()) / 2, null);
+    if (icon != null) {
+      g.drawImage(IconUtil.toImage(icon), 2, (h - icon.getIconHeight()) / 2, null);
+    }
     g.setColor(Color.BLACK);
-    g.drawString(path, 2 + icon.getIconWidth() + 2, h - 2);
+    g.drawString(path, 2 + (icon == null ? 0 : icon.getIconWidth()) + 2, h - 2);
     cache.put(path, img);
     return img;
   }

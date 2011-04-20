@@ -100,4 +100,9 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement implements Loc
                               @Nullable("is null when called from inspection") Editor editor,
                               @NotNull PsiElement startElement,
                               @NotNull PsiElement endElement);
+
+  @Override
+  public boolean startInWriteAction() {
+    return true;
+  }
 }

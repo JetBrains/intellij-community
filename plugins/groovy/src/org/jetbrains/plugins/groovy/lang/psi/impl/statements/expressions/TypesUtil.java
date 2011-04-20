@@ -36,7 +36,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
@@ -50,6 +49,7 @@ import java.util.Map;
 
 import static com.intellij.psi.CommonClassNames.*;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_GSTRING;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_MATH_BIG_INTEGER;
 
@@ -92,6 +92,13 @@ public class TypesUtil {
     return ResolveUtil.getMethodCandidates(thisType, ourOperationsToOperatorNames.get(tokenType), place, argumentTypes);
   }
 
+  public static GroovyResolveResult[] getOverloadedUnaryOperatorCandidates(@NotNull PsiType thisType,
+                                                                      IElementType tokenType,
+                                                                      @NotNull GroovyPsiElement place,
+                                                                      PsiType[] argumentTypes) {
+    return ResolveUtil.getMethodCandidates(thisType, ourUnaryOperationsToOperatorNames.get(tokenType), place, argumentTypes);
+  }
+
   private static final Map<IElementType, String> ourPrimitiveTypesToClassNames = new HashMap<IElementType, String>();
   private static final String NULL = "null";
 
@@ -111,6 +118,7 @@ public class TypesUtil {
   }
 
   private static final Map<IElementType, String> ourOperationsToOperatorNames = new HashMap<IElementType, String>();
+  private static final Map<IElementType, String> ourUnaryOperationsToOperatorNames = new HashMap<IElementType, String>();
 
   static {
     ourOperationsToOperatorNames.put(mPLUS, "plus");
@@ -121,9 +129,19 @@ public class TypesUtil {
     ourOperationsToOperatorNames.put(mDIV, "div");
     ourOperationsToOperatorNames.put(mMOD, "mod");
     ourOperationsToOperatorNames.put(mSTAR, "multiply");
-    ourOperationsToOperatorNames.put(mDEC, "previous");
-    ourOperationsToOperatorNames.put(mINC, "next");
     ourOperationsToOperatorNames.put(kAS, "asType");
+    ourOperationsToOperatorNames.put(mCOMPARE_TO, "compareTo");
+    ourOperationsToOperatorNames.put(mGT, "compareTo");
+    ourOperationsToOperatorNames.put(mGE, "compareTo");
+    ourOperationsToOperatorNames.put(mLT, "compareTo");
+    ourOperationsToOperatorNames.put(mLE, "compareTo");
+
+    ourUnaryOperationsToOperatorNames.put(mLNOT, "asBoolean");
+    ourUnaryOperationsToOperatorNames.put(mPLUS, "positive");
+    ourUnaryOperationsToOperatorNames.put(mMINUS, "negative");
+    ourUnaryOperationsToOperatorNames.put(mDEC, "previous");
+    ourUnaryOperationsToOperatorNames.put(mINC, "next");
+    ourUnaryOperationsToOperatorNames.put(mBNOT, "bitwiseNegate");
   }
 
   private static final TObjectIntHashMap<String> TYPE_TO_RANK = new TObjectIntHashMap<String>();
@@ -286,6 +304,11 @@ public class TypesUtil {
       lType = boxPrimitiveType(lType, manager, scope);
     }
 
+    if (unboxPrimitiveTypeWrapper(lType) == PsiType.CHAR &&
+        (typeEqualsToText(rType, GROOVY_LANG_GSTRING) || typeEqualsToText(rType, JAVA_LANG_STRING))) {
+      return true;
+    }
+
     return TypeConversionUtil.isAssignable(lType, rType);
 
   }
@@ -375,13 +398,10 @@ public class TypesUtil {
     else if (type1 instanceof GrClosureType && type2 instanceof GrClosureType) {
       GrClosureType clType1 = (GrClosureType)type1;
       GrClosureType clType2 = (GrClosureType)type2;
-      GrClosureSignature signature1=clType1.getSignature();
-      GrClosureSignature signature2=clType2.getSignature();
+      GrClosureSignature signature1 = clType1.getSignature();
+      GrClosureSignature signature2 = clType2.getSignature();
 
-      GrClosureParameter[] parameters1 = signature1.getParameters();
-      GrClosureParameter[] parameters2 = signature2.getParameters();
-
-      if (parameters1.length == parameters2.length) {
+      if (signature1.getParameterCount() == signature2.getParameterCount()) {
         final GrClosureSignature signature = GrClosureSignatureImpl.getLeastUpperBound(signature1, signature2, manager);
         if (signature != null) {
           GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());

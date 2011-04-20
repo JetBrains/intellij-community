@@ -17,6 +17,7 @@ package com.intellij.lang.xml;
 
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.lang.CompositeLanguage;
+import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -49,6 +50,10 @@ public class XMLLanguage extends CompositeLanguage {
 
   protected XMLLanguage(@NonNls String name, @NonNls String... mime) {
     super(name, mime);
+  }
+
+  protected XMLLanguage(Language baseLanguage, @NonNls String name, @NonNls String... mime) {
+    super(baseLanguage, name, mime);
   }
 
 

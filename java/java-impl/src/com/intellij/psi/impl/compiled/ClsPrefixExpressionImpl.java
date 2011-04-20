@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -22,55 +23,72 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefixExpression {
-  private final ClsElementImpl myParent;
+  private ClsElementImpl myParent;
+  private final PsiJavaToken myOperation;
   private final PsiExpression myOperand;
 
-  private final MySign mySign = new MySign();
-
-  public ClsPrefixExpressionImpl(ClsElementImpl parent, PsiExpression operand) {
+  public ClsPrefixExpressionImpl(ClsElementImpl parent, ClsJavaTokenImpl operation, ClsLiteralExpressionImpl operand) {
     myParent = parent;
+    myOperation = operation;
     myOperand = operand;
+    operation.setParent(this);
+    operand.setParent(this);
   }
 
+  void setParent(ClsElementImpl parent) {
+    myParent = parent;
+  }
+
+  @NotNull
+  @Override
   public PsiExpression getOperand() {
     return myOperand;
   }
 
   @NotNull
+  @Override
   public PsiJavaToken getOperationSign() {
-    return mySign;
+    return myOperation;
   }
 
   @NotNull
+  @Override
   public IElementType getOperationTokenType() {
-    return getOperationSign().getTokenType();
+    return myOperation.getTokenType();
   }
 
+  @Override
   public PsiType getType() {
     return myOperand.getType();
   }
 
+  @Override
   public PsiElement getParent() {
     return myParent;
   }
 
   @NotNull
+  @Override
   public PsiElement[] getChildren() {
-    return new PsiElement[]{getOperationSign(), getOperand()};
+    return new PsiElement[]{myOperation, myOperand};
   }
 
+  @Override
   public String getText() {
-    return "-" + myOperand.getText();
+    return StringUtil.join(myOperation.getText(), myOperand.getText());
   }
 
+  @Override
   public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
     buffer.append(getText());
   }
 
+  @Override
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, JavaElementType.PREFIX_EXPRESSION);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitPrefixExpression(this);
@@ -80,39 +98,8 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
     }
   }
 
+  @Override
   public String toString() {
     return "PsiPrefixExpression:" + getText();
-  }
-
-  private class MySign extends ClsElementImpl implements PsiJavaToken {
-    public IElementType getTokenType() {
-      return JavaTokenType.MINUS;
-    }
-
-    @NotNull
-    public PsiElement[] getChildren() {
-      return EMPTY_ARRAY;
-    }
-
-    public PsiElement getParent() {
-      return ClsPrefixExpressionImpl.this;
-    }
-
-    public void appendMirrorText(final int indentLevel, final StringBuilder buffer) {
-      buffer.append("-");
-    }
-
-    public void setMirror(@NotNull TreeElement element) {
-      setMirrorCheckingType(element, JavaTokenType.MINUS);
-    }
-
-    public void accept(@NotNull PsiElementVisitor visitor) {
-      if (visitor instanceof JavaElementVisitor) {
-        ((JavaElementVisitor)visitor).visitJavaToken(this);
-      }
-      else {
-        visitor.visitElement(this);
-      }
-    }
   }
 }

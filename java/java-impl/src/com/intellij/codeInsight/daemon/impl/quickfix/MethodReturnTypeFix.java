@@ -181,9 +181,15 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
       try {
         final ConvertReturnStatementsVisitor visitor = new ConvertReturnStatementsVisitor(factory, method, myTargetType);
 
-        final ControlFlow controlFlow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(method.getBody());
+        ControlFlow controlFlow;
+        try {
+          controlFlow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(method.getBody());
+        }
+        catch (AnalysisCanceledException e) {
+          controlFlow = null; //must be an error
+        }
         PsiReturnStatement returnStatement;
-        if (ControlFlowUtil.processReturns(controlFlow, visitor)) {
+        if (controlFlow != null && ControlFlowUtil.processReturns(controlFlow, visitor)) {
           // extra return statement not needed
           // get latest modified return statement and select...
           returnStatement = visitor.getLatestReturn();
@@ -192,10 +198,6 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
           returnStatement = visitor.createReturnInLastStatement();
         }
         mySelector.accept(returnStatement, method);
-      }
-      catch (AnalysisCanceledException e) {
-        LOG.error(e);
-        return;
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

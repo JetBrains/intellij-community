@@ -42,6 +42,8 @@ import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
@@ -337,11 +339,12 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     if (jdk == null) {
       throw new ExecutionException(DebuggerBundle.message("error.jdk.not.specified"));
     }
-    final String versionString = jdk.getVersionString();
-    if (versionString.contains("1.0") || versionString.contains("1.1")) {
+    final JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
+    String versionString = jdk.getVersionString();
+    if (version == JavaSdkVersion.JDK_1_0 || version == JavaSdkVersion.JDK_1_1) {
       throw new ExecutionException(DebuggerBundle.message("error.unsupported.jdk.version", versionString));
     }
-    if (SystemInfo.isWindows && versionString.contains("1.2")) {
+    if (SystemInfo.isWindows && version == JavaSdkVersion.JDK_1_2) {
       final VirtualFile homeDirectory = jdk.getHomeDirectory();
       if (homeDirectory == null || !homeDirectory.isValid()) {
         throw new ExecutionException(DebuggerBundle.message("error.invalid.jdk.home", versionString));

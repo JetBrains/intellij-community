@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
@@ -54,7 +55,9 @@ public class HgMergeCommand {
     } else if (StringUtils.isNotBlank(branch)) {
       arguments.add(branch);
     }
-    return commandExecutor.executeInCurrentThread(repo, "merge", arguments);
+    final HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "merge", arguments);
+    project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project);
+    return result;
   }
 
 }

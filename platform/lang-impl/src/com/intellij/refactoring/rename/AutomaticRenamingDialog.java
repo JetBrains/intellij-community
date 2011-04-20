@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
@@ -31,6 +33,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ui.Table;
@@ -61,7 +64,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   private String[] myNewNames;
   private PsiNamedElement[] myRenames;
   private MyTableModel myTableModel;
-  private Table myTable;
+  private JBTable myTable;
   private JPanel myPanelForPreview;
   private JButton mySelectAllButton;
   private JButton myUnselectAllButton;
@@ -69,6 +72,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   private JSplitPane mySplitPane;
   private final Project myProject;
   private final UsagePreviewPanel myUsagePreviewPanel;
+  private final JLabel myUsageFileLabel;
   private ListSelectionListener myListSelectionListener;
 
   public AutomaticRenamingDialog(Project project, AutomaticRenamer renamer) {
@@ -76,6 +80,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     myProject = project;
     myRenamer = renamer;
     myUsagePreviewPanel = new UsagePreviewPanel(myProject);
+    myUsageFileLabel = new JLabel();
     populateData();
     setTitle(myRenamer.getDialogTitle());
     init();
@@ -170,11 +175,19 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     });
     myListSelectionListener = new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
+        myUsageFileLabel.setText("");
         int index = myTable.getSelectionModel().getLeadSelectionIndex();
         if (index != -1) {
           PsiNamedElement element = myRenames[index];
           UsageInfo usageInfo = new UsageInfo(element);
           myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
+          final PsiFile containingFile = element.getContainingFile();
+          if (containingFile != null) {
+            final VirtualFile virtualFile = containingFile.getVirtualFile();
+            if (virtualFile != null) {
+              myUsageFileLabel.setText(virtualFile.getName());
+            }
+          }
         }
         else {
           myUsagePreviewPanel.updateLayout(null);
@@ -185,6 +198,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
     myPanelForPreview.add(myUsagePreviewPanel, BorderLayout.CENTER);
     myUsagePreviewPanel.updateLayout(null);
+    myPanelForPreview.add(myUsageFileLabel, BorderLayout.NORTH);
     mySplitPane.setDividerLocation(0.5);
     
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
@@ -231,6 +245,11 @@ public class AutomaticRenamingDialog extends DialogWrapper {
         myRenamer.doNotRename(element);
       }
     }
+  }
+
+  private void createUIComponents() {
+    myTable = new JBTable();
+    myTable.setRowHeight(myTable.getFontMetrics(UIManager.getFont("Table.font").deriveFont(Font.BOLD)).getHeight() + 4);
   }
 
   private class MyTableModel extends AbstractTableModel {

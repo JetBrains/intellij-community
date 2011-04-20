@@ -16,6 +16,7 @@
 
 package com.intellij.util.ui;
 
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.UIBundle;
@@ -108,11 +109,11 @@ public abstract class StatusText {
   }
 
   private Rectangle getTextComponentBound() {
-    Rectangle bounds = myOwner == null ? new Rectangle(0, 0, 0, 0) : myOwner.getBounds();
+    Rectangle ownerRec = myOwner == null ? new Rectangle(0, 0, 0, 0) : myOwner.getBounds();
 
     Dimension size = myComponent.getPreferredSize();
-    int x = (bounds.width - size.width) / 2;
-    int y = bounds.height / 3;
+    int x = (ownerRec.width - size.width) / 2;
+    int y = (ownerRec.height - size.height) / 2;
     return new Rectangle(x, y, size.width, size.height);
   }
 
@@ -166,5 +167,9 @@ public abstract class StatusText {
     Graphics2D g2 = (Graphics2D)g.create(b.x, b.y, b.width, b.height);
     myComponent.paint(g2);
     g2.dispose();
+  }
+
+  public Dimension getPreferredSize() {
+    return myComponent.getPreferredSize();
   }
 }

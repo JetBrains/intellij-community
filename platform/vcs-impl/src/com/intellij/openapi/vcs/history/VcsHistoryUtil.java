@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -80,10 +81,14 @@ public class VcsHistoryUtil {
     diffData.setContentTitles(title1, title2);
     diffData.setContents(createContent(project, content1, revision1, doc, charset, fileType),
                          createContent(project, content2, revision2, doc, charset, fileType));
-    DiffManager.getInstance().getDiffTool().show(diffData);
+    WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+      public void run() {
+        DiffManager.getInstance().getDiffTool().show(diffData);
+      }
+    }, null, project);
   }
 
-  public static byte[] loadRevisionContent(VcsFileRevision revision) throws VcsException, IOException {
+    public static byte[] loadRevisionContent(VcsFileRevision revision) throws VcsException, IOException {
     byte[] content = revision.getContent();
     if (content == null) {
       revision.loadContent();

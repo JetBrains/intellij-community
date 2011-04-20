@@ -54,8 +54,10 @@ public class AdvancedSettingsUI implements Configurable {
   private JPanel myLanguageAnnotationPanel;
   private JPanel myPatternAnnotationPanel;
   private JPanel mySubstAnnotationPanel;
-  private JCheckBox myAnalyzeReferencesCheckBox;
-  private JCheckBox myUseDataflowAnalysisIfCheckBox;
+  private JRadioButton myDfaOff;
+  private JRadioButton myAnalyzeReferences;
+  private JRadioButton myUseDfa;
+  private JRadioButton myLookForAssignments;
   private JCheckBox myIncludeUncomputableOperandsAsCheckBox;
 
   private final ReferenceEditorWithBrowseButton myAnnotationField;
@@ -130,10 +132,7 @@ public class AdvancedSettingsUI implements Configurable {
     if (!mySubstField.getText().equals(myConfiguration.getSubstAnnotationClass())) {
       return true;
     }
-    if (myConfiguration.isResolveReferences() != myAnalyzeReferencesCheckBox.isSelected()) {
-      return true;
-    }
-    if (myConfiguration.isUseDfaIfAvailable() != myUseDataflowAnalysisIfCheckBox.isSelected()) {
+    if (!myConfiguration.getDfaOption().equals(getDfaOption())) {
       return true;
     }
     if (myConfiguration.isIncludeUncomputablesAsLiterals() != myIncludeUncomputableOperandsAsCheckBox.isSelected()) {
@@ -158,9 +157,17 @@ public class AdvancedSettingsUI implements Configurable {
     myConfiguration.setPatternAnnotation(myPatternField.getText());
     myConfiguration.setSubstAnnotation(mySubstField.getText());
 
-    myConfiguration.setResolveReferences(myAnalyzeReferencesCheckBox.isSelected());
-    myConfiguration.setUseDfaIfAvailable(myUseDataflowAnalysisIfCheckBox.isSelected());
+    myConfiguration.setDfaOption(getDfaOption());
     myConfiguration.setIncludeUncomputablesAsLiterals(myIncludeUncomputableOperandsAsCheckBox.isSelected());
+  }
+
+  @NotNull
+  private Configuration.DfaOption getDfaOption() {
+    if (myDfaOff.isSelected()) return Configuration.DfaOption.OFF;
+    if (myAnalyzeReferences.isSelected()) return Configuration.DfaOption.RESOLVE;
+    if (myLookForAssignments.isSelected()) return Configuration.DfaOption.ASSIGNMENTS;
+    if (myUseDfa.isSelected()) return Configuration.DfaOption.DFA;
+    return Configuration.DfaOption.OFF;
   }
 
   public void reset() {
@@ -172,9 +179,25 @@ public class AdvancedSettingsUI implements Configurable {
     myAssertInstrumentation.setSelected(myConfiguration.getInstrumentation() == Configuration.InstrumentationType.ASSERT);
     myExceptionInstrumentation.setSelected(myConfiguration.getInstrumentation() == Configuration.InstrumentationType.EXCEPTION);
 
-    myAnalyzeReferencesCheckBox.setSelected(myConfiguration.isResolveReferences());
-    myUseDataflowAnalysisIfCheckBox.setSelected(myConfiguration.isUseDfaIfAvailable());
+    setDfaOption(myConfiguration.getDfaOption());
     myIncludeUncomputableOperandsAsCheckBox.setSelected(myConfiguration.isIncludeUncomputablesAsLiterals());
+  }
+
+  private void setDfaOption(@NotNull final Configuration.DfaOption dfaOption) {
+    switch (dfaOption) {
+      case OFF:
+        myDfaOff.setSelected(true);
+        break;
+      case RESOLVE:
+        myAnalyzeReferences.setSelected(true);
+        break;
+      case ASSIGNMENTS:
+        myLookForAssignments.setSelected(true);
+        break;
+      case DFA:
+        myUseDfa.setSelected(true);
+        break;
+    }
   }
 
   public void disposeUIResources() {

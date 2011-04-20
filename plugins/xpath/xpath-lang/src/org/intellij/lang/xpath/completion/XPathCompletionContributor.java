@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.xpath.context.NamespaceContext;
 import org.intellij.lang.xpath.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,7 +82,24 @@ public class XPathCompletionContributor extends CompletionContributor {
     extend(CompletionType.BASIC, psiElement().withParent(psiElement(XPath2TypeElement.class).without(prefix())), new CompletionProvider<CompletionParameters>() {
       protected void addCompletions(@NotNull CompletionParameters parameters, ProcessingContext context, @NotNull CompletionResultSet result) {
         final XPathElement parent = PsiTreeUtil.getParentOfType(parameters.getPosition(), XPathElement.class);
-        addResult(result, CompletionLists.getNodeTypeCompletions(parent), parameters.getPosition(), parameters.getOffset());
+        assert parent != null;
+
+        if (parent.getParent() instanceof XPath2TreatAs || parent.getParent() instanceof XPath2InstanceOf) {
+          addResult(result, CompletionLists.getNodeTypeCompletions(parent), parameters.getPosition(), parameters.getOffset());
+        }
+
+        final NamespaceContext namespaceContext = parent.getXPathContext().getNamespaceContext();
+        if (namespaceContext != null) {
+          final String prefixForURI = namespaceContext.getPrefixForURI(XPath2Type.XMLSCHEMA_NS, parent.getXPathContext().getContextElement());
+          if (prefixForURI != null && prefixForURI.length() > 0) {
+            addResult(result, ContainerUtil.map(XPath2Type.SchemaType.listSchemaTypes(), new Function<XPath2Type, Lookup>() {
+              @Override
+              public Lookup fun(XPath2Type type) {
+                return new MyLookup(prefixForURI + ":" + type.getQName().getLocalPart());
+              }
+            }), parameters.getPosition(), parameters.getOffset());
+          }
+        }
       }
     });
     extend(CompletionType.BASIC, psiElement().withParent(psiElement(XPath2TypeElement.class).with(prefix())), new CompletionProvider<CompletionParameters>() {
@@ -94,8 +112,7 @@ public class XPathCompletionContributor extends CompletionContributor {
           addResult(result, ContainerUtil.map(XPath2Type.SchemaType.listSchemaTypes(), new Function<XPath2Type, Lookup>() {
             @Override
             public Lookup fun(XPath2Type type) {
-              return new AbstractLookup(type.getQName().getLocalPart(), type.getName()) {
-              };
+              return new MyLookup(type.getQName().getLocalPart());
             }
           }), parameters.getPosition(), parameters.getOffset());
         }
@@ -130,8 +147,7 @@ public class XPathCompletionContributor extends CompletionContributor {
     String prefix = CompletionData.findPrefixStatic(element, i);
 
     if (element.getParent() instanceof XPathVariableReference) {
-      final String text = element.getText();
-      prefix = "$" + text.substring(0, text.indexOf(CompletionLists.INTELLIJ_IDEA_RULEZ));
+      prefix = "$" + prefix;
     }
 
     if (element.getParent() instanceof XPathNodeTest) {
@@ -154,5 +170,11 @@ public class XPathCompletionContributor extends CompletionContributor {
     }
 
     return prefix;
+  }
+
+  private static class MyLookup extends AbstractLookup {
+    public MyLookup(String name) {
+      super(name, name);
+    }
   }
 }

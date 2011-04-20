@@ -20,12 +20,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -44,17 +46,19 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     return "IF statement";
   }
 
-  public GrCondition getCondition() {
+  @Nullable
+  public GrExpression getCondition() {
     PsiElement lParenth = getLParenth();
 
     if (lParenth == null) return null;
     PsiElement afterLParen = lParenth.getNextSibling();
 
-    if (afterLParen instanceof GrCondition) return ((GrCondition) afterLParen);
+    if (afterLParen instanceof GrExpression) return (GrExpression)afterLParen;
 
     return null;
   }
 
+  @Nullable
   public GrStatement getThenBranch() {
     GrStatement[] statements = findChildrenByClass(GrStatement.class);
 
@@ -64,6 +68,7 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     return null;
   }
 
+  @Nullable
   public GrStatement getElseBranch() {
     GrStatement[] statements = findChildrenByClass(GrStatement.class);
     if (statements.length == 3 && (statements[2] instanceof GrStatement)) {
@@ -74,11 +79,12 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
   }
 
   public GrStatement replaceThenBranch(GrStatement newBranch) throws IncorrectOperationException {
-    if (getThenBranch() == null ||
+    final GrStatement thenBranch = getThenBranch();
+    if (thenBranch == null ||
             newBranch == null) {
       throw new IncorrectOperationException();
     }
-    ASTNode oldBodyNode = getThenBranch().getNode();
+    ASTNode oldBodyNode = thenBranch.getNode();
     if (oldBodyNode.getTreePrev() != null &&
             GroovyTokenTypes.mNLS.equals(oldBodyNode.getTreePrev().getElementType())) {
       ASTNode whiteNode = GroovyPsiElementFactory.getInstance(getProject()).createWhiteSpace().getNode();
@@ -93,11 +99,11 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
   }
 
   public GrStatement replaceElseBranch(GrStatement newBranch) throws IncorrectOperationException {
-    if (getElseBranch() == null ||
-            newBranch == null) {
+    final GrStatement elseBranch = getElseBranch();
+    if (elseBranch == null || newBranch == null) {
       throw new IncorrectOperationException();
     }
-    ASTNode oldBodyNode = getElseBranch().getNode();
+    ASTNode oldBodyNode = elseBranch.getNode();
     if (oldBodyNode.getTreePrev() != null &&
             GroovyTokenTypes.mNLS.equals(oldBodyNode.getTreePrev().getElementType())) {
       ASTNode whiteNode = GroovyPsiElementFactory.getInstance(getProject()).createWhiteSpace().getNode();

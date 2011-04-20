@@ -86,7 +86,7 @@ public class DefaultCompletionContributor extends CompletionContributor {
     final LookupElement[] items = context.getItems();
     if (items.length == 1) {
       final LookupElement item = items[0];
-      if (!StringUtil.isEmpty(item.getPrefixMatcher().getPrefix()) || context.getParameters().getCompletionType() == CompletionType.SMART) {
+      if (!StringUtil.isEmpty(context.getLookup().itemPattern(item)) || context.getParameters().getCompletionType() == CompletionType.SMART) {
         return AutoCompletionDecision.insertItem(item);
       }
     }

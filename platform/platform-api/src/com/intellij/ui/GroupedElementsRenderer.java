@@ -20,15 +20,13 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public abstract class GroupedElementsRenderer {
   public static final Color POPUP_SEPARATOR_FOREGROUND = Color.gray.brighter();
   public static final Color POPUP_SEPARATOR_TEXT_FOREGROUND = Color.gray;
   public static final Color SELECTED_FRAME_FOREGROUND = Color.black;
-
-  final static Border ourSelectedBorder = new DottedBorder(SELECTED_FRAME_FOREGROUND);
-  final static Border ourBorder = BorderFactory.createEmptyBorder(1, 1, 1, 1);
 
   protected SeparatorWithText mySeparatorComponent = new SeparatorWithText();
   protected JComponent myComponent;
@@ -61,7 +59,7 @@ public abstract class GroupedElementsRenderer {
     myTextLabel.setDisabledIcon(disabledIcon);
 
     if (isSelected) {
-      myComponent.setBorder(ourSelectedBorder);
+      myComponent.setBorder(getSelectedBorder());
       setSelected(myComponent);
       setSelected(myTextLabel);
       if (UIUtil.isUnderNimbusLookAndFeel()) {
@@ -69,7 +67,7 @@ public abstract class GroupedElementsRenderer {
       }
     }
     else {
-      myComponent.setBorder(ourBorder);
+      myComponent.setBorder(getBorder());
       setDeselected(myComponent);
       setDeselected(myTextLabel);
       if (UIUtil.isUnderGTKLookAndFeel() || UIUtil.isUnderNimbusLookAndFeel()) {
@@ -102,7 +100,15 @@ public abstract class GroupedElementsRenderer {
   protected abstract Color getForeground();
 
   protected Border getDefaultItemComponentBorder() {
-    return ourBorder;
+    return getBorder();
+  }
+
+  private Border getSelectedBorder() {
+    return UIUtil.isToUseDottedCellBorder() ? new DottedBorder(UIUtil.getListCellPadding(), SELECTED_FRAME_FOREGROUND) : new EmptyBorder(UIUtil.getListCellPadding());
+  }
+
+  private Border getBorder() {
+    return new EmptyBorder(UIUtil.getListCellPadding());
   }
 
   public static abstract class List extends GroupedElementsRenderer {

@@ -42,4 +42,8 @@ public abstract class VolatileDoubleCheckedLockedInit<T> {
     }
     return myInstance;
   }
+
+  public void reset() {
+    myInitialized = false;
+  }
 }

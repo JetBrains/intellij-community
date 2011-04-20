@@ -39,6 +39,7 @@ import org.intellij.lang.xpath.context.functions.Parameter;
 import org.intellij.lang.xpath.psi.*;
 import org.intellij.lang.xpath.psi.impl.PrefixedNameImpl;
 import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
+import org.intellij.lang.xpath.psi.impl.XPathNumberImpl;
 import org.jetbrains.annotations.NotNull;
 
 import javax.xml.namespace.QName;
@@ -145,6 +146,10 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
             }
           }
         }
+      }
+    } else {
+      if (((XPathNumberImpl)number).isScientificNotation()) {
+        myHolder.createErrorAnnotation(number, "Number literals in scientific notation are not allowed in XPath 1.0");
       }
     }
 

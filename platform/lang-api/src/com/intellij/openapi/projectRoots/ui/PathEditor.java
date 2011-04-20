@@ -17,6 +17,7 @@ package com.intellij.openapi.projectRoots.ui;
 
 import com.google.common.collect.Lists;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,6 +53,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -188,12 +190,14 @@ public class PathEditor {
         setSelectedRoots(added);
       }
     });
+    UIUtil.addKeyboardShortcut(myList, myAddButton, CommonShortcuts.getInsertKeystroke());
     myRemoveButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         int[] idxs = myList.getSelectedIndices();
         doRemoveItems(idxs, myList);
       }
     });
+    UIUtil.addKeyboardShortcut(myList, myRemoveButton, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
     mySpecifyUrlButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         onSpecifyUrlButtonClicked();

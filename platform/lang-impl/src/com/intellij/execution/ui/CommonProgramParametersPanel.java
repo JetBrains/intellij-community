@@ -140,6 +140,10 @@ public class CommonProgramParametersPanel extends JPanel {
     myModuleContext = moduleContext;
   }
 
+  public LabeledComponent<RawCommandLineEditor> getProgramParametersComponent() {
+    return myProgramParametersComponent;
+  }
+
   public void applyTo(CommonProgramRunConfigurationParameters configuration) {
     configuration.setProgramParameters(myProgramParametersComponent.getComponent().getText());
     configuration.setWorkingDirectory(myWorkingDirectoryField.getText());

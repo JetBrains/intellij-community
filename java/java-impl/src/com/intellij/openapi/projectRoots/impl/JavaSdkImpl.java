@@ -48,6 +48,19 @@ public class JavaSdkImpl extends JavaSdk {
   private static final Icon JDK_ICON_EXPANDED = IconLoader.getIcon("/nodes/ppJdkOpen.png");
   private static final Icon ADD_ICON = IconLoader.getIcon("/general/addJdk.png");
   @NonNls private static final String JAVA_VERSION_PREFIX = "java version ";
+  private static final Map<JavaSdkVersion, String[]> VERSION_STRINGS = new EnumMap<JavaSdkVersion, String[]>(JavaSdkVersion.class);
+
+  static {
+    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_0, new String[]{"1.0"});
+    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_1, new String[]{"1.1"});
+    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_2, new String[]{"1.2"});
+    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_3, new String[]{"1.3"});
+    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_4, new String[]{"1.4"});
+    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_5, new String[]{"1.5", "5.0"});
+    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_6, new String[]{"1.6", "6.0"});
+    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_7, new String[]{"1.7", "7.0"});
+    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_8, new String[]{"1.8", "8.0"});
+  }
 
   public JavaSdkImpl() {
     super("JavaSDK");
@@ -185,7 +198,8 @@ public class JavaSdkImpl extends JavaSdk {
     return suggestedName;
   }
 
-  private static String getVersionNumber(String versionString) {
+  @NotNull
+  private static String getVersionNumber(@NotNull String versionString) {
     if (versionString.startsWith(JAVA_VERSION_PREFIX)) {
       versionString = versionString.substring(JAVA_VERSION_PREFIX.length());
       if (versionString.startsWith("\"") && versionString.endsWith("\"")) {
@@ -301,6 +315,32 @@ public class JavaSdkImpl extends JavaSdk {
     addDocs(jdkHomeFile, sdkModificator);
     sdkModificator.commitChanges();
     return jdk;
+  }
+
+  @Override
+  public JavaSdkVersion getVersion(@NotNull Sdk sdk) {
+    String version = sdk.getVersionString();
+    if (version == null) return null;
+    return getVersion(version);
+  }
+
+  @Override
+  @Nullable
+  public JavaSdkVersion getVersion(@NotNull String versionString) {
+    for (Map.Entry<JavaSdkVersion, String[]> entry : VERSION_STRINGS.entrySet()) {
+      for (String s : entry.getValue()) {
+        if (versionString.contains(s)) {
+          return entry.getKey();
+        }
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public boolean isOfVersionOrHigher(@NotNull Sdk sdk, @NotNull JavaSdkVersion version) {
+    JavaSdkVersion sdkVersion = getVersion(sdk);
+    return sdkVersion != null && sdkVersion.isAtLeast(version);
   }
 
   private static File getPathForJdkNamed(String name) {

@@ -17,6 +17,7 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -63,7 +64,7 @@ public class LocalSearchScope extends SearchScope {
     Set<PsiElement> localScope = new LinkedHashSet<PsiElement>(scope.length);
 
     for (final PsiElement element : scope) {
-      LOG.assertTrue(element.getContainingFile() != null);
+      LOG.assertTrue(element.getContainingFile() != null, element.getClass().getName());
       if (element instanceof PsiFile) {
         ContainerUtil.addAll(localScope, ((PsiFile)element).getPsiRoots());
       }
@@ -212,6 +213,15 @@ public class LocalSearchScope extends SearchScope {
       PsiFile containingFile = element.getContainingFile();
       if (containingFile == null) continue;
       if (containingFile.getVirtualFile() == file) return true;
+    }
+    return false;
+  }
+
+  public boolean containsRange(PsiFile file, TextRange range) {
+    for (PsiElement element : getScope()) {
+      if (file == element.getContainingFile() && element.getTextRange().contains(range)) {
+        return true;
+      }
     }
     return false;
   }

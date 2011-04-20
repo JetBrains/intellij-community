@@ -37,8 +37,20 @@ public class XPath2HighlightingTest extends XPath2HighlightingTestBase {
     doXPathHighlighting();
   }
 
+  public void testMalformedStringLiteral() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testQuotedStringLiteral() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testEmptyStringLiteral() throws Throwable {
+    doXPathHighlighting();
+  }
+
   @Override
   protected String getSubPath() {
-    return "xpath/highlighting";
+    return "xpath2/highlighting";
   }
 }

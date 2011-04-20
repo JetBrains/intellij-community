@@ -100,6 +100,7 @@ public class FileBasedIndex implements ApplicationComponent {
   private final Map<ID<?, ?>, Semaphore> myUnsavedDataIndexingSemaphores = new HashMap<ID<?,?>, Semaphore>();
   private final TObjectIntHashMap<ID<?, ?>> myIndexIdToVersionMap = new TObjectIntHashMap<ID<?, ?>>();
   private final Set<ID<?, ?>> myNotRequiringContentIndices = new HashSet<ID<?, ?>>();
+  private final Set<ID<?, ?>> myRequiringContentIndices = new HashSet<ID<?, ?>>();
   private final Set<FileType> myNoLimitCheckTypes = new HashSet<FileType>();
 
   private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
@@ -356,6 +357,9 @@ public class FileBasedIndex implements ApplicationComponent {
     final int version = extension.getVersion();
     if (!extension.dependsOnFileContent()) {
       myNotRequiringContentIndices.add(name);
+    }
+    else {
+      myRequiringContentIndices.add(name);
     }
     myIndexIdToVersionMap.put(name, version);
     final File versionFile = IndexInfrastructure.getVersionFile(name);
@@ -1573,34 +1577,40 @@ public class FileBasedIndex implements ApplicationComponent {
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               public void run() {
                 for (ID<?, ?> indexId : affectedIndices) {
-                  IndexingStamp.update(file, indexId, -1L);
+                  IndexingStamp.update(file, indexId, -2L);
                 }
               }
             });
-            iterateIndexableFiles(file, new Processor<VirtualFile>() {
-              public boolean process(final VirtualFile file) {
-                scheduleForUpdate(file);
-                return true;
-              }
-            });
+            // the file is for sure not a dir and it was previously indexed by at least one index
+            scheduleForUpdate(file);
           }
           else {
-            final InvalidationTask invalidator = new InvalidationTask(file) {
+            myFutureInvalidations.offer(new InvalidationTask(file) {
               public void run() {
                 removeFileDataFromIndices(affectedIndices, file);
               }
-            };
-            myFutureInvalidations.offer(invalidator);
+            });
           }
         }
         if (!markForReindex) {
-          myFilesToUpdate.remove(file); // no need to update it anymore
+          final boolean removedFromUpdateQueue = myFilesToUpdate.remove(file);// no need to update it anymore
+          if (removedFromUpdateQueue && affectedIndices.isEmpty()) {
+            // Currently the file is about to be deleted and previously it was scheduled for update and not processed up to now.
+            // Because the file was scheduled for update, at the moment of scheduling it was marked as unindexed, 
+            // so, to be on the safe side, we have to schedule data invalidation from all content-requiring indices for this file
+            myFutureInvalidations.offer(new InvalidationTask(file) {
+              public void run() {
+                removeFileDataFromIndices(myRequiringContentIndices, file);
+              }
+            });
+          }
         }
+        
         IndexingStamp.flushCache();
       }
     }
 
-    private void removeFileDataFromIndices(List<ID<?, ?>> affectedIndices, VirtualFile file) {
+    private void removeFileDataFromIndices(Collection<ID<?, ?>> affectedIndices, VirtualFile file) {
       Throwable unexpectedError = null;
       for (ID<?, ?> indexId : affectedIndices) {
         try {
@@ -1631,7 +1641,9 @@ public class FileBasedIndex implements ApplicationComponent {
 
     public void ensureAllInvalidateTasksCompleted() {
       final int size = getNumberOfPendingInvalidations();
-      if (size == 0) return;
+      if (size == 0) {
+        return;
+      }
       final ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
       final ProgressIndicator indicator = current != null ? current : new EmptyProgressIndicator();
       indicator.setText("");

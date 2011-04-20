@@ -178,6 +178,12 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return true;
   }
 
+  @Nullable
+  private PsiElement getShellComment() {
+    final ASTNode node = getNode().findChildByType(GroovyTokenTypes.mSH_COMMENT);
+    return node == null ? null : node.getPsi();
+  }
+
   private static boolean processImports(ResolveState state,
                                         PsiElement lastParent,
                                         PsiElement place,
@@ -271,7 +277,11 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
 
   public GrImportStatement[] getImportStatements() {
-    return findChildrenByClass(GrImportStatement.class);
+    List<GrImportStatement> result = new ArrayList<GrImportStatement>();
+    for (PsiElement child : getChildren()) {
+      if (child instanceof GrImportStatement) result.add((GrImportStatement)child);
+    }
+    return result.toArray(new GrImportStatement[result.size()]);
   }
 
   @Nullable
@@ -300,8 +310,12 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     GrImportStatement[] importStatements = getImportStatements();
     if (importStatements.length > 0) {
       return importStatements[importStatements.length - 1];
-    } else if (getPackageDefinition() != null) {
+    }
+    else if (getPackageDefinition() != null) {
       return getPackageDefinition();
+    }
+    else if (getShellComment() != null) {
+      return getShellComment();
     }
 
     return null;

@@ -17,16 +17,20 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
 
 /**
  * @author ilyas
  */
-public class GrPropertySelectionImpl extends GrExpressionImpl implements GrPropertySelection {
+public class GrPropertySelectionImpl extends GrReferenceExpressionImpl implements GrPropertySelection {
 
   public GrPropertySelectionImpl(@NotNull ASTNode node) {
     super(node);
@@ -40,7 +44,29 @@ public class GrPropertySelectionImpl extends GrExpressionImpl implements GrPrope
     return "Property selection";
   }
 
-  public PsiType getType() {
-    return null;
+  @NotNull
+  @Override
+  public GroovyResolveResult[] multiResolve(boolean incomplete) {
+    return GroovyResolveResult.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getDotToken() {
+    return findNotNullChildByType(TokenSets.DOTS);
+  }
+
+  @NotNull
+  @Override
+  public GrExpression getQualifier() {
+    return findNotNullChildByClass(GrExpression.class);
+  }
+
+  @NotNull
+  @Override
+  public GrExpression getReferenceNameElement() {
+    final PsiElement last = getLastChild();
+//    assert last instanceof GrExpression;
+    return (GrExpression)last;
   }
 }

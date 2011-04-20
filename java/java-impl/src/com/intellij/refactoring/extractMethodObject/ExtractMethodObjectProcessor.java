@@ -238,11 +238,14 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       final PsiField outputField = myOutputFields[i];
       final String name = getPureName(var);
       LOG.assertTrue(name != null);
+      final PsiField field;
       if (outputField != null) {
         var2FieldNames.put(var.getName(), outputField.getName());
         myInnerClass.add(outputField);
+        field = outputField;
+      } else {
+        field = PropertyUtil.findPropertyField(myProject, myInnerClass, name, false);
       }
-      final PsiField field = PropertyUtil.findPropertyField(myProject, myInnerClass, name, false);
       LOG.assertTrue(field != null, "i:" + i + "; output variables: " + Arrays.toString(outputVariables) + "; parameters: " + Arrays.toString(getMethod().getParameterList().getParameters()) + "; output field: " + outputField );
       myInnerClass.add(PropertyUtil.generateGetterPrototype(field));
     }
@@ -364,8 +367,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
   private String getPureName(PsiVariable var) {
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myProject);
-    return var instanceof PsiLocalVariable
-                        ? styleManager.variableNameToPropertyName(var.getName(), VariableKind.LOCAL_VARIABLE) : styleManager.variableNameToPropertyName(var.getName(), VariableKind.PARAMETER);
+    final VariableKind kind = var instanceof PsiLocalVariable ? VariableKind.LOCAL_VARIABLE : VariableKind.PARAMETER;
+    return styleManager.variableNameToPropertyName(var.getName(), kind);
   }
 
   public  PsiExpression processMethodDeclaration( PsiExpressionList expressionList) throws IncorrectOperationException {
@@ -716,9 +719,12 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
           String name = variable.getName();
           LOG.assertTrue(name != null);
           PsiStatement st = null;
+          final String pureName = getPureName(variable);
+          final int varIdxInOutput = ArrayUtil.find(myOutputVariables, variable);
+          final String getterName = varIdxInOutput > -1 && myOutputFields[varIdxInOutput] != null ? PropertyUtil.suggestGetterName(myProject, myOutputFields[varIdxInOutput]) : PropertyUtil.suggestGetterName(pureName, variable.getType());
           if (isDeclaredInside(variable)) {
             st = myElementFactory.createStatementFromText(
-              variable.getType().getCanonicalText() + " " + name + " = " + object + "." + PropertyUtil.suggestGetterName(getPureName(variable), variable.getType()) + "();",
+              variable.getType().getCanonicalText() + " " + name + " = " + object + "." + getterName + "();",
               myInnerMethod);
             if (reassigned.contains(new ControlFlowUtil.VariableInfo(variable, null))) {
               final PsiElement[] psiElements = ((PsiDeclarationStatement)st).getDeclaredElements();
@@ -728,8 +734,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
             }
           }
           else {
-            if (ArrayUtil.find(myOutputVariables, variable) != -1) {
-              st = myElementFactory.createStatementFromText(name + " = " + object + "." + PropertyUtil.suggestGetterName(getPureName(variable), variable.getType()) + "();", myInnerMethod);
+            if (varIdxInOutput != -1) {
+              st = myElementFactory.createStatementFromText(name + " = " + object + "." + getterName + "();", myInnerMethod);
             }
           }
           if (st != null) {

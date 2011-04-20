@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.Processor;
@@ -48,6 +49,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -145,6 +149,7 @@ public class AbstractPopup implements JBPopup {
   private boolean myMayBeParent;
   private JLabel myAdCmp;
   private AbstractPopup.SpeedSearchKeyListener mySearchKeyListener;
+  private JLabel myAdComponent;
 
 
   AbstractPopup() {
@@ -179,6 +184,7 @@ public class AbstractPopup implements JBPopup {
                      boolean modalContext,
                      @Nullable Component[] focusOwners,
                      @Nullable String adText,
+                     int adTextAlignment,
                      final boolean headerAlwaysFocusable,
                      @NotNull List<Pair<ActionListener, KeyStroke>> keyboardActions,
                      Component settingsButtons,
@@ -200,7 +206,7 @@ public class AbstractPopup implements JBPopup {
 
     myContent.add(component, BorderLayout.CENTER);
     if (adText != null) {
-      myAdCmp = HintUtil.createAdComponent(adText);
+      myAdCmp = HintUtil.createAdComponent(adText, HintUtil.getDefaultAdComponentBorder(), adTextAlignment);
       myContent.add(myAdCmp, BorderLayout.SOUTH);
     }
 
@@ -320,7 +326,29 @@ public class AbstractPopup implements JBPopup {
   }
 
   public void setAdText(@NotNull final String s) {
-    myContent.add(HintUtil.createAdComponent(s, BorderFactory.createEmptyBorder(3, 5, 3, 5)), BorderLayout.SOUTH);
+    setAdText(s, SwingUtilities.LEFT);
+  }
+
+  public void setAdText(@NotNull final String s, int alignment) {
+    if (myAdComponent == null) {
+      myAdComponent = HintUtil.createAdComponent(s, BorderFactory.createEmptyBorder(1, 5, 1, 5), alignment);
+      JPanel wrapper = new JPanel(new BorderLayout()) {
+        @Override
+        protected void paintComponent(Graphics g) {
+          g.setColor(new Color(135, 135, 135));
+          g.drawLine(0, 0, getWidth(), 0);
+          super.paintComponent(g);
+        }
+      };
+      wrapper.setOpaque(false);
+      wrapper.setBorder(new EmptyBorder(1, 0, 0, 0));
+      wrapper.add(myAdComponent, BorderLayout.CENTER);
+      myContent.add(wrapper, BorderLayout.SOUTH);
+      pack(false, true);
+    } else {
+      myAdComponent.setText(s);
+      myAdComponent.setHorizontalAlignment(alignment);
+    }
   }
 
   public static Point getCenterOf(final Component aContainer, final JComponent content) {
@@ -939,6 +967,27 @@ public class AbstractPopup implements JBPopup {
     wnd.setLocation(p.getScreenPoint());
   }
 
+  @Override
+  public void pack(boolean width, boolean height) {
+    if (!isVisible() || (!width && !height)) return;
+
+    Dimension size = getSize();
+    Dimension prefSize = myContent.computePreferredSize();
+
+    if (width) {
+      size.width = prefSize.width;
+    }
+
+    if (height) {
+      size.height = prefSize.height;
+    }
+
+    size = computeWindowSize(size);
+
+    final Window window = SwingUtilities.getWindowAncestor(myContent);
+    window.setSize(size);
+  }
+
   public void pack() {
     final Window window = SwingUtilities.getWindowAncestor(myContent);
 
@@ -1046,6 +1095,18 @@ public class AbstractPopup implements JBPopup {
                     this);
       }
     }
+
+    public Dimension computePreferredSize() {
+      if (isPreferredSizeSet()) {
+        Dimension setSize;
+        setSize = getPreferredSize();
+        setPreferredSize(null);
+        Dimension result = getPreferredSize();
+        setPreferredSize(setSize);
+        return result;
+      }
+      return getPreferredSize();
+    }
   }
 
   public boolean isCancelOnClickOutside() {
@@ -1122,17 +1183,20 @@ public class AbstractPopup implements JBPopup {
   }
 
   private void setSize(Dimension size, boolean adjustByContent) {
+    Dimension toSet = size;
     if (myPopup == null) {
-      myForcedSize = size;
+      myForcedSize = toSet;
     }
     else {
       if (adjustByContent) {
-        if (myAdCmp != null) {
-          size.height += myAdCmp.getPreferredSize().height;
-        }
+        toSet = computeWindowSize(toSet);
       }
-      updateMaskAndAlpha(setSize(myContent, size));
+      updateMaskAndAlpha(setSize(myContent, toSet));
     }
+  }
+
+  private Dimension computeWindowSize(Dimension size) {
+    return size;
   }
 
   @Override

@@ -17,11 +17,15 @@ package com.intellij.ide;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ide.CutElementMarker;
+import com.intellij.openapi.ide.KillRingTransferable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.*;
 import java.io.IOException;
@@ -49,7 +53,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     fireContentChanged(null);
   }
 
-  void fireContentChanged(final Transferable oldTransferable) {
+  void fireContentChanged(@Nullable final Transferable oldTransferable) {
     myDispatcher.getMulticaster().contentChanged(oldTransferable, getContents());
   }
 
@@ -65,11 +69,11 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     myDispatcher.removeListener(listener);
   }
 
-  public void setContents(Transferable content) {
+  public void setContents(@NotNull final Transferable content) {
     Transferable old = getContents();
-    addNewContentToStack(content);
+    Transferable contentToUse = addNewContentToStack(content);
 
-    setSystemClipboardContent(content);
+    setSystemClipboardContent(contentToUse);
 
     fireContentChanged(old);
   }
@@ -78,42 +82,135 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     return myClipboardSynchronizer.isDataFlavorAvailable(dataFlavor);
   }
 
-  public boolean isCutElement(final Object element) {
+  public boolean isCutElement(@Nullable final Object element) {
     for(CutElementMarker marker: Extensions.getExtensions(CutElementMarker.EP_NAME)) {
       if (marker.isCutElement(element)) return true;
     }
     return false;
   }
 
+  @Override
+  public void stopKillRings() {
+    for (Transferable data : myDatas) {
+      if (data instanceof KillRingTransferable) {
+        ((KillRingTransferable)data).setReadyToCombine(false);
+      }
+    }
+  }
+
   void setSystemClipboardContent(final Transferable content) {
     myClipboardSynchronizer.setContent(content, this);
   }
 
-  private void addNewContentToStack(Transferable content) {
+  /**
+   * Stores given content within the current manager. It is merged with already stored ones
+   * if necessary (see {@link KillRingTransferable}).
+   * 
+   * @param content     content to store
+   * @return            content that is either the given one or the one that was assembled from it and already stored one
+   */
+  @NotNull
+  private Transferable addNewContentToStack(@NotNull Transferable content) {
     try {
       String clipString = getStringContent(content);
-      if (clipString != null) {
-        Transferable same = null;
-        for (Transferable old : myDatas) {
-          if (clipString.equals(getStringContent(old))) {
-            same = old;
-            break;
+      if (clipString == null) {
+        return content;
+      }
+      
+      if (content instanceof KillRingTransferable) {
+        KillRingTransferable killRingContent = (KillRingTransferable)content;
+        if (killRingContent.isReadyToCombine() && !myDatas.isEmpty()) {
+          Transferable prev = myDatas.get(0);
+          if (prev instanceof KillRingTransferable) {
+            Transferable merged = merge(killRingContent, (KillRingTransferable)prev);
+            if (merged != null) {
+              myDatas.set(0, merged);
+              return merged;
+            }
           }
         }
+        if (killRingContent.isReadyToCombine()) {
+          addToTheTopOfTheStack(killRingContent);
+          return killRingContent;
+        }
+      }
+      
+      Transferable same = null;
+      for (Transferable old : myDatas) {
+        if (clipString.equals(getStringContent(old))) {
+          same = old;
+          break;
+        }
+      }
 
-        if (same == null) {
-          myDatas.add(0, content);
-          deleteAfterAllowedMaximum();
-        }
-        else {
-          moveContentTopStackTop(same);
-        }
+      if (same == null) {
+        addToTheTopOfTheStack(content);
+      }
+      else {
+        moveContentTopStackTop(same);
       }
     } catch (UnsupportedFlavorException e) {
     } catch (IOException e) {
     }
+    return content;
   }
 
+  private void addToTheTopOfTheStack(@NotNull Transferable content) {
+    myDatas.add(0, content);
+    deleteAfterAllowedMaximum();
+  }
+  
+  /**
+   * Merges given new data with the given old one and returns merge result in case of success.
+   * 
+   * @param newData     new data to merge
+   * @param oldData     old data to merge
+   * @return            merge result of the given data if possible; <code>null</code> otherwise
+   * @throws IOException                  as defined by {@link Transferable#getTransferData(DataFlavor)}
+   * @throws UnsupportedFlavorException   as defined by {@link Transferable#getTransferData(DataFlavor)}
+   */
+  @Nullable
+  private static Transferable merge(@NotNull KillRingTransferable newData, @NotNull KillRingTransferable oldData)
+    throws IOException, UnsupportedFlavorException
+  {
+    if (!oldData.isReadyToCombine() || !newData.isReadyToCombine()) {
+      return null;
+    }
+    
+    Document document = newData.getDocument();
+    if (document == null || document != oldData.getDocument()) {
+      return null;
+    }
+    
+    Object newDataText = newData.getTransferData(DataFlavor.stringFlavor);
+    Object oldDataText = oldData.getTransferData(DataFlavor.stringFlavor);
+    if (newDataText == null || oldDataText == null) {
+      return null;
+    }
+
+    if (oldData.isCut()) {
+      if (newData.getStartOffset() == oldData.getStartOffset()) {
+        return new KillRingTransferable(
+          oldDataText.toString() + newDataText, document, oldData.getStartOffset(), newData.getEndOffset(), newData.isCut()
+        );
+      }
+    }
+    
+    if (newData.getStartOffset() == oldData.getEndOffset()) {
+      return new KillRingTransferable(
+        oldDataText.toString() + newDataText, document, oldData.getStartOffset(), newData.getEndOffset(), false
+      );
+    }
+    
+    if (newData.getEndOffset() == oldData.getStartOffset()) {
+      return new KillRingTransferable(
+        newDataText.toString() + oldDataText, document, newData.getStartOffset(), oldData.getEndOffset(), false
+      );
+    }
+    
+    return null;
+  }
+  
   private static String getStringContent(Transferable content) throws UnsupportedFlavorException, IOException {
     return (String) content.getTransferData(DataFlavor.stringFlavor);
   }

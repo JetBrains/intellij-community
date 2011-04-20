@@ -27,7 +27,6 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
 import org.jetbrains.plugins.groovy.codeInspection.utils.SideEffectChecker;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatement;
@@ -77,11 +76,11 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
 
     public void visitIfStatement(@NotNull GrIfStatement statement) {
       super.visitIfStatement(statement);
-      final GrCondition outerCondition = statement.getCondition();
-      if (!(outerCondition instanceof GrExpression)) {
+      final GrExpression outerCondition = statement.getCondition();
+      if (outerCondition == null) {
         return;
       }
-      if (SideEffectChecker.mayHaveSideEffects((GrExpression) outerCondition)) {
+      if (SideEffectChecker.mayHaveSideEffects(outerCondition)) {
         return;
       }
       GrStatement thenBranch = statement.getThenBranch();
@@ -106,12 +105,11 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
         return;
       }
       final GrIfStatement innerIf = (GrIfStatement) statements[0];
-      final GrCondition innerCondition = innerIf.getCondition();
-      if (!(innerCondition instanceof GrExpression)) {
+      final GrExpression innerCondition = innerIf.getCondition();
+      if (innerCondition == null) {
         return;
       }
-      if (!EquivalenceChecker.expressionsAreEquivalent((GrExpression) innerCondition,
-          (GrExpression) outerCondition)) {
+      if (!EquivalenceChecker.expressionsAreEquivalent(innerCondition, outerCondition)) {
         return;
       }
       if (ignoreOnVolatileVariables &&

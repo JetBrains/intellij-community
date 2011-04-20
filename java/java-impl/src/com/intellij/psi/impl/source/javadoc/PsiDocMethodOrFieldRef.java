@@ -111,14 +111,13 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
                                                                   PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
     }
     else {
-      methodSignature = MethodSignatureUtil.createMethodSignature(name, PsiType.EMPTY_ARRAY,
-                                                                  PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
+      methodSignature = null;
     }
 
     final PsiMethod[] methods = getAllMethods(scope, this);
     for (PsiMethod method : methods) {
       if (!method.getName().equals(name) ||
-          !MethodSignatureUtil.areSignaturesErasureEqual(methodSignature, method.getSignature(PsiSubstitutor.EMPTY))) continue;
+          (methodSignature != null && !MethodSignatureUtil.areSignaturesErasureEqual(methodSignature, method.getSignature(PsiSubstitutor.EMPTY)))) continue;
       return new MyReference(method) {
         @NotNull
         public PsiElement[] getVariants() {

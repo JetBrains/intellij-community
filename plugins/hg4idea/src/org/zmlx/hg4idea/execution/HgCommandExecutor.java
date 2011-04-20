@@ -20,13 +20,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.*;
+import org.zmlx.hg4idea.HgExecutableValidator;
+import org.zmlx.hg4idea.HgGlobalSettings;
+import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
@@ -182,7 +186,7 @@ public final class HgCommandExecutor {
   // logging to the Version Control console (without extensions and configs)
   private void log(String operation, List<String> arguments, HgCommandResult result) {
     String exeName;
-    final int lastSlashIndex = mySettings.getHgExecutable().lastIndexOf("/");
+    final int lastSlashIndex = mySettings.getHgExecutable().lastIndexOf(File.separator);
     exeName = mySettings.getHgExecutable().substring(lastSlashIndex + 1);
 
     final String executable = mySettings.isRunViaBash() ? "bash -c " + exeName : exeName;

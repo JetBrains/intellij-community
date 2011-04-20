@@ -291,7 +291,7 @@ public class ScopeEditorPanel {
     return toolbar.getComponent();
   }
 
-  private void rebuild(final boolean updateText, final Runnable runnable, final boolean requestFocus){
+  private void rebuild(final boolean updateText, @Nullable final Runnable runnable, final boolean requestFocus){
     myUpdateAlarm.cancelAllRequests();
     final Runnable request = new Runnable() {
       public void run() {
@@ -405,7 +405,7 @@ public class ScopeEditorPanel {
     return myCurrentScope;
   }
 
-  public void reset(PackageSet packageSet, Runnable runnable){
+  public void reset(PackageSet packageSet, @Nullable Runnable runnable) {
     myCurrentScope = packageSet;
     myPatternField.setText(myCurrentScope == null ? "" : myCurrentScope.getText());
     rebuild(false, runnable, false);

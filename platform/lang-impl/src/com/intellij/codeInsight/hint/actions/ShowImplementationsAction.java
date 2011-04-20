@@ -19,7 +19,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
-import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.ImplementationSearcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -179,7 +179,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
         .setMovable(true)
         .setTitle(title)
         .createPopup();
-      final Lookup lookup = LookupManager.getActiveLookup(editor);
+      final LookupEx lookup = LookupManager.getActiveLookup(editor);
       if (lookup != null) {
         lookup.showItemPopup(popup);
       } else {

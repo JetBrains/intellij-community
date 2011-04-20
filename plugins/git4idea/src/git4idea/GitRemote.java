@@ -220,7 +220,7 @@ public final class GitRemote {
    * @throws VcsException if there is a problem with running git
    */
   @Nullable
-  public static GitRemote find(Project project, VirtualFile root, String name) throws VcsException {
+  public static GitRemote find(@NotNull Project project, @NotNull VirtualFile root, @NotNull String name) throws VcsException {
     GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.REMOTE);
     handler.setNoSSH(true);
     handler.setSilent(true);

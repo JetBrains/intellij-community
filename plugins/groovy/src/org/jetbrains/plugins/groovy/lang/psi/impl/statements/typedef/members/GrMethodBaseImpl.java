@@ -62,7 +62,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
@@ -104,7 +103,10 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
 
   @Nullable
   public GrOpenBlock getBlock() {
-    return this.findChildByClass(GrOpenBlock.class);
+    for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrOpenBlock) return (GrOpenBlock)cur;
+    }
+    return null;
   }
 
   public void setBlock(GrCodeBlock newBlock) {
@@ -118,12 +120,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
   public GrParameter[] getParameters() {
-    GrParameterListImpl parameterList = findChildByClass(GrParameterListImpl.class);
-    if (parameterList != null) {
-      return parameterList.getParameters();
-    }
-
-    return GrParameter.EMPTY_ARRAY;
+    return getParameterList().getParameters();
   }
 
   public GrTypeElement getReturnTypeElementGroovy() {

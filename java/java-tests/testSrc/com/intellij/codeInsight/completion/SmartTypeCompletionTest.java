@@ -584,7 +584,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testSuggestAnythingWhenWildcardExpected() throws Throwable {
     configureByTestName();
-    assertStringItems("X<java.lang.Object>", "Y", "Z<java.lang.Object>"); 
+    assertStringItems("X", "Y", "Z");
   }
 
   public void testNewVararg() throws Throwable {
@@ -801,6 +801,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testCastWith2TypeParameters() throws Throwable { doTest(); }
+  public void testClassLiteralInArrayAnnoInitializer() throws Throwable { doTest(); }
+  public void testClassLiteralInArrayAnnoInitializer2() throws Throwable { doTest(); }
 
   public void testAnnotation() throws Exception {
     doTest();
@@ -1030,6 +1032,12 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     }));
     select('\n');
     checkResultByTestName();
+  }
+
+  public void testQualifiedAfterNew() throws Exception {
+    myFixture.addClass("package foo; public interface Foo<T> {}");
+    myFixture.addClass("package bar; public class Bar implements foo.Foo {}");
+    doTest();
   }
 
   public void testTabAfterNew() throws Exception {

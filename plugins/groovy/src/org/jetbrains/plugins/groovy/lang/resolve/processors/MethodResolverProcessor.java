@@ -27,14 +27,17 @@ import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
@@ -63,7 +66,8 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private final boolean myIsConstructor;
 
   private boolean myStopExecuting = false;
-  private final Set<GrStatement> myExitPoints = new HashSet<GrStatement>();
+  private Set<GrStatement> myExitPoints;
+  private final boolean canNotBeExitPoint;
 
   public MethodResolverProcessor(String name, GroovyPsiElement place, boolean isConstructor, PsiType thisType, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments) {
     this(name, place, isConstructor, thisType, argumentTypes, typeArguments, false);
@@ -75,11 +79,16 @@ public class MethodResolverProcessor extends ResolverProcessor {
     myArgumentTypes = argumentTypes;
     myTypeArguments = typeArguments;
     myAllVariants = allVariants;
+    canNotBeExitPoint = !canBexExitPoint(place);
+  }
 
-    final GrMethod method = PsiTreeUtil.getParentOfType(myPlace, GrMethod.class, true, GrClosableBlock.class);
-    if (method != null) {
-      myExitPoints.addAll(ControlFlowUtils.collectReturns(method.getBlock()));
+  private static boolean canBexExitPoint(PsiElement place) {
+    while (place != null) {
+      if (place instanceof GrMethod || place instanceof GrClosableBlock) return true;
+      if (place instanceof GrThrowStatement || place instanceof GrTypeDefinitionBody || place instanceof GroovyFile) return false;
+      place = place.getParent();
     }
+    return false;
   }
 
   public boolean execute(PsiElement element, ResolveState state) {
@@ -228,7 +237,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     PsiElement call = myPlace.getParent();
     final PsiElement parent = call.getParent();
     PsiType rType = null;
-    if (parent instanceof GrReturnStatement || myExitPoints.contains(call)) {
+    if (parent instanceof GrReturnStatement || exitsContains(call)) {
       final GrMethod method = PsiTreeUtil.getParentOfType(parent, GrMethod.class, true, GrClosableBlock.class);
       if (method != null) rType = method.getReturnType();
     }
@@ -239,6 +248,18 @@ public class MethodResolverProcessor extends ResolverProcessor {
       rType = ((GrVariable)parent).getDeclaredType();
     }
     return rType;
+  }
+
+  private boolean exitsContains(PsiElement call) {
+    if (canNotBeExitPoint) return false;
+    if (myExitPoints == null) {
+      final GrMethod method = PsiTreeUtil.getParentOfType(myPlace, GrMethod.class, true, GrClosableBlock.class);
+      myExitPoints = new HashSet<GrStatement>();
+      if (method != null) {
+        myExitPoints.addAll(ControlFlowUtils.collectReturns(method.getBlock()));
+      }
+    }
+    return myExitPoints.contains(call);
   }
 
   @NotNull

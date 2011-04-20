@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class ProjectFileType implements FileType {
+public class ProjectFileType implements InternalFileType {
   @NonNls public static final String DEFAULT_EXTENSION = "ipr";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".ipr";
   private static final Icon ICON = IconLoader.getIcon("/nodes/ideaProject.png");

@@ -19,6 +19,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.zmlx.hg4idea.command.HgTagBranchCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
@@ -26,6 +27,7 @@ import org.zmlx.hg4idea.ui.HgCurrentBranchStatus;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 class HgCurrentBranchStatusUpdater implements HgUpdater {
 
@@ -36,9 +38,21 @@ class HgCurrentBranchStatusUpdater implements HgUpdater {
   }
 
   public void update(final Project project) {
-    Editor textEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if (textEditor != null) {
-      Document document = textEditor.getDocument();
+    final AtomicReference<Editor> textEditor = new AtomicReference<Editor>();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            textEditor.set(FileEditorManager.getInstance(project).getSelectedTextEditor());
+          }
+        });
+      }
+    });
+
+    if (textEditor.get() != null) {
+      Document document = textEditor.get().getDocument();
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
 
       final VirtualFile repo = VcsUtil.getVcsRootFor(project, file);

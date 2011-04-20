@@ -31,8 +31,7 @@ public class EnableNotEqual extends DirDiffAction {
     return getModel().isShowDifferent();
   }
 
-  @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void updateState(boolean state) {
     getModel().setShowDifferent(state);
   }
 }

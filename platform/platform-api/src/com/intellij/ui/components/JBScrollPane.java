@@ -30,6 +30,14 @@ import java.awt.event.MouseEvent;
 import java.lang.reflect.Method;
 
 public class JBScrollPane extends JScrollPane {
+
+  private int myViewportBorderWidth = -1;
+
+  public JBScrollPane(int viewportWidth) {
+    myViewportBorderWidth = viewportWidth;
+    updateViewportBorder();
+  }
+
   public JBScrollPane() {
     setupCorners();
   }
@@ -59,7 +67,11 @@ public class JBScrollPane extends JScrollPane {
 
   public void setUI(ScrollPaneUI ui) {
     super.setUI(ui);
-    setViewportBorder(new ViewportBorder(1));
+    updateViewportBorder();
+  }
+
+  private void updateViewportBorder() {
+    setViewportBorder(new ViewportBorder(myViewportBorderWidth >= 0 ? myViewportBorderWidth : 1));
   }
 
   public static ViewportBorder createIndentBorder() {

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.dir.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diff.impl.dir.DirDiffIcons;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
@@ -34,5 +35,19 @@ public abstract class DirDiffAction extends ToggleAction implements DirDiffIcons
 
   public DirDiffTableModel getModel() {
     return myModel;
+  }
+
+  protected abstract void updateState(boolean state);
+
+  @Override
+  public final void setSelected(AnActionEvent e, boolean state) {
+    updateState(state);
+    getModel().reloadModel(null);
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setEnabled(!getModel().isUpdating());
   }
 }

@@ -19,6 +19,11 @@
  */
 package com.intellij.openapi.project;
 
+import com.intellij.ide.highlighter.InternalFileType;
+import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.highlighter.WorkspaceFileType;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.SystemInfo;
@@ -26,6 +31,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +39,8 @@ import java.io.File;
 import java.io.IOException;
 
 public class ProjectUtil {
+  @NonNls public static final String DIRECTORY_BASED_PROJECT_DIR = ".idea";
+
   private ProjectUtil() {
   }
 
@@ -90,5 +98,15 @@ public class ProjectUtil {
   @Nullable
   public static Project guessProjectForFile(VirtualFile file) {
     return ProjectLocator.getInstance().guessProjectForFile(file);
+  }
+
+  public static boolean isProjectOrWorkspaceFile(final VirtualFile file) {
+    return isProjectOrWorkspaceFile(file, file.getFileType());
+  }
+
+  public static boolean isProjectOrWorkspaceFile(final VirtualFile file,
+                                                 final FileType fileType) {
+    if (fileType instanceof InternalFileType) return true;
+    return file.getPath().contains("/"+ DIRECTORY_BASED_PROJECT_DIR +"/");
   }
 }

@@ -145,7 +145,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     return PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiFile.class);
   }
 
-  public void inspectionStarted(LocalInspectionToolSession session) {}
+  public void inspectionStarted(LocalInspectionToolSession session, boolean isOnTheFly) {}
 
   public void inspectionFinished(LocalInspectionToolSession session, ProblemsHolder problemsHolder) {
     inspectionFinished(session);

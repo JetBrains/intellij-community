@@ -70,7 +70,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
 
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.CLASSLAYOUT_GROUP_NAME;
+    return GroupNames.CLASS_LAYOUT_GROUP_NAME;
   }
 
   @NotNull
@@ -105,10 +105,6 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-
-      }
-
       @Override
       public void visitJavaFile(PsiJavaFile file) {
         for (PsiClass aClass : file.getClasses()) {
@@ -143,7 +139,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     for (PsiField field : candidates) {
       if (usedFields.contains(field) && !hasImplicitReadOrWriteUsage(field, implicitUsageProviders)) {
         final String message = InspectionsBundle.message("inspection.field.can.be.local.problem.descriptor");
-        holder.registerProblem(field.getNameIdentifier(), message, new MyQuickFix(field));
+        holder.registerProblem(field.getNameIdentifier(), message, new MyQuickFix());
       }
     }
   }
@@ -210,13 +206,9 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
   }
 
   private static boolean isImmutableState(PsiType type) {
-    if (type instanceof PsiPrimitiveType) {
-      return true;
-    }
-    if (PsiPrimitiveType.getUnboxedType(type) != null) {
-      return true;
-    }
-    return Comparing.strEqual(CommonClassNames.JAVA_LANG_STRING, type.getCanonicalText());
+    return type instanceof PsiPrimitiveType ||
+           PsiPrimitiveType.getUnboxedType(type) != null ||
+           Comparing.strEqual(CommonClassNames.JAVA_LANG_STRING, type.getCanonicalText());
   }
 
   private static Collection<PsiVariable> getWrittenVariables(ControlFlow controlFlow, Ref<Collection<PsiVariable>> writtenVariables) {
@@ -263,19 +255,15 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
   }
 
   private static class MyQuickFix implements LocalQuickFix {
-    private final PsiField myField;
-
-    public MyQuickFix(final PsiField field) {
-      myField = field;
-    }
-
     @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.field.can.be.local.quickfix");
     }
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!myField.isValid()) return; //weird. should not get here when field becomes invalid
+      PsiElement element = descriptor.getPsiElement();
+      PsiField myField = PsiTreeUtil.getParentOfType(element, PsiField.class);
+      if (myField == null || !myField.isValid()) return; //weird. should not get here when field becomes invalid
 
       final Collection<PsiReference> refs = ReferencesSearch.search(myField).findAll();
       if (refs.isEmpty()) return;
@@ -302,18 +290,20 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
             final PsiExpression initializer = expression.getRExpression();
             final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), initializer);
             if (!mayBeFinal) {
-              PsiUtil.setModifierProperty(((PsiModifierListOwner)decl.getDeclaredElements()[0]), PsiModifier.FINAL, false);
+              PsiUtil.setModifierProperty((PsiModifierListOwner)decl.getDeclaredElements()[0], PsiModifier.FINAL, false);
             }
             newDeclaration = anchor.replace(decl);
             refsSet.remove(expression.getLExpression());
             retargetReferences(elementFactory, localName, refsSet);
           }
           else {
-            newDeclaration = addDeclarationWithFieldInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refsSet);
+            newDeclaration = addDeclarationWithFieldInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refsSet,
+                                                                                     myField);
           }
         }
         else {
-          newDeclaration = addDeclarationWithFieldInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refsSet);
+          newDeclaration = addDeclarationWithFieldInitializerAndRetargetReferences(elementFactory, localName, anchorBlock, anchor, refsSet,
+                                                                                   myField);
         }
       }
       catch (IncorrectOperationException e) {
@@ -361,10 +351,12 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       }
     }
 
-    private PsiElement addDeclarationWithFieldInitializerAndRetargetReferences(final PsiElementFactory elementFactory, final String localName,
-                                                                               final PsiCodeBlock anchorBlock,
-                                                                               final PsiElement anchor,
-                                                                               final Set<PsiReference> refs)
+    private static PsiElement addDeclarationWithFieldInitializerAndRetargetReferences(final PsiElementFactory elementFactory,
+                                                                                      final String localName,
+                                                                                      final PsiCodeBlock anchorBlock,
+                                                                                      final PsiElement anchor,
+                                                                                      final Set<PsiReference> refs,
+                                                                                      PsiField myField)
       throws IncorrectOperationException {
       final PsiDeclarationStatement decl = elementFactory.createVariableDeclarationStatement(localName, myField.getType(), myField.getInitializer());
       final PsiElement newDeclaration = anchorBlock.addBefore(decl, anchor);

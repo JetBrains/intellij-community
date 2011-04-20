@@ -115,6 +115,10 @@ public class XsltHighlightingTest extends TestBase {
         doXsltHighlighting();
     }
 
+    public void testEscapedXPathString() throws Throwable {
+        doXsltHighlighting();
+    }
+
     public void testTemplateWithPrefix() throws Throwable {
         myFixture.enableInspections(XmlUnusedNamespaceInspection.class);
         doXsltHighlighting();

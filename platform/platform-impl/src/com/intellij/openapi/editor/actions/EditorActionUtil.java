@@ -38,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EditorPopupHandler;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -117,7 +118,7 @@ public class EditorActionUtil {
     if (newLength < 0) {
       newLength = 0;
     }
-    StringBuffer buf = new StringBuffer(newLength);
+    StringBuilder buf = new StringBuilder(newLength);
     int tabSize = editorSettings.getTabSize(project);
     for (int i = 0; i < newLength;) {
       if (tabSize > 0 && editorSettings.isUseTabCharacter(project) && i + tabSize <= newLength) {

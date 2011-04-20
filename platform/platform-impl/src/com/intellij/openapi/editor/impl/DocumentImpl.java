@@ -147,7 +147,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
     VisualPosition visualCaret = activeEditor == null ? null : activeEditor.getCaretModel().getVisualPosition();
     int caretLine = activeEditor == null ? -1 : activeEditor.getCaretModel().getLogicalPosition().line;
-    int caretOffset = activeEditor == null ? -1 : activeEditor.getCaretModel().getOffset();
 
     boolean markAsNeedsStrippingLater = false;
     CharSequence text = myText.getCharArray();
@@ -164,7 +163,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         whiteSpaceStart = offset;
       }
       if (whiteSpaceStart == -1) continue;
-      if (!isVirtualSpaceEnabled && caretLine == line && whiteSpaceStart < caretOffset) {
+      if (!isVirtualSpaceEnabled && caretLine == line && activeEditor != null && whiteSpaceStart < activeEditor.getCaretModel().getOffset()) {
         // mark this as a document that needs stripping later
         // otherwise the caret would jump madly
         markAsNeedsStrippingLater = true;

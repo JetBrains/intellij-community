@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Bas Leijdekkers
+ * Copyright 2006-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.varargs;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -69,8 +70,9 @@ public class ConvertVarargParameterToArrayIntention extends Intention {
             modifyCall(methodCallExpression, typeText, parameterIndex);
         }
         final PsiType arrayType = type.toArrayType();
-        final PsiManager psiManager = lastParameter.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+        final Project project = lastParameter.getProject();
+        final PsiElementFactory factory =
+                JavaPsiFacade.getElementFactory(project);
         final PsiTypeElement newTypeElement =
                 factory.createTypeElement(arrayType);
         final PsiTypeElement typeElement =
@@ -100,8 +102,9 @@ public class ConvertVarargParameterToArrayIntention extends Intention {
             }
         }
         builder.append('}');
-        final PsiManager manager = methodCallExpression.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+        final Project project = methodCallExpression.getProject();
+        final PsiElementFactory factory =
+                JavaPsiFacade.getElementFactory(project);
         final PsiExpression arrayExpression =
                 factory.createExpressionFromText(builder.toString(),
                         methodCallExpression);
@@ -114,9 +117,11 @@ public class ConvertVarargParameterToArrayIntention extends Intention {
         } else {
             argumentList.add(arrayExpression);
         }
-        JavaCodeStyleManager.getInstance(manager.getProject()).shortenClassReferences(argumentList);
+        final JavaCodeStyleManager javaCodeStyleManager =
+                JavaCodeStyleManager.getInstance(project);
+        javaCodeStyleManager.shortenClassReferences(argumentList);
         final CodeStyleManager codeStyleManager =
-              manager.getCodeStyleManager();
+                CodeStyleManager.getInstance(project);
         codeStyleManager.reformat(argumentList);
     }
 }

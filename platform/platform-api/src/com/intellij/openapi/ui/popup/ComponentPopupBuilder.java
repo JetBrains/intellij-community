@@ -119,6 +119,9 @@ public interface ComponentPopupBuilder {
   @NotNull
   ComponentPopupBuilder setAdText(@Nullable String text);
 
+  @NotNull
+  ComponentPopupBuilder setAdText(@Nullable String text, int textAlignment);
+
   @NotNull ComponentPopupBuilder setShowShadow(boolean show);
 
   @NotNull

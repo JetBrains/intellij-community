@@ -46,6 +46,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -498,6 +499,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     final TextAttributes defaultAttrs = myGlobalScheme.getAttributes(HighlighterColors.TEXT);
 
     for (Trinity<IElementType, PsiLanguageInjectionHost, TextRange> token : tokens) {
+      ProgressManager.checkCanceled();
       IElementType tokenType = token.getFirst();
       PsiLanguageInjectionHost injectionHost = token.getSecond();
       TextRange textRange = token.getThird();

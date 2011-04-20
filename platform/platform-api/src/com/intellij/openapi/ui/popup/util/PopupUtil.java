@@ -50,6 +50,19 @@ public class PopupUtil {
     }
   }
 
+  public static JBPopup getPopupContainerFor(@Nullable Component c) {
+    if (c == null) return null;
+
+    final Window wnd = SwingUtilities.getWindowAncestor(c);
+    if (wnd instanceof JWindow) {
+      final JRootPane root = ((JWindow)wnd).getRootPane();
+      return (JBPopup)root.getClientProperty(JBPopup.KEY);
+    }
+
+    return null;
+
+  }
+
   public static void setPopupType(@NotNull final PopupFactory factory, final int type) {
     try {
       final Method method = PopupFactory.class.getDeclaredMethod("setPopupType", int.class);

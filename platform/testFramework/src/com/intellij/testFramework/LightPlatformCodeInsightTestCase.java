@@ -499,6 +499,30 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected static void moveCaretToNextWordWithSelection() {
     doAction("EditorNextWordWithSelection");
   }
+
+  protected static void cutLineBackward() {
+    doAction("EditorCutLineBackward");
+  }
+  
+  protected static void cutToLineEnd() {
+    doAction("EditorCutLineEnd");
+  }
+
+  protected static void killToWordStart() {
+    doAction("EditorKillToWordStart");
+  }
+  
+  protected static void killToWordEnd() {
+    doAction("EditorKillToWordEnd");
+  }
+
+  protected static void killRegion() {
+    doAction("EditorKillRegion");
+  }
+
+  protected static void killRingSave() {
+    doAction("EditorKillRingSave");
+  }
   
   protected static void lineComment() {
     new CommentByLineCommentHandler().invoke(getProject(), getEditor(), getFile());

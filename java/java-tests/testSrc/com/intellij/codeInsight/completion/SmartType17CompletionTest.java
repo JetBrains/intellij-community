@@ -16,21 +16,9 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
-import com.intellij.codeInsight.template.SmartCompletionContextType;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.openapi.util.Condition;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class SmartType17CompletionTest extends LightFixtureCompletionTestCase {
@@ -51,6 +39,13 @@ public class SmartType17CompletionTest extends LightFixtureCompletionTestCase {
 
   public void testDiamondNotCollapsed() throws Exception {
     doTest();
+  }
+
+  public void testDiamondPresentation() {
+    configureByFile("/" + getTestName(false) + ".java");
+    LookupElementPresentation presentation = new LookupElementPresentation();
+    myItems[0].renderElement(presentation);
+    assertEquals("MyDD<>", presentation.getItemText());
   }
 
 

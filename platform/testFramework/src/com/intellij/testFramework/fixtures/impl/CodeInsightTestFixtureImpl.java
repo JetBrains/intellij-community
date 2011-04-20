@@ -47,6 +47,9 @@ import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -69,10 +72,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionsArea;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -99,6 +99,8 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
@@ -107,10 +109,7 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Function;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.UIUtil;
@@ -1038,6 +1037,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       UIUtil.pump();
     }
 
+    ((StatisticsManagerImpl)StatisticsManager.getInstance()).clearStatistics();
+
     FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
     VirtualFile[] openFiles = editorManager.getOpenFiles();
     for (VirtualFile openFile : openFiles) {
@@ -1770,6 +1771,29 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       assertOrderedEquals(strings, expected);
     }
     assertEquals(selected, list.getSelectedIndex());
+  }
+
+  @Override
+  public void testStructureView(Consumer<StructureViewComponent> consumer) {
+    assert myFile != null : "configure first";
+
+    final VirtualFile vFile = myFile.getVirtualFile();
+    assert vFile != null : "no virtual file for " + myFile;
+
+    final FileEditor fileEditor = FileEditorManager.getInstance(getProject()).getSelectedEditor(vFile);
+    assert fileEditor != null : "editor not opened for " + vFile;
+
+    final StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(myFile);
+    assert builder != null : "no builder for " + myFile;
+
+    StructureViewComponent component = null;
+    try {
+      component = (StructureViewComponent)builder.createStructureView(fileEditor, myProjectFixture.getProject());
+      consumer.consume(component);
+    }
+    finally {
+      if (component != null) Disposer.dispose(component);
+    }
   }
 
   private LookupImpl getLookup() {

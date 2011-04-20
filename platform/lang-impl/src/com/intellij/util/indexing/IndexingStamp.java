@@ -142,11 +142,7 @@ public class IndexingStamp {
 
   public static boolean isFileIndexed(VirtualFile file, ID<?, ?> indexName, final long indexCreationStamp) {
     try {
-      if (file instanceof NewVirtualFile && file.isValid()) {
-        synchronized (myTimestampsCache) {
-          return myTimestampsCache.get(file).get(indexName) == indexCreationStamp;
-        }
-      }
+      return getIndexStamp(file, indexName) == indexCreationStamp;
     }
     catch (RuntimeException e) {
       final Throwable cause = e.getCause();
@@ -156,6 +152,15 @@ public class IndexingStamp {
     }
 
     return false;
+  }
+
+  public static long getIndexStamp(VirtualFile file, ID<?, ?> indexName) {
+    if (file instanceof NewVirtualFile && file.isValid()) {
+      synchronized (myTimestampsCache) {
+        return myTimestampsCache.get(file).get(indexName);
+      }
+    }
+    return 0L;
   }
 
   public static void update(final VirtualFile file, final ID<?, ?> indexName, final long indexCreationStamp) {

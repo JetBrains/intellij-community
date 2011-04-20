@@ -55,6 +55,14 @@ import java.util.regex.Pattern;
 public class ClsStubBuilder {
   private static final Pattern REGEX_PATTERN = Pattern.compile("(?<=[^\\$])\\${1}(?=[^\\$])");
 
+  public static final String DOUBLE_POSITIVE_INF = "1.0 / 0.0";
+  public static final String DOUBLE_NEGATIVE_INF = "-1.0 / 0.0";
+  public static final String DOUBLE_NAN = "0.0d / 0.0";
+
+  public static final String FLOAT_POSITIVE_INF = "1.0f / 0.0";
+  public static final String FLOAT_NEGATIVE_INF = "-1.0f / 0.0";
+  public static final String FLOAT_NAN = "0.0f / 0.0";
+
   private ClsStubBuilder() { }
 
   @Nullable
@@ -66,7 +74,7 @@ public class ClsStubBuilder {
       }
     }
 
-    final PsiJavaFileStubImpl file = new PsiJavaFileStubImpl("dont.know.yet", true);
+    final PsiJavaFileStubImpl file = new PsiJavaFileStubImpl("do.not.know.yet", true);
     try {
       final PsiClassStub result = buildClass(vFile, bytes, file, 0);
       if (result == null) return null;
@@ -341,6 +349,7 @@ public class ClsStubBuilder {
       return myLexer.getTokenType() == null;
     }
 
+    @Nullable
     public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
       if ((access & Opcodes.ACC_SYNTHETIC) != 0) return null;
       if (!isCorrectName(name)) return null;
@@ -611,6 +620,7 @@ public class ClsStubBuilder {
       });
     }
 
+    @Nullable
     public AnnotationVisitor visitParameterAnnotation(final int parameter, final String desc, final boolean visible) {
       return new AnnotationTextCollector(desc, new AnnotationResultCallback() {
         public void callback(final String text) {
@@ -661,6 +671,7 @@ public class ClsStubBuilder {
       }
     }
 
+    @Nullable
     public AnnotationVisitor visitParameterAnnotation(final int parameter, String desc, boolean visible) {
       return (parameter < myParamIgnoreCount) ? null : super.visitParameterAnnotation(parameter - myParamIgnoreCount, desc, visible);
     }
@@ -678,9 +689,10 @@ public class ClsStubBuilder {
     if (value instanceof Double) {
       final double d = ((Double)value).doubleValue();
       if (Double.isInfinite(d)) {
-        return d > 0 ? "1.0 / 0.0" : "-1.0 / 0.0";
-      } else if (Double.isNaN(d)) {
-        return "0.0d / 0.0";
+        return d > 0 ? DOUBLE_POSITIVE_INF : DOUBLE_NEGATIVE_INF;
+      }
+      else if (Double.isNaN(d)) {
+        return DOUBLE_NAN;
       }
       return Double.toString(d);
     }
@@ -689,10 +701,12 @@ public class ClsStubBuilder {
       final float v = ((Float)value).floatValue();
 
       if (Float.isInfinite(v)) {
-        return v > 0 ? "1.0f / 0.0" : "-1.0f / 0.0";
-      } else if (Float.isNaN(v)) {
-        return "0.0f / 0.0";
-      } else {
+        return v > 0 ? FLOAT_POSITIVE_INF : FLOAT_NEGATIVE_INF;
+      }
+      else if (Float.isNaN(v)) {
+        return FLOAT_NAN;
+      }
+      else {
         return Float.toString(v) + "f";
       }
     }
@@ -717,5 +731,4 @@ public class ClsStubBuilder {
     //   Leading and trailing $ chars should be left unchanged.
     return raw.contains("$")? REGEX_PATTERN.matcher(raw).replaceAll("\\.") : raw;
   }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.ide.highlighter;
 
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path;
-
-import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import com.intellij.openapi.fileTypes.FileType;
 
 /**
- * @author ilyas
+ * @author gregsh
  */
-public interface GrPropertySelector extends UserDataHolderEx, Cloneable, Iconable, PsiElement, NavigationItem, GroovyPsiElement {
+public interface InternalFileType extends FileType {
 }

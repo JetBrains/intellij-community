@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.CachedValueProvider;
@@ -147,13 +148,22 @@ public class FoldingUpdate {
     };
   }
 
-  private static void getFoldingsFor(PsiFile file, Document document, Map<PsiElement, FoldingDescriptor> elementsToFoldMap, boolean quick) {
+  private static void getFoldingsFor(@NotNull PsiFile file, @NotNull Document document, @NotNull Map<PsiElement, FoldingDescriptor> elementsToFoldMap, boolean quick) {
     final FileViewProvider viewProvider = file.getViewProvider();
     for (final Language language : viewProvider.getLanguages()) {
       final PsiFile psi = viewProvider.getPsi(language);
       final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(language);
       if (psi != null && foldingBuilder != null) {
+        TextRange docRange = TextRange.from(0, document.getTextLength());
         for (FoldingDescriptor descriptor : LanguageFolding.buildFoldingDescriptors(foldingBuilder, psi, document, quick)) {
+          TextRange range = descriptor.getRange();
+          if (!docRange.contains(range)) {
+            LOG.error("Folding descriptor " + descriptor +
+                      " made by " + foldingBuilder +
+                      " for " +language +
+                      " and called on file " + psi +
+                      " is outside document range: " + docRange);
+          }
           elementsToFoldMap.put(descriptor.getElement().getPsi(), descriptor);
         }
       }

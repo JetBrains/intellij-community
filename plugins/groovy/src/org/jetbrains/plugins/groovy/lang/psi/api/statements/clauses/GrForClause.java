@@ -18,12 +18,13 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses;
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
 /**
  * @author ilyas
  */
-public interface GrForClause extends GroovyPsiElement {
+public interface GrForClause extends GroovyPsiElement, GrParametersOwner {
   @Nullable
   GrVariable getDeclaredVariable();
 }

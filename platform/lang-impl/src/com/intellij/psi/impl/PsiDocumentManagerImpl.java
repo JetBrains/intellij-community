@@ -518,12 +518,17 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
     int startOffset = textBlock.getStartOffset();
     int psiEndOffset = textBlock.getPsiEndOffset();
     if (oldPsiText != null) {
+      String msg = "PSI/document inconsistency before reparse: ";
+      if (startOffset >= oldPsiText.length()) {
+        msg += "startOffset=" + oldPsiText + " while text length is " + oldPsiText.length() + "; ";
+        startOffset = oldPsiText.length();
+      }
+
       String psiPrefix = oldPsiText.substring(0, startOffset);
       String docPrefix = chars.subSequence(0, startOffset).toString();
       String psiSuffix = oldPsiText.substring(psiEndOffset);
       String docSuffix = chars.subSequence(textBlock.getTextEndOffset(), chars.length()).toString();
       if (!psiPrefix.equals(docPrefix) || !psiSuffix.equals(docSuffix)) {
-        String msg = "PSI/document inconsistency before reparse: ";
         if (!psiPrefix.equals(docPrefix)) {
           msg = msg + "psiPrefix=" + psiPrefix + "; docPrefix=" + docPrefix + ";";
         }

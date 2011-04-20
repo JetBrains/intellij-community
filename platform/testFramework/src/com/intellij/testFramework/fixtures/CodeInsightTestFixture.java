@@ -24,6 +24,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionTool;
+import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
@@ -38,6 +39,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -371,4 +373,11 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void testFoldingWithCollapseStatus(String fileName);
 
   void assertPreferredCompletionItems(int selected, @NonNls String... expected);
+
+  /**
+   * Initializes the structure view for the file currently loaded in the editor and passes it to the specified consumer.
+   *
+   * @param consumer the callback in which the actual testing of the structure view is performed.
+   */
+  void testStructureView(Consumer<StructureViewComponent> consumer);
 }

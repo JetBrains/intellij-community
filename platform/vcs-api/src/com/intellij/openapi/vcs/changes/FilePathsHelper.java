@@ -5,6 +5,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.util.Locale;
+
 public class FilePathsHelper {
   private FilePathsHelper() {
   }
@@ -32,6 +34,6 @@ public class FilePathsHelper {
 
   public static String convertPath(final String s) {
     String result = FileUtil.toSystemIndependentName(s);
-    return SystemInfo.isFileSystemCaseSensitive ? result : result.toUpperCase();
+    return SystemInfo.isFileSystemCaseSensitive ? result : result.toUpperCase(Locale.US);
   }
 }

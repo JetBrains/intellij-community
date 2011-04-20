@@ -92,7 +92,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
           final int endOffset = psiElement.getTextRange().getEndOffset();
           LocalInspectionToolSession session = new LocalInspectionToolSession(containingFile, startOffset, endOffset);
           final PsiElementVisitor visitor = localInspectionTool.buildVisitor(holder, false, session);
-          localInspectionTool.inspectionStarted(session);
+          localInspectionTool.inspectionStarted(session, false);
           final PsiElement[] elementsInRange = getElementsIntersectingRange(containingFile,
                                                                             startOffset,
                                                                             endOffset);

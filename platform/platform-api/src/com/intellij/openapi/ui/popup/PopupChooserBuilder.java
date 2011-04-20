@@ -24,9 +24,11 @@ import com.intellij.ui.InplaceButton;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.Function;
+import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
@@ -36,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -74,6 +77,7 @@ public class PopupChooserBuilder {
 
   private Function<Object,String> myItemsNamer = null;
   private boolean myMayBeParent;
+  private int myAdAlignment = SwingUtilities.LEFT;
 
   public PopupChooserBuilder(@NotNull JList list) {
     myChooserComponent = list;
@@ -219,7 +223,8 @@ public class PopupChooserBuilder {
     }
 
     scrollPane.getViewport().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    ((JComponent)scrollPane.getViewport().getView()).setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    Insets viewportPadding = UIUtil.getListViewportPadding();
+    ((JComponent)scrollPane.getViewport().getView()).setBorder(BorderFactory.createEmptyBorder(viewportPadding.top, viewportPadding.left, viewportPadding.bottom, viewportPadding.right));
 
     if (myChooserComponent instanceof ListWithFilter) {
       contentPane.add(myChooserComponent, BorderLayout.CENTER);
@@ -244,7 +249,7 @@ public class PopupChooserBuilder {
     builder.setDimensionServiceKey(null, myDimensionServiceKey, false).setRequestFocus(myRequestFocus).setResizable(myForceResizable)
       .setMovable(myForceMovable).setTitle(myForceMovable ? myTitle : null).setCancelCallback(myCancelCallback).setAlpha(myAlpha)
       .setFocusOwners(myFocusOwners).setCancelKeyEnabled(myCancelKeyEnabled && !(myChooserComponent instanceof ListWithFilter)).
-      setAdText(myAd).setKeyboardActions(myKeyboardActions).setMayBeParent(myMayBeParent);
+      setAdText(myAd, myAdAlignment).setKeyboardActions(myKeyboardActions).setMayBeParent(myMayBeParent);
 
     if (myCommandButton != null) {
       builder.setCommandButton(myCommandButton);
@@ -400,7 +405,27 @@ public class PopupChooserBuilder {
     private final JList myList;
 
     private MyListWrapper(final JList list) {
-      super(list);
+      super(UIUtil.isUnderAquaLookAndFeel() ? 0 : -1);
+      JBViewport viewport = new JBViewport() {
+        @Override
+        protected LayoutManager createLayoutManager() {
+          return new ViewportLayout() {
+            @Override
+            public Dimension preferredLayoutSize(Container parent) {
+              int size = list.getModel().getSize();
+              if (size >= 0 && size <= 20) {
+                return list.getPreferredSize();
+              } else {
+                return super.preferredLayoutSize(parent);
+              }
+            }
+          };
+        }
+      };
+      setViewport(viewport);
+      setViewportView(list);
+
+
       if (myAutoselectOnMouseMove) {
         list.addMouseMotionListener(new MouseMotionAdapter() {
           boolean myIsEngaged = false;
@@ -419,18 +444,9 @@ public class PopupChooserBuilder {
 
       ListScrollingUtil.installActions(list);
 
-      int modelSize = list.getModel().getSize();
       setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-      if (modelSize > 0 && modelSize <= 20) {
-        list.setVisibleRowCount(0);
-        getViewport().setPreferredSize(list.getPreferredSize());
-      }
-      else {
-        list.setVisibleRowCount(20);
-      }
       myList = list;
     }
-
 
     @Nullable
     public Object getData(@NonNls String dataId) {
@@ -463,7 +479,13 @@ public class PopupChooserBuilder {
 
   @NotNull
   public PopupChooserBuilder setAdText(String ad) {
+    setAdText(ad, SwingUtilities.LEFT);
+    return this;
+  }
+
+  public PopupChooserBuilder setAdText(String ad, int alignment) {
     myAd = ad;
+    myAdAlignment = alignment;
     return this;
   }
 

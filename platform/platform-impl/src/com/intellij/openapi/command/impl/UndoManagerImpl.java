@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -341,6 +342,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
           if (myProject != null) {
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           }
+          CopyPasteManager.getInstance().stopKillRings();
           myMerger.undoOrRedo(editor, isUndo);
         }
         catch (RuntimeException ex) {

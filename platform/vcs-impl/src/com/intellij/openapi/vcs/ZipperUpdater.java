@@ -56,4 +56,8 @@ public class ZipperUpdater {
       }
     }
   }
+
+  public void stop() {
+    myAlarm.cancelAllRequests();
+  }
 }

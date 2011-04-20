@@ -30,6 +30,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -108,7 +109,7 @@ public class CompilerAPICompiler implements BackendCompiler {
           List<String> commandLine = new ArrayList<String>();
           JavacSettings javacSettings = CompilerAPIConfiguration.getSettings(myProject, CompilerAPIConfiguration.class);
           final List<String> additionalOptions =
-            JavacCompiler.addAdditionalSettings(commandLine, javacSettings, false, 6, myProject, compileContext.isAnnotationProcessorsEnabled());
+            JavacCompiler.addAdditionalSettings(commandLine, javacSettings, false, JavaSdkVersion.JDK_1_6, myProject, compileContext.isAnnotationProcessorsEnabled());
 
           JavacCompiler.addCommandLineOptions(chunk, commandLine, outputDir, chunk.getJdk(), false,false, null, false, false, false);
           commandLine.addAll(additionalOptions);

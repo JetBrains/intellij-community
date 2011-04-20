@@ -285,12 +285,13 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         return true;
       }
     }
-    else if (completionChar == Lookup.AUTO_INSERT_SELECT_CHAR || completionChar == Lookup.NORMAL_SELECT_CHAR) {
+    else if (completionChar == Lookup.AUTO_INSERT_SELECT_CHAR || completionChar == Lookup.NORMAL_SELECT_CHAR || completionChar == Lookup.REPLACE_SELECT_CHAR) {
       if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag() && HtmlUtil.isSingleHtmlTag(tag.getName())) {
         template.addTextSegment(tag instanceof HtmlTag ? ">" : "/>");
       }
       else {
-        if (needAlLeastOneAttribute(tag) && WebEditorOptions.getInstance().isAutomaticallyStartAttribute()) {
+        if (needAlLeastOneAttribute(tag) && WebEditorOptions.getInstance().isAutomaticallyStartAttribute() && tag.getAttributes().length == 0
+            && template.getSegmentsCount() == 0) {
           completeAttribute(template);
           return true;
         }

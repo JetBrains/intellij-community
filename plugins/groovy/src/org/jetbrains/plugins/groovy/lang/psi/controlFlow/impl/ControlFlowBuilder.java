@@ -24,7 +24,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -143,7 +143,19 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     final InstructionImpl end = startNode(null);
     checkPending(end); //collect return edges
-    return myInstructions.toArray(new Instruction[myInstructions.size()]);
+
+
+    return assertValidPsi(myInstructions.toArray(new Instruction[myInstructions.size()]));
+  }
+
+  public static Instruction[] assertValidPsi(Instruction[] instructions) {
+    for (Instruction instruction : instructions) {
+      PsiElement element = instruction.getElement();
+      if (element != null && !element.isValid()) {
+        throw new AssertionError("invalid element in dfa: " + element);
+      }
+    }
+    return instructions;
   }
 
   private void buildFlowForClosure(final GrClosableBlock closure) {
@@ -270,25 +282,25 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   public void visitThrowStatement(GrThrowStatement throwStatement) {
     final GrExpression exception = throwStatement.getException();
-    if (exception != null) {
-      exception.accept(this);
-      final InstructionImpl throwInstruction = startNode(throwStatement);
-      flowAbrupted();
-      final PsiType type = exception.getNominalType();
-      if (type != null) {
-        ExceptionInfo info = findCatch(type);
-        if (info != null) {
-          info.myThrowers.add(throwInstruction);
-        }
-        else {
-          addPendingEdge(null, throwInstruction);
-        }
+    if (exception == null) return;
+
+    exception.accept(this);
+    final InstructionImpl throwInstruction = startNode(throwStatement);
+    flowAbrupted();
+    final PsiType type = exception.getNominalType();
+    if (type != null) {
+      ExceptionInfo info = findCatch(type);
+      if (info != null) {
+        info.myThrowers.add(throwInstruction);
       }
       else {
         addPendingEdge(null, throwInstruction);
       }
-      finishNode(throwInstruction);
     }
+    else {
+      addPendingEdge(null, throwInstruction);
+    }
+    finishNode(throwInstruction);
   }
 
   private void flowAbrupted() {
@@ -317,7 +329,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   public void visitAssignmentExpression(GrAssignmentExpression expression) {
     GrExpression lValue = expression.getLValue();
-    if (expression.getOperationToken() != GroovyElementTypes.mASSIGN) {
+    if (expression.getOperationToken() != GroovyTokenTypes.mASSIGN) {
       if (lValue instanceof GrReferenceExpression) {
         ReadWriteVariableInstructionImpl instruction =
           new ReadWriteVariableInstructionImpl((GrReferenceExpression)lValue, myInstructionNumber++, false);
@@ -343,7 +355,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitUnaryExpression(GrUnaryExpression expression) {
     final GrExpression operand = expression.getOperand();
     if (operand != null) {
-      final boolean negation = expression.getOperationTokenType() == GroovyElementTypes.mLNOT;
+      final boolean negation = expression.getOperationTokenType() == GroovyTokenTypes.mLNOT;
       if (negation) {
         myNegate = !myNegate;
       }
@@ -505,7 +517,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   //add edge when instruction.getElement() is not contained in scopeWhenAdded
-  private void addPendingEdge(GroovyPsiElement scopeWhenAdded, InstructionImpl instruction) {
+  private void addPendingEdge(@Nullable GroovyPsiElement scopeWhenAdded, InstructionImpl instruction) {
     if (instruction == null) return;
 
     int i = 0;
@@ -662,7 +674,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  private InstructionImpl startNode(GroovyPsiElement element) {
+  private InstructionImpl startNode(@Nullable GroovyPsiElement element) {
     return startNode(element, true);
   }
 

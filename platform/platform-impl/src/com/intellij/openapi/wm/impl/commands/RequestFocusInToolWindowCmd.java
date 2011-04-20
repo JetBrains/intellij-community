@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
@@ -70,7 +71,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
         return;
       }
 
-      Component preferredFocusedComponent = myFocusWatcher.getFocusedComponent();
+      Component preferredFocusedComponent = myToolWindow.isUseLastFocusedOnActivation() ? myFocusWatcher.getFocusedComponent() : null;
 
       if (preferredFocusedComponent == null && myToolWindow.getContentManager().getSelectedContent() != null) {
         preferredFocusedComponent = myToolWindow.getContentManager().getSelectedContent().getPreferredFocusableComponent();

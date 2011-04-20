@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.editor;
 
 import com.intellij.lang.ImportOptimizer;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -75,6 +76,11 @@ public class GroovyImportOptimizer implements ImportOptimizer {
     }
 
     public void run() {
+      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myFile.getProject());
+      final Document document = documentManager.getDocument(myFile);
+      if (document != null) {
+        documentManager.commitDocument(document);
+      }
       final Set<String> importedClasses = new LinkedHashSet<String>();
       final Set<String> staticallyImportedMembers = new LinkedHashSet<String>();
       final Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();

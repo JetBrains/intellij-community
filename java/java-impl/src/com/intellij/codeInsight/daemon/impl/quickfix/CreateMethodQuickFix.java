@@ -62,7 +62,7 @@ public class CreateMethodQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(myTargetClass.getContainingFile())) return;
 
-    PsiMethod method = createMethod(project);
+      PsiMethod method = createMethod(project);
     List<Pair<PsiExpression, PsiType>> arguments =
       ContainerUtil.map2List(method.getParameterList().getParameters(), new Function<PsiParameter, Pair<PsiExpression, PsiType>>() {
         public Pair<PsiExpression, PsiType> fun(PsiParameter psiParameter) {
@@ -76,7 +76,7 @@ public class CreateMethodQuickFix implements LocalQuickFix {
 
   private PsiMethod createMethod(Project project) {
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-    String methodText = mySignature + "{" + myBody + "}";
+    String methodText = mySignature + (myTargetClass.isInterface() ? ";" : "{" + myBody + "}");
     return elementFactory.createMethodFromText(methodText, null);
   }
 

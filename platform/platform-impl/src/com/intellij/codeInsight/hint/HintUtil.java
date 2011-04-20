@@ -128,12 +128,21 @@ public class HintUtil {
   }
 
   public static JLabel createAdComponent(final String bottomText) {
-    return createAdComponent(bottomText, new EmptyBorder(1, 2, 1, 2));
+    return createAdComponent(bottomText, getDefaultAdComponentBorder());
+  }
+
+  public static EmptyBorder getDefaultAdComponentBorder() {
+    return new EmptyBorder(1, 2, 1, 2);
   }
 
   public static JLabel createAdComponent(final String bottomText, final Border border) {
+    return createAdComponent(bottomText, border, SwingUtilities.LEFT);
+  }
+
+  public static JLabel createAdComponent(final String bottomText, final Border border, int alignment) {
     JLabel label = new JLabel();
     label.setText(bottomText);
+    label.setHorizontalAlignment(alignment);
     label.setFont(label.getFont().deriveFont((float)(label.getFont().getSize() - 2)));
     if (bottomText != null) {
       label.setBorder(border);

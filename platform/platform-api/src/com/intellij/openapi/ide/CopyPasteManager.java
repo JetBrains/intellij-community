@@ -17,6 +17,8 @@ package com.intellij.openapi.ide;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
@@ -39,11 +41,22 @@ public abstract class CopyPasteManager {
 
   public abstract Transferable[] getAllContents();
 
-  public abstract void setContents(Transferable content);
+  public abstract void setContents(@NotNull Transferable content);
 
-  public abstract boolean isCutElement(Object element);
+  public abstract boolean isCutElement(@Nullable Object element);
 
+  /**
+   * We support 'kill rings' at the editor, i.e. every time when subsequent adjacent regions of text are copied they are
+   * combined into single compound region. Every non-adjacent change makes existing regions unable to combine.
+   * <p/>
+   * However, there are situations when all 'kill rings' should be stopped manually (e.g. on undo). Hence, we need
+   * a handle to ask for that. This method works like such a handle.
+   * 
+   * @see KillRingTransferable
+   */
+  public abstract void stopKillRings();
+  
   public interface ContentChangedListener extends EventListener {
-    void contentChanged(final Transferable oldTransferable, final Transferable newTransferable);
+    void contentChanged(@Nullable final Transferable oldTransferable, final Transferable newTransferable);
   }
 }

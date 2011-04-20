@@ -34,7 +34,9 @@ public interface AntBuildFileBase extends AntBuildFile {
   AbstractProperty.AbstractPropertyContainer getAllOptions();
 
   boolean shouldExpand();
-
+  
+  void setShouldExpand(boolean expand);
+  
   void updateProperties();
 
   void updateConfig();

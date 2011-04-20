@@ -47,6 +47,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author ven
  */
@@ -71,8 +74,9 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
     return GroovyPsiElementImpl.replaceWithStatement(this, statement);
   }
 
-  public void subtreeChanged() {
-    super.subtreeChanged();
+  @Override
+  public void clearCaches() {
+    super.clearCaches();
     putUserData(CONTROL_FLOW, null);
   }
 
@@ -106,7 +110,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
       putUserData(CONTROL_FLOW, controlFlow);
     }
 
-    return controlFlow.getValue();
+    return ControlFlowBuilder.assertValidPsi(controlFlow.getValue());
   }
 
   public void removeVariable(GrVariable variable) {
@@ -133,7 +137,11 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
 
   @NotNull
   public GrStatement[] getStatements() {
-    return findChildrenByClass(GrStatement.class);
+    List<GrStatement> result = new ArrayList<GrStatement>();
+    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrStatement) result.add((GrStatement)cur);
+    }
+    return result.toArray(new GrStatement[result.size()]);
   }
 
   public GrStatement addStatementBefore(@NotNull GrStatement element, GrStatement anchor) throws IncorrectOperationException {

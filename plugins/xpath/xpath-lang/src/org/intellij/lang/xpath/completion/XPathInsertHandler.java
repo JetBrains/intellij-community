@@ -98,7 +98,7 @@ class XPathInsertHandler implements InsertHandler {
         int x = context.getSelectionEndOffset();
         while (x < textLength) {
             final char c = charAt(charsSequence, x);
-            if (isIdentifier(c) || (c == ':' && !isNamespace)) {
+            if (isIdentifier(c) || c == '*' || (c == ':' && !isNamespace)) {
                 x++;
             } else {
                 break;

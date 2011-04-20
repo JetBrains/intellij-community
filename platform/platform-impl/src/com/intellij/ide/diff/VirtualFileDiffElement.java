@@ -16,8 +16,10 @@
 package com.intellij.ide.diff;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.io.IOException;
 
 /**
@@ -79,5 +81,10 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   @Override
   public VirtualFile getValue() {
     return myFile;
+  }
+
+  @Override
+  public Icon getIcon() {
+    return isContainer() ? Icons.FOLDER_ICON : myFile.getIcon();
   }
 }

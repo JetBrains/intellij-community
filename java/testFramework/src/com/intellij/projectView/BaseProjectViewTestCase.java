@@ -50,6 +50,9 @@ import java.util.List;
 public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   protected AbstractTreeStructure myStructure;
   protected boolean myShowMembers = false;
+  protected boolean myHideEmptyMiddlePackages;
+  protected boolean myFlattenPackages;
+
   private List<AbstractProjectViewPSIPane> myPanes = new ArrayList<AbstractProjectViewPSIPane>();
 
   protected Queryable.PrintInfo myPrintInfo;
@@ -62,6 +65,16 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
       @Override
       public boolean isShowMembers() {
         return myShowMembers;
+      }
+
+      @Override
+      public boolean isHideEmptyMiddlePackages() {
+        return myHideEmptyMiddlePackages;
+      }
+
+      @Override
+      public boolean isFlattenPackages() {
+        return myFlattenPackages;
       }
     };
   }

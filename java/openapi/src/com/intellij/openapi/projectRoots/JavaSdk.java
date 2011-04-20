@@ -37,9 +37,20 @@ public abstract class JavaSdk extends SdkType implements JavaSdkType, Applicatio
     return createJdk(jdkName, jreHome, true);
   }
 
+  /**
+   * @deprecated use {@link #isOfVersionOrHigher(Sdk, JavaSdkVersion)} instead
+   */
   public abstract int compareTo(@NotNull String versionString, @NotNull String versionNumber);
 
   public abstract Sdk createJdk(@NonNls String jdkName, String home, boolean isJre);
+
+  @Nullable
+  public abstract JavaSdkVersion getVersion(@NotNull Sdk sdk);
+
+  @Nullable
+  public abstract JavaSdkVersion getVersion(@NotNull String versionString);
+
+  public abstract boolean isOfVersionOrHigher(@NotNull Sdk sdk, @NotNull JavaSdkVersion version);
 
   public static boolean checkForJdk(File file) {
     return JdkUtil.checkForJdk(file);

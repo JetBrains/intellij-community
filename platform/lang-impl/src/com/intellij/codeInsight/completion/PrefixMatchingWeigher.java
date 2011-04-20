@@ -27,7 +27,7 @@ import java.util.Set;
 public class PrefixMatchingWeigher extends CompletionWeigher {
 
   public Comparable weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
-    final String prefix = item.getPrefixMatcher().getPrefix();
+    final String prefix = location.getCompletionParameters().getLookup().itemPattern(item);
 
     if (prefix.isEmpty()) {
       return 0;

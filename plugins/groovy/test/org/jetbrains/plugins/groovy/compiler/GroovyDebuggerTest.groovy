@@ -15,6 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.compiler
 
+import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.engine.ContextUtil
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.SuspendContextImpl
@@ -32,18 +34,19 @@ import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.process.ProcessAdapter
+import com.intellij.execution.runners.ProgramRunner
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
+import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager
-import com.intellij.execution.runners.ProgramRunner
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.debugger.engine.ContextUtil
-import com.intellij.debugger.SourcePosition
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 
 /**
  * @author peter
@@ -78,7 +81,8 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     super.tuneFixture(moduleBuilder)
-    moduleBuilder.addJdk(System.getenv('JAVA_HOME'))
+    def javaHome = FileUtil.toSystemIndependentName(SystemProperties.getJavaHome())
+    moduleBuilder.addJdk(StringUtil.trimEnd(StringUtil.trimEnd(javaHome, '/'), '/jre'))
   }
 
   private void runDebugger(String mainClass, Closure cl) {

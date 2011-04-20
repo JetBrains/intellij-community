@@ -103,7 +103,7 @@ public class LookupManagerImpl extends LookupManager {
     EditorFactory.getInstance().addEditorFactoryListener(myEditorFactoryListener, myProject);
   }
 
-  public Lookup showLookup(final Editor editor,
+  public LookupEx showLookup(final Editor editor,
                            @NotNull LookupElement[] items,
                            final String prefix,
                            @NotNull final LookupArranger arranger) {
@@ -200,12 +200,10 @@ public class LookupManagerImpl extends LookupManager {
       }
     });
 
+    CamelHumpMatcher matcher = new CamelHumpMatcher(prefix == null ? "" : prefix);
     if (items.length > 0) {
       for (final LookupElement item : items) {
-        if (prefix != null) {
-          item.setPrefixMatcher(new CamelHumpMatcher(prefix));
-        }
-        myActiveLookup.addItem(item);
+        myActiveLookup.addItem(item, matcher);
       }
       myActiveLookup.refreshUi();
     } else {
@@ -222,7 +220,7 @@ public class LookupManagerImpl extends LookupManager {
     }
   }
 
-  public Lookup getActiveLookup() {
+  public LookupEx getActiveLookup() {
     return myActiveLookup;
   }
 

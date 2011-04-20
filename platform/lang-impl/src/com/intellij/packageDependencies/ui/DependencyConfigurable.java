@@ -218,7 +218,7 @@ public class DependencyConfigurable extends BaseConfigurable {
 
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
           myCombo = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope)value).getName());
-          return new CellEditorComponentWithBrowseButton<JComboBox>(myCombo, this);
+          return new CellEditorComponentWithBrowseButton<JComponent>(myCombo, this);
         }
       };
     }

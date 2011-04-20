@@ -31,8 +31,7 @@ public class EnableRight extends DirDiffAction {
     return getModel().isShowNewOnTarget();
   }
 
-  @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void updateState(boolean state) {
     getModel().setShowNewOnTarget(state);
   }
 }

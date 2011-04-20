@@ -162,7 +162,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
       }
     });
 
-    myCommonJavaParameters.setProgramParametersLabel(ExecutionBundle.message("junit.configuration.test.runner.parameters.label"));
+    myCommonJavaParameters.getProgramParametersComponent().setVisible(false);
   }
 
   public void applyEditorTo(final JUnitConfiguration configuration) {

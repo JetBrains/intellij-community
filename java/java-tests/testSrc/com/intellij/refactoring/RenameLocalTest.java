@@ -2,9 +2,15 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.java.JavaRefactoringSupportProvider;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.rename.RenameWrongRefHandler;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
@@ -84,5 +90,39 @@ public class RenameLocalTest extends LightCodeInsightTestCase {
     CodeInsightTestUtil.doInlineRename(new VariableInplaceRenameHandler(), newName, getEditor(), element);
 
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
+  public void testRenameWrongRef() throws Exception {
+    doRenameWrongRef("i");
+  }
+
+  private void doRenameWrongRef(final String newName) throws Exception {
+    final String name = getTestName(false);
+    configureByFile(BASE_PATH + name + ".java");
+
+    final TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(getProject());
+    try {
+      templateManager.setTemplateTesting(true);
+
+      new RenameWrongRefHandler().invoke(getProject(), getEditor(), getFile(), null);
+
+      final TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
+      assert state != null;
+      final TextRange range = state.getCurrentVariableRange();
+      assert range != null;
+
+      new WriteCommandAction.Simple(getProject()) {
+        @Override
+        protected void run() throws Throwable {
+          getEditor().getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), newName);
+        }
+      }.execute().throwException();
+
+      state.gotoEnd(false);
+      checkResultByFile(BASE_PATH + name + "_after.java");
+    }
+    finally {
+      templateManager.setTemplateTesting(false);
+    }
   }
 }

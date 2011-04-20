@@ -176,6 +176,9 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertTrue("Exception not found", Arrays.binarySearch(myItems, "xxx") > 0);
   }
 
+  public void testClassLiteralInArrayAnnoInitializer() throws Throwable { doTest(); }
+  public void testClassLiteralInArrayAnnoInitializer2() throws Throwable { doTest(); }
+
   public void testReferenceParameters() throws Exception {
     configureByFile("ReferenceParameters.java");
     assertNotNull(myItems);

@@ -119,6 +119,9 @@ public class TextFieldWithHistory extends ComboBox {
       }
 
       if (!contains(newItem)) {
+        // set newly added item as selected.
+        // otherwise current selection will be set to editor
+        mySelectedItem = newItem;
         insertElementAt(newItem, 0);
       }
     }

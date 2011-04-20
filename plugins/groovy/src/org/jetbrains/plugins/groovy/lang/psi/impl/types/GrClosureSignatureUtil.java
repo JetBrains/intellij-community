@@ -87,7 +87,7 @@ public class GrClosureSignatureUtil {
     return new GrClosureSignatureImpl(method.getParameterList().getParameters(), null, substitutor) {
       @Override
       public PsiType getReturnType() {
-        return PsiUtil.getSmartReturnType(method);
+        return getSubstitutor().substitute(PsiUtil.getSmartReturnType(method));
       }
 
       @Override

@@ -52,7 +52,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GroovyD
   }
 
   public void accept(GroovyElementVisitor visitor) {
-    visitor.visitElement(this);
+    visitor.visitDocComment(this);
   }
 
   public void acceptChildren(GroovyElementVisitor visitor) {

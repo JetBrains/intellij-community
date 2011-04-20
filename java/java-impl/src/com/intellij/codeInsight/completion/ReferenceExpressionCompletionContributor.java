@@ -396,7 +396,7 @@ public class ReferenceExpressionCompletionContributor {
     final JavaCodeFragment block = elementFactory.createCodeBlockCodeFragment(typeText + " xxx;xxx.xxx;", place, false);
     final PsiElement secondChild = block.getChildren()[1];
     if (!(secondChild instanceof PsiExpressionStatement)) {
-      LOG.error(typeText);
+      LOG.error(typeText + " of " + varType.getClass());
     }
     final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)secondChild;
     final PsiReferenceExpression mockRef = (PsiReferenceExpression) expressionStatement.getExpression();

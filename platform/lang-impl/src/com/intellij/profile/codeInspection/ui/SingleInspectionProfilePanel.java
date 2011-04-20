@@ -532,36 +532,27 @@ public class SingleInspectionProfilePanel extends JPanel {
     scrollPane.setMinimumSize(preferredSize);
 
     myTree.addTreeExpansionListener(new TreeExpansionListener() {
-      private String getExpandedString(TreePath treePath) {
-        final InspectionConfigTreeNode node = (InspectionConfigTreeNode)treePath.getLastPathComponent();
-        final Descriptor descriptor = node.getDesriptor();
-        if (descriptor != null) {
-          return descriptor.getText();
-        }
-        else {
-          return node.getGroupName();
-        }
-      }
+
 
       public void treeCollapsed(TreeExpansionEvent event) {
         InspectionProfileImpl selected = mySelectedProfile;
-        String nodeTitle = getExpandedString(event.getPath());
+        final InspectionConfigTreeNode node = (InspectionConfigTreeNode)event.getPath().getLastPathComponent();
         final InspectionProfileImpl parentProfile = (InspectionProfileImpl)selected.getParentProfile();
         if (parentProfile != null) {
-          parentProfile.getExpandedNodes().collapseNode(nodeTitle);
+          parentProfile.getExpandedNodes().collapseNode(node);
         }
-        selected.getExpandedNodes().collapseNode(nodeTitle);
+        selected.getExpandedNodes().collapseNode(node);
       }
 
       public void treeExpanded(TreeExpansionEvent event) {
         InspectionProfileImpl selected = mySelectedProfile;
         if (selected != null) {
-          String nodeTitle = getExpandedString(event.getPath());
+          final InspectionConfigTreeNode node = (InspectionConfigTreeNode)event.getPath().getLastPathComponent();
           final InspectionProfileImpl parentProfile = (InspectionProfileImpl)selected.getParentProfile();
           if (parentProfile != null) {
-            parentProfile.getExpandedNodes().expandNode(nodeTitle);
+            parentProfile.getExpandedNodes().expandNode(node);
           }
-          selected.getExpandedNodes().expandNode(nodeTitle);
+          selected.getExpandedNodes().expandNode(node);
         }
       }
     });

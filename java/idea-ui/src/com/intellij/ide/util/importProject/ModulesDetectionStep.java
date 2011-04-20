@@ -26,10 +26,7 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -109,24 +106,27 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
     }
 
     final List<ModuleDescriptor> modules = myModulesLayoutPanel.getChosenEntries();
-    List<String> errors = new ArrayList<String>();
+    final Map<String, ModuleDescriptor> errors = new LinkedHashMap<String, ModuleDescriptor>();
     for (ModuleDescriptor module : modules) {
       try {
         final String moduleFilePath = module.computeModuleFilePath();
         if (new File(moduleFilePath).exists()) {
-          errors.add(IdeBundle.message("warning.message.the.module.file.0.already.exist.and.will.be.overwritten", moduleFilePath));
+          errors.put(IdeBundle.message("warning.message.the.module.file.0.already.exist.and.will.be.overwritten", moduleFilePath), module);
         }
       }
       catch (InvalidDataException e) {
-        errors.add(e.getMessage());
+        errors.put(e.getMessage(), module);
       }
     }
     if (!errors.isEmpty()) {
-      final int answer = Messages.showYesNoDialog(getComponent(),
-                                                  IdeBundle.message("warning.text.0.do.you.want.to.continue", StringUtil.join(errors, "\n")),
-                                                  IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
+      final int answer = Messages.showYesNoCancelDialog(getComponent(),
+                                                        IdeBundle.message("warning.text.0.do.you.want.to.continue",
+                                                                          StringUtil.join(errors.keySet(), "\n")),
+                                                        IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
       if (answer != 0) {
-        return false;
+        for (ModuleDescriptor moduleDescriptor : errors.values()) {
+          moduleDescriptor.reuseExisting(true);
+        }
       }
     }
     return true;

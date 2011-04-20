@@ -39,10 +39,10 @@ public abstract class AbstractBasicToClassNameDelegator extends CompletionContri
     if (!isClassNameCompletionSupported(result, file, position)) return;
 
     final Ref<Boolean> empty = Ref.create(true);
-    result.runRemainingContributors(parameters, new Consumer<LookupElement>() {
-          public void consume(final LookupElement lookupElement) {
+    result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
+          public void consume(final CompletionResult lookupElement) {
             empty.set(false);
-            result.addElement(lookupElement);
+            result.passResult(lookupElement);
           }
         });
 
@@ -59,10 +59,10 @@ public abstract class AbstractBasicToClassNameDelegator extends CompletionContri
     }
 
 
-    CompletionService.getCompletionService().getVariantsFromContributors(classParams, null, new Consumer<LookupElement>() {
-      public void consume(final LookupElement lookupElement) {
-        updateProperties(lookupElement);
-        result.addElement(lookupElement);
+    CompletionService.getCompletionService().getVariantsFromContributors(classParams, null, new Consumer<CompletionResult>() {
+      public void consume(final CompletionResult lookupElement) {
+        updateProperties(lookupElement.getLookupElement());
+        result.passResult(lookupElement);
       }
     });
   }

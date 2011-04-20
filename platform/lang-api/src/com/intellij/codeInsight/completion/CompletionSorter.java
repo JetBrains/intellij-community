@@ -32,8 +32,8 @@ public abstract class CompletionSorter {
     return CompletionService.getCompletionService().emptySorter();
   }
 
-  public static CompletionSorter defaultSorter(CompletionParameters parameters) {
-    return CompletionService.getCompletionService().defaultSorter(parameters);
+  public static CompletionSorter defaultSorter(CompletionParameters parameters, PrefixMatcher matcher) {
+    return CompletionService.getCompletionService().defaultSorter(parameters, matcher);
   }
 
 }

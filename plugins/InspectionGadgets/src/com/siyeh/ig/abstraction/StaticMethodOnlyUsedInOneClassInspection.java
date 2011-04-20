@@ -82,10 +82,10 @@ public class StaticMethodOnlyUsedInOneClassInspection
     private static class StaticMethodOnlyUsedInOneClassFix
             extends InspectionGadgetsFix {
 
-        private final PsiClass usageClass;
+        private final SmartPsiElementPointer<PsiClass> usageClass;
 
         public StaticMethodOnlyUsedInOneClassFix(PsiClass usageClass) {
-            this.usageClass = usageClass;
+            this.usageClass = SmartPointerManager.getInstance(usageClass.getProject()).createSmartPsiElementPointer(usageClass);
         }
 
         @NotNull
@@ -113,7 +113,7 @@ public class StaticMethodOnlyUsedInOneClassInspection
 
                                 public Object getData(@NonNls String name) {
                                     if (LangDataKeys.TARGET_PSI_ELEMENT.is(name)) {
-                                        return usageClass;
+                                        return usageClass.getElement();
                                     }
                                     return dataManager.getDataContext().getData(name);
                                 }

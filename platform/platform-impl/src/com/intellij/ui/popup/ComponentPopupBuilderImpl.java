@@ -79,6 +79,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private List<Pair<ActionListener, KeyStroke>> myKeyboardActions = Collections.emptyList();
   private Component mySettingsButtons;
   private boolean myMayBeParent;
+  private int myAdAlignment = SwingUtilities.LEFT;
 
   public ComponentPopupBuilderImpl(final JComponent component,
                                    final JComponent preferredFocusedComponent) {
@@ -208,7 +209,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
                                               myCallback, myCancelOnClickOutside, myListeners, myUseDimServiceForXYLocation, myCommandButton,
                                               myCancelButton,
                                               myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
-                                              myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd,
+                                              myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd, myAdAlignment,
                                               myHeaderAlwaysFocusable, myKeyboardActions, mySettingsButtons, myPinCallback, myMayBeParent,
                                               myShowShadow);
     if (myUserData != null) {
@@ -296,7 +297,14 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @NotNull
   public ComponentPopupBuilder setAdText(@Nullable final String text) {
+    return setAdText(text, SwingUtilities.LEFT);
+  }
+
+  @NotNull
+  @Override
+  public ComponentPopupBuilder setAdText(@Nullable String text, int textAlignment) {
     myAd = text;
+    myAdAlignment = textAlignment;
     return this;
   }
 

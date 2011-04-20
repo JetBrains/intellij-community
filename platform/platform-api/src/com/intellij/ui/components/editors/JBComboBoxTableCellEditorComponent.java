@@ -44,6 +44,7 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
   private Object myValue;
   private Function<Object, String> myToString = StringUtil.createToStringFunction(Object.class);
 
+  @SuppressWarnings({"GtkPreferredJComboBoxRenderer"})
   private ListCellRenderer myRenderer = new DefaultListCellRenderer() {
     public Icon myEmptyIcon;
 
@@ -80,14 +81,14 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
     myTable = table;
   }
 
-  public void setTable(JTable table) {
-    myTable = table;
-  }
-
   public void setCell(JTable table, int row, int column) {
     setTable(table);
     setRow(row);
     setColumn(column);
+  }
+
+  public void setTable(JTable table) {
+    myTable = table;
   }
 
   public void setRow(int row) {
@@ -96,6 +97,10 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
 
   public void setColumn(int column) {
     myColumn = column;
+  }
+
+  public Object[] getOptions() {
+    return myOptions;
   }
 
   public void setOptions(Object... options) {

@@ -18,6 +18,7 @@ package com.intellij.lang.ant.dom;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
@@ -74,6 +75,11 @@ public abstract class AntDomPropertyDefiningElement extends AntDomElement implem
   public final String getPropertyValue(final String propertyName) {
     for (GenericAttributeValue<String> value : getPropertyDefiningAttributes()) {
       if (propertyName.equals(value.getStringValue())) {
+        return calcPropertyValue(propertyName);
+      }
+    }
+    for (String implicitPropName : getImplicitPropertyNames()) {
+      if (propertyName.equals(implicitPropName)) {
         return calcPropertyValue(propertyName);
       }
     }

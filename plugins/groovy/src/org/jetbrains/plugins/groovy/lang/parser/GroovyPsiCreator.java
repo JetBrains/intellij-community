@@ -50,7 +50,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrIndexPropertyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrMethodCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPropertySelectionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPropertySelectorImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.regex.GrRegexFindExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.relational.GrRelationalExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types.GrBuiltinTypeClassExpressionImpl;
@@ -238,7 +237,6 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(ARRAY_DECLARATOR)) return new GrArrayDeclarationImpl(node);
 
     //Paths
-    if (elem.equals(PATH_PROPERTY)) return new GrPropertySelectorImpl(node);
     if (elem.equals(PATH_PROPERTY_REFERENCE)) return new GrPropertySelectionImpl(node);
     if (elem.equals(PATH_METHOD_CALL)) return new GrMethodCallExpressionImpl(node);
     if (elem.equals(PATH_INDEX_PROPERTY)) return new GrIndexPropertyImpl(node);
