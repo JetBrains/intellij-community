@@ -83,7 +83,7 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
 
   @NotNull
   public GrExpression getLValue() {
-    return findNotNullChildByClass(GrExpression.class);
+    return findExpressionChild(this);
   }
 
   @Nullable

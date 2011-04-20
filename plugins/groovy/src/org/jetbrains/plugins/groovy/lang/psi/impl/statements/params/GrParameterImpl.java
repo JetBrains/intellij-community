@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableBaseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -178,7 +179,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
 
   @Nullable
   public GrExpression getDefaultInitializer() {
-    return findChildByClass(GrExpression.class);
+    return GroovyPsiElementImpl.findExpressionChild(this);
   }
 
   public boolean isOptional() {
@@ -208,7 +209,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
 
   @NotNull
   public GrModifierList getModifierList() {
-    return findNotNullChildByClass(GrModifierList.class);
+    return getStubOrPsiChild(GroovyElementTypes.MODIFIERS);
   }
 
   @NotNull

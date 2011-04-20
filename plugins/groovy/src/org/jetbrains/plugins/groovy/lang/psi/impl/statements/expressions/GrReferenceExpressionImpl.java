@@ -822,7 +822,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   public GrExpression getQualifierExpression() {
-    return findChildByClass(GrExpression.class);
+    return findExpressionChild(this);
   }
 
   public boolean isQualified() {
