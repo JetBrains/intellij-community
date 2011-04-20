@@ -28,4 +28,30 @@ public class ImplicitArrayToString {
     private String bar(int[] array) {
         return String.valueOf(array) + array.toString();
     }
+
+    private void noWarnOnCharArrays(char[] cs) {
+        System.out.println(cs);
+        String.valueOf(cs);
+    }
+
+    private void warnOnStringBuilderAppend(int[] is) {
+        new StringBuilder().append(is); // calls String.valueOf
+    }
+
+    void foo() {
+        System.out.println("new String[10]" + new String[10]);
+        final String[] var = new String[10];
+        System.out.println("new String[10]" + var);
+        System.out.println("new String[10]" + meth());
+    }
+
+    private String[] meth() {
+        return new String[10];
+    }
+
+    public static void main(String[] args) {
+        char[] charArray = new char[]{'A', 'B', 'C'};
+        System.out.println(charArray); // should not warn
+        System.out.println(args); // should indeed warn
+    }
 }
