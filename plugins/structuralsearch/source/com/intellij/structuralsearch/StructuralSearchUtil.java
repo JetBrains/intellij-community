@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.psi.PsiElement;
+import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 import com.intellij.tokenindex.LanguageTokenizer;
 import com.intellij.tokenindex.Tokenizer;
 import org.jetbrains.annotations.NotNull;
@@ -135,5 +136,18 @@ public class StructuralSearchUtil {
     }
 
     return result.toArray(new FileType[result.size()]);
+  }
+
+  public static String shieldSpecialChars(String word) {
+    final StringBuffer buf = new StringBuffer(word.length());
+
+    for (int i = 0; i < word.length(); ++i) {
+      if (MatchUtils.SPECIAL_CHARS.indexOf(word.charAt(i)) != -1) {
+        buf.append("\\");
+      }
+      buf.append(word.charAt(i));
+    }
+
+    return buf.toString();
   }
 }

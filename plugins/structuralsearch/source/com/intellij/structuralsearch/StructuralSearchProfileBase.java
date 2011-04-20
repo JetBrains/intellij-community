@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
  */
 public abstract class StructuralSearchProfileBase extends StructuralSearchProfile {
   private static final String TYPED_VAR_PREFIX = "aaaaaa";
-  private static final Pattern ourSubstitutionPattern = Pattern.compile("\\b(aaaaaa\\w+)\\b");
+  private Pattern mySubstitutionPattern;
 
   private static final String DELIMETER_CHARS = ",;.[]{}():";
   protected static final String PATTERN_PLACEHOLDER = "$$PATTERN_PLACEHOLDER$$";
@@ -185,12 +185,12 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     return new CompiledPattern() {
       @Override
       public String getTypedVarPrefix() {
-        return TYPED_VAR_PREFIX;
+        return StructuralSearchProfileBase.this.getTypedVarPrefix();
       }
 
       @Override
       public boolean isTypedVar(String str) {
-        return str.startsWith(TYPED_VAR_PREFIX);
+        return str.startsWith(StructuralSearchProfileBase.this.getTypedVarPrefix());
       }
 
       /*@Override
@@ -218,6 +218,10 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         return text.substring(start, end + 1);
       }*/
     };
+  }
+
+  protected String getTypedVarPrefix() {
+    return TYPED_VAR_PREFIX;
   }
 
   @Override
@@ -305,11 +309,17 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
   @Override
   public boolean canBeVarDelimeter(@NotNull PsiElement element) {
-    final EquivalenceDescriptorProvider provider = EquivalenceDescriptorProvider.getInstance(element);
-    if (provider != null) {
-      return provider.canBeVariableDelimeter(element);
+    if (!(element instanceof LeafElement)) {
+      return false;
     }
-    return super.canBeVarDelimeter(element);
+
+    final IElementType elementType = ((LeafElement)element).getElementType();
+    return getVariableDelimeters().contains(elementType);
+  }
+
+  @NotNull
+  protected TokenSet getVariableDelimeters() {
+    return TokenSet.EMPTY;
   }
 
   public static boolean match(@NotNull EquivalenceDescriptor descriptor1,
@@ -498,10 +508,18 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     return result.toArray(new PsiElement[result.size()]);
   }
 
+  private Pattern getSubstitutionPattern() {
+    if (mySubstitutionPattern == null) {
+      final String s = StructuralSearchUtil.shieldSpecialChars(getTypedVarPrefix());
+      mySubstitutionPattern = Pattern.compile("\\b(" + s + "\\w+)\\b");
+    }
+    return mySubstitutionPattern;
+  }
+
   // todo: support expression patterns
   // todo: support {statement;} = statement; (node has only non-lexical child)
 
-  private static class MyCompilingVisitor extends PsiRecursiveElementVisitor {
+  private class MyCompilingVisitor extends PsiRecursiveElementVisitor {
     private final GlobalCompilingVisitor myGlobalVisitor;
     private final PsiElement myTopElement;
 
@@ -574,7 +592,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
       if (value.length() > 2 && value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
         @Nullable MatchingHandler handler =
-          myGlobalVisitor.processPatternStringWithFragments(value, GlobalCompilingVisitor.OccurenceKind.LITERAL, ourSubstitutionPattern);
+          myGlobalVisitor.processPatternStringWithFragments(value, GlobalCompilingVisitor.OccurenceKind.LITERAL, getSubstitutionPattern());
 
         if (handler != null) {
           literal.putUserData(CompiledPattern.HANDLER_KEY, handler);

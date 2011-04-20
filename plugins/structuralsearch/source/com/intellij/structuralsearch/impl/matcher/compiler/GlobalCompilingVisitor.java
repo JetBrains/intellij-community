@@ -4,7 +4,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
-import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 import com.intellij.structuralsearch.impl.matcher.filters.CompositeFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
@@ -176,7 +175,7 @@ public class GlobalCompilingVisitor {
       word = content.substring(start, matcher.start());
 
       if (word.length() > 0) {
-        buf.append(shieldSpecialChars(word));
+        buf.append(StructuralSearchUtil.shieldSpecialChars(word));
         hasLiteralContent = true;
 
         processTokenizedName(word, false, kind);
@@ -202,7 +201,7 @@ public class GlobalCompilingVisitor {
 
     if (word.length() > 0) {
       hasLiteralContent = true;
-      buf.append(shieldSpecialChars(word));
+      buf.append(StructuralSearchUtil.shieldSpecialChars(word));
 
       processTokenizedName(word, false, kind);
     }
@@ -228,19 +227,6 @@ public class GlobalCompilingVisitor {
 
   static boolean IsNotSuitablePredicate(RegExpPredicate predicate, SubstitutionHandler handler) {
     return predicate == null || handler.getMinOccurs() == 0 || !predicate.couldBeOptimized();
-  }
-
-  private static String shieldSpecialChars(String word) {
-    final StringBuffer buf = new StringBuffer(word.length());
-
-    for (int i = 0; i < word.length(); ++i) {
-      if (MatchUtils.SPECIAL_CHARS.indexOf(word.charAt(i)) != -1) {
-        buf.append("\\");
-      }
-      buf.append(word.charAt(i));
-    }
-
-    return buf.toString();
   }
 
   private void addFilesToSearchForGivenWord(String refname, boolean endTransaction, GlobalCompilingVisitor.OccurenceKind kind) {

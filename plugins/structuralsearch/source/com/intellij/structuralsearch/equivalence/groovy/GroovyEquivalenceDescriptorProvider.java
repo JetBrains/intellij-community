@@ -8,7 +8,6 @@ import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorBuilder;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -26,7 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
  * @author Eugene.Kudelevsky
  */
 public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorProvider {
-  private static final TokenSet VARIABLE_DELIMETERS = TokenSet.create(GroovyTokenTypes.mCOMMA, GroovyTokenTypes.mSEMI);
   private static final TokenSet IGNORED_TOKENS = TokenSet.orSet(TokenSets.WHITE_SPACES_OR_COMMENTS, TokenSets.SEPARATORS);
 
   @Override
@@ -97,12 +95,6 @@ public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorPr
     // todo: support 'object method()' <-> 'object.method()'
 
     return null;
-  }
-
-  @NotNull
-  @Override
-  public TokenSet getVariableDelimeters() {
-    return VARIABLE_DELIMETERS;
   }
 
   @Override

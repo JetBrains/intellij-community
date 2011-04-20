@@ -3,7 +3,6 @@ package com.intellij.structuralsearch.equivalence;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.structuralsearch.StructuralSearchProfileBase;
 import org.jetbrains.annotations.NotNull;
@@ -20,21 +19,6 @@ public abstract class EquivalenceDescriptorProvider {
 
   @Nullable
   public abstract EquivalenceDescriptor buildDescriptor(@NotNull PsiElement element);
-
-  // delimeter of SSR vars when sequential occurence is applicable; by default - only whitespaces
-  public boolean canBeVariableDelimeter(@NotNull PsiElement element) {
-    if (!(element instanceof LeafElement)) {
-      return false;
-    }
-
-    final IElementType elementType = ((LeafElement)element).getElementType();
-    return getVariableDelimeters().contains(elementType);
-  }
-
-  @NotNull
-  public TokenSet getVariableDelimeters() {
-    return TokenSet.EMPTY;
-  }
 
   public TokenSet getLiterals() {
     return TokenSet.EMPTY;

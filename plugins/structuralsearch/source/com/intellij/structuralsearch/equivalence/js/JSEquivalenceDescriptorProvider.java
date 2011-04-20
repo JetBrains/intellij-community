@@ -17,8 +17,6 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene.Kudelevsky
  */
 public class JSEquivalenceDescriptorProvider extends EquivalenceDescriptorProvider {
-  private static final TokenSet VARIABLE_DELIMETERS = TokenSet.create(JSTokenTypes.COMMA, JSTokenTypes.SEMICOLON);
-
   @Override
   public boolean isMyContext(@NotNull PsiElement context) {
     return context.getLanguage().isKindOf(JavascriptLanguage.INSTANCE);
@@ -70,12 +68,6 @@ public class JSEquivalenceDescriptorProvider extends EquivalenceDescriptorProvid
     }
 
     return null;
-  }
-
-  @NotNull
-  @Override
-  public TokenSet getVariableDelimeters() {
-    return VARIABLE_DELIMETERS;
   }
 
   @Override
