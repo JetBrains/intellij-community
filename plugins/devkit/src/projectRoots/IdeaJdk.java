@@ -214,9 +214,9 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
       }
     }
     if (javaSdks.isEmpty()){
-      JDKVersion requiredVer = getRequiredJdkVersion(sdk);
-      if (requiredVer != null) {
-        Messages.showErrorDialog(DevKitBundle.message("no.java.sdk.for.idea.sdk.found", requiredVer), "No Java SDK found");
+      JavaSdkVersion requiredVersion = getRequiredJdkVersion(sdk);
+      if (requiredVersion != null) {
+        Messages.showErrorDialog(DevKitBundle.message("no.java.sdk.for.idea.sdk.found", requiredVersion), "No Java SDK found");
       }
       else {
         Messages.showErrorDialog(DevKitBundle.message("no.idea.sdk.version.found"), "No Java SDK found");
@@ -243,15 +243,10 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
   public static boolean isValidInternalJdk(Sdk ideaSdk, Sdk sdk) {
     final SdkType sdkType = sdk.getSdkType();
     if (sdkType instanceof JavaSdk) {
-      final String versionString = sdkType.getVersionString(sdk);
-      JDKVersion requiredJdkVersion = getRequiredJdkVersion(ideaSdk);
-      if (versionString != null && requiredJdkVersion != null) {
-        for (JDKVersion version : JDKVersion.values()) {
-          if (versionString.contains(version.getPresentation())) {
-            return requiredJdkVersion.compareTo(version) <= 0;
-          }
-        }
-        return true;
+      final JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
+      JavaSdkVersion requiredVersion = getRequiredJdkVersion(ideaSdk);
+      if (version != null && requiredVersion != null) {
+        return version.isAtLeast(requiredVersion);
       }
     }
     return false;
@@ -279,15 +274,15 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
     return result;
   }
 
-  private static JDKVersion getRequiredJdkVersion(final Sdk ideaSdk) {
+  @Nullable
+  private static JavaSdkVersion getRequiredJdkVersion(final Sdk ideaSdk) {
     int classFileVersion = getIdeaClassFileVersion(ideaSdk);
-    JDKVersion requiredJdkVersion = null;
     switch(classFileVersion) {
-      case 48: requiredJdkVersion = JDKVersion.V1_4; break;
-      case 49: requiredJdkVersion = JDKVersion.V1_5; break;
-      case 50: requiredJdkVersion = JDKVersion.V1_6; break;
+      case 48: return JavaSdkVersion.JDK_1_4;
+      case 49: return JavaSdkVersion.JDK_1_5;
+      case 50: return JavaSdkVersion.JDK_1_6;
     }
-    return requiredJdkVersion;
+    return null;
   }
 
   public static void setupSdkPaths(final SdkModificator sdkModificator, final String sdkHome, final Sdk internalJava) {
@@ -517,20 +512,5 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
            type == OrderRootType.SOURCES ||
            type == JavadocOrderRootType.getInstance() ||
            type == AnnotationOrderRootType.getInstance();
-  }
-
-  enum JDKVersion {
-
-    V1_4("1.4"), V1_5("1.5"), V1_6("1.6");
-
-    private final String myPresentation;
-
-    JDKVersion(String presentation) {
-      myPresentation = presentation;
-    }
-
-    public String getPresentation() {
-      return myPresentation;
-    }
   }
 }

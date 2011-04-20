@@ -24,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,9 +34,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.EnumMap;
-
 /**
  * @author cdr
  */
@@ -43,16 +41,6 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#" + IncreaseLanguageLevelFix.class.getName());
 
   private final LanguageLevel myLevel;
-  private static final Map<LanguageLevel, String[]> acceptableJDKVersions = new EnumMap<LanguageLevel, String[]>(LanguageLevel.class);
-
-  static {
-    acceptableJDKVersions.put(LanguageLevel.JDK_1_3, new String[]{"1.3"});
-    acceptableJDKVersions.put(LanguageLevel.JDK_1_4, new String[]{"1.4"});
-    acceptableJDKVersions.put(LanguageLevel.JDK_1_5, new String[]{"1.5", "5.0"});
-    acceptableJDKVersions.put(LanguageLevel.JDK_1_6, new String[]{"1.6", "6.0"});
-    acceptableJDKVersions.put(LanguageLevel.JDK_1_7, new String[]{"1.7", "7.0"});
-    acceptableJDKVersions.put(LanguageLevel.JDK_1_8, new String[]{"1.8", "8.0"});
-  }
 
   public IncreaseLanguageLevelFix(LanguageLevel targetLevel) {
     myLevel = targetLevel;
@@ -71,13 +59,8 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
   private static boolean isJdkSupportsLevel(@Nullable final Sdk jdk, final LanguageLevel level) {
     if (jdk == null) return true;
     final JavaSdk sdk = JavaSdk.getInstance();
-    final String versionString = jdk.getVersionString();
-    if (versionString == null) return false;
-    final String[] acceptableVersionNumbers = acceptableJDKVersions.get(level);
-    for (String number : acceptableVersionNumbers) {
-      if (sdk.compareTo(versionString, number) >= 0) return true;
-    }
-    return false;
+    final JavaSdkVersion version = sdk.getVersion(jdk);
+    return version != null && version.getMaxLanguageLevel().isAtLeast(level);
   }
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {

@@ -37,6 +37,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.IconLoader;
@@ -199,7 +200,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
               if (module == null) return;
               final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
               if (jdk == null) return;
-              final boolean is_1_5 = JavaSdk.getInstance().compareTo(jdk.getVersionString(), "1.5") >= 0;
+              final boolean is_1_5 = JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_5);
               if (!is_1_5) return;
               final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
               if (psiFile == null) return;

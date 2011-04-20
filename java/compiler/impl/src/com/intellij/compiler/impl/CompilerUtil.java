@@ -177,6 +177,7 @@ public class CompilerUtil {
     }
   }
 
+  //todo[nik] rewrite using JavaSdkVersion#getMaxLanguageLevel
   @NotNull
   public static LanguageLevel getApplicableLanguageLevel(String versionString, @NotNull LanguageLevel languageLevel) {
     final boolean is8OrNewer = isOfVersion(versionString, "1.8") || isOfVersion(versionString, "8.0");

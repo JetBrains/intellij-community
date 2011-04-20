@@ -21,16 +21,16 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.PathEditor;
-import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 
 import javax.swing.*;
 
@@ -80,16 +80,15 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
     private String getInitialValue() {
       if (mySdk != null) {
-        final String versionString = mySdk.getVersionString();
-        if (versionString != null) {
-          final LanguageLevel level = LanguageLevelUtil.getDefaultLanguageLevel(versionString);
-          if (level == LanguageLevel.JDK_1_5) {
-            return "http://download.oracle.com/javase/1.5.0/docs/api/";
-          } else if (level == LanguageLevel.JDK_1_6) {
-            return "http://download.oracle.com/javase/6/docs/api/";
-          } else if (level == LanguageLevel.JDK_1_7) {
-            return "http://download.oracle.com/javase/7/docs/api/";
-          }
+        final JavaSdkVersion version = JavaSdk.getInstance().getVersion(mySdk);
+        if (version == JavaSdkVersion.JDK_1_5) {
+          return "http://download.oracle.com/javase/1.5.0/docs/api/";
+        }
+        else if (version == JavaSdkVersion.JDK_1_6) {
+          return "http://download.oracle.com/javase/6/docs/api/";
+        }
+        else if (version == JavaSdkVersion.JDK_1_7) {
+          return "http://download.oracle.com/javase/7/docs/api/";
         }
       }
       return "";

@@ -27,12 +27,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.StorageScheme;
-import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -174,12 +175,12 @@ public class NewProjectUtil {
   }
 
   public static void applyJdkToProject(@NotNull Project project, @NotNull Sdk jdk) {
-    String versionString = jdk.getVersionString();
-    if (versionString == null) return;
+    JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
+    if (version == null) return;
 
     ProjectRootManagerEx rootManager = ProjectRootManagerEx.getInstanceEx(project);
     rootManager.setProjectSdk(jdk);
-    LanguageLevel level = LanguageLevelUtil.getDefaultLanguageLevel(versionString);
+    LanguageLevel level = version.getMaxLanguageLevel();
     LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
     if (level.compareTo(ext.getLanguageLevel()) < 0) {
       ext.setLanguageLevel(level);
