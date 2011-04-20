@@ -32,11 +32,7 @@ import com.intellij.refactoring.actions.TypeCookAction;
 import org.jetbrains.annotations.NotNull;
 
 public class GenerifyFileFix implements IntentionAction, LocalQuickFix {
-  private final String myFileName;
-
-  public GenerifyFileFix(String fileName) {
-    myFileName = fileName;
-  }
+  private String myFileName;
 
   @NotNull
   public String getText() {
@@ -58,17 +54,25 @@ public class GenerifyFileFix implements IntentionAction, LocalQuickFix {
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     if (element == null) return;
-    if (isAvailable(project, null, element.getContainingFile())) {
+    final PsiFile file = element.getContainingFile();
+    if (isAvailable(project, null, file)) {
+      myFileName = file.getName();
       new WriteCommandAction(project) {
         protected void run(Result result) throws Throwable {
-          invoke(project, FileEditorManager.getInstance(project).getSelectedTextEditor(), element.getContainingFile());
+          invoke(project, FileEditorManager.getInstance(project).getSelectedTextEditor(), file);
         }
       }.execute();
     }
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return file != null && file.isValid() && PsiManager.getInstance(project).isInProject(file);
+    if (file != null && file.isValid()) {
+      myFileName = file.getName();
+      return PsiManager.getInstance(project).isInProject(file);
+    }
+    else {
+      return false;
+    }
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
