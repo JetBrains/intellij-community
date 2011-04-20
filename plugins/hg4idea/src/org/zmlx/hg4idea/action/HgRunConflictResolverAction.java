@@ -12,11 +12,9 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.provider.update.HgConflictResolver;
 import org.zmlx.hg4idea.ui.HgRunConflictResolverDialog;
 
@@ -63,12 +61,12 @@ public class HgRunConflictResolverAction extends HgAbstractGlobalAction {
       }
 
       public void execute() {
-        new Task.Modal(project, "Mercurial resolves conflicts", false) {
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
-          public void run(@NotNull ProgressIndicator indicator) {
+          public void run() {
             new HgConflictResolver(project).resolve(repository);
           }
-        }.queue();
+        });
       }
     };
   }
