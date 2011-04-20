@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -15,8 +14,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-import static com.jetbrains.python.psi.PyFunction.Flag.STATICMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Flag.CLASSMETHOD;
+import static com.jetbrains.python.psi.PyFunction.Flag.STATICMETHOD;
 
 /**
  * Checks for for calls like <code>X.method(y,...)</code>, where y is not an instance of X.
@@ -51,7 +50,7 @@ public class PyCallByClassInspection extends PyInspection {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, session);
   }
 

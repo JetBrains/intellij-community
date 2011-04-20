@@ -59,7 +59,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly, final LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly, @NotNull final LocalInspectionToolSession session) {
     final Visitor visitor = new Visitor(holder, session, ignoredIdentifiers);
     // buildVisitor() will be called on injected files in the same session - don't overwrite if we already have one
     final Visitor existingVisitor = session.getUserData(KEY);
