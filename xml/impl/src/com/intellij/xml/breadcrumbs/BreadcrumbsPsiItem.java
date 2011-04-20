@@ -24,10 +24,15 @@ import org.jetbrains.annotations.NotNull;
 public class BreadcrumbsPsiItem extends BreadcrumbsItem {
   private final PsiElement myElement;
   private final BreadcrumbsInfoProvider myProvider;
+  private CrumbPresentation myPresentation;
 
   public BreadcrumbsPsiItem(@NotNull final PsiElement element, @NotNull final BreadcrumbsInfoProvider provider) {
     myElement = element;
     myProvider = provider;
+  }
+
+  public void setPresentation(CrumbPresentation presentation) {
+    myPresentation = presentation;
   }
 
   public String getDisplayText() {
@@ -37,6 +42,11 @@ public class BreadcrumbsPsiItem extends BreadcrumbsItem {
   public String getTooltip() {
     final String s = isValid() ? myProvider.getElementTooltip(myElement) : "";
     return s == null ? "" : s;
+  }
+
+  @Override
+  public CrumbPresentation getPresentation() {
+    return myPresentation;
   }
 
   public boolean isValid() {
