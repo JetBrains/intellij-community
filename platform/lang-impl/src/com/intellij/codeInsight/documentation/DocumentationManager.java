@@ -509,6 +509,7 @@ public class DocumentationManager {
   @Nullable
   public PsiElement findTargetElement(final Editor editor, @Nullable final PsiFile file, PsiElement contextElement) {
     PsiElement element = editor != null ? TargetElementUtilBase.findTargetElement(editor, ourFlagsForTargetElements) : null;
+    assertSameProject(element);
 
     // Allow context doc over xml tag content
     if (element != null || contextElement != null) {
@@ -516,19 +517,23 @@ public class DocumentationManager {
         .adjustElement(editor, ourFlagsForTargetElements, element, contextElement);
       if (adjusted != null) {
         element = adjusted;
+        assertSameProject(element);
       }
     }
     
     if (element == null && editor != null) {
       element = getElementFromLookup(editor, file);
-      
+      assertSameProject(element);
+
       if (element == null) {
         final PsiReference ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
 
         if (ref != null) {
           element = TargetElementUtilBase.getInstance().adjustReference(ref);
+          assertSameProject(element);
           if (element == null && ref instanceof PsiPolyVariantReference) {
             element = ref.getElement();
+            assertSameProject(element);
           }
         }
       }
