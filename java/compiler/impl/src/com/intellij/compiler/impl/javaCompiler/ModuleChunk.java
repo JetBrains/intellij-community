@@ -242,7 +242,7 @@ public class ModuleChunk extends Chunk<Module> {
     final OrderedSet<VirtualFile> cpFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
     final OrderedSet<VirtualFile> jdkFiles = new OrderedSet<VirtualFile>(TObjectHashingStrategy.CANONICAL);
     for (final Module module : modules) {
-      Collections.addAll(cpFiles, orderEnumerator(module, exportedOnly, new BeforeJdkOrderEntryCondition()).getClassesRoots());
+      Collections.addAll(cpFiles, orderEnumerator(module, exportedOnly, new BeforeJdkOrderEntryCondition(module)).getClassesRoots());
       Collections.addAll(jdkFiles, OrderEnumerator.orderEntries(module).sdkOnly().getClassesRoots());
     }
     cpFiles.addAll(jdkFiles);
@@ -313,10 +313,15 @@ public class ModuleChunk extends Chunk<Module> {
 
   private static class BeforeJdkOrderEntryCondition implements Condition<OrderEntry> {
     private boolean myJdkFound;
+    private final Module myOwnerModule;
+
+    private BeforeJdkOrderEntryCondition(Module ownerModule) {
+      myOwnerModule = ownerModule;
+    }
 
     @Override
     public boolean value(OrderEntry orderEntry) {
-      if (orderEntry instanceof JdkOrderEntry) {
+      if (orderEntry instanceof JdkOrderEntry && myOwnerModule.equals(orderEntry.getOwnerModule())) {
         myJdkFound = true;
       }
       return !myJdkFound;
