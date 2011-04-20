@@ -153,7 +153,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       return true;
     }*/
 
-    if (element instanceof PsiWhiteSpace || element instanceof PsiErrorElement) {
+    if (element instanceof PsiWhiteSpace || element instanceof PsiErrorElement || element instanceof PsiComment) {
       return true;
     }
 
