@@ -58,7 +58,7 @@ class NameUsage implements PsiElementUsage {
     return new UsagePresentation() {
       @Nullable
       public Icon getIcon() {
-        return myElement.getIcon(0);
+        return myElement.isValid() ? myElement.getIcon(0) : null;
       }
 
       @NotNull
