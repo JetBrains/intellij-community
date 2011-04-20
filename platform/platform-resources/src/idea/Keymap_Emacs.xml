@@ -34,6 +34,9 @@
       <keyboard-shortcut first-keystroke="shift INSERT"/>
       <keyboard-shortcut first-keystroke="control Y"/>
     </action>
+    <action id="PasteMultiple">
+      <keyboard-shortcut first-keystroke="alt Y"/>
+    </action>
     <action id="EditorSelectWord">
       <keyboard-shortcut first-keystroke="control alt W"/>
     </action>
