@@ -40,7 +40,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
   }
 
   public Object[] getChildElements(Object element) {
-    LOG.assertTrue(element instanceof AbstractTreeNode, element.getClass().getName());
+    LOG.assertTrue(element instanceof AbstractTreeNode, element != null ? element.getClass().getName() : null);
     AbstractTreeNode<?> treeNode = (AbstractTreeNode)element;
     Collection<? extends AbstractTreeNode> elements = treeNode.getChildren();
     List<TreeStructureProvider> providers = getProvidersDumbAware();
