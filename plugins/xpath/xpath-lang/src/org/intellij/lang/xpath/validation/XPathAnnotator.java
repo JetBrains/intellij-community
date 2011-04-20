@@ -41,6 +41,7 @@ import org.intellij.lang.xpath.psi.impl.PrefixedNameImpl;
 import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
 import org.intellij.lang.xpath.psi.impl.XPathNumberImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.xml.namespace.QName;
 import java.util.Arrays;
@@ -257,7 +258,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
     final XPathFunction function = call.resolve();
     final Function functionDecl = function != null ? function.getDeclaration() : null;
     if (functionDecl == null) {
-      final PrefixedNameImpl qName = ((PrefixedNameImpl)call.getQName());
+      final PrefixedNameImpl qName = (PrefixedNameImpl)call.getQName();
 
       // need special check for extension functions
       if (call.getQName().getPrefix() != null && contextProvider.getFunctionContext().allowsExtensions()) {
@@ -309,17 +310,140 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
   }
 
   private static void checkNodeTypeTest(AnnotationHolder holder, XPathNodeTypeTest test) {
+    final NodeType nodeType = test.getNodeType();
+    if (nodeType == null) {
+      return;
+    }
+
     final XPathExpression[] arguments = test.getArgumentList();
-    if (arguments.length == 0) {
-      return;
-    }
-    if (test.getNodeType() == NodeType.PROCESSING_INSTRUCTION && arguments.length == 1) {
-      if (!(arguments[0] instanceof XPathString)) {
-        holder.createErrorAnnotation(arguments[0], "String literal expected");
+    if (test.getXPathVersion() == XPathVersion.V2) {
+
+      switch (nodeType) {
+        case NODE:
+        case TEXT:
+        case COMMENT:
+          markExceedingArguments(holder, arguments, 0);
+          break;
+
+        // TODO: parser doesn't understand TypeName? yet:
+        //   	 ElementTest 	   ::=    	"element" "(" (ElementNameOrWildcard ("," TypeName "?"?)?)? ")"
+        case ELEMENT:
+        case ATTRIBUTE:
+          checkKindTestArguments(holder, test, true, 0, 2);
+          break;
+
+        case SCHEMA_ELEMENT:
+        case SCHEMA_ATTRIBUTE:
+          checkKindTestArguments(holder, test, false, 1, 1);
+          break;
+
+        case DOCUMENT_NODE:
+          if (arguments.length >= 1) {
+            markExceedingArguments(holder, arguments, 1);
+
+            final XPathNodeTypeTest argument = findNodeType(arguments[0]);
+            if (argument != null) {
+              final NodeType type = argument.getNodeType();
+              if (type == NodeType.ELEMENT || type == NodeType.SCHEMA_ELEMENT) {
+                return;
+              }
+            }
+            holder.createErrorAnnotation(arguments[0], "element() or schema-element() expected");
+          }
+          break;
+
+        case PROCESSING_INSTRUCTION:
+          if (arguments.length >= 1) {
+            markExceedingArguments(holder, arguments, 1);
+
+            if (arguments[0] instanceof XPathString) {
+              break;
+            } else {
+              final PrefixedName argument = findQName(arguments[0]);
+              if (argument != null) {
+                if (argument.getPrefix() == null && !"*".equals(argument.getLocalName())) {
+                  break;
+                }
+              }
+            }
+            holder.createErrorAnnotation(arguments[0], "String literal or NCName expected");
+          }
+          break;
       }
-      return;
+    } else {
+      if (arguments.length == 0) {
+        return;
+      }
+      if (test.getNodeType() == NodeType.PROCESSING_INSTRUCTION && arguments.length == 1) {
+        if (!(arguments[0] instanceof XPathString)) {
+          holder.createErrorAnnotation(arguments[0], "String literal expected");
+        }
+        return;
+      }
+      holder.createErrorAnnotation(test, "Invalid number of arguments for node type test '" + nodeType.getType() + "'");
     }
-    holder.createErrorAnnotation(test, "Invalid number of arguments for node type test '" + test.getNodeType().getType() + "'");
+  }
+
+  private static void checkKindTestArguments(AnnotationHolder holder,
+                                             XPathNodeTypeTest test,
+                                             boolean wildcardAllowed,
+                                             int min,
+                                             int max) {
+    final XPathExpression[] arguments = test.getArgumentList();
+    if (arguments.length >= min) {
+      for (XPathExpression arg : arguments) {
+        final PrefixedName argument = findQName(arg);
+        if (argument == null) {
+          holder.createErrorAnnotation(arg, "QName expected");
+        } else {
+          if (!wildcardAllowed && ("*".equals(argument.getPrefix()) || "*".equals(argument.getLocalName()))) {
+            holder.createErrorAnnotation(arg, "QName expected");
+          }
+        }
+      }
+    } else {
+      holder.createErrorAnnotation(test, "Missing argument for node kind test");
+    }
+
+    markExceedingArguments(holder, arguments, max);
+  }
+
+  private static void markExceedingArguments(AnnotationHolder holder, XPathExpression[] arguments, int start) {
+    for (int i = start; i < arguments.length; i++) {
+      holder.createErrorAnnotation(arguments[i], "Too many arguments");
+    }
+  }
+
+  @Nullable
+  private static XPathNodeTypeTest findNodeType(XPathExpression argument) {
+    final XPathNodeTest test = findNodeTest(argument);
+    if (test != null && !test.isNameTest() && test.getPrincipalType() == XPathNodeTest.PrincipalType.ELEMENT) {
+      return PsiTreeUtil.getChildOfType(test, XPathNodeTypeTest.class);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PrefixedName findQName(XPathExpression argument) {
+    final XPathNodeTest test = findNodeTest(argument);
+    if (test != null && test.isNameTest() && test.getPrincipalType() == XPathNodeTest.PrincipalType.ELEMENT) {
+      return test.getQName();
+    }
+    return null;
+  }
+
+  @Nullable
+  private static XPathNodeTest findNodeTest(XPathExpression argument) {
+    if (argument instanceof XPathLocationPath) {
+      final XPathStep step = ((XPathLocationPath)argument).getFirstStep();
+      if (step != null && step.getPreviousStep() == null && step.getPredicates().length == 0) {
+        final XPathNodeTest test = step.getNodeTest();
+        if (test != null) {
+          return test;
+        }
+      }
+    }
+    return null;
   }
 
   private static void checkNodeTest(@NotNull ContextProvider myProvider, AnnotationHolder holder, XPathNodeTest nodeTest) {

@@ -65,7 +65,7 @@ NODE_TYPE= "comment"
     | "processing-instruction"
     | "node"
 
-NODE_TYPE2 = "element" | "attribute" | "schema-element" | "document-node"
+NODE_TYPE2 = "element" | "attribute" | "schema-element" | "schema-attribute" | "document-node"
 
 WS={WHITE_SPACE_CHAR}+
 

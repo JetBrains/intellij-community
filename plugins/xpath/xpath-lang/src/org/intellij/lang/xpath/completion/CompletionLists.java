@@ -43,7 +43,7 @@ public class CompletionLists {
   ));
 
   public static final Set<String> NODE_TYPE_FUNCS_V2 = new HashSet<String>(Arrays.asList(
-          "text", "node", "comment", "processing-instruction", "attribute", "element", "schema-element", "document-node"
+          "text", "node", "comment", "processing-instruction", "attribute", "element", "schema-element", "schema-attribute", "document-node"
   ));
 
   public static final Set<String> OPERATORS = new HashSet<String>(Arrays.asList(

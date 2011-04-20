@@ -21,6 +21,7 @@ public enum NodeType {
     ATTRIBUTE,
     ELEMENT,
     SCHEMA_ELEMENT,
+    SCHEMA_ATTRIBUTE,
     DOCUMENT_NODE,
     TEXT,
     COMMENT,

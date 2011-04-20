@@ -15,6 +15,8 @@
  */
 package org.intellij.lang.xpath;
 
+import java.util.Date;
+
 /*
 * Created by IntelliJ IDEA.
 * User: sweinreuter
@@ -46,6 +48,14 @@ public class XPath2HighlightingTest extends XPath2HighlightingTestBase {
   }
 
   public void testEmptyStringLiteral() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testNodeKindTest() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testIncorrectNodeKindTests() throws Throwable {
     doXPathHighlighting();
   }
 
