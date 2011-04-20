@@ -104,7 +104,9 @@ public class XPath2Parser extends XPathParser {
     checkMatches(builder, XPath2TokenTypes.QUANTIFIERS, "'every' or 'some' expected");
     parseBindingSequence(builder);
     checkMatches(builder, XPath2TokenTypes.SATISFIES, "'satisfies' expected");
-    parseExprSingle(builder);
+    if (!parseExprSingle(builder)) {
+      builder.error("expression expected");
+    }
     mark.done(XPath2ElementTypes.QUANTIFIED);
     return true;
   }
@@ -261,7 +263,9 @@ public class XPath2Parser extends XPathParser {
     if (builder.getTokenType() == XPath2TokenTypes.INSTANCE) {
       builder.advanceLexer();
       checkMatches(builder, XPath2TokenTypes.OF, "'of' expected");
-      parseSequenceType(builder);
+      if (!parseSequenceType(builder)) {
+        builder.error("sequence type expected");
+      }
       expr.done(XPath2ElementTypes.INSTANCE_OF);
     } else {
       expr.drop();
@@ -281,7 +285,9 @@ public class XPath2Parser extends XPathParser {
       builder.advanceLexer();
 
       checkMatches(builder, XPath2TokenTypes.AS, "'as' expected");
-      parseSequenceType(builder);
+      if (!parseSequenceType(builder)) {
+        builder.error("sequence type expected");
+      }
       expr.done(XPath2ElementTypes.TREAT_AS);
     } else {
       expr.drop();
