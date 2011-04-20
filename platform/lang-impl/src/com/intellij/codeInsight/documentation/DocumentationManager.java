@@ -174,6 +174,7 @@ public class DocumentationManager {
 
     final PsiElement originalElement = file != null ? file.findElementAt(editor.getCaretModel().getOffset()) : null;
     PsiElement element = findTargetElement(editor, file, originalElement);
+    assertSameProject(element);
 
     if (element == null && myParameterInfoController != null) {
       final Object[] objects = myParameterInfoController.getSelectedElements();
@@ -181,6 +182,7 @@ public class DocumentationManager {
       if (objects != null && objects.length > 0) {
         if (objects[0] instanceof PsiElement) {
           element = (PsiElement)objects[0];
+          assertSameProject(element);
         }
       }
     }
@@ -189,10 +191,14 @@ public class DocumentationManager {
 
     if (element == null) { // look if we are within a javadoc comment
       element = originalElement;
+      assertSameProject(element);
       if (element == null) return;
+
       PsiComment comment = PsiTreeUtil.getParentOfType(element, PsiComment.class);
       if (comment == null) return;
+
       element = comment.getParent();
+      assertSameProject(element);
       //if (!(element instanceof PsiDocCommentOwner)) return null;
     }
 
@@ -937,10 +943,14 @@ public class DocumentationManager {
   }
 
   public Project getProject(@Nullable final PsiElement element) {
-    if (element != null && element.isValid()) {
-      assert myProject == element.getProject() : myProject + "!=" + element.getProject();
-    }
+    assertSameProject(element);
     return myProject;
+  }
+
+  private void assertSameProject(@Nullable PsiElement element) {
+    if (element != null && element.isValid() && myProject != element.getProject()) {
+      throw new AssertionError(myProject + "!=" + element.getProject() + "; element=" + element);
+    }
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
