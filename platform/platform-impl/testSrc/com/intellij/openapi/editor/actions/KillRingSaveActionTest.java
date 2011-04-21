@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.ide.KillRingTransferable;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,13 +43,7 @@ public class KillRingSaveActionTest extends AbstractRegionToKillRingTest {
     }
 
     Transferable contents = CopyPasteManager.getInstance().getContents();
-    //TODO den remove
-    if (!(contents instanceof KillRingTransferable)) {
-      System.err.println("xxx: Unexpected transferable at " + getClass() + ": " + contents);
-    }
-    //TODO den uncomment
-    //assertTrue(contents.toString(), contents instanceof KillRingTransferable);
-    //assertEquals(parseResult.first, contents.getTransferData(DataFlavor.stringFlavor));
+    assertEquals(parseResult.first, contents.getTransferData(DataFlavor.stringFlavor));
     assertEquals(textBefore, myEditor.getDocument().getText());
   }
 }
