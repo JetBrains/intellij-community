@@ -127,6 +127,7 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
         @Override
         public void run() {
           myValue = myList.getSelectedValue();
+          myTable.setValueAt(myValue, myRow, myColumn); // on Mac getCellEditorValue() called before myValue is set.
         }
       }).createPopup()
       .show(new RelativePoint(myTable, point));
