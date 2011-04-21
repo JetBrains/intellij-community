@@ -39,7 +39,8 @@ public class DirDiffDialog extends DialogWrapper {
     setTitle("Directory Diff");
     init();
     final JBTable table = myDiffPanel.getTable();
-    table.changeSelection(myModel.getElementAt(0).isSeparator() ? 1 : 0, 3, false, false);
+    //final DirDiffElement element = myModel.getElementAt(0);
+    //table.changeSelection(element.isSeparator() ? 1 : 0, 3, false, false);
     table.setColumnSelectionAllowed(false);
     table.getTableHeader().setReorderingAllowed(false);
     table.getTableHeader().setResizingAllowed(false);
@@ -59,6 +60,11 @@ public class DirDiffDialog extends DialogWrapper {
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myDiffPanel.getTable();
+  }
+
+  @Override
+  public void show() {
+    super.show();
   }
 
   @Override

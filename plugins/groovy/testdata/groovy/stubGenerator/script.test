@@ -1,12 +1,13 @@
 println "bugaga"
 -----
 public class script extends groovy.lang.Script {
-  public static void main(java.lang.String[] args) {
-    return ;
-  }
+public static void main(java.lang.String[] args) {
+return ;
+}
 
-  public java.lang.Object run() {
-    return null;
-  }
+public java.lang.Object run() {
+return null;
+}
+
 }
 ---

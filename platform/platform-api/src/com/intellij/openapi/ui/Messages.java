@@ -139,7 +139,7 @@ public class Messages {
     }
   }
 
-  public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon, DialogWrapper.DoNotAskOption doNotAskOption) {
+  public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon, @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
@@ -157,26 +157,26 @@ public class Messages {
    * @see #showDialog(Project, String, String, String[], int, Icon)
    * @see #showDialog(Component, String, String, String[], int, Icon)
    */
-  public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, Icon icon, DialogWrapper.DoNotAskOption doNotAskOption) {
+  public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon, @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return showDialog(message, title, options, defaultOptionIndex, -1, icon, doNotAskOption);
   }
 
-  public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, Icon icon) {
+  public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, @Nullable Icon icon) {
     return showDialog(message, title, options, defaultOptionIndex, -1, icon);
   }
 
-  public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
+  public static int showDialog(String message, String title, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon) {
     return showDialog(message, title, options, defaultOptionIndex, focusedOptionIndex, icon, null);
   }
 
   /**
    * @see com.intellij.openapi.ui.DialogWrapper#DialogWrapper(Project,boolean)
    */
-  public static void showMessageDialog(Project project, String message, String title, Icon icon) {
+  public static void showMessageDialog(Project project, String message, String title, @Nullable Icon icon) {
     showDialog(project, message, title, new String[]{OK_BUTTON}, 0, icon);
   }
 
-  public static void showMessageDialog(Component parent, String message, String title, Icon icon) {
+  public static void showMessageDialog(Component parent, String message, String title, @Nullable Icon icon) {
     showDialog(parent, message, title, new String[]{OK_BUTTON}, 0, icon);
   }
 
@@ -186,21 +186,21 @@ public class Messages {
    * @see #showMessageDialog(Project, String, String, Icon)
    * @see #showMessageDialog(Component, String, String, Icon)
    */
-  public static void showMessageDialog(String message, String title, Icon icon) {
+  public static void showMessageDialog(String message, String title, @Nullable Icon icon) {
     showDialog(message, title, new String[]{OK_BUTTON}, 0, icon);
   }
 
   /**
    * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
    */
-  public static int showYesNoDialog(Project project, String message, String title, Icon icon) {
+  public static int showYesNoDialog(Project project, String message, String title, @Nullable Icon icon) {
     return showDialog(project, message, title, new String[]{YES_BUTTON, NO_BUTTON}, 0, icon);
   }
 
   /**
    * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
    */
-  public static int showYesNoDialog(Component parent, String message, String title, Icon icon) {
+  public static int showYesNoDialog(Component parent, String message, String title, @Nullable Icon icon) {
     return showDialog(parent, message, title, new String[]{YES_BUTTON, NO_BUTTON}, 0, icon);
   }
 
@@ -211,7 +211,7 @@ public class Messages {
    * @see #showYesNoDialog(Project, String, String, Icon)
    * @see #showYesNoDialog(Component, String, String, Icon)
    */
-  public static int showYesNoDialog(String message, String title, Icon icon) {
+  public static int showYesNoDialog(String message, String title, @Nullable Icon icon) {
     return showDialog(message, title, new String[]{YES_BUTTON, NO_BUTTON}, 0, icon);
   }
 
@@ -657,7 +657,7 @@ public class Messages {
       super(project, false);
     }
 
-    protected void _init(String title, String message, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon, DoNotAskOption doNotAskOption) {
+    protected void _init(String title, String message, String[] options, int defaultOptionIndex, int focusedOptionIndex, @Nullable Icon icon, @Nullable DoNotAskOption doNotAskOption) {
       setTitle(title);
       myMessage = message;
       myOptions = options;
@@ -694,7 +694,7 @@ public class Messages {
       return actions;
     }
 
-    private void assignMnemonic(String option, Action action) {
+    private static void assignMnemonic(String option, Action action) {
       int mnemoPos = option.indexOf("&");
       if (mnemoPos >= 0 && mnemoPos < option.length() - 2) {
         String mnemoChar = option.substring(mnemoPos + 1, mnemoPos + 2).trim();

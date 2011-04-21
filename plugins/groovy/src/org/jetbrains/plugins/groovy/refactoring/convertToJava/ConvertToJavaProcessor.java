@@ -19,7 +19,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.psi.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
@@ -27,9 +31,9 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -44,6 +48,7 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
     myFiles = files;
   }
 
+  @NotNull
   @Override
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new UsageViewDescriptorAdapter() {
@@ -69,24 +74,30 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
   //private static String
   @Override
   protected void performRefactoring(UsageInfo[] usages) {
-//    final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject, Collections.<VirtualFile>emptyList(), true);
+    final HashSet<VirtualFile> allToCompile = new HashSet<VirtualFile>();
+    for (GroovyFile file : myFiles) {
+      allToCompile.add(file.getVirtualFile());
+    }
+    final GroovyToJavaGenerator fileGenerator = new GroovyToJavaGenerator(myProject, allToCompile, true);
 
     for (GroovyFile file : myFiles) {
-      final PsiDirectory dir = file.getContainingDirectory();
-      LOG.assertTrue(dir != null);
+      final Map<String, CharSequence> map = fileGenerator.generateStubs(file);
+      StringBuilder builder = new StringBuilder();
+      for (String s : map.keySet()) {
+        builder.append(map.get(s)).append('\n');
+      }
+
+      String fileName = getNewFileName(file);
+      final PsiFile newFile = (PsiFile)file.setName(fileName);
+      final Document document = PsiDocumentManager.getInstance(myProject).getDocument(newFile);
+      LOG.assertTrue(document != null);
+      document.setText(builder);
+    }
 
 
-      final PsiFile[] files = dir.getFiles();
-      Set<String> fileNames = new HashSet<String>();
-      for (PsiFile psiFile : files) {
-        fileNames.add(psiFile.getName());
-      }
-      String prefix = FileUtil.getNameWithoutExtension(file.getName());
-      String fileName = prefix + ".java";
-      int index = 1;
-      while (fileNames.contains(fileName)) {
-        fileName = prefix + index + ".java";
-      }
+    /*
+    for (GroovyFile file : myFiles) {
+
       final Project project = file.getProject();
 
       GrTopStatement[] statements = file.getTopStatements();
@@ -96,17 +107,31 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
         statement.accept(generator);
         builder.append("\n");
       }
-
+      String fileName = getNewFileName(file);
       final PsiFile newFile = (PsiFile)file.setName(fileName);
       final Document document = PsiDocumentManager.getInstance(project).getDocument(newFile);
       document.setText(builder);
-      /*final PsiFile created = PsiFileFactory.getInstance(project)
-        .createFileFromText(file.getScriptClass().getName() + ".java", StdLanguages.JAVA, builder.toString());
-      PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
-      file.delete();
-      dir.add(created);*/
-      //QuickfixUtil.positionCursor(project, created, created.getFirstChild());
     }
+    */
+  }
+
+  private static String getNewFileName(GroovyFile file) {
+    final PsiDirectory dir = file.getContainingDirectory();
+    LOG.assertTrue(dir != null);
+
+
+    final PsiFile[] files = dir.getFiles();
+    Set<String> fileNames = new HashSet<String>();
+    for (PsiFile psiFile : files) {
+      fileNames.add(psiFile.getName());
+    }
+    String prefix = FileUtil.getNameWithoutExtension(file.getName());
+    String fileName = prefix + ".java";
+    int index = 1;
+    while (fileNames.contains(fileName)) {
+      fileName = prefix + index + ".java";
+    }
+    return fileName;
   }
 
   @Override

@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,8 +42,8 @@ public class EditorNotifications extends AbstractProjectComponent {
 
   public interface Provider<T extends JComponent> {
 
-
     Key<T> getKey();
+
 
     @Nullable
     T createNotificationPanel(VirtualFile file);
@@ -108,6 +109,13 @@ public class EditorNotifications extends AbstractProjectComponent {
     }
     else {
       editor.putUserData(key, null);
+    }
+  }
+
+  public static void updateAll() {
+    Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    for (Project project : projects) {
+      getInstance(project).updateAllNotifications();
     }
   }
 }
