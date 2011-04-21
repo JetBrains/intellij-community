@@ -135,7 +135,10 @@ public abstract class DiffElement<T> {
     if (src instanceof VirtualFile) {
       final Object trg = element.getValue();
       if (trg instanceof VirtualFile) {
-        return SimpleDiffRequest.compareFiles((VirtualFile)src, (VirtualFile)trg, project);
+        final FileDocumentManager mgr = FileDocumentManager.getInstance();
+        if (mgr.getDocument((VirtualFile)src) != null && mgr.getDocument((VirtualFile)trg) != null) {
+          return SimpleDiffRequest.compareFiles((VirtualFile)src, (VirtualFile)trg, project);
+        }
       }
     }
     final DiffContent srcContent = createDiffContent();
