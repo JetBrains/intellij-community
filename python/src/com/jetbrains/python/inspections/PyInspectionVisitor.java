@@ -1,7 +1,9 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -75,18 +77,32 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
 
   /**
    * The most full-blown version.
+   * @see com.intellij.codeInspection.ProblemDescriptor
+   */
+  protected final void registerProblem(
+    @NotNull final PsiElement psiElement,
+    @NotNull final String descriptionTemplate,
+    final ProblemHighlightType highlightType,
+    @Nullable final HintAction hintAction,
+    final LocalQuickFix... fixes) {
+    registerProblem(psiElement, descriptionTemplate, highlightType, hintAction, null, fixes);
+  }
+
+  /**
+   * The most full-blown version.
    * @see ProblemDescriptor
    */
   protected final void registerProblem(
     @NotNull final PsiElement psiElement,
     @NotNull final String descriptionTemplate,
     final ProblemHighlightType highlightType,
-    final HintAction hintAction,
+    @Nullable final HintAction hintAction,
+    @Nullable final TextRange rangeInElement,
     final LocalQuickFix... fixes)
   {
     if (myHolder != null) {
-      myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(psiElement, descriptionTemplate, highlightType, hintAction,
-                                                                             myHolder.isOnTheFly(), fixes));
+      myHolder.registerProblem(new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false,
+                                                         rangeInElement, hintAction, myHolder.isOnTheFly()));
     }
   }
 }

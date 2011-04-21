@@ -41,7 +41,7 @@ public class ConvertDocstringQuickFix implements LocalQuickFix {
       if (content.startsWith("'''") ) {
         content = content.substring(3, content.length()-3);
       } else {
-        content = content.substring(1, content.length()-1);
+        content = content.length() == 1 ? "" : content.substring(1, content.length()-1);
       }
 
       PyStringLiteralExpression newString = (PyStringLiteralExpression)elementGenerator.createFromText(LanguageLevel.forElement(expression),

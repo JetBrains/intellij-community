@@ -62,6 +62,10 @@ public class PyRenameTest extends PyLightFixtureTestCase {
     doTest("bar");
   }
 
+  public void testEpydocRenameParameter() {
+    doTest("bar");
+  }
+
   public void testClassNameConflict() {  // PY-2390
     doRenameConflictTest("Foo", "A class named 'Foo' is already defined in classNameConflict.py");
   }

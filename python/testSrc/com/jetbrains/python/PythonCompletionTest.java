@@ -1,10 +1,8 @@
-/*
- * User: anna
- * Date: 06-Mar-2008
- */
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.jetbrains.python.documentation.DocStringFormat;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -319,5 +317,35 @@ public class PythonCompletionTest extends PyLightFixtureTestCase {
 
   public void testReexportModules() {  // PY-2385
     doMultiFileTest();
+  }
+
+  public void testEpydocParamTag() {
+    doTest();
+  }
+
+  public void testEpydocTags() {
+    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    settings.setFormat(DocStringFormat.EPYTEXT);
+    try {
+      myFixture.configureByFile("completion/epydocTags.py");
+      myFixture.completeBasic();
+      assertTrue(myFixture.getLookupElementStrings().contains("@param"));
+    }
+    finally {
+      settings.setFormat(DocStringFormat.PLAIN);
+    }
+  }
+
+  public void testEpydocTagsMiddle() {
+    final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    settings.setFormat(DocStringFormat.EPYTEXT);
+    try {
+      myFixture.configureByFile("completion/epydocTagsMiddle.py");
+      myFixture.completeBasic();
+      myFixture.checkResultByFile("completion/epydocTagsMiddle.after.py");
+    }
+    finally {
+      settings.setFormat(DocStringFormat.PLAIN);
+    }
   }
 }

@@ -7,6 +7,9 @@ import java.util.List;
  */
 public class SphinxDocString extends StructuredDocString {
   public static String[] KEYWORD_ARGUMENT_TAGS = new String[] { "keyword", "key" };
+  public static String[] ALL_TAGS = new String[] { ":param", ":parameter", ":arg", ":argument", ":keyword", ":key",
+                                                   ":type", ":raise", ":raises", ":var", ":cvar", ":ivar",
+                                                   ":return", ":returns", ":rtype", ":except", ":exception" };
 
   public SphinxDocString(String docstringText) {
     super(docstringText, ":");
@@ -44,7 +47,7 @@ public class SphinxDocString extends StructuredDocString {
 
   @Override
   public String getReturnDescription() {
-    return getTagValue("return");
+    return getTagValue(EpydocString.RETURN_TAGS);
   }
 
   @Override

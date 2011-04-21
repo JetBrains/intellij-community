@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -18,8 +19,8 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.*;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
+import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.codeInsight.imports.PythonReferenceImporter;
 import com.jetbrains.python.console.PydevConsoleRunner;
@@ -59,7 +60,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly, final LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly, @NotNull final LocalInspectionToolSession session) {
     final Visitor visitor = new Visitor(holder, session, ignoredIdentifiers);
     // buildVisitor() will be called on injected files in the same session - don't overwrite if we already have one
     final Visitor existingVisitor = session.getUserData(KEY);
@@ -320,18 +321,20 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           if (ref_text.length() > 2 && Character.isUpperCase(ref_text.charAt(0)) && !Character.isUpperCase(ref_text.charAt(1)) &&
               PsiTreeUtil.getParentOfType(ref_element, PyImportStatementBase.class) == null) {
             PsiElement anchor = reference.getElement();
-            final PyExpression qexpr = ((PyQualifiedExpression)reference.getElement()).getQualifier();
-            if (qexpr != null) {
-              final PyType type = myTypeEvalContext.getType(qexpr);
-              if (type instanceof PyModuleType) {
-                anchor = ((PyModuleType) type).getModule();
+            if (reference.getElement() instanceof PyQualifiedExpression) {
+              final PyExpression qexpr = ((PyQualifiedExpression)reference.getElement()).getQualifier();
+              if (qexpr != null) {
+                final PyType type = myTypeEvalContext.getType(qexpr);
+                if (type instanceof PyModuleType) {
+                  anchor = ((PyModuleType) type).getModule();
+                }
+                else {
+                  anchor = null;
+                }
               }
-              else {
-                anchor = null;
+              if (anchor != null) {
+                actions.add(new CreateClassQuickFix(ref_text, anchor));
               }
-            }
-            if (anchor != null) {
-              actions.add(new CreateClassQuickFix(ref_text, anchor));
             }
           }
         }
@@ -358,7 +361,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
       PsiElement point = node.getLastChild(); // usually the identifier at the end of qual ref
       if (point == null) point = node;
-      registerProblem(point, description, hl_type, null, actions.toArray(new LocalQuickFix[actions.size()]));
+      TextRange range = reference.getRangeInElement().shiftRight(-point.getStartOffsetInParent());
+      registerProblem(point, description, hl_type, null, range, actions.toArray(new LocalQuickFix[actions.size()]));
     }
 
     private static boolean isCall(PyElement node) {

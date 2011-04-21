@@ -1,14 +1,13 @@
 package com.jetbrains.python.highlighting;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
-import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.highlighting.PyHighlighter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +31,8 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
     new AttributesDescriptor("Dot", PyHighlighter.PY_DOT),
     new AttributesDescriptor("Function definition", PyHighlighter.PY_FUNC_DEFINITION),
     new AttributesDescriptor("Class definition", PyHighlighter.PY_CLASS_DEFINITION),
-    new AttributesDescriptor("Doc Comment", PyHighlighter.PY_DOC_COMMENT),
+    new AttributesDescriptor("Docstring", PyHighlighter.PY_DOC_COMMENT),
+    new AttributesDescriptor("Docstring tag", PyHighlighter.PY_DOC_COMMENT_TAG),
     new AttributesDescriptor("Predefined item definition", PyHighlighter.PY_PREDEFINED_DEFINITION),
     new AttributesDescriptor("Decorator", PyHighlighter.PY_DECORATOR),
     new AttributesDescriptor("Built-in name", PyHighlighter.PY_BUILTIN_NAME),
@@ -41,17 +41,16 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
     new AttributesDescriptor("Invalid escape sequence", PyHighlighter.PY_INVALID_STRING_ESCAPE),
   };
 
-  @NonNls private static final HashMap<String,TextAttributesKey> ourTagToDescriptorMap = new HashMap<String, TextAttributesKey>();
-
-  static {
-    ourTagToDescriptorMap.put("docComment", PyHighlighter.PY_DOC_COMMENT);
-    ourTagToDescriptorMap.put("decorator", PyHighlighter.PY_DECORATOR);
-    ourTagToDescriptorMap.put("predefined", PyHighlighter.PY_PREDEFINED_DEFINITION);
-    ourTagToDescriptorMap.put("predefinedUsage", PyHighlighter.PY_PREDEFINED_USAGE);
-    ourTagToDescriptorMap.put("funcDef", PyHighlighter.PY_FUNC_DEFINITION);
-    ourTagToDescriptorMap.put("classDef", PyHighlighter.PY_CLASS_DEFINITION);
-    ourTagToDescriptorMap.put("builtin", PyHighlighter.PY_BUILTIN_NAME);
-  }
+  @NonNls private static final Map<String,TextAttributesKey> ourTagToDescriptorMap = ImmutableMap.<String, TextAttributesKey>builder()
+    .put("docComment", PyHighlighter.PY_DOC_COMMENT)
+    .put("docCommentTag", PyHighlighter.PY_DOC_COMMENT_TAG)
+    .put("decorator", PyHighlighter.PY_DECORATOR)
+    .put("predefined", PyHighlighter.PY_PREDEFINED_DEFINITION)
+    .put("predefinedUsage", PyHighlighter.PY_PREDEFINED_USAGE)
+    .put("funcDef", PyHighlighter.PY_FUNC_DEFINITION)
+    .put("classDef", PyHighlighter.PY_CLASS_DEFINITION)
+    .put("builtin", PyHighlighter.PY_BUILTIN_NAME)
+    .build();
 
   @NotNull
   public String getDisplayName() {
@@ -84,7 +83,8 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
     return
       "@<decorator>decorator</decorator>(param=1)\n" +
       "def f(x):\n" +
-      "    <docComment>\"\"\" Syntax Highlighting Demo \"\"\"</docComment>\n" +
+      "    <docComment>\"\"\" Syntax Highlighting Demo\n" +
+      "        <docCommentTag>@param</docCommentTag> x Parameter\"\"\"</docComment>\n" +
       "    s = (\"Test\", 2+3, {'a': 'b'}, x)   # Comment\n" +
       "    print s[0].lower()\n"+
       "\n"+
