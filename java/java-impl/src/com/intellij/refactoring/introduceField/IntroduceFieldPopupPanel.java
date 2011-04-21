@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManager;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
@@ -33,7 +34,7 @@ import java.awt.event.*;
  * Date: 4/8/11
  */
 public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
-  private JComboBox myInitializerCombo;
+  private @Nullable JComboBox myInitializerCombo;
   private JComboBox myVisibilityCombo;
   private DefaultComboBoxModel myInitialisersPlaceModel;
 
@@ -53,7 +54,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
 
   protected void initializeControls(PsiExpression initializerExpression, BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
     super.initializeControls(initializerExpression, ourLastInitializerPlace);
-    initializeInitializerPlace(initializerExpression, ourLastInitializerPlace);
+
     String ourLastVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY;
     setVisibility(ourLastVisibility);
   }
@@ -106,7 +107,10 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
   }
 
   public BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace() {
-    return (BaseExpressionToFieldHandler.InitializationPlace)myInitializerCombo.getSelectedItem();
+    if (myInitializerCombo != null) {
+      return (BaseExpressionToFieldHandler.InitializationPlace)myInitializerCombo.getSelectedItem();
+    }
+    return (BaseExpressionToFieldHandler.InitializationPlace)myInitialisersPlaceModel.getElementAt(0);
   }
 
   public String getFieldVisibility() {
@@ -122,9 +126,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
       new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                              new Insets(0, 5, 0, 0), 0, 0);
     gridBagConstraints.insets.top = 5;
-    final JLabel initLabel = new JLabel(RefactoringBundle.message("initialize.in.border.title") + ":");
-    initLabel.setDisplayedMnemonic('i');
-    groupPanel.add(initLabel, gridBagConstraints);
+
 
     myInitialisersPlaceModel = new DefaultComboBoxModel();
     myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD);
@@ -133,40 +135,44 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     if (TestUtil.isTestClass(myParentClass)) {
       myInitialisersPlaceModel.addElement(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD);
     }
-    myInitializerCombo = new JComboBox(myInitialisersPlaceModel);
-    InplaceIntroduceConstantPopup.appendActions(myInitializerCombo, myParentClass.getProject());
-    initLabel.setLabelFor(myInitializerCombo);
-    myInitializerCombo.setRenderer(new ListCellRendererWrapper<BaseExpressionToFieldHandler.InitializationPlace>(myInitializerCombo) {
-      @Override
-      public void customize(JList list,
-                            BaseExpressionToFieldHandler.InitializationPlace value,
-                            int index,
-                            boolean selected,
-                            boolean hasFocus) {
-        if (value == BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD) {
-          setText("current method");
-        } else if (value == BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR) {
-          setText("constructor");
-        } else if (value == BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION) {
-          setText("field declaration");
-        } else {
-          setText("setUp");
+    initializeInitializerPlace(myInitializerExpression, InplaceIntroduceFieldPopup.ourLastInitializerPlace);
+    if (myInitialisersPlaceModel.getSize() > 1) {
+      final JLabel initLabel = new JLabel(RefactoringBundle.message("initialize.in.border.title") + ":");
+      initLabel.setDisplayedMnemonic('i');
+      groupPanel.add(initLabel, gridBagConstraints);
+      JComboBox initializersCombo = new JComboBox(myInitialisersPlaceModel);
+      InplaceIntroduceConstantPopup.appendActions(initializersCombo, myParentClass.getProject());
+      initLabel.setLabelFor(initializersCombo);
+      initializersCombo.setRenderer(new ListCellRendererWrapper<BaseExpressionToFieldHandler.InitializationPlace>(initializersCombo) {
+        @Override
+        public void customize(JList list,
+                              BaseExpressionToFieldHandler.InitializationPlace value,
+                              int index,
+                              boolean selected,
+                              boolean hasFocus) {
+          setText(getPresentableText(value));
         }
-      }
-    });
-    myInitializerCombo.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        itemListener.itemStateChanged(null);
-        finalUpdater.itemStateChanged(null);
-      }
-    });
-    gridBagConstraints.gridx = 1;
-    gridBagConstraints.insets.top = 0;
-    gridBagConstraints.insets.left = 0;
-    gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
-    groupPanel.add(myInitializerCombo, gridBagConstraints);
-
+      });
+      initializersCombo.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          itemListener.itemStateChanged(null);
+          finalUpdater.itemStateChanged(null);
+        }
+      });
+      gridBagConstraints.gridx = 1;
+      gridBagConstraints.insets.top = 0;
+      gridBagConstraints.insets.left = 0;
+      gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+      groupPanel.add(initializersCombo, gridBagConstraints);
+      myInitializerCombo = initializersCombo;
+    } else {
+      gridBagConstraints.gridwidth = 2;
+      groupPanel.add(new JLabel("Initialize field in " +
+                                getPresentableText((BaseExpressionToFieldHandler.InitializationPlace)myInitialisersPlaceModel.getElementAt(0))),
+                     gridBagConstraints);
+      gridBagConstraints.gridwidth = 1;
+    }
 
 
     gridBagConstraints.gridx = 0;
@@ -180,6 +186,18 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     return mainPanel;
   }
 
+  private static String getPresentableText(BaseExpressionToFieldHandler.InitializationPlace value) {
+    if (value == BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD) {
+      return "current method";
+    } else if (value == BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR) {
+      return "constructor";
+    } else if (value == BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION) {
+      return "field declaration";
+    } else {
+      return "setUp";
+    }
+  }
+
   protected boolean setEnabledInitializationPlaces(PsiElement initializerPart, PsiElement initializer) {
     if (initializerPart instanceof PsiReferenceExpression) {
       PsiReferenceExpression refExpr = (PsiReferenceExpression) initializerPart;
@@ -191,7 +209,6 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
           myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION);
           myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR);
           myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD);
-          enableFinal(false);
           return false;
         }
       }
@@ -213,6 +230,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
   }
 
   public void setInitializeInFieldDeclaration() {
+    LOG.assertTrue(myInitializerCombo != null);
     myInitializerCombo.setSelectedItem(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION);
   }
 
@@ -222,7 +240,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
 
   @Override
   protected boolean allowFinal() {
-    final Object selectedItem = myInitializerCombo.getSelectedItem();
+    final Object selectedItem = getInitializerPlace();
     boolean allowFinal = selectedItem == BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION ||
                          (selectedItem == BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR && !myWillBeDeclaredStatic);
     if (selectedItem == BaseExpressionToFieldHandler.InitializationPlace.IN_CURRENT_METHOD && myIsCurrentMethodConstructor) {
