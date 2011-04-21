@@ -21,6 +21,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -382,13 +383,11 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (this == o) return true;
     if (!(o instanceof IdeaPluginDescriptorImpl)) return false;
 
-    final IdeaPluginDescriptorImpl pluginDescriptor = (IdeaPluginDescriptorImpl)o;
-
-    return myName == null ? pluginDescriptor.myName == null : myName.equals(pluginDescriptor.myName);
+    return Comparing.equal(myId, ((IdeaPluginDescriptorImpl)o).myId);
   }
 
   public int hashCode() {
-    return myName != null ? myName.hashCode() : 0;
+    return myId != null ? myId.hashCode() : 0;
   }
 
   @NotNull
