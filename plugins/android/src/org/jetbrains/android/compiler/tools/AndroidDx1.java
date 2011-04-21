@@ -108,6 +108,10 @@ public class AndroidDx1 {
       vmParamList.add("-Xmx" + configuration.MAX_HEAP_SIZE + "M");
     }
     parameters.getClassPath().add(PathUtil.getJarPathForClass(AndroidDxRunner.class));
+
+    // delete file to check if it will exist after dex compilation
+    new File(outFile).delete();
+
     Process process = null;
     try {
       GeneralCommandLine commandLine = CommandLineBuilder.createFromJavaParameters(parameters, true);
@@ -151,11 +155,15 @@ public class AndroidDx1 {
     handler.startNotify();
     handler.waitFor();
 
+    final List<String> errors = messages.get(CompilerMessageCategory.ERROR);
+
     if (new File(outFile).isFile()) {
       // if compilation finished correctly, show all errors as warnings
-      List<String> errors = messages.get(CompilerMessageCategory.ERROR);
       messages.get(CompilerMessageCategory.WARNING).addAll(errors);
       errors.clear();
+    }
+    else if (errors.size() == 0) {
+      errors.add("Cannot create classes.dex file");
     }
 
     return messages;
