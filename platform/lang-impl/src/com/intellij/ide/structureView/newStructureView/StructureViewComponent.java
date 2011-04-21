@@ -70,6 +70,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, DataProvider, StructureView.Scrollable {
@@ -778,7 +779,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         resetChildren();
         childrenStamp = currentStamp;
       }
-      return super.getChildren();
+      try {
+        return super.getChildren();
+      }
+      catch (IndexNotReadyException ignore) {
+        return Collections.emptyList();
+      }
     }
 
     @Override
