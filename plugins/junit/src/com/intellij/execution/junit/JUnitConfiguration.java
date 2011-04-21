@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -299,6 +300,11 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
         setForkMode(mode);
       }
     }
+    final Element dirNameElement = element.getChild("dir");
+    if (dirNameElement != null) {
+      final String dirName = dirNameElement.getAttributeValue("value");
+      getPersistentData().setDirName(FileUtil.toSystemDependentName(dirName));
+    }
   }
 
   public void writeExternal(final Element element) throws WriteExternalException {
@@ -306,10 +312,17 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     RunConfigurationExtension.writeSettings(this, element);
     writeModule(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
-    DefaultJDOMExternalizer.writeExternal(getPersistentData(), element);
-    EnvironmentVariablesComponent.writeExternal(element, getPersistentData().getEnvs());
+    final Data persistentData = getPersistentData();
+    DefaultJDOMExternalizer.writeExternal(persistentData, element);
+    EnvironmentVariablesComponent.writeExternal(element, persistentData.getEnvs());
+    final String dirName = persistentData.getDirName();
+    if (!dirName.isEmpty()) {
+      final Element dirNameElement = new Element("dir");
+      dirNameElement.setAttribute("value", FileUtil.toSystemIndependentName(dirName));
+      element.addContent(dirNameElement);
+    }
     final Element patternsElement = new Element(PATTERNS_EL_NAME);
-    for (String o : getPersistentData().getPatterns()) {
+    for (String o : persistentData.getPatterns()) {
       final Element patternElement = new Element(PATTERN_EL_NAME);
       patternElement.setAttribute(TEST_CLASS_ATT_NAME, o);
       patternsElement.addContent(patternElement);
@@ -346,7 +359,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
   public static class Data implements Cloneable {
     public String PACKAGE_NAME;
-    public String DIR_NAME;
+    private String DIR_NAME;
     public String MAIN_CLASS_NAME;
     public String METHOD_NAME;
     public String TEST_OBJECT = TEST_CLASS;
@@ -532,6 +545,10 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
     public void setEnvs(final Map<String, String> envs) {
       myEnvs = envs;
+    }
+
+    public void setDirName(String dirName) {
+      DIR_NAME = dirName;
     }
   }
 

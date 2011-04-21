@@ -111,7 +111,7 @@ public class JUnitConfigurationModel {
         data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
       }
       else if (testObject == JUnitConfiguration.TEST_DIRECTORY) {
-        data.DIR_NAME = getJUnitTextValue(DIR);
+        data.setDirName(getJUnitTextValue(DIR));
       }
       else {
         final LinkedHashSet<String> set = new LinkedHashSet<String>();
