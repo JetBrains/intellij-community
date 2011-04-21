@@ -40,7 +40,7 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
       if (file == null) return null;
 
       final PsiElement targetElement = TargetElementUtil
-          .findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+          .findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
       if (targetElement instanceof PsiClass) {
         return targetElement;
       }
