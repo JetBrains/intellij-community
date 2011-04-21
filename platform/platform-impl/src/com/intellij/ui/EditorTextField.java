@@ -570,9 +570,16 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   }
 
   @Override
-  public void doLayout() {
-    if (getComponentCount() != 1) return;
+  protected void addImpl(Component comp, Object constraints, int index) {
+    if (myEditor == null || comp != myEditor.getComponent()) {
+      assert false : "You are not allowed to add anything to EditorTextField";
+    }
 
+    super.addImpl(comp, constraints, index);
+  }
+
+  @Override
+  public void doLayout() {
     Component c = getComponent(0);
     Insets insets = getInsets() != null ? getInsets() : new Insets(0, 0, 0, 0);
     int prefHeight = c.getPreferredSize().height;
