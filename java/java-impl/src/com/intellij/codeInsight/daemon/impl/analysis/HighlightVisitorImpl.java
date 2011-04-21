@@ -854,7 +854,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override public void visitReturnStatement(PsiReturnStatement statement) {
-    myHolder.add(HighlightUtil.checkReturnStatementType(statement));
+    try {
+      myHolder.add(HighlightUtil.checkReturnStatementType(statement));
+    }
+    catch (IndexNotReadyException ignore) {
+    }
   }
 
   @Override public void visitStatement(PsiStatement statement) {
