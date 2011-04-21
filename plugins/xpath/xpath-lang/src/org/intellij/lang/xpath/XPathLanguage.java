@@ -33,6 +33,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
 import org.intellij.lang.xpath.completion.CompletionLists;
 import org.intellij.lang.xpath.psi.XPathFunction;
+import org.intellij.lang.xpath.psi.XPathVariable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +78,7 @@ public final class XPathLanguage extends Language {
         }
 
         public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
-            return psiElement instanceof XPathFunction;
+            return psiElement instanceof XPathFunction || psiElement instanceof XPathVariable;
         }
 
         @Nullable
@@ -87,7 +88,13 @@ public final class XPathLanguage extends Language {
 
         @NotNull
         public String getType(@NotNull PsiElement element) {
-            return element instanceof XPathFunction ? "function" : "unknown";
+          if (element instanceof XPathFunction) {
+            return "function";
+          } else if (element instanceof XPathVariable) {
+            return "variable";
+          } else {
+            return "unknown";
+          }
         }
 
         @NotNull
