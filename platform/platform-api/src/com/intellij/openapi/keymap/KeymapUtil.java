@@ -348,6 +348,10 @@ public class KeymapUtil {
     }
   }
 
+  public static boolean isEmacsKeymap() {
+    return isEmacsKeymap(KeymapManager.getInstance().getActiveKeymap());
+  }
+  
   public static boolean isEmacsKeymap(@Nullable Keymap keymap) {
     for (; keymap != null; keymap = keymap.getParent()) {
       if ("Emacs".equalsIgnoreCase(keymap.getName())) {
