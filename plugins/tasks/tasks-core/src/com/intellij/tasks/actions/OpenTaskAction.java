@@ -36,7 +36,7 @@ public class OpenTaskAction extends BaseTaskAction {
   public void actionPerformed(AnActionEvent e) {
 
     Project project = getProject(e);
-    assert project != null;
+    if (project == null) return;
     ActivateTaskDialog dialog = new ActivateTaskDialog(project);
     dialog.show();
     if (dialog.isOK()) {
