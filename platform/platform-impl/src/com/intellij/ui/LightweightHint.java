@@ -239,6 +239,10 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   }
 
+  public boolean vetoesHiding() {
+    return false;
+  }
+
   private static boolean fitsLayeredPane(JLayeredPane pane, JComponent component, RelativePoint desiredLocation, HintHint hintHint) {
     if (hintHint.isAwtTooltip()) {
       Dimension size = component.getPreferredSize();
@@ -248,8 +252,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       Balloon.Position pos = hintHint.getPreferredPosition();
       int pointer = BalloonImpl.getPointerLength(pos) + BalloonImpl.getNormalInset();
       if (pos == Balloon.Position.above || pos == Balloon.Position.below) {
-        boolean hieghtFit = target.y - size.height - pointer > 0 || target.y + size.height + pointer < paneSize.height;
-        return hieghtFit && size.width + pointer < paneSize.width;
+        boolean heightFit = target.y - size.height - pointer > 0 || target.y + size.height + pointer < paneSize.height;
+        return heightFit && size.width + pointer < paneSize.width;
       } else {
         boolean widthFit = target.x - size.width - pointer > 0 || target.x + size.width + pointer < paneSize.width;
         return widthFit && size.height + pointer < paneSize.height;
