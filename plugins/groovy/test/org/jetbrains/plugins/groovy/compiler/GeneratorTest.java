@@ -7,7 +7,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.refactoring.convertToJava.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -99,21 +99,21 @@ public class GeneratorTest extends LightGroovyTestCase {
     final String relTestPath = getTestName(true) + ".test";
     final List<String> data = TestUtils.readInput(getTestDataPath() + "/" + relTestPath);
 
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder builder = new StringBuilder();
     final String testName = StringUtil.trimEnd(relTestPath, ".test");
     PsiFile psiFile = TestUtils.createPseudoPhysicalFile(getProject(), testName + ".groovy", data.get(0));
-    final Map<String,String> map =
-      new GroovyToJavaGenerator(getProject(), Arrays.asList(psiFile.getViewProvider().getVirtualFile()), false)
+    final Map<String, CharSequence> map =
+      new GroovyToJavaGenerator(getProject(), Collections.singleton(psiFile.getViewProvider().getVirtualFile()), false)
         .generateStubs((GroovyFile)psiFile);
 
-     for (String stubText : map.values()) {
-      buffer.append(stubText);
-      buffer.append("\n");
-      buffer.append("---");
-      buffer.append("\n");
+     for (CharSequence stubText : map.values()) {
+      builder.append(stubText);
+      builder.append("\n");
+      builder.append("---");
+      builder.append("\n");
     }
 
-    assertEquals(data.get(1).trim(), buffer.toString().trim());
+    assertEquals(data.get(1).trim(), builder.toString().trim());
   }
 
 }

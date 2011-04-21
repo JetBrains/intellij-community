@@ -8,36 +8,37 @@ public T next() { throw new UnsupportedOperationException("This method is not av
 }
 -----
 public class BugSample<T> extends groovy.lang.GroovyObjectSupport implements java.util.Iterator<T>, groovy.lang.GroovyObject {
-  public boolean hasNext() {
-    return false;
-  }
+public boolean hasNext() {
+return false;
+}
 
-  public void remove() {
-    return ;
-  }
+public void remove() {
+return ;
+}
 
-  public T next() {
-    return null;
-  }
+public T next() {
+return null;
+}
 
-  public groovy.lang.MetaClass getMetaClass() {
-    return null;
-  }
+public groovy.lang.MetaClass getMetaClass() {
+return null;
+}
 
-  public void setMetaClass(groovy.lang.MetaClass mc) {
-    return ;
-  }
+public void setMetaClass(groovy.lang.MetaClass mc) {
+return ;
+}
 
-  public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
-    return null;
-  }
+public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+return null;
+}
 
-  public java.lang.Object getProperty(java.lang.String propertyName) {
-    return null;
-  }
+public java.lang.Object getProperty(java.lang.String propertyName) {
+return null;
+}
 
-  public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
-    return ;
-  }
+public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+return ;
+}
+
 }
 ---

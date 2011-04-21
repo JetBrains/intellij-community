@@ -3,6 +3,6 @@ interface Foo {
 }
 -----
 public interface Foo {
-  public static final java.lang.Object bar = null;
+public static final java.lang.Object bar = null;
 }
 ---

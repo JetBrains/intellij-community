@@ -26,7 +26,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -57,11 +57,10 @@ public class GroovyPatterns extends PsiJavaPatterns {
     return groovyLiteralExpression(null);
   }
 
-  public static GroovyElementPattern.Capture<GrLiteral> groovyLiteralExpression(final ElementPattern value) {
+  public static GroovyElementPattern.Capture<GrLiteral> groovyLiteralExpression(@Nullable final ElementPattern value) {
     return new GroovyElementPattern.Capture<GrLiteral>(new InitialPatternCondition<GrLiteral>(GrLiteral.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        return o instanceof GrLiteral
-               && (value == null || value.accepts(((GrLiteral)o).getValue(), context));
+        return o instanceof GrLiteral && (value == null || value.accepts(((GrLiteral)o).getValue(), context));
       }
     });
   }
@@ -103,8 +102,8 @@ public class GroovyPatterns extends PsiJavaPatterns {
           PsiElement nameElement = ((GrArgumentLabel)o).getNameElement();
           if (nameElement instanceof LeafPsiElement) {
             IElementType elementType = ((LeafPsiElement)nameElement).getElementType();
-            if (elementType == GroovyElementTypes.mIDENT ||
-                CommonClassNames.JAVA_LANG_STRING.equals(TypesUtil.getPsiTypeName(elementType))) {
+            if (elementType == GroovyTokenTypes.mIDENT ||
+                CommonClassNames.JAVA_LANG_STRING.equals(TypesUtil.getBoxedTypeName(elementType))) {
               return namePattern == null || namePattern.accepts(((GrArgumentLabel)o).getName());
             }
           }

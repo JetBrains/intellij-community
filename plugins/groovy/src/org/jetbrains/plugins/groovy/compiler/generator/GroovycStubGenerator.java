@@ -133,7 +133,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
       indicator.pushState();
 
       try {
-        final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject, toCompile, false);
+        final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject, new HashSet<VirtualFile>(toCompile), false);
         for (int i = 0; i < toCompile.size(); i++) {
           indicator.setFraction((double)i / toCompile.size());
 
@@ -212,21 +212,21 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
       LOG.debug("Generating stubs for " + item.getName() + "...");
     }
 
-    final Map<String, String> output = ApplicationManager.getApplication().runReadAction(new Computable<Map<String, String>>() {
-      public Map<String, String> compute() {
+    final Map<String, CharSequence> output = ApplicationManager.getApplication().runReadAction(new Computable<Map<String, CharSequence>>() {
+      public Map<String, CharSequence> compute() {
         return generator.generateStubs((GroovyFile)PsiManager.getInstance(project).findFile(item));
       }
     });
     return writeStubs(outputRootDirectory, output, item);
   }
 
-  private static List<VirtualFile> writeStubs(VirtualFile outputRootDirectory, Map<String, String> output, VirtualFile src) {
+  private static List<VirtualFile> writeStubs(VirtualFile outputRootDirectory, Map<String, CharSequence> output, VirtualFile src) {
     final ArrayList<VirtualFile> stubs = CollectionFactory.arrayList();
     for (String relativePath : output.keySet()) {
       final File stubFile = new File(outputRootDirectory.getPath(), relativePath);
       FileUtil.createIfDoesntExist(stubFile);
       try {
-        FileUtil.writeToFile(stubFile, output.get(relativePath).getBytes(src.getCharset()));
+        FileUtil.writeToFile(stubFile, output.get(relativePath).toString().getBytes(src.getCharset()));
       }
       catch (IOException e) {
         LOG.error(e);

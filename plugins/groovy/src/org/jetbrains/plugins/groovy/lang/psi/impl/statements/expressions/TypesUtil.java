@@ -428,7 +428,7 @@ public class TypesUtil {
     if (elemType == kNULL) {
       return PsiType.NULL;
     }
-    final String typeName = getPsiTypeName(elemType);
+    final String typeName = getBoxedTypeName(elemType);
     if (typeName != null) {
       return createTypeByFQClassName(typeName, context);
     }
@@ -436,7 +436,7 @@ public class TypesUtil {
   }
 
   @Nullable
-  public static String getPsiTypeName(IElementType elemType) {
+  public static String getBoxedTypeName(IElementType elemType) {
     return ourPrimitiveTypesToClassNames.get(elemType);
   }
 

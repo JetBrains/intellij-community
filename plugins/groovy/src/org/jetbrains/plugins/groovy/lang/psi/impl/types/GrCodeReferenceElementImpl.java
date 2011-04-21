@@ -162,8 +162,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
         if (target instanceof PsiClass) {
           final PsiClass aClass = (PsiClass)target;
           String name = aClass.getQualifiedName();
-          if (name == null) {
-            name = aClass.getName(); //?
+          if (name == null) { //parameter types don't have qualified name
+            name = aClass.getName();
           }
           final PsiType[] types = getTypeArguments();
           if (types.length == 0) return name;

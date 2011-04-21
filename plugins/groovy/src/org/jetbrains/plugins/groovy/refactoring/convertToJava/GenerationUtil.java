@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -27,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator;
@@ -57,6 +59,106 @@ public class GenerationUtil {
 
   public static void writeType(StringBuilder builder, PsiType type) {
     builder.append(type.getCanonicalText()); //todo make smarter.
+  }
+
+  public static void writeType(final StringBuilder builder,
+                               final PsiType type,
+                               final PsiElement context,
+                               final ClassNameProvider classNameProvider) {
+    if (type instanceof PsiPrimitiveType) {
+      builder.append(type.getCanonicalText());
+      return;
+    }
+
+    final boolean acceptEllipsis = isLastParameter(context);
+
+    type.accept(new PsiTypeVisitor<Object>() {
+      @Override
+      public Object visitEllipsisType(PsiEllipsisType ellipsisType) {
+        final PsiType componentType = ellipsisType.getComponentType();
+        componentType.accept(this);
+        if (acceptEllipsis) {
+          builder.append("...");
+        }
+        else {
+          builder.append("[]");
+        }
+        return this;
+      }
+
+      @Override
+      public Object visitPrimitiveType(PsiPrimitiveType primitiveType) {
+        if (classNameProvider.forStubs()) {
+          builder.append(primitiveType.getCanonicalText());
+          return this;
+        }
+        final PsiType boxed = TypesUtil.boxPrimitiveType(primitiveType, context.getManager(), context.getResolveScope());
+        boxed.accept(this);
+        return this;
+      }
+
+      @Override
+      public Object visitArrayType(PsiArrayType arrayType) {
+        arrayType.getComponentType().accept(this);
+        builder.append("[]");
+        return this;
+      }
+
+      @Override
+      public Object visitClassType(PsiClassType classType) {
+        final PsiType[] parameters = classType.getParameters();
+        final PsiClass psiClass = classType.resolve();
+        if (psiClass == null) {
+          builder.append(classType.getClassName());
+        }
+        else {
+          final String qname = classNameProvider.getQualifiedClassName(psiClass, context);
+          builder.append(qname);
+        }
+        writeTypeParameters(builder, parameters);
+        return this;
+      }
+
+      @Override
+      public Object visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+        capturedWildcardType.getWildcard().accept(this);
+        return this;
+      }
+
+      @Override
+      public Object visitWildcardType(PsiWildcardType wildcardType) {
+        builder.append("?");
+        PsiType bound = wildcardType.getBound();
+        if (bound == null) return this;
+        if (wildcardType.isExtends()) {
+          builder.append(" extends");
+        }
+        else {
+          builder.append(" super ");
+        }
+        bound.accept(this);
+        return this;
+      }
+
+      @Override
+      public Object visitDisjunctionType(PsiDisjunctionType disjunctionType) {
+        //todo
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public Object visitType(PsiType type) {
+        //todo
+        throw new UnsupportedOperationException();
+      }
+    });
+  }
+
+  private static boolean isLastParameter(PsiElement context) {
+    final PsiElement parent = context.getParent();
+    return context instanceof PsiParameter &&
+           parent instanceof PsiParameterList &&
+           ((PsiParameterList)parent).getParameterIndex((PsiParameter)context) == ((PsiParameterList)parent).getParametersCount() - 1;
   }
 
   private static void writeTypeParameters(StringBuilder builder, PsiType[] parameters) {
@@ -233,5 +335,15 @@ public class GenerationUtil {
     ExpressionContext statementContext = context.copy();
     writer.writeStatement(statementBuilder, statementContext);
     writeStatement(builder, statementBuilder, statement, statementContext);
+  }
+
+  @Nullable
+  static PsiClass findAccessibleSuperClass(@NotNull PsiElement context, @NotNull PsiClass initialClass) {
+    PsiClass curClass = initialClass;
+    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper();
+    while (curClass != null && !resolveHelper.isAccessible(curClass, context, null)) {
+      curClass = curClass.getSuperClass();
+    }
+    return curClass;
   }
 }

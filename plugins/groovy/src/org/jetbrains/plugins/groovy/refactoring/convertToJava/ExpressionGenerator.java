@@ -28,7 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -554,8 +553,6 @@ public class ExpressionGenerator extends Generator {
     else {
       builder.append(value);
     }
-
-    //todo replace with character in some cases
   }
 
   @Override
@@ -715,27 +712,9 @@ public class ExpressionGenerator extends Generator {
   }
 
   @Override
-  public void visitArrayTypeElement(GrArrayTypeElement typeElement) {
-    //todo
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void visitBuiltinTypeElement(GrBuiltInTypeElement typeElement) {
-    //todo
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void visitClassTypeElement(GrClassTypeElement typeElement) {
-    //todo
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void visitBuiltinTypeClassExpression(GrBuiltinTypeClassExpression expression) {
     final IElementType type = expression.getFirstChild().getNode().getElementType();
-    final String boxed = TypesUtil.getPsiTypeName(type);
+    final String boxed = TypesUtil.getBoxedTypeName(type);
     builder.append(boxed).append(".class");
   }
 
@@ -784,7 +763,7 @@ public class ExpressionGenerator extends Generator {
                               GrClosableBlock[] closures,
                               PsiSubstitutor substitutor,
                               GroovyPsiElement context) {
-    if (method instanceof GrGdkMethod && !method.hasModifierProperty(GrModifier.STATIC)) {
+    if (method instanceof GrGdkMethod && !method.hasModifierProperty(PsiModifier.STATIC)) {
       if (caller == null) {
         caller = factory.createExpressionFromText("this", context);
       }
@@ -795,8 +774,7 @@ public class ExpressionGenerator extends Generator {
       return;
     }
 
-    //todo check for private method?
-    if (method.hasModifierProperty(GrModifier.STATIC)) {
+    if (method.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass != null) {
         builder.append(containingClass.getQualifiedName()).append(".");
@@ -817,7 +795,6 @@ public class ExpressionGenerator extends Generator {
 
   @Override
   public void visitListOrMap(GrListOrMap listOrMap) {
-    //todo infer type parameters from context if possible
     final PsiType type = listOrMap.getType();
 
     //can be PsiArrayType or GrLiteralClassType
@@ -825,7 +802,7 @@ public class ExpressionGenerator extends Generator {
 
     if (listOrMap.isMap()) {
       String varName = generateMapVariableDeclaration(listOrMap, type);
-      generateMapElementInsertions(listOrMap, varName);              //todo generate array if possible
+      generateMapElementInsertions(listOrMap, varName);
       builder.append(varName);
     }
     else {
