@@ -238,6 +238,12 @@ public class ProgressManagerImpl extends ProgressManager {
       myCurrentProgressCount.decrementAndGet();
       if (modal) myCurrentModalProgressCount.decrementAndGet();
       if (progress == null || progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.decrementAndGet();
+
+      if (progress != null) {
+        synchronized (progress) {
+          progress.notifyAll();
+        }
+      }
     }
   }
 

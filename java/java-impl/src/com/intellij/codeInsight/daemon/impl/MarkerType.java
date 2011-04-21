@@ -25,6 +25,7 @@ import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
@@ -109,6 +110,10 @@ public enum MarkerType {
     public void browse(MouseEvent e, PsiElement element) {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiMethod)) return;
+      if (DumbService.isDumb(element.getProject())) {
+        DumbService.getInstance(element.getProject()).showDumbModeNotification("Navigation to overriding classes is not possible during index update");
+        return;
+      }
 
       final PsiMethod method = (PsiMethod)parent;
       final CommonProcessors.CollectProcessor<PsiMethod> collectProcessor = new CommonProcessors.CollectProcessor<PsiMethod>(new THashSet<PsiMethod>());
@@ -162,6 +167,11 @@ public enum MarkerType {
     public void browse(MouseEvent e, PsiElement element) {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiClass)) return;
+
+      if (DumbService.isDumb(element.getProject())) {
+        DumbService.getInstance(element.getProject()).showDumbModeNotification("Navigation to overriding methods is not possible during index update");
+        return;
+      }
 
       final PsiClass aClass = (PsiClass)parent;
       final CommonProcessors.CollectProcessor<PsiClass> collectProcessor = new CommonProcessors.CollectProcessor<PsiClass>(new THashSet<PsiClass>());

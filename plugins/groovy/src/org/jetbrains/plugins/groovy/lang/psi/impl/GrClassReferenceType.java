@@ -56,6 +56,7 @@ public class GrClassReferenceType extends PsiClassType {
     return myReferenceElement.multiResolve(false);
   }
 
+  @Nullable
   public String getClassName() {
     return myReferenceElement.getReferenceName();
   }
@@ -67,15 +68,15 @@ public class GrClassReferenceType extends PsiClassType {
 
   @NotNull
   public ClassResolveResult resolveGenerics() {
+    final GroovyResolveResult resolveResult = myReferenceElement.advancedResolve();
     return new ClassResolveResult() {
       public PsiClass getElement() {
-        return resolve();
+        final PsiElement resolved = resolveResult.getElement();
+        return resolved instanceof PsiClass ? (PsiClass)resolved : null;
       }
 
       public PsiSubstitutor getSubstitutor() {
-        final GroovyResolveResult[] results = multiResolve();
-        if (results.length != 1) return PsiSubstitutor.UNKNOWN;
-        return results[0].getSubstitutor();
+        return resolveResult.getSubstitutor();
       }
 
       public boolean isPackagePrefixPackageReference() {
@@ -83,19 +84,16 @@ public class GrClassReferenceType extends PsiClassType {
       }
 
       public boolean isAccessible() {
-        final GroovyResolveResult[] results = multiResolve();
-        for (GroovyResolveResult result : results) {
-          if (result.isAccessible()) return true;
-        }
-        return false;
+        return resolveResult.isAccessible();
       }
 
       public boolean isStaticsScopeCorrect() {
-        return true; //TODO
+        return resolveResult.isStaticsOK();
       }
 
+      @Nullable
       public PsiElement getCurrentFileResolveScope() {
-        return null; //TODO???
+        return resolveResult.getCurrentFileResolveContext();
       }
 
       public boolean isValidResult() {
@@ -108,7 +106,7 @@ public class GrClassReferenceType extends PsiClassType {
   public PsiClassType rawType() {
     final PsiClass clazz = resolve();
     if (clazz != null) {
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(clazz.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(clazz.getProject());
       return factory.createType(clazz, factory.createRawSubstitutor(clazz));
     }
 
@@ -119,30 +117,9 @@ public class GrClassReferenceType extends PsiClassType {
     return PsiNameHelper.getPresentableText(myReferenceElement.getReferenceName(), myReferenceElement.getTypeArguments());
   }
 
-  @Nullable
+  @NotNull
   public String getCanonicalText() {
-    PsiClass resolved = resolve();
-    if (resolved == null) return null;
-    if (resolved instanceof PsiTypeParameter) return resolved.getName();
-    final String qName = resolved.getQualifiedName();
-    if (isRaw()) return qName;
-
-    final PsiType[] typeArgs = myReferenceElement.getTypeArguments();
-    if (typeArgs.length == 0) return qName;
-
-    StringBuilder builder = new StringBuilder();
-    builder.append(qName).append("<");
-    for (int i = 0; i < typeArgs.length; i++) {
-      if (i > 0) builder.append(", ");
-      final String typeArgCanonical = typeArgs[i].getCanonicalText();
-      if (typeArgCanonical != null) {
-        builder.append(typeArgCanonical);
-      } else {
-        return null;
-      }
-    }
-    builder.append(">");
-    return builder.toString();
+    return myReferenceElement.getCanonicalText();
   }
 
   public String getInternalCanonicalText() {

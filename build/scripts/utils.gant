@@ -33,8 +33,8 @@ binding.setVariable("isEap", {
   return "true" == p("component.version.eap")
 })
 
-binding.setVariable("mem32", "-Xms128m -Xmx512m -XX:MaxPermSize=250m")
-binding.setVariable("mem64", "-Xms128m -Xmx800m -XX:MaxPermSize=350m")
+binding.setVariable("mem32", "-Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=64m")
+binding.setVariable("mem64", "-Xms128m -Xmx800m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=64m")
 binding.setVariable("common_vmoptions", "-ea")
 
 binding.setVariable("vmoptions32", {"$mem32 $common_vmoptions"})

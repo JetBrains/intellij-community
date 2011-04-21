@@ -58,6 +58,7 @@
       <action id="EditorMoveDownAndScroll" class="com.intellij.openapi.editor.actions.MoveDownAndScrollAction"/>
       <action id="EditorMoveUpAndScrollWithSelection" class="com.intellij.openapi.editor.actions.MoveUpWithSelectionAndScrollAction"/>
       <action id="EditorMoveDownAndScrollWithSelection" class="com.intellij.openapi.editor.actions.MoveDownWithSelectionAndScrollAction"/>
+      <action id="EditorToggleStickySelection" class="com.intellij.openapi.editor.actions.ToggleStickySelectionModeAction"/>
       <action id="EditorLineStart" class="com.intellij.openapi.editor.actions.LineStartAction"/>
       <action id="EditorLineEnd" class="com.intellij.openapi.editor.actions.LineEndAction"/>
       <action id="EditorCutLineBackward" class="com.intellij.openapi.editor.actions.CutLineBackwardAction"/>

@@ -59,11 +59,13 @@ public class GrRangeType extends GrLiteralClassType {
     this(LanguageLevel.JDK_1_5, scope, facade, left, right);
   }
 
+  @NotNull
   @Override
   protected String getJavaClassName() {
     return myQualifiedName;
   }
 
+  @NotNull
   @Override
   public String getClassName() {
     return StringUtil.getShortName(myQualifiedName);

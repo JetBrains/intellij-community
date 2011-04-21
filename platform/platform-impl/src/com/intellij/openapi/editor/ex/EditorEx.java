@@ -175,4 +175,21 @@ public interface EditorEx extends Editor {
    * @param text    virtual text to show until user data is entered or the editor is focused
    */
   void setPlaceholder(@Nullable CharSequence text);
+
+  /**
+   * Allows to answer if 'sticky selection' is active for the current editor.
+   * <p/>
+   * 'Sticky selection' means that every time caret position changes, selection end offset is automatically set to the same position.
+   * Selection start is always caret offset on {@link #setStickySelection(boolean)} call with <code>'true'</code> argument.
+   * 
+   * @return      <code>true</code> if 'sticky selection' mode is active at the current editor; <code>false</code> otherwise
+   */
+  boolean isStickySelection();
+
+  /**
+   * Allows to set current {@link #isStickySelection() sticky selection} mode.
+   * 
+   * @param enable      flag that identifies if <code>'sticky selection'</code> mode should be enabled
+   */
+  void setStickySelection(boolean enable);
 }

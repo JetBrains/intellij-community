@@ -151,7 +151,7 @@ public abstract class InspectionProfileEntry {
       if (descriptionUrl == null) return null;
       return ResourceUtil.loadText(descriptionUrl);
     }
-    catch (IOException e2) { }
+    catch (IOException ignored) { }
 
     return null;
   }

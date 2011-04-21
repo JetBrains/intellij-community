@@ -219,7 +219,7 @@ public class PsiUtil {
   public static PsiType[] getArgumentTypes(GrNamedArgument[] namedArgs,
                                             GrExpression[] expressions,
                                             GrClosableBlock[] closures,
-                                            boolean nullAsBottom, GrExpression stopAt) {
+                                            boolean nullAsBottom, @Nullable GrExpression stopAt) {
     List<PsiType> result = new ArrayList<PsiType>();
 
     if (namedArgs.length > 0) {
@@ -305,7 +305,7 @@ public class PsiUtil {
     final PsiElement resolved = ref.resolve();
     if (resolved == null) return false;
 
-    final GrQualifiedReference<Qualifier> copy = (GrQualifiedReference<Qualifier>)ref.copy();
+    final GrQualifiedReference<Qualifier> copy = getCopy(ref);
 
     copy.setQualifier(null);
     if (!copy.isReferenceTo(resolved)) {
@@ -329,6 +329,14 @@ public class PsiUtil {
     }
     ref.setQualifier(null);
     return true;
+  }
+
+  private static <Qualifier extends PsiElement> GrQualifiedReference<Qualifier> getCopy(GrQualifiedReference<Qualifier> ref) {
+    if (ref.getParent() instanceof GrMethodCall) {
+      final GrMethodCall copy = ((GrMethodCall)ref.getParent().copy());
+      return (GrQualifiedReference<Qualifier>)copy.getInvokedExpression();
+    }
+    return (GrQualifiedReference<Qualifier>)ref.copy();
   }
 
   private static <Qualifier extends PsiElement> boolean canShorten(Qualifier qualifier) {

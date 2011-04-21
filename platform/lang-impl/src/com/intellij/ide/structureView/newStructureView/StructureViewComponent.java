@@ -451,7 +451,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private ArrayList<AbstractTreeNode> getPathToElement(Object element) {
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-    addToPath((AbstractTreeNode)myAbstractTreeBuilder.getTreeStructure().getRootElement(), element, result, new THashSet<Object>());
+    final AbstractTreeStructure treeStructure = myAbstractTreeBuilder.getTreeStructure();
+    if (treeStructure != null) {
+      addToPath((AbstractTreeNode)treeStructure.getRootElement(), element, result, new THashSet<Object>());
+    }
     return result;
   }
 

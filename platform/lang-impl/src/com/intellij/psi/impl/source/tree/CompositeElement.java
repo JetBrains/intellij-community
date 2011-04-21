@@ -221,11 +221,65 @@ public class CompositeElement extends TreeElement {
   public char[] textToCharArray() {
     final int len = getTextLength();
     char[] buffer = new char[len];
-    final int endOffset = AstBufferUtil.toBuffer(this, buffer, 0);
+    final int endOffset;
+    try {
+      endOffset = AstBufferUtil.toBuffer(this, buffer, 0);
+    }
+    catch (ArrayIndexOutOfBoundsException e) {
+      String msg = "Underestimated text length: " + len;
+      msg += diagnoseTextInconsistency(new String(buffer));
+      try {
+        int length = AstBufferUtil.toBuffer(this, new char[len], 0);
+        msg += ";\n repetition gives success (" + length + ")";
+      }
+      catch (ArrayIndexOutOfBoundsException e1) {
+        msg += ";\n repetition fails as well";
+      }
+      throw new RuntimeException(msg, e);
+    }
     if (endOffset != len) {
-      throw new AssertionError("len=" + len + "; endOffset=" + endOffset + "; this=" + this);
+      String msg = "len=" + len + ";\n endOffset=" + endOffset;
+      msg += diagnoseTextInconsistency(new String(buffer, 0, endOffset));
+      throw new AssertionError(msg);
     }
     return buffer;
+  }
+
+  private String diagnoseTextInconsistency(String text) {
+    String msg = ";\n buffer=" + text;
+    msg += ";\n this=" + this;
+    int shitStart = textMatches(text, 0);
+    msg += ";\n matches until " + shitStart;
+    LeafElement leaf = findLeafElementAt(shitStart);
+    msg += ";\n element there=" + leaf;
+    if (leaf != null) {
+      PsiElement psi = leaf.getPsi();
+      msg += ";\n leaf.text=" + leaf.getText();
+      msg += ";\n leaf.psi=" + psi;
+      msg += ";\n leaf.lang=" + (psi == null ? null : psi.getLanguage());
+      msg += ";\n leaf.type=" + leaf.getElementType();
+    }
+    PsiElement psi = getPsi();
+    if (psi != null) {
+      boolean valid = psi.isValid();
+      msg += ";\n psi.valid=" + valid;
+      if (valid) {
+        PsiFile file = psi.getContainingFile();
+        if (file != null) {
+          msg += ";\n psi.file=" + file;
+          msg += ";\n psi.file.tl=" + file.getTextLength();
+          msg += ";\n psi.file.lang=" + file.getLanguage();
+          msg += ";\n psi.file.vp=" + file.getViewProvider();
+          msg += ";\n psi.file.vp.lang=" + file.getViewProvider().getLanguages();
+          msg += ";\n psi.file.vp.lang=" + file.getViewProvider().getLanguages();
+
+          PsiElement fileLeaf = file.findElementAt(getTextRange().getStartOffset());
+          LeafElement myLeaf = findLeafElementAt(0);
+          msg += ";\n leaves at start=" + fileLeaf + " and " + myLeaf;
+        }
+      }
+    }
+    return msg;
   }
 
   public boolean textContains(char c) {

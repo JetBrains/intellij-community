@@ -28,6 +28,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -36,6 +39,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.FilterComponent;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +57,7 @@ import java.util.List;
  */
 public abstract class LogConsoleBase extends AdditionalTabComponent implements LogConsole, LogFilterListener {
   private static final Logger LOG = Logger.getInstance("com.intellij.diagnostic.logging.LogConsoleImpl");
+  @NonNls private static final String APPLYING_FILTER_TITLE = "Applying filter...";
 
   private ConsoleView myConsole;
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();
@@ -61,6 +66,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private String myLineUnderSelection = null;
   private int myLineOffset = -1;
   private LogContentPreprocessor myContentPreprocessor;
+  private final Project myProject;
   private String myTitle = null;
   private boolean myWasInitialized;
   private final JPanel myTopComponent = new JPanel(new BorderLayout());
@@ -70,7 +76,13 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   private FilterComponent myFilter = new FilterComponent("LOG_FILTER_HISTORY", 5) {
     public void filter() {
-      myModel.updateCustomFilter(getFilter());
+      final Task.Backgroundable task = new Task.Backgroundable(myProject, APPLYING_FILTER_TITLE) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          myModel.updateCustomFilter(getFilter());
+        }
+      };
+      ProgressManager.getInstance().run(task);
     }
   };
   private JPanel mySearchComponent;
@@ -79,6 +91,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   public LogConsoleBase(Project project, @Nullable Reader reader, String title, final boolean buildInActions, LogFilterModel model) {
     super(new BorderLayout());
+    myProject = project;
     myTitle = title;
     myModel = model;
     myReaderThread = new ReaderThread(reader);
@@ -445,7 +458,13 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     myLogFilterCombo.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final LogFilter filter = (LogFilter)myLogFilterCombo.getSelectedItem();
-        myModel.selectFilter(filter);
+        final Task.Backgroundable task = new Task.Backgroundable(myProject, APPLYING_FILTER_TITLE) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            myModel.selectFilter(filter);
+          }
+        };
+        ProgressManager.getInstance().run(task);
       }
     });
     myTextFilterWrapper.removeAll();

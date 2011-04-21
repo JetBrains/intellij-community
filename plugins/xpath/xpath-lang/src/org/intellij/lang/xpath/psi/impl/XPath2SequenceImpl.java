@@ -33,7 +33,23 @@ public class XPath2SequenceImpl extends XPath2ElementImpl implements XPath2Seque
   @NotNull
   @Override
   public XPathType getType() {
-    return XPath2Type.SEQUENCE;
+    final XPathExpression[] sequence = getSequence();
+    if (sequence.length == 0) {
+      return XPath2Type.SEQUENCE;
+    }
+
+    XPathType commonType = XPath2Type.mapType(sequence[0].getType());
+    outer:
+    while (commonType != null) {
+      for (int i = 1; i < sequence.length; i++) {
+        final XPathType t = XPath2Type.mapType(sequence[i].getType());
+        if (commonType.isAssignableFrom(t)) {
+          break  outer;
+        }
+      }
+      commonType = XPathType.getSuperType(commonType);
+    }
+    return XPath2SequenceType.create(commonType, XPath2SequenceType.Cardinality.ONE_OR_MORE);
   }
 
   public void accept(XPath2ElementVisitor visitor) {

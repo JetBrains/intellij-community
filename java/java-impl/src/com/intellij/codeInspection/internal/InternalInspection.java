@@ -41,7 +41,7 @@ public abstract class InternalInspection extends BaseJavaLocalInspectionTool {
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
-                                        LocalInspectionToolSession session) {
+                                        @NotNull LocalInspectionToolSession session) {
     if (JavaPsiFacade.getInstance(holder.getProject()).findClass(JBList.class.getName(),
                                                                  GlobalSearchScope.allScope(holder.getProject())) == null) {
       return new PsiElementVisitor() {

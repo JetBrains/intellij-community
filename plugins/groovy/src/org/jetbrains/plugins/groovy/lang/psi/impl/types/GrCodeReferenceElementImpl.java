@@ -17,7 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -43,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -61,8 +62,17 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceEl
  * @date: 26.03.2007
  */
 public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeReferenceElement> implements GrCodeReferenceElement {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.types.GrCodeReferenceElementImpl");
+  private volatile String myCachedTextSkipWhiteSpaceAndComments;
+
   public GrCodeReferenceElementImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  @Override
+  public void subtreeChanged() {
+    super.subtreeChanged();
+    myCachedTextSkipWhiteSpaceAndComments = null;
   }
 
   @Override
@@ -143,24 +153,57 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
 
   @NotNull
   public String getCanonicalText() {
-    PsiElement resolved = resolve();
-    if (resolved instanceof PsiClass) {
-      final String qname = ((PsiClass)resolved).getQualifiedName();
-      if (qname != null) {
-        return qname;
-      }
-    }
-    if (resolved instanceof PsiPackage) {
-      return ((PsiPackage) resolved).getQualifiedName();
-    }
+    final ReferenceKind kind = getKind(false);
+    switch (kind) {
+      case CLASS:
+      case CLASS_IN_QUALIFIED_NEW:
+      case CLASS_OR_PACKAGE:
+        final PsiElement target = resolve();
+        if (target instanceof PsiClass) {
+          final PsiClass aClass = (PsiClass)target;
+          String name = aClass.getQualifiedName();
+          if (name == null) {
+            name = aClass.getName(); //?
+          }
+          final PsiType[] types = getTypeArguments();
+          if (types.length == 0) return name;
 
-    final GrCodeReferenceElement qualifier = getQualifier();
-    final String referenceName = StringUtil.notNullize(getReferenceName());
-    if (qualifier != null) {
-      return qualifier.getCanonicalText() + "." + referenceName;
-    }
+          final StringBuilder buf = new StringBuilder();
+          buf.append(name);
+          buf.append('<');
+          for (int i = 0; i < types.length; i++) {
+            if (i > 0) buf.append(',');
+            buf.append(types[i].getCanonicalText());
+          }
+          buf.append('>');
 
-    return referenceName;
+          return buf.toString();
+        }
+        else if (target instanceof PsiPackage) {
+          return ((PsiPackage)target).getQualifiedName();
+        }
+        else {
+          LOG.assertTrue(target == null);
+          return getTextSkipWhiteSpaceAndComments();
+        }
+
+      case CLASS_FQ:
+      case CLASS_OR_PACKAGE_FQ:
+      case PACKAGE_FQ:
+      case STATIC_MEMBER_FQ:
+        return getTextSkipWhiteSpaceAndComments();
+      default:
+        LOG.assertTrue(false);
+        return null;
+    }
+  }
+
+  private String getTextSkipWhiteSpaceAndComments() {
+    String whiteSpaceAndComments = myCachedTextSkipWhiteSpaceAndComments;
+    if (whiteSpaceAndComments == null) {
+      myCachedTextSkipWhiteSpaceAndComments = whiteSpaceAndComments = PsiImplUtil.getTextSkipWhiteSpaceAndComments(getNode());
+    }
+    return whiteSpaceAndComments;
   }
 
   protected boolean bindsCorrectly(PsiElement element) {

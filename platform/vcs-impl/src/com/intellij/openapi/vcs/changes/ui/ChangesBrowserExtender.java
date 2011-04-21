@@ -19,12 +19,14 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.Change;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public interface ChangesBrowserExtender {
   void addToolbarActions(final DialogWrapper dialogWrapper);
   void addSelectedListChangeListener(SelectedListChangeListener listener);
   
-  List<AbstractVcs> getAffectedVcses();
+  Collection<AbstractVcs> getAffectedVcses();
   List<Change> getCurrentIncludedChanges();
 }

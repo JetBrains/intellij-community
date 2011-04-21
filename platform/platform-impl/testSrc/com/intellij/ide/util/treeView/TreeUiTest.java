@@ -2102,6 +2102,34 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertTree("+root\n");
   }
 
+  public void testQueueUpdate() throws Exception {
+    buildStructure(myRoot);
+
+    buildNode(new NodeElement("com"), false);
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  +intellij\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+
+    Node ibm = myCom.addChild("ibm");
+
+    getBuilder().queueUpdateFrom(new NodeElement("com"), false, true);
+    getBuilder().queueUpdateFrom(new NodeElement("/"), false, false);
+
+    assertTree("-/\n" +
+               " -com\n" +
+               "  ibm\n" +
+               "  +intellij\n" +
+               " +jetbrains\n" +
+               " +org\n" +
+               " +xunit\n");
+
+  }
+
   public void testReleaseBuilderDuringUpdate() throws Exception {
     assertReleaseDuringBuilding("update", "fabrique", new Runnable() {
       @Override
@@ -2208,6 +2236,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public static class SyncUpdate extends TreeUiTest {
     public SyncUpdate() {
       super(false, false);
+    }
+
+    @Override
+    public void testQueueUpdate() throws Exception {
+      super.testQueueUpdate();
     }
   }
 

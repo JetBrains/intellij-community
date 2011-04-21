@@ -22,8 +22,8 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
  * @author nik
  */
 public class ProjectInspectionToolsConfigurableProvider extends ErrorsConfigurableProvider {
-  private InspectionProfileManager myProfileManager;
-  private InspectionProjectProfileManager myProjectProfileManager;
+  private final InspectionProfileManager myProfileManager;
+  private final InspectionProjectProfileManager myProjectProfileManager;
 
   public ProjectInspectionToolsConfigurableProvider(InspectionProfileManager profileManager,
                                                     InspectionProjectProfileManager projectProfileManager) {

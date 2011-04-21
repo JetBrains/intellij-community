@@ -107,7 +107,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * @return not-null visitor for this inspection.
    */
   @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly, final LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return buildVisitor(holder, isOnTheFly);
   }
 

@@ -68,11 +68,13 @@ public class GrMapType extends GrLiteralClassType {
       facade.findClass(JAVA_UTIL_LINKED_HASH_MAP, scope) != null ? JAVA_UTIL_LINKED_HASH_MAP : CommonClassNames.JAVA_UTIL_MAP;
   }
 
+  @NotNull
   @Override
   protected String getJavaClassName() {
     return myJavaClassName;
   }
 
+  @NotNull
   public String getClassName() {
     return StringUtil.getShortName(myJavaClassName);
   }
@@ -152,11 +154,6 @@ public class GrMapType extends GrLiteralClassType {
       return myStringEntries.equals(((GrMapType)obj).myStringEntries) && myOtherEntries.equals(((GrMapType)obj).myOtherEntries);
     }
     return super.equals(obj);
-  }
-
-  @Nullable
-  public PsiType getValueType(@NotNull String key) {
-    return myStringEntries.get(key);
   }
 
   public boolean isAssignableFrom(@NotNull PsiType type) {

@@ -229,7 +229,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     if (PsiType.VOID.equals(var.getType()) || prefix.startsWith(JavaCompletionUtil.IS_PREFIX) ||
         prefix.startsWith(JavaCompletionUtil.GET_PREFIX) ||
         prefix.startsWith(JavaCompletionUtil.SET_PREFIX)) {
-      completeVariableNameForRefactoring(var.getProject(), set, matcher, var.getType(), variableKind);
+      completeVariableNameForRefactoring(var.getProject(), set, matcher, var.getType(), variableKind, includeOverlapped);
       return;
     }
 
@@ -261,16 +261,23 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
                                     matcher), suggestedNameInfo);
   }
 
-  public static void completeVariableNameForRefactoring(Project project, Set<LookupElement> set, PrefixMatcher matcher, PsiType varType, VariableKind varKind) {
+  public static void completeVariableNameForRefactoring(Project project,
+                                                        Set<LookupElement> set,
+                                                        PrefixMatcher matcher,
+                                                        PsiType varType,
+                                                        VariableKind varKind, final boolean includeOverlapped) {
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(varKind, null, null, varType);
-    final String[] strings = completeVariableNameForRefactoring(codeStyleManager, matcher, varType, varKind, suggestedNameInfo);
+    final String[] strings = completeVariableNameForRefactoring(codeStyleManager, matcher, varType, varKind, suggestedNameInfo,
+                                                                includeOverlapped);
     tunePreferencePolicy(LookupItemUtil.addLookupItems(set, strings, matcher), suggestedNameInfo);
   }
 
-  public static String[] completeVariableNameForRefactoring(JavaCodeStyleManager codeStyleManager, final PrefixMatcher matcher, final PsiType varType,
-                                                               final VariableKind varKind,
-                                                               SuggestedNameInfo suggestedNameInfo) {
+  public static String[] completeVariableNameForRefactoring(JavaCodeStyleManager codeStyleManager,
+                                                            final PrefixMatcher matcher,
+                                                            final PsiType varType,
+                                                            final VariableKind varKind,
+                                                            SuggestedNameInfo suggestedNameInfo, final boolean includeOverlapped) {
     Set<String> result = new LinkedHashSet<String>();
     final String[] suggestedNames = suggestedNameInfo.names;
     for (final String suggestedName : suggestedNames) {
@@ -279,7 +286,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       }
     }
 
-    if (result.isEmpty() && PsiType.VOID != varType) {
+    if (result.isEmpty() && PsiType.VOID != varType && includeOverlapped) {
       // use suggested names as suffixes
       final String requiredSuffix = codeStyleManager.getSuffixByVariableKind(varKind);
       final String prefix = matcher.getPrefix();

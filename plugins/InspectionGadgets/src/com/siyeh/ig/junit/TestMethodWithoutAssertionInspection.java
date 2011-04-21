@@ -144,13 +144,55 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
             if (hasExpectedExceptionAnnotation(method)) {
                 return;
             }
-            final ContainsAssertionVisitor visitor =
-                    new ContainsAssertionVisitor();
-            method.accept(visitor);
-            if (visitor.containsAssertion()) {
+            if (containsAssertion(method)) {
+                return;
+            }
+            if (lastStatementIsCallToMethodWithAssertion(method)) {
                 return;
             }
             registerMethodError(method);
+        }
+
+        private boolean lastStatementIsCallToMethodWithAssertion(
+                PsiMethod method) {
+            final PsiCodeBlock body = method.getBody();
+            if (body == null) {
+                return false;
+            }
+            final PsiStatement[] statements = body.getStatements();
+            if (statements.length <= 0) {
+                return false;
+            }
+            final PsiStatement lastStatement = statements[0];
+            if (!(lastStatement instanceof PsiExpressionStatement)) {
+                return false;
+            }
+            final PsiExpressionStatement expressionStatement =
+                    (PsiExpressionStatement) lastStatement;
+            final PsiExpression expression =
+                    expressionStatement.getExpression();
+            if (!(expression instanceof PsiMethodCallExpression)) {
+                return false;
+            }
+            final PsiMethodCallExpression methodCallExpression =
+                    (PsiMethodCallExpression) expression;
+            final PsiReferenceExpression methodExpression =
+                    methodCallExpression.getMethodExpression();
+            final PsiExpression qualifierExpression =
+                    methodExpression.getQualifierExpression();
+            if (qualifierExpression != null &&
+                    !(qualifierExpression instanceof PsiThisExpression)) {
+                return false;
+            }
+            final PsiMethod targetMethod = methodCallExpression.resolveMethod();
+            return containsAssertion(targetMethod);
+        }
+
+        private boolean containsAssertion(PsiElement element) {
+            final ContainsAssertionVisitor visitor =
+                    new ContainsAssertionVisitor();
+            element.accept(visitor);
+            return visitor.containsAssertion();
         }
 
         private boolean hasExpectedExceptionAnnotation(PsiMethod method) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.dsl;
+class Pos07 {
+    static class Foo<X extends Number & Comparable<Number>> {}
+    static class DoubleFoo<X extends Number & Comparable<Number>,
+                           Y extends Number & Comparable<Number>> {}
+    static class TripleFoo<X extends Number & Comparable<Number>,
+                           Y extends Number & Comparable<Number>,
+                           Z> {}
 
-import com.intellij.util.indexing.IndexedRootsProvider;
-
-public interface GroovyDslIndexedRootProvider extends IndexedRootsProvider {
-
+    Foo<?> fw = new Foo<>();
+    DoubleFoo<?,?> dw = new DoubleFoo<>();
+    TripleFoo<?,?,?> tw = new TripleFoo<>();
 }

@@ -572,5 +572,22 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     }
     return ap;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    AbstractVcs that = (AbstractVcs)o;
+
+    if (!myKey.equals(that.myKey)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myKey.hashCode();
+  }
 }
 

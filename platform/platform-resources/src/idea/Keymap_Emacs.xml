@@ -40,6 +40,10 @@
     <action id="EditorSelectWord">
       <keyboard-shortcut first-keystroke="control alt W"/>
     </action>
+    <action id="EditorToggleStickySelection">
+      <keyboard-shortcut first-keystroke="control shift 2"/>
+    </action>
+    <action id="ToggleBookmark2" />
     <action id="AutoIndentLines">
       <keyboard-shortcut first-keystroke="control alt I"/>
       <keyboard-shortcut first-keystroke="control alt Q"/>
@@ -66,6 +70,7 @@
       <keyboard-shortcut first-keystroke="DELETE"/>
       <keyboard-shortcut first-keystroke="control D"/>
     </action>
+    <action id="SafeDelete" />
     <action id="EditorKillToWordStart">
       <keyboard-shortcut first-keystroke="alt DELETE"/>
     </action>

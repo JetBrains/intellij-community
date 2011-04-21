@@ -17,13 +17,8 @@ package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffSettings;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DirDiffManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,24 +33,8 @@ public class DirDiffManagerImpl extends DirDiffManager {
 
   @Override
   public void showDiff(@NotNull final DiffElement dir1, @NotNull final DiffElement dir2, final DirDiffSettings settings) {
-    Task.Backgroundable task = new Task.Backgroundable(myProject, "Directory comparison", true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setText("Calculating differences");
-        final DirDiffTableModel model = new DirDiffTableModel(myProject, dir1, dir2, indicator, settings);
-        final Runnable run = new Runnable() {
-          public void run() {
-            if (model.getRowCount() == 0) {
-              Messages.showInfoMessage(myProject, "No difference has been found", "Directory Diff Tool");
-            } else {
-              new DirDiffDialog(myProject, model, settings).show();
-            }
-          }
-        };
-        ApplicationManager.getApplication().invokeLater(run);
-      }
-    };
-    ProgressManager.getInstance().run(task);
+    final DirDiffTableModel model = new DirDiffTableModel(myProject, dir1, dir2, settings);
+    new DirDiffDialog(myProject, model, settings).show();
   }
 
   @Override

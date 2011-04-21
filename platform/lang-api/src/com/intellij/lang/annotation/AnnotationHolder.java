@@ -144,7 +144,7 @@ public interface AnnotationHolder {
       * @param message the info message.
       * @return the annotation (which can be modified to set additional annotation parameters)
       */
-     Annotation createWeakWarningAnnotation(@NotNull TextRange range, String message);
+     Annotation createWeakWarningAnnotation(@NotNull TextRange range, @Nullable String message);
 
 
   /**
@@ -175,7 +175,7 @@ public interface AnnotationHolder {
    * @param message the information message.
    * @return the annotation (which can be modified to set additional annotation parameters)
    */
-  Annotation createInfoAnnotation(@NotNull TextRange range, String message);
+  Annotation createInfoAnnotation(@NotNull TextRange range, @Nullable String message);
 
 
   AnnotationSession getCurrentAnnotationSession();

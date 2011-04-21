@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -90,5 +91,11 @@ public class CopyHandler extends EditorActionHandler {
                                                                 transferableDatas,
                                                                 escapedText != null ? new RawText(rawText) : null);
     CopyPasteManager.getInstance().setContents(transferable);
+    if (editor instanceof EditorEx) {
+      EditorEx ex = (EditorEx)editor;
+      if (ex.isStickySelection()) {
+        ex.setStickySelection(false);
+      }
+    }
   }
 }

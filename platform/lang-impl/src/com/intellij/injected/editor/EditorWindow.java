@@ -630,4 +630,14 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   public void setPlaceholder(@Nullable CharSequence text) {
     myDelegate.setPlaceholder(text);
   }
+
+  @Override
+  public boolean isStickySelection() {
+    return myDelegate.isStickySelection();
+  }
+
+  @Override
+  public void setStickySelection(boolean enable) {
+    myDelegate.setStickySelection(enable);
+  }
 }

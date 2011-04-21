@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -47,8 +48,7 @@ public class ModalityContextImpl implements ModalityContext {
       action.run();
     }
     else {
-      ModalityState modalityState = getCurrentModalityState();
-      PeriodicalTasksCloser.getInstance().invokeAndWaitInterruptedWhenClosing(project, action, modalityState);
+      WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(action);
     }
   }
 

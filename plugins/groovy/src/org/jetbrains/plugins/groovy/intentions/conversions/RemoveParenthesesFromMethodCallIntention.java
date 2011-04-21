@@ -37,7 +37,7 @@ public class RemoveParenthesesFromMethodCallIntention extends Intention {
 
   @Override
   protected boolean isStopElement(PsiElement element) {
-    return element instanceof GrStatementOwner;
+    return super.isStopElement(element) || element instanceof GrStatementOwner;
   }
 
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {

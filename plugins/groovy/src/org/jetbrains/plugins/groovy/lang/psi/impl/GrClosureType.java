@@ -133,7 +133,7 @@ public class GrClosureType extends PsiClassType {
     }
   }
 
-  @Nullable
+  @NotNull
   public String getCanonicalText() {
     final PsiType[] typeArgs = getParameters();
     if (typeArgs.length == 0 || typeArgs[0] == null) {

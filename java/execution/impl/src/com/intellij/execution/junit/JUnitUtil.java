@@ -66,8 +66,7 @@ public class JUnitUtil {
         }
       }
     }
-    final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-    return parameters.length == 0;
+    return psiMethod.getParameterList().getParametersCount() == 0;
   }
 
   public static boolean isTestMethod(final Location<? extends PsiMethod> location) {

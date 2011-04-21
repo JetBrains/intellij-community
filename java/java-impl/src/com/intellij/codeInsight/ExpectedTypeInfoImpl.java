@@ -20,6 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ExpectedTypeInfoImpl");
@@ -66,7 +68,12 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
           final PsiType bound = ((PsiWildcardType)parameters[0]).getExtendsBound();
           if (bound instanceof PsiClassType) {
             final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
-            defaultType = factory.createTypeFromText(CommonClassNames.JAVA_LANG_CLASS + "<" + bound.getCanonicalText() + ">", null);
+            String canonicalText = bound.getCanonicalText();
+            if (canonicalText.contains("?extends")) {
+              throw new AssertionError("Incorrect text: " + bound + "; " + Arrays.toString(((PsiClassType)bound).getParameters()));
+            }
+
+            defaultType = factory.createTypeFromText(CommonClassNames.JAVA_LANG_CLASS + "<" + canonicalText + ">", null);
           }
         }
       }

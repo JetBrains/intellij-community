@@ -70,6 +70,22 @@ public class LoadingDecorator {
     Disposer.register(parent, myLoadingLayer.myProgress);
   }
 
+  protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
+    parent.setLayout(new GridBagLayout());
+
+    final Font font = text.getFont();
+    text.setFont(font.deriveFont(font.getStyle(), font.getSize() + 8));
+    text.setForeground(Color.black);
+
+    final int gap = new JLabel().getIconTextGap();
+    final NonOpaquePanel result = new NonOpaquePanel(new FlowLayout(FlowLayout.CENTER, gap * 3, 0));
+    result.add(icon);
+    result.add(text);
+    parent.add(result);
+
+    return result;
+  }
+
   public JComponent getComponent() {
     return myPane;
   }
@@ -121,8 +137,7 @@ public class LoadingDecorator {
   }
 
   private class LoadingLayer extends JPanel {
-
-    private final JLabel myText;
+    private final JLabel myText = new JLabel("", SwingConstants.CENTER);
 
     private BufferedImage mySnapshot;
     private Color mySnapshotBg;
@@ -137,22 +152,8 @@ public class LoadingDecorator {
     private LoadingLayer() {
       setOpaque(false);
       setVisible(false);
-      setLayout(new GridBagLayout());
-
-      myText = new JLabel("", JLabel.CENTER);
-      final Font font = myText.getFont();
-      myText.setFont(font.deriveFont(font.getStyle(), font.getSize() + 8));
-      myText.setForeground(Color.black);
       myProgress.setOpaque(false);
-
-
-      final int gap = new JLabel().getIconTextGap();
-      myTextComponent = new NonOpaquePanel(new FlowLayout(FlowLayout.CENTER, gap * 3, 0));
-      myTextComponent.add(myProgress);
-      myTextComponent.add(myText);
-
-      add(myTextComponent);
-
+      myTextComponent = customizeLoadingLayer(this, myText, myProgress);
       myProgress.suspend();
     }
 

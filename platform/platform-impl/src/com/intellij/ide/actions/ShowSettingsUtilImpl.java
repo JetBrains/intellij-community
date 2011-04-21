@@ -44,7 +44,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     _showSettingsDialog(project, group, null);
   }
 
-  private void _showSettingsDialog(final Project project, ConfigurableGroup[] group, Configurable toSelect) {
+  private static void _showSettingsDialog(final Project project, ConfigurableGroup[] group, Configurable toSelect) {
     group = filterEmptyGroups(group);
 
     if ("false".equalsIgnoreCase(System.getProperty("new.options.editor"))) {
@@ -83,7 +83,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     return null;
   }
 
-  public void showSettingsDialog(@Nullable final Project project, final @NotNull String nameToSelect) {
+  public void showSettingsDialog(@Nullable final Project project, @NotNull final String nameToSelect) {
     ConfigurableGroup[] group;
     if (project == null) {
       group = new ConfigurableGroup[] {new IdeConfigurablesGroup()};

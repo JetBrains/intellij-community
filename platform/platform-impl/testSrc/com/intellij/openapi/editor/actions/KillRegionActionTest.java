@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.ide.KillRingTransferable;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +39,6 @@ public class KillRegionActionTest extends AbstractRegionToKillRingTest {
     killRegion();
     if (parseResult.first != null) {
       Transferable contents = CopyPasteManager.getInstance().getContents();
-      assertTrue(contents instanceof KillRingTransferable);
       assertEquals(parseResult.first, contents.getTransferData(DataFlavor.stringFlavor));
     }
     

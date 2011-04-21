@@ -58,10 +58,9 @@ public class KillRingSaveAction extends TextComponentEditorAction {
       if (start >= end) {
         return;
       }
-      Document document = editor.getDocument();
-      KillRingUtil.copyToKillRing(document, start, end, false);
+      KillRingUtil.copyToKillRing(editor, start, end, false);
       if (myRemove) {
-        document.deleteString(start, end);
+        editor.getDocument().deleteString(start, end);
       }
     }
   }

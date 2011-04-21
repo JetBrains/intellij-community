@@ -46,7 +46,11 @@ public class XPathType {
         return myAbstract;
     }
 
-    public static XPathType fromString(String value) {
+  public static XPathType getSuperType(XPathType type) {
+    return type instanceof XPath2Type ? ((XPath2Type)type).getSuperType() : null;
+  }
+
+  public static XPathType fromString(String value) {
         if ("string".equals(value)) {
             return XPathType.STRING;
         } else if ("number".equals(value)) {
@@ -68,6 +72,50 @@ public class XPathType {
   }
 
   public static boolean isAssignable(@NotNull XPathType left, @NotNull XPathType type) {
+    if (left instanceof ChoiceType) {
+      final XPathType[] types = ((ChoiceType)left).getTypes();
+      for (XPathType t : types) {
+        if (isAssignable(t, type)) {
+          return true;
+        }
+      }
+      return false;
+    }
     return left.isAssignableFrom(type) || type.canBePromotedTo(left);
+  }
+
+  public static final class ChoiceType extends XPathType {
+    private final XPathType[] myTypes;
+
+    ChoiceType(XPathType[] types, String name) {
+      super(name, true);
+      myTypes = types;
+    }
+
+    public static XPathType create(XPath2Type... types) {
+      final StringBuilder name = new StringBuilder();
+      for (XPath2Type type : types) {
+        if (name.length() > 0) {
+          name.append(", ");
+        }
+        name.append(type.getName());
+      }
+      name.insert(0, "one of ");
+      return new ChoiceType(types, name.toString());
+    }
+
+    public XPathType[] getTypes() {
+      return myTypes;
+    }
+
+    @Override
+    public boolean isAssignableFrom(@NotNull XPathType type) {
+      return false;
+    }
+
+    @Override
+    protected boolean canBePromotedTo(XPathType type) {
+      return false;
+    }
   }
 }

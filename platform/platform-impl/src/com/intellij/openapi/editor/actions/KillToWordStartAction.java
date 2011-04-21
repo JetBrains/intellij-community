@@ -53,12 +53,12 @@ public class KillToWordStartAction extends TextComponentEditorAction {
       boolean camel = editor.getSettings().isCamelWords();
       for (int i = caretOffset - 1; i >= 0; i--) {
         if (EditorActionUtil.isWordStart(text, i, camel)) {
-          KillRingUtil.cut(document, i, caretOffset);
+          KillRingUtil.cut(editor, i, caretOffset);
           return;
         }
       }
 
-      KillRingUtil.cut(document, 0, caretOffset);
+      KillRingUtil.cut(editor, 0, caretOffset);
     }
   }
 }
