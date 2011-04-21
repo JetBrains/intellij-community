@@ -34,7 +34,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
 
   @Override
   public String getPath() {
-    return myFile.getPath();
+    return myFile.getPresentableUrl();
   }
 
   @NotNull

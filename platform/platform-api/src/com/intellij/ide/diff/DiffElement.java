@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.diff;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -42,6 +43,7 @@ public abstract class DiffElement<T> {
   public static final DiffElement[] EMPTY_ARRAY = new DiffElement[0];
   private DiffPanel myDiffPanel;
   private Editor myEditor;
+  private static final Logger LOG = Logger.getInstance(DiffElement.class.getName());
 
   public abstract String getPath();
 
@@ -80,18 +82,24 @@ public abstract class DiffElement<T> {
     disposeViewComponent();
     try {
       final T value = getValue();
+      FileType fileType = getFileType();
+      if (fileType != null && fileType.isBinary()) {
+        return null;
+      }
       final byte[] content = getContent();
       final EditorFactory editorFactory = EditorFactory.getInstance();
       final Document document = value instanceof VirtualFile
                                 ? FileDocumentManager.getInstance().getDocument((VirtualFile)value)
                                 : editorFactory.createDocument(StringUtil.convertLineSeparators(new String(content)));
-      if (document != null && getFileType() != null) {
-        myEditor = editorFactory.createEditor(document, project, getFileType(), true);
+      if (document != null && fileType != null) {
+        myEditor = editorFactory.createEditor(document, project, fileType, true);
         myEditor.getSettings().setFoldingOutlineShown(false);
         return myEditor.getComponent();
       }
     }
-    catch (IOException e) {//
+    catch (IOException e) {
+      LOG.error(e);
+      // TODO
     }
     return null;
   }
@@ -100,7 +108,15 @@ public abstract class DiffElement<T> {
   public JComponent getDiffComponent(DiffElement element, Project project, Window parentWindow) {
     disposeDiffComponent();
 
-    final DiffRequest request = createRequest(project, element);
+    DiffRequest request;
+    try {
+      request = createRequest(project, element);
+    }
+    catch (IOException e) {
+      // TODO
+      LOG.error(e);
+      return null;
+    }
     if (request != null) {
       myDiffPanel = DiffManager.getInstance().createDiffPanel(parentWindow, project);
       myDiffPanel.setRequestFocus(false);
@@ -114,7 +130,7 @@ public abstract class DiffElement<T> {
   }
 
   @Nullable
-  protected DiffRequest createRequest(Project project, DiffElement element) {
+  protected DiffRequest createRequest(Project project, DiffElement element) throws IOException {
     final T src = getValue();
     if (src instanceof VirtualFile) {
       final Object trg = element.getValue();
@@ -134,13 +150,8 @@ public abstract class DiffElement<T> {
   }
 
   @Nullable
-  protected DiffContent createDiffContent() {
-    try {
-      return new SimpleContent(new String(getContent(), getCharset()), getFileType());
-    }
-    catch (IOException e) {//
-    }
-    return null;
+  protected DiffContent createDiffContent() throws IOException {
+    return new SimpleContent(new String(getContent(), getCharset()), getFileType());
   }
 
   public abstract T getValue();
