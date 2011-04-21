@@ -569,6 +569,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     finishNode(instruction);
   }
 
+  @Override
+  public void visitCaseSection(GrCaseSection caseSection) {
+    for (GrStatement statement : caseSection.getStatements()) {
+      statement.accept(this);
+    }
+  }
+
   public void visitTryStatement(GrTryCatchStatement tryCatchStatement) {
     final GrOpenBlock tryBlock = tryCatchStatement.getTryBlock();
     final GrCatchClause[] catchClauses = tryCatchStatement.getCatchClauses();
@@ -593,6 +600,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       finishNode(tryBeg);
     }
 
+    Set<Pair<InstructionImpl, GroovyPsiElement>> pendingAfterTry = new LinkedHashSet<Pair<InstructionImpl, GroovyPsiElement>>(myPending);
+
     InstructionImpl[][] throwers = new InstructionImpl[catchClauses.length][];
     for (int i = 0; i < catchClauses.length; i++) {
       final List<InstructionImpl> list = myCatchedExceptionInfos.pop().myThrowers;
@@ -614,6 +623,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       catches[i] = myHead;
       finishNode(catchBeg);
     }
+
+    pendingAfterTry.addAll(myPending);
+    myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>(pendingAfterTry);
 
     if (finallyClause != null) {
       flowAbrupted();
