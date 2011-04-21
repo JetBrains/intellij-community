@@ -34,16 +34,16 @@ public class HtmlTagTreeBreadcrumbsPresentationProvider extends BreadcrumbsPrese
     if (file == null || !HtmlTagTreeHighlightingUtil.isTagTreeHighlightingActive(file)) {
       return false;
     }
-
-    if (!HtmlTagTreeHighlightingUtil.containsParentTagsWithSameName(deepestElement)) {
-      return false;
-    }
     return true;
   }
 
   @Override
   public CrumbPresentation[] getCrumbPresentations(@NotNull PsiElement[] elements) {
     if (elements.length == 0 || !isMyContext(elements[elements.length - 1])) {
+      return null;
+    }
+
+    if (!HtmlTagTreeHighlightingUtil.containsTagsWithSameName(elements)) {
       return null;
     }
 

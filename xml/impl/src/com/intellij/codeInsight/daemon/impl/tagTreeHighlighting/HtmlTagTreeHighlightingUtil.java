@@ -25,7 +25,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashSet;
-import com.intellij.xml.util.HtmlUtil;
 
 import java.awt.*;
 import java.util.Set;
@@ -37,17 +36,16 @@ class HtmlTagTreeHighlightingUtil {
   private HtmlTagTreeHighlightingUtil() {
   }
 
-  static boolean containsParentTagsWithSameName(PsiElement element) {
+  static boolean containsTagsWithSameName(PsiElement[] elements) {
     final Set<String> names = new HashSet<String>();
 
-    while (element != null) {
+    for (PsiElement element : elements) {
       if (element instanceof XmlTag) {
         final String name = ((XmlTag)element).getName();
         if (!names.add(name)) {
           return true;
         }
       }
-      element = element.getParent();
     }
 
     return false;
@@ -58,7 +56,7 @@ class HtmlTagTreeHighlightingUtil {
       return false;
     }
 
-    if (!(file instanceof XmlFile) || !HtmlUtil.hasHtml(file)) {
+    if (!(file instanceof XmlFile)/* || !HtmlUtil.hasHtml(file)*/) {
       return false;
     }
 

@@ -48,8 +48,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.*;
-import java.util.List;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.PriorityQueue;
 
 /**
  * @author spleaner
@@ -93,7 +95,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     }, this);
 
 
-    myInfoProvider = findInfoProvider(findViewProvider());
+    myInfoProvider = findInfoProvider(findViewProvider(myFile, myProject));
 
     final CaretListener caretListener = new CaretListener() {
       public void caretPositionChanged(final CaretEvent e) {
@@ -193,10 +195,11 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     }
   }
 
-  @Nullable   
-  private BreadcrumbsInfoProvider findProviderForElement(@NotNull final PsiElement element) {
+  @Nullable
+  private static BreadcrumbsInfoProvider findProviderForElement(@NotNull final PsiElement element,
+                                                                final BreadcrumbsInfoProvider defaultProvider) {
     final BreadcrumbsInfoProvider provider = getInfoProvider(element.getLanguage());
-    return provider == null ? myInfoProvider : provider;
+    return provider == null ? defaultProvider : provider;
   }
 
   private static PsiElement[] toPsiElementArray(Collection<BreadcrumbsPsiItem> items) {
@@ -209,10 +212,8 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   }
 
   @Nullable
-  private static CrumbPresentation[] getCrumbPresentations(@NotNull final LinkedList<BreadcrumbsPsiItem> items,
-                                                           @NotNull PsiElement firstElement) {
+  private static CrumbPresentation[] getCrumbPresentations(final PsiElement[] elements) {
     for (BreadcrumbsPresentationProvider provider : BreadcrumbsPresentationProvider.EP_NAME.getExtensions()) {
-      final PsiElement[] elements = toPsiElementArray(items);
       final CrumbPresentation[] presentations = provider.getCrumbPresentations(elements);
       if (presentations != null) {
         return presentations;
@@ -226,23 +227,18 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   }
 
   @Nullable
-  private List<BreadcrumbsPsiItem> getLineElements(@NotNull final LogicalPosition position) {
-    final PsiElement firstElement = findFirstBreadcrumbedElement(position);
-    PsiElement element = firstElement;
-    if (element == null) return null;
+  private static LinkedList<BreadcrumbsPsiItem> getPresentableLineElements(@NotNull final LogicalPosition position,
+                                                                           final VirtualFile file,
+                                                                           final Editor editor,
+                                                                           final Project project,
+                                                                           final BreadcrumbsInfoProvider defaultInfoProvider) {
+    final LinkedList<BreadcrumbsPsiItem> result =
+      getLineElements(editor.logicalPositionToOffset(position), file, project, defaultInfoProvider);
 
-    final LinkedList<BreadcrumbsPsiItem> result = new LinkedList<BreadcrumbsPsiItem>();
-    while (element != null) {
-      BreadcrumbsInfoProvider provider = findProviderForElement(element);
+    if (result == null) return null;
 
-      if (provider != null && provider.acceptElement(element)) {
-        result.addFirst(new BreadcrumbsPsiItem(element, provider));
-      }
-
-      element = (provider != null) ? provider.getParent(element) : element.getParent();
-    }
-
-    final CrumbPresentation[] presentations = getCrumbPresentations(result, firstElement);
+    final PsiElement[] elements = toPsiElementArray(result);
+    final CrumbPresentation[] presentations = getCrumbPresentations(elements);
     if (presentations != null) {
       int i = 0;
       for (BreadcrumbsPsiItem item : result) {
@@ -254,16 +250,45 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   }
 
   @Nullable
-  private PsiElement findFirstBreadcrumbedElement(final LogicalPosition position) {
-    if (myFile == null || !myFile.isValid()) return null;
+  public static PsiElement[] getLinePsiElements(int offset, VirtualFile file, Project project, BreadcrumbsInfoProvider infoProvider) {
+    final LinkedList<BreadcrumbsPsiItem> lineElements = getLineElements(offset, file, project, infoProvider);
+    return lineElements != null ? toPsiElementArray(lineElements) : null;
+  }
 
-    final int offset = myEditor.logicalPositionToOffset(position);
+  @Nullable
+  private static LinkedList<BreadcrumbsPsiItem> getLineElements(final int offset,
+                                                                VirtualFile file,
+                                                                Project project,
+                                                                BreadcrumbsInfoProvider defaultInfoProvider) {
+    PsiElement element = findFirstBreadcrumbedElement(offset, file, project, defaultInfoProvider);
+    if (element == null) return null;
+
+    final LinkedList<BreadcrumbsPsiItem> result = new LinkedList<BreadcrumbsPsiItem>();
+    while (element != null) {
+      BreadcrumbsInfoProvider provider = findProviderForElement(element, defaultInfoProvider);
+
+      if (provider != null && provider.acceptElement(element)) {
+        result.addFirst(new BreadcrumbsPsiItem(element, provider));
+      }
+
+      element = (provider != null) ? provider.getParent(element) : element.getParent();
+    }
+    return result;
+  }
+
+  @Nullable
+  private static PsiElement findFirstBreadcrumbedElement(final int offset,
+                                                         final VirtualFile file,
+                                                         final Project project,
+                                                         final BreadcrumbsInfoProvider defaultInfoProvider) {
+    if (file == null || !file.isValid()) return null;
+
     PriorityQueue<PsiElement> leafs = new PriorityQueue<PsiElement>(3, new Comparator<PsiElement>() {
       public int compare(final PsiElement o1, final PsiElement o2) {
         return o2.getTextRange().getStartOffset() - o1.getTextRange().getStartOffset();
       }
     });
-    FileViewProvider viewProvider = findViewProvider();
+    FileViewProvider viewProvider = findViewProvider(file, project);
     if (viewProvider == null) return null;
 
     for (final Language language : viewProvider.getLanguages()) {
@@ -273,7 +298,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
       final PsiElement element = leafs.remove();
       if (!element.isValid()) continue;
 
-      BreadcrumbsInfoProvider provider = findProviderForElement(element);
+      BreadcrumbsInfoProvider provider = findProviderForElement(element, defaultInfoProvider);
       if (provider != null && provider.acceptElement(element)) {
         return element;
       }
@@ -285,9 +310,9 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   }
 
   @Nullable
-  private FileViewProvider findViewProvider() {
-    if (myFile == null) return null;
-    return PsiManager.getInstance(myProject).findViewProvider(myFile);
+  private static FileViewProvider findViewProvider(final VirtualFile file, final Project project) {
+    if (file == null) return null;
+    return PsiManager.getInstance(project).findViewProvider(file);
   }
 
   private void updateCrumbs(final LogicalPosition position) {
@@ -296,12 +321,12 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
         return;
       }
 
-      myComponent.setItems(getLineElements(position));
+      myComponent.setItems(getPresentableLineElements(position, myFile, myEditor, myProject, myInfoProvider));
     }
   }
 
   @Nullable
-  static BreadcrumbsInfoProvider findInfoProvider(@Nullable FileViewProvider viewProvider) {
+  public static BreadcrumbsInfoProvider findInfoProvider(@Nullable FileViewProvider viewProvider) {
     BreadcrumbsInfoProvider provider = null;
     if (viewProvider != null) {
       final WebEditorOptions webEditorOptions = WebEditorOptions.getInstance();

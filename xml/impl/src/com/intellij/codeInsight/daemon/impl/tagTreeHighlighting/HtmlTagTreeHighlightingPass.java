@@ -21,9 +21,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -37,10 +35,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider;
+import com.intellij.xml.breadcrumbs.BreadcrumbsXmlWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +60,7 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
   private final XmlFile myFile;
   private final Editor myEditor;
+  private final BreadcrumbsInfoProvider myInfoProvider;
 
   private final List<Pair<TextRange, TextRange>> myPairsToHighlight = new ArrayList<Pair<TextRange, TextRange>>();
 
@@ -66,6 +68,8 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     super(file.getProject(), editor.getDocument(), true);
     myFile = file;
     myEditor = editor;
+    final FileViewProvider viewProvider = PsiManager.getInstance(file.getProject()).findViewProvider(file.getVirtualFile());
+    myInfoProvider = BreadcrumbsXmlWrapper.findInfoProvider(viewProvider);
   }
 
   @Override
@@ -78,33 +82,21 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
       return;
     }
 
-    final int offset = myEditor.getCaretModel().getOffset();
+    final PsiElement[] elements =
+      BreadcrumbsXmlWrapper.getLinePsiElements(myEditor.getCaretModel().getOffset(), myFile.getVirtualFile(), myProject, myInfoProvider);
 
-    PsiElement element = null;
-
-    final FileViewProvider viewProvider = myFile.getViewProvider();
-    for (Language language : viewProvider.getLanguages()) {
-      if (language instanceof XMLLanguage) {
-        element = viewProvider.findElementAt(offset, language);
-        if (element != null) {
-          break;
-        }
-      }
-    }
-
-    if (element == null) {
+    if (elements == null || elements.length == 0) {
       return;
     }
 
-    if (!HtmlTagTreeHighlightingUtil.containsParentTagsWithSameName(element)) {
+    if (!HtmlTagTreeHighlightingUtil.containsTagsWithSameName(elements)) {
       return;
     }
 
-    while (element != null) {
-      if (element instanceof XmlTag) {
-        myPairsToHighlight.add(getTagRanges((XmlTag)element));
+    for (int i = elements.length - 1; i >= 0; i--) {
+      if (elements[i] instanceof XmlTag) {
+        myPairsToHighlight.add(getTagRanges((XmlTag)elements[i]));
       }
-      element = element.getParent();
     }
   }
 
