@@ -121,14 +121,18 @@ public class AndroidFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
     if (e instanceof PsiFile) {
       // resource file
       PsiField[] fields = AndroidResourceUtil.findResourceFieldsForFileResource((PsiFile)e, true);
-      assert fields.length > 0;
+      if (fields.length == 0) {
+        return null;
+      }
       return new MyFindUsagesHandler(e, fields);
     }
     else if (e instanceof XmlTag) {
       // value resource
       XmlTag tag = (XmlTag)e;
       PsiField[] fields = AndroidResourceUtil.findResourceFieldsForValueResource(tag, true);
-      assert fields.length > 0;
+      if (fields.length == 0) {
+        return null;
+      }
       XmlAttributeValue nameValue = AndroidUtils.getNameAttrValue(tag);
       assert nameValue != null;
       return new MyFindUsagesHandler(nameValue, fields);
