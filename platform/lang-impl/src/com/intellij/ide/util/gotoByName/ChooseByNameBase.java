@@ -29,6 +29,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -61,6 +62,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -441,16 +443,30 @@ public abstract class ChooseByNameBase {
       }
     });
 
+    final Set<KeyStroke> upShortcuts = getShortcuts(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
+    final Set<KeyStroke> downShortcuts = getShortcuts(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
     myTextField.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER && (e.getModifiers() & KeyEvent.SHIFT_MASK) != 0) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER && (e.getModifiers() & InputEvent.SHIFT_MASK) != 0) {
           myClosedByShiftEnter = true;
           close(true);
         }
         if (!myListScrollPane.isVisible()) {
           return;
         }
-        final int keyCode = e.getKeyCode();
+        final int keyCode;
+        
+        // Add support for user-defined 'caret up/down' shortcuts.
+        KeyStroke stroke = KeyStroke.getKeyStrokeForEvent(e);
+        if (upShortcuts.contains(stroke)) {
+          keyCode = KeyEvent.VK_UP;
+        }
+        else if (downShortcuts.contains(stroke)) {
+          keyCode = KeyEvent.VK_DOWN;
+        }
+        else {
+          keyCode = e.getKeyCode();
+        }
         switch (keyCode) {
           case KeyEvent.VK_DOWN:
             ListScrollingUtil.moveDown(myList, e.getModifiersEx());
@@ -529,6 +545,22 @@ public abstract class ChooseByNameBase {
     }
   }
 
+  private static Set<KeyStroke> getShortcuts(@NotNull String actionId) {
+    Set<KeyStroke> result = new HashSet<KeyStroke>();
+    Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+    Shortcut[] shortcuts = keymap.getShortcuts(actionId);
+    if (shortcuts == null) {
+      return result;
+    }
+    for (Shortcut shortcut : shortcuts) {
+      if (shortcut instanceof KeyboardShortcut) {
+        KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
+        result.add(keyboardShortcut.getFirstKeyStroke());
+      }
+    }
+    return result;
+  }
+  
   private void hideHint() {
     if (!myTextFieldPanel.focusRequested()) {
       doClose(false);
@@ -678,7 +710,7 @@ public abstract class ChooseByNameBase {
 
   protected void rebuildList(final int pos,
                              final int delay,
-                             final Runnable postRunnable,
+                             final @Nullable Runnable postRunnable,
                              final ModalityState modalityState,
                              final @Nullable ComponentEvent e) {
     ApplicationManager.getApplication().assertIsDispatchThread();

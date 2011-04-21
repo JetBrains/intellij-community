@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
@@ -45,6 +46,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
+import sun.util.LocaleServiceProviderPool;
 
 import javax.swing.*;
 import java.awt.*;
@@ -76,6 +78,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
 
   private JComboBox myReplaceFieldsCb;
   private boolean myInitialized = false;
+  private static final Logger LOG = Logger.getInstance("#" + InplaceIntroduceParameterPopup.class.getName());
 
 
   InplaceIntroduceParameterPopup(final Project project,
@@ -204,6 +207,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
           nameSuggestions.add(parameter.getName());
           nameSuggestions.addAll(Arrays.asList(names));
           final VariableInplaceRenamer renamer = new ParameterInplaceIntroducer(parameter);
+          LOG.assertTrue(parameter.isPhysical());
           renamer.performInplaceRename(false, nameSuggestions);
         }
       }

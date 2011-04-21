@@ -17,14 +17,21 @@ package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffSettings;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.LoadingDecorator;
+import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Konstantin Bulenkov
@@ -37,61 +44,172 @@ public class DirDiffTableModel extends AbstractTableModel {
   private final DirDiffSettings mySettings;
   private DiffElement mySrc;
   private DiffElement myTrg;
-  final List<DirDiffElement> myElements = new ArrayList<DirDiffElement>();
-  private boolean myUpdating = false;
+  private DTree myTree;
+  private final List<DirDiffElement> myElements = new ArrayList<DirDiffElement>();
+  private final AtomicBoolean myUpdating = new AtomicBoolean(false);
+  private JBTable myTable;
+  private Disposable myDisposableParent;
+  public String DECORATOR = "DIFF_TABLE_DECORATOR";
+  public volatile AtomicReference<String> text = new AtomicReference<String>(prepareText(""));
+  private Updater updater;
+  
+  
+  public static final String EMPTY_STRING = "                                                  ";
 
-  public DirDiffTableModel(Project project, DiffElement src, DiffElement trg, ProgressIndicator indicator, DirDiffSettings settings) {
+  public void stopUpdating() {
+    if (myUpdating.get()) {
+      myUpdating.set(false);
+    }
+  }
+
+  public void applyRemove() {
+    myUpdating.set(true);
+    final Iterator<DirDiffElement> i = myElements.iterator();
+    while(i.hasNext()) {
+      final DType type = i.next().getType();
+      switch (type) {
+        case SOURCE:
+          if (!mySettings.showNewOnSource) i.remove();
+          break;
+        case TARGET:
+          if (!mySettings.showNewOnTarget) i.remove();
+          break;
+        case SEPARATOR:
+          break;
+        case CHANGED:
+          if (!mySettings.showDifferent) i.remove();
+          break;
+        case EQUAL:
+          if (!mySettings.showEqual) i.remove();
+          break;
+      }
+    }
+
+    boolean sep = true;
+    for (int j = myElements.size() - 1; j >= 0; j--) {
+      if (myElements.get(j).isSeparator()) {
+        if (sep) {
+          myElements.remove(j);
+        } else {
+          sep = true;
+        }
+      } else {
+        sep = false;
+      }
+    }
+    fireTableDataChanged();
+    myUpdating.set(false);
+  }
+
+  private static String prepareText(String text) {
+    final int LEN = EMPTY_STRING.length();
+    String right;
+    if (text == null) {
+      right = EMPTY_STRING;
+    } else if (text.length() == LEN) {
+      right = text;
+    } else if (text.length() < LEN) {
+      right = text + EMPTY_STRING.substring(0, LEN - text.length());
+    } else {
+      right = "..." + text.substring(text.length() - LEN + 2);
+    }
+    return "Loading... " + right;
+  }
+
+  public DirDiffTableModel(Project project, DiffElement src, DiffElement trg, DirDiffSettings settings) {
     myProject = project;
     mySettings = settings;
     mySrc = src;
     myTrg = trg;
-    reloadModel(indicator);
   }
 
-  public void reloadModel(ProgressIndicator indicator) {
-    myUpdating = true;
-    clear();
-    final DTree tree = new DTree(null, "", true);
-    scan(mySrc, tree, true);
-    scan(myTrg, tree, false);
+  public void reloadModel() {
+    myUpdating.set(true);
+    final LoadingDecorator decorator = getDecorator();
+    decorator.startLoading(false);
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        try {
+          updater = new Updater(decorator, 100);
+          updater.start();
+          myTree = new DTree(null, "", true);
+          scan(mySrc, myTree, true);
+          scan(myTrg, myTree, false);
 
-    tree.setSource(mySrc);
-    tree.setTarget(myTrg);
-    tree.update(mySettings);
-    tree.updateVisibility(mySettings);
-
-    myElements.clear();
-    fillElements(tree);
-    fireTableDataChanged();
-    myUpdating = false;
+          myTree.setSource(mySrc);
+          myTree.setTarget(myTrg);
+          myTree.update(mySettings);
+          applySettings();
+        }
+        catch (Exception e) {//
+        }
+      }
+    });
   }
 
-  private void fillElements(DTree tree) {
+  private LoadingDecorator getDecorator() {
+    return (LoadingDecorator)myTable.getClientProperty(DECORATOR);
+  }
+
+  public void applySettings() {
+    if (! myUpdating.get()) myUpdating.set(true);
+    if (!getDecorator().isLoading()) {
+      getDecorator().startLoading(false);
+      if (updater == null) {
+        updater = new Updater(getDecorator(), 100);
+        updater.start();
+      }
+    }
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      public void run() {
+        myTree.updateVisibility(mySettings);
+        final ArrayList<DirDiffElement> elements = new ArrayList<DirDiffElement>();
+        fillElements(myTree, elements);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            clear();
+            myElements.addAll(elements);
+            myUpdating.set(false);
+            fireTableDataChanged();
+            DirDiffTableModel.this.text.set("");
+            if (getDecorator().isLoading()) {
+              getDecorator().stopLoading();
+            }
+          }
+        });
+      }
+    });
+  }
+
+  private void fillElements(DTree tree, List<DirDiffElement> elements) {
+    if (!myUpdating.get()) return;
     boolean separatorAdded = tree.getParent() == null;
+    text.set(prepareText(tree.getPath()));
     for (DTree child : tree.getChildren()) {
+      if (!myUpdating.get()) return;
       if (!child.isContainer()) {
         if (child.isVisible()) {
           if (!separatorAdded) {
-            myElements.add(DirDiffElement.createDirElement(tree.getSource(), tree.getTarget(), tree.getPath()));
+            elements.add(DirDiffElement.createDirElement(tree.getSource(), tree.getTarget(), tree.getPath()));
             separatorAdded = true;
           }
           switch (child.getType()) {
             case SOURCE:
-              myElements.add(DirDiffElement.createSourceOnly(child.getSource()));
+              elements.add(DirDiffElement.createSourceOnly(child.getSource()));
               break;
             case TARGET:
-              myElements.add(DirDiffElement.createTargetOnly(child.getTarget()));
+              elements.add(DirDiffElement.createTargetOnly(child.getTarget()));
               break;
             case CHANGED:
-              myElements.add(DirDiffElement.createChange(child.getSource(), child.getTarget()));
+              elements.add(DirDiffElement.createChange(child.getSource(), child.getTarget()));
               break;
             case EQUAL:
-              myElements.add(DirDiffElement.createEqual(child.getSource(), child.getTarget()));
+              elements.add(DirDiffElement.createEqual(child.getSource(), child.getTarget()));
               break;
           }
         }
       } else {
-        fillElements(child);
+        fillElements(child, elements);
       }
     }
   }
@@ -104,10 +222,17 @@ public class DirDiffTableModel extends AbstractTableModel {
     }
   }
 
-  private static void scan(DiffElement element, DTree root, boolean source) {
+  public void setDisposableParent(Disposable parent) {
+    myDisposableParent = parent;
+  }
+
+  private void scan(DiffElement element, DTree root, boolean source) {
+    if (!myUpdating.get()) return;
     if (element.isContainer()) {
       try {
+        text.set(prepareText(element.getPath()));
         for (DiffElement child : element.getChildren()) {
+          if (!myUpdating.get()) return;
           scan(child, root.addChild(child, source), source);
         }
       }
@@ -144,6 +269,14 @@ public class DirDiffTableModel extends AbstractTableModel {
     if (mySettings.showDate) count += 2;
     if (mySettings.showSize) count += 2;
     return count;
+  }
+
+  public JBTable getTable() {
+    return myTable;
+  }
+
+  public void setTable(JBTable table) {
+    myTable = table;
   }
 
   @Nullable
@@ -218,6 +351,41 @@ public class DirDiffTableModel extends AbstractTableModel {
   }
 
   public boolean isUpdating() {
-    return myUpdating;
+    return myUpdating.get();
+  }
+
+  class Updater extends Thread {
+    private final LoadingDecorator myDecorator;
+    private final int mySleep;
+
+    Updater(LoadingDecorator decorator, int sleep) {
+      super("Loading Updater");
+      myDecorator = decorator;
+      mySleep = sleep;
+    }
+
+    @Override
+    public void run() {
+      if (myDecorator.isLoading()) {
+        try {
+          Thread.sleep(mySleep);
+        }
+        catch (InterruptedException e) {//
+        }
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            final String s = text.get();
+            if (s != null && myDecorator.isLoading()) {
+              myDecorator.setLoadingText(s);
+            }
+          }
+        });
+        updater = new Updater(myDecorator, mySleep);
+        updater.start();
+      } else {
+        updater = null;
+      }
+    }
   }
 }

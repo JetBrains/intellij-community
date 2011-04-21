@@ -26,7 +26,7 @@ public interface CachedValueProvider<T> {
     private final Object[] myDependencyItems;
     private boolean myLockValue = false;
 
-    public Result(T value, Object... dependencyItems) {
+    public Result(@Nullable T value, Object... dependencyItems) {
       myValue = value;
       myDependencyItems = dependencyItems;
     }
@@ -39,11 +39,11 @@ public interface CachedValueProvider<T> {
       return myDependencyItems;
     }
 
-    public static <T> Result<T> createSingleDependency(T value, Object dependency) {
+    public static <T> Result<T> createSingleDependency(@Nullable T value, Object dependency) {
       return create(value, dependency);
     }
 
-    public static <T> Result<T> create(T value, Object... dependencies) {
+    public static <T> Result<T> create(@Nullable T value, Object... dependencies) {
       return new Result<T>(value, dependencies);
     }
 

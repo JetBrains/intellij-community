@@ -42,7 +42,15 @@ public abstract class DirDiffAction extends ToggleAction implements DirDiffIcons
   @Override
   public final void setSelected(AnActionEvent e, boolean state) {
     updateState(state);
-    getModel().reloadModel(null);
+    if (this.getClass() == RefreshDirDiffAction.class) {
+      getModel().reloadModel();
+    } else {
+      if (state) {
+        getModel().applySettings();
+      } else {
+        getModel().applyRemove();
+      }
+    }
   }
 
   @Override

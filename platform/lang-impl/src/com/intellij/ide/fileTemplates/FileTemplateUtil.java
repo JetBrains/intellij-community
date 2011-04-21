@@ -65,14 +65,41 @@ import java.util.*;
 public class FileTemplateUtil{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.FileTemplateUtil");
   @NonNls private static final String FILE_RESOURCE_LOADER_INSTANCE = "file.resource.loader.instance";
-  private static boolean ourVelocityInitialized = false;
   private static final CreateFromTemplateHandler ourDefaultCreateFromTemplateHandler = new DefaultCreateFromTemplateHandler();
 
   private FileTemplateUtil() {
   }
 
+  static {
+    try{
+      File modifiedPatternsPath = new File(PathManager.getConfigPath());
+      modifiedPatternsPath = new File(modifiedPatternsPath, "fileTemplates");
+      modifiedPatternsPath = new File(modifiedPatternsPath, "includes");
+
+      LogSystem emptyLogSystem = new LogSystem() {
+        public void init(RuntimeServices runtimeServices) throws Exception {
+        }
+
+        public void logVelocityMessage(int i, String s) {
+          //todo[myakovlev] log somethere?
+        }
+      };
+      Velocity.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM, emptyLogSystem);
+      Velocity.setProperty(RuntimeConstants.RESOURCE_LOADER, "file,class");
+      //todo[myakovlev] implement my own Loader, with ability to load templates from classpath
+      Velocity.setProperty(FILE_RESOURCE_LOADER_INSTANCE, new FileResourceLoader());
+      Velocity.setProperty("class.resource.loader.class", MyClasspathResourceLoader.class.getName());
+      Velocity.setProperty(RuntimeConstants.FILE_RESOURCE_LOADER_PATH, modifiedPatternsPath.getAbsolutePath());
+      Velocity.setProperty(RuntimeConstants.INPUT_ENCODING, FileTemplate.ourEncoding);
+      Velocity.setProperty(RuntimeConstants.PARSER_POOL_SIZE, 3);
+      Velocity.init();
+    }
+    catch (Exception e){
+      LOG.error("Unable to init Velocity", e);
+    }
+  }
+  
   public static String[] calculateAttributes(String templateContent, Properties properties, boolean includeDummies) throws ParseException {
-    initVelocity();
     final Set<String> unsetAttributes = new HashSet<String>();
     final Set<String> definedAttributes = new HashSet<String>();
     //noinspection HardCodedStringLiteral
@@ -161,7 +188,6 @@ public class FileTemplateUtil{
   }
 
   public static String mergeTemplate(Map attributes, String content) throws IOException{
-    initVelocity();
     VelocityContext context = new VelocityContext();
     for (final Object o : attributes.keySet()) {
       String name = (String)o;
@@ -171,7 +197,6 @@ public class FileTemplateUtil{
   }
 
   public static String mergeTemplate(Properties attributes, String content) throws IOException{
-    initVelocity();
     VelocityContext context = new VelocityContext();
     Enumeration<?> names = attributes.propertyNames();
     while (names.hasMoreElements()){
@@ -182,7 +207,6 @@ public class FileTemplateUtil{
   }
 
   private static String mergeTemplate(String templateContent, final VelocityContext context) throws IOException {
-    initVelocity();
     StringWriter stringWriter = new StringWriter();
     try {
       Velocity.evaluate(context, stringWriter, "", templateContent);
@@ -199,43 +223,8 @@ public class FileTemplateUtil{
     return stringWriter.toString();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static synchronized void initVelocity(){
-    try{
-      if (ourVelocityInitialized) {
-        return;
-      }
-      File modifiedPatternsPath = new File(PathManager.getConfigPath());
-      modifiedPatternsPath = new File(modifiedPatternsPath, "fileTemplates");
-      modifiedPatternsPath = new File(modifiedPatternsPath, "includes");
-
-      LogSystem emptyLogSystem = new LogSystem() {
-        public void init(RuntimeServices runtimeServices) throws Exception {
-        }
-
-        public void logVelocityMessage(int i, String s) {
-          //todo[myakovlev] log somethere?
-        }
-      };
-      Velocity.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM, emptyLogSystem);
-      Velocity.setProperty(RuntimeConstants.RESOURCE_LOADER, "file,class");
-      //todo[myakovlev] implement my own Loader, with ability to load templates from classpath
-      Velocity.setProperty(FILE_RESOURCE_LOADER_INSTANCE, new FileResourceLoader());
-      Velocity.setProperty("class.resource.loader.class", MyClasspathResourceLoader.class.getName());
-      Velocity.setProperty(RuntimeConstants.FILE_RESOURCE_LOADER_PATH, modifiedPatternsPath.getAbsolutePath());
-      Velocity.setProperty(RuntimeConstants.INPUT_ENCODING, FileTemplate.ourEncoding);
-      Velocity.setProperty(RuntimeConstants.PARSER_POOL_SIZE, 3);
-      Velocity.init();
-      ourVelocityInitialized = true;
-    }
-    catch (Exception e){
-      LOG.error("Unable to init Velocity", e);
-    }
-  }
-
   @TestOnly
   public static void addResourcesDir(File dir) {
-    initVelocity();
     final FileResourceLoader loader = (FileResourceLoader)Velocity.getProperty(FILE_RESOURCE_LOADER_INSTANCE);
     try {
       Field pathsField = FileResourceLoader.class.getDeclaredField("paths");
@@ -341,10 +330,10 @@ public class FileTemplateUtil{
     return methodText.replaceAll("\n", "\n" + StringUtil.repeatSymbol(' ',indent));
   }
 
-  @NonNls private static final String INCLUDES_PATH = "fileTemplates/includes/";
 
   public static class MyClasspathResourceLoader extends ClasspathResourceLoader{
-    @NonNls private static final String FT_EXTENSION = ".ft";
+    private static final String INCLUDES_PATH = "fileTemplates/includes/";
+    private static final String FT_EXTENSION = ".ft";
 
     public synchronized InputStream getResourceStream(String name) throws ResourceNotFoundException{
       return super.getResourceStream(INCLUDES_PATH + name + FT_EXTENSION);
