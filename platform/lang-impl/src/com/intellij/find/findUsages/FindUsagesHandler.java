@@ -23,16 +23,19 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author peter
@@ -119,7 +122,7 @@ public abstract class FindUsagesHandler {
   public void processUsagesInText(@NotNull final PsiElement element,
                                   @NotNull Processor<UsageInfo> processor,
                                   @NotNull GlobalSearchScope searchScope) {
-    String stringToSearch = getStringToSearch(element);
+    Collection<String> stringToSearch = getStringsToSearch(element);
     if (stringToSearch == null) return;
     final TextRange elementTextRange = ApplicationManager.getApplication().runReadAction(new Computable<TextRange>() {
       public TextRange compute() {
@@ -138,16 +141,18 @@ public abstract class FindUsagesHandler {
         return new UsageInfo(usage, startOffset, endOffset, true);
       }
     };
-    TextOccurrencesUtil.processTextOccurences(element, stringToSearch, searchScope, processor, factory);
+    for (String s : stringToSearch) {
+      TextOccurrencesUtil.processTextOccurences(element, s, searchScope, processor, factory);
+    }
   }
 
   @Nullable
-  protected String getStringToSearch(final PsiElement element) {
+  protected Collection<String> getStringsToSearch(final PsiElement element) {
     if (element instanceof PsiNamedElement) {
-      return ((PsiNamedElement)element).getName();
+      return ContainerUtil.createMaybeSingletonList(((PsiNamedElement)element).getName());
     }
 
-    return element.getText();
+    return Collections.singleton(element.getText());
   }
 
   protected boolean isSearchForTextOccurencesAvailable(PsiElement psiElement, boolean isSingleFile) {
