@@ -27,6 +27,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,6 +40,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 public class KeymapUtil {
+  
   private static final Icon ourKeyboardShortcutIcon = IconLoader.getIcon("/general/keyboardShortcut.png");
   private static final Icon ourMouseShortcutIcon = IconLoader.getIcon("/general/mouseShortcut.png");
   @NonNls private static final String APPLE_LAF_AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
@@ -59,6 +61,9 @@ public class KeymapUtil {
   private static final Set<Integer> ourTooltipKeys = new HashSet<Integer>();
   private static final Set<Integer> ourOtherTooltipKeys = new HashSet<Integer>();
   private static RegistryValue ourTooltipKeysProperty;
+
+  private KeymapUtil() {
+  }
 
   public static String getShortcutText(Shortcut shortcut) {
     String s = "";
@@ -99,6 +104,9 @@ public class KeymapUtil {
   }
 
   /**
+   * @param button        target mouse button
+   * @param modifiers     modifiers used within the target click
+   * @param clickCount    target clicks count
    * @return string representation of passed mouse shortcut.
    */
   public static String getMouseShortcutText(int button, int modifiers, int clickCount) {
@@ -176,12 +184,12 @@ public class KeymapUtil {
     if (SystemInfo.isMac) {
       try {
         Class appleLaf = Class.forName(APPLE_LAF_AQUA_LOOK_AND_FEEL_CLASS_NAME);
-        Method getModifiers = appleLaf.getMethod(GET_KEY_MODIFIERS_TEXT_METHOD, new Class[]{int.class, boolean.class});
-        return (String)getModifiers.invoke(appleLaf, new Object[]{new Integer(modifiers), Boolean.FALSE});
+        Method getModifiers = appleLaf.getMethod(GET_KEY_MODIFIERS_TEXT_METHOD, int.class, boolean.class);
+        return (String)getModifiers.invoke(appleLaf, modifiers, Boolean.FALSE);
       }
       catch (Exception e) {
         if (SystemInfo.isMacOSLeopard) {
-          return KeymapUtil.getKeyModifiersTextForMacOSLeopard(modifiers);
+          return getKeyModifiersTextForMacOSLeopard(modifiers);
         }
         
         // OK do nothing here.
@@ -198,8 +206,7 @@ public class KeymapUtil {
 
   public static String getFirstKeyboardShortcutText(AnAction action) {
     Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();
-    for (int i = 0; i < shortcuts.length; i++) {
-      Shortcut shortcut = shortcuts[i];
+    for (Shortcut shortcut : shortcuts) {
       if (shortcut instanceof KeyboardShortcut) {
         return getShortcutText(shortcut);
       }
@@ -211,20 +218,22 @@ public class KeymapUtil {
     if (shortcuts.length == 0) {
       return "";
     }
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     for (int i = 0; i < shortcuts.length; i++) {
       Shortcut shortcut = shortcuts[i];
       if (i > 0) {
         buffer.append(' ');
       }
-      buffer.append(KeymapUtil.getShortcutText(shortcut));
+      buffer.append(getShortcutText(shortcut));
     }
     return buffer.toString();
   }
 
   /**
    * Factory method. It parses passed string and creates <code>MouseShortcut</code>.
-   * 
+   *
+   * @param keystrokeString       target keystroke
+   * @return                      shortcut for the given keystroke
    * @throws InvalidDataException if <code>keystrokeString</code> doesn't represent valid <code>MouseShortcut</code>.
    */
   public static MouseShortcut parseMouseShortcut(String keystrokeString) throws InvalidDataException {
@@ -234,19 +243,19 @@ public class KeymapUtil {
     for (StringTokenizer tokenizer = new StringTokenizer(keystrokeString); tokenizer.hasMoreTokens();) {
       String token = tokenizer.nextToken();
       if (SHIFT.equals(token)) {
-        modifiers |= MouseEvent.SHIFT_DOWN_MASK;
+        modifiers |= InputEvent.SHIFT_DOWN_MASK;
       }
       else if (CONTROL.equals(token) || CTRL.equals(token)) {
-        modifiers |= MouseEvent.CTRL_DOWN_MASK;
+        modifiers |= InputEvent.CTRL_DOWN_MASK;
       }
       else if (META.equals(token)) {
-        modifiers |= MouseEvent.META_DOWN_MASK;
+        modifiers |= InputEvent.META_DOWN_MASK;
       }
       else if (ALT.equals(token)) {
-        modifiers |= MouseEvent.ALT_DOWN_MASK;
+        modifiers |= InputEvent.ALT_DOWN_MASK;
       }
       else if (ALT_GRAPH.equals(token)) {
-        modifiers |= MouseEvent.ALT_GRAPH_DOWN_MASK;
+        modifiers |= InputEvent.ALT_GRAPH_DOWN_MASK;
       }
       else if (BUTTON1.equals(token)) {
         button = MouseEvent.BUTTON1;
@@ -268,7 +277,7 @@ public class KeymapUtil {
   }
 
   public static String getKeyModifiersTextForMacOSLeopard(int modifiers) {
-      StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
       if ((modifiers & InputEvent.META_MASK) != 0) {
           buf.append(Toolkit.getProperty("AWT.meta", "Meta"));
       }
@@ -324,10 +333,10 @@ public class KeymapUtil {
     ourTooltipKeys.clear();
     ourOtherTooltipKeys.clear();
 
-    processKey(text.contains("meta"), KeyEvent.META_MASK);
-    processKey(text.contains("control") | text.contains("ctrl"), KeyEvent.CTRL_MASK);
-    processKey(text.contains("shift"), KeyEvent.SHIFT_MASK);
-    processKey(text.contains("alt"), KeyEvent.ALT_MASK);
+    processKey(text.contains("meta"), InputEvent.META_MASK);
+    processKey(text.contains("control") | text.contains("ctrl"), InputEvent.CTRL_MASK);
+    processKey(text.contains("shift"), InputEvent.SHIFT_MASK);
+    processKey(text.contains("alt"), InputEvent.ALT_MASK);
 
   }
 
@@ -337,5 +346,18 @@ public class KeymapUtil {
     } else {
       ourOtherTooltipKeys.add(value);
     }
+  }
+
+  public static boolean isEmacsKeymap() {
+    return isEmacsKeymap(KeymapManager.getInstance().getActiveKeymap());
+  }
+  
+  public static boolean isEmacsKeymap(@Nullable Keymap keymap) {
+    for (; keymap != null; keymap = keymap.getParent()) {
+      if ("Emacs".equalsIgnoreCase(keymap.getName())) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -52,6 +52,8 @@ public class DTree {
   private DiffElement<?> myTarget;
   private DType type;
   private boolean myVisible = true;
+  private String mySeparator = null;
+  private String myPath = null;
 
   public DTree(@Nullable DTree parent, @NotNull String name, boolean container) {
     this.myParent = parent;
@@ -209,16 +211,21 @@ public class DTree {
   }
 
   public String getPath() {
-    final DTree parent = getParent();
-    if (parent != null) {
-      return parent.getPath() + getName() + (isContainer ? getSeparator() : "");
-    } else {
-      return getName() + (isContainer ? getSeparator() : "");
+    if (myPath == null) {
+      final DTree parent = getParent();
+      if (parent != null) {
+        myPath = parent.getPath() + getName() + (isContainer ? getSeparator() : "");
+      } else {
+        myPath = getName() + (isContainer ? getSeparator() : "");
+      }
     }
+    return myPath;
   }
 
   private String getSeparator() {
-    final String s = mySource != null ? mySource.getSeparator() : myTarget != null ? myTarget.getSeparator() : "";
-    return s;
+    if (mySeparator == null) {
+      mySeparator = mySource != null ? mySource.getSeparator() : myTarget != null ? myTarget.getSeparator() : "";
+    }
+    return mySeparator;
   }
 }

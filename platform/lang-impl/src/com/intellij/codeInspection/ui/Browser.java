@@ -456,47 +456,34 @@ public class Browser extends JPanel {
         PsiElement psiElement = ((RefElement)element).getElement();
         if (psiElement != null && psiElement.isValid()) {
           if (!CodeInsightUtilBase.preparePsiElementForWrite(psiElement)) return;
-
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              Runnable command = new Runnable() {
-                public void run() {
-                  CommandProcessor.getInstance().markCurrentCommandAsGlobal(myView.getProject());
-
-                  //CCE here means QuickFix was incorrectly inherited
-                  fixes[idx].applyFix(myView.getProject(), descriptor);
-                }
-              };
-              CommandProcessor.getInstance().executeCommand(myView.getProject(), command, fixes[idx].getName(), null);
-              final DescriptorProviderInspection tool = ((DescriptorProviderInspection)myView.getTree().getSelectedTool());
-              if (tool != null) {
-                tool.ignoreProblem(element, descriptor, idx);
-              }
-              myView.updateView(false);
-            }
-          });
+          performFix(element, descriptor, idx, fixes[idx]);
         }
-      } else {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              Runnable command = new Runnable() {
-                public void run() {
-                  CommandProcessor.getInstance().markCurrentCommandAsGlobal(myView.getProject());
-
-                  //CCE here means QuickFix was incorrectly inherited
-                  fixes[idx].applyFix(myView.getProject(), descriptor);
-                }
-              };
-              CommandProcessor.getInstance().executeCommand(myView.getProject(), command, fixes[idx].getName(), null);
-              final DescriptorProviderInspection tool = ((DescriptorProviderInspection)myView.getTree().getSelectedTool());
-              if (tool != null) {
-                tool.ignoreProblem(element, descriptor, idx);
-              }
-              myView.updateView(false);
-            }
-          });
+      }
+      else {
+        performFix(element, descriptor, idx, fixes[idx]);
       }
     }
+  }
+
+  private void performFix(final RefEntity element, final CommonProblemDescriptor descriptor, final int idx, final QuickFix fix) {
+    final Runnable command = new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            CommandProcessor.getInstance().markCurrentCommandAsGlobal(myView.getProject());
+            //CCE here means QuickFix was incorrectly inherited
+            fix.applyFix(myView.getProject(), descriptor);
+            final DescriptorProviderInspection tool = ((DescriptorProviderInspection)myView.getTree().getSelectedTool());
+            if (tool != null) {
+              tool.ignoreProblem(element, descriptor, idx);
+            }
+            myView.updateView(false);
+          }
+        });
+      }
+    };
+    CommandProcessor.getInstance().executeCommand(myView.getProject(), command, fix.getName(), null);
   }
 }
 

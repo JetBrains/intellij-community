@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.Library;
@@ -45,7 +46,7 @@ import java.util.List;
 /**
 * @author nik
 */
-public class CreateNewLibraryAction extends AnAction {
+public class CreateNewLibraryAction extends DumbAwareAction {
   private final @Nullable LibraryType myType;
   private BaseLibrariesConfigurable myLibrariesConfigurable;
   private @Nullable Project myProject;

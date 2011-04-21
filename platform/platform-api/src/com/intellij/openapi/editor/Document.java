@@ -38,6 +38,7 @@ import java.beans.PropertyChangeListener;
  * @see EditorFactory#createDocument(CharSequence)
  */
 public interface Document extends UserDataHolder {
+  Document[] EMPTY_ARRAY = new Document[0];
   @NonNls
   String PROP_WRITABLE = "writable";
 

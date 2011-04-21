@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -53,15 +54,20 @@ public class MavenEnvironmentForm {
     DocumentAdapter listener = new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        myUpdateAlarm.cancelAllRequests();
-        myUpdateAlarm.addRequest(new Runnable() {
-            @Override
-            public void run() {
-              mavenHomeOverrider.updateDefault();
-              userSettingsFileOverrider.updateDefault();
-              localRepositoryOverrider.updateDefault();
-            }
-          }, 100);
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            myUpdateAlarm.cancelAllRequests();
+            myUpdateAlarm.addRequest(new Runnable() {
+                @Override
+                public void run() {
+                  mavenHomeOverrider.updateDefault();
+                  userSettingsFileOverrider.updateDefault();
+                  localRepositoryOverrider.updateDefault();
+                }
+              }, 100);
+          }
+        });
       }
     };
 

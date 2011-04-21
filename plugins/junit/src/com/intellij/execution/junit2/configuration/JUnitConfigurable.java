@@ -30,6 +30,9 @@ import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PackageChooserDialog;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -39,10 +42,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.ui.InsertPathAction;
 import com.intellij.util.Icons;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
@@ -63,7 +69,8 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     new TIntArrayList(new int[]{0}),
     new TIntArrayList(new int[]{1}),
     new TIntArrayList(new int[]{1, 2}),
-    new TIntArrayList(new int[]{3})
+    new TIntArrayList(new int[]{3}),
+    new TIntArrayList(new int[]{4})
   );
 
   // Garbage
@@ -71,8 +78,10 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   private JRadioButton myClassButton;
   private JRadioButton myTestMethodButton;
   private JRadioButton myTestPatternButton;
+  private JRadioButton myTestDirButton;
   private JComponent myPackagePanel;
   private LabeledComponent<TextFieldWithBrowseButton> myPackage;
+  private LabeledComponent<TextFieldWithBrowseButton> myDir;
   private LabeledComponent<JPanel> myPattern;
   private LabeledComponent<TextFieldWithBrowseButton> myClass;
   private LabeledComponent<TextFieldWithBrowseButton> myMethod;
@@ -87,8 +96,8 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
   private TextFieldWithBrowseButton myPatternTextField;
 
   private final ConfigurationModuleSelector myModuleSelector;
-  private final JRadioButton[] myRadioButtons = new JRadioButton[4];
-  private final LabeledComponent[] myTestLocations = new LabeledComponent[4];
+  private final JRadioButton[] myRadioButtons = new JRadioButton[5];
+  private final LabeledComponent[] myTestLocations = new LabeledComponent[5];
   private final JUnitConfigurationModel myModel;
 
   private final BrowseModuleValueActionListener[] myBrowsers;
@@ -112,16 +121,31 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
       new PackageChooserActionListener(project),
       new TestClassBrowser(project),
       new MethodBrowser(project),
-      new TestsChooserActionListener(project)
+      new TestsChooserActionListener(project),
+      new BrowseModuleValueActionListener(project) {
+        @Override
+        protected String showDialog() {
+          final VirtualFile[] virtualFiles =
+            FileChooser.chooseFiles(project, new FileChooserDescriptor(false, true, false, false, false, false));
+          if (virtualFiles.length == 1) {
+            return FileUtil.toSystemDependentName(virtualFiles[0].getPath());
+          }
+          return null;
+        }
+      }
     };
     // Garbage support
     myRadioButtons[JUnitConfigurationModel.ALL_IN_PACKAGE] = myAllInPackageButton;
     myRadioButtons[JUnitConfigurationModel.CLASS] = myClassButton;
     myRadioButtons[JUnitConfigurationModel.METHOD] = myTestMethodButton;
     myRadioButtons[JUnitConfigurationModel.PATTERN] = myTestPatternButton;
+    myRadioButtons[JUnitConfigurationModel.DIR] = myTestDirButton;
+
     myTestLocations[JUnitConfigurationModel.ALL_IN_PACKAGE] = myPackage;
     myTestLocations[JUnitConfigurationModel.CLASS] = myClass;
     myTestLocations[JUnitConfigurationModel.METHOD] = myMethod;
+    myTestLocations[JUnitConfigurationModel.DIR] = myDir;
+
     final JPanel panel = myPattern.getComponent();
     panel.setLayout(new BorderLayout());
     myPatternTextField = new TextFieldWithBrowseButton();
@@ -136,6 +160,12 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     });
     panel.add(editBtn, BorderLayout.EAST);
     myTestLocations[JUnitConfigurationModel.PATTERN] = myPattern;
+
+    final FileChooserDescriptor dirFileChooser = new FileChooserDescriptor(false, true, false, false, false, false);
+    dirFileChooser.setHideIgnored(false);
+    final JTextField textField = myDir.getComponent().getTextField();
+    InsertPathAction.addTo(textField, dirFileChooser);
+    FileChooserFactory.getInstance().installFileCompletion(textField, dirFileChooser, true, null);
     // Done
 
     myModel.setListener(this);
@@ -213,6 +243,16 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
       myPattern.setVisible(false);
       myClass.setVisible(false);
       myMethod.setVisible(false);
+      myDir.setVisible(false);
+      myForkCb.setEnabled(true);
+      myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
+      myForkCb.setSelectedItem(selectedItem);
+    } else if (myTestDirButton.isSelected()) {
+      myPackagePanel.setVisible(false);
+      myDir.setVisible(true);
+      myPattern.setVisible(false);
+      myClass.setVisible(false);
+      myMethod.setVisible(false);
       myForkCb.setEnabled(true);
       myForkCb.setModel(new DefaultComboBoxModel(FORK_MODE_ALL));
       myForkCb.setSelectedItem(selectedItem);
@@ -220,6 +260,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     else if (myClassButton.isSelected()){
       myPackagePanel.setVisible(false);
       myPattern.setVisible(false);
+      myDir.setVisible(false);
       myClass.setVisible(true);
       myMethod.setVisible(false);
       myForkCb.setEnabled(true);
@@ -229,6 +270,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     else if (myTestMethodButton.isSelected()){
       myPackagePanel.setVisible(false);
       myPattern.setVisible(false);
+      myDir.setVisible(false);
       myClass.setVisible(true);
       myMethod.setVisible(true);
       myForkCb.setEnabled(false);
@@ -236,6 +278,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> {
     } else {
       myPackagePanel.setVisible(false);
       myPattern.setVisible(true);
+      myDir.setVisible(false);
       myClass.setVisible(false);
       myMethod.setVisible(false);
       myForkCb.setEnabled(true);

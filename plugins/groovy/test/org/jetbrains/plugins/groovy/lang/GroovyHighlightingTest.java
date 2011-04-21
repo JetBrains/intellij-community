@@ -283,6 +283,8 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
 
   public void testBuiltInTypeInstantiation() {doTest();}
 
+  public void testSwitchControlFlow() {doTest(new UnusedDefInspection(), new GroovyResultOfAssignmentUsedInspection());}
+
   public void testRawTypeInAssignment() {doTest(new GroovyAssignabilityCheckInspection());}
 
   public void testSOEInFieldDeclarations() {doTest();}

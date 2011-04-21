@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.DocumentEvent;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 /**
@@ -253,7 +254,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
 
   @Nullable
-  public Set<OptionDescription> getAcceptableDescriptions(final String prefix) {
+  public synchronized Set<OptionDescription> getAcceptableDescriptions(final String prefix) {
     if (prefix == null) return null;
     final String stemmedPrefix = PorterStemmerUtil.stem(prefix);
     if (stemmedPrefix == null) return null;

@@ -16,6 +16,7 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.*;
@@ -149,6 +150,12 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
 
   @Override
   public VirtualFile getOutputFile() {
+    String filePath = getOutputFilePath();
+    return !StringUtil.isEmpty(filePath) ? LocalFileSystem.getInstance().findFileByPath(filePath) : null;
+  }
+
+  @Override
+  public String getOutputFilePath() {
     String filePath;
     if (myRootElement instanceof ArchivePackagingElement) {
       filePath = myOutputPath + "/" + ((ArchivePackagingElement)myRootElement).getArchiveFileName();
@@ -156,7 +163,7 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
     else {
       filePath = myOutputPath;
     }
-    return LocalFileSystem.getInstance().findFileByPath(filePath);
+    return filePath;
   }
 
   public void copyFrom(ArtifactImpl modified) {

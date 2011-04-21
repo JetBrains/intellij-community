@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 * User: sweinreuter
 * Date: 04.01.11
 */
-public interface XPath2RangeExpression extends XPathExpression {
+public interface XPath2RangeExpression extends XPathBinaryExpression {
   @NotNull
   XPathExpression getFrom();
 

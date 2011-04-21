@@ -9,32 +9,31 @@ class MyClass {
 }
 -----
 public class MyClass extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
-  public MyClass(int i) {
-    this((java.lang.Object)null);
-  }
+public MyClass(int i) {
+this((java.lang.Object)null);
+}
+public MyClass(java.lang.Object o) {
 
-  public MyClass(java.lang.Object o) {
+}
+public groovy.lang.MetaClass getMetaClass() {
+return null;
+}
 
-  }
+public void setMetaClass(groovy.lang.MetaClass mc) {
+return ;
+}
 
-  public groovy.lang.MetaClass getMetaClass() {
-    return null;
-  }
+public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+return null;
+}
 
-  public void setMetaClass(groovy.lang.MetaClass mc) {
-    return ;
-  }
+public java.lang.Object getProperty(java.lang.String propertyName) {
+return null;
+}
 
-  public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
-    return null;
-  }
+public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+return ;
+}
 
-  public java.lang.Object getProperty(java.lang.String propertyName) {
-    return null;
-  }
-
-  public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
-    return ;
-  }
 }
 ---

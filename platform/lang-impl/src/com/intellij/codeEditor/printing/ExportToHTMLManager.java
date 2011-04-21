@@ -102,6 +102,7 @@ class ExportToHTMLManager {
       Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
     }
 
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     final String outputDirectoryName = exportToHTMLSettings.OUTPUT_DIRECTORY;
     if(exportToHTMLSettings.getPrintScope() != PrintSettings.PRINT_DIRECTORY) {
       if(psiFile == null || psiFile.getText() == null) {

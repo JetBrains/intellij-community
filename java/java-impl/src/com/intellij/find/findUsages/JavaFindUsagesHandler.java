@@ -223,42 +223,54 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
   }
 
   @Override
-  protected String getStringToSearch(final PsiElement element) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      public String compute() {
-        PsiElement norm = element;
-        if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
-          norm = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
+  protected Set<String> getStringsToSearch(final PsiElement element) {
+    if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
+      return getStringsToSearch(JavaDirectoryService.getInstance().getPackage((PsiDirectory)element));
+    }
+
+    final Set<String> result = new HashSet<String>();
+
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        if (element instanceof PsiPackage) {
+          ContainerUtil.addIfNotNull(result, ((PsiPackage)element).getQualifiedName());
         }
-        if (norm instanceof PsiPackage) {
-          return ((PsiPackage)norm).getQualifiedName();
-        }
-        if (norm instanceof PsiClass) {
-          return ((PsiClass)norm).getQualifiedName();
-        }
-        if (norm instanceof PsiMethod) {
-          return ((PsiMethod)norm).getName();
-        }
-        if (norm instanceof PsiVariable) {
-          return ((PsiVariable)norm).getName();
-        }
-        if (norm instanceof PsiMetaOwner) {
-          final PsiMetaData metaData = ((PsiMetaOwner)norm).getMetaData();
-          if (metaData != null) {
-            return metaData.getName();
+        else if (element instanceof PsiClass) {
+          final String qname = ((PsiClass)element).getQualifiedName();
+          if (qname != null) {
+            result.add(qname);
+            PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
+            if (topLevelClass != null) {
+              String topName = topLevelClass.getQualifiedName();
+              assert topName != null;
+              result.add(topName + qname.substring(topName.length()).replace('.', '$'));
+            }
           }
         }
-        if (norm instanceof PsiNamedElement) {
-          return ((PsiNamedElement)norm).getName();
+        else if (element instanceof PsiMethod) {
+          ContainerUtil.addIfNotNull(result, ((PsiMethod)element).getName());
         }
-        if (norm instanceof XmlAttributeValue) {
-          return ((XmlAttributeValue)norm).getValue();
+        else if (element instanceof PsiVariable) {
+          ContainerUtil.addIfNotNull(result, ((PsiVariable)element).getName());
         }
-
-        LOG.error("Unknown element type: " + element);
-        return null;
+        else if (element instanceof PsiMetaOwner) {
+          final PsiMetaData metaData = ((PsiMetaOwner)element).getMetaData();
+          if (metaData != null) {
+            ContainerUtil.addIfNotNull(result, metaData.getName());
+          }
+        }
+        else if (element instanceof PsiNamedElement) {
+          ContainerUtil.addIfNotNull(result, ((PsiNamedElement)element).getName());
+        }
+        else if (element instanceof XmlAttributeValue) {
+          ContainerUtil.addIfNotNull(result, ((XmlAttributeValue)element).getValue());
+        } else {
+          LOG.error("Unknown element type: " + element);
+        }
       }
     });
+
+    return result;
   }
 
   @Override

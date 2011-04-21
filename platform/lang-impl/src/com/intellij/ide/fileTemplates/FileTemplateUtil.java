@@ -18,7 +18,6 @@ package com.intellij.ide.fileTemplates;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -27,6 +26,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -35,6 +35,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
+import org.apache.commons.collections.ExtendedProperties;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.exception.ResourceNotFoundException;
@@ -48,15 +49,13 @@ import org.apache.velocity.runtime.parser.node.ASTReference;
 import org.apache.velocity.runtime.parser.node.ASTSetDirective;
 import org.apache.velocity.runtime.parser.node.Node;
 import org.apache.velocity.runtime.parser.node.SimpleNode;
-import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
-import org.apache.velocity.runtime.resource.loader.FileResourceLoader;
+import org.apache.velocity.runtime.resource.Resource;
+import org.apache.velocity.runtime.resource.loader.ResourceLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
-import java.lang.reflect.Field;
 import java.util.*;
 
 /**
@@ -64,15 +63,67 @@ import java.util.*;
  */
 public class FileTemplateUtil{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.FileTemplateUtil");
-  @NonNls private static final String FILE_RESOURCE_LOADER_INSTANCE = "file.resource.loader.instance";
-  private static boolean ourVelocityInitialized = false;
   private static final CreateFromTemplateHandler ourDefaultCreateFromTemplateHandler = new DefaultCreateFromTemplateHandler();
 
   private FileTemplateUtil() {
   }
 
+  static {
+    try{
+      final FileTemplateManager templateManager = FileTemplateManager.getInstance();
+
+      LogSystem emptyLogSystem = new LogSystem() {
+        public void init(RuntimeServices runtimeServices) throws Exception {
+        }
+
+        public void logVelocityMessage(int i, String s) {
+          //todo[myakovlev] log somethere?
+        }
+      };
+      Velocity.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM, emptyLogSystem);
+      Velocity.setProperty(RuntimeConstants.INPUT_ENCODING, FileTemplate.ourEncoding);
+      Velocity.setProperty(RuntimeConstants.PARSER_POOL_SIZE, 3);
+      Velocity.setProperty(RuntimeConstants.RESOURCE_LOADER, "includes");
+      Velocity.setProperty("includes.resource.loader.instance", new ResourceLoader() {
+        public void init(ExtendedProperties configuration) {
+        }
+
+        public InputStream getResourceStream(String resourceName) throws ResourceNotFoundException {
+          final FileTemplate include = templateManager.getPattern(resourceName);
+          if (include == null) {
+            throw new ResourceNotFoundException("Template not found: " + resourceName);
+          }
+          
+          final String lineSeparatorToUse = CodeStyleSettingsManager.getSettings(ProjectManagerEx.getInstanceEx().getDefaultProject()).getLineSeparator();
+          String text = include.getText();
+          if (!lineSeparatorToUse.equals("\n")){
+            text = StringUtil.convertLineSeparators(text, lineSeparatorToUse);
+          }
+          
+          try {
+            return new ByteArrayInputStream(text.getBytes(FileTemplate.ourEncoding));
+          }
+          catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+          }
+        }
+
+        public boolean isSourceModified(Resource resource) {
+          return true;
+        }
+
+        public long getLastModified(Resource resource) {
+          return 0L;
+        }
+      });
+      Velocity.init();
+    }
+    catch (Exception e){
+      LOG.error("Unable to init Velocity", e);
+    }
+  }
+  
   public static String[] calculateAttributes(String templateContent, Properties properties, boolean includeDummies) throws ParseException {
-    initVelocity();
     final Set<String> unsetAttributes = new HashSet<String>();
     final Set<String> definedAttributes = new HashSet<String>();
     //noinspection HardCodedStringLiteral
@@ -161,7 +212,6 @@ public class FileTemplateUtil{
   }
 
   public static String mergeTemplate(Map attributes, String content) throws IOException{
-    initVelocity();
     VelocityContext context = new VelocityContext();
     for (final Object o : attributes.keySet()) {
       String name = (String)o;
@@ -171,7 +221,6 @@ public class FileTemplateUtil{
   }
 
   public static String mergeTemplate(Properties attributes, String content) throws IOException{
-    initVelocity();
     VelocityContext context = new VelocityContext();
     Enumeration<?> names = attributes.propertyNames();
     while (names.hasMoreElements()){
@@ -182,7 +231,6 @@ public class FileTemplateUtil{
   }
 
   private static String mergeTemplate(String templateContent, final VelocityContext context) throws IOException {
-    initVelocity();
     StringWriter stringWriter = new StringWriter();
     try {
       Velocity.evaluate(context, stringWriter, "", templateContent);
@@ -197,55 +245,6 @@ public class FileTemplateUtil{
       });
     }
     return stringWriter.toString();
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static synchronized void initVelocity(){
-    try{
-      if (ourVelocityInitialized) {
-        return;
-      }
-      File modifiedPatternsPath = new File(PathManager.getConfigPath());
-      modifiedPatternsPath = new File(modifiedPatternsPath, "fileTemplates");
-      modifiedPatternsPath = new File(modifiedPatternsPath, "includes");
-
-      LogSystem emptyLogSystem = new LogSystem() {
-        public void init(RuntimeServices runtimeServices) throws Exception {
-        }
-
-        public void logVelocityMessage(int i, String s) {
-          //todo[myakovlev] log somethere?
-        }
-      };
-      Velocity.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM, emptyLogSystem);
-      Velocity.setProperty(RuntimeConstants.RESOURCE_LOADER, "file,class");
-      //todo[myakovlev] implement my own Loader, with ability to load templates from classpath
-      Velocity.setProperty(FILE_RESOURCE_LOADER_INSTANCE, new FileResourceLoader());
-      Velocity.setProperty("class.resource.loader.class", MyClasspathResourceLoader.class.getName());
-      Velocity.setProperty(RuntimeConstants.FILE_RESOURCE_LOADER_PATH, modifiedPatternsPath.getAbsolutePath());
-      Velocity.setProperty(RuntimeConstants.INPUT_ENCODING, FileTemplate.ourEncoding);
-      Velocity.setProperty(RuntimeConstants.PARSER_POOL_SIZE, 3);
-      Velocity.init();
-      ourVelocityInitialized = true;
-    }
-    catch (Exception e){
-      LOG.error("Unable to init Velocity", e);
-    }
-  }
-
-  @TestOnly
-  public static void addResourcesDir(File dir) {
-    initVelocity();
-    final FileResourceLoader loader = (FileResourceLoader)Velocity.getProperty(FILE_RESOURCE_LOADER_INSTANCE);
-    try {
-      Field pathsField = FileResourceLoader.class.getDeclaredField("paths");
-      pathsField.setAccessible(true);
-      Collection<String> paths = (Collection)pathsField.get(loader);
-      paths.add(dir.getAbsolutePath());
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
   }
 
   public static PsiElement createFromTemplate(@NotNull final FileTemplate template,
@@ -341,15 +340,6 @@ public class FileTemplateUtil{
     return methodText.replaceAll("\n", "\n" + StringUtil.repeatSymbol(' ',indent));
   }
 
-  @NonNls private static final String INCLUDES_PATH = "fileTemplates/includes/";
-
-  public static class MyClasspathResourceLoader extends ClasspathResourceLoader{
-    @NonNls private static final String FT_EXTENSION = ".ft";
-
-    public synchronized InputStream getResourceStream(String name) throws ResourceNotFoundException{
-      return super.getResourceStream(INCLUDES_PATH + name + FT_EXTENSION);
-    }
-  }
 
   public static boolean canCreateFromTemplate (PsiDirectory[] dirs, FileTemplate template) {
     FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());

@@ -47,6 +47,7 @@ public class ControlFlowTest extends LightCodeInsightFixtureTestCase {
   public void testWhileNonConstant() throws Throwable { doTest(); }
   public void testIfInstanceofElse() throws Throwable { doTest(); }
   public void testReturnMapFromClosure() {doTest();}
+  public void testSwitchInTryWithThrows() {doTest();}
 
   private static String dumpControlFlow(Instruction[] instructions) {
     StringBuilder builder = new StringBuilder();

@@ -4,11 +4,7 @@ print(a);
 }
  else {
 print("foo foo");
-java.util.ArrayList<java.lang.Integer> integers = new java.util.ArrayList<java.lang.Integer>(3);
-integers.add(1);
-integers.add(2);
-integers.add(3);
-java.util.ArrayList<java.lang.Integer> list = integers;
+java.util.ArrayList<java.lang.Integer> list = new java.util.ArrayList<java.lang.Integer>(Arrays.asList(1, 2, 3));
 print(org.codehaus.groovy.runtime.DefaultGroovyMethods.asBoolean(list)?"full: " + java.lang.String.valueOf(list):"empty");
 }
 

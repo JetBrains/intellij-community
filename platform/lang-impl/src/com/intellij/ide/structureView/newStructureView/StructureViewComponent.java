@@ -36,6 +36,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.*;
@@ -69,6 +70,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, DataProvider, StructureView.Scrollable {
@@ -451,7 +453,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private ArrayList<AbstractTreeNode> getPathToElement(Object element) {
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-    addToPath((AbstractTreeNode)myAbstractTreeBuilder.getTreeStructure().getRootElement(), element, result, new THashSet<Object>());
+    final AbstractTreeStructure treeStructure = myAbstractTreeBuilder.getTreeStructure();
+    if (treeStructure != null) {
+      addToPath((AbstractTreeNode)treeStructure.getRootElement(), element, result, new THashSet<Object>());
+    }
     return result;
   }
 
@@ -510,7 +515,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
           if (myAbstractTreeBuilder == null) {
             return;
           }
-          selectViewableElement();
+          try {
+            selectViewableElement();
+          }
+          catch (IndexNotReadyException ignore) {
+          }
         }
       }, 1000
     );
@@ -770,7 +779,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         resetChildren();
         childrenStamp = currentStamp;
       }
-      return super.getChildren();
+      try {
+        return super.getChildren();
+      }
+      catch (IndexNotReadyException ignore) {
+        return Collections.emptyList();
+      }
     }
 
     @Override

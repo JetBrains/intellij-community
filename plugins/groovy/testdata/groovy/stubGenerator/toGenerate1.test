@@ -4,34 +4,36 @@ class s {
 println "foo"
 -----
 public class toGenerate1 extends groovy.lang.Script {
-  public static final void main(java.lang.String[] args) {
-    return ;
-  }
+public static void main(java.lang.String[] args) {
+return ;
+}
 
-  public java.lang.Object run() {
-    return null;
-  }
+public java.lang.Object run() {
+return null;
+}
+
 }
 ---
 public class s extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
-  public groovy.lang.MetaClass getMetaClass() {
-    return null;
-  }
+public groovy.lang.MetaClass getMetaClass() {
+return null;
+}
 
-  public void setMetaClass(groovy.lang.MetaClass mc) {
-    return ;
-  }
+public void setMetaClass(groovy.lang.MetaClass mc) {
+return ;
+}
 
-  public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
-    return null;
-  }
+public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+return null;
+}
 
-  public java.lang.Object getProperty(java.lang.String propertyName) {
-    return null;
-  }
+public java.lang.Object getProperty(java.lang.String propertyName) {
+return null;
+}
 
-  public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
-    return ;
-  }
+public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+return ;
+}
+
 }
 ---

@@ -311,7 +311,7 @@ public class InplaceIntroduceConstantPopup {
         if (visibility != null) {
           PsiUtil.setModifierProperty(field, visibility, true);
         }
-        field = BaseExpressionToFieldHandler.ConvertToFieldRunnable.appendField(myExpr, myParentClass, myParentClass, myAnchorElementIfAll, field);
+        field = BaseExpressionToFieldHandler.ConvertToFieldRunnable.appendField(myExpr, BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, myParentClass, myParentClass, myAnchorElementIfAll, field);
         return field;
       }
     });

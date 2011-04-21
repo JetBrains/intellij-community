@@ -89,7 +89,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
     make()
     edt {
       ProgramRunner runner = ProgramRunner.PROGRAM_RUNNER_EP.extensions.find { it.class == GenericDebuggerRunner }
-      runProcess(mainClass, myModule, DefaultDebugExecutor, [onTextAvailable: { evt, type -> print evt.text}] as ProcessAdapter, runner)
+      runProcess(mainClass, myModule, DefaultDebugExecutor, [onTextAvailable: { evt, type -> /*print evt.text*/}] as ProcessAdapter, runner)
     }
     cl.call()
     resume()

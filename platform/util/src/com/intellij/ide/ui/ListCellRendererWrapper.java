@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.ui;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -87,7 +89,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
    */
   public abstract void customize(final JList list, final T value, final int index, final boolean selected, final boolean hasFocus);
 
-  public final void setIcon(final Icon icon) {
+  public final void setIcon(final @Nullable Icon icon) {
     myIcon = icon;
   }
 

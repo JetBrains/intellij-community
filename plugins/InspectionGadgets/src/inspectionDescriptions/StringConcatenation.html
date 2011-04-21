@@ -4,6 +4,15 @@ This inspection reports any String concatenation (<b>+</b>). Concatenation is us
 incorrect in an internationalized environment, and should be replace by uses of
 <b>java.text.MessageFormat</b> or similar classes.
 <p>
+Use the first checkbox below to have this inspection ignore string concatenations
+which are used as a description argument in an <b>assert</b> statement.
+<br>Use the second checkbox to ignore string concatenations used as arguments
+for a call to any of the <b>System.out.print()</b> methods.
+<br>Use the third checkbox to ignore string concatenations used as arguments
+for a call to any of the <b>System.err.print()</b> methods.
+<br>Use the fourth checkbox to ignore string concatenations used as arguments in
+the construction of any subclass of <b>java.lang.Throwable</b>
+<p>
 <small>Powered by InspectionGadgets</small>
 </body>
 </html>

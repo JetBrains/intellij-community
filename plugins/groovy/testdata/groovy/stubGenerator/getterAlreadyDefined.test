@@ -4,16 +4,17 @@ def getFoo () {
 }
 -----
 public class getterAlreadyDefined extends groovy.lang.Script {
-  public static final void main(java.lang.String[] args) {
-    return ;
-  }
+public static void main(java.lang.String[] args) {
+return ;
+}
 
-  public java.lang.Object run() {
-    return null;
-  }
+public java.lang.Object run() {
+return null;
+}
 
-  public java.lang.Object getFoo() {
-    return null;
-  }
+public java.lang.Object getFoo() {
+return null;
+}
+
 }
 ---

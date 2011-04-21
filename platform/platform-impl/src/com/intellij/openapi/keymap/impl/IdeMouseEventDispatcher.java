@@ -206,8 +206,9 @@ public final class IdeMouseEventDispatcher {
   }
 
   private static int getScrollAmount(Component c, MouseWheelEvent me, JScrollBar scrollBar) {
-    final int ratio = Registry.is("ide.smart.horizontal.scrolling")
-                      ? Math.max((int)Math.pow(c.getWidth() / scrollBar.getWidth() , 2), 10) : 10; // do annoying scrolling faster if smart scrolling is on
+    final int scrollBarWidth = scrollBar.getWidth();
+    final int ratio = Registry.is("ide.smart.horizontal.scrolling") && scrollBarWidth > 0
+                      ? Math.max((int)Math.pow(c.getWidth() / scrollBarWidth, 2), 10) : 10; // do annoying scrolling faster if smart scrolling is on
     return me.getUnitsToScroll() * scrollBar.getUnitIncrement() * ratio;
   }
 

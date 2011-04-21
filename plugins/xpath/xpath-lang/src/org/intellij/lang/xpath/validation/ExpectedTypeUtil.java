@@ -43,32 +43,36 @@ public class ExpectedTypeUtil {
 
         final XPathExpression parentExpr = PsiTreeUtil.getParentOfType(expression, XPathExpression.class);
         if (parentExpr != null) {
-            if (parentExpr instanceof XPathBinaryExpression) {
-                final XPathElementType op = ((XPathBinaryExpression)parentExpr).getOperator();
+            if (parentExpr instanceof XPathBinaryExpression && expression == ((XPathBinaryExpression)parentExpr).getROperand()) {
+              final XPathElementType op = ((XPathBinaryExpression)parentExpr).getOperator();
+              final XPathExpression lop = ((XPathBinaryExpression)parentExpr).getLOperand();
                 if (op == XPathTokenTypes.AND || op == XPathTokenTypes.OR) {
                     expectedType = XPathType.BOOLEAN;
-                } else {
-                  final XPathExpression lop = ((XPathBinaryExpression)parentExpr).getLOperand();
-                  if (XPathTokenTypes.NUMBER_OPERATIONS.contains(op)) {
-                    if (isXPath1(expression)) {
-                      expectedType = XPathType.NUMBER;
-                    } else if (expression == ((XPathBinaryExpression)parentExpr).getROperand()) {
-                      expectedType = matchingType(lop, op);
-                    }
-                  } else if (XPath2TokenTypes.COMP_OPS.contains(op)) {
-                    if (lop != null && lop.getType() != XPathType.NODESET) {
-                      if ((expectedType = lop.getType()) == XPathType.BOOLEAN) {
-                        if (!isXPath1(expression)) expectedType = XPath2Type.BOOLEAN_STRICT;
-                      } else if (expectedType == XPath2Type.BOOLEAN) {
-                        expectedType = XPath2Type.BOOLEAN_STRICT;
-                      }
-                    } else {
-                      expectedType = XPathType.UNKNOWN;
+                } else if (XPathTokenTypes.NUMBER_OPERATIONS.contains(op)) {
+                  if (isXPath1(expression)) {
+                    expectedType = XPathType.NUMBER;
+                  } else {
+                    expectedType = matchingType(lop, op);
+                  }
+                } else if (XPath2TokenTypes.COMP_OPS.contains(op)) {
+                  if (lop != null && lop.getType() != XPathType.NODESET) {
+                    if ((expectedType = lop.getType()) == XPathType.BOOLEAN) {
+                      if (!isXPath1(expression)) expectedType = XPath2Type.BOOLEAN_STRICT;
+                    } else if (expectedType == XPath2Type.BOOLEAN) {
+                      expectedType = XPath2Type.BOOLEAN_STRICT;
                     }
                   } else {
                     expectedType = XPathType.UNKNOWN;
                   }
+                } else if (XPath2TokenTypes.INTERSECT_EXCEPT.contains(op)) {
+                  expectedType = XPath2SequenceType.create(XPath2Type.NODE, XPath2SequenceType.Cardinality.ZERO_OR_MORE);
+                } else if (op == XPath2TokenTypes.TO) {
+                  expectedType = XPath2Type.INTEGER;
+                } else {
+                  expectedType = XPathType.UNKNOWN;
                 }
+            } else if (parentExpr instanceof XPathPrefixExpression) {
+              expectedType = XPathType.NUMBER;
             } else if (parentExpr instanceof XPathFunctionCall) {
                 final XPathFunctionCall call = (XPathFunctionCall)parentExpr;
                 final XPathFunction xpathFunction = call.resolve();
@@ -108,12 +112,11 @@ public class ExpectedTypeUtil {
               if (expression == ((XPath2If)parentExpr).getCondition()) {
                 return mapType(expression, XPath2Type.BOOLEAN);
               }
-            } else if (parentExpr instanceof XPath2RangeExpression) {
-                return mapType(expression, XPath2Type.INTEGER);
             } else if (parentExpr instanceof XPathFilterExpression) {
                 final XPathFilterExpression filterExpression = (XPathFilterExpression)parentExpr;
 
-                if (filterExpression.getExpression() == expression) {
+              final XPathExpression filteredExpression = filterExpression.getExpression();
+              if (filteredExpression == expression) {
                     return isXPath1(expression) ? XPathType.NODESET : XPath2Type.SEQUENCE;
                 }
 
@@ -132,9 +135,26 @@ public class ExpectedTypeUtil {
   }
 
   private static XPathType matchingType(XPathExpression lOperand, XPathElementType op) {
-      // TODO
-      return XPathType.UNKNOWN;
+    final XPathType type = mapType(lOperand, lOperand.getType());
+    if (XPathTokenTypes.ADD_OPS.contains(op)) {
+      if (XPathType.isAssignable(XPath2Type.NUMERIC, type)) {
+        return XPath2Type.NUMERIC;
+      } else if (XPathType.isAssignable(XPath2Type.DATE, type) || XPathType.isAssignable(XPath2Type.TIME, type) || XPathType.isAssignable(XPath2Type.DATETIME, type)) {
+        return XPath2Type.DURATION;
+      } else if (XPathType.isAssignable(XPath2Type.DURATION, type)) {
+        return XPathType.ChoiceType.create(XPath2Type.DURATION, XPath2Type.DATE, XPath2Type.TIME, XPath2Type.DATETIME);
+      }
+    } else if (XPath2TokenTypes.MULT_OPS.contains(op)) {
+      if (XPathType.isAssignable(XPath2Type.NUMERIC, type)) {
+        return XPathType.ChoiceType.create(XPath2Type.NUMERIC, XPath2Type.DURATION);
+      } else if (XPath2Type.DURATION.isAssignableFrom(type)) {
+        return XPath2Type.NUMERIC;
+      }
     }
+
+    // TODO
+    return XPathType.UNKNOWN;
+  }
 
     public static XPathType mapType(XPathExpression context, XPathType type) {
       return context.getXPathVersion() == XPathVersion.V2 ?

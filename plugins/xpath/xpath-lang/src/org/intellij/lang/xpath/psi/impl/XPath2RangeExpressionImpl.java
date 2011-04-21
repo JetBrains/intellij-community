@@ -16,6 +16,8 @@
 package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import org.intellij.lang.xpath.XPath2TokenTypes;
+import org.intellij.lang.xpath.XPathElementType;
 import org.intellij.lang.xpath.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +36,28 @@ public class XPath2RangeExpressionImpl extends XPath2ElementImpl implements XPat
   public XPathExpression getTo() {
     XPathExpression[] expressions = findChildrenByClass(XPathExpression.class);
     return expressions.length > 1 ? expressions[1] : null;
+  }
+
+  @Override
+  public XPathExpression getLOperand() {
+    return getFrom();
+  }
+
+  @Override
+  public XPathExpression getROperand() {
+    return getTo();
+  }
+
+  @NotNull
+  @Override
+  public XPathElementType getOperator() {
+    return (XPathElementType)XPath2TokenTypes.TO;
+  }
+
+  @NotNull
+  @Override
+  public String getOperationSign() {
+    return "to";
   }
 
   @NotNull

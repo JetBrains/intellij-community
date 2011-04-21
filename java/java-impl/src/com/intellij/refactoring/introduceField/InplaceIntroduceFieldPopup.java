@@ -78,7 +78,7 @@ public class InplaceIntroduceFieldPopup {
   private String myFieldName;
 
   private boolean myInitListeners = false;
-  private static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
+  static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
 
   public InplaceIntroduceFieldPopup(PsiLocalVariable localVariable,
                                     PsiClass parentClass,

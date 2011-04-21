@@ -25,6 +25,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
     myGroovyPsiManager = GroovyPsiManager.getInstance(myFacade.getProject());
   }
 
+  @NotNull
   protected abstract String getJavaClassName();
 
   @NotNull
@@ -62,6 +63,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
         return true;
       }
 
+      @Nullable
       public PsiElement getCurrentFileResolveScope() {
         return null;
       }
@@ -72,10 +74,13 @@ public abstract class GrLiteralClassType extends PsiClassType {
     };
   }
 
-  @Nullable
+  @Override
+  @NotNull
+  public abstract String getClassName() ;
+
+  @NotNull
   public String getPresentableText() {
     String name = getClassName();
-    if (name == null) return null;
     final PsiType[] params = getParameters();
     if (params.length == 0 || params[0] == null) return name;
 
@@ -87,22 +92,19 @@ public abstract class GrLiteralClassType extends PsiClassType {
     }, ", ") + ">";
   }
 
-  @Nullable
+  @NotNull
   public String getCanonicalText() {
-    PsiClass resolved = resolve();
-    if (resolved == null) return null;
-    final String name = resolved.getQualifiedName();
-    if (name==null) return null;
-
+    String name = getJavaClassName();
     final PsiType[] params = getParameters();
-    if (params.length==0 || params[0]==null) return name;
+    if (params.length == 0 || params[0] == null) return name;
 
-    return name + "<" + StringUtil.join(params, new Function<PsiType, String>() {
+    final Function<PsiType, String> f = new Function<PsiType, String>() {
       @Override
       public String fun(PsiType psiType) {
         return psiType.getCanonicalText();
       }
-    }, ", ") + ">";
+    };
+    return name + "<" + StringUtil.join(params, f, ", ") + ">";
   }
 
   @NotNull

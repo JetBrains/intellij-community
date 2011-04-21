@@ -8,32 +8,34 @@ class Cl implements Callable<String> {
 
 -----
 public interface Callable<V> {
-  public V call() throws java.lang.Exception ;
+public V call() throws java.lang.Exception ;
+
 }
 ---
 public class Cl extends groovy.lang.GroovyObjectSupport implements Callable<java.lang.String>, groovy.lang.GroovyObject {
-  public java.lang.String call() {
-    return null;
-  }
+public java.lang.String call() {
+return null;
+}
 
-  public groovy.lang.MetaClass getMetaClass() {
-    return null;
-  }
+public groovy.lang.MetaClass getMetaClass() {
+return null;
+}
 
-  public void setMetaClass(groovy.lang.MetaClass mc) {
-    return ;
-  }
+public void setMetaClass(groovy.lang.MetaClass mc) {
+return ;
+}
 
-  public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
-    return null;
-  }
+public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+return null;
+}
 
-  public java.lang.Object getProperty(java.lang.String propertyName) {
-    return null;
-  }
+public java.lang.Object getProperty(java.lang.String propertyName) {
+return null;
+}
 
-  public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
-    return ;
-  }
+public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+return ;
+}
+
 }
 ---

@@ -133,6 +133,15 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   @NotNull
   private static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull Project project, @NotNull E element, PsiFile containingFile) {
     if (element instanceof PsiCompiledElement || !element.isPhysical()) {
+      if (element instanceof StubBasedPsiElement && element instanceof PsiCompiledElement) {
+        if (element instanceof PsiFile) {
+          return new FileElementInfo((PsiFile)element);
+        }
+        PsiAnchor.StubIndexReference stubReference = PsiAnchor.createStubReference(element, containingFile);
+        if (stubReference != null) {
+          return new ClsElementInfo(stubReference);
+        }
+      }
       return new HardElementInfo(project, element);
     }
     if (element instanceof PsiDirectory) {
@@ -179,8 +188,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   @Override
   public void dispose() {
-    myElementInfo.dispose();
-    myElement = null;
+    //myElementInfo.dispose();
+    //myElement = null;
   }
 
   @Override

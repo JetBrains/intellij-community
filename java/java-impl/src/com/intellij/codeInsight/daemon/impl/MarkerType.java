@@ -112,6 +112,7 @@ public enum MarkerType {
       if (!(parent instanceof PsiMethod)) return;
       if (DumbService.isDumb(element.getProject())) {
         DumbService.getInstance(element.getProject()).showDumbModeNotification("Navigation to overriding classes is not possible during index update");
+        return;
       }
 
       final PsiMethod method = (PsiMethod)parent;
@@ -169,6 +170,7 @@ public enum MarkerType {
 
       if (DumbService.isDumb(element.getProject())) {
         DumbService.getInstance(element.getProject()).showDumbModeNotification("Navigation to overriding methods is not possible during index update");
+        return;
       }
 
       final PsiClass aClass = (PsiClass)parent;
