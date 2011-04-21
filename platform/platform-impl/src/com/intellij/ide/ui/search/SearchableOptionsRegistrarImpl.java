@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.DocumentEvent;
+import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -55,6 +56,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
   private final Set<String> myStopWords = Collections.synchronizedSet(new HashSet<String>());
   private final Map<Pair<String, String>, Set<String>> myHighlightOption2Synonym = Collections.synchronizedMap(new THashMap<Pair<String, String>, Set<String>>());
+  private volatile boolean allTheseHugeFilesAreLoaded;
 
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private final StringInterner myIdentifierTable = new StringInterner() {
@@ -71,7 +73,6 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   @NonNls
   private static final Pattern REG_EXP = Pattern.compile("[\\W&&[^-]]+");
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public SearchableOptionsRegistrarImpl() {
     if (ApplicationManager.getApplication().isCommandLine() ||
         ApplicationManager.getApplication().isUnitTestMode()) return;
@@ -80,7 +81,18 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       final String text = ResourceUtil.loadText(ResourceUtil.getResource(SearchableOptionsRegistrarImpl.class, "/search/", "ignore.txt"));
       final String[] stopWords = text.split("[\\W]");
       ContainerUtil.addAll(myStopWords, stopWords);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+  }
 
+  private void loadHugeFilesIfNecessary() {
+    if (allTheseHugeFilesAreLoaded) {
+      return;
+    }
+    allTheseHugeFilesAreLoaded = true;
+    try {
       //index
       final URL indexResource = ResourceUtil.getResource(SearchableOptionsRegistrar.class, "/search/", "searchableOptions.xml");
       if (indexResource == null) {
@@ -158,10 +170,10 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   }
 
   private synchronized void putOptionWithHelpId(String option, final String id, final String groupName, String hit, final String path) {
-    if (myStopWords.contains(option)) return;
+    if (isStopWord(option)) return;
     String stopWord = PorterStemmerUtil.stem(option);
     if (stopWord == null) return;
-    if (myStopWords.contains(stopWord)) return;
+    if (isStopWord(stopWord)) return;
     if (!myId2Name.containsKey(id) && groupName != null) {
       myId2Name.put(myIdentifierTable.intern(id), myIdentifierTable.intern(groupName));
     }
@@ -191,25 +203,23 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       for (ConfigurableGroup group : groups) {
         contentHits.addAll(SearchUtil.expandGroup(group));
       }
-    } else {
+    }
+    else {
       contentHits.addAll(configurables);
     }
 
-    if (option != null) {
-      String optionToCheck = option.trim().toLowerCase();
-      for (Configurable each : contentHits) {
-        if (each.getDisplayName() == null) continue;
-        final String displayName = each.getDisplayName().toLowerCase();
-        final List<String> allWords = StringUtil.getWordsIn(displayName);
-        if (displayName.contains(optionToCheck)) {
-          hits.getNameFullHits().add(each);
+    String optionToCheck = option.trim().toLowerCase();
+    for (Configurable each : contentHits) {
+      if (each.getDisplayName() == null) continue;
+      final String displayName = each.getDisplayName().toLowerCase();
+      final List<String> allWords = StringUtil.getWordsIn(displayName);
+      if (displayName.contains(optionToCheck)) {
+        hits.getNameFullHits().add(each);
+        hits.getNameHits().add(each);
+      }
+      for (String eachWord : allWords) {
+        if (eachWord.startsWith(optionToCheck)) {
           hits.getNameHits().add(each);
-        }
-        for (int i = 0; i < allWords.size(); i++) {
-          String eachWord = allWords.get(i);
-          if (eachWord.startsWith(optionToCheck)) {
-            hits.getNameHits().add(each);
-          }
         }
       }
     }
@@ -258,10 +268,12 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     if (prefix == null) return null;
     final String stemmedPrefix = PorterStemmerUtil.stem(prefix);
     if (stemmedPrefix == null) return null;
+    loadHugeFilesIfNecessary();
     Set<OptionDescription> result = null;
-    for (String option : myStorage.keySet()) {
-      final Set<OptionDescription> descriptions = myStorage.get(option);
+    for (Map.Entry<String, Set<OptionDescription>> entry : myStorage.entrySet()) {
+      final Set<OptionDescription> descriptions = entry.getValue();
       if (descriptions != null) {
+        final String option = entry.getKey();
         if (!option.startsWith(prefix) && !option.startsWith(stemmedPrefix)) {
           final String stemmedOption = PorterStemmerUtil.stem(option);
           if (stemmedOption != null && !stemmedOption.startsWith(prefix) && !stemmedOption.startsWith(stemmedPrefix)) {
@@ -279,6 +291,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
 
   @Nullable
   public String getInnerPath(SearchableConfigurable configurable, @NonNls String option) {
+    loadHugeFilesIfNecessary();
     Set<OptionDescription> path = null;
     final Set<String> words = getProcessedWordsWithoutStemming(option);
     for (String word : words) {
@@ -322,10 +335,12 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   }
 
   public Set<String> getSynonym(final String option, @NotNull final SearchableConfigurable configurable) {
+    loadHugeFilesIfNecessary();
     return myHighlightOption2Synonym.get(Pair.create(option, configurable.getId()));
   }
 
   public Map<String, Set<String>> findPossibleExtension(@NotNull String prefix, final Project project) {
+    loadHugeFilesIfNecessary();
     final boolean perProject = CodeStyleFacade.getInstance(project).projectUsesOwnSettings();
     final Map<String, Set<String>> result = new THashMap<String, Set<String>>();
     int count = 0;
