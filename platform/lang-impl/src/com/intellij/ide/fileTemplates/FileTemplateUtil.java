@@ -93,13 +93,7 @@ public class FileTemplateUtil{
           if (include == null) {
             throw new ResourceNotFoundException("Template not found: " + resourceName);
           }
-          
-          final String lineSeparatorToUse = CodeStyleSettingsManager.getSettings(ProjectManagerEx.getInstanceEx().getDefaultProject()).getLineSeparator();
-          String text = include.getText();
-          if (!lineSeparatorToUse.equals("\n")){
-            text = StringUtil.convertLineSeparators(text, lineSeparatorToUse);
-          }
-          
+          final String text = include.getText();
           try {
             return new ByteArrayInputStream(text.getBytes(FileTemplate.ourEncoding));
           }
@@ -211,27 +205,27 @@ public class FileTemplateUtil{
     return attrib;
   }
 
-  public static String mergeTemplate(Map attributes, String content) throws IOException{
+  public static String mergeTemplate(Map attributes, String content, boolean useSystemLineSeparators) throws IOException{
     VelocityContext context = new VelocityContext();
     for (final Object o : attributes.keySet()) {
       String name = (String)o;
       context.put(name, attributes.get(name));
     }
-    return mergeTemplate(content, context);
+    return mergeTemplate(content, context, useSystemLineSeparators);
   }
 
-  public static String mergeTemplate(Properties attributes, String content) throws IOException{
+  public static String mergeTemplate(Properties attributes, String content, boolean useSystemLineSeparators) throws IOException{
     VelocityContext context = new VelocityContext();
     Enumeration<?> names = attributes.propertyNames();
     while (names.hasMoreElements()){
       String name = (String)names.nextElement();
       context.put(name, attributes.getProperty(name));
     }
-    return mergeTemplate(content, context);
+    return mergeTemplate(content, context, useSystemLineSeparators);
   }
 
-  private static String mergeTemplate(String templateContent, final VelocityContext context) throws IOException {
-    StringWriter stringWriter = new StringWriter();
+  private static String mergeTemplate(String templateContent, final VelocityContext context, boolean useSystemLineSeparators) throws IOException {
+    final StringWriter stringWriter = new StringWriter();
     try {
       Velocity.evaluate(context, stringWriter, "", templateContent);
     }
@@ -244,7 +238,16 @@ public class FileTemplateUtil{
         }
       });
     }
-    return stringWriter.toString();
+    final String result = stringWriter.toString();
+    
+    if (useSystemLineSeparators) {
+      final String newSeparator = CodeStyleSettingsManager.getSettings(ProjectManagerEx.getInstanceEx().getDefaultProject()).getLineSeparator();
+      if (!"\n".equals(newSeparator)) {
+        return StringUtil.convertLineSeparators(result, newSeparator);
+      }
+    }
+    
+    return result;
   }
 
   public static PsiElement createFromTemplate(@NotNull final FileTemplate template,

@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
@@ -73,7 +74,10 @@ public class FileTemplatesTest extends IdeaTestCase {
   }
 
   private static void doTestTemplate(String inputString, Properties properties, String expected, String dir) throws Exception {
-    String result = FileTemplateUtil.mergeTemplate(properties, inputString);
+    inputString = StringUtil.convertLineSeparators(inputString);
+    expected = StringUtil.convertLineSeparators(expected);
+    
+    final String result = FileTemplateUtil.mergeTemplate(properties, inputString, false);
     assertEquals(expected, result);
 
     List attrs = Arrays.asList(FileTemplateUtil.calculateAttributes(inputString, new Properties(), false));
