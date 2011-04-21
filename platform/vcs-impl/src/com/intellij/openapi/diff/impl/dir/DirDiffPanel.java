@@ -21,10 +21,13 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.AsyncProcessIcon;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -32,8 +35,11 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Konstantin Bulenkov
@@ -52,6 +58,7 @@ public class DirDiffPanel {
   private JComboBox myFileFilter;
   private JPanel myToolBarPanel;
   private JBScrollPane myScrollPane;
+  private JPanel myRootPanel;
   private final DirDiffTableModel myModel;
   public JLabel myErrorLabel;
   private final DirDiffDialog myDialog;
@@ -67,7 +74,10 @@ public class DirDiffPanel {
     myTargetDirField.setText(model.getTargetDir().getPath());
     mySourceDirLabel.setIcon(model.getSourceDir().getIcon());
     myTargetDirLabel.setIcon(model.getTargetDir().getIcon());
+    myModel.setTable(myTable);
+    myModel.setDisposableParent(dirDiffDialog.getDisposable());
     myTable.setModel(myModel);
+
     final DirDiffTableCellRenderer renderer = new DirDiffTableCellRenderer(myTable);
     myTable.setDefaultRenderer(Object.class, renderer);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -148,8 +158,41 @@ public class DirDiffPanel {
     final TableColumn operationColumn = columnModel.getColumn((columnModel.getColumnCount() - 1) / 2);
     operationColumn.setMaxWidth(25);
     operationColumn.setMinWidth(25);
+    for (int i = 0; i < columnModel.getColumnCount(); i++) {
+      final String name = myModel.getColumnName(i);
+      final TableColumn column = columnModel.getColumn(i);
+      if (DirDiffTableModel.COLUMN_DATE.equals(name)) {
+        column.setMaxWidth(90);
+        column.setMinWidth(90);
+      } else if (DirDiffTableModel.COLUMN_SIZE.equals(name)) {
+        column.setMaxWidth(120);
+        column.setMinWidth(120);
+      }
+    }
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DirDiff", new DirDiffToolbarActions(myModel), true);
     myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
+    final LoadingDecorator decorator = new LoadingDecorator(myComponent, dirDiffDialog.getDisposable(), -1) {
+      @Override
+      protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
+        final NonOpaquePanel panel = super.customizeLoadingLayer(parent, text, icon);
+        final Font font = text.getFont();
+        text.setFont(font.deriveFont(font.getStyle(), font.getSize() + 6));
+        text.setForeground(new Color(0,0,0,150));
+        return panel;
+      }
+    };
+    //mySplitPanel.setTopComponent(decorator.getComponent());
+    decorator.getComponent().setMinimumSize(new Dimension(400, 100));
+    myTable.putClientProperty(myModel.DECORATOR, decorator);
+    myTable.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentShown(ComponentEvent e) {
+        myTable.removeComponentListener(this);
+        myModel.reloadModel();
+      }
+    });
+    myRootPanel.removeAll();
+    myRootPanel.add(decorator.getComponent(), BorderLayout.CENTER);
   }
 
   private JLabel getErrorLabel() {
@@ -176,7 +219,7 @@ public class DirDiffPanel {
   }
 
   public JComponent getPanel() {
-    return myComponent;
+    return myRootPanel;
   }
 
   public JBTable getTable() {
@@ -184,6 +227,21 @@ public class DirDiffPanel {
   }
 
   public void dispose() {
+    myModel.stopUpdating();
     clearDiffPanel();
+  }
+
+  private void createUIComponents() {
+    final AtomicBoolean callUpdate = new AtomicBoolean(true);
+    myRootPanel = new JPanel(new BorderLayout()) {
+      @Override
+      protected void paintChildren(Graphics g) {
+        super.paintChildren(g);
+        if (callUpdate.get()) {
+          callUpdate.set(false);
+          myModel.reloadModel();
+        }
+      }
+    };
   }
 }
