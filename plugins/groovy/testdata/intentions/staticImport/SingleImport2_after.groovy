@@ -6,6 +6,6 @@ class Util {
   static doSomethingElse(def a){}
 }
 
-doSome<caret>thing()
+doSomething()
 doSomething(2)
 Util.doSomethingElse(2)

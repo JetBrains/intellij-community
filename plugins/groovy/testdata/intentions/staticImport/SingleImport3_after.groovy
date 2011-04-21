@@ -6,5 +6,5 @@ class Util {
 
 def doSomething(){}
 
-Util.doSome<caret>thing()
+Util.doSomething()
 doSomething()
