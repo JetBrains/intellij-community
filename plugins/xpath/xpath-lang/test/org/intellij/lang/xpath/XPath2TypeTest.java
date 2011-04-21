@@ -39,6 +39,10 @@ public class XPath2TypeTest extends XPath2HighlightingTestBase {
     doXPathHighlighting();
   }
 
+  public void testUriToStringSequence() throws Throwable {
+    doXPathHighlighting();
+  }
+
   public void testNumberToNode() throws Throwable {
     doXPathHighlighting();
   }

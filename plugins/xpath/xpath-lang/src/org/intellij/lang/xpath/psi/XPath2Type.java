@@ -136,6 +136,9 @@ public class XPath2Type extends XPathType {
 
   @Override
   protected boolean canBePromotedTo(XPathType type) {
+    while (type instanceof XPath2SequenceType) {
+      type = ((XPath2SequenceType)type).getType();
+    }
     if (this == ITEM || NODE.isAssignableFrom(this) || (this == ANYATOMICTYPE && ANYATOMICTYPE.isAssignableFrom(type))) return true;
 
     if (this == FLOAT && type == DOUBLE) return true;
