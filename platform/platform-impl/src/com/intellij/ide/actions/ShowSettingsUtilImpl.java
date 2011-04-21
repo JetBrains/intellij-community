@@ -177,7 +177,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     return editor.isOK();
   }
 
-  private static String createDimensionKey(Configurable configurable) {
+  public static String createDimensionKey(Configurable configurable) {
     String displayName = configurable.getDisplayName();
     displayName = displayName.replaceAll("\n", "_").replaceAll(" ", "_");
     return "#" + displayName;

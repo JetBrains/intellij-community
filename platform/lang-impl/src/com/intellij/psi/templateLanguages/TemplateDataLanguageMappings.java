@@ -59,7 +59,7 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
   }
 
   @Override
-  protected Language getDefaultMapping(@Nullable VirtualFile file) {
+  public Language getDefaultMapping(@Nullable VirtualFile file) {
     return file == null? null : TemplateDataLanguagePatterns.getInstance().getTemplateDataLanguageByFileName(file);
   }
 

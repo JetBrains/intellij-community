@@ -90,8 +90,9 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
     return true;
   }
 
+  @Override
   @Nullable
-  protected T getDefaultMapping(@Nullable final VirtualFile file) {
+  public T getDefaultMapping(@Nullable final VirtualFile file) {
     return null;
   }
 
