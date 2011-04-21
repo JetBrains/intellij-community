@@ -105,6 +105,10 @@ public class AndroidDrawableResourcesDomTest extends AndroidDomTest {
     doTestHighlighting();
   }
 
+  public void testLayerListHighlighting1() throws Throwable {
+    doTestHighlighting();
+  }
+
   public void testLayerListCompletion1() throws Throwable {
     doTestCompletion();
   }
