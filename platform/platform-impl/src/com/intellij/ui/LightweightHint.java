@@ -239,6 +239,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   }
 
+  //todo[kirillk] look here
   public boolean vetoesHiding() {
     return false;
   }
