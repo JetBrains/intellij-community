@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -138,6 +139,19 @@ public abstract class FindUsagesHandler {
             && elementTextRange.contains(endOffset)) {
           return null;
         }
+
+        PsiReference someReference = usage.findReferenceAt(startOffset);
+        if (someReference != null) {
+          PsiElement refElement = someReference.getElement();
+          for (PsiReference ref : PsiReferenceService.getService().getReferences(refElement, new PsiReferenceService.Hints(element, null))) {
+            if (element.getManager().areElementsEquivalent(ref.resolve(), element)) {
+              TextRange range = ref.getRangeInElement().shiftRight(refElement.getTextRange().getStartOffset() - usage.getTextRange().getStartOffset());
+              return new UsageInfo(usage, range.getStartOffset(), range.getEndOffset(), true);
+            }
+          }
+
+        }
+
         return new UsageInfo(usage, startOffset, endOffset, true);
       }
     };
