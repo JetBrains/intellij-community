@@ -53,7 +53,7 @@
 
   <project-components>
     <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.HtmlTagTreeHighlightingPassFactory</implementation-class>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingPassFactory</implementation-class>
       <skipForDefaultProject/>
     </component>
   </project-components>
@@ -91,7 +91,7 @@
     <editorSmartKeysConfigurable instance="com.intellij.application.options.editor.WebEditorOptionsProvider"/>
     <editorAppearanceConfigurable instance="com.intellij.application.options.editor.WebEditorAppearanceConfigurable"/>
 
-    <editorAppearanceConfigurable instance="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.HtmlTagTreeHighlightingConfigurable"/>
+    <editorAppearanceConfigurable instance="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingConfigurable"/>
 
     <autoImportOptionsProvider instance="com.intellij.application.options.XmlAutoImportOptionsProvider"/>
 
@@ -348,6 +348,6 @@
 
     <sourceRootFinder implementation="com.intellij.ide.util.newProjectWizard.JavaSourceRootFinder"/>
     <breadcrumbsPresentationProvider
-        implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.HtmlTagTreeBreadcrumbsPresentationProvider"/>
+        implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeBreadcrumbsPresentationProvider"/>
   </extensions>
 </idea-plugin>

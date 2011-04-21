@@ -32,8 +32,8 @@ import java.util.Set;
 /**
  * @author Eugene.Kudelevsky
  */
-class HtmlTagTreeHighlightingUtil {
-  private HtmlTagTreeHighlightingUtil() {
+class XmlTagTreeHighlightingUtil {
+  private XmlTagTreeHighlightingUtil() {
   }
 
   static boolean containsTagsWithSameName(PsiElement[] elements) {
@@ -86,7 +86,7 @@ class HtmlTagTreeHighlightingUtil {
   }
 
   static Color[] getBaseColors() {
-    final ColorKey[] colorKeys = HtmlTagTreeHighlightingColors.getColorKeys();
+    final ColorKey[] colorKeys = XmlTagTreeHighlightingColors.getColorKeys();
     final Color[] colors = new Color[colorKeys.length];
 
     final EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();

@@ -29,9 +29,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Eugene.Kudelevsky
  */
-public class HtmlTagTreeHighlightingPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
+public class XmlTagTreeHighlightingPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
 
-  public HtmlTagTreeHighlightingPassFactory(Project project, TextEditorHighlightingPassRegistrar registrar) {
+  public XmlTagTreeHighlightingPassFactory(Project project, TextEditorHighlightingPassRegistrar registrar) {
     super(project);
     registrar.registerTextEditorHighlightingPass(this, new int[]{Pass.UPDATE_ALL}, null, false, -1);
   }
@@ -39,9 +39,9 @@ public class HtmlTagTreeHighlightingPassFactory extends AbstractProjectComponent
   public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
     if (editor.isOneLineMode()) return null;
 
-    if (!HtmlTagTreeHighlightingUtil.isTagTreeHighlightingActive(file)) return null;
+    if (!XmlTagTreeHighlightingUtil.isTagTreeHighlightingActive(file)) return null;
 
-    return new HtmlTagTreeHighlightingPass((XmlFile)file, editor);
+    return new XmlTagTreeHighlightingPass((XmlFile)file, editor);
   }
 }
 

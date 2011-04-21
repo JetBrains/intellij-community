@@ -52,7 +52,7 @@ import java.util.List;
 /**
  * @author Eugene.Kudelevsky
  */
-public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
+public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   private static final Key<List<RangeHighlighter>> TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("TAG_TREE_HIGHLIGHTERS_IN_EDITOR_KEY");
 
   private static final HighlightInfoType TYPE = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, TextAttributesKey
@@ -64,7 +64,7 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
   private final List<Pair<TextRange, TextRange>> myPairsToHighlight = new ArrayList<Pair<TextRange, TextRange>>();
 
-  public HtmlTagTreeHighlightingPass(@NotNull XmlFile file, @NotNull Editor editor) {
+  public XmlTagTreeHighlightingPass(@NotNull XmlFile file, @NotNull Editor editor) {
     super(file.getProject(), editor.getDocument(), true);
     myFile = file;
     myEditor = editor;
@@ -89,7 +89,7 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
       return;
     }
 
-    if (!HtmlTagTreeHighlightingUtil.containsTagsWithSameName(elements)) {
+    if (!XmlTagTreeHighlightingUtil.containsTagsWithSameName(elements)) {
       return;
     }
 
@@ -158,7 +158,7 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     final List<HighlightInfo> highlightInfos = new ArrayList<HighlightInfo>(count * 2);
     final MarkupModel markupModel = myEditor.getMarkupModel();
 
-    final Color[] baseColors = HtmlTagTreeHighlightingUtil.getBaseColors();
+    final Color[] baseColors = XmlTagTreeHighlightingUtil.getBaseColors();
     final Color[] colorsForEditor = toColorsForEditor(baseColors);
     final Color[] colorsForLineMarkers = toColorsForLineMarkers(baseColors);
 
@@ -269,7 +269,7 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     for (int i = 0; i < resultColors.length; i++) {
       final Color color = baseColors[i];
 
-      final Color color1 = HtmlTagTreeHighlightingUtil.makeTransparent(color, tagBackground, transparency);
+      final Color color1 = XmlTagTreeHighlightingUtil.makeTransparent(color, tagBackground, transparency);
       resultColors[i] = color1;
     }
 
