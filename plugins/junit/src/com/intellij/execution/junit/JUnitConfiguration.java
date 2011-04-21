@@ -52,6 +52,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
   @NonNls public static final String TEST_CLASS = "class";
   @NonNls public static final String TEST_PACKAGE = "package";
+  @NonNls public static final String TEST_DIRECTORY = "directory";
   @NonNls public static final String TEST_METHOD = "method";
   @NonNls private static final String PATTERN_EL_NAME = "pattern";
   @NonNls public static final String TEST_PATTERN = PATTERN_EL_NAME;
@@ -345,6 +346,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
   public static class Data implements Cloneable {
     public String PACKAGE_NAME;
+    public String DIR_NAME;
     public String MAIN_CLASS_NAME;
     public String METHOD_NAME;
     public String TEST_OBJECT = TEST_CLASS;
@@ -372,7 +374,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
              Comparing.equal(VM_PARAMETERS, second.VM_PARAMETERS) &&
              Comparing.equal(PARAMETERS, second.PARAMETERS) &&
              Comparing.equal(myPattern, second.myPattern) &&
-             Comparing.equal(FORK_MODE, second.FORK_MODE) ;
+             Comparing.equal(FORK_MODE, second.FORK_MODE) &&
+             Comparing.equal(DIR_NAME, second.DIR_NAME);
     }
 
     public int hashCode() {
@@ -384,7 +387,8 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
              Comparing.hashcode(VM_PARAMETERS) ^
              Comparing.hashcode(PARAMETERS) ^
              Comparing.hashcode(myPattern) ^
-             Comparing.hashcode(FORK_MODE);
+             Comparing.hashcode(FORK_MODE) ^
+             Comparing.hashcode(DIR_NAME);
     }
 
     public TestSearchScope getScope() {
@@ -447,7 +451,7 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
     }
 
     public String getGeneratedName(final JavaRunConfigurationModule configurationModule) {
-      if (TEST_PACKAGE.equals(TEST_OBJECT)) {
+      if (TEST_PACKAGE.equals(TEST_OBJECT) || TEST_DIRECTORY.equals(TEST_OBJECT)) {
         final String moduleName = TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT ? "" : configurationModule.getModuleName();
         final String packageName = getPackageName();
         if (packageName.length() == 0) {
@@ -484,6 +488,10 @@ public class JUnitConfiguration extends ModuleBasedConfiguration<JavaRunConfigur
 
     public String getMethodName() {
       return METHOD_NAME != null ? METHOD_NAME : "";
+    }
+
+    public String getDirName() {
+      return DIR_NAME != null ? DIR_NAME : "";
     }
 
     public Set<String> getPatterns() {
