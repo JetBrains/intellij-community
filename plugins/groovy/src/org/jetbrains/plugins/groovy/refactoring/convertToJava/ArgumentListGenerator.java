@@ -69,47 +69,49 @@ class ArgumentListGenerator {
 
     final GrClosureParameter[] params = signature.getParameters();
 
+    final Project project = context.getProject();
     myBuilder.append("(");
+    boolean hasArgs = false;
     for (int i = 0; i < argInfos.length; i++) {
       GrClosureSignatureUtil.ArgInfo<PsiElement> arg = argInfos[i];
-      if (arg.isMultiArg) {
-        generateMultiArg(arg, params[i], substitutor, context.getProject());
+      final GrClosureParameter param = params[i];
+      if (arg.isMultiArg ? generateMultiArg(arg, param, substitutor, project) : generateSingeArg(arg, param)) {
+        hasArgs = true;
+        myBuilder.append(", ");
       }
-      else {
-        generateSingeArg(arg, params[i]);
-      }
-      myBuilder.append(", ");
     }
 
-    if (argInfos.length > 0) {
+    if (hasArgs) {
       myBuilder.delete(myBuilder.length() - 2, myBuilder.length());
     }
 
     myBuilder.append(")");
   }
 
-  private void generateSingeArg(GrClosureSignatureUtil.ArgInfo<PsiElement> arg, GrClosureParameter param) {
+  private boolean generateSingeArg(GrClosureSignatureUtil.ArgInfo<PsiElement> arg, GrClosureParameter param) {
     boolean argExists = arg.args.size() > 0 && arg.args.get(0) != null;
     if (argExists) {
       final PsiElement actual = arg.args.get(0);
       LOG.assertTrue(actual instanceof GrExpression);
       ((GrExpression)actual).accept(myExpressionGenerator);
+      return true;
     }
     else {
-      final GrExpression initializer = param.getDefaultInitializer();
+      /*final GrExpression initializer = param.getDefaultInitializer();
       if (initializer != null) {
         initializer.accept(myExpressionGenerator);
       }
       else {
         myBuilder.append("???"); //todo add something more consistent
-      }
+      }*/
+      return false;
     }
   }
 
-  private void generateMultiArg(GrClosureSignatureUtil.ArgInfo<PsiElement> arg,
-                                GrClosureParameter param,
-                                PsiSubstitutor substitutor,
-                                Project project) {
+  private boolean generateMultiArg(GrClosureSignatureUtil.ArgInfo<PsiElement> arg,
+                                   GrClosureParameter param,
+                                   PsiSubstitutor substitutor,
+                                   Project project) {
     final PsiType type = param.getType();
     //todo find out if param is array in case of it has declared type
 
@@ -131,6 +133,7 @@ class ArgumentListGenerator {
       LOG.assertTrue(listOrMap instanceof GrListOrMap);
       listOrMap.accept(myExpressionGenerator);
     }
+    return true;
   }
 
   private void generateSimple(GrExpression[] exprs,

@@ -102,9 +102,8 @@ public class GeneratorTest extends LightGroovyTestCase {
     final StringBuilder builder = new StringBuilder();
     final String testName = StringUtil.trimEnd(relTestPath, ".test");
     PsiFile psiFile = TestUtils.createPseudoPhysicalFile(getProject(), testName + ".groovy", data.get(0));
-    final Map<String, CharSequence> map =
-      new GroovyToJavaGenerator(getProject(), Collections.singleton(psiFile.getViewProvider().getVirtualFile()), false)
-        .generateStubs((GroovyFile)psiFile);
+    final Map<String, CharSequence> map = new GroovyToJavaGenerator(getProject(), Collections.singleton(
+      psiFile.getViewProvider().getVirtualFile())).generateStubs((GroovyFile)psiFile);
 
      for (CharSequence stubText : map.values()) {
       builder.append(stubText);

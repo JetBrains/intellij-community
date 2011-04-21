@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
@@ -345,5 +346,42 @@ public class GenerationUtil {
       curClass = curClass.getSuperClass();
     }
     return curClass;
+  }
+
+  static PsiType findOutParameterType(PsiParameter parameter) {
+    return parameter.getType(); //todo make smarter
+  }
+
+  static boolean isAbstractInJava(PsiMethod method) {
+    if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return true;
+    }
+
+    final PsiClass psiClass = method.getContainingClass();
+    return psiClass != null && GrClassSubstitutor.getSubstitutedClass(psiClass).isInterface();
+  }
+
+  static void writeTypeParameters(StringBuilder text,
+                                  PsiTypeParameterListOwner typeParameterListOwner,
+                                  final ClassNameProvider classNameProvider) {
+    if (!typeParameterListOwner.hasTypeParameters()) return;
+
+    text.append("<");
+    PsiTypeParameter[] parameters = typeParameterListOwner.getTypeParameters();
+    final PsiTypeParameterList typeParameterList = typeParameterListOwner.getTypeParameterList();
+    for (int i = 0; i < parameters.length; i++) {
+      if (i > 0) text.append(", ");
+      PsiTypeParameter parameter = parameters[i];
+      text.append(parameter.getName());
+      PsiClassType[] extendsListTypes = parameter.getExtendsListTypes();
+      if (extendsListTypes.length > 0) {
+        text.append(" extends ");
+        for (int j = 0; j < extendsListTypes.length; j++) {
+          if (j > 0) text.append(" & ");
+          writeType(text, extendsListTypes[j], typeParameterList, classNameProvider);
+        }
+      }
+    }
+    text.append(">");
   }
 }
