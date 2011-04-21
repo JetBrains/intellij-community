@@ -26,7 +26,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -60,7 +62,7 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
         return new FirefoxSettings();
       }
     },
-    CHROME(XmlBundle.message("browsers.chrome"), "chrome", "google-chrome", null, IconLoader.getIcon("/xml/browsers/chrome16.png")) {
+    CHROME(XmlBundle.message("browsers.chrome"), getWindowsPathToChrome(), "google-chrome", null, IconLoader.getIcon("/xml/browsers/chrome16.png")) {
       @Override
       public BrowserSpecificSettings createBrowserSpecificSettings() {
         return new ChromeSettings();
@@ -200,6 +202,14 @@ public class BrowsersConfiguration implements PersistentStateComponent<Element> 
     else {
       getInstance().doLaunchBrowser(family, url, ArrayUtil.EMPTY_STRING_ARRAY);
     }
+  }
+
+  @Nullable
+  private static String getWindowsPathToChrome() {
+    if (!SystemInfo.isWindows) return null;
+
+    String localSettings = SystemProperties.getUserHome() + (SystemInfo.isWindows7 ? "/AppData/Local" : "/Local Settings");
+    return FileUtil.toSystemDependentName(localSettings + "/Google/Chrome/Application/chrome.exe");
   }
 
   public static void launchBrowser(final @NotNull BrowserFamily family, @NotNull final String url, String... parameters) {
