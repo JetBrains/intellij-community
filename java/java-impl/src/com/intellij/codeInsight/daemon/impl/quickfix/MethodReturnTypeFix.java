@@ -55,14 +55,14 @@ import java.util.List;
 public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodReturnBooleanFix");
 
-  private final PsiType myReturnType;
+  private final SmartTypePointer myReturnTypePointer;
   private final boolean myFixWholeHierarchy;
   private final String myName;
   private final String myCanonicalText;
 
-  public MethodReturnTypeFix(final PsiMethod method, final PsiType returnType, boolean fixWholeHierarchy) {
+  public MethodReturnTypeFix(@NotNull PsiMethod method, @NotNull PsiType returnType, boolean fixWholeHierarchy) {
     super(method);
-    myReturnType = returnType;
+    myReturnTypePointer = SmartTypePointerManager.getInstance(method.getProject()).createSmartTypePointer(returnType);
     myFixWholeHierarchy = fixWholeHierarchy;
     myName = method.getName();
     myCanonicalText = returnType.getCanonicalText();
@@ -87,6 +87,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
                              @NotNull PsiElement endElement) {
     final PsiMethod myMethod = (PsiMethod)startElement;
 
+    PsiType myReturnType = myReturnTypePointer.getType();
     return myMethod.isValid()
         && myMethod.getManager().isInProject(myMethod)
         && myReturnType != null
@@ -94,10 +95,6 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
         && !TypeConversionUtil.isNullType(myReturnType)
         && myMethod.getReturnType() != null
         && !Comparing.equal(myReturnType, myMethod.getReturnType());
-  }
-
-  public boolean startInWriteAction() {
-    return true;
   }
 
   @Override
@@ -109,12 +106,14 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final PsiMethod myMethod = (PsiMethod)startElement;
 
     if (!CodeInsightUtilBase.prepareFileForWrite(myMethod.getContainingFile())) return;
+    PsiType myReturnType = myReturnTypePointer.getType();
+    if (myReturnType == null) return;
     if (myFixWholeHierarchy) {
       final PsiMethod superMethod = myMethod.findDeepestSuperMethod();
       final PsiType superReturnType = superMethod == null ? null : superMethod.getReturnType();
       if (superReturnType != null &&
           !Comparing.equal(myReturnType, superReturnType) &&
-          !changeClassTypeArgument(myMethod, project, superReturnType, superMethod.getContainingClass(), editor)) {
+          !changeClassTypeArgument(myMethod, project, superReturnType, superMethod.getContainingClass(), editor, myReturnType)) {
         return;
       }
     }
@@ -326,7 +325,11 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     editor.getSelectionModel().setSelection(range.getEndOffset(), range.getStartOffset());
   }
 
-  private boolean changeClassTypeArgument(PsiMethod myMethod, Project project, PsiType superReturnType, PsiClass superClass, Editor editor) {
+  private static boolean changeClassTypeArgument(PsiMethod myMethod,
+                                                 Project project,
+                                                 PsiType superReturnType,
+                                                 PsiClass superClass,
+                                                 Editor editor, PsiType returnType) {
     if (superClass == null || !superClass.hasTypeParameters()) return true;
     final PsiClass superReturnTypeClass = PsiUtil.resolveClassInType(superReturnType);
     if (superReturnTypeClass == null || !(superReturnTypeClass instanceof PsiTypeParameter || superReturnTypeClass.hasTypeParameters())) return true;
@@ -341,7 +344,6 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     if (!(resolve instanceof PsiClass)) return true;
     final PsiClass baseClass = (PsiClass)resolve;
 
-    PsiType returnType = myReturnType;
     if (returnType instanceof PsiPrimitiveType) {
       returnType = ((PsiPrimitiveType)returnType).getBoxedType(derivedClass);
     }
