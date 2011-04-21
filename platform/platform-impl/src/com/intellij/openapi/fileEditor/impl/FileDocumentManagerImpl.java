@@ -362,6 +362,10 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
   @NotNull
   public Document[] getUnsavedDocuments() {
+    if (myUnsavedDocuments.isEmpty()) {
+      return Document.EMPTY_ARRAY;
+    }
+
     List<Document> list = new ArrayList<Document>(myUnsavedDocuments);
     return list.toArray(new Document[list.size()]);
   }

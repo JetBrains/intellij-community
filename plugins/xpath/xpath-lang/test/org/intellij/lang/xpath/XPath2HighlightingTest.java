@@ -15,6 +15,10 @@
  */
 package org.intellij.lang.xpath;
 
+import org.intellij.lang.xpath.context.ContextProvider;
+
+import java.util.Date;
+
 /*
 * Created by IntelliJ IDEA.
 * User: sweinreuter
@@ -46,6 +50,43 @@ public class XPath2HighlightingTest extends XPath2HighlightingTestBase {
   }
 
   public void testEmptyStringLiteral() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testNodeKindTest() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testIncorrectNodeKindTests() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testValidOperations() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testValidOperations2() throws Throwable {
+    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    doXPathHighlighting();
+  }
+
+  public void testPlusOperatorNotApplicable() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testToOperatorNotApplicable() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testIntersectOperatorNotApplicable() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testUnionOperatorNotApplicable() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testInvalidNodeTypePredicate() throws Throwable {
     doXPathHighlighting();
   }
 

@@ -355,10 +355,10 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
       myBrowser.addSelectedListChangeListener(listener);
     }
 
-    public List<AbstractVcs> getAffectedVcses() {
+    public Collection<AbstractVcs> getAffectedVcses() {
       final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
       final Set<AbstractVcs> vcses = new HashSet<AbstractVcs>(Arrays.asList(vcsManager.getAllActiveVcss()));
-      final List<AbstractVcs> result = new ArrayList<AbstractVcs>();
+      final Set<AbstractVcs> result = new HashSet<AbstractVcs>();
       for (Change change : myBrowser.myAllChanges) {
         if (vcses.isEmpty()) break;
         final AbstractVcs vcs = ChangesUtil.getVcsForChange(change, myBrowser.myProject);

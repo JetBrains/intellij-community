@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -37,7 +38,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -155,13 +155,13 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
                                                          @Nullable PsiType type,
                                                          String... identifiers) {
     StringBuilder text = writeModifiers(modifiers);
-    if (modifiers == null || modifiers.length == 0) {
-      text.append("def ");
-    }
+
     if (type != null) {
-      type = TypesUtil.unboxPrimitiveTypeWrapper(type);
-      final String typeText = getTypeText(type);
+      final PsiType unboxed = TypesUtil.unboxPrimitiveTypeWrapper(type);
+      final String typeText = getTypeText(unboxed);
       text.append(typeText).append(" ");
+    } else if (text.length() == 0) {
+      text.insert(0, "def ");
     }
 
     if (identifiers.length > 1 && initializer != null) {
@@ -186,17 +186,18 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       text.append(" = ").append(initializer.getText());
     }
 
-    PsiFile file = createGroovyFile(text.toString());
-    GrTopStatement[] topStatements = ((GroovyFileBase)file).getTopStatements();
+    GrTopStatement[] topStatements = ((GroovyFileBase)createGroovyFile(text.toString())).getTopStatements();
     if (topStatements.length == 0 || !(topStatements[0] instanceof GrVariableDeclaration)) {
-      throw new RuntimeException("Invalid arguments, text = " + text.toString());
+      topStatements = ((GroovyFileBase)createGroovyFile("def " + text)).getTopStatements();
+    }
+    if (topStatements.length == 0 || !(topStatements[0] instanceof GrVariableDeclaration)) {
+      throw new RuntimeException("Invalid arguments, text = " + text);
     }
 
-    final GrVariableDeclaration declaration = (GrVariableDeclaration)topStatements[0];
-    if (declaration.getTypeElementGroovy() != null) {
-      declaration.getModifierList().setModifierProperty(GrModifier.DEF, false);
-    }
-    return declaration;
+    final GrVariableDeclaration statement = (GrVariableDeclaration)topStatements[0];
+    //todo switch-case formatting should work without this hack
+    CodeEditUtil.markToReformatBefore(statement.getNode().findLeafElementAt(0), true);
+    return statement;
   }
 
   @Override

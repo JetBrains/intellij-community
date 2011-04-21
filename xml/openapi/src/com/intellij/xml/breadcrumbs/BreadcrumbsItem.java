@@ -15,6 +15,8 @@
  */
 package com.intellij.xml.breadcrumbs;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author spleaner
  */
@@ -26,4 +28,8 @@ public abstract class BreadcrumbsItem {
     return "";
   }
 
+  @Nullable
+  public CrumbPresentation getPresentation() {
+    return null;
+  }
 }

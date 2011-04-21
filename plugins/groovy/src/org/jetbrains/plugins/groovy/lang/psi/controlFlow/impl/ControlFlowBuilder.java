@@ -143,7 +143,19 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     final InstructionImpl end = startNode(null);
     checkPending(end); //collect return edges
-    return myInstructions.toArray(new Instruction[myInstructions.size()]);
+
+
+    return assertValidPsi(myInstructions.toArray(new Instruction[myInstructions.size()]));
+  }
+
+  public static Instruction[] assertValidPsi(Instruction[] instructions) {
+    for (Instruction instruction : instructions) {
+      PsiElement element = instruction.getElement();
+      if (element != null && !element.isValid()) {
+        throw new AssertionError("invalid element in dfa: " + element);
+      }
+    }
+    return instructions;
   }
 
   private void buildFlowForClosure(final GrClosableBlock closure) {

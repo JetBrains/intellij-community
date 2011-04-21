@@ -67,14 +67,14 @@ public class CutLineEndAction extends EditorAction {
         }
       }
 
-      delete(doc, start, end);
+      delete(editor, start, end);
     }
 
-    private void delete(@NotNull Document document, int start, int end) {
+    private void delete(@NotNull Editor editor, int start, int end) {
       if (myCopyToClipboard) {
-        EditorActionUtil.copyToKillRing(document, start, end, true);
+        KillRingUtil.copyToKillRing(editor, start, end, true);
       }
-      document.deleteString(start, end);
+      editor.getDocument().deleteString(start, end);
     }
   }
 }

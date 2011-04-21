@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 import java.util.Map;
@@ -47,24 +48,35 @@ public final class HighlightData {
     myHighlightType = highlightType;
   }
 
-  public void addHighlToView(Editor view, EditorColorsScheme scheme, Map<TextAttributesKey,String> displayText) {
+  public void addHighlToView(final Editor view, EditorColorsScheme scheme, final Map<TextAttributesKey,String> displayText) {
 
     // XXX: Hack
     if (HighlighterColors.BAD_CHARACTER.equals(myHighlightType)) {
       return;
     }
 
-    TextAttributes attr = scheme.getAttributes(myHighlightType);
+    final TextAttributes attr = scheme.getAttributes(myHighlightType);
     if (attr != null) {
-      // IDEA-53203: add ERASE_MARKER for manually defined attributes
-      view.getMarkupModel().addRangeHighlighter(myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                TextAttributes.ERASE_MARKER, HighlighterTargetArea.EXACT_RANGE);
-      RangeHighlighter highlighter = view.getMarkupModel()
-          .addRangeHighlighter(myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX, attr, HighlighterTargetArea.EXACT_RANGE);
-      final Color errorStripeColor = attr.getErrorStripeColor();
-      highlighter.setErrorStripeMarkColor(errorStripeColor);
-      final String tooltip = displayText.get(myHighlightType);
-      highlighter.setErrorStripeTooltip(tooltip);
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            // IDEA-53203: add ERASE_MARKER for manually defined attributes
+            view.getMarkupModel().addRangeHighlighter(myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                      TextAttributes.ERASE_MARKER, HighlighterTargetArea.EXACT_RANGE);
+            RangeHighlighter highlighter = view.getMarkupModel()
+              .addRangeHighlighter(myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX, attr,
+                                   HighlighterTargetArea.EXACT_RANGE);
+            final Color errorStripeColor = attr.getErrorStripeColor();
+            highlighter.setErrorStripeMarkColor(errorStripeColor);
+            final String tooltip = displayText.get(myHighlightType);
+            highlighter.setErrorStripeTooltip(tooltip);
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
+      });
     }
   }
 

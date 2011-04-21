@@ -17,10 +17,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
@@ -150,9 +147,14 @@ public class QuickFixAction extends AnAction {
                   for (QuickFix fix : fixes) {
                     if (fix != null) {
                       final QuickFixAction quickFixAction = QuickFixAction.this;
-                      if (quickFixAction instanceof LocalQuickFixWrapper &&
-                          !((LocalQuickFixWrapper)quickFixAction).getFix().getClass().isInstance(fix)) {
-                        continue;
+                      if (quickFixAction instanceof LocalQuickFixWrapper) {
+                        QuickFix unwrapped = ((LocalQuickFixWrapper)quickFixAction).getFix();
+
+                        if (!unwrapped.getClass().isInstance(fix)) continue;
+                        if (unwrapped instanceof IntentionWrapper && fix instanceof IntentionWrapper &&
+                            !(((IntentionWrapper) unwrapped).getAction().getClass().isInstance(((IntentionWrapper) fix).getAction()))) {
+                          continue;
+                        }
                       }
 
                       final long startCount = tracker.getModificationCount();

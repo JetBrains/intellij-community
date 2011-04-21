@@ -399,7 +399,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       if (localQuickFixes != null){
         for (QuickFix fix : localQuickFixes) {
           if (fix == null) continue;
-          final Class klass = fix.getClass();
+          final Class klass = fix instanceof IntentionWrapper ? ((IntentionWrapper) fix).getAction().getClass() : fix.getClass();
           final QuickFixAction quickFixAction = result.get(klass);
           if (quickFixAction != null){
             try {

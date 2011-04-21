@@ -16,6 +16,8 @@
 package git4idea.branch;
 
 import git4idea.GitBranch;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Holder for branch and its tracked branch (if any).
@@ -23,19 +25,19 @@ import git4idea.GitBranch;
  * @author Kirill Likhodedov
  */
 public class GitBranchPair {
-  private GitBranch myBranch;
-  private GitBranch myTrackedName;
+  private @NotNull GitBranch myBranch;
+  private @Nullable GitBranch myTrackedName;
 
-  public GitBranchPair(GitBranch branch, GitBranch tracked) {
+  public GitBranchPair(@NotNull GitBranch branch, @Nullable GitBranch tracked) {
     myBranch = branch;
     myTrackedName = tracked;
   }
 
-  public GitBranch getBranch() {
+  public @NotNull GitBranch getBranch() {
     return myBranch;
   }
 
-  public GitBranch getTracked() {
+  public @Nullable GitBranch getTracked() {
     return myTrackedName;
   }
 

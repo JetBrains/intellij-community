@@ -30,6 +30,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -47,10 +48,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.Comparator;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.List;
-import java.util.PriorityQueue;
 
 /**
  * @author spleaner
@@ -65,8 +64,11 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   private final BreadcrumbsInfoProvider myInfoProvider;
   private final JPanel myWrapperPanel;
 
+  public static final Key<BreadcrumbsXmlWrapper> BREADCRUMBS_COMPONENT_KEY = new Key<BreadcrumbsXmlWrapper>("BREADCRUMBS_KEY");
+
   public BreadcrumbsXmlWrapper(@NotNull final Editor editor) {
     myEditor = editor;
+    myEditor.putUserData(BREADCRUMBS_COMPONENT_KEY, this);
 
     final Project project = editor.getProject();
     assert project != null;
@@ -178,7 +180,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     myWrapperPanel.add(myComponent, BorderLayout.CENTER);
   }
 
-  private void queueUpdate(Editor editor) {
+  public void queueUpdate(Editor editor) {
     myQueue.cancelAllUpdates();
     myQueue.queue(new MyUpdate(this, editor));
   }
@@ -197,13 +199,36 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     return provider == null ? myInfoProvider : provider;
   }
 
+  private static PsiElement[] toPsiElementArray(Collection<BreadcrumbsPsiItem> items) {
+    final PsiElement[] elements = new PsiElement[items.size()];
+    int index = 0;
+    for (BreadcrumbsPsiItem item : items) {
+      elements[index++] = item.getPsiElement();
+    }
+    return elements;
+  }
+
+  @Nullable
+  private static CrumbPresentation[] getCrumbPresentations(@NotNull final LinkedList<BreadcrumbsPsiItem> items,
+                                                           @NotNull PsiElement firstElement) {
+    for (BreadcrumbsPresentationProvider provider : BreadcrumbsPresentationProvider.EP_NAME.getExtensions()) {
+      final PsiElement[] elements = toPsiElementArray(items);
+      final CrumbPresentation[] presentations = provider.getCrumbPresentations(elements);
+      if (presentations != null) {
+        return presentations;
+      }
+    }
+    return null;
+  }
+
   private void setUserCaretChange(final boolean userCaretChange) {
     myUserCaretChange = userCaretChange;
   }
 
   @Nullable
   private List<BreadcrumbsPsiItem> getLineElements(@NotNull final LogicalPosition position) {
-    PsiElement element = findFirstBreadcrumbedElement(position);
+    final PsiElement firstElement = findFirstBreadcrumbedElement(position);
+    PsiElement element = firstElement;
     if (element == null) return null;
 
     final LinkedList<BreadcrumbsPsiItem> result = new LinkedList<BreadcrumbsPsiItem>();
@@ -215,6 +240,14 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
       }
 
       element = (provider != null) ? provider.getParent(element) : element.getParent();
+    }
+
+    final CrumbPresentation[] presentations = getCrumbPresentations(result, firstElement);
+    if (presentations != null) {
+      int i = 0;
+      for (BreadcrumbsPsiItem item : result) {
+        item.setPresentation(presentations[i++]);
+      }
     }
 
     return result;
@@ -302,7 +335,13 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     }
   }
 
+  @Nullable
+  public static BreadcrumbsXmlWrapper getBreadcrumbsComponent(@NotNull Editor editor) {
+    return editor.getUserData(BREADCRUMBS_COMPONENT_KEY);
+  }
+
   public void dispose() {
+    myEditor.putUserData(BREADCRUMBS_COMPONENT_KEY, null);
     myEditor = null;
   }
 

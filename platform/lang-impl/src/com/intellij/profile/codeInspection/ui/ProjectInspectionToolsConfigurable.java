@@ -32,7 +32,7 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
   }
 
   protected InspectionProfileImpl getCurrentProfile() {
-    return (InspectionProfileImpl)((InspectionProjectProfileManager)myProjectProfileManager).getProjectProfileImpl();
+    return (InspectionProfileImpl)myProjectProfileManager.getProjectProfileImpl();
   }
 
   @Override

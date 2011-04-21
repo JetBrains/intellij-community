@@ -26,9 +26,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -44,14 +41,12 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
@@ -101,7 +96,7 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
       return;
     }
 
-    if (!containsParentTagsWithSameName(element)) {
+    if (!HtmlTagTreeHighlightingUtil.containsParentTagsWithSameName(element)) {
       return;
     }
 
@@ -111,22 +106,6 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
       }
       element = element.getParent();
     }
-  }
-
-  private static boolean containsParentTagsWithSameName(PsiElement element) {
-    final Set<String> names = new HashSet<String>();
-
-    while (element != null) {
-      if (element instanceof XmlTag) {
-        final String name = ((XmlTag)element).getName();
-        if (!names.add(name)) {
-          return true;
-        }
-      }
-      element = element.getParent();
-    }
-
-    return false;
   }
 
   @Nullable
@@ -187,7 +166,7 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     final List<HighlightInfo> highlightInfos = new ArrayList<HighlightInfo>(count * 2);
     final MarkupModel markupModel = myEditor.getMarkupModel();
 
-    final Color[] baseColors = getBaseColors();
+    final Color[] baseColors = HtmlTagTreeHighlightingUtil.getBaseColors();
     final Color[] colorsForEditor = toColorsForEditor(baseColors);
     final Color[] colorsForLineMarkers = toColorsForLineMarkers(baseColors);
 
@@ -261,19 +240,6 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   }
 
 
-  private static Color[] getBaseColors() {
-    final ColorKey[] colorKeys = HtmlTagTreeHighlightingColors.getColorKeys();
-    final Color[] colors = new Color[colorKeys.length];
-
-    final EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
-
-    for (int i = 0; i < colors.length; i++) {
-      colors[i] = colorsScheme.getColor(colorKeys[i]);
-    }
-
-    return colors;
-  }
-
   private static Color[] toColorsForLineMarkers(Color[] baseColors) {
     final Color[] colors = new Color[baseColors.length];
     final Color tagBackground = new Color(239, 239, 239);
@@ -298,28 +264,24 @@ public class HtmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private Color[] toColorsForEditor(Color[] baseColors) {
-    final Color[] colors = new Color[baseColors.length];
     final Color tagBackground = myEditor instanceof EditorEx ? ((EditorEx)myEditor).getBackgroundColor() : null;
 
+    if (tagBackground == null) {
+      return baseColors;
+    }
+
+    final Color[] resultColors = new Color[baseColors.length];
     // todo: make configurable
     final double transparency = 0.1;
 
-    for (int i = 0; i < colors.length; i++) {
+    for (int i = 0; i < resultColors.length; i++) {
       final Color color = baseColors[i];
 
-      if (tagBackground == null) {
-        colors[i] = color;
-      }
-      else {
-        int r = (int)(tagBackground.getRed() * (1 - transparency) + color.getRed() * transparency);
-        int g = (int)(tagBackground.getGreen() * (1 - transparency) + color.getGreen() * transparency);
-        int b = (int)(tagBackground.getBlue() * (1 - transparency) + color.getBlue() * transparency);
-
-        colors[i] = new Color(r, g, b);
-      }
+      final Color color1 = HtmlTagTreeHighlightingUtil.makeTransparent(color, tagBackground, transparency);
+      resultColors[i] = color1;
     }
 
-    return colors;
+    return resultColors;
   }
 
   public static void clearHighlightingAndLineMarkers(final Editor editor, @NotNull Project project) {

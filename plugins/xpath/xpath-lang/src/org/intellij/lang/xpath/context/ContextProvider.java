@@ -185,7 +185,9 @@ public abstract class ContextProvider {
     }
 
     public static final class DefaultProvider extends ContextProvider {
-        private final XmlElement myContextElement;
+      public static NamespaceContext NULL_NAMESPACE_CONTEXT = null;
+
+      private final XmlElement myContextElement;
         private final ContextType myContextType;
         private final NamespaceContext myNamespaceContext;
 
@@ -197,7 +199,7 @@ public abstract class ContextProvider {
               myNamespaceContext = XsltNamespaceContext.NAMESPACE_CONTEXT;
               setXPathInjected(myContextElement.getContainingFile());
             } else {
-              myNamespaceContext = null;
+              myNamespaceContext = NULL_NAMESPACE_CONTEXT;
             }
         }
 
@@ -209,7 +211,7 @@ public abstract class ContextProvider {
             myNamespaceContext = XsltNamespaceContext.NAMESPACE_CONTEXT;
             setXPathInjected(myContextElement.getContainingFile());
           } else {
-            myNamespaceContext = null;
+            myNamespaceContext = NULL_NAMESPACE_CONTEXT;
           }
         }
 

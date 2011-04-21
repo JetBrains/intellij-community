@@ -74,7 +74,7 @@ public class XPath2ElementVisitor extends XPathElementVisitor {
   }
 
   public void visitXPath2RangeExpression(XPath2RangeExpression o) {
-    visitXPathExpression(o);
+    visitXPathBinaryExpression(o);
   }
 
   @Override

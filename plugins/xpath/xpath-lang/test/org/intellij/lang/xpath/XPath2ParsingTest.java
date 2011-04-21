@@ -75,6 +75,14 @@ public class XPath2ParsingTest extends TestBase {
     doXPathHighlighting();
   }
 
+  public void testMissingInstanceOfType() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testMissingSatisfiesExpression() throws Throwable {
+    doXPathHighlighting();
+  }
+
   private void doXPathHighlighting(String... moreFiles) throws Throwable {
     final String name = getTestFileName();
     myFixture.testHighlighting(false, false, false, ArrayUtil.append(moreFiles, name + ".xpath2"));

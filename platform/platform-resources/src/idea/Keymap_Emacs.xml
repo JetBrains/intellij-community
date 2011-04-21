@@ -19,7 +19,6 @@
     <action id="$Cut">
       <keyboard-shortcut first-keystroke="shift DELETE"/>
       <keyboard-shortcut first-keystroke="alt X"/>
-      <keyboard-shortcut first-keystroke="control W"/>
     </action>
     <action id="ReformatCode"/>
     <action id="EditorCodeBlockEndWithSelection">
@@ -35,9 +34,16 @@
       <keyboard-shortcut first-keystroke="shift INSERT"/>
       <keyboard-shortcut first-keystroke="control Y"/>
     </action>
+    <action id="PasteMultiple">
+      <keyboard-shortcut first-keystroke="alt Y"/>
+    </action>
     <action id="EditorSelectWord">
       <keyboard-shortcut first-keystroke="control alt W"/>
     </action>
+    <action id="EditorToggleStickySelection">
+      <keyboard-shortcut first-keystroke="control shift 2"/>
+    </action>
+    <action id="ToggleBookmark2" />
     <action id="AutoIndentLines">
       <keyboard-shortcut first-keystroke="control alt I"/>
       <keyboard-shortcut first-keystroke="control alt Q"/>
@@ -64,8 +70,18 @@
       <keyboard-shortcut first-keystroke="DELETE"/>
       <keyboard-shortcut first-keystroke="control D"/>
     </action>
-    <action id="EditorDeleteToWordEnd">
+    <action id="SafeDelete" />
+    <action id="EditorKillToWordStart">
+      <keyboard-shortcut first-keystroke="alt DELETE"/>
+    </action>
+    <action id="EditorKillToWordEnd">
       <keyboard-shortcut first-keystroke="alt D"/>
+    </action>
+    <action id="EditorKillRegion">
+      <keyboard-shortcut first-keystroke="control W"/>
+    </action>
+    <action id="EditorKillRingSave">
+      <keyboard-shortcut first-keystroke="alt W"/>
     </action>
     <action id="$Undo">
       <keyboard-shortcut first-keystroke="shift control MINUS"/>
@@ -79,7 +95,6 @@
     <action id="$Copy">
       <keyboard-shortcut first-keystroke="control INSERT"/>
       <keyboard-shortcut first-keystroke="alt C"/>
-      <keyboard-shortcut first-keystroke="alt W"/>
       <keyboard-shortcut first-keystroke="ESCAPE" second-keystroke="W"/>
     </action>
     <action id="GotoPreviousError">

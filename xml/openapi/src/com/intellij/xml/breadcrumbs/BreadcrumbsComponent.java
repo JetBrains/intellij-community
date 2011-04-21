@@ -588,7 +588,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     }
   }
 
-  private static class ButtonSettings extends PainterSettings {
+  static class ButtonSettings extends PainterSettings {
     protected static final Color DEFAULT_BG_COLOR = new Color(245, 245, 245);
     private static final Color LIGHT_BG_COLOR = new Color(253, 253, 253);
     private static final Color CURRENT_BG_COLOR = new Color(250, 250, 220);
@@ -599,21 +599,32 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     protected static final Color DEFAULT_BORDER_COLOR = new Color(90, 90, 90);
     private static final Color LIGHT_BORDER_COLOR = new Color(170, 170, 170);
 
-    @Nullable
-    Color getBackgroundColor(@NotNull final Crumb c) {
-      if (c.isHovered()) {
+    static Color getBackgroundColor(boolean selected, boolean hovered, boolean light, boolean navigationCrumb) {
+      if (hovered) {
         return HOVERED_BG_COLOR;
       }
 
-      if (c.isSelected()) {
+      if (selected) {
         return CURRENT_BG_COLOR;
       }
 
-      if (c.isLight() && !(c instanceof NavigationCrumb)) {
+      if (light && !navigationCrumb) {
         return LIGHT_BG_COLOR;
       }
 
       return DEFAULT_BG_COLOR;
+    }
+
+    @Nullable
+    Color getBackgroundColor(@NotNull final Crumb c) {
+      final BreadcrumbsItem item = c.getItem();
+      if (item != null) {
+        final CrumbPresentation presentation = item.getPresentation();
+        if (presentation != null) {
+          return presentation.getBackgroundColor(c.isSelected(), c.isHovered(), c.isLight());
+        }
+      }
+      return getBackgroundColor(c.isSelected(), c.isHovered(), c.isLight(), c instanceof NavigationCrumb);
     }
 
     @Nullable

@@ -77,8 +77,18 @@ public abstract class GenericNotifierImpl<T, Key> {
       notifications = new ArrayList<MyNotification<T>>(myState.values());
       myState.clear();
     }
-    for (MyNotification<T> notification : notifications) {
-      notification.expire();
+    final Application application = ApplicationManager.getApplication();
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        for (MyNotification<T> notification : notifications) {
+          notification.expire();
+        }
+      }
+    };
+    if (application.isDispatchThread()) {
+      runnable.run();
+    } else {
+      application.invokeLater(runnable, myProject.getDisposed());
     }
   }
 

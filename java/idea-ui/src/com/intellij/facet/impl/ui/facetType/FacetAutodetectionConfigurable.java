@@ -20,6 +20,7 @@ import com.intellij.facet.impl.autodetecting.DisabledAutodetectionByTypeElement;
 import com.intellij.facet.impl.autodetecting.DisabledAutodetectionInModuleElement;
 import com.intellij.facet.impl.autodetecting.FacetAutodetectingManager;
 import com.intellij.facet.impl.autodetecting.FacetAutodetectingManagerImpl;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -45,6 +46,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.*;
 
 /**
@@ -105,9 +107,11 @@ public class FacetAutodetectionConfigurable implements Configurable {
         }
       }
     });
+    UIUtil.addKeyboardShortcut(myModulesList, myAddModuleButton, CommonShortcuts.getInsertKeystroke());
 
     myRemoveModuleButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
+        //noinspection unchecked
         List<String> removed = ListUtil.removeSelectedItems(myModulesList);
         for (String moduleName : removed) {
           if (!myAddedModules.remove(moduleName)) {
@@ -117,14 +121,18 @@ public class FacetAutodetectionConfigurable implements Configurable {
         updateButtons();
       }
     });
+    KeyStroke delete = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0);
+    UIUtil.addKeyboardShortcut(myModulesList, myRemoveModuleButton, delete);
 
     myRemoveFileButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
+        //noinspection unchecked
         List<String> removed = ListUtil.removeSelectedItems(myFilesList);
         myRemovedFiles.addAll(removed);
         updateButtons();
       }
     });
+    UIUtil.addKeyboardShortcut(myFilesList, myRemoveFileButton, delete);
 
     myEnableAutoDetectionCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {

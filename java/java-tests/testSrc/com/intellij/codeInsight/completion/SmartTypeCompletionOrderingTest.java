@@ -5,8 +5,13 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.statistics.StatisticsManager;
+
+import java.util.List;
 
 public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/smartTypeSorting"; 
@@ -132,16 +137,16 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testExpectedInterfaceShouldGoFirst() throws Throwable {
-    checkPreferredItems(0, "MyProcessor<Foo>", "Proc1<Foo>");
+    checkPreferredItems(0, "MyProcessor", "Proc1");
   }
 
   public void testStatisticsAffectsNonPreferableExpectedItems() throws Throwable {
     final LookupImpl lookup = invokeCompletion(getTestName(false) + ".java");
-    assertPreferredItems(1, "List<Foo>", "AbstractList<Foo>", "AbstractSequentialList<Foo>", "ArrayList<Foo>");
+    assertPreferredItems(1, "List", "AbstractList", "AbstractSequentialList", "ArrayList");
     incUseCount(lookup, 0);
-    assertPreferredItems(1, "List<Foo>", "AbstractList<Foo>", "AbstractSequentialList<Foo>", "ArrayList<Foo>");
+    assertPreferredItems(1, "List", "AbstractList", "AbstractSequentialList", "ArrayList");
     incUseCount(lookup, 0);
-    assertPreferredItems(0, "List<Foo>", "AbstractList<Foo>", "AbstractSequentialList<Foo>", "ArrayList<Foo>");
+    assertPreferredItems(0, "List", "AbstractList", "AbstractSequentialList", "ArrayList");
   }
 
   public void testPreferNonRecursiveMethodParams() throws Throwable {
@@ -237,6 +242,26 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
 
   public void testPreferSameNamedMethods() {
     checkPreferredItems(0, "foo", "boo", "doo", "hashCode");
+  }
+
+  public void testErasureNotAffectingProximity() {
+    myFixture.addClass("package foo; public interface Foo<T> {}");
+    myFixture.addClass("package bar; public class Bar implements foo.Foo {}");
+    myFixture.addClass("public class Bar<T> implements foo.Foo<T> {}");
+    checkPreferredItems(0, "Bar", "Bar");
+
+    LookupElementPresentation presentation = new LookupElementPresentation();
+    List<LookupElement> items = getLookup().getItems();
+
+    LookupElement first = items.get(0);
+    assertEquals("Bar", ((PsiClass)first.getObject()).getQualifiedName());
+    first.renderElement(presentation);
+    assertEquals("Bar<String>", presentation.getItemText());
+
+    LookupElement second = items.get(1);
+    assertEquals("bar.Bar", ((PsiClass)second.getObject()).getQualifiedName());
+    second.renderElement(presentation);
+    assertEquals("Bar", presentation.getItemText());
   }
 
   @Override

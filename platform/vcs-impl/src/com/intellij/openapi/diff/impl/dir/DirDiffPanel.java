@@ -85,6 +85,7 @@ public class DirDiffPanel {
         }
         else {
           final DirDiffElement element = myModel.getElementAt(myTable.getSelectedRow());
+          if (element == null) return;
           final Project project = myModel.getProject();
           clearDiffPanel();
           if (element.getType() == DType.CHANGED) {
@@ -120,18 +121,24 @@ public class DirDiffPanel {
         int row = myTable.getSelectedRow();
         if (keyCode == KeyEvent.VK_DOWN && row != rows - 1) {
           row++;
-          if (myModel.getElementAt(row).isSeparator()) {
+          final DirDiffElement element = myModel.getElementAt(row);
+          if (element == null) return;
+          if (element.isSeparator()) {
             row++;
           }
         } else if (keyCode == KeyEvent.VK_UP && row != 0) {
           row--;
-          if (myModel.getElementAt(row).isSeparator()) {
+          final DirDiffElement element = myModel.getElementAt(row);
+          if (element == null) return;
+          if (element.isSeparator()) {
             row--;
           }
         } else {
           return;
         }
-        if (0 <= row && row < rows && !myModel.getElementAt(row).isSeparator()) {
+        final DirDiffElement element = myModel.getElementAt(row);
+        if (element == null) return;
+        if (!element.isSeparator()) {
           e.consume();
           myTable.changeSelection(row, (myModel.getColumnCount() - 1) / 2, false, false);
         }

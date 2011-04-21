@@ -58,17 +58,22 @@ public abstract class CvsOperation {
                                                  "CVS_LOCAL_BRANCH_NUM",
                                                  "COMSPEC",
                                                  "TMPDIR",
+
                                                  "CVS_PID",
+                                                 "COMSPEC",
+                                                 "CVS_VERIFY_TEMPLATE",
+                                                 "CVS_NOBASES",
+                                                 "CVS_SIGN_COMMITS",
+    
+                                                 "CVS_VERIFY_CHECKOUTS"
                                                 };
   private final static Map<String, String> ourEnvironmentVariablesMap = new HashMap<String, String>();
-  {
-    ourEnvironmentVariablesMap.putAll(EnvironmentUtil.getEnviromentProperties());
-    final Iterator<String> iterator = ourEnvironmentVariablesMap.keySet().iterator();
-    final Set<String> known = new HashSet<String>(Arrays.asList(ourKnownToCvs));
-    while (iterator.hasNext()) {
-      final String key = iterator.next();
-      if (! known.contains(key)) {
-        iterator.remove();
+  static {
+    final Map<String, String> environmentProperties = EnvironmentUtil.getEnviromentProperties();
+    for (String name : ourKnownToCvs) {
+      final String value = environmentProperties.get(name);
+      if (value != null) {
+        ourEnvironmentVariablesMap.put(name, value);
       }
     }
   }

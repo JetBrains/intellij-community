@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Bas Leijdekkers
+ * Copyright 2006-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ipp.varargs;
 
-import com.intellij.lang.StdLanguages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameterList;
@@ -26,7 +25,6 @@ class ConvertVarargParameterToArrayPredicate
         implements PsiElementPredicate {
 
     public boolean satisfiedBy(@NotNull PsiElement element) {
-      if (!StdLanguages.JAVA.equals(element.getLanguage())) return false;
         if (!(element instanceof PsiParameterList)) {
             return false;
         }

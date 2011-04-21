@@ -120,6 +120,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     PsiClass aClass = myParentClass;
     while (aClass != null) {
       classes.add(aClass);
+      final PsiField psiField = ConvertToFieldRunnable.checkForwardRefs(selectedExpr, aClass);
+      if (psiField != null && psiField.getParent() == aClass) break;
       aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
     }
     if (classes.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
@@ -583,6 +585,11 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     public PsiClass getTargetClass() {
       if (myTargetClass != null) return myTargetClass;
       final String packageName = StringUtil.getPackageName(myQualifiedName);
+      final String shortName = StringUtil.getShortName(myQualifiedName);
+      if (Comparing.strEqual(myParentClass.getQualifiedName(), packageName)) {
+        myTargetClass = (PsiClass)myParentClass.add(JavaPsiFacade.getElementFactory(myProject).createClass(shortName));
+        return myTargetClass;
+      }
       PsiPackage psiPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
       final PsiDirectory psiDirectory;
       if (psiPackage != null) {
@@ -591,7 +598,6 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       } else {
         psiDirectory = PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, myParentClass.getContainingFile().getContainingDirectory(), false);
       }
-      final String shortName = StringUtil.getShortName(myQualifiedName);
       myTargetClass = psiDirectory != null ? JavaDirectoryService.getInstance().createClass(psiDirectory, shortName) : null;
       return myTargetClass;
     }
@@ -677,7 +683,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                      myParentClass);
 
         setModifiers(myField, mySettings, mySettings.isDeclareStatic());
-        myField = appendField(initializer, destClass, myParentClass, myAnchorElement, myField);
+        myField = appendField(initializer, initializerPlace, destClass, myParentClass, myAnchorElement, myField);
         if (!mySettings.isIntroduceEnumConstant()) {
           VisibilityUtil.fixVisibility(myOccurrences, myField, mySettings.getFieldVisibility());
         }
@@ -776,7 +782,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     static PsiField appendField(final PsiExpression initializer,
-                                final PsiClass destClass,
+                                InitializationPlace initializerPlace, final PsiClass destClass,
                                 final PsiClass parentClass,
                                 final PsiElement anchorElement,
                                 final PsiField psiField) {
@@ -801,9 +807,12 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         return field;
       }
       else {
-        final PsiField forwardReference = checkForwardRefs(initializer, parentClass);
-        if (forwardReference != null) {
-          return (PsiField)destClass.addAfter(psiField, forwardReference);
+        final PsiField forwardReference = initializerPlace == InitializationPlace.IN_FIELD_DECLARATION
+                                          ? checkForwardRefs(initializer, parentClass) : null;
+        if (forwardReference != null ) {
+          return forwardReference.getParent() == destClass ?
+                 (PsiField)destClass.addAfter(psiField, forwardReference) :
+                 (PsiField)forwardReference.getParent().addAfter(psiField, forwardReference);
         } else {
           return (PsiField)destClass.add(psiField);
         }

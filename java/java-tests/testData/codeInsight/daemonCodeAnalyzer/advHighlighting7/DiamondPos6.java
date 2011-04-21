@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.dsl;
+class Pos06 {
+    static class Foo<X> {
+        Foo(X x) {  }
+    }
 
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PathUtil;
-import com.intellij.util.indexing.IndexedRootsProvider;
+    static class DoubleFoo<X,Y> {
+        DoubleFoo(X x,Y y) {  }
+    }
 
-import java.io.File;
-import java.util.Collections;
-import java.util.Set;
+    static class TripleFoo<X,Y,Z> {
+        TripleFoo(X x,Y y,Z z) {  }
+    }
 
-/**
- * @author peter
- */
-public class StandardDslIndexedRootsProvider extends AbstractDslIndexedRootsProvider {
-
+    Foo<? extends Integer> fi = new Foo<>(1);
+    Foo<?> fw = new Foo<>(fi);
+    Foo<? extends Double> fd = new Foo<>(3.0);
+    DoubleFoo<?,?> dw = new DoubleFoo<>(fi,fd);
+    Foo<String> fs = new Foo<>("one");
+    TripleFoo<?,?,?> tw = new TripleFoo<>(fi,fd,fs);
 }

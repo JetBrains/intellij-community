@@ -31,9 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.MockJdkWrapper;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -189,17 +187,12 @@ public class JavacCompiler extends ExternalCompiler {
                                     JavacSettings javacSettings, final boolean annotationProcessorsEnabled) throws IOException {
     final Sdk jdk = getJdkForStartupCommand(chunk);
     final String versionString = jdk.getVersionString();
-    if (versionString == null || "".equals(versionString) || !(jdk.getSdkType() instanceof JavaSdkType)) {
+    JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
+    if (versionString == null || version == null || !(jdk.getSdkType() instanceof JavaSdkType)) {
       throw new IllegalArgumentException(CompilerBundle.message("javac.error.unknown.jdk.version", jdk.getName()));
     }
-    final boolean isVersion1_0 = CompilerUtil.isOfVersion(versionString, "1.0");
-    final boolean isVersion1_1 = CompilerUtil.isOfVersion(versionString, "1.1");
-    final boolean isVersion1_2 = CompilerUtil.isOfVersion(versionString, "1.2");
-    final boolean isVersion1_3 = CompilerUtil.isOfVersion(versionString, "1.3");
-    final boolean isVersion1_4 = CompilerUtil.isOfVersion(versionString, "1.4");
-    final boolean isVersion1_5 = CompilerUtil.isOfVersion(versionString, "1.5") || CompilerUtil.isOfVersion(versionString, "5.0");
-    final boolean isVersion1_5_or_higher = isVersion1_5 || !(isVersion1_0 || isVersion1_1 || isVersion1_2 || isVersion1_3 || isVersion1_4);
-    final int versionIndex = isVersion1_0? 0 : isVersion1_1? 1 : isVersion1_2? 2 : isVersion1_3? 3 : isVersion1_4? 4 : isVersion1_5? 5 : 6;
+    final boolean isVersion1_0 = version == JavaSdkVersion.JDK_1_0;
+    final boolean isVersion1_1 = version == JavaSdkVersion.JDK_1_1;
 
     JavaSdkType sdkType = (JavaSdkType)jdk.getSdkType();
 
@@ -212,15 +205,15 @@ public class JavacCompiler extends ExternalCompiler {
 
     commandLine.add(vmExePath);
 
-    if (isVersion1_1 || isVersion1_0) {
-      commandLine.add("-mx" + javacSettings.MAXIMUM_HEAP_SIZE + "m");
+    if (version.isAtLeast(JavaSdkVersion.JDK_1_2)) {
+      commandLine.add("-Xmx" + javacSettings.MAXIMUM_HEAP_SIZE + "m");
     }
     else {
-      commandLine.add("-Xmx" + javacSettings.MAXIMUM_HEAP_SIZE + "m");
+      commandLine.add("-mx" + javacSettings.MAXIMUM_HEAP_SIZE + "m");
     }
 
     final List<String> additionalOptions =
-      addAdditionalSettings(commandLine, javacSettings, myAnnotationProcessorMode, versionIndex, myProject, annotationProcessorsEnabled);
+      addAdditionalSettings(commandLine, javacSettings, myAnnotationProcessorMode, version, myProject, annotationProcessorsEnabled);
 
     CompilerUtil.addLocaleOptions(commandLine, false);
 
@@ -235,11 +228,11 @@ public class JavacCompiler extends ExternalCompiler {
       commandLine.add("\"" + versionString + "\"");
     }
 
-    if (isVersion1_2 || isVersion1_1 || isVersion1_0) {
-      commandLine.add(JAVAC_MAIN_CLASS_OLD);
+    if (version.isAtLeast(JavaSdkVersion.JDK_1_3)) {
+      commandLine.add(JAVAC_MAIN_CLASS);
     }
     else {
-      commandLine.add(JAVAC_MAIN_CLASS);
+      commandLine.add(JAVAC_MAIN_CLASS_OLD);
     }
 
     addCommandLineOptions(chunk, commandLine, outputPath, jdk, isVersion1_0, isVersion1_1, myTempFiles, true, true, myAnnotationProcessorMode);
@@ -266,7 +259,7 @@ public class JavacCompiler extends ExternalCompiler {
         for (final VirtualFile file : files) {
           // Important: should use "/" slashes!
           // but not for JDK 1.5 - see SCR 36673
-          final String path = isVersion1_5_or_higher ? file.getPath().replace('/', File.separatorChar) : file.getPath();
+          final String path = version.isAtLeast(JavaSdkVersion.JDK_1_5) ? file.getPath().replace('/', File.separatorChar) : file.getPath();
           if (LOG.isDebugEnabled()) {
             LOG.debug("Adding path for compilation " + path);
           }
@@ -281,10 +274,10 @@ public class JavacCompiler extends ExternalCompiler {
   }
 
   public static List<String> addAdditionalSettings(List<String> commandLine, JavacSettings javacSettings, boolean isAnnotationProcessing,
-                                                   int versionIndex, Project project, final boolean annotationProcessorsEnabled) {
+                                                   JavaSdkVersion version, Project project, final boolean annotationProcessorsEnabled) {
     final List<String> additionalOptions = new ArrayList<String>();
     StringTokenizer tokenizer = new StringTokenizer(javacSettings.getOptionsString(project), " ");
-    if (versionIndex < 6) {
+    if (!version.isAtLeast(JavaSdkVersion.JDK_1_6)) {
       isAnnotationProcessing = false; // makes no sense for these versions
     }
     if (isAnnotationProcessing) {
@@ -318,26 +311,20 @@ public class JavacCompiler extends ExternalCompiler {
       }
     }
     else {
-      if (versionIndex > 5) {
-        if (annotationProcessorsEnabled) {
-          // Unless explicitly specified by user, disable annotation processing by default for 'java compilation' mode
-          // This is needed to suppress unwanted side-effects from auto-discovered processors from compilation classpath
-          additionalOptions.add("-proc:none");
-        }
+      if (version.isAtLeast(JavaSdkVersion.JDK_1_6) && annotationProcessorsEnabled) {
+        // Unless explicitly specified by user, disable annotation processing by default for 'java compilation' mode
+        // This is needed to suppress unwanted side-effects from auto-discovered processors from compilation classpath
+        additionalOptions.add("-proc:none");
       }
     }
 
     while (tokenizer.hasMoreTokens()) {
       @NonNls String token = tokenizer.nextToken();
-      if (versionIndex == 0) {
-        if ("-deprecation".equals(token)) {
-          continue; // not supported for this version
-        }
+      if (version == JavaSdkVersion.JDK_1_0 && "-deprecation".equals(token)) {
+        continue; // not supported for this version
       }
-      if (versionIndex <= 4) {
-        if ("-Xlint".equals(token)) {
-          continue; // not supported in these versions
-        }
+      if (!version.isAtLeast(JavaSdkVersion.JDK_1_5) && "-Xlint".equals(token)) {
+        continue; // not supported in these versions
       }
       if (token.startsWith("-proc:")) {
         continue;

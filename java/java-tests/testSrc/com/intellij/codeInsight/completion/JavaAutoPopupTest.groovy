@@ -723,5 +723,16 @@ class Foo {
     assert !lookup
   }
 
+  public void testMethodNameRestart() {
+    myFixture.configureByText "a.java", '''
+public class Bar {
+    private static List<java.io.File> getS<caret>
+
+}
+'''
+    type 'ta'
+    assert !lookup
+  }
+
 
 }

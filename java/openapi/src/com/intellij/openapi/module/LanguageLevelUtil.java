@@ -17,6 +17,7 @@ package com.intellij.openapi.module;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,25 +51,17 @@ public class LanguageLevelUtil {
     return getLanguageLevelForFile(file.getParent());
   }
 
+  /**
+   * @deprecated use {@link com.intellij.openapi.projectRoots.JavaSdkVersion#getMaxLanguageLevel()} instead
+   */
   public static LanguageLevel getDefaultLanguageLevel(@NotNull String versionString) {
-    if (isOfVersionOrHigher(versionString, "1.8") || isOfVersionOrHigher(versionString, "8.0")) {
-      return LanguageLevel.JDK_1_8;
-    }
-    if (isOfVersionOrHigher(versionString, "1.7") || isOfVersionOrHigher(versionString, "7.0")) {
-      return LanguageLevel.JDK_1_7;
-    }
-    if (isOfVersionOrHigher(versionString, "1.6") || isOfVersionOrHigher(versionString, "6.0")) {
-      return LanguageLevel.JDK_1_6;
-    }
-    if (isOfVersionOrHigher(versionString, "1.5") || isOfVersionOrHigher(versionString, "5.0")) {
-      return LanguageLevel.JDK_1_5;
-    }
-    if (isOfVersionOrHigher(versionString, "1.4")) {
-      return LanguageLevel.JDK_1_4;
-    }
-    return LanguageLevel.JDK_1_3;
+    JavaSdkVersion version = JavaSdk.getInstance().getVersion(versionString);
+    return version != null ? version.getMaxLanguageLevel() : LanguageLevel.JDK_1_3;
   }
 
+  /**
+   * @deprecated use {@link com.intellij.openapi.projectRoots.JavaSdkVersion#isAtLeast(com.intellij.openapi.projectRoots.JavaSdkVersion)} instead
+   */
   public static boolean isOfVersionOrHigher(@NotNull String versionString, String checkedVersion) {
     return JavaSdk.getInstance().compareTo(versionString, checkedVersion) >= 0;
   }

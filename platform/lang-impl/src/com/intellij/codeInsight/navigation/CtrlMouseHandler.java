@@ -212,6 +212,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_DECLARATION)) return BrowseMode.Declaration;
       if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_TYPE_DECLARATION)) return BrowseMode.TypeDeclaration;
       if (matchMouseShortcut(activeKeymap, modifiers, IdeActions.ACTION_GOTO_IMPLEMENTATION)) return BrowseMode.Implementation;
+      if (modifiers == InputEvent.CTRL_MASK) return BrowseMode.Declaration;
     }
     return BrowseMode.None;
   }

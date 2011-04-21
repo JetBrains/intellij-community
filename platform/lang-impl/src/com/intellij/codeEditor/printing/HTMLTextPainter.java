@@ -80,7 +80,6 @@ class HTMLTextPainter {
     myHTMLFileName = dirName + File.separator + ExportToHTMLManager.getHTMLFileName(psiFile);
 
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-    psiDocumentManager.commitAllDocuments();
     Document document = psiDocumentManager.getDocument(psiFile);
 
     ArrayList<LineMarkerInfo> methodSeparators = new ArrayList<LineMarkerInfo>();

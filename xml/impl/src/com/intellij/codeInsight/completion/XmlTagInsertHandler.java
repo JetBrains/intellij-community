@@ -290,7 +290,8 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         template.addTextSegment(tag instanceof HtmlTag ? ">" : "/>");
       }
       else {
-        if (needAlLeastOneAttribute(tag) && WebEditorOptions.getInstance().isAutomaticallyStartAttribute() && tag.getAttributes().length == 0) {
+        if (needAlLeastOneAttribute(tag) && WebEditorOptions.getInstance().isAutomaticallyStartAttribute() && tag.getAttributes().length == 0
+            && template.getSegmentsCount() == 0) {
           completeAttribute(template);
           return true;
         }

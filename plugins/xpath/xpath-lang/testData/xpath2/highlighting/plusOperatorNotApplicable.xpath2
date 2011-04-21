@@ -1,0 +1,1 @@
+<error descr="Operator '+' cannot to applied to expressions of type 'xs:string'">'55' + 1</error>

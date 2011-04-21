@@ -45,7 +45,9 @@ public class HgTagBranchCommand {
 
   @Nullable
   public String getCurrentBranch() {
-    HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(repo, "branch", null);
+    final HgCommandExecutor executor = new HgCommandExecutor(project);
+    executor.setSilent(true);
+    HgCommandResult result = executor.executeInCurrentThread(repo, "branch", null);
     if (result == null) {
       return null;
     }

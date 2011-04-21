@@ -49,6 +49,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   private String myLogin;
   private String myHost;
   private static final Logger LOG = Logger.getInstance(GithubSettings.class.getName());
+  private String myPassword;
 
   public static GithubSettings getInstance(){
     return ServiceManager.getService(GithubSettings.class);
@@ -81,12 +82,16 @@ public class GithubSettings implements PersistentStateComponent<Element> {
 
   @Nullable
   public String getPassword() {
-    try {
-      return PasswordSafe.getInstance().getPassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY);
+    if (myPassword == null){
+      try {
+        myPassword = PasswordSafe.getInstance().getPassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY);
+      }
+      catch (PasswordSafeException e) {
+        myPassword = null;
+        return "";
+      }
     }
-    catch (PasswordSafeException e) {
-      return "";
-    }
+    return myPassword;
   }
 
   public String getHost() {
@@ -98,6 +103,7 @@ public class GithubSettings implements PersistentStateComponent<Element> {
   }
 
   public void setPassword(final String password) {
+    myPassword = password;
     try {
       PasswordSafe.getInstance().storePassword(null, GithubSettings.class, GITHUB_SETTINGS_PASSWORD_KEY, password);
     }

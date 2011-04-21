@@ -44,6 +44,7 @@ public class XPath2Type extends XPathType {
   public static final XPath2Type ATTRIBUTE = createItemType("attribute()", NODE);
   public static final XPath2Type PROCESSING_INSTRUCTION = createItemType("processing-instruction()", NODE);
 
+  public static final XPath2Type NODE_SEQUENCE = XPath2SequenceType.create(NODE, XPath2SequenceType.Cardinality.ZERO_OR_MORE);
   public static final XPath2Type SEQUENCE = XPath2SequenceType.create(ITEM, XPath2SequenceType.Cardinality.ZERO_OR_MORE);
 
   public static final XPath2Type ANYATOMICTYPE = createSchemaType("anyAtomicType", ITEM);
@@ -135,7 +136,7 @@ public class XPath2Type extends XPathType {
 
   @Override
   protected boolean canBePromotedTo(XPathType type) {
-    if (this == ITEM || NODE.isAssignableFrom(this) || this == ANYATOMICTYPE) return true;
+    if (this == ITEM || NODE.isAssignableFrom(this) || (this == ANYATOMICTYPE && ANYATOMICTYPE.isAssignableFrom(type))) return true;
 
     if (this == FLOAT && type == DOUBLE) return true;
     if (DECIMAL.isAssignableFrom(DECIMAL) && (type == DOUBLE || type == FLOAT)) return true;

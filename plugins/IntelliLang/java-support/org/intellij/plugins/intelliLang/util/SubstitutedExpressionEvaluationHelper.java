@@ -45,10 +45,10 @@ public class SubstitutedExpressionEvaluationHelper {
   }
 
   public Object computeExpression(final PsiExpression e, final List<PsiExpression> uncomputables) {
-    return computeExpression(e, myConfiguration.isUseDfaIfAvailable(), myConfiguration.isIncludeUncomputablesAsLiterals(), uncomputables);
+    return computeExpression(e, myConfiguration.getDfaOption(), myConfiguration.isIncludeUncomputablesAsLiterals(), uncomputables);
   }
 
-  public Object computeExpression(final PsiExpression e, final boolean useDfa, final boolean includeUncomputablesAsLiterals, final List<PsiExpression> uncomputables) {
+  public Object computeExpression(final PsiExpression e, final Configuration.DfaOption dfaOption, final boolean includeUncomputablesAsLiterals, final List<PsiExpression> uncomputables) {
     final ConcurrentMap<PsiElement, Object> map = new ConcurrentHashMap<PsiElement, Object>();
     //if (true) return myHelper.computeConstantExpression(e, false);
     return myHelper.computeExpression(e, false, new PsiConstantEvaluationHelper.AuxEvaluator() {
@@ -73,16 +73,24 @@ public class SubstitutedExpressionEvaluationHelper {
             final Object substituted = calcSubstituted((PsiModifierListOwner)resolved);
             if (substituted != null) return substituted;
             if (resolved instanceof PsiVariable) {
-              resolvedType = ((PsiVariable)resolved).getType();
-              final Collection<PsiExpression> values =
-                !useDfa? Collections.<PsiExpression>emptyList() : DfaUtil.getCachedVariableValues((PsiVariable)resolved, o);
+              final PsiVariable psiVariable = (PsiVariable)resolved;
+              resolvedType = psiVariable.getType();
+              final Collection<PsiExpression> values;
+              if (dfaOption == Configuration.DfaOption.ASSIGNMENTS) {
+                values = DfaUtil.getVariableAssignmentsInFile(psiVariable, true, o);
+              }
+              else if (dfaOption == Configuration.DfaOption.DFA) {
+                final Collection<PsiExpression> realValues = DfaUtil.getCachedVariableValues(psiVariable, o);
+                values = realValues == null? DfaUtil.getVariableAssignmentsInFile(psiVariable, true, o) : realValues;
+              }
+              else {
+                values = Collections.<PsiExpression>emptyList();
+              }
               // return the first computed value as far as we do not support multiple injection
-              if (values != null) {
-                for (PsiExpression value : values) {
-                  final Object computedValue = auxEvaluator.computeExpression(value, this);
-                  if (computedValue != null) {
-                    return computedValue;
-                  }
+              for (PsiExpression value : values) {
+                final Object computedValue = auxEvaluator.computeExpression(value, this);
+                if (computedValue != null) {
+                  return computedValue;
                 }
               }
             }

@@ -107,7 +107,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * @return not-null visitor for this inspection.
    */
   @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly, final LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return buildVisitor(holder, isOnTheFly);
   }
 
@@ -145,7 +145,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     return PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiFile.class);
   }
 
-  public void inspectionStarted(LocalInspectionToolSession session) {}
+  public void inspectionStarted(LocalInspectionToolSession session, boolean isOnTheFly) {}
 
   public void inspectionFinished(LocalInspectionToolSession session, ProblemsHolder problemsHolder) {
     inspectionFinished(session);

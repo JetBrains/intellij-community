@@ -20,12 +20,13 @@ import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.pom.NavigatableWithText;
 import com.intellij.psi.PsiFile;
 
 import javax.swing.*;
 import java.util.Set;
 
-public class ModuleNode extends PackageDependenciesNode {
+public class ModuleNode extends PackageDependenciesNode implements NavigatableWithText{
   private final Module myModule;
 
   public ModuleNode(Module module) {
@@ -99,5 +100,10 @@ public class ModuleNode extends PackageDependenciesNode {
 
   public boolean isValid() {
     return myModule != null && !myModule.isDisposed();
+  }
+
+  @Override
+  public String getNavigateActionText(boolean focusEditor) {
+    return "Open Module Settings";
   }
 }

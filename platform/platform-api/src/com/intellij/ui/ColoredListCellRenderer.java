@@ -19,6 +19,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 
 /**
@@ -32,6 +34,8 @@ public abstract class ColoredListCellRenderer extends SimpleColoredComponent imp
 
   public ColoredListCellRenderer(){
     setFocusBorderAroundIcon(true);
+    getIpad().left = UIUtil.getListCellHPadding();
+    getIpad().right = UIUtil.getListCellHPadding();
   }
 
   public Component getListCellRendererComponent(
@@ -63,7 +67,7 @@ public abstract class ColoredListCellRenderer extends SimpleColoredComponent imp
       }
     }
 
-    setPaintFocusBorder(hasFocus && !UIUtil.isUnderAquaLookAndFeel());
+    setPaintFocusBorder(hasFocus);
 
     customizeCellRenderer(list, value, index, selected, hasFocus);
 

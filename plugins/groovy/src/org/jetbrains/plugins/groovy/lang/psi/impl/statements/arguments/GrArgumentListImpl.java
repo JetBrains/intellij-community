@@ -59,7 +59,11 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
 
   @NotNull
   public GrNamedArgument[] getNamedArguments() {
-    return findChildrenByClass(GrNamedArgument.class);
+    List<GrNamedArgument> result = new ArrayList<GrNamedArgument>();
+    for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
+      if (cur instanceof GrNamedArgument) result.add((GrNamedArgument)cur);
+    }
+    return result.toArray(new GrNamedArgument[result.size()]);
   }
 
   @Override

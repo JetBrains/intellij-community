@@ -77,6 +77,7 @@ public class PopupChooserBuilder {
 
   private Function<Object,String> myItemsNamer = null;
   private boolean myMayBeParent;
+  private int myAdAlignment = SwingUtilities.LEFT;
 
   public PopupChooserBuilder(@NotNull JList list) {
     myChooserComponent = list;
@@ -222,8 +223,8 @@ public class PopupChooserBuilder {
     }
 
     scrollPane.getViewport().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    int hPadding = UIUtil.isUnderAquaLookAndFeel() ? 0 : 5;
-    ((JComponent)scrollPane.getViewport().getView()).setBorder(BorderFactory.createEmptyBorder(5, hPadding, 5, hPadding));
+    Insets viewportPadding = UIUtil.getListViewportPadding();
+    ((JComponent)scrollPane.getViewport().getView()).setBorder(BorderFactory.createEmptyBorder(viewportPadding.top, viewportPadding.left, viewportPadding.bottom, viewportPadding.right));
 
     if (myChooserComponent instanceof ListWithFilter) {
       contentPane.add(myChooserComponent, BorderLayout.CENTER);
@@ -248,7 +249,7 @@ public class PopupChooserBuilder {
     builder.setDimensionServiceKey(null, myDimensionServiceKey, false).setRequestFocus(myRequestFocus).setResizable(myForceResizable)
       .setMovable(myForceMovable).setTitle(myForceMovable ? myTitle : null).setCancelCallback(myCancelCallback).setAlpha(myAlpha)
       .setFocusOwners(myFocusOwners).setCancelKeyEnabled(myCancelKeyEnabled && !(myChooserComponent instanceof ListWithFilter)).
-      setAdText(myAd).setKeyboardActions(myKeyboardActions).setMayBeParent(myMayBeParent);
+      setAdText(myAd, myAdAlignment).setKeyboardActions(myKeyboardActions).setMayBeParent(myMayBeParent);
 
     if (myCommandButton != null) {
       builder.setCommandButton(myCommandButton);
@@ -478,7 +479,13 @@ public class PopupChooserBuilder {
 
   @NotNull
   public PopupChooserBuilder setAdText(String ad) {
+    setAdText(ad, SwingUtilities.LEFT);
+    return this;
+  }
+
+  public PopupChooserBuilder setAdText(String ad, int alignment) {
     myAd = ad;
+    myAdAlignment = alignment;
     return this;
   }
 

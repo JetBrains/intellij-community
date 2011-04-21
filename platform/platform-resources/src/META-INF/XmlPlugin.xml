@@ -22,6 +22,8 @@
 
     <extensionPoint name="breadcrumbsInfoProvider" interface="com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider"/>
 
+    <extensionPoint name="breadcrumbsPresentationProvider" interface="com.intellij.xml.breadcrumbs.BreadcrumbsPresentationProvider"/>
+
     <extensionPoint name="xmlStructureViewElementProvider"
                     interface="com.intellij.ide.structureView.xml.XmlStructureViewElementProvider"/>
 
@@ -345,5 +347,7 @@
     <xml.attributeDescriptorsProvider implementation="com.intellij.html.impl.Html5CustomAttributeDescriptorsProvider"/>
 
     <sourceRootFinder implementation="com.intellij.ide.util.newProjectWizard.JavaSourceRootFinder"/>
+    <breadcrumbsPresentationProvider
+        implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.HtmlTagTreeBreadcrumbsPresentationProvider"/>
   </extensions>
 </idea-plugin>

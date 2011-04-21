@@ -46,7 +46,7 @@ public class ShowSettingsAction extends AnAction implements DumbAware {
       project = ProjectManager.getInstance().getDefaultProject();
     }
 
-    ConfigurableGroup[] group = new ConfigurableGroup[]{
+    ConfigurableGroup[] group = {
       new ProjectConfigurablesGroup(project),
       new IdeConfigurablesGroup()
     };

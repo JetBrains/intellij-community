@@ -41,19 +41,27 @@ class PersistentRangeMarker extends RangeMarkerImpl {
 
   private void storeLinesAndCols(DocumentEvent e) {
     // document might have been changed already
-    if (getStartOffset() < myDocument.getTextLength()) {
-      myStartLine = myDocument.getLineNumber(getStartOffset());
-      myStartColumn = getStartOffset() - myDocument.getLineStartOffset(myStartLine);
+    int startOffset = getStartOffset();
+    if (startOffset <= myDocument.getTextLength()) {
+      myStartLine = myDocument.getLineNumber(startOffset);
+      myStartColumn = startOffset - myDocument.getLineStartOffset(myStartLine);
       if (myStartColumn < 0) {
         invalidate(e);
       }
     }
-    if (getEndOffset() < myDocument.getTextLength()) {
-      myEndLine = myDocument.getLineNumber(getEndOffset());
-      myEndColumn = getEndOffset() - myDocument.getLineStartOffset(myEndLine);
+    else {
+      invalidate(e);
+    }
+    int endOffset = getEndOffset();
+    if (endOffset <= myDocument.getTextLength()) {
+      myEndLine = myDocument.getLineNumber(endOffset);
+      myEndColumn = endOffset - myDocument.getLineStartOffset(myEndLine);
       if (myEndColumn < 0) {
         invalidate(e);
       }
+    }
+    else {
+      invalidate(e);
     }
   }
 
@@ -83,7 +91,11 @@ class PersistentRangeMarker extends RangeMarkerImpl {
         storeLinesAndCols(e);
       }
     }
-    if (getEndOffset() < getStartOffset() || getEndOffset() > getDocument().getTextLength()) {
+    if (intervalEnd() < intervalStart() ||
+        intervalEnd() > getDocument().getTextLength() ||
+        myEndLine < myStartLine ||
+        myStartLine == myEndLine && myEndColumn < myStartColumn ||
+        getDocument().getLineCount() < myEndLine) {
       invalidate(e);
     }
   }

@@ -84,10 +84,11 @@ public class CompletionServiceImpl extends CompletionService{
     final PsiElement position = parameters.getPosition();
     final String prefix = CompletionData.findPrefixStatic(position, parameters.getOffset());
     final String textBeforePosition = parameters.getPosition().getContainingFile().getText().substring(0, parameters.getOffset());
-    CompletionProgressIndicator process = myCurrentCompletion;
-    if (process == null) {
-      throw new AssertionError("createResultSet may be invoked only during completion: " + ourPhase + "; set at " + ourPhaseTrace);
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (!(indicator instanceof CompletionProgressIndicator)) {
+      throw new AssertionError("createResultSet may be invoked only from completion thread: " + indicator + "!=" + myCurrentCompletion + "; phase=" + ourPhase + "; set at " + ourPhaseTrace);
     }
+    CompletionProgressIndicator process = (CompletionProgressIndicator)indicator;
     CamelHumpMatcher matcher = new CamelHumpMatcher(prefix, true, parameters.relaxMatching());
     CompletionSorterImpl sorter = defaultSorter(parameters, matcher);
     return new CompletionResultSetImpl(consumer, textBeforePosition, matcher, contributor,parameters, sorter, process, null);
@@ -225,12 +226,16 @@ public class CompletionServiceImpl extends CompletionService{
 
   public static CompletionPhase getCompletionPhase() {
 //    ApplicationManager.getApplication().assertIsDispatchThread();
-    CompletionPhase phase = ourPhase;
+    CompletionPhase phase = getPhaseRaw();
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.checkCanceled();
     }
     return phase;
+  }
+
+  public static CompletionPhase getPhaseRaw() {
+    return ourPhase;
   }
 
   public CompletionSorterImpl defaultSorter(CompletionParameters parameters, final PrefixMatcher matcher) {

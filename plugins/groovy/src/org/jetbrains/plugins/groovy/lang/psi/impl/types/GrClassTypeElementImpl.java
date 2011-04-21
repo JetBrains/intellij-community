@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -43,7 +44,7 @@ public class GrClassTypeElementImpl extends GroovyPsiElementImpl implements GrCl
 
   @NotNull
   public GrCodeReferenceElement getReferenceElement() {
-    return findChildByClass(GrCodeReferenceElement.class);
+    return (GrCodeReferenceElement)findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
   }
 
   @NotNull

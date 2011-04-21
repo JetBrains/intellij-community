@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.reference.RefFileImpl;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nls;
@@ -66,7 +65,7 @@ public class RemoveRedundantUncheckedSuppressionTest extends LightQuickFixTestCa
         @Override
         public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
                                               boolean isOnTheFly,
-                                              LocalInspectionToolSession session) {
+                                              @NotNull LocalInspectionToolSession session) {
           return new JavaElementVisitor() {
             @Override
             public void visitReferenceExpression(PsiReferenceExpression expression) {

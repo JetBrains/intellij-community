@@ -4,7 +4,7 @@ def getFoo () {
 }
 -----
 public class getterAlreadyDefined extends groovy.lang.Script {
-  public static final void main(java.lang.String[] args) {
+  public static void main(java.lang.String[] args) {
     return ;
   }
 

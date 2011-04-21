@@ -15,6 +15,8 @@
  */
 package org.intellij.lang.xpath;
 
+import org.intellij.lang.xpath.context.ContextProvider;
+
 public class XPath2TypeTest extends XPath2HighlightingTestBase {
 
   public void testQNameToQName() throws Throwable {
@@ -94,6 +96,24 @@ public class XPath2TypeTest extends XPath2HighlightingTestBase {
   }
 
   public void testBooleanComparisonIDEA67348() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testNumberPlusString() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testUnaryExpressionType() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testDatePlusDuration() throws Throwable {
+    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    doXPathHighlighting();
+  }
+
+  public void testDatePlusDate() throws Throwable {
+    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
     doXPathHighlighting();
   }
 

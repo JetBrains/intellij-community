@@ -25,8 +25,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PrefixReference extends SimpleAttributeReference implements EmptyResolveMessageProvider {
+
+  private final TextRange myRange;
+
   public PrefixReference(XmlAttribute attribute) {
     super(attribute);
+    myRange = getPrefixRange(myAttribute);
+  }
+
+  public PrefixReference(XmlAttribute attribute, TextRange range) {
+    super(attribute);
+    myRange = range;
   }
 
   public static TextRange getPrefixRange(XmlAttribute attribute) {
@@ -52,7 +61,7 @@ public class PrefixReference extends SimpleAttributeReference implements EmptyRe
   @Override
   @NotNull
   protected TextRange getTextRange() {
-    return getPrefixRange(myAttribute);
+    return myRange;
   }
 
   @Override

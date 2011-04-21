@@ -50,6 +50,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.Table;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -306,10 +307,10 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       });
     }
 
-    addKeyboardShortcut(myEntryTable, removeButton, KeyEvent.VK_DELETE, 0);
-    addKeyboardShortcut(myEntryTable, addButton, KeyEvent.VK_INSERT, 0);
-    addKeyboardShortcut(myEntryTable, upButton, KeyEvent.VK_UP, KeyEvent.CTRL_DOWN_MASK);
-    addKeyboardShortcut(myEntryTable, downButton, KeyEvent.VK_DOWN, KeyEvent.CTRL_DOWN_MASK);
+    UIUtil.addKeyboardShortcut(myEntryTable, removeButton, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
+    UIUtil.addKeyboardShortcut(myEntryTable, addButton, CommonShortcuts.getInsertKeystroke());
+    UIUtil.addKeyboardShortcut(myEntryTable, upButton, KeyStroke.getKeyStroke(KeyEvent.VK_UP, KeyEvent.CTRL_DOWN_MASK));
+    UIUtil.addKeyboardShortcut(myEntryTable, downButton, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, KeyEvent.CTRL_DOWN_MASK));
 
     addButton.addActionListener(new ActionListener() {
       @Override
@@ -405,20 +406,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
     });
     return panel;
-  }
-
-  private static void addKeyboardShortcut(final JComponent target, final JButton button, final int keyEvent, final int modifiers) {
-    target.registerKeyboardAction(
-      new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          if (button.isEnabled()) {
-            button.doClick();
-          }
-        }
-      },
-      KeyStroke.getKeyStroke(keyEvent, modifiers),
-      WHEN_FOCUSED
-    );
   }
 
   @Override

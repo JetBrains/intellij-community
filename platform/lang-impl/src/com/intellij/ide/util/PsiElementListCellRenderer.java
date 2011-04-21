@@ -116,7 +116,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         setIcon(IconUtil.getEmptyIcon(false));
         append(value == null ? "" : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
       }
-      setPaintFocusBorder(false);
+      setPaintFocusBorder(hasFocus && UIUtil.isToUseDottedCellBorder());
       setBackground(selected ? UIUtil.getListSelectionBackground() : bgColor);
     }
 

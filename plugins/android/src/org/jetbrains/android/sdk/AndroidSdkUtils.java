@@ -232,7 +232,7 @@ public class AndroidSdkUtils {
     if (!(jdk.getSdkType() instanceof JavaSdk)) {
       return false;
     }
-    String versionString = jdk.getVersionString();
-    return versionString != null && (versionString.contains("1.5") || versionString.contains("1.6"));
+    JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
+    return version == JavaSdkVersion.JDK_1_5 || version == JavaSdkVersion.JDK_1_6;
   }
 }

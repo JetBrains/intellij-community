@@ -293,7 +293,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     boolean hasVcsOptions = false;
     Box vcsCommitOptions = Box.createVerticalBox();
-    final List<AbstractVcs> vcses = getAffectedVcses();
+    final List<AbstractVcs> vcses = new ArrayList<AbstractVcs>(getAffectedVcses());
+    Collections.sort(vcses, new Comparator<AbstractVcs>() {
+      @Override
+      public int compare(AbstractVcs o1, AbstractVcs o2) {
+        return o1.getKeyInstanceMethod().getName().compareToIgnoreCase(o2.getKeyInstanceMethod().getName());
+      }
+    });
     myCheckinChangeListSpecificComponents = new HashMap<String, CheckinChangeListSpecificComponent>();
     for (AbstractVcs vcs : vcses) {
       final CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
@@ -820,9 +826,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  public List<AbstractVcs> getAffectedVcses() {
+  public Collection<AbstractVcs> getAffectedVcses() {
     if (! myShowVcsCommit) {
-      return Collections.emptyList();
+      return Collections.emptySet();
     }
     return myBrowserExtender.getAffectedVcses();
   }
@@ -894,7 +900,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   public boolean vcsIsAffected(String name) {
     // tod +- performance?
     if (! ProjectLevelVcsManager.getInstance(myProject).checkVcsIsActive(name)) return false;
-    final List<AbstractVcs> affected = myBrowserExtender.getAffectedVcses();
+    final Collection<AbstractVcs> affected = myBrowserExtender.getAffectedVcses();
     for (AbstractVcs vcs : affected) {
       if (Comparing.equal(vcs.getName(), name)) return true;
     }

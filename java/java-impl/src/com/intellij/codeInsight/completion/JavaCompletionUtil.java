@@ -121,14 +121,15 @@ public class JavaCompletionUtil {
   }
 
   public static void completeVariableNameForRefactoring(Project project, Set<LookupElement> set, String prefix, PsiType varType, VariableKind varKind) {
-    JavaMemberNameCompletionContributor.completeVariableNameForRefactoring(project, set, new CamelHumpMatcher(prefix), varType, varKind);
+    JavaMemberNameCompletionContributor.completeVariableNameForRefactoring(project, set, new CamelHumpMatcher(prefix), varType, varKind,
+                                                                           true);
   }
 
   public static String[] completeVariableNameForRefactoring(JavaCodeStyleManager codeStyleManager, final PsiType varType,
                                                                final VariableKind varKind,
                                                                SuggestedNameInfo suggestedNameInfo) {
     return JavaMemberNameCompletionContributor
-      .completeVariableNameForRefactoring(codeStyleManager, new CamelHumpMatcher(""), varType, varKind, suggestedNameInfo);
+      .completeVariableNameForRefactoring(codeStyleManager, new CamelHumpMatcher(""), varType, varKind, suggestedNameInfo, true);
   }
 
   public static PsiType eliminateWildcards(PsiType type) {

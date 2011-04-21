@@ -35,7 +35,7 @@ public final class AntBuildFilePropertiesAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    myAntExplorer.setBuildFileProperties(e.getDataContext());
+    myAntExplorer.setBuildFileProperties();
   }
 
   public void update(AnActionEvent event) {

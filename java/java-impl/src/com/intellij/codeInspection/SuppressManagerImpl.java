@@ -31,6 +31,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
@@ -256,9 +257,7 @@ public class SuppressManagerImpl extends SuppressManager {
     if (module == null) return false;
     final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
     if (jdk == null) return false;
-    final String jdkVersion = jdk.getVersionString();
-    if (jdkVersion == null) return false;
-    final boolean is_1_5 = JavaSdk.getInstance().compareTo(jdkVersion, "1.5") >= 0;
+    final boolean is_1_5 = JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_5);
     return DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS && is_1_5 && PsiUtil.isLanguageLevel5OrHigher(file);
   }
 

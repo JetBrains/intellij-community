@@ -53,7 +53,8 @@ public class MapIgnoredFilesHolder extends AbstractIgnoredFilesHolder {
 
   @Override
   public void addFile(VirtualFile file) {
-    LOG.assertTrue(! file.isDirectory());
+    // todo fix more. take from x0x branch
+    //LOG.assertTrue(! file.isDirectory());
     mySet.add(file);
   }
 

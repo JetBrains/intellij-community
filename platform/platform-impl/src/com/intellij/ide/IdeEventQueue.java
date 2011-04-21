@@ -562,7 +562,7 @@ public class IdeEventQueue extends EventQueue {
 
     if (Registry.is("actionSystem.fixNullFocusedComponent")) {
       final Component focusOwner = mgr.getFocusOwner();
-      if (focusOwner == null) {
+      if (focusOwner == null || !focusOwner.isShowing()) {
 
         IdeEventQueue queue = IdeEventQueue.getInstance();
         boolean mouseEventsAhead = e instanceof MouseEvent ||
@@ -596,7 +596,7 @@ public class IdeEventQueue extends EventQueue {
             final IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(showingWindow);
             Runnable requestDefaultFocus = new Runnable() {
               public void run() {
-                if (mgr.getFocusOwner() == null) {
+                if (mgr.getFocusOwner() == null || !mgr.getFocusOwner().isShowing()) {
                   if (getPopupManager().requestDefaultFocus(false)) return;
 
                   final Application app = ApplicationManager.getApplication();

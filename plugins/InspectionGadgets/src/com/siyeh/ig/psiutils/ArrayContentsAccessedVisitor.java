@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 class ArrayContentsAccessedVisitor extends JavaRecursiveElementVisitor{
@@ -24,7 +25,6 @@ class ArrayContentsAccessedVisitor extends JavaRecursiveElementVisitor{
     private final PsiVariable variable;
 
     public ArrayContentsAccessedVisitor(@NotNull PsiVariable variable){
-        super();
         this.variable = variable;
     }
 
@@ -40,11 +40,11 @@ class ArrayContentsAccessedVisitor extends JavaRecursiveElementVisitor{
         }
         final PsiReferenceExpression referenceExpression =
                 (PsiReferenceExpression)qualifier;
-        final PsiElement referent = referenceExpression.resolve();
-        if(referent == null){
+        final PsiElement target = referenceExpression.resolve();
+        if(target == null){
             return;
         }
-        if(!referent.equals(variable)){
+        if(!target.equals(variable)){
             return;
         }
         accessed = true;
@@ -72,11 +72,36 @@ class ArrayContentsAccessedVisitor extends JavaRecursiveElementVisitor{
         }
         final PsiReferenceExpression referenceExpression =
                 (PsiReferenceExpression)arrayExpression;
-        final PsiElement referent = referenceExpression.resolve();
-        if(referent == null){
+        final PsiElement target = referenceExpression.resolve();
+        if(target == null){
             return;
         }
-        if(referent.equals(variable)){
+        if(target.equals(variable)){
+            accessed = true;
+        }
+    }
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression){
+        if(accessed){
+            return;
+        }
+        super.visitReferenceExpression(expression);
+        @NonNls final String referenceName = expression.getReferenceName();
+        if(!"length".equals(referenceName)){
+            return;
+        }
+        final PsiExpression qualifier = expression.getQualifierExpression();
+        if(!(qualifier instanceof PsiReferenceExpression)){
+            return;
+        }
+        final PsiReferenceExpression referenceExpression =
+                (PsiReferenceExpression) qualifier;
+        final PsiElement target = referenceExpression.resolve();
+        if(target == null){
+            return;
+        }
+        if(target.equals(variable)){
             accessed = true;
         }
     }

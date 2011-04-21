@@ -31,6 +31,7 @@ import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
@@ -192,7 +193,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     myList.setSelectedIndex(0);
-    myList.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    Insets padding = UIUtil.getListViewportPadding();
+    myList.setBorder(new EmptyBorder(padding));
 
     ListScrollingUtil.installActions(myList);
 

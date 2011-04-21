@@ -204,7 +204,7 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
     return result == null ? defaultPosition : result;
   }
 
-  private void validateContext(boolean isWrite) {
+  private static void validateContext(boolean isWrite) {
     if (isWrite) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
@@ -422,6 +422,11 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   }
 
   public void removeSelection() {
+    if (myEditor.isStickySelection()) {
+      // Most of our 'change caret position' actions (like move caret to word start/end etc) remove active selection.
+      // However, we don't want to do that for 'sticky selection'.
+      return;
+    }
     validateContext(true);
     removeBlockSelection();
     myLastSelectionStart = myEditor.getCaretModel().getOffset();

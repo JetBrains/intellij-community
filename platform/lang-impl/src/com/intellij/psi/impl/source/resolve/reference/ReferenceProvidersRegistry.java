@@ -118,23 +118,28 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
                                                                double priority) {
     myKnownSupers.clear();
     final Class scope = pattern.getCondition().getInitialCondition().getAcceptedClass();
-    final PsiNamePatternCondition<?> nameCondition =
-      ContainerUtil.findInstance(pattern.getCondition().getConditions(), PsiNamePatternCondition.class);
-    if (nameCondition != null) {
-      for (PatternCondition<? super String> condition : nameCondition.getNamePattern().getCondition().getConditions()) {
-        if (condition instanceof ValuePatternCondition) {
-          final Collection<String> strings = ((ValuePatternCondition)condition).getValues();
-          registerNamedReferenceProvider(ArrayUtil.toStringArray(strings), nameCondition, scope, true, provider, priority, pattern);
-          return;
+    final List<PatternCondition<? super T>> conditions = pattern.getCondition().getConditions();
+    for (int i = 0, conditionsSize = conditions.size(); i < conditionsSize; i++) {
+      PatternCondition<? super T> _condition = conditions.get(i);
+      if (_condition instanceof PsiNamePatternCondition) {
+        final PsiNamePatternCondition<?> nameCondition = (PsiNamePatternCondition)_condition;
+        List<PatternCondition<? super String>> conditions1 = nameCondition.getNamePattern().getCondition().getConditions();
+        for (int i1 = 0, conditions1Size = conditions1.size(); i1 < conditions1Size; i1++) {
+          PatternCondition<? super String> condition = conditions1.get(i1);
+          if (condition instanceof ValuePatternCondition) {
+            final Collection<String> strings = ((ValuePatternCondition)condition).getValues();
+            registerNamedReferenceProvider(ArrayUtil.toStringArray(strings), nameCondition, scope, true, provider, priority, pattern);
+            return;
+          }
+          if (condition instanceof CaseInsensitiveValuePatternCondition) {
+            final String[] strings = ((CaseInsensitiveValuePatternCondition)condition).getValues();
+            registerNamedReferenceProvider(strings, nameCondition, scope, false, provider, priority, pattern);
+            return;
+          }
         }
-        if (condition instanceof CaseInsensitiveValuePatternCondition) {
-          final String[] strings = ((CaseInsensitiveValuePatternCondition)condition).getValues();
-          registerNamedReferenceProvider(strings, nameCondition, scope, false, provider, priority, pattern);
-          return;
-        }
+        break;
       }
     }
-
 
     while (true) {
       final SimpleProviderBinding providerBinding = myBindingsMap.get(scope);

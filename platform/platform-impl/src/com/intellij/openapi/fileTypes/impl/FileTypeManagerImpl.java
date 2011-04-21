@@ -870,7 +870,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   public void setPatternsTable(Set<FileType> fileTypes, FileTypeAssocTable assocTable) {
     fireBeforeFileTypesChanged();
-    mySchemesManager.clearAllSchemes();
+    for (FileType existing : getRegisteredFileTypes()) {
+      if (!fileTypes.contains(existing)) {
+        mySchemesManager.removeScheme(existing);
+      }
+    }
     for (FileType fileType : fileTypes) {
       mySchemesManager.addNewScheme(fileType, true);
       if (fileType instanceof AbstractFileType) {

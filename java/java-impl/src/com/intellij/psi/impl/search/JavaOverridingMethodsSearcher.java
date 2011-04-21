@@ -1,5 +1,7 @@
 package com.intellij.psi.impl.search;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -10,6 +12,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -20,29 +23,41 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
     final SearchScope scope = p.getScope();
 
     final PsiClass parentClass = method.getContainingClass();
-
+    assert parentClass != null;
     Processor<PsiClass> inheritorsProcessor = new Processor<PsiClass>() {
-      public boolean process(PsiClass inheritor) {
-        PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(parentClass, inheritor, PsiSubstitutor.EMPTY);
-        MethodSignature signature = method.getSignature(substitutor);
-        PsiMethod found = MethodSignatureUtil.findMethodBySuperSignature(inheritor, signature, false);
-        if (found == null || !isAcceptable(found, method)) {
-          if (parentClass.isInterface() && !inheritor.isInterface()) {  //check for sibling implementation
-            final PsiClass superClass = inheritor.getSuperClass();
-            if (superClass != null && !superClass.isInheritor(parentClass, true)) {
-              found = MethodSignatureUtil.findMethodInSuperClassBySignatureInDerived(inheritor, superClass, signature, true);
-              if (found != null && isAcceptable(found, method)) {
-                return consumer.process(found) && p.isCheckDeep();
-              }
-            }
+      public boolean process(final PsiClass inheritor) {
+        PsiMethod found = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod>() {
+          @Nullable
+          public PsiMethod compute() {
+            return findOverridingMethod(inheritor, parentClass, method);
           }
-          return true;
-        }
-        return consumer.process(found) && p.isCheckDeep();
+        });
+        return found == null || consumer.process(found) && p.isCheckDeep();
       }
     };
 
     return ClassInheritorsSearch.search(parentClass, scope, true).forEach(inheritorsProcessor);
+  }
+
+  @Nullable
+  private static PsiMethod findOverridingMethod(PsiClass inheritor, @NotNull PsiClass parentClass, PsiMethod method) {
+    PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(parentClass, inheritor, PsiSubstitutor.EMPTY);
+    MethodSignature signature = method.getSignature(substitutor);
+    PsiMethod found = MethodSignatureUtil.findMethodBySuperSignature(inheritor, signature, false);
+    if (found != null && isAcceptable(found, method)) {
+      return found;
+    }
+
+    if (parentClass.isInterface() && !inheritor.isInterface()) {  //check for sibling implementation
+      final PsiClass superClass = inheritor.getSuperClass();
+      if (superClass != null && !superClass.isInheritor(parentClass, true)) {
+        PsiMethod derived = MethodSignatureUtil.findMethodInSuperClassBySignatureInDerived(inheritor, superClass, signature, true);
+        if (derived != null && isAcceptable(derived, method)) {
+          return derived;
+        }
+      }
+    }
+    return null;
   }
 
   private static boolean isAcceptable(final PsiMethod found, final PsiMethod method) {

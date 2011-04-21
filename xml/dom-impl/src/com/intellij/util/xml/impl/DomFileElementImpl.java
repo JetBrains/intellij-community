@@ -336,7 +336,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     }
     final DomFileElementImpl<DomElement> fileElement = myManager.getFileElement(myFile);
     if (!equals(fileElement)) {
-      return "file element changed: " + fileElement;
+      return "file element changed: " + fileElement + "; fileType=" + myFile.getFileType();
     }
     return null;
   }

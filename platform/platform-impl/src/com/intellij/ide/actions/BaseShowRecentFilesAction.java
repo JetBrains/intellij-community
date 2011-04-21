@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
@@ -49,6 +50,7 @@ import java.io.File;
 
 public abstract class BaseShowRecentFilesAction extends AnAction implements DumbAware {
   private static final Color BORDER_COLOR = new Color(0x87, 0x87, 0x87);
+  private JBPopup myPopup;
 
   public void actionPerformed(AnActionEvent e) {
     show(PlatformDataKeys.PROJECT.getData(e.getDataContext()));
@@ -152,6 +154,10 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
         else {
           pathLabel.setText(" ");
         }
+
+        if (myPopup != null) {
+          myPopup.setAdText(pathLabel.getText(), SwingUtilities.RIGHT);
+        }
       }
     });
 
@@ -193,10 +199,10 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
     footerPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
     footerPanel.add(pathLabel);
 
-    new PopupChooserBuilder(list).
+    myPopup = new PopupChooserBuilder(list).
       setTitle(getTitle()).
+      setAdText(" ").
       setMovable(true).
-      setSouthComponent(footerPanel).
       setItemChoosenCallback(runnable).
       addAdditionalChooseKeystroke(getAdditionalSelectKeystroke()).
       setFilteringEnabled(new Function<Object, String>() {
@@ -204,7 +210,8 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
           return o instanceof VirtualFile ? ((VirtualFile)o).getName() : "";
         }
       }).
-      createPopup().showCenteredInCurrentWindow(project);
+      createPopup();
+    myPopup.showCenteredInCurrentWindow(project);
   }
 
   protected abstract String getTitle();
