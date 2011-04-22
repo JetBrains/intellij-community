@@ -550,6 +550,7 @@ public class InspectionGadgetsPlugin implements ApplicationComponent,
         if (classExists("javax.xml.xpath.XPath")) {
             m_inspectionClasses.add(MalformedXPathInspection.class);
         }
+        m_inspectionClasses.add(MathRandomCastToIntInspection.class);
         m_inspectionClasses.add(MismatchedArrayReadWriteInspection.class);
         m_inspectionClasses.add(MismatchedCollectionQueryUpdateInspection.class);
         m_inspectionClasses.add(MismatchedStringBuilderQueryUpdateInspection.class);
