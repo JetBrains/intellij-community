@@ -15,7 +15,6 @@
  */
 package com.intellij.usageView;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -206,13 +205,6 @@ public class UsageInfo {
   @Nullable
   public VirtualFile getVirtualFile() {
     return mySmartPointer.getVirtualFile();
-  }
-
-  public void dispose() {
-    ((Disposable)mySmartPointer).dispose();
-    if (myPsiFileRange != null) {
-      ((Disposable)myPsiFileRange).dispose();
-    }
   }
 
   public boolean isDynamicUsage() {
