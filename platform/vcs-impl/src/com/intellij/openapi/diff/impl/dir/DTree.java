@@ -150,8 +150,15 @@ public class DTree {
       } else {
         assert src != null;
         DType dtype = src.getSize() == trg.getSize() ? DType.EQUAL : DType.CHANGED;
-        if (dtype == DType.EQUAL && settings.compareByContent) {
-          dtype = isEqual(src, trg) ? DType.EQUAL : DType.CHANGED;
+        if (dtype == DType.EQUAL) {
+          switch (settings.compareMode) {
+            case CONTENT:
+              dtype = isEqual(src, trg) ? DType.EQUAL : DType.CHANGED;
+              break;
+            case TIMESTAMP:
+              dtype = src.getTimeStamp() == trg.getTimeStamp() ? DType.EQUAL : DType.CHANGED;
+              break;
+          }
         }
         tree.setType(dtype);
       }

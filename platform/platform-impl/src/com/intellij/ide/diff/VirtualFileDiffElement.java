@@ -49,8 +49,8 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   }
 
   @Override
-  public long getModificationStamp() {
-    return myFile.getModificationStamp();
+  public long getTimeStamp() {
+    return myFile.getTimeStamp();
   }
 
   @Override
