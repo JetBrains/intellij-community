@@ -152,6 +152,11 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
     return myMainPanel;
   }
 
+  @Override
+  protected String getHelpId() {
+    return "reference.project.structure.artifacts.jar.from.module";
+  }
+
   private static class ModuleListRenderer extends ListCellRendererWrapper<Module> {
     public ModuleListRenderer(JComboBox comboBox) {
       super(comboBox);
