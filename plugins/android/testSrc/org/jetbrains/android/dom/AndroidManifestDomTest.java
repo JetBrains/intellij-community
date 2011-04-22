@@ -120,7 +120,7 @@ public class AndroidManifestDomTest extends AndroidDomTest {
   public void testActivityCompletion3() throws Throwable {
     copyFileToProject("MyActivity.java", "src/p1/p2/MyActivity.java");
     copyFileToProject("MyActivity1.java", "src/p1/p2/p3/MyActivity1.java");
-    doTestCompletion();
+    doTestCompletion(false);
   }
 
   public void testActivityCompletion4() throws Throwable {
@@ -138,20 +138,20 @@ public class AndroidManifestDomTest extends AndroidDomTest {
 
   public void testActivityCompletion6() throws Throwable {
     copyFileToProject("MyActivity.java", "src/p1/p2/MyActivity.java");
-    doTestCompletion();
+    doTestCompletion(false);
   }
 
   public void testUsesPermissionCompletion() throws Throwable {
-    doTestCompletion();
+    doTestCompletion(false);
   }
 
   public void testApplicationNameCompletion() throws Throwable {
     copyFileToProject("MyApplication.java", "src/p1/p2/MyApplication.java");
-    doTestCompletion();
+    doTestCompletion(false);
   }
 
   public void testManageSpaceActivity() throws Throwable {
     copyFileToProject("MyActivity.java", "src/p1/p2/MyActivity.java");
-    doTestCompletion();
+    doTestCompletion(false);
   }
 }

@@ -72,7 +72,11 @@ abstract class AndroidDomTest extends AndroidTestCase {
   }
 
   protected void doTestCompletion() throws Throwable {
-    toTestCompletion(getTestName(true) + ".xml", getTestName(true) + "_after.xml");
+    doTestCompletion(true);
+  }
+
+  protected void doTestCompletion(boolean lowercaseFirstLetter) throws Throwable {
+    toTestCompletion(getTestName(lowercaseFirstLetter) + ".xml", getTestName(lowercaseFirstLetter) + "_after.xml");
   }
 
   protected void toTestCompletion(String fileBefore, String fileAfter) throws Throwable {
