@@ -75,7 +75,14 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
       }
       PyElement klass = PsiTreeUtil.getParentOfType(element, PyClass.class, PyFile.class);
       if (klass != null) {
-        editor.getDocument().insertString(editor.getCaretModel().getOffset(), "\n"+element.getParent().getText().substring(0,3));
+        String whitespace = "\n";
+        if (klass instanceof PyClass) {
+          PsiWhiteSpace ws = PsiTreeUtil.getPrevSiblingOfType(((PyClass)klass).getStatementList(), PsiWhiteSpace.class);
+          if (ws != null)
+            whitespace = ws.getText();
+        }
+
+        editor.getDocument().insertString(editor.getCaretModel().getOffset(), whitespace+element.getParent().getText().substring(0,3));
         return Result.Continue;
       }
     }
