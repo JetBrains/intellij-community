@@ -16,12 +16,11 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.diff.DiffElement;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.sql.Date;
-import java.text.DateFormat;
 
 import static com.intellij.openapi.diff.impl.dir.DirDiffOperation.*;
 
@@ -55,7 +54,7 @@ public class DirDiffElement {
     }
     else if (type == DType.CHANGED) {
       assert source != null;
-      myOperation = source.getFileType().isBinary() ? NONE : DirDiffOperation.MERGE;
+      myOperation = DirDiffOperation.MERGE;
     }
   }
 
@@ -68,7 +67,7 @@ public class DirDiffElement {
   }
 
   private static String getLastModification(DiffElement file) {
-    return DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(new Date(file.getModificationStamp()));
+    return DateFormatUtil.formatDateTime(file.getTimeStamp());
   }
 
   public static DirDiffElement createChange(@NotNull DiffElement source, @NotNull DiffElement target) {
@@ -143,21 +142,6 @@ public class DirDiffElement {
 
   public DirDiffOperation getOperation() {
     return myOperation;
-  }
-
-  public boolean isContainer() {
-    return mySource == null ? myTarget.isContainer() : mySource.isContainer();
-  }
-
-  public void setNextOperation() {
-    final DirDiffOperation o = myOperation;
-    if (isSource()) {
-      myOperation = o == COPY_TO ? REMOVE : o == REMOVE ? NONE : COPY_TO;
-    } else if (isTarget()) {
-      myOperation = o == COPY_FROM ? REMOVE : o == REMOVE ? NONE : COPY_FROM;
-    } else {
-      myOperation = o == MERGE ? COPY_TO : o == COPY_TO ? COPY_FROM : o == COPY_FROM ? NONE : MERGE;
-    }
   }
 
   public Icon getIcon() {

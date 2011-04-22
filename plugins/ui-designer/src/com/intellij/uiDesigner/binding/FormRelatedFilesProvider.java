@@ -41,8 +41,13 @@ public class FormRelatedFilesProvider extends GotoRelatedProvider {
   public List<? extends GotoRelatedItem> getItems(@NotNull PsiElement context) {
     PsiClass psiClass = PsiTreeUtil.getParentOfType(context, PsiClass.class, false);
     if (psiClass != null) {
-      List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(psiClass);
-      return GotoRelatedItem.createItems(forms);
+      while (psiClass != null) {
+        List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(psiClass);
+        if (!forms.isEmpty()) {
+          return GotoRelatedItem.createItems(forms);
+        }
+        psiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
+      }
     }
     else {
       PsiFile file = context.getContainingFile();

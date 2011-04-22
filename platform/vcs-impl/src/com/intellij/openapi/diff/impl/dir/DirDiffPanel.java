@@ -107,7 +107,7 @@ public class DirDiffPanel {
 
           } else {
             final DiffElement object = element.isSource() ? element.getSource() : element.getTarget();
-            myViewComponent = object.getViewComponent(project);
+            myViewComponent = object.getViewComponent(project, null);
 
             if (myViewComponent != null) {
               myCurrentElement = object;
@@ -196,7 +196,7 @@ public class DirDiffPanel {
   }
 
   private JLabel getErrorLabel() {
-    return myErrorLabel == null ? myErrorLabel = new JLabel("Can't recognize file type", SwingConstants.CENTER) : myErrorLabel;
+    return myErrorLabel == null ? myErrorLabel = new JLabel("Can't create editor/diff component for this file type", SwingConstants.CENTER) : myErrorLabel;
   }
 
   private void clearDiffPanel() {

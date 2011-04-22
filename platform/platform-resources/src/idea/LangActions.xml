@@ -661,6 +661,7 @@
     <group id="XDebugger.Actions">
       <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction"/>
       <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction"/>
+      <action id="XDebugger.CopyName" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyNameAction"/>
       <action id="XDebugger.Inspect" class="com.intellij.xdebugger.impl.ui.tree.actions.XInspectAction"/>
       <action id="XDebugger.JumpToSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToSourceAction"/>
       <action id="XDebugger.AddToWatches" class="com.intellij.xdebugger.impl.ui.tree.actions.XAddToWatchesAction"/>
@@ -696,18 +697,20 @@
       <reference ref="XDebugger.MuteBreakpoints"/>
     </group>
 
-    <group id="XDebugger.Evaluation.Dialog.Tree.Popup">
+    <group id="XDebugger.ValueGroup" popup="false">
       <reference ref="XDebugger.Inspect"/>
       <reference ref="XDebugger.SetValue"/>
       <reference ref="XDebugger.CopyValue"/>
+      <reference ref="XDebugger.CopyName"/>
       <reference ref="Debugger.MarkObject"/>
     </group>
 
+    <group id="XDebugger.Evaluation.Dialog.Tree.Popup">
+      <reference ref="XDebugger.ValueGroup"/>
+    </group>
+
     <group id="XDebugger.Variables.Tree.Popup">
-      <reference ref="XDebugger.Inspect"/>
-      <reference ref="XDebugger.SetValue"/>
-      <reference ref="XDebugger.CopyValue"/>
-      <reference ref="Debugger.MarkObject"/>
+      <reference ref="XDebugger.ValueGroup"/>
       <reference ref="XDebugger.JumpToSource"/>
       <reference ref="XDebugger.AddToWatches"/>
     </group>
@@ -717,10 +720,7 @@
       <reference ref="XDebugger.RemoveWatch"/>
       <reference ref="XDebugger.RemoveAllWatches"/>
       <reference ref="XDebugger.EditWatch"/>
-      <reference ref="XDebugger.Inspect"/>
-      <reference ref="XDebugger.SetValue"/>
-      <reference ref="XDebugger.CopyValue"/>
-      <reference ref="Debugger.MarkObject"/>
+      <reference ref="XDebugger.ValueGroup"/>
     </group>
 
     <group id="XDebugger.Watches.Tree.Toolbar">
@@ -729,13 +729,11 @@
     </group>
 
     <group id="XDebugger.Inspect.Tree.Popup">
-      <reference ref="XDebugger.Inspect"/>
-      <reference ref="XDebugger.CopyValue"/>
-      <reference ref="Debugger.MarkObject"/>
+      <reference ref="XDebugger.ValueGroup"/>
     </group>
 
     <group id="XDebugger.Value.Hint.Tree.Popup">
-      <reference ref="XDebugger.CopyValue"/>
+      <reference ref="XDebugger.ValueGroup"/>
       <reference ref="XDebugger.AddToWatches"/>
     </group>
 

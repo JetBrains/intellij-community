@@ -253,7 +253,7 @@ public class DirDiffTableModel extends AbstractTableModel {
   }
 
   public String getTitle() {
-    return "Diff for " + mySrc.getPath() + " and " + myTrg.getPath();
+    return "Diff for " + mySrc.getPresentablePath() + " and " + myTrg.getPresentablePath();
   }
 
   @Nullable
@@ -363,6 +363,14 @@ public class DirDiffTableModel extends AbstractTableModel {
 
   public boolean isUpdating() {
     return myUpdating.get();
+  }
+
+  public DirDiffSettings.CompareMode getCompareMode() {
+    return mySettings.compareMode;
+  }
+
+  public void setCompareMode(DirDiffSettings.CompareMode mode) {
+    mySettings.compareMode = mode;
   }
 
   class Updater extends Thread {

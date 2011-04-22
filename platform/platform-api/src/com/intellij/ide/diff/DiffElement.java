@@ -50,9 +50,13 @@ public abstract class DiffElement<T> {
   @NotNull
   public abstract String getName();
 
+  public String getPresentablePath() {
+    return getPath();
+  }
+
   public abstract long getSize();
 
-  public abstract long getModificationStamp();
+  public abstract long getTimeStamp();
 
   public FileType getFileType() {
     return FileTypeManager.getInstance().getFileTypeByFileName(getName());
@@ -61,9 +65,6 @@ public abstract class DiffElement<T> {
   public abstract boolean isContainer();
 
   public abstract DiffElement[] getChildren() throws IOException;
-
-  @Nullable
-  public abstract DiffElement<T> findFileByRelativePath(String path);
 
   /**
    * Returns content data as byte array. Can be null, if element for example is a container
@@ -78,7 +79,7 @@ public abstract class DiffElement<T> {
   }
 
   @Nullable
-  public JComponent getViewComponent(Project project) {
+  public JComponent getViewComponent(Project project, DiffElement target) {
     disposeViewComponent();
     try {
       final T value = getValue();
@@ -133,8 +134,10 @@ public abstract class DiffElement<T> {
   protected DiffRequest createRequest(Project project, DiffElement element) throws IOException {
     final T src = getValue();
     if (src instanceof VirtualFile) {
+      if (((VirtualFile)src).getFileType().isBinary()) return null;
       final Object trg = element.getValue();
       if (trg instanceof VirtualFile) {
+        if (((VirtualFile)trg).getFileType().isBinary()) return null;
         final FileDocumentManager mgr = FileDocumentManager.getInstance();
         if (mgr.getDocument((VirtualFile)src) != null && mgr.getDocument((VirtualFile)trg) != null) {
           return SimpleDiffRequest.compareFiles((VirtualFile)src, (VirtualFile)trg, project);

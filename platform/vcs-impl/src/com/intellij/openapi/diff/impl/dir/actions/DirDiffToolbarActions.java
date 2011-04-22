@@ -40,6 +40,8 @@ public class DirDiffToolbarActions extends ActionGroup {
       new EnableNotEqual(myModel),
       new EnableEqual(myModel),
       new EnableRight(myModel),
+      Separator.getInstance(),
+      new ChangeCompareModeGroup(myModel),
       Separator.getInstance()
     };
   }

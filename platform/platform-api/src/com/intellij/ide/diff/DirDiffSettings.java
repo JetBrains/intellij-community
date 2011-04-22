@@ -27,7 +27,13 @@ public class DirDiffSettings {
   public boolean showNewOnSource = true;
   public boolean showNewOnTarget = true;
 
-  public boolean compareByContent = true;
+  public CompareMode compareMode = CompareMode.CONTENT;
 
   public String filter = "*.*";
+
+  public static enum CompareMode {
+    CONTENT, // the most honest, the slowest. Compares size, if equal compares contents. Ignores timestamps
+    SIZE, // Compares size only
+    TIMESTAMP // Compares size, if equal compares timestamps
+  }
 }

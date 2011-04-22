@@ -56,12 +56,10 @@ public class GroovyToJavaGenerator {
   private final Set<VirtualFile> myAllToCompile;
   private final Project myProject;
 
-  private final boolean fullConversion;
 
-  public GroovyToJavaGenerator(Project project, Set<VirtualFile> allToCompile, boolean fullConversion) {
+  public GroovyToJavaGenerator(Project project, Set<VirtualFile> allToCompile) {
     myProject = project;
     myAllToCompile = allToCompile;
-    this.fullConversion = fullConversion;
   }
 
   public Map<String, CharSequence> generateStubs(GroovyFile file) {
@@ -97,15 +95,10 @@ public class GroovyToJavaGenerator {
     output.put(filename, text);
   }
 
-  private String getFileNameForClass(PsiClass clazz) {
-    if (fullConversion) {
-      return clazz.getName() + ".java";
-    }
-    else {
-      final PsiFile containingFile = clazz.getContainingFile();
-      final GrPackageDefinition packageDefinition = ((GroovyFile)containingFile).getPackageDefinition();
-      return getPackageDirectory(packageDefinition) + clazz.getName() + ".java";
-    }
+  private static String getFileNameForClass(PsiClass clazz) {
+    final PsiFile containingFile = clazz.getContainingFile();
+    final GrPackageDefinition packageDefinition = ((GroovyFile)containingFile).getPackageDefinition();
+    return getPackageDirectory(packageDefinition) + clazz.getName() + ".java";
   }
 
   private static String getPackageDirectory(@Nullable GrPackageDefinition packageDefinition) {
@@ -120,9 +113,9 @@ public class GroovyToJavaGenerator {
   public CharSequence generateClass(@NotNull PsiClass typeDefinition) {
     try {
       StringBuilder text = new StringBuilder();
-      final ClassNameProvider classNameProvider =
-        fullConversion ? new GeneratorClassNameProvider() : new StubClassNameProvider(myAllToCompile);
-      new ClassGenerator(myProject, classNameProvider).writeTypeDefinition(text, typeDefinition, true);
+      final ClassNameProvider classNameProvider = new StubClassNameProvider(myAllToCompile);
+      ClassItemGenerator classItemGenerator = new StubGenerator(classNameProvider, myProject);
+      new ClassGenerator(myProject, classNameProvider, classItemGenerator).writeTypeDefinition(text, typeDefinition, true);
       return text;
     }
     catch (ProcessCanceledException e) {
@@ -145,8 +138,7 @@ public class GroovyToJavaGenerator {
       return method.getText();
     }
 
-    final ClassGenerator generator =
-      new ClassGenerator(method.getProject(), new StubClassNameProvider(Collections.<VirtualFile>emptySet()));
+    final ClassItemGenerator generator = new StubGenerator(new StubClassNameProvider(Collections.<VirtualFile>emptySet()), method.getProject());
     final StringBuilder buffer = new StringBuilder();
     if (method instanceof GrConstructor) {
       generator.writeConstructor(buffer, (GrConstructor)method, false);

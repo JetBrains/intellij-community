@@ -133,7 +133,7 @@ public class GroovycStubGenerator extends GroovyCompilerBase {
       indicator.pushState();
 
       try {
-        final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject, new HashSet<VirtualFile>(toCompile), false);
+        final GroovyToJavaGenerator generator = new GroovyToJavaGenerator(myProject, new HashSet<VirtualFile>(toCompile));
         for (int i = 0; i < toCompile.size(); i++) {
           indicator.setFraction((double)i / toCompile.size());
 

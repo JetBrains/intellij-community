@@ -19,11 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
@@ -33,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -74,17 +69,15 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
   //private static String
   @Override
   protected void performRefactoring(UsageInfo[] usages) {
-    final HashSet<VirtualFile> allToCompile = new HashSet<VirtualFile>();
-    for (GroovyFile file : myFiles) {
-      allToCompile.add(file.getVirtualFile());
-    }
-    final GroovyToJavaGenerator fileGenerator = new GroovyToJavaGenerator(myProject, allToCompile, true);
+    final GeneratorClassNameProvider classNameProvider = new GeneratorClassNameProvider();
+    final ClassGenerator classGenerator = new ClassGenerator(myProject, classNameProvider, new ClassItemGeneratorImpl());
 
     for (GroovyFile file : myFiles) {
-      final Map<String, CharSequence> map = fileGenerator.generateStubs(file);
+      final PsiClass[] classes = file.getClasses();
       StringBuilder builder = new StringBuilder();
-      for (String s : map.keySet()) {
-        builder.append(map.get(s)).append('\n');
+      for (PsiClass aClass : classes) {
+        classGenerator.writeTypeDefinition(builder, aClass, true);
+        builder.append('\n');
       }
 
       String fileName = getNewFileName(file);
