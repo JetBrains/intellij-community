@@ -68,7 +68,9 @@ public class ClassGenerator {
     final boolean isScript = typeDefinition instanceof GroovyScriptClass;
 
     final GroovyFile containingFile = (GroovyFile)typeDefinition.getContainingFile();
-    writePackageStatement(text, containingFile.getPackageDefinition());
+    if (toplevel) {
+      writePackageStatement(text, containingFile.getPackageDefinition());
+    }
 
     boolean isEnum = typeDefinition.isEnum();
     boolean isAnnotationType = typeDefinition.isAnnotationType();
@@ -110,9 +112,10 @@ public class ClassGenerator {
       final GrEnumConstant[] enumConstants = ((GrEnumTypeDefinition)typeDefinition).getEnumConstants();
       for (GrEnumConstant constant : enumConstants) {
         classItemGenerator.writeEnumConstant(text, constant);
+        text.append(',');
       }
-      if (enumConstants.length>0) {
-        text.append(";\n");
+      if (enumConstants.length > 0) {
+        text.replace(text.length() - 1, text.length(), ";\n");
       }
     }
 
