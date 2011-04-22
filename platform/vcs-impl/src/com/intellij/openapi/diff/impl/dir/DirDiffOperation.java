@@ -33,7 +33,7 @@ public enum DirDiffOperation {
       case COPY_TO:   return IconLoader.getIcon("/vcs/arrow_right.png");
       case COPY_FROM: return IconLoader.getIcon("/vcs/arrow_left.png");
       case REMOVE:    return IconLoader.getIcon("/vcs/remove.png");
-      case MERGE:     return IconLoader.getIcon("/vcs/merge.png");
+      case MERGE:     return IconLoader.getIcon("/vcs/not_equal.png");
       case EQUAL:     return IconLoader.getIcon("/vcs/equal.png");
       case NONE:      return EmptyIcon.create(12);
     }
