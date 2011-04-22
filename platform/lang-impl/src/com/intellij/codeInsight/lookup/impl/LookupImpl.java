@@ -757,6 +757,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     LOG.assertTrue(!myDisposed, disposeTrace);
   }
 
+  @Override
+  public boolean vetoesHiding() {
+    return myChangeGuard;
+  }
+
   public boolean isShown() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myShown;

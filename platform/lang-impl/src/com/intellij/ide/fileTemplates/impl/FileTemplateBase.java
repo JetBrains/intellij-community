@@ -78,12 +78,12 @@ public abstract class FileTemplateBase implements FileTemplate {
 
   @NotNull
   public final String getText(Map attributes) throws IOException{
-    return StringUtil.convertLineSeparators(FileTemplateUtil.mergeTemplate(attributes, getText()));
+    return FileTemplateUtil.mergeTemplate(attributes, getText(), false);
   }
 
   @NotNull
   public final String getText(Properties attributes) throws IOException{
-    return StringUtil.convertLineSeparators(FileTemplateUtil.mergeTemplate(attributes, getText()));
+    return FileTemplateUtil.mergeTemplate(attributes, getText(), false);
   }
 
   @NotNull

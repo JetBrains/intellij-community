@@ -3,40 +3,41 @@ class Test {
 }
 -----
 public class Test extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
-  public java.lang.Object foo(java.lang.Object h, java.lang.Object i, java.lang.Object j, java.lang.Object k) {
-    return null;
-  }
+public java.lang.Object foo(java.lang.Object h, java.lang.Object i, java.lang.Object j, java.lang.Object k) {
+return null;
+}
 
-  public java.lang.Object foo(java.lang.Object h, java.lang.Object i, java.lang.Object j) {
-    return null;
-  }
+public java.lang.Object foo(java.lang.Object h, java.lang.Object i, java.lang.Object j) {
+return null;
+}
 
-  public java.lang.Object foo(java.lang.Object h, java.lang.Object i) {
-    return null;
-  }
+public java.lang.Object foo(java.lang.Object h, java.lang.Object i) {
+return null;
+}
 
-  public java.lang.Object foo(java.lang.Object h) {
-    return null;
-  }
+public java.lang.Object foo(java.lang.Object h) {
+return null;
+}
 
-  public groovy.lang.MetaClass getMetaClass() {
-    return null;
-  }
+public groovy.lang.MetaClass getMetaClass() {
+return null;
+}
 
-  public void setMetaClass(groovy.lang.MetaClass mc) {
-    return ;
-  }
+public void setMetaClass(groovy.lang.MetaClass mc) {
+return ;
+}
 
-  public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
-    return null;
-  }
+public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+return null;
+}
 
-  public java.lang.Object getProperty(java.lang.String propertyName) {
-    return null;
-  }
+public java.lang.Object getProperty(java.lang.String propertyName) {
+return null;
+}
 
-  public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
-    return ;
-  }
+public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+return ;
+}
+
 }
 ---

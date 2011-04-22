@@ -1097,14 +1097,20 @@ public class FileBasedIndex implements ApplicationComponent {
               break; // hack. Most probably that other indexing threads is waiting for PsiLock, which we're are holding.
             }
           }
-          if (allDocsProcessed) {
-            myUpToDateIndices.add(indexId); // safe to set the flag here, becase it will be cleared under the WriteAction
+          if (allDocsProcessed && !hasActiveTransactions()) {
+            myUpToDateIndices.add(indexId); // safe to set the flag here, because it will be cleared under the WriteAction
           }
         }
       }
       finally {
         guard.leave();
       }
+    }
+  }
+
+  private boolean hasActiveTransactions() {
+    synchronized (myTransactionMap) {
+      return !myTransactionMap.isEmpty();
     }
   }
 

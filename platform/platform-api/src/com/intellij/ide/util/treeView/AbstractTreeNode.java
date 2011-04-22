@@ -113,7 +113,8 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor impl
   }
 
   public int hashCode() {
-    return getValue() == null ? 0 : getValue().hashCode();
+    T value = getValue();
+    return value == null ? 0 : value.hashCode();
   }
 
   public final AbstractTreeNode getParent() {

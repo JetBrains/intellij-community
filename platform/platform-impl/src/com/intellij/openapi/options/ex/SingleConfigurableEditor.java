@@ -16,6 +16,7 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -75,11 +76,11 @@ public class SingleConfigurableEditor extends DialogWrapper {
   }
 
   public SingleConfigurableEditor(Project project, Configurable configurable) {
-    this(project, configurable, null);
+    this(project, configurable, ShowSettingsUtilImpl.createDimensionKey(configurable));
   }
 
   public SingleConfigurableEditor(Component parent, Configurable configurable) {
-    this(parent, configurable, null);
+    this(parent, configurable, ShowSettingsUtilImpl.createDimensionKey(configurable));
   }
 
   private static String createTitleString(Configurable configurable) {

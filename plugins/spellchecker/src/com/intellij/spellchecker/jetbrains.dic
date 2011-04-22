@@ -262,6 +262,8 @@ plist
 plsql
 plugin
 plugins
+pointcut
+pointcuts
 posix
 postfix
 postprocessor

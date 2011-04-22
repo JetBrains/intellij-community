@@ -15,6 +15,15 @@
  */
 package com.intellij.spellchecker.engine;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.spellchecker.compress.CompressedDictionary;
 import com.intellij.spellchecker.dictionary.Dictionary;
@@ -22,23 +31,28 @@ import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.EditableDictionaryLoader;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class BaseSpellChecker implements SpellCheckerEngine {
-
+  static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.engine.BaseSpellChecker");
 
   private final Transformation transform = new Transformation();
 
   private final Set<EditableDictionary> dictionaries = new THashSet<EditableDictionary>();
-  private final Set<Dictionary> bundledDictionaries = new THashSet<Dictionary>();
+  private final List<Dictionary> bundledDictionaries = new CopyOnWriteArrayList<Dictionary>();
   private final Metrics metrics = new LevenshteinDistance();
 
-
+  private AtomicBoolean myLoadingDictionaries = new AtomicBoolean(false); 
+  private List<Pair<Loader, Consumer<Dictionary>>> myDictionariesToLoad = new CopyOnWriteArrayList<Pair<Loader, Consumer<Dictionary>>>();
+  
   public BaseSpellChecker() {
   }
 
@@ -71,11 +85,79 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   }
 
   private void loadCompressedDictionary(@NotNull Loader loader) {
-    final CompressedDictionary dictionary = CompressedDictionary.create(loader, transform);
-    if (dictionary != null) {
-      addCompressedFixedDictionary(dictionary);
+    loadDictionaryAsync(loader, new Consumer<Dictionary>() {
+      @Override
+      public void consume(final Dictionary dictionary) {
+        addCompressedFixedDictionary(dictionary);
+      }
+    });
+  }
+  
+  private void loadDictionaryAsync(@NotNull final Loader loader, @NotNull final Consumer<Dictionary> consumer) {
+    if (myLoadingDictionaries.compareAndSet(false, true)) {
+      LOG.debug("Loading " + loader.getName());
+      _doLoadDictionaryAsync(loader, consumer);
+    }
+    else {
+      queueDictionaryLoad(loader, consumer);
     }
   }
+
+  private void _doLoadDictionaryAsync(final Loader loader, final Consumer<Dictionary> consumer) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        LOG.debug("Loading " + loader.getName());
+        ProgressManager.getInstance()
+          .run(new Task.Backgroundable(null,"Loading spellchecker dictionary...", false,
+                                       new PerformInBackgroundOption() {
+                                         @Override
+                                         public boolean shouldStartInBackground() {
+                                           return true;
+                                         }
+
+                                         @Override
+                                         public void processSentToBackground() {
+                                         }
+                                       }) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              final CompressedDictionary dictionary = CompressedDictionary.create(loader, transform);
+              if (dictionary != null) {
+                LOG.debug(loader.getName() + " loaded!");
+                consumer.consume(dictionary);
+              }
+
+              if (myDictionariesToLoad.isEmpty()) {
+                LOG.debug("Loading finished, restarting daemon...");
+                myLoadingDictionaries.set(false);
+
+                final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+                for (final Project project : openProjects) {
+                  if (project.isInitialized() && project.isOpen() && !project.isDefault()) {
+                    UIUtil.invokeLaterIfNeeded(new Runnable() {
+                      @Override
+                      public void run() {
+                        DaemonCodeAnalyzer.getInstance(project).restart();
+                      }
+                    });
+                  }
+                }
+              }
+              else {
+                final Pair<Loader, Consumer<Dictionary>> nextDictionary = myDictionariesToLoad.remove(0);
+                _doLoadDictionaryAsync(nextDictionary.getFirst(), nextDictionary.getSecond());
+              }
+            }
+          });
+      }
+    });
+  }
+
+  private void queueDictionaryLoad(final Loader loader, final Consumer<Dictionary> consumer) {
+    LOG.debug("Queuing load for: " + loader.getName());
+    myDictionariesToLoad.add(Pair.create(loader, consumer));
+  } 
 
   private void addModifiableDictionary(@NotNull EditableDictionary dictionary) {
     dictionaries.add(dictionary);
@@ -160,7 +242,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     if (transformed == null) {
       return true;
     }
-    return isCorrect(transformed, bundledDictionaries) || isCorrect(transformed, dictionaries);
+    return myLoadingDictionaries.get() || isCorrect(transformed, bundledDictionaries) || isCorrect(transformed, dictionaries);
 
 
   }
@@ -214,12 +296,9 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   }
 
   public void removeDictionary(@NotNull String name) {
-    for (Iterator<Dictionary> iterator = bundledDictionaries.iterator(); iterator.hasNext();) {
-      Dictionary dictionary = iterator.next();
-      if (name.equals(dictionary.getName())) {
-        iterator.remove();
-        break;
-      }
+    final Dictionary dictionaryByName = getBundledDictionaryByName(name);
+    if (dictionaryByName != null) {
+      bundledDictionaries.remove(dictionaryByName);
     }
   }
 

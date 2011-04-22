@@ -7,16 +7,15 @@ enum E {
 }
 -----
 public enum E {
-  A((int)0){
-
-  public java.lang.Object foo() {
-    return null;
-  }
+A((int)0){
+public java.lang.Object foo() {
+return null;
+}
 };
-  E(int i) {
+E(int i) {
 
-  }
+}
+public abstract java.lang.Object foo() ;
 
-  public abstract java.lang.Object foo() ;
 }
 ---

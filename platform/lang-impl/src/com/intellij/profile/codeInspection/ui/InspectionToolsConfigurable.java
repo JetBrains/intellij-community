@@ -92,6 +92,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
 
 
   public InspectionToolsConfigurable(InspectionProjectProfileManager projectProfileManager, InspectionProfileManager profileManager) {
+    InspectionToolRegistrar.getInstance().buildInspectionSearchIndexIfNecessary();
     myAddButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final ModifiableModel model = SingleInspectionProfilePanel.createNewProfile(-1, getSelectedObject(), myWholePanel, "");

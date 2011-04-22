@@ -11,72 +11,72 @@ class DelegateBarImpl {
 }
 -----
 public interface DelegateFoo {
-  public java.lang.Object foo() ;
+public java.lang.Object foo() ;
+
 }
 ---
 public class Doo extends groovy.lang.GroovyObjectSupport implements java.io.Serializable, groovy.lang.GroovyObject {
-  public groovy.lang.MetaClass getMetaClass() {
-    return null;
-  }
+public groovy.lang.MetaClass getMetaClass() {
+return null;
+}
 
-  public void setMetaClass(groovy.lang.MetaClass mc) {
-    return ;
-  }
+public void setMetaClass(groovy.lang.MetaClass mc) {
+return ;
+}
 
-  public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
-    return null;
-  }
+public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+return null;
+}
 
-  public java.lang.Object getProperty(java.lang.String propertyName) {
-    return null;
-  }
+public java.lang.Object getProperty(java.lang.String propertyName) {
+return null;
+}
 
-  public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
-    return ;
-  }
+public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+return ;
+}
+
 }
 ---
 public class DelegateBarImpl extends groovy.lang.GroovyObjectSupport implements DelegateFoo, java.lang.Runnable, java.io.Serializable, groovy.lang.GroovyObject {
-  public DelegateFoo getFoo() {
-    return null;
-  }
+public DelegateFoo getFoo() {
+return null;
+}
 
-  public void setFoo(DelegateFoo foo) {
-    return ;
-  }
+public void setFoo(DelegateFoo foo) {
+return ;
+}
 
-  public java.lang.Object foo() {
-    return null;
-  }
+public java.lang.Object foo() {
+return null;
+}
 
-  public void run() {
-    return ;
-  }
+public void run() {
+return ;
+}
 
-  public groovy.lang.MetaClass getMetaClass() {
-    return null;
-  }
+public groovy.lang.MetaClass getMetaClass() {
+return null;
+}
 
-  public void setMetaClass(groovy.lang.MetaClass mc) {
-    return ;
-  }
+public void setMetaClass(groovy.lang.MetaClass mc) {
+return ;
+}
 
-  public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
-    return null;
-  }
+public java.lang.Object invokeMethod(java.lang.String name, java.lang.Object args) {
+return null;
+}
 
-  public java.lang.Object getProperty(java.lang.String propertyName) {
-    return null;
-  }
+public java.lang.Object getProperty(java.lang.String propertyName) {
+return null;
+}
 
-  public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
-    return ;
-  }
+public void setProperty(java.lang.String propertyName, java.lang.Object newValue) {
+return ;
+}
 
-  private DelegateFoo foo = null;
-
-  private java.lang.Runnable zoo = null;
-
-  private Doo doo = null;
+private DelegateFoo foo = null;
+private java.lang.Runnable zoo = null;
+private Doo doo = null;
 }
 ---

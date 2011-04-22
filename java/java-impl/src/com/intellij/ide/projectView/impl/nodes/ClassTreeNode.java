@@ -151,6 +151,8 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
   }
 
   public boolean canRepresent(final Object element) {
+    if (!isValid()) return false;
+
     return super.canRepresent(element) || canRepresent(getValue(), element);
   }
 
@@ -174,6 +176,6 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
 
   @Nullable
   private static PsiFile parentFileOf(final PsiClass psiClass) {
-    return psiClass.getContainingClass() == null ? psiClass.getContainingFile() : null; 
+    return psiClass.getContainingClass() == null ? psiClass.getContainingFile() : null;
   }
 }

@@ -37,6 +37,9 @@ public interface PerFileMappings<T> {
   @Nullable
   T getMapping(final VirtualFile file);
 
+  @Nullable
+  T getDefaultMapping(@Nullable VirtualFile file);
+
   T chosenToStored(final VirtualFile file, final T value);
 
   boolean isSelectable(final T value);

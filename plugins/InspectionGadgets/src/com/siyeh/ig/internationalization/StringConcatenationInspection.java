@@ -20,6 +20,7 @@ import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -45,6 +46,9 @@ public class StringConcatenationInspection extends BaseInspection {
 
     /** @noinspection PublicField*/
     public boolean ignoreSystemErrs = false;
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreThrowableArguments = false;
 
     @Override
     @NotNull
@@ -88,11 +92,11 @@ public class StringConcatenationInspection extends BaseInspection {
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(expressionParent,
                             PsiMethod.class);
-          if (method != null) {
-            final InspectionGadgetsFix fix = new DelegatingFix(
-                    new AddAnnotationFix(AnnotationUtil.NON_NLS, method));
-            result.add(fix);
-          }
+            if (method != null) {
+                final InspectionGadgetsFix fix = new DelegatingFix(
+                        new AddAnnotationFix(AnnotationUtil.NON_NLS, method));
+                result.add(fix);
+            }
         }
         return result.toArray(new InspectionGadgetsFix[result.size()]);
     }
@@ -126,6 +130,9 @@ public class StringConcatenationInspection extends BaseInspection {
         optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
                 "string.concatenation.ignore.system.err.option"),
                 "ignoreSystemErrs");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "string.concatenation.ignore.exceptions.option"),
+                "ignoreThrowableArguments");
         return optionsPanel;
     }
 
@@ -160,32 +167,50 @@ public class StringConcatenationInspection extends BaseInspection {
                     NonNlsUtils.isNonNlsAnnotated(rhs)) {
                 return;
             }
-            final PsiElement element =
-                    PsiTreeUtil.getParentOfType(expression,
-                            PsiAssertStatement.class,
-                            PsiMethodCallExpression.class);
-            if (ignoreAsserts && element instanceof PsiAssertStatement) {
-                return;
+            if (ignoreAsserts) {
+                final PsiAssertStatement assertStatement =
+                        PsiTreeUtil.getParentOfType(expression,
+                                PsiAssertStatement.class, true,
+                                PsiCodeBlock.class);
+                if (assertStatement != null) {
+                    return;
+                }
             }
-            if (element instanceof PsiMethodCallExpression) {
+            if (ignoreSystemErrs || ignoreSystemOuts) {
                 final PsiMethodCallExpression methodCallExpression =
-                        (PsiMethodCallExpression)element;
-                final PsiReferenceExpression methodExpression =
-                        methodCallExpression.getMethodExpression();
-                @NonNls
-                final String canonicalText =
-                        methodExpression.getCanonicalText();
-                if (ignoreSystemOuts &&
-                    "System.out.println".equals(canonicalText) ||
-                        "System.out.print".equals(canonicalText)) {
-                    return;
+                        PsiTreeUtil.getParentOfType(expression,
+                                PsiMethodCallExpression.class, true,
+                                PsiCodeBlock.class);
+                if (methodCallExpression != null) {
+                    final PsiReferenceExpression methodExpression =
+                            methodCallExpression.getMethodExpression();
+                    @NonNls
+                    final String canonicalText =
+                            methodExpression.getCanonicalText();
+                    if (ignoreSystemOuts &&
+                            "System.out.println".equals(canonicalText) ||
+                            "System.out.print".equals(canonicalText)) {
+                        return;
+                    }
+                    if (ignoreSystemErrs &&
+                            "System.err.println".equals(canonicalText) ||
+                            "System.err.print".equals(canonicalText)) {
+                        return;
+                    }
                 }
-                if (ignoreSystemErrs &&
-                        "System.err.println".equals(canonicalText) ||
-                        "System.err.print".equals(canonicalText)) {
-                    return;
+            }
+            if (ignoreThrowableArguments) {
+                final PsiNewExpression newExpression =
+                        PsiTreeUtil.getParentOfType(expression,
+                                PsiNewExpression.class, true,
+                                PsiCodeBlock.class);
+                if (newExpression != null) {
+                    final PsiType type = newExpression.getType();
+                    if (type != null && InheritanceUtil.isInheritor(type,
+                            "java.lang.Throwable")) {
+                        return;
+                    }
                 }
-
             }
             if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {
                 return;

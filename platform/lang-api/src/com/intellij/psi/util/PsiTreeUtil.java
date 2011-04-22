@@ -584,6 +584,14 @@ public class PsiTreeUtil {
     return true;
   }
 
+  public static boolean processElements(@NotNull PsiElementProcessor processor, @Nullable PsiElement... elements) {
+    if (elements == null || elements.length == 0) return true;
+    for (PsiElement element : elements) {
+      if (!processElements(element, processor)) return false;
+    }
+    return true;
+  }
+
   @NotNull
   public static PsiElement[] copyElements(@NotNull PsiElement[] elements) {
     ArrayList<PsiElement> roots = new ArrayList<PsiElement>();

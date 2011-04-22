@@ -4,5 +4,6 @@ import java.lang.annotation.*
 
 }
 -----
-public @interface III {}
+public @interface III {
+}
 ---

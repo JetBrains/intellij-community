@@ -53,8 +53,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -65,12 +63,9 @@ import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.util.Function;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PathUtil;
-import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.charset.UnsupportedCharsetException;
 import java.util.*;
 
 public abstract class TestObject implements JavaCommandLine {
@@ -96,6 +91,9 @@ public abstract class TestObject implements JavaCommandLine {
       return new TestClass(project, configuration, runnerSettings, configurationSettings);
     if (JUnitConfiguration.TEST_PACKAGE.equals(id))
       return new TestPackage(project, configuration, runnerSettings, configurationSettings);
+    else if (JUnitConfiguration.TEST_DIRECTORY.equals(id)) {
+      return new TestDirectory(project, configuration, runnerSettings, configurationSettings);
+    }
     if (JUnitConfiguration.TEST_PATTERN.equals(id)) {
       return new TestsPattern(project, configuration, runnerSettings, configurationSettings);
     }

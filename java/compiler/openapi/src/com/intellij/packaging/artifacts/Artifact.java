@@ -46,4 +46,7 @@ public interface Artifact extends UserDataHolder {
 
   @Nullable
   VirtualFile getOutputFile();
+
+  @Nullable
+  String getOutputFilePath();
 }

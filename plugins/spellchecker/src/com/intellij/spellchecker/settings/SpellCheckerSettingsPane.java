@@ -54,6 +54,7 @@ public class SpellCheckerSettingsPane implements Disposable {
   private PathsChooserComponent pathsChooserComponent;
   private final List<Pair<String, Boolean>> allDictionaries = new ArrayList<Pair<String, Boolean>>();
   private final List<String> dictionariesFolders = new ArrayList<String>();
+  private final List<String> removedDictionaries = new ArrayList<String>();
   private final WordsPanel wordsPanel;
   private final SpellCheckerManager manager;
   private final SpellCheckerSettings settings;
@@ -113,6 +114,8 @@ public class SpellCheckerSettingsPane implements Disposable {
           for (Pair<String, Boolean> pair : currentDictionaries) {
             if (!pair.first.startsWith(FileUtil.toSystemDependentName(path))) {
               result.add(pair);
+            } else {
+              removedDictionaries.add(pair.first);
             }
           }
           currentDictionaries.clear();
@@ -190,8 +193,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     settings.setDisabledDictionariesPaths(disabledDictionaries);
     settings.setBundledDisabledDictionariesPaths(bundledDisabledDictionaries);
 
-    manager.updateBundledDictionaries();
-
+    manager.updateBundledDictionaries(removedDictionaries);
   }
 
   private boolean isUserDictionary(final String dictionary) {
@@ -210,6 +212,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     pathsChooserComponent.reset();
     fillAllDictionaries();
     optionalChooserComponent.reset();
+    removedDictionaries.clear();
   }
 
 

@@ -16,6 +16,8 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
@@ -31,8 +33,23 @@ public abstract class RelatedItemLineMarkerProvider implements LineMarkerProvide
 
   @Override
   public final void collectSlowLineMarkers(List<PsiElement> elements, Collection<LineMarkerInfo> result) {
-    collectNavigationMarkers(elements, result);
+    collectNavigationMarkers(elements, result, false);
   }
 
-  public abstract void collectNavigationMarkers(List<PsiElement> elements, Collection<? super RelatedItemLineMarkerInfo> result);
+  public void collectNavigationMarkers(List<PsiElement> elements,
+                                       Collection<? super RelatedItemLineMarkerInfo> result,
+                                       boolean forNavigation) {
+    for (PsiElement element : elements) {
+      collectNavigationMarkers(element, result);
+      if (forNavigation && element instanceof PsiNameIdentifierOwner) {
+        PsiElement nameIdentifier = ((PsiNameIdentifierOwner)element).getNameIdentifier();
+        if (nameIdentifier != null && !elements.contains(nameIdentifier)) {
+          collectNavigationMarkers(nameIdentifier, result);
+        }
+      }
+    }
+  }
+
+  protected void collectNavigationMarkers(@NotNull PsiElement element, Collection<? super RelatedItemLineMarkerInfo> result) {
+  }
 }

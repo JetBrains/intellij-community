@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 
 import java.util.List;
@@ -64,7 +65,7 @@ public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
       super.visitAssignmentExpression(grAssignmentExpression);
       final PsiElement parent = grAssignmentExpression.getParent();
       final GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(grAssignmentExpression);
-      if (parent instanceof GrCodeBlock || parent instanceof GroovyFile || parent instanceof GrControlStatement || parent == null) {
+      if (parent instanceof GrCodeBlock || parent instanceof GroovyFile || parent instanceof GrControlStatement || parent == null || parent instanceof GrCaseSection) {
         //check for method that has void return type. so it does not matter what return statements are.
         if (flowOwner instanceof GrOpenBlock) {
           final PsiElement flowParent = flowOwner.getParent();

@@ -16,12 +16,13 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -75,6 +76,16 @@ public class NavigationGutterIconBuilder<T> {
     @NotNull
     public Collection<? extends PsiElement> fun(final DomElement o) {
       return ContainerUtil.createMaybeSingletonList(o.getXmlElement());
+    }
+  };
+  public static final NotNullFunction<DomElement, Collection<? extends GotoRelatedItem>> DOM_GOTO_RELATED_ITEM_PROVIDER = new NotNullFunction<DomElement, Collection<? extends GotoRelatedItem>>() {
+    @NotNull
+    @Override
+    public Collection<? extends GotoRelatedItem> fun(DomElement dom) {
+      if (dom.getXmlElement() != null) {
+        return Collections.singletonList(new DomGotoRelatedItem(dom));
+      }
+      return Collections.emptyList();
     }
   };
 
@@ -169,16 +180,28 @@ public class NavigationGutterIconBuilder<T> {
     return annotation;
   }
 
-  public LineMarkerInfo createLineMarkerInfo(@NotNull PsiElement element) {
+  public RelatedItemLineMarkerInfo<PsiElement> createLineMarkerInfo(@NotNull PsiElement element) {
+    return createLineMarkerInfo(element, null);
+  }
+
+  public RelatedItemLineMarkerInfo<PsiElement> createLineMarkerInfo(@NotNull PsiElement element,
+                                                                    @Nullable final NotNullFunction<T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider) {
     final MyNavigationGutterIconRenderer renderer = createGutterIconRenderer(element.getProject());
     final String tooltip = renderer.getTooltipText();
-    return new LineMarkerInfo<PsiElement>(element,
-                                          element.getTextRange(),
-                                          renderer.getIcon(),
-                                          Pass.UPDATE_OVERRIDEN_MARKERS,
-                                          tooltip == null ? null : new ConstantFunction<PsiElement, String>(tooltip),
-                                          renderer.isNavigateAction()? renderer : null,
-                                          renderer.getAlignment());
+    NotNullLazyValue<Collection<? extends GotoRelatedItem>> gotoTargets = new NotNullLazyValue<Collection<? extends GotoRelatedItem>>() {
+      @NotNull
+      @Override
+      protected Collection<? extends GotoRelatedItem> compute() {
+        if (gotoRelatedItemProvider != null) {
+          return ContainerUtil.concat(myTargets.getValue(), gotoRelatedItemProvider);
+        }
+        return Collections.emptyList();
+      }
+    };
+    return new RelatedItemLineMarkerInfo<PsiElement>(element, element.getTextRange(), renderer.getIcon(), Pass.UPDATE_OVERRIDEN_MARKERS,
+                                                     tooltip == null ? null : new ConstantFunction<PsiElement, String>(tooltip),
+                                                     renderer.isNavigateAction() ? renderer : null, renderer.getAlignment(),
+                                                     gotoTargets);
   }
 
   private void checkBuilt() {

@@ -473,7 +473,7 @@ public final class DomManagerImpl extends DomManager {
   }
 
   public long getModificationCount() {
-    return myModificationCount;
+    return myModificationCount + PsiManager.getInstance(myProject).getModificationTracker().getOutOfCodeBlockModificationCount();
   }
 
   public void performAtomicChange(@NotNull Runnable change) {

@@ -19,7 +19,7 @@ import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.NavigatablePsiElement;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +30,7 @@ import java.util.Collection;
 /**
  * @author nik
  */
-public class RelatedItemLineMarkerInfo<T extends NavigatablePsiElement> extends LineMarkerInfo<T> {
+public class RelatedItemLineMarkerInfo<T extends PsiElement> extends LineMarkerInfo<T> {
   private final NotNullLazyValue<Collection<? extends GotoRelatedItem>> myTargets;
 
   public RelatedItemLineMarkerInfo(@NotNull T element, @NotNull TextRange range, Icon icon, int updatePass,
@@ -55,8 +55,6 @@ public class RelatedItemLineMarkerInfo<T extends NavigatablePsiElement> extends 
       }
     });
   }
-
-
 
   @NotNull
   public Collection<? extends GotoRelatedItem> createGotoRelatedItems() {
