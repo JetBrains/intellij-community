@@ -67,7 +67,7 @@ public class DirDiffElement {
   }
 
   private static String getLastModification(DiffElement file) {
-    return DateFormatUtil.formatDate(file.getTimeStamp());
+    return DateFormatUtil.formatDateTime(file.getTimeStamp());
   }
 
   public static DirDiffElement createChange(@NotNull DiffElement source, @NotNull DiffElement target) {
