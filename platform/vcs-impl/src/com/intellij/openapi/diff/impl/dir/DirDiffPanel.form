@@ -15,6 +15,7 @@
           <splitpane id="2c9d2" binding="mySplitPanel">
             <constraints border-constraint="Center"/>
             <properties>
+              <dividerLocation value="250"/>
               <orientation value="0"/>
             </properties>
             <border type="none"/>

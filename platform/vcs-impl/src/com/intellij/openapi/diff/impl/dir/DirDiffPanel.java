@@ -73,7 +73,6 @@ public class DirDiffPanel implements Disposable {
 
 
   public DirDiffPanel(DirDiffTableModel model, DirDiffDialog dirDiffDialog, DirDiffSettings settings) {
-    mySplitPanel.setDividerLocation(0.5);
     myModel = model;
     myDialog = dirDiffDialog;
     mySourceDirField.setText(model.getSourceDir().getPath());

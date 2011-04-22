@@ -36,7 +36,6 @@ public class DirDiffDialog extends DialogWrapper {
     setModal(false);
     myModel = model;
     mySettings = settings;
-    setSize(600, 600);
     setTitle("Directory Diff");
     init();
     final JBTable table = myDiffPanel.getTable();
@@ -50,6 +49,7 @@ public class DirDiffDialog extends DialogWrapper {
 
   @Override
   protected String getDimensionServiceKey() {
+    setSize(800, 600);
     return "DirDiffDialog";
   }
 
