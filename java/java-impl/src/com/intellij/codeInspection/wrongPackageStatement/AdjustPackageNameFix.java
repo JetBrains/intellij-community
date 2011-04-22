@@ -27,19 +27,15 @@ import org.jetbrains.annotations.NotNull;
 
 public class AdjustPackageNameFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.wrongPackageStatement.AdjustPackageNameFix");
-  private final PsiJavaFile myFile;
-  private final PsiPackageStatement myStatement;
-  private final PsiPackage myTargetPackage;
+  private final String myName;
 
-  public AdjustPackageNameFix(PsiJavaFile file, PsiPackageStatement statement, PsiPackage targetPackage) {
-    myFile = file;
-    myStatement = statement;
-    myTargetPackage = targetPackage;
+  public AdjustPackageNameFix(String targetPackage) {
+    myName = targetPackage;
   }
 
   @NotNull
   public String getName() {
-    return QuickFixBundle.message("adjust.package.text", myTargetPackage.getQualifiedName());
+    return QuickFixBundle.message("adjust.package.text", myName);
   }
 
   @NotNull
@@ -47,21 +43,21 @@ public class AdjustPackageNameFix implements LocalQuickFix {
     return QuickFixBundle.message("adjust.package.family");
   }
 
-  public boolean isAvailable() {
-    return myFile != null
-        && myFile.isValid()
-        && myFile.getManager().isInProject(myFile)
-        && myTargetPackage != null
-        && myTargetPackage.isValid()
-        && (myStatement == null || myStatement.isValid())
-        ;
-  }
-
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    PsiElement element = descriptor.getPsiElement();
+    if (element == null) return;
+    PsiFile myFile = element.getContainingFile();
     if (!CodeInsightUtilBase.prepareFileForWrite(myFile)) return;
+
+    PsiDirectory directory = myFile.getContainingDirectory();
+    if (directory == null) return;
+    PsiPackage myTargetPackage = JavaDirectoryService.getInstance().getPackage(directory);
+    if (myTargetPackage == null) return;
 
     try {
       PsiElementFactory factory = JavaPsiFacade.getInstance(myFile.getProject()).getElementFactory();
+      PsiPackageStatement myStatement = ((PsiJavaFile)myFile).getPackageStatement();
+
       if (myTargetPackage.getQualifiedName().length() == 0) {
         if (myStatement != null) {
           myStatement.delete();
