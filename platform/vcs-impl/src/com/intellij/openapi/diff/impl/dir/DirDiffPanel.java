@@ -17,12 +17,15 @@ package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffSettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -44,7 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author Konstantin Bulenkov
  */
-public class DirDiffPanel {
+public class DirDiffPanel implements Disposable {
   private JPanel myDiffPanel;
   private JBTable myTable;
   private JPanel myComponent;
@@ -55,16 +58,19 @@ public class DirDiffPanel {
   private JBLabel mySourceDirLabel;
   private JPanel myActionsPanel;
   private JPanel myActionsCenterPanel;
-  private JComboBox myFileFilter;
   private JPanel myToolBarPanel;
   private JBScrollPane myScrollPane;
   private JPanel myRootPanel;
+  private JPanel myFilterPanel;
+  private JTextField myFilter;
   private final DirDiffTableModel myModel;
   public JLabel myErrorLabel;
   private final DirDiffDialog myDialog;
   private JComponent myDiffPanelComponent;
   private JComponent myViewComponent;
   private DiffElement myCurrentElement;
+  private String oldFilter;
+
 
   public DirDiffPanel(DirDiffTableModel model, DirDiffDialog dirDiffDialog, DirDiffSettings settings) {
     mySplitPanel.setDividerLocation(0.5);
@@ -193,6 +199,42 @@ public class DirDiffPanel {
     });
     myRootPanel.removeAll();
     myRootPanel.add(decorator.getComponent(), BorderLayout.CENTER);
+    myModel.addModelListener(new DirDiffModelListener() {
+      @Override
+      public void updateStarted() {
+        myFilter.setEnabled(false);
+      }
+
+      @Override
+      public void updateFinished() {
+        myFilter.setEnabled(true);
+      }
+    });
+
+    myFilter.setText(settings.getFilter());
+    oldFilter = myFilter.getText();
+    myFilter.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          e.consume();
+          fireFilterUpdated();
+        }
+        else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+          e.consume();
+          IdeFocusManager.getInstance(myModel.getProject()).requestFocus(myTable, true);
+        }
+      }
+    });
+  }
+
+  private void fireFilterUpdated() {
+    final String newFilter = myFilter.getText();
+    if (!StringUtil.equals(oldFilter, newFilter)) {
+      oldFilter = newFilter;
+      myModel.getSettings().setFilter(newFilter);
+      myModel.applySettings();
+    }
   }
 
   private JLabel getErrorLabel() {

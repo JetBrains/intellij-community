@@ -15,6 +15,11 @@
  */
 package com.intellij.ide.diff;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PatternUtil;
+
+import java.util.regex.Pattern;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -26,10 +31,24 @@ public class DirDiffSettings {
   public boolean showDifferent = true;
   public boolean showNewOnSource = true;
   public boolean showNewOnTarget = true;
-
+  public boolean showCompareModes = true;
   public CompareMode compareMode = CompareMode.CONTENT;
 
-  public String filter = "*.*";
+  private String filter = "";
+  private Pattern filterPattern = PatternUtil.fromMask("*");
+
+  public String getFilter() {
+    return filter;
+  }
+
+  public void setFilter(String filter) {
+    this.filter = filter;
+    filterPattern = PatternUtil.fromMask(StringUtil.isEmpty(filter) ? "*" : filter);
+  }
+
+  public Pattern getFilterPattern() {
+    return filterPattern;
+  }
 
   public static enum CompareMode {
     CONTENT, // the most honest, the slowest. Compares size, if equal compares contents. Ignores timestamps

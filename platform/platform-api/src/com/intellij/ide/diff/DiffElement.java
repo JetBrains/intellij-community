@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.diff;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
@@ -39,7 +40,7 @@ import java.nio.charset.Charset;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class DiffElement<T> {
+public abstract class DiffElement<T> implements Disposable {
   public static final DiffElement[] EMPTY_ARRAY = new DiffElement[0];
   private DiffPanel myDiffPanel;
   private Editor myEditor;
@@ -183,5 +184,9 @@ public abstract class DiffElement<T> {
   @Nullable
   public Icon getIcon() {
     return null;
+  }
+
+  @Override
+  public void dispose() {
   }
 }

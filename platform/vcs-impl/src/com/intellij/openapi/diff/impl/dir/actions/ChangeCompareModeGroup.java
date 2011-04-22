@@ -32,11 +32,17 @@ public class ChangeCompareModeGroup extends ComboBoxAction {
 
   public ChangeCompareModeGroup(DirDiffTableModel model) {
     getTemplatePresentation().setText("Compare by");
-    final ArrayList<ChangeCompareModeAction> actions = new ArrayList<ChangeCompareModeAction>();
-    for (DirDiffSettings.CompareMode mode : DirDiffSettings.CompareMode.values()) {
-      actions.add(new ChangeCompareModeAction(model, mode));
+    if (model.getSettings().showCompareModes) {
+      final ArrayList<ChangeCompareModeAction> actions = new ArrayList<ChangeCompareModeAction>();
+      for (DirDiffSettings.CompareMode mode : DirDiffSettings.CompareMode.values()) {
+        actions.add(new ChangeCompareModeAction(model, mode));
+      }
+      myGroup = new DefaultActionGroup(actions.toArray(new ChangeCompareModeAction[actions.size()]));
+    } else {
+      getTemplatePresentation().setEnabled(false);
+      getTemplatePresentation().setVisible(false);
+      myGroup = new DefaultActionGroup();
     }
-    myGroup = new DefaultActionGroup(actions.toArray(new ChangeCompareModeAction[actions.size()]));
   }
 
   @NotNull
