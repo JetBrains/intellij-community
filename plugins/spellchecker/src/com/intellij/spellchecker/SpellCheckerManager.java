@@ -77,7 +77,7 @@ public class SpellCheckerManager {
   }
 
 
-  public void updateBundledDictionaries() {
+  public void updateBundledDictionaries(final List<String> removedDictionaries) {
     for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
       for (String dictionary : provider.getBundledDictionaries()) {
         boolean dictionaryShouldBeLoad = this.settings == null || !this.settings.getBundledDisabledDictionariesPaths().contains(dictionary);
@@ -116,6 +116,13 @@ public class SpellCheckerManager {
 
       }
     }
+    
+    if (removedDictionaries != null && removedDictionaries.size() > 0) {
+      for (final String name : removedDictionaries) {
+        spellChecker.removeDictionary(name);
+      }
+    }
+    
     restartInspections();
   }
 
