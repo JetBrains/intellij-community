@@ -32,9 +32,14 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     return configureByFile(fname);
   }
 
-  public void testSimpleFunction() {
+  protected Map<String, PsiElement> loadTest(int expected_marks) {
     Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 3);
+    assertEquals("Test data sanity", marks.size(), expected_marks);
+    return marks;
+  }
+
+  public void testSimpleFunction() {
+    Map<String, PsiElement> marks = loadTest(3);
 
     PsiElement arg1 = marks.get("<arg1>");
     feignCtrlP(arg1.getTextOffset()).check("a, b, c", new String[]{"a, "});
@@ -54,8 +59,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testStarredFunction() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 4);
+    Map<String, PsiElement> marks = loadTest(4);
 
     PsiElement arg1 = marks.get("<arg1>");
     feignCtrlP(arg1.getTextOffset()).check("a, b, *c", new String[]{"a, "});
@@ -76,8 +80,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testKwdFunction() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 4);
+    Map<String, PsiElement> marks = loadTest(4);
 
     PsiElement arg1 = marks.get("<arg1>");
     feignCtrlP(arg1.getTextOffset()).check("a, b, **c", new String[]{"a, "});
@@ -98,8 +101,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testKwdOutOfOrder() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 4);
+    Map<String, PsiElement> marks = loadTest(4);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b, **c", new String[]{"**c"});
 
@@ -111,8 +113,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testStarArg() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 3);
+    Map<String, PsiElement> marks = loadTest(3);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b, c", new String[]{"a, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b, c", new String[]{"b, ","c"});
@@ -120,8 +121,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testKwdArg() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 3);
+    Map<String, PsiElement> marks = loadTest(3);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b, c", new String[]{"a, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b, c", new String[]{"b, ","c"});
@@ -129,8 +129,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testKwdArgOutOfOrder() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 3);
+    Map<String, PsiElement> marks = loadTest(3);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b, c", new String[]{"b, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b, c", new String[]{"a, ","c"});
@@ -138,8 +137,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testStarredAndKwdFunction() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 6);
+    Map<String, PsiElement> marks = loadTest(6);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b, *c, **d", new String[]{"a, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b, *c, **d", new String[]{"b, "});
@@ -150,8 +148,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testNestedArg() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 4);
+    Map<String, PsiElement> marks = loadTest(4);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, (b, c), d", new String[]{"a, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, (b, c), d", new String[]{"b, "});
@@ -162,8 +159,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testDoubleNestedArg() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 5);
+    Map<String, PsiElement> marks = loadTest(5);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, (b, (c, d)), e", new String[]{"a, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, (b, (c, d)), e", new String[]{"b, "});
@@ -173,8 +169,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testNestedMultiArg() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 3);
+    Map<String, PsiElement> marks = loadTest(3);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, (b, c), d", new String[]{"a, "});
     feignCtrlP(marks.get("<arg23>").getTextOffset()).check("a, (b, c), d", new String[]{"b, ","c"});
@@ -182,16 +177,14 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testStarredParam() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 2);
+    Map<String, PsiElement> marks = loadTest(2);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b, c", new String[]{"a, "});
     feignCtrlP(marks.get("<arg23>").getTextOffset()).check("a, b, c", new String[]{"b, ","c"});
   }
 
   public void testStarredParamAndArg() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 4);
+    Map<String, PsiElement> marks = loadTest(4);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b, *c", new String[]{"a, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b, *c", new String[]{"b, "});
@@ -201,31 +194,27 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
 
   public void testSimpleMethod() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 1);
+    Map<String, PsiElement> marks = loadTest(1);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self, a", new String[]{"a"}, new String[]{"self, "});
   }
 
   public void testSimpleClassFunction() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 2);
+    Map<String, PsiElement> marks = loadTest(2);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self, a", new String[]{"self, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self, a", new String[]{"a"});
   }
 
   public void testReassignedFunction() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 2);
+    Map<String, PsiElement> marks = loadTest(2);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b", new String[]{"a, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b", new String[]{"b"});
   }
 
   public void testReassignedInstanceMethod() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 3);
+    Map<String, PsiElement> marks = loadTest(3);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self, a, b, c", new String[]{"a, "}, new String[]{"self, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self, a, b, c", new String[]{"b, "}, new String[]{"self, "});
@@ -233,32 +222,28 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testReassignedClassInit() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 2);
+    Map<String, PsiElement> marks = loadTest(2);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self, a, b", new String[]{"a, "}, new String[]{"self, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self, a, b", new String[]{"b"}, new String[]{"self, "});
   }
 
   public void testInheritedClassInit() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 2);
+    Map<String, PsiElement> marks = loadTest(2);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self, a, b", new String[]{"a, "}, new String[]{"self, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self, a, b", new String[]{"b"}, new String[]{"self, "});
   }
 
   public void testRedefinedNewConstructorCall() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 2);
+    Map<String, PsiElement> marks = loadTest(2);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("cls, a, b", new String[]{"a, "}, new String[]{"cls, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("cls, a, b", new String[]{"b"}, new String[]{"cls, "});
   }
 
   public void testRedefinedNewDirectCall() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 3);
+    Map<String, PsiElement> marks = loadTest(3);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("cls, a, b", new String[]{"cls, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("cls, a, b", new String[]{"a, "});
@@ -266,63 +251,55 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testIgnoreNewInOldStyleClass() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 1);
+    Map<String, PsiElement> marks = loadTest(1);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self, one", new String[]{"one"}, new String[]{"self, "});
   }
 
 
   public void testBoundMethodSimple() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 2);
+    Map<String, PsiElement> marks = loadTest(2);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self, a, b", new String[]{"a, "}, new String[]{"self, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self, a, b", new String[]{"b"}, new String[]{"self, "});
   }
 
   public void testBoundMethodReassigned() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 2);
+    Map<String, PsiElement> marks = loadTest(2);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self, a, b", new String[]{"a, "}, new String[]{"self, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self, a, b", new String[]{"b"}, new String[]{"self, "});
   }
 
   public void testConstructorFactory() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 1);
+    Map<String, PsiElement> marks = loadTest(1);
 
     feignCtrlP(marks.get("<arg>").getTextOffset()).check("self, color", new String[]{"color"}, new String[]{"self, "});
   }
 
 
   public void testBoundMethodStatic() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 2);
+    Map<String, PsiElement> marks = loadTest(2);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b", new String[]{"a, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b", new String[]{"b"});
   }
 
   public void testSimpleLambda() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 1);
+    Map<String, PsiElement> marks = loadTest(1);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x", new String[]{"x"});
   }
 
   public void testReassignedLambda() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 2);
+    Map<String, PsiElement> marks = loadTest(2);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x, y", new String[]{"x, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x, y", new String[]{"y"});
   }
 
   public void testLambdaVariousArgs() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 4);
+    Map<String, PsiElement> marks = loadTest(4);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x, y=1, *args, **kwargs", new String[]{"x, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x, y=1, *args, **kwargs", new String[]{"y=1, "});
@@ -332,8 +309,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   public void testTupleAndNamedArg1() {
     // PY-1268
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 2);
+    Map<String, PsiElement> marks = loadTest(2);
 
     feignCtrlP(marks.get("<arg_c>").getTextOffset()).check("a, b, c", new String[]{"c"});
     feignCtrlP(marks.get("<arg_star>").getTextOffset()).check("a, b, c", new String[]{"a, ", "b, "});
@@ -341,27 +317,43 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   public void testTupleAndNamedArg2() {
     // PY-1268
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 2);
+    Map<String, PsiElement> marks = loadTest(2);
 
     feignCtrlP(marks.get("<arg_star>").getTextOffset()).check("a, b, c", new String[]{"a, ", "b, "});
     feignCtrlP(marks.get("<arg_c>").getTextOffset()).check("a, b, c", new String[]{"c"});
   }
 
   public void testTupleArgPlainParam() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 1);
+    Map<String, PsiElement> marks = loadTest(1);
     feignCtrlP(marks.get("<arg>").getTextOffset()).check("a, b, c", new String[]{"b, "});
   }
 
 
-
   public void testStaticmethod() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), 2);
+    Map<String, PsiElement> marks = loadTest(2);
 
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b", new String[]{"a, "});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b", new String[]{"b"});
+  }
+
+  public void testPartialSimple() {
+    Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b, c", new String[]{"c"});
+  }
+
+  public void testPartialWithList() { // PY-3383
+    Map<String, PsiElement> marks = loadTest(2);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b, c, **kwargs", new String[]{"b, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b, c, **kwargs", new String[]{"c, "});
+  }
+
+  public void testPartialNamed() {
+    Map<String, PsiElement> marks = loadTest(2);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b, c=1, d=2, e=3", new String[]{"d=2, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a, b, c=1, d=2, e=3", new String[]{}); // no logical next
   }
 
   /**

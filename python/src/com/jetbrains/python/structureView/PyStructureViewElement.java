@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.Function;
 import com.intellij.util.Icons;
 import com.jetbrains.python.PyIcons;
 import com.jetbrains.python.PyNames;
@@ -14,10 +15,13 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.Nullable;
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
 import javax.swing.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.Arrays;
 
 /**
  * Handles nodes in Structure View.
@@ -142,27 +146,24 @@ public class PyStructureViewElement implements StructureViewTreeElement {
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
       public String getPresentableText() {
+        final String unnamed = "<unnamed>";
         if (myElement instanceof PyFunction) {
           PyParameterList argList = ((PyFunction) myElement).getParameterList();
-          final String name = myElement.getName();
-          StringBuilder result = new StringBuilder(name == null ? "<unnamed>" : name);
+          StringBuilder result = new StringBuilder(notNullize(myElement.getName(), unnamed));
           ParamHelper.appendParameterList(argList, result);
           return result.toString();
         }
-        else if (myElement instanceof PyClass) {
+        else if (myElement instanceof PyClass && myElement.isValid()) {
           PyClass c = (PyClass) myElement;
-          StringBuilder result = new StringBuilder(c.getName());
+          StringBuilder result = new StringBuilder(notNullize(c.getName(), unnamed));
           PyClass[] superClasses = c.getSuperClasses();
-          int n = superClasses.length;
-          if (n > 0) {
+          if (superClasses.length > 0) {
             result.append("(");
-            for (int i = 0; i < n; i++) {
-              c = superClasses[i];
-              result.append(c.getName());
-              if (i != n - 1) {
-                result.append(", ");
+            result.append(join(Arrays.asList(c.getSuperClasses()), new Function<PyClass, String>() {
+              public String fun(PyClass c) {
+                return notNullize(c.getName(), unnamed);
               }
-            }
+            }, ", "));
             result.append(")");
           }
           return result.toString();
