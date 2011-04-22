@@ -15,12 +15,14 @@
  */
 package com.intellij.ide.diff;
 
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * @author Konstantin Bulenkov
@@ -59,12 +61,14 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   }
   @Override
   public VirtualFileDiffElement[] getChildren() {
-    final VirtualFile[] children = myFile.getChildren();
-    final VirtualFileDiffElement[] elements = new VirtualFileDiffElement[children.length];
-    for (int i = 0; i < children.length; i++) {
-      elements[i] = new VirtualFileDiffElement(children[i]);
+    final VirtualFile[] files = myFile.getChildren();
+    final ArrayList<VirtualFileDiffElement> elements = new ArrayList<VirtualFileDiffElement>();
+    for (VirtualFile file : files) {
+      if (!FileTypeManager.getInstance().isFileIgnored(file)) {
+        elements.add(new VirtualFileDiffElement(file));
+      }
     }
-    return elements;
+    return elements.toArray(new VirtualFileDiffElement[elements.size()]);
   }
 
   @Override
