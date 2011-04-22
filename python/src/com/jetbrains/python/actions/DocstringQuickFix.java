@@ -109,14 +109,20 @@ public class DocstringQuickFix implements LocalQuickFix {
     }
     PyFunction fun = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(fun.getStatementList(), PsiWhiteSpace.class);
+    String ws = "\n";
+    if (whitespace != null) {
+      String[] spaces = whitespace.getText().split("\n");
+      if (spaces.length > 1)
+        ws = ws + whitespace.getText().split("\n")[1];
+    }
     newText.deleteCharAt(newText.length()-1);
-    newText.append((whitespace != null ? whitespace.getText() : "\n"));
+    newText.append(ws);
 
     for (int i = 0; i != myMissing.size(); ++i) {
       String s = myMissing.get(i);
       newText.append(myPrefix).append("param ").append(s).append(": ");
       if (i != myMissing.size()-1)
-        newText.append((whitespace != null ? whitespace.getText() : "\n"));
+        newText.append(ws);
     }
     newText.append("\n");
     for (int i = ind; i != lines.length; ++i) {
