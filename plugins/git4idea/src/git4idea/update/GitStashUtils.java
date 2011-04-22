@@ -153,8 +153,6 @@ public class GitStashUtils {
       }, new TaskDescriptor("", Where.AWT) {
       @Override
       public void run(ContinuationContext context) {
-        LOG.info("Deleting change list");
-        shelveManager.deleteChangeList(shelvedChangeList);
         GitVcs.getInstance(project).getVFSListener().setEventsSuppressed(false);
         addFilesAfterUnshelve(project, shelvedChangeList, projectPath, context);
         ChangeListManager.getInstance(project).invokeAfterUpdate(new Runnable() {
