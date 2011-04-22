@@ -180,7 +180,7 @@ public class OpenFileDescriptor implements Navigatable {
     if (getOffset() >= 0) {
       e.getCaretModel().moveToOffset(Math.min(getOffset(), e.getDocument().getTextLength()));
     }
-    else if (getLine() != -1 && getColumn() != -1) {
+    else if (getLine() != -1) {
       LogicalPosition pos = new LogicalPosition(getLine(), getColumn());
       e.getCaretModel().moveToLogicalPosition(pos);
     }
