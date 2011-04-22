@@ -107,7 +107,7 @@ public class DirDiffPanel {
 
           } else {
             final DiffElement object = element.isSource() ? element.getSource() : element.getTarget();
-            myViewComponent = object.getViewComponent(project);
+            myViewComponent = object.getViewComponent(project, null);
 
             if (myViewComponent != null) {
               myCurrentElement = object;

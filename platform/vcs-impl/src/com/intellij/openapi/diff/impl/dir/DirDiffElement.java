@@ -16,12 +16,11 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.diff.DiffElement;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.sql.Date;
-import java.text.DateFormat;
 
 import static com.intellij.openapi.diff.impl.dir.DirDiffOperation.*;
 
@@ -68,7 +67,7 @@ public class DirDiffElement {
   }
 
   private static String getLastModification(DiffElement file) {
-    return DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM).format(new Date(file.getModificationStamp()));
+    return DateFormatUtil.formatDate(file.getTimeStamp());
   }
 
   public static DirDiffElement createChange(@NotNull DiffElement source, @NotNull DiffElement target) {

@@ -16,9 +16,11 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -36,5 +38,19 @@ public enum DirDiffOperation {
       case NONE:      return EmptyIcon.create(12);
     }
     return null;
+  }
+
+  public Color getTextColor() {
+    switch (this) {
+      case COPY_TO:
+      case COPY_FROM:
+        return FileStatus.COLOR_ADDED;
+      case MERGE:
+        return FileStatus.COLOR_MODIFIED;
+      case REMOVE:
+      case NONE:
+      case EQUAL:
+    }
+    return Color.BLACK;
   }
 }

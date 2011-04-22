@@ -50,9 +50,13 @@ public abstract class DiffElement<T> {
   @NotNull
   public abstract String getName();
 
+  public String getPresentablePath() {
+    return getPath();
+  }
+
   public abstract long getSize();
 
-  public abstract long getModificationStamp();
+  public abstract long getTimeStamp();
 
   public FileType getFileType() {
     return FileTypeManager.getInstance().getFileTypeByFileName(getName());
@@ -78,7 +82,7 @@ public abstract class DiffElement<T> {
   }
 
   @Nullable
-  public JComponent getViewComponent(Project project) {
+  public JComponent getViewComponent(Project project, DiffElement target) {
     disposeViewComponent();
     try {
       final T value = getValue();
