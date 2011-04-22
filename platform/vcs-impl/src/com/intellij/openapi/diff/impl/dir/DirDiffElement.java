@@ -144,21 +144,6 @@ public class DirDiffElement {
     return myOperation;
   }
 
-  public boolean isContainer() {
-    return mySource == null ? myTarget.isContainer() : mySource.isContainer();
-  }
-
-  public void setNextOperation() {
-    final DirDiffOperation o = myOperation;
-    if (isSource()) {
-      myOperation = o == COPY_TO ? REMOVE : o == REMOVE ? NONE : COPY_TO;
-    } else if (isTarget()) {
-      myOperation = o == COPY_FROM ? REMOVE : o == REMOVE ? NONE : COPY_FROM;
-    } else {
-      myOperation = o == MERGE ? COPY_TO : o == COPY_TO ? COPY_FROM : o == COPY_FROM ? NONE : MERGE;
-    }
-  }
-
   public Icon getIcon() {
     return mySource != null ? mySource.getIcon() : myTarget.getIcon();
   }

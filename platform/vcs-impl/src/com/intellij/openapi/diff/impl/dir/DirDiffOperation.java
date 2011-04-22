@@ -26,18 +26,16 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public enum DirDiffOperation {
-  COPY_TO, COPY_FROM, REMOVE, MERGE, NONE, EQUAL;
+  COPY_TO, COPY_FROM, MERGE, EQUAL;
 
   public Icon getIcon() {
     switch (this) {
       case COPY_TO:   return IconLoader.getIcon("/vcs/arrow_right.png");
       case COPY_FROM: return IconLoader.getIcon("/vcs/arrow_left.png");
-      case REMOVE:    return IconLoader.getIcon("/vcs/remove.png");
       case MERGE:     return IconLoader.getIcon("/vcs/not_equal.png");
       case EQUAL:     return IconLoader.getIcon("/vcs/equal.png");
-      case NONE:      return EmptyIcon.create(12);
     }
-    return null;
+    return EmptyIcon.create(16);
   }
 
   public Color getTextColor() {
@@ -47,8 +45,6 @@ public enum DirDiffOperation {
         return FileStatus.COLOR_ADDED;
       case MERGE:
         return FileStatus.COLOR_MODIFIED;
-      case REMOVE:
-      case NONE:
       case EQUAL:
     }
     return Color.BLACK;
