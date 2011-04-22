@@ -96,7 +96,7 @@ public class PlainTextFormatter implements InspectionsReportConverter {
         final InspectionProfileEntry tool = tools.get(fileNameWithoutExt).getTool();
 
         // Tool name and group
-        writeToolName(w, tool);
+        w.append(getToolPresentableName(tool)).append("\n");
 
         // Description is HTML based, need to be converted in plain text
         writeInspectionDescription(w, tool, transformer);
@@ -203,37 +203,50 @@ public class PlainTextFormatter implements InspectionsReportConverter {
                                             @NotNull final Transformer transformer)
     throws IOException, ConversionException {
 
+    final StringWriter descrWriter = new StringWriter();
+    String descr = tool.loadDescription();
+    if (descr == null) {
+      return;
+    }
+    // convert line ends to xml form
+    descr = descr.replace("<br>", "<br/>");
+
     try {
 
-      final StringWriter descrWriter = new StringWriter();
-      final String descr = tool.loadDescription();
-      if (descr != null) {
-        transformer.transform(new StreamSource(new StringReader(descr)), new StreamResult(descrWriter));
-        final String trimmedDesc = descrWriter.toString().trim();
-        final String[] descLines = StringUtil.splitByLines(trimmedDesc);
-        if (descLines.length > 0) {
-          for (String descLine : descLines) {
-            w.append("  ").append(descLine.trim()).append("\n");
-          }
-        }
-      }
+      transformer.transform(new StreamSource(new StringReader(descr)), new StreamResult(descrWriter));
     }
     catch (TransformerException e) {
-      throw new ConversionException("Cannot load inspection description for '" + tool.getDisplayName() + "'. Error: " + e.getMessage());
+      // Not critical problem, just inspection error cannot be loaded
+      warn("ERROR:  Cannot load description for inspection: " + getToolPresentableName(tool) + ".\n        Error message: " + e.getMessage());
+      return;
+    }
+
+    final String trimmedDesc = descrWriter.toString().trim();
+    final String[] descLines = StringUtil.splitByLines(trimmedDesc);
+    if (descLines.length > 0) {
+      for (String descLine : descLines) {
+        w.append("  ").append(descLine.trim()).append("\n");
+      }
     }
   }
 
-  protected void writeToolName(@NotNull final Writer w,
-                               @NotNull final InspectionProfileEntry tool) throws IOException {
-    final String inspectionName = tool.getDisplayName();
-    w.append(inspectionName).append(" (");
+  @NotNull
+  protected String getToolPresentableName(@NotNull final InspectionProfileEntry tool) throws IOException {
+    final StringBuilder buff = new StringBuilder();
+
+    // inspection name
+    buff.append(tool.getDisplayName()).append(" (");
+
+    // group name
     final String[] groupPath = tool.getGroupPath();
     for (int i = 0, groupPathLength = groupPath.length; i < groupPathLength; i++) {
       if (i != 0) {
-        w.append(" | ");
+        buff.append(" | ");
       }
-      w.append(groupPath[i]);
+      buff.append(groupPath[i]);
     }
-    w.append(")\n");
+    buff.append(")");
+
+    return buff.toString();
   }
 }
