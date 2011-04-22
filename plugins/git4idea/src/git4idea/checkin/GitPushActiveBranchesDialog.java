@@ -26,9 +26,11 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CheckboxTree;
@@ -246,8 +248,9 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
                   commitsNum -= unchecked.size();
                 }
               }
-              GitUIUtil.notifySuccess(myProject, "Pushed successfully",
-                                      "Pushed " + commitsNum + " " + StringUtil.pluralize("commit", commitsNum) + ".");
+              final String pushMessage = "Pushed " + commitsNum + " " + StringUtil.pluralize("commit", commitsNum) + ".";
+              GitUIUtil.notifySuccess(myProject, "", pushMessage);
+              VcsBalloonProblemNotifier.showOverVersionControlView(myVcs.getProject(), pushMessage, MessageType.INFO);
               return;
             }
             pushExceptions = new ArrayList<VcsException>(exceptions);
