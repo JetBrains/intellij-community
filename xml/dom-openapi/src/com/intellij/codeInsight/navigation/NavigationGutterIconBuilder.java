@@ -72,6 +72,7 @@ public class NavigationGutterIconBuilder<T> {
   private GutterIconRenderer.Alignment myAlignment = GutterIconRenderer.Alignment.CENTER;
   private PsiElementListCellRenderer myCellRenderer;
   private NullableFunction<T,String> myNamer = ElementPresentationManager.namer();
+  private final NotNullFunction<T, Collection<? extends GotoRelatedItem>> myGotoRelatedItemProvider;
   public static final NotNullFunction<DomElement,Collection<? extends PsiElement>> DEFAULT_DOM_CONVERTOR = new NotNullFunction<DomElement, Collection<? extends PsiElement>>() {
     @NotNull
     public Collection<? extends PsiElement> fun(final DomElement o) {
@@ -88,18 +89,39 @@ public class NavigationGutterIconBuilder<T> {
       return Collections.emptyList();
     }
   };
+  public static final NotNullFunction<PsiElement, Collection<? extends GotoRelatedItem>> PSI_GOTO_RELATED_ITEM_PROVIDER = new NotNullFunction<PsiElement, Collection<? extends GotoRelatedItem>>() {
+    @NotNull
+    @Override
+    public Collection<? extends GotoRelatedItem> fun(PsiElement dom) {
+      return Collections.singletonList(new GotoRelatedItem(dom));
+    }
+  };
 
-  protected NavigationGutterIconBuilder(@NotNull final Icon icon, @NotNull NotNullFunction<T,Collection<? extends PsiElement>> converter) {
+  protected NavigationGutterIconBuilder(@NotNull final Icon icon, @NotNull NotNullFunction<T, Collection<? extends PsiElement>> converter) {
+    this(icon, converter, null);
+  }
+
+  protected NavigationGutterIconBuilder(@NotNull final Icon icon,
+                                        @NotNull NotNullFunction<T, Collection<? extends PsiElement>> converter,
+                                        final @Nullable NotNullFunction<T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider) {
     myIcon = icon;
     myConverter = converter;
+    myGotoRelatedItemProvider = gotoRelatedItemProvider;
   }
 
   public static NavigationGutterIconBuilder<PsiElement> create(@NotNull final Icon icon) {
-    return create(icon, DEFAULT_PSI_CONVERTOR);
+    return create(icon, DEFAULT_PSI_CONVERTOR, PSI_GOTO_RELATED_ITEM_PROVIDER);
   }
 
-  public static <T> NavigationGutterIconBuilder<T> create(@NotNull final Icon icon, @NotNull NotNullFunction<T, Collection<? extends PsiElement>> converter) {
-    return new NavigationGutterIconBuilder<T>(icon, converter);
+  public static <T> NavigationGutterIconBuilder<T> create(@NotNull final Icon icon,
+                                                          @NotNull NotNullFunction<T, Collection<? extends PsiElement>> converter) {
+    return create(icon, converter, null);
+  }
+
+  public static <T> NavigationGutterIconBuilder<T> create(@NotNull final Icon icon,
+                                                          @NotNull NotNullFunction<T, Collection<? extends PsiElement>> converter,
+                                                          final @Nullable NotNullFunction<T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider) {
+    return new NavigationGutterIconBuilder<T>(icon, converter, gotoRelatedItemProvider);
   }
 
   public NavigationGutterIconBuilder<T> setTarget(@Nullable T target) {
@@ -181,19 +203,14 @@ public class NavigationGutterIconBuilder<T> {
   }
 
   public RelatedItemLineMarkerInfo<PsiElement> createLineMarkerInfo(@NotNull PsiElement element) {
-    return createLineMarkerInfo(element, null);
-  }
-
-  public RelatedItemLineMarkerInfo<PsiElement> createLineMarkerInfo(@NotNull PsiElement element,
-                                                                    @Nullable final NotNullFunction<T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider) {
     final MyNavigationGutterIconRenderer renderer = createGutterIconRenderer(element.getProject());
     final String tooltip = renderer.getTooltipText();
     NotNullLazyValue<Collection<? extends GotoRelatedItem>> gotoTargets = new NotNullLazyValue<Collection<? extends GotoRelatedItem>>() {
       @NotNull
       @Override
       protected Collection<? extends GotoRelatedItem> compute() {
-        if (gotoRelatedItemProvider != null) {
-          return ContainerUtil.concat(myTargets.getValue(), gotoRelatedItemProvider);
+        if (myGotoRelatedItemProvider != null) {
+          return ContainerUtil.concat(myTargets.getValue(), myGotoRelatedItemProvider);
         }
         return Collections.emptyList();
       }
