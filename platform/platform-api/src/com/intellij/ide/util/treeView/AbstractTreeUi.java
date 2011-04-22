@@ -2272,6 +2272,8 @@ public class AbstractTreeUi {
 
   public List<Object> getExpandedElements() {
     final List<Object> result = new ArrayList<Object>();
+    if (isReleased()) return result;
+
     final Enumeration<TreePath> enumeration = myTree.getExpandedDescendants(getPathFor(getRootNode()));
     if (enumeration != null) {
       while (enumeration.hasMoreElements()) {
