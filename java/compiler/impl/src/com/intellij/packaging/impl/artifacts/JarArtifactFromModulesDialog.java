@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.elements.ManifestFileUtil;
+import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,6 +78,11 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
     updateManifestDirField();
     myManifestDirField.addBrowseFolderListener(null, null, project, ManifestFileUtil.createDescriptorForManifestDirectory());
 
+    setupModulesCombobox(context);
+    init();
+  }
+
+  private void setupModulesCombobox(PackagingElementResolvingContext context) {
     final Module[] modules = context.getModulesProvider().getModules().clone();
     Arrays.sort(modules, ModulesAlphaComparator.INSTANCE);
     if (modules.length > 1) {
@@ -86,7 +92,12 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
       myModuleComboBox.addItem(module);
     }
     myModuleComboBox.setRenderer(new ModuleListRenderer(myModuleComboBox));
-    init();
+    new ComboboxSpeedSearch(myModuleComboBox) {
+      @Override
+      protected String getElementText(Object element) {
+        return element instanceof Module ? ((Module)element).getName() : "";
+      }
+    };
   }
 
   private void updateManifestDirField() {
@@ -139,6 +150,11 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     return myMainPanel;
+  }
+
+  @Override
+  protected String getHelpId() {
+    return "reference.project.structure.artifacts.jar.from.module";
   }
 
   private static class ModuleListRenderer extends ListCellRendererWrapper<Module> {

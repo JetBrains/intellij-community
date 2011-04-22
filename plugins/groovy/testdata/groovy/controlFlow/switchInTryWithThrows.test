@@ -1,0 +1,33 @@
+def v = "s"
+def m="10"
+def <warning descr="Assignment is not used">x</warning>="10"
+try {
+  switch (x) {
+    case 1:
+      v = "100"
+      break
+   case 2:
+      break
+    default:
+      throw new IllegalArgumentException("Wrong")
+  }
+} catch (Exception e) {
+  throw e
+}
+println v + m
+-----
+0(1) element: null
+1(2) WRITE v
+2(3) WRITE m
+3(4,8) element: Open block
+4(5) READ x
+5(6,7,8,11) element: Switch statement
+6(8,11) WRITE v
+7(8) element: THROW statement
+8(9) element: Catch clause
+9(10) READ e
+10(14) element: THROW statement
+11(12) READ println
+12(13) READ v
+13(14) READ m
+14() element: null

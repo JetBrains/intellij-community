@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.HashMap;
@@ -84,7 +83,7 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
         return label;
       }
 
-      Color fg = isSelected ? UIUtil.getTableSelectionForeground() : getForegroundColor(op);
+      Color fg = isSelected ? UIUtil.getTableSelectionForeground() : op.getTextColor();
       label.setForeground(fg);
       final String name = table.getColumnName(column);
       if (DirDiffTableModel.COLUMN_DATE.equals(name)) {
@@ -101,11 +100,6 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
       }
     }
     return c;
-  }
-
-  private static Color getForegroundColor(DirDiffOperation op) {
-    return op == DirDiffOperation.COPY_TO || op == DirDiffOperation.COPY_FROM
-           ? FileStatus.COLOR_ADDED : FileStatus.COLOR_MODIFIED;
   }
 
   private BufferedImage getOrCreate(String path, Icon icon) {

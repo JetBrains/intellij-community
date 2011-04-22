@@ -70,6 +70,9 @@ public class AbstractTreeUi {
 
       NodeDescriptor nodeDescriptor1 = getDescriptorFrom((DefaultMutableTreeNode)n1);
       NodeDescriptor nodeDescriptor2 = getDescriptorFrom((DefaultMutableTreeNode)n2);
+
+      if (nodeDescriptor1 == null || nodeDescriptor2 == null) return 0;
+
       return myNodeDescriptorComparator != null
              ? myNodeDescriptorComparator.compare(nodeDescriptor1, nodeDescriptor2)
              : nodeDescriptor1.getIndex() - nodeDescriptor2.getIndex();
@@ -702,8 +705,13 @@ public class AbstractTreeUi {
       queueToBackground(build, update, rootDescriptor).doWhenProcessed(new Runnable() {
         @Override
         public void run() {
-          myRootNodeInitialized = true;
-          processNodeActionsIfReady(myRootNode);
+          invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              myRootNodeInitialized = true;
+              processNodeActionsIfReady(myRootNode);
+            }
+          });
         }
       });
     }
@@ -2264,6 +2272,8 @@ public class AbstractTreeUi {
 
   public List<Object> getExpandedElements() {
     final List<Object> result = new ArrayList<Object>();
+    if (isReleased()) return result;
+
     final Enumeration<TreePath> enumeration = myTree.getExpandedDescendants(getPathFor(getRootNode()));
     if (enumeration != null) {
       while (enumeration.hasMoreElements()) {

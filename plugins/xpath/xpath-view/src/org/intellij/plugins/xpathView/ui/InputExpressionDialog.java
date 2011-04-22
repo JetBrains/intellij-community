@@ -258,13 +258,13 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
     }
 
     protected boolean isOkEnabled() {
-        return myEditor.getDocument().getTextLength() > 0;
+        return myEditor.getField().getDocument().getTextLength() > 0;
     }
 
     @Nullable
     protected Editor getEditor() {
         if (getMode() == Mode.ADVANCED) {
-            return myEditor.getEditor();
+            return myEditor.getField().getEditor();
         } else {
             return myComboboxEditor.getEditor();
         }
@@ -276,7 +276,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
 
         if (mode == Mode.ADVANCED) {
             setEditor(myEditor, GridConstraints.SIZEPOLICY_WANT_GROW);
-            myEditor.selectAll();
+            myEditor.getField().selectAll();
         } else {
             setEditor(myComboBox, GridConstraints.SIZEPOLICY_FIXED);
             myComboBox.setModel(myModel);
@@ -439,9 +439,9 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
 
         public void setItem(Object object) {
             if (object == null) {
-                myEditor.setText("");
+                myEditor.getField().setText("");
             } else {
-                myEditor.setText(((HistoryElement)object).expression);
+                myEditor.getField().setText(((HistoryElement)object).expression);
             }
         }
     }

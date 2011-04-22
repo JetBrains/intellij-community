@@ -18,8 +18,9 @@ package com.intellij.openapi.vcs.history;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 
 import java.io.IOException;
 import java.util.Date;
@@ -56,8 +57,13 @@ public class CurrentRevision implements VcsFileRevision {
         return myFile.contentsToByteArray();
       }
     }
-    catch (IOException e) {
-      Messages.showMessageDialog(e.getLocalizedMessage(), VcsBundle.message("message.text.could.not.load.file.content"), Messages.getErrorIcon());
+    catch (final IOException e) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override public void run() {
+          Messages.showMessageDialog(e.getLocalizedMessage(), VcsBundle.message("message.text.could.not.load.file.content"),
+                                     Messages.getErrorIcon());
+        }
+      });
       return null;
     }
 

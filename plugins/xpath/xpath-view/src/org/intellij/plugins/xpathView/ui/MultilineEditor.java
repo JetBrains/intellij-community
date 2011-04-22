@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.xpathView.ui;
 
+import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -28,11 +29,16 @@ import javax.swing.event.ListDataListener;
 import javax.swing.event.ListDataEvent;
 import java.awt.*;
 
-public class MultilineEditor extends EditorTextField {
+public class MultilineEditor extends JPanel {
 
     private final EditorModel myModel;
+    private EditorTextField myEditorTextField;
 
-    public interface EditorModel extends ListModel {
+    public EditorTextField getField() {
+    return myEditorTextField;
+  }
+
+  public interface EditorModel extends ListModel {
         int getSelectedIndex();
 
         void setSelectedIndex(int index);
@@ -50,8 +56,28 @@ public class MultilineEditor extends EditorTextField {
     }
 
     public MultilineEditor(Document document, Project project, FileType fileType, EditorModel model) {
-        super(document, project, fileType);
+        super(new BorderLayout());
         this.myModel = model;
+        myEditorTextField = new EditorTextField(document, project, fileType) {
+          protected EditorEx createEditor() {
+              final EditorEx editor = super.createEditor();
+
+              editor.setHorizontalScrollbarVisible(true);
+              editor.setVerticalScrollbarVisible(true);
+              editor.setEmbeddedIntoDialogWrapper(true);
+
+              editor.getComponent().setPreferredSize(null);
+
+              return editor;
+          }
+
+          @Override
+          protected boolean isOneLineMode() {
+              return false;
+          }
+        };
+        myEditorTextField.setCenterByHeight(false);
+        add(myEditorTextField, BorderLayout.CENTER);
         model.addListDataListener(new ListDataListener() {
             public void intervalAdded(ListDataEvent e) {
             }
@@ -62,7 +88,7 @@ public class MultilineEditor extends EditorTextField {
             public void contentsChanged(ListDataEvent e) {
                 final int selectedIndex = myModel.getSelectedIndex();
                 if (selectedIndex != -1) {
-                    setText(myModel.getItemString(selectedIndex));
+                    myEditorTextField.setText(myModel.getItemString(selectedIndex));
                 } else {
 //                    setText("");
                 }
@@ -107,29 +133,13 @@ public class MultilineEditor extends EditorTextField {
     private void refocus() {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                final Editor editor = getEditor();
+                final Editor editor = myEditorTextField.getEditor();
                 if (editor != null) {
                     editor.getContentComponent().requestFocus();
                 }
-                selectAll();
+                myEditorTextField.selectAll();
             }
         });
     }
 
-    protected EditorEx createEditor() {
-        final EditorEx editor = super.createEditor();
-
-        editor.setHorizontalScrollbarVisible(true);
-        editor.setVerticalScrollbarVisible(true);
-        editor.setEmbeddedIntoDialogWrapper(true);
-
-        editor.getComponent().setPreferredSize(null);
-
-        return editor;
-    }
-
-    @Override
-    protected boolean isOneLineMode() {
-        return false;
-    }
 }

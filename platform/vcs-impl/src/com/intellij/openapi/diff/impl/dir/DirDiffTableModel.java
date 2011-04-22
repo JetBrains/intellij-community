@@ -99,6 +99,16 @@ public class DirDiffTableModel extends AbstractTableModel {
     }
     fireTableDataChanged();
     myUpdating.set(false);
+    selectFirstRow();
+  }
+
+  private void selectFirstRow() {
+    if (myElements.size() > 0) {
+      int row = myElements.get(0).isSeparator() ? 1 : 0;
+      if (row < myTable.getRowCount()) {
+        myTable.getSelectionModel().setSelectionInterval(row, row);
+      }
+    }
   }
 
   private static String prepareText(String text) {
@@ -171,6 +181,7 @@ public class DirDiffTableModel extends AbstractTableModel {
             myElements.addAll(elements);
             myUpdating.set(false);
             fireTableDataChanged();
+            selectFirstRow();
             DirDiffTableModel.this.text.set("");
             if (getDecorator().isLoading()) {
               getDecorator().stopLoading();
@@ -242,7 +253,7 @@ public class DirDiffTableModel extends AbstractTableModel {
   }
 
   public String getTitle() {
-    return "Diff for " + mySrc.getPath() + " and " + myTrg.getPath();
+    return "Diff for " + mySrc.getPresentablePath() + " and " + myTrg.getPresentablePath();
   }
 
   @Nullable
@@ -352,6 +363,14 @@ public class DirDiffTableModel extends AbstractTableModel {
 
   public boolean isUpdating() {
     return myUpdating.get();
+  }
+
+  public DirDiffSettings.CompareMode getCompareMode() {
+    return mySettings.compareMode;
+  }
+
+  public void setCompareMode(DirDiffSettings.CompareMode mode) {
+    mySettings.compareMode = mode;
   }
 
   class Updater extends Thread {

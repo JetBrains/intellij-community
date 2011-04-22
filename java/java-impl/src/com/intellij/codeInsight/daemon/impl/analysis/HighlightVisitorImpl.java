@@ -854,7 +854,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override public void visitReturnStatement(PsiReturnStatement statement) {
-    myHolder.add(HighlightUtil.checkReturnStatementType(statement));
+    try {
+      myHolder.add(HighlightUtil.checkReturnStatementType(statement));
+    }
+    catch (IndexNotReadyException ignore) {
+    }
   }
 
   @Override public void visitStatement(PsiStatement statement) {
@@ -920,7 +924,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override public void visitTypeCastExpression(PsiTypeCastExpression typeCast) {
     super.visitTypeCastExpression(typeCast);
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkInconvertibleTypeCast(typeCast));
+    try {
+      if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkInconvertibleTypeCast(typeCast));
+    }
+    catch (IndexNotReadyException ignore) {
+    }
   }
 
   @Override public void visitTypeParameterList(PsiTypeParameterList list) {

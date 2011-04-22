@@ -7,8 +7,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 
 /**
@@ -29,7 +27,7 @@ public class SwitchToFind extends EditorHeaderAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    if (KeymapUtil.isEmacsKeymap(KeymapManager.getInstance().getActiveKeymap())) {
+    if (KeymapUtil.isEmacsKeymap()) {
       // Emacs users are accustomed to the editor that executes 'find next' on subsequent pressing of shortcut that
       // activates 'incremental search'. Hence, we do the similar hack here for them.
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT);

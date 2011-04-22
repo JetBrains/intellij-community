@@ -15,7 +15,6 @@
  */
 package com.intellij.navigation;
 
-import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PsiNavigateUtil;
 import org.jetbrains.annotations.NotNull;
@@ -55,9 +54,9 @@ public class GotoRelatedItem {
     return myElement;
   }
 
-  public static List<GotoRelatedItem> createItems(@NotNull Collection<? extends NavigatablePsiElement> elements) {
+  public static List<GotoRelatedItem> createItems(@NotNull Collection<? extends PsiElement> elements) {
     List<GotoRelatedItem> items = new ArrayList<GotoRelatedItem>(elements.size());
-    for (NavigatablePsiElement element : elements) {
+    for (PsiElement element : elements) {
       items.add(new GotoRelatedItem(element));
     }
     return items;

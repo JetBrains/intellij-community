@@ -16,25 +16,37 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 public enum DirDiffOperation {
-  COPY_TO, COPY_FROM, REMOVE, MERGE, NONE, EQUAL;
+  COPY_TO, COPY_FROM, MERGE, EQUAL;
 
   public Icon getIcon() {
     switch (this) {
       case COPY_TO:   return IconLoader.getIcon("/vcs/arrow_right.png");
       case COPY_FROM: return IconLoader.getIcon("/vcs/arrow_left.png");
-      case REMOVE:    return IconLoader.getIcon("/vcs/remove.png");
-      case MERGE:     return IconLoader.getIcon("/vcs/merge.png");
+      case MERGE:     return IconLoader.getIcon("/vcs/not_equal.png");
       case EQUAL:     return IconLoader.getIcon("/vcs/equal.png");
-      case NONE:      return EmptyIcon.create(12);
     }
-    return null;
+    return EmptyIcon.create(16);
+  }
+
+  public Color getTextColor() {
+    switch (this) {
+      case COPY_TO:
+      case COPY_FROM:
+        return FileStatus.COLOR_ADDED;
+      case MERGE:
+        return FileStatus.COLOR_MODIFIED;
+      case EQUAL:
+    }
+    return Color.BLACK;
   }
 }

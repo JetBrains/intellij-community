@@ -105,21 +105,26 @@ public class TestPackage extends TestObject {
         }
         tasks[0] = findTestsWithProgress(new FindCallback() {
           public void found(@NotNull final Collection<PsiClass> classes, final boolean isJunit4) {
-            addClassesListToJavaParameters(classes, new Function<PsiElement, String>() {
-              @Nullable
-              public String fun(PsiElement element) {
-                if (element instanceof PsiClass) {
-                  return JavaExecutionUtil.getRuntimeQualifiedName((PsiClass)element);
+            try {
+              addClassesListToJavaParameters(classes, new Function<PsiElement, String>() {
+                @Nullable
+                public String fun(PsiElement element) {
+                  if (element instanceof PsiClass) {
+                    return JavaExecutionUtil.getRuntimeQualifiedName((PsiClass)element);
+                  }
+                  else if (element instanceof PsiMethod) {
+                    PsiMethod method = (PsiMethod)element;
+                    return JavaExecutionUtil.getRuntimeQualifiedName(method.getContainingClass()) + "," + method.getName();
+                  }
+                  else {
+                    return null;
+                  }
                 }
-                else if (element instanceof PsiMethod) {
-                  PsiMethod method = (PsiMethod)element;
-                  return JavaExecutionUtil.getRuntimeQualifiedName(method.getContainingClass()) + "," + method.getName();
-                }
-                else {
-                  return null;
-                }
-              }
-            }, data.getPackageName(), false, isJunit4);
+              }, getPackage(data).getQualifiedName(), false, isJunit4);
+            }
+            catch (CantRunException e) {
+              //can't be here
+            }
           }
         }, filter);
       }
@@ -185,12 +190,17 @@ public class TestPackage extends TestObject {
   }
 
   protected GlobalSearchScope filterScope(final JUnitConfiguration.Data data) throws CantRunException {
+    final PsiPackage aPackage = getPackage(data);
+    return PackageScope.packageScope(aPackage, true);
+  }
+
+  protected PsiPackage getPackage(JUnitConfiguration.Data data) throws CantRunException {
     final Project project = myConfiguration.getProject();
     final String packageName = data.getPackageName();
     final PsiManager psiManager = PsiManager.getInstance(project);
     final PsiPackage aPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(packageName);
     if (aPackage == null) throw CantRunException.packageNotFound(packageName);
-    return PackageScope.packageScope(aPackage, true);
+    return aPackage;
   }
 
   public String suggestActionName() {

@@ -225,7 +225,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     Rectangle newBounds = new Rectangle(location.x, location.y, size.width, size.height);
 
     final boolean okToUpdateBounds = hideIfOutOfEditor ? oldRectangle.contains(newBounds) : oldRectangle.intersects(newBounds);
-    if (okToUpdateBounds) {
+    if (okToUpdateBounds && !hint.vetoesHiding()) {
       hint.setLocation(new RelativePoint(editor.getContentComponent(), location));
     }
     else {
@@ -856,7 +856,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
       for (int i = myHintsStack.size() - 1; i >= 0; i--) {
         final HintInfo info = myHintsStack.get(i);
-        if (!info.hint.isVisible()) {
+        if (!info.hint.isVisible() && !info.hint.vetoesHiding()) {
           myHintsStack.remove(i);
 
           // We encountered situation when 'hint' instances use 'hide()' method as object destruction callback

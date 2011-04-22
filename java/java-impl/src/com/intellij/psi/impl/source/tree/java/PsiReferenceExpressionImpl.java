@@ -259,15 +259,13 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
   @NotNull
   public String getCanonicalText() {
-    PsiElement element = resolve();
-    if (element instanceof PsiClass) {
-      String fqn = ((PsiClass)element).getQualifiedName();
-      if (fqn == null) {
-        LOG.error("FQN is null. Reference:" + getElement().getText() +
-                  " resolves to:" + LogUtil.objectAndClass(element) +
-                  " parent:" + LogUtil.objectAndClass(element.getParent()));
-      }
-      return fqn;
+    final PsiElement element = resolve();
+    if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
+      final String fqn = ((PsiClass)element).getQualifiedName();
+      if (fqn != null) return fqn;
+      LOG.error("FQN is null. Reference:" + getElement().getText() +
+                " resolves to:" + LogUtil.objectAndClass(element) +
+                " parent:" + LogUtil.objectAndClass(element.getParent()));
     }
     return getCachedTextSkipWhiteSpaceAndComments();
   }

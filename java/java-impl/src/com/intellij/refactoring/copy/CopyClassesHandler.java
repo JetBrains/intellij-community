@@ -267,6 +267,10 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
 
     final Set<PsiElement> rebindExpressions = new HashSet<PsiElement>();
     for (PsiElement element : oldToNewMap.values()) {
+      if (element == null) {
+        LOG.error(oldToNewMap.keySet());
+        continue;
+      }
       decodeRefs(element, oldToNewMap, rebindExpressions);
     }
 
@@ -340,7 +344,7 @@ public class CopyClassesHandler implements CopyHandlerDelegate {
    }
 
 
-  private static void decodeRefs(PsiElement element, final Map<PsiClass, PsiElement> oldToNewMap, final Set<PsiElement> rebindExpressions) {
+  private static void decodeRefs(@NotNull PsiElement element, final Map<PsiClass, PsiElement> oldToNewMap, final Set<PsiElement> rebindExpressions) {
     element.accept(new JavaRecursiveElementVisitor(){
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {

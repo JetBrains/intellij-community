@@ -51,6 +51,8 @@ import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.ThreadDeathRequest;
 import com.sun.jdi.request.ThreadStartRequest;
 
+import javax.swing.*;
+
 /**
  * @author lex
  */
@@ -369,6 +371,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     
     boolean shouldResume = false;
 
+    final Project project = getProject();
     if (hint != null) {
       final int nextStepDepth = hint.getNextStepDepth(suspendContext);
       if (nextStepDepth != RequestHint.STOP) {
@@ -378,7 +381,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       }
 
       if(!shouldResume && hint.isRestoreBreakpoints()) {
-        DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().enableBreakpoints(this);
+        DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().enableBreakpoints(this);
       }
     }
 
@@ -394,7 +397,14 @@ public class DebugProcessEvents extends DebugProcessImpl {
       if (hint != null) {
         final RequestHint.SmartStepFilter smartStepFilter = hint.getSmartStepFilter();
         if (smartStepFilter != null && !smartStepFilter.wasMethodExecuted()) {
-          ToolWindowManager.getInstance(getProject()).notifyByBalloon(ToolWindowId.DEBUG, MessageType.INFO, "Method <b>" + smartStepFilter.getTargetMethodName() + "()</b> has not been called");
+          final String message = "Method <b>" + smartStepFilter.getTargetMethodName() + "()</b> has not been called";
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              if (!project.isDisposed()) {
+                ToolWindowManager.getInstance(project).notifyByBalloon(ToolWindowId.DEBUG, MessageType.INFO, message);
+              }
+            }
+          });
         }
       }
     }

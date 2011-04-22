@@ -653,16 +653,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     return myPatternsManager.findTemplateByName(name);
   }
 
-  //public FileTemplate addPattern(@NotNull @NonNls String name, @NotNull @NonNls String extension) {
-  //  LOG.assertTrue(myPatternsManager != null);
-  //  return myPatternsManager.addTemplate(name, extension);
-  //}
-
-  //public void removePattern(@NotNull FileTemplate template, boolean fromDiskOnly) {
-  //  LOG.assertTrue(myPatternsManager != null);
-  //  myPatternsManager.removeTemplate(template, fromDiskOnly);
-  //}
-
   @NotNull
   public FileTemplate[] getAllCodeTemplates() {
     final Collection<FileTemplateBase> templates = myCodeTemplatesManager.getAllTemplates(false);
@@ -674,24 +664,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     final Collection<FileTemplateBase> templates = myJ2eeTemplatesManager.getAllTemplates(false);
     return templates.toArray(new FileTemplate[templates.size()]);
   }
-
-  //@NotNull
-  //public FileTemplate addCodeTemplate(@NotNull @NonNls String name, @NotNull @NonNls String extension) {
-  //  return myCodeTemplatesManager.addTemplate(name, extension);
-  //}
-
-  //@NotNull
-  //public FileTemplate addJ2eeTemplate(@NotNull @NonNls String name, @NotNull @NonNls String extension) {
-  //  return myJ2eeTemplatesManager.addTemplate(name, extension);
-  //}
-
-  //public void removeCodeTemplate(@NotNull FileTemplate template, boolean fromDiskOnly) {
-  //  myCodeTemplatesManager.removeTemplate(template, fromDiskOnly);
-  //}
-  //
-  //public void removeJ2eeTemplate(@NotNull FileTemplate template, boolean fromDiskOnly) {
-  //  myJ2eeTemplatesManager.removeTemplate(template, fromDiskOnly);
-  //}
 
   public void setTemplates(@NotNull String templatesCategory, Collection<FileTemplate> templates) {
     for (FTManager manager : myAllManagers) {

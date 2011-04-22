@@ -166,7 +166,8 @@ public final class IdeMouseEventDispatcher {
     fillActionsList(component, shortcut, IdeKeyEventDispatcher.isModalContext(component));
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     if (actionManager != null) {
-      for (AnAction action : myActions) {
+      AnAction[] actions = myActions.toArray(new AnAction[myActions.size()]);
+      for (AnAction action : actions) {
         DataContext dataContext = DataManager.getInstance().getDataContext(component);
         Presentation presentation = myPresentationFactory.getPresentation(action);
         AnActionEvent actionEvent = new AnActionEvent(e, dataContext, ActionPlaces.MAIN_MENU, presentation,

@@ -39,16 +39,18 @@ public class JUnitConfigurationModel {
   public static final int CLASS = 1;
   public static final int METHOD = 2;
   public static final int PATTERN = 3;
+  public static final int DIR = 4;
 
   private static final List<String> ourTestObjects;
   static {
-    ourTestObjects = Arrays.asList(JUnitConfiguration.TEST_PACKAGE, JUnitConfiguration.TEST_CLASS, JUnitConfiguration.TEST_METHOD, JUnitConfiguration.TEST_PATTERN);
+    ourTestObjects = Arrays.asList(JUnitConfiguration.TEST_PACKAGE, JUnitConfiguration.TEST_CLASS, JUnitConfiguration.TEST_METHOD, JUnitConfiguration.TEST_PATTERN,
+                                   JUnitConfiguration.TEST_DIRECTORY);
   }
 
 
   private JUnitConfigurable myListener;
   private int myType = -1;
-  private final Document[] myJUnitDocuments = new Document[4];
+  private final Document[] myJUnitDocuments = new Document[5];
   private final Project myProject;
 
   public JUnitConfigurationModel(final Project project) {
@@ -86,7 +88,7 @@ public class JUnitConfigurationModel {
     final String testObject = getTestObject();
     final String className = getJUnitTextValue(CLASS);
     data.TEST_OBJECT = testObject;
-    if (testObject != JUnitConfiguration.TEST_PACKAGE && testObject != JUnitConfiguration.TEST_PATTERN) {
+    if (testObject != JUnitConfiguration.TEST_PACKAGE && testObject != JUnitConfiguration.TEST_PATTERN && testObject != JUnitConfiguration.TEST_DIRECTORY) {
       try {
         data.METHOD_NAME = getJUnitTextValue(METHOD);
         final PsiClass testClass = JUnitUtil.findPsiClass(className, module, myProject);
@@ -107,6 +109,9 @@ public class JUnitConfigurationModel {
     else {
       if (testObject == JUnitConfiguration.TEST_PACKAGE) {
         data.PACKAGE_NAME = getJUnitTextValue(ALL_IN_PACKAGE);
+      }
+      else if (testObject == JUnitConfiguration.TEST_DIRECTORY) {
+        data.setDirName(getJUnitTextValue(DIR));
       }
       else {
         final LinkedHashSet<String> set = new LinkedHashSet<String>();
@@ -148,6 +153,7 @@ public class JUnitConfigurationModel {
     setJUnitTextValue(CLASS, data.getMainClassName());
     setJUnitTextValue(METHOD, data.getMethodName());
     setJUnitTextValue(PATTERN, data.getPatternPresentation());
+    setJUnitTextValue(DIR, data.getDirName());
   }
 
   private void setJUnitTextValue(final int index, final String text) {

@@ -70,6 +70,17 @@ public abstract class LanguagePerFileConfigurable<T> implements SearchableConfig
     return myPanel;
   }
 
+  @Nullable
+  public T getNewMapping(final VirtualFile file) {
+    final Map<VirtualFile, T> values = myTreeView.getValues();
+    for (VirtualFile cur = file; cur != null; cur = cur.getParent()) {
+      final T t = values.get(cur);
+      if (t != null) return t;
+    }
+    final T t = values.get(null);
+    return t == null? myMappings.getDefaultMapping(file) : t;
+  }
+
   public boolean isModified() {
     Map<VirtualFile, T> mapping = myMappings.getMappings();
     boolean same = myTreeView.getValues().equals(mapping);

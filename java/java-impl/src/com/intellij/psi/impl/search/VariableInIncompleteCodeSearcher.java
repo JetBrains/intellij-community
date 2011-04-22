@@ -44,20 +44,17 @@ public class VariableInIncompleteCodeSearcher extends QueryExecutorBase<PsiRefer
     final SearchScope scope = refElement.getUseScope();
     if (!(scope instanceof LocalSearchScope)) return;
 
-    final PsiElement[] scopeElements = ((LocalSearchScope)scope).getScope();
-    for (PsiElement scopeElement : scopeElements) {
-      PsiTreeUtil.processElements(scopeElement, new PsiElementProcessor() {
-        @Override
-        public boolean execute(final PsiElement element) {
-          if (element instanceof PsiJavaCodeReferenceElement) {
-            final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element;
-            if (name.equals(ref.getCanonicalText()) && ref.resolve() == null && ref.advancedResolve(true).getElement() == refElement) {
-              consumer.process(ref);
-            }
+    PsiTreeUtil.processElements(new PsiElementProcessor() {
+      @Override
+      public boolean execute(final PsiElement element) {
+        if (element instanceof PsiJavaCodeReferenceElement) {
+          final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element;
+          if (name.equals(ref.getCanonicalText()) && ref.resolve() == null && ref.advancedResolve(true).getElement() == refElement) {
+            consumer.process(ref);
           }
-          return true;
         }
-      });
-    }
+        return true;
+      }
+    }, ((LocalSearchScope)scope).getScope());
   }
 }

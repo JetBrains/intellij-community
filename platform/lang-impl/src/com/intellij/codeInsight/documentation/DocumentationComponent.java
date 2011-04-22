@@ -38,6 +38,7 @@ import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
@@ -511,7 +512,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = colorsManager.getGlobalScheme();
     StyleConstants.setFontSize(myFontSizeStyle, scheme.getQuickDocFontSize().getSize());
-    StyleConstants.setFontFamily(myFontSizeStyle, scheme.getEditorFontName());
+    if (Registry.is("documentation.component.editor.font")) {
+      StyleConstants.setFontFamily(myFontSizeStyle, scheme.getEditorFontName());
+    }
     styledDocument.setCharacterAttributes(0, document.getLength(), myFontSizeStyle, false);
   }
   

@@ -41,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -188,7 +187,6 @@ public class InspectionToolRegistrar {
     }
     myInspectionToolFactories.removeAll(broken);
 
-    buildInspectionIndex(tools);
     return tools;
   }
 
@@ -214,20 +212,20 @@ public class InspectionToolRegistrar {
     return null;
   }
 
-  private synchronized void buildInspectionIndex(final Collection<InspectionTool> tools) {
+  public void buildInspectionSearchIndexIfNecessary() {
     if (!myToolsAreInitialized.getAndSet(true)) {
       final Application app = ApplicationManager.getApplication();
       if (app.isUnitTestMode() || app.isHeadlessEnvironment()) return;
 
       app.executeOnPooledThread(new Runnable(){
         public void run() {
+          List<InspectionTool> tools = createTools();
           for (InspectionTool tool : tools) {
             processText(tool.getDisplayName().toLowerCase(), tool);
 
             final String description = tool.loadDescription();
             if (description != null) {
-              @NonNls String descriptionText;
-              descriptionText = HTML_PATTERN.matcher(description).replaceAll(" ");
+              @NonNls String descriptionText = HTML_PATTERN.matcher(description).replaceAll(" ");
               processText(descriptionText, tool);
             }
           }
@@ -236,7 +234,7 @@ public class InspectionToolRegistrar {
     }
   }
 
-  private void processText(final @NonNls @NotNull String descriptionText, final InspectionTool tool) {
+  private void processText(@NotNull @NonNls final String descriptionText, final InspectionTool tool) {
     if (ApplicationManager.getApplication().isDisposed()) return;
     LOG.assertTrue(myOptionsRegistrar != null);
     final Set<String> words = myOptionsRegistrar.getProcessedWordsWithoutStemming(descriptionText);

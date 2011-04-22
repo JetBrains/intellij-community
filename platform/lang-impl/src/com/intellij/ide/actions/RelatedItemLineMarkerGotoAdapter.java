@@ -52,7 +52,7 @@ public class RelatedItemLineMarkerGotoAdapter extends GotoRelatedProvider {
         for (PsiElement parent : parents) {
           ContainerUtil.addIfNotNull(relatedItemLineMarkerProvider.getLineMarkerInfo(parent), markers);
         }
-        relatedItemLineMarkerProvider.collectNavigationMarkers(parents, markers);
+        relatedItemLineMarkerProvider.collectNavigationMarkers(parents, markers, true);
 
         addItemsForMarkers(markers, items);
       }

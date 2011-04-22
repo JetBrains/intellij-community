@@ -28,6 +28,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
@@ -74,7 +75,7 @@ public class MouseGestureManager implements ApplicationComponent {
         myListeners.put(frame, listener);
       }
       catch (Exception e) {
-        LOG.error(e);
+        LOG.debug(e);
       }
     }
   }
