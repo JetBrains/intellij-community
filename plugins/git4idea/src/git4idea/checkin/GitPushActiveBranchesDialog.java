@@ -17,7 +17,6 @@ package git4idea.checkin;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -228,8 +227,8 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
    * will be interrupted.
    */
   private void rebaseAndPush() {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override public void run() {
+   final Task.Backgroundable rebaseAndPushTask = new Task.Backgroundable(myProject, GitBundle.getString("push.active.fetching")) {
+      public void run(@NotNull ProgressIndicator indicator) {
         List<VcsException> exceptions = new ArrayList<VcsException>();
         List<VcsException> pushExceptions = new ArrayList<VcsException>();
         for (int i = 0; i < 3; i++) {
@@ -274,7 +273,8 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
         }
         notifyMessage(myProject, "Failed to push", "Update project and push again", NotificationType.ERROR, true, pushExceptions);
       }
-    });
+    };
+    GitVcs.runInBackground(rebaseAndPushTask);
   }
 
   /**
