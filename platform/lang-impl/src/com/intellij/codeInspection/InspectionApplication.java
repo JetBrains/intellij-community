@@ -285,7 +285,7 @@ public class InspectionApplication {
           reportConverter.convert(resultsDataPath, myOutPath, inspectionContext.getTools(), inspectionsResults);
         }
         catch (InspectionsReportConverter.ConversionException e) {
-          logError(e.getMessage());
+          logError("\n" + e.getMessage());
           printHelp();
         }
       }
