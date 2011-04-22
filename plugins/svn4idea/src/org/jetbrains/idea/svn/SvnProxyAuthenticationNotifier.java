@@ -28,7 +28,7 @@ public class SvnProxyAuthenticationNotifier extends GenericNotifierImpl<String, 
   }
 
   @Override
-  protected boolean ask(String obj) {
+  protected boolean ask(String obj, String description) {
     return false;  //To change body of implemented methods use File | Settings | File Templates.
   }
 

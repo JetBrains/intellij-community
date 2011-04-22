@@ -50,7 +50,7 @@ public abstract class GenericNotifierImpl<T, Key> {
     myLock = new Object();
   }
 
-  protected abstract boolean ask(final T obj);
+  protected abstract boolean ask(final T obj, String description);
   @NotNull
   protected abstract Key getKey(final T obj);
   @NotNull
@@ -143,10 +143,11 @@ public abstract class GenericNotifierImpl<T, Key> {
 
   private class MyListener implements NotificationListener {
     public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+      final String description = event.getDescription();
       if (notification instanceof MyNotification) {
         final MyNotification<T> concreteNotification = (MyNotification<T>) notification;
         final T obj = concreteNotification.getObj();
-        final boolean state = ask(obj);
+        final boolean state = ask(obj, description);
         if (state) {
           synchronized (myLock) {
             final Key key = getKey(obj);
