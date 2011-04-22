@@ -7,11 +7,3 @@ public class OverloadedMethodsWithSameNumberOfParameters {
 
     public void equals(String s) {}
 }
-interface MyInterface {
-    void myMethod(String value);
-}
-class MyClass implements MyInterface {
-    @Override
-    public void myMethod(String value) {
-    }
-}
