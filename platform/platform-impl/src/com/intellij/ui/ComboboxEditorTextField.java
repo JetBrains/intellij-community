@@ -52,14 +52,17 @@ public class ComboboxEditorTextField extends EditorTextField {
 
   public ComboboxEditorTextField(@NotNull String text, Project project, FileType fileType) {
     super(text, project, fileType);
+    setOneLineMode(true);
   }
 
   public ComboboxEditorTextField(Document document, Project project, FileType fileType) {
     this(document, project, fileType, false);
+    setOneLineMode(true);
   }
 
   public ComboboxEditorTextField(Document document, Project project, FileType fileType, boolean isViewer) {
     super(document, project, fileType, isViewer);
+    setOneLineMode(true);
   }
 
   @Override
