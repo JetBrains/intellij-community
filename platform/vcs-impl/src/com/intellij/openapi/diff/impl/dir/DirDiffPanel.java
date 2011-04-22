@@ -196,7 +196,7 @@ public class DirDiffPanel {
   }
 
   private JLabel getErrorLabel() {
-    return myErrorLabel == null ? myErrorLabel = new JLabel("Can't recognize file type", SwingConstants.CENTER) : myErrorLabel;
+    return myErrorLabel == null ? myErrorLabel = new JLabel("Can't create editor/diff component for this file type", SwingConstants.CENTER) : myErrorLabel;
   }
 
   private void clearDiffPanel() {

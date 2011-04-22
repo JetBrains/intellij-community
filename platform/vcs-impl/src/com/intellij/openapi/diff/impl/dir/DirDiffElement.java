@@ -54,7 +54,7 @@ public class DirDiffElement {
     }
     else if (type == DType.CHANGED) {
       assert source != null;
-      myOperation = source.getFileType().isBinary() ? NONE : DirDiffOperation.MERGE;
+      myOperation = DirDiffOperation.MERGE;
     }
   }
 

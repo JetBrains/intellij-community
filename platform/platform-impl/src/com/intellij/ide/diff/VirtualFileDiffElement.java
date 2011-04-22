@@ -68,12 +68,6 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   }
 
   @Override
-  public VirtualFileDiffElement findFileByRelativePath(String path) {
-    final VirtualFile file = myFile.findFileByRelativePath(path);
-    return file == null ? null : new VirtualFileDiffElement(file);
-  }
-
-  @Override
   public byte[] getContent() throws IOException {
     return myFile.contentsToByteArray();
   }

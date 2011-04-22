@@ -66,9 +66,6 @@ public abstract class DiffElement<T> {
 
   public abstract DiffElement[] getChildren() throws IOException;
 
-  @Nullable
-  public abstract DiffElement<T> findFileByRelativePath(String path);
-
   /**
    * Returns content data as byte array. Can be null, if element for example is a container
    * @return content byte array
@@ -137,8 +134,10 @@ public abstract class DiffElement<T> {
   protected DiffRequest createRequest(Project project, DiffElement element) throws IOException {
     final T src = getValue();
     if (src instanceof VirtualFile) {
+      if (((VirtualFile)src).getFileType().isBinary()) return null;
       final Object trg = element.getValue();
       if (trg instanceof VirtualFile) {
+        if (((VirtualFile)trg).getFileType().isBinary()) return null;
         final FileDocumentManager mgr = FileDocumentManager.getInstance();
         if (mgr.getDocument((VirtualFile)src) != null && mgr.getDocument((VirtualFile)trg) != null) {
           return SimpleDiffRequest.compareFiles((VirtualFile)src, (VirtualFile)trg, project);
