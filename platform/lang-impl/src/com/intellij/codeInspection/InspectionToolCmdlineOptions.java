@@ -13,7 +13,7 @@ public interface InspectionToolCmdlineOptions extends InspectionToolCmdlineOptio
   /**
    * @return 0 if turned off
    */
-  int getVerboseLevel();
+  int getVerboseLevelProperty();
 
   void validate() throws CmdlineArgsValidationException;
 

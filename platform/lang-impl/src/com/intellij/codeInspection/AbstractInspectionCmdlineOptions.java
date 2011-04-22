@@ -1,96 +1,93 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.PlainTextFormatter;
+import com.intellij.openapi.diagnostic.Logger;
 import com.sampullara.cli.Args;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * @author Roman.Chernyatchik
  */
 public abstract class AbstractInspectionCmdlineOptions implements InspectionToolCmdlineOptions {
-  protected abstract String getProfileNameOrPath();
+  private static final Logger LOG = Logger.getInstance(AbstractInspectionCmdlineOptions.class);
 
-  protected abstract String getProjectPath();
   @Nullable
-  protected abstract String getOutputPath();
-  protected abstract String getDirToInspect();
+  protected abstract String getProfileNameOrPathProperty();
   @Nullable
-  protected abstract String getOutputFormat();
+  protected abstract String getProjectPathProperty();
   @Nullable
-  protected abstract String getXSLTSchemePath();
+  protected abstract String getOutputPathProperty();
   @Nullable
-  protected abstract Boolean getErrorCodeRequired();
+  protected abstract String getDirToInspectProperty();
   @Nullable
-  protected abstract Boolean getRunWithEditorSettings();
+  protected abstract String getOutputFormatProperty();
+  @Nullable
+  protected abstract String getXSLTSchemePathProperty();
+  @Nullable
+  protected abstract Boolean getErrorCodeRequiredProperty();
+  @Nullable
+  protected abstract Boolean getRunWithEditorSettingsProperty();
 
 
   public void initApplication(InspectionApplication app) {
     app.myHelpProvider = this;
     app.myProjectPath = determineProjectPath();
-    app.myProfileName = getProfileNameOrPath();
-    // if plain formatter and output path not specified - use STDOUT
-    // otherwise specified output path or a default one
-    app.myOutPath = getOutputPath() != null ? getOutputPath()
-                                            : getOutputFormat() == PlainTextFormatter.NAME ? null
-                                                                                           : getDefaultOutputPath();
-    app.mySourceDirectory = getDirToInspect();
-    app.setVerboseLevel(getVerboseLevel());
+    app.myProfileName = getProfileNameOrPathProperty();
+    app.myOutPath = determineOutputPath();
+    app.mySourceDirectory = determineDirectoryToInspect(app.myProjectPath);
+    app.setVerboseLevel(getVerboseLevelProperty());
 
-    final Boolean errorCodeRequired = getErrorCodeRequired();
+    final Boolean errorCodeRequired = getErrorCodeRequiredProperty();
     if (errorCodeRequired != null) {
       app.myErrorCodeRequired = errorCodeRequired;
     }
-    final Boolean runWithEditorSettings = getRunWithEditorSettings();
+    final Boolean runWithEditorSettings = getRunWithEditorSettingsProperty();
     if (runWithEditorSettings != null) {
       app.myRunWithEditorSettings = runWithEditorSettings;
     }
 
-    final String xsltSchemePath = getXSLTSchemePath();
+    final String xsltSchemePath = getXSLTSchemePathProperty();
     if (xsltSchemePath != null) {
       app.myOutputFormat = xsltSchemePath;
     } else {
-      final String outputFormat = getOutputFormat();
+      final String outputFormat = getOutputFormatProperty();
       if (outputFormat != null) {
         app.myOutputFormat = outputFormat.toLowerCase();
       }
     }
   }
 
-  @Nullable
-  protected String determineProjectPath() {
-    final String projectPath = getProjectPath();
-    return projectPath != null ? projectPath : getDefaultProjectPath();
-  }
-
-
   @Override
   public void validate() throws CmdlineArgsValidationException {
     // project path
     final String projectPath = determineProjectPath();
     if (projectPath == null) {
-      throw new CmdlineArgsValidationException("Project not found");
+      throw new CmdlineArgsValidationException("Project not found.");
     }
     else if (!new File(projectPath).exists()) {
-      throw new CmdlineArgsValidationException("Project '" + projectPath + "' doesn't exist.");
+      throw new CmdlineArgsValidationException("Project '" + projectPath + "' not found.");
     }
 
-    // Dir to inspect
-    final String dirToInspect = getDirToInspect();
-    if (dirToInspect != null && !(new File(dirToInspect).exists())) {
-      throw new CmdlineArgsValidationException("Directory '" + dirToInspect + "' doesn't exist.");
-    }
-
-    final String xsltSchemePath = getXSLTSchemePath();
-    if (xsltSchemePath != null) {
-      final File xsltScheme = new File(xsltSchemePath);
-      if (!xsltScheme.exists()) {
-        throw new CmdlineArgsValidationException("XSLT scheme '" + xsltSchemePath + "' doesn't exist.");
+    // Dir to inspect: check only if set
+    if (getDirToInspectProperty() != null) {
+      final String dirToInspect = determineDirectoryToInspect(projectPath);
+      if (dirToInspect == null) {
+        throw new CmdlineArgsValidationException("Directory '" + dirToInspect + "' not found.");
       }
     }
 
-    final String outputFormat = getOutputFormat();
+    final String xsltSchemePath = getXSLTSchemePathProperty();
+    if (xsltSchemePath != null) {
+      final File xsltScheme = new File(xsltSchemePath);
+      if (!xsltScheme.exists()) {
+        throw new CmdlineArgsValidationException("XSLT scheme '" + xsltSchemePath + "' not found.");
+      }
+    }
+
+    final String outputFormat = getOutputFormatProperty();
     if (outputFormat != null) {
       StringBuilder builder = new StringBuilder();
       for (InspectionsReportConverter converter : InspectionsReportConverter.EP_NAME.getExtensions()) {
@@ -112,19 +109,62 @@ public abstract class AbstractInspectionCmdlineOptions implements InspectionTool
     }
   }
 
+  @Nullable
+  protected String determineOutputPath() {
+    final String outputPathProperty = getOutputPathProperty();
+
+    // if plain formatter and output path not specified - use STDOUT
+    // otherwise specified output path or a default one
+    return outputPathProperty != null ? outputPathProperty
+                                      : getOutputFormatProperty() == PlainTextFormatter.NAME ? null
+                                                                                             : getDefaultOutputPath();
+  }
+
   @Override
   public void printHelpAndExit() {
     Args.usage(this);
     System.exit(1);
   }
 
+  @Nullable
+  protected String determineProjectPath() {
+    final String projectPath = getProjectPathProperty();
+    return projectPath != null ? projectPath : getDefaultProjectPath();
+  }
+
+  @Nullable
+  protected String determineDirectoryToInspect(@Nullable final String projectPath) {
+    final String dirToInspect = getDirToInspectProperty();
+
+    if (dirToInspect == null) {
+      return null;
+    }
+
+    try {
+      // 1. By relative path
+      final File relativePathFile = new File(projectPath + File.separatorChar + dirToInspect);
+      if (relativePathFile.exists()) {
+        return relativePathFile.getCanonicalPath();
+      }
+
+      // 2. try absolute path
+      final File absPathFile = new File(dirToInspect);
+      if (absPathFile.exists()) {
+        return absPathFile.getCanonicalPath();
+      }
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+    return null;
+  }
+
   protected String getDefaultOutputPath() {
-    return getOutputPath() + "/results";
+    return getOutputPathProperty() + "/results";
   }
 
   @Nullable
   protected String getDefaultProjectPath() {
-    // current working dir
-    return System.getProperty("user.dir");
+    return null;
   }
 }
