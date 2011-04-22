@@ -45,7 +45,7 @@ class ChangeCompareModeAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     myModel.setCompareMode(myMode);
-    myModel.applySettings();
+    myModel.reloadModel();
   }
 
   @Override
