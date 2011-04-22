@@ -702,8 +702,13 @@ public class AbstractTreeUi {
       queueToBackground(build, update, rootDescriptor).doWhenProcessed(new Runnable() {
         @Override
         public void run() {
-          myRootNodeInitialized = true;
-          processNodeActionsIfReady(myRootNode);
+          invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              myRootNodeInitialized = true;
+              processNodeActionsIfReady(myRootNode);
+            }
+          });
         }
       });
     }
