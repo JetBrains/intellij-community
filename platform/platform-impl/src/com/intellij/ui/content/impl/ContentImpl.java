@@ -42,6 +42,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private boolean myPinnable = true;
   private Icon myLayeredIcon = new LayeredIcon(2);
   private Disposable myDisposer = null;
+  private boolean myShouldDisposeContent = true;
   private String myTabName;
   private String myToolwindowTitle;
   private boolean myCloseable = true;
@@ -144,6 +145,16 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     myDisposer = disposer;
   }
 
+  @Override
+  public void setShouldDisposeContent(boolean value) {
+    myShouldDisposeContent = value;
+  }
+
+  @Override
+  public boolean shouldDisposeContent() {
+    return myShouldDisposeContent;
+  }
+
   public String getDescription() {
     return myDescription;
   }
@@ -234,7 +245,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   public void dispose() {
-    if (myComponent instanceof Disposable) {
+    if (myShouldDisposeContent && myComponent instanceof Disposable) {
       Disposer.dispose((Disposable)myComponent);
     }
 
