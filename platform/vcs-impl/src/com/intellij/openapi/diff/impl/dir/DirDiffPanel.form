@@ -15,7 +15,7 @@
           <splitpane id="2c9d2" binding="mySplitPanel">
             <constraints border-constraint="Center"/>
             <properties>
-              <dividerLocation value="250"/>
+              <dividerLocation value="200"/>
               <orientation value="0"/>
             </properties>
             <border type="none"/>
@@ -32,9 +32,7 @@
                 <constraints>
                   <splitpane position="left"/>
                 </constraints>
-                <properties>
-                  <minimumSize width="21" height="200"/>
-                </properties>
+                <properties/>
                 <border type="none"/>
                 <children>
                   <component id="1fb9d" class="com.intellij.ui.table.JBTable" binding="myTable">

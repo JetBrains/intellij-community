@@ -17,6 +17,7 @@ package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffSettings;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -48,6 +49,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Konstantin Bulenkov
  */
 public class DirDiffPanel implements Disposable {
+  public static final String DIVIDER_PROPERTY = "dir.diff.panel.divider.location";
   private JPanel myDiffPanel;
   private JBTable myTable;
   private JPanel myComponent;
@@ -187,7 +189,7 @@ public class DirDiffPanel implements Disposable {
       }
     };
     //mySplitPanel.setTopComponent(decorator.getComponent());
-    decorator.getComponent().setMinimumSize(new Dimension(400, 100));
+    //decorator.getComponent().setMinimumSize(new Dimension(400, 100));
     myTable.putClientProperty(myModel.DECORATOR, decorator);
     myTable.addComponentListener(new ComponentAdapter() {
       @Override
@@ -269,6 +271,7 @@ public class DirDiffPanel implements Disposable {
 
   public void dispose() {
     myModel.stopUpdating();
+    PropertiesComponent.getInstance().setValue(DIVIDER_PROPERTY, String.valueOf(mySplitPanel.getDividerLocation()));
     clearDiffPanel();
   }
 
@@ -284,5 +287,9 @@ public class DirDiffPanel implements Disposable {
         }
       }
     };
+  }
+
+  public void setupSplitter() {
+    mySplitPanel.setDividerLocation(Integer.valueOf(PropertiesComponent.getInstance().getValue(DIVIDER_PROPERTY, "200")));
   }
 }
