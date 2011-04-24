@@ -61,7 +61,7 @@ public class RevealFileAction extends AnAction {
     if (!ioFile.isDirectory()) {
       ioFile = ioFile.getParentFile();
     }
-    ShowFilePathAction.open(ioFile, ioFile);
+    ShowFilePathAction.open(ioFile, new File(file.getPresentableUrl()));
   }
 }
 
