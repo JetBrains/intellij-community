@@ -12,6 +12,9 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
+import com.intellij.ide.passwordSafe.PasswordSafe;
+import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
+import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.net.AuthenticationPanel;
@@ -26,8 +29,16 @@ public class HgUsernamePasswordDialog extends DialogWrapper {
   public HgUsernamePasswordDialog(Project project, String url, String login, String password) {
     super(project, false);
     setTitle(HgVcsMessages.message("hg4idea.dialog.login.password.required"));
+
+    // if password is prefilled, it is expected to continue remembering it.
+    Boolean rememberPassword = !StringUtils.isBlank(password);
+    final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
+    // if password saving is disabled, don't show the checkbox.
+    if (passwordSafe.getSettings().getProviderType().equals(PasswordSafeSettings.ProviderType.DO_NOT_STORE)) {
+      rememberPassword = null;
+    }
     authPanel = new AuthenticationPanel(HgVcsMessages.message("hg4idea.dialog.login.description", url), login, password,
-                                        !StringUtils.isBlank(password));
+                                        rememberPassword);
     init();
   }
 
