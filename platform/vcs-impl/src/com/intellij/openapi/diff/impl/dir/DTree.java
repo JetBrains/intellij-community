@@ -178,6 +178,9 @@ public class DTree {
           return;
         }
       }
+      if (type == null) {
+        myVisible = true;
+      } else {
       switch (type) {
         case SOURCE:
           myVisible = settings.showNewOnSource;
@@ -194,6 +197,7 @@ public class DTree {
         case EQUAL:
           myVisible = settings.showEqual;
           break;
+      }
       }
     } else {
       myVisible = false;
