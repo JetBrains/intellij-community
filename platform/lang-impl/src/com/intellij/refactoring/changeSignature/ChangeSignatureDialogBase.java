@@ -18,8 +18,8 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -190,14 +190,23 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
     top.add(myPropagatePanel, BorderLayout.EAST);
 
     panel.add(top);
-    if (!myMethod.isConstructor()) {
+    final DocumentListener documentListener = new DocumentAdapter() {
+      public void documentChanged(DocumentEvent event) {
+        updateSignature();
+      }
+    };
+
+    if (myMethod.canChangeName()) {
       JLabel namePrompt = new JLabel();
       myNameField = new EditorTextField(myMethod.getName());
       namePrompt.setText(RefactoringBundle.message("name.prompt"));
       namePrompt.setLabelFor(myNameField);
       panel.add(namePrompt);
       panel.add(myNameField);
+      myNameField.addDocumentListener(documentListener);
+    }
 
+    if (myMethod.canChangeReturnType() != MethodDescriptor.ReadWriteOption.None) {
       JLabel typePrompt = new JLabel();
       panel.add(typePrompt);
       myReturnTypeCodeFragment = createReturnTypeCodeFragment();
@@ -207,20 +216,12 @@ public abstract class ChangeSignatureDialogBase<P extends ParameterInfo, M exten
       typePrompt.setLabelFor(myReturnTypeField);
       panel.add(myReturnTypeField);
 
-      if (!myMethod.canChangeReturnType()) {
+      if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite) {
+        myReturnTypeField.addDocumentListener(documentListener);
+      }
+      else {
         myReturnTypeField.setEnabled(false);
       }
-
-      final DocumentListener documentListener = new DocumentListener() {
-        public void beforeDocumentChange(DocumentEvent event) {
-        }
-
-        public void documentChanged(DocumentEvent event) {
-          updateSignature();
-        }
-      };
-      myNameField.addDocumentListener(documentListener);
-      myReturnTypeField.addDocumentListener(documentListener);
     }
 
     return panel;
