@@ -23,7 +23,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.ui.HgUsernamePasswordDialog;
+import org.zmlx.hg4idea.ui.HgAuthDialog;
 
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
@@ -148,7 +148,7 @@ class HgCommandAuthenticator {
         return;
       }
 
-      final HgUsernamePasswordDialog dialog = new HgUsernamePasswordDialog(myProject, myURL, login, password);
+      final HgAuthDialog dialog = new HgAuthDialog(myProject, myURL, login, password);
       dialog.show();
       if (dialog.isOK()) {
         myUserName = dialog.getUsername();

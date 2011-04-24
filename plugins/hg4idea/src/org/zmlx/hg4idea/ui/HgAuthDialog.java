@@ -23,10 +23,10 @@ import org.zmlx.hg4idea.HgVcsMessages;
 
 import javax.swing.*;
 
-public class HgUsernamePasswordDialog extends DialogWrapper {
+public class HgAuthDialog extends DialogWrapper {
   private AuthenticationPanel authPanel;
 
-  public HgUsernamePasswordDialog(Project project, String url, String login, String password) {
+  public HgAuthDialog(Project project, String url, String login, String password) {
     super(project, false);
     setTitle(HgVcsMessages.message("hg4idea.dialog.login.password.required"));
 
