@@ -14,9 +14,9 @@ package org.zmlx.hg4idea.execution;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.ide.passwordSafe.PasswordSafeException;
-import com.intellij.ide.passwordSafe.config.PasswordSafeSettings;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
+import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafe;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.apache.commons.lang.StringUtils;
@@ -45,10 +45,9 @@ class HgCommandAuthenticator {
   public void saveCredentials() {
     if (myRunnable == null) return;
 
+    // if checkbox is selected, remember on disk. Otherwise in memory. Don't read password safe settings.
+
     final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-    if (passwordSafe.getSettings().getProviderType().equals(PasswordSafeSettings.ProviderType.DO_NOT_STORE)) {
-      return;
-    }
     final String key = keyForUrlAndLogin(myRunnable.getURL(), myRunnable.getUserName());
 
     final PasswordSafeProvider provider =
@@ -132,8 +131,14 @@ class HgCommandAuthenticator {
         try {
           final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
           password = passwordSafe.getMemoryProvider().getPassword(myProject, HgCommandAuthenticator.class, key);
-          if (password == null && passwordSafe.getSettings().getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
-            password = passwordSafe.getMasterKeyProvider().getPassword(myProject, HgCommandAuthenticator.class, key);
+          if (password == null) {
+            final MasterKeyPasswordSafe masterKeyProvider = passwordSafe.getMasterKeyProvider();
+            if (!masterKeyProvider.isEmpty()) {
+              // workaround for: don't ask for master password, if the requested password is not there.
+              // this should be fixed in PasswordSafe: don't ask master password to look for keys
+              // until then we assume that is PasswordSafe was used (there is anything there), then it makes sense to look there.
+              password = masterKeyProvider.getPassword(myProject, HgCommandAuthenticator.class, key);
+            }
           }
         } catch (PasswordSafeException e) {
           LOG.info("Couldn't get password for key [" + key + "]", e);
