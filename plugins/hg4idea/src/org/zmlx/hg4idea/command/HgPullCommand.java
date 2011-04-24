@@ -18,11 +18,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -78,22 +76,18 @@ public class HgPullCommand {
 
     final HgCommandExecutor executor = new HgCommandExecutor(project);
     executor.setShowOutput(true);
-    executor.execute(repo, "pull", arguments, new HgCommandResultHandler() {
-      @Override
-      public void process(@Nullable HgCommandResult result) {
-        if (HgErrorUtil.isAuthorizationError(result)) {
-          HgUtil.notifyError(project, "Authorization required", "http authorization required for <code>" + source + "</code>");
-        } else if (HgErrorUtil.isAbort(result)) {
-          if (result != null) {
-            LOG.error(new VcsException(result.getRawError()));
-          } else {
-            LOG.error("Error handing result of 'hg pull' execution.");
-          }
-        } else {
-          project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
-        }
+    final HgCommandResult result = executor.executeInCurrentThread(repo, "pull", arguments);
+    if (HgErrorUtil.isAuthorizationError(result)) {
+      HgUtil.notifyError(project, "Authorization required", "http authorization required for <code>" + source + "</code>");
+    } else if (HgErrorUtil.isAbort(result)) {
+      if (result != null) {
+        LOG.error(new VcsException(result.getRawError()));
+      } else {
+        LOG.error("Error handing result of 'hg pull' execution.");
       }
-    });
+    } else {
+      project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
+    }
   }
 
 }

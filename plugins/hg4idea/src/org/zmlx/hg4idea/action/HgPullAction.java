@@ -12,8 +12,11 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.HgPullCommand;
 import org.zmlx.hg4idea.ui.HgPullDialog;
 
@@ -42,13 +45,18 @@ public class HgPullAction extends HgAbstractGlobalAction {
       }
 
       public void execute() {
-        HgPullCommand command = new HgPullCommand(
+        final HgPullCommand command = new HgPullCommand(
           project, dialog.getRepository()
         );
         command.setSource(dialog.getSource());
         command.setRebase(false);
         command.setUpdate(false);
-        command.execute();
+        new Task.Backgroundable(project, "Pulling changes from " + dialog.getSource(), false){
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            command.execute();
+          }
+        }.queue();
       }
     };
   }
