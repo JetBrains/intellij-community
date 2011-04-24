@@ -70,7 +70,7 @@ public class HgUpdateTest extends HgCollaborativeTest {
     HgPullCommand pull = new HgPullCommand(myProject, projectRepoVirtualFile);
     pull.setSource(new HgShowConfigCommand(myProject).getDefaultPath(projectRepoVirtualFile));
     pull.setUpdate(false);
-    pull.execute(null);
+    pull.execute();
 
     assertEquals( determineNumberOfIncomingChanges( projectRepo ), 0,
                   "The update operation should have pulled the incoming changes from the default repository." );

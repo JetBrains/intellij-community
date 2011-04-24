@@ -14,10 +14,7 @@ package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgPullCommand;
-import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.ui.HgPullDialog;
 
 import java.util.Collection;
@@ -51,12 +48,7 @@ public class HgPullAction extends HgAbstractGlobalAction {
         command.setSource(dialog.getSource());
         command.setRebase(false);
         command.setUpdate(false);
-        command.execute(new HgCommandResultHandler() {
-          @Override
-          public void process(@Nullable HgCommandResult result) {
-            new HgCommandResultNotifier(project).process(result, null, null);
-          }
-        });
+        command.execute();
       }
     };
   }

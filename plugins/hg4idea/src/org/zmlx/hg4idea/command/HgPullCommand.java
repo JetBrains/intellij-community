@@ -12,7 +12,9 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +23,8 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
+import org.zmlx.hg4idea.util.HgErrorUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -34,6 +38,7 @@ public class HgPullCommand {
   private String revision;
   private boolean update = true;
   private boolean rebase = !update;
+  private static final Logger LOG = Logger.getInstance(HgPullCommand.class);
   
   public HgPullCommand(Project project, @NotNull VirtualFile repo) {
     this.project = project;
@@ -56,7 +61,7 @@ public class HgPullCommand {
     this.source = source;
   }
 
-  public void execute(@Nullable final HgCommandResultHandler resultHandler) {
+  public void execute() {
     List<String> arguments = new LinkedList<String>();
     if (update) {
       arguments.add("--update");
@@ -76,9 +81,16 @@ public class HgPullCommand {
     executor.execute(repo, "pull", arguments, new HgCommandResultHandler() {
       @Override
       public void process(@Nullable HgCommandResult result) {
-        project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
-        if (resultHandler != null) {
-          resultHandler.process(result);
+        if (HgErrorUtil.isAuthorizationError(result)) {
+          HgUtil.notifyError(project, "Authorization required", "http authorization required for <code>" + source + "</code>");
+        } else if (HgErrorUtil.isAbort(result)) {
+          if (result != null) {
+            LOG.error(new VcsException(result.getRawError()));
+          } else {
+            LOG.error("Error handing result of 'hg pull' execution.");
+          }
+        } else {
+          project.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(project);
         }
       }
     });
