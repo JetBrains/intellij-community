@@ -243,6 +243,7 @@ public class DirDiffPanel implements Disposable {
     } else {
       mySourceDirField.setButtonEnabled(false);
       mySourceDirField.getButton().setVisible(false);
+      mySourceDirField.setEditable(false);
     }
 
     if (trgChooser != null) {
@@ -265,6 +266,7 @@ public class DirDiffPanel implements Disposable {
     } else {
       myTargetDirField.setButtonEnabled(false);
       myTargetDirField.getButton().setVisible(false);
+      myTargetDirField.setEditable(false);
     }
   }
 
