@@ -790,7 +790,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     for (int i = 0; i < linesNumber; i++) {
       buffer.append(i).append(": ").append(getLineStartOffset(i)).append("-").append(getLineEndOffset(i)).append("\n");
     }
-    return super.toString();
+    return buffer.toString();
   }
 
   private static class MyCharArray extends CharArray {
