@@ -47,8 +47,16 @@ public class EnterBetweenBracesHandler implements EnterHandlerDelegate {
       return Result.Continue;
     }
 
+    final int line = document.getLineNumber(caretOffset);
+    final int start = document.getLineStartOffset(line);
+    final CodeDocumentationUtil.CommentContext commentContext =
+      CodeDocumentationUtil.tryParseCommentContext(file, text, caretOffset, start);
+
     // special case: enter inside "()" or "{}"
-    String indentInsideJavadoc = CodeDocumentationUtil.getIndentInsideJavadoc(document, caretOffset);
+    String indentInsideJavadoc = commentContext.docAsterisk
+                                 ? CodeDocumentationUtil.getIndentInsideJavadoc(document, caretOffset)
+                                 : null;
+
     originalHandler.execute(editor, dataContext);
 
     Project project = editor.getProject();
