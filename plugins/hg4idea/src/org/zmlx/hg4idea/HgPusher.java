@@ -39,6 +39,7 @@ public class HgPusher {
 
   private static final Logger LOG = Logger.getInstance(HgPusher.class);
   private static Pattern PUSH_COMMITS_PATTERN = Pattern.compile(".*added (\\d+) changesets.*");
+  private static Pattern PUSH_NO_CHANGES = Pattern.compile(".*no changes found.*");
 
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
@@ -68,9 +69,12 @@ public class HgPusher {
         int commitsNum = getNumberOfPushedCommits(result);
         String title = null;
         String description = null;
-        if (commitsNum >= 0) {
+        if (commitsNum > 0) {
           title = "Pushed successfully";
           description = "Pushed " + commitsNum + " " + StringUtil.pluralize("commit", commitsNum) + ".";
+        } else if (commitsNum == 0) {
+          title = "";
+          description = "Nothing to push";
         }
         new HgCommandResultNotifier(project).process(result, title, description);
       }
@@ -81,7 +85,8 @@ public class HgPusher {
     if (!HgErrorUtil.isAbort(result)) {
       final List<String> outputLines = result.getOutputLines();
       for (String outputLine : outputLines) {
-        final Matcher matcher = PUSH_COMMITS_PATTERN.matcher(outputLine.trim());
+        outputLine = outputLine.trim();
+        final Matcher matcher = PUSH_COMMITS_PATTERN.matcher(outputLine);
         if (matcher.matches()) {
           try {
             return Integer.parseInt(matcher.group(1));
@@ -90,6 +95,8 @@ public class HgPusher {
             LOG.info("getNumberOfPushedCommits ", e);
             return -1;
           }
+        } else if (PUSH_NO_CHANGES.matcher(outputLine).matches()) {
+          return 0;
         }
       }
     }
