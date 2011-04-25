@@ -52,7 +52,7 @@ public abstract class DiffElement<T> implements Disposable {
   public abstract String getName();
 
   public String getPresentablePath() {
-    return getPath();
+    return getName();
   }
 
   public abstract long getSize();
