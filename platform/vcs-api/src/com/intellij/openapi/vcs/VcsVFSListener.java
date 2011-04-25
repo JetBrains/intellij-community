@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.SmartList;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +61,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected final VcsShowConfirmationOption myRemoveOption;
   protected final List<VirtualFile> myAddedFiles = new ArrayList<VirtualFile>();
   protected final Map<VirtualFile, VirtualFile> myCopyFromMap = new HashMap<VirtualFile, VirtualFile>();
+  protected final List<VcsException> myExceptions = new SmartList<VcsException>();
   protected final List<FilePath> myDeletedFiles = new ArrayList<FilePath>();
   protected final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<FilePath>();
   protected final List<MovedFileInfo> myMovedFiles = new ArrayList<MovedFileInfo>();
@@ -246,7 +248,8 @@ public abstract class VcsVFSListener implements Disposable {
 
   protected abstract String getSingleFileAddPromptTemplate();
 
-  protected abstract void performAdding(final Collection<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap);
+  protected abstract void performAdding(final Collection<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap)
+    ;
 
   protected abstract String getDeleteTitle();
 
@@ -407,6 +410,9 @@ public abstract class VcsVFSListener implements Disposable {
               }
             }
             myDirtyScopeManager.filesDirty(files, dirs);
+          }
+          if (! myExceptions.isEmpty()) {
+            AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, myVcs.getDisplayName() + " operations errors");
           }
         }
       }
