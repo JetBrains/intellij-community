@@ -36,6 +36,8 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   private final long myId;
   //private static long counter;
   private static final AtomicLong counter = new AtomicLong();
+  
+  private boolean myDisposed;
 
   protected RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register) {
     this(document, start, end, register, false, false);
@@ -77,6 +79,16 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   @Override
   public void dispose() {
     if(isValid()) {
+      if (myDisposed) {
+        // This brings the troubles because range markers tree asserts that the range marker is removed, hence, if this
+        // method is subsequently called for the same range marker object during, say, listeners notification on particular event,
+        // all subsequent listeners are not notified because AssertionError is thrown up to the stack.
+        //
+        // We do know that such a problem exists at LineStatusTracker at the moment.
+        LOG.error("Detected attempt to dispose already disposed range marker");
+        return;
+      }
+      myDisposed = true;
       unregisterInTree();
     }
   }
