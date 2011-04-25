@@ -77,12 +77,18 @@ public class FileManagerImpl implements FileManager {
   private final ConcurrentMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = new ConcurrentHashMap<VirtualFile, PsiDirectory>();
   private final ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = new ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider>();
 
-  private final Map<VirtualFile, GlobalSearchScope> myDefaultUseScopesCache = new ConcurrentFactoryMap<VirtualFile, GlobalSearchScope>() {
+  private final Map<VirtualFile, GlobalSearchScope> myDefaultResolveScopesCache = new ConcurrentFactoryMap<VirtualFile, GlobalSearchScope>() {
     @Override
     protected GlobalSearchScope create(VirtualFile key) {
-      GlobalSearchScope scope = getInherentResolveScope(key);
+      final Project project = myManager.getProject();
+      GlobalSearchScope scope = null;
+      for(ResolveScopeProvider resolveScopeProvider:ResolveScopeProvider.EP_NAME.getExtensions()) {
+        scope = resolveScopeProvider.getResolveScope(key, project);
+        if (scope != null) break;
+      }
+      if (scope == null) scope = getInherentResolveScope(key);
       for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
-        final SearchScope extra = enlarger.getAdditionalResolveScope(key, myManager.getProject());
+        final SearchScope extra = enlarger.getAdditionalResolveScope(key, project);
         if (extra != null) {
           scope = scope.union(extra);
         }
@@ -123,7 +129,7 @@ public class FileManagerImpl implements FileManager {
     manager.registerRunnableToRunOnChange(new Runnable() {
       @Override
       public void run() {
-        myDefaultUseScopesCache.clear();
+        myDefaultResolveScopesCache.clear();
       }
     });
   }
@@ -413,7 +419,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   private GlobalSearchScope getDefaultResolveScope(@NotNull final Project project, @NotNull PsiFile psiFile, @NotNull final VirtualFile vFile) {
-    return myDefaultUseScopesCache.get(vFile);
+    return myDefaultResolveScopesCache.get(vFile);
   }
 
   private GlobalSearchScope getInherentResolveScope(VirtualFile vFile) {

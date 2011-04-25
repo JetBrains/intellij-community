@@ -130,6 +130,7 @@
 
   <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger"/>
   <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger"/>
+  <extensionPoint name="resolveScopeProvider" interface="com.intellij.psi.ResolveScopeProvider"/>
 
   <extensionPoint name="gotoClassContributor"
                   interface="com.intellij.navigation.ChooseByNameContributor"/>
