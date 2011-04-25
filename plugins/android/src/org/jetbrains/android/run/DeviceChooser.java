@@ -85,7 +85,7 @@ public class DeviceChooser extends DialogWrapper implements AndroidDebugBridge.I
     myDeviceTable.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER && isOKActionEnabled()) {
           doOKAction();
         }
       }
