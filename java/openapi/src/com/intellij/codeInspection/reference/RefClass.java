@@ -18,8 +18,6 @@ package com.intellij.codeInspection.reference;
 import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -30,13 +28,13 @@ import java.util.Set;
 public interface RefClass extends RefJavaElement {
 
   @NotNull
-  HashSet<RefClass> getBaseClasses();
+  Set<RefClass> getBaseClasses();
 
   @NotNull
-  HashSet<RefClass> getSubClasses();
+  Set<RefClass> getSubClasses();
 
   @NotNull
-  ArrayList<RefMethod> getConstructors();
+  List<RefMethod> getConstructors();
 
   @NotNull
   Set<RefElement> getInTypeReferences();
