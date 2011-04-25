@@ -232,7 +232,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       return RefactoringMessageUtil.getIncorrectIdentifierMessage(name);
     }
 
-    if (!myMethod.isConstructor()) {
+    if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite) {
       try {
         ((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType();
       }
@@ -321,7 +321,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
     // warnings
     try {
-      if (!myMethod.isConstructor()) {
+      if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite) {
         if (!RefactoringUtil.isResolvableType(((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType())) {
           if (Messages.showOkCancelDialog(myProject, RefactoringBundle
             .message("changeSignature.cannot.resolve.return.type", myReturnTypeCodeFragment.getText()),

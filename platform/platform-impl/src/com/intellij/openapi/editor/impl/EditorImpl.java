@@ -932,7 +932,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int offset = logicalPositionToOffset(logicalPosition);
     int textLength = myDocument.getTextLength();
 
-    if (offset >= textLength) return new VisualPosition(line, 0);
+    if (offset >= textLength) return new VisualPosition(line, EditorUtil.columnsNumber(p.x, EditorUtil.getSpaceWidth(Font.PLAIN, this)));
 
     // There is a possible case that starting logical line is split by soft-wraps and it's part after the split should be drawn.
     // We mark that we're under such circumstances then.

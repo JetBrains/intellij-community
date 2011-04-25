@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -45,11 +46,17 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   protected final Project myProject;
   @SuppressWarnings({"UnusedDeclaration"})
   private RangeMarker myRangeMarker; //maintain hard reference during modification
+  protected final Language myLanguage;
 
   protected SelfElementInfo(@NotNull Project project, @NotNull PsiElement anchor) {
-    this(project, anchor.getTextRange(), anchor.getClass(), anchor.getContainingFile());
+    this(project, anchor.getTextRange(), anchor.getClass(), anchor.getContainingFile(), anchor.getLanguage());
   }
-  public SelfElementInfo(@NotNull Project project, @NotNull TextRange anchor, @NotNull Class anchorClass, @NotNull PsiFile containingFile) {
+  public SelfElementInfo(@NotNull Project project,
+                         @NotNull TextRange anchor,
+                         @NotNull Class anchorClass,
+                         @NotNull PsiFile containingFile,
+                         @NotNull Language language) {
+    myLanguage = language;
     myVirtualFile = containingFile.getVirtualFile();
     myType = anchorClass;
 
@@ -159,15 +166,15 @@ public class SelfElementInfo implements SmartPointerElementInfo {
     final int syncStartOffset = getSyncStartOffset();
     final int syncEndOffset = getSyncEndOffset();
 
-    return findElementInside(file, syncStartOffset, syncEndOffset, myType);
+    return findElementInside(file, syncStartOffset, syncEndOffset, myType, myLanguage);
   }
 
   protected PsiFile restoreFile() {
     return restoreFileFromVirtual(myVirtualFile, myProject);
   }
 
-  protected static PsiElement findElementInside(PsiFile file, int syncStartOffset, int syncEndOffset, Class type) {
-    PsiElement anchor = file.getViewProvider().findElementAt(syncStartOffset, file.getLanguage());
+  protected static PsiElement findElementInside(@NotNull PsiFile file, int syncStartOffset, int syncEndOffset, @NotNull Class type, @NotNull Language language) {
+    PsiElement anchor = file.getViewProvider().findElementAt(syncStartOffset, language);
     if (anchor == null) return null;
 
     TextRange range = anchor.getTextRange();

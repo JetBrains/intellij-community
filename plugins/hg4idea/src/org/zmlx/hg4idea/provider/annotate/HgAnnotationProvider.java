@@ -21,8 +21,11 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.zmlx.hg4idea.HgFile;
+import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.command.HgAnnotateCommand;
 import org.zmlx.hg4idea.command.HgLogCommand;
+
+import java.util.List;
 
 public class HgAnnotationProvider implements AnnotationProvider {
 
@@ -35,20 +38,18 @@ public class HgAnnotationProvider implements AnnotationProvider {
   }
 
   public FileAnnotation annotate(VirtualFile file) throws VcsException {
+    return annotate(file, null);
+  }
+
+  public FileAnnotation annotate(VirtualFile file, VcsFileRevision revision) throws VcsException {
     final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, VcsUtil.getFilePath(file.getPath()));
     if (vcsRoot == null) {
       throw new VcsException("vcs root is null");
     }
     final HgFile hgFile = new HgFile(vcsRoot, VfsUtil.virtualToIoFile(file));
-    return new HgAnnotation(
-      hgFile,
-      (new HgAnnotateCommand(myProject)).execute(hgFile),
-      (new HgLogCommand(myProject)).execute(hgFile, DEFAULT_LIMIT, false)
-    );
-  }
-
-  public FileAnnotation annotate(VirtualFile file, VcsFileRevision revision) throws VcsException {
-    return annotate(file);
+    final List<HgAnnotationLine> annotationResult = (new HgAnnotateCommand(myProject)).execute(hgFile, revision);
+    final List<HgFileRevision> logResult = (new HgLogCommand(myProject)).execute(hgFile, DEFAULT_LIMIT, false);
+    return new HgAnnotation(hgFile, annotationResult, logResult);
   }
 
   public boolean isAnnotationValid(VcsFileRevision rev) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.diff;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
@@ -35,11 +36,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.concurrent.Callable;
 
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class DiffElement<T> {
+public abstract class DiffElement<T> implements Disposable {
   public static final DiffElement[] EMPTY_ARRAY = new DiffElement[0];
   private DiffPanel myDiffPanel;
   private Editor myEditor;
@@ -51,7 +53,7 @@ public abstract class DiffElement<T> {
   public abstract String getName();
 
   public String getPresentablePath() {
-    return getPath();
+    return getName();
   }
 
   public abstract long getSize();
@@ -79,7 +81,7 @@ public abstract class DiffElement<T> {
   }
 
   @Nullable
-  public JComponent getViewComponent(Project project, DiffElement target) {
+  public JComponent getViewComponent(Project project, @Nullable DiffElement target) {
     disposeViewComponent();
     try {
       final T value = getValue();
@@ -182,6 +184,15 @@ public abstract class DiffElement<T> {
 
   @Nullable
   public Icon getIcon() {
+    return null;
+  }
+
+  @Override
+  public void dispose() {
+  }
+
+  @Nullable
+  public Callable<DiffElement<T>> getElementChooser(Project project) {
     return null;
   }
 }

@@ -20,12 +20,12 @@ import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -108,41 +108,33 @@ class CatchBodyVisitor extends JavaRecursiveElementWalkingVisitor {
     Pair<? extends PsiElement, ? extends PsiElement> range = DefaultFileTemplateUsageInspection.getInteriorRange(catchBlock);
     final String description = InspectionsBundle.message("default.file.template.description");
     ProblemDescriptor descriptor = myManager.createProblemDescriptor(range.first, range.second, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                                     myOnTheFly, createQuickFix(section));
+                                                                     myOnTheFly, createQuickFix());
     myProblemDescriptors.add(descriptor);
   }
 
-  private static LocalQuickFix[] createQuickFix(final PsiCatchSection section) {
+  private static LocalQuickFix[] createQuickFix() {
     FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            final PsiParameter parameter = section.getParameter();
-            if (parameter == null) return;
-            PsiCodeBlock catchBlock = section.getCatchBlock();
-            if (catchBlock == null) return;
-            PsiType type = parameter.getType();
-            if (!(type instanceof PsiClassType)) return;
-            final PsiJavaParserFacade elementFactory = JavaPsiFacade.getInstance(section.getProject()).getParserFacade();
-            try {
-              PsiCatchSection sectionTemplate = elementFactory.createCatchSection((PsiClassType)type, parameter.getName(), parameter);
-              section.replace(sectionTemplate);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        });
-      }
-    };
-
     ReplaceWithFileTemplateFix replaceWithFileTemplateFix = new ReplaceWithFileTemplateFix() {
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        runnable.run();
+      public void applyFix(@NotNull Project project, @NotNull final ProblemDescriptor descriptor) {
+        final PsiCatchSection section = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiCatchSection.class);
+        if (section == null) return;
+        final PsiParameter parameter = section.getParameter();
+        if (parameter == null) return;
+        PsiCodeBlock catchBlock = section.getCatchBlock();
+        if (catchBlock == null) return;
+        PsiType type = parameter.getType();
+        if (!(type instanceof PsiClassType)) return;
+        final PsiJavaParserFacade elementFactory = JavaPsiFacade.getInstance(section.getProject()).getParserFacade();
+        try {
+          PsiCatchSection sectionTemplate = elementFactory.createCatchSection((PsiClassType)type, parameter.getName(), parameter);
+          section.replace(sectionTemplate);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
       }
     };
-    LocalQuickFix editFileTemplateFix = DefaultFileTemplateUsageInspection.createEditFileTemplateFix(template, runnable);
+    LocalQuickFix editFileTemplateFix = DefaultFileTemplateUsageInspection.createEditFileTemplateFix(template, replaceWithFileTemplateFix);
     if (template.isDefault()) {
       return new LocalQuickFix[]{editFileTemplateFix};
     }

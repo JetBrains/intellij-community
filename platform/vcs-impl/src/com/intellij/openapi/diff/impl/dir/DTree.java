@@ -172,6 +172,15 @@ public class DTree {
 
   public void updateVisibility(DirDiffSettings settings) {
     if (children.isEmpty()) {
+      if (type != DType.SEPARATOR && !"".equals(settings.getFilter())) {
+        if (!settings.getFilterPattern().matcher(getName()).matches()) {
+          myVisible = false;
+          return;
+        }
+      }
+      if (type == null) {
+        myVisible = true;
+      } else {
       switch (type) {
         case SOURCE:
           myVisible = settings.showNewOnSource;
@@ -188,6 +197,7 @@ public class DTree {
         case EQUAL:
           myVisible = settings.showEqual;
           break;
+      }
       }
     } else {
       myVisible = false;

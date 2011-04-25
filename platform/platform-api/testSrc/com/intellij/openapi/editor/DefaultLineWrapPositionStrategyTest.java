@@ -67,6 +67,13 @@ public class DefaultLineWrapPositionStrategyTest {
     doTest(document);
   }
 
+  @Test
+  public void longStringWithoutWrapPositionIsNotWrapped() {
+    String document = 
+      "-----------------<EDGE>---------------------------------------------------------";
+    doTest(document);
+  }
+  
   private void doTest(final String document) {
     doTest(document, true);
   }
@@ -100,7 +107,7 @@ public class DefaultLineWrapPositionStrategyTest {
 
     private String document;
     private int    index;
-    private int    wrapIndex;
+    private int    wrapIndex = -1;
     private int    tmpWrapIndex;
     private int    edgeIndex;
     private int    tmpEdgeIndex;

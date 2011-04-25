@@ -383,12 +383,6 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return myMergedUsageInfos;
   }
 
-  public void dispose() {
-    for (UsageInfo usageInfo : myMergedUsageInfos) {
-      usageInfo.dispose();
-    }
-  }
-
   private long myModificationStamp;
   private long getCurrentModificationStamp() {
     final PsiFile containingFile = getPsiFile();

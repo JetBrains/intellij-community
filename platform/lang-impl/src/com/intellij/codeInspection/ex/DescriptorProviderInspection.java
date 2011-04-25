@@ -133,7 +133,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
   }
 
   private void collectQuickFixes(final QuickFix[] fixes, final RefEntity refEntity) {
-    if (fixes != null) {
+    if (fixes != null && fixes.length != 0) {
       Set<QuickFix> localQuickFixes = getQuickFixActions().get(refEntity);
       if (localQuickFixes == null) {
         localQuickFixes = new HashSet<QuickFix>();

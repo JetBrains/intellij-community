@@ -81,7 +81,11 @@ abstract class HgRevisionsCommand {
       hgCommandExecutor, hgFile.getRepo(), template, limit, originalHgFile
     );
 
-    List<HgFileRevision> revisions = new LinkedList<HgFileRevision>();
+    final List<HgFileRevision> revisions = new LinkedList<HgFileRevision>();
+    if (result == null) {
+      return revisions;
+    }
+
     String output = result.getRawOutput();
     String[] changeSets = output.split(HgChangesetUtil.CHANGESET_SEPARATOR);
     for (String line : changeSets) {

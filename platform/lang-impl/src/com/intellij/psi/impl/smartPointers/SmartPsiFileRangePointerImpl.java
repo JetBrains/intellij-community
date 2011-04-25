@@ -30,7 +30,7 @@ public class SmartPsiFileRangePointerImpl extends SmartPsiElementPointerImpl<Psi
 
   @NotNull
   private static SmartPointerElementInfo createElementInfo(@NotNull PsiFile containingFile, @NotNull TextRange range) {
-    return new SelfElementInfo(containingFile.getProject(), range, PsiFile.class, containingFile);
+    return new SelfElementInfo(containingFile.getProject(), range, PsiFile.class, containingFile, containingFile.getLanguage());
   }
 
   @Override

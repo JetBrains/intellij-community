@@ -19,9 +19,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.ErrorTreeView;
+import org.jetbrains.annotations.Nullable;
 
 public interface ErrorViewFactory {
-  ErrorTreeView createErrorTreeView(Project project, String helpId, boolean createExitAction, AnAction[] extraPopupMenuActions,
+  ErrorTreeView createErrorTreeView(Project project, @Nullable String helpId, boolean createExitAction, AnAction[] extraPopupMenuActions,
                                     AnAction[] extraRightToolbarGroupActions, ContentManagerProvider contentManagerProvider);
 
 

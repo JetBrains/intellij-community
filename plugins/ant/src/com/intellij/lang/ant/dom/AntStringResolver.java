@@ -16,12 +16,14 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.HashMap;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -30,6 +32,7 @@ import java.util.Map;
 public class AntStringResolver extends PropertyProviderFinder{
   private final PropertyExpander myExpander;
   private final boolean mySkipCustomTags;
+  private static final Key<Map<String, String>> RESOLVED_STRINGS_MAP_KEY = Key.create("_ant_resolved_strings_cache_");
 
   private AntStringResolver(DomElement contextElement, PropertyExpander expander) {
     super(contextElement);
@@ -37,7 +40,6 @@ public class AntStringResolver extends PropertyProviderFinder{
     mySkipCustomTags = CustomAntElementsRegistry.ourIsBuildingClasspathForCustomTagLoading.get();
   }
 
-  private static final Key<Map<String, String>> RESOLVED_STRINGS_MAP_KEY = new Key<Map<String, String>>("_ant_resolved_strings_cache_");
 
   public void visitAntDomCustomElement(AntDomCustomElement custom) {
     if (!mySkipCustomTags) {
@@ -46,33 +48,36 @@ public class AntStringResolver extends PropertyProviderFinder{
   }
 
   @NotNull
-  public static String computeString(@NotNull DomElement context, @NotNull String valueString) {
+  public static String computeString(@NotNull final DomElement context, @NotNull String valueString) {
     PropertyExpander expander = new PropertyExpander(valueString);
     if (!expander.hasPropertiesToExpand()) {
       return valueString;
     }
-    AntDomProject project = context.getParentOfType(AntDomProject.class, false);
-    if (project == null) {
-      return valueString;
-    }
-    project = project.getContextAntProject();
-    Map<String, String> cached = context.getUserData(RESOLVED_STRINGS_MAP_KEY);
+    
+    final Map<String, String> cached = context.getUserData(RESOLVED_STRINGS_MAP_KEY);
     if (cached != null) {
-      final String resolvedFromCache = cached.get(valueString);
-      if (resolvedFromCache != null) {
-        return resolvedFromCache;
+      expander.acceptProvider(new CachedPropertiesProvider(cached));
+      if (!expander.hasPropertiesToExpand()) {
+        return expander.getResult();
       }
     }
-    else {
-      cached = Collections.synchronizedMap(new HashMap<String, String>());
-      context.putUserData(RESOLVED_STRINGS_MAP_KEY, cached);
+    
+    expander.setPropertyExpansionListener(new PropertyExpander.PropertyExpansionListener() {
+      public void onPropertyExpanded(String propName, String propValue) {
+        cacheResult(context, RESOLVED_STRINGS_MAP_KEY, propName, propValue);
+      }
+    });
+    
+    AntDomProject project = context.getParentOfType(AntDomProject.class, false);
+    if (project == null) {
+      return expander.getResult();
     }
-    new AntStringResolver(context, expander).execute(project, project.getDefaultTarget().getRawText());
-    final String result = expander.getResult();
-    cached.put(valueString, result);
-    return result;
-  }
+    project = project.getContextAntProject();
 
+    new AntStringResolver(context, expander).execute(project, project.getDefaultTarget().getRawText());
+
+    return expander.getResult();
+  }
 
   protected void propertyProviderFound(PropertiesProvider propertiesProvider) {
     myExpander.acceptProvider(propertiesProvider);
@@ -81,6 +86,29 @@ public class AntStringResolver extends PropertyProviderFinder{
     }
   }
 
+  private static class CachedPropertiesProvider implements PropertiesProvider {
+    Set<String> allNames;
+    private final Map<String, String> myCached;
 
+    public CachedPropertiesProvider(Map<String, String> cached) {
+      myCached = cached;
+    }
+
+    @NotNull
+    public Iterator<String> getNamesIterator() {
+      if (allNames == null) {
+        allNames = new HashSet<String>(myCached.keySet());
+      }
+      return allNames.iterator();
+    }
+
+    public String getPropertyValue(String propertyName) {
+      return myCached.get(propertyName);
+    }
+
+    public PsiElement getNavigationElement(String propertyName) {
+      return null;
+    }
+  }
 }
 

@@ -17,14 +17,17 @@ package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffSettings;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -35,16 +38,16 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class DirDiffPanel {
+@SuppressWarnings({"unchecked"})
+public class DirDiffPanel implements Disposable {
+  public static final String DIVIDER_PROPERTY = "dir.diff.panel.divider.location";
   private JPanel myDiffPanel;
   private JBTable myTable;
   private JPanel myComponent;
@@ -53,21 +56,18 @@ public class DirDiffPanel {
   private TextFieldWithBrowseButton myTargetDirField;
   private JBLabel myTargetDirLabel;
   private JBLabel mySourceDirLabel;
-  private JPanel myActionsPanel;
-  private JPanel myActionsCenterPanel;
-  private JComboBox myFileFilter;
   private JPanel myToolBarPanel;
-  private JBScrollPane myScrollPane;
   private JPanel myRootPanel;
+  private JTextField myFilter;
   private final DirDiffTableModel myModel;
   public JLabel myErrorLabel;
   private final DirDiffDialog myDialog;
   private JComponent myDiffPanelComponent;
   private JComponent myViewComponent;
   private DiffElement myCurrentElement;
+  private String oldFilter;
 
   public DirDiffPanel(DirDiffTableModel model, DirDiffDialog dirDiffDialog, DirDiffSettings settings) {
-    mySplitPanel.setDividerLocation(0.5);
     myModel = model;
     myDialog = dirDiffDialog;
     mySourceDirField.setText(model.getSourceDir().getPath());
@@ -75,12 +75,14 @@ public class DirDiffPanel {
     mySourceDirLabel.setIcon(model.getSourceDir().getIcon());
     myTargetDirLabel.setIcon(model.getTargetDir().getIcon());
     myModel.setTable(myTable);
+    myModel.setPanel(this);
     myModel.setDisposableParent(dirDiffDialog.getDisposable());
     myTable.setModel(myModel);
 
     final DirDiffTableCellRenderer renderer = new DirDiffTableCellRenderer(myTable);
     myTable.setDefaultRenderer(Object.class, renderer);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    final Project project = myModel.getProject();
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -96,7 +98,6 @@ public class DirDiffPanel {
         else {
           final DirDiffElement element = myModel.getElementAt(myTable.getSelectedRow());
           if (element == null) return;
-          final Project project = myModel.getProject();
           clearDiffPanel();
           if (element.getType() == DType.CHANGED) {
             myDiffPanelComponent = element.getSource().getDiffComponent(element.getTarget(), project, myDialog.getWindow());
@@ -182,7 +183,7 @@ public class DirDiffPanel {
       }
     };
     //mySplitPanel.setTopComponent(decorator.getComponent());
-    decorator.getComponent().setMinimumSize(new Dimension(400, 100));
+    //decorator.getComponent().setMinimumSize(new Dimension(400, 100));
     myTable.putClientProperty(myModel.DECORATOR, decorator);
     myTable.addComponentListener(new ComponentAdapter() {
       @Override
@@ -193,6 +194,93 @@ public class DirDiffPanel {
     });
     myRootPanel.removeAll();
     myRootPanel.add(decorator.getComponent(), BorderLayout.CENTER);
+    myModel.addModelListener(new DirDiffModelListener() {
+      @Override
+      public void updateStarted() {
+        myFilter.setEnabled(false);
+      }
+
+      @Override
+      public void updateFinished() {
+        myFilter.setEnabled(true);
+      }
+    });
+
+    myFilter.setText(settings.getFilter());
+    oldFilter = myFilter.getText();
+    myFilter.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+          e.consume();
+          fireFilterUpdated();
+        }
+        else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+          e.consume();
+          IdeFocusManager.getInstance(project).requestFocus(myTable, true);
+        }
+      }
+    });
+    final Callable<DiffElement> srcChooser = myModel.getSourceDir().getElementChooser(project);
+    final Callable<DiffElement> trgChooser = myModel.getTargetDir().getElementChooser(project);
+    if (srcChooser != null) {
+      mySourceDirField.setButtonEnabled(true);
+      mySourceDirField.addActionListener(new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          try {
+            final Callable<DiffElement> chooser = myModel.getSourceDir().getElementChooser(project);
+            if (chooser == null) return;
+            final DiffElement newElement = chooser.call();
+            if (newElement != null) {
+              myModel.setSourceDir(newElement);
+              mySourceDirField.setText(newElement.getPath());
+            }
+          } catch (Exception e1) {//
+          }
+        }
+      });
+    } else {
+      mySourceDirField.setButtonEnabled(false);
+      mySourceDirField.getButton().setVisible(false);
+      mySourceDirField.setEditable(false);
+    }
+
+    if (trgChooser != null) {
+      myTargetDirField.setButtonEnabled(true);
+      myTargetDirField.addActionListener(new AbstractAction() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          try {
+            final Callable<DiffElement> chooser = myModel.getTargetDir().getElementChooser(project);
+            if (chooser == null) return;
+            final DiffElement newElement = chooser.call();
+            if (newElement != null) {
+              myModel.setTargetDir(newElement);
+              myTargetDirField.setText(newElement.getPath());
+            }
+          } catch (Exception e1) {//
+          }
+        }
+      });
+    } else {
+      myTargetDirField.setButtonEnabled(false);
+      myTargetDirField.getButton().setVisible(false);
+      myTargetDirField.setEditable(false);
+    }
+  }
+
+  public JTextField getFilter() {
+    return myFilter;
+  }
+
+  private void fireFilterUpdated() {
+    final String newFilter = myFilter.getText();
+    if (!StringUtil.equals(oldFilter, newFilter)) {
+      oldFilter = newFilter;
+      myModel.getSettings().setFilter(newFilter);
+      myModel.applySettings();
+    }
   }
 
   private JLabel getErrorLabel() {
@@ -228,6 +316,7 @@ public class DirDiffPanel {
 
   public void dispose() {
     myModel.stopUpdating();
+    PropertiesComponent.getInstance().setValue(DIVIDER_PROPERTY, String.valueOf(mySplitPanel.getDividerLocation()));
     clearDiffPanel();
   }
 
@@ -243,5 +332,9 @@ public class DirDiffPanel {
         }
       }
     };
+  }
+
+  public void setupSplitter() {
+    mySplitPanel.setDividerLocation(Integer.valueOf(PropertiesComponent.getInstance().getValue(DIVIDER_PROPERTY, "200")));
   }
 }

@@ -74,7 +74,6 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       for (int i = size - 1; i >= index; i--) {
         pointers.remove(i);
       }
-      int i = 0;
     }
   }
 
@@ -148,15 +147,21 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
   }
 
+  //private static final Key<SmartPsiElementPointer> CACHED_SMART_POINTER_KEY = Key.create("CACHED_SMART_POINTER_KEY");
   @NotNull
   public <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element) {
     if (!element.isValid()) {
       LOG.error("Invalid element:" + element);
     }
+    //final SmartPsiElementPointer cachedPointer = element.getUserData(CACHED_SMART_POINTER_KEY);
+    //if (cachedPointer != null) {
+    //  return cachedPointer;
+    //}
+
     PsiFile containingFile = element.getContainingFile();
     SmartPointerEx<E> pointer = new SmartPsiElementPointerImpl<E>(myProject, element, containingFile);
     initPointer(pointer, containingFile);
-
+    //element.putUserData(CACHED_SMART_POINTER_KEY, pointer);
     return pointer;
   }
 
@@ -173,7 +178,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     return pointer;
   }
 
-  private <E extends PsiElement> void initPointer(SmartPointerEx<E> pointer, PsiFile containingFile) {
+  private static <E extends PsiElement> void initPointer(SmartPointerEx<E> pointer, PsiFile containingFile) {
     if (containingFile == null) return;
     synchronized (containingFile) {
       //Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(containingFile);
@@ -210,11 +215,9 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
 
   @NotNull
+  @Deprecated
   public <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(@NotNull E element) {
     return createSmartPsiElementPointer(element);
-    //LazyPointerImpl<E> pointer = new LazyPointerImpl<E>(element);
-    //initPointer(element, pointer, element.getContainingFile());
-    //return pointer;
   }
 
   @Override
@@ -223,9 +226,6 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       SmartPointerElementInfo elementInfo1 = ((SmartPsiElementPointerImpl)pointer1).getElementInfo();
       SmartPointerElementInfo elementInfo2 = ((SmartPsiElementPointerImpl)pointer2).getElementInfo();
       return elementInfo1.pointsToTheSameElementAs(elementInfo2);
-    }
-    if (pointer1 instanceof LazyPointerImpl && pointer2 instanceof LazyPointerImpl) {
-      return ((LazyPointerImpl)pointer1).pointsToTheSameElementAs((LazyPointerImpl)pointer2);
     }
     return Comparing.equal(pointer1.getElement(), pointer2.getElement());
   }

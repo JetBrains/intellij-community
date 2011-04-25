@@ -17,6 +17,7 @@ package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -33,6 +34,32 @@ import java.util.*;
  *         Date: Apr 22, 2010
  */
 public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
+
+  protected static <K, V> void cacheResult(@Nullable final DomElement context,
+                                           final Key<Map<K, V>> cacheKind,
+                                           K key,
+                                           V value) {
+    if (context != null) {
+      Map<K, V> cachemap = context.getUserData(cacheKind);
+      if (cachemap == null) {
+        context.putUserData(cacheKind, cachemap = Collections.synchronizedMap(new HashMap<K, V>()));
+      }
+      cachemap.put(key, value);
+    }
+  }
+
+  @Nullable
+  protected static <K, V> V getCachedResult(@Nullable final DomElement context,
+                                            final Key<Map<K, V>> cacheKind,
+                                            K key) {
+    if (context != null) {
+      final Map<K, V> cached = context.getUserData(cacheKind);
+      if (cached != null) {
+        return cached.get(key);
+      }
+    }
+    return null;
+  }
 
   public static enum Stage {
     RESOLVE_MAP_BUILDING_STAGE, TARGETS_WALKUP_STAGE

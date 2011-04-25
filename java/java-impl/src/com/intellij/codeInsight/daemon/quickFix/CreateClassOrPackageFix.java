@@ -18,9 +18,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -44,10 +42,8 @@ import java.util.*;
 /**
  * @author peter
  */
-public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
-
+public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final List<PsiDirectory> myWritableDirectoryList;
-  private final PsiElement myContext;
   private final String myPresentation;
 
   @Nullable private final ClassKind myClassKind;
@@ -92,17 +88,17 @@ public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
     return createFix(qualifiedName, context.getResolveScope(), context, null, kind, superClass, null);
   }
 
-  private CreateClassOrPackageFix(final List<PsiDirectory> writableDirectoryList,
-                                  final PsiElement context,
-                                  final String presentation,
-                                  final String redPart,
+  private CreateClassOrPackageFix(@NotNull List<PsiDirectory> writableDirectoryList,
+                                  @NotNull PsiElement context,
+                                  @NotNull String presentation,
+                                  @NotNull String redPart,
                                   @Nullable ClassKind kind,
                                   @Nullable String superClass,
                                   @Nullable final String templateName) {
+    super(context);
     myRedPart = redPart;
     myTemplateName = templateName;
     myWritableDirectoryList = writableDirectoryList;
-    myContext = context;
     myClassKind = kind;
     mySuperClass = superClass;
     myPresentation = presentation;
@@ -111,13 +107,8 @@ public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
   @NotNull
   public String getText() {
     return QuickFixBundle.message(
-        myClassKind == ClassKind.INTERFACE ? "create.interface.text" : myClassKind != null ? "create.class.text" : "create.package.text",
-        myPresentation);
-  }
-
-  @NotNull
-  public String getName() {
-    return getText();
+      myClassKind == ClassKind.INTERFACE ? "create.interface.text" : myClassKind != null ? "create.class.text" : "create.package.text",
+      myPresentation);
   }
 
   @NotNull
@@ -125,19 +116,28 @@ public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
     return getText();
   }
 
-  public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiFile file = descriptor.getPsiElement().getContainingFile();
+  @Override
+  public void invoke(@NotNull final Project project,
+                     @NotNull final PsiFile file,
+                     @Nullable("is null when called from inspection") Editor editor,
+                     @NotNull final PsiElement startElement,
+                     @NotNull PsiElement endElement) {
     if (isAvailable(project, null, file)) {
       new WriteCommandAction(project) {
         protected void run(Result result) throws Throwable {
-          invoke(project, null, file);
+          final PsiDirectory directory = chooseDirectory(project, file);
+          if (directory == null) return;
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              doCreate(directory, startElement);
+            }
+          });
         }
       }.execute();
     }
   }
 
   private static boolean checkCreateClassOrPackage(final boolean createJavaClass, final PsiDirectory directory, final String name) {
-
     try {
       if (createJavaClass) {
         JavaDirectoryService.getInstance().checkCreateClass(directory, name);
@@ -150,21 +150,6 @@ public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
     catch (IncorrectOperationException ex) {
       return false;
     }
-  }
-
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return true;
-  }
-
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-
-    final PsiDirectory directory = chooseDirectory(project, file);
-    if (directory == null) return;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        doCreate(directory);
-      }
-    });
   }
 
   @Nullable
@@ -192,7 +177,7 @@ public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
     return preferredDirectory;
   }
 
-  private void doCreate(final PsiDirectory baseDirectory) {
+  private void doCreate(final PsiDirectory baseDirectory, PsiElement myContext) {
     final PsiManager manager = baseDirectory.getManager();
     PsiDirectory directory = baseDirectory;
     String lastName;

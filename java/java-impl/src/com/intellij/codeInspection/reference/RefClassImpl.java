@@ -35,15 +35,12 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class RefClassImpl extends RefJavaElementImpl implements RefClass {
-  private static final HashSet<RefElement> EMPTY_SET = new HashSet<RefElement>(0);
-  private static final HashSet<RefClass> EMPTY_CLASS_SET = new HashSet<RefClass>(0);
-  private static final ArrayList<RefMethod> EMPTY_METHOD_LIST = new ArrayList<RefMethod>(0);
+  private static final Set<RefElement> EMPTY_SET = Collections.emptySet();
+  private static final Set<RefClass> EMPTY_CLASS_SET = Collections.emptySet();
+  private static final List<RefMethod> EMPTY_METHOD_LIST = new ArrayList<RefMethod>(0);
   private static final int IS_ANONYMOUS_MASK = 0x10000;
   private static final int IS_INTERFACE_MASK = 0x20000;
   private static final int IS_UTILITY_MASK   = 0x40000;
@@ -54,14 +51,14 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private static final int IS_TESTCASE_MASK  = 0x800000;
   private static final int IS_LOCAL_MASK     = 0x1000000;
 
-  private HashSet<RefClass> myBases;
-  private HashSet<RefClass> mySubClasses;
-  private ArrayList<RefMethod> myConstructors;
+  private Set<RefClass> myBases; // singleton (to conserve the memory) or THashSet
+  private Set<RefClass> mySubClasses; // singleton (to conserve the memory) or THashSet
+  private List<RefMethod> myConstructors;
   private RefMethodImpl myDefaultConstructor;
-  private ArrayList<RefMethod> myOverridingMethods;
-  private THashSet<RefElement> myInTypeReferences;
-  private THashSet<RefElement> myInstanceReferences;
-  private ArrayList<RefJavaElement> myClassExporters;
+  private List<RefMethod> myOverridingMethods;
+  private Set<RefElement> myInTypeReferences;
+  private Set<RefElement> myInstanceReferences;
+  private List<RefJavaElement> myClassExporters;
 
   RefClassImpl(PsiClass psiClass, RefManager manager) {
     super(psiClass, manager);
@@ -270,33 +267,52 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   @NotNull
-  public HashSet<RefClass> getBaseClasses() {
+  public Set<RefClass> getBaseClasses() {
     if (myBases == null) return EMPTY_CLASS_SET;
     return myBases;
   }
 
   private void addBaseClass(RefClass refClass){
-    if (myBases == null){
-      myBases = new HashSet<RefClass>(1);
+    if (myBases == null) {
+      myBases = Collections.singleton(refClass);
+      return;
+    }
+    if (myBases.size() == 1) {
+      // convert from singleton
+      myBases = new THashSet<RefClass>(myBases);
     }
     myBases.add(refClass);
   }
 
   @NotNull
-  public HashSet<RefClass> getSubClasses() {
+  public Set<RefClass> getSubClasses() {
     if (mySubClasses == null) return EMPTY_CLASS_SET;
     return mySubClasses;
   }
 
-  private void addSubClass(RefClass refClass){
-    if (mySubClasses == null){
-      mySubClasses = new HashSet<RefClass>(1);
+  private void addSubClass(@NotNull RefClass refClass){
+    if (mySubClasses == null) {
+      mySubClasses = Collections.singleton(refClass);
+      return;
+    }
+    if (mySubClasses.size() == 1) {
+      // convert from singleton
+      mySubClasses = new THashSet<RefClass>(mySubClasses);
     }
     mySubClasses.add(refClass);
   }
+  private void removeSubClass(RefClass refClass){
+    if (mySubClasses == null) return;
+    if (mySubClasses.size() == 1) {
+      mySubClasses = null;
+    }
+    else {
+      mySubClasses.remove(refClass);
+    }
+  }
 
   @NotNull
-  public ArrayList<RefMethod> getConstructors() {
+  public List<RefMethod> getConstructors() {
     if (myConstructors == null) return EMPTY_METHOD_LIST;
     return myConstructors;
   }
@@ -397,7 +413,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
 
     for (RefClass superClass : getBaseClasses()) {
-      superClass.getSubClasses().remove(this);
+      ((RefClassImpl)superClass).removeSubClass(this);
     }
   }
 

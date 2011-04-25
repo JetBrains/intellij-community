@@ -19,7 +19,6 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -76,7 +75,7 @@ public class FileHeaderChecker {
       });
       PsiDocComment element = docComment.get();
       if (element == null) return null;
-      LocalQuickFix[] quickFix = createQuickFix(element, matcher, offsetToProperty);
+      LocalQuickFix[] quickFix = createQuickFix(matcher, offsetToProperty);
       final String description = InspectionsBundle.message("default.file.template.description");
       return manager.createProblemDescriptor(element, description, onTheFly, quickFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
@@ -98,55 +97,46 @@ public class FileHeaderChecker {
     return properties;
   }
 
-  private static LocalQuickFix[] createQuickFix(final PsiDocComment element,
-                                              final Matcher matcher,
-                                              final TIntObjectHashMap<String> offsetToProperty) {
+  private static LocalQuickFix[] createQuickFix(final Matcher matcher,
+                                                final TIntObjectHashMap<String> offsetToProperty) {
     final FileTemplate template = FileTemplateManager.getInstance().getPattern(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            if (!element.isValid()) return;
-            if (!CodeInsightUtil.preparePsiElementsForWrite(element)) return;
-            String newText;
-            try {
-              newText = template.getText(computeProperties(matcher, offsetToProperty));
-            }
-            catch (IOException e) {
-              LOG.error(e);
-              return;
-            }
-            try {
-              int offset = element.getTextRange().getStartOffset();
-              PsiFile psiFile = element.getContainingFile();
-              if (psiFile == null) return;
-              PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiFile.getProject());
-              Document document = documentManager.getDocument(psiFile);
-              if (document == null) return;
-
-              element.delete();
-              documentManager.doPostponedOperationsAndUnblockDocument(document);
-              documentManager.commitDocument(document);
-
-              document.insertString(offset, newText);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-            catch (IllegalStateException e) {
-              LOG.error("Cannot create doc comment from text: '" + newText + "'", e);
-            }
-          }
-        });
-      }
-    };
 
     final ReplaceWithFileTemplateFix replaceTemplateFix = new ReplaceWithFileTemplateFix() {
-      public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-        runnable.run();
+      public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+        PsiElement element = descriptor.getPsiElement();
+        if (element == null || !element.isValid()) return;
+        if (!CodeInsightUtil.preparePsiElementsForWrite(element)) return;
+        String newText;
+        try {
+          newText = template.getText(computeProperties(matcher, offsetToProperty));
+        }
+        catch (IOException e) {
+          LOG.error(e);
+          return;
+        }
+        try {
+          int offset = element.getTextRange().getStartOffset();
+          PsiFile psiFile = element.getContainingFile();
+          if (psiFile == null) return;
+          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiFile.getProject());
+          Document document = documentManager.getDocument(psiFile);
+          if (document == null) return;
+
+          element.delete();
+          documentManager.doPostponedOperationsAndUnblockDocument(document);
+          documentManager.commitDocument(document);
+
+          document.insertString(offset, newText);
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+        catch (IllegalStateException e) {
+          LOG.error("Cannot create doc comment from text: '" + newText + "'", e);
+        }
       }
     };
-    final LocalQuickFix editFileTemplateFix = DefaultFileTemplateUsageInspection.createEditFileTemplateFix(template, runnable);
+    final LocalQuickFix editFileTemplateFix = DefaultFileTemplateUsageInspection.createEditFileTemplateFix(template, replaceTemplateFix);
     if (template.isDefault()) {
       return new LocalQuickFix[]{editFileTemplateFix};
     }

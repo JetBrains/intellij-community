@@ -235,8 +235,7 @@ public class TextChangesStorage {
           continue;
         }
 
-        TextChangeImpl adjusted = new TextChangeImpl(adjustedText, changeEntry.change.getStart(), changeEntry.change.getEnd());
-        myChanges.set(i, new ChangeEntry(adjusted, adjusted.getStart()));
+        changeEntry.change = new TextChangeImpl(adjustedText, changeEntry.change.getStart(), changeEntry.change.getEnd());
         insertionIndex = -1;
         updateClientOffsetOnly = true;
         continue;
@@ -256,6 +255,7 @@ public class TextChangesStorage {
         int numberOfStoredChangeSymbolsToRemove = newChangeEnd - storedClientStart;
         CharSequence adjustedText = storedText.subSequence(numberOfStoredChangeSymbolsToRemove, storedText.length());
         changeEntry.change = new TextChangeImpl(adjustedText, changeEntry.change.getStart(), changeEntry.change.getEnd());
+        changeEntry.clientStartOffset += changeDiff + numberOfStoredChangeSymbolsToRemove;
         newChangeEnd -= numberOfStoredChangeSymbolsToRemove;
         insertionIndex = i;
         continue;
@@ -265,7 +265,7 @@ public class TextChangesStorage {
       if (newChangeStart < storedClientEnd && newChangeEnd >= storedClientEnd) {
         CharSequence adjustedText = storedText.subSequence(0, newChangeStart - storedClientStart);
         TextChangeImpl adjusted = new TextChangeImpl(adjustedText, changeEntry.change.getStart(), changeEntry.change.getEnd());
-        myChanges.set(i, new ChangeEntry(adjusted, adjusted.getStart()));
+        changeEntry.change = adjusted;
         clientShift += adjusted.getDiff();
         newChangeEnd -= storedClientEnd - newChangeStart;
         insertionIndex = i + 1;
@@ -292,7 +292,7 @@ public class TextChangesStorage {
     ChangeEntry toMerge = myChanges.get(insertionIndex);
     if (insertionIndex > 0) {
       ChangeEntry left = myChanges.get(insertionIndex - 1);
-      if (left.change.getEnd() == toMerge.change.getStart()) {
+      if (left.getClientEndOffset() == toMerge.clientStartOffset && left.change.getEnd() == toMerge.change.getStart()) {
         String text = left.change.getText().toString() + toMerge.change.getText();
         left.change = new TextChangeImpl(text, left.change.getStart(), toMerge.change.getEnd());
         myChanges.remove(insertionIndex);
@@ -304,7 +304,7 @@ public class TextChangesStorage {
     toMerge = myChanges.get(insertionIndex);
     if (insertionIndex < myChanges.size() - 1) {
       ChangeEntry right = myChanges.get(insertionIndex + 1);
-      if (toMerge.change.getEnd() == right.change.getStart()) {
+      if (toMerge.getClientEndOffset() == right.clientStartOffset && toMerge.change.getEnd() == right.change.getStart()) {
         String text = toMerge.change.getText().toString() + right.change.getText();
         toMerge.change = new TextChangeImpl(text, toMerge.change.getStart(), right.change.getEnd());
         myChanges.remove(insertionIndex + 1);
@@ -469,7 +469,12 @@ public class TextChangesStorage {
 
     return -(start + 1);
   }
-  
+
+  @Override
+  public String toString() {
+    return myChanges.toString();
+  }
+
   /**
    * Utility class that contains target {@link TextChangeImpl document change} and auxiliary information associated with it.
    */
@@ -486,6 +491,18 @@ public class TextChangesStorage {
     ChangeEntry(TextChangeImpl change, int clientStartOffset) {
       this.change = change;
       this.clientStartOffset = clientStartOffset;
+    }
+
+    /**
+     * @return      end offset of the current change at the 'client text', i.e. {@link #clientStartOffset} plus change text length
+     */
+    public int getClientEndOffset() {
+      return clientStartOffset + change.getText().length();
+    }
+    
+    @Override
+    public String toString() {
+      return "client start offset: " + clientStartOffset + ", change: " + change;
     }
   }
 }

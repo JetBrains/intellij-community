@@ -28,6 +28,7 @@ import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.List;
@@ -66,7 +67,7 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
       return null;
     }
     HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(repo, command, args);
-    if (result == HgCommandResult.CANCELLED) {
+    if (result == HgCommandResult.CANCELLED || HgErrorUtil.isAuthorizationError(result)) {
       final HgVcs vcs = HgVcs.getInstance(project);
       Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID, "Checking for incoming/outgoing changes disabled",
                                                 "Authentication is required to check incoming/outgoing changes in " + repositoryURL +

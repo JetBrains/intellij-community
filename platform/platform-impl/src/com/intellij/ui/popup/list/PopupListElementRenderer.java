@@ -18,6 +18,7 @@ package com.intellij.ui.popup.list;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.ui.popup.PopupIcons;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 
@@ -70,7 +71,8 @@ public class PopupListElementRenderer extends GroupedItemsListRenderer {
 
     if (step.hasSubstep(value) && isSelectable) {
       myNextStepLabel.setVisible(true);
-      myNextStepLabel.setIcon(isSelected ? PopupIcons.HAS_NEXT_ICON : PopupIcons.HAS_NEXT_ICON_GRAYED);
+      myNextStepLabel.setIcon(isSelected ? (UIUtil.isUnderAquaLookAndFeel() ? PopupIcons.HAS_NEXT_ICON_INVERTED : PopupIcons.HAS_NEXT_ICON) 
+                                         : PopupIcons.HAS_NEXT_ICON_GRAYED);
     }
     else {
       myNextStepLabel.setVisible(false);

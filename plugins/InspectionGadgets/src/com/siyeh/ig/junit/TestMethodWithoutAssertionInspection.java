@@ -189,6 +189,7 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
         }
 
         private boolean containsAssertion(PsiElement element) {
+          if (element == null) return false;
             final ContainsAssertionVisitor visitor =
                     new ContainsAssertionVisitor();
             element.accept(visitor);

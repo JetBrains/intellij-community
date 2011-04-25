@@ -80,11 +80,13 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   public String getValue() {
     String text = myElement.getText();
     final TextRange range = getRangeInElement();
-    if (range.getEndOffset() > text.length() || range.getStartOffset() > text.length() || range.getStartOffset() < 0 || range.getEndOffset() < 0) {
-      LOG.error("Wrong range in reference " + this + ": " + range + ". Reference text: '" + text + "'");
+    try {
+      return range.substring(text);
+    }
+    catch (StringIndexOutOfBoundsException e) {
+      LOG.error("Wrong range in reference " + this + ": " + range + ". Reference text: '" + text + "'", e);
       return text;
     }
-    return range.substring(text);
   }
 
 

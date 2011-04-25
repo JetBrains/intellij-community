@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -32,12 +33,13 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
@@ -54,15 +56,6 @@ public class ShowFilePathAction extends AnAction {
       return;
     }
     e.getPresentation().setEnabled(getFile(e) != null);
-  }
-
-  public static boolean isSupported() {
-    return isJava6orLater() || SystemInfo.isMac;
-  }
-
-  private static boolean isJava6orLater() {
-    final String javaVersion = System.getProperty("java.version");
-    return javaVersion.startsWith("1.6") || javaVersion.startsWith("1.7");
   }
 
   public void actionPerformed(final AnActionEvent e) {
@@ -168,44 +161,61 @@ public class ShowFilePathAction extends AnAction {
       }
     };
 
-    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-    return popup;
+    return JBPopupFactory.getInstance().createListPopup(step);
+  }
+
+  public static boolean isSupported() {
+    return SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isGnome || SystemInfo.isKDE || Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
+  }
+
+  public static String getFileExplorerName() {
+    if (SystemInfo.isMac) return "Finder";
+    if (SystemInfo.isGnome) return "Nautilus";
+    if (SystemInfo.isKDE) return "Konqueror";
+    return "Explorer";
   }
 
   public static void open(final File ioFile, File toSelect) {
-    if (SystemInfo.isMac) {
-      String cmd = "open";
-      String path = ioFile.getAbsolutePath();
-      try {
-        File parent = ioFile.getParentFile();
-        if (parent != null) {
-          Runtime.getRuntime().exec(cmd + " " + path, ArrayUtil.EMPTY_STRING_ARRAY, parent);
-        }
-        else {
-          Runtime.getRuntime().exec(cmd + " " + path);
-        }
-      }
-      catch (IOException e) {
-        LOG.warn(e);
-      }
+    try {
+      if (SystemInfo.isWindows || SystemInfo.isMac) {
+        final String path = toSelect == null ? ioFile.getAbsolutePath() : toSelect.exists() ? toSelect.getAbsolutePath() : ioFile.getAbsolutePath();
+        final Runtime runtime = Runtime.getRuntime();
 
-    }
-    else if (isJava6orLater()) {
-      try {
-        final Object desktopObject = Class.forName("java.awt.Desktop").getMethod("getDesktop").invoke(null);
-        desktopObject.getClass().getMethod("open", File.class).invoke(desktopObject, ioFile);
-      }
-      catch (Exception e) {
-        LOG.debug(e);
-      }
-    }
-    else {
-      throw new UnsupportedOperationException();
-    }
+        String[] args;
+        if (SystemInfo.isMac) {
+          final String script = String.format(
+            "tell application \"Finder\"\n" +
+            "\treveal {\"%s\"} as POSIX file\n" +
+            "\tactivate\n" +
+            "end tell", path);
 
+          args = new String[] {"osascript", "-e", script};
+        } else {
+          args = new String[] {"explorer", String.format("/select,\"%s\"", path)};
+        }
+
+        runtime.exec(args);
+      }
+      else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+        Desktop.getDesktop().open(ioFile);
+      }
+      else if (SystemInfo.isGnome) {
+        Runtime.getRuntime().exec(new String[]{"gnome-open", ioFile.getAbsolutePath()});
+      }
+      else if (SystemInfo.isKDE) {
+        Runtime.getRuntime().exec(new String[]{"kfmclient", "exec", ioFile.getAbsolutePath()});
+      }
+      else {
+        Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");
+      }
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
   }
 
-  private VirtualFile getFile(final AnActionEvent e) {
+  @Nullable
+  private static VirtualFile getFile(final AnActionEvent e) {
     return PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
   }
 

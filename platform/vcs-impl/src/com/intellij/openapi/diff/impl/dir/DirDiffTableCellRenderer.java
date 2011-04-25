@@ -115,7 +115,7 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
       g.drawImage(IconUtil.toImage(icon), 2, (h - icon.getIconHeight()) / 2, null);
     }
     g.setColor(Color.BLACK);
-    g.drawString(path, 2 + (icon == null ? 0 : icon.getIconWidth()) + 2, h - 2);
+    g.drawString(path, 2 + (icon == null ? 0 : icon.getIconWidth()) + 2, h - 3);
     cache.put(path, img);
     return img;
   }

@@ -36,9 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends SingleRootFileViewProvider {
@@ -171,5 +169,17 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Single
       }
     }
     return ret;
+  }
+
+  @Override
+  public void contentsSynchronized() {
+    super.contentsSynchronized();
+    Set<Language> languages = getLanguages();
+    for (Iterator<Map.Entry<Language, PsiFile>> iterator = myRoots.entrySet().iterator(); iterator.hasNext(); ) {
+      Map.Entry<Language, PsiFile> entry = iterator.next();
+      if (!languages.contains(entry.getKey())) {
+        iterator.remove();
+      }
+    }
   }
 }

@@ -445,6 +445,7 @@
       <separator/>
       <reference ref="CompareTwoFiles"/>
       <reference ref="CompareFileWithEditor"/>
+      <reference ref="CompareDirs"/>
       <separator/>
       <reference ref="ExternalToolsGroup"/>
       <separator/>
@@ -476,6 +477,7 @@
       <reference ref="SynchronizeCurrentFile"/>
       <reference ref="CompareTwoFiles"/>
       <reference ref="CompareFileWithEditor"/>
+      <reference ref="CompareDirs"/>
       <separator/>
       <reference ref="ExternalToolsGroup"/>
       <separator/>

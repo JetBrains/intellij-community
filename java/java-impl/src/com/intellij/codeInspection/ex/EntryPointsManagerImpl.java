@@ -219,7 +219,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
         return;
       }
 
-      ArrayList<RefMethod> refConstructors = refClass.getConstructors();
+      List<RefMethod> refConstructors = refClass.getConstructors();
       if (refConstructors.size() == 1) {
         addEntryPoint(refConstructors.get(0), isPersistent);
         return;
@@ -227,7 +227,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
       else if (refConstructors.size() > 1) {
         // Many constructors here. Need to ask user which ones are used
         for (int i = 0; i < refConstructors.size(); i++) {
-          addEntryPoint((RefMethod)((ArrayList)refConstructors).get(i), isPersistent);
+          addEntryPoint(refConstructors.get(i), isPersistent);
         }
 
         return;

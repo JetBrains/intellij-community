@@ -58,7 +58,8 @@ class CompAPIDriver {
 
     assert myCompilationResults.isEmpty();
     JavaCompiler compiler = JavacTool.create(); //use current classloader
-    MyFileManager manager = new MyFileManager(this, outputDir);
+    StandardJavaFileManager standardFileManager = compiler.getStandardFileManager(null, null, null);
+    MyFileManager manager = new MyFileManager(this, outputDir, standardFileManager);
 
     Iterable<? extends JavaFileObject> input = manager.getJavaFileObjectsFromFiles(paths);
 

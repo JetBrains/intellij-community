@@ -14,18 +14,13 @@ package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.StringUtils;
-import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.command.*;
-import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgCommandResultHandler;
-import org.zmlx.hg4idea.provider.update.HgConflictResolver;
+import org.zmlx.hg4idea.command.HgMQCommand;
+import org.zmlx.hg4idea.command.HgPullCommand;
 import org.zmlx.hg4idea.ui.HgPullDialog;
 
 import java.util.Collection;
-import java.util.Map;
 
+// TODO unsued code. Keeping until MQ extension will be supported
 public class HgMqRebaseAction extends HgAbstractGlobalAction {
 
   protected HgGlobalCommandBuilder getHgGlobalCommandBuilder(final Project project) {
@@ -61,28 +56,28 @@ public class HgMqRebaseAction extends HgAbstractGlobalAction {
         pullCommand.setRebase(true);
         pullCommand.setUpdate(false);
 
-        pullCommand.execute(new HgCommandResultHandler() {
-          @Override
-          public void process(@Nullable HgCommandResult result) {
-            new HgCommandResultNotifier(project).process(result, null, null);
-
-            String currentBranch = new HgTagBranchCommand(project, repository).getCurrentBranch();
-            if (StringUtils.isBlank(currentBranch)) {
-              return;
-            }
-
-            new HgConflictResolver(project).resolve(repository);
-
-            HgResolveCommand resolveCommand = new HgResolveCommand(project);
-            Map<HgFile, HgResolveStatusEnum> status = resolveCommand.getListSynchronously(repository);
-
-            if (status.containsValue(HgResolveStatusEnum.UNRESOLVED)) {
-              return;
-            }
-
-            new HgRebaseCommand(project, repository).continueRebase();
-          }
-        });
+        //pullCommand.execute(new HgCommandResultHandler() {
+        //  @Override
+        //  public void process(@Nullable HgCommandResult result) {
+        //    new HgCommandResultNotifier(project).process(result, null, null);
+        //
+        //    String currentBranch = new HgTagBranchCommand(project, repository).getCurrentBranch();
+        //    if (StringUtils.isBlank(currentBranch)) {
+        //      return;
+        //    }
+        //
+        //    new HgConflictResolver(project).resolve(repository);
+        //
+        //    HgResolveCommand resolveCommand = new HgResolveCommand(project);
+        //    Map<HgFile, HgResolveStatusEnum> status = resolveCommand.getListSynchronously(repository);
+        //
+        //    if (status.containsValue(HgResolveStatusEnum.UNRESOLVED)) {
+        //      return;
+        //    }
+        //
+        //    new HgRebaseCommand(project, repository).continueRebase();
+        //  }
+        //});
       }
     };
   }

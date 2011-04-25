@@ -199,6 +199,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         assert destFile.mkdirs() : destFile;
       }
       else {
+        if (!fromFile.exists()) {
+          fail("Cannot find source file: '"+sourceFilePath+"'. getTestDataPath()='"+getTestDataPath()+"'. getHomePath()='"+getHomePath()+"'.");
+        }
         try {
           FileUtil.copy(fromFile, destFile);
         }

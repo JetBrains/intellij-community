@@ -25,15 +25,12 @@ import org.jetbrains.annotations.NotNull;
  * User: cdr
  */
 public class MultiRootSelfElementInfo extends SelfElementInfo {
-  private final Language myLanguage;
-
   public MultiRootSelfElementInfo(@NotNull Project project,
                                   @NotNull TextRange anchor,
                                   @NotNull Class anchorClass,
                                   @NotNull PsiFile containingFile,
                                   @NotNull Language language) {
-    super(project, anchor, anchorClass, containingFile);
-    myLanguage = language;
+    super(project, anchor, anchorClass, containingFile, language);
   }
 
   @Override

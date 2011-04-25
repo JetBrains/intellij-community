@@ -303,22 +303,24 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     myContextManager.restoreContext(origin);
 
     final Task task = doActivate(origin, true);
-    
-    List<ChangeListInfo> changeLists = getOpenChangelists(task);
-    if (changeLists.isEmpty()) {
-      myConfig.createChangelist = createChangelist;
-    }
 
-    if (createChangelist) {
+    if (isVcsEnabled()) {
+      List<ChangeListInfo> changeLists = getOpenChangelists(task);
       if (changeLists.isEmpty()) {
-        String name = TaskUtil.getChangeListName(task);
-        String comment = TaskUtil.getChangeListComment(this, origin);
-        createChangeList(task, name, comment);
-      } else {
-        String id = changeLists.get(0).id;
-        LocalChangeList changeList = myChangeListManager.getChangeList(id);
-        if (changeList != null) {
-          myChangeListManager.setDefaultChangeList(changeList);
+        myConfig.createChangelist = createChangelist;
+      }
+
+      if (createChangelist) {
+        if (changeLists.isEmpty()) {
+          String name = TaskUtil.getChangeListName(task);
+          String comment = TaskUtil.getChangeListComment(this, origin);
+          createChangeList(task, name, comment);
+        } else {
+          String id = changeLists.get(0).id;
+          LocalChangeList changeList = myChangeListManager.getChangeList(id);
+          if (changeList != null) {
+            myChangeListManager.setDefaultChangeList(changeList);
+          }
         }
       }
     }

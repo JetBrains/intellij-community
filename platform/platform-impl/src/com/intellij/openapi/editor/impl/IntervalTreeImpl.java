@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -127,6 +128,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       assertUnderWriteLock();
       intervals.add(createGetable(interval));
       keySize++;
+      setNode(interval, this);
     }
 
     protected Getable<T> createGetable(@NotNull T interval) {
@@ -183,8 +185,13 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
   private void assertUnderWriteLock() {
     String s = l.writeLock().toString();
-    assert s.contains("Locked by thread") : s;
+    assert isAcquired(l.writeLock()) : s;
   }
+  private static boolean isAcquired(Lock l) {
+    String s = l.toString();
+    return s.contains("Locked by thread");
+  }
+
 
   private void pushDeltaFromRoot(IntervalNode node) {
     if (normalized) return;
@@ -197,6 +204,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   @NotNull
   protected abstract IntervalNode createNewNode(@NotNull T key, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer);
   protected abstract IntervalNode lookupNode(@NotNull T key);
+  protected abstract void setNode(@NotNull T key, IntervalNode node);
 
   private int compareNodes(@NotNull IntervalNode i1, int delta1, @NotNull IntervalNode i2, int delta2, @NotNull List<IntervalNode> invalid) {
     if (!i2.hasAliveKey(false)) {
@@ -427,7 +435,6 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     if (collectedAway.isEmpty()) return;
     try {
       l.writeLock().lock();
-      checkMax(true);
       for (IntervalNode node : collectedAway) {
         removeNode(node);
       }
@@ -446,11 +453,13 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       modCount++;
       IntervalNode newNode = createNewNode(interval, start, end, greedyToLeft, greedyToRight, layer);
       IntervalNode insertedNode = findOrInsert(newNode);
-      if (insertedNode != newNode) {
+      if (insertedNode == newNode) {
+        setNode(interval, insertedNode);
+      }
+      else {
         // merged
         insertedNode.addInterval(interval);
       }
-
       checkMax(true);
       return insertedNode;
     }
@@ -462,16 +471,29 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   // returns true if all markers are valid
   public boolean checkMax(boolean assertInvalid) {
     if (!VERIFY) return false;
-    Ref<Boolean> allValid = new Ref<Boolean>(true);
-    AtomicInteger keyCounter = new AtomicInteger();
-    AtomicInteger nodeCounter = new AtomicInteger();
-    TLongHashSet ids = new TLongHashSet();
-    checkMax(getRoot(), 0, assertInvalid, allValid, keyCounter, nodeCounter, ids);
-    if (assertInvalid) {
-      assert nodeSize() == nodeCounter.get() : "node size: "+ nodeSize() +"; actual: "+nodeCounter;
-      assert keySize == keyCounter.get() : "key size: "+ keySize +"; actual: "+keyCounter;
+
+    try {
+      l.readLock().lock();
+
+      Ref<Boolean> allValid = new Ref<Boolean>(true);
+      AtomicInteger keyCounter = new AtomicInteger();
+      AtomicInteger nodeCounter = new AtomicInteger();
+      TLongHashSet ids = new TLongHashSet();
+      checkMax(getRoot(), 0, assertInvalid, allValid, keyCounter, nodeCounter, ids);
+      if (assertInvalid) {
+        assert nodeSize() == nodeCounter.get() : "node size: "+ nodeSize() +"; actual: "+nodeCounter;
+        assert keySize == keyCounter.get() : "key size: "+ keySize +"; actual: "+keyCounter;
+        assert keySize >= nodeSize() : keySize + "; "+nodeSize();
+
+        IntervalNode left = getRoot();
+        while (left != null && left.getLeft() != null) left = left.getLeft();
+        assert minNode == left;
+      }
+      return allValid.get();
     }
-    return allValid.get();
+    finally {
+      l.readLock().unlock();
+    }
   }
 
   // returns real (minStart, maxStart, maxEnd)
@@ -488,6 +510,16 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       if (t == null) continue;
       checkBelongsToTheTree(t, assertInvalid);
       assert ids.add(((RangeMarkerImpl)t).getId()) : t;
+    }
+
+    if (assertInvalid) {
+      IntervalNode next = root.next;
+      if (next != null) {
+        assert previous(next) == root;
+        int nextStart = next.intervalStart() + next.computeDeltaUpToRoot();
+        int myStart = root.intervalStart() + deltaUpToRootExclusive + root.delta;
+        assert nextStart >= myStart;
+      }
     }
 
     keyCounter.addAndGet(root.intervals.size());
@@ -540,21 +572,23 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   protected void checkBelongsToTheTree(T interval, boolean assertInvalid) {
     IntervalNode root = lookupNode(interval);
     if (root == null) return;
-    assert !root.intervals.isEmpty();
-
     assert root.getTree() == this : root.getTree() +"; this: "+this;
     if (!VERIFY) return;
-    boolean contains = false;
-    for (int i = root.intervals.size() - 1; i >= 0; i--) {
-      T key = root.intervals.get(i).get();
-      if (key == null) continue;
-      contains |= key == interval;
-      IntervalNode node = lookupNode(key);
-      assert assertInvalid && node == root || !assertInvalid && (node == null || node == root) : node;
-      assert assertInvalid && node.getTree() == this || !assertInvalid && (node == null || node.getTree() == this) : node;
-    }
 
-    assert contains : root.intervals + "; " + interval;
+    if (assertInvalid) {
+      assert !root.intervals.isEmpty();
+      boolean contains = false;
+      for (int i = root.intervals.size() - 1; i >= 0; i--) {
+        T key = root.intervals.get(i).get();
+        if (key == null) continue;
+        contains |= key == interval;
+        IntervalNode node = lookupNode(key);
+        assert node == root : node;
+        assert node.getTree() == this : node;
+      }
+
+      assert contains : root.intervals + "; " + interval;
+    }
 
     IntervalNode e = root;
     while (e.getParent() != null) e = e.getParent();
@@ -566,6 +600,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     if (!interval.isValid()) return false;
     try {
       l.writeLock().lock();
+      if (!interval.isValid()) return false;
       checkBelongsToTheTree(interval, true);
       checkMax(true);
       processReferenceQueue();
@@ -574,6 +609,8 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       if (node == null) return false;
 
       node.removeInterval(interval);
+      setNode(interval, null);
+
       checkMax(true);
       return true;
     }
@@ -590,7 +627,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   }
 
   @Override
-  protected void deleteNode(Node<T> n) {
+  protected void deleteNode(@NotNull Node<T> n) {
     IntervalNode node = (IntervalNode)n;
     pushDeltaFromRoot(node);
     unlinkNode(node);
@@ -847,7 +884,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
             indexInCurrentList++;
           }
           indexInCurrentList = 0;
-          node = getNextNode(node);
+          node = node.next;
         }
         return false;
       }
@@ -863,10 +900,6 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
         return t;
       }
 
-
-      private IntervalNode getNextNode(IntervalNode node) {
-        return node.next;
-      }
 
       public void remove() {
         throw new IncorrectOperationException();
@@ -939,6 +972,13 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     List<IntervalNode> gced = new ArrayList<IntervalNode>();
     collectGced(getRoot(), gced);
     deleteNodes(gced);
+  }
+
+  @Override
+  public void clear() {
+    super.clear();
+    keySize = 0;
+    minNode = null;
   }
 
   private void collectGced(IntervalNode root, List<IntervalNode> gced) {

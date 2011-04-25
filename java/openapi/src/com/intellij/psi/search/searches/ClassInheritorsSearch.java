@@ -21,23 +21,22 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.Function;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.Stack;
-import gnu.trove.TObjectHashingStrategy;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
+import java.lang.ref.Reference;
 import java.util.Set;
 
 /**
@@ -154,9 +153,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
                                            @NotNull final PsiClass baseClass,
                                            @NotNull final SearchScope searchScope,
                                            @NotNull final SearchParameters parameters) {
-    if (baseClass instanceof PsiAnonymousClass) return true;
-
-    if (isFinal(baseClass)) return true;
+    if (baseClass instanceof PsiAnonymousClass || isFinal(baseClass)) return true;
 
     final String qname = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
@@ -173,25 +170,26 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
               return aClass.getQualifiedName();
             }
           });
-          if (CommonClassNames.JAVA_LANG_OBJECT.equals(qname1)) {
-            return true;
-          }
-
-          return consumer.process(aClass);
+          return CommonClassNames.JAVA_LANG_OBJECT.equals(qname1) || consumer.process(aClass);
         }
       });
     }
 
     final Ref<PsiClass> currentBase = Ref.create(null);
-    final Stack<PsiClass> stack = new Stack<PsiClass>();
-    final Set<PsiClass> processed = new HashSet<PsiClass>();
+    final Stack<Pair<Reference<PsiClass>, String>> stack = new Stack<Pair<Reference<PsiClass>, String>>();
+    // there are two sets for memory optimization: it's cheaper to hold FQN than PsiClass
+    final Set<String> processedFqns = new THashSet<String>(); // FQN of processed classes if the class has one
+    final Set<PsiClass> processed = new THashSet<PsiClass>();   // processed classes without FQN (e.g. anonymous)
+
     final Processor<PsiClass> processor = new Processor<PsiClass>() {
       public boolean process(final PsiClass candidate) {
         ProgressManager.checkCanceled();
 
         final Ref<Boolean> result = new Ref<Boolean>();
+        final String[] fqn = new String[1];
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
+            fqn[0] = candidate.getQualifiedName();
             if (parameters.isCheckInheritance() || parameters.isCheckDeep() && !(candidate instanceof PsiAnonymousClass)) {
               if (!candidate.isInheritor(currentBase.get(), false)) {
                 result.set(true);
@@ -213,27 +211,53 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
         if (!result.isNull()) return result.get().booleanValue();
 
         if (parameters.isCheckDeep() && !(candidate instanceof PsiAnonymousClass) && !isFinal(candidate)) {
-          stack.push(candidate);
+          Reference<PsiClass> ref = fqn[0] == null ? createHardReference(candidate) : new SoftReference<PsiClass>(candidate);
+          stack.push(Pair.create(ref, fqn[0]));
         }
 
         return true;
       }
     };
-    stack.push(baseClass);
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(baseClass.getProject());
+    stack.push(Pair.create(createHardReference(baseClass), qname));
+    final GlobalSearchScope projectScope = GlobalSearchScope.allScope(baseClass.getProject());
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(projectScope.getProject());
     while (!stack.isEmpty()) {
       ProgressManager.checkCanceled();
 
-      final PsiClass psiClass = stack.pop();
-      if (!processed.add(psiClass)) continue;
+      Pair<Reference<PsiClass>, String> pair = stack.pop();
+      PsiClass psiClass = pair.getFirst().get();
+      final String fqn = pair.getSecond();
+      if (psiClass == null) {
+        psiClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
+          public PsiClass compute() {
+            return facade.findClass(fqn, projectScope);
+          }
+        });
+        if (psiClass == null) continue;
+      }
+      if (fqn == null) {
+        if (!processed.add(psiClass)) continue;
+      }
+      else {
+        if (!processedFqns.add(fqn)) continue;
+      }
 
       currentBase.set(psiClass);
-      if (!DirectClassInheritorsSearch.search(psiClass, scope, parameters.isIncludeAnonymous()).forEach(processor)) return false;
+      if (!DirectClassInheritorsSearch.search(psiClass, projectScope, parameters.isIncludeAnonymous()).forEach(processor)) return false;
     }
     return true;
   }
 
-  private static boolean isFinal(final PsiClass baseClass) {
+  private static Reference<PsiClass> createHardReference(final PsiClass candidate) {
+    return new SoftReference<PsiClass>(candidate){
+      @Override
+      public PsiClass get() {
+        return candidate;
+      }
+    };
+  }
+
+  private static boolean isFinal(@NotNull final PsiClass baseClass) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
         return Boolean.valueOf(baseClass.hasModifierProperty(PsiModifier.FINAL));

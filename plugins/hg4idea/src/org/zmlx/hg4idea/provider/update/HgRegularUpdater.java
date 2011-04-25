@@ -21,12 +21,10 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -213,20 +211,11 @@ public class HgRegularUpdater implements HgUpdater {
     throws VcsException {
     indicator.setText2(HgVcsMessages.message("hg4idea.progress.pull.with.update"));
     HgPullCommand hgPullCommand = new HgPullCommand(project, repo);
-    hgPullCommand.setSource(new HgShowConfigCommand(project).getDefaultPath(repo));
+    final String defaultPath = new HgShowConfigCommand(project).getDefaultPath(repo);
+    hgPullCommand.setSource(defaultPath);
     hgPullCommand.setUpdate(false);
     hgPullCommand.setRebase(false);
-    hgPullCommand.execute(new HgCommandResultHandler() {
-      @Override
-      public void process(@Nullable HgCommandResult result) {
-        try {
-          ensureSuccess(result);
-        }
-        catch (VcsException e) {
-          LOG.error(e);
-        }
-      }
-    });
+    hgPullCommand.execute();
   }
 
   private void update(@NotNull VirtualFile repo, ProgressIndicator indicator, UpdatedFiles updatedFiles, List<VcsException> warnings) throws VcsException {

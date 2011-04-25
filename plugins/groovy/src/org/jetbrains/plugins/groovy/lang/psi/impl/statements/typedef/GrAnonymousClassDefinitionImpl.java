@@ -37,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
+import org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrStubElementType;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 /**
@@ -50,7 +51,11 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   }
 
   public GrAnonymousClassDefinitionImpl(GrTypeDefinitionStub stub) {
-    super(stub, GroovyElementTypes.ANONYMOUS_CLASS_DEFINITION);
+    this(stub, GroovyElementTypes.ANONYMOUS_CLASS_DEFINITION);
+  }
+
+  public GrAnonymousClassDefinitionImpl(GrTypeDefinitionStub stub, final GrStubElementType nodeType) {
+    super(stub, nodeType);
   }
 
   @NotNull
@@ -64,7 +69,7 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
     return PsiModifier.FINAL.equals(name);
   }
 
-  @NotNull
+  @Nullable
   public GrArgumentList getArgumentListGroovy() {
     //noinspection ConstantConditions
     return findChildByClass(GrArgumentList.class); //not null because of definition

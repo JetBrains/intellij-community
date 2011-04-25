@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Konstantin Bulenkov
  */
-public class DirDiffTableModel extends AbstractTableModel {
+public class DirDiffTableModel extends AbstractTableModel implements Disposable {
   public static final String COLUMN_NAME = "Name";
   public static final String COLUMN_SIZE = "Size";
   public static final String COLUMN_DATE = "Date";
@@ -52,9 +53,19 @@ public class DirDiffTableModel extends AbstractTableModel {
   public String DECORATOR = "DIFF_TABLE_DECORATOR";
   public volatile AtomicReference<String> text = new AtomicReference<String>(prepareText(""));
   private Updater updater;
-  
-  
+  private List<DirDiffModelListener> myListeners = new ArrayList<DirDiffModelListener>();
+
   public static final String EMPTY_STRING = "                                                  ";
+  private DirDiffPanel myPanel;
+
+  public DirDiffTableModel(Project project, DiffElement src, DiffElement trg, DirDiffSettings settings) {
+    myProject = project;
+    mySettings = settings;
+    mySrc = src;
+    Disposer.register(this, src);
+    myTrg = trg;
+    Disposer.register(this, trg);
+  }
 
   public void stopUpdating() {
     if (myUpdating.get()) {
@@ -111,6 +122,14 @@ public class DirDiffTableModel extends AbstractTableModel {
     }
   }
 
+  public void setPanel(DirDiffPanel panel) {
+    myPanel = panel;
+  }
+
+  public void updateFromUI() {
+    getSettings().setFilter(myPanel.getFilter().getText());
+  }
+
   private static String prepareText(String text) {
     final int LEN = EMPTY_STRING.length();
     String right;
@@ -126,11 +145,20 @@ public class DirDiffTableModel extends AbstractTableModel {
     return "Loading... " + right;
   }
 
-  public DirDiffTableModel(Project project, DiffElement src, DiffElement trg, DirDiffSettings settings) {
-    myProject = project;
-    mySettings = settings;
-    mySrc = src;
-    myTrg = trg;
+  void fireUpdateStarted() {
+    for (DirDiffModelListener listener : myListeners) {
+      listener.updateStarted();
+    }
+  }
+
+  void fireUpdateFinished() {
+    for (DirDiffModelListener listener : myListeners) {
+      listener.updateFinished();
+    }
+  }
+
+  void addModelListener(DirDiffModelListener listener) {
+    myListeners.add(listener);
   }
 
   public void reloadModel() {
@@ -269,6 +297,14 @@ public class DirDiffTableModel extends AbstractTableModel {
     return myTrg;
   }
 
+  public void setSourceDir(DiffElement src) {
+    mySrc = src;
+  }
+
+  public void setTargetDir(DiffElement trg) {
+    myTrg = trg;
+  }
+
   @Override
   public int getRowCount() {
     return myElements.size();
@@ -371,6 +407,15 @@ public class DirDiffTableModel extends AbstractTableModel {
 
   public void setCompareMode(DirDiffSettings.CompareMode mode) {
     mySettings.compareMode = mode;
+  }
+
+  @Override
+  public void dispose() {
+    myListeners.clear();
+  }
+
+  public DirDiffSettings getSettings() {
+    return mySettings;
   }
 
   class Updater extends Thread {

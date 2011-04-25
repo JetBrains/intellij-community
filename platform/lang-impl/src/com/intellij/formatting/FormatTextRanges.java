@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,8 +61,8 @@ public class FormatTextRanges {
      * @param range     range to check
      * @return               <code>true</code> if given range has no intersections with the wrapped range; <code>false</code> otherwise
      */
-    public boolean isWhitespaceReadOnly(TextRange range) {
-      if (range.getStartOffset() >= myRange.getEndOffset()) return true;
+    public boolean isWhitespaceReadOnly(@Nullable TextRange range) {
+      if (range == null || range.getStartOffset() >= myRange.getEndOffset()) return true;
       if (myProcessHeadingWhitespace) {
         return range.getEndOffset() < myRange.getStartOffset();
       }

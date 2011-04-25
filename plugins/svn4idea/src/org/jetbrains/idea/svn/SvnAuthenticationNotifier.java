@@ -77,7 +77,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   }
 
   @Override
-  protected boolean ask(final AuthenticationRequest obj) {
+  protected boolean ask(final AuthenticationRequest obj, String description) {
     final Ref<Boolean> resultRef = new Ref<Boolean>();
     final boolean done = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {

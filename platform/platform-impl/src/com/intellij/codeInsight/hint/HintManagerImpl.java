@@ -225,7 +225,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     Rectangle newBounds = new Rectangle(location.x, location.y, size.width, size.height);
 
     final boolean okToUpdateBounds = hideIfOutOfEditor ? oldRectangle.contains(newBounds) : oldRectangle.intersects(newBounds);
-    if (okToUpdateBounds && !hint.vetoesHiding()) {
+    if (okToUpdateBounds || hint.vetoesHiding()) {
       hint.setLocation(new RelativePoint(editor.getContentComponent(), location));
     }
     else {

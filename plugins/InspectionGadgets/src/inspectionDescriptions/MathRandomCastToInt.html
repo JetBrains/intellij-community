@@ -1,0 +1,13 @@
+<html>
+<body>
+This inspection reports any calls to <b>Math.random()</b> which are immediately
+cast to <b>int</b>. Casting a <b>double</b> between <b>0.0</b> (inclusive) and
+<b>1.0</b> (exclusive) will always round down to zero. A <b>Math.random()</b> value
+should first be multiplied with some factor before casting it to an <b>int</b> to
+get a value between zero (inclusive) and the multiplication factor (exclusive).
+Another possible solution would be to use the <b>nextInt()</b> method of
+<b>java.util.Random</b>.
+<p>
+<small>New in 10.5, Powered by InspectionGadgets</small>
+</body>
+</html>
