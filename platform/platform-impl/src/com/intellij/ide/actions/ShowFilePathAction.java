@@ -165,7 +165,14 @@ public class ShowFilePathAction extends AnAction {
   }
 
   public static boolean isSupported() {
-    return SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux || Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
+    return SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isGnome || SystemInfo.isKDE || Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
+  }
+
+  public static String getFileExplorerName() {
+    if (SystemInfo.isMac) return "Finder";
+    if (SystemInfo.isGnome) return "Nautilus";
+    if (SystemInfo.isKDE) return "Konqueror";
+    return "Explorer";
   }
 
   public static void open(final File ioFile, File toSelect) {
@@ -192,8 +199,11 @@ public class ShowFilePathAction extends AnAction {
       else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
         Desktop.getDesktop().open(ioFile);
       }
-      else if (SystemInfo.isLinux) {
-        Runtime.getRuntime().exec(new String[]{"xdg-open", ioFile.getAbsolutePath()});
+      else if (SystemInfo.isGnome) {
+        Runtime.getRuntime().exec(new String[]{"gnome-open", ioFile.getAbsolutePath()});
+      }
+      else if (SystemInfo.isKDE) {
+        Runtime.getRuntime().exec(new String[]{"kfmclient", "exec", ioFile.getAbsolutePath()});
       }
       else {
         Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");
