@@ -467,6 +467,7 @@
     <projectService serviceInterface="com.jetbrains.rest.ReSTService"
                     serviceImplementation="com.jetbrains.rest.ReSTService"/>
     <completion.contributor language="ReST" implementationClass="com.jetbrains.rest.DirectiveCompletionContributor"/>
+    <completion.contributor language="ReST" implementationClass="com.jetbrains.rest.OptionCompletionContributor"/>
   </extensions>
 
   <extensionPoints>
