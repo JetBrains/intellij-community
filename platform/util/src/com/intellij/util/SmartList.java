@@ -15,7 +15,6 @@
  */
 package com.intellij.util;
 
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterator;
 
 import java.util.*;
@@ -23,7 +22,7 @@ import java.util.*;
 @SuppressWarnings({"unchecked"})
 public class SmartList<E> extends AbstractList<E> {
   private int mySize = 0;
-  private Object myElem = null; // null if mySize==0, (E)elem if mySize==1, E[2] if mySize==2, ArrayList<E> if mySize>2
+  private Object myElem = null; // null if mySize==0, (E)elem if mySize==1, Object[] if mySize>=2
 
   public SmartList() {
   }
@@ -43,10 +42,7 @@ public class SmartList<E> extends AbstractList<E> {
     if (mySize == 1) {
       return (E)myElem;
     }
-    if (mySize == 2) {
-      return (E)((Object[])myElem)[index];
-    }
-    return ((List<E>)myElem).get(index);
+    return (E)((Object[])myElem)[index];
   }
 
   public boolean add(E e) {
@@ -59,16 +55,19 @@ public class SmartList<E> extends AbstractList<E> {
       array[1] = e;
       myElem = array;
     }
-    else if (mySize == 2) {
-      List<E> list = new ArrayList<E>(3);
-      final Object[] array = (Object[])myElem;
-      list.add((E)array[0]);
-      list.add((E)array[1]);
-      list.add(e);
-      myElem = list;
-    }
     else {
-      ((List<E>)myElem).add(e);
+      Object[] array = (Object[])myElem;
+      int oldCapacity = array.length;
+      if (mySize >= oldCapacity) {
+        // have to resize
+        int newCapacity = oldCapacity * 3 /2 + 1;
+        int minCapacity = mySize + 1;
+        if (newCapacity < minCapacity) {
+          newCapacity = minCapacity;
+        }
+        myElem = array = Arrays.copyOf(array, newCapacity);
+      }
+      array[mySize] = e;
     }
 
     mySize++;
@@ -95,13 +94,10 @@ public class SmartList<E> extends AbstractList<E> {
       oldValue = (E)myElem;
       myElem = element;
     }
-    else if (mySize == 2) {
+    else {
       final Object[] array = (Object[])myElem;
       oldValue = (E)array[index];
       array[index] = element;
-    }
-    else {
-      oldValue = ((List<E>)myElem).set(index, element);
     }
     return oldValue;
   }
@@ -115,24 +111,20 @@ public class SmartList<E> extends AbstractList<E> {
       oldValue = (E)myElem;
       myElem = null;
     }
-    else if (mySize == 2) {
-      final Object[] array = (Object[])myElem;
-      oldValue = (E)array[index];
-      myElem = array[1 - index];
-    }
-    else if (mySize == 3) {
-      List<E> list = (List<E>)myElem;
-      oldValue = list.get(index);
-      Object[] array = new Object[2];
-      int i0 = index==0 ? 1 : 0;
-      int i1 = index==0 ? 2 : index==1 ? 2 : 1;
-      array[0] = list.get(i0);
-      array[1] = list.get(i1);
-      myElem = array;
-    }
     else {
-      List<E> list = (List<E>)myElem;
-      oldValue = list.remove(index);
+      final Object[] array = (Object[])myElem;
+      oldValue = (E) array[index];
+
+      if (mySize == 2) {
+        myElem = array[1 - index];
+      }
+      else {
+        int numMoved = mySize - index - 1;
+        if (numMoved > 0) {
+          System.arraycopy(array, index + 1, array, index, numMoved);
+        }
+        array[mySize-1] = null;
+      }
     }
     mySize--;
     modCount++;
@@ -178,18 +170,10 @@ public class SmartList<E> extends AbstractList<E> {
     return mySize == 0;
   }
 
-  public void sort(Comparator<E> comparator) {
-    if (mySize < 2) return;
-    if (mySize == 2) {
-      final Object[] array = (Object[])myElem;
-      if (comparator.compare((E)array[0], (E)array[1]) > 0) {
-        Object t = array[0];
-        array[0] = array[1];
-        array[1] = t;
-      }
-    }
-    else {
-      ContainerUtil.sort((List<E>)myElem, comparator);
+  public void sort(Comparator<? super E> comparator) {
+    if (mySize >= 2) {
+      E[] array = (E[])myElem;
+      Arrays.sort(array, 0, mySize, comparator);
     }
   }
 
