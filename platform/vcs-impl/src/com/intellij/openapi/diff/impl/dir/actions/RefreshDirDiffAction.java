@@ -34,5 +34,6 @@ public class RefreshDirDiffAction extends DirDiffAction {
 
   @Override
   protected void updateState(boolean state) {
+    getModel().updateFromUI();
   }
 }

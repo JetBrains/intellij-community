@@ -15,14 +15,19 @@
  */
 package com.intellij.ide.diff;
 
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.Callable;
 
 /**
  * @author Konstantin Bulenkov
@@ -84,5 +89,19 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   @Override
   public Icon getIcon() {
     return isContainer() ? Icons.FOLDER_ICON : myFile.getIcon();
+  }
+
+  @Override
+  public Callable<DiffElement<VirtualFile>> getElementChooser(final Project project) {
+    return new Callable<DiffElement<VirtualFile>>() {
+      @Nullable
+      @Override
+      public DiffElement<VirtualFile> call() throws Exception {
+        final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+        final VirtualFile[] result = FileChooserFactory.getInstance()
+          .createFileChooser(descriptor, project).choose(getValue(), project);
+        return result.length == 1 ? new VirtualFileDiffElement(result[0]) : null;
+      }
+    };
   }
 }

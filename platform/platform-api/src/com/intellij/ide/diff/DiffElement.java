@@ -36,6 +36,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.concurrent.Callable;
 
 /**
  * @author Konstantin Bulenkov
@@ -80,7 +81,7 @@ public abstract class DiffElement<T> implements Disposable {
   }
 
   @Nullable
-  public JComponent getViewComponent(Project project, DiffElement target) {
+  public JComponent getViewComponent(Project project, @Nullable DiffElement target) {
     disposeViewComponent();
     try {
       final T value = getValue();
@@ -188,5 +189,10 @@ public abstract class DiffElement<T> implements Disposable {
 
   @Override
   public void dispose() {
+  }
+
+  @Nullable
+  public Callable<DiffElement<T>> getElementChooser(Project project) {
+    return null;
   }
 }

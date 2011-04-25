@@ -56,6 +56,7 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
   private List<DirDiffModelListener> myListeners = new ArrayList<DirDiffModelListener>();
 
   public static final String EMPTY_STRING = "                                                  ";
+  private DirDiffPanel myPanel;
 
   public DirDiffTableModel(Project project, DiffElement src, DiffElement trg, DirDiffSettings settings) {
     myProject = project;
@@ -119,6 +120,14 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
         myTable.getSelectionModel().setSelectionInterval(row, row);
       }
     }
+  }
+
+  public void setPanel(DirDiffPanel panel) {
+    myPanel = panel;
+  }
+
+  public void updateFromUI() {
+    getSettings().setFilter(myPanel.getFilter().getText());
   }
 
   private static String prepareText(String text) {
@@ -286,6 +295,14 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
 
   public DiffElement getTargetDir() {
     return myTrg;
+  }
+
+  public void setSourceDir(DiffElement src) {
+    mySrc = src;
+  }
+
+  public void setTargetDir(DiffElement trg) {
+    myTrg = trg;
   }
 
   @Override
