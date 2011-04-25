@@ -57,6 +57,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
     
     List<VcsException> exceptions = new LinkedList<VcsException>();
 
+    boolean result = true;
     for (FilePath contentRoot : contentRoots) {
       if (indicator != null && indicator.isCanceled()) {
         throw new ProcessCanceledException();
@@ -71,7 +72,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
       }
       try {
         HgUpdater updater = hgUpdaterFactory.buildUpdater(repository, updateConfiguration);
-        updater.update(updatedFiles, indicator, exceptions);
+        result &= updater.update(updatedFiles, indicator, exceptions);
       } catch (VcsException e) {
         //TODO include module name where exception occurred
         exceptions.add(e);
@@ -80,7 +81,7 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
         indicator.finishNonCancelableSection();
       }
     }
-    return new UpdateSessionAdapter(exceptions, false);
+    return new UpdateSessionAdapter(exceptions, !result);
   }
 
   public Configurable createConfigurable(Collection<FilePath> contentRoots) {
