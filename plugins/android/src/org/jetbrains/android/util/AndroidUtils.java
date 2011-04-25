@@ -15,10 +15,7 @@
  */
 package org.jetbrains.android.util;
 
-import com.android.ddmlib.AdbCommandRejectedException;
-import com.android.ddmlib.IDevice;
-import com.android.ddmlib.ShellCommandUnresponsiveException;
-import com.android.ddmlib.TimeoutException;
+import com.android.ddmlib.*;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.ISdkLog;
 import com.android.sdklib.SdkConstants;
@@ -30,9 +27,12 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.impl.ConsoleViewImpl;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.facet.ProjectFacetManager;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -67,8 +67,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.HashSet;
@@ -76,6 +74,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
+import org.jetbrains.android.actions.AndroidEnableDdmsAction;
 import org.jetbrains.android.dom.AndroidDomUtil;
 import org.jetbrains.android.dom.manifest.Activity;
 import org.jetbrains.android.dom.manifest.Application;
@@ -639,5 +638,62 @@ public class AndroidUtils {
         ((ToolWindowManagerEx)manager).addToolWindowManagerListener(listener);
       }
     });
+  }
+
+  @Nullable
+  public static AndroidDebugBridge getDebugBridge(Project project) {
+    final List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
+    for (AndroidFacet facet : facets) {
+      final AndroidDebugBridge debugBridge = facet.getDebugBridge();
+      if (debugBridge != null) {
+        return debugBridge;
+      }
+    }
+    return null;
+  }
+
+  public static boolean activateDdmsIfNeccessary(@NotNull AndroidFacet facet) {
+    return activateDdmsIfNecessary(facet.getModule().getProject(),
+                                   facet.getDebugBridge());
+  }
+
+  public static boolean activateDdmsIfNecessary(Project project, AndroidDebugBridge bridge) {
+    final boolean ddmsEnabled = AndroidEnableDdmsAction.isDdmsEnabled();
+    boolean shouldRestartDdms = !ddmsEnabled;
+
+    if (ddmsEnabled && bridge != null && isDdmsCorrupted(bridge)) {
+      shouldRestartDdms = true;
+      AndroidEnableDdmsAction.setDdmsEnabled(project, false);
+    }
+
+    if (shouldRestartDdms) {
+      if (!ddmsEnabled) {
+        int result = Messages.showYesNoDialog(project, AndroidBundle.message("android.ddms.disabled.error"),
+                                              AndroidBundle.message("android.ddms.disabled.dialog.title"),
+                                              Messages.getQuestionIcon());
+        if (result != 0) {
+          return false;
+        }
+      }
+      AndroidEnableDdmsAction.setDdmsEnabled(project, true);
+    }
+    return true;
+  }
+
+  public static boolean isDdmsCorrupted(@NotNull AndroidDebugBridge bridge) {
+    IDevice[] devices = bridge.getDevices();
+    if (devices.length > 0) {
+      Client[] clients = devices[0].getClients();
+
+      if (clients.length == 0) {
+        return true;
+      }
+
+      if (clients.length > 0) {
+        ClientData clientData = clients[0].getClientData();
+        return clientData == null || clientData.getVmIdentifier() == null;
+      }
+    }
+    return false;
   }
 }
