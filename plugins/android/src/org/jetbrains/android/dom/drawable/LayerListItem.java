@@ -32,4 +32,6 @@ public interface LayerListItem extends DrawableDomElement {
   AndroidAttributeValue<ResourceValue> getDrawable();
 
   List<BitmapOrNinePatchElement> getBitmaps();
+
+  List<Shape> getShapes();
 }

@@ -57,7 +57,7 @@ public class SwitchTaskAction extends BaseTaskAction {
     popup.showCenteredInCurrentWindow(project);
   }
 
-  public static ListPopupImpl createPopup(DataContext dataContext, Runnable onDispose) {
+  public static ListPopupImpl createPopup(DataContext dataContext, @Nullable Runnable onDispose) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final Ref<Boolean> shiftPressed = Ref.create(false);
     DefaultActionGroup group = project == null ? new DefaultActionGroup() : createPopupActionGroup(project, shiftPressed);
@@ -113,19 +113,22 @@ public class SwitchTaskAction extends BaseTaskAction {
         temp.add(task);
         continue;
       }
-      group.add(createActivateTaskAction(manager, task, shiftPressed, false));
+      group.add(createActivateTaskAction(manager, project, task, shiftPressed, false));
     }
     if (vcsEnabled && !temp.isEmpty()) {
       group.addSeparator();
       for (int i = 0, tempSize = temp.size(); i < Math.min(tempSize, 5); i++) {
         LocalTask task = temp.get(i);
-        group.add(createActivateTaskAction(manager, task, shiftPressed, true));
+        group.add(createActivateTaskAction(manager, project, task, shiftPressed, true));
       }
     }
     return group;
   }
 
-  private static AnAction createActivateTaskAction(final TaskManager manager, final LocalTask task, final Ref<Boolean> shiftPressed,
+  private static AnAction createActivateTaskAction(final TaskManager manager,
+                                                   final Project project,
+                                                   final LocalTask task,
+                                                   final Ref<Boolean> shiftPressed,
                                                    final boolean temp) {
     String trimmedSummary = TaskUtil.getTrimmedSummary(task);
 
@@ -143,7 +146,6 @@ public class SwitchTaskAction extends BaseTaskAction {
         return new AnAction[]{switchAction, new AnAction("&Remove") {
           @Override
           public void actionPerformed(AnActionEvent e) {
-            Project project = getProject(e);
             removeTask(project, task, manager);
           }
         }};
@@ -163,7 +165,7 @@ public class SwitchTaskAction extends BaseTaskAction {
     return group;
   }
 
-  public static void removeTask(final Project project, LocalTask task, TaskManager manager) {
+  public static void removeTask(final @NotNull Project project, LocalTask task, TaskManager manager) {
     if (task.isDefault()) {
       Messages.showInfoMessage(project, "Default task cannot be removed", "Cannot Remove");
     }

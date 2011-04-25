@@ -28,14 +28,10 @@ import java.awt.*;
 /**
  * @author Eugene.Kudelevsky
  */
-public class HtmlTagTreeBreadcrumbsPresentationProvider extends BreadcrumbsPresentationProvider {
+public class XmlTagTreeBreadcrumbsPresentationProvider extends BreadcrumbsPresentationProvider {
   private static boolean isMyContext(@NotNull PsiElement deepestElement) {
     final PsiFile file = deepestElement.getContainingFile();
-    if (file == null || !HtmlTagTreeHighlightingUtil.isTagTreeHighlightingActive(file)) {
-      return false;
-    }
-
-    if (!HtmlTagTreeHighlightingUtil.containsParentTagsWithSameName(deepestElement)) {
+    if (file == null || !XmlTagTreeHighlightingUtil.isTagTreeHighlightingActive(file)) {
       return false;
     }
     return true;
@@ -47,8 +43,12 @@ public class HtmlTagTreeBreadcrumbsPresentationProvider extends BreadcrumbsPrese
       return null;
     }
 
+    if (!XmlTagTreeHighlightingUtil.containsTagsWithSameName(elements)) {
+      return null;
+    }
+
     final CrumbPresentation[] result = new CrumbPresentation[elements.length];
-    final Color[] baseColors = HtmlTagTreeHighlightingUtil.getBaseColors();
+    final Color[] baseColors = XmlTagTreeHighlightingUtil.getBaseColors();
     int index = 0;
 
     for (int i = result.length - 1; i >= 0; i--) {
@@ -70,7 +70,7 @@ public class HtmlTagTreeBreadcrumbsPresentationProvider extends BreadcrumbsPrese
     @Override
     public Color getBackgroundColor(boolean selected, boolean hovered, boolean light) {
       final Color baseColor = super.getBackgroundColor(selected, hovered, light);
-      return HtmlTagTreeHighlightingUtil.makeTransparent(myColor, baseColor, 0.1);
+      return XmlTagTreeHighlightingUtil.makeTransparent(myColor, baseColor, 0.1);
     }
   }
 }

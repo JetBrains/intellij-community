@@ -32,7 +32,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -173,22 +172,29 @@ public class ShowFilePathAction extends AnAction {
   }
 
   public static void open(final File ioFile, File toSelect) {
-    if (SystemInfo.isMac) {
-      String cmd = "open";
-      String path = ioFile.getAbsolutePath();
+    if (SystemInfo.isWindows || SystemInfo.isMac) {
+      final String path = toSelect == null ? ioFile.getAbsolutePath() : toSelect.exists() ? toSelect.getAbsolutePath() : ioFile.getAbsolutePath();
+      final Runtime runtime = Runtime.getRuntime();
+      
+      String[] args;
+      if (SystemInfo.isMac) {
+        final String script = String.format(
+          "tell application \"Finder\"\n" +
+          "\treveal {\"%s\"} as POSIX file\n" +
+          "\tactivate\n" +
+          "end tell", path);
+      
+        args = new String[] {"osascript", "-e", script};
+      } else {
+        args = new String[] {"explorer", String.format("/select,\"%s\"", path)};
+      }
+      
       try {
-        File parent = ioFile.getParentFile();
-        if (parent != null) {
-          Runtime.getRuntime().exec(cmd + " " + path, ArrayUtil.EMPTY_STRING_ARRAY, parent);
-        }
-        else {
-          Runtime.getRuntime().exec(cmd + " " + path);
-        }
+        runtime.exec(args);
       }
       catch (IOException e) {
         LOG.warn(e);
       }
-
     }
     else if (isJava6orLater()) {
       try {

@@ -624,7 +624,7 @@ public abstract class GroovyRefactoringUtil {
 
   public static GrExpression generateArgFromMultiArg(PsiSubstitutor substitutor,
                                                      List<? extends PsiElement> arguments,
-                                                     PsiType type,
+                                                     @Nullable PsiType type,
                                                      final Project project) {
     StringBuilder argText = new StringBuilder();
     argText.append("[");

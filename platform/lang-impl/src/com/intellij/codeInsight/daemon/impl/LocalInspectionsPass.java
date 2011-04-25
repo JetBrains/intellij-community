@@ -138,13 +138,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   private void disposeDescriptors() {
-    for (List<InspectionResult> list : result.values()) {
-      for (InspectionResult inspectionResult : list) {
-         for (ProblemDescriptor pd: inspectionResult.foundProblems) {
-           ((ProblemDescriptorImpl)pd).dispose();
-         }
-      }
-    }
     result.clear();
   }
 
@@ -231,26 +224,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final LocalInspectionToolSession session = new LocalInspectionToolSession(myFile, myStartOffset, myEndOffset);
 
     List<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>> init = new ArrayList<Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor>>();
-    boolean finished = false;
-    try {
-      visitPriorityElementsAndInit(tools, iManager, isOnTheFly, indicator, inside, session, init);
-      visitRestElementsAndCleanup(tools,iManager,isOnTheFly, indicator, outside, session, init);
-      finished = true;
-    }
-    finally {
-      if (!finished) {
-        synchronized (init) {
-          for (Trinity<LocalInspectionTool, ProblemsHolder, PsiElementVisitor> trinity : init) {
-            List<ProblemDescriptor> results = trinity.second.getResults();
-            if (results != null) {
-              for (ProblemDescriptor pd : results) {
-                ((ProblemDescriptorImpl)pd).dispose();
-              }
-            }
-          }
-        }
-      }
-    }
+    visitPriorityElementsAndInit(tools, iManager, isOnTheFly, indicator, inside, session, init);
+    visitRestElementsAndCleanup(tools,iManager,isOnTheFly, indicator, outside, session, init);
 
     indicator.checkCanceled();
 

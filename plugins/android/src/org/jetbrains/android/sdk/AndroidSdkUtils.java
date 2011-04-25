@@ -235,4 +235,8 @@ public class AndroidSdkUtils {
     JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
     return version == JavaSdkVersion.JDK_1_5 || version == JavaSdkVersion.JDK_1_6;
   }
+
+  public static boolean targetHasId(@NotNull IAndroidTarget target, @NotNull String id) {
+    return id.equals(target.getVersion().getApiString()) || id.equals(target.getVersionName());
+  }
 }

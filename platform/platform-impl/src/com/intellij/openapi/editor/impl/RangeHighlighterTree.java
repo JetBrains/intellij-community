@@ -61,7 +61,7 @@ public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
     return new RHNode(key, start, end, greedyToLeft, greedyToRight,layer);
   }
 
-  class RHNode extends RMNode {
+  class RHNode extends RangeMarkerTree<RangeHighlighterEx>.RMNode {
     final int myLayer;
 
     public RHNode(@NotNull final RangeHighlighterEx key,

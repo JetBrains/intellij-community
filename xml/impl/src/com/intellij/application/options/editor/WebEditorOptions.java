@@ -18,7 +18,6 @@ package com.intellij.application.options.editor;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.xml.XmlBundle;
@@ -52,6 +51,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   private boolean myTagTreeHighlightingEnabled = true;
   private int myTagTreeHighlightingLevelCount = 6;
+  private int myTagTreeHighlightingOpacity = 10;
 
   public static WebEditorOptions getInstance() {
     return ServiceManager.getService(WebEditorOptions.class);
@@ -139,6 +139,14 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public int getTagTreeHighlightingLevelCount() {
     return myTagTreeHighlightingLevelCount;
+  }
+
+  public void setTagTreeHighlightingOpacity(int tagTreeHighlightingOpacity) {
+    myTagTreeHighlightingOpacity = tagTreeHighlightingOpacity;
+  }
+
+  public int getTagTreeHighlightingOpacity() {
+    return myTagTreeHighlightingOpacity;
   }
 
   public void setTagTreeHighlightingEnabled(boolean tagTreeHighlightingEnabled) {

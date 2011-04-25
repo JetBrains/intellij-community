@@ -60,10 +60,15 @@ public class PropertyResolver extends PropertyProviderFinder {
 
   @Override
   protected void propertyProviderFound(PropertiesProvider propertiesProvider) {
+    boolean found = false;
     for (Iterator<String> it = propertiesProvider.getNamesIterator(); it.hasNext();) {
-      myVariants.add(it.next());
+      final String providerProperty = it.next();
+      myVariants.add(providerProperty);
+      if (myPropertyName.equals(providerProperty)) {
+        found = true;
+      }
     }
-    if (propertiesProvider.getPropertyValue(myPropertyName) != null) {
+    if (found) {
       myResult = propertiesProvider;
       stop();
     }

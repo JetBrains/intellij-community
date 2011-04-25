@@ -1,4 +1,5 @@
 <resources>
   <string name="hello">hello</string>
   <item name="hi" type="string"/>
+  <string-array name="str_arr"></string-array>
 </resources>

@@ -71,6 +71,9 @@ public interface Content extends UserDataHolder, ComponentContainer {
    */
   void setDisposer(Disposable disposer);
 
+  void setShouldDisposeContent(boolean value);
+  boolean shouldDisposeContent();
+
   String getDescription();
 
   void setDescription(String description);

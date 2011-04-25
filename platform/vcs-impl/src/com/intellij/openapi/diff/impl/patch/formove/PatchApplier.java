@@ -108,7 +108,9 @@ public class PatchApplier<BinaryType extends FilePatch> {
 
   @AsynchronousExecution
   public void execute(boolean showSuccessNotification) {
-    final Continuation continuation = Continuation.createForCurrentProgress(myProject, true, "Apply patch");
+    final Continuation continuation = ApplicationManager.getApplication().isDispatchThread() ?
+                                      Continuation.createFragmented(myProject, true) :
+                                      Continuation.createForCurrentProgress(myProject, true, "Apply patch");
     final GatheringContinuationContext initContext =
       new GatheringContinuationContext();
     scheduleSelf(showSuccessNotification, initContext);

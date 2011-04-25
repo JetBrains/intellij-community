@@ -25,7 +25,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashSet;
-import com.intellij.xml.util.HtmlUtil;
 
 import java.awt.*;
 import java.util.Set;
@@ -33,21 +32,20 @@ import java.util.Set;
 /**
  * @author Eugene.Kudelevsky
  */
-class HtmlTagTreeHighlightingUtil {
-  private HtmlTagTreeHighlightingUtil() {
+class XmlTagTreeHighlightingUtil {
+  private XmlTagTreeHighlightingUtil() {
   }
 
-  static boolean containsParentTagsWithSameName(PsiElement element) {
+  static boolean containsTagsWithSameName(PsiElement[] elements) {
     final Set<String> names = new HashSet<String>();
 
-    while (element != null) {
+    for (PsiElement element : elements) {
       if (element instanceof XmlTag) {
         final String name = ((XmlTag)element).getName();
         if (!names.add(name)) {
           return true;
         }
       }
-      element = element.getParent();
     }
 
     return false;
@@ -58,7 +56,7 @@ class HtmlTagTreeHighlightingUtil {
       return false;
     }
 
-    if (!(file instanceof XmlFile) || !HtmlUtil.hasHtml(file)) {
+    if (!(file instanceof XmlFile)/* || !HtmlUtil.hasHtml(file)*/) {
       return false;
     }
 
@@ -69,15 +67,26 @@ class HtmlTagTreeHighlightingUtil {
   }
 
   static Color makeTransparent(Color color, Color backgroundColor, double transparency) {
-    int r = (int)(backgroundColor.getRed() * (1 - transparency) + color.getRed() * transparency);
-    int g = (int)(backgroundColor.getGreen() * (1 - transparency) + color.getGreen() * transparency);
-    int b = (int)(backgroundColor.getBlue() * (1 - transparency) + color.getBlue() * transparency);
+    int r = makeTransparent(transparency, color.getRed(), backgroundColor.getRed());
+    int g = makeTransparent(transparency, color.getGreen(), backgroundColor.getGreen());
+    int b = makeTransparent(transparency, color.getBlue(), backgroundColor.getBlue());
 
     return new Color(r, g, b);
   }
 
+  private static int makeTransparent(double transparency, int channel, int backgroundChannel) {
+    final int result = (int)(backgroundChannel * (1 - transparency) + channel * transparency);
+    if (result < 0) {
+      return 0;
+    }
+    if (result > 255) {
+      return 255;
+    }
+    return result;
+  }
+
   static Color[] getBaseColors() {
-    final ColorKey[] colorKeys = HtmlTagTreeHighlightingColors.getColorKeys();
+    final ColorKey[] colorKeys = XmlTagTreeHighlightingColors.getColorKeys();
     final Color[] colors = new Color[colorKeys.length];
 
     final EditorColorsScheme colorsScheme = EditorColorsManager.getInstance().getGlobalScheme();

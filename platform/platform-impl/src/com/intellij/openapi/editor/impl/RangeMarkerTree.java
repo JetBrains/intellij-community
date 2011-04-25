@@ -86,7 +86,6 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     RangeMarkerImpl marker = (RangeMarkerImpl)interval;
     marker.setValid(true);
     RangeMarkerTree<T>.RMNode node = (RMNode)super.addInterval(interval, start, end, greedyToLeft, greedyToRight, layer);
-    ((RangeMarkerImpl)interval).myNode = node;
 
     checkBelongsToTheTree(interval, true);
 
@@ -110,7 +109,12 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     return (RMNode)((RangeMarkerImpl)key).myNode;
   }
 
-  public class RMNode extends IntervalNode {
+  @Override
+  protected void setNode(@NotNull T key, IntervalNode intervalNode) {
+    ((RangeMarkerImpl)key).myNode = (RMNode)intervalNode;
+  }
+
+  public class RMNode extends IntervalTreeImpl<T>.IntervalNode {
     private final boolean isExpandToLeft;
     private final boolean isExpandToRight;
 
@@ -128,19 +132,12 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       return isExpandToRight;
     }
 
-    @Override
-    public void addInterval(@NotNull T interval) {
-      super.addInterval(interval);
-      ((RangeMarkerImpl)interval).myNode = (RangeMarkerTree.RMNode)this;
-      checkBelongsToTheTree(interval, true);
-    }
-
-    @Override
-    public boolean removeInterval(@NotNull T key) {
-      boolean removedNode = super.removeInterval(key);
-      ((RangeMarkerImpl)key).myNode = null;
-      return removedNode;
-    }
+    //@Override
+    //public void addInterval(@NotNull T interval) {
+    //  super.addInterval(interval);
+    //  ((RangeMarkerImpl)interval).myNode = this;
+    //  checkBelongsToTheTree(interval, true);
+    //}
 
     @Override
     public String toString() {

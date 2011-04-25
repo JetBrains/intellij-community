@@ -16,6 +16,7 @@
 package com.intellij.spellchecker.engine;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -85,12 +86,20 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   }
 
   private void loadCompressedDictionary(@NotNull Loader loader) {
-    loadDictionaryAsync(loader, new Consumer<Dictionary>() {
-      @Override
-      public void consume(final Dictionary dictionary) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      final CompressedDictionary dictionary = CompressedDictionary.create(loader, transform);
+      if (dictionary != null) {
         addCompressedFixedDictionary(dictionary);
       }
-    });
+    }
+    else {
+      loadDictionaryAsync(loader, new Consumer<Dictionary>() {
+        @Override
+        public void consume(final Dictionary dictionary) {
+          addCompressedFixedDictionary(dictionary);
+        }
+      });
+    }
   }
   
   private void loadDictionaryAsync(@NotNull final Loader loader, @NotNull final Consumer<Dictionary> consumer) {

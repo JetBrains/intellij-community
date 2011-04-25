@@ -138,9 +138,8 @@ public abstract class RedBlackTree<K> {
     assert node1 == null || node1.getParent() == null || node1.getParent().getLeft() == node1 || node1.getParent().getRight() == node1;
   }
 
-  protected void deleteNode(Node<K> n) {
+  protected void deleteNode(@NotNull Node<K> n) {
     modCount++;
-    if (n == null) return;  // Key not found, do nothing
 
     Node<K> e = n;
     while (e.getParent() != null) e = e.getParent();

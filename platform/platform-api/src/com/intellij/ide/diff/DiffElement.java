@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.diff;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
@@ -39,7 +40,7 @@ import java.nio.charset.Charset;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class DiffElement<T> {
+public abstract class DiffElement<T> implements Disposable {
   public static final DiffElement[] EMPTY_ARRAY = new DiffElement[0];
   private DiffPanel myDiffPanel;
   private Editor myEditor;
@@ -51,7 +52,7 @@ public abstract class DiffElement<T> {
   public abstract String getName();
 
   public String getPresentablePath() {
-    return getPath();
+    return getName();
   }
 
   public abstract long getSize();
@@ -65,9 +66,6 @@ public abstract class DiffElement<T> {
   public abstract boolean isContainer();
 
   public abstract DiffElement[] getChildren() throws IOException;
-
-  @Nullable
-  public abstract DiffElement<T> findFileByRelativePath(String path);
 
   /**
    * Returns content data as byte array. Can be null, if element for example is a container
@@ -137,8 +135,10 @@ public abstract class DiffElement<T> {
   protected DiffRequest createRequest(Project project, DiffElement element) throws IOException {
     final T src = getValue();
     if (src instanceof VirtualFile) {
+      if (((VirtualFile)src).getFileType().isBinary()) return null;
       final Object trg = element.getValue();
       if (trg instanceof VirtualFile) {
+        if (((VirtualFile)trg).getFileType().isBinary()) return null;
         final FileDocumentManager mgr = FileDocumentManager.getInstance();
         if (mgr.getDocument((VirtualFile)src) != null && mgr.getDocument((VirtualFile)trg) != null) {
           return SimpleDiffRequest.compareFiles((VirtualFile)src, (VirtualFile)trg, project);
@@ -184,5 +184,9 @@ public abstract class DiffElement<T> {
   @Nullable
   public Icon getIcon() {
     return null;
+  }
+
+  @Override
+  public void dispose() {
   }
 }

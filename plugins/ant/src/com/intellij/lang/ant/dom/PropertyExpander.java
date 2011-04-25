@@ -32,9 +32,24 @@ public class PropertyExpander {
   private static final Pattern $$_PATTERN = Pattern.compile("\\$\\$");
   final List<PropertiesProvider> myProviders = new ArrayList<PropertiesProvider>();
   final Resolver myResolver;
+  private PropertyExpansionListener myPropertyExpansionListener;
 
+  public interface PropertyExpansionListener {
+    void onPropertyExpanded(String propName, String propValue);
+  }
+  
   public PropertyExpander(final @NotNull String str) {
     myResolver = new Resolver(str);
+  }
+
+  /**
+   * @param listener new listener implementation
+   * @return previous listener
+   */
+  public PropertyExpansionListener setPropertyExpansionListener(PropertyExpansionListener listener) {
+    final PropertyExpansionListener prevListener = myPropertyExpansionListener;
+    myPropertyExpansionListener = listener;
+    return prevListener;
   }
 
   public boolean hasPropertiesToExpand() {
@@ -48,6 +63,7 @@ public class PropertyExpander {
       final String value = provider.getPropertyValue(propName);
       if (value != null) {
         final PropertyExpander propertyValueExpander = new PropertyExpander(value);
+        propertyValueExpander.setPropertyExpansionListener(myPropertyExpansionListener);
         if (propertyValueExpander.hasPropertiesToExpand()) {
           for (PropertiesProvider p : myProviders) {
             propertyValueExpander.acceptProvider(p);
@@ -55,12 +71,24 @@ public class PropertyExpander {
               break;
             }
           }
+          if (propertyValueExpander.hasPropertiesToExpand()) {
+            propertyValueExpander.acceptProvider(provider);
+          }
         }
-        myResolver.replace(propertyValueExpander.getResult());
+        final String propValue = propertyValueExpander.getResult();
+        myResolver.replace(propValue);
+        notifyPropertyExpanded(propName, propValue);
       }
     }
     myProviders.add(provider);
     myResolver.restart();
+  }
+
+  public void notifyPropertyExpanded(String propName, String propValue) {
+    final PropertyExpansionListener listener = myPropertyExpansionListener;
+    if (listener != null) {
+      listener.onPropertyExpanded(propName, propValue);
+    }
   }
 
   @NotNull

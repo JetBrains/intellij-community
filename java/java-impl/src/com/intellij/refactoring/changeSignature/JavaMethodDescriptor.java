@@ -57,11 +57,6 @@ public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl>
   }
 
   @Override
-  public boolean isConstructor() {
-    return myMethod.isConstructor();
-  }
-
-  @Override
   public PsiMethod getMethod() {
     return myMethod;
   }
@@ -89,7 +84,12 @@ public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl>
   }
 
   @Override
-  public boolean canChangeReturnType() {
-    return true;
+  public ReadWriteOption canChangeReturnType() {
+    return myMethod.isConstructor() ? ReadWriteOption.None : ReadWriteOption.ReadWrite;
+  }
+
+  @Override
+  public boolean canChangeName() {
+    return !myMethod.isConstructor();
   }
 }

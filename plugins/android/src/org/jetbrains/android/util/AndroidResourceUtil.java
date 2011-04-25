@@ -226,6 +226,9 @@ public class AndroidResourceUtil {
       else if (resClassName.equals("declare-styleable")) {
         resClassName = "styleable";
       }
+      else if (resClassName.endsWith("-array")) {
+        resClassName = "array";
+      }
       if (resClassName != null) {
         String resourceName = tag.getAttributeValue("name");
         return resourceName != null ? resClassName : null;

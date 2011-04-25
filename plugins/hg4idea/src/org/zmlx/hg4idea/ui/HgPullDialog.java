@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import org.apache.commons.lang.StringUtils;
 import org.zmlx.hg4idea.command.HgShowConfigCommand;
 
@@ -88,8 +89,14 @@ public class HgPullDialog extends DialogWrapper {
       public void run() {
         VirtualFile repo = hgRepositorySelector.getRepository();
         HgShowConfigCommand configCommand = new HgShowConfigCommand(project);
-        String defaultPath = configCommand.getDefaultPath(repo);
-        sourceTxt.setText(defaultPath);
+        final String defaultPath = configCommand.getDefaultPath(repo);
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            sourceTxt.setText(defaultPath);
+          }
+        });
+
         onChangePullSource();
       }
     });

@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.smartPointers.SmartPointerEx;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -203,13 +202,6 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
   public boolean showTooltip() {
     return myShowTooltip;
-  }
-
-  public void dispose() {
-    QuickFix[] fixes = getFixes();
-    if (fixes != null && fixes.length != 0) return;
-    ((SmartPointerEx)myStartSmartPointer).dispose();
-    if (myEndSmartPointer != null) ((SmartPointerEx)myEndSmartPointer).dispose();
   }
 
   @Override

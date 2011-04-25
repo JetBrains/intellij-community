@@ -110,7 +110,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
 
     try {
       myIgnoreInfos = true;
-      IdeaTestUtil.assertTiming("Should be quite performant !", 3500, new Runnable() {
+      IdeaTestUtil.assertTiming("Should be quite performant !", 15000, new Runnable() {
         @Override
         public void run() {
           doDoTest(true, false);

@@ -58,6 +58,7 @@ public interface IdeActions {
   @NonNls String ACTION_COMMENT_BLOCK = "CommentByBlockComment";
 
   @NonNls String ACTION_COPY = "$Copy";
+  @NonNls String ACTION_CUT = "$Cut";
   @NonNls String ACTION_DELETE = "$Delete";
   @NonNls String ACTION_PASTE = "$Paste";
   @NonNls String ACTION_CONTEXT_HELP = "ContextHelp";

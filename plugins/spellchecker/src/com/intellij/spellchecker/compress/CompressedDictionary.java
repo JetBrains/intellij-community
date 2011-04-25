@@ -19,7 +19,9 @@ import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.spellchecker.engine.Transformation;
 import com.intellij.util.Consumer;
-import gnu.trove.THashMap;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectProcedure;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -34,7 +36,7 @@ public final class CompressedDictionary implements Dictionary {
   private final Encoder encoder;
   private final String name;
 
-  private final Map<Integer, SortedSet<byte[]>> rawData = new THashMap<Integer, SortedSet<byte[]>>();
+  private TIntObjectHashMap<SortedSet<byte[]>> rawData = new TIntObjectHashMap<SortedSet<byte[]>>();
   private static final Comparator<byte[]> COMPARATOR = new Comparator<byte[]>() {
     public int compare(byte[] o1, byte[] o2) {
       return compareArrays(o1, o2);
@@ -58,25 +60,25 @@ public final class CompressedDictionary implements Dictionary {
   }
 
   void pack() {
-    if (rawData == null) {
-      return;
-    }
     lengths = new int[rawData.size()];
-    this.words = new byte[rawData.size()][];
-    int row = 0;
-    for (Map.Entry<Integer, SortedSet<byte[]>> entry : rawData.entrySet()) {
-      final Integer l = entry.getKey();
-      lengths[row] = l;
-      this.words[row] = new byte[entry.getValue().size() * l];
-      int k = 0;
-      for (byte[] bytes : entry.getValue()) {
-        for (byte aByte : bytes) {
-          this.words[row][k++] = aByte;
+    words = new byte[rawData.size()][];
+    rawData.forEachEntry(new TIntObjectProcedure<SortedSet<byte[]>>() {
+      int row = 0;
+      @Override
+      public boolean execute(int l, SortedSet<byte[]> value) {
+        lengths[row] = l;
+        words[row] = new byte[value.size() * l];
+        int k = 0;
+        for (byte[] bytes : value) {
+          for (byte aByte : bytes) {
+            words[row][k++] = aByte;
+          }
         }
+        row++;
+        return true;
       }
-      row++;
-    }
-    rawData.clear();
+    });
+    rawData = null;
   }
 
   private static SortedSet<byte[]> createSet() {
@@ -131,10 +133,7 @@ public final class CompressedDictionary implements Dictionary {
           break;
         }
       }
-      if (index == -1) {
-        return false;
-      }
-      return contains(compressed, words[index]);
+      return index != -1 && contains(compressed, words[index]);
     }
     catch (EncodingException ignored) {
       return false;
@@ -164,7 +163,7 @@ public final class CompressedDictionary implements Dictionary {
 
 
   public String toString() {
-    final StringBuffer sb = new StringBuffer();
+    @NonNls StringBuilder sb = new StringBuilder();
     sb.append("CompressedDictionary");
     sb.append("{wordsCount=").append(wordsCount);
     sb.append(", name='").append(name).append('\'');
@@ -193,7 +192,7 @@ public final class CompressedDictionary implements Dictionary {
 
   public static int compareArrays(byte[] array1, byte[] array2) {
     if (array1.length != array2.length) {
-      return (array1.length < array2.length ? -1 : 1);
+      return array1.length < array2.length ? -1 : 1;
     }
     //compare elements values
     for (int i = 0; i < array1.length; i++) {
@@ -217,7 +216,7 @@ public final class CompressedDictionary implements Dictionary {
     int low = fromIndex;
     int high = toIndex - 1;
     while (low <= high) {
-      int mid = (low + high) >>> 1;
+      int mid = low + high >>> 1;
       byte[] toTest = new byte[unitLength];
       System.arraycopy(data, mid * unitLength, toTest, 0, unitLength);
       int check = compareArrays(toTest, goal);

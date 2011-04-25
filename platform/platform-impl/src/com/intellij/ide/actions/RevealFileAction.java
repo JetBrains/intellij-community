@@ -45,7 +45,7 @@ public class RevealFileAction extends AnAction {
 
   @NotNull
   public static String getActionName() {
-    return SystemInfo.isMac ? "Show in Finder" : "Show in Explorer";
+    return SystemInfo.isMac ? "Reveal in Finder" : "Show in Explorer";
   }
 
   @Override
@@ -61,7 +61,7 @@ public class RevealFileAction extends AnAction {
     if (!ioFile.isDirectory()) {
       ioFile = ioFile.getParentFile();
     }
-    ShowFilePathAction.open(ioFile, ioFile);
+    ShowFilePathAction.open(ioFile, new File(file.getPresentableUrl()));
   }
 }
 

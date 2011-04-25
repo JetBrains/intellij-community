@@ -56,7 +56,7 @@ public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool
         String description = JavaErrorMessages.message("missing.package.statement", packageName);
 
         return new ProblemDescriptor[]{manager.createProblemDescriptor(classes[0].getNameIdentifier(), description,
-                                                                       new AdjustPackageNameFix(javaFile, null, dirPackage),
+                                                                       new AdjustPackageNameFix(packageName),
                                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly)};
       }
       if (packageStatement != null) {
@@ -64,10 +64,10 @@ public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool
         PsiPackage classPackage = (PsiPackage)packageReference.resolve();
         List<LocalQuickFix> availableFixes = new ArrayList<LocalQuickFix>();
         if (classPackage == null) {
-          availableFixes.add(new AdjustPackageNameFix(javaFile, packageStatement, dirPackage));
+          availableFixes.add(new AdjustPackageNameFix(packageName));
         }
         else if (!Comparing.equal(dirPackage.getQualifiedName(), packageReference.getText(), true)) {
-          availableFixes.add(new AdjustPackageNameFix(javaFile, packageStatement, dirPackage));
+          availableFixes.add(new AdjustPackageNameFix(packageName));
           MoveToPackageFix moveToPackageFix = new MoveToPackageFix(classPackage.getQualifiedName());
           if (moveToPackageFix.isAvailable(file)) {
             availableFixes.add(moveToPackageFix);

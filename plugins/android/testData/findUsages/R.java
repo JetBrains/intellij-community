@@ -13,4 +13,8 @@ public final class R {
     public static final class id {
       public static final int anchor=0x7f040003;
     }
+
+    public static final class array {
+      public static final int str_arr=0x7f040004;
+    }
 }

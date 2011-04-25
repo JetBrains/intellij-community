@@ -110,6 +110,12 @@ public class AndroidFindUsagesTest extends AndroidTestCase {
     assertEquals(2, references.size());
   }
 
+  public void testStringArray() throws Throwable {
+    myFixture.copyFileToProject(BASE_PATH + "Class.java", "src/p1/p2/Class.java");
+    Collection<UsageInfo> references = findCodeUsages("stringArray.xml");
+    assertEquals(2, references.size());
+  }
+
   private static Collection<UsageInfo> findElementAtCaret(String fileName, JavaCodeInsightTestFixture fixture, String basePath) throws Throwable {
     String newFilePath = "res/layout/" + fileName;
     VirtualFile file = fixture.copyFileToProject(basePath + fileName, newFilePath);

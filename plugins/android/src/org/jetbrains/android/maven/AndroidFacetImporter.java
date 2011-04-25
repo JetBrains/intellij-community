@@ -31,10 +31,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidFacetType;
 import org.jetbrains.android.facet.AndroidRootUtil;
-import org.jetbrains.android.sdk.AndroidSdk;
-import org.jetbrains.android.sdk.AndroidSdkType;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
-import org.jetbrains.android.sdk.EmptySdkLog;
+import org.jetbrains.android.sdk.*;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,11 +94,39 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
   }
 
   private void configureAndroidPlatform(AndroidFacet facet, MavenProject project, MavenModifiableModelsProvider modelsProvider) {
+    final Sdk currentSdk = modelsProvider.getRootModel(facet.getModule()).getSdk();
+    if (currentSdk != null && isAppropriateSdk(currentSdk, project)) {
+      return;
+    }
+
     Sdk platformLib = findOrCreateAndroidPlatform(project);
     if (platformLib != null) {
       modelsProvider.getRootModel(facet.getModule()).setSdk(platformLib);
     }
     //facet.getConfiguration().ADD_ANDROID_LIBRARY = false;
+  }
+
+  private boolean isAppropriateSdk(@NotNull Sdk sdk, MavenProject mavenProject) {
+    if (!(sdk.getSdkType() == AndroidSdkType.getInstance())) {
+      return false;
+    }
+
+    final String platformId = getPlatformFromConfig(mavenProject);
+    if (platformId == null) {
+      return false;
+    }
+
+    final AndroidSdkAdditionalData sdkAdditionalData = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
+    if (sdkAdditionalData == null) {
+      return false;
+    }
+
+    final AndroidPlatform androidPlatform = sdkAdditionalData.getAndroidPlatform();
+    if (androidPlatform == null) {
+      return false;
+    }
+
+    return AndroidSdkUtils.targetHasId(androidPlatform.getTarget(), platformId);
   }
 
   @Nullable
@@ -130,15 +155,8 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
 
   @Nullable
   private Sdk findOrCreateAndroidPlatform(MavenProject project, String sdkPath) {
-    String apiLevel = null;
     if (sdkPath != null) {
-      Element sdkRoot = getConfig(project, "sdk");
-      if (sdkRoot != null) {
-        Element platform = sdkRoot.getChild("platform");
-        if (platform != null) {
-          apiLevel = platform.getValue();
-        }
-      }
+      final String apiLevel = getPlatformFromConfig(project);
 
       if (apiLevel == null) {
         return null;
@@ -154,6 +172,18 @@ public class AndroidFacetImporter extends FacetImporter<AndroidFacet, AndroidFac
           }
           return library;
         }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private String getPlatformFromConfig(MavenProject project) {
+    Element sdkRoot = getConfig(project, "sdk");
+    if (sdkRoot != null) {
+      Element platform = sdkRoot.getChild("platform");
+      if (platform != null) {
+        return platform.getValue();
       }
     }
     return null;

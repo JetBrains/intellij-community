@@ -38,13 +38,19 @@ public class AuthenticationPanel extends JPanel {
    * @param login             Initial login value.
    * @param password          Initial password value.
    * @param rememberPassword  Default value for the 'remember password' checkbox.
+   * If true, the checkbox will be selected; if false, the checkbox won't be selected; if null, there will be no checkbox for remembering
+   * password.
    */
-  public AuthenticationPanel(@Nullable String description, @Nullable String login, @Nullable String password, boolean rememberPassword) {
+  public AuthenticationPanel(@Nullable String description, @Nullable String login, @Nullable String password, @Nullable Boolean rememberPassword) {
     add(myMainPanel);
     myDescriptionLabel.setText(description);
     myLoginTextField.setText(login);
     myPasswordTextField.setText(password);
-    rememberPasswordCheckBox.setSelected(rememberPassword);
+    if (rememberPassword == null) {
+      rememberPasswordCheckBox.setVisible(false);
+    } else {
+      rememberPasswordCheckBox.setSelected(rememberPassword);
+    }
   }
 
   public String getLogin () {

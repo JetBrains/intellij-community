@@ -50,18 +50,6 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     registerInTree(start, end, greedyToLeft, greedyToRight, layer);
   }
 
-  @Override
-  public void setGreedyToLeft(boolean greedy) {
-    if (!isValid() || greedy == isGreedyToLeft()) return;
-    myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), greedy, isGreedyToRight(), getLayer());
-  }
-
-  @Override
-  public void setGreedyToRight(boolean greedy) {
-    if (!isValid() || greedy == isGreedyToRight()) return;
-    myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), greedy, getLayer());
-  }
-
   protected RangeHighlighterData getData() {
     return data;
   }
@@ -74,10 +62,9 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   @Override
   protected boolean unregisterInTree() {
-    if (myNode == null) return false;
+    if (!isValid()) return false;
     // we store highlighters in MarkupModel
     getData().getMarkupModel().removeHighlighter(this);
-    myNode = null;
     return true;
   }
 

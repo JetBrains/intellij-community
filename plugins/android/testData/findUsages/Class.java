@@ -6,5 +6,6 @@ public class Class1 {
         int id2 = R.string.hello;
         int id3 = R.string.hi;
         int id3 = R.id.anchor;
+        int id4 = R.array.str_arr;
     }
 }

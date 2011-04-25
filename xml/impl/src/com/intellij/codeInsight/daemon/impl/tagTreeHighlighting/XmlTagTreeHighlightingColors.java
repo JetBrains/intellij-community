@@ -24,12 +24,12 @@ import java.awt.*;
 /**
  * @author Eugene.Kudelevsky
  */
-public class HtmlTagTreeHighlightingColors {
+public class XmlTagTreeHighlightingColors {
   private static ColorKey[] ourColorKeys = null;
 
   private static final Color[] DEFAULT_COLORS = new Color[]{Color.RED, Color.YELLOW, Color.GREEN, Color.CYAN, Color.BLUE, Color.MAGENTA};
 
-  private HtmlTagTreeHighlightingColors() {
+  private XmlTagTreeHighlightingColors() {
   }
 
   @NotNull

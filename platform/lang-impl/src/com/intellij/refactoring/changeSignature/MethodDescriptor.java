@@ -16,11 +16,12 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public interface MethodDescriptor<P extends ParameterInfo> {
+
+  enum ReadWriteOption { ReadWrite, Read, None }
 
   String getName();
 
@@ -30,13 +31,13 @@ public interface MethodDescriptor<P extends ParameterInfo> {
 
   String getVisibility();
 
-  boolean isConstructor();
-
   PsiElement getMethod();
 
   boolean canChangeVisibility();
 
   boolean canChangeParameters();
 
-  boolean canChangeReturnType();
+  boolean canChangeName();
+
+  ReadWriteOption canChangeReturnType();
 }
