@@ -270,6 +270,8 @@
       <separator/>
       <action id="MoveStatementDown" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementDownAction"/>
       <action id="MoveStatementUp" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementUpAction"/>
+      <action id="MoveLineDown" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveLineDownAction"/>
+      <action id="MoveLineUp" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveLineUpAction"/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
     </group>
 
