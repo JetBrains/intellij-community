@@ -461,11 +461,12 @@
     <fileTypeFactory implementation="com.jetbrains.rest.RestFileTypeFactory"/>
     <lang.syntaxHighlighterFactory key="ReST"
                                    implementationClass="com.jetbrains.rest.RestHighlighterFactory"/>
-    <lang.parserDefinition language="ReST" implementationClass="com.jetbrains.rest.RestParserDefinition"/>
+    <lang.parserDefinition language="ReST" implementationClass="com.jetbrains.rest.parsing.RestParserDefinition"/>
     <colorSettingsPage implementation="com.jetbrains.rest.RestColorsPage"/>
 
     <projectService serviceInterface="com.jetbrains.rest.ReSTService"
                     serviceImplementation="com.jetbrains.rest.ReSTService"/>
+    <completion.contributor language="ReST" implementationClass="com.jetbrains.rest.DirectiveCompletionContributor"/>
   </extensions>
 
   <extensionPoints>
