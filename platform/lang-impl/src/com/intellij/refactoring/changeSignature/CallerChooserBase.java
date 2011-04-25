@@ -274,4 +274,9 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
     super.doOKAction();
   }
 
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myTree;
+  }
+
 }
