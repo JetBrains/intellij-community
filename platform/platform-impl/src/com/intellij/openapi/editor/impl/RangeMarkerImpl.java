@@ -31,7 +31,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerImpl");
 
   protected final DocumentEx myDocument;
-  RangeMarkerTree.RMNode myNode;
+  protected RangeMarkerTree.RMNode myNode;
 
   private final long myId;
   //private static long counter;
@@ -66,7 +66,6 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     IntervalTreeImpl tree = myNode.getTree();
     tree.checkMax(true);
     boolean b = myDocument.removeRangeMarker(this);
-    myNode = null;
     tree.checkMax(true);
     return b;
   }
@@ -114,15 +113,20 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return myDocument;
   }
 
+  // fake method to simplify setGreedyToLeft/right methods. overridden in RangeHighlighter
+  public int getLayer() {
+    return 0;
+  }
+
   public void setGreedyToLeft(final boolean greedy) {
     if (!isValid() || greedy == isGreedyToLeft()) return;
 
-    myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), greedy, isGreedyToRight(), 0);
+    myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), greedy, isGreedyToRight(), getLayer());
   }
 
   public void setGreedyToRight(final boolean greedy) {
     if (!isValid() || greedy == isGreedyToRight()) return;
-    myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), greedy, 0);
+    myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), greedy, getLayer());
   }
 
   public boolean isGreedyToLeft() {
