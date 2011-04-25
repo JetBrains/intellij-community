@@ -22,11 +22,11 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.TreeDiffProvider;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranchesSearcher;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitFileUtils;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 
@@ -52,7 +52,7 @@ public class GitTreeDiffProvider implements TreeDiffProvider {
       for (String path : paths) {
         files.add(VcsUtil.getFilePath(path));
       }
-      for (List<String> pathList : GitFileUtils.chunkPaths(vcsRoot, files)) {
+      for (List<String> pathList : VcsFileUtil.chunkPaths(vcsRoot, files)) {
         GitSimpleHandler handler = new GitSimpleHandler(myProject, vcsRoot, GitCommand.DIFF);
         handler.addParameters("--name-status", "--diff-filter=ADCRUX", "-M", "HEAD..." + searcher.getRemote().getFullName());
         handler.setNoSSH(true);

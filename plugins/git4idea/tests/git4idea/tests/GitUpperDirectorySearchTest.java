@@ -23,7 +23,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.ui.UIUtil;
-import git4idea.GitUtil;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -77,7 +77,7 @@ public class GitUpperDirectorySearchTest {
     Assert.assertNotNull(dir);
     Assert.assertNotNull(childFile);
 
-    final VirtualFile result = GitUtil.getPossibleBase(childFile, dirName);
+    final VirtualFile result = VcsFileUtil.getPossibleBase(childFile, dirName);
     Assert.assertEquals(result, dir);
   }
 
@@ -98,7 +98,7 @@ public class GitUpperDirectorySearchTest {
     Assert.assertNotNull(dir);
     Assert.assertNotNull(childFile);
 
-    final VirtualFile result = GitUtil.getPossibleBase(childFile, dirName.split("/"));
+    final VirtualFile result = VcsFileUtil.getPossibleBase(childFile, dirName.split("/"));
     Assert.assertEquals(result, dir);
   }
 
@@ -119,7 +119,7 @@ public class GitUpperDirectorySearchTest {
     Assert.assertNotNull(dir);
     Assert.assertNotNull(childFile);
 
-    final VirtualFile result = GitUtil.getPossibleBase(childFile, dirName.split("/"));
+    final VirtualFile result = VcsFileUtil.getPossibleBase(childFile, dirName.split("/"));
     Assert.assertEquals(result, dir);
   }
 }

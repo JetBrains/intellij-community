@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.commands.GitFileUtils;
 import git4idea.history.wholeTree.GitBinaryMultipleContentsRevision;
@@ -70,7 +71,7 @@ public class GitContentRevision implements ContentRevision {
       return null;
     }
     VirtualFile root = GitUtil.getGitRoot(myFile);
-    byte[] result = GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), GitUtil.relativePath(root, myFile));
+    byte[] result = GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myFile));
     if (myCharset == null) {
       myCharset = myFile.getCharset(myProject);
     }

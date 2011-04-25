@@ -30,7 +30,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
-import git4idea.GitUtil;
+import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +71,7 @@ public abstract class BasicAction extends DumbAwareAction {
       vcs.runInBackground(new Task.Backgroundable(project, getActionName()) {
 
         public void run(@NotNull ProgressIndicator indicator) {
-          GitUtil.refreshFiles(project, Arrays.asList(affectedFiles));
+          VcsFileUtil.refreshFiles(project, Arrays.asList(affectedFiles));
           UIUtil.invokeLaterIfNeeded(new Runnable() {
             public void run() {
               GitUIUtil.showOperationErrors(project, exceptions, actionName);
@@ -115,7 +115,7 @@ public abstract class BasicAction extends DumbAwareAction {
       
       public void run(@NotNull ProgressIndicator indicator) {
         action.consume(indicator);
-        GitUtil.refreshFiles(project, Arrays.asList(affectedFiles));
+        VcsFileUtil.refreshFiles(project, Arrays.asList(affectedFiles));
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           public void run() {
             GitUIUtil.showOperationErrors(project, exceptions, getActionName());

@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.Git;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -120,7 +121,7 @@ public class GitInit extends DumbAwareAction {
     }
     vcs.setDirectoryMappings(vcsDirectoryMappings);
     vcs.updateActiveVcss();
-    GitUtil.refreshFiles(project, Collections.singleton(root));
+    VcsFileUtil.refreshFiles(project, Collections.singleton(root));
   }
 
 }

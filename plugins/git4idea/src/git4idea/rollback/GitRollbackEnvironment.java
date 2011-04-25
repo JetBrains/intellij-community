@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitFileUtils;
@@ -180,7 +181,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
    * @throws VcsException Id it breaks.
    */
   public void revert(final VirtualFile root, final List<FilePath> files) throws VcsException {
-    for (List<String> paths : GitFileUtils.chunkPaths(root, files)) {
+    for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.CHECKOUT);
       handler.setNoSSH(true);
       handler.addParameters("HEAD");

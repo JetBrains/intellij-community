@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.commands.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,7 +111,7 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   public synchronized void loadContent() throws VcsException {
     final VirtualFile root = GitUtil.getGitRoot(path);
     if (content == null) {
-      content = GitFileUtils.getFileContent(project, root, revision.getRev(), GitUtil.relativePath(root, path));
+      content = GitFileUtils.getFileContent(project, root, revision.getRev(), VcsFileUtil.relativePath(root, path));
       if (content == null) {
         content = new byte[0];
       }

@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.HashSet;
+import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.Nullable;
@@ -161,7 +162,7 @@ public class GitConfigTracker implements GitRootsListener {
         }
         return;
       }
-      VirtualFile base = GitUtil.getPossibleBase(file, ".git", "config");
+      VirtualFile base = VcsFileUtil.getPossibleBase(file, ".git", "config");
       if (base != null) {
         boolean reported;
         synchronized (myReportedRoots) {

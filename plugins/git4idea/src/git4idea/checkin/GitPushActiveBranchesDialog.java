@@ -41,9 +41,9 @@ import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.actions.GitRepositoryAction;
 import git4idea.actions.GitShowAllSubmittedFilesAction;
@@ -271,7 +271,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
               notifyMessage(myProject, "Failed to rebase", null, NotificationType.ERROR, true, exceptions);
               return;
             }
-            GitUtil.refreshFiles(myProject, rebaseInfo.roots);
+            VcsFileUtil.refreshFiles(myProject, rebaseInfo.roots);
           }
         }
         notifyMessage(myProject, "Failed to push", "Update project and push again", NotificationType.ERROR, true, pushExceptions);
@@ -418,7 +418,7 @@ public class GitPushActiveBranchesDialog extends DialogWrapper {
       GitUIUtil.showOperationErrors(myProject, exceptions, "git rebase");
     }
     refreshTree(false, rebaseInfo.uncheckedCommits);
-    GitUtil.refreshFiles(myProject, rebaseInfo.roots);
+    VcsFileUtil.refreshFiles(myProject, rebaseInfo.roots);
   }
 
   private boolean executeRebase(final List<VcsException> exceptions, RebaseInfo rebaseInfo) {

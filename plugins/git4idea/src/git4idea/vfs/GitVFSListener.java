@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -125,7 +126,7 @@ public class GitVFSListener extends VcsVFSListener {
         for (Map.Entry<VirtualFile, List<VirtualFile>> e : sortedFiles.entrySet()) {
           VirtualFile root = e.getKey();
           pi.setText(root.getPresentableUrl());
-          for (List<String> paths : GitFileUtils.chunkFiles(root, e.getValue())) {
+          for (List<String> paths : VcsFileUtil.chunkFiles(root, e.getValue())) {
             pi.setText2(paths.get(0) + "...");
             try {
               GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LS_FILES);
@@ -192,7 +193,7 @@ public class GitVFSListener extends VcsVFSListener {
             final VirtualFile root = e.getKey();
             indicator.setText(root.getPresentableUrl());
             GitFileUtils.addFiles(myProject, root, e.getValue());
-            GitUtil.markFilesDirty(myProject, e.getValue());
+            VcsFileUtil.markFilesDirty(myProject, e.getValue());
           }
           catch (final VcsException ex) {
             UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -235,7 +236,7 @@ public class GitVFSListener extends VcsVFSListener {
             final VirtualFile root = e.getKey();
             indicator.setText(root.getPresentableUrl());
             GitFileUtils.addPaths(myProject, root, e.getValue());
-            GitUtil.markFilesDirty(myProject, e.getValue());
+            VcsFileUtil.markFilesDirty(myProject, e.getValue());
           }
           catch (final VcsException ex) {
             UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -292,7 +293,7 @@ public class GitVFSListener extends VcsVFSListener {
             indicator.setText(root.getPresentableUrl());
             GitFileUtils.delete(myProject, root, e.getValue(), "--ignore-unmatch");
             if (myProject != null && !myProject.isDisposed()) {
-              GitUtil.markFilesDirty(myProject, e.getValue());
+              VcsFileUtil.markFilesDirty(myProject, e.getValue());
             }
             for (FilePath p : e.getValue()) {
               for (File f = p.getIOFile(); f != null && !f.equals(rootFile); f = f.getParentFile()) {

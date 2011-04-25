@@ -37,6 +37,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
@@ -442,7 +443,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                              boolean nextCommitAmend)
     throws VcsException {
     boolean amend = nextCommitAmend;
-    for (List<String> paths : GitFileUtils.chunkPaths(root, files)) {
+    for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
       handler.setNoSSH(true);
       if (amend) {
