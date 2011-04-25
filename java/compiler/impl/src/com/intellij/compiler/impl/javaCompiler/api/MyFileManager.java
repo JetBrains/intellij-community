@@ -22,8 +22,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
-import com.sun.tools.javac.util.Context;
-import com.sun.tools.javac.util.DefaultFileManager;
+import com.sun.tools.javac.util.ListBuffer;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 
@@ -36,17 +35,17 @@ import java.util.*;
 /**
 * @author cdr
 */
-@SuppressWarnings({"Since15"})
-class MyFileManager extends DefaultFileManager {
+class MyFileManager implements StandardJavaFileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.api.MyFileManager");
 
   private final String myOutputDir;
+  private final StandardJavaFileManager myStandardFileManager;
   private final CompAPIDriver myCompAPIDriver;
 
-  MyFileManager(CompAPIDriver compAPIDriver, String outputDir) {
-    super(new Context(), false, null);
+  MyFileManager(CompAPIDriver compAPIDriver, String outputDir, StandardJavaFileManager standardFileManager) {
     myCompAPIDriver = compAPIDriver;
     myOutputDir = outputDir;
+    myStandardFileManager = standardFileManager;
   }
 
   @Override
@@ -76,11 +75,17 @@ class MyFileManager extends DefaultFileManager {
     return createUri("file:///" + outputDir.replace('\\','/') + "/" + name.replace('.', '/') + JavaFileObject.Kind.CLASS.extension);
   }
 
+
   @Override
   public Iterable<JavaFileObject> list(Location location, String packageName, Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException {
     if (recurse) {
-      return super.list(location, packageName, kinds, recurse);
+      throw new IllegalArgumentException();
     }
+    return findInside(location, packageName, kinds, false);
+  }
+
+  private List<JavaFileObject> findInside(Location location, String packageName, Set<JavaFileObject.Kind> kinds, boolean lookForFile)
+    throws IOException {
     Iterable<? extends File> path = getLocation(location);
     if (path == null) return Collections.emptyList();
 
@@ -96,11 +101,20 @@ class MyFileManager extends DefaultFileManager {
       }
       VirtualFile virtualFile = StringUtil.isEmptyOrSpaces(subdirectory) ? dir : dir.findFileByRelativePath(subdirectory);
       if (virtualFile == null) continue;
-      
-      if (!virtualFile.isDirectory()) continue;
-      for (VirtualFile child : virtualFile.getChildren()) {
-        JavaFileObject.Kind kind = getKind("."+child.getExtension());
-        if (kinds.contains(kind)) {
+
+      VirtualFile[] children;
+      if (lookForFile) {
+        if (!virtualFile.isDirectory()) {
+          children = new VirtualFile[]{virtualFile};
+        }
+        else continue;
+      }
+      else {
+        children = virtualFile.getChildren();
+      }
+      for (VirtualFile child : children) {
+        JavaFileObject.Kind kind = getKind("." + child.getExtension());
+        if (kinds == null || kinds.contains(kind)) {
           if (results == null) results = new SmartList<JavaFileObject>();
           if (kind == JavaFileObject.Kind.SOURCE && child.getFileSystem() instanceof JarFileSystem) continue;  //for some reasdon javac looks for java files inside jar
 
@@ -117,7 +131,7 @@ class MyFileManager extends DefaultFileManager {
 
     if (LOG.isDebugEnabled()) {
       // for testing consistency
-      Collection c = (Collection)super.list(location, packageName, kinds, recurse);
+      Collection c = (Collection)myStandardFileManager.list(location, packageName, kinds, false);
       Collection<JavaFileObject> sup = new HashSet(c);
       assert sup.size() == c.size();
       assert new HashSet(c).equals(sup);
@@ -142,8 +156,102 @@ class MyFileManager extends DefaultFileManager {
     return ret;
   }
 
+  private static JavaFileObject.Kind getKind(String name) {
+      if (name.endsWith(JavaFileObject.Kind.CLASS.extension))
+          return JavaFileObject.Kind.CLASS;
+      else if (name.endsWith(JavaFileObject.Kind.SOURCE.extension))
+          return JavaFileObject.Kind.SOURCE;
+      else if (name.endsWith(JavaFileObject.Kind.HTML.extension))
+          return JavaFileObject.Kind.HTML;
+      else
+          return JavaFileObject.Kind.OTHER;
+  }
+
+
   @Override
   public String inferBinaryName(Location location, JavaFileObject file) {
     return FileUtil.getNameWithoutExtension(new File(file.getName()).getName());
+  }
+
+  ////////// delegates
+  @Override
+  public int isSupportedOption(String option) {
+    return myStandardFileManager.isSupportedOption(option);
+  }
+
+  @Override
+  public void close() throws IOException {
+    myStandardFileManager.close();
+  }
+
+  @Override
+  public void flush() throws IOException {
+    myStandardFileManager.flush();
+  }
+
+  @Override
+  public boolean handleOption(String current, Iterator<String> remaining) {
+    return myStandardFileManager.handleOption(current, remaining);
+  }
+
+  @Override
+  public ClassLoader getClassLoader(Location location) {
+    return myStandardFileManager.getClassLoader(location);
+  }
+
+  @Override
+  public boolean isSameFile(FileObject a, FileObject b) {
+    if (a instanceof FileVirtualObject && b instanceof FileVirtualObject) {
+      return a.equals(b);
+    }
+    return myStandardFileManager.isSameFile(a, b);
+  }
+
+  public Iterable<? extends JavaFileObject> getJavaFileObjects(File... files) {
+    return getJavaFileObjectsFromFiles(Arrays.asList(files));
+  }
+
+  public Iterable<? extends JavaFileObject> getJavaFileObjects(String... names) {
+    return getJavaFileObjectsFromStrings(Arrays.asList(names));
+  }
+  public Iterable<? extends JavaFileObject> getJavaFileObjectsFromStrings(Iterable<String> names) {
+    ListBuffer<File> files = new ListBuffer<File>();
+    for (String name : names) {
+      files.append(new File(name));
+    }
+    return getJavaFileObjectsFromFiles(files.toList());
+  }
+
+  public JavaFileObject getJavaFileForInput(Location location, String className, JavaFileObject.Kind kind) throws IOException {
+    List<JavaFileObject> result = findInside(location, className, kind == null ? null : Collections.singleton(kind), true);
+    if (!result.isEmpty()) {
+      return result.get(0);
+    }
+    return null;
+  }
+
+  @Override
+  public FileObject getFileForInput(Location location, String packageName, String relativeName) throws IOException {
+    return getJavaFileForInput(location, packageName + "/" + relativeName, null);
+  }
+
+  @Override
+  public FileObject getFileForOutput(Location location, String packageName, String relativeName, FileObject sibling) throws IOException {
+    return getJavaFileForOutput(location, packageName + "/" + relativeName, null, null);
+  }
+
+  @Override
+  public Iterable<? extends File> getLocation(Location location) {
+    return myStandardFileManager.getLocation(location);
+  }
+
+  @Override
+  public void setLocation(Location location, Iterable<? extends File> path) throws IOException {
+    myStandardFileManager.setLocation(location, path);
+  }
+
+  @Override
+  public boolean hasLocation(Location location) {
+    return myStandardFileManager.hasLocation(location);
   }
 }
