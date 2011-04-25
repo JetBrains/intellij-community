@@ -324,7 +324,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   public void installActions(final int index, final NavBarItem component) {
     ListenerUtil.addMouseListener(component, new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
-        if (!e.isConsumed() && !e.isPopupTrigger() && e.getClickCount() == 2) {
+        if (!e.isConsumed() && !e.isPopupTrigger() && e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
           myModel.setSelectedIndex(index);
           IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
           doubleClick(index);
