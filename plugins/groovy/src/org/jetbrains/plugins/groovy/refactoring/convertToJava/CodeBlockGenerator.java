@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplic
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
@@ -64,6 +65,16 @@ public class CodeBlockGenerator extends Generator {
   @Override
   public ExpressionContext getContext() {
     return context;
+  }
+
+
+  @Override
+  public void visitMethod(GrMethod method) {
+    final GrOpenBlock block = method.getBlock();
+
+    if (block != null) {
+      block.accept(this);
+    }
   }
 
   @Override
@@ -106,10 +117,6 @@ public class CodeBlockGenerator extends Generator {
     writeStatement(builder, returnStatement, expressionGenerator.getContext());
   }
 
-  private void writeStatement(StringBuilder statementBuilder, GrStatement statement) {
-    writeStatement(statementBuilder, statement, null);
-  }
-
   private void writeStatement(StringBuilder statementBuilder,
                               GrStatement statement,
                               @Nullable ExpressionContext context) {
@@ -136,16 +143,19 @@ public class CodeBlockGenerator extends Generator {
   }
 
   @Override
-  public void visitLabeledStatement(GrLabeledStatement labeledStatement) {
-    final String label = labeledStatement.getLabelName();
-    final GrStatement statement = labeledStatement.getStatement();
+  public void visitLabeledStatement(final GrLabeledStatement labeledStatement) {
+    GenerationUtil.writeStatement(builder, context, labeledStatement, new StatementWriter() {
+      @Override
+      public void writeStatement(StringBuilder builder, ExpressionContext context) {
+        final String label = labeledStatement.getLabelName();
+        final GrStatement statement = labeledStatement.getStatement();
 
-    StringBuilder statementBuilder = new StringBuilder();
-    statementBuilder.append(label).append(": ");
-    if (statement != null) {
-      statement.accept(new CodeBlockGenerator(statementBuilder, context.project));
-    }
-    writeStatement(statementBuilder, labeledStatement);
+        builder.append(label).append(": ");
+        if (statement != null) {
+          statement.accept(new CodeBlockGenerator(builder, context));
+        }
+      }
+    });
   }
 
   @Override

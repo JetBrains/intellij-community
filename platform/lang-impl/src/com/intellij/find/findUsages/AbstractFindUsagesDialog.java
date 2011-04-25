@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.usageView.UsageViewManager;
 import org.jetbrains.annotations.NotNull;
@@ -104,13 +105,14 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     gbConstraints.weightx = 1;
     gbConstraints.weighty = 1;
     gbConstraints.anchor = GridBagConstraints.EAST;
-    final JLabel promptLabel = new JLabel(getLabelText());
-    panel.add(promptLabel, gbConstraints);
+    final SimpleColoredComponent coloredComponent = new SimpleColoredComponent();
+    configureLabelComponent(coloredComponent);
+    panel.add(coloredComponent, gbConstraints);
 
     return panel;
   }
 
-  public abstract String getLabelText();
+  public abstract void configureLabelComponent(final SimpleColoredComponent coloredComponent);
 
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());

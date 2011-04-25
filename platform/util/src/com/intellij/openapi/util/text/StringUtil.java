@@ -19,7 +19,6 @@ import com.google.common.collect.Lists;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -58,7 +57,7 @@ public class StringUtil {
   }
 
   public static Function<String, String> TRIMMER = new Function<String, String>() {
-    @SuppressWarnings({"ConstantConditions"})
+    @Nullable
     @Override
     public String fun(String s) {
       return s == null ? null : s.trim();
@@ -506,6 +505,24 @@ public class StringUtil {
     }
     return false;
   }
+
+  public static NotNullFunction<String, String> escaper(final boolean escapeSlash, @Nullable final String additionalChars) {
+    return new NotNullFunction<String, String>() {
+      @NotNull
+      @Override
+      public String fun(String dom) {
+        final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+        try {
+          StringUtil.escapeStringCharacters(dom.length(), dom, additionalChars, escapeSlash, builder);
+          return builder.toString();
+        }
+        finally {
+          StringBuilderSpinAllocator.dispose(builder);
+        }
+      }
+    };
+  }
+
 
   public static void escapeStringCharacters(int length, @NotNull String str, @NotNull @NonNls StringBuilder buffer) {
     escapeStringCharacters(length, str, "\"", buffer);

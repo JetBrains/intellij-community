@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,39 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * @author cdr
- */
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
-class MoveStatementHandler extends BaseMoveHandler {
-
-  public MoveStatementHandler(boolean down) {
+/**
+ * @author Dennis.Ushakov
+ */
+class MoveLineHandler extends BaseMoveHandler {
+  public MoveLineHandler(boolean down) {
     super(down);
   }
 
   @Override
   @Nullable
   protected MoverWrapper getSuitableMover(final Editor editor, final PsiFile file) {
-    // order is important!
-    final StatementUpDownMover[] movers = Extensions.getExtensions(StatementUpDownMover.STATEMENT_UP_DOWN_MOVER_EP);
     final StatementUpDownMover.MoveInfo info = new StatementUpDownMover.MoveInfo();
-    for (final StatementUpDownMover mover : movers) {
-      if (mover.checkAvailable(editor, file, info, isDown)) {
-        return new MoverWrapper(mover, info, isDown);
-      }
-    }
-
-    // order is important
-    //Mover[] movers = new Mover[]{new StatementMover(isDown), new DeclarationMover(isDown), new XmlMover(isDown), new LineMover(isDown)};
-    return null;
+    final StatementUpDownMover mover = new LineMover();
+    return mover.checkAvailable(editor, file, info, isDown) ? new MoverWrapper(mover, info, isDown) : null;
   }
-
 }
-

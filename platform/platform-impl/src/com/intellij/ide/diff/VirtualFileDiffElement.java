@@ -97,11 +97,20 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
       @Nullable
       @Override
       public DiffElement<VirtualFile> call() throws Exception {
-        final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false);
+        final FileChooserDescriptor descriptor = getChooserDescriptor();
         final VirtualFile[] result = FileChooserFactory.getInstance()
           .createFileChooser(descriptor, project).choose(getValue(), project);
-        return result.length == 1 ? new VirtualFileDiffElement(result[0]) : null;
+        return result.length == 1 ? createElement(result[0]) : null;
       }
     };
+  }
+
+  @Nullable
+  protected VirtualFileDiffElement createElement(VirtualFile file) {
+    return new VirtualFileDiffElement(file);
+  }
+
+  protected FileChooserDescriptor getChooserDescriptor() {
+    return new FileChooserDescriptor(false, true, false, false, false, false);
   }
 }

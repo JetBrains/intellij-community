@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
+package com.intellij.util;
 
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 
 /**
- * synthetic method (either getter or setter) generated for groovy property
- * @author ven
+ * @author nik
  */
-public interface GrAccessorMethod extends PsiMethod {
-  GrAccessorMethod[] EMPTY_ARRAY = new GrAccessorMethod[0];
-  
+public class FunctionUtil {
+  private FunctionUtil() {
+  }
+
   @NotNull
-  GrField getProperty();
+  public static <A, B, C> NotNullFunction<A, C> composition(@NotNull final NotNullFunction<B, C> f, @NotNull final NotNullFunction<A, B> g) {
+    return new NotNullFunction<A, C>() {
+      @Override
+      @NotNull
+      public C fun(A a) {
+        return f.fun(g.fun(a));
+      }
+    };
+  }
 
-  @Nullable
-  PsiType getInferredReturnType();
-
-  boolean isSetter();
 }

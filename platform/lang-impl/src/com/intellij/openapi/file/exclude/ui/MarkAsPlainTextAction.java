@@ -48,12 +48,10 @@ public class MarkAsPlainTextAction extends AnAction {
     final Presentation presentation = e.getPresentation();
     final EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     presentation.setVisible(false);
-    if (typeManager == null || file == null || file.isDirectory()) {
+    if (typeManager == null || file == null) {
       return;
     }
-    if (!typeManager.isMarkedAsPlainText(file)) {
-      FileType originalType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
-      if (originalType.isBinary() || originalType == StdFileTypes.PLAIN_TEXT) return;
+    if (EnforcedPlainTextFileTypeManager.isApplicableFor(file) && !typeManager.isMarkedAsPlainText(file)) {
       presentation.setVisible(true);
       presentation.setIcon(EnforcedPlainTextFileTypeFactory.ENFORCED_PLAIN_TEXT_ICON);
     }

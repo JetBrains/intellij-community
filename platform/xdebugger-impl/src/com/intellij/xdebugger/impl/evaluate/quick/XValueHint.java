@@ -26,6 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.NotNullFunction;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -40,6 +41,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,10 +86,23 @@ public class XValueHint extends AbstractValueHint {
           }
 
           @Override
-          public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull final String separator, @NonNls @NotNull final String value, final boolean hasChildren) {
+          public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value,
+                                      boolean hasChildren) {
+            setPresentation(icon, type, separator, value, null, hasChildren);
+          }
+
+          @Override
+          public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value,
+                                      @Nullable NotNullFunction<String, String> valuePresenter, boolean hasChildren) {
+            setPresentation(icon, type, XDebuggerUIConstants.EQ_TEXT, value, valuePresenter, hasChildren);
+          }
+
+          @Override
+          public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull final String separator,
+                                      @NonNls @NotNull final String value, @Nullable final NotNullFunction<String, String> valuePresenter, final boolean hasChildren) {
             DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
               public void run() {
-                doShowHint(result, separator, value, hasChildren);
+                doShowHint(result, separator, value, valuePresenter != null ? valuePresenter : XValueNodeImpl.DEFAULT_VALUE_PRESENTER, hasChildren);
               }
             });
           }
@@ -120,13 +135,15 @@ public class XValueHint extends AbstractValueHint {
     }, myExpressionPosition);
   }
 
-  private void doShowHint(final XValue xValue, final String separator, final String value, final boolean hasChildren) {
+  private void doShowHint(final XValue xValue, final String separator, final String value,
+                          @NotNull NotNullFunction<String, String> valuePresenter,
+                          final boolean hasChildren) {
     if (isHintHidden()) return;
 
     SimpleColoredText text = new SimpleColoredText();
     text.append(myExpression, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
     text.append(separator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    text.append(value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    text.append(valuePresenter.fun(value), SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
     if (!hasChildren) {
       showHint(HintUtil.createInformationLabel(text));
