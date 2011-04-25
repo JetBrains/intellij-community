@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -34,9 +35,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
@@ -53,15 +56,6 @@ public class ShowFilePathAction extends AnAction {
       return;
     }
     e.getPresentation().setEnabled(getFile(e) != null);
-  }
-
-  public static boolean isSupported() {
-    return isJava6orLater() || SystemInfo.isMac;
-  }
-
-  private static boolean isJava6orLater() {
-    final String javaVersion = System.getProperty("java.version");
-    return javaVersion.startsWith("1.6") || javaVersion.startsWith("1.7");
   }
 
   public void actionPerformed(final AnActionEvent e) {
@@ -167,8 +161,11 @@ public class ShowFilePathAction extends AnAction {
       }
     };
 
-    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-    return popup;
+    return JBPopupFactory.getInstance().createListPopup(step);
+  }
+
+  public static boolean isSupported() {
+    return SystemInfo.isWindows || SystemInfo.isMac || Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
   }
 
   public static void open(final File ioFile, File toSelect) {
@@ -196,22 +193,22 @@ public class ShowFilePathAction extends AnAction {
         LOG.warn(e);
       }
     }
-    else if (isJava6orLater()) {
+    else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
       try {
-        final Object desktopObject = Class.forName("java.awt.Desktop").getMethod("getDesktop").invoke(null);
-        desktopObject.getClass().getMethod("open", File.class).invoke(desktopObject, ioFile);
+        Desktop.getDesktop().open(ioFile);
       }
-      catch (Exception e) {
-        LOG.debug(e);
+      catch (IOException e) {
+        LOG.info(e);
       }
     }
     else {
-      throw new UnsupportedOperationException();
+      Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");
     }
 
   }
 
-  private VirtualFile getFile(final AnActionEvent e) {
+  @Nullable
+  private static VirtualFile getFile(final AnActionEvent e) {
     return PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
   }
 
