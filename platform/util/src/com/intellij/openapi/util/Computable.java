@@ -16,19 +16,21 @@
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *  @author dsl
  */
 public interface Computable <T> {
 
+  @Nullable
   T compute();
 
   class PredefinedValueComputable<T> implements Computable<T> {
 
     private final T myValue;
 
-    public PredefinedValueComputable(T value) {
+    public PredefinedValueComputable(@Nullable T value) {
       myValue = value;
     }
 
