@@ -80,32 +80,12 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
         builder.append('\n');
       }
 
-      String fileName = getNewFileName(file);
-      final PsiFile newFile = (PsiFile)file.setName(fileName);
-      final Document document = PsiDocumentManager.getInstance(myProject).getDocument(newFile);
+      final Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
       LOG.assertTrue(document != null);
       document.setText(builder);
-    }
-
-
-    /*
-    for (GroovyFile file : myFiles) {
-
-      final Project project = file.getProject();
-
-      GrTopStatement[] statements = file.getTopStatements();
-      final StringBuilder builder = new StringBuilder();
-      CodeBlockGenerator generator = new CodeBlockGenerator(builder, new ExpressionContext(project));
-      for (GrTopStatement statement : statements) {
-        statement.accept(generator);
-        builder.append("\n");
-      }
       String fileName = getNewFileName(file);
-      final PsiFile newFile = (PsiFile)file.setName(fileName);
-      final Document document = PsiDocumentManager.getInstance(project).getDocument(newFile);
-      document.setText(builder);
+      file.setName(fileName);
     }
-    */
   }
 
   private static String getNewFileName(GroovyFile file) {
