@@ -163,12 +163,12 @@ public class BraceHighlightingHandler {
     int offset = myEditor.getCaretModel().getOffset();
     final CharSequence chars = myEditor.getDocument().getCharsSequence();
 
-    if (myEditor.offsetToLogicalPosition(offset).column != myEditor.getCaretModel().getLogicalPosition().column) {
-      // we are in virtual space
-      final int caretLineNumber = myEditor.getCaretModel().getLogicalPosition().line;
-      if (caretLineNumber >= myDocument.getLineCount()) return;
-      offset = myDocument.getLineEndOffset(caretLineNumber) + myDocument.getLineSeparatorLength(caretLineNumber);
-    }
+    //if (myEditor.offsetToLogicalPosition(offset).column != myEditor.getCaretModel().getLogicalPosition().column) {
+    //  // we are in virtual space
+    //  final int caretLineNumber = myEditor.getCaretModel().getLogicalPosition().line;
+    //  if (caretLineNumber >= myDocument.getLineCount()) return;
+    //  offset = myDocument.getLineEndOffset(caretLineNumber) + myDocument.getLineSeparatorLength(caretLineNumber);
+    //}
 
     final int originalOffset = offset;
 
