@@ -49,7 +49,11 @@ public class HgAnnotateCommand {
     HgCommandExecutor executor = new HgCommandExecutor(project);
     HgCommandResult result = executor.executeInCurrentThread(hgFile.getRepo(), "annotate", Arrays.asList("-cqnudl", hgFile.getRelativePath()));
 
-    List<HgAnnotationLine> annotations = new ArrayList<HgAnnotationLine>();
+    final List<HgAnnotationLine> annotations = new ArrayList<HgAnnotationLine>();
+    if (result == null) {
+      return annotations;
+    }
+
     for (String line : result.getOutputLines()) {
       Matcher matcher = LINE_PATTERN.matcher(line);
       if (matcher.matches()) {
