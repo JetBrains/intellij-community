@@ -108,7 +108,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
 
     myCbSearchForReferences = new NonFocusableCheckBox(RefactoringBundle.message("search.for.references"));
     myCbSearchForReferences.setSelected(RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE);
-    panel.add(myCbSearchForReferences, new GridBagConstraints(0, 2, 1, 1, 1, 0,
+    panel.add(myCbSearchForReferences, new GridBagConstraints(0, 2, 2, 1, 1, 0,
                                                               GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                                               new Insets(4, 8, 4, 8), 0, 0));
 
