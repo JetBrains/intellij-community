@@ -607,6 +607,12 @@
   <action id="MoveStatementUp">
     <keyboard-shortcut first-keystroke="control shift UP"/>
   </action>
+  <action id="MoveLineDown">
+    <keyboard-shortcut first-keystroke="alt shift DOWN"/>
+  </action>
+  <action id="MoveLineUp">
+    <keyboard-shortcut first-keystroke="alt shift UP"/>
+  </action>
   <action id="EditorEnter">
     <keyboard-shortcut first-keystroke="ENTER"/>
   </action>

@@ -39,5 +39,7 @@
     <action id="ShowExecutionPoint">
       <keyboard-shortcut first-keystroke="shift alt 0" />
     </action>
+    <action id="MoveLineDown" />
+    <action id="MoveLineUp" />
   </keymap>
 </component>
