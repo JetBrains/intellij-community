@@ -35,14 +35,14 @@ class AnchorElementInfo extends SelfElementInfo {
   private IStubElementType myStubElementType;
 
   AnchorElementInfo(@NotNull PsiElement anchor, @NotNull PsiFile containingFile) {
-    super(containingFile.getProject(), anchor.getTextRange(), anchor.getClass(), containingFile, anchor.getLanguage());
+    super(containingFile.getProject(), anchor.getTextRange(), anchor.getClass(), containingFile, containingFile.getLanguage());
   }
   // will restore by stub index until file tree get loaded
   AnchorElementInfo(@NotNull PsiElement anchor,
                     @NotNull PsiFileWithStubSupport containingFile,
                     int stubId,
                     @NotNull IStubElementType stubElementType) {
-    super(containingFile.getProject(), new TextRange(0,0), anchor.getClass(), containingFile, anchor.getLanguage());
+    super(containingFile.getProject(), new TextRange(0,0), anchor.getClass(), containingFile, containingFile.getLanguage());
     this.stubId = stubId;
     myStubElementType = stubElementType;
     IElementType contentElementType = ((PsiFileImpl)containingFile).getContentElementType();
