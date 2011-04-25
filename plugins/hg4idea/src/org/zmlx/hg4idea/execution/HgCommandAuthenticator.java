@@ -48,7 +48,8 @@ class HgCommandAuthenticator {
     // if checkbox is selected, remember on disk. Otherwise in memory. Don't read password safe settings.
 
     final PasswordSafeImpl passwordSafe = (PasswordSafeImpl)PasswordSafe.getInstance();
-    final String key = keyForUrlAndLogin(myRunnable.getURL(), myRunnable.getUserName());
+    final String url = stripSchemaFromUrl(myRunnable.getURL());
+    final String key = keyForUrlAndLogin(url, myRunnable.getUserName());
 
     final PasswordSafeProvider provider =
       myRunnable.isRememberPassword() ? passwordSafe.getMasterKeyProvider() : passwordSafe.getMemoryProvider();
@@ -56,12 +57,24 @@ class HgCommandAuthenticator {
       provider.storePassword(myProject, HgCommandAuthenticator.class, key, myRunnable.getPassword());
       final HgVcs vcs = HgVcs.getInstance(myProject);
       if (vcs != null) {
-        vcs.getGlobalSettings().addRememberedUrl(myRunnable.getURL(), myRunnable.getUserName());
+        vcs.getGlobalSettings().addRememberedUrl(url, myRunnable.getUserName());
       }
     }
     catch (PasswordSafeException e) {
       LOG.info("Couldn't store the password for key [" + key + "]", e);
     }
+  }
+
+  /**
+   * Removes schema (protocol) part from url. For example, makes "bitbucket.org" from "http://bitbucket.org".
+   */
+  private static String stripSchemaFromUrl(String url) {
+    final String schemaSeparator = "://";
+    int ind = url.indexOf(schemaSeparator);
+    if (ind != -1) {
+      return url.substring(ind + schemaSeparator.length());
+    }
+    return url;
   }
 
   public boolean promptForAuthentication(Project project, String proposedLogin, String uri, String path) {
@@ -115,7 +128,7 @@ class HgCommandAuthenticator {
       final HgGlobalSettings hgGlobalSettings = vcs.getGlobalSettings();
       @Nullable String rememberedLoginsForUrl = null;
       if (!StringUtils.isBlank(myURL)) {
-        rememberedLoginsForUrl = hgGlobalSettings.getRememberedUserName(myURL);
+        rememberedLoginsForUrl = hgGlobalSettings.getRememberedUserName(stripSchemaFromUrl(myURL));
       }
 
       String login = myProposedLogin;
