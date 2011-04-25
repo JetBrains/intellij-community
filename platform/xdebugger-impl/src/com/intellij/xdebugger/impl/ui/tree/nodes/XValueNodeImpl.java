@@ -18,7 +18,7 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.NotNullFunction;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
@@ -44,12 +44,14 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       return StringUtil.compare(o1.getName(), o2.getName(), true);
     }
   };
+  public static final NotNullFunction<String, String> DEFAULT_VALUE_PRESENTER = StringUtil.escaper(false, null);
   private String myName;
   private String myType;
   private String myValue;
   private XFullValueEvaluator myFullValueEvaluator;
   private String mySeparator;
   private boolean myChanged;
+  private NotNullFunction<String, String> myValuePresenter;
 
   public XValueNodeImpl(XDebuggerTree tree, final XDebuggerTreeNode parent, String name, final @NotNull XValue value) {
     super(tree, parent, value);
@@ -73,13 +75,38 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     setPresentation(null, icon, type, separator, value, hasChildren);
   }
 
+  @Override
+  public void setPresentation(@Nullable Icon icon,
+                              @NonNls @Nullable String type,
+                              @NonNls @NotNull String value,
+                              @Nullable NotNullFunction<String, String> valuePresenter,
+                              boolean hasChildren) {
+    setPresentation(icon, type, XDebuggerUIConstants.EQ_TEXT, value, valuePresenter, hasChildren);
+  }
+
+
   public void setPresentation(final String name, @Nullable final Icon icon, @Nullable final String type, @NotNull final String value,
                               final boolean hasChildren) {
     setPresentation(name, icon, type, XDebuggerUIConstants.EQ_TEXT, value, hasChildren);
   }
 
+  @Override
+  public void setPresentation(@Nullable Icon icon,
+                              @NonNls @Nullable String type,
+                              @NonNls @NotNull String separator,
+                              @NonNls @NotNull String value,
+                              @Nullable NotNullFunction<String, String> valuePresenter,
+                              boolean hasChildren) {
+    setPresentation(null, icon, type, separator, value, valuePresenter, hasChildren);
+  }
+
   public void setPresentation(@NonNls final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
                               @NonNls @NotNull final String value, final boolean hasChildren) {
+    setPresentation(name, icon, type, separator, value, null, hasChildren);
+  }
+
+  private void setPresentation(@NonNls final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
+                               @NonNls @NotNull final String value, @Nullable final NotNullFunction<String, String> valuePresenter, final boolean hasChildren) {
     DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
       public void run() {
         setIcon(icon);
@@ -89,6 +116,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         myValue = value;
         mySeparator = separator;
         myType = type;
+        myValuePresenter = valuePresenter != null ? valuePresenter : DEFAULT_VALUE_PRESENTER;
 
         updateText();
         setLeaf(!hasChildren);
@@ -122,16 +150,8 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       myText.append("{" + myType + "} ", XDebuggerUIConstants.TYPE_ATTRIBUTES);
     }
 
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    String value;
-    try {
-      StringUtil.escapeStringCharacters(myValue.length(), myValue, null, false, builder);
-      value = builder.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
-    myText.append(value, myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    String presentableValue = myValuePresenter.fun(myValue);
+    myText.append(presentableValue, myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
   public void markChanged() {
