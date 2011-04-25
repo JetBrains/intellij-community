@@ -255,6 +255,10 @@ public class GroovyParser implements PsiParser {
 
   public void parseBlockBody(PsiBuilder builder) {
     skipSeparators(builder);
+    parseBlockBodyWithoutSkippingSeparators(builder);
+  }
+
+  public void parseBlockBodyWithoutSkippingSeparators(PsiBuilder builder) {
     parseCodeBlock(builder, RCURLY_ONLY);
     ParserUtils.getToken(builder, mNLS);
   }

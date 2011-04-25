@@ -39,9 +39,9 @@ public class StringConstructorExpression implements GroovyElementTypes {
       if (mGSTRING_END.equals(builder.getTokenType())) {
         sMarker.rollbackTo();
         sMarker = builder.mark();
-        ParserUtils.advance(builder);
-        ParserUtils.advance(builder);
-        ParserUtils.advance(builder);
+        builder.advanceLexer();
+        builder.advanceLexer();
+        builder.advanceLexer();
         sMarker.done(LITERAL);
         return LITERAL;
       }
