@@ -466,5 +466,19 @@
       first-show="6"
       successive-show="10"
       min-usage-count="1"/>
-  </group> 
+  </group>
+  <group id="diff">
+    <feature
+      id="dir.diff"
+      tip-file="DirDiff.html"
+      first-show="6"
+      successive-show="10"
+      min-usage-count="1"/>
+    <feature
+      id="jar.diff"
+      tip-file="JarDiff.html"
+      first-show="6"
+      successive-show="10"
+      min-usage-count="1"/>
+  </group>
 </component>
