@@ -88,7 +88,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
 
       // Don't wrap on a non-id symbol followed by non-id symbol, e.g. don't wrap between two pluses at i++.
       // Also don't wrap before non-id symbol preceded by a space - wrap on space instead;
-      if (!isIdSymbol(c) && (i < startOffset + 2 || (isIdSymbol(text.charAt(i - 1)) && !myRules.contains(text.charAt(i - 1))))) {
+      if (!isIdSymbol(c) && i > startOffset + 1 && isIdSymbol(text.charAt(i - 1)) && !myRules.contains(text.charAt(i - 1))) {
         myOffset2weight.store(i, NON_ID_WEIGHT);
       }
     }
@@ -119,12 +119,12 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
       }
 
       // Don't wrap on a non-id symbol followed by non-id symbol, e.g. don't wrap between two pluses at i++;
-      if (!isIdSymbol(c) && (i >= endOffset - 1 || isIdSymbol(text.charAt(i + 1)))) {
+      if (!isIdSymbol(c) && i < endOffset - 1 && isIdSymbol(text.charAt(i + 1))) {
         return i;
       }
     }
 
-    return endOffset;
+    return -1;
   }
 
   /**
