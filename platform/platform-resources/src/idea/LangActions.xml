@@ -446,6 +446,7 @@
       <reference ref="CompareTwoFiles"/>
       <reference ref="CompareFileWithEditor"/>
       <reference ref="CompareDirs"/>
+      <reference ref="CompareJars"/>
       <separator/>
       <reference ref="ExternalToolsGroup"/>
       <separator/>
@@ -478,6 +479,7 @@
       <reference ref="CompareTwoFiles"/>
       <reference ref="CompareFileWithEditor"/>
       <reference ref="CompareDirs"/>
+      <reference ref="CompareJars"/>
       <separator/>
       <reference ref="ExternalToolsGroup"/>
       <separator/>

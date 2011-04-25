@@ -114,6 +114,7 @@
     <action id="CompareTwoFiles" class="com.intellij.openapi.diff.actions.CompareFiles"/>
     <action id="CompareFileWithEditor" class="com.intellij.openapi.diff.actions.CompareFileWithEditor"/>
     <action id="CompareDirs" class="com.intellij.openapi.diff.actions.CompareDirectoriesAction" text="Compare Directories"/>
+    <action id="CompareJars" class="com.intellij.openapi.diff.actions.CompareJarsAction" text="Compare Jars" use-shortcut-of="CompareDirs"/>
 
     <action id="ScrollTreeToCenter" class="com.intellij.ide.actions.ScrollTreeToCenterAction" use-shortcut-of="EditorScrollToCenter"/>
 
