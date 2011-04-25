@@ -7,7 +7,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -35,7 +34,7 @@ public class GrSuperReferenceExpressionImpl extends GrThisSuperReferenceExpressi
   public PsiType getType() {
     final GrReferenceExpression qualifier = getQualifier();
     if (qualifier == null) {
-      GroovyPsiElement context = PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class, GroovyFile.class);
+      GroovyPsiElement context = PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class, GroovyFileBase.class);
       if (context instanceof GrTypeDefinition) {
         final PsiClass superClass = ((GrTypeDefinition)context).getSuperClass();
         if (superClass != null) {
@@ -43,6 +42,13 @@ public class GrSuperReferenceExpressionImpl extends GrThisSuperReferenceExpressi
         }
       }
       else if (context instanceof GroovyFileBase) {
+        PsiClass scriptClass = ((GroovyFileBase)context).getScriptClass();
+        if (scriptClass != null) {
+          PsiClass superClass = scriptClass.getSuperClass();
+          if (superClass != null) {
+            return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(superClass);
+          }
+        }
         return GrClassImplUtil.getGroovyObjectType(this);
       }
 
