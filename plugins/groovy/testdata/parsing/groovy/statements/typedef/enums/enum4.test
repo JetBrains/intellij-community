@@ -48,23 +48,24 @@ Groovy script
               PsiElement(Gstring)('"bar"')
             PsiElement())(')')
           PsiWhiteSpace(' ')
-          Type definition body
-            PsiElement({)('{')
-            PsiWhiteSpace('\n    ')
-            Variable definitions
-              Modifiers
-                PsiElement(def)('def')
-              PsiWhiteSpace(' ')
-              Field
-                PsiElement(identifier)('b')
+          Enum constant initializer
+            Type definition body
+              PsiElement({)('{')
+              PsiWhiteSpace('\n    ')
+              Variable definitions
+                Modifiers
+                  PsiElement(def)('def')
                 PsiWhiteSpace(' ')
-                PsiElement(=)('=')
-                PsiWhiteSpace(' ')
-                Literal
-                  PsiElement(Integer)('3')
-            PsiElement(;)(';')
-            PsiElement(new line)('\n  ')
-            PsiElement(})('}')
+                Field
+                  PsiElement(identifier)('b')
+                  PsiWhiteSpace(' ')
+                  PsiElement(=)('=')
+                  PsiWhiteSpace(' ')
+                  Literal
+                    PsiElement(Integer)('3')
+              PsiElement(;)(';')
+              PsiElement(new line)('\n  ')
+              PsiElement(})('}')
         PsiElement(,)(',')
         Enumeration constant
           PsiElement(new line)('\n\n  ')
@@ -103,10 +104,11 @@ Groovy script
                   PsiElement())(')')
             PsiElement())(')')
           PsiWhiteSpace(' ')
-          Type definition body
-            PsiElement({)('{')
-            PsiWhiteSpace('\n  ')
-            PsiElement(})('}')
+          Enum constant initializer
+            Type definition body
+              PsiElement({)('{')
+              PsiWhiteSpace('\n  ')
+              PsiElement(})('}')
         PsiElement(,)(',')
       PsiElement(new line)('\n\n  ')
       Class initializer

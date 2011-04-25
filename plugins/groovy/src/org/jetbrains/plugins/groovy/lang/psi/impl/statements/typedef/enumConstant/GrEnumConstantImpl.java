@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -183,8 +183,8 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant, P
   }
 
   @Nullable
-  public GrTypeDefinitionBody getAnonymousBlock() {
-    return findChildByClass(GrTypeDefinitionBody.class);
+  public GrEnumConstantInitializer getConstantInitializer() {
+    return findChildByClass(GrEnumConstantInitializer.class);
   }
 
   @Override

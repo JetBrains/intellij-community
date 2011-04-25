@@ -52,7 +52,9 @@ public class EnumConstant implements GroovyElementTypes {
     }
 
     if (builder.getTokenType() == mLCURLY) {
+      final PsiBuilder.Marker enumInitializer = builder.mark();
       TypeDefinition.parseClassBody(builder, null, parser);
+      enumInitializer.done(ENUM_CONSTANT_INITIALIZER);
     }
 
     ecMarker.done(ENUM_CONSTANT);

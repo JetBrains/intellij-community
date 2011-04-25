@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members;
 
 import com.intellij.lang.PsiBuilder;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
@@ -33,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class ConstructorDefinition implements GroovyElementTypes {
-  public static boolean parse(PsiBuilder builder, String className, GroovyParser parser) {
+  public static boolean parse(PsiBuilder builder, @Nullable String className, GroovyParser parser) {
     if (className == null) return false;
     PsiBuilder.Marker constructorMarker = builder.mark();
     if (!parseModifiers(builder, parser)) {

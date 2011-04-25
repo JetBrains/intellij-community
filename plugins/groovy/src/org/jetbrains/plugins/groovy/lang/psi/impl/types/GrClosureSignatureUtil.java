@@ -211,6 +211,14 @@ public class GrClosureSignatureUtil {
     return TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context);
   }
 
+  @Nullable
+  public static GrClosureSignature createSignature(GroovyResolveResult resolveResult) {
+    final PsiElement resolved = resolveResult.getElement();
+    if (!(resolved instanceof PsiMethod)) return null;
+    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    return createSignature((PsiMethod)resolved, substitutor);
+  }
+
   private static class ParameterMapperForVararg<Arg> {
     private GroovyPsiElement context;
     GrClosureParameter[] params;

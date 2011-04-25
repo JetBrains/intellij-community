@@ -234,6 +234,7 @@ public class GroovyPsiCreator implements GroovyElementTypes {
     if (elem.equals(PARENTHESIZED_EXPRESSION)) return new GrParenthesizedExpressionImpl(node);
     if (elem.equals(NEW_EXPRESSION)) return new GrNewExpressionImpl(node);
     if (elem.equals(ANONYMOUS_CLASS_DEFINITION)) return new GrAnonymousClassDefinitionImpl(node);
+    if (elem.equals(ENUM_CONSTANT_INITIALIZER)) return new GrEnumConstantInitializerImpl(node);
     if (elem.equals(ARRAY_DECLARATOR)) return new GrArrayDeclarationImpl(node);
 
     //Paths
