@@ -12,6 +12,10 @@ public void foo(java.lang.String[] foo, java.lang.Object bar) {
 return ;
 }
 
+public void foo(java.lang.String[] foo) {
+return ;
+}
+
 public groovy.lang.MetaClass getMetaClass() {
 return null;
 }
