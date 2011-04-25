@@ -33,4 +33,6 @@ public interface GrAccessorMethod extends PsiMethod {
 
   @Nullable
   PsiType getInferredReturnType();
+
+  boolean isSetter();
 }

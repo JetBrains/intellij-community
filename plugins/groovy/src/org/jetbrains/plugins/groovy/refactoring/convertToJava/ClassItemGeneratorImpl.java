@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -140,7 +141,10 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     if (!isAbstract) {
       /************* body **********/
       if (method instanceof GrMethod) {
-        ((GrMethod)method).getBlock().accept(new CodeBlockGenerator(builder, myProject));
+        ((GrMethod)method).accept(new CodeBlockGenerator(builder, myProject));
+      }
+      else if (method instanceof GrAccessorMethod) {
+        writeAccessorBody(builder, method);
       }
       else {
         builder.append("{//todo\n}");
@@ -148,6 +152,19 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     }
     else {
       builder.append(";");
+    }
+  }
+
+  private static void writeAccessorBody(StringBuilder builder, PsiMethod method) {
+    final String propName = ((GrAccessorMethod)method).getProperty().getName();
+    if (((GrAccessorMethod)method).isSetter()) {
+      final String paramName = method.getParameterList().getParameters()[0].getName();
+      builder.append("{\n this.").append(propName).append(" = ").append(paramName).append(";\n}");
+    }
+    else {
+      builder.append("{\n return ");
+      builder.append(propName);
+      builder.append(";\n}");
     }
   }
 
@@ -161,6 +178,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
   public void writeVariableDeclarations(StringBuilder builder, GrVariableDeclaration variableDeclaration) {
     final ExpressionContext context = new ExpressionContext(myProject);
     GenerationUtil.writeSimpleVarDeclaration(variableDeclaration, builder, context);
+    builder.append('\n');
   }
 
   @Override

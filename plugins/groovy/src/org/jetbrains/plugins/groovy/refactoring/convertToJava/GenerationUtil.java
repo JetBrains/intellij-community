@@ -75,11 +75,16 @@ public class GenerationUtil {
   }
 
   public static void writeType(final StringBuilder builder,
-                               final PsiType type,
+                               @Nullable final PsiType type,
                                final PsiElement context,
                                final ClassNameProvider classNameProvider) {
     if (type instanceof PsiPrimitiveType) {
       builder.append(type.getCanonicalText());
+      return;
+    }
+
+    if (type == null) {
+      builder.append(CommonClassNames.JAVA_LANG_OBJECT);
       return;
     }
 
