@@ -165,46 +165,43 @@ public class ShowFilePathAction extends AnAction {
   }
 
   public static boolean isSupported() {
-    return SystemInfo.isWindows || SystemInfo.isMac || Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
+    return SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux || Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
   }
 
   public static void open(final File ioFile, File toSelect) {
-    if (SystemInfo.isWindows || SystemInfo.isMac) {
-      final String path = toSelect == null ? ioFile.getAbsolutePath() : toSelect.exists() ? toSelect.getAbsolutePath() : ioFile.getAbsolutePath();
-      final Runtime runtime = Runtime.getRuntime();
-      
-      String[] args;
-      if (SystemInfo.isMac) {
-        final String script = String.format(
-          "tell application \"Finder\"\n" +
-          "\treveal {\"%s\"} as POSIX file\n" +
-          "\tactivate\n" +
-          "end tell", path);
-      
-        args = new String[] {"osascript", "-e", script};
-      } else {
-        args = new String[] {"explorer", String.format("/select,\"%s\"", path)};
-      }
-      
-      try {
+    try {
+      if (SystemInfo.isWindows || SystemInfo.isMac) {
+        final String path = toSelect == null ? ioFile.getAbsolutePath() : toSelect.exists() ? toSelect.getAbsolutePath() : ioFile.getAbsolutePath();
+        final Runtime runtime = Runtime.getRuntime();
+
+        String[] args;
+        if (SystemInfo.isMac) {
+          final String script = String.format(
+            "tell application \"Finder\"\n" +
+            "\treveal {\"%s\"} as POSIX file\n" +
+            "\tactivate\n" +
+            "end tell", path);
+
+          args = new String[] {"osascript", "-e", script};
+        } else {
+          args = new String[] {"explorer", String.format("/select,\"%s\"", path)};
+        }
+
         runtime.exec(args);
       }
-      catch (IOException e) {
-        LOG.warn(e);
-      }
-    }
-    else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
-      try {
+      else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
         Desktop.getDesktop().open(ioFile);
       }
-      catch (IOException e) {
-        LOG.info(e);
+      else if (SystemInfo.isLinux) {
+        Runtime.getRuntime().exec(new String[]{"xdg-open", ioFile.getAbsolutePath()});
+      }
+      else {
+        Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");
       }
     }
-    else {
-      Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");
+    catch (IOException e) {
+      LOG.warn(e);
     }
-
   }
 
   @Nullable
