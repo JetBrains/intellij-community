@@ -506,36 +506,75 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyComprehensionElement(final PyComprehensionElement node) {
-    myBuilder.startNode(node);
     PyExpression prevCondition = null;
-    for (ComprhIfComponent component : node.getIfComponents()) {
-      final PyExpression condition = component.getTest();
-      if (condition != null) {
-        condition.accept(this);
-        final Instruction head = myBuilder.prevInstruction;
-        final Instruction prevInstruction =
-          prevCondition != null ? myBuilder.startConditionalNode(condition, prevCondition, true) : myBuilder.startNode(condition);
-        prevCondition = condition;
-        // restore head
-        myBuilder.prevInstruction = head;
-        myBuilder.addPendingEdge(node, head); // false condition
-        myBuilder.prevInstruction = prevInstruction;
-      }
-    }
+    myBuilder.startNode(node);
+    List<Instruction> iterators = new ArrayList<Instruction>();
 
-    for (ComprhForComponent forComponent : node.getForComponents()) {
-      final PyExpression iteratedList = forComponent.getIteratedList();
-      if (prevCondition != null) {
-        myBuilder.startConditionalNode(iteratedList, prevCondition, true);
-        prevCondition = null;
+    for (ComprehensionComponent component : node.getComponents()) {
+      if (component instanceof ComprhForComponent) {
+        final ComprhForComponent c = (ComprhForComponent) component;
+        final PyExpression iteratedList = c.getIteratedList();
+        final PyExpression iteratorVariable = c.getIteratorVariable();
+        if (prevCondition != null) {
+          myBuilder.startConditionalNode(iteratedList, prevCondition, true);
+          prevCondition = null;
+        }
+        else {
+          myBuilder.startNode(iteratedList);
+        }
+        iteratedList.accept(this);
+
+        // for-loop continue and exit
+        for (Instruction i : iterators) {
+          myBuilder.addEdge(myBuilder.prevInstruction, i);
+        }
+        myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
+
+        final Instruction iterator = myBuilder.startNode(iteratorVariable);
+        iteratorVariable.accept(this);
+
+        // Inner "for" and "if" constructs will be linked to all outer iterators
+        iterators.add(iterator);
       }
-      iteratedList.accept(this);
-      forComponent.getIteratorVariable().accept(this);
+      else if (component instanceof ComprhIfComponent) {
+        final ComprhIfComponent c = (ComprhIfComponent) component;
+        final PyExpression condition = c.getTest();
+        if (condition == null) {
+          continue;
+        }
+        if (prevCondition != null) {
+          myBuilder.startConditionalNode(condition, prevCondition, true);
+        }
+        else {
+          myBuilder.startNode(condition);
+        }
+        condition.accept(this);
+
+        // Condition is true for nested "for" and "if" constructs, next startNode() should create a conditional node
+        prevCondition = condition;
+
+        // for-loop continue and exit
+        for (Instruction i : iterators) {
+          myBuilder.addEdge(myBuilder.prevInstruction, i);
+        }
+        myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
+      }
     }
 
     final PyExpression result = node.getResultExpression();
     if (result != null) {
+      if (prevCondition != null) {
+        myBuilder.startConditionalNode(result, prevCondition, true);
+      }
+      else {
+        myBuilder.startNode(result);
+      }
       result.accept(this);
+
+      // for-loop continue
+      for (Instruction i : iterators) {
+        myBuilder.addEdge(myBuilder.prevInstruction, i);
+      }
     }
   }
 
