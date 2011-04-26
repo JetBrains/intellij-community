@@ -134,6 +134,8 @@ private def layoutMac(Map args, String home, Paths paths) {
       </dict>
     </array>
   """
+  // TODO remove the next line when system_selector for Mac and other OS will be unified
+  args["system_selector"] = args.system_selector_mac
 
   layoutMacApp(paths.distMac, home, args)
 
@@ -141,6 +143,13 @@ private def layoutMac(Map args, String home, Paths paths) {
     dir("bin") {
       fileset(dir: "$home/bin") { include(name: "*.*") }
     }
+  }
+
+  ant.replace(file: "$paths.distMac/bin/idea.sh") {
+    replacefilter(token: "@@system_selector@@", value: args.system_selector)
+  }
+  ant.replace(file: "$paths.distMac/bin/inspect_diff.sh") {
+    replacefilter(token: "@@system_selector@@", value: args.system_selector)
   }
 
   patchPropertiesFile(paths.distMac)
