@@ -50,12 +50,12 @@ public class CustomTemplateCallback {
 
   public CustomTemplateCallback(Editor editor, PsiFile file, boolean wrapping) {
     myProject = file.getProject();
-    myTemplateManager = TemplateManagerImpl.getInstance(myProject);
+    myTemplateManager = TemplateManager.getInstance(myProject);
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     int offset = getOffset(wrapping, editor);
-    PsiElement element = InjectedLanguageUtil.findElementAtNoCommit(file, offset);
+    PsiElement element = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
     myFile = element != null ? element.getContainingFile() : file;
 
     myInInjectedFragment = InjectedLanguageManager.getInstance(myProject).isInjectedFragment(myFile);
