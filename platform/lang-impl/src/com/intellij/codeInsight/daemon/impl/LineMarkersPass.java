@@ -45,7 +45,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.FunctionUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -185,7 +185,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass impl
       startFrom.getTextRange(), 
       null, 
       Pass.UPDATE_ALL, 
-      NullableFunction.NULL, 
+      FunctionUtil.<Object, String>nullConstant(),
       null, 
       GutterIconRenderer.Alignment.RIGHT
     );

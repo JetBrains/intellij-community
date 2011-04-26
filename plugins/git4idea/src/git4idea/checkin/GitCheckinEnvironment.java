@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -202,8 +203,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    //noinspection unchecked
-    return commit(changes, preparedComment, NullableFunction.NULL);
+    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant());
   }
 
   /**

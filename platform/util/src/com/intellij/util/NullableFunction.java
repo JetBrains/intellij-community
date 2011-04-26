@@ -24,6 +24,9 @@ public interface NullableFunction<Dom, Img> extends Function<Dom,Img> {
   @Nullable
   Img fun(final Dom dom);
 
+  /**
+   * @see FunctionUtil#nullConstant()
+   */
   NullableFunction NULL = new NullableFunction() {
     public Object fun(final Object o) {
       return null;

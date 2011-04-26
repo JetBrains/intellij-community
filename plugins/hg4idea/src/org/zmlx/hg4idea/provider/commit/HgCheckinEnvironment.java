@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.UIUtil;
@@ -35,7 +36,6 @@ import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.execution.HgCommandException;
 
-import javax.swing.*;
 import java.util.*;
 
 public class HgCheckinEnvironment implements CheckinEnvironment {
@@ -170,9 +170,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     return choice[0] == 0;
   }
 
-  public List<VcsException> commit(List<Change> changes,
-    String preparedComment) {
-    return commit(changes, preparedComment, NullableFunction.NULL);
+  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant());
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {

@@ -25,6 +25,17 @@ public class FunctionUtil {
   }
 
   @NotNull
+  public static <T> Function<T, T> id() {
+    //noinspection unchecked
+    return Function.ID;
+  }
+
+  public static <A, B> NullableFunction<A, B> nullConstant() {
+    //noinspection unchecked
+    return NullableFunction.NULL;
+  }
+
+  @NotNull
   public static <A, B, C> NotNullFunction<A, C> composition(@NotNull final NotNullFunction<B, C> f, @NotNull final NotNullFunction<A, B> g) {
     return new NotNullFunction<A, C>() {
       @Override

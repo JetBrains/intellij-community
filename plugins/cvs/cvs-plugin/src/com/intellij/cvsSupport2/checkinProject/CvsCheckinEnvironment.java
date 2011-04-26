@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
@@ -117,7 +118,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    return commit(changes, preparedComment, NullableFunction.NULL);
+    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant());
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {

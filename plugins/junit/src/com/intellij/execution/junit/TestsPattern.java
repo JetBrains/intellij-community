@@ -33,7 +33,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.util.Function;
+import com.intellij.util.FunctionUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -78,7 +78,7 @@ public class TestsPattern extends TestObject {
     } else {
       JavaParametersUtil.configureProject(project, myJavaParameters, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
     }
-    addClassesListToJavaParameters(classNames, new Function.Self<String, String>(), "", true, isJUnit4);
+    addClassesListToJavaParameters(classNames, FunctionUtil.<String>id(), "", true, isJUnit4);
   }
 
   @Override
