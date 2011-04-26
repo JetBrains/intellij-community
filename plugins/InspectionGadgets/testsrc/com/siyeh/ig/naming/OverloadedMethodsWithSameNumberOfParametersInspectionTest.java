@@ -34,6 +34,6 @@ public class OverloadedMethodsWithSameNumberOfParametersInspectionTest
 
   private void doTest(BaseInspection inspection) throws Exception {
     doTest("com/siyeh/igtest/naming/overloaded_methods_with_same_number_of_parameters/" +
-           getTestName(true), inspection);
+           getTestName(false), inspection);
   }
 }
