@@ -7,7 +7,7 @@ includeTargets << new File("${guessHome(this as Script)}/community/build/scripts
 includeTargets << new File("${guessHome(this)}/build/scripts/libLicenses.gant")
 includeTool << Jps
 
-requireProperty("buildNumber", requireProperty("build.number", "106.SNAPSHOT"))
+requireProperty("buildNumber", requireProperty("build.number", "108.SNAPSHOT"))
 
 setProperty("ch", "$home/community")
 setProperty("dryRun", false)
