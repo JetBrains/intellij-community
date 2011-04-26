@@ -468,6 +468,7 @@
                     serviceImplementation="com.jetbrains.rest.ReSTService"/>
     <completion.contributor language="ReST" implementationClass="com.jetbrains.rest.DirectiveCompletionContributor"/>
     <completion.contributor language="ReST" implementationClass="com.jetbrains.rest.OptionCompletionContributor"/>
+    <gotoDeclarationHandler implementation="com.jetbrains.rest.RestGotoProvider" order="FIRST"/>
   </extensions>
 
   <extensionPoints>
