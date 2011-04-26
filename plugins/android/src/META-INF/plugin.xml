@@ -58,7 +58,7 @@
             text="Attach debugger to Android process"
             description="Attach debugger to Android process"
             icon="/icons/attachDebugger.png">
-      <add-to-group group-id="RunnerActions" anchor="after" relative-to-action="Debug"/>
+      <add-to-group group-id="ToolbarRunGroup" anchor="after" relative-to-action="RunnerActions"/>
     </action>
   </actions>
 
