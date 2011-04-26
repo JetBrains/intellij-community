@@ -7,17 +7,6 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public abstract class PrefixMatcher {
-  public static final PrefixMatcher FALSE_MATCHER = new PrefixMatcher("######################################") {
-
-    public boolean prefixMatches(@NotNull final String name) {
-      return false;
-    }
-
-    @NotNull
-    public PrefixMatcher cloneWithPrefix(@NotNull final String prefix) {
-      return this;
-    }
-  };
   protected final String myPrefix;
 
   protected PrefixMatcher(String prefix) {
