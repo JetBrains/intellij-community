@@ -21,17 +21,18 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 import org.zmlx.hg4idea.command.HgRevertCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
+import org.zmlx.hg4idea.util.HgUtil;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class HgRollbackEnvironment implements RollbackEnvironment {
 
@@ -92,19 +93,13 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
     HgRevertCommand revertCommand = new HgRevertCommand(project);
     HgResolveCommand resolveCommand = new HgResolveCommand(project);
 
-    for (FilePath filePath : filePaths) {
-      VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, filePath);
-      if (vcsRoot == null) {
-        continue;
-      }
+    for (Map.Entry<VirtualFile,Collection<FilePath>> entry : HgUtil.groupFilePathsByHgRoots(project, filePaths).entrySet()) {
+      final VirtualFile repo = entry.getKey();
+      final Collection<FilePath> files = entry.getValue();
 
-      HgFile hgFile = new HgFile(vcsRoot, filePath);
-
-      HgRevisionNumber revisionNumber = identifyCommand.firstParent(vcsRoot);
-      revertCommand.execute(hgFile, revisionNumber, false);
-      resolveCommand.markResolved(vcsRoot, filePath);
-
-      dirtyScopeManager.dirDirtyRecursively(filePath.getParentPath());
+      HgRevisionNumber revisionNumber = identifyCommand.firstParent(repo);
+      revertCommand.execute(repo, files, revisionNumber, false);
+      resolveCommand.markResolved(repo, files);
     }
   }
 

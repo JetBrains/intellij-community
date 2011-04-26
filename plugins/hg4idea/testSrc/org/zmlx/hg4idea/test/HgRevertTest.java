@@ -1,11 +1,14 @@
 package org.zmlx.hg4idea.test;
 
+import com.intellij.vcsUtil.VcsUtil;
 import org.testng.annotations.Test;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.command.HgCatCommand;
 import org.zmlx.hg4idea.command.HgRevertCommand;
 
+import java.io.File;
 import java.nio.charset.Charset;
+import java.util.Collections;
 
 import static org.testng.Assert.assertEquals;
 
@@ -19,7 +22,7 @@ public class HgRevertTest extends HgSingleUserTest {
     fillFile(myProjectDir, new String[]{"file.txt"}, "new contents");
 
     HgRevertCommand revertCommand = new HgRevertCommand(myProject);
-    revertCommand.execute(getHgFile("file.txt"), null, false);
+    revertCommand.execute(myRepo.getDir(), Collections.singleton(VcsUtil.getFilePath(new File(myProjectDir, "file.txt"))), null, false);
 
     HgCatCommand catCommand = new HgCatCommand(myProject);
     String content = catCommand.execute(getHgFile("file.txt"), null, Charset.defaultCharset());
@@ -38,7 +41,7 @@ public class HgRevertTest extends HgSingleUserTest {
     runHgOnProjectRepo("commit", "-m", "new contents");
 
     HgRevertCommand revertCommand = new HgRevertCommand(myProject);
-    revertCommand.execute(getHgFile("file.txt"), HgRevisionNumber.getLocalInstance("0"), false);
+    revertCommand.execute(myRepo.getDir(), Collections.singleton(VcsUtil.getFilePath(new File(myProjectDir, "file.txt"))), HgRevisionNumber.getLocalInstance("0"), false);
 
     HgCatCommand catCommand = new HgCatCommand(myProject);
     String content = catCommand.execute(getHgFile("file.txt"), HgRevisionNumber.getLocalInstance("0"), Charset.defaultCharset());
