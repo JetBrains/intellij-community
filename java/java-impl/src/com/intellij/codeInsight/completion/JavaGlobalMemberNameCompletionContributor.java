@@ -114,11 +114,13 @@ public class JavaGlobalMemberNameCompletionContributor extends CompletionContrib
           ref.bindToElementViaStaticImport(myContainingClass);
           PostprocessReformattingAspect.getInstance(ref.getProject()).doPostponedFormatting();
         }
-      } else {
-        context.getDocument().insertString(context.getStartOffset(), ".");
-        JavaCompletionUtil.insertClassReference(myContainingClass, context.getFile(), context.getStartOffset());
       }
       super.handleInsert(context);
+    }
+
+    @Override
+    protected boolean shouldQualify(PsiField field, InsertionContext context) {
+      return !willBeImported() || super.shouldQualify(field, context);
     }
   }
 }

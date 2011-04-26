@@ -16,21 +16,16 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +38,6 @@ import java.util.Set;
 * @author peter
 */
 public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.SmartCompletionDecorator");
   @NotNull private final Collection<ExpectedTypeInfo> myExpectedTypeInfos;
   private PsiElement myPosition;
 
@@ -115,75 +109,8 @@ public class SmartCompletionDecorator extends TailTypeDecorator<LookupElement> {
   @Override
   public void handleInsert(InsertionContext context) {
     myPosition = getPosition(context, this);
-    LookupItem item = getDelegate().as(LookupItem.CLASS_CONDITION_KEY);
-    if (item != null) {
-      analyzeItem(context, item, getObject(), myPosition, myExpectedTypeInfos);
-    }
     super.handleInsert(context);
   }
-
-  private static void analyzeItem(final InsertionContext context, final LookupItem item, final Object completion, @Nullable PsiElement position, @NotNull Collection<ExpectedTypeInfo> expectedTypes) {
-    if (position == null) return;
-
-    final PsiFile file = position.getContainingFile();
-
-    final int startOffset = position.getTextRange().getStartOffset();
-    PsiReference ref = position.getContainingFile().findReferenceAt(startOffset);
-
-    if (ref!=null && completion instanceof PsiNamedElement) {
-      if (completion instanceof PsiField) {
-        final PsiMember member = (PsiMember)completion;
-        if (item.getAttribute(LookupItem.FORCE_QUALIFY) != null
-            && member.hasModifierProperty(PsiModifier.STATIC)
-            && PsiUtil.isAccessible(member, position, null)) {
-          final PsiClass containingClass = member.getContainingClass();
-          if (containingClass != null) {
-            final String refText = ref.getElement().getText();
-            final Document document = context.getEditor().getDocument();
-            document.insertString(context.getEditor().getCaretModel().getOffset(), " ");
-            final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(context.getProject());
-            psiDocumentManager.commitDocument(document);
-            LOG.assertTrue(!psiDocumentManager.isUncommited(psiDocumentManager.getDocument(file)));
-            final PsiReference finalRef = file.findReferenceAt(startOffset);
-            if (finalRef == null) {
-              final String text = document.getText();
-              LOG.error("startOffset=" + startOffset + "\n" +
-                        "caretOffset=" + context.getEditor().getCaretModel().getOffset() + "\n" +
-                        "ref.getText()=" + refText + "\n" +
-                        "file=" + file + "\n" +
-                        "documentPart=" + text.substring(Math.max(startOffset - 100, 0), Math.min(startOffset + 100, text.length())));
-            }
-            final String name = member.getName();
-            assert name != null;
-            final PsiElement psiElement = file.getManager().performActionWithFormatterDisabled(new Computable<PsiElement>() {
-              public PsiElement compute() {
-                try {
-                  return finalRef.bindToElement(containingClass);
-                }
-                catch (IncorrectOperationException e) {
-                  LOG.error(e);
-                }
-                return null;
-              }
-            });
-            final PsiElement element = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(psiElement);
-            int whereToInsert = element.getTextRange().getEndOffset();
-            final String insertString = "." + name;
-            document.insertString(whereToInsert, insertString);
-            final int endOffset = whereToInsert + insertString.length();
-            context.getEditor().getCaretModel().moveToOffset(endOffset);
-            context.getOffsetMap().addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, endOffset);
-            context.getOffsetMap().addOffset(CompletionInitializationContext.START_OFFSET, whereToInsert);
-            context.getOffsetMap().addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, endOffset);
-            item.setLookupString(name);
-            document.deleteString(endOffset, endOffset + 1);
-          }
-        }
-      }
-    }
-
-  }
-
 
   public static boolean hasUnboundTypeParams(final PsiMethod method) {
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();

@@ -669,11 +669,6 @@ public class JavaCompletionUtil {
   }
 
   public static LookupItem qualify(final LookupItem ret) {
-    if (!(ret instanceof JavaMethodCallElement)) {
-      for (String s : getAllLookupStrings((PsiMember)ret.getObject())) {
-        ret.setLookupString(s);
-      }
-    }
     return ret.forceQualify();
   }
 
