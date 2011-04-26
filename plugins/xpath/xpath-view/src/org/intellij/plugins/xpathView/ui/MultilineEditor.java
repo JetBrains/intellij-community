@@ -15,7 +15,6 @@
  */
 package org.intellij.plugins.xpathView.ui;
 
-import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -25,8 +24,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
 
 import javax.swing.*;
-import javax.swing.event.ListDataListener;
 import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import java.awt.*;
 
 public class MultilineEditor extends JPanel {
