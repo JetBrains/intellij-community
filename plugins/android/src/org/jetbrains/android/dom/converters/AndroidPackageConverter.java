@@ -16,11 +16,13 @@
 package org.jetbrains.android.dom.converters;
 
 import com.intellij.psi.ElementManipulators;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PackageReferenceSet;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.CustomReferenceConverter;
+import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,9 +34,10 @@ public class AndroidPackageConverter extends Converter<String> implements Custom
 
   @Override
   public String fromString(@Nullable @NonNls String s, ConvertContext context) {
-    if (s == null) return null;
+    /*if (s == null) return null;
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(context.getPsiManager().getProject());
-    return facade.findPackage(s) == null ? null : s;
+    return facade.findPackage(s) == null ? null : s;*/
+    return s;
   }
 
   @Override
