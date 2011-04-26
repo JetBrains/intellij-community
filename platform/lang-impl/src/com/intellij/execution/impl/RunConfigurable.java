@@ -1052,7 +1052,7 @@ class RunConfigurable extends BaseConfigurable {
       final TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath != null) {
         final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-        if (treeNode.getUserObject() instanceof SingleConfigurationConfigurable) {
+        if (!(treeNode.getUserObject() instanceof ConfigurationType)) {
           if (myDirection < 0) {
             presentation.setEnabled(treeNode.getPreviousSibling() != null);
           }
