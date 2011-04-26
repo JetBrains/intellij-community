@@ -292,7 +292,7 @@ public class TestPackage extends TestObject {
       final PsiDirectory[] directories = aPackage.getDirectories();
       for (PsiDirectory directory : directories) {
         final Module currentModule = ModuleUtil.findModuleForFile(directory.getVirtualFile(), project);
-        if (module != currentModule) {
+        if (module != currentModule && currentModule != null) {
           modulesWithPackage.add(currentModule);
         }
       }
