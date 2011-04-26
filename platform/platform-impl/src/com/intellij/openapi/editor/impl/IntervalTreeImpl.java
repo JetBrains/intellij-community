@@ -506,7 +506,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     for (int i = root.intervals.size() - 1; i >= 0; i--) {
       T t = root.intervals.get(i).get();
       if (t == null) continue;
-      checkBelongsToTheTree(t, assertInvalid);
+      checkBelongsToTheTree(t, false);
       assert ids.add(((RangeMarkerImpl)t).getId()) : t;
     }
 
