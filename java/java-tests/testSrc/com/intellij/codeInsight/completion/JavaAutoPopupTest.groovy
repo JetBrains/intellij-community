@@ -735,7 +735,7 @@ public class Bar {
     assert !lookup
   }
 
-  public void testExplicitlyAutocompletionAfterAutoPopup() {
+  public void testExplicitAutocompletionAfterAutoPopup() {
     myFixture.configureByText 'a.java', 'class Foo <caret>'
     type 'ext'
 
@@ -745,6 +745,23 @@ public class Bar {
     }
     myFixture.checkResult 'class Foo extends <caret>'
   }
+
+  public void testExplicitMultipleVariantCompletionAfterAutoPopup() {
+    myFixture.configureByText 'a.java', 'class Foo {<caret>}'
+    type 'pr'
+
+    CompletionAutoPopupHandler.ourTestingAutopopup = false
+    edt {
+      myFixture.completeBasic()
+    }
+    myFixture.checkResult 'class Foo {pr<caret>}'
+    lookup.items.each {
+      lookup.list.cellRenderer.getListCellRendererComponent(lookup.list, it, 0, false, false)
+    }
+    assert myFixture.lookupElementStrings == ['private', 'protected']
+  }
+
+
 
 
 }

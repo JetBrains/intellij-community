@@ -64,6 +64,7 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -382,7 +383,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     final List<LookupElement> items = matchingItems(snapshot);
 
-    if (items.equals(getItems())) {
+    List<LookupElement> oldItems = getItems();
+    if (oldItems.size() == items.size() && new THashSet<LookupElement>(items, TObjectHashingStrategy.IDENTITY).containsAll(oldItems)) {
       return;
     }
 
