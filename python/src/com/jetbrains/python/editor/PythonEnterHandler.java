@@ -66,7 +66,13 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
       PyFunction fun = PsiTreeUtil.getParentOfType(element, PyFunction.class);
       if (fun != null) {
         PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(fun.getStatementList(), PsiWhiteSpace.class);
-        String docStub = provider.generateDocumentationContentStub(fun, (whitespace != null ? whitespace.getText() : "\n"));
+        String ws = "\n";
+        if (whitespace != null) {
+          String[] spaces = whitespace.getText().split("\n");
+          if (spaces.length > 1)
+            ws = ws + whitespace.getText().split("\n")[1];
+        }
+        String docStub = provider.generateDocumentationContentStub(fun, ws);
         docStub += element.getParent().getText().substring(0,3);
         if (docStub != null && docStub.length() != 0) {
           editor.getDocument().insertString(editor.getCaretModel().getOffset(), docStub);
@@ -75,7 +81,17 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
       }
       PyElement klass = PsiTreeUtil.getParentOfType(element, PyClass.class, PyFile.class);
       if (klass != null) {
-        editor.getDocument().insertString(editor.getCaretModel().getOffset(), "\n"+element.getParent().getText().substring(0,3));
+        String ws = "\n";
+        if (klass instanceof PyClass) {
+          PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(((PyClass)klass).getStatementList(), PsiWhiteSpace.class);
+          if (whitespace != null) {
+            String[] spaces = whitespace.getText().split("\n");
+            if (spaces.length > 1)
+              ws = ws + whitespace.getText().split("\n")[1];
+          }
+        }
+
+        editor.getDocument().insertString(editor.getCaretModel().getOffset(), ws+element.getParent().getText().substring(0,3));
         return Result.Continue;
       }
     }

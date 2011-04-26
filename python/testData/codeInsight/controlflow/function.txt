@@ -5,35 +5,40 @@
 4(5) element: PyExpressionStatement
 5(6) element: PyAssignmentStatement
 6(7) element: PyListCompExpression
-7(8) READ ACCESS: callable
-8(9) READ ACCESS: getattr
-9(10) READ ACCESS: object
-10(11,17) READ ACCESS: method
-11(12) element: PyCallExpression: callable
-12(13) element: PyCallExpression: dir. Condition: callable(getattr(object, method)):true
-13(14) READ ACCESS: dir
-14(15) READ ACCESS: object
-15(16) WRITE ACCESS: method
-16(17) READ ACCESS: method
-17(18) WRITE ACCESS: methodList
-18(19) element: PyAssignmentStatement
-19(20) READ ACCESS: collapse
-20(21) element: PyLambdaExpression
-21(22) WRITE ACCESS: s
-22(23) READ ACCESS: s
-23(24) element: PyLambdaExpression
-24(25) WRITE ACCESS: s
-25(26) READ ACCESS: s
-26(27) WRITE ACCESS: processFunc
-27(28) element: PyPrintStatement
-28(29) element: PyListCompExpression
-29(30) READ ACCESS: methodList
-30(31) WRITE ACCESS: method
-31(32) READ ACCESS: method
-32(33) READ ACCESS: spacing
-33(34) READ ACCESS: processFunc
-34(35) READ ACCESS: str
-35(36) READ ACCESS: getattr
-36(37) READ ACCESS: object
-37(38) READ ACCESS: method
-38() element: null
+7(8) element: PyCallExpression: dir
+8(9) READ ACCESS: dir
+9(10,19) READ ACCESS: object
+10(11) element: PyTargetExpression: method
+11(12) WRITE ACCESS: method
+12(13) element: PyCallExpression: callable
+13(14) READ ACCESS: callable
+14(15) READ ACCESS: getattr
+15(16) READ ACCESS: object
+16(10,17,19) READ ACCESS: method
+17(18) element: PyReferenceExpression: method. Condition: callable(getattr(object, method)):true
+18(10,19) READ ACCESS: method
+19(20) WRITE ACCESS: methodList
+20(21) element: PyAssignmentStatement
+21(22) READ ACCESS: collapse
+22(23) element: PyLambdaExpression
+23(24) WRITE ACCESS: s
+24(25) READ ACCESS: s
+25(26) element: PyLambdaExpression
+26(27) WRITE ACCESS: s
+27(28) READ ACCESS: s
+28(29) WRITE ACCESS: processFunc
+29(30) element: PyPrintStatement
+30(31) element: PyListCompExpression
+31(32) element: PyReferenceExpression: methodList
+32(33,43) READ ACCESS: methodList
+33(34) element: PyTargetExpression: method
+34(35) WRITE ACCESS: method
+35(36) element: PyBinaryExpression
+36(37) READ ACCESS: method
+37(38) READ ACCESS: spacing
+38(39) READ ACCESS: processFunc
+39(40) READ ACCESS: str
+40(41) READ ACCESS: getattr
+41(42) READ ACCESS: object
+42(33,43) READ ACCESS: method
+43() element: null

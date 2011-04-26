@@ -4,6 +4,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.documentation.DocStringFormat;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -259,6 +261,18 @@ public class PyQuickFixTest extends PyLightFixtureTestCase {
     setLanguageLevel(LanguageLevel.PYTHON27);
     doInspectionTest("SetFunctionToLiteralFromString.py", PySetFunctionToLiteralInspection.class,
                      PyBundle.message("QFIX.replace.function.set.with.literal"), true, true);
+  }
+
+  public void testDocstringParams() {                      //PY-3394
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
+    documentationSettings.setFormat(DocStringFormat.EPYTEXT);
+    try {
+      doInspectionTest("DocstringParams.py", PyDocstringInspection.class,
+                     PyBundle.message("QFIX.docstring"), true, true);
+    }
+    finally {
+      documentationSettings.setFormat(DocStringFormat.PLAIN);
+    }
   }
 
   public void testUnnecessaryBackslash() {

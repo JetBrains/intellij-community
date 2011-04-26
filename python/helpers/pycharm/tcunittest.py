@@ -11,6 +11,24 @@ def strclass(cls):
         return cls.__module__
     return "%s.%s" % (cls.__module__, cls.__name__)
 
+def smart_str(s):
+    encoding='utf-8'
+    errors='strict'
+    if not isinstance(s, basestring):
+        try:
+            return str(s)
+        except UnicodeEncodeError:
+            if isinstance(s, Exception):
+                # An Exception subclass containing non-ASCII data that doesn't
+                # know how to print itself properly. We shouldn't raise a
+                # further exception.
+                return ' '.join([smart_str(arg) for arg in s])
+            return unicode(s).encode(encoding, errors)
+    elif isinstance(s, unicode):
+        return s.encode(encoding, errors)
+    else:
+        return s
+
 class TeamcityTestResult(TestResult):
     def __init__(self, stream=sys.stdout):
         TestResult.__init__(self)
@@ -69,7 +87,7 @@ class TeamcityTestResult(TestResult):
     def addFailure(self, test, err):
         TestResult.addFailure(self, test, err)
 
-        error_value = str(err[1])
+        error_value = smart_str(err[1])
         if not len(error_value):
           # means it's test function and we have to extract value from traceback
           error_value = traceback.extract_tb(err[2])

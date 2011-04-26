@@ -50,7 +50,13 @@ public class PyDocStubIntention extends BaseIntentionAction {
     PythonDocumentationProvider documentationProvider = new PythonDocumentationProvider();
     PyStatementList list = function.getStatementList();
     PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(list, PsiWhiteSpace.class);
-    String docContent = documentationProvider.generateDocumentationContentStub(function, (whitespace != null? whitespace.getText() : "\n"));
+    String ws = "\n";
+    if (whitespace != null) {
+      String[] spaces = whitespace.getText().split("\n");
+      if (spaces.length > 1)
+        ws = ws + whitespace.getText().split("\n")[1];
+    }
+    String docContent = documentationProvider.generateDocumentationContentStub(function, ws);
     PyExpressionStatement string = elementGenerator.createFromText(LanguageLevel.forElement(function), PyExpressionStatement.class,
                                                                        "\"\"\"" + docContent + "\"\"\"");
     if (list.getStatements().length != 0)

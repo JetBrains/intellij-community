@@ -5,6 +5,8 @@ import com.intellij.find.findUsages.CommonFindUsagesDialog;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,12 +42,15 @@ public class PyModuleFindUsagesHandler extends FindUsagesHandler {
                                       isSingleFile,
                                       this) {
       @Override
-      public String getLabelText() {
+      public void configureLabelComponent(final SimpleColoredComponent coloredComponent) {
         final PsiDirectory dir = myFile.getContainingDirectory();
         if (dir == null) {
-          return super.getLabelText();
+          super.configureLabelComponent(coloredComponent);
         }
-        return "Module " + dir.getName();
+        else {
+          coloredComponent.append("Module ");
+          coloredComponent.append(dir.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        }
       }
     };
   }

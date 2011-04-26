@@ -17,7 +17,7 @@ def foo(a, b, n):
   pass
 
 def foo():
-  <warning descr="Unexpected parameters in docstring">"""
+  <warning descr="Unexpected parameters a in docstring.">"""
 
   @param a:
   @return:
@@ -26,7 +26,7 @@ def foo():
 
 
 def foo(a, c):
-  <warning descr="Missing parameters c in docstring.">"""
+  <warning descr="Missing parameters c in docstring. Unexpected parameters b in docstring.">"""
   @param a:
   @param b:
   @return:
