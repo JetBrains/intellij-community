@@ -14,8 +14,11 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgChange;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileStatusEnum;
@@ -89,7 +92,7 @@ public class HgStatusCommand {
     return execute(repo, null);
   }
 
-  public Set<HgChange> execute(VirtualFile repo, String relativePath) {
+  public Set<HgChange> execute(VirtualFile repo, @Nullable Collection<FilePath> paths) {
     if (repo == null) {
       return Collections.emptySet();
     }
@@ -97,44 +100,57 @@ public class HgStatusCommand {
     HgCommandExecutor executor = new HgCommandExecutor(project);
     executor.setSilent(true);
 
-    List<String> arguments = new LinkedList<String>();
+    List<String> options = new LinkedList<String>();
     if (includeAdded) {
-      arguments.add("--added");
+      options.add("--added");
     }
     if (includeModified) {
-      arguments.add("--modified");
+      options.add("--modified");
     }
     if (includeRemoved) {
-      arguments.add("--removed");
+      options.add("--removed");
     }
     if (includeDeleted) {
-      arguments.add("--deleted");
+      options.add("--deleted");
     }
     if (includeUnknown) {
-      arguments.add("--unknown");
+      options.add("--unknown");
     }
     if (includeIgnored) {
-      arguments.add("--ignored");
+      options.add("--ignored");
     }
     if (includeCopySource) {
-      arguments.add("--copies");
+      options.add("--copies");
     }
     if (baseRevision != null) {
-      arguments.add("--rev");
-      arguments.add(baseRevision.getChangeset());
+      options.add("--rev");
+      options.add(baseRevision.getChangeset());
       if (targetRevision != null) {
-        arguments.add("--rev");
-        arguments.add(targetRevision.getChangeset());
+        options.add("--rev");
+        options.add(targetRevision.getChangeset());
       }
     }
 
-    if (relativePath != null) {
-      arguments.add(relativePath);
-    }
+    final Set<HgChange> changes = new HashSet<HgChange>();
 
-    //executor.setSilent(true);
-    HgCommandResult result = executor.executeInCurrentThread(repo, "status", arguments);
-    Set<HgChange> changes = new HashSet<HgChange>();
+    if (paths != null) {
+      final List<List<String>> chunked = VcsFileUtil.chunkPaths(repo, paths);
+      for (List<String> chunk : chunked) {
+        List<String> args = new ArrayList<String>();
+        args.addAll(options);
+        args.addAll(chunk);
+        HgCommandResult result = executor.executeInCurrentThread(repo, "status", args);
+        changes.addAll(parseChangesFromResult(repo, result));
+      }
+    } else {
+      HgCommandResult result = executor.executeInCurrentThread(repo, "status", options);
+      changes.addAll(parseChangesFromResult(repo, result));
+    }
+    return changes;
+  }
+
+  private static Collection<HgChange> parseChangesFromResult(VirtualFile repo, HgCommandResult result) {
+    final Set<HgChange> changes = new HashSet<HgChange>();
     HgChange previous = null;
     if (result == null) {
       return changes;
