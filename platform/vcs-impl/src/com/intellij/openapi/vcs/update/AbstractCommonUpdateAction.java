@@ -60,14 +60,16 @@ import java.io.File;
 import java.util.*;
 
 public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
+  private final boolean myAlwaysVisible;
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.update.AbstractCommonUpdateAction");
 
   private final ActionInfo myActionInfo;
   private final ScopeInfo myScopeInfo;
 
-  protected AbstractCommonUpdateAction(ActionInfo actionInfo, ScopeInfo scopeInfo) {
+  protected AbstractCommonUpdateAction(ActionInfo actionInfo, ScopeInfo scopeInfo, boolean alwaysVisible) {
     myActionInfo = actionInfo;
     myScopeInfo = scopeInfo;
+    myAlwaysVisible = alwaysVisible;
   }
 
   private String getCompleteActionName(VcsContext dataContext) {
@@ -235,6 +237,12 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     Project project = vcsContext.getProject();
 
     if (project != null) {
+      final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+      final boolean underVcs = vcsManager.hasActiveVcss();
+      if (! underVcs) {
+        presentation.setVisible(false);
+        return;
+      }
 
       String actionName = getCompleteActionName(vcsContext);
       if (myActionInfo.showOptions(project) || OptionsDialog.shiftIsPressed(vcsContext.getModifiers())) {
@@ -246,21 +254,21 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       presentation.setVisible(true);
       presentation.setEnabled(true);
 
-      if (supportingVcsesAreEmpty(vcsContext.getProject(), myActionInfo)) {
-        presentation.setVisible(false);
+      if (supportingVcsesAreEmpty(vcsManager, myActionInfo)) {
+        presentation.setVisible(myAlwaysVisible);
         presentation.setEnabled(false);
       }
 
       if (filterRootsBeforeAction()) {
         FilePath[] roots = filterRoots(myScopeInfo.getRoots(vcsContext, myActionInfo), vcsContext);
         if (roots.length == 0) {
-          presentation.setVisible(false);
+          presentation.setVisible(myAlwaysVisible);
           presentation.setEnabled(false);
         }
       }
 
       if (presentation.isVisible() && presentation.isEnabled() &&
-          ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning()) {
+          vcsManager.isBackgroundVcsOperationRunning()) {
         presentation.setEnabled(false);
       }
     } else {
@@ -273,9 +281,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     return true;
   }
 
-  private static boolean supportingVcsesAreEmpty(final Project project, final ActionInfo actionInfo) {
-    if (project == null) return true;
-    final AbstractVcs[] allActiveVcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
+  private static boolean supportingVcsesAreEmpty(final ProjectLevelVcsManager vcsManager, final ActionInfo actionInfo) {
+    final AbstractVcs[] allActiveVcss = vcsManager.getAllActiveVcss();
     for (AbstractVcs activeVcs : allActiveVcss) {
       if (actionInfo.getEnvironment(activeVcs) != null) return false;
     }

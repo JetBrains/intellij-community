@@ -18,7 +18,7 @@ package com.intellij.openapi.vcs.update;
 public class CommonIntegrateProjectAction extends AbstractCommonUpdateAction{
 
   public CommonIntegrateProjectAction() {
-    super(ActionInfo.INTEGRATE, ScopeInfo.PROJECT);
+    super(ActionInfo.INTEGRATE, ScopeInfo.PROJECT, true);
   }
 
   protected boolean filterRootsBeforeAction() {

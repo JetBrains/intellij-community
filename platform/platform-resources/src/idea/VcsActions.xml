@@ -52,8 +52,6 @@
         <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction" icon="/_cvs/checkOut.png">
           <keyboard-shortcut first-keystroke="control T" keymap="$default"/>
         </action>
-        <action id="Vcs.ProjectStatus" class="com.intellij.openapi.vcs.update.CommonStatusProjectAction">
-        </action>
         <action id="Vcs.IntegrateProject" class="com.intellij.openapi.vcs.update.CommonIntegrateProjectAction"/>
         <action id="Vcs.RefreshStatuses" class="com.intellij.openapi.vcs.actions.RefreshStatuses"/>
         <separator/>
