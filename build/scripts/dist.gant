@@ -29,6 +29,9 @@ setProperty("paths", new Paths(out))
 
 def paths = new Paths(out)
 
+// load ApplicationInfo.xml properties
+ant.xmlproperty(file: appInfoFile(), collapseAttributes: "true")
+
 target(compile: "Compile project") {
   loadProject()
 
@@ -68,7 +71,6 @@ public def layoutAll(Map args, String home, String out) {
   Paths paths = new Paths(out)
 
   wire_build_date(args.buildNumber)
-  ant.xmlproperty(file: appInfoFile(), collapseAttributes: "true")
 
   def layouts = includeFile("$home/build/scripts/layouts.gant")
   layouts.layoutFull(home, paths.distAll)
