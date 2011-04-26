@@ -718,6 +718,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     EditorModificationUtil.deleteSelectedText(myEditor);
     final int caretOffset = myEditor.getCaretModel().getOffset();
     int lookupStart = caretOffset - prefix.length();
+
+    int len = myEditor.getDocument().getTextLength();
+    LOG.assertTrue(lookupStart >= 0 && lookupStart <= len, "ls: " + lookupStart + "doc: " + len);
+    LOG.assertTrue(caretOffset >= 0 && caretOffset <= len, "co: " + caretOffset + "doc: " + len);
+
     myEditor.getDocument().replaceString(lookupStart, caretOffset, lookupString);
 
     int offset = lookupStart + lookupString.length();

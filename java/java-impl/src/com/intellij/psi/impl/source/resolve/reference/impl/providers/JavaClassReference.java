@@ -198,7 +198,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     int end = getRangeInElement().getEndOffset();
     String text = getElement().getText();
     int lt = text.indexOf('<', getRangeInElement().getStartOffset());
-    if (lt >= 0) {
+    if (lt >= 0 && lt < end) {
       end = CharArrayUtil.shiftBackward(text, lt - 1, "\n\t ") + 1;
     }
     TextRange range = new TextRange(myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset(), end);

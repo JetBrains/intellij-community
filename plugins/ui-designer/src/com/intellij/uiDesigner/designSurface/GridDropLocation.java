@@ -218,6 +218,7 @@ public class GridDropLocation implements ComponentDropLocation {
       constraints.setColumn(column + relativeCol);
       constraints.setRowSpan(rowSpan);
       constraints.setColSpan(colSpan);
+      LOG.info("GridDropLocation.dropIntoGrid() constraints=" + constraints);
       container.addComponent(c);
 
       // Fill DropInfo
@@ -225,5 +226,6 @@ public class GridDropLocation implements ComponentDropLocation {
     }
 
     container.revalidate();
+    LOG.info("GridDropLocation.dropIntoGrid() done");
   }
 }

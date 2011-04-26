@@ -73,7 +73,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   private boolean myInheritSwingFont = true;
   private Color myEnforcedBgColor = null;
   private boolean myOneLineMode; // use getter to access this field! It is allowed to override getter and change initial behaviour
-  private boolean myCenterByHeight = true;
+  private boolean myCenterByHeight = false;
   private boolean myEnsureWillComputePreferredSize;
   private Dimension myPassivePreferredSize;
   private CharSequence myHintText;

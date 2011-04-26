@@ -53,6 +53,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
 
   protected void analyze(@NotNull Project project, AnalysisScope scope) {
     try {
+      scope.setSearchInLibraries(false);
       FileDocumentManager.getInstance().saveAllDocuments();
       final InspectionManagerEx inspectionManagerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
       final GlobalInspectionContextImpl inspectionContext = getGlobalInspectionContext(project);

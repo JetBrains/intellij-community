@@ -1075,7 +1075,37 @@ public class PsiUtil {
     return element instanceof LeafElement && ((LeafElement)element).getElementType() == type;
   }
 
-  public static GrNamedArgument[] getFirstMapNamedArguments(GrCall grCall) {
+  /**
+   * Returns all arguments passed to method. First argument is null if Named Arguments is present.
+   */
+  public static GrExpression[] getAllArguments(@NotNull GrCall call) {
+    GrArgumentList argumentList = call.getArgumentList();
+    if (argumentList == null) return GrExpression.EMPTY_ARRAY;
+
+    GrClosableBlock[] closureArguments = call.getClosureArguments();
+    GrExpression[] expressionArguments = argumentList.getExpressionArguments();
+    GrNamedArgument[] namedArguments = argumentList.getNamedArguments();
+
+    int length = expressionArguments.length + closureArguments.length;
+    int k = 0;
+    if (namedArguments.length > 0) {
+      length++;
+      k = 1;
+    }
+
+    GrExpression[] res = new GrExpression[length];
+    for (GrExpression expressionArgument : expressionArguments) {
+      res[k++] = expressionArgument;
+    }
+
+    for (GrClosableBlock closureArgument : closureArguments) {
+      res[k++] = closureArgument;
+    }
+
+    return res;
+  }
+
+  public static GrNamedArgument[] getFirstMapNamedArguments(@NotNull GrCall grCall) {
     GrNamedArgument[] res = grCall.getNamedArguments();
     if (res.length > 0) return res;
 

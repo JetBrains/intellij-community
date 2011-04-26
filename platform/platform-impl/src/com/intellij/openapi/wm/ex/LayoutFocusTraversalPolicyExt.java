@@ -27,6 +27,21 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
    */
   private static JComponent myOverridenDefaultComponent;
 
+  private boolean myNoDefaultComponent;
+  private Object myNoDefaultComponentRequestor;
+
+  public void setNoDefaultComponent(boolean noDefaultComponent, Object requestor) {
+    if (noDefaultComponent) {
+      myNoDefaultComponent = noDefaultComponent;
+      myNoDefaultComponentRequestor = requestor;
+    } else {
+      if (myNoDefaultComponentRequestor == requestor) {
+        myNoDefaultComponent = false;
+        myNoDefaultComponentRequestor = null;
+      }
+    }
+  }
+
   /**
    * !!!!! CAUTION !!!!!
    * !!!!! CAUTION !!!!!
@@ -50,6 +65,8 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
 
 // Made non-final for Fabrique
   public Component getDefaultComponent(final Container focusCycleRoot) {
+    if (myNoDefaultComponent) return null;
+
     if (myOverridenDefaultComponent != null) {
       return myOverridenDefaultComponent;
     }
@@ -61,6 +78,8 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
   }
 
   public Component getFirstComponent(final Container focusCycleRoot) {
+    if (myNoDefaultComponent) return null;
+
     if (myOverridenDefaultComponent != null) {
       return myOverridenDefaultComponent;
     }
@@ -72,6 +91,8 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
   }
 
   public Component getLastComponent(final Container focusCycleRoot) {
+    if (myNoDefaultComponent) return null;
+
     if (myOverridenDefaultComponent != null) {
       return myOverridenDefaultComponent;
     }
@@ -83,6 +104,8 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
   }
 
   public Component getComponentAfter(final Container focusCycleRoot, final Component aComponent) {
+    if (myNoDefaultComponent) return null;
+
     if (myOverridenDefaultComponent != null) {
       return myOverridenDefaultComponent;
     }
@@ -94,6 +117,8 @@ public class LayoutFocusTraversalPolicyExt extends LayoutFocusTraversalPolicy{
   }
 
   public Component getComponentBefore(final Container focusCycleRoot, final Component aComponent) {
+    if (myNoDefaultComponent) return null;
+
     if (myOverridenDefaultComponent != null) {
       return myOverridenDefaultComponent;
     }

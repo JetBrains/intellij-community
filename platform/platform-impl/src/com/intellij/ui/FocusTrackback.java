@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -328,6 +329,14 @@ public class FocusTrackback {
     consume();
     getStackForRoot(myRoot).remove(this);
     mySheduledForRestore = false;
+
+    if (myParentWindow != null) {
+      FocusTraversalPolicy policy = myParentWindow.getFocusTraversalPolicy();
+      if (policy instanceof LayoutFocusTraversalPolicyExt) {
+        ((LayoutFocusTraversalPolicyExt)policy).setNoDefaultComponent(false, this);
+      }
+    }
+
     myParentWindow = null;
     myRoot = null;
     myFocusOwner = null;
@@ -409,6 +418,10 @@ public class FocusTrackback {
         owner.setAccessible(true);
         owner.invoke(null, myParentWindow, null);
 
+        FocusTraversalPolicy policy = myParentWindow.getFocusTraversalPolicy();
+        if (policy instanceof LayoutFocusTraversalPolicyExt) {
+          ((LayoutFocusTraversalPolicyExt)policy).setNoDefaultComponent(true, this);
+        }
       }
       catch (Exception e) {
         LOG.debug(e);

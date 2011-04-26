@@ -64,15 +64,29 @@ public final class GridChangeUtil {
     }
 
     final LayoutManager newLayout = oldLayout.copyLayout(grid.getLayout(), isRow ? 1 : 0, isRow ? 0 : 1);
+    GridConstraints[] oldConstraints = copyConstraints(grid);
 
     for (int i=grid.getComponentCount() - 1; i >= 0; i--){
       final GridConstraints constraints = grid.getComponent(i).getConstraints();
-      final GridConstraints oldConstraints = (GridConstraints) constraints.clone();
       adjustConstraintsOnInsert(constraints, isRow, beforeIndex, 1);
-      grid.getComponent(i).fireConstraintsChanged(oldConstraints);
     }
 
     grid.setLayout(newLayout);
+    fireAllConstraintsChanged(grid, oldConstraints);
+  }
+
+  private static GridConstraints[] copyConstraints(RadContainer grid) {
+    final GridConstraints[] gridConstraints = new GridConstraints[grid.getComponentCount()];
+    for (int i = 0; i < grid.getComponentCount(); i++) {
+      gridConstraints [i] = (GridConstraints) grid.getComponent(i).getConstraints().clone();
+    }
+    return gridConstraints;
+  }
+
+  private static void fireAllConstraintsChanged(RadContainer grid, GridConstraints[] oldConstraints) {
+    for(int i=grid.getComponentCount()-1; i >= 0; i--) {
+      grid.getComponent(i).fireConstraintsChanged(oldConstraints [i]);
+    }
   }
 
   public static void adjustConstraintsOnInsert(final GridConstraints constraints, final boolean isRow, final int beforeIndex,
@@ -182,10 +196,10 @@ public final class GridChangeUtil {
     final RadAbstractGridLayoutManager oldLayout = grid.getGridLayoutManager();
 
     final LayoutManager newLayout = oldLayout.copyLayout(grid.getLayout(), isRow ? -1 : 0, isRow ? 0 : -1);
+    GridConstraints[] oldConstraints = copyConstraints(grid);
 
     for (int i=grid.getComponentCount() - 1; i >= 0; i--){
       final GridConstraints constraints = grid.getComponent(i).getConstraints();
-      final GridConstraints oldConstraints = (GridConstraints) constraints.clone();
 
       if (constraints.getCell(isRow) > cellIndex) {
         // component starts after the cell being deleted - move it
@@ -195,10 +209,10 @@ public final class GridChangeUtil {
         // component belongs to the cell being deleted - decrement component's span
         addToSpan(constraints, isRow, -1);
       }
-      grid.getComponent(i).fireConstraintsChanged(oldConstraints);
     }
 
     grid.setLayout(newLayout);
+    fireAllConstraintsChanged(grid, oldConstraints);
   }
 
 

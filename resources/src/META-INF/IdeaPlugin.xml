@@ -855,8 +855,6 @@
 
     <keymapExtension implementation="com.intellij.debugger.actions.DebuggerKeymapExtension"/>
 
-    <keymapExtension implementation="com.intellij.tools.ToolKeymapExtension"/>
-
     <vcsSelectionProvider implementation="com.intellij.vcsUtil.JavaVcsSelectionProvider"/>
 
     <smartPointerElementInfoFactory implementation="com.intellij.psi.impl.smartPointers.ImplicitVariableElementInfoFactory"/>

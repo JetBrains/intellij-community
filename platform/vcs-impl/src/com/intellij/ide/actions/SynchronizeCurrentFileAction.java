@@ -37,12 +37,12 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
 
     String message = getMessage(files);
     e.getPresentation().setEnabled(true);
-    e.getPresentation().setText(message);
+    e.getPresentation().setText(message.replace("_", "__").replace("&", "&&"));
   }
 
   private static String getMessage(VirtualFile[] files) {
     if (files.length == 1) {
-      return IdeBundle.message("action.synchronize.file", files[0].getName().replace("_", "__").replace("&", "&&"));
+      return IdeBundle.message("action.synchronize.file", files[0].getName());
     }
     return IdeBundle.message("action.synchronize.selected.files");
   }
