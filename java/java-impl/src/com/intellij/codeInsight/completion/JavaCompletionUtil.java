@@ -759,7 +759,7 @@ public class JavaCompletionUtil {
     String name = psiClass.getName();
     document.replaceString(startOffset, endOffset, name);
 
-    final RangeMarker toDelete = insertTemporary(startOffset + name.length(), document, ";");
+    final RangeMarker toDelete = insertTemporary(startOffset + name.length(), document, "#");
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 

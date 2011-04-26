@@ -853,6 +853,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     doTest('\n')
   }
 
+  public void testClassNameInIfBeforeIdentifier() throws Throwable {
+    myFixture.addClass("package foo; public class ABCDEFFFFF {}")
+    doTest('\n')
+  }
+
   public void testClassNameWithInnersTab() throws Throwable { doTest('\t') }
 
   public void testClassNameWithGenericsTab() throws Throwable {doTest('\t') }
