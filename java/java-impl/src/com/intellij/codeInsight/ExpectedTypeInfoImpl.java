@@ -17,10 +17,10 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
 
 public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
@@ -70,7 +70,14 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
             final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
             String canonicalText = bound.getCanonicalText();
             if (canonicalText.contains("?extends")) {
-              throw new AssertionError("Incorrect text: " + bound + "; " + Arrays.toString(((PsiClassType)bound).getParameters()));
+              throw new AssertionError("Incorrect text: " + bound + "; " +
+                                       canonicalText + "; " +
+                                       StringUtil.join(((PsiClassType)bound).getParameters(), new Function<PsiType, String>() {
+                                                         @Override
+                                                         public String fun(PsiType psiType) {
+                                                           return psiType + " of " + psiType.getClass();
+                                                         }
+                                                       }, ", "));
             }
 
             defaultType = factory.createTypeFromText(CommonClassNames.JAVA_LANG_CLASS + "<" + canonicalText + ">", null);
