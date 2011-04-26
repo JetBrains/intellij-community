@@ -51,18 +51,7 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
     myApplication = new InspectionApplication();
     initApplication(myApplication, myOptions);
 
-    if (storeSettingsInTmpDir()) {
-      // use tmp dirs for settings
-      //PathManager.useTmpSettings();
-    }
-  }
-
-  /**
-   * Override to change default behaviour.
-   * @return true if all application caches, settings, etc should be stored in tmp folder.
-   */
-  protected boolean storeSettingsInTmpDir() {
-    return true;
+    // TODO: keep application settings in Memory
   }
 
   protected InspectionApplication getApplication() {
