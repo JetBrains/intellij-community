@@ -15,11 +15,9 @@
  */
 package com.intellij.uiDesigner.binding;
 
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
@@ -45,6 +43,18 @@ public class RenameUIRelatedTest extends MultiFileTestCase {
   protected void setupProject(VirtualFile rootDir) {
     LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     super.setupProject(rootDir);
+  }
+
+  public void testRenameClass() throws Exception {
+    doTest(new PerformAction() {
+      @Override
+      public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
+        PsiClass aClass = myJavaFacade.findClass("UIClass", ProjectScope.getAllScope(myProject));
+        Assert.assertNotNull(aClass);
+
+        new RenameProcessor(myProject, aClass, "NewClass", true, true).run();
+      }
+    });
   }
 
   public void testRenameBoundField() throws Exception {
