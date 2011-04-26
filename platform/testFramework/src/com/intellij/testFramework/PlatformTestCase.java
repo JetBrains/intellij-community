@@ -395,6 +395,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       myProject = null;
       myModule = null;
       myFilesToDelete.clear();
+      myEditorListenerTracker = null;
+      myThreadTracker = null;
     }
   }
 
