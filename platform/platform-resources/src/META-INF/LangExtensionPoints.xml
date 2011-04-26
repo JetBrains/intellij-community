@@ -179,6 +179,8 @@
   <extensionPoint name="copyPastePreProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePreProcessor"/>
   <extensionPoint name="copyPastePostProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePostProcessor"/>
 
+  <extensionPoint name="commentCompleteHandler" interface="com.intellij.codeInsight.editorActions.CommentCompleteHandler"/>
+
   <extensionPoint name="liveTemplateContext" interface="com.intellij.codeInsight.template.TemplateContextType"/>
   <extensionPoint name="liveTemplateMacro" interface="com.intellij.codeInsight.template.Macro"/>
   <extensionPoint name="liveTemplateOptionalProcessor" interface="com.intellij.codeInsight.template.impl.TemplateOptionalProcessor"/>
