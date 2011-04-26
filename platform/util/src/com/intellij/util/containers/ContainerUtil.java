@@ -545,6 +545,19 @@ public class ContainerUtil {
       }
     };
   }
+  @NotNull
+  public static <T> Iterable<T> concat(@NotNull final T[]... iterables) {
+    return new Iterable<T>() {
+      public Iterator<T> iterator() {
+        Iterator[] iterators = new Iterator[iterables.length];
+        for (int i = 0, iterablesLength = iterables.length; i < iterablesLength; i++) {
+          T[] iterable = iterables[i];
+          iterators[i] = Arrays.asList(iterable).iterator();
+        }
+        return new SequenceIterator<T>(iterators);
+      }
+    };
+  }
 
   @NotNull
   public static <T> List<T> concat(@NotNull final List<List<? extends T>> lists) {
