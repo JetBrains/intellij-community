@@ -159,6 +159,12 @@ public class EnterHandler extends BaseEnterHandler {
   }
 
   private static boolean isCommentComplete(PsiComment comment, CodeDocumentationAwareCommenter commenter) {
+    for (CommentCompleteHandler handler : Extensions.getExtensions(CommentCompleteHandler.EP_NAME)) {
+      if (handler.isApplicable(comment, commenter)) {
+        return handler.isCommentComplete(comment, commenter);
+      }
+    }
+
     String commentText = comment.getText();
     final boolean docComment = isDocComment(comment, commenter);
     final String expectedCommentEnd = docComment ? commenter.getDocumentationCommentSuffix():commenter.getBlockCommentSuffix();

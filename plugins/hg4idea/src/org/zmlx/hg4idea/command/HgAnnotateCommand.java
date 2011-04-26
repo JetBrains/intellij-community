@@ -13,15 +13,15 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationLine;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,24 +45,32 @@ public class HgAnnotateCommand {
     this.project = project;
   }
 
-  public List<HgAnnotationLine> execute(@NotNull HgFile hgFile) {
-    HgCommandExecutor executor = new HgCommandExecutor(project);
-    HgCommandResult result = executor.executeInCurrentThread(hgFile.getRepo(), "annotate", Arrays.asList("-cqnudl", hgFile.getRelativePath()));
+  public List<HgAnnotationLine> execute(@NotNull HgFile hgFile, VcsFileRevision revision) {
+    final List<String> arguments = new ArrayList<String>();
+    arguments.add("-cqnudl");
+    if (revision != null) {
+      arguments.add("-r");
+      HgRevisionNumber revisionNumber = (HgRevisionNumber)revision.getRevisionNumber();
+      arguments.add(revisionNumber.getChangeset());
+    }
+    arguments.add(hgFile.getRelativePath());
+    final HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(hgFile.getRepo(), "annotate", arguments);
 
-    List<HgAnnotationLine> annotations = new ArrayList<HgAnnotationLine>();
+    final List<HgAnnotationLine> annotations = new ArrayList<HgAnnotationLine>();
+    if (result == null) {
+      return annotations;
+    }
+
     for (String line : result.getOutputLines()) {
       Matcher matcher = LINE_PATTERN.matcher(line);
       if (matcher.matches()) {
         String user = matcher.group(USER_GROUP);
-        HgRevisionNumber revision = HgRevisionNumber.getInstance(
-          matcher.group(REVISION_GROUP),
-          matcher.group(CHANGESET_GROUP)
-        );
+        HgRevisionNumber rev = HgRevisionNumber.getInstance(matcher.group(REVISION_GROUP), matcher.group(CHANGESET_GROUP));
         String date = matcher.group(DATE_GROUP);
         Integer lineNumber = Integer.valueOf(matcher.group(LINE_NUMBER_GROUP));
         String content = matcher.group(CONTENT_GROUP);
         HgAnnotationLine annotationLine = new HgAnnotationLine(
-          user, revision, date, lineNumber, content
+          user, rev, date, lineNumber, content
         );
         annotations.add(annotationLine);
       }

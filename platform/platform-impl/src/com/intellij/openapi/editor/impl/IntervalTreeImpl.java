@@ -50,10 +50,10 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     private volatile int myStart;
     private volatile int myEnd;
     private volatile boolean isValid = true;
-    protected final SmartList<Getable<T>> intervals;
+    protected final List<Getable<T>> intervals;
     protected int maxEnd; // max of all intervalEnd()s among all children.
     protected int delta;  // delta of startOffset. getStartOffset() = myStartOffset + Sum of deltas up to root
-    IntervalNode next; // node following this in the in-order tree traversal. used for optimised tree iteration
+    private IntervalNode next; // node following this in the in-order tree traversal. used for optimised tree iteration
 
     public IntervalNode(@NotNull T key, int start, int end) {
       // maxEnd == 0 so to not disrupt existing maxes
@@ -184,14 +184,12 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   }
 
   private void assertUnderWriteLock() {
-    String s = l.writeLock().toString();
-    assert isAcquired(l.writeLock()) : s;
+    assert isAcquired(l.writeLock()) : l.writeLock();
   }
   private static boolean isAcquired(Lock l) {
     String s = l.toString();
     return s.contains("Locked by thread");
   }
-
 
   private void pushDeltaFromRoot(IntervalNode node) {
     if (normalized) return;
@@ -213,7 +211,6 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     int start1 = i1.intervalStart() + delta1;
     int start2 = i2.intervalStart() + delta2;
     if (start1 != start2) return start1 - start2;
-    //if (i2Key == null) return 1; // by default insert to the right to the gced node
     int equalStartCompare = getComparator().compare(i1, i2);
     return equalStartCompare;
   }
@@ -338,6 +335,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   }
 
   protected IntervalNode findOrInsert(@NotNull IntervalNode node) {
+    assertUnderWriteLock();
     node.color = Color.RED;
     node.setParent(null);
     node.setValid(true);
@@ -508,7 +506,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     for (int i = root.intervals.size() - 1; i >= 0; i--) {
       T t = root.intervals.get(i).get();
       if (t == null) continue;
-      checkBelongsToTheTree(t, assertInvalid);
+      checkBelongsToTheTree(t, false);
       assert ids.add(((RangeMarkerImpl)t).getId()) : t;
     }
 
@@ -628,13 +626,13 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
   @Override
   protected void deleteNode(@NotNull Node<T> n) {
+    assertUnderWriteLock();
     IntervalNode node = (IntervalNode)n;
     pushDeltaFromRoot(node);
     unlinkNode(node);
 
     super.deleteNode(n);
 
-    assertUnderWriteLock();
     keySize -= node.intervals.size();
     assert keySize >= 0 : keySize;
   }
@@ -969,6 +967,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   }
 
   private void purgeDeadNodes() {
+    assertUnderWriteLock();
     List<IntervalNode> gced = new ArrayList<IntervalNode>();
     collectGced(getRoot(), gced);
     deleteNodes(gced);

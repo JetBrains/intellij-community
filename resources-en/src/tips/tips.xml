@@ -140,4 +140,6 @@
   <tip file="EnterDirectoryInGotoFile.html"/>
   <tip file="GotoLineInFile.html"/>
   <tip file="AnnotationsAndDiffs.html"/>
+  <tip file="DirDiff.html"/>
+  <tip file="JarDiff.html"/>
 </tips>

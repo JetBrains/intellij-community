@@ -204,8 +204,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
   
   private static boolean isIprPath(final IFile file) {
-    return file.exists() && (file.getName().indexOf(".") > 0 && ProjectFileType.DEFAULT_EXTENSION.equals(
-      FileUtil.getExtension(file.getName())));
+    return file.getName().indexOf(".") > 0 && ProjectFileType.DEFAULT_EXTENSION.equals(FileUtil.getExtension(file.getName()));
   }
 
   private static void useOldWsContent(final String filePath, final IFile ws) {

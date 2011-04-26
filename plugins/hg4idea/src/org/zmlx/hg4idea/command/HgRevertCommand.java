@@ -13,13 +13,15 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.apache.commons.lang.StringUtils;
-import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -31,26 +33,27 @@ public class HgRevertCommand {
     this.project = project;
   }
 
-  public void execute(HgFile hgFile, HgRevisionNumber vcsRevisionNumber, boolean backupFile) {
-    List<String> arguments = new LinkedList<String>();
-
+  public void execute(VirtualFile repo, Collection<FilePath> files, HgRevisionNumber vcsRevisionNumber, boolean backupFile) {
+    final List<String> options = new LinkedList<String>();
     if (vcsRevisionNumber != null) {
-      arguments.add("--rev");
+      options.add("--rev");
       if (StringUtils.isNotBlank(vcsRevisionNumber.getChangeset())) {
-        arguments.add(vcsRevisionNumber.getChangeset());
+        options.add(vcsRevisionNumber.getChangeset());
       }
       else {
-        arguments.add(vcsRevisionNumber.getRevision());
+        options.add(vcsRevisionNumber.getRevision());
       }
     }
-
     if (!backupFile) {
-      arguments.add("--no-backup");
+      options.add("--no-backup");
     }
 
-    ContainerUtil.addAll(arguments, hgFile.getRelativePath());
-
-    new HgCommandExecutor(project).execute(hgFile.getRepo(), "revert", arguments, null);
+    for (List<String> chunk : VcsFileUtil.chunkPaths(repo, files)) {
+      List<String> args = new LinkedList<String>();
+      args.addAll(options);
+      args.addAll(chunk);
+      new HgCommandExecutor(project).execute(repo, "revert", args, null);
+    }
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project);
   }
 }

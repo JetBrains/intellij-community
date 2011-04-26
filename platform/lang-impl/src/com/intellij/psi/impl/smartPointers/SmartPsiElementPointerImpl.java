@@ -179,7 +179,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     if (isMultiRoot && !isElementInMainRoot) {
       return new MultiRootSelfElementInfo(project, element.getTextRange(), element.getClass(), containingFile, containingFile.getLanguage());
     }
-    return new SelfElementInfo(project, element.getTextRange(), element.getClass(), containingFile, element.getLanguage());
+    return new SelfElementInfo(project, element.getTextRange(), element.getClass(), containingFile, containingFile.getLanguage());
   }
 
   public void documentAndPsiInSync() {

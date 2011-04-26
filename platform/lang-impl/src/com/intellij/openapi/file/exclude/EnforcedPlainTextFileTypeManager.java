@@ -19,6 +19,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -34,6 +38,17 @@ public class EnforcedPlainTextFileTypeManager extends PersistentFileSetManager {
   
   public boolean isMarkedAsPlainText(VirtualFile file) {
     return containsFile(file);
+  }
+
+  public static boolean isApplicableFor(VirtualFile file) {
+    if (file.isDirectory()) return false;
+    FileType originalType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
+    if (originalType.isBinary() ||
+        originalType == FileTypes.PLAIN_TEXT ||
+        originalType == StdFileTypes.JAVA) {
+      return false;
+    }
+    return true;
   }
 
   public void markAsPlainText(VirtualFile file) {

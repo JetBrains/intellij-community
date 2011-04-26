@@ -17,7 +17,7 @@ package com.intellij.openapi.vcs.update;
 
 public class CommonIntegrateFileOrDirectoryAction extends AbstractCommonUpdateAction{
   public CommonIntegrateFileOrDirectoryAction() {
-    super(ActionInfo.INTEGRATE, ScopeInfo.FILES);
+    super(ActionInfo.INTEGRATE, ScopeInfo.FILES, false);
   }
 
   protected boolean filterRootsBeforeAction() {

@@ -669,11 +669,6 @@ public class JavaCompletionUtil {
   }
 
   public static LookupItem qualify(final LookupItem ret) {
-    if (!(ret instanceof JavaMethodCallElement)) {
-      for (String s : getAllLookupStrings((PsiMember)ret.getObject())) {
-        ret.setLookupString(s);
-      }
-    }
     return ret.forceQualify();
   }
 
@@ -764,7 +759,7 @@ public class JavaCompletionUtil {
     String name = psiClass.getName();
     document.replaceString(startOffset, endOffset, name);
 
-    final RangeMarker toDelete = insertTemporary(startOffset + name.length(), document, ";");
+    final RangeMarker toDelete = insertTemporary(startOffset + name.length(), document, "#");
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 

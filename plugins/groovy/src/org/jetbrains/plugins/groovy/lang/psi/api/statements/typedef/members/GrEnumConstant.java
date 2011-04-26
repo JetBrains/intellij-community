@@ -21,7 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrConstructorInvocationImpl;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -31,7 +33,7 @@ public interface GrEnumConstant extends GrField, GrConstructorCall, PsiEnumConst
   GrEnumConstant[] EMPTY_ARRAY = new GrEnumConstant[0];
 
   @Nullable
-  GrTypeDefinitionBody getAnonymousBlock();
+  GrEnumConstantInitializer getConstantInitializer();
 
   @Override
   GrArgumentList getArgumentList();

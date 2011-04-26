@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.update;
+package com.intellij.codeInsight.editorActions.moveUpDown;
 
-public class CommonStatusProjectAction extends AbstractCommonUpdateAction {
-  public CommonStatusProjectAction() {
-    super(ActionInfo.STATUS, ScopeInfo.PROJECT);
+import com.intellij.openapi.editor.actionSystem.EditorAction;
+
+/**
+ * @author Dennis.Ushakov
+ */
+public class MoveLineUpAction extends EditorAction {
+  public MoveLineUpAction() {
+    super(new MoveLineHandler(false));
   }
-
-  protected boolean filterRootsBeforeAction() {
-    return false;
-  }
-
 }

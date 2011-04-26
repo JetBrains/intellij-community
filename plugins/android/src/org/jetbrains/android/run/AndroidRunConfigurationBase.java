@@ -44,7 +44,6 @@ import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jdom.Element;
-import org.jetbrains.android.actions.AndroidEnableDdmsAction;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
@@ -54,6 +53,7 @@ import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdk;
 import org.jetbrains.android.sdk.AndroidSdkImpl;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -201,7 +201,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
 
     boolean debug = DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId());
     if (debug) {
-      if (!activateDdmsIfNeccessary(facet)) {
+      if (!AndroidUtils.activateDdmsIfNeccessary(facet)) {
         return null;
       }
     }
@@ -234,51 +234,6 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
       };
     }
     return null;
-  }
-
-  private static boolean activateDdmsIfNeccessary(@NotNull AndroidFacet facet) {
-    final Project project = facet.getModule().getProject();
-    final boolean ddmsEnabled = AndroidEnableDdmsAction.isDdmsEnabled();
-    boolean shouldRestartDdms = !ddmsEnabled;
-
-    if (ddmsEnabled && isDdmsCorrupted(facet)) {
-      shouldRestartDdms = true;
-      AndroidEnableDdmsAction.setDdmsEnabled(project, false);
-    }
-
-    if (shouldRestartDdms) {
-      if (!ddmsEnabled) {
-        int result = Messages.showYesNoDialog(project, AndroidBundle.message("android.ddms.disabled.error"),
-                                              AndroidBundle.message("android.ddms.disabled.dialog.title"),
-                                              Messages.getQuestionIcon());
-        if (result != 0) {
-          return false;
-        }
-      }
-      AndroidEnableDdmsAction.setDdmsEnabled(project, true);
-    }
-    return true;
-  }
-
-  // can be invoked only from dispatch thread!
-  private static boolean isDdmsCorrupted(@NotNull AndroidFacet facet) {
-    AndroidDebugBridge bridge = facet.getDebugBridge();
-    if (bridge != null) {
-      return isDdmsCorrupted(bridge);
-    }
-    return false;
-  }
-
-  static boolean isDdmsCorrupted(@NotNull AndroidDebugBridge bridge) {
-    IDevice[] devices = bridge.getDevices();
-    if (devices.length > 0) {
-      Client[] clients = devices[0].getClients();
-      if (clients.length > 0) {
-        ClientData clientData = clients[0].getClientData();
-        return clientData == null || clientData.getVmIdentifier() == null;
-      }
-    }
-    return false;
   }
 
   @Nullable

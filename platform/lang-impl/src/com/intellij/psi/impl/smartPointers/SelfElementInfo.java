@@ -49,7 +49,7 @@ public class SelfElementInfo implements SmartPointerElementInfo {
   protected final Language myLanguage;
 
   protected SelfElementInfo(@NotNull Project project, @NotNull PsiElement anchor) {
-    this(project, anchor.getTextRange(), anchor.getClass(), anchor.getContainingFile(), anchor.getLanguage());
+    this(project, anchor.getTextRange(), anchor.getClass(), anchor.getContainingFile(), anchor.getContainingFile().getLanguage());
   }
   public SelfElementInfo(@NotNull Project project,
                          @NotNull TextRange anchor,

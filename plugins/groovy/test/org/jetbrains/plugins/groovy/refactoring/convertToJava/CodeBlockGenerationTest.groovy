@@ -17,43 +17,17 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 
 import com.intellij.lang.StdLanguages
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ContentEntry
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement
 import org.jetbrains.plugins.groovy.util.TestUtils
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
 
 /**
  * @author Maxim.Medvedev
  */
-public class CodeBlockGenerationTest extends LightCodeInsightFixtureTestCase {
-  public static final DefaultLightProjectDescriptor GROOVY_18_PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
-    @Override
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
-      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath("$TestUtils.mockGroovy1_8LibraryName!/");
-      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
-      modifiableModel.commit();
-    }
-  };
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return GROOVY_18_PROJECT_DESCRIPTOR;
-  }
-
+public class CodeBlockGenerationTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
     return "${TestUtils.testDataPath}refactoring/convertGroovyToJava/codeBlock";

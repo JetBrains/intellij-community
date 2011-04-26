@@ -49,6 +49,7 @@ import com.intellij.xdebugger.DefaultDebugProcessHandler;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AvdsNotSupportedException;
 import org.jetbrains.android.sdk.AndroidSdkImpl;
+import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidOutputReceiver;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -552,8 +553,8 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
 
   private boolean checkDdms() {
     AndroidDebugBridge bridge = AndroidDebugBridge.getBridge();
-    if (myDebugMode && bridge != null && AndroidRunConfigurationBase.isDdmsCorrupted(bridge)) {
-      message("Debug info is not available. Please close other application using ADB: DDMS, Eclipse", STDERR);
+    if (myDebugMode && bridge != null && AndroidUtils.isDdmsCorrupted(bridge)) {
+      message(AndroidBundle.message("ddms.corrupted.error"), STDERR);
       return false;
     }
     return true;

@@ -35,7 +35,7 @@ import java.util.*;
  */
 public class GetCommittedChangelistAction extends AbstractCommonUpdateAction {
   public GetCommittedChangelistAction() {
-    super(ActionInfo.UPDATE, CHANGELIST);
+    super(ActionInfo.UPDATE, CHANGELIST, false);
   }
 
   protected void actionPerformed(final VcsContext context) {

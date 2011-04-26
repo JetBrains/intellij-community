@@ -71,10 +71,6 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
                   final TestResultMessage result = proxy.getResultMessage();
                   final String name = TestProxy.toDisplayText(result, consoleProperties.getProject());
                   append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-                  final String description = result.getTestDescription();
-                  if (description != null && description.startsWith(name) && description.length() > name.length()) {
-                    append(description.substring(name.length()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-                  }
                 } else {
                     append(proxy.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
                 }

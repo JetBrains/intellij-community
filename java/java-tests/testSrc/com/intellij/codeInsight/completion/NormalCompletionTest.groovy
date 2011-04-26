@@ -847,6 +847,17 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testSuggestExpectedTypeMembersInCall() throws Throwable { doTest('\n') }
 
+  public void testSuggestExpectedTypeMembersNonImported() throws Throwable {
+    myFixture.addClass("package foo; public class Super { public static final Super FOO = null; }")
+    myFixture.addClass("package foo; public class Usage { public static void foo(Super s) {} }")
+    doTest('\n')
+  }
+
+  public void testClassNameInIfBeforeIdentifier() throws Throwable {
+    myFixture.addClass("package foo; public class ABCDEFFFFF {}")
+    doTest('\n')
+  }
+
   public void testClassNameWithInnersTab() throws Throwable { doTest('\t') }
 
   public void testClassNameWithGenericsTab() throws Throwable {doTest('\t') }

@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.DialogManager;
 import git4idea.GitUtil;
 import git4idea.config.GitVcsSettings;
@@ -172,7 +173,7 @@ public class GitConvertFilesDialog extends DialogWrapper {
         if (i != null) {
           r.setIcon(i);
         }
-        r.append(GitUtil.getRelativeFilePath(file, parent), SimpleTextAttributes.REGULAR_ATTRIBUTES, true);
+        r.append(VcsFileUtil.getRelativeFilePath(file, parent), SimpleTextAttributes.REGULAR_ATTRIBUTES, true);
       }
       else {
         // the vcs root node

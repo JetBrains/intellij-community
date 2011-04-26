@@ -16,12 +16,14 @@
 
 package com.intellij.ide.commander;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.GroupedElementsRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.UIUtil;
@@ -57,6 +59,8 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
     SimpleTextAttributes attributes = null;
     String locationString = null;
 
+    setBorder(BorderFactory.createEmptyBorder(1, 0, 1, 0)); // for separator, see below
+    
     if (value instanceof NodeDescriptor) {
       final NodeDescriptor descriptor = (NodeDescriptor)value;
       setIcon(descriptor.getClosedIcon());
@@ -76,6 +80,12 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
           if (textAttributes != null) attributes =  SimpleTextAttributes.fromTextAttributes(textAttributes);
         }
         locationString = treeNode.getLocationString();
+
+        final PresentationData presentation = treeNode.getPresentation();
+        if (presentation.hasSeparatorAbove() && !selected) {
+          setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, GroupedElementsRenderer.POPUP_SEPARATOR_FOREGROUND),
+                                                       BorderFactory.createEmptyBorder(0, 0, 1, 0)));
+        }
       }
     }
 

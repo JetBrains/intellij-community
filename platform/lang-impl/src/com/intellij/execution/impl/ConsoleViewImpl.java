@@ -19,6 +19,7 @@ package com.intellij.execution.impl;
 import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
 import com.intellij.execution.ConsoleFolding;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.actions.ConsoleActionsPostProcessor;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
@@ -1640,7 +1641,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     for (int i = 0; i < customActions.size(); ++i) {
       consoleActions[i + 4] = customActions.get(i);
     }
-    return consoleActions;
+    ConsoleActionsPostProcessor[] postProcessors = Extensions.getExtensions(ConsoleActionsPostProcessor.EP_NAME);
+    AnAction[] result = consoleActions;
+    if (postProcessors != null) {
+      for (ConsoleActionsPostProcessor postProcessor : postProcessors) {
+        result = postProcessor.postProcess(this, result);
+      }
+    }
+    return result;
   }
 
   protected void scrollToTheEnd() {

@@ -42,6 +42,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
@@ -629,7 +630,7 @@ public class GitBranchesWidget extends TextPanel implements CustomStatusBarWidge
               GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.FETCH);
               h.addParameters("--all", "-v");
               final Collection<VcsException> e = GitHandlerUtil
-                .doSynchronouslyWithExceptions(h, indicator, "Fetching all for " + GitUtil.relativePath(myProject.getBaseDir(), root));
+                .doSynchronouslyWithExceptions(h, indicator, "Fetching all for " + VcsFileUtil.relativePath(myProject.getBaseDir(), root));
               exceptions.addAll(e);
             }
           }

@@ -184,17 +184,23 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
   }
 
   public TestProxy testStarted(TestResultMessage result) {
+    return testStarted(result, true);
+  }
+
+  public TestProxy testStarted(TestResultMessage result, boolean registerDups) {
     TestProxy classNode = getPackageClassNodeFor(result);
     TestProxy proxy = new TestProxy();
     proxy.setParent(classNode);
     proxy.setResultMessage(result);
     synchronized (started) {
-      List<TestProxy> dups = started.get(result);
-      if (dups == null) {
-        dups = new ArrayList<TestProxy>();
-        started.put(result, dups);
+      if (registerDups) {
+        List<TestProxy> dups = started.get(result);
+        if (dups == null) {
+          dups = new ArrayList<TestProxy>();
+          started.put(result, dups);
+        }
+        dups.add(proxy);
       }
-      dups.add(proxy);
     }
     final String testMethodDescriptor = result.getTestClass() + result.getMethod();
     if (startedMethods.contains(testMethodDescriptor)) {
@@ -241,7 +247,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
             }
           }
           if (testCase == null) {
-            testCase = testStarted(result);
+            testCase = testStarted(result, false);
             testCase.appendStacktrace(result);
           }
         }

@@ -102,7 +102,7 @@ public class LibraryOptionsPanel {
       public int compare(LibraryEditor o1, LibraryEditor o2) {
         final String name1 = o1.getName();
         final String name2 = o2.getName();
-        return StringUtil.notNullize(name1).compareToIgnoreCase(StringUtil.notNullize(name2));
+        return -StringUtil.notNullize(name1).compareToIgnoreCase(StringUtil.notNullize(name2));
       }
     });
 

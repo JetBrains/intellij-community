@@ -20,7 +20,7 @@ import java.util.List;
 
 public interface HgUpdater {
 
-  void update(UpdatedFiles updatedFiles, ProgressIndicator indicator, List<VcsException> exceptions)
+  boolean update(UpdatedFiles updatedFiles, ProgressIndicator indicator, List<VcsException> exceptions)
     throws VcsException;
 
   static class UpdateConfiguration{

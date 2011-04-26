@@ -200,7 +200,11 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo> extends L
     private final FileType myFileType;
 
     public DefaultValueColumn(Project project, FileType fileType) {
-      super(RefactoringBundle.message("column.name.default.value"));
+      this(project, fileType, RefactoringBundle.message("column.name.default.value"));
+    }
+
+    public DefaultValueColumn(Project project, FileType fileType, String title) {
+      super(title);
       myProject = project;
       myFileType = fileType;
     }

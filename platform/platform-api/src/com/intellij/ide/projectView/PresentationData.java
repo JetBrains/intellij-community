@@ -17,6 +17,7 @@ package com.intellij.ide.projectView;
 
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationWithSeparator;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.ComparableObject;
@@ -51,6 +52,7 @@ public class PresentationData implements ItemPresentation, ComparableObject {
 
   private Font myFont;
 
+  private boolean mySeparatorAbove = false;
 
   private boolean myChanged;
 
@@ -170,7 +172,16 @@ public class PresentationData implements ItemPresentation, ComparableObject {
     setPresentableText(presentation.getPresentableText());
     setLocationString(presentation.getLocationString());
     setAttributesKey(presentation.getTextAttributesKey());
+    setSeparatorAbove(presentation instanceof ItemPresentationWithSeparator);
   }
+  
+  public boolean hasSeparatorAbove() {
+    return mySeparatorAbove;
+  }
+  
+  public void setSeparatorAbove(final boolean b) {
+    mySeparatorAbove = b;
+  } 
 
   public TextAttributesKey getTextAttributesKey() {
     return myAttributesKey;
@@ -229,10 +240,12 @@ public class PresentationData implements ItemPresentation, ComparableObject {
     myPresentableText = null;
     myTooltip = null;
     myChanged = false;
+    mySeparatorAbove = false;
   }
 
   public Object[] getEqualityObjects() {
-    return new Object[] {myOpenIcon, myClosedIcon, myColoredText, myAttributesKey, myFont, myForcedTextForeground, myPresentableText, myLocationString};
+    return new Object[]{myOpenIcon, myClosedIcon, myColoredText, myAttributesKey, myFont, myForcedTextForeground, myPresentableText,
+      myLocationString, mySeparatorAbove};
   }
 
   @Override
@@ -259,6 +272,7 @@ public class PresentationData implements ItemPresentation, ComparableObject {
     myOpenIcon = from.myOpenIcon;
     myPresentableText = from.myPresentableText;
     myTooltip = from.myTooltip;
+    mySeparatorAbove = from.mySeparatorAbove;
   }
 
   public PresentationData clone() {
@@ -281,6 +295,7 @@ public class PresentationData implements ItemPresentation, ComparableObject {
     myOpenIcon = getValue(myOpenIcon, from.myOpenIcon);
     myPresentableText = getValue(myPresentableText, from.myPresentableText);
     myTooltip = getValue(myTooltip, from.myTooltip);
+    mySeparatorAbove = mySeparatorAbove || from.mySeparatorAbove;
   }
 
   private <T> T getValue(T ownValue, T fromValue) {

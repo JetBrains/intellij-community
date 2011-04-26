@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.commands.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +40,6 @@ public class GitBinaryContentRevision extends GitContentRevision implements Bina
       return null;
     }
     final VirtualFile root = GitUtil.getGitRoot(myFile);
-    return GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), GitUtil.relativePath(root, myFile));
+    return GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myFile));
   }
 }

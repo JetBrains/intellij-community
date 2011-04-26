@@ -130,6 +130,7 @@
 
   <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger"/>
   <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger"/>
+  <extensionPoint name="resolveScopeProvider" interface="com.intellij.psi.ResolveScopeProvider"/>
 
   <extensionPoint name="gotoClassContributor"
                   interface="com.intellij.navigation.ChooseByNameContributor"/>
@@ -177,6 +178,8 @@
 
   <extensionPoint name="copyPastePreProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePreProcessor"/>
   <extensionPoint name="copyPastePostProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePostProcessor"/>
+
+  <extensionPoint name="commentCompleteHandler" interface="com.intellij.codeInsight.editorActions.CommentCompleteHandler"/>
 
   <extensionPoint name="liveTemplateContext" interface="com.intellij.codeInsight.template.TemplateContextType"/>
   <extensionPoint name="liveTemplateMacro" interface="com.intellij.codeInsight.template.Macro"/>
@@ -249,6 +252,7 @@
                   area="IDEA_PROJECT"/>
 
   <extensionPoint name="consoleFilterProvider" interface="com.intellij.execution.filters.ConsoleFilterProvider"/>
+  <extensionPoint name="consoleActionsPostProcessor" interface="com.intellij.execution.actions.ConsoleActionsPostProcessor"/>
 
   <extensionPoint name="console.folding" interface="com.intellij.execution.ConsoleFolding"/>
 

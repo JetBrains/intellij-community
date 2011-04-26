@@ -22,6 +22,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
+import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -143,7 +144,7 @@ public class GrClosureSignatureUtil {
                                                            PsiType[] args,
                                                            GroovyPsiElement context,
                                                            boolean partial) {
-    return mapParametersToArguments(signature, args, (Function<PsiType, PsiType>)Function.ID, context, partial);
+    return mapParametersToArguments(signature, args, FunctionUtil.<PsiType>id(), context, partial);
   }
 
   @Nullable
@@ -209,6 +210,14 @@ public class GrClosureSignatureUtil {
       return true;
     }
     return TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context);
+  }
+
+  @Nullable
+  public static GrClosureSignature createSignature(GroovyResolveResult resolveResult) {
+    final PsiElement resolved = resolveResult.getElement();
+    if (!(resolved instanceof PsiMethod)) return null;
+    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    return createSignature((PsiMethod)resolved, substitutor);
   }
 
   private static class ParameterMapperForVararg<Arg> {

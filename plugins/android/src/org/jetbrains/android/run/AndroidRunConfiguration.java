@@ -183,13 +183,13 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
         switch (status) {
           case ERROR:
             if (processHandler != null) {
-              processHandler.notifyTextAvailable("Debug port is busy", STDOUT);
+              processHandler.notifyTextAvailable("Debug port is busy\n", STDOUT);
             }
             LOG.info("Debug port is busy");
             return false;
           case ATTACHED:
             if (processHandler != null) {
-              processHandler.notifyTextAvailable("Debugger already attached", STDOUT);
+              processHandler.notifyTextAvailable("Debugger already attached\n", STDOUT);
             }
             LOG.info("Debugger already attached");
             return false;

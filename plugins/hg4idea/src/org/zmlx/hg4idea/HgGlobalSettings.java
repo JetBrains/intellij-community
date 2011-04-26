@@ -31,27 +31,21 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
   private static final String HG = HgVcs.HG_EXECUTABLE_FILE_NAME;
   private static final int FIVE_MINUTES = 300;
 
-  private String myHgExecutable = HG;
-
-  // visited URL -> login for this URL. Passwords are remembered in the PasswordSafe.
-  private Map<String, String> myRememberedUserNames = new HashMap<String, String>();
-  private boolean myRunViaBash;
+  private State myState = new State();
 
   public static class State {
-    public String hgExecutable;
-    public boolean runViaBash;
+    public String myHgExecutable = HG;
+    public boolean myRunViaBash = false;
+    // visited URL -> login for this URL. Passwords are remembered in the PasswordSafe.
+    public Map<String, String> myRememberedUserNames = new HashMap<String, String>();
   }
 
   public State getState() {
-    State s = new State();
-    s.hgExecutable = myHgExecutable;
-    s.runViaBash = myRunViaBash;
-    return s;
+    return myState;
   }
 
   public void loadState(State state) {
-    myHgExecutable = state.hgExecutable;
-    myRunViaBash = state.runViaBash;
+    myState = state;
   }
 
   /**
@@ -61,7 +55,7 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
    */
   @Nullable
   public String getRememberedUserName(@NotNull String stringUrl) {
-    return myRememberedUserNames.get(stringUrl);
+    return myState.myRememberedUserNames.get(stringUrl);
   }
 
   /**
@@ -76,7 +70,7 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
     if (username == null) {
       username = "";
     }
-    myRememberedUserNames.put(stringUrl, username);
+    myState.myRememberedUserNames.put(stringUrl, username);
   }
 
   public static String getDefaultExecutable() {
@@ -84,19 +78,19 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
   }
 
   public String getHgExecutable() {
-    return myHgExecutable;
+    return myState.myHgExecutable;
   }
 
   public void setHgExecutable(String hgExecutable) {
-    this.myHgExecutable = hgExecutable;
+    myState.myHgExecutable = hgExecutable;
   }
 
   public boolean isAutodetectHg() {
-    return HG.equals(myHgExecutable);
+    return HG.equals(myState.myHgExecutable);
   }
 
   public void enableAutodetectHg() {
-    myHgExecutable = HG;
+    myState.myHgExecutable = HG;
   }
 
   public static int getIncomingCheckIntervalSeconds() {
@@ -104,11 +98,11 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
   }
 
   public boolean isRunViaBash() {
-    return myRunViaBash;
+    return myState.myRunViaBash;
   }
 
   public void setRunViaBash(boolean runViaBash) {
-    myRunViaBash = runViaBash;
+    myState.myRunViaBash = runViaBash;
   }
 
 }

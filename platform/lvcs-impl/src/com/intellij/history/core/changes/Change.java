@@ -39,6 +39,10 @@ public abstract class Change {
     out.writeLong(myId);
   }
 
+  public long getId() {
+    return myId;
+  }
+
   public abstract boolean affectsPath(String paths);
 
   public abstract boolean affectsProject(String projectId);

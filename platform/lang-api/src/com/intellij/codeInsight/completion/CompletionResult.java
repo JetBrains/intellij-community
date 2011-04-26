@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class CompletionResult {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionResult");
   private final LookupElement myLookupElement;
   private final PrefixMatcher myMatcher;
   private final CompletionSorter mySorter;

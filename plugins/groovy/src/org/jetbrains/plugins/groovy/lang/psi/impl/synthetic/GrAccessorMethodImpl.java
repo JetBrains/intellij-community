@@ -85,6 +85,11 @@ public class GrAccessorMethodImpl extends LightMethodBuilder implements GrAccess
     return myProperty.getTypeGroovy();
   }
 
+  @Override
+  public boolean isSetter() {
+    return myIsSetter;
+  }
+
 
   public PsiElement copy() {
     //return new GrAccessorMethodImpl(myProperty, myIsSetter, getName());

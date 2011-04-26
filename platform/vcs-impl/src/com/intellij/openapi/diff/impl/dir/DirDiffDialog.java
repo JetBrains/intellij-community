@@ -65,4 +65,9 @@ public class DirDiffDialog extends DialogWrapper {
   public JComponent getPreferredFocusedComponent() {
     return myDiffPanel.getTable();
   }
+
+  @Override
+  protected Action[] createActions() {
+    return new Action[]{};
+  }
 }

@@ -176,7 +176,7 @@ public class JUnit4TestRunnerUtil {
 
   private static Class loadTestClass(String suiteClassName) {
     try {
-      return Class.forName(suiteClassName);
+      return Class.forName(suiteClassName, false, JUnit4TestRunnerUtil.class.getClassLoader());
     }
     catch (ClassNotFoundException e) {
       String clazz = e.getMessage();

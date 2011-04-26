@@ -17,18 +17,15 @@ package git4idea;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.GitCommand;
@@ -128,26 +125,6 @@ public class GitUtil {
     return result;
   }
 
-  public static String getRelativeFilePath(VirtualFile file, @NotNull final VirtualFile baseDir) {
-    return getRelativeFilePath(file.getPath(), baseDir);
-  }
-
-  public static String getRelativeFilePath(FilePath file, @NotNull final VirtualFile baseDir) {
-    return getRelativeFilePath(file.getPath(), baseDir);
-  }
-
-  public static String getRelativeFilePath(String file, @NotNull final VirtualFile baseDir) {
-    if (SystemInfo.isWindows) {
-      file = file.replace('\\', '/');
-    }
-    final String basePath = baseDir.getPath();
-    if (!file.startsWith(basePath)) {
-      return file;
-    }
-    else if (file.equals(basePath)) return ".";
-    return file.substring(baseDir.getPath().length() + 1);
-  }
-
   /**
    * Sort files by vcs root
    *
@@ -204,105 +181,6 @@ public class GitUtil {
       l.add(p);
     }
     return rc;
-  }
-
-  /**
-   * Unescape path returned by the Git
-   *
-   * @param path a path to unescape
-   * @return unescaped path
-   * @throws VcsException if the path in invalid
-   */
-  public static String unescapePath(String path) throws VcsException {
-    final int l = path.length();
-    StringBuilder rc = new StringBuilder(l);
-    for (int i = 0; i < path.length(); i++) {
-      char c = path.charAt(i);
-      if (c == '\\') {
-        //noinspection AssignmentToForLoopParameter
-        i++;
-        if (i >= l) {
-          throw new VcsException("Unterminated escape sequence in the path: " + path);
-        }
-        final char e = path.charAt(i);
-        switch (e) {
-          case '\\':
-            rc.append('\\');
-            break;
-          case 't':
-            rc.append('\t');
-            break;
-          case 'n':
-            rc.append('\n');
-            break;
-          default:
-            if (isOctal(e)) {
-              // collect sequence of characters as a byte array.
-              // count bytes first
-              int n = 0;
-              for (int j = i; j < l;) {
-                if (isOctal(path.charAt(j))) {
-                  n++;
-                  for (int k = 0; k < 3 && j < l && isOctal(path.charAt(j)); k++) {
-                    //noinspection AssignmentToForLoopParameter
-                    j++;
-                  }
-                }
-                if (j + 1 >= l || path.charAt(j) != '\\' || !isOctal(path.charAt(j + 1))) {
-                  break;
-                }
-                //noinspection AssignmentToForLoopParameter
-                j++;
-              }
-              // convert to byte array
-              byte[] b = new byte[n];
-              n = 0;
-              while (i < l) {
-                if (isOctal(path.charAt(i))) {
-                  int code = 0;
-                  for (int k = 0; k < 3 && i < l && isOctal(path.charAt(i)); k++) {
-                    code = code * 8 + (path.charAt(i) - '0');
-                    //noinspection AssignmentToForLoopParameter
-                    i++;
-                  }
-                  b[n++] = (byte)code;
-                }
-                if (i + 1 >= l || path.charAt(i) != '\\' || !isOctal(path.charAt(i + 1))) {
-                  break;
-                }
-                //noinspection AssignmentToForLoopParameter
-                i++;
-              }
-              assert n == b.length;
-              // add them to string
-              final String encoding = GitConfigUtil.getFileNameEncoding();
-              try {
-                rc.append(new String(b, encoding));
-              }
-              catch (UnsupportedEncodingException e1) {
-                throw new IllegalStateException("The file name encoding is unsuported: " + encoding);
-              }
-            }
-            else {
-              throw new VcsException("Unknown escape sequence '\\" + path.charAt(i) + "' in the path: " + path);
-            }
-        }
-      }
-      else {
-        rc.append(c);
-      }
-    }
-    return rc.toString();
-  }
-
-  /**
-   * Check if character is octal digit
-   *
-   * @param ch a character to test
-   * @return true if the octal digit, false otherwise
-   */
-  private static boolean isOctal(char ch) {
-    return '0' <= ch && ch <= '7';
   }
 
   /**
@@ -449,201 +327,6 @@ public class GitUtil {
     return gitRootOrNull(vFile) != null;
   }
 
-  /**
-   * Get relative path
-   *
-   * @param root a root path
-   * @param path a path to file (possibly deleted file)
-   * @return a relative path
-   * @throws IllegalArgumentException if path is not under root.
-   */
-  public static String relativePath(final VirtualFile root, FilePath path) {
-    return relativePath(VfsUtil.virtualToIoFile(root), path.getIOFile());
-  }
-
-
-  /**
-   * Get relative path
-   *
-   * @param root a root path
-   * @param path a path to file (possibly deleted file)
-   * @return a relative path
-   * @throws IllegalArgumentException if path is not under root.
-   */
-  public static String relativePath(final File root, FilePath path) {
-    return relativePath(root, path.getIOFile());
-  }
-
-  /**
-   * Get relative path
-   *
-   * @param root a root path
-   * @param file a virtual file
-   * @return a relative path
-   * @throws IllegalArgumentException if path is not under root.
-   */
-  public static String relativePath(final File root, VirtualFile file) {
-    return relativePath(root, VfsUtil.virtualToIoFile(file));
-  }
-
-  /**
-   * Get relative path
-   *
-   * @param root a root file
-   * @param file a virtual file
-   * @return a relative path
-   * @throws IllegalArgumentException if path is not under root.
-   */
-  public static String relativePath(final VirtualFile root, VirtualFile file) {
-    return relativePath(VfsUtil.virtualToIoFile(root), VfsUtil.virtualToIoFile(file));
-  }
-
-  /**
-   * Get relative path
-   *
-   * @param root a root file
-   * @param file a virtual file
-   * @return a relative path
-   * @throws IllegalArgumentException if path is not under root.
-   */
-  public static String relativeOrFullPath(final VirtualFile root, VirtualFile file) {
-    if (root == null) {
-      file.getPath();
-    }
-    return relativePath(VfsUtil.virtualToIoFile(root), VfsUtil.virtualToIoFile(file));
-  }
-
-  /**
-   * Get relative path
-   *
-   * @param root a root path
-   * @param path a path to file (possibly deleted file)
-   * @return a relative path
-   * @throws IllegalArgumentException if path is not under root.
-   */
-  public static String relativePath(final File root, File path) {
-    String rc = FileUtil.getRelativePath(root, path);
-    if (rc == null) {
-      throw new IllegalArgumentException("The file " + path + " cannot be made relative to " + root);
-    }
-    return rc.replace(File.separatorChar, '/');
-  }
-
-  /**
-   * Covert list of files to relative paths
-   *
-   * @param root      a vcs root
-   * @param filePaths a parameters to convert
-   * @return a list of relative paths
-   * @throws IllegalArgumentException if some path is not under root.
-   */
-  public static List<String> toRelativePaths(@NotNull VirtualFile root, @NotNull final Collection<FilePath> filePaths) {
-    ArrayList<String> rc = new ArrayList<String>(filePaths.size());
-    for (FilePath path : filePaths) {
-      rc.add(relativePath(root, path));
-    }
-    return rc;
-  }
-
-  /**
-   * Covert list of files to relative paths
-   *
-   * @param root  a vcs root
-   * @param files a parameters to convert
-   * @return a list of relative paths
-   * @throws IllegalArgumentException if some path is not under root.
-   */
-  public static List<String> toRelativeFiles(@NotNull VirtualFile root, @NotNull final Collection<VirtualFile> files) {
-    ArrayList<String> rc = new ArrayList<String>(files.size());
-    for (VirtualFile file : files) {
-      rc.add(relativePath(root, file));
-    }
-    return rc;
-  }
-
-  /**
-   * Refresh files
-   *
-   * @param project       a project
-   * @param affectedFiles affected files and directories
-   */
-  public static void refreshFiles(@NotNull final Project project, @NotNull final Collection<VirtualFile> affectedFiles) {
-    final VcsDirtyScopeManager dirty = VcsDirtyScopeManager.getInstance(project);
-    for (VirtualFile file : affectedFiles) {
-      if (!file.isValid()) {
-        continue;
-      }
-      file.refresh(false, true);
-      if (file.isDirectory()) {
-        dirty.dirDirtyRecursively(file);
-      }
-      else {
-        dirty.fileDirty(file);
-      }
-    }
-  }
-
-  /**
-   * Refresh files
-   *
-   * @param project       a project
-   * @param affectedFiles affected files and directories
-   */
-  public static void markFilesDirty(@NotNull final Project project, @NotNull final Collection<VirtualFile> affectedFiles) {
-    final VcsDirtyScopeManager dirty = VcsDirtyScopeManager.getInstance(project);
-    for (VirtualFile file : affectedFiles) {
-      if (!file.isValid()) {
-        continue;
-      }
-      if (file.isDirectory()) {
-        dirty.dirDirtyRecursively(file);
-      }
-      else {
-        dirty.fileDirty(file);
-      }
-    }
-  }
-
-
-  /**
-   * Mark files dirty
-   *
-   * @param project       a project
-   * @param affectedFiles affected files and directories
-   */
-  public static void markFilesDirty(Project project, List<FilePath> affectedFiles) {
-    final VcsDirtyScopeManager dirty = VcsDirtyScopeManager.getInstance(project);
-    for (FilePath file : affectedFiles) {
-      if (file.isDirectory()) {
-        dirty.dirDirtyRecursively(file);
-      }
-      else {
-        dirty.fileDirty(file);
-      }
-    }
-  }
-
-  /**
-   * Refresh files
-   *
-   * @param project       a project
-   * @param affectedFiles affected files and directories
-   */
-  public static void refreshFiles(Project project, List<FilePath> affectedFiles) {
-    final VcsDirtyScopeManager dirty = VcsDirtyScopeManager.getInstance(project);
-    for (FilePath file : affectedFiles) {
-      VirtualFile vFile = VcsUtil.getVirtualFile(file.getIOFile());
-      if (vFile != null) {
-        vFile.refresh(false, true);
-      }
-      if (file.isDirectory()) {
-        dirty.dirDirtyRecursively(file);
-      }
-      else {
-        dirty.fileDirty(file);
-      }
-    }
-  }
 
   /**
    * Return committer name based on author name and committer name
@@ -708,41 +391,6 @@ public class GitUtil {
     return String.format("%015x%x", (rev >>> 4), rev & 0xF);
   }
 
-  /**
-   * The get the possible base for the path. It tries to find the parent for the provided path.
-   *
-   * @param file the file to get base for
-   * @param path the path to to check
-   * @return the file base
-   */
-  @Nullable
-  public static VirtualFile getPossibleBase(final VirtualFile file, final String... path) {
-    if (file == null || path.length == 0) return null;
-
-    VirtualFile current = file;
-    final List<VirtualFile> backTrace = new ArrayList<VirtualFile>();
-    int idx = path.length - 1;
-    while (current != null) {
-      if (SystemInfo.isFileSystemCaseSensitive ? current.getName().equals(path[idx]) : current.getName().equalsIgnoreCase(path[idx])) {
-        if (idx == 0) {
-          return current;
-        }
-        -- idx;
-      } else if (idx != path.length - 1) {
-        int diff = path.length - 1 - idx - 1;
-        for (int i = 0; i < diff; i++) {
-          current = backTrace.remove(backTrace.size() - 1);
-        }
-        idx = path.length - 1;
-        continue;
-      }
-      backTrace.add(current);
-      current = current.getParent();
-    }
-
-    return null;
-  }
-
   public static void getLocalCommittedChanges(final Project project,
                                               final VirtualFile root,
                                               final Consumer<GitSimpleHandler> parametersSpecifier,
@@ -795,21 +443,91 @@ public class GitUtil {
   }
 
   /**
-   * Cast or wrap exception into a vcs exception, errors and runtime exceptions are just thrown throw.
+   * Unescape path returned by the Git
    *
-   * @param t an exception to throw
-   * @return a wrapped exception
+   * @param path a path to unescape
+   * @return unescaped path
+   * @throws com.intellij.openapi.vcs.VcsException if the path in invalid
    */
-  public static VcsException rethrowVcsException(Throwable t) {
-    if (t instanceof Error) {
-      throw (Error)t;
+  public static String unescapePath(String path) throws VcsException {
+    final int l = path.length();
+    StringBuilder rc = new StringBuilder(l);
+    for (int i = 0; i < path.length(); i++) {
+      char c = path.charAt(i);
+      if (c == '\\') {
+        //noinspection AssignmentToForLoopParameter
+        i++;
+        if (i >= l) {
+          throw new VcsException("Unterminated escape sequence in the path: " + path);
+        }
+        final char e = path.charAt(i);
+        switch (e) {
+          case '\\':
+            rc.append('\\');
+            break;
+          case 't':
+            rc.append('\t');
+            break;
+          case 'n':
+            rc.append('\n');
+            break;
+          default:
+            if (VcsFileUtil.isOctal(e)) {
+              // collect sequence of characters as a byte array.
+              // count bytes first
+              int n = 0;
+              for (int j = i; j < l;) {
+                if (VcsFileUtil.isOctal(path.charAt(j))) {
+                  n++;
+                  for (int k = 0; k < 3 && j < l && VcsFileUtil.isOctal(path.charAt(j)); k++) {
+                    //noinspection AssignmentToForLoopParameter
+                    j++;
+                  }
+                }
+                if (j + 1 >= l || path.charAt(j) != '\\' || !VcsFileUtil.isOctal(path.charAt(j + 1))) {
+                  break;
+                }
+                //noinspection AssignmentToForLoopParameter
+                j++;
+              }
+              // convert to byte array
+              byte[] b = new byte[n];
+              n = 0;
+              while (i < l) {
+                if (VcsFileUtil.isOctal(path.charAt(i))) {
+                  int code = 0;
+                  for (int k = 0; k < 3 && i < l && VcsFileUtil.isOctal(path.charAt(i)); k++) {
+                    code = code * 8 + (path.charAt(i) - '0');
+                    //noinspection AssignmentToForLoopParameter
+                    i++;
+                  }
+                  b[n++] = (byte)code;
+                }
+                if (i + 1 >= l || path.charAt(i) != '\\' || !VcsFileUtil.isOctal(path.charAt(i + 1))) {
+                  break;
+                }
+                //noinspection AssignmentToForLoopParameter
+                i++;
+              }
+              assert n == b.length;
+              // add them to string
+              final String encoding = GitConfigUtil.getFileNameEncoding();
+              try {
+                rc.append(new String(b, encoding));
+              }
+              catch (UnsupportedEncodingException e1) {
+                throw new IllegalStateException("The file name encoding is unsuported: " + encoding);
+              }
+            }
+            else {
+              throw new VcsException("Unknown escape sequence '\\" + path.charAt(i) + "' in the path: " + path);
+            }
+        }
+      }
+      else {
+        rc.append(c);
+      }
     }
-    if (t instanceof RuntimeException) {
-      throw (RuntimeException)t;
-    }
-    if (t instanceof VcsException) {
-      return (VcsException)t;
-    }
-    return new VcsException(t.getMessage(), t);
+    return rc.toString();
   }
 }

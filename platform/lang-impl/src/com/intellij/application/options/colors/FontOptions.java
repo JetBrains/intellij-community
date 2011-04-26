@@ -16,6 +16,7 @@
 
 package com.intellij.application.options.colors;
 
+import com.intellij.application.options.OptionsConstants;
 import com.intellij.application.options.SelectFontDialog;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -158,7 +159,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
     myEditorFontSizeField.getDocument().addDocumentListener(new DocumentAdapter() {
       public void textChanged(DocumentEvent event) {
         if (myIsInSchemeChange) return;
-        int fontSize = 12;
+        int fontSize = OptionsConstants.DEFAULT_EDITOR_FONT_SIZE;
         try {
           fontSize = Integer.parseInt(myEditorFontSizeField.getText());
         }
@@ -167,7 +168,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
         }
         finally {
           if (fontSize < 1) fontSize = 1;
-          if (fontSize > 30) fontSize = 30;
+          if (fontSize > OptionsConstants.MAX_EDITOR_FONT_SIZE) fontSize = OptionsConstants.MAX_EDITOR_FONT_SIZE;
 
           getCurrentScheme().setEditorFontSize(fontSize);
           updateDescription(true);
@@ -278,7 +279,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
           continue;
         }
         try {
-          Font plainFont = new Font(fontName, Font.PLAIN, 12);
+          Font plainFont = new Font(fontName, Font.PLAIN, OptionsConstants.DEFAULT_EDITOR_FONT_SIZE);
           if (plainFont.canDisplay('W')) {
             Font boldFont = plainFont.deriveFont(Font.BOLD);
             if (progress != null) {

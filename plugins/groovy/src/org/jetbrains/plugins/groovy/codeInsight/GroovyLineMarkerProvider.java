@@ -26,7 +26,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.psi.*;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.FunctionUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -85,7 +85,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
           }
           LineMarkerInfo info =
             new LineMarkerInfo<PsiElement>(element, comment != null ? comment.getTextRange() : element.getTextRange(), null,
-                                           Pass.UPDATE_ALL, NullableFunction.NULL, null,
+                                           Pass.UPDATE_ALL, FunctionUtil.<Object, String>nullConstant(), null,
                                            GutterIconRenderer.Alignment.RIGHT);
           EditorColorsScheme scheme = myColorsManager.getGlobalScheme();
           info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);

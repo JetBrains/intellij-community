@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.frame;
 
+import com.intellij.util.NotNullFunction;
 import com.intellij.xdebugger.Obsolescent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,9 +37,40 @@ public interface XValueNode extends Obsolescent {
    */
   int MAX_VALUE_LENGTH = 100;
 
+  /**
+   * Setup presentation of the value
+   * @param icon icon representing value type (see {@link com.intellij.xdebugger.ui.DebuggerIcons})
+   * @param type optional type of the value, it is shown in gray color and surrounded by braces
+   * @param value string representation of value. It is also used in 'Copy Value' action
+   * @param hasChildren {@code false} if the node is a leaf
+   */
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren);
 
+  /**
+   * The same as {@link #setPresentation(javax.swing.Icon, String, String, boolean)} but also allows to
+   * customize {@code separator} between name and value
+   */
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value, boolean hasChildren);
+
+  /**
+   * The same as {@link #setPresentation(javax.swing.Icon, String, String, boolean)} but allows to change default processing of
+   * {@code value} parameter using custom {@code valuePresenter} function. By default only invisible characters like tabs or line separators
+   * are escaped in the value. {@code valuePresenter} function doesn't affect 'Copy Value' action. It can be used to escape additional
+   * characters and/or surround value by quotes.
+   *
+   * @see com.intellij.openapi.util.text.StringUtil#QUOTER
+   * @see com.intellij.openapi.util.text.StringUtil#escaper
+   * @see com.intellij.util.FunctionUtil#composition
+   */
+  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value,
+                       @Nullable NotNullFunction<String, String> valuePresenter, boolean hasChildren);
+
+  /**
+   * The same as {@link #setPresentation(javax.swing.Icon, String, String, com.intellij.util.NotNullFunction, boolean)} but also allows to
+   * customize {@code separator} between name and value
+   */
+  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value,
+                       @Nullable NotNullFunction<String, String> valuePresenter, boolean hasChildren);
 
   /**
    * If string representation of the value is too long to show in the tree pass truncated value to {@link #setPresentation(javax.swing.Icon, String, String, boolean)}

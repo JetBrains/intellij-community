@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
@@ -24,10 +25,7 @@ import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class HgResolveCommand {
 
@@ -91,8 +89,13 @@ public class HgResolveCommand {
     new HgCommandExecutor(myProject).execute(repo, "resolve", Arrays.asList("--mark", path.getPath()), null);
   }
 
-  public void markResolved(VirtualFile repo, FilePath path) {
-    new HgCommandExecutor(myProject).execute(repo, "resolve", Arrays.asList("--mark", path.getPath()), null);
+  public void markResolved(VirtualFile repo, Collection<FilePath> paths) {
+    for (List<String> chunk : VcsFileUtil.chunkPaths(repo, paths)) {
+      final List<String> args = new ArrayList<String>();
+      args.add("--mark");
+      args.addAll(chunk);
+      new HgCommandExecutor(myProject).execute(repo, "resolve", args, null);
+    }
   }
 
 }

@@ -281,7 +281,7 @@ public class ConsoleBuffer {
 
     myDeferredTypes.add(contentType);
 
-    s = StringUtil.convertLineSeparators(s, !SystemInfo.isMac);
+    s = StringUtil.convertLineSeparators(s, true);
 
     myDeferredOutputLength += s.length();
     StringBuilder bufferToUse;

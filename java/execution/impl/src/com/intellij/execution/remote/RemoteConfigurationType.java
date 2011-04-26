@@ -64,6 +64,11 @@ public class RemoteConfigurationType implements ConfigurationType {
   }
 
   @NotNull
+  public ConfigurationFactory getFactory() {
+    return myFactory;
+  }
+
+  @NotNull
   public String getId() {
     return "Remote";
   }

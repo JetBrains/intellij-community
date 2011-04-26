@@ -24,8 +24,8 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.UIUtil;
@@ -35,7 +35,6 @@ import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.execution.HgCommandException;
 
-import javax.swing.*;
 import java.util.*;
 
 public class HgCheckinEnvironment implements CheckinEnvironment {
@@ -170,9 +169,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     return choice[0] == 0;
   }
 
-  public List<VcsException> commit(List<Change> changes,
-    String preparedComment) {
-    return commit(changes, preparedComment, NullableFunction.NULL);
+  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant());
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {
@@ -187,20 +185,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     return null;
   }
 
-  public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
-    final HgAddCommand command = new HgAddCommand(myProject);
-    for (final VirtualFile file : files) {
-      final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, file);
-      if (vcsRoot == null) {
-        continue;
-      }
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          command.execute(new HgFile(vcsRoot, VfsUtil.virtualToIoFile(file)));
-        }
-      });
-    }
+  public List<VcsException> scheduleUnversionedFilesForAddition(final List<VirtualFile> files) {
+    new HgAddCommand(myProject).addWithProgress(files);
     return null;
   }
 

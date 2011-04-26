@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -35,10 +36,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocat
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
@@ -54,6 +56,7 @@ public class StubGenerator implements ClassItemGenerator {
 
   private ClassNameProvider classNameProvider;
   private Project myProject;
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.StubGenerator");
 
   public StubGenerator(ClassNameProvider classNameProvider, Project project) {
     this.classNameProvider = classNameProvider;
@@ -69,11 +72,11 @@ public class StubGenerator implements ClassItemGenerator {
       text.append(")");
     }
 
-    GrTypeDefinitionBody block = enumConstant.getAnonymousBlock();
-    if (block != null) {
+    GrEnumConstantInitializer initializer = enumConstant.getConstantInitializer();
+    if (initializer != null) {
       text.append("{\n");
-      for (PsiMethod method : block.getMethods()) {
-        writeMethod(text, method, method.getParameterList().getParameters());
+      for (PsiMethod method : initializer.getMethods()) {
+        writeMethod(text, method, 0);
       }
       text.append("}");
     }
@@ -95,7 +98,7 @@ public class StubGenerator implements ClassItemGenerator {
   }
 
 
-  public void writeConstructor(final StringBuilder text, final GrConstructor constructor, boolean isEnum) {
+  public void writeConstructor(final StringBuilder text, final GrConstructor constructor, int skipOptional, boolean isEnum) {
     if (!isEnum) {
       text.append("public ");
       //writeModifiers(text, constructor.getModifierList(), JAVA_MODIFIERS);
@@ -106,9 +109,8 @@ public class StubGenerator implements ClassItemGenerator {
     text.append(constructor.getName());
 
     /************* parameters **********/
-    GrParameter[] parameterList = constructor.getParameters();
-
-    writeParameterList(text, parameterList);
+    final ArrayList<GrParameter> actual = GenerationUtil.getActualParams(constructor, skipOptional);
+    GenerationUtil.writeParameterList(text, actual.toArray(new GrParameter[actual.size()]), classNameProvider);
 
     final Set<String> throwsTypes = collectThrowsTypes(constructor, new THashSet<PsiMethod>());
     if (!throwsTypes.isEmpty()) {
@@ -159,8 +161,7 @@ public class StubGenerator implements ClassItemGenerator {
     return result;
   }
 
-
-  public void writeMethod(StringBuilder text, PsiMethod method, final PsiParameter[] parameters) {
+  public void writeMethod(StringBuilder text, PsiMethod method, final int skipOptional) {
     if (method == null) return;
     String name = method.getName();
     if (!JavaPsiFacade.getInstance(method.getProject()).getNameHelper().isIdentifier(name)) {
@@ -197,7 +198,15 @@ public class StubGenerator implements ClassItemGenerator {
 
     text.append(name);
 
-    writeParameterList(text, parameters);
+
+    if (method instanceof GrMethod) {
+      final ArrayList<GrParameter> actualParams = GenerationUtil.getActualParams(((GrMethod)method), skipOptional);
+      GenerationUtil.writeParameterList(text, actualParams.toArray(new GrParameter[actualParams.size()]), classNameProvider);
+    }
+    else {
+      LOG.assertTrue(skipOptional==0);
+      GenerationUtil.writeParameterList(text, method.getParameterList().getParameters(), classNameProvider);
+    }
 
     writeThrowsList(text, method);
 
@@ -213,42 +222,10 @@ public class StubGenerator implements ClassItemGenerator {
     text.append("\n");
   }
 
-  private void writeParameterList(StringBuilder text, PsiParameter[] parameters) {
-    text.append("(");
-
-    //writes myParameters
-    int i = 0;
-    while (i < parameters.length) {
-      PsiParameter parameter = parameters[i];
-      if (parameter == null) continue;
-
-      if (i > 0) text.append(", ");  //append ','
-      writeType(text, GenerationUtil.findOutParameterType(parameter), parameter, classNameProvider);
-      text.append(" ");
-      text.append(parameter.getName());
-
-      i++;
-    }
-    text.append(")");
-    text.append(" ");
-  }
-
   private void writeThrowsList(StringBuilder text, PsiMethod method) {
     final PsiReferenceList throwsList = method.getThrowsList();
     final PsiClassType[] exceptions = throwsList.getReferencedTypes();
-    if (exceptions.length > 0) {
-      text.append("throws ");
-      for (int i = 0; i < exceptions.length; i++) {
-        PsiClassType exception = exceptions[i];
-        if (i != 0) {
-          text.append(",");
-        }
-        writeType(text, exception, throwsList, classNameProvider);
-        text.append(" ");
-      }
-
-      //todo search for all thrown exceptions from this file methods
-    }
+    GenerationUtil.writeThrowsList(text, throwsList, exceptions, classNameProvider);
   }
 
   @Nullable
@@ -316,11 +293,11 @@ public class StubGenerator implements ClassItemGenerator {
       methods.add(factory.createMethodFromText("public void setProperty(String propertyName, Object newValue) {}", null));
     }
 
-    if (typeDefinition instanceof GrTypeDefinition) {
+    /*if (typeDefinition instanceof GrTypeDefinition) {
       for (PsiMethod delegatedMethod : GrClassImplUtil.getDelegatedMethods((GrTypeDefinition)typeDefinition)) {
         methods.add(delegatedMethod);
       }
-    }
+    }*/
 
     return methods;
   }

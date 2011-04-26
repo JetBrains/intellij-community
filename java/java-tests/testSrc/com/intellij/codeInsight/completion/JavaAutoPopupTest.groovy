@@ -33,6 +33,7 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
+import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 
 /**
  * @author peter
@@ -268,7 +269,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
       myFixture.type 'r'
       lookup.markReused()
       lookup.currentItem = lookup.items[0]
-      CommandProcessor.instance.executeCommand project, ({lookup.finishLookup Lookup.NORMAL_SELECT_CHAR} as Runnable), null, null
+      CommandProcessor.instance.executeCommand project, {lookup.finishLookup Lookup.NORMAL_SELECT_CHAR}, null, null
 
     }
     myFixture.checkResult """
@@ -733,6 +734,34 @@ public class Bar {
     type 'ta'
     assert !lookup
   }
+
+  public void testExplicitAutocompletionAfterAutoPopup() {
+    myFixture.configureByText 'a.java', 'class Foo <caret>'
+    type 'ext'
+
+    CompletionAutoPopupHandler.ourTestingAutopopup = false
+    edt {
+      myFixture.completeBasic()
+    }
+    myFixture.checkResult 'class Foo extends <caret>'
+  }
+
+  public void testExplicitMultipleVariantCompletionAfterAutoPopup() {
+    myFixture.configureByText 'a.java', 'class Foo {<caret>}'
+    type 'pr'
+
+    CompletionAutoPopupHandler.ourTestingAutopopup = false
+    edt {
+      myFixture.completeBasic()
+    }
+    myFixture.checkResult 'class Foo {pr<caret>}'
+    lookup.items.each {
+      lookup.list.cellRenderer.getListCellRendererComponent(lookup.list, it, 0, false, false)
+    }
+    assert myFixture.lookupElementStrings == ['private', 'protected']
+  }
+
+
 
 
 }

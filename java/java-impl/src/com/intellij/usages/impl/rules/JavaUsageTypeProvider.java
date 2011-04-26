@@ -99,7 +99,7 @@ public class JavaUsageTypeProvider implements UsageTypeProvider {
 
   private static boolean haveCommonSuperMethod(@NotNull PsiMethod m1, @NotNull PsiMethod m2) {
     final Queue<PsiMethod> supers1Q = new ArrayDeque<PsiMethod>(); supers1Q.add(m1);
-    final Queue<PsiMethod> supers2Q = new ArrayDeque<PsiMethod>(); supers2Q.add(m1);
+    final Queue<PsiMethod> supers2Q = new ArrayDeque<PsiMethod>(); supers2Q.add(m2);
     Set<PsiMethod> supers1 = new THashSet<PsiMethod>();
     Set<PsiMethod> supers2 = new THashSet<PsiMethod>();
     while (true) {

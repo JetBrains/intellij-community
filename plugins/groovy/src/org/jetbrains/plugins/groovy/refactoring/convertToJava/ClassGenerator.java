@@ -18,9 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -30,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -108,7 +106,12 @@ public class ClassGenerator {
 
     text.append("{\n");
 
-    if (isEnum) {
+    writeMembers(text, typeDefinition, isClassDef);
+    text.append("}");
+  }
+
+  public void writeMembers(StringBuilder text, PsiClass typeDefinition, boolean isClassDef) {
+    if (typeDefinition.isEnum()) {
       final GrEnumConstant[] enumConstants = ((GrEnumTypeDefinition)typeDefinition).getEnumConstants();
       for (GrEnumConstant constant : enumConstants) {
         classItemGenerator.writeEnumConstant(text, constant);
@@ -132,7 +135,6 @@ public class ClassGenerator {
         text.append("\n");
       }
     }
-    text.append("}");
   }
 
   private void writeImplementsList(StringBuilder text, PsiClass typeDefinition, boolean isInterface) {
@@ -170,47 +172,14 @@ public class ClassGenerator {
 
 
   private void writeAllMethods(StringBuilder text, Collection<PsiMethod> methods, PsiClass aClass) {
-    Set<MethodSignature> methodSignatures = new HashSet<MethodSignature>();
     for (PsiMethod method : methods) {
-      if (!shouldBeGenerated(method)) {
-        continue;
-      }
+      if (!shouldBeGenerated(method)) continue;
 
       if (method instanceof GrConstructor) {
-        classItemGenerator.writeConstructor(text, (GrConstructor)method, aClass.isEnum());
-        continue;
-      }
-
-      PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (parameters.length > 0) {
-        PsiParameter[] parametersCopy = new PsiParameter[parameters.length];
-        PsiType[] parameterTypes = new PsiType[parameters.length];
-        for (int i = 0; i < parameterTypes.length; i++) {
-          parametersCopy[i] = parameters[i];
-          parameterTypes[i] = GenerationUtil.findOutParameterType(parameters[i]);
-        }
-
-        for (int i = parameters.length - 1; i >= 0; i--) {
-          MethodSignature signature =
-            MethodSignatureUtil.createMethodSignature(method.getName(), parameterTypes, method.getTypeParameters(), PsiSubstitutor.EMPTY);
-          if (methodSignatures.add(signature)) {
-            classItemGenerator.writeMethod(text, method, parametersCopy);
-            text.append('\n');
-
-          }
-
-          PsiParameter parameter = parameters[i];
-          if (!(parameter instanceof GrParameter) || !((GrParameter)parameter).isOptional()) break;
-          parameterTypes = ArrayUtil.remove(parameterTypes, parameterTypes.length - 1);
-          parametersCopy = ArrayUtil.remove(parametersCopy, parametersCopy.length - 1);
-        }
+        writeAllSignaturesOfConstructor(text, (GrConstructor)method, classItemGenerator, aClass.isEnum());
       }
       else {
-        MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
-        if (methodSignatures.add(signature)) {
-          classItemGenerator.writeMethod(text, method, parameters);
-          text.append('\n');
-        }
+        writeAllSignaturesOfMethod(text, method, classItemGenerator);
       }
     }
   }
@@ -229,4 +198,38 @@ public class ClassGenerator {
     return true;
   }
 
+
+  public static void writeAllSignaturesOfMethod(StringBuilder builder, PsiMethod method, ClassItemGenerator generator) {
+    if (!(method instanceof GrMethod)) {
+      generator.writeMethod(builder, method, 0);
+      builder.append('\n');
+      return;
+    }
+
+    int count = getOptionalParameterCount((GrMethod)method);
+
+    for (int i = 0; i <= count; i++) {
+      generator.writeMethod(builder, method, i);
+      builder.append('\n');
+    }
+  }
+
+  public static void writeAllSignaturesOfConstructor(StringBuilder builder, GrConstructor constructor, ClassItemGenerator generator, boolean isEnum) {
+
+    int count = getOptionalParameterCount(constructor);
+
+    for (int i = 0; i <= count; i++) {
+      generator.writeConstructor(builder, constructor, i, isEnum);
+    }
+  }
+
+
+  private static int getOptionalParameterCount(GrMethod method) {
+    final GrParameter[] parameters = method.getParameterList().getParameters();
+    int count = 0;
+    for (GrParameter parameter : parameters) {
+      if (parameter.isOptional()) count++;
+    }
+    return count;
+  }
 }

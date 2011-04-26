@@ -4,6 +4,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -33,10 +34,28 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
   }
 
   @Override
+  public LookupItem<PsiVariable> forceQualify() {
+    PsiVariable var = getObject();
+    if (var instanceof PsiField) {
+      for (String s : JavaCompletionUtil.getAllLookupStrings((PsiField)var)) {
+        setLookupString(s); //todo set the string that will be inserted
+      }
+    }
+    return super.forceQualify();
+  }
+
+  @Override
   public void handleInsert(InsertionContext context) {
     super.handleInsert(context);
 
+    PsiVariable variable = getObject();
+    context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), variable.getName());
+
     PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getDocument());
+    if (variable instanceof PsiField && shouldQualify((PsiField)variable, context)) {
+      qualifyFieldReference(context, (PsiField)variable);
+    }
+
     PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getTailOffset() - 1, PsiReferenceExpression.class, false);
     if (ref != null) {
       JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(ref);
@@ -58,14 +77,41 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     else if (completionChar == '.') {
       AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
     }
-    else if (completionChar == '!' && PsiType.BOOLEAN.isAssignableFrom(getObject().getType())) {
+    else if (completionChar == '!' && PsiType.BOOLEAN.isAssignableFrom(variable.getType())) {
       context.setAddCompletionChar(false);
       if (ref != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EXCLAMATION_FINISH);
         context.getDocument().insertString(ref.getTextRange().getStartOffset(), "!");
       }
     }
+  }
 
+  protected boolean shouldQualify(PsiField field, InsertionContext context) {
+    if (getAttribute(FORCE_QUALIFY) != null) {
+      return true;
+    }
 
+    PsiReference reference = context.getFile().findReferenceAt(context.getStartOffset());
+    if (reference instanceof PsiReferenceExpression && !((PsiReferenceExpression) reference).isQualified()) {
+      final PsiVariable target = JavaPsiFacade.getInstance(context.getProject()).getResolveHelper().resolveReferencedVariable(field.getName(), (PsiElement)reference);
+      return !field.getManager().areElementsEquivalent(target, JavaCompletionUtil.getOriginalElement(field));
+    }
+    return false;
+  }
+
+  private static void qualifyFieldReference(InsertionContext context, PsiField field) {
+    context.commitDocument();
+    PsiFile file = context.getFile();
+    final PsiReference reference = file.findReferenceAt(context.getStartOffset());
+    if (reference instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)reference).isQualified()) {
+      return;
+    }
+
+    PsiClass containingClass = field.getContainingClass();
+    if (containingClass != null) {
+      context.getDocument().insertString(context.getStartOffset(), ".");
+      JavaCompletionUtil.insertClassReference(containingClass, file, context.getStartOffset());
+      PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getDocument());
+    }
   }
 }

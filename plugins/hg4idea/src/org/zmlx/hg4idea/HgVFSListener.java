@@ -94,8 +94,8 @@ public class HgVFSListener extends VcsVFSListener {
                                false,
                                VcsConfiguration.getInstance(myProject).getAddRemoveOption() ) {
       @Override public void run(@NotNull ProgressIndicator aProgressIndicator) {
-        final ArrayList<HgFile> adds = new ArrayList<HgFile>();
-        final HashMap<HgFile, HgFile> copies = new HashMap<HgFile, HgFile>(); // from -> to
+        final ArrayList<VirtualFile> adds = new ArrayList<VirtualFile>();
+        final HashMap<VirtualFile, VirtualFile> copies = new HashMap<VirtualFile, VirtualFile>(); // from -> to
 
         // separate adds from copies
         for (VirtualFile file : addedFiles) {
@@ -105,9 +105,9 @@ public class HgVFSListener extends VcsVFSListener {
 
           final VirtualFile copyFrom = copyFromMap.get(file);
           if (copyFrom != null) {
-            copies.put(new HgFile(myProject, copyFrom), new HgFile(myProject, file));
+            copies.put(copyFrom, file);
           } else {
-            adds.add(new HgFile(myProject, file));
+            adds.add(file);
           }
         }
 
@@ -118,7 +118,7 @@ public class HgVFSListener extends VcsVFSListener {
 
         // copy needs to be run for each file separately
         if (!copies.isEmpty()) {
-          for(Map.Entry<HgFile, HgFile> copy : copies.entrySet()) {
+          for(Map.Entry<VirtualFile, VirtualFile> copy : copies.entrySet()) {
             new HgCopyCommand(myProject).execute(copy.getKey(), copy.getValue());
           }
         }

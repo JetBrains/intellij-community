@@ -98,7 +98,9 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
     return new ProjectJdkStep(wizardContext){
       public boolean isStepVisible() {
         final Sdk newProjectJdk = AddModuleWizard.getNewProjectJdk(wizardContext);
-        return newProjectJdk == null || !wizardContext.getProjectBuilder().isSuitableSdk(newProjectJdk);
+        if (newProjectJdk == null) return true;
+        final ProjectBuilder projectBuilder = wizardContext.getProjectBuilder();
+        return projectBuilder != null && !projectBuilder.isSuitableSdk(newProjectJdk);
       }
     };
   }

@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Key;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 
 public abstract class DataManager {
@@ -69,4 +71,17 @@ public abstract class DataManager {
    */
   @Nullable
   public abstract <T> T loadFromDataContext(DataContext dataContext, Key<T> dataKey);
+
+  public static void registerDataProvider(JComponent component, DataProvider provider) {
+    component.putClientProperty(CLIENT_PROPERTY_DATA_PROVIDER, provider);
+  }
+
+  @Nullable
+  public static DataProvider getDataProvider(@NotNull JComponent component) {
+    return (DataProvider)component.getClientProperty(CLIENT_PROPERTY_DATA_PROVIDER);
+  }
+
+  public static void removeDataProvider(@NotNull JComponent component) {
+    component.putClientProperty(CLIENT_PROPERTY_DATA_PROVIDER, null);
+  }
 }

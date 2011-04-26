@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.StubBasedPsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterListOwner;
@@ -32,6 +33,6 @@ public interface GrAnonymousClassDefinition
   @NotNull
   GrCodeReferenceElement getBaseClassReferenceGroovy();
 
-  @NotNull
+  @Nullable
   GrArgumentList getArgumentListGroovy();
 }

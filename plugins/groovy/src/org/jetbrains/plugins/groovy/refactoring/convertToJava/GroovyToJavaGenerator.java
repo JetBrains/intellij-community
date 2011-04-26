@@ -141,10 +141,10 @@ public class GroovyToJavaGenerator {
     final ClassItemGenerator generator = new StubGenerator(new StubClassNameProvider(Collections.<VirtualFile>emptySet()), method.getProject());
     final StringBuilder buffer = new StringBuilder();
     if (method instanceof GrConstructor) {
-      generator.writeConstructor(buffer, (GrConstructor)method, false);
+      generator.writeConstructor(buffer, (GrConstructor)method, 0, false);
     }
     else {
-      generator.writeMethod(buffer, method, method.getParameterList().getParameters());
+      generator.writeMethod(buffer, method, 0);
     }
     return buffer.toString();
   }

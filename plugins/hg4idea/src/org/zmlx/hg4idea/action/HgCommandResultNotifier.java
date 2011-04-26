@@ -39,11 +39,11 @@ public final class HgCommandResultNotifier {
     if (!out.isEmpty()) {
       VcsUtil.showStatusMessage(myProject, out.get(out.size() - 1));
     }
-    if (!err.isEmpty()) {
+    if (HgErrorUtil.isAbort(result)) {
       VcsUtil.showErrorMessage(
         myProject, "<html>" + StringUtils.join(err, "<br>") + "</html>", "Error"
       );
-    } else if (!HgErrorUtil.isAbort(result) && successTitle != null && successDescription != null) {
+    } else if (successTitle != null && successDescription != null) {
       Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID, successTitle, successDescription, NotificationType.INFORMATION), myProject);
     }
   }

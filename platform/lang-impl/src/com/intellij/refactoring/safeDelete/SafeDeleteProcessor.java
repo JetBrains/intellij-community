@@ -100,7 +100,14 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    return PsiTreeUtil.isAncestor(ancestor, place, false);
+    boolean isAncestor = PsiTreeUtil.isAncestor(ancestor, place, false);
+    if (!isAncestor && ancestor instanceof PsiNameIdentifierOwner) {
+      final PsiElement nameIdentifier = ((PsiNameIdentifierOwner)ancestor).getNameIdentifier();
+      if (nameIdentifier != null && !PsiTreeUtil.isAncestor(ancestor, nameIdentifier, true)) {
+        isAncestor = PsiTreeUtil.isAncestor(nameIdentifier.getParent(), place, false);
+      }
+    }
+    return isAncestor;
   }
 
   @NotNull

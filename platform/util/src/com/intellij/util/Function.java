@@ -25,11 +25,17 @@ import java.util.Collection;
 public interface Function<Param, Result> {
   Result fun(Param param);
 
+  /**
+   * @see FunctionUtil#id()
+   */
   Function ID = new Function() {
     public Object fun(final Object o) {
       return o;
     }
   };
+  /**
+   * @see FunctionUtil#nullConstant()
+   */
   Function NULL = NullableFunction.NULL;
 
   final class Self<P, R> implements Function<P, R> {

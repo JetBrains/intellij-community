@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.Patches;
+import com.intellij.application.options.OptionsConstants;
 import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.TooltipController;
@@ -932,7 +933,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int offset = logicalPositionToOffset(logicalPosition);
     int textLength = myDocument.getTextLength();
 
-    if (offset >= textLength) return new VisualPosition(line, 0);
+    if (offset >= textLength) return new VisualPosition(line, EditorUtil.columnsNumber(p.x, EditorUtil.getSpaceWidth(Font.PLAIN, this)));
 
     // There is a possible case that starting logical line is split by soft-wraps and it's part after the split should be drawn.
     // We mark that we're under such circumstances then.
@@ -5043,6 +5044,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private final HashMap<ColorKey, Color> myOwnColors = new HashMap<ColorKey, Color>();
     private final EditorColorsScheme myCustomGlobalScheme;
     private Map<EditorFontType, Font> myFontsMap = null;
+    private int myMaxFontSize = OptionsConstants.MAX_EDITOR_FONT_SIZE;
     private int myFontSize = -1;
     private String myFaceName = null;
     private EditorColorsScheme myGlobalScheme;
@@ -5124,7 +5126,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     public void setEditorFontSize(int fontSize) {
       if (fontSize < 8) fontSize = 8;
-      if (fontSize > 20) fontSize = 20;
+      if (fontSize > myMaxFontSize) fontSize = myMaxFontSize;
       myFontSize = fontSize;
       initFonts();
     }
@@ -5189,6 +5191,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void updateGlobalScheme() {
       myGlobalScheme = myCustomGlobalScheme != null ? myCustomGlobalScheme
                                                     :  EditorColorsManager.getInstance().getGlobalScheme();
+      int globalFontSize = getGlobal().getEditorFontSize();
+      myMaxFontSize = Math.max(OptionsConstants.MAX_EDITOR_FONT_SIZE, globalFontSize);
     }
   }
 

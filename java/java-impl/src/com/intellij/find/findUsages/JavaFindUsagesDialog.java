@@ -25,6 +25,8 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.usageView.UsageViewUtil;
 
@@ -90,8 +92,10 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
            myPsiElement != null && getPsiManager().getSearchHelper().getUseScope(myPsiElement)instanceof LocalSearchScope;
   }
 
-  public String getLabelText() {
-    return StringUtil.capitalize(UsageViewUtil.getType(myPsiElement)) + " " + UsageViewUtil.getDescriptiveName(myPsiElement);
+  public void configureLabelComponent(final SimpleColoredComponent coloredComponent) {
+    coloredComponent.append(StringUtil.capitalize(UsageViewUtil.getType(myPsiElement)));
+    coloredComponent.append(" ");
+    coloredComponent.append(UsageViewUtil.getDescriptiveName(myPsiElement), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
   }
 
   protected final PsiElement getPsiElement() {

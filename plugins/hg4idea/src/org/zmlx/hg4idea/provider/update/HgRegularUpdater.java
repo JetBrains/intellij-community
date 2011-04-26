@@ -61,7 +61,7 @@ public class HgRegularUpdater implements HgUpdater {
     return updateConfiguration.shouldCommitAfterMerge();
   }
 
-  public void update(final UpdatedFiles updatedFiles, ProgressIndicator indicator, List<VcsException> warnings)
+  public boolean update(final UpdatedFiles updatedFiles, ProgressIndicator indicator, List<VcsException> warnings)
     throws VcsException {
     indicator.setText(HgVcsMessages.message("hg4idea.progress.updating", repository.getPath()));
 
@@ -88,7 +88,10 @@ public class HgRegularUpdater implements HgUpdater {
 //    }
 
     if (shouldPull()) {
-      pull(repository, indicator);
+      boolean pullResult = pull(repository, indicator);
+      if (!pullResult) {
+        return false;
+      }
     }
 
     if (shouldUpdate()) {
@@ -125,6 +128,7 @@ public class HgRegularUpdater implements HgUpdater {
       //any kind of update could have resulted in merges and merge conflicts, so run the resolver
       resolvePossibleConflicts(updatedFiles);
     }
+    return true;
   }
 
   private List<HgRevisionNumber> determingRemainingOriginalBranchHeads(List<HgRevisionNumber> branchHeadsBeforePull, List<HgRevisionNumber> branchHeadsAfterPull) {
@@ -207,7 +211,7 @@ public class HgRegularUpdater implements HgUpdater {
     return statusCommand.execute(repository);
   }
 
-  private void pull(VirtualFile repo, ProgressIndicator indicator)
+  private boolean pull(VirtualFile repo, ProgressIndicator indicator)
     throws VcsException {
     indicator.setText2(HgVcsMessages.message("hg4idea.progress.pull.with.update"));
     HgPullCommand hgPullCommand = new HgPullCommand(project, repo);
@@ -215,7 +219,7 @@ public class HgRegularUpdater implements HgUpdater {
     hgPullCommand.setSource(defaultPath);
     hgPullCommand.setUpdate(false);
     hgPullCommand.setRebase(false);
-    hgPullCommand.execute();
+    return hgPullCommand.execute();
   }
 
   private void update(@NotNull VirtualFile repo, ProgressIndicator indicator, UpdatedFiles updatedFiles, List<VcsException> warnings) throws VcsException {

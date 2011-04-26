@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.actions;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.ide.diff.VirtualFileDiffElement;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -34,6 +35,7 @@ public class CompareDirectoriesAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = getEventProject(e);
     final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("dir.diff");
     if (project != null && files != null) {
       VirtualFileDiffElement src = null;
       VirtualFileDiffElement trg = null;

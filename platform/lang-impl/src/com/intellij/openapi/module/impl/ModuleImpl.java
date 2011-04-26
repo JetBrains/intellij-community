@@ -297,13 +297,13 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   public GlobalSearchScope getModuleRuntimeScope(boolean includeTests) {
     if (includeTests) {
       if (myModuleTestsRuntimeClasspathScope == null) {
-        myModuleTestsRuntimeClasspathScope = new ModuleWithDependenciesScope(this, false, true, true, true);
+        myModuleTestsRuntimeClasspathScope = new ModuleWithDependenciesScope(this, false, true, true, true, false);
       }
       return myModuleTestsRuntimeClasspathScope;
     }
     else {
       if (myModuleRuntimeClasspathScope == null) {
-        myModuleRuntimeClasspathScope = new ModuleWithDependenciesScope(this, false, true, true, false);
+        myModuleRuntimeClasspathScope = new ModuleWithDependenciesScope(this, false, true, true, false, false);
       }
       return myModuleRuntimeClasspathScope;
     }

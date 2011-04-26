@@ -48,7 +48,18 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
                                      boolean compileClasspath,
                                      boolean includeLibraries,
                                      boolean includeOtherModules,
-                                     boolean includeTests) {
+                                     boolean includeTests
+                                     ) {
+    this(module, compileClasspath, includeLibraries, includeOtherModules, includeTests, !compileClasspath);
+  }
+
+  // todo refactor to use builder-style tuning like for OrderEnumerator
+  public ModuleWithDependenciesScope(Module module,
+                                     boolean compileClasspath,
+                                     boolean includeLibraries,
+                                     boolean includeOtherModules,
+                                     boolean includeTests,
+                                     boolean runtimeClasspath) {
     super(module.getProject());
     myModule = module;
 
@@ -65,7 +76,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     if (myCompileClasspath) {
       en.exportedOnly().compileOnly();
     }
-    else {
+    if (runtimeClasspath) {
       en.runtimeOnly();
     }
     if (!myIncludeLibraries) en.withoutLibraries().withoutSdk();

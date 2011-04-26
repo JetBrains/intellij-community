@@ -21,6 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageViewUtil;
 
 import javax.swing.*;
@@ -60,8 +62,10 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
     return null;
   }
 
-  public String getLabelText() {
-    return StringUtil.capitalize(UsageViewUtil.getType(myPsiElement)) + " " + UsageViewUtil.getDescriptiveName(myPsiElement);
+  public void configureLabelComponent(final SimpleColoredComponent coloredComponent) {
+    coloredComponent.append(StringUtil.capitalize(UsageViewUtil.getType(myPsiElement)));
+    coloredComponent.append(" ");
+    coloredComponent.append(UsageViewUtil.getDescriptiveName(myPsiElement), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
   }
 
   @Override

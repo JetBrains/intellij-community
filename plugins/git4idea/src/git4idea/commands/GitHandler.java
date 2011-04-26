@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Processor;
-import git4idea.GitUtil;
+import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVcsSettings;
@@ -302,7 +302,7 @@ public abstract class GitHandler {
   public void addRelativePaths(@NotNull final Collection<FilePath> filePaths) {
     checkNotStarted();
     for (FilePath path : filePaths) {
-      myCommandLine.addParameter(GitUtil.relativePath(myWorkingDirectory, path));
+      myCommandLine.addParameter(VcsFileUtil.relativePath(myWorkingDirectory, path));
     }
   }
 
@@ -315,7 +315,7 @@ public abstract class GitHandler {
   public void addRelativePathsForFiles(@NotNull final Collection<File> files) {
     checkNotStarted();
     for (File file : files) {
-      myCommandLine.addParameter(GitUtil.relativePath(myWorkingDirectory, file));
+      myCommandLine.addParameter(VcsFileUtil.relativePath(myWorkingDirectory, file));
     }
   }
 
@@ -329,7 +329,7 @@ public abstract class GitHandler {
   public void addRelativeFiles(@NotNull final Collection<VirtualFile> files) {
     checkNotStarted();
     for (VirtualFile file : files) {
-      myCommandLine.addParameter(GitUtil.relativePath(myWorkingDirectory, file));
+      myCommandLine.addParameter(VcsFileUtil.relativePath(myWorkingDirectory, file));
     }
   }
 
@@ -632,7 +632,7 @@ public abstract class GitHandler {
    * @return true if the command line is too big
    */
   public boolean isLargeCommandLine() {
-    return myCommandLine.getCommandLineString().length() > GitFileUtils.FILE_PATH_LIMIT;
+    return myCommandLine.getCommandLineString().length() > VcsFileUtil.FILE_PATH_LIMIT;
   }
 
   public void runInCurrentThread(Runnable postStartAction) {

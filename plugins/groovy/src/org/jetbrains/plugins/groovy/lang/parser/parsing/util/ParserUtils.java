@@ -145,6 +145,7 @@ public abstract class ParserUtils {
     marker.error(msg);
   }
 
+  @Deprecated
   public static void advance(PsiBuilder builder, int count) {
     for (int i = 0; i < count; i++) {
       builder.getTokenText();
@@ -152,6 +153,7 @@ public abstract class ParserUtils {
     }
   }
 
+  @Deprecated
   public static void advance(PsiBuilder builder) {
     advance(builder, 1);
   }

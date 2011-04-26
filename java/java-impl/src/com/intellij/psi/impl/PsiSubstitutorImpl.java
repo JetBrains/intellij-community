@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,16 +35,21 @@ import java.util.*;
  */
 public class PsiSubstitutorImpl implements PsiSubstitutor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiSubstitutorImpl");
-  private final Map<PsiTypeParameter, PsiType> mySubstitutionMap;
-  private final TObjectHashingStrategy<PsiTypeParameter> PSI_EQUIVALENCE = new TObjectHashingStrategy<PsiTypeParameter>() {
+
+  private static final TObjectHashingStrategy<PsiTypeParameter> PSI_EQUIVALENCE = new TObjectHashingStrategy<PsiTypeParameter>() {
+    @Override
     public int computeHashCode(PsiTypeParameter object) {
       String name = object.getName();
       return name == null ? 0 : name.hashCode();
     }
+
+    @Override
     public boolean equals(PsiTypeParameter element1, PsiTypeParameter element2) {
       return element1.getManager().areElementsEquivalent(element1, element2);
     }
   };
+
+  private final Map<PsiTypeParameter, PsiType> mySubstitutionMap;
 
   private PsiSubstitutorImpl(@NotNull Map<PsiTypeParameter, PsiType> map) {
     mySubstitutionMap = new THashMap<PsiTypeParameter, PsiType>(map, PSI_EQUIVALENCE);
@@ -53,9 +59,23 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     mySubstitutionMap = new THashMap<PsiTypeParameter, PsiType>(2, PSI_EQUIVALENCE);
   }
 
-  public PsiType substitute(@NotNull PsiTypeParameter typeParameter){
-    if(!mySubstitutionMap.containsKey(typeParameter)){
-      return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter);
+  public PsiType substitute(@NotNull PsiTypeParameter typeParameter) {
+    if (containsInMap(typeParameter)) {
+      return getFromMap(typeParameter);
+    }
+    return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter);
+  }
+
+  private boolean containsInMap(PsiTypeParameter typeParameter) {
+    if (typeParameter instanceof LightTypeParameter) {
+      typeParameter = ((LightTypeParameter)typeParameter).getDelegate();
+    }
+    return mySubstitutionMap.containsKey(typeParameter);
+  }
+
+  private PsiType getFromMap(PsiTypeParameter typeParameter) {
+    if (typeParameter instanceof LightTypeParameter) {
+      typeParameter = ((LightTypeParameter)typeParameter).getDelegate();
     }
     return mySubstitutionMap.get(typeParameter);
   }
@@ -202,7 +222,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       if (aClass == null) return classType;
       if (aClass instanceof PsiTypeParameter) {
         final PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
-        if (mySubstitutionMap.containsKey(typeParameter)) {
+        if (containsInMap(typeParameter)) {
           return substituteTypeParameter(typeParameter);
         }
         else {
@@ -218,7 +238,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
     }
 
     private PsiType substituteTypeParameter(final PsiTypeParameter typeParameter) {
-      PsiType t = mySubstitutionMap.get(typeParameter);
+      PsiType t = getFromMap(typeParameter);
       if (myKind == SubstituteKind.SIMPLE) {
         return t;
       }

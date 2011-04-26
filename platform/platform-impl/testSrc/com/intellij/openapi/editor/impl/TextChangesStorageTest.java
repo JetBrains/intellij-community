@@ -238,6 +238,21 @@ public class TextChangesStorageTest {
     checkChanges(c("aef", 3, 5));
   }
   
+  @Test
+  public void replaceAndDeleteWholeTextFromItsStart() {
+    delete(72, 79);
+    insert("a", 72);
+    delete(72, 73);
+    delete(64, 71);
+    delete(51, 62);
+    insert("a", 54);
+    insert("a", 53);
+    insert("a", 51);
+    delete(56, 57);
+    insert("b", 56);
+    checkChanges(c("a", 51, 62), c("a", 64, 71), c("b", 72, 79));
+  }
+  
   private void checkChanges(TextChangeImpl ... changes) {
     assertEquals(asList(changes), myStorage.getChanges());
     assertEquals(changes.length > 0, !myStorage.isEmpty());

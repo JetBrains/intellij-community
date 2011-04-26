@@ -7,10 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -39,8 +36,8 @@ public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressio
       if (context instanceof GrTypeDefinition) {
         return createType((PsiClass)context);
       }
-      else if (context instanceof GroovyFile) {
-        return createType(((GroovyFile)context).getScriptClass());
+      else if (context instanceof GroovyFileBase) {
+        return createType(((GroovyFileBase)context).getScriptClass());
       }
     }
     else {
@@ -62,10 +59,10 @@ public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressio
   }
 
   private GroovyPsiElement getFileContext() {
-    GroovyPsiElement context = PsiTreeUtil.getContextOfType(this, GrTypeDefinition.class, GroovyFile.class);
-    if (context instanceof GroovyFile && GroovyPsiElementFactory.DUMMY_FILE_NAME.equals(FileUtil.getNameWithoutExtension(
-      ((GroovyFile)context).getName()))) {
-      context = PsiTreeUtil.getContextOfType(context, true, GrTypeDefinition.class, GroovyFile.class);
+    GroovyPsiElement context = PsiTreeUtil.getContextOfType(this, GrTypeDefinition.class, GroovyFileBase.class);
+    if (context instanceof GroovyFileBase
+        && GroovyPsiElementFactory.DUMMY_FILE_NAME.equals(FileUtil.getNameWithoutExtension(((GroovyFileBase)context).getName()))) {
+      context = PsiTreeUtil.getContextOfType(context, true, GrTypeDefinition.class, GroovyFileBase.class);
     }
     return context;
   }
@@ -98,8 +95,8 @@ public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressio
     if (context instanceof GrTypeDefinition) {
       return context;
     }
-    else if (context instanceof GroovyFile) {
-      return ((GroovyFile)context).getScriptClass();
+    else if (context instanceof GroovyFileBase) {
+      return ((GroovyFileBase)context).getScriptClass();
     }
     return null;
   }

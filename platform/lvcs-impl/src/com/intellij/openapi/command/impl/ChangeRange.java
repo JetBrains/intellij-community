@@ -20,38 +20,39 @@ import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.changes.Change;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.revertion.ChangeRevertingVisitor;
+import com.intellij.openapi.util.Ref;
 
 import java.io.IOException;
 
 public class ChangeRange {
   private final IdeaGateway myGateway;
   private final LocalHistoryFacade myVcs;
-  private final Change myFromChange;
-  private final Change myToChange;
+  private final long myFromChangeId;
+  private final long myToChangeId;
 
-  public ChangeRange(IdeaGateway gw, LocalHistoryFacade vcs, Change change) {
+  public ChangeRange(IdeaGateway gw, LocalHistoryFacade vcs, long change) {
     this(gw, vcs, change, change);
   }
 
-  public ChangeRange(IdeaGateway gw, LocalHistoryFacade vcs, Change from, Change to) {
+  public ChangeRange(IdeaGateway gw, LocalHistoryFacade vcs, long fromChangeId, long toChangeId) {
     myGateway = gw;
     myVcs = vcs;
-    myFromChange = from;
-    myToChange = to;
+    myFromChangeId = fromChangeId;
+    myToChangeId = toChangeId;
   }
 
   public ChangeRange revert(ChangeRange reverse) throws IOException {
-    final Change[] first = {null};
-    final Change[] last = {null};
+    final Ref<Long> first = new Ref<Long>();
+    final Ref<Long> last = new Ref<Long>();
     LocalHistoryFacade.Listener l = new LocalHistoryFacade.Listener() {
       public void changeAdded(Change c) {
-        if (first[0] == null) first[0] = c;
-        last[0] = c;
+        if (first.isNull()) first.set(c.getId());
+        last.set(c.getId());
       }
     };
     myVcs.addListener(l, null);
     try {
-      myVcs.accept(new ChangeRevertingVisitor(myGateway, myToChange, myFromChange));
+      myVcs.accept(new ChangeRevertingVisitor(myGateway, myToChangeId, myFromChangeId));
     }
     catch(ChangeRevertingVisitor.RuntimeIOException e) {
       throw (IOException)e.getCause();
@@ -61,9 +62,9 @@ public class ChangeRange {
     }
     
     if (reverse != null) {
-      if (first[0] == null) first[0] = reverse.myFromChange;
-      if (last[0] == null) last[0] = reverse.myToChange;
+      if (first.isNull()) first.set(reverse.myFromChangeId);
+      if (last.isNull()) last.set(reverse.myToChangeId);
     }
-    return new ChangeRange(myGateway, myVcs, first[0], last[0]);
+    return new ChangeRange(myGateway, myVcs, first.get(), last.get());
   }
 }

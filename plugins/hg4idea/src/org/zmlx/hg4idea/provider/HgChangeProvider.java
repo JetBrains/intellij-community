@@ -21,7 +21,11 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.zmlx.hg4idea.*;
-import org.zmlx.hg4idea.command.*;
+import org.zmlx.hg4idea.command.HgResolveCommand;
+import org.zmlx.hg4idea.command.HgResolveStatusEnum;
+import org.zmlx.hg4idea.command.HgStatusCommand;
+import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.awt.*;
 import java.util.*;
@@ -56,20 +60,6 @@ public class HgChangeProvider implements ChangeProvider {
     myVcsKey = vcsKey;
   }
 
-  public void getChanges(VcsDirtyScope dirtyScope, ChangelistBuilder builder,
-                         ProgressIndicator progress, ChangeListManagerGate addGate) throws VcsException {
-    final Collection<HgChange> changes = new HashSet<HgChange>();
-
-    for (FilePath filePath : dirtyScope.getRecursivelyDirtyDirectories()) {
-      changes.addAll(process(builder, filePath));
-    }
-    for (FilePath filePath : dirtyScope.getDirtyFiles()) {
-      changes.addAll(process(builder, filePath));
-    }
-
-    processUnsavedChanges(builder, dirtyScope.getDirtyFilesNoExpand(), changes);
-  }
-
   public boolean isModifiedDocumentTrackingRequired() {
     return true;
   }
@@ -77,21 +67,26 @@ public class HgChangeProvider implements ChangeProvider {
   public void doCleanup(List<VirtualFile> files) {
   }
 
-  private Collection<HgChange> process(ChangelistBuilder builder,
-    FilePath filePath) {
-    VirtualFile repo = VcsUtil.getVcsRootFor(myProject, filePath);
-    if (repo == null) {
-      return new HashSet<HgChange>();
+  public void getChanges(VcsDirtyScope dirtyScope, ChangelistBuilder builder,
+                         ProgressIndicator progress, ChangeListManagerGate addGate) throws VcsException {
+    final Collection<HgChange> changes = new HashSet<HgChange>();
+    changes.addAll(process(builder, dirtyScope.getRecursivelyDirtyDirectories()));
+    changes.addAll(process(builder, dirtyScope.getDirtyFiles()));
+    processUnsavedChanges(builder, dirtyScope.getDirtyFilesNoExpand(), changes);
+  }
+
+  private Collection<HgChange> process(ChangelistBuilder builder, Collection<FilePath> files) {
+    final Set<HgChange> hgChanges = new HashSet<HgChange>();
+    for (Map.Entry<VirtualFile, Collection<FilePath>> entry : HgUtil.groupFilePathsByHgRoots(myProject, files).entrySet()) {
+      VirtualFile repo = entry.getKey();
+
+      final HgRevisionNumber workingRevision = new HgWorkingCopyRevisionsCommand(myProject).identify(repo);
+      final HgRevisionNumber parentRevision = new HgWorkingCopyRevisionsCommand(myProject).firstParent(repo);
+      final Map<HgFile, HgResolveStatusEnum> list = new HgResolveCommand(myProject).getListSynchronously(repo);
+
+      hgChanges.addAll(new HgStatusCommand(myProject).execute(repo, entry.getValue()));
+      sendChanges(builder, hgChanges, list, workingRevision, parentRevision);
     }
-    Set<HgChange> hgChanges = new HgStatusCommand(myProject).execute(repo, filePath.getPath());
-    if (hgChanges == null || hgChanges.isEmpty()) {
-      return new HashSet<HgChange>();
-    }
-    sendChanges(builder, hgChanges,
-      new HgResolveCommand(myProject).getListSynchronously(repo),
-      new HgWorkingCopyRevisionsCommand(myProject).identify(repo),
-      new HgWorkingCopyRevisionsCommand(myProject).firstParent(repo)
-    );
     return hgChanges;
   }
 

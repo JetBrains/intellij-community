@@ -49,7 +49,10 @@ public class XPath2SequenceImpl extends XPath2ElementImpl implements XPath2Seque
       }
       commonType = XPathType.getSuperType(commonType);
     }
-    return XPath2SequenceType.create(commonType, XPath2SequenceType.Cardinality.ONE_OR_MORE);
+    if (commonType != null) {
+      return XPath2SequenceType.create(commonType, XPath2SequenceType.Cardinality.ONE_OR_MORE);
+    }
+    return XPathType.UNKNOWN;
   }
 
   public void accept(XPath2ElementVisitor visitor) {

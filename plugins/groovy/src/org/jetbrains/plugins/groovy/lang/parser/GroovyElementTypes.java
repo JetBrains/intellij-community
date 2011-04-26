@@ -98,6 +98,14 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
       }
     };
 
+  GrStubElementType<GrTypeDefinitionStub, GrEnumConstantInitializer> ENUM_CONSTANT_INITIALIZER =
+    new GrTypeDefinitionElementType<GrEnumConstantInitializer>("Enum constant initializer") {
+      @Override
+      public GrEnumConstantInitializer createPsi(GrTypeDefinitionStub stub) {
+        return new GrEnumConstantInitializerImpl(stub);
+      }
+    };
+
   TokenSet TYPE_DEFINITION_TYPES = TokenSet.create(CLASS_DEFINITION, INTERFACE_DEFINITION, ENUM_DEFINITION, ANNOTATION_DEFINITION);
 
   GrStubElementType<GrFieldStub, GrEnumConstant> ENUM_CONSTANT = new GrEnumConstantElementType();

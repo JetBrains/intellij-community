@@ -387,6 +387,11 @@ public class BackendCompilerWrapper {
         process.destroy();
         exitValue = process.exitValue();
       }
+      catch (Error e) {
+        process.destroy();
+        exitValue = process.exitValue();
+        throw e;
+      }
       finally {
         if (CompileDriver.ourDebugMode) {
           System.out.println("Compiler exit code is " + exitValue);

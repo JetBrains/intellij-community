@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
@@ -24,10 +25,15 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -38,6 +44,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
@@ -55,6 +62,11 @@ public class GenerationUtil {
     PsiModifier.NATIVE,
   };
 
+  public static final String[] CONSTRUCTOR_MODIFIERS = new String[]{
+    PsiModifier.PRIVATE,
+    PsiModifier.PACKAGE_LOCAL,
+  };
+
   private GenerationUtil() {
   }
 
@@ -63,11 +75,16 @@ public class GenerationUtil {
   }
 
   public static void writeType(final StringBuilder builder,
-                               final PsiType type,
+                               @Nullable final PsiType type,
                                final PsiElement context,
                                final ClassNameProvider classNameProvider) {
     if (type instanceof PsiPrimitiveType) {
       builder.append(type.getCanonicalText());
+      return;
+    }
+
+    if (type == null) {
+      builder.append(CommonClassNames.JAVA_LANG_OBJECT);
       return;
     }
 
@@ -383,5 +400,146 @@ public class GenerationUtil {
       }
     }
     text.append(">");
+  }
+
+  static void writeParameterList(StringBuilder text, PsiParameter[] parameters, final ClassNameProvider classNameProvider) {
+    text.append("(");
+
+    //writes myParameters
+    int i = 0;
+    while (i < parameters.length) {
+      PsiParameter parameter = parameters[i];
+      if (parameter == null) continue;
+
+      if (i > 0) text.append(", ");  //append ','
+      writeType(text, findOutParameterType(parameter), parameter, classNameProvider);
+      text.append(" ");
+      text.append(parameter.getName());
+
+      i++;
+    }
+    text.append(")");
+    text.append(" ");
+  }
+
+  static void writeThrowsList(StringBuilder text,
+                              PsiReferenceList throwsList,
+                              PsiClassType[] exceptions,
+                              final ClassNameProvider classNameProvider) {
+    if (exceptions.length <= 0) return;
+
+    text.append("throws ");
+    for (int i = 0; i < exceptions.length; i++) {
+      PsiClassType exception = exceptions[i];
+      if (i != 0) {
+        text.append(",");
+      }
+      writeType(text, exception, throwsList, classNameProvider);
+      text.append(" ");
+    }
+  }
+
+  static Set<String> getVarTypes(GrVariableDeclaration variableDeclaration) {
+    GrVariable[] variables = variableDeclaration.getVariables();
+    final GrTypeElement typeElement = variableDeclaration.getTypeElementGroovy();
+    Set<String> types = new HashSet<String>(variables.length);
+    if (typeElement == null) {
+      if (variables.length > 1) {
+        for (GrVariable variable : variables) {
+          final GrExpression initializer = variable.getInitializerGroovy();
+          if (initializer != null) {
+            final PsiType varType = initializer.getType();
+            if (varType != null) {
+              types.add(getTypeText(varType));
+            }
+          }
+        }
+      }
+    }
+    return types;
+  }
+
+  static String getTypeText(PsiType varType) {
+    final StringBuilder builder = new StringBuilder();
+    writeType(builder, varType);
+    return builder.toString();
+  }
+
+  static ArrayList<GrParameter> getActualParams(GrMethod constructor, int skipOptional) {
+    GrParameter[] parameterList = constructor.getParameters();
+    final ArrayList<GrParameter> actual = new ArrayList<GrParameter>(Arrays.asList(parameterList));
+    if (skipOptional == 0) return actual;
+    for (int i = parameterList.length - 1; i >= 0; i--) {
+      if (!actual.get(i).isOptional()) continue;
+
+      actual.remove(i);
+      skipOptional--;
+      if (skipOptional == 0) break;
+    }
+    return actual;
+  }
+
+  public static PsiType getVarType(GrVariable variable) {
+    PsiType type = variable.getDeclaredType();
+    if (type == null) {
+      type = variable.getTypeGroovy();
+    }
+    if (type == null) {
+      type = variable.getType();
+    }
+    return type;
+  }
+
+  public static void writeSimpleVarDeclaration(GrVariableDeclaration variableDeclaration,
+                                               StringBuilder builder,
+                                               ExpressionContext expressionContext) {
+    GrVariable[] variables = variableDeclaration.getVariables();
+
+    Set<String> types = getVarTypes(variableDeclaration);
+
+    if (types.size() > 1) {
+      if (variableDeclaration.getParent() instanceof GrControlStatement) {
+        expressionContext.setInsertCurlyBrackets();
+      }
+      for (GrVariable variable : variables) {
+        writeVariableSeparately(variable, builder, expressionContext);
+        builder.append(";\n");
+      }
+      return;
+    }
+    PsiType type = getVarType(variables[0]);
+    writeType(builder, type);
+
+    builder.append(" ");
+    for (GrVariable variable : variables) {
+      writeVariableWithoutType(builder, expressionContext, variable);
+      builder.append(", ");
+    }
+    if (variables.length > 0) {
+      builder.delete(builder.length() - 2, builder.length());
+    }
+    builder.append(";");
+  }
+
+  static void writeVariableWithoutType(StringBuilder builder, ExpressionContext expressionContext, GrVariable variable) {
+    builder.append(variable.getName());
+    final GrExpression initializer = variable.getInitializerGroovy();
+    if (initializer != null) {
+      builder.append(" = ");
+      initializer.accept(new ExpressionGenerator(builder, expressionContext));
+    }
+  }
+
+  static void writeVariableSeparately(GrVariable variable, StringBuilder builder, ExpressionContext expressionContext) {
+    PsiType type = getVarType(variable);
+
+    if (writeModifiers(builder, variable.getModifierList())) {
+      builder.append(" ");
+    }
+
+    writeType(builder, type);
+    builder.append(" ");
+
+    writeVariableWithoutType(builder, expressionContext, variable);
   }
 }

@@ -17,9 +17,9 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -37,13 +37,14 @@ public class ShowLogAction extends AnAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
-    super.update(e);
-    e.getPresentation().setText(getActionName());
+    Presentation presentation = e.getPresentation();
+    presentation.setVisible(ShowFilePathAction.isSupported());
+    presentation.setText(getActionName());
   }
 
   @NotNull
   public static String getActionName() {
-    return SystemInfo.isMac ? "Reveal Log in Finder" : "Show Log in Explorer";
+    return "Reveal Log in " + ShowFilePathAction.getFileExplorerName();
   }
 
 }

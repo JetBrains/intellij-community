@@ -25,7 +25,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import git4idea.GitUtil;
+import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitConfigUtil;
 import org.jetbrains.annotations.NotNull;
@@ -333,7 +333,7 @@ public class GitIgnoreTracker {
         }
         return;
       }
-      final VirtualFile base = GitUtil.getPossibleBase(file, LOCAL_EXCLUDE_ARRAY);
+      final VirtualFile base = VcsFileUtil.getPossibleBase(file, LOCAL_EXCLUDE_ARRAY);
       if (base != null) {
         myDirtyScopeManager.dirDirtyRecursively(base);
         return;

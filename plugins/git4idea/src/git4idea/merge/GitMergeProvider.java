@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.merge.MergeProvider2;
 import com.intellij.openapi.vcs.merge.MergeSession;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsRunnable;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
@@ -271,7 +272,7 @@ public class GitMergeProvider implements MergeProvider2 {
             }
           }
           for (VirtualFile f : files) {
-            String path = GitUtil.relativePath(root, f);
+            String path = VcsFileUtil.relativePath(root, f);
             Conflict c = cs.get(path);
             assert c != null : "The conflict not found for the file: " + f.getPath() + "(" + path + ")";
             c.myFile = f;

@@ -24,6 +24,8 @@ public class PopupIcons {
 
   public static Icon HAS_NEXT_ICON = IconLoader.getIcon("/icons/ide/nextStep.png");
   public static Icon HAS_NEXT_ICON_GRAYED = IconLoader.getIcon("/icons/ide/nextStepGrayed.png");
+  public static Icon HAS_NEXT_ICON_INVERTED = IconLoader.getIcon("/icons/ide/nextStepInverted.png");
+  
   public static Icon EMPTY_ICON = new EmptyIcon();
 
   private static class EmptyIcon implements Icon {
