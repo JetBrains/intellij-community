@@ -32,8 +32,8 @@ public class ModuleScopesTest extends ModuleTestCase {
 
   public void testBasics() throws Exception {
     Module moduleA = createModule("a.iml", StdModuleTypes.JAVA);
-    Module moduleB = addDependentModule(moduleA, DependencyScope.COMPILE);
-    VirtualFile libraryRoot = addLibrary(moduleA, DependencyScope.COMPILE);
+    addDependentModule(moduleA, DependencyScope.COMPILE);
+    addLibrary(moduleA, DependencyScope.COMPILE);
 
     VirtualFile classB = myFixture.createFile("b/Test.java", "public class Test { }");
     VirtualFile libraryClass = myFixture.createFile("lib/Test.class");
@@ -168,7 +168,7 @@ public class ModuleScopesTest extends ModuleTestCase {
     assertTrue(m.getModuleWithDependenciesAndLibrariesScope(false).contains(libraryClass));
 
     assertTrue(m.getModuleRuntimeScope(true).contains(libraryClass));
-    assertFalse(m.getModuleRuntimeScope(false).contains(libraryClass));
+    assertTrue(m.getModuleRuntimeScope(false).contains(libraryClass));
   }
 
   private static VirtualFile[] getRuntimeClasspath(Module m) {
