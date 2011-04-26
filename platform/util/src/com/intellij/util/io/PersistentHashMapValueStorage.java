@@ -191,23 +191,6 @@ public class PersistentHashMapValueStorage {
     void dispose();
   }
 
-  private static class MappedReader implements RAReader {
-    private final PagedFileStorage myHolder;
-
-    private MappedReader(File file, PagedFileStorage.StorageLock lock) throws IOException {
-      myHolder = new PagedFileStorage(file, lock);
-      myHolder.length();
-    }
-
-    public void get(final long addr, final byte[] dst, final int off, final int len) {
-      myHolder.get((int)addr, dst, off, len);
-    }
-
-    public void dispose() {
-      myHolder.close();
-    }
-  }
-
   private static class FileReader implements RAReader {
     private final RandomAccessFile myFile;
 
