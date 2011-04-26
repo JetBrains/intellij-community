@@ -618,4 +618,6 @@
   <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>
 
   <refactoring.elementListenerProvider implementation="com.intellij.execution.impl.RunConfigurationRefactoringElementListenerProvider"/>
+
+  <keymapExtension implementation="com.intellij.tools.ToolKeymapExtension"/>
 </extensions>
