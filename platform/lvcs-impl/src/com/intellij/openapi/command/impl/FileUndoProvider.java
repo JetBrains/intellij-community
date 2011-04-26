@@ -34,7 +34,7 @@ import java.io.IOException;
 public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider {
   public static final Logger LOG = Logger.getInstance("#" + FileUndoProvider.class.getName());
 
-  private final Key<DocumentReference> DELETION_WAS_UNDOABLE = new Key<DocumentReference>("DeletionWasUndoable");
+  private final Key<DocumentReference> DELETION_WAS_UNDOABLE = new Key<DocumentReference>(FileUndoProvider.class.getName() +".DeletionWasUndoable");
 
   private final Project myProject;
   private boolean myIsInsideCommand;
@@ -42,7 +42,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
   private LocalHistoryFacade myLocalHistory;
   private IdeaGateway myGateway;
 
-  private Change myLastChange;
+  private long myLastChangeId;
 
   @SuppressWarnings({"UnusedDeclaration"})
   public FileUndoProvider() {
@@ -61,7 +61,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
     myLocalHistory.addListener(new LocalHistoryFacade.Listener() {
       public void changeAdded(Change c) {
         if (!(c instanceof StructuralChange) || c instanceof ContentChange) return;
-        myLastChange = c;
+        myLastChangeId = c.getId();
       }
     }, myProject);
   }
@@ -178,7 +178,7 @@ public class FileUndoProvider extends VirtualFileAdapter implements UndoProvider
 
     public MyUndoableAction(DocumentReference r) {
       super(r);
-      myActionChangeRange = new ChangeRange(myGateway, myLocalHistory, myLastChange);
+      myActionChangeRange = new ChangeRange(myGateway, myLocalHistory, myLastChangeId);
     }
 
     public void undo() throws UnexpectedUndoException {

@@ -36,26 +36,26 @@ public class ChangeRevertingVisitor extends ChangeVisitor {
   private final IdeaGateway myGateway;
   private final Set<DelayedApply> myDelayedApplies = new HashSet<DelayedApply>();
 
-  private final Change myFromChange;
-  private final Change myToChange;
+  private final long myFromChangeId;
+  private final long myToChangeId;
 
   private boolean isReverting;
 
-  public ChangeRevertingVisitor(IdeaGateway gw, Change from, Change to) {
+  public ChangeRevertingVisitor(IdeaGateway gw, long fromChangeId, long toChangeId) {
     myGateway = gw;
-    myFromChange = from;
-    myToChange = to;
+    myFromChangeId = fromChangeId;
+    myToChangeId = toChangeId;
   }
 
   protected boolean shouldRevert(Change c) {
-    if (c.equals(myFromChange)) {
+    if (c.getId() == myFromChangeId) {
       isReverting = true;
     }
     return isReverting && !(c instanceof ContentChange);
   }
 
   protected void checkShouldStop(Change c) throws StopVisitingException {
-    if (c.equals(myToChange)) stop();
+    if (c.getId() == myToChangeId) stop();
   }
 
   @Override
