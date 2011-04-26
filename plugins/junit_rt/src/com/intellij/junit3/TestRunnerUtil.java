@@ -149,7 +149,7 @@ public class TestRunnerUtil {
 
   private static Class loadTestClass(JUnit3IdeaTestRunner runner, String suiteClassName) {
     try {
-      return Class.forName(suiteClassName);
+      return Class.forName(suiteClassName, false, TestRunnerUtil.class.getClassLoader());
     }
     catch (ClassNotFoundException e) {
       String clazz = e.getMessage();
