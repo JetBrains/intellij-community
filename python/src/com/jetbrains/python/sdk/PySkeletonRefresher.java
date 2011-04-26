@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,6 +50,7 @@ public class PySkeletonRefresher {
   // we use the equals sign after filename so that we can freely include space in the filename
 
   private static final Logger LOG = Logger.getInstance("#" + PySkeletonRefresher.class.getName());
+  private String myExtraSyspath;
 
   public PySkeletonRefresher(Sdk sdk, String skeletonsPath, ProgressIndicator indicator) {
     myIndicator = indicator;
@@ -77,6 +78,25 @@ public class PySkeletonRefresher {
     }
   }
 
+  private String getExtraSyspath() {
+    if (myExtraSyspath == null) {
+      VirtualFile[] class_dirs = mySdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+      StringBuilder arg_builder = new StringBuilder("\"");
+      int i = 0;
+      while (i < class_dirs.length) {
+        if (i > 0) arg_builder.append(File.pathSeparator);
+        if (class_dirs[i].isInLocalFileSystem()) {
+          final String pathname = class_dirs[i].getPath();
+          if (!mySkeletonsPath.equals(pathname)) arg_builder.append(pathname);
+        }
+        i += 1;
+      }
+      arg_builder.append("\"");
+      myExtraSyspath = arg_builder.toString();
+    }
+    return myExtraSyspath;
+  }
+
   List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker cached_checker) {
     return regenerateSkeletons(cached_checker, null);
   }
@@ -96,18 +116,20 @@ public class PySkeletonRefresher {
 
     indicate(PyBundle.message("sdk.gen.querying.$0", readable_path));
     // get generator version and binary libs list in one go
-    final ProcessOutput run_result = SdkUtil.getProcessOutput(parent_dir,
-      new String[]{home_path, PythonHelpersLocator.getHelperPath(GENERATOR3), "-L"},
+    final ProcessOutput run_result = SdkUtil.getProcessOutput(
+      parent_dir,
+      new String[]{home_path, PythonHelpersLocator.getHelperPath(GENERATOR3), "-L", "-s", getExtraSyspath()},
       PythonSdkType.getVirtualEnvAdditionalEnv(home_path),
-      MINUTE
+      MINUTE * 2
     );
     if (run_result.getExitCode() != 0) {
-      StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3)
-        .append(" for ").append(home_path)
-        .append(", exit code ").append(run_result.getExitCode())
-        .append(", stderr: \n-----\n");
-      for (String err_line : run_result.getStderrLines()) sb.append(err_line).append("\n");
-      sb.append("-----");
+      StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3).append(" for ").append(home_path);
+      if (run_result.isTimeout()) sb.append(": timed out.");
+      else {
+        sb.append(", exit code ").append(run_result.getExitCode()).append(", stderr: \n-----\n");
+        for (String err_line : run_result.getStderrLines()) sb.append(err_line).append("\n");
+        sb.append("-----");
+      }
       throw new InvalidSdkException(sb.toString());
     }
     // stdout contains version in the first line and then the list of binaries
@@ -357,11 +379,10 @@ public class PySkeletonRefresher {
    * (Re-)generates skeletons for all binary python modules. Up-to-date skeletons are not regenerated.
    * Does one module at a time: slower, but avoids certain conflicts.
    *
-   *
    * @param binaryPath   where to find interpreter.
    * @param checker   to check if a skeleton is up to date.
-   * @param binaries
-   * @return number of generation errors
+   * @param binaries  output of generator3 -L, list of prospective binary modules
+   * @return blacklist data; whatever was not generated successfully is put here.
    */
   private List<Triplet> updateOrCreateSkeletons(
     final String binaryPath, int generator_version,
@@ -404,12 +425,15 @@ public class PySkeletonRefresher {
             int failed_generator_version = version_info.getFirst();
             long failed_timestamp = version_info.getSecond();
             must_rebuild &= failed_generator_version < generator_version || failed_timestamp < lib_file_timestamp;
+            if (! must_rebuild) { // we're still failing to rebuild, it, keep it in blacklist
+              error_list.add(new Triplet(module_name, module_lib_name, lib_file_timestamp));
+            }
           }
         }
         if (must_rebuild) {
           indicateMinor(module_name);
           LOG.info("Skeleton for " + module_name);
-          if (!generateSkeleton(binaryPath, mySkeletonsPath, module_name, module_lib_name, null)) {
+          if (!generateSkeleton(module_name, module_lib_name, null)) { // NOTE: are assembly refs always empty for built-ins?
             error_list.add(new Triplet(module_name, module_lib_name, lib_file_timestamp));
           }
         }
@@ -420,18 +444,18 @@ public class PySkeletonRefresher {
 
   /**
    * Generates a skeleton for a particular binary module.
-   * @param binaryPath path to relevant Python interpreter
-   * @param skeletonsRoot root of skeletons dir for relevant SDK
+   *
    * @param modname name of the binary module as known to Python (e.g. 'foo.bar')
    * @param modfilename name of file which defines the module, null for built-in modules
    * @param assemblyRefs refs that generator wants to know in .net environment, if applicable
    * @return true if generation completed successfully
    */
-  public static boolean generateSkeleton(
-    @NotNull String binaryPath, @NotNull String skeletonsRoot, @NotNull String modname,
-    @Nullable String modfilename, @Nullable List<String> assemblyRefs
+  public boolean generateSkeleton(
+    @NotNull String modname, @Nullable String modfilename, @Nullable List<String> assemblyRefs
   ) {
     boolean ret = true;
+    String binaryPath = mySdk.getHomePath();
+    String skeletonsRoot = PythonSdkType.findSkeletonsPath(mySdk);
     final String parent_dir = new File(binaryPath).getParent();
     List<String> commandLine = new ArrayList<String>();
     commandLine.add(binaryPath);
@@ -445,6 +469,8 @@ public class PySkeletonRefresher {
     if (ApplicationManagerEx.getApplicationEx().isInternal()) {
       commandLine.add("-x");
     }
+    commandLine.add("-s");
+    commandLine.add(getExtraSyspath());
     commandLine.add(modname);
     if (modfilename != null) commandLine.add(modfilename);
 
