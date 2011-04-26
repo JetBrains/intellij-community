@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -88,7 +89,7 @@ public abstract class GenericNotifierImpl<T, Key> {
     if (application.isDispatchThread()) {
       runnable.run();
     } else {
-      application.invokeLater(runnable, myProject.getDisposed());
+      application.invokeLater(runnable, ModalityState.NON_MODAL, myProject.getDisposed());
     }
   }
 
@@ -110,7 +111,7 @@ public abstract class GenericNotifierImpl<T, Key> {
         public void run() {
           Notifications.Bus.notify(notification, NotificationDisplayType.STICKY_BALLOON, myProject);
         }
-      });
+      }, ModalityState.NON_MODAL);
     }
   }
 
