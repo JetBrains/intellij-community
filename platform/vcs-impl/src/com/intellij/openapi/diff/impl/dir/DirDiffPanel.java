@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.ide.util.PropertiesComponent;
@@ -97,13 +98,20 @@ public class DirDiffPanel implements Disposable {
         }
         else {
           final DirDiffElement element = myModel.getElementAt(myTable.getSelectedRow());
-          if (element == null) return;
+          if (element == null
+              || (myCurrentElement != null && (myCurrentElement == element.getSource() || myCurrentElement == element.getTarget()))) {
+            return;
+          }
           clearDiffPanel();
           if (element.getType() == DType.CHANGED) {
             myDiffPanelComponent = element.getSource().getDiffComponent(element.getTarget(), project, myDialog.getWindow());
             if (myDiffPanelComponent != null) {
               myDiffPanel.add(myDiffPanelComponent, BorderLayout.CENTER);
               myCurrentElement = element.getSource();
+            } else {
+              myDiffPanel.add(getErrorLabel(), BorderLayout.CENTER);
+              myDiffPanel.revalidate();
+              myDiffPanel.repaint();
             }
 
           } else {
@@ -113,6 +121,7 @@ public class DirDiffPanel implements Disposable {
             if (myViewComponent != null) {
               myCurrentElement = object;
               myDiffPanel.add(myViewComponent, BorderLayout.CENTER);
+              DataManager.registerDataProvider(myDiffPanel, myCurrentElement.getDataProvider(project));
               myViewComponent.revalidate();
             } else {
               myDiffPanel.add(getErrorLabel(), BorderLayout.CENTER);
@@ -284,7 +293,7 @@ public class DirDiffPanel implements Disposable {
   }
 
   private JLabel getErrorLabel() {
-    return myErrorLabel == null ? myErrorLabel = new JLabel("Can't create editor/diff component for this file type", SwingConstants.CENTER) : myErrorLabel;
+    return myErrorLabel == null ? myErrorLabel = new JLabel("Unknown or binary file type", SwingConstants.CENTER) : myErrorLabel;
   }
 
   private void clearDiffPanel() {
@@ -304,6 +313,7 @@ public class DirDiffPanel implements Disposable {
     }
     myCurrentElement = null;
     myDiffPanel.remove(getErrorLabel());
+    myDiffPanel.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, null);
   }
 
   public JComponent getPanel() {

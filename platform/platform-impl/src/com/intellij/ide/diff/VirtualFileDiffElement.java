@@ -15,12 +15,18 @@
  */
 package com.intellij.ide.diff;
 
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Icons;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +40,8 @@ import java.util.concurrent.Callable;
  */
 public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   private final VirtualFile myFile;
+  private FileEditor myFileEditor;
+  private FileEditorProvider myEditorProvider;
 
   public VirtualFileDiffElement(@NotNull VirtualFile file) {
     myFile = file;
@@ -112,5 +120,42 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
 
   protected FileChooserDescriptor getChooserDescriptor() {
     return new FileChooserDescriptor(false, true, false, false, false, false);
+  }
+
+  @Override
+  protected JComponent getFromProviders(final Project project, DiffElement target) {
+    final FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, getValue());
+    if (providers.length > 0) {
+      myFileEditor = providers[0].createEditor(project, getValue());
+      myEditorProvider = providers[0];
+      return myFileEditor.getComponent();
+    }
+    return null;
+  }
+
+  @Override
+  public void disposeViewComponent() {
+    super.disposeViewComponent();
+    if (myFileEditor != null && myEditorProvider != null) {
+      myEditorProvider.disposeEditor(myFileEditor);
+      myFileEditor = null;
+      myEditorProvider = null;
+    }
+  }
+
+  @Override
+  public DataProvider getDataProvider(final Project project) {
+    return new DataProvider() {
+      @Override
+      public Object getData(@NonNls String dataId) {
+        if (PlatformDataKeys.PROJECT.is(dataId)) {
+          return project;
+        }
+        if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+          return myFileEditor;
+        }
+        return null;
+      }
+    };
   }
 }

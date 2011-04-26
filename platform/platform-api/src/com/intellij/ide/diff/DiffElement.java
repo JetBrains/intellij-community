@@ -16,6 +16,7 @@
 package com.intellij.ide.diff;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
@@ -87,7 +88,7 @@ public abstract class DiffElement<T> implements Disposable {
       final T value = getValue();
       FileType fileType = getFileType();
       if (fileType != null && fileType.isBinary()) {
-        return null;
+        return getFromProviders(project, target);
       }
       final byte[] content = getContent();
       final EditorFactory editorFactory = EditorFactory.getInstance();
@@ -104,6 +105,11 @@ public abstract class DiffElement<T> implements Disposable {
       LOG.error(e);
       // TODO
     }
+    return null;
+  }
+
+  @Nullable
+  protected JComponent getFromProviders(Project project, DiffElement target) {
     return null;
   }
 
@@ -193,6 +199,11 @@ public abstract class DiffElement<T> implements Disposable {
 
   @Nullable
   public Callable<DiffElement<T>> getElementChooser(Project project) {
+    return null;
+  }
+
+  @Nullable
+  public DataProvider getDataProvider(Project project) {
     return null;
   }
 }
