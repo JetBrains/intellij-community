@@ -91,7 +91,7 @@ if [ "@@isEap@@" = "true" ]; then
  AGENT="-agentlib:yjpagent$BITS=disablej2ee,sessionname=pycharm"
 fi
 
-REQUIRED_JVM_ARGS="-Xbootclasspath/a:../lib/boot.jar -Didea.platform.prefix=Python -Didea.no.jre.check=true $AGENT $PYCHARM_PROPERTIES_PROPERTY $REQUIRED_JVM_ARGS"
+REQUIRED_JVM_ARGS="-Xbootclasspath/a:../lib/boot.jar -Didea.platform.prefix=Python -Didea.no.jre.check=true -Didea.paths.selector=@@system_selector@@ $AGENT $PYCHARM_PROPERTIES_PROPERTY $REQUIRED_JVM_ARGS"
 JVM_ARGS=`tr '\n' ' ' < "$PYCHARM_VM_OPTIONS"`
 JVM_ARGS="$JVM_ARGS $REQUIRED_JVM_ARGS"
 
