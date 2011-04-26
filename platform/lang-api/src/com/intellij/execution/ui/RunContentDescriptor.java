@@ -48,7 +48,7 @@ public class RunContentDescriptor {
     myComponent = component;
     myDisplayName = displayName;
     myIcon = icon;
-    myComponent.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new DataProvider() {
+    DataManager.registerDataProvider(myComponent, new DataProvider() {
 
       public Object getData(@NonNls final String dataId) {
         if (RunContentManager.RUN_CONTENT_DESCRIPTOR.is(dataId)) {

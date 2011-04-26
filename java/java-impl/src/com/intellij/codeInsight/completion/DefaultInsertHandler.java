@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -73,38 +72,12 @@ public class DefaultInsertHandler extends TemplateInsertHandler implements Clone
     state.caretOffset = processTail(tailType, state.caretOffset, state.tailOffset, editor);
     editor.getSelectionModel().removeSelection();
 
-    qualifyIfNeeded(context, item);
-
+    addImportForItem(context, item);
 
     if (tailType == TailType.DOT || context.getCompletionChar() == '.') {
       AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
     }
 
-  }
-
-  private static void qualifyIfNeeded(InsertionContext context, LookupElement item) {
-    try{
-      final PsiFile file = context.getFile();
-      if (item.getObject() instanceof PsiField) {
-        PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
-        PsiReference reference = file.findReferenceAt(context.getStartOffset());
-        if (reference instanceof PsiReferenceExpression && !((PsiReferenceExpression) reference).isQualified()) {
-          final PsiField member = (PsiField)item.getObject();
-          final PsiVariable target =
-              JavaPsiFacade.getInstance(context.getProject()).getResolveHelper().resolveReferencedVariable(member.getName(), (PsiElement)reference);
-          if (member.getManager().areElementsEquivalent(target, JavaCompletionUtil.getOriginalElement(member))) return;
-          
-          final PsiClass psiClass = member.getContainingClass();
-          if (psiClass != null && StringUtil.isNotEmpty(psiClass.getName())) {
-            context.getEditor().getDocument().insertString(context.getStartOffset(), psiClass.getName() + ".");
-          }
-        }
-      }
-      addImportForItem(context, item);
-    }
-    catch(IncorrectOperationException e){
-      LOG.error(e);
-    }                                                                       
   }
 
   private static void handleParentheses(final boolean hasParams, final boolean needParenth, TailType tailType, InsertionContext context, InsertHandlerState myState){

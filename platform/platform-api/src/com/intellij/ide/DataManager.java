@@ -75,4 +75,13 @@ public abstract class DataManager {
   public static void registerDataProvider(JComponent component, DataProvider provider) {
     component.putClientProperty(CLIENT_PROPERTY_DATA_PROVIDER, provider);
   }
+
+  @Nullable
+  public static DataProvider getDataProvider(@NotNull JComponent component) {
+    return (DataProvider)component.getClientProperty(CLIENT_PROPERTY_DATA_PROVIDER);
+  }
+
+  public static void removeDataProvider(@NotNull JComponent component) {
+    component.putClientProperty(CLIENT_PROPERTY_DATA_PROVIDER, null);
+  }
 }

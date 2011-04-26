@@ -94,7 +94,7 @@ public class StatisticsPanel implements DataProvider {
     // Contex menu in Table
     PopupHandler.installPopupHandler(myStatisticsTableView, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
     // set this statistic tab as dataprovider for test's table view
-    myStatisticsTableView.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, this);
+    DataManager.registerDataProvider(myStatisticsTableView, this);
   }
 
   public void addPropagateSelectionListener(final PropagateSelectionHandler handler) {
