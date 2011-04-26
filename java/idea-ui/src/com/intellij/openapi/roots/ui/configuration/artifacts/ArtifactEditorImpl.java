@@ -188,7 +188,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
   public JComponent createMainComponent() {
     mySourceItemsTree.initTree();
     myLayoutTreeComponent.initTree();
-    myMainPanel.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new TypeSafeDataProviderAdapter(new MyDataProvider()));
+    DataManager.registerDataProvider(myMainPanel, new TypeSafeDataProviderAdapter(new MyDataProvider()));
 
     myErrorPanelPlace.add(myValidationManager.getMainErrorPanel(), BorderLayout.CENTER);
 

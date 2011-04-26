@@ -319,7 +319,7 @@ public class RunnerLayoutUiImpl implements Disposable, RunnerLayoutUi, LayoutSta
         return myContentUI;
       }
 
-      final DataProvider provider = (DataProvider)getClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER);
+      final DataProvider provider = DataManager.getDataProvider(this);
       return provider != null ? provider.getData(dataId) : null;
     }
   }

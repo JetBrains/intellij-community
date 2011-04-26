@@ -324,7 +324,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
       myExplanationTree = new Tree(new DefaultTreeModel(buildTree()));
       myExplanationTree.setRootVisible(false);
       myExplanationTree.setCellRenderer(new ExplanationTreeRenderer());
-      myExplanationTree.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, this);
+      DataManager.registerDataProvider(myExplanationTree, this);
       TreeUtil.expandAll(myExplanationTree);
       final NavigateAction navigateAction = new NavigateAction();
       navigateAction.registerCustomShortcutSet(new CustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1.getShortcuts()[0]), myExplanationTree);

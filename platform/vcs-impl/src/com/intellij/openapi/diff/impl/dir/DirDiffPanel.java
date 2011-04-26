@@ -313,7 +313,7 @@ public class DirDiffPanel implements Disposable {
     }
     myCurrentElement = null;
     myDiffPanel.remove(getErrorLabel());
-    myDiffPanel.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, null);
+    DataManager.removeDataProvider(myDiffPanel);
   }
 
   public JComponent getPanel() {

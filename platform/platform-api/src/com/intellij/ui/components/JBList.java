@@ -147,7 +147,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
   }
 
   public void setDataProvider(DataProvider provider) {
-    putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, provider);
+    DataManager.registerDataProvider(this, provider);
   }
 
   public void disableEmptyText() {

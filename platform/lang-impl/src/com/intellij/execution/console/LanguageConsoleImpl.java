@@ -44,7 +44,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -70,7 +69,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.FocusManager;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -128,7 +130,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myPanel.add(myHistoryViewer.getComponent());
     myPanel.add(myConsoleEditor.getComponent());
     setupComponents();
-    myPanel.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new TypeSafeDataProviderAdapter(this));
+    DataManager.registerDataProvider(myPanel, new TypeSafeDataProviderAdapter(this));
     myUpdateQueue = new MergingUpdateQueue("ConsoleUpdateQueue", 300, true, null);
     Disposer.register(this, myUpdateQueue);
     myHistoryViewer.getComponent().addComponentListener(new ComponentAdapter() {

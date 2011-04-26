@@ -132,7 +132,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     myComponentPlace.setLayout(new GridBagLayout());
     myComponentPlace.add(myEditor.getComponent(), new GridBagConstraints(0,0,1,1,1.0,1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
     myComponentPlace.doLayout();
-    myWholePanel.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new TypeSafeDataProviderAdapter(new MyDataProvider()));
+    DataManager.registerDataProvider(myWholePanel, new TypeSafeDataProviderAdapter(new MyDataProvider()));
     final JBScrollPane scrollPane = new JBScrollPane(myWholePanel);
     scrollPane.setBorder(null);
     return scrollPane;
