@@ -255,6 +255,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   public void resort() {
     myFrozenItems.clear();
     myPreselectedItem = EMPTY_LOOKUP_ITEM;
+    synchronized (myList) {
+      ((DefaultListModel)myList.getModel()).clear();
+    }
+
     final List<LookupElement> items = myModel.getItems();
     myModel.clearItems();
     for (final LookupElement item : items) {
@@ -377,6 +381,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     final Pair<List<LookupElement>,Iterable<List<LookupElement>>> snapshot = myModel.getModelSnapshot();
 
     final List<LookupElement> items = matchingItems(snapshot);
+
+    if (items.equals(getItems())) {
+      return;
+    }
 
     checkMinPrefixLengthChanges(items);
 
