@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
-import com.intellij.util.containers.HashMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +44,9 @@ import java.util.*;
  * HgUtil is a collection of static utility methods for Mercurial.
  */
 public abstract class HgUtil {
-  
+
+  public static final int MANY_FILES = 100;
+
   public static File copyResourceToTempFile(String basename, String extension) throws IOException {
     final InputStream in = HgUtil.class.getClassLoader().getResourceAsStream("python/" + basename + extension);
 
@@ -334,6 +335,41 @@ public abstract class HgUtil {
       }
     }
     return repos;
+  }
+
+  public static @NotNull Map<VirtualFile, Collection<VirtualFile>> sortByHgRoots(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
+    Map<VirtualFile, Collection<VirtualFile>> sorted = new HashMap<VirtualFile, Collection<VirtualFile>>();
+    for (VirtualFile file : files) {
+      VirtualFile repo = VcsUtil.getVcsRootFor(project, file);
+      if (repo == null) {
+        continue;
+      }
+      Collection<VirtualFile> filesForRoot = sorted.get(repo);
+      if (filesForRoot == null) {
+        filesForRoot = new HashSet<VirtualFile>();
+        sorted.put(repo, filesForRoot);
+      }
+      filesForRoot.add(file);
+    }
+    return sorted;
+  }
+
+  public static @NotNull Map<VirtualFile, Collection<FilePath>> groupFilePathsByHgRoots(@NotNull Project project,
+                                                                                        @NotNull Collection<FilePath> files) {
+    Map<VirtualFile, Collection<FilePath>> sorted = new HashMap<VirtualFile, Collection<FilePath>>();
+    for (FilePath file : files) {
+      VirtualFile repo = VcsUtil.getVcsRootFor(project, file);
+      if (repo == null) {
+        continue;
+      }
+      Collection<FilePath> filesForRoot = sorted.get(repo);
+      if (filesForRoot == null) {
+        filesForRoot = new HashSet<FilePath>();
+        sorted.put(repo, filesForRoot);
+      }
+      filesForRoot.add(file);
+    }
+    return sorted;
   }
 
 }

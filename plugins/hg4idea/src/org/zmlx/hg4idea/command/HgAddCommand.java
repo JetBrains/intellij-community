@@ -12,14 +12,17 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.util.HgUtil;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -39,17 +42,49 @@ public class HgAddCommand {
    * Adds given files to their Mercurial repositories.
    * @param hgFiles files to be added.
    */
-  public void execute(@NotNull HgFile... hgFiles) {
-    execute(Arrays.asList(hgFiles));
+  public void execute(@NotNull Collection<VirtualFile> files) {
+    execute(files, null);
   }
 
-  /**
-   * Adds given files to their Mercurial repositories.
-   * @param hgFiles files to be added.
-   */
-  public void execute(@NotNull Collection<HgFile> hgFiles) {
-    for(Map.Entry<VirtualFile, List<String>> entry : HgUtil.getRelativePathsByRepository(hgFiles).entrySet()) {
-      new HgCommandExecutor(myProject).executeInCurrentThread(entry.getKey(), "add", entry.getValue());
+  public void addWithProgress(final Collection<VirtualFile> files) {
+    if (files.size() >= HgUtil.MANY_FILES) {
+      new Task.Backgroundable(myProject, "Adding files to Mercurial", true) {
+        @Override public void run(@NotNull ProgressIndicator indicator) {
+          indicator.setIndeterminate(false);
+          execute(files, indicator);
+        }
+      }.queue();
+    } else {
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override public void run() {
+          execute(files);
+        }
+      });
+    }
+  }
+
+  private void execute(@NotNull Collection<VirtualFile> files, @Nullable ProgressIndicator indicator) {
+    final Map<VirtualFile, Collection<VirtualFile>> sorted = HgUtil.sortByHgRoots(myProject, files);
+    for (Map.Entry<VirtualFile, Collection<VirtualFile>> entry : sorted.entrySet()) {
+      if (indicator != null) {
+        if (indicator.isCanceled()) { return; }
+        indicator.setFraction(0);
+        indicator.setText2("Adding files to " + entry.getKey().getPresentableUrl());
+      }
+      addFiles(entry.getKey(), entry.getValue(), indicator);
+    }
+  }
+
+  private void addFiles(VirtualFile repo, Collection<VirtualFile> files, @Nullable ProgressIndicator indicator) {
+    final List<List<String>> chunks = VcsFileUtil.chunkFiles(repo, files);
+    int currentChunk = 0;
+    for (List<String> paths : chunks) {
+      if (indicator != null) {
+        if (indicator.isCanceled()) { return; }
+        indicator.setFraction((double)currentChunk / chunks.size());
+        currentChunk++;
+      }
+      new HgCommandExecutor(myProject).executeInCurrentThread(repo, "add", paths);
     }
   }
 

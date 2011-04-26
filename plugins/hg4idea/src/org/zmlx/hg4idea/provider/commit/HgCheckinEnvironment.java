@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
@@ -186,20 +185,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     return null;
   }
 
-  public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
-    final HgAddCommand command = new HgAddCommand(myProject);
-    for (final VirtualFile file : files) {
-      final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, file);
-      if (vcsRoot == null) {
-        continue;
-      }
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          command.execute(new HgFile(vcsRoot, VfsUtil.virtualToIoFile(file)));
-        }
-      });
-    }
+  public List<VcsException> scheduleUnversionedFilesForAddition(final List<VirtualFile> files) {
+    new HgAddCommand(myProject).addWithProgress(files);
     return null;
   }
 

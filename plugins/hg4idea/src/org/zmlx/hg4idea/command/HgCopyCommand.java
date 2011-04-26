@@ -13,23 +13,35 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
-import org.zmlx.hg4idea.HgFile;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsFileUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 public class HgCopyCommand {
 
-  private final Project project;
+  private final Project myProject;
 
   public HgCopyCommand(Project project) {
-    this.project = project;
+    myProject = project;
   }
 
-  public void execute(HgFile source, HgFile target) {
-    HgCommandExecutor executor = new HgCommandExecutor(project);
-    if (source.getRepo().equals(target.getRepo())) {
-      executor.execute(source.getRepo(), "copy", Arrays.asList("--after", source.getRelativePath(), target.getRelativePath()), null);
+  public void execute(VirtualFile source, VirtualFile target) {
+    HgCommandExecutor executor = new HgCommandExecutor(myProject);
+    VirtualFile sourceRepo = VcsUtil.getVcsRootFor(myProject, source);
+    VirtualFile targetRepo = VcsUtil.getVcsRootFor(myProject, target);
+    if (sourceRepo != null && targetRepo != null && sourceRepo.equals(targetRepo)) {
+      executor.execute(sourceRepo, "copy", Arrays.asList("--after",
+                                                         VcsFileUtil.relativeOrFullPath(sourceRepo, source),
+                                                         VcsFileUtil.relativeOrFullPath(targetRepo, target)), null);
+    } else {
+      // copying from one repository to another => 'hg add' in new repo
+      if (targetRepo != null) {
+        new HgAddCommand(myProject).execute(Collections.singleton(target));
+      }
     }
   }
 
