@@ -427,6 +427,13 @@ public class PythonSdkType extends SdkType {
         }
         catch (InvalidSdkException e) {
           success.set(false);
+          LOG.warn(e);
+          Notifications.Bus.notify(
+            new Notification(
+              SKELETONS_TOPIC, "Refresh failed", "Skeleton re-generation failed. Please see PyCharm log for traceback. Send it to developers.",
+              NotificationType.WARNING
+            )
+          );
         }
       }
     };

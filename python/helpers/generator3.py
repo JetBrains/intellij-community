@@ -2240,13 +2240,17 @@ if __name__ == "__main__":
 
     # handle cmdline
     helptext = (
+        #01234567890123456789012345678901234567890123456789012345678901234567890123456789
         'Generates interface skeletons for python modules.' '\n'
-        'Usage: generator [options] [module_name [file_name]]' '\n'
-        '  module_name is fully qualified, and file_name is where the module is defined.' '\n'
-        '  E.g. foo.bar /usr/lib/python/foo_bar.so' '\n'
-        '  For built-in modules file_name is not provided.' '\n'
+        'Usage: ' '\n'
+        '  generator [options] [module_name [file_name]]' '\n'
+        '  generator [options] -L ' '\n'
+        'module_name is fully qualified, and file_name is where the module is defined.' '\n'
+        'E.g. foo.bar /usr/lib/python/foo_bar.so' '\n'
+        'For built-in modules file_name is not provided.' '\n'
         'Output files will be named as modules plus ".py" suffix.' '\n'
         'Normally every name processed will be printed and stdout flushed.' '\n'
+        'directory_list is one string separated by OS-specific path separtors.' '\n'
         '\n'
         'Options are:' '\n'
         ' -h -- prints this help message.' '\n'
@@ -2257,10 +2261,13 @@ if __name__ == "__main__":
         ' -v -- be verbose, print lots of debug output to stderr' '\n'
         ' -c modules -- import CLR assemblies with specified names' '\n'
         ' -p -- run CLR profiler ' '\n'
-        ' -L -- print version and then a list of binary module files on sys.path;' '\n'
-        '       lines are "qualified.module.name /full/path/to/module_file.{dll,so}"' '\n'
+        ' -s path_list -- add paths to sys.path before run; path_list lists directories' '\n'
+        '    separated by path separator char, e.g. "c:\\foo;d:\\bar;c:\\with space"' '\n'
+        ' -L -- print version and then a list of binary module files found ' '\n'
+        '    on sys.path and in directories in directory_list;' '\n'
+        '    lines are "qualified.module.name /full/path/to/module_file.{pyd,dll,so}"' '\n'
     )
-    opts, args = getopt(sys.argv[1:], "d:hbqxvc:pL")
+    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:L")
     opts = dict(opts)
 
     if not opts or '-h' in opts:
@@ -2280,8 +2287,20 @@ if __name__ == "__main__":
 
     _is_verbose = '-v' in opts
 
+    # patch sys.path?
+    extra_path = opts.get('-s', None)
+    if extra_path:
+        source_dirs = [x for x in extra_path.split(os.path.pathsep)]
+        for p in source_dirs:
+            if p and p not in sys.path:
+                sys.path.append(p) # we need this to make things in additional dirs importable
+        note("Altered sys.path: %r", sys.path)
+
     # find binaries?
     if "-L" in opts:
+        if len(args) > 0:
+            report("Expected no args with -L, got %d args", len(args))
+            sys.exit(1)
         say(VERSION)
         for name, path in find_binaries(sys.path):
             say("%s %s", name, path)
@@ -2293,14 +2312,13 @@ if __name__ == "__main__":
     # determine names
     if '-b' in opts:
         if args:
-            report("No names should not be specified with -b")
+            report("No names should be specified with -b")
             sys.exit(1)
         names = list(sys.builtin_module_names)
         if not BUILTIN_MOD_NAME in names:
             names.append(BUILTIN_MOD_NAME)
         if '__main__' in names:
             names.remove('__main__') # we don't want ourselves processed
-        # TODO: process the whole names list separately here
         for name in names:
             processOne(name, None, True)
 
