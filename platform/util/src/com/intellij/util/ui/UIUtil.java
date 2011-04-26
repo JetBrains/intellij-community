@@ -35,9 +35,14 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
+import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.ProgressBarUI;
 import javax.swing.plaf.UIResource;
+import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicTreeUI;
+import javax.swing.plaf.basic.ComboPopup;
+import javax.swing.text.DefaultEditorKit;
+import javax.swing.text.JTextComponent;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import javax.swing.tree.TreePath;
@@ -1496,6 +1501,69 @@ public class UIUtil {
       keyStroke,
       JComponent.WHEN_FOCUSED
     );
+  }
+
+  public static void installComboBoxCopyAction(JComboBox comboBox) {
+    final Component editorComponent = comboBox.getEditor().getEditorComponent();
+    if (!(editorComponent instanceof JTextComponent)) return;
+    final InputMap inputMap = ((JTextComponent)editorComponent).getInputMap();
+    for (KeyStroke keyStroke : inputMap.allKeys()) {
+      if (DefaultEditorKit.copyAction.equals(inputMap.get(keyStroke))) {
+        comboBox.getInputMap().put(keyStroke, DefaultEditorKit.copyAction);
+      }
+    }
+    comboBox.getActionMap().put(DefaultEditorKit.copyAction, new AbstractAction() {
+      @Override
+      public void actionPerformed(final ActionEvent e) {
+        if (!(e.getSource() instanceof JComboBox)) return;
+        final JComboBox comboBox = (JComboBox)e.getSource();
+        final String text;
+        final Object selectedItem = comboBox.getSelectedItem();
+        if (selectedItem instanceof String) {
+          text = (String)selectedItem;
+        }
+        else {
+          final Component component =
+            comboBox.getRenderer().getListCellRendererComponent(new JList(), selectedItem, 0, false, false);
+          if (component instanceof JLabel) {
+            text = ((JLabel)component).getText();
+          }
+          else if (component != null) {
+            final String str = component.toString();
+            // skip default Component.toString and handle SimpleColoredComponent case
+            text = str == null || str.startsWith(component.getClass().getName()+"[")? null : str;
+          }
+          else {
+            text = null;
+          }
+        }
+        if (text != null) {
+          final JTextField textField = new JTextField(text);
+          textField.selectAll();
+          textField.copy();
+        }
+      }
+    });
+  }
+
+  @Nullable
+  public static ComboPopup getComboBoxPopup(JComboBox comboBox) {
+    final ComboBoxUI ui = comboBox.getUI();
+    if (ui instanceof BasicComboBoxUI) {
+      try {
+        final Field popup = BasicComboBoxUI.class.getDeclaredField("popup");
+        popup.setAccessible(true);
+        return (ComboPopup) popup.get(ui);
+      }
+      catch (NoSuchFieldException e) {
+        return null;
+      }
+      catch (IllegalAccessException e) {
+        return null;
+      }
+    }
+
+    return null;
   }
 
   public static class MacTreeUI extends BasicTreeUI {
