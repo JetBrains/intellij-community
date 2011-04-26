@@ -40,6 +40,7 @@ public class PathManager {
   @NonNls private static final String PROPERTY_PLUGINS_PATH = "idea.plugins.path";
   @NonNls private static final String PROPERTY_HOME_PATH = "idea.home.path";
   @NonNls private static final String PROPERTY_LOG_PATH = "idea.log.path";
+  @NonNls private static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
 
   @NonNls private static String ourHomePath;
   @NonNls private static String ourSystemPath;
@@ -120,6 +121,13 @@ public class PathManager {
     if (System.getProperty(PROPERTY_SYSTEM_PATH) != null) {
       ourSystemPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_SYSTEM_PATH)));
     }
+    else if (getPathsSelector() != null) {
+      final String selector = getPathsSelector();
+      // Mac: ~/Library/Caches/@@selector@@
+      // Others: ~/.@@selector@@/system
+      ourSystemPath = SystemProperties.getUserHome() + (SystemInfo.isMac ? "/Library/Caches/" + selector
+                                                                         : File.separator + "." + selector + File.separator + "system");
+    }
     else {
       ourSystemPath = getHomePath() + File.separator + "system";
     }
@@ -155,16 +163,27 @@ public class PathManager {
     return getConfigPath(true);
   }
 
-  private static String  getConfigPathWithoutDialog() {
+  private static String getConfigPathWithoutDialog() {
     if (ourConfigPath != null) return ourConfigPath;
 
     if (System.getProperty(PROPERTY_CONFIG_PATH) != null) {
       ourConfigPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_CONFIG_PATH)));
     }
+    else if (getPathsSelector() != null) {
+      final String selector = getPathsSelector();
+      // Mac: ~/Library/Preferences/@@selector@@
+      // Others: ~/.@@selector@@/config
+      ourConfigPath = SystemProperties.getUserHome() + (SystemInfo.isMac ? "/Library/Preferences/" + selector
+                                                                         : File.separator + "." + selector + File.separator + "config");
+    }
     else {
       ourConfigPath = getHomePath() + File.separator + "config";
     }
     return ourConfigPath;
+  }
+
+  private static String getPathsSelector() {
+    return System.getProperty(PROPERTY_PATHS_SELECTOR);
   }
 
   public static String getBinPath() {
@@ -203,7 +222,13 @@ public class PathManager {
     if (ourPluginsPath == null) {
       if (System.getProperty(PROPERTY_PLUGINS_PATH) != null) {
         ourPluginsPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_PLUGINS_PATH)));
-      } else {
+      }
+      else if (SystemInfo.isMac && getPathsSelector() != null) {
+        // Mac: ~//Library/Application Support/@@selector@@
+        ourPluginsPath = SystemProperties.getUserHome() + "/Library/Application Support/" + getPathsSelector();
+      }
+      else {
+        // Others: @@config_path@@/plugins
         ourPluginsPath = getConfigPath() + File.separatorChar + PLUGINS_DIRECTORY;
       }
     }
@@ -216,7 +241,12 @@ public class PathManager {
       if (System.getProperty(PROPERTY_LOG_PATH) != null) {
         ourLogPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_LOG_PATH)));
       }
+      else if (SystemInfo.isMac && getPathsSelector() != null) {
+        // Mac: ~/Library/Logs/@@selector@@
+        ourLogPath = SystemProperties.getUserHome() + "/Library/Logs/" + getPathsSelector();
+      }
       else {
+        // Others: @@system_path@@/log
         ourLogPath = getSystemPath() + File.separatorChar + LOG_DIRECTORY;
       }
     }

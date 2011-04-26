@@ -69,14 +69,8 @@
         <string>~/.cvspass</string>
         <key>com.apple.mrj.application.live-resize</key>
         <string>false</string>
-        <key>idea.config.path</key>
-        <string>~/Library/Preferences/@@system_selector@@/</string>
-        <key>idea.system.path</key>
-        <string>~/Library/Caches/@@system_selector@@/</string>
-        <key>idea.plugins.path</key>
-        <string>~/Library/Application Support/@@system_selector@@/</string>
-        <key>idea.log.path</key>
-        <string>~/Library/Logs/@@system_selector@@/</string>
+        <key>idea.paths.selector</key>
+        <string>@@system_selector@@</string>
         <key>java.endorsed.dirs</key>
         <string></string>
         <key>idea.smooth.progress</key>

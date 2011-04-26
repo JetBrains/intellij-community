@@ -39,7 +39,7 @@ if [ -z "$IDEA_VM_OPTIONS" ]; then
 IDEA_VM_OPTIONS="$IDEA_HOME/bin/idea.vmoptions"
 fi
 
-REQUIRED_JVM_ARGS="-Xbootclasspath/a:../lib/boot.jar $IDEA_PROPERTIES_PROPERTY $REQUIRED_JVM_ARGS"
+REQUIRED_JVM_ARGS="-Xbootclasspath/a:../lib/boot.jar -Didea.paths.selector=@@system_selector@@ $IDEA_PROPERTIES_PROPERTY $REQUIRED_JVM_ARGS"
 JVM_ARGS=`tr '\n' ' ' < "$IDEA_VM_OPTIONS"`
 JVM_ARGS="$JVM_ARGS $REQUIRED_JVM_ARGS"
 

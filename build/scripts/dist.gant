@@ -60,7 +60,7 @@ target('default': 'The default target') {
   layoutAll(
           buildNumber: "IC-108.SNAPSHOT",
           version: "IdeaX",
-          system_selector: "IntelliJIdeaCE10",
+          system_selector: "IntelliJIdeaCE${p("component.version.major")}",
           home, out)
 }
 
@@ -91,6 +91,13 @@ private def layoutWin(Map args, String home, Paths paths) {
       fileset(dir: "$home/bin") { include(name: "*.*") }
       fileset(dir: "$home/bin/win")
     }
+  }
+
+  ant.replace(file: "$target/bin/idea.bat") {
+    replacefilter(token: "@@system_selector@@", value: args.system_selector)
+  }
+  ant.replace(file: "$target/bin/inspect_diff.bat") {
+    replacefilter(token: "@@system_selector@@", value: args.system_selector)
   }
 
   patchPropertiesFile(paths.distWin)
@@ -167,6 +174,13 @@ def layoutLinux(Map args, String home, Paths paths) {
       fileset(dir: "$home/build/images")
     }
     fileset(dir: "$home/build", includes: "Install-Linux-tar.txt")
+  }
+
+  ant.replace(file: "$paths.distUnix/bin/idea.sh") {
+    replacefilter(token: "@@system_selector@@", value: args.system_selector)
+  }
+  ant.replace(file: "$paths.distUnix/bin/inspect_diff.sh") {
+    replacefilter(token: "@@system_selector@@", value: args.system_selector)
   }
 
   patchPropertiesFile(paths.distUnix)
