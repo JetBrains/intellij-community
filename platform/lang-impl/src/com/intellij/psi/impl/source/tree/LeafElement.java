@@ -85,9 +85,14 @@ public abstract class LeafElement extends TreeElement {
 
   public static int leafTextMatches(@NotNull CharSequence text, @NotNull CharSequence buffer, int start) {
     final int length = text.length();
-    if(buffer.length() - start < length) return -1;
+    if(buffer.length() - start < length) {
+      return start == 0 ? Integer.MIN_VALUE : -start;
+    }
     for(int i = 0; i < length; i++){
-      if(text.charAt(i) != buffer.charAt(i + start)) return -1;
+      int k = i + start;
+      if(text.charAt(i) != buffer.charAt(k)) {
+        return k == 0 ? Integer.MIN_VALUE : -k;
+      }
     }
     return start + length;
   }
