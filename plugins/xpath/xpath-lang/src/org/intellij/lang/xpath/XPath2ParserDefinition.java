@@ -37,7 +37,7 @@ public class XPath2ParserDefinition extends XPathParserDefinition {
   @NotNull
   @Override
   public Lexer createLexer(Project project) {
-    return new XPathLexer(true);
+    return XPathLexer.create(true);
   }
 
   public IFileElementType getFileNodeType() {

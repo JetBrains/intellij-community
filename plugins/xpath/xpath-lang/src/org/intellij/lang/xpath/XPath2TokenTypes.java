@@ -57,6 +57,9 @@ public final class XPath2TokenTypes {
   public static final IElementType CAST = new XPathElementType("CAST");
   public static final IElementType CASTABLE = new XPathElementType("CASTABLE");
 
+  public static final IElementType ITEM = new XPathElementType("ITEM");
+  public static final IElementType EMPTY_SEQUENCE = new XPathElementType("EMPTY_SEQUENCE");
+
   public static final IElementType WEQ = new XPathElementType("WEQ");       // =
   public static final IElementType WLE = new XPathElementType("WLE");       // <=
   public static final IElementType WLT = new XPathElementType("WLT");       // <

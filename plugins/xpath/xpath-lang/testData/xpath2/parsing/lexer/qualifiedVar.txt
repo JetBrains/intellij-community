@@ -1,0 +1,4 @@
+DOLLAR ('$')
+VARIABLE_PREFIX ('foo')
+COL (':')
+VARIABLE_NAME ('var')
