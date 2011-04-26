@@ -21,14 +21,11 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.ComboBoxUI;
-import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.ComboPopup;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.lang.reflect.Field;
 
 /**
  * Due to many bugs and "features" in <code>JComboBox</code> implementation we provide
@@ -60,6 +57,7 @@ public class ComboBox extends ComboBoxWithWidePopup {
    */
   public ComboBox(final int minimumAndPreferredWidth) {
     this(new DefaultComboBoxModel(), minimumAndPreferredWidth);
+    UIUtil.installComboBoxCopyAction(this);
   }
 
   public ComboBox(final ComboBoxModel model, final int minimumAndPreferredWidth) {
@@ -95,22 +93,7 @@ public class ComboBox extends ComboBoxWithWidePopup {
 
   @Nullable
   public ComboPopup getPopup() {
-    final ComboBoxUI ui = getUI();
-    if (ui instanceof BasicComboBoxUI) {
-      try {
-        final Field popup = BasicComboBoxUI.class.getDeclaredField("popup");
-        popup.setAccessible(true);
-        return (ComboPopup) popup.get(ui);
-      }
-      catch (NoSuchFieldException e) {
-        return null;
-      }
-      catch (IllegalAccessException e) {
-        return null;
-      }
-    }
-
-    return null;
+    return UIUtil.getComboBoxPopup(this);
   }
 
   public ComboBox(final Object[] items, final int preferredWidth) {
