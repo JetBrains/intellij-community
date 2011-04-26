@@ -18,6 +18,7 @@ package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.InvokeTemplateAction;
@@ -72,6 +73,9 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
     List<AnAction> applicable = buildSurroundActions(project, editor, file, surrounder);
     if (applicable != null) {
       showPopup(editor, applicable);
+    }
+    else {
+      HintManager.getInstance().showErrorHint(editor, "Couldn't find Surround With variants applicable to the current context");
     }
   }
 
