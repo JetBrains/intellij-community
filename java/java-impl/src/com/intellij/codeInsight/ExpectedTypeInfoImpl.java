@@ -17,9 +17,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
@@ -64,23 +62,12 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
       final PsiClass psiClass = psiClassType.resolve();
       if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
         final PsiType[] parameters = psiClassType.getParameters();
-        if (parameters.length == 1 && parameters[0] instanceof PsiWildcardType) {
+        PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+        if (parameters.length == 1 && parameters[0] instanceof PsiWildcardType && typeParameters.length == 1) {
           final PsiType bound = ((PsiWildcardType)parameters[0]).getExtendsBound();
           if (bound instanceof PsiClassType) {
-            final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
-            String canonicalText = bound.getCanonicalText();
-            if (canonicalText.contains("?extends")) {
-              throw new AssertionError("Incorrect text: " + bound + "; " +
-                                       canonicalText + "; " +
-                                       StringUtil.join(((PsiClassType)bound).getParameters(), new Function<PsiType, String>() {
-                                                         @Override
-                                                         public String fun(PsiType psiType) {
-                                                           return psiType + " of " + psiType.getClass();
-                                                         }
-                                                       }, ", "));
-            }
-
-            defaultType = factory.createTypeFromText(CommonClassNames.JAVA_LANG_CLASS + "<" + canonicalText + ">", null);
+            defaultType = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory()
+              .createType(psiClass, PsiSubstitutor.EMPTY.put(typeParameters[0], bound));
           }
         }
       }
