@@ -218,7 +218,7 @@ target('default': "Build artifacts") {
   layoutUnix(paths.distUnix)
   layoutMac(buildName: buildName,
             version: "1.0",
-            system_selector: $system_selector,
+            system_selector: system_selector,
             paths.distMac)
 
   buildExe()
@@ -531,7 +531,7 @@ def layoutWin(String target) {
     }
   }
   ant.replace(file: "$target/bin/pycharm.bat") {
-    replacefilter(token: "@@system_selector@@", value: $system_selector)
+    replacefilter(token: "@@system_selector@@", value: system_selector)
   }
   ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help")
   ant.echo(file: "$target/bin/pycharm.exe.vmoptions", message: vmoptions32().replace(' ', '\n'))
@@ -541,7 +541,7 @@ def layoutUnix(String target) {
   ant.copy(file: "$home/python/build/pycharm.sh", todir: "$target/bin")
   ant.replace(file: "$target/bin/pycharm.sh") {
     replacefilter(token: "@@isEap@@", value: isEap())
-    replacefilter(token: "@@system_selector@@", value: $system_selector)
+    replacefilter(token: "@@system_selector@@", value: system_selector)
   }
 }
 
