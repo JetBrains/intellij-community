@@ -35,11 +35,14 @@ def extractTypeParameter(def typeText) {
   if (start < 0) return null
 
   String componentType = end < 0 ? typeText.substring(start + 1) : typeText.substring(start + 1, end)
-  if (componentType.startsWith(Constants.WILDCARD_PREFIX)) {
-    componentType = componentType.substring(Constants.WILDCARD_PREFIX.size())
-  }
+  return removeWildcard(componentType);
+}
 
-  return componentType;
+private String removeWildcard(String componentType) {
+  if (componentType.startsWith(Constants.WILDCARD_PREFIX)) {
+    return componentType.substring(Constants.WILDCARD_PREFIX.size())
+  }
+  return componentType
 }
 
 def constructElementTypeArg(def psiType) {
@@ -70,10 +73,10 @@ contributor(ctype:NUMBER) {
   method name: "or", type: NUMBER, params:[arg:NUMBER]
   method name: "and", type: NUMBER, params:[arg:NUMBER]
   method name: "xor", type: NUMBER, params:[arg:NUMBER]
-  method name: "next", type: psiType.canonicalText
-  method name: "previous", type: psiType.canonicalText
-  method name: "negative", type: psiType.canonicalText
-  method name: "positive", type: psiType.canonicalText
+  method name: "next", type: removeWildcard(psiType.canonicalText)
+  method name: "previous", type: removeWildcard(psiType.canonicalText)
+  method name: "negative", type: removeWildcard(psiType.canonicalText)
+  method name: "positive", type: removeWildcard(psiType.canonicalText)
 
   method name: "plus", type: STRING, params:[arg:STRING]
 }
