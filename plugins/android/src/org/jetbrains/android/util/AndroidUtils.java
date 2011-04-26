@@ -578,7 +578,9 @@ public class AndroidUtils {
       Manifest manifest = depFacet.getManifest();
       if (manifest != null) {
         String aPackage = manifest.getPackage().getValue();
-        result.add(aPackage);
+        if (aPackage != null) {
+          result.add(aPackage);
+        }
       }
     }
   }
