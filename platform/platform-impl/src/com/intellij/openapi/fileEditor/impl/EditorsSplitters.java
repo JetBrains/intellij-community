@@ -299,7 +299,9 @@ public class EditorsSplitters extends JPanel {
     for (final EditorWindow myWindow : myWindows) {
       final EditorWithProviderComposite[] editors = myWindow.getEditors();
       for (final EditorWithProviderComposite editor : editors) {
-        files.add(editor.getFile());
+        final VirtualFile file = editor.getFile();
+        LOG.assertTrue(file.isValid(), Arrays.toString(editor.getProviders()));
+        files.add(file);
       }
     }
     return VfsUtil.toVirtualFileArray(files);
