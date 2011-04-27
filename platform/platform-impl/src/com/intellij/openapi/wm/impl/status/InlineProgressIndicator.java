@@ -104,13 +104,6 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myComponent.add(myProcessName, BorderLayout.NORTH);
       final Font font = myProcessName.getFont();
 
-      final boolean aqua = UIUtil.isUnderAquaLookAndFeel();
-
-      int size = font.getSize() - (aqua ? 4 : 2);
-      if (size < (aqua ? 8 : 10)) {
-        size = (aqua ? 8 : 10);
-      }
-      myProcessName.setFont(font.deriveFont(Font.PLAIN, size));
       myProcessName.setForeground(UIUtil.getPanelBackground().brighter().brighter());
       myProcessName.setBorder(new EmptyBorder(2, 2, 2, 2));
       myProcessName.setDecorate(false);
