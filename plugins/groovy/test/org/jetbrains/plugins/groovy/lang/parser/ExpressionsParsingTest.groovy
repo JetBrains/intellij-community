@@ -162,6 +162,7 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testregex$regex9() throws Throwable { doTest(); }
   public void testregex$regex_begin() throws Throwable { doTest(); }
   public void testregex$regex_begin2() throws Throwable { doTest(); }
+  public void testregex$multiLineSlashy() throws Throwable { doTest(); }
   public void testrelational$eq1() throws Throwable { doTest(); }
   public void testrelational$inst0() throws Throwable { doTest(); }
   public void testrelational$inst1() throws Throwable { doTest(); }
