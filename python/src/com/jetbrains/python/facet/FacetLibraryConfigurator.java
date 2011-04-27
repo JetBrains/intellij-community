@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -24,19 +25,21 @@ public class FacetLibraryConfigurator {
   private FacetLibraryConfigurator() {
   }
 
-  public static void attachLibrary(final Module module, final String libraryName, final List<String> paths) {
+  public static void attachLibrary(final Module module, @Nullable final ModifiableRootModel existingModel, final String libraryName, final List<String> paths) {
     final ModifiableModelsProvider modelsProvider = ModifiableModelsProvider.SERVICE.getInstance();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         // add all paths to library
-        final ModifiableRootModel model = modelsProvider.getModuleModifiableModel(module);
+        final ModifiableRootModel model = existingModel != null ? existingModel : modelsProvider.getModuleModifiableModel(module);
         final LibraryOrderEntry orderEntry = OrderEntryUtil.findLibraryOrderEntry(model, libraryName);
         if (orderEntry != null) {
           // update existing
           Library lib = orderEntry.getLibrary();
           if (lib != null) {
             fillLibrary(module.getProject(), lib, paths);
-            modelsProvider.commitModuleModifiableModel(model);
+            if (existingModel == null) {
+              modelsProvider.commitModuleModifiableModel(model);
+            }
             return;
           }
         }
@@ -46,7 +49,9 @@ public class FacetLibraryConfigurator {
         fillLibrary(module.getProject(), lib, paths);
         projectLibrariesModel.commit();
         model.addLibraryEntry(lib);
-        modelsProvider.commitModuleModifiableModel(model);
+        if (existingModel == null) {
+          modelsProvider.commitModuleModifiableModel(model);
+        }
       }
     });
   }

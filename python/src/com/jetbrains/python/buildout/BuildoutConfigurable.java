@@ -135,7 +135,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
       return;
     }
     final List<String> paths = facet.getConfiguration().getPaths();
-    FacetLibraryConfigurator.attachLibrary(module, BUILDOUT_LIB_NAME, paths);
+    FacetLibraryConfigurator.attachLibrary(module, null, BUILDOUT_LIB_NAME, paths);
   }
 
   public static void detachLibrary(final Module module) {
