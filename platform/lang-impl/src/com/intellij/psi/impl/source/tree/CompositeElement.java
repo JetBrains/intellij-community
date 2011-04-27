@@ -250,7 +250,7 @@ public class CompositeElement extends TreeElement {
     msg += ";\n this=" + this;
     int shitStart = textMatches(text, 0);
     msg += ";\n matches until " + shitStart;
-    LeafElement leaf = findLeafElementAt(shitStart);
+    LeafElement leaf = findLeafElementAt(Math.abs(shitStart));
     msg += ";\n element there=" + leaf;
     if (leaf != null) {
       PsiElement psi = leaf.getPsi();
@@ -293,7 +293,7 @@ public class CompositeElement extends TreeElement {
     int curOffset = start;
     for (TreeElement child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       curOffset = child.textMatches(buffer, curOffset);
-      if (curOffset == -1) return -1;
+      if (curOffset < 0) return curOffset;
     }
     return curOffset;
   }
