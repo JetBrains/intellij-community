@@ -98,7 +98,7 @@ public class ParameterListElement extends CompositeElement implements Constants 
     //    *) 'arg2' is to be removed;
     // We don't want to keep trailing white space then
     TreeElement newLastNodeInsideParens = getLastNodeInsideParens();
-    if (newLastNodeInsideParens.getElementType() == WHITE_SPACE) {
+    if (newLastNodeInsideParens != null && newLastNodeInsideParens.getElementType() == WHITE_SPACE) {
       if (oldLastNodeInsideParens.getElementType() != WHITE_SPACE) {
         deleteChildInternal(newLastNodeInsideParens);
       } else {
