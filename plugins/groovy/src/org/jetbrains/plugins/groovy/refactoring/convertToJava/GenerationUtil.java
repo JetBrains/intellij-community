@@ -62,6 +62,16 @@ public class GenerationUtil {
     PsiModifier.NATIVE,
   };
 
+  public static final String[] JAVA_MODIFIERS_WITHOUT_ABSTRACT = new String[] {
+    PsiModifier.PUBLIC,
+    PsiModifier.PROTECTED,
+    PsiModifier.PRIVATE,
+    PsiModifier.PACKAGE_LOCAL,
+    PsiModifier.STATIC,
+    PsiModifier.FINAL,
+    PsiModifier.NATIVE,
+  };
+
   public static final String[] CONSTRUCTOR_MODIFIERS = new String[]{
     PsiModifier.PRIVATE,
     PsiModifier.PACKAGE_LOCAL,
@@ -467,9 +477,13 @@ public class GenerationUtil {
 
   static ArrayList<GrParameter> getActualParams(GrMethod constructor, int skipOptional) {
     GrParameter[] parameterList = constructor.getParameters();
-    final ArrayList<GrParameter> actual = new ArrayList<GrParameter>(Arrays.asList(parameterList));
+    return getActualParams(parameterList, skipOptional);
+  }
+
+  public static ArrayList<GrParameter> getActualParams(GrParameter[] parameters, int skipOptional) {
+    final ArrayList<GrParameter> actual = new ArrayList<GrParameter>(Arrays.asList(parameters));
     if (skipOptional == 0) return actual;
-    for (int i = parameterList.length - 1; i >= 0; i--) {
+    for (int i = parameters.length - 1; i >= 0; i--) {
       if (!actual.get(i).isOptional()) continue;
 
       actual.remove(i);
