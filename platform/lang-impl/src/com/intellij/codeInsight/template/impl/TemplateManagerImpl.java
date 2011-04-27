@@ -29,6 +29,8 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -429,6 +431,17 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public TemplateContextType getContextType(@NotNull PsiFile file, int offset) {
+    LinkedList<TemplateContextType> userDefinedExtensionsFirst = buildOrderedContextTypes();
+    for (TemplateContextType contextType : userDefinedExtensionsFirst) {
+      if (contextType.isInContext(file, offset)) {
+        return contextType;
+      }
+    }
+    assert false : "OtherContextType should match any context";
+    return null;
+  }
+
+  private LinkedList<TemplateContextType> buildOrderedContextTypes() {
     final TemplateContextType[] typeCollection = getAllContextTypes();
     LinkedList<TemplateContextType> userDefinedExtensionsFirst = new LinkedList<TemplateContextType>();
     for (TemplateContextType contextType : typeCollection) {
@@ -439,8 +452,14 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
         userDefinedExtensionsFirst.addFirst(contextType);
       }
     }
+    return userDefinedExtensionsFirst;
+  }
+
+  @Override
+  public TemplateContextType getContextType(@NotNull FileType fileType) {
+    LinkedList<TemplateContextType> userDefinedExtensionsFirst = buildOrderedContextTypes();
     for (TemplateContextType contextType : userDefinedExtensionsFirst) {
-      if (contextType.isInContext(file, offset)) {
+      if (contextType.isInContext(fileType)) {
         return contextType;
       }
     }
@@ -469,11 +488,23 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     if (context.isEnabled(instance.getContextType(file, offset))) {
       return true;
     }
+
     Language baseLanguage = file.getViewProvider().getBaseLanguage();
+
     if (baseLanguage != file.getLanguage()) {
       PsiFile basePsi = file.getViewProvider().getPsi(baseLanguage);
       if (basePsi != null && context.isEnabled(instance.getContextType(basePsi, offset))) {
         return true;
+      }
+    }
+
+    final Language baseLanguageForBaseLanguage = baseLanguage.getBaseLanguage();
+    if (baseLanguageForBaseLanguage != null) {
+      final LanguageFileType associatedFileType = baseLanguageForBaseLanguage.getAssociatedFileType();
+      if (associatedFileType != null && associatedFileType != file.getFileType()) {
+        if (context.isEnabled(instance.getContextType(associatedFileType))) {
+          return true;
+        }
       }
     }
 
