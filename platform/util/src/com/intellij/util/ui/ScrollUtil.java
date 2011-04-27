@@ -16,40 +16,112 @@
 
 package com.intellij.util.ui;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 import java.awt.*;
 
 /**
- * @author mike
+ * @author Konstantin Bulenkov
  */
 public class ScrollUtil {
-  private ScrollUtil() {
+  private ScrollUtil() {}
+
+
+  @Nullable
+  public static JScrollPane findScrollPane(JComponent c) {
+    if (c == null) return null;
+    return UIUtil.findComponentOfType(c, JScrollPane.class);
   }
 
-  public static void center(JComponent c, Rectangle r) {
+  @Nullable
+  public static JScrollBar findVerticalScrollBar(JComponent c) {
+    return findScrollBar(c, Adjustable.VERTICAL);
+  }
+
+  @Nullable
+  public static JScrollBar findHorizontalScrollBar(JComponent c) {
+    return findScrollBar(c, Adjustable.HORIZONTAL);
+  }
+
+  @Nullable
+  private static JScrollBar findScrollBar(JComponent c, int orientation) {
+    if (c == null) return null;
+    if (c instanceof JScrollBar && ((JScrollBar)c).getOrientation() == orientation) {
+      return (JScrollBar)c;
+    }
+    for (Component comp : c.getComponents()) {
+      if (comp instanceof JComponent) {
+        final JScrollBar scrollBar = findScrollBar((JComponent)comp, orientation);
+        if (scrollBar != null) {
+          return scrollBar;
+        }
+      }
+    }
+    return null;
+  }
+
+  public static void scrollVertically(JComponent c, int position) {
+    final JScrollPane pane = findScrollPane(c);
+    if (pane != null) {
+      final JScrollBar bar = pane.getVerticalScrollBar();
+      if (bar != null) {
+        bar.setValue(position);
+      }
+    } else {
+      final JScrollBar scrollBar = findVerticalScrollBar(c);
+      if (scrollBar != null) {
+        scrollBar.setValue(position);
+      }
+    }
+  }
+
+  public static void scrollHorizontally(JComponent c, int position) {
+    final JScrollPane pane = findScrollPane(c);
+    if (pane != null) {
+      final JScrollBar bar = pane.getHorizontalScrollBar();
+      if (bar != null) {
+        bar.setValue(position);
+      }
+    } else {
+      final JScrollBar scrollBar = findHorizontalScrollBar(c);
+      if (scrollBar != null) {
+        scrollBar.setValue(position);
+      }
+    }
+  }
+
+  public static void center(final JComponent c, final Rectangle r) {
     center(c, r, false);
   }
 
-  public static void center(JComponent c, Rectangle r, boolean withInsets) {
-    Rectangle visible = c.getVisibleRect();
-
+  public static void center(final JComponent c, final Rectangle r, final boolean withInsets) {
+    final Rectangle visible = c.getVisibleRect();
     visible.x = r.x - (visible.width - r.width) / 2;
     visible.y = r.y - (visible.height - r.height) / 2;
 
-    Rectangle bounds = c.getBounds();
-    Insets i = withInsets ? new Insets(0, 0, 0, 0) : c.getInsets();
+    final Rectangle bounds = c.getBounds();
+    final Insets i = withInsets ? new Insets(0, 0, 0, 0) : c.getInsets();
     bounds.x = i.left;
     bounds.y = i.top;
     bounds.width -= i.left + i.right;
     bounds.height -= i.top + i.bottom;
 
-    if (visible.x < bounds.x) visible.x = bounds.x;
+    if (visible.x < bounds.x) {
+      visible.x = bounds.x;
+    }
 
-    if (visible.x + visible.width > bounds.x + bounds.width) visible.x = bounds.x + bounds.width - visible.width;
+    if (visible.x + visible.width > bounds.x + bounds.width) {
+      visible.x = bounds.x + bounds.width - visible.width;
+    }
 
-    if (visible.y < bounds.y) visible.y = bounds.y;
+    if (visible.y < bounds.y) {
+      visible.y = bounds.y;
+    }
 
-    if (visible.y + visible.height > bounds.y + bounds.height) visible.y = bounds.y + bounds.height - visible.height;
+    if (visible.y + visible.height > bounds.y + bounds.height) {
+      visible.y = bounds.y + bounds.height - visible.height;
+    }
 
     c.scrollRectToVisible(visible);
   }

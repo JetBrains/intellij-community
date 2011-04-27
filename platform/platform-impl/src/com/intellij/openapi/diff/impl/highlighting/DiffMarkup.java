@@ -189,7 +189,7 @@ public abstract class DiffMarkup implements EditorSource {
     myDisposables.clear();
   }
 
-  public void addDisposable(Disposable disposable) {
+  public void addDisposable(@NotNull Disposable disposable) {
     myDisposables.add(disposable);
   }
 
