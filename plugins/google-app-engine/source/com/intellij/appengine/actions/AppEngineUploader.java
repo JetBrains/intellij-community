@@ -136,6 +136,7 @@ public class AppEngineUploader {
   }
 
   public void startUploading() {
+    FileDocumentManager.getInstance().saveAllDocuments();
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Uploading application", true, null) {
       public void run(@NotNull ProgressIndicator indicator) {
         compileAndUpload();
