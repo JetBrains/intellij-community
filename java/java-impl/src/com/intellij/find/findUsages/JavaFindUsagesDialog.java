@@ -95,7 +95,7 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
   public void configureLabelComponent(final SimpleColoredComponent coloredComponent) {
     coloredComponent.append(StringUtil.capitalize(UsageViewUtil.getType(myPsiElement)));
     coloredComponent.append(" ");
-    coloredComponent.append(UsageViewUtil.getDescriptiveName(myPsiElement), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    coloredComponent.append(UsageViewUtil.getDescriptiveName(myPsiElement));
   }
 
   protected final PsiElement getPsiElement() {
