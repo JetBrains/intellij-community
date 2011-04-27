@@ -89,7 +89,7 @@ public class CompletionServiceImpl extends CompletionService{
       throw new AssertionError("createResultSet may be invoked only from completion thread: " + indicator + "!=" + myCurrentCompletion + "; phase=" + ourPhase + "; set at " + ourPhaseTrace);
     }
     CompletionProgressIndicator process = (CompletionProgressIndicator)indicator;
-    CamelHumpMatcher matcher = new CamelHumpMatcher(prefix, true, parameters.relaxMatching());
+    CamelHumpMatcher matcher = new CamelHumpMatcher(prefix, true, parameters.isRelaxedMatching());
     CompletionSorterImpl sorter = defaultSorter(parameters, matcher);
     return new CompletionResultSetImpl(consumer, textBeforePosition, matcher, contributor,parameters, sorter, process, null);
   }

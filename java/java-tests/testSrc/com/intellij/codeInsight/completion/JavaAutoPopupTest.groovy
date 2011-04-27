@@ -15,7 +15,9 @@
  */
 package com.intellij.codeInsight.completion
 
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
+import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -33,7 +35,6 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
-import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 
 /**
  * @author peter
@@ -747,6 +748,8 @@ public class Bar {
   }
 
   public void testExplicitMultipleVariantCompletionAfterAutoPopup() {
+    println CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE
+
     myFixture.configureByText 'a.java', 'class Foo {<caret>}'
     type 'pr'
 

@@ -56,6 +56,7 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
 import com.intellij.codeInspection.wrongPackageStatement.WrongPackageStatementInspection;
+import com.intellij.util.xml.DeprecatedClassUsageInspection;
 
 /**
  * @author max
@@ -88,6 +89,7 @@ public class StandardInspectionToolsProvider implements InspectionToolProvider {
       JavaDocLocalInspection.class,
       JavaDocReferenceInspection.class,
       DeprecationInspection.class,
+      DeprecatedClassUsageInspection.class,
       EqualsAndHashcode.class,
 
       Java15APIUsageInspection.class,

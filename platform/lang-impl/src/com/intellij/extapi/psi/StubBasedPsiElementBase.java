@@ -70,8 +70,11 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
           NonCancelableSection criticalSection = ProgressManager.getInstance().startNonCancelableSection();
           try {
             if (!file.isValid()) throw new PsiInvalidElementAccessException(this);
-            assert file.getTreeElement() == null : file.isPhysical() + "; " + myNode;
+            FileElement treeElement = file.getTreeElement();
             StubTree stubTree = file.getStubTree();
+            if (treeElement != null) {
+              throw new AssertionError(file.isPhysical() + "; node=" + myNode + "; file=" + file + " tree=" + treeElement + "; stubTree=" + stubTree);
+            }
             final FileElement fileElement = file.loadTreeElement();
             node = myNode;
             if (node == null) {

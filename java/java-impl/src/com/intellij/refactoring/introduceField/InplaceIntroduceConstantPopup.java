@@ -418,6 +418,57 @@ public class InplaceIntroduceConstantPopup {
     @Override
     protected void moveOffsetAfter(boolean success) {
       if (success) {
+        final PsiField psiField = (PsiField)getVariable();
+        if (psiField == null) {
+          super.moveOffsetAfter(false);
+          return;
+        }
+        myFieldTypePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(psiField.getType());
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        myConstantName = psiField.getName();
+
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            final PsiFile containingFile = myParentClass.getContainingFile();
+            final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
+            final RangeMarker exprMarker = getExprMarker();
+            if (exprMarker != null) {
+              myExpr = restoreExpression(containingFile, psiField, elementFactory, exprMarker, myExprText);
+              if (myExpr != null && myExpr.isPhysical()) {
+                myExprMarker = myEditor.getDocument().createRangeMarker(myExpr.getTextRange());
+              }
+            }
+            final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
+            for (int i = 0, occurrenceMarkersSize = occurrenceMarkers.size(); i < occurrenceMarkersSize; i++) {
+              RangeMarker marker = occurrenceMarkers.get(i);
+              if (getExprMarker() != null && marker.getStartOffset() == getExprMarker().getStartOffset()) {
+                myOccurrences[i] = myExpr;
+                continue;
+              }
+              final PsiExpression psiExpression =
+                restoreExpression(containingFile, psiField, elementFactory, marker, myLocalVariable != null ? myLocalName : myExprText);
+              if (psiExpression != null) {
+                myOccurrences[i] = psiExpression;
+              }
+            }
+
+            if (myAnchorIdxIfAll != -1 && myOccurrences[myAnchorIdxIfAll] != null) {
+              myAnchorElementIfAll = myOccurrences[myAnchorIdxIfAll].getParent();
+            }
+
+            if (myAnchorIdx != -1 && myOccurrences[myAnchorIdx] != null) {
+              myAnchorElement = myOccurrences[myAnchorIdx].getParent();
+            }
+            myOccurrenceMarkers = null;
+            if (psiField.isValid()) {
+              psiField.delete();
+            }
+          }
+        });
+        if (myLocalVariable == null && myExpr == null) {
+          super.moveOffsetAfter(false);
+          return;
+        }
         final BaseExpressionToFieldHandler.Settings settings =
           new BaseExpressionToFieldHandler.Settings(myConstantName,
                                                     isReplaceAllOccurrences(), true,
@@ -445,7 +496,7 @@ public class InplaceIntroduceConstantPopup {
         };
         ApplicationManager.getApplication().runWriteAction(runnable);
       }
-      super.moveOffsetAfter(success);
+      super.moveOffsetAfter(false);
       if (myMoveToAnotherClassCb.isSelected()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
@@ -492,54 +543,6 @@ public class InplaceIntroduceConstantPopup {
         });
       }
       return myWholePanel;
-    }
-
-    @Override
-    public void finish() {
-      super.finish();
-      final PsiField psiField = (PsiField)getVariable();
-      LOG.assertTrue(psiField != null);
-      myFieldTypePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(psiField.getType());
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      myConstantName = psiField.getName();
-
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          final PsiFile containingFile = myParentClass.getContainingFile();
-          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
-          final RangeMarker exprMarker = getExprMarker();
-          if (exprMarker != null) {
-            myExpr = restoreExpression(containingFile, psiField, elementFactory, exprMarker, myExprText);
-            if (myExpr != null && myExpr.isPhysical()) {
-              myExprMarker = myEditor.getDocument().createRangeMarker(myExpr.getTextRange());
-            }
-          }
-          final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
-          for (int i = 0, occurrenceMarkersSize = occurrenceMarkers.size(); i < occurrenceMarkersSize; i++) {
-            RangeMarker marker = occurrenceMarkers.get(i);
-            if (getExprMarker() != null && marker.getStartOffset() == getExprMarker().getStartOffset()) {
-              myOccurrences[i] = myExpr;
-              continue;
-            }
-            final PsiExpression psiExpression = restoreExpression(containingFile, psiField, elementFactory, marker, myLocalVariable != null ? myLocalName : myExprText);
-            if (psiExpression != null) {
-              myOccurrences[i] = psiExpression;
-            }
-          }
-
-          if (myAnchorIdxIfAll != -1 && myOccurrences[myAnchorIdxIfAll] != null) {
-            myAnchorElementIfAll = myOccurrences[myAnchorIdxIfAll].getParent();
-          }
-
-          if (myAnchorIdx != -1 && myOccurrences[myAnchorIdx] != null) {
-            myAnchorElement = myOccurrences[myAnchorIdx].getParent();
-          }
-          myOccurrenceMarkers = null;
-          if (psiField.isValid()) {
-            psiField.delete();
-          }
-        }
-      });
     }
   }
 

@@ -85,6 +85,10 @@ public class DiffPanelOutterComponent extends JPanel implements DataProvider {
     return new Dimension(600, 400);
   }
 
+  public void removeStatusBar() {
+    myBottomContainer.remove(myStatusBar);
+  }
+
   public Object getData(String dataId) {
     if (PlatformDataKeys.SOURCE_NAVIGATION_LOCKED.is(dataId)) {
       return Boolean.TRUE;
