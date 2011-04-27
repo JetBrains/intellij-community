@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PyBundle;
@@ -72,8 +73,11 @@ public class PyPropertyAccessInspection extends PyInspection {
             if (property != null) {
               AccessDirection dir = AccessDirection.of(node);
               checkAccessor(node, name, dir, property);
-              if (dir == AccessDirection.READ && node.getParent() instanceof PyAugAssignmentStatement) {
-                checkAccessor(node, name, AccessDirection.WRITE, property);
+              if (dir == AccessDirection.READ) {
+                final PsiElement parent = node.getParent();
+                if (parent instanceof PyAugAssignmentStatement && ((PyAugAssignmentStatement)parent).getTarget() == node) {
+                  checkAccessor(node, name, AccessDirection.WRITE, property);
+                }
               }
             }
           }
