@@ -41,7 +41,7 @@ import static com.jetbrains.python.sdk.SkeletonVersionChecker.fromVersionString;
 public class PySkeletonRefresher {
   @Nullable final ProgressIndicator myIndicator;
   final Sdk mySdk;
-  final String mySkeletonsPath;
+  String mySkeletonsPath;
   private static final int MINUTE = 60 * 1000;
   final static String GENERATOR3 = "generator3.py";
 
@@ -52,7 +52,13 @@ public class PySkeletonRefresher {
   private static final Logger LOG = Logger.getInstance("#" + PySkeletonRefresher.class.getName());
   private String myExtraSyspath;
 
-  public PySkeletonRefresher(Sdk sdk, String skeletonsPath, ProgressIndicator indicator) {
+  /**
+   * Creates a new object that refreshes skeletons of given SDK.
+   * @param sdk a Python SDK
+   * @param skeletonsPath if known; null means 'determine and create as needed'.
+   * @param indicator to report progress of long operations
+   */
+  public PySkeletonRefresher(@NotNull Sdk sdk, @Nullable String skeletonsPath, @Nullable ProgressIndicator indicator) {
     myIndicator = indicator;
     mySdk = sdk;
     mySkeletonsPath = skeletonsPath;
@@ -95,6 +101,18 @@ public class PySkeletonRefresher {
       myExtraSyspath = arg_builder.toString();
     }
     return myExtraSyspath;
+  }
+
+  /**
+   * Creates if needed all path(s) used to store skeletons of its SDK.
+   * @return path name of skeleton dir for the SDK, guaranteed to be already created.
+   */
+  public @NotNull String getSkeletonPath() {
+    if (mySkeletonsPath == null) {
+      mySkeletonsPath = PythonSdkType.getSkeletonsPath(mySdk.getHomePath());
+      if (! new File(mySkeletonsPath).mkdirs()) throw new InvalidSdkException("Can't create skeleton dir "+String.valueOf(mySkeletonsPath));
+    }
+    return  mySkeletonsPath;
   }
 
   List<String> regenerateSkeletons(@Nullable SkeletonVersionChecker cached_checker) {
@@ -402,9 +420,10 @@ public class PySkeletonRefresher {
         String module_name = line.substring(0, cutpos);
         String module_lib_name = line.substring(cutpos+1);
         final String module_path = module_name.replace('.', '/');
-        File skeleton_file = new File(mySkeletonsPath, module_path + ".py");
+        String skeleton_path = getSkeletonPath(); // will create dirs as needed
+        File skeleton_file = new File(skeleton_path, module_path + ".py");
         if (!skeleton_file.exists()) {
-          skeleton_file = new File(new File(mySkeletonsPath, module_path), PyNames.INIT_DOT_PY);
+          skeleton_file = new File(new File(skeleton_path, module_path), PyNames.INIT_DOT_PY);
         }
         File lib_file = new File(module_lib_name);
         Matcher matcher = getParseHeader(skeleton_file);
@@ -455,13 +474,12 @@ public class PySkeletonRefresher {
   ) {
     boolean ret = true;
     String binaryPath = mySdk.getHomePath();
-    String skeletonsRoot = PythonSdkType.findSkeletonsPath(mySdk);
     final String parent_dir = new File(binaryPath).getParent();
     List<String> commandLine = new ArrayList<String>();
     commandLine.add(binaryPath);
     commandLine.add(PythonHelpersLocator.getHelperPath(GENERATOR3));
     commandLine.add("-d");
-    commandLine.add(skeletonsRoot);
+    commandLine.add(getSkeletonPath());
     if (assemblyRefs != null && !assemblyRefs.isEmpty()) {
       commandLine.add("-c");
       commandLine.add(StringUtil.join(assemblyRefs, ";"));
