@@ -89,6 +89,8 @@ public abstract class GenericNotifierImpl<T, Key> {
               iterator.remove();
             }
           }
+        }
+        for (MyNotification<T> notification : notifications) {
           notification.expire();
         }
       }
