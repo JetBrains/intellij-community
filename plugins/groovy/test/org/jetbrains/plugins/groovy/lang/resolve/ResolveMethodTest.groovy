@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 
-import com.intellij.psi.util.PropertyUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -579,15 +578,14 @@ class Zoo {
   public void testInvokeMethodViaThisInStaticContext() {
     final PsiReference ref = configureByFile("invokeMethodViaThisInStaticContext/A.groovy");
     final PsiElement element = ref.resolve();
-    assertInstanceOf(element, PsiMethod.class);
-    assertEquals "Class", element.getContainingClass().getName()
+    assertEquals "Class", assertInstanceOf(element, PsiMethod).getContainingClass().getName()
   }
 
   public void testInvokeMethodViaClassInStaticContext() {
     final PsiReference ref = configureByFile("invokeMethodViaClassInStaticContext/A.groovy");
     final PsiElement element = ref.resolve();
     assertInstanceOf(element, PsiMethod.class);
-    assertEquals "Foo", element.getContainingClass().getName()
+    assertEquals "Foo", assertInstanceOf(element, PsiMethod).getContainingClass().getName()
   }
 
   public void testUseInCategory() throws Exception {
@@ -604,14 +602,12 @@ class Zoo {
 
   public void testCommandExpressionStatement1() {
     PsiElement method = resolve("A.groovy")
-    assertInstanceOf method, GrMethod
-    assertEquals "foo2", method.name
+    assertEquals "foo2", assertInstanceOf(method, GrMethod).name
   }
 
   public void testCommandExpressionStatement2() {
     PsiElement method = resolve("A.groovy")
-    assertInstanceOf method, GrMethod
-    assertEquals "foo3", method.name
+    assertEquals "foo3", assertInstanceOf(method, GrMethod).name
   }
 
   public void testUpperCaseFieldAndGetter() {
@@ -628,9 +624,7 @@ class Zoo {
 
   public void testMethodChosenCorrect() {
     final PsiElement resolved = resolve("A.groovy")
-    assertInstanceOf resolved, GrMethod.class
-
-    assertEquals "map", resolved.parameterList.parameters[0].name
+    assert "map" == assertInstanceOf(resolved, GrMethod).parameterList.parameters[0].name
   }
 
   public void testResolveCategories() {
@@ -651,7 +645,6 @@ class Zoo {
 
   public void testPlusAssignment() {
     final PsiElement resolved = resolve("A.groovy")
-    assertInstanceOf resolved, GrMethod
-    assertEquals("plus", resolved.name)
+    assertEquals("plus", assertInstanceOf(resolved, GrMethod).name)
   }
 }

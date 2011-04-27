@@ -274,8 +274,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     myFixture.configureByFile("IDEADEV40403/A.groovy");
     def reference = findReference()
     def resolved = reference.resolve()
-    assertInstanceOf(resolved, PsiMethod.class);
-    def clazz = resolved.containingClass
+    def clazz = assertInstanceOf(resolved, PsiMethod).containingClass
     assertEquals "Script", clazz.name
   }
 
@@ -338,7 +337,7 @@ print ba<caret>r
     def ref = findReference()
     def resolved = ref.resolve();
     assertNotNull resolved
-    assertEquals resolved.getName(), "isFoo"
+    assert ((PsiMethod) resolved).getName() == "isFoo"
   }
 
   public void testExplicitBooleanProperty() throws Exception {
@@ -348,8 +347,7 @@ print ba<caret>r
  print new A().f<caret>oo""");
     def ref = findReference()
     def resolved = ref.resolve();
-    assertNotNull resolved
-    assertEquals resolved.getName(), "isFoo"
+    assert ((PsiMethod) resolved).getName() == "isFoo"
   }
 
   public void testStaticFieldAndNonStaticGetter() {
@@ -636,7 +634,7 @@ set<caret>Foo(2)
 
   public void testPreferAlias() {
     myFixture.addFileToProject "a/B.groovy", "package a; class B {public static def f1; public static def f2}"
-    assertEquals 'f2', resolve("A.groovy").name
+    assertEquals 'f2', ((GrField) resolve("A.groovy")).name
   }
 
   public void testF1property() {
