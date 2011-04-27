@@ -288,6 +288,13 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
   }
 
+  public void testInheritConstructors() {
+    myFixture.addClass("package groovy.transform; public @interface InheritConstructors {}")
+    myFixture.addFileToProject('Classes.groovy', '@groovy.transform.InheritConstructors class CustomException extends Exception {}')
+    def ref = configureByText('new Cu<caret>stomException("msg")')
+    assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
+  }
+
   private PsiReference configureByText(String text) {
     myFixture.configureByText 'a.groovy', text
     def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
