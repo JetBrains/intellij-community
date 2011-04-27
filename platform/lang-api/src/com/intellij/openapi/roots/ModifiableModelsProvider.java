@@ -2,6 +2,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 
 /**
@@ -24,4 +25,5 @@ public interface ModifiableModelsProvider {
   void disposeModuleModifiableModel(final ModifiableRootModel model);
 
   LibraryTable.ModifiableModel getLibraryTableModifiableModel();
+  LibraryTable.ModifiableModel getLibraryTableModifiableModel(Project project);
 }
