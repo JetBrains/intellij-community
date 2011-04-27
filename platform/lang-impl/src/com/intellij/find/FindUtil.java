@@ -95,9 +95,7 @@ public class FindUtil {
     }
   }
 
-  public static void configureFindModel(boolean replace, Editor editor, FindModel model) {
-    final String selectedText = editor.getSelectionModel().getSelectedText();
-
+  public static void configureFindModel(boolean replace, @Nullable String selectedText, FindModel model) {
     boolean isGlobal = true;
     String stringToFind = null;
     if (!StringUtil.isEmpty(selectedText)) {
