@@ -254,6 +254,46 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertEquals(0, method.getParameterList().getParameters().length);
   }
 
+  public void testWrongConstructor() {
+    myFixture.addFileToProject('Classes.groovy', 'class Foo { int a; int b }')
+    def ref = configureByText('new Fo<caret>o(2, 3)')
+    assert !((GrNewExpression) ref.element.parent).advancedResolve().element
+  }
+
+  public void testLangImmutableConstructor() {
+    myFixture.addClass("package groovy.lang; public @interface Immutable {}")
+    myFixture.addFileToProject('Classes.groovy', '@Immutable class Foo { int a; int b }')
+    def ref = configureByText('new Fo<caret>o(2, 3)')
+    assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
+  }
+
+  public void testTransformImmutableConstructor() {
+    myFixture.addClass("package groovy.transform; public @interface Immutable {}")
+    myFixture.addFileToProject('Classes.groovy', '@groovy.transform.Immutable class Foo { int a; int b }')
+    def ref = configureByText('new Fo<caret>o(2, 3)')
+    assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
+  }
+
+  public void testTupleConstructor() {
+    myFixture.addClass("package groovy.transform; public @interface TupleConstructor {}")
+    myFixture.addFileToProject('Classes.groovy', '@groovy.transform.TupleConstructor class Foo { int a; int b }')
+    def ref = configureByText('new Fo<caret>o(2, 3)')
+    assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
+  }
+
+  public void testCanonicalConstructor() {
+    myFixture.addClass("package groovy.transform; public @interface Canonical {}")
+    myFixture.addFileToProject('Classes.groovy', '@groovy.transform.Canonical class Foo { int a; int b }')
+    def ref = configureByText('new Fo<caret>o(2, 3)')
+    assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
+  }
+
+  private PsiReference configureByText(String text) {
+    myFixture.configureByText 'a.groovy', text
+    def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    return ref
+  }
+
   public void testPartiallyDeclaredType() throws Exception {
     PsiReference ref = configureByFile("partiallyDeclaredType/A.groovy");
     PsiElement resolved = ref.resolve();
