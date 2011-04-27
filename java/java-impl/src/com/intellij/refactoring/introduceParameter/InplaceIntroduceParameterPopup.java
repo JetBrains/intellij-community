@@ -46,6 +46,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.Nullable;
 import sun.util.LocaleServiceProviderPool;
 
 import javax.swing.*;
@@ -219,8 +220,10 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     return myTypeSelectorManager;
   }
 
+  @Nullable
   private PsiParameter getParameter() {
-    return myMethod.getParameterList().getParameters()[myParameterIndex];
+    final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
+    return parameters.length > myParameterIndex ? parameters[myParameterIndex] : null;
   }
 
   public List<RangeMarker> getOccurrenceMarkers() {
@@ -295,7 +298,10 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     protected void moveOffsetAfter(boolean success) {
       if (success) {
         final PsiParameter psiParameter = (PsiParameter)getVariable();
-        LOG.assertTrue(psiParameter != null);
+        if (psiParameter == null) {
+          super.moveOffsetAfter(false);
+          return;
+        }
         myFinal = psiParameter.hasModifierProperty(PsiModifier.FINAL);
         myParameterTypePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(psiParameter.getType());
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
