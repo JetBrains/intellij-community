@@ -21,11 +21,13 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -78,7 +80,7 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
     @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         JavaResolveResult result = reference.advancedResolve(true);
         PsiElement resolved = result.getElement();
-        checkDeprecated(resolved, reference.getReferenceNameElement(), myHolder);
+        checkDeprecated(resolved, reference.getReferenceNameElement(), null, myHolder);
       }
 
     @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -107,7 +109,7 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
 
         PsiMethod constructor = result == null ? null : result.getElement();
         if (constructor != null && expression.getClassReference() != null) {
-          checkDeprecated(constructor, expression.getClassReference(), myHolder);
+          checkDeprecated(constructor, expression.getClassReference(), null, myHolder);
         }
       }
     }
@@ -141,15 +143,16 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
     }
   }
 
-  static void checkDeprecated(PsiElement refElement,
-                              PsiElement elementToHighlight,
-                              ProblemsHolder holder) {
+  public static void checkDeprecated(PsiElement refElement,
+                                     PsiElement elementToHighlight,
+                                     @Nullable TextRange rangeInElement,
+                                     ProblemsHolder holder) {
     if (!(refElement instanceof PsiDocCommentOwner)) return;
     if (!((PsiDocCommentOwner)refElement).isDeprecated()) return;
 
     String description = JavaErrorMessages.message("deprecated.symbol",
                                                    HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY));
 
-    holder.registerProblem(elementToHighlight, description, ProblemHighlightType.LIKE_DEPRECATED);
+    holder.registerProblem(elementToHighlight, description, ProblemHighlightType.LIKE_DEPRECATED, rangeInElement);
   }
 }
