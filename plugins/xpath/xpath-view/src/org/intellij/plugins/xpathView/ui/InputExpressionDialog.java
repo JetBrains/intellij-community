@@ -391,7 +391,12 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
     }
 
     public JComponent getPreferredFocusedComponent() {
-        return myEditor;
+      final Editor editor = getEditor();
+      if (editor != null) {
+        return editor.getContentComponent();
+      } else {
+        return null;
+      }
     }
 
     @SuppressWarnings({"unchecked"})

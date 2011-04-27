@@ -99,7 +99,7 @@ public class XPathParser implements PsiParser {
     return false;
   }
 
-  private void parseArgumentList(PsiBuilder builder) {
+  protected void parseArgumentList(PsiBuilder builder) {
     checkMatches(builder, XPathTokenTypes.LPAREN, "( expected");
 
     if (builder.getTokenType() != XPathTokenTypes.RPAREN) {

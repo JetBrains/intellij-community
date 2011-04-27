@@ -355,7 +355,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
       final long now = System.currentTimeMillis();
       final String newPath = getDataFile(myFile).getPath() + ".new";
       final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath);
-      myValueStorage.switchToCompactionMode(ourLock);
+      myValueStorage.switchToCompactionMode();
 
       traverseAllRecords(new RecordsProcessor() {
         public boolean process(final int keyId) throws IOException {

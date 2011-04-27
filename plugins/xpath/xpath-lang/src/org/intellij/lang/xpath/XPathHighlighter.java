@@ -41,7 +41,7 @@ public class XPathHighlighter extends SyntaxHighlighterBase {
 
   @NotNull
     public Lexer getHighlightingLexer() {
-        return new XPathLexer(myXPath2Syntax);
+        return XPathLexer.create(myXPath2Syntax);
     }
 
     static final TextAttributesKey XPATH_KEYWORD = TextAttributesKey.createTextAttributesKey(

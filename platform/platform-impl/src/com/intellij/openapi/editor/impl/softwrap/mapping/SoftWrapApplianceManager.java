@@ -234,6 +234,9 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
     }
 
     String placeholder = foldRegion.getPlaceholderText();
+    if (placeholder.isEmpty()) {
+      return true;
+    }
     FontInfo fontInfo = EditorUtil.fontForChar(placeholder.charAt(0), myContext.fontType, myEditor);
     int placeholderWidthInPixels = 0;
     for (int i = 0; i < placeholder.length(); i++) {

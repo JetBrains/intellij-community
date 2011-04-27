@@ -79,8 +79,9 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
                                  null, -1, -1);
             }
 
-            items.add(new MyItem(module, target, manifestFile, resourcesDirPaths, assetsDirPath, outputPath, false));
-            items.add(new MyItem(module, target, manifestFile, resourcesDirPaths, assetsDirPath, outputPath + RELEASE_SUFFIX, true));
+            items.add(new MyItem(module, target, manifestFile, resourcesDirPaths, assetsDirPath, outputPath,
+                                 configuration.GENERATE_UNSIGNED_APK));
+            //items.add(new MyItem(module, target, manifestFile, resourcesDirPaths, assetsDirPath, outputPath + RELEASE_SUFFIX, true));
           }
         }
       }
@@ -107,46 +108,59 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
         continue;
       }
 
-      if (!AndroidPackagingCompiler.shouldGenerateApk(item.myModule, context, item.myReleasePackage)) {
-        continue;
+      doProcess(context, item, false);
+
+      if (context.getMessages(CompilerMessageCategory.ERROR).length == 0) {
+        doProcess(context, item, true);
       }
 
-      final VirtualFile preprocessedManifestFile;
-      try {
-        preprocessedManifestFile = item.myReleasePackage
-                                   ? item.myManifestFile
-                                   : copyManifestAndSetDebuggableToTrue(item.myModule, item.myManifestFile);
-      }
-      catch (IOException e) {
-        LOG.info(e);
-        context.addMessage(CompilerMessageCategory.ERROR, "Cannot preprocess AndroidManifest.xml for debug build",
-                           item.myManifestFile.getUrl(), -1, -1);
-        continue;
-      }
-
-      final Map<VirtualFile, VirtualFile> presentableFilesMap = Collections.singletonMap(item.myManifestFile, preprocessedManifestFile);
-
-      try {
-        Map<CompilerMessageCategory, List<String>> messages = AndroidApt.packageResources(item.myAndroidTarget,
-                                                                                          preprocessedManifestFile.getPath(),
-                                                                                          item.myResourceDirPaths,
-                                                                                          item.myAssetsDirPath,
-                                                                                          item.myOutputPath);
-        AndroidCompileUtil.addMessages(context, messages, presentableFilesMap);
-      }
-      catch (final IOException e) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            if (context.getProject().isDisposed()) return;
-            context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
-          }
-        });
-      }
       if (context.getMessages(CompilerMessageCategory.ERROR).length == 0) {
         result.add(item);
       }
     }
     return result.toArray(new ProcessingItem[result.size()]);
+  }
+
+  private static void doProcess(final CompileContext context, MyItem item, boolean releasePackage) {
+    if (!AndroidPackagingCompiler.shouldGenerateApk(item.myModule, context, releasePackage)) {
+      return;
+    }
+
+    final VirtualFile preprocessedManifestFile;
+    try {
+      preprocessedManifestFile = releasePackage
+                                 ? item.myManifestFile
+                                 : copyManifestAndSetDebuggableToTrue(item.myModule, item.myManifestFile);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      context.addMessage(CompilerMessageCategory.ERROR, "Cannot preprocess AndroidManifest.xml for debug build",
+                         item.myManifestFile.getUrl(), -1, -1);
+      return;
+    }
+
+    final Map<VirtualFile, VirtualFile> presentableFilesMap = Collections.singletonMap(item.myManifestFile, preprocessedManifestFile);
+
+    try {
+      final String outputPath = releasePackage
+                                ? item.myOutputPath + RELEASE_SUFFIX
+                                : item.myOutputPath;
+
+      Map<CompilerMessageCategory, List<String>> messages = AndroidApt.packageResources(item.myAndroidTarget,
+                                                                                        preprocessedManifestFile.getPath(),
+                                                                                        item.myResourceDirPaths,
+                                                                                        item.myAssetsDirPath,
+                                                                                        outputPath);
+      AndroidCompileUtil.addMessages(context, messages, presentableFilesMap);
+    }
+    catch (final IOException e) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          if (context.getProject().isDisposed()) return;
+          context.addMessage(CompilerMessageCategory.ERROR, e.getMessage(), null, -1, -1);
+        }
+      });
+    }
   }
 
   private static VirtualFile copyManifestAndSetDebuggableToTrue(@NotNull final Module module, @NotNull final VirtualFile manifestFile)
@@ -226,7 +240,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     final String myOutputPath;
 
     private final boolean myFileExists;
-    private final boolean myReleasePackage;
+    private final boolean myGenerateUnsignedApk;
 
     private MyItem(Module module,
                    IAndroidTarget androidTarget,
@@ -234,7 +248,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
                    String[] resourceDirPaths,
                    String assetsDirPath,
                    String outputPath,
-                   boolean releasePackage) {
+                   boolean generateUnsignedApk) {
       myModule = module;
       myAndroidTarget = androidTarget;
       myManifestFile = manifestFile;
@@ -242,7 +256,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
       myAssetsDirPath = assetsDirPath;
       myOutputPath = outputPath;
       myFileExists = new File(outputPath).exists();
-      myReleasePackage = releasePackage;
+      myGenerateUnsignedApk = generateUnsignedApk;
     }
 
     @NotNull
@@ -254,23 +268,23 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
 
     @Override
     public ValidityState getValidityState() {
-      return new MyValidityState(myModule, myFileExists, myReleasePackage);
+      return new MyValidityState(myModule, myFileExists, myGenerateUnsignedApk);
     }
   }
 
   private static class MyValidityState extends ResourcesValidityState {
     private final boolean myOutputFileExists;
-    private final boolean myReleaseBuild;
+    private final boolean myGenerateUnsignedApk;
 
-    public MyValidityState(Module module, boolean outputFileExists, boolean releaseBuild) {
+    public MyValidityState(Module module, boolean outputFileExists, boolean generateUnsignedApk) {
       super(module);
       myOutputFileExists = outputFileExists;
-      myReleaseBuild = releaseBuild;
+      myGenerateUnsignedApk = generateUnsignedApk;
     }
 
     public MyValidityState(DataInput is) throws IOException {
       super(is);
-      myReleaseBuild = is.readBoolean();
+      myGenerateUnsignedApk = is.readBoolean();
       myOutputFileExists = true;
     }
 
@@ -283,7 +297,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
       if (myOutputFileExists != otherState1.myOutputFileExists) {
         return false;
       }
-      if (myReleaseBuild != otherState1.myReleaseBuild) {
+      if (myGenerateUnsignedApk != otherState1.myGenerateUnsignedApk) {
         return false;
       }
       return super.equalsTo(otherState);
@@ -292,7 +306,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     @Override
     public void save(DataOutput os) throws IOException {
       super.save(os);
-      os.writeBoolean(myReleaseBuild);
+      os.writeBoolean(myGenerateUnsignedApk);
     }
   }
 }

@@ -60,6 +60,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -162,12 +163,12 @@ public class BraceHighlightingHandler {
     int offset = myEditor.getCaretModel().getOffset();
     final CharSequence chars = myEditor.getDocument().getCharsSequence();
 
-    if (myEditor.offsetToLogicalPosition(offset).column != myEditor.getCaretModel().getLogicalPosition().column) {
-      // we are in virtual space
-      final int caretLineNumber = myEditor.getCaretModel().getLogicalPosition().line;
-      if (caretLineNumber >= myDocument.getLineCount()) return;
-      offset = myDocument.getLineEndOffset(caretLineNumber) + myDocument.getLineSeparatorLength(caretLineNumber);
-    }
+    //if (myEditor.offsetToLogicalPosition(offset).column != myEditor.getCaretModel().getLogicalPosition().column) {
+    //  // we are in virtual space
+    //  final int caretLineNumber = myEditor.getCaretModel().getLogicalPosition().line;
+    //  if (caretLineNumber >= myDocument.getLineCount()) return;
+    //  offset = myDocument.getLineEndOffset(caretLineNumber) + myDocument.getLineSeparatorLength(caretLineNumber);
+    //}
 
     final int originalOffset = offset;
 
@@ -200,6 +201,40 @@ public class BraceHighlightingHandler {
     if (BraceMatchingUtil.isLBraceToken(iterator, chars, myFileType) ||
         BraceMatchingUtil.isRBraceToken(iterator, chars, myFileType)) {
       doHighlight(offset, originalOffset);
+    }
+    else if (offset > 0) {
+      // There is a possible case that there is paired braces nearby the caret position and the document contains only white
+      // space symbols between them. We want to highlight such braces as well.
+      // Example: 
+      //     public void test() { <caret>
+      //     }
+      boolean searchForward = true;
+      char c = chars.charAt(offset);
+
+      // Try to find matched brace backwards.
+      if (offset >= originalOffset || c != '\n') {
+        int backwardNonWsOffset = CharArrayUtil.shiftBackward(chars, offset - 1, "\t ");
+        if (backwardNonWsOffset < offset - 1 || c == ' ' || c == '\t' || c == '\n') {
+          iterator = getEditorHighlighter().createIterator(backwardNonWsOffset);
+          if (BraceMatchingUtil.isLBraceToken(iterator, chars, myFileType) || BraceMatchingUtil.isRBraceToken(iterator, chars, myFileType)) {
+            offset = backwardNonWsOffset;
+            searchForward = false;
+            doHighlight(backwardNonWsOffset, originalOffset);
+          }
+        }
+      }
+
+      // Try to find matched brace forward.
+      if (searchForward) {
+        int forwardOffset = CharArrayUtil.shiftForward(chars, c == '\n' ? offset + 1 : offset, "\t ");
+        if (forwardOffset > offset || c == ' ' || c == '\t' || c == '\n') {
+          iterator = getEditorHighlighter().createIterator(forwardOffset);
+          if (BraceMatchingUtil.isLBraceToken(iterator, chars, myFileType) || BraceMatchingUtil.isRBraceToken(iterator, chars, myFileType)) {
+            offset = forwardOffset;
+            doHighlight(forwardOffset, originalOffset);
+          }
+        }
+      }
     }
 
     //highlight scope
@@ -368,8 +403,7 @@ public class BraceHighlightingHandler {
   }
 
   private void registerHighlighter(RangeHighlighter highlighter) {
-    List<RangeHighlighter> highlighters = getHighlightersList();
-    highlighters.add(highlighter);
+    getHighlightersList().add(highlighter);
   }
 
   @NotNull

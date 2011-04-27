@@ -35,33 +35,39 @@ public abstract class TestBase extends UsefulTestCase {
 
   protected CodeInsightTestFixture myFixture;
 
-    @Override
-    protected void setUp() throws Exception {
-        final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-        final IdeaProjectTestFixture fixture = factory.createLightFixtureBuilder().getFixture();
-        myFixture = factory.createCodeInsightFixture(fixture);
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
 
-        myFixture.setTestDataPath(getTestDataPath());
+    final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
+    final IdeaProjectTestFixture fixture = factory.createLightFixtureBuilder().getFixture();
+    myFixture = factory.createCodeInsightFixture(fixture);
 
-        myFixture.setUp();
-    }
+    myFixture.setTestDataPath(getTestDataPath());
 
-    private String getTestDataPath() {
-        // path logic taken from RegExpSupport tests
-        final String def = PluginPathManager.getPluginHomePath("xpath") + "/xpath-lang/testData";
-        return System.getProperty("idea.xpath.testdata-path", def) + "/" + getSubPath();
-    }
+    myFixture.setUp();
+  }
 
-    protected abstract String getSubPath();
+  private String getTestDataPath() {
+    return getTestDataPath(getSubPath());
+  }
 
-    @Override
-    protected void tearDown() throws Exception {
-        myFixture.tearDown();
-        myFixture = null;
-    }
+  public static String getTestDataPath(String subPath) {
+    // path logic taken from RegExpSupport tests
+    final String def = PluginPathManager.getPluginHomePath("xpath") + "/xpath-lang/testData";
+    return System.getProperty("idea.xpath.testdata-path", def) + "/" + subPath;
+  }
 
-    protected String getTestFileName() {
-        final String s = getName().substring("test".length());
-        return Character.toLowerCase(s.charAt(0)) + s.substring(1);
-    }
+  protected abstract String getSubPath();
+
+  @Override
+  protected void tearDown() throws Exception {
+    myFixture.tearDown();
+    myFixture = null;
+  }
+
+  protected String getTestFileName() {
+    final String s = getName().substring("test".length());
+    return Character.toLowerCase(s.charAt(0)) + s.substring(1);
+  }
 }

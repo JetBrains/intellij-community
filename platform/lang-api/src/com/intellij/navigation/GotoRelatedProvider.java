@@ -22,6 +22,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
+ * Provides items for Go To -> Related File action.
+ * <p>
+ * If related items are represented as icons on the gutter use {@link com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider}
+ * to provide both line markers and 'goto related' targets
+ *
  * @author Dmitry Avdeev
  */
 public abstract class GotoRelatedProvider {

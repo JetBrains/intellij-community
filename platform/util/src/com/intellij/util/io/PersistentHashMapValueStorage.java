@@ -175,14 +175,10 @@ public class PersistentHashMapValueStorage {
     }
   }
 
-  public void switchToCompactionMode(PagedFileStorage.StorageLock lock) {
+  public void switchToCompactionMode() {
     ourReadersCache.remove(myPath);
-    try {
-      myCompactionModeReader = new MappedReader(myFile, lock);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    // in compaction mode use faster reader
+    myCompactionModeReader = new FileReader(myFile);
     myCompactionMode = true;
   }
 
@@ -193,23 +189,6 @@ public class PersistentHashMapValueStorage {
   private interface RAReader {
     void get(long addr, byte[] dst, int off, int len) throws IOException;
     void dispose();
-  }
-
-  private static class MappedReader implements RAReader {
-    private final PagedFileStorage myHolder;
-
-    private MappedReader(File file, PagedFileStorage.StorageLock lock) throws IOException {
-      myHolder = new PagedFileStorage(file, lock);
-      myHolder.length();
-    }
-
-    public void get(final long addr, final byte[] dst, final int off, final int len) {
-      myHolder.get((int)addr, dst, off, len);
-    }
-
-    public void dispose() {
-      myHolder.close();
-    }
   }
 
   private static class FileReader implements RAReader {

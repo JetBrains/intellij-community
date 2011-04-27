@@ -82,7 +82,9 @@ public abstract class CompletionPhase implements Disposable {
 
     @Override
     public int newCompletionStarted(int time, boolean repeated) {
-      throw new UnsupportedOperationException("Not implemented");
+      CompletionServiceImpl.assertPhase(NoCompletion.getClass()); // will fail and log valuable info
+      CompletionServiceImpl.setCompletionPhase(NoCompletion);
+      return time;
     }
   }
   public static class BgCalculation extends CompletionPhase {

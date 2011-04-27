@@ -15,6 +15,8 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -22,12 +24,9 @@ public class SequenceIterator<T> implements Iterator<T> {
   private final Iterator[] myIterators;
   private int myCurrentIndex;
 
-  public SequenceIterator(Iterator... iterators){
+  public SequenceIterator(@NotNull Iterator... iterators){
     myIterators = new Iterator[iterators.length];
-    for (int i = 0; i < iterators.length; i++){
-      Iterator iterator = iterators[i];
-      myIterators[i] = iterator;
-    }
+    System.arraycopy(iterators, 0, myIterators, 0, iterators.length);
   }
 
   public boolean hasNext(){

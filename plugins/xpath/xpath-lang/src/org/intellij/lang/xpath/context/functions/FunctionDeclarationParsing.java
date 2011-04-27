@@ -45,7 +45,7 @@ public class FunctionDeclarationParsing {
   }
 
   public static Pair<String, ? extends Function> parseFuntionDeclaration(String decl) {
-    final Lexer lexer = new FilterLexer(new XPathLexer(true),
+    final Lexer lexer = new FilterLexer(XPathLexer.create(true),
             new FilterLexer.SetFilter(TokenSet.create(XPathTokenTypes.WHITESPACE)));
     lexer.start(decl);
 
@@ -129,7 +129,7 @@ public class FunctionDeclarationParsing {
     if (lexer.getTokenType() == XPath2TokenTypes.QUEST) {
       lexer.advance();
       return XPath2SequenceType.Cardinality.OPTIONAL;
-    } else if (lexer.getTokenType() == XPathTokenTypes.MULT) {
+    } else if (lexer.getTokenType() == XPathTokenTypes.MULT || lexer.getTokenType() == XPathTokenTypes.STAR) {
       lexer.advance();
       return XPath2SequenceType.Cardinality.ZERO_OR_MORE;
     } else if (lexer.getTokenType() == XPathTokenTypes.PLUS) {
@@ -140,7 +140,7 @@ public class FunctionDeclarationParsing {
   }
 
   public static String match(Lexer lexer, IElementType token) {
-    assert lexer.getTokenType() == token : lexer.getTokenType();
+    assert lexer.getTokenType() == token : lexer.getTokenType() + ": " + lexer.getTokenText();
     final String s = lexer.getTokenText();
     lexer.advance();
     return s;
@@ -150,12 +150,14 @@ public class FunctionDeclarationParsing {
   public static String parseType(Lexer lexer) {
     String type = parseQName(lexer);
     if (type == null) {
-      if (lexer.getTokenType() == XPathTokenTypes.FUNCTION_NAME || lexer.getTokenType() == XPathTokenTypes.NODE_TYPE) {
+      if (lexer.getTokenType() == XPath2TokenTypes.ITEM || lexer.getTokenType() == XPathTokenTypes.FUNCTION_NAME || lexer.getTokenType() == XPathTokenTypes.NODE_TYPE) {
         type = lexer.getTokenText();
         lexer.advance();
         match(lexer, XPathTokenTypes.LPAREN);
         match(lexer, XPathTokenTypes.RPAREN);
         type += "()";
+      } else {
+        assert false : "unexpected token: " + lexer.getTokenType();
       }
     }
     return type;

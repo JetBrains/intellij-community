@@ -16,7 +16,9 @@
 package org.intellij.lang.xpath;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.Nullable;
 
 /*
 * Created by IntelliJ IDEA.
@@ -350,7 +352,17 @@ public class XPath2Parser extends XPathParser {
   private boolean parseSequenceType(PsiBuilder builder) {
     PsiBuilder.Marker mark = builder.mark();
 
-    if (parseFunction(builder) || parseNodeType(builder) || parseQName(builder)) {
+    final IElementType type = parseItemOrEmptySequenceType(builder);
+    if (type != null) {
+      if (type == XPath2TokenTypes.ITEM) {
+        if (XPath2TokenTypes.OCCURRENCE_OPS.contains(builder.getTokenType())) {
+          makeToken(builder);
+        }
+      }
+
+      mark.done(XPath2ElementTypes.SEQUENCE_TYPE);
+      return true;
+    } else if (parseNodeType(builder) || parseQName(builder)) {
       if (XPath2TokenTypes.OCCURRENCE_OPS.contains(builder.getTokenType())) {
         makeToken(builder);
       }
@@ -360,6 +372,19 @@ public class XPath2Parser extends XPathParser {
 
     mark.drop();
     return false;
+  }
+
+  @Nullable
+  private IElementType parseItemOrEmptySequenceType(PsiBuilder builder) {
+    final IElementType tokenType = builder.getTokenType();
+    if (tokenType == XPath2TokenTypes.ITEM || tokenType == XPath2TokenTypes.EMPTY_SEQUENCE) {
+      final PsiBuilder.Marker mark = builder.mark();
+      builder.advanceLexer();
+      parseArgumentList(builder);
+      mark.done(XPath2ElementTypes.ITEM_OR_EMPTY_SEQUENCE);
+      return tokenType;
+    }
+    return null;
   }
 
   private static boolean parseQName(PsiBuilder builder) {

@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Provides type-safe access to data.
@@ -27,11 +28,10 @@ import java.util.Map;
  * @author max
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "UnusedDeclaration", "EqualsWhichDoesntCheckParameterClass"})
+@SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
 public class Key<T> {
-  private static int ourKeysCounter = 0;
-  private final int myIndex = ourKeysCounter++;
-
+  private static final AtomicInteger ourKeysCounter = new AtomicInteger();
+  private final int myIndex = ourKeysCounter.getAndIncrement();
   private final String myName; // for debug purposes only
 
   public Key(@NotNull @NonNls String name) {

@@ -78,6 +78,7 @@
 
     <lang.parserDefinition language="XPath2" implementationClass="org.intellij.lang.xpath.XPath2ParserDefinition" />
     <lang.syntaxHighlighterFactory key="XPath2" implementationClass="org.intellij.lang.xpath.XPath2Language$XPathSyntaxHighlighterFactory" />
+    <lang.commenter language="XPath2" implementationClass="org.intellij.lang.xpath.XPath2Language$XPath2Commenter" />
 
     <codeInsight.parameterInfo language="XPath" implementationClass="org.intellij.lang.xpath.XPathParameterInfoHandler" />
     <fileTypeFactory implementation="org.intellij.lang.xpath.XPathSupportLoader" />

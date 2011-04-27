@@ -25,8 +25,11 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -157,37 +160,38 @@ public class InplaceIntroduceFieldPopup {
   }
 
   public void startTemplate(final boolean replaceAllOccurrences, @Nullable final PsiType fieldDefaultType) {
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-        public void run() {
-          myTypeSelectorManager.setAllOccurences(replaceAllOccurrences);
+    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+      public void run() {
+        myTypeSelectorManager.setAllOccurences(replaceAllOccurrences);
 
-          PsiType defaultType = myTypeSelectorManager.getTypeSelector().getSelectedType();
-          if (fieldDefaultType != null) {
-            if (replaceAllOccurrences) {
-              if (ArrayUtil.find(myTypeSelectorManager.getTypesForAll(), fieldDefaultType) != -1) {
-                defaultType = fieldDefaultType;
-              }
-            } else if (ArrayUtil.find(myTypeSelectorManager.getTypesForOne(), fieldDefaultType) != -1){
+        PsiType defaultType = myTypeSelectorManager.getTypeSelector().getSelectedType();
+        if (fieldDefaultType != null) {
+          if (replaceAllOccurrences) {
+            if (ArrayUtil.find(myTypeSelectorManager.getTypesForAll(), fieldDefaultType) != -1) {
               defaultType = fieldDefaultType;
             }
           }
-
-          final SuggestedNameInfo suggestedNameInfo =
-            IntroduceFieldDialog.createGenerator(myStatic, myLocalVariable, myInitializerExpression, myLocalVariable != null)
-              .getSuggestedNameInfo(defaultType);
-
-          final PsiField field = createFieldToStartTemplateOn(suggestedNameInfo.names, defaultType);
-          if (field != null) {
-            myEditor.getCaretModel().moveToOffset(field.getTextOffset());
-            myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-            final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<String>();
-            nameSuggestions.add(field.getName());
-            nameSuggestions.addAll(Arrays.asList(suggestedNameInfo.names));
-            final VariableInplaceRenamer renamer = new FieldInplaceIntroducer(field);
-            renamer.performInplaceRename(false, nameSuggestions);
+          else if (ArrayUtil.find(myTypeSelectorManager.getTypesForOne(), fieldDefaultType) != -1) {
+            defaultType = fieldDefaultType;
           }
         }
-      }, IntroduceFieldHandler.REFACTORING_NAME, IntroduceFieldHandler.REFACTORING_NAME);
+
+        final SuggestedNameInfo suggestedNameInfo =
+          IntroduceFieldDialog.createGenerator(myStatic, myLocalVariable, myInitializerExpression, myLocalVariable != null)
+            .getSuggestedNameInfo(defaultType);
+
+        final PsiField field = createFieldToStartTemplateOn(suggestedNameInfo.names, defaultType);
+        if (field != null) {
+          myEditor.getCaretModel().moveToOffset(field.getTextOffset());
+          myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+          final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<String>();
+          nameSuggestions.add(field.getName());
+          nameSuggestions.addAll(Arrays.asList(suggestedNameInfo.names));
+          final VariableInplaceRenamer renamer = new FieldInplaceIntroducer(field);
+          renamer.performInplaceRename(false, nameSuggestions);
+        }
+      }
+    });
   }
 
   private PsiField createFieldToStartTemplateOn(final String[] names,
@@ -196,14 +200,22 @@ public class InplaceIntroduceFieldPopup {
     return ApplicationManager.getApplication().runWriteAction(new Computable<PsiField>() {
       @Override
       public PsiField compute() {
-        PsiField field = elementFactory.createField(myFieldName != null ? myFieldName : names[0], defaultType);
-        field = (PsiField)myParentClass.add(field);
-        PsiUtil.setModifierProperty(field, PsiModifier.FINAL, myIntroduceFieldPanel.isDeclareFinal());
-        final String visibility = myIntroduceFieldPanel.getFieldVisibility();
-        if (visibility != null) {
-          PsiUtil.setModifierProperty(field, visibility, true);
-        }
-        return field;
+        final Ref<PsiField> ref = new Ref<PsiField>();
+        PostprocessReformattingAspect.getInstance(myProject).postponeFormattingInside(new Runnable() {
+          @Override
+          public void run() {
+            PsiField field = elementFactory.createField(myFieldName != null ? myFieldName : names[0], defaultType);
+            field = (PsiField)myParentClass.add(field);
+            PsiUtil.setModifierProperty(field, PsiModifier.FINAL, myIntroduceFieldPanel.isDeclareFinal());
+            final String visibility = myIntroduceFieldPanel.getFieldVisibility();
+            if (visibility != null) {
+              PsiUtil.setModifierProperty(field, visibility, true);
+            }
+            ref.set(field);
+          }
+        });
+
+        return ref.get();
       }
     });
   }
