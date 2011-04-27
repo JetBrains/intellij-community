@@ -281,7 +281,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
           if (reference.getQualifier() == null) {
             GroovySmartCompletionContributor.addExpectedClassMembers(parameters, result);
 
-            if (StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix()) || parameters.relaxMatching()) {
+            if (StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix()) || parameters.isRelaxedMatching()) {
               addAllClasses(parameters, result, inheritors);
             }
           }
