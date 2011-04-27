@@ -111,13 +111,13 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         if (element instanceof PyQualifiedExpression && ((PyQualifiedExpression)element).getQualifier() != null) {
           continue;
         }
-        // Ingore self references assignments
+        // Ignore self references assignments
         if (element instanceof PyTargetExpression && element.getChildren().length != 0) {
           continue;
         }
         final ReadWriteInstruction.ACCESS access = ((ReadWriteInstruction)instruction).getAccess();
-        // WriteAccess
-        if (access.isWriteAccess()) {
+        // Write access excluding WRITETYPE, because it's element is a type reference, not a variable of this type
+        if (access == ReadWriteInstruction.ACCESS.WRITE || access == ReadWriteInstruction.ACCESS.READWRITE) {
           if (!myUsedElements.contains(element)) {
             myUnusedElements.add(element);
           }
