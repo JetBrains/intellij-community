@@ -115,6 +115,9 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
             if (!(type instanceof PsiArrayType)) {
                 return;
             }
+            if (type instanceof PsiEllipsisType) {
+                return;
+            }
             final PsiArrayType arrayType = (PsiArrayType) type;
             final PsiType componentType = arrayType.getComponentType();
             if (componentType instanceof PsiArrayType) {
