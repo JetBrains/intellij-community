@@ -1,7 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.structuralsearch.StructuralSearchProfileBase;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptor;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
 import com.intellij.structuralsearch.equivalence.MultiChildDescriptor;
@@ -86,7 +86,7 @@ public class SkippingHandler extends MatchingHandler implements DelegatingHandle
   public static PsiElement getOnlyNonWhitespaceChild(PsiElement element) {
     PsiElement onlyChild = null;
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (child instanceof PsiWhiteSpace || child.getTextLength() == 0) {
+      if (StructuralSearchProfileBase.isIgnoredNode(element) || child.getTextLength() == 0) {
         continue;
       }
       if (onlyChild != null) {

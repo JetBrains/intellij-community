@@ -70,7 +70,7 @@ public final class TopLevelMatchingHandler extends MatchingHandler implements De
     return match(patternNode, matchedNode, context);
   }
 
-  protected boolean isMatchSequentiallySucceeded(final NodeIterator nodes2) {
+  public boolean isMatchSequentiallySucceeded(final NodeIterator nodes2) {
     return true;
   }
 

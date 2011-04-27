@@ -25,7 +25,7 @@ public abstract class CompiledPattern {
   // when match is not successfull (or successful partially)
   //private int advancement = 1;
 
-  public abstract String getTypedVarPrefix();
+  public abstract String[] getTypedVarPrefixes();
   public abstract boolean isTypedVar(String str);
 
   public void setTargetNode(final PsiElement element) {

@@ -57,8 +57,8 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
   public CompiledPattern createCompiledPattern() {
     return new CompiledPattern() {
       @Override
-      public String getTypedVarPrefix() {
-        return JSStructuralSearchProfile.getTypedVarPrefix();
+      public String[] getTypedVarPrefixes() {
+        return new String[] {JSStructuralSearchProfile.getTypedVarPrefix()};
       }
 
       @Override

@@ -26,7 +26,7 @@ public final class LightTopLevelMatchingHandler extends MatchingHandler implemen
     return myDelegate.match(patternNode, matchedNode, start, end, context);
   }
 
-  protected boolean isMatchSequentiallySucceeded(final NodeIterator nodes2) {
+  public boolean isMatchSequentiallySucceeded(final NodeIterator nodes2) {
     return true;
   }
 

@@ -10,8 +10,8 @@ public class JavaCompiledPattern extends CompiledPattern {
   private boolean requestsSuperMethods;
   private boolean requestsSuperInners;
 
-  public String getTypedVarPrefix() {
-    return TYPED_VAR_PREFIX;
+  public String[] getTypedVarPrefixes() {
+    return new String[] {TYPED_VAR_PREFIX};
   }
 
   public boolean isTypedVar(final String str) {

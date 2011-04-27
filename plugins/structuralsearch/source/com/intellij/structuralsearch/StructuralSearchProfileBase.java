@@ -38,9 +38,6 @@ import java.util.regex.Pattern;
  * @author Eugene.Kudelevsky
  */
 public abstract class StructuralSearchProfileBase extends StructuralSearchProfile {
-  private static final String TYPED_VAR_PREFIX = "aaaaaa";
-  private Pattern mySubstitutionPattern;
-
   private static final String DELIMETER_CHARS = ",;.[]{}():";
   protected static final String PATTERN_PLACEHOLDER = "$$PATTERN_PLACEHOLDER$$";
   private PsiElementVisitor myLexicalNodesFilter;
@@ -53,7 +50,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       @Override
       public void visitElement(PsiElement element) {
         super.visitElement(element);
-        if (isLexicalNode(element)) {
+        if (isIgnoredNode(element)) {
           return;
         }
         CompiledPattern pattern = globalVisitor.getContext().getPattern();
@@ -138,7 +135,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         @Override
         public void visitElement(PsiElement element) {
           super.visitElement(element);
-          if (isLexicalNode(element)) {
+          if (isIgnoredNode(element)) {
             filter.setResult(true);
           }
         }
@@ -147,7 +144,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     return myLexicalNodesFilter;
   }
 
-  public static boolean isLexicalNode(PsiElement element) {
+  public static boolean isIgnoredNode(PsiElement element) {
     // ex. "var i = 0" in AS: empty JSAttributeList should be skipped
     /*if (element.getText().length() == 0) {
       return true;
@@ -180,48 +177,39 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   }
 
   @NotNull
+  protected abstract String[] getVarPrefixes();
+
+  @NotNull
   @Override
   public CompiledPattern createCompiledPattern() {
     return new CompiledPattern() {
       @Override
-      public String getTypedVarPrefix() {
-        return StructuralSearchProfileBase.this.getTypedVarPrefix();
+      public String[] getTypedVarPrefixes() {
+        return getVarPrefixes();
       }
 
       @Override
       public boolean isTypedVar(String str) {
-        return str.startsWith(StructuralSearchProfileBase.this.getTypedVarPrefix());
+        for (String prefix : getVarPrefixes()) {
+          if (str.startsWith(prefix)) {
+            return true;
+          }
+        }
+        return false;
       }
 
-      /*@Override
+      @Override
       public String getTypedVarString(PsiElement element) {
-        String text = element.getText();
+        final PsiElement initialElement = element;
+        PsiElement child = SkippingHandler.getOnlyNonWhitespaceChild(element);
 
-        int start = 0;
-        while (start < text.length() && DELIMETER_CHARS.indexOf(text.charAt(start)) >= 0) {
-          start++;
+        while (child != element && child != null && !(child instanceof LeafElement)) {
+          element = child;
+          child = SkippingHandler.getOnlyNonWhitespaceChild(element);
         }
-
-        if (start == text.length()) {
-          return "";
-        }
-
-        int end = text.length() - 1;
-        while (end >= 0 && DELIMETER_CHARS.indexOf(text.charAt(end)) >= 0) {
-          end--;
-        }
-
-        if (end < 0) {
-          return "";
-        }
-
-        return text.substring(start, end + 1);
-      }*/
+        return child instanceof LeafElement ? element.getText() : initialElement.getText();
+      }
     };
-  }
-
-  protected String getTypedVarPrefix() {
-    return TYPED_VAR_PREFIX;
   }
 
   @Override
@@ -267,8 +255,13 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       return true;
     }
 
-    PsiElement child = SkippingHandler.getOnlyNonWhitespaceChild(element);
-    return child != null && child instanceof LeafElement;
+    while (!(element instanceof LeafElement) && element != null) {
+      element = SkippingHandler.getOnlyNonWhitespaceChild(element);
+    }
+    return element != null;
+
+    /*PsiElement child = SkippingHandler.getOnlyNonWhitespaceChild(element);
+    return child != null && child instanceof LeafElement;*/
   }
 
   /*@Nullable
@@ -309,17 +302,11 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
   @Override
   public boolean canBeVarDelimeter(@NotNull PsiElement element) {
-    if (!(element instanceof LeafElement)) {
-      return false;
+    final EquivalenceDescriptorProvider provider = EquivalenceDescriptorProvider.getInstance(element);
+    if (provider != null) {
+      return provider.canBeVariableDelimeter(element);
     }
-
-    final IElementType elementType = ((LeafElement)element).getElementType();
-    return getVariableDelimeters().contains(elementType);
-  }
-
-  @NotNull
-  protected TokenSet getVariableDelimeters() {
-    return TokenSet.EMPTY;
+    return super.canBeVarDelimeter(element);
   }
 
   public static boolean match(@NotNull EquivalenceDescriptor descriptor1,
@@ -508,20 +495,14 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     return result.toArray(new PsiElement[result.size()]);
   }
 
-  private Pattern getSubstitutionPattern() {
-    if (mySubstitutionPattern == null) {
-      final String s = StructuralSearchUtil.shieldSpecialChars(getTypedVarPrefix());
-      mySubstitutionPattern = Pattern.compile("\\b(" + s + "\\w+)\\b");
-    }
-    return mySubstitutionPattern;
-  }
-
   // todo: support expression patterns
   // todo: support {statement;} = statement; (node has only non-lexical child)
 
-  private class MyCompilingVisitor extends PsiRecursiveElementVisitor {
+  private static class MyCompilingVisitor extends PsiRecursiveElementVisitor {
     private final GlobalCompilingVisitor myGlobalVisitor;
     private final PsiElement myTopElement;
+
+    private Pattern[] mySubstitutionPatterns;
 
     private MyCompilingVisitor(GlobalCompilingVisitor globalVisitor, PsiElement topElement) {
       myGlobalVisitor = globalVisitor;
@@ -591,13 +572,32 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       String value = literal.getText();
 
       if (value.length() > 2 && value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
-        @Nullable MatchingHandler handler =
-          myGlobalVisitor.processPatternStringWithFragments(value, GlobalCompilingVisitor.OccurenceKind.LITERAL, getSubstitutionPattern());
 
-        if (handler != null) {
-          literal.putUserData(CompiledPattern.HANDLER_KEY, handler);
+        if (mySubstitutionPatterns == null) {
+          final String[] prefixes = myGlobalVisitor.getContext().getPattern().getTypedVarPrefixes();
+          mySubstitutionPatterns = createPatterns(prefixes);
+        }
+
+        for (Pattern substitutionPattern : mySubstitutionPatterns) {
+          @Nullable MatchingHandler handler =
+          myGlobalVisitor.processPatternStringWithFragments(value, GlobalCompilingVisitor.OccurenceKind.LITERAL, substitutionPattern);
+
+          if (handler != null) {
+            literal.putUserData(CompiledPattern.HANDLER_KEY, handler);
+            break;
+          }
         }
       }
+    }
+
+    private static Pattern[] createPatterns(String[] prefixes) {
+      final Pattern[] patterns = new Pattern[prefixes.length];
+
+      for (int i = 0; i < prefixes.length; i++) {
+        final String s = StructuralSearchUtil.shieldSpecialChars(prefixes[0]);
+        patterns[i] = Pattern.compile("\\b(" + s + "\\w+)\\b");
+      }
+      return patterns;
     }
 
     private void initTopLevelElement(PsiElement element) {

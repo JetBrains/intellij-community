@@ -32,7 +32,7 @@ public class SSRNodeSpecificHasher extends NodeSpecificHasher {
   private static final NodeFilter ourNodeFilter = new NodeFilter() {
       @Override
       public boolean accepts(PsiElement element) {
-        return StructuralSearchProfileBase.isLexicalNode(element) ||
+        return StructuralSearchProfileBase.isIgnoredNode(element) ||
                !DuplocatorSettings.getInstance().DISTINGUISH_LITERALS && isLiteral(element);
       }
     };

@@ -15,6 +15,12 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
 
   @NotNull
   @Override
+  protected String[] getVarPrefixes() {
+    return new String[] {"_$_____"};
+  }
+
+  @NotNull
+  @Override
   protected LanguageFileType getFileType() {
     return GroovyFileType.GROOVY_FILE_TYPE;
   }

@@ -18,6 +18,7 @@ public class MatchContext {
   private MatchOptions options;
   private GlobalMatchingVisitor matcher;
   private boolean shouldRecursivelyMatch = true;
+  private boolean myWithAlternativePatternRoots = true;
 
   private List<PsiElement> myMatchedNodes;
 
@@ -27,6 +28,14 @@ public class MatchContext {
 
   public void setMatchedNodes(final List<PsiElement> matchedNodes) {
     myMatchedNodes = matchedNodes;
+  }
+
+  public boolean isWithAlternativePatternRoots() {
+    return myWithAlternativePatternRoots;
+  }
+
+  public void setWithAlternativePatternRoots(boolean withAlternativePatternRoots) {
+    myWithAlternativePatternRoots = withAlternativePatternRoots;
   }
 
   public interface UnmatchedElementsListener {

@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="duplicates" />
     <orderEntry type="module" module-name="jetgroovy" />
     <orderEntry type="module" module-name="xml" />
+    <orderEntry type="module" module-name="php" />
   </component>
 </module>
 

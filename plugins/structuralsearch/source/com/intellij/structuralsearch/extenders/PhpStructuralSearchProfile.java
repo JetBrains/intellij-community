@@ -20,6 +20,12 @@ public class PhpStructuralSearchProfile extends StructuralSearchProfileBase {
 
   @NotNull
   @Override
+  protected String[] getVarPrefixes() {
+    return new String[]{"$______", "aaaaaaaaa"};
+  }
+
+  @NotNull
+  @Override
   protected LanguageFileType getFileType() {
     return PhpFileType.INSTANCE;
   }

@@ -10,6 +10,7 @@ import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
+import com.intellij.structuralsearch.impl.matcher.handlers.CompositeHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.DelegatingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
@@ -38,6 +39,8 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
 
   // context of matching
   private MatchContext matchContext;
+
+  private MatchingHandler myLastHandler;
 
   //private final PsiElementVisitor myXmlVisitor = new XmlMatchingVisitor(this);
   //private final PsiElementVisitor myJavaVisitor = new JavaMatchingVisitor(this);
@@ -97,10 +100,16 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
 
   public final boolean handleTypedElement(final PsiElement typedElement, final PsiElement match) {
     MatchingHandler handler = matchContext.getPattern().getHandler(typedElement);
+    final MatchingHandler initialHandler = handler;
+    if (handler instanceof CompositeHandler) {
+      handler = ((CompositeHandler)handler).findSubstitutionHandler(typedElement, matchContext);
+    }
     if (handler instanceof DelegatingHandler) {
       handler = ((DelegatingHandler)handler).getDelegate();
     }
-    assert handler instanceof SubstitutionHandler : handler.getClass();
+    assert handler instanceof SubstitutionHandler :
+      handler != null ? handler.getClass() : "null" + ' ' + (initialHandler != null ? initialHandler.getClass() : "null");
+
     return ((SubstitutionHandler)handler).handle(match, matchContext);
   }
 
@@ -182,8 +191,26 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   // @return if they are equal and false otherwise
 
   public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2) {
-    return continueMatchingSequentially(nodes, nodes2, matchContext);
+    if (!nodes.hasNext()) {
+      return nodes.hasNext() == nodes2.hasNext();
+    }
+
+    myLastHandler = matchContext.getPattern().getHandler(nodes.current());
+    return myLastHandler.matchSequentially(
+      nodes,
+      nodes2,
+      matchContext
+    );
   }
+
+  /*public boolean matchByHandler1(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
+    return context.getPattern().getHandler(patternNode).match(patternNode, matchedNode, context);
+  }*/
+
+  /*public boolean isMatchSequentiallySucceeded(NodeIterator nodes2) {
+    assert myLastHandler != null;
+    return myLastHandler.isMatchSequentiallySucceeded(nodes2);
+  }*/
 
   public static boolean continueMatchingSequentially(final NodeIterator nodes, final NodeIterator nodes2, MatchContext matchContext) {
     if (!nodes.hasNext()) {
@@ -223,8 +250,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
       for (; elements.hasNext(); elements.advance()) {
         final PsiElement elementNode = elements.current();
 
-        boolean matched =
-          firstMatchingHandler.matchSequentially(patternNodes, elements, matchContext);
+        boolean matched = firstMatchingHandler.matchSequentially(patternNodes, elements, matchContext);
 
         if (matched) {
           MatchingHandler matchingHandler = matchContext.getPattern().getHandler(Configuration.CONTEXT_VAR_NAME);

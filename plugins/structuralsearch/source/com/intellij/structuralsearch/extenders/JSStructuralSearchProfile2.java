@@ -18,6 +18,12 @@ public class JSStructuralSearchProfile2 extends StructuralSearchProfileBase {
 
   @NotNull
   @Override
+  protected String[] getVarPrefixes() {
+    return new String[] {"_$______"};
+  }
+
+  @NotNull
+  @Override
   protected LanguageFileType getFileType() {
     return JavaScriptSupportLoader.JAVASCRIPT;
   }

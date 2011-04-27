@@ -67,6 +67,30 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "def a = 1\n def b = 2", 1);
   }
 
+  public void test4() throws Exception {
+    String s = "for (a in list) {\n" +
+               "  println(\"hello1\");\n" +
+               "  println(\"hello2\");\n" +
+               "}";
+    doTest(s, "for ($a$ in $b$) {\n" +
+              "  $st1$;\n" +
+              "  $st2$\n" +
+              "}", 1);
+    doTest(s, "for ($a$ in $b$) {\n" +
+              "  $st1$\n" +
+              "  $st2$\n" +
+              "}", 1);
+    doTest(s, "for ($a$ in $b$) {\n" +
+              "  $st$\n" +
+              "}", 0);
+    doTest(s, "for ($a$ in $b$) {\n" +
+              "  '_T*\n" +
+              "}", 1);
+    doTest(s, "for ($a$ in $b$) {\n" +
+              "  '_T+\n" +
+              "}", 1);
+  }
+
   private void doTest(String source,
                       String pattern,
                       int expectedOccurences) {

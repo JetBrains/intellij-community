@@ -185,7 +185,7 @@ public abstract class MatchingHandler extends MatchPredicate {
 
           if (usedVars== null ||
               usedVars.indexOf(el2)==-1) {
-            final boolean matched = handler.match(el,el2,context);
+            final boolean matched = handler.match(el, el2, context);
 
             if (matched) {
               if (usedVars==null) usedVars = new LinkedList<PsiElement>();

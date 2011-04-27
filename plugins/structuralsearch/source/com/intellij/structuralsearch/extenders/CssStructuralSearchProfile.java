@@ -12,6 +12,12 @@ import org.jetbrains.annotations.Nullable;
 public class CssStructuralSearchProfile extends StructuralSearchProfileBase {
   @NotNull
   @Override
+  protected String[] getVarPrefixes() {
+    return new String[] {"aaaaaaaaa"};
+  }
+
+  @NotNull
+  @Override
   protected LanguageFileType getFileType() {
     return CssSupportLoader.CSS_FILE_TYPE;
   }

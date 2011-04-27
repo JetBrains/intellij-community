@@ -376,7 +376,7 @@ public class SubstitutionHandler extends MatchingHandler {
         return false;
       }
 
-      if (greedy) {
+      if (greedy)  {
         // go greedily to maxOccurs
 
         while(fNodes2.hasNext() && matchedOccurs < maxOccurs) {

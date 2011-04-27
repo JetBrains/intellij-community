@@ -6,8 +6,8 @@ package com.intellij.structuralsearch.impl.matcher;
 public class XmlCompiledPattern extends CompiledPattern {
   private static final String XML_TYPED_VAR_PREFIX = "__";
 
-  public String getTypedVarPrefix() {
-    return XML_TYPED_VAR_PREFIX;
+  public String[] getTypedVarPrefixes() {
+    return new String[] {XML_TYPED_VAR_PREFIX};
   }
 
   public boolean isTypedVar(final String str) {
