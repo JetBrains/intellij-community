@@ -13,11 +13,6 @@ import org.jetbrains.annotations.NotNull;
 public class PhpStructuralSearchProfile extends StructuralSearchProfileBase {
   private static final TokenSet VAR_DELIMITERS = TokenSet.create(PhpTokenTypes.opCOMMA, PhpTokenTypes.opSEMICOLON);
 
-  @Override
-  protected String getTypedVarPrefix() {
-    return "$______";
-  }
-
   @NotNull
   @Override
   protected String[] getVarPrefixes() {

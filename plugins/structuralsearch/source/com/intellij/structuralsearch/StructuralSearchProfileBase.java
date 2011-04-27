@@ -302,11 +302,12 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
   @Override
   public boolean canBeVarDelimeter(@NotNull PsiElement element) {
-    final EquivalenceDescriptorProvider provider = EquivalenceDescriptorProvider.getInstance(element);
-    if (provider != null) {
-      return provider.canBeVariableDelimeter(element);
-    }
-    return super.canBeVarDelimeter(element);
+    final ASTNode node = element.getNode();
+    return node != null && getVariableDelimeters().contains(node.getElementType());
+  }
+
+  protected TokenSet getVariableDelimeters() {
+    return TokenSet.EMPTY;
   }
 
   public static boolean match(@NotNull EquivalenceDescriptor descriptor1,
