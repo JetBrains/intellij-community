@@ -29,9 +29,11 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.search.GrSourceFilterScope;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author ven
@@ -79,6 +81,9 @@ public class MethodLateBoundReferencesSearcher extends QueryExecutorBase<PsiRefe
 
         final GrReferenceExpression ref = (GrReferenceExpression)element;
         if (!name.equals(ref.getReferenceName()) || PsiUtil.isLValue(ref) || ref.resolve() != null) {
+          return true;
+        }
+        if (!(ref.getParent() instanceof GrMethodCall) && ResolveUtil.referenceIsKeyOfMap(ref)) {
           return true;
         }
 
