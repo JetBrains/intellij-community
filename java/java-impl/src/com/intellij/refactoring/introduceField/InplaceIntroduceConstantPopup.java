@@ -34,10 +34,12 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -267,7 +269,7 @@ public class InplaceIntroduceConstantPopup {
   }
 
   private void startIntroduceTemplate(final boolean replaceAllOccurrences, @Nullable final PsiType fieldDefaultType) {
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
       public void run() {
         myTypeSelectorManager.setAllOccurences(replaceAllOccurrences);
         PsiType defaultType = myTypeSelectorManager.getTypeSelector().getSelectedType();
@@ -283,8 +285,9 @@ public class InplaceIntroduceConstantPopup {
         }
         final String propName = myLocalVariable != null ? JavaCodeStyleManager
           .getInstance(myProject).variableNameToPropertyName(myLocalVariable.getName(), VariableKind.LOCAL_VARIABLE) : null;
-        final String[] names = IntroduceConstantDialog.createNameSuggestionGenerator(propName, myExpr, JavaCodeStyleManager.getInstance(myProject))
-          .getSuggestedNameInfo(defaultType).names;
+        final String[] names =
+          IntroduceConstantDialog.createNameSuggestionGenerator(propName, myExpr, JavaCodeStyleManager.getInstance(myProject))
+            .getSuggestedNameInfo(defaultType).names;
         final PsiField field = createFieldToStartTemplateOn(names, defaultType);
         if (field != null) {
           myEditor.getCaretModel().moveToOffset(field.getTextOffset());
@@ -296,7 +299,7 @@ public class InplaceIntroduceConstantPopup {
           renamer.performInplaceRename(false, nameSuggestions);
         }
       }
-    }, IntroduceConstantHandler.REFACTORING_NAME, IntroduceConstantHandler.REFACTORING_NAME);
+    });
   }
 
   private PsiField createFieldToStartTemplateOn(final String[] names, final PsiType psiType) {
@@ -304,15 +307,22 @@ public class InplaceIntroduceConstantPopup {
     return ApplicationManager.getApplication().runWriteAction(new Computable<PsiField>() {
       @Override
       public PsiField compute() {
-        PsiField field = elementFactory.createFieldFromText(psiType.getCanonicalText() + " " + (myConstantName != null ? myConstantName : names[0]) + " = " + myExprText + ";", myParentClass);
-        PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
-        PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
-        final String visibility = getSelectedVisibility();
-        if (visibility != null) {
-          PsiUtil.setModifierProperty(field, visibility, true);
-        }
-        field = BaseExpressionToFieldHandler.ConvertToFieldRunnable.appendField(myExpr, BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, myParentClass, myParentClass, myAnchorElementIfAll, field);
-        return field;
+        final Ref<PsiField> ref = new Ref<PsiField>();
+        final Runnable runnable = new Runnable() {
+          public void run() {
+            PsiField field = elementFactory.createFieldFromText(psiType.getCanonicalText() + " " + (myConstantName != null ? myConstantName : names[0]) + " = " + myExprText + ";", myParentClass);
+            PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
+            PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
+            final String visibility = getSelectedVisibility();
+            if (visibility != null) {
+              PsiUtil.setModifierProperty(field, visibility, true);
+            }
+            field = BaseExpressionToFieldHandler.ConvertToFieldRunnable.appendField(myExpr, BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, myParentClass, myParentClass, myAnchorElementIfAll, field);
+            ref.set(field);
+          }
+        };
+        PostprocessReformattingAspect.getInstance(myProject).postponeFormattingInside(runnable);
+        return ref.get();
       }
     });
   }
