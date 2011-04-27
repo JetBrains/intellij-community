@@ -8,4 +8,6 @@ public class MethodCanBeVariableArity {
     public void method(String... s) {}
 
     public void convertMe(String[] ss) {}
+
+    public void convertMeNot(byte[] bs) {}
 }

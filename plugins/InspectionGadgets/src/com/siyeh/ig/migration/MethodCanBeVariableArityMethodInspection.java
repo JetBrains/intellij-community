@@ -16,6 +16,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -27,7 +28,12 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreByteAndShortArrayParameters = false;
 
     @Nls
     @NotNull
@@ -42,6 +48,13 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "method.can.be.variable.arity.method.problem.descriptor");
+    }
+
+    @Override
+    public JComponent createOptionsPanel() {
+        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+                "method.can.be.variable.arity.method.ignore.byte.short.option"),
+                this, "ignoreByteAndShortArrayParameters");
     }
 
     @Override
@@ -95,7 +108,7 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
         return new MethodCanBeVariableArityMethodVisitor();
     }
 
-    private static class MethodCanBeVariableArityMethodVisitor
+    private class MethodCanBeVariableArityMethodVisitor
             extends BaseInspectionVisitor {
 
         @Override
@@ -123,6 +136,12 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
             if (componentType instanceof PsiArrayType) {
                 // don't report when it is multidimensional array
                 return;
+            }
+            if (ignoreByteAndShortArrayParameters) {
+                if (PsiType.BYTE.equals(componentType) ||
+                        PsiType.SHORT.equals(componentType)) {
+                    return;
+                }
             }
             registerMethodError(method);
         }
