@@ -687,4 +687,19 @@ set<caret>Foo(2)
     def ref = configureByText("@groovy.util.logging.Commons('myLog') class Foo { { myLo<caret>g.inf } }")
     assert assertInstanceOf(ref.resolve(), PsiVariable).type.canonicalText == 'org.apache.commons.logging.Log'
   }
+
+  public void testFieldTransform() {
+    myFixture.addClass('package groovy.transform; public @interface Field {}')
+    def ref = configureByText("""@groovy.transform.Field def aaa = 2
+def foo() { println <caret>aaa }
+""")
+    assert ref.resolve() instanceof GrVariable
+  }
+
+  public void testScriptVariableFromScriptMethod() {
+    def ref = configureByText("""def aaa = 2
+def foo() { println <caret>aaa }
+""")
+    assert !ref.resolve()
+  }
 }

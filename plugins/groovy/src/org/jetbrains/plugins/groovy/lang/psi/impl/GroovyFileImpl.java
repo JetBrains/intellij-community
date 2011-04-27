@@ -48,9 +48,11 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
@@ -266,12 +268,20 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     while (run != null) {
       if (!(run instanceof GrTopLevelDefinition) &&
           !(run instanceof GrImportStatement) &&
+          isDeclarationVisible(lastParent, run) &&
           !run.processDeclarations(processor, state, null, place)) {
         return false;
       }
       run = run.getPrevSibling();
     }
 
+    return true;
+  }
+
+  private static boolean isDeclarationVisible(PsiElement lastParent, PsiElement decl) {
+    if (lastParent instanceof GrMethod && decl instanceof GrVariableDeclaration) {
+      return ((GrVariableDeclaration)decl).getModifierList().findAnnotation("groovy.transform.Field") != null;
+    }
     return true;
   }
 
