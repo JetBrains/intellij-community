@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,6 +88,10 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
   private static PsiCodeBlock addCatchStatement(PsiTryStatement tryStatement, PsiClassType exceptionType, PsiFile file) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getInstance(tryStatement.getProject()).getElementFactory();
 
+    if (tryStatement.getTryBlock() == null) {
+      addTryBlock(tryStatement, factory);
+    }
+
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(tryStatement.getProject());
     String name = styleManager.suggestVariableName(VariableKind.PARAMETER, null, null, exceptionType).names[0];
     name = styleManager.suggestUniqueVariableName(name, tryStatement, false);
@@ -98,11 +103,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
       tryStatement.add(catchSection);
     }
     else {
-      PsiElement finallyElement = finallyBlock;
-      while (!(finallyElement instanceof PsiKeyword) && !PsiKeyword.FINALLY.equals(finallyElement.getText())) {
-        finallyElement = finallyElement.getPrevSibling();
-      }
-      tryStatement.addBefore(catchSection, finallyElement);
+      tryStatement.addBefore(catchSection, getFinallySectionStart(finallyBlock));
     }
 
     PsiParameter[] parameters = tryStatement.getCatchBlockParameters();
@@ -110,6 +111,36 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
 
     return catchBlocks[catchBlocks.length - 1];
+  }
+
+  private static void addTryBlock(PsiTryStatement tryStatement, PsiElementFactory factory) {
+    PsiCodeBlock tryBlock = factory.createCodeBlock();
+
+    PsiElement anchor;
+    PsiCatchSection[] catchSections = tryStatement.getCatchSections();
+    if (catchSections.length > 0) {
+      anchor = catchSections[0];
+    }
+    else {
+      PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
+      anchor = finallyBlock != null ? getFinallySectionStart(finallyBlock) : null;
+    }
+
+    if (anchor != null) {
+      tryStatement.addBefore(tryBlock, anchor);
+    }
+    else {
+      tryStatement.add(tryBlock);
+    }
+  }
+
+  private static PsiElement getFinallySectionStart(@NotNull PsiCodeBlock finallyBlock) {
+    PsiElement finallyElement = finallyBlock;
+    while (!PsiUtil.isJavaToken(finallyElement, JavaTokenType.FINALLY_KEYWORD) && finallyElement != null) {
+      finallyElement = finallyElement.getPrevSibling();
+    }
+    assert finallyElement != null : finallyBlock.getParent().getText();
+    return finallyElement;
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
@@ -130,6 +161,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     if (element instanceof PsiWhiteSpace) element = file.findElementAt(offset - 1);
     if (element == null) return null;
 
+    @SuppressWarnings({"unchecked"})
     final PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, PsiMethod.class);
     if (parent == null || parent instanceof PsiMethod) return null;
     final PsiTryStatement statement = (PsiTryStatement) parent;
