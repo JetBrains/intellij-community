@@ -785,9 +785,9 @@ public class SingleInspectionProfilePanel extends JPanel {
         final JComponent comp = descriptor.getState().getAdditionalConfigPanel();
         withSeverity.add(comp != null ? comp : new JPanel(),
                          new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
-                                                GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+                                                GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 
-        myOptionsPanel.add(withSeverity, BorderLayout.CENTER);
+        myOptionsPanel.add(withSeverity, BorderLayout.NORTH);
       }
       myOptionsPanel.validate();
       GuiUtils.enableChildren(myOptionsPanel, node.isChecked());
