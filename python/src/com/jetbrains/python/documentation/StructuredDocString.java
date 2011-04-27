@@ -18,7 +18,11 @@ public abstract class StructuredDocString {
   protected final Map<String, String> mySimpleTagValues = Maps.newHashMap();
   protected final Map<String, Map<String, String>> myArgTagValues = Maps.newHashMap();
 
+  @Nullable
   public static StructuredDocString parse(String text) {
+    if (text == null) {
+      return null;
+    }
     if (text.contains(":param ") || text.contains(":rtype ") || text.contains(":type ")) {
       return new SphinxDocString(text);
     }
