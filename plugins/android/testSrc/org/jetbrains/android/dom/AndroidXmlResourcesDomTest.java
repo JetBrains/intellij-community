@@ -120,4 +120,9 @@ public class AndroidXmlResourcesDomTest extends AndroidDomTest {
   public void testAccountAuthenticator1() throws Throwable {
     toTestCompletion("accountAuthenticator1.xml", "accountAuthenticator1_after.xml");
   }
+
+  public void testAppWidgetProviderConfigure() throws Throwable {
+    copyFileToProject("MyWidgetConfigurable.java", "src/p1/p2/MyWidgetConfigurable.java");
+    doTestCompletion();
+  }
 }
