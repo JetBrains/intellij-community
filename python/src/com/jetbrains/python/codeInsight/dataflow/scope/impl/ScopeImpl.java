@@ -81,6 +81,16 @@ public class ScopeImpl implements Scope {
     return myAllNames.contains(name);
   }
 
+  @NotNull
+  public Collection<ScopeVariable> getAllDeclaredVariables() {
+    final List<DFAMap<ScopeVariable>> vars = computeScopeVariables();
+    final int n = vars.size();
+    if (n > 0) {
+      return vars.get(n - 1).values();
+    }
+    return Collections.emptyList();
+  }
+
   private Set<String> computeAllNames() {
     final Set<String> names = new HashSet<String>();
     for (Instruction instruction : myFlow) {

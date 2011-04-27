@@ -2,6 +2,7 @@ package com.jetbrains.python.codeInsight.dataflow.scope;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyExceptPartNavigator;
@@ -38,6 +39,22 @@ public class ScopeUtil {
     final PyListCompExpression listCompExpression = PyListCompExpressionNavigator.getPyListCompExpressionByVariable(element);
     if (listCompExpression != null){
       return listCompExpression;
+    }
+    return null;
+  }
+
+  @Nullable
+  public static ScopeOwner getDeclarationScopeOwner(PyReferenceExpression node) {
+    final String name = node.getName();
+    if (name != null) {
+      ScopeOwner owner = PsiTreeUtil.getParentOfType(node, ScopeOwner.class);
+      while (owner != null) {
+        Scope scope = ControlFlowCache.getScope(owner);
+        if (scope.containsDeclaration(name)) {
+          return owner;
+        }
+        owner = PsiTreeUtil.getParentOfType(owner, ScopeOwner.class);
+      }
     }
     return null;
   }
