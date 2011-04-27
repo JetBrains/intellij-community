@@ -17,6 +17,7 @@ package com.intellij.ide.diff;
 
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diff.DiffRequest;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -131,6 +132,12 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
       return myFileEditor.getComponent();
     }
     return null;
+  }
+
+  @Override
+  protected DiffRequest createRequestForBinaries(Project project, @NotNull VirtualFile src, @NotNull VirtualFile trg) {
+
+    return super.createRequestForBinaries(project, src, trg);
   }
 
   @Override
