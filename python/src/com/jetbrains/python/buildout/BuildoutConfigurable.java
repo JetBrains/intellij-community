@@ -135,7 +135,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
     if (facet_is_desired && ! got_facet) addFacet(mySettingsPanel.getConfiguration());
     if (! facet_is_desired && got_facet) removeFacet(facet);
     if (facet_is_desired) attachLibrary(myModule);
-    else detachLibrary();
+    else detachLibrary(myModule);
   }
 
   public static void attachLibrary(final Module module) {
@@ -144,20 +144,22 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
       return;
     }
     final List<String> paths = facet.getConfiguration().getPaths();
+    final ModifiableModelsProvider modelsProvider = ModifiableModelsProvider.SERVICE.getInstance();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         // add all paths to library
-        final LibraryOrderEntry orderEntry = findEggsOrderEntry(ModuleRootManager.getInstance(module));
+        final ModifiableRootModel root_model = modelsProvider.getModuleModifiableModel(module);
+        final LibraryOrderEntry orderEntry = findEggsOrderEntry(root_model);
         if (orderEntry != null) {
           // update existing
           Library lib = orderEntry.getLibrary();
           if (lib != null) {
             fillLibrary(module.getProject(), lib, paths);
+            modelsProvider.commitModuleModifiableModel(root_model);
             return;
           }
         }
         // create new
-        final ModifiableRootModel root_model = ModuleRootManager.getInstance(module).getModifiableModel();
         Library lib = LibraryTablesRegistrar
           .getInstance()
           .getLibraryTable(root_model.getProject())
@@ -165,7 +167,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
         ;
         fillLibrary(module.getProject(), lib, paths);
         root_model.addLibraryEntry(lib);
-        root_model.commit();
+        modelsProvider.commitModuleModifiableModel(root_model);
       }
     });
   }
@@ -200,11 +202,11 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
     modifiableModel.commit();
   }
 
-  private void detachLibrary() {
+  public static void detachLibrary(final Module module) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         // remove the library                                           
-        final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
         OrderEntry entry = findEggsOrderEntry(model);
         OrderEntryUtil.detachModuleLibrary(model, entry);
       }
