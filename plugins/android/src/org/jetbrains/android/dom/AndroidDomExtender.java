@@ -146,7 +146,12 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     Class valueClass = formats.size() == 1 ? getValueClass(formats.iterator().next()) : String.class;
     registrar.registerAttributeChildExtension(xmlName, GenericAttributeValue.class);
     DomExtension extension = registrar.registerGenericAttributeValueChildExtension(xmlName, valueClass);
-    final Converter converter = AndroidDomUtil.getConverter(attrDef);
+
+    Converter converter = AndroidDomUtil.getSpecificConverter(xmlName, element);
+    if (converter == null) {
+      converter = AndroidDomUtil.getConverter(attrDef);
+    }
+
     if (converter != null) {
       extension.setConverter(converter, mustBeSoft(converter, attrDef.getFormats()));
     }
