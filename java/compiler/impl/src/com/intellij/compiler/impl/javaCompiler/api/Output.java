@@ -15,9 +15,10 @@
  */
 package com.intellij.compiler.impl.javaCompiler.api;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.tools.*;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 
 /**
@@ -26,9 +27,11 @@ import java.net.URI;
 @SuppressWarnings({"ALL"})
 class Output extends SimpleJavaFileObject {
   private final CompAPIDriver myCompAPIDriver;
+  @Nullable
+  private volatile byte[] myFileBytes;
 
-  Output(URI uri, CompAPIDriver compAPIDriver) {
-    super(uri, Kind.CLASS);
+  Output(URI uri, CompAPIDriver compAPIDriver, final Kind kind) {
+    super(uri, kind);
     myCompAPIDriver = compAPIDriver;
   }
 
@@ -38,10 +41,33 @@ class Output extends SimpleJavaFileObject {
       @Override
       public void close() throws IOException {
         super.close();
-        myCompAPIDriver.offerClassFile(toUri(), toByteArray());
+        final byte[] bytes = toByteArray();
+        myFileBytes = bytes;
+        if (Kind.CLASS.equals(kind)) {
+          myCompAPIDriver.offerClassFile(toUri(), bytes);
+        }
       }
     };
   }
+
+  @Override
+  public InputStream openInputStream() throws IOException {
+    final byte[] bytes = myFileBytes;
+    if (bytes == null) {
+      throw new FileNotFoundException(toUri().getPath());
+    }
+    return new ByteArrayInputStream(bytes);
+  }
+
+  @Override
+  public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
+    final byte[] bytes = myFileBytes;
+    if (bytes == null) {
+      throw null;
+    }
+    return new String(bytes);
+  }
+
   @Override
   public int hashCode() {
     return toUri().hashCode();

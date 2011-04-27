@@ -20,8 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-
 public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ExpectedTypeInfoImpl");
@@ -64,16 +62,12 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
       final PsiClass psiClass = psiClassType.resolve();
       if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
         final PsiType[] parameters = psiClassType.getParameters();
-        if (parameters.length == 1 && parameters[0] instanceof PsiWildcardType) {
+        PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+        if (parameters.length == 1 && parameters[0] instanceof PsiWildcardType && typeParameters.length == 1) {
           final PsiType bound = ((PsiWildcardType)parameters[0]).getExtendsBound();
           if (bound instanceof PsiClassType) {
-            final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
-            String canonicalText = bound.getCanonicalText();
-            if (canonicalText.contains("?extends")) {
-              throw new AssertionError("Incorrect text: " + bound + "; " + Arrays.toString(((PsiClassType)bound).getParameters()));
-            }
-
-            defaultType = factory.createTypeFromText(CommonClassNames.JAVA_LANG_CLASS + "<" + canonicalText + ">", null);
+            defaultType = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory()
+              .createType(psiClass, PsiSubstitutor.EMPTY.put(typeParameters[0], bound));
           }
         }
       }

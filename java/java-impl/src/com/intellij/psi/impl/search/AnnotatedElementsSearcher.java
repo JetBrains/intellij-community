@@ -52,6 +52,9 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
       if (!isInstanceof(owner, types)) continue;
 
       PsiModifierListOwner candidate = (PsiModifierListOwner)owner;
+      if (!candidate.isValid()) {
+        throw new PsiInvalidElementAccessException(candidate);
+      }
 
       if (!psiManager.areElementsEquivalent(ref.resolve(), annClass)) continue;
       if (useScope instanceof GlobalSearchScope &&

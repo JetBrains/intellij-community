@@ -59,6 +59,7 @@ public class AddAllOpenFilesToFavorites extends AnAction{
     final PsiManager psiManager = PsiManager.getInstance(project);
     final VirtualFile[] openFiles = editorManager.getOpenFiles();
     for (VirtualFile openFile : openFiles) {
+      if (!openFile.isValid()) continue;
       final PsiFile psiFile = psiManager.findFile(openFile);
       if (psiFile != null) {
         result.add(psiFile);

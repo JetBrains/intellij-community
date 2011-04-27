@@ -57,6 +57,13 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
     updateAllEnabled(null);
   }
 
+  protected void disableVersionNumbers() {
+    myNumAfter.setVisible(false);
+    myNumBefore.setVisible(false);
+    myUseNumBeforeFilter.setVisible(false);
+    myUseNumAfterFilter.setVisible(false);
+  }
+
   protected String getChangeNumberTitle() {
     return VcsBundle.message("border.changes.filter.change.number.filter");
   }

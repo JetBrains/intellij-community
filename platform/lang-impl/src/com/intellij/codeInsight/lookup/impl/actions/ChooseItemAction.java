@@ -23,6 +23,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class ChooseItemAction extends EditorAction {
   public ChooseItemAction(){
@@ -30,9 +32,12 @@ public class ChooseItemAction extends EditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
-    public void execute(final Editor editor, final DataContext dataContext) {
+    public void execute(@NotNull final Editor editor, final DataContext dataContext) {
       LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-      assert lookup != null;
+      if (lookup == null) {
+        Project project = editor.getProject();
+        throw new AssertionError(editor + "; " + (project == null ? null : LookupManager.getInstance(project).getActiveLookup()));
+      }
       lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
     }
 

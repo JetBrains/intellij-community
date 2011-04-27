@@ -97,7 +97,7 @@ public class CompletionParameters {
     return myInvocationCount;
   }
 
-  public boolean relaxMatching() {
+  public boolean isRelaxedMatching() {
     return myRelaxedMatching;
   }
 }

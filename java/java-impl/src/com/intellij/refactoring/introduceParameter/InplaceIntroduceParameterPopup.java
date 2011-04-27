@@ -46,6 +46,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
+import org.jetbrains.annotations.Nullable;
 import sun.util.LocaleServiceProviderPool;
 
 import javax.swing.*;
@@ -219,8 +220,10 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     return myTypeSelectorManager;
   }
 
+  @Nullable
   private PsiParameter getParameter() {
-    return myMethod.getParameterList().getParameters()[myParameterIndex];
+    final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
+    return parameters.length > myParameterIndex ? parameters[myParameterIndex] : null;
   }
 
   public List<RangeMarker> getOccurrenceMarkers() {
@@ -294,6 +297,43 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     @Override
     protected void moveOffsetAfter(boolean success) {
       if (success) {
+        final PsiParameter psiParameter = (PsiParameter)getVariable();
+        if (psiParameter == null) {
+          super.moveOffsetAfter(false);
+          return;
+        }
+        myFinal = psiParameter.hasModifierProperty(PsiModifier.FINAL);
+        myParameterTypePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(psiParameter.getType());
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        myParameterName = psiParameter.getName();
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            final PsiFile containingFile = myMethod.getContainingFile();
+            final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
+            if (myExprMarker != null) {
+              myExpr = restoreExpression(containingFile, psiParameter, elementFactory, myExprMarker, myExprText);
+              if (myExpr != null) {
+                myExprMarker = myEditor.getDocument().createRangeMarker(myExpr.getTextRange());
+              }
+            }
+            final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
+            for (int i = 0, occurrenceMarkersSize = occurrenceMarkers.size(); i < occurrenceMarkersSize; i++) {
+              RangeMarker marker = occurrenceMarkers.get(i);
+              if (myExprMarker != null && marker.getStartOffset() == myExprMarker.getStartOffset()) {
+                myOccurrences[i] = myExpr;
+                continue;
+              }
+              final PsiExpression psiExpression = restoreExpression(containingFile, psiParameter, elementFactory, marker, myExprText);
+              if (psiExpression != null) {
+                myOccurrences[i] = psiExpression;
+              }
+            }
+            myOccurrenceMarkers = null;
+            if (psiParameter.isValid()) {
+              psiParameter.delete();
+            }
+          }
+        });
         boolean isDeleteLocalVariable = false;
 
         PsiExpression parameterInitializer = myExpr;
@@ -303,6 +343,12 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
           }
           isDeleteLocalVariable = isDeleteLocalVariable();
         }
+
+        if (myLocalVar == null && myExpr == null) {
+          super.moveOffsetAfter(false);
+          return;
+        }
+
         final TIntArrayList parametersToRemove = getParametersToRemove();
 
         final IntroduceParameterProcessor processor =
@@ -332,9 +378,8 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
           }
         };
         CommandProcessor.getInstance().executeCommand(myProject, runnable, IntroduceParameterHandler.REFACTORING_NAME, null);
-      } else {
-        super.moveOffsetAfter(success);
       }
+      super.moveOffsetAfter(false);
     }
 
     private void normalizeParameterIdxAccordingToRemovedParams(TIntArrayList parametersToRemove) {
@@ -348,47 +393,6 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
         }
       });
     }
-
-
-    @Override
-    public void finish() {
-      super.finish();
-      final PsiParameter psiParameter = (PsiParameter)getVariable();
-      LOG.assertTrue(psiParameter != null);
-      myFinal = psiParameter.hasModifierProperty(PsiModifier.FINAL);
-      myParameterTypePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(psiParameter.getType());
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      myParameterName = psiParameter.getName();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          final PsiFile containingFile = myMethod.getContainingFile();
-          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
-          if (myExprMarker != null) {
-            myExpr = restoreExpression(containingFile, psiParameter, elementFactory, myExprMarker, myExprText);
-            if (myExpr != null) {
-              myExprMarker = myEditor.getDocument().createRangeMarker(myExpr.getTextRange());
-            }
-          }
-          final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
-          for (int i = 0, occurrenceMarkersSize = occurrenceMarkers.size(); i < occurrenceMarkersSize; i++) {
-            RangeMarker marker = occurrenceMarkers.get(i);
-            if (myExprMarker != null && marker.getStartOffset() == myExprMarker.getStartOffset()) {
-              myOccurrences[i] = myExpr;
-              continue;
-            }
-            final PsiExpression psiExpression = restoreExpression(containingFile, psiParameter, elementFactory, marker, myExprText);
-            if (psiExpression != null) {
-              myOccurrences[i] = psiExpression;
-            }
-          }
-          myOccurrenceMarkers = null;
-          if (psiParameter.isValid()) {
-            psiParameter.delete();
-          }
-        }
-      });
-    }
-
 
     public boolean createFinals() {
       return hasFinalModifier();

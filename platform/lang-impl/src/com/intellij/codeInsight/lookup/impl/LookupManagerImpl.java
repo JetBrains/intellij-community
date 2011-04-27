@@ -26,6 +26,7 @@ import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -166,6 +167,8 @@ public class LookupManagerImpl extends LookupManager {
       alarm.addRequest(request, settings.JAVADOC_INFO_DELAY);
     }
 
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     myActiveLookup = lookup;
     myActiveLookupEditor = editor;
     myActiveLookup.addLookupListener(new LookupAdapter() {
@@ -194,6 +197,7 @@ public class LookupManagerImpl extends LookupManager {
         myActiveLookup.removeLookupListener(this);
         Disposer.dispose(connector);
         Lookup lookup = myActiveLookup;
+        ApplicationManager.getApplication().assertIsDispatchThread();
         myActiveLookup = null;
         myActiveLookupEditor = null;
         myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, lookup, null);

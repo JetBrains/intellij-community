@@ -175,14 +175,10 @@ public class PersistentHashMapValueStorage {
     }
   }
 
-  public void switchToCompactionMode(PagedFileStorage.StorageLock lock) {
+  public void switchToCompactionMode() {
     ourReadersCache.remove(myPath);
-    try {
-      myCompactionModeReader = new MappedReader(myFile, lock);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    // in compaction mode use faster reader
+    myCompactionModeReader = new FileReader(myFile);
     myCompactionMode = true;
   }
 

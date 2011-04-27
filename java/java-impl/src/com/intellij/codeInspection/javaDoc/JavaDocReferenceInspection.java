@@ -26,12 +26,14 @@ import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.FQNameCellRenderer;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -234,7 +236,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
         Collections.sort(myClassesToImport, new PsiProximityComparator(referenceElement.getElement()));
         final JList list = new JBList(myClassesToImport.toArray(new PsiClass[myClassesToImport.size()]));
         list.setCellRenderer(new FQNameCellRenderer());
-        Runnable runnable = new Runnable() {
+        final Runnable runnable = new Runnable() {
           public void run() {
             if (!element.isValid()) return;
             final int index = list.getSelectedIndex();
@@ -250,13 +252,19 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
             }.execute();
           }
         };
-        final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
-        assert editor != null; //available for on the fly mode only
-        new PopupChooserBuilder(list).
-          setTitle(QuickFixBundle.message("class.to.import.chooser.title")).
-          setItemChoosenCallback(runnable).
-          createPopup().
-          showInBestPositionFor(editor);
+        final AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
+        asyncResult.doWhenDone(new AsyncResult.Handler<DataContext>() {
+          @Override
+          public void run(DataContext dataContext) {
+            final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+            assert editor != null; //available for on the fly mode only
+            new PopupChooserBuilder(list).
+              setTitle(QuickFixBundle.message("class.to.import.chooser.title")).
+              setItemChoosenCallback(runnable).
+              createPopup().
+              showInBestPositionFor(editor);
+          }
+        });
       }
     }
   }

@@ -74,7 +74,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
     if (applicable != null) {
       showPopup(editor, applicable);
     }
-    else {
+    else if (!ApplicationManager.getApplication().isUnitTestMode()) {
       HintManager.getInstance().showErrorHint(editor, "Couldn't find Surround With variants applicable to the current context");
     }
   }
