@@ -14,7 +14,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
@@ -25,6 +24,7 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
@@ -37,6 +37,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * @author oleg
@@ -109,13 +111,13 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         if (element instanceof PyQualifiedExpression && ((PyQualifiedExpression)element).getQualifier() != null) {
           continue;
         }
-        // Ingore self references assignments
+        // Ignore self references assignments
         if (element instanceof PyTargetExpression && element.getChildren().length != 0) {
           continue;
         }
         final ReadWriteInstruction.ACCESS access = ((ReadWriteInstruction)instruction).getAccess();
-        // WriteAccess
-        if (access.isWriteAccess()) {
+        // Write access excluding WRITETYPE, because it's element is a type reference, not a variable of this type
+        if (access == ReadWriteInstruction.ACCESS.WRITE || access == ReadWriteInstruction.ACCESS.READWRITE) {
           if (!myUsedElements.contains(element)) {
             myUnusedElements.add(element);
           }
@@ -145,19 +147,19 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             number = ControlFlowUtil.findInstructionNumberByElement(instructions, augAssignmentStatement);
           }
 
-          // Check out of scope resolve elements, processes nested scopes
-          if (element instanceof PyReferenceExpression){
-            for (ResolveResult result : ((PyReferenceExpression)element).getReference().multiResolve(false)) {
-              final PsiElement resolveElement = result.getElement();
-              // in case when we resolve out of the scope we still can have imported statements with write accesses inside
-              if (resolveElement != null && !PsiTreeUtil.isAncestor(owner, resolveElement, false)){
-                myUsedElements.add(element);
-                myUsedElements.add(resolveElement);
-                myUnusedElements.remove(element);
-                myUnusedElements.remove(resolveElement);
+          // Check if the element is declared out of scope, mark all out of scope write accesses as used
+          if (element instanceof PyReferenceExpression) {
+            final PyReferenceExpression ref = (PyReferenceExpression)element;
+            final ScopeOwner declOwner = ScopeUtil.getDeclarationScopeOwner(ref);
+            if (declOwner != null && declOwner != owner) {
+              Collection<PsiElement> writeElements = getWriteElements(name, declOwner);
+              for (PsiElement e : writeElements) {
+                myUsedElements.add(e);
+                myUnusedElements.remove(e);
               }
             }
           }
+
           ControlFlowUtil
             .iteratePrev(number, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
               public ControlFlowUtil.Operation fun(final Instruction inst) {
@@ -180,7 +182,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
                   if (element == null || !PsiTreeUtil.isAncestor(node, element, false)) {
                     return ControlFlowUtil.Operation.CONTINUE;
                   }
-                  // Ingore self references assignments
+                  // Ignore self references assignments
                   if (element instanceof PyTargetExpression && element.getChildren().length != 0){
                     return ControlFlowUtil.Operation.NEXT;
                   }
@@ -199,6 +201,21 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
       }
     }
+  }
+
+  @NotNull
+  private static Collection<PsiElement> getWriteElements(String name, ScopeOwner scopeOwner) {
+    ControlFlow flow = ControlFlowCache.getControlFlow(scopeOwner);
+    Collection<PsiElement> result = new ArrayList<PsiElement>();
+    for (Instruction instr : flow.getInstructions()) {
+      if (instr instanceof ReadWriteInstruction) {
+        ReadWriteInstruction rw = (ReadWriteInstruction)instr;
+        if (rw.getName().equals(name) && rw.getAccess().isWriteAccess()){
+          result.add(rw.getElement());
+        }
+      }
+    }
+    return result;
   }
 
   private static boolean isAssignedOnEachExceptFlow(final Instruction inst,
