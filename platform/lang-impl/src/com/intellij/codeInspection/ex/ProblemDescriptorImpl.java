@@ -52,7 +52,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
                                ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
-                               final TextRange rangeInElement,
+                               @Nullable TextRange rangeInElement,
                                boolean onTheFly) {
     this(startElement, endElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, rangeInElement, null, onTheFly);
   }
@@ -60,7 +60,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
                                ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
-                               final TextRange rangeInElement,
+                               @Nullable TextRange rangeInElement,
                                @Nullable HintAction hintAction,
                                boolean onTheFly) {
     this(startElement, endElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, rangeInElement, true, hintAction, onTheFly);
@@ -72,7 +72,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
                                LocalQuickFix[] fixes,
                                ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
-                               final TextRange rangeInElement,
+                               @Nullable TextRange rangeInElement,
                                final boolean tooltip,
                                @Nullable HintAction hintAction,
                                boolean onTheFly) {

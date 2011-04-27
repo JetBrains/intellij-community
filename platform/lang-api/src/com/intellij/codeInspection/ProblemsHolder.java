@@ -152,7 +152,7 @@ public class ProblemsHolder {
   public void registerProblem(@NotNull final PsiElement psiElement,
                               @NotNull final String message,
                               final ProblemHighlightType highlightType,
-                              final TextRange rangeInElement,
+                              @Nullable TextRange rangeInElement,
                               final LocalQuickFix... fixes) {
 
     final ProblemDescriptor descriptor = myManager.createProblemDescriptor(psiElement, rangeInElement, message, highlightType, myOnTheFly,
