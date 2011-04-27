@@ -110,10 +110,20 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     bounds.y += myTextFieldPanel.getHeight() + (SystemInfo.isMac ? 3 : 1);
 
     final Dimension preferredScrollPaneSize = myListScrollPane.getPreferredSize();
+    if (myList.getModel().getSize() == 0) {
+      preferredScrollPaneSize.height = UIManager.getFont("Label.font").getSize();
+    }
+
     preferredScrollPaneSize.width = Math.max(myTextFieldPanel.getWidth(), preferredScrollPaneSize.width);
 
     Rectangle prefferedBounds = new Rectangle(bounds.x, bounds.y, preferredScrollPaneSize.width, preferredScrollPaneSize.height);
+    Rectangle original = new Rectangle(prefferedBounds);
+
     ScreenUtil.fitToScreen(prefferedBounds);
+    if (original.width > prefferedBounds.width) {
+      int height = myListScrollPane.getHorizontalScrollBar().getPreferredSize().height;
+      prefferedBounds.height += height;
+    }
 
     myListScrollPane.setVisible(true);
     myListScrollPane.setBorder(null);
