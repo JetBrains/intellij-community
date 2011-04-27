@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.changes.IgnoredFileBean;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -936,11 +935,26 @@ public class TypeConversionUtil {
       substitutor = getSuperClassSubstitutorInner(superClass, derivedClass, derivedSubstitutor, visited, manager);
     }
     if (substitutor == null) {
-      LOG.error(
-        "Not inheritor: " + derivedClass + "(" + derivedClass.getClass().getName() + "; " + PsiUtilBase.getVirtualFile(derivedClass) + ");" +
-        "\n super: " + superClass + "(" + superClass.getClass().getName() + "; " + PsiUtilBase.getVirtualFile(superClass) + ")");
+      final StringBuilder msg = new StringBuilder("Super: " + classInfo(superClass));
+      msg.append("visited:\n");
+      for (PsiClass aClass : visited) {
+        msg.append("  each: " + classInfo(aClass));
+      }
+      msg.append("hierarchy:\n");
+      InheritanceUtil.processSupers(derivedClass, true, new Processor<PsiClass>() {
+        @Override
+        public boolean process(PsiClass psiClass) {
+          msg.append("each: " + classInfo(psiClass));
+          return true;
+        }
+      });
+      LOG.error(msg.toString());
     }
     return substitutor;
+  }
+
+  private static String classInfo(PsiClass aClass) {
+    return aClass.getQualifiedName() + "(" + aClass.getClass().getName() + "; " + PsiUtilBase.getVirtualFile(aClass) + ");\n";
   }
 
   @NotNull
