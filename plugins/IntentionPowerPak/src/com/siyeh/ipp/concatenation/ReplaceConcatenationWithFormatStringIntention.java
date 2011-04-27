@@ -15,15 +15,16 @@
  */
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConcatenationUtils;
-import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ReplaceConcatenationWithFormatStringIntention
         extends Intention {
@@ -149,7 +150,8 @@ public class ReplaceConcatenationWithFormatStringIntention
             if (type != null && (type.equalsToText("java.lang.String") ||
                  type.equalsToText("char"))) {
                 if (length > 2) {
-                    formatString.append(text.substring(1, length - 1));
+                    formatString.append(
+                            text.substring(1, length - 1).replace("%", "%%"));
                 }
             } else {
                 formatString.append(text);
