@@ -81,9 +81,35 @@ public abstract class GenericNotifierImpl<T, Key> {
     final Application application = ApplicationManager.getApplication();
     final Runnable runnable = new Runnable() {
       public void run() {
-        for (MyNotification<T> notification : notifications) {
+        final Iterator<MyNotification<T>> iterator = notifications.iterator();
+        while (iterator.hasNext()) {
+          final MyNotification<T> notification = iterator.next();
+          synchronized (myLock) {
+            if (myState.containsKey(getKey(notification.getObj()))) {
+              iterator.remove();
+            }
+          }
           notification.expire();
         }
+      }
+    };
+    if (application.isDispatchThread()) {
+      runnable.run();
+    } else {
+      application.invokeLater(runnable, ModalityState.NON_MODAL, myProject.getDisposed());
+    }
+  }
+
+  private void expireNotification(final MyNotification<T> notification) {
+    final Application application = ApplicationManager.getApplication();
+    final Runnable runnable = new Runnable() {
+      public void run() {
+        synchronized (myLock) {
+          if (myState.containsKey(getKey(notification.getObj()))) {
+            return;
+          }
+        }
+        notification.expire();
       }
     };
     if (application.isDispatchThread()) {
@@ -109,9 +135,12 @@ public abstract class GenericNotifierImpl<T, Key> {
     } else {
       application.invokeLater(new Runnable() {
         public void run() {
+          synchronized (myLock) {
+            if (! myState.containsKey(getKey(notification.getObj()))) return;
+          }
           Notifications.Bus.notify(notification, NotificationDisplayType.STICKY_BALLOON, myProject);
         }
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.NON_MODAL, myProject.getDisposed());
     }
   }
 
@@ -124,7 +153,7 @@ public abstract class GenericNotifierImpl<T, Key> {
       }
     }
     if (notification != null) {
-      notification.expire();
+      expireNotification(notification);
     }
   }
 
@@ -138,7 +167,7 @@ public abstract class GenericNotifierImpl<T, Key> {
       }
     }
     if (notification != null) {
-      notification.expire();
+      expireNotification(notification);
     }
   }
 
@@ -154,7 +183,7 @@ public abstract class GenericNotifierImpl<T, Key> {
             final Key key = getKey(obj);
             myState.remove(key);
           }
-          notification.expire();
+          expireNotification(concreteNotification);
         }
       }
     }
