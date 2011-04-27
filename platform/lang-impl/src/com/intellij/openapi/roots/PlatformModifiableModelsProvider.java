@@ -1,6 +1,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 
@@ -22,5 +23,10 @@ public class PlatformModifiableModelsProvider implements ModifiableModelsProvide
 
   public LibraryTable.ModifiableModel getLibraryTableModifiableModel() {
     return LibraryTablesRegistrar.getInstance().getLibraryTable().getModifiableModel();
+  }
+
+  @Override
+  public LibraryTable.ModifiableModel getLibraryTableModifiableModel(Project project) {
+    return LibraryTablesRegistrar.getInstance().getLibraryTable(project).getModifiableModel();
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.LibraryTableModifiableModelProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import org.jetbrains.annotations.Nullable;
@@ -21,8 +22,16 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
   public ModifiableRootModel getModuleModifiableModel(final Module module) {
     final Project project = module.getProject();
     StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
-    final ModuleEditor moduleEditor = context != null ? context.getModulesConfigurator().getModuleEditor(module) : null;
-    return moduleEditor != null ? moduleEditor.getModifiableRootModelProxy() : ModuleRootManager.getInstance(module).getModifiableModel();
+    if (context != null) {
+      final ModulesConfigurator configurator = context.getModulesConfigurator();
+      if (!configurator.isModuleModelCommitted()) {
+        final ModuleEditor moduleEditor = configurator.getModuleEditor(module);
+        if (moduleEditor != null) {
+          return moduleEditor.getModifiableRootModelProxy();
+        }
+      }
+    }
+    return ModuleRootManager.getInstance(module).getModifiableModel();
   }
 
   public void commitModuleModifiableModel(final ModifiableRootModel model) {
@@ -53,5 +62,15 @@ public class IdeaModifiableModelsProvider implements ModifiableModelsProvider {
       }
     }
     return LibraryTablesRegistrar.getInstance().getLibraryTable().getModifiableModel();
+  }
+
+  @Override
+  public LibraryTable.ModifiableModel getLibraryTableModifiableModel(Project project) {
+    StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
+    if (context != null) {
+      LibraryTableModifiableModelProvider provider = context.createModifiableModelProvider(LibraryTablesRegistrar.PROJECT_LEVEL);
+      return provider.getModifiableModel();
+    }
+    return LibraryTablesRegistrar.getInstance().getLibraryTable(project).getModifiableModel();
   }
 }
