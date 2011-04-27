@@ -302,7 +302,7 @@ public class FileWatcher {
   private void notifyOnFailure(String cause, NotificationListener listener) {
     if (!myFailureShownToTheUser) {
       myFailureShownToTheUser = true;
-      Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "External file sync may be slow", cause, NotificationType.ERROR, listener));
+      Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "External file sync may be slow", cause, NotificationType.WARNING, listener));
     }
   }
 
