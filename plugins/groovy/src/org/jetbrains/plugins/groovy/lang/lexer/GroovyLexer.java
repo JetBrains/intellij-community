@@ -21,6 +21,7 @@ import com.intellij.lexer.LookAheadLexer;
 import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 
 /**
@@ -57,6 +58,36 @@ public class GroovyLexer extends LookAheadLexer {
       } else {
         addToken(token);
         baseLexer.advance();
+      }
+    } else if (type == mDOLLAR_SLASHY_LITERAL) {
+      //todo rewrite groovy literal treatment with normal dollar-slashy strings treatment
+
+      String text = baseLexer.getTokenText();
+      assert text.startsWith("$/");
+      assert text.endsWith("/$");
+      if (text.length() == 4) {
+        addToken(mREGEX_LITERAL);
+        baseLexer.advance();
+        return;
+      }
+
+      int start = baseLexer.getTokenStart() + 1;
+
+      GroovyLexer regex = new GroovyLexer();
+      regex.start("/" + text.substring(2, text.length() - 2).replace('/', 'a') + "/");
+      while (true) {
+        IElementType tokenType = regex.getTokenType();
+        int tokenEnd = regex.getTokenEnd();
+        regex.advance();
+
+        boolean last = regex.getTokenType() == null;
+        if (last) {
+          addToken(tokenType);
+          baseLexer.advance();
+          return;
+        }
+
+        addToken(start + tokenEnd, tokenType);
       }
     } else {
       super.lookAhead(baseLexer);

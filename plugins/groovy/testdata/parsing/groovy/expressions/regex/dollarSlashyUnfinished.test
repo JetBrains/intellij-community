@@ -1,0 +1,83 @@
+def dollarSlashy = $/
+    Hello $name,
+    today we're ${date}
+    $ dollar-sign
+    $$ dollar-sign
+    \ backslash
+    / slash
+    $/ slash
+/
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('dollarSlashy')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Multiplicative expression
+        Reference expression
+          PsiElement(identifier)('$')
+        PsiElement(/)('/')
+        PsiElement(new line)('\n    ')
+        Reference expression
+          PsiElement(identifier)('Hello')
+  PsiWhiteSpace(' ')
+  PsiErrorElement:';' or new line expected
+    PsiElement(identifier)('$name')
+    PsiElement(,)(',')
+  PsiElement(new line)('\n    ')
+  Reference expression
+    Call expression
+      Reference expression
+        PsiElement(identifier)('today')
+      PsiWhiteSpace(' ')
+      Command arguments
+        Reference expression
+          PsiElement(identifier)('we')
+    PsiElement(string)(''re ${date}')
+  PsiElement(new line)('\n    ')
+  Call expression
+    Reference expression
+      PsiElement(identifier)('$')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Additive expression
+        Reference expression
+          PsiElement(identifier)('dollar')
+        PsiElement(-)('-')
+        Reference expression
+          PsiElement(identifier)('sign')
+  PsiElement(new line)('\n    ')
+  Call expression
+    Reference expression
+      PsiElement(identifier)('$$')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Additive expression
+        Reference expression
+          PsiElement(identifier)('dollar')
+        PsiElement(-)('-')
+        Reference expression
+          PsiElement(identifier)('sign')
+  PsiElement(new line)('\n    ')
+  PsiErrorElement:';' or new line expected
+    PsiElement(wrong token)('\')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('backslash')
+  PsiElement(new line)('\n    ')
+  Call expression
+    Literal
+      PsiElement(regexp)('/ slash\n    $/')
+    PsiWhiteSpace(' ')
+    Command arguments
+      Reference expression
+        PsiElement(identifier)('slash')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(wrong regex)('/')
+    PsiErrorElement:Wrong string literal
+      <empty list>

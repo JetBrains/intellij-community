@@ -1,0 +1,30 @@
+def dollarSlashy = $/ ${$/ a /$} ${$/ b /$} /$
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('dollarSlashy')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Compound regular expression
+        PsiElement(regex begin)('$/ $')
+        Closable block
+          PsiElement({)('{')
+          Parameter list
+            <empty list>
+          Literal
+            PsiElement(regexp)('$/ a /$')
+          PsiElement(})('}')
+        PsiElement(regex content)(' $')
+        Closable block
+          PsiElement({)('{')
+          Parameter list
+            <empty list>
+          Literal
+            PsiElement(regexp)('$/ b /$')
+          PsiElement(})('}')
+        PsiElement(regex end)(' /$')

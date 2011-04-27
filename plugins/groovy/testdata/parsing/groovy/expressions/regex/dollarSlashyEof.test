@@ -1,0 +1,18 @@
+def dollarSlashy = $/
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('dollarSlashy')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Multiplicative expression
+        Reference expression
+          PsiElement(identifier)('$')
+        PsiElement(/)('/')
+        PsiErrorElement:Expression expected
+          <empty list>
