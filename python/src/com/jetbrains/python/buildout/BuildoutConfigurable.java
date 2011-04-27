@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -160,12 +160,10 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
           }
         }
         // create new
-        Library lib = LibraryTablesRegistrar
-          .getInstance()
-          .getLibraryTable(root_model.getProject())
-          .createLibrary(BUILDOUT_LIB_NAME)
-        ;
+        final LibraryTable.ModifiableModel projectLibrariesModel = modelsProvider.getLibraryTableModifiableModel(root_model.getProject());
+        Library lib = projectLibrariesModel.createLibrary(BUILDOUT_LIB_NAME);
         fillLibrary(module.getProject(), lib, paths);
+        projectLibrariesModel.commit();
         root_model.addLibraryEntry(lib);
         modelsProvider.commitModuleModifiableModel(root_model);
       }
@@ -203,12 +201,19 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
   }
 
   public static void detachLibrary(final Module module) {
+    final ModifiableModelsProvider modelsProvider = ModifiableModelsProvider.SERVICE.getInstance();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         // remove the library                                           
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+        final ModifiableRootModel model = modelsProvider.getModuleModifiableModel(module);
         OrderEntry entry = findEggsOrderEntry(model);
-        OrderEntryUtil.detachModuleLibrary(model, entry);
+        if (entry == null) {
+          modelsProvider.disposeModuleModifiableModel(model);
+        }
+        else {
+          model.removeOrderEntry(entry);
+          modelsProvider.commitModuleModifiableModel(model);
+        }
       }
     });
   }
