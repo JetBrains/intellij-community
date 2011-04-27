@@ -95,10 +95,10 @@ private def layoutWin(Map args, String home, Paths paths) {
     }
   }
 
-  ant.replace(file: "$target/bin/idea.bat") {
+  ant.replace(file: "$paths.distWin/bin/idea.bat") {
     replacefilter(token: "@@system_selector@@", value: args.system_selector)
   }
-  ant.replace(file: "$target/bin/inspect_diff.bat") {
+  ant.replace(file: "$paths.distWin/bin/inspect_diff.bat") {
     replacefilter(token: "@@system_selector@@", value: args.system_selector)
   }
 
