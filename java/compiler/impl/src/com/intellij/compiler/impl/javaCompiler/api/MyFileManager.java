@@ -63,16 +63,16 @@ class MyFileManager implements StandardJavaFileManager {
 
   @Override
   public JavaFileObject getJavaFileForOutput(Location location, String name, JavaFileObject.Kind kind, FileObject fileObject) {
-    URI uri = toURI(myOutputDir, name);
-    return new Output(uri, myCompAPIDriver);
+    URI uri = toURI(myOutputDir, name, kind);
+    return new Output(uri, myCompAPIDriver, kind);
   }
 
   static URI createUri(String url) {
     return URI.create(url.replaceAll(" ","%20"));
   }
 
-  private static URI toURI(String outputDir, String name) {
-    return createUri("file:///" + outputDir.replace('\\','/') + "/" + name.replace('.', '/') + JavaFileObject.Kind.CLASS.extension);
+  private static URI toURI(String outputDir, String name, JavaFileObject.Kind kind) {
+    return createUri("file:///" + outputDir.replace('\\','/') + "/" + name.replace('.', '/') + kind.extension);
   }
 
 
@@ -201,7 +201,7 @@ class MyFileManager implements StandardJavaFileManager {
 
   @Override
   public boolean isSameFile(FileObject a, FileObject b) {
-    if (a instanceof FileVirtualObject && b instanceof FileVirtualObject) {
+    if ((a instanceof FileVirtualObject && b instanceof FileVirtualObject) || (a instanceof Output && b instanceof Output)) {
       return a.equals(b);
     }
     return myStandardFileManager.isSameFile(a, b);
@@ -232,12 +232,12 @@ class MyFileManager implements StandardJavaFileManager {
 
   @Override
   public FileObject getFileForInput(Location location, String packageName, String relativeName) throws IOException {
-    return getJavaFileForInput(location, packageName + "/" + relativeName, null);
+    return getJavaFileForInput(location, packageName + "/" + relativeName, getKind(relativeName));
   }
 
   @Override
   public FileObject getFileForOutput(Location location, String packageName, String relativeName, FileObject sibling) throws IOException {
-    return getJavaFileForOutput(location, packageName + "/" + relativeName, null, null);
+    return getJavaFileForOutput(location, packageName + "/" + relativeName, getKind(relativeName), null);
   }
 
   @Override
