@@ -41,6 +41,7 @@
     <extensionPoint name="namedArgumentProvider" interface="org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider"/>
     <extensionPoint name="unresolvedHighlightFilter" interface="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter"/>
     <extensionPoint name="unresolvedHighlightFileFilter" interface="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFileFilter"/>
+    <extensionPoint name="configSlurperSupport" interface="org.jetbrains.plugins.groovy.extensions.ConfigSlurperSupport"/>
 
     <extensionPoint name="callExpressionTypeCalculator" interface="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionTypeCalculator"/>
 
