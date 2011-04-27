@@ -349,7 +349,11 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testGdslWildcardTypes() {
-    myFixture.configureByText("a.groovy", "List<? extends String> l = []; l.get(1)");
+    myFixture.configureByText("a.groovy",
+                              "List<? extends String> la = []; la.get(1); " +
+                              "List<? super String> lb = []; lb.get(1); " +
+                              "List<?> lc = []; lc.get(1); "
+    );
     myFixture.checkHighlighting(true, false, false);
   }
 

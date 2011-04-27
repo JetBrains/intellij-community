@@ -15,11 +15,17 @@
  */
 package org.intellij.lang.xpath.xslt.impl;
 
+import com.intellij.codeInsight.daemon.QuickFixProvider;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ProcessingContext;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.context.XsltNamespaceContext;
@@ -54,16 +60,32 @@ public class XsltReferenceContributor extends PsiReferenceContributor {
               @Override
               public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
                 if (element.textContains(':')) {
-                  return new PsiReference[]{new PrefixReference((XmlAttribute)element.getParent()) {
-                    @NotNull
-                    @Override
-                    public Object[] getVariants() {
-                      return XsltNamespaceContext.getPrefixes(myAttribute).toArray();
-                    }
-                  }};
+                  return new PsiReference[]{ new NamespacePrefixReference(element) };
                 }
                 return PsiReference.EMPTY_ARRAY;
               }
             });
+  }
+
+  private static class NamespacePrefixReference extends PrefixReference implements QuickFixProvider {
+    public NamespacePrefixReference(PsiElement element) {
+      super((XmlAttribute)element.getParent());
+    }
+
+    @NotNull
+    @Override
+    public Object[] getVariants() {
+      return XsltNamespaceContext.getPrefixes(myAttribute).toArray();
+    }
+
+    @Override
+    public void registerQuickfix(HighlightInfo info, PsiReference reference) {
+      QuickFixAction.registerQuickFixAction(info, new CreateNSDeclarationIntentionFix(myAttribute.getValueElement(), getCanonicalText(), (XmlFile)myAttribute.getContainingFile()) {
+        @Override
+        public boolean showHint(Editor editor) {
+          return false;
+        }
+      });
+    }
   }
 }

@@ -137,7 +137,7 @@ public class LibraryUtil {
   }
 
   @Nullable
-  public static Library findLibrary(@NotNull Module module, final @NotNull String name) {
+  public static Library findLibrary(@NotNull Module module, @NotNull final String name) {
     final Ref<Library> result = Ref.create(null);
     OrderEnumerator.orderEntries(module).forEachLibrary(new Processor<Library>() {
       @Override

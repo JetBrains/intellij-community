@@ -29,6 +29,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Vector;
@@ -157,7 +158,7 @@ public class CvsElement extends DefaultMutableTreeNode implements CvsTabbedWindo
 
   public Icon getIcon(boolean expanded) {
     return expanded ? myExpandedIcon : myIcon;
-  };
+  }
 
   public String getElementPath() {
     return myPath;
@@ -197,7 +198,7 @@ public class CvsElement extends DefaultMutableTreeNode implements CvsTabbedWindo
 
     public MyGetContentCallback(LoadingNode loadingNode) {
       myLoadingNode = loadingNode;
-      myModel.getCvsTree().addListener(MyGetContentCallback.this);
+      myModel.getCvsTree().addListener(this);
     }
 
     public void deactivated() {
@@ -223,8 +224,16 @@ public class CvsElement extends DefaultMutableTreeNode implements CvsTabbedWindo
       SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             final int offset = getChildCount();
-            for (int i = 0; i < content.size(); i++) {
-              insert(content.get(i), i + offset);
+            for (final CvsElement newChild : content) {
+              final int insertionPoint;
+              if (children == null) {
+                insertionPoint = -1;
+              } else {
+                insertionPoint = Collections.binarySearch(children, newChild, CvsElementComparator.INSTANCE);
+              }
+              if (insertionPoint < 0) {
+                insert(newChild, -(insertionPoint + 1));
+              }
             }
             if ((offset <= 1) && isNodeChild(myLoadingNode)) {
               remove(myLoadingNode);
@@ -274,8 +283,7 @@ public class CvsElement extends DefaultMutableTreeNode implements CvsTabbedWindo
     }
     if (children == null) return;
     Object[] nodes = children.toArray();
-    for (int i = 0; i < nodes.length; i++) {
-      Object node = nodes[i];
+    for (Object node : nodes) {
       if (node instanceof CvsElement) {
         ((CvsElement)node).release();
       }

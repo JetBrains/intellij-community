@@ -352,7 +352,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return false;
     }
 
-    return StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix()) || parameters.relaxMatching();
+    return StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix()) || parameters.isRelaxedMatching();
   }
 
   private static void completeAnnotationAttributeName(CompletionResultSet result, PsiElement insertedElement,

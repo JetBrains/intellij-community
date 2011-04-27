@@ -22,6 +22,7 @@ import com.intellij.lang.cacheBuilder.SimpleWordsScanner;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.refactoring.NamesValidator;
+import com.intellij.lexer.Lexer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
@@ -133,7 +134,7 @@ public final class XPathLanguage extends Language {
     }
 
     public static class XPathNamesValidator implements NamesValidator {
-        private final XPathLexer xPathLexer = new XPathLexer(false);
+        private final Lexer xPathLexer = XPathLexer.create(false);
 
         public synchronized boolean isIdentifier(String text, Project project) {
             xPathLexer.start(text);

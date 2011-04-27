@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.diff.impl;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.util.LabeledEditor;
@@ -28,9 +31,12 @@ import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ui.ScrollUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,22 +70,37 @@ public class DiffSideView {
     return myPanel;
   }
 
-  public void setEditorSource(EditorSource source) {
+  public void setEditorSource(final Project project, final EditorSource source) {
     MyState state = new MyState();
     myEditorSource = source;
     myLineMarker.attach(myEditorSource);
     Editor editor = myEditorSource.getEditor();
+    final FileEditor fileEditor = myEditorSource.getFileEditor();
     if (editor == null) {
-      insertComponent(MOCK_COMPONENT);
-      return;
-    }
-    editor.getScrollingModel().scrollHorizontally(0);
-    insertComponent(editor.getComponent());
-    applyHighlighter();
-    setMouseListeners(source);
-    MyEditorFocusListener.install(this);
+      insertComponent(fileEditor == null ? MOCK_COMPONENT : fileEditor.getComponent());
+      DataManager.registerDataProvider(myPanel, new DataProvider() {
+        @Override
+        public Object getData(@NonNls String dataId) {
+          if (PlatformDataKeys.PROJECT.is(dataId)) {return project;}
+          if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {return fileEditor;}
+          return null;
+        }
+      });
+      if (fileEditor != null) {
+        ScrollUtil.scrollVertically(fileEditor.getComponent(), 0);
+        ScrollUtil.scrollHorizontally(fileEditor.getComponent(), 0);
 
-    state.restore();
+      }
+    } else {
+      DataManager.removeDataProvider(myPanel);
+      editor.getScrollingModel().scrollHorizontally(0);
+      insertComponent(editor.getComponent());
+      applyHighlighter();
+      setMouseListeners(source);
+      MyEditorFocusListener.install(this);
+
+      state.restore();
+    }
   }
 
   private void insertComponent(JComponent component) {

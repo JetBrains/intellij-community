@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath;
 
+import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.SingleLazyInstanceSyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -36,6 +37,33 @@ public final class XPath2Language extends Language {
     @NotNull
     protected SyntaxHighlighter createHighlighter() {
       return new XPathHighlighter(true);
+    }
+  }
+
+  public static class XPath2Commenter implements Commenter  {
+    @Override
+    public String getLineCommentPrefix() {
+      return null;
+    }
+
+    @Override
+    public String getBlockCommentPrefix() {
+      return "(:";
+    }
+
+    @Override
+    public String getBlockCommentSuffix() {
+      return ":)";
+    }
+
+    @Override
+    public String getCommentedBlockCommentPrefix() {
+      return getBlockCommentPrefix();
+    }
+
+    @Override
+    public String getCommentedBlockCommentSuffix() {
+      return getBlockCommentSuffix();
     }
   }
 }

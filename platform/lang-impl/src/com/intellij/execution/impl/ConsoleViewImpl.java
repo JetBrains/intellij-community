@@ -1750,7 +1750,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         editor.getSelectionModel().removeSelection();
         return;
       }
-      if (buffer.isEmpty()) return;
+      if (buffer.getUserInputLength() <= 0) return;
 
       final int deferredOffset = myContentSize - buffer.getLength() - buffer.getUserInputLength();
 

@@ -25,17 +25,18 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiCacheKey<T,H extends PsiElement> extends Key<Pair<Long, T>> {
   private final Function<H,T> myFunction;
 
-  private PsiCacheKey(@NonNls String name, final Function<H, T> function) {
+  private PsiCacheKey(@NonNls @NotNull String name, @NotNull Function<H, T> function) {
     super(name);
     myFunction = function;
   }
 
-  public final T getValue(H h) {
+  public final T getValue(@NotNull H h) {
     while (true) {
       Pair<Long, T> data = h.getUserData(this);
 
@@ -59,7 +60,7 @@ public class PsiCacheKey<T,H extends PsiElement> extends Key<Pair<Long, T>> {
   }
 
   @Nullable
-  public final T getCachedValueOrNull(H h) {
+  public final T getCachedValueOrNull(@NotNull H h) {
     Pair<Long, T> data = h.getUserData(this);
     final long count = h.getManager().getModificationTracker().getJavaStructureModificationCount();
     if (data == null || data.getFirst() != count) {
@@ -69,7 +70,7 @@ public class PsiCacheKey<T,H extends PsiElement> extends Key<Pair<Long, T>> {
     return data.getSecond();
   }
 
-  public static <T,H extends PsiElement> PsiCacheKey<T,H> create(@NonNls String name, final Function<H, T> function) {
+  public static <T,H extends PsiElement> PsiCacheKey<T,H> create(@NonNls @NotNull String name, @NotNull Function<H, T> function) {
     return new PsiCacheKey<T,H>(name, function);
   }
 }

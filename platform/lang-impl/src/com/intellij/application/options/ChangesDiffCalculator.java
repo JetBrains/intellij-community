@@ -28,6 +28,7 @@ import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
@@ -108,6 +109,12 @@ public class ChangesDiffCalculator {
     @Override
     public void highlightText(Fragment fragment, boolean drawBorder) {
     }
+
+
+    @Override
+    public FileEditor getFileEditor() {
+      return null;
+    }
   }
 
   private static class ChangesCollector extends BaseMarkup {
@@ -128,6 +135,5 @@ public class ChangesDiffCalculator {
         ranges.add(currentRange);
       }
     }
-
   }
 }

@@ -136,7 +136,7 @@ public class ExpectedTypeUtil {
 
   private static XPathType matchingType(XPathExpression lOperand, XPathElementType op) {
     final XPathType type = mapType(lOperand, lOperand.getType());
-    if (XPathTokenTypes.ADD_OPS.contains(op)) {
+    if (op == XPathTokenTypes.PLUS) {
       if (XPathType.isAssignable(XPath2Type.NUMERIC, type)) {
         return XPath2Type.NUMERIC;
       } else if (XPathType.isAssignable(XPath2Type.DATE, type) || XPathType.isAssignable(XPath2Type.TIME, type) || XPathType.isAssignable(XPath2Type.DATETIME, type)) {
@@ -144,11 +144,27 @@ public class ExpectedTypeUtil {
       } else if (XPathType.isAssignable(XPath2Type.DURATION, type)) {
         return XPathType.ChoiceType.create(XPath2Type.DURATION, XPath2Type.DATE, XPath2Type.TIME, XPath2Type.DATETIME);
       }
-    } else if (XPath2TokenTypes.MULT_OPS.contains(op)) {
+    } else if (op == XPathTokenTypes.MINUS) {
+      if (XPathType.isAssignable(XPath2Type.NUMERIC, type)) {
+        return XPath2Type.NUMERIC;
+      } else if (XPathType.isAssignable(XPath2Type.DATE, type) || XPathType.isAssignable(XPath2Type.TIME, type) || XPathType.isAssignable(XPath2Type.DATETIME, type)) {
+        return XPathType.ChoiceType.create(XPath2Type.DATE, XPath2Type.DURATION);
+      } else if (XPathType.isAssignable(XPath2Type.DURATION, type)) {
+        return XPath2Type.DURATION;
+      }
+    } else if (op == XPathTokenTypes.MULT) {
       if (XPathType.isAssignable(XPath2Type.NUMERIC, type)) {
         return XPathType.ChoiceType.create(XPath2Type.NUMERIC, XPath2Type.DURATION);
       } else if (XPath2Type.DURATION.isAssignableFrom(type)) {
         return XPath2Type.NUMERIC;
+      }
+    } else if (op == XPath2TokenTypes.IDIV || op == XPathTokenTypes.MOD) {
+      return XPath2Type.NUMERIC;
+    } else if (op == XPathTokenTypes.DIV) {
+      if (XPathType.isAssignable(XPath2Type.NUMERIC, type)) {
+        return XPath2Type.NUMERIC;
+      } else if (XPath2Type.DURATION.isAssignableFrom(type)) {
+        return XPath2Type.ChoiceType.create(XPath2Type.NUMERIC, XPath2Type.DURATION);
       }
     }
 

@@ -23,6 +23,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
+ * Override this class and register the implementation as {@code codeInsight.lineMarkerProvider} extension to provide both line marker and
+ * 'Go to related file' targets
+ *
  * @author nik
  */
 public abstract class RelatedItemLineMarkerProvider implements LineMarkerProvider {

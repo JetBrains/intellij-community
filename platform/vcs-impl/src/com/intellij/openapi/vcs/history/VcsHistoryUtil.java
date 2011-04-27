@@ -15,19 +15,27 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
@@ -69,7 +77,7 @@ public class VcsHistoryUtil {
    * @throws com.intellij.openapi.vcs.VcsException
    * @throws java.io.IOException
    */
-  public static void showDiff(Project project, FilePath filePath, VcsFileRevision revision1, VcsFileRevision revision2, String title1, String title2) throws VcsException, IOException {
+  public static void showDiff(final Project project, FilePath filePath, VcsFileRevision revision1, VcsFileRevision revision2, String title1, String title2) throws VcsException, IOException {
     final byte[] content1 = loadRevisionContent(revision1);
     final byte[] content2 = loadRevisionContent(revision2);
 
@@ -79,11 +87,54 @@ public class VcsHistoryUtil {
     final Charset charset = filePath.getCharset();
     final FileType fileType = filePath.getFileType();
     diffData.setContentTitles(title1, title2);
-    diffData.setContents(createContent(project, content1, revision1, doc, charset, fileType),
-                         createContent(project, content2, revision2, doc, charset, fileType));
+    final Ref<VirtualFile> f1 = new Ref<VirtualFile>(null);
+    final Ref<VirtualFile> f2 = new Ref<VirtualFile>(null);
+
+    if (fileType.isBinary()) {
+      final File file1 = FileUtil.createTempFile(revision1.getRevisionNumber().asString(), filePath.getName());
+      final File file2 = FileUtil.createTempFile(revision2.getRevisionNumber().asString(), filePath.getName());
+      try {
+        final FileOutputStream fos1 = new FileOutputStream(file1);
+        fos1.write(content1);
+        final FileOutputStream fos2 = new FileOutputStream(file2);
+        fos2.write(content2);
+        fos1.close();
+        fos2.close();
+        f1.set(LocalFileSystem.getInstance().findFileByIoFile(file1));
+        f2.set(LocalFileSystem.getInstance().findFileByIoFile(file2));
+      } catch(Exception e) {//
+      }
+    }
+    if (f1.isNull() || f2.isNull()) {
+      diffData.setContents(createContent(project, content1, revision1, doc, charset, fileType),
+                           createContent(project, content2, revision2, doc, charset, fileType));
+    } else {
+      diffData.setContents(new FileContent(project, f1.get()), new FileContent(project, f2.get()));
+    }
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
       public void run() {
         DiffManager.getInstance().getDiffTool().show(diffData);
+        if (!f1.isNull() || !f2.isNull()) {
+          Disposer.register(project, new Disposable() {
+            @Override
+            public void dispose() {
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                public void run() {
+                  try {
+                    if (!f1.isNull()) {
+                      f1.get().delete(this);
+                    }
+                    if (!f2.isNull()) {
+                      f2.get().delete(this);
+                    }
+                  }
+                  catch (IOException e) {//
+                  }
+                }
+              });
+            }
+          });
+        }
       }
     }, null, project);
   }

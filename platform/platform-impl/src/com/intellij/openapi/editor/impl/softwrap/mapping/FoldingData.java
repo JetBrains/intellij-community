@@ -56,4 +56,9 @@ class FoldingData {
   public FoldRegion getFoldRegion() {
     return myFoldRegion;
   }
+
+  @Override
+  public String toString() {
+    return "width in columns: " + widthInColumns + ", start X: " + startX + ", fold region: " + myFoldRegion;
+  }
 }

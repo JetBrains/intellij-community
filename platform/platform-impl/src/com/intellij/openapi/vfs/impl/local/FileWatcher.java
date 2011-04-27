@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -31,8 +32,10 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.watcher.ChangeKind;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
@@ -74,6 +77,8 @@ public class FileWatcher {
   private List<String> myRecursiveWatchRoots = new ArrayList<String>();
   private List<String> myFlatWatchRoots = new ArrayList<String>();
 
+  private boolean myFailureShownToTheUser = false;
+
   private Process notifierProcess;
   private BufferedReader notifierReader;
   private BufferedWriter notifierWriter;
@@ -113,6 +118,7 @@ public class FileWatcher {
     }
     else {
       LOG.info("Native file watcher failed to startup.");
+      notifyOnFailure("File watcher failed to startup", null);
     }
   }
 
@@ -240,6 +246,7 @@ public class FileWatcher {
     if (isShuttingDown) return;
 
     if (attemptCount++ > MAX_PROCESS_LAUNCH_ATTEMPT_COUNT) {
+      notifyOnFailure("File watcher cannot be started", null);
       throw new IOException("Can't launch process anymore");
     }
 
@@ -258,7 +265,21 @@ public class FileWatcher {
     final String pathToExecutable = alternatePathToExecutable != null
                                     ? FileUtil.toSystemDependentName(alternatePathToExecutable)
                                     : PathManager.getBinPath() + File.separatorChar + executableName;
-    if (!new File(pathToExecutable).canExecute()) return;
+    final File exec = new File(pathToExecutable);
+    if (!exec.exists()) {
+      notifyOnFailure("File watcher is not found at path: " + pathToExecutable, null);
+      return;
+    }
+
+    if (!exec.canExecute()) {
+      notifyOnFailure("File watcher is not executable: <a href=\"" + pathToExecutable + "\">" + pathToExecutable +"</a>", new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          ShowFilePathAction.open(exec, exec);
+        }
+      });
+      return;
+    }
 
     LOG.info("Starting file watcher: " + pathToExecutable);
 
@@ -275,6 +296,13 @@ public class FileWatcher {
         myFlatWatchRoots.clear();
         setWatchRoots(recursiveWatchRoots, flatWatchRoots);
       }
+    }
+  }
+
+  private void notifyOnFailure(String cause, NotificationListener listener) {
+    if (!myFailureShownToTheUser) {
+      myFailureShownToTheUser = true;
+      Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "External file sync may be slow", cause, NotificationType.WARNING, listener));
     }
   }
 

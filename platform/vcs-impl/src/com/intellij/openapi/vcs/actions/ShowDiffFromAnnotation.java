@@ -42,10 +42,7 @@ import com.intellij.util.containers.CacheOneStepIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -162,7 +159,7 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
 
   // for current line number
   private DiffNavigationContext createDiffNavigationContext(final int actualLine) {
-    final MyContentsLines contentsLines = new MyContentsLines(myFileAnnotation.getAnnotatedContent());
+    final ContentsLines contentsLines = new ContentsLines(myFileAnnotation.getAnnotatedContent());
 
     final Pair<Integer, String> pair = correctActualLineIfTextEmpty(contentsLines, actualLine);
     return new DiffNavigationContext(new Iterable<String>() {
@@ -175,7 +172,7 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
 
   private final static int ourVicinity = 5;
 
-  private Pair<Integer, String> correctActualLineIfTextEmpty(final MyContentsLines contentsLines, final int actualLine) {
+  private Pair<Integer, String> correctActualLineIfTextEmpty(final ContentsLines contentsLines, final int actualLine) {
     final VcsRevisionNumber revision = myFileAnnotation.getLineRevisionNumber(actualLine);
 
     for (int i = actualLine; (i < (actualLine + ourVicinity)) && (!contentsLines.isLineEndsFinished()); i++) {
@@ -196,105 +193,11 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
     return new Pair<Integer, String>(actualLine, contentsLines.getLineContents(actualLine));
   }
 
-  private static class MySplittingIterator implements Iterator<Integer> {
-    private final String myContents;
-    // always at the beginning of the _next_ line
-    private int myOffset;
-
-    private MySplittingIterator(final String contents) {
-      myContents = contents;
-      myOffset = 0;
-    }
-
-    @Override
-    public boolean hasNext() {
-      return myOffset < myContents.length();
-    }
-
-    @Override
-    public Integer next() {
-      final int start = myOffset;
-      while (myOffset < myContents.length()) {
-        // \r, \n, or \r\n
-        final char c = myContents.charAt(myOffset);
-        if ('\n' == c) {
-          ++myOffset;
-          break;
-        }
-        else if ('\r' == c) {
-          if (myOffset + 1 == myContents.length()) {
-            // at the end
-            ++myOffset;
-            break;
-          }
-          else {
-            myOffset += (('\n' == myContents.charAt(myOffset + 1)) ? 2 : 1);
-            break;
-          }
-        }
-        ++myOffset;
-      }
-
-      return start;
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException();
-    }
-  }
-
-  private static class MyContentsLines {
-    private final MySplittingIterator mySplittingIterator;
-    private final List<Integer> myLinesStartOffsets;
-    private final String myContents;
-    private boolean myLineEndsFinished;
-
-    private MyContentsLines(final String contents) {
-      myContents = contents;
-      mySplittingIterator = new MySplittingIterator(contents);
-      myLinesStartOffsets = new LinkedList<Integer>();
-    }
-
-    public String getLineContents(final int number) {
-      assert !myLineEndsFinished || myLinesStartOffsets.size() > number;
-
-      // we need to know end
-      if (myLineEndsFinished || (myLinesStartOffsets.size() > (number + 1))) {
-        return extractCalculated(number);
-      }
-      while (((myLinesStartOffsets.size() - 1) < (number + 1)) && (!myLineEndsFinished) && mySplittingIterator.hasNext()) {
-        final Integer nextStart = mySplittingIterator.next();
-        myLinesStartOffsets.add(nextStart);
-      }
-      myLineEndsFinished = myLinesStartOffsets.size() < (number + 1);
-      return extractCalculated(number);
-    }
-
-    private String extractCalculated(int number) {
-      String text = myContents.substring(myLinesStartOffsets.get(number),
-                                         (number + 1 >= myLinesStartOffsets.size())
-                                         ? myContents.length()
-                                         : myLinesStartOffsets.get(number + 1));
-      text = text.endsWith("\r\n") ? text.substring(0, text.length() - 2) : text;
-      text = (text.endsWith("\r") || text.endsWith("\n")) ? text.substring(0, text.length() - 1) : text;
-      return text;
-    }
-
-    public boolean isLineEndsFinished() {
-      return myLineEndsFinished;
-    }
-
-    public int getKnownLinesNumber() {
-      return myLineEndsFinished ? myLinesStartOffsets.size() : -1;
-    }
-  }
-
   /**
    * Slightly break the contract: can return null from next() while had claimed hasNext()
    */
   private static class ContextLineIterator implements Iterator<String> {
-    private final MyContentsLines myContentsLines;
+    private final ContentsLines myContentsLines;
 
     private final VcsRevisionNumber myRevisionNumber;
     private final FileAnnotation myAnnotation;
@@ -302,7 +205,7 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
     // we assume file has at least one line ;)
     private int myCurrentLine;  // to start looking for next line with revision from
 
-    private ContextLineIterator(final MyContentsLines contentLines, final FileAnnotation annotation, final int stopAtLine) {
+    private ContextLineIterator(final ContentsLines contentLines, final FileAnnotation annotation, final int stopAtLine) {
       myAnnotation = annotation;
       myRevisionNumber = myAnnotation.originalRevision(stopAtLine);
       myStopAtLine = stopAtLine;

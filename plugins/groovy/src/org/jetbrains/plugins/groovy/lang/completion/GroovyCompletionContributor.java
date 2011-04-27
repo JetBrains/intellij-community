@@ -219,6 +219,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     });
 
     MapArgumentCompletionProvider.register(this);
+    GroovyConfigSlurperCompletionProvider.register(this);
 
     // class name stuff
 
@@ -281,7 +282,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
           if (reference.getQualifier() == null) {
             GroovySmartCompletionContributor.addExpectedClassMembers(parameters, result);
 
-            if (StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix()) || parameters.relaxMatching()) {
+            if (StringUtil.isCapitalized(result.getPrefixMatcher().getPrefix()) || parameters.isRelaxedMatching()) {
               addAllClasses(parameters, result, inheritors);
             }
           }

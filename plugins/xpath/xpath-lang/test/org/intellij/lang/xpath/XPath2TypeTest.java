@@ -121,6 +121,34 @@ public class XPath2TypeTest extends XPath2HighlightingTestBase {
     doXPathHighlighting();
   }
 
+  public void testDateMinusDate() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testDateMinusDuration() throws Throwable {
+    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    doXPathHighlighting();
+  }
+
+  public void testDurationMinusDate() throws Throwable {
+    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    doXPathHighlighting();
+  }
+
+  public void testNumericDivDuration() throws Throwable {
+    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    doXPathHighlighting();
+  }
+
+  public void testDurationDivNumeric() throws Throwable {
+    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    doXPathHighlighting();
+  }
+
+  public void testNumericMultString() throws Throwable {
+    doXPathHighlighting();
+  }
+
   @Override
   protected String getSubPath() {
     return "xpath2/highlighting/types";

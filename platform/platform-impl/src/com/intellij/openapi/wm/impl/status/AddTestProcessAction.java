@@ -61,8 +61,6 @@ public class AddTestProcessAction extends AnAction implements DumbAware {
     builder.createBalloon().show(new RelativePoint(ro, point), Balloon.Position.above);
 
 
-    if (true) return;
-
 
     final Project p = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (p != null) {

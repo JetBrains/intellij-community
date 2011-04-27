@@ -41,6 +41,7 @@ public final class XPath2ElementTypes {
 
   public static final IElementType SEQUENCE_TYPE = new XPath2ElementType("SEQUENCE_TYPE");
   public static final IElementType SINGLE_TYPE = new XPath2ElementType("SINGLE_TYPE");
+  public static final IElementType ITEM_OR_EMPTY_SEQUENCE = new XPath2ElementType("ITEM_OR_EMPTY_SEQUENCE");
   public static final TokenSet TYPE_ELEMENTS = TokenSet.create(SEQUENCE_TYPE, SINGLE_TYPE);
 
   public static final TokenSet EXPRESSIONS = TokenSet.orSet(
