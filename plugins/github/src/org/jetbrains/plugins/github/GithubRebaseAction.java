@@ -134,7 +134,7 @@ public class GithubRebaseAction extends DumbAwareAction {
         }
       }
       if (!remoteForParentSeen){
-        final int result = Messages.showYesNoDialog(project, "It is nescessary to have '" +
+        final int result = Messages.showYesNoDialog(project, "It is necessary to have '" +
                                                              parentRepoUrl +
                                                              "' as a configured remote. Add remote?", "Github Rebase",
                                                     Messages.getQuestionIcon());
