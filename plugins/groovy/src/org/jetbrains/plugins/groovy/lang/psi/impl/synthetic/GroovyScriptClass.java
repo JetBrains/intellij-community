@@ -367,7 +367,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
             super.visitElement(element);
           }
         });
-        return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, myFile);
 
       }
     });
