@@ -47,7 +47,8 @@ public class PyMissingConstructorInspection extends PyInspection {
       if (node.isNewStyleClass())
         superNames.push(PyNames.SUPER);
 
-      addSuperNames(superNames, superClasses, name);
+      Iterable<PyClassRef> ansectors = node.iterateAncestors();
+      addSuperNames(superNames, ansectors);
 
       if (!superHasConstructor(node)) return;
       PyFunction initMethod = node.findMethodByName(PyNames.INIT, false);
@@ -78,18 +79,16 @@ public class PyMissingConstructorInspection extends PyInspection {
       }
     }
 
-    private static void addSuperNames(Stack<String> st, PsiElement[] superClasses, String name) {
-      for (PsiElement cl : superClasses) {
-        if (!name.equals(cl.getText())) {
-          if (!PyNames.OBJECT.equals(cl.getText()))
-            st.push(cl.getText());
+    private static void addSuperNames(Stack<String> st, Iterable<PyClassRef> superClasses) {
+      for (PyClassRef cl : superClasses) {
+        if (!PyNames.OBJECT.equals(cl.getClassName()))
+          st.push(cl.getClassName());
 
-          if (cl instanceof PyReferenceExpression) {
-            PyReferenceExpression ref = (PyReferenceExpression) cl;
-            final PsiElement result = ref.getReference(PyResolveContext.noProperties()).resolve();
-            if (result instanceof PyClass)
-              addSuperNames(st, ((PyClass)result).getSuperClassExpressions(), name);
-          }
+        if (cl instanceof PyReferenceExpression) {
+          PyReferenceExpression ref = (PyReferenceExpression) cl;
+          final PsiElement result = ref.getReference(PyResolveContext.noProperties()).resolve();
+          if (result instanceof PyClass)
+            addSuperNames(st, ((PyClass)result).iterateAncestors());
         }
       }
     }
