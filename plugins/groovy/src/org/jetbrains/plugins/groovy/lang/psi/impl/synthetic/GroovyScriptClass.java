@@ -30,6 +30,9 @@ import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +41,8 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -346,14 +351,43 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner, Sy
     return false;
   }
 
+  private List<GrVariable> getScriptFields() {
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<List<GrVariable>>() {
+      @Override
+      public Result<List<GrVariable>> compute() {
+        final List<GrVariable> result = new ArrayList<GrVariable>();
+        myFile.accept(new PsiRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitElement(PsiElement element) {
+            if (element instanceof GrVariableDeclaration &&
+                ((GrVariableDeclaration)element).getModifierList().findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD) != null) {
+              Collections.addAll(result, ((GrVariableDeclaration)element).getVariables());
+            }
+
+            super.visitElement(element);
+          }
+        });
+        return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, myFile);
+
+      }
+    });
+  }
+
   public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
-                                     @NotNull ResolveState state,
+                                     @NotNull final ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     for (GrTopLevelDefinition definition : myFile.getTopLevelDefinitions()) {
       if (!(definition instanceof PsiClass)) {
         if (!ResolveUtil.processElement(processor, definition, state)) return false;
       }
+    }
+
+    for (GrVariable variable : getScriptFields()) {
+      if (!ResolveUtil.processElement(processor, variable, state)) {
+        return false;
+      }
+
     }
 
     if (!ResolveUtil.processElement(processor, myMainMethod, state) || !ResolveUtil.processElement(processor, myRunMethod, state)) {
