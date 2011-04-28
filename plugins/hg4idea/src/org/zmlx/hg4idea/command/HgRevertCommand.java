@@ -52,7 +52,7 @@ public class HgRevertCommand {
       List<String> args = new LinkedList<String>();
       args.addAll(options);
       args.addAll(chunk);
-      new HgCommandExecutor(project).execute(repo, "revert", args, null);
+      new HgCommandExecutor(project).executeInCurrentThread(repo, "revert", args);
     }
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project);
   }
