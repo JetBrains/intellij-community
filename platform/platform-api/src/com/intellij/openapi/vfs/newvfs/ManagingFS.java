@@ -22,6 +22,7 @@ package com.intellij.openapi.vfs.newvfs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
@@ -29,7 +30,6 @@ import java.io.DataOutputStream;
 import java.util.List;
 
 public abstract class ManagingFS implements FileSystemInterface {
-
   private static class ManagingFSHolder {
     private static final ManagingFS ourInstance = ApplicationManager.getApplication().getComponent(ManagingFS.class);
   }
@@ -39,35 +39,39 @@ public abstract class ManagingFS implements FileSystemInterface {
   }
 
   @Nullable
-  public abstract DataInputStream readAttribute(VirtualFile file, FileAttribute att);
+  public abstract DataInputStream readAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att);
 
-  public abstract DataOutputStream writeAttribute(VirtualFile file, FileAttribute att);
+  @NotNull
+  public abstract DataOutputStream writeAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att);
 
-  public abstract int getModificationCount(VirtualFile fileOrDirectory);
+  public abstract int getModificationCount(@NotNull VirtualFile fileOrDirectory);
 
   // Only counts modifications done in current IDEA session
   public abstract int getCheapFileSystemModificationCount();
 
   public abstract int getFilesystemModificationCount();
 
-  public abstract boolean areChildrenLoaded(VirtualFile dir);
+  public abstract boolean areChildrenLoaded(@NotNull VirtualFile dir);
 
-  public abstract boolean wereChildrenAccessed(VirtualFile dir);
+  public abstract boolean wereChildrenAccessed(@NotNull VirtualFile dir);
 
-  public abstract void processEvents(List<? extends VFileEvent> events);
+  public abstract void processEvents(@NotNull List<? extends VFileEvent> events);
 
   @Nullable
-  public abstract NewVirtualFile findRoot(final String basePath, NewVirtualFileSystem fs);
+  public abstract NewVirtualFile findRoot(@NotNull String basePath, @NotNull NewVirtualFileSystem fs);
 
   public abstract void refresh(final boolean asynchronous);
 
-  public abstract VirtualFile[] getRoots(final NewVirtualFileSystem fs);
+  @NotNull
+  public abstract VirtualFile[] getRoots(@NotNull NewVirtualFileSystem fs);
 
 
+  @NotNull
   public abstract VirtualFile[] getLocalRoots();
 
   @Nullable
   public abstract VirtualFile findFileById(int id);
 
+  @NotNull
   public abstract VirtualFile[] getRoots();
 }

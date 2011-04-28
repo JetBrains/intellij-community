@@ -132,43 +132,44 @@ public class TempFileSystem extends NewVirtualFileSystem {
     return "temp";
   }
 
-  public boolean exists(final VirtualFile fileOrDirectory) {
+  public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
     return convert(fileOrDirectory) != null;
   }
 
-  public String[] list(final VirtualFile file) {
+  @NotNull
+  public String[] list(@NotNull final VirtualFile file) {
     final FSItem fsItem = convert(file);
     assert fsItem != null;
 
     return fsItem.list();
   }
 
-  public boolean isDirectory(final VirtualFile file) {
+  public boolean isDirectory(@NotNull final VirtualFile file) {
     return convert(file) instanceof FSDir;
   }
 
-  public long getTimeStamp(final VirtualFile file) {
+  public long getTimeStamp(@NotNull final VirtualFile file) {
     final FSItem fsItem = convert(file);
     assert fsItem != null: "cannot find item for path " + file.getPath();
 
     return fsItem.myTimestamp;
   }
 
-  public void setTimeStamp(final VirtualFile file, final long modstamp) throws IOException {
+  public void setTimeStamp(@NotNull final VirtualFile file, final long modstamp) throws IOException {
     final FSItem fsItem = convert(file);
     assert fsItem != null;
 
     fsItem.myTimestamp = modstamp > 0 ? modstamp : LocalTimeCounter.currentTime();
   }
 
-  public boolean isWritable(final VirtualFile file) {
+  public boolean isWritable(@NotNull final VirtualFile file) {
     final FSItem fsItem = convert(file);
     assert fsItem != null;
 
     return fsItem.myWritable;
   }
 
-  public void setWritable(final VirtualFile file, final boolean writableFlag) throws IOException {
+  public void setWritable(@NotNull final VirtualFile file, final boolean writableFlag) throws IOException {
     final FSItem fsItem = convert(file);
     assert fsItem != null;
 
@@ -176,7 +177,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
   }
 
   @NotNull
-  public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
+  public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
     final FSItem fsItem = convert(file);
     if (fsItem == null) throw new FileNotFoundException("Cannot find temp for " + file.getPath());
     
@@ -186,12 +187,12 @@ public class TempFileSystem extends NewVirtualFileSystem {
   }
 
   @NotNull
-  public InputStream getInputStream(final VirtualFile file) throws IOException {
+  public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
     return new ByteArrayInputStream(contentsToByteArray(file));
   }
 
   @NotNull
-  public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp)
+  public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp)
       throws IOException {
     return new ByteArrayOutputStream() {
       public void close() throws IOException {
@@ -205,7 +206,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
     };
   }
 
-  public long getLength(final VirtualFile file) {
+  public long getLength(@NotNull final VirtualFile file) {
     try {
       return contentsToByteArray(file).length;
     }

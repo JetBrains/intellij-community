@@ -186,50 +186,51 @@ public class MockLocalFileSystem extends LocalFileSystem {
   }
 
   @Override
-  public boolean exists(final VirtualFile fileOrDirectory) {
+  public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
     return false;
   }
 
   @Override
   @NotNull
-  public InputStream getInputStream(final VirtualFile file) throws IOException {
+  public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
     throw new UnsupportedOperationException();
   }
 
   @Override
   @NotNull
-  public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
+  public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
     return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
   @Override
-  public long getLength(final VirtualFile file) {
+  public long getLength(@NotNull final VirtualFile file) {
     return 0;
   }
 
   @Override
   @NotNull
-  public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException {
+  public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public long getTimeStamp(final VirtualFile file) {
+  public long getTimeStamp(@NotNull final VirtualFile file) {
     return 0;
   }
 
   @Override
-  public boolean isDirectory(final VirtualFile file) {
+  public boolean isDirectory(@NotNull final VirtualFile file) {
     return false;
   }
 
   @Override
-  public boolean isWritable(final VirtualFile file) {
+  public boolean isWritable(@NotNull final VirtualFile file) {
     return false;
   }
 
+  @NotNull
   @Override
-  public String[] list(final VirtualFile file) {
+  public String[] list(@NotNull final VirtualFile file) {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
@@ -238,12 +239,12 @@ public class MockLocalFileSystem extends LocalFileSystem {
   }
 
   @Override
-  public void setTimeStamp(final VirtualFile file, final long modstamp) throws IOException {
+  public void setTimeStamp(@NotNull final VirtualFile file, final long modstamp) throws IOException {
 
   }
 
   @Override
-  public void setWritable(final VirtualFile file, final boolean writableFlag) throws IOException {
+  public void setWritable(@NotNull final VirtualFile file, final boolean writableFlag) throws IOException {
 
   }
 

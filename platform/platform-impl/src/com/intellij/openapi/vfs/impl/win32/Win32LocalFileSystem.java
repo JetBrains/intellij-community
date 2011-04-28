@@ -68,8 +68,9 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   private Win32LocalFileSystem() {
   }
 
+  @NotNull
   @Override
-  public String[] list(VirtualFile file) {
+  public String[] list(@NotNull VirtualFile file) {
     try {
       String[] strings = myKernel.list(file.getPath());
       if (checkMe && !Arrays.asList(strings).equals(Arrays.asList(super.list(file)))) {
@@ -86,7 +87,7 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   }
 
   @Override
-  public boolean exists(VirtualFile fileOrDirectory) {
+  public boolean exists(@NotNull VirtualFile fileOrDirectory) {
     if (fileOrDirectory.getParent() == null) return true;
     try {
       myKernel.exists(fileOrDirectory.getPath());
@@ -101,7 +102,7 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   }
 
   @Override
-  public boolean isDirectory(VirtualFile file) {
+  public boolean isDirectory(@NotNull VirtualFile file) {
     try {
       boolean b = myKernel.isDirectory(file.getPath());
       if (checkMe && b != super.isDirectory(file)) {
@@ -115,7 +116,7 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   }
 
   @Override
-  public boolean isWritable(VirtualFile file) {
+  public boolean isWritable(@NotNull VirtualFile file) {
     try {
       boolean b = myKernel.isWritable(file.getPath());
       if (checkMe && b != super.isWritable(file)) {
@@ -129,7 +130,7 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   }
 
   @Override
-  public long getTimeStamp(VirtualFile file) {
+  public long getTimeStamp(@NotNull VirtualFile file) {
     try {
       long timeStamp = myKernel.getTimeStamp(file.getPath());
       if (checkMe && timeStamp != super.getTimeStamp(file)) {

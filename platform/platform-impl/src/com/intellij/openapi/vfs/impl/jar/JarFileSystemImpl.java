@@ -224,26 +224,26 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return true;
   }
 
-  public boolean exists(final VirtualFile fileOrDirectory) {
+  public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
     return getHandler(fileOrDirectory).exists(fileOrDirectory);
   }
 
   @NotNull
-  public InputStream getInputStream(final VirtualFile file) throws IOException {
+  public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
     return getHandler(file).getInputStream(file);
   }
 
   @NotNull
-  public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
+  public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
     return getHandler(file).contentsToByteArray(file);
   }
 
-  public long getLength(final VirtualFile file) {
+  public long getLength(@NotNull final VirtualFile file) {
     return getHandler(file).getLength(file);
   }
 
   @NotNull
-  public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp)
+  public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp)
     throws IOException {
     return getHandler(file).getOutputStream(file, requestor, modStamp, timeStamp);
   }
@@ -268,27 +268,28 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     return true;
   }
 
-  public long getTimeStamp(final VirtualFile file) {
+  public long getTimeStamp(@NotNull final VirtualFile file) {
     return getHandler(file).getTimeStamp(file);
   }
 
-  public boolean isDirectory(final VirtualFile file) {
+  public boolean isDirectory(@NotNull final VirtualFile file) {
     return getHandler(file).isDirectory(file);
   }
 
-  public boolean isWritable(final VirtualFile file) {
+  public boolean isWritable(@NotNull final VirtualFile file) {
     return false;
   }
 
-  public String[] list(final VirtualFile file) {
+  @NotNull
+  public String[] list(@NotNull final VirtualFile file) {
     return getHandler(file).list(file);
   }
 
-  public void setTimeStamp(final VirtualFile file, final long modstamp) throws IOException {
+  public void setTimeStamp(@NotNull final VirtualFile file, final long modstamp) throws IOException {
     getHandler(file).setTimeStamp(file, modstamp);
   }
 
-  public void setWritable(final VirtualFile file, final boolean writableFlag) throws IOException {
+  public void setWritable(@NotNull final VirtualFile file, final boolean writableFlag) throws IOException {
     getHandler(file).setWritable(file, writableFlag);
   }
 
