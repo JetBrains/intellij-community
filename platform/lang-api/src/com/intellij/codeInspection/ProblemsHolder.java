@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 
 /**
@@ -45,7 +46,7 @@ public class ProblemsHolder {
   private final InspectionManager myManager;
   private final PsiFile myFile;
   private final boolean myOnTheFly;
-  private List<ProblemDescriptor> myProblems = null;
+  private MyList<ProblemDescriptor> myProblems = new MyList<ProblemDescriptor>();
 
   public ProblemsHolder(@NotNull InspectionManager manager, @NotNull PsiFile file, boolean onTheFly) {
     myManager = manager;
@@ -53,12 +54,12 @@ public class ProblemsHolder {
     myOnTheFly = onTheFly;
   }
 
-  public void registerProblem(@NotNull PsiElement psiElement, @Nls String descriptionTemplate, LocalQuickFix... fixes) {
+  public void registerProblem(@NotNull PsiElement psiElement, @NotNull @Nls String descriptionTemplate, LocalQuickFix... fixes) {
     registerProblem(psiElement, descriptionTemplate, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
   }
 
   public void registerProblem(@NotNull PsiElement psiElement,
-                              String descriptionTemplate,
+                              @NotNull String descriptionTemplate,
                               ProblemHighlightType highlightType,
                               LocalQuickFix... fixes) {
     registerProblem(myManager.createProblemDescriptor(psiElement, descriptionTemplate, myOnTheFly, fixes, highlightType));
@@ -85,9 +86,6 @@ public class ProblemsHolder {
                 );
     }
 
-    if (myProblems == null) {
-      myProblems = new ArrayList<ProblemDescriptor>(1);
-    }
     myProblems.add(problemDescriptor);
   }
 
@@ -171,8 +169,9 @@ public class ProblemsHolder {
 
   @Nullable
   public List<ProblemDescriptor> getResults() {
-    final List<ProblemDescriptor> problems = myProblems;
-    myProblems = null;
+    MyList<ProblemDescriptor> problems = myProblems;
+    problems.allowModifications(false);
+    myProblems = new MyList<ProblemDescriptor>();
     return problems;
   }
 
@@ -185,8 +184,9 @@ public class ProblemsHolder {
   public final InspectionManager getManager() {
     return myManager;
   }
+
   public boolean hasResults() {
-    return myProblems != null && !myProblems.isEmpty();
+    return !myProblems.isEmpty();
   }
 
   public boolean isOnTheFly() {
@@ -199,5 +199,18 @@ public class ProblemsHolder {
 
   public final Project getProject() {
     return myManager.getProject();
+  }
+
+  private static class MyList<T> extends ArrayList<T> {
+    private volatile boolean readOnly;
+    @Override
+    public boolean add(T o) {
+      if (readOnly) throw new ConcurrentModificationException();
+      return super.add(o);
+    }
+
+    private void allowModifications(boolean v) {
+      readOnly = !v;
+    }
   }
 }

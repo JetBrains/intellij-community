@@ -75,21 +75,19 @@ public class XDebuggerTestUtil {
     assertPosition(session.getCurrentPosition(), file, line);
   }
 
-  public static XExecutionStack getActiveThread(XDebugSession session) {
+  public static XExecutionStack getActiveThread(@NotNull XDebugSession session) {
     return session.getSuspendContext().getActiveExecutionStack();
   }
 
-  public static List<XStackFrame> collectStacks(XDebugSession session) throws InterruptedException {
-    return collectStacks(getActiveThread(session));
+  public static List<XStackFrame> collectStacks(@NotNull XDebugSession session) throws InterruptedException {
+    return collectStacks(null, session);
   }
 
-  public static List<XStackFrame> collectStacks(XExecutionStack thread, XDebugSession session) throws InterruptedException {
-    if (thread == null) thread = getActiveThread(session);
-
-    return collectStacks(thread);
+  public static List<XStackFrame> collectStacks(@Nullable XExecutionStack thread, @NotNull XDebugSession session) throws InterruptedException {
+    return collectStacks(thread == null ? getActiveThread(session) : thread);
   }
 
-  public static List<XStackFrame> collectStacks(XExecutionStack thread) throws InterruptedException {
+  public static List<XStackFrame> collectStacks(@NotNull XExecutionStack thread) throws InterruptedException {
     XTestStackFrameContainer container = new XTestStackFrameContainer();
     thread.computeStackFrames(0, container);
     return container.waitFor(TIMEOUT * 2).first;
@@ -137,7 +135,11 @@ public class XDebuggerTestUtil {
     return node;
   }
 
-  public static void assertVariable(XValue var, String name, String type, String value, Boolean hasChildren) throws InterruptedException {
+  public static void assertVariable(XValue var,
+                                    @Nullable String name,
+                                    @Nullable String type,
+                                    @Nullable String value,
+                                    @Nullable Boolean hasChildren) throws InterruptedException {
     XTestValueNode node = computePresentation(var);
 
     Assert.assertEquals(name, node.myName);
@@ -146,15 +148,15 @@ public class XDebuggerTestUtil {
     if (hasChildren != null) Assert.assertEquals((boolean)hasChildren, node.myHasChildren);
   }
 
-  public static void assertVariableValue(XValue var, String name, String value) throws InterruptedException {
+  public static void assertVariableValue(XValue var, @Nullable String name, @Nullable String value) throws InterruptedException {
     assertVariable(var, name, null, value, null);
   }
 
-  public static void assertVariableValue(Collection<XValue> vars, String name, String value) throws InterruptedException {
+  public static void assertVariableValue(Collection<XValue> vars, @Nullable String name, @Nullable String value) throws InterruptedException {
     assertVariableValue(findVar(vars, name), name, value);
   }
 
-  public static void assertVariableValueMatches(Collection<XValue> vars, String name, String valuePattern) throws InterruptedException {
+  public static void assertVariableValueMatches(Collection<XValue> vars, @Nullable String name, String valuePattern) throws InterruptedException {
     assertVariableValueMatches(findVar(vars, name), name, valuePattern);
   }
 

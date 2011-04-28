@@ -29,7 +29,7 @@ import com.intellij.util.IncorrectOperationException;
 public class StringLiteralManipulator extends AbstractElementManipulator<PsiLiteralExpression> {
   public PsiLiteralExpression handleContentChange(PsiLiteralExpression expr, TextRange range, String newContent) throws IncorrectOperationException {
     final Object value = expr.getValue();
-    if (!(value instanceof String)) throw new IncorrectOperationException("cannot handle content change for: "+ value);
+    if (!(value instanceof String)) throw new IncorrectOperationException("cannot handle content change for: "+ value+", expr: "+expr);
     String oldText = expr.getText();
     newContent = StringUtil.escapeStringCharacters(newContent);
     String newText = oldText.substring(0, range.getStartOffset()) + newContent + oldText.substring(range.getEndOffset());

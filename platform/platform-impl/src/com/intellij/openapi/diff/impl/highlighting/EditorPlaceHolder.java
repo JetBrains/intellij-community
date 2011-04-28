@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -72,6 +73,10 @@ class EditorPlaceHolder extends DiffMarkup implements DiffVersionComponent {
           final FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(getProject(), file);
           if (providers.length > 0) {
             myFileEditor = providers[0].createEditor(getProject(), file);
+            if (myFileEditor instanceof TextEditor) {
+              myEditor = (EditorEx)((TextEditor)myFileEditor).getEditor();
+              ContentDocumentListener.install(myContent, this);
+            }
             myFileEditorProvider = providers[0];
             addDisposable(new Disposable() {
               @Override
@@ -79,6 +84,7 @@ class EditorPlaceHolder extends DiffMarkup implements DiffVersionComponent {
                 myFileEditorProvider.disposeEditor(myFileEditor);
                 myFileEditor = null;
                 myFileEditorProvider = null;
+                myEditor = null;
               }
             });
           }

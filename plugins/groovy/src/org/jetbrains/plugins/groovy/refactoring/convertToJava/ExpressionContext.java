@@ -16,17 +16,22 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-class ExpressionContext {
+class ExpressionContext implements Cloneable {
   List<String> myStatements = new ArrayList<String>();
   Set<String> myUsedVarNames;
   Project project;
-  private boolean myShouldInsertCurlyBrackets = false;
+
+  private Map<String, Boolean> myProps = new HashMap<String, Boolean>();
+  private static final String myShouldInsertCurlyBrackets = "shouldInsertCurly";
+  private static final String myInAnonymousContext = "inAnonymousContext";
 
   ExpressionContext(Project project, Set<String> usedVarNames) {
     this.project = project;
@@ -37,21 +42,43 @@ class ExpressionContext {
     this(project, new HashSet<String>());
   }
 
+  @Override
+  public Object clone() {
+    return copy();
+  }
+
   ExpressionContext copy() {
-    return new ExpressionContext(project, myUsedVarNames);
+    final ExpressionContext expressionContext = new ExpressionContext(project, myUsedVarNames);
+    expressionContext.myProps.putAll(myProps);
+    return expressionContext;
   }
 
   ExpressionContext extend() {
     final HashSet<String> usedVarNames = new HashSet<String>();
     usedVarNames.addAll(myUsedVarNames);
-    return new ExpressionContext(project, usedVarNames);
+    final ExpressionContext expressionContext = new ExpressionContext(project, usedVarNames);
+    expressionContext.myProps.putAll(myProps);
+    return expressionContext;
   }
 
   public void setInsertCurlyBrackets() {
-    myShouldInsertCurlyBrackets = true;
+    myProps.put(myShouldInsertCurlyBrackets, true);
+  }
+
+  private boolean getProp(String name) {
+    final Boolean aBoolean = myProps.get(name);
+    return aBoolean != null && aBoolean.booleanValue();
   }
 
   public boolean shouldInsertCurlyBrackets() {
-    return myShouldInsertCurlyBrackets;
+    return getProp(myShouldInsertCurlyBrackets);
+  }
+
+  public boolean isInAnonymousContext() {
+    return getProp(myInAnonymousContext);
+  }
+
+  public void setInAnonymousContext(boolean inAnonymousContext) {
+    myProps.put(myInAnonymousContext, inAnonymousContext);
   }
 }

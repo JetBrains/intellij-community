@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
@@ -49,7 +50,7 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
   public void exportResults(@NotNull Element parentNode) {}
 
   @NotNull
-  public JobDescriptor[] getJobDescriptors() {
+  public JobDescriptor[] getJobDescriptors(GlobalInspectionContext globalInspectionContext) {
     return new JobDescriptor[0];
   }
 

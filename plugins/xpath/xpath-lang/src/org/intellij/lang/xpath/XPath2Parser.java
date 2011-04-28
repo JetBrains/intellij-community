@@ -104,11 +104,17 @@ public class XPath2Parser extends XPathParser {
   private boolean parseQuantifiedExpr(PsiBuilder builder) {
     PsiBuilder.Marker mark = builder.mark();
     checkMatches(builder, XPath2TokenTypes.QUANTIFIERS, "'every' or 'some' expected");
+
     parseBindingSequence(builder);
+
     checkMatches(builder, XPath2TokenTypes.SATISFIES, "'satisfies' expected");
+
+    final PsiBuilder.Marker ret = builder.mark();
     if (!parseExprSingle(builder)) {
       builder.error("expression expected");
     }
+
+    ret.done(XPath2ElementTypes.BODY);
     mark.done(XPath2ElementTypes.QUANTIFIED);
     return true;
   }

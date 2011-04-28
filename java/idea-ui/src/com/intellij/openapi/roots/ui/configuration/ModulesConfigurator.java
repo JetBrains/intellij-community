@@ -84,6 +84,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   };
   private boolean myModified = false;
   private ModifiableModuleModel myModuleModel;
+  private boolean myModuleModelCommitted = false;
   private ProjectFacetsConfigurator myFacetsConfigurator;
 
   private StructureConfigurableContext myContext;
@@ -315,6 +316,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         try {
           final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
           projectRootManager.multiCommit(myModuleModel, rootModels);
+          myModuleModelCommitted = true;
           myFacetsConfigurator.commitFacets();
 
         }
@@ -327,6 +329,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
           myFacetsConfigurator = createFacetsConfigurator();
           myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+          myModuleModelCommitted = false;
 
           final ProjectFacetsConfigurator configurator = myFacetsConfigurator;
 
@@ -355,6 +358,10 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   public ModifiableModuleModel getModuleModel() {
     return myModuleModel;
+  }
+
+  public boolean isModuleModelCommitted() {
+    return myModuleModelCommitted;
   }
 
   public boolean deleteModule(final Module module) {

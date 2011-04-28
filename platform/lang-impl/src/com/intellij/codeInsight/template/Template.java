@@ -21,7 +21,21 @@ import com.intellij.openapi.editor.RangeMarker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumMap;
+import java.util.Map;
+
 public abstract class Template {
+
+  public enum Property {
+    USE_STATIC_IMPORT_IF_POSSIBLE
+  }
+  private static final Map<Property, Boolean> DEFAULT_PROPERTIES = new EnumMap<Property, Boolean>(Property.class);
+  static {
+    DEFAULT_PROPERTIES.put(Property.USE_STATIC_IMPORT_IF_POSSIBLE, false);
+  }
+
+  private final Map<Property, Boolean> myProperties = new EnumMap<Property, Boolean>(Property.class);
+  
   public abstract void addTextSegment(@NotNull String text);
   public abstract void addVariableSegment(@NonNls String name);
 
@@ -66,4 +80,18 @@ public abstract class Template {
 
   public abstract boolean isToShortenLongNames();
   public abstract void setToShortenLongNames(boolean toShortenLongNames);
+
+  public boolean getValue(@NotNull Property key) {
+    Boolean result = myProperties.get(key);
+    return result == null ? getDefaultValue(key) : result;
+  }
+
+  public void setValue(@NotNull Property key, boolean value) {
+    myProperties.put(key, value);
+  }
+
+  public static boolean getDefaultValue(@NotNull Property key) {
+    Boolean result = DEFAULT_PROPERTIES.get(key);
+    return result == null ? false : result;
+  }
 }

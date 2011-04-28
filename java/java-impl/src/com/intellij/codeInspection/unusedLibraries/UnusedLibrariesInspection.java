@@ -22,10 +22,7 @@ package com.intellij.codeInspection.unusedLibraries;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.RefManager;
@@ -64,7 +61,7 @@ import java.util.*;
 
 public class UnusedLibrariesInspection extends DescriptorProviderInspection {
   private static final Logger LOG = Logger.getInstance("#" + UnusedLibrariesInspection.class.getName());
-  private static final JobDescriptor BACKWARD_ANALYSIS = new JobDescriptor(InspectionsBundle.message("unused.library.backward.analysis.job.description"));
+  private final JobDescriptor BACKWARD_ANALYSIS = new JobDescriptor(InspectionsBundle.message("unused.library.backward.analysis.job.description"));
 
   public void runInspection(@NotNull final AnalysisScope scope, @NotNull final InspectionManager manager) {
     final Project project = getContext().getProject();
@@ -118,14 +115,18 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
     }, new ProgressIndicatorBase() {
       public void setFraction(final double fraction) {
         super.setFraction(fraction);
-        BACKWARD_ANALYSIS.setDoneAmount((int)fraction * BACKWARD_ANALYSIS.getTotalAmount());
-        getContext().incrementJobDoneAmount(BACKWARD_ANALYSIS, getText2());
+        int nextAmount = (int)(fraction * BACKWARD_ANALYSIS.getTotalAmount());
+        if (nextAmount > BACKWARD_ANALYSIS.getDoneAmount() && nextAmount < BACKWARD_ANALYSIS.getTotalAmount()) {
+          BACKWARD_ANALYSIS.setDoneAmount(nextAmount);
+          getContext().incrementJobDoneAmount(BACKWARD_ANALYSIS, getText2());
+        }
       }
 
       public boolean isCanceled() {
         return progressIndicator != null && progressIndicator.isCanceled() || super.isCanceled();
       }
     });
+    BACKWARD_ANALYSIS.setDoneAmount(BACKWARD_ANALYSIS.getTotalAmount());
     final Map<PsiFile, Set<PsiFile>> dependencies = builder.getDependencies();
     for (PsiFile file : dependencies.keySet()) {
       final VirtualFile virtualFile = file.getVirtualFile();
@@ -175,7 +176,7 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
   }
 
   @NotNull
-  public JobDescriptor[] getJobDescriptors() {
+  public JobDescriptor[] getJobDescriptors(GlobalInspectionContext globalInspectionContext) {
     return new JobDescriptor[] {BACKWARD_ANALYSIS};
   }
 

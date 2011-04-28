@@ -112,6 +112,10 @@ public class ExpectedTypeUtil {
               if (expression == ((XPath2If)parentExpr).getCondition()) {
                 return mapType(expression, XPath2Type.BOOLEAN);
               }
+            } else if (parentExpr instanceof XPath2QuantifiedExpr) {
+              if (expression == ((XPath2QuantifiedExpr)parentExpr).getTest()) {
+                return mapType(expression, XPath2Type.BOOLEAN);
+              }
             } else if (parentExpr instanceof XPathFilterExpression) {
                 final XPathFilterExpression filterExpression = (XPathFilterExpression)parentExpr;
 

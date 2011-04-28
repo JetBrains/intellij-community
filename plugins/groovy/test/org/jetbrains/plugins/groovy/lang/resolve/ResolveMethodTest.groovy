@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 
-import com.intellij.psi.util.PropertyUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -253,6 +252,53 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertNotNull(method);
     assertTrue(method.isConstructor());
     assertEquals(0, method.getParameterList().getParameters().length);
+  }
+
+  public void testWrongConstructor() {
+    myFixture.addFileToProject('Classes.groovy', 'class Foo { int a; int b }')
+    def ref = configureByText('new Fo<caret>o(2, 3)')
+    assert !((GrNewExpression) ref.element.parent).advancedResolve().element
+  }
+
+  public void testLangImmutableConstructor() {
+    myFixture.addClass("package groovy.lang; public @interface Immutable {}")
+    myFixture.addFileToProject('Classes.groovy', '@Immutable class Foo { int a; int b }')
+    def ref = configureByText('new Fo<caret>o(2, 3)')
+    assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
+  }
+
+  public void testTransformImmutableConstructor() {
+    myFixture.addClass("package groovy.transform; public @interface Immutable {}")
+    myFixture.addFileToProject('Classes.groovy', '@groovy.transform.Immutable class Foo { int a; int b }')
+    def ref = configureByText('new Fo<caret>o(2, 3)')
+    assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
+  }
+
+  public void testTupleConstructor() {
+    myFixture.addClass("package groovy.transform; public @interface TupleConstructor {}")
+    myFixture.addFileToProject('Classes.groovy', '@groovy.transform.TupleConstructor class Foo { int a; int b }')
+    def ref = configureByText('new Fo<caret>o(2, 3)')
+    assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
+  }
+
+  public void testCanonicalConstructor() {
+    myFixture.addClass("package groovy.transform; public @interface Canonical {}")
+    myFixture.addFileToProject('Classes.groovy', '@groovy.transform.Canonical class Foo { int a; int b }')
+    def ref = configureByText('new Fo<caret>o(2, 3)')
+    assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
+  }
+
+  public void testInheritConstructors() {
+    myFixture.addClass("package groovy.transform; public @interface InheritConstructors {}")
+    myFixture.addFileToProject('Classes.groovy', '@groovy.transform.InheritConstructors class CustomException extends Exception {}')
+    def ref = configureByText('new Cu<caret>stomException("msg")')
+    assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof PsiMethod
+  }
+
+  private PsiReference configureByText(String text) {
+    myFixture.configureByText 'a.groovy', text
+    def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    return ref
   }
 
   public void testPartiallyDeclaredType() throws Exception {
@@ -579,15 +625,14 @@ class Zoo {
   public void testInvokeMethodViaThisInStaticContext() {
     final PsiReference ref = configureByFile("invokeMethodViaThisInStaticContext/A.groovy");
     final PsiElement element = ref.resolve();
-    assertInstanceOf(element, PsiMethod.class);
-    assertEquals "Class", element.getContainingClass().getName()
+    assertEquals "Class", assertInstanceOf(element, PsiMethod).getContainingClass().getName()
   }
 
   public void testInvokeMethodViaClassInStaticContext() {
     final PsiReference ref = configureByFile("invokeMethodViaClassInStaticContext/A.groovy");
     final PsiElement element = ref.resolve();
     assertInstanceOf(element, PsiMethod.class);
-    assertEquals "Foo", element.getContainingClass().getName()
+    assertEquals "Foo", assertInstanceOf(element, PsiMethod).getContainingClass().getName()
   }
 
   public void testUseInCategory() throws Exception {
@@ -604,14 +649,12 @@ class Zoo {
 
   public void testCommandExpressionStatement1() {
     PsiElement method = resolve("A.groovy")
-    assertInstanceOf method, GrMethod
-    assertEquals "foo2", method.name
+    assertEquals "foo2", assertInstanceOf(method, GrMethod).name
   }
 
   public void testCommandExpressionStatement2() {
     PsiElement method = resolve("A.groovy")
-    assertInstanceOf method, GrMethod
-    assertEquals "foo3", method.name
+    assertEquals "foo3", assertInstanceOf(method, GrMethod).name
   }
 
   public void testUpperCaseFieldAndGetter() {
@@ -628,9 +671,7 @@ class Zoo {
 
   public void testMethodChosenCorrect() {
     final PsiElement resolved = resolve("A.groovy")
-    assertInstanceOf resolved, GrMethod.class
-
-    assertEquals "map", resolved.parameterList.parameters[0].name
+    assert "map" == assertInstanceOf(resolved, GrMethod).parameterList.parameters[0].name
   }
 
   public void testResolveCategories() {
@@ -651,7 +692,6 @@ class Zoo {
 
   public void testPlusAssignment() {
     final PsiElement resolved = resolve("A.groovy")
-    assertInstanceOf resolved, GrMethod
-    assertEquals("plus", resolved.name)
+    assertEquals("plus", assertInstanceOf(resolved, GrMethod).name)
   }
 }

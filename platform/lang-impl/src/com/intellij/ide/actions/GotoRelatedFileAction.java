@@ -48,9 +48,9 @@ public class GotoRelatedFileAction extends AnAction {
     PsiFile psiFile = LangDataKeys.PSI_FILE.getData(context);
     if (psiFile == null) return;
 
-    List<GotoRelatedItem> items = getItems(psiFile, editor);
+    List<GotoRelatedItem> items = getItems(psiFile, editor, context);
     if (items.isEmpty()) return;
-    if (items.size() == 1) {
+    if (items.size() == 1 && items.get(0).getElement() != null) {
       items.get(0).navigate();
       return;
     }
@@ -101,19 +101,22 @@ public class GotoRelatedFileAction extends AnAction {
   }
 
   @NotNull
-  public static List<GotoRelatedItem> getItems(@NotNull PsiFile psiFile, @Nullable Editor editor) {
-    PsiElement context = psiFile;
+  public static List<GotoRelatedItem> getItems(@NotNull PsiFile psiFile, @Nullable Editor editor, @Nullable DataContext dataContext) {
+    PsiElement contextElement = psiFile;
     if (editor != null) {
       PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
       if (element != null) {
-        context = element;
+        contextElement = element;
       }
     }
 
     List<GotoRelatedItem> items = new ArrayList<GotoRelatedItem>();
 
     for (GotoRelatedProvider provider : Extensions.getExtensions(GotoRelatedProvider.EP_NAME)) {
-      items.addAll(provider.getItems(context));
+      items.addAll(provider.getItems(contextElement));
+      if (dataContext != null) {
+        items.addAll(provider.getItems(dataContext));
+      }
     }
     return items;
   }

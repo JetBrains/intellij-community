@@ -30,25 +30,30 @@ public abstract class GrLiteralClassType extends PsiClassType {
 
   @NotNull
   public ClassResolveResult resolveGenerics() {
+    final PsiClass myBaseClass = resolve();
+    final PsiSubstitutor substitutor;
+    if (myBaseClass != null) {
+      final PsiType[] typeArgs = getParameters();
+      final PsiTypeParameter[] typeParams = myBaseClass.getTypeParameters();
+      if (typeParams.length == typeArgs.length) {
+        substitutor = PsiSubstitutor.EMPTY.putAll(myBaseClass, typeArgs);
+      }
+      else {
+        substitutor = PsiSubstitutor.EMPTY;
+      }
+    }
+    else {
+      substitutor = PsiSubstitutor.EMPTY;
+    }
+
     return new ClassResolveResult() {
-      private final PsiClass myBaseClass = resolve();
 
       public PsiClass getElement() {
         return myBaseClass;
       }
 
       public PsiSubstitutor getSubstitutor() {
-        PsiSubstitutor result = PsiSubstitutor.EMPTY;
-        if (myBaseClass != null) {
-          final PsiType[] typeArgs = getParameters();
-          final PsiTypeParameter[] typeParams = myBaseClass.getTypeParameters();
-          if (typeParams.length == typeArgs.length) {
-            for (int i = 0; i < typeArgs.length; i++) {
-              result = result.put(typeParams[i], typeArgs[i]);
-            }
-          }
-        }
-        return result;
+        return substitutor;
       }
 
       public boolean isPackagePrefixPackageReference() {
@@ -118,7 +123,7 @@ public abstract class GrLiteralClassType extends PsiClassType {
 
   @Nullable
   public PsiClass resolve() {
-    return myFacade.findClass(getJavaClassName(), getResolveScope());
+    return myGroovyPsiManager.findClassWithCache(getJavaClassName(), getResolveScope());
   }
 
   @NotNull

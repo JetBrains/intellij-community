@@ -20,9 +20,12 @@ import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xml.XmlName;
 import org.jetbrains.android.dom.attrs.AttributeDefinition;
 import org.jetbrains.android.dom.attrs.AttributeDefinitions;
 import org.jetbrains.android.dom.attrs.AttributeFormat;
@@ -35,8 +38,10 @@ import org.jetbrains.android.dom.menu.Item;
 import org.jetbrains.android.dom.menu.Menu;
 import org.jetbrains.android.dom.resources.*;
 import org.jetbrains.android.dom.xml.PreferenceElement;
+import org.jetbrains.android.dom.xml.XmlResourceElement;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.ResourceManager;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +58,7 @@ import static org.jetbrains.android.util.AndroidUtils.SYSTEM_RESOURCE_PACKAGE;
 public class AndroidDomUtil {
   public static final StaticEnumConverter BOOLEAN_CONVERTER = new StaticEnumConverter("true", "false");
   public static final Map<String, String> SPECIAL_RESOURCE_TYPES = new HashMap<String, String>();
+  private static final PackageClassConverter ACTIVITY_CONVERTER = new PackageClassConverter(AndroidUtils.ACTIVITY_BASE_CLASS_NAME);
 
   static {
     addSpecialResourceType("string", "label", "description", "title");
@@ -137,6 +143,33 @@ public class AndroidDomUtil {
       default:
         return composite;
     }
+  }
+
+  @Nullable
+  public static ResolvingConverter getSpecificConverter(@NotNull XmlName attrName, DomElement context) {
+    if (context == null) {
+      return null;
+    }
+
+    if (!SdkConstants.NS_RESOURCES.equals(attrName.getNamespaceKey())) {
+      return null;
+    }
+
+    final XmlTag xmlTag = context.getXmlTag();
+    if (xmlTag == null) {
+      return null;
+    }
+
+    final String localName = attrName.getLocalName();
+    final String tagName = xmlTag.getName();
+
+    if (context instanceof XmlResourceElement) {
+      if ("configure".equals(localName) && "appwidget-provider".equals(tagName)) {
+        return ACTIVITY_CONVERTER;
+      }
+    }
+
+    return null;
   }
 
   @Nullable

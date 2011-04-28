@@ -1,3 +1,5 @@
+import com.intellij.psi.PsiClass
+
 contributor(context(scope:annotatedScope(ctype: "groovy.lang.Newify"))) {
   // For methods
   def memb = enclosingMember()
@@ -18,7 +20,7 @@ contributor(context(scope:annotatedScope(ctype: "groovy.lang.Newify"))) {
         for (c in refs.asList()) {
           def targetClass = c.bind()
           for (cons in (targetClass?.constructors ?: [])) {
-            method name: targetClass.name, params: cons.paramStringVector, type: targetClass.qualName
+            method name: ((PsiClass) targetClass).name, params: cons.paramStringVector, type: targetClass.qualName
           }
         }
       }

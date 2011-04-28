@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
@@ -79,6 +80,10 @@ public class CodeBlockGenerator extends Generator {
 
   @Override
   public void visitOpenBlock(GrOpenBlock block) {
+    visitCodeBlock(block);
+  }
+
+  public void visitCodeBlock(GrCodeBlock block) {
     builder.append("{\n");
     final GrStatement[] statements = block.getStatements();
     for (GrStatement statement : statements) {
@@ -161,7 +166,7 @@ public class CodeBlockGenerator extends Generator {
   @Override
   public void visitExpression(GrExpression expression) {
     final StringBuilder statementBuilder = new StringBuilder();
-    final ExpressionContext context = new ExpressionContext(this.context.project, this.context.myUsedVarNames);
+    final ExpressionContext context = this.context.copy();
     expression.accept(new ExpressionGenerator(statementBuilder, context));
     statementBuilder.append(";");
     writeStatement(statementBuilder, expression, context);

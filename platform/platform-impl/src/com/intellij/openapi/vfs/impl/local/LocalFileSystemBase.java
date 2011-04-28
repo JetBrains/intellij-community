@@ -125,28 +125,29 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return new File(path);
   }
 
-  public boolean exists(final VirtualFile fileOrDirectory) {
+  public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
     if (fileOrDirectory.getParent() == null) return true;
     return convertToIOFile(fileOrDirectory).exists();
   }
 
-  public long getLength(final VirtualFile file) {
+  public long getLength(@NotNull final VirtualFile file) {
     return convertToIOFile(file).length();
   }
 
-  public long getTimeStamp(final VirtualFile file) {
+  public long getTimeStamp(@NotNull final VirtualFile file) {
     return convertToIOFile(file).lastModified();
   }
 
-  public boolean isDirectory(final VirtualFile file) {
+  public boolean isDirectory(@NotNull final VirtualFile file) {
     return convertToIOFile(file).isDirectory();
   }
 
-  public boolean isWritable(final VirtualFile file) {
+  public boolean isWritable(@NotNull final VirtualFile file) {
     return convertToIOFile(file).canWrite();
   }
 
-  public String[] list(final VirtualFile file) {
+  @NotNull
+  public String[] list(@NotNull final VirtualFile file) {
     if (file.getParent() == null) {
       final File[] roots = File.listRoots();
       if (roots.length == 1 && roots[0].getName().length() == 0) {
@@ -381,17 +382,17 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @NotNull
-  public InputStream getInputStream(final VirtualFile file) throws FileNotFoundException {
+  public InputStream getInputStream(@NotNull final VirtualFile file) throws FileNotFoundException {
     return new BufferedInputStream(new FileInputStream(convertToIOFile(file)));
   }
 
   @NotNull
-  public byte[] contentsToByteArray(final VirtualFile file) throws IOException {
+  public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
     return FileUtil.loadFileBytes(convertToIOFile(file));
   }
 
   @NotNull
-  public OutputStream getOutputStream(final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws FileNotFoundException {
+  public OutputStream getOutputStream(@NotNull final VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws FileNotFoundException {
     final File ioFile = convertToIOFile(file);
     final OutputStream stream = shallUseSafeStream(requestor, ioFile) ? new SafeFileOutputStream(ioFile) : new FileOutputStream(ioFile);
     return new BufferedOutputStream(stream) {
@@ -475,11 +476,11 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return new FakeVirtualFile(newParent, copyName);
   }
 
-  public void setTimeStamp(final VirtualFile file, final long modstamp) {
+  public void setTimeStamp(@NotNull final VirtualFile file, final long modstamp) {
     convertToIOFile(file).setLastModified(modstamp);
   }
 
-  public void setWritable(final VirtualFile file, final boolean writableFlag) throws IOException {
+  public void setWritable(@NotNull final VirtualFile file, final boolean writableFlag) throws IOException {
     FileUtil.setReadOnlyAttribute(file.getPath(), !writableFlag);
     final File ioFile = convertToIOFile(file);
     if (ioFile.canWrite() != writableFlag) {

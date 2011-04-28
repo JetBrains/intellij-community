@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.android.AndroidTestCase;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene.Kudelevsky
@@ -110,6 +111,10 @@ public class AndroidAddStringResourceActionTest extends AndroidTestCase {
     assertFalse(new AndroidAddStringResourceAction().isAvailable(myFixture.getProject(), myFixture.getEditor(), javaPsiFile));
   }
 
+  public void testEscape() {
+    doTest(getTestName(false), "strings.xml", null, true, "strings_escape_after.xml");
+  }
+
   public void testNewFile() {
     doTest("1", null, null, true);
   }
@@ -136,6 +141,14 @@ public class AndroidAddStringResourceActionTest extends AndroidTestCase {
   }
 
   private void doTest(String testName, String stringsXml, final Runnable invokeAfterTemplate, final boolean closePopup) {
+    doTest(testName, stringsXml, invokeAfterTemplate, closePopup, "strings_after.xml");
+  }
+
+  private void doTest(String testName,
+                      String stringsXml,
+                      @Nullable final Runnable invokeAfterTemplate,
+                      final boolean closePopup,
+                      String stringsAfter) {
     if (stringsXml != null) {
       myFixture.copyFileToProject(BASE_PATH + stringsXml, "res/values/strings.xml");
     }
@@ -162,6 +175,6 @@ public class AndroidAddStringResourceActionTest extends AndroidTestCase {
       }
     }, "", "");
     myFixture.checkResultByFile(BASE_PATH + "Class" + testName + "_after.java");
-    myFixture.checkResultByFile("res/values/strings.xml", BASE_PATH + "strings_after.xml", false);
+    myFixture.checkResultByFile("res/values/strings.xml", BASE_PATH + stringsAfter, false);
   }
 }

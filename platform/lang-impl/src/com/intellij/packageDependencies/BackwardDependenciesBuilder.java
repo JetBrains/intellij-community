@@ -82,6 +82,7 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
     final PsiManager psiManager = PsiManager.getInstance(getProject());
     psiManager.startBatchFilesProcessingMode();
     try {
+      final int fileCount = getScope().getFileCount();
       getScope().accept(new PsiRecursiveElementVisitor() {
         @Override public void visitFile(final PsiFile file) {
           ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -94,7 +95,6 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
             if (virtualFile != null) {
               indicator.setText2(ProjectUtil.calcRelativeToProjectPath(virtualFile, getProject()));
             }
-            final int fileCount = getScope().getFileCount();
             if (fileCount > 0) {
               indicator.setFraction(((double)++myFileCount) / myTotalFileCount);
             }

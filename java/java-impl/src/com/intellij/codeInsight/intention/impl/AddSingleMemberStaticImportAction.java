@@ -32,6 +32,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction");
@@ -42,26 +43,32 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
     return CodeInsightBundle.message("intention.add.single.member.static.import.family");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(element)) return false;
+  /**
+   * Allows to check if it's possible to perform static import for the target element.
+   * 
+   * @param element     target element that is static import candidate
+   * @return            not-null qualified name of the class which method may be statically imported if any; <code>null</code> otherwise
+   */
+  @Nullable
+  public static String getStaticImportClass(@NotNull PsiElement element) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
     PsiFile file = element.getContainingFile();
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiReferenceExpression &&
         ((PsiReferenceExpression)element.getParent()).getQualifierExpression() != null) {
       PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
-      if (refExpr.getParameterList() != null &&
-          refExpr.getParameterList().getFirstChild() != null) return false;
+      PsiReferenceParameterList parameterList = refExpr.getParameterList();
+      if (parameterList != null && parameterList.getFirstChild() != null) return null;
       PsiElement resolved = refExpr.resolve();
-      if (resolved instanceof PsiMember &&
-          ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+      if (resolved instanceof PsiMember && ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
         PsiClass aClass = ((PsiMember)resolved).getContainingClass();
         if (aClass != null && !PsiTreeUtil.isAncestor(aClass, element, true)) {
           String qName = aClass.getQualifiedName();
           if (qName != null) {
             qName = qName + "." +refExpr.getReferenceName();
             if (file instanceof PsiJavaFile) {
-              if (((PsiJavaFile)file).getImportList().findSingleImportStatement(refExpr.getReferenceName()) == null) {
-                setText(CodeInsightBundle.message("intention.add.single.member.static.import.text", qName));
-                return true;
+              PsiImportList importList = ((PsiJavaFile)file).getImportList();
+              if (importList != null && importList.findSingleImportStatement(refExpr.getReferenceName()) == null) {
+                return qName;
               }
             }
           }
@@ -69,20 +76,28 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
       }
     }
 
-    return false;
+    return null;
+  }
+  
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    String classQName = getStaticImportClass(element);
+    if (classQName != null) {
+      setText(CodeInsightBundle.message("intention.add.single.member.static.import.text", classQName));
+    }
+    return classQName != null;
   }
 
-
-  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+  public static void invoke(PsiFile file, PsiElement element) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    
     final PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
     final PsiElement resolved = refExpr.resolve();
 
     file.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
-        if (refExpr.getReferenceName().equals(expression.getReferenceName())) {
+        String referenceName = refExpr.getReferenceName();
+        if (referenceName != null && referenceName.equals(expression.getReferenceName())) {
           PsiElement resolved = expression.resolve();
           if (resolved != null) {
             expression.putUserData(TEMP_REFERENT_USER_DATA, resolved);
@@ -91,7 +106,11 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
       }
     });
 
-    RefactoringUtil.bindToElementViaStaticImport(((PsiMember)resolved).getContainingClass(), ((PsiNamedElement)resolved).getName(), ((PsiJavaFile)file).getImportList());
+    if (resolved != null) {
+      RefactoringUtil.bindToElementViaStaticImport(
+        ((PsiMember)resolved).getContainingClass(), ((PsiNamedElement)resolved).getName(), ((PsiJavaFile)file).getImportList()
+      );
+    }
 
     file.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -133,5 +152,11 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
         super.visitReferenceExpression(expression);
       }
     });
+
+  }
+  
+  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    invoke(file, element);
   }
 }

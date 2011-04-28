@@ -146,4 +146,6 @@ final class Matcher {
 
   void testAsBoolean() {doTest()}
   void testCharInitializer() {doTest()}
+
+  void testAnonymousFromMap() {doTest()}
 }

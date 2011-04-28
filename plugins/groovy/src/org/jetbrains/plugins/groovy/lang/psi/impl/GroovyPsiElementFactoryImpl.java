@@ -55,9 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorImpl;
 
@@ -415,6 +413,38 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       throw new IncorrectOperationException("Can't create method from text: '" + file.getText() + "'");
     }
     return ((GrMethod)definition);
+  }
+
+  @Override
+  public GrMethod createMethodFromSignature(String name, GrClosureSignature signature) {
+    StringBuilder builder = new StringBuilder("public");
+    final PsiType returnType = signature.getReturnType();
+    if (returnType != null) {
+      builder.append(' ');
+      builder.append(returnType.getCanonicalText());
+    }
+
+    builder.append(' ').append(name).append('(');
+    int i = 0;
+    for (GrClosureParameter parameter : signature.getParameters()) {
+      final PsiType type = parameter.getType();
+      if (type != null) {
+        builder.append(type.getCanonicalText());
+        builder.append(' ');
+      }
+      builder.append('p').append(++i);
+      final GrExpression initializer = parameter.getDefaultInitializer();
+      if (initializer != null) {
+        builder.append(" = ").append(initializer.getText());
+        builder.append(", ");
+      }
+    }
+    if (signature.getParameterCount() > 0) {
+      builder.delete(builder.length() - 2, builder.length());
+    }
+
+    builder.append("){}");
+    return createMethodFromText(builder.toString());
   }
 
   @Override

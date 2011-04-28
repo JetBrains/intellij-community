@@ -274,8 +274,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
     myFixture.configureByFile("IDEADEV40403/A.groovy");
     def reference = findReference()
     def resolved = reference.resolve()
-    assertInstanceOf(resolved, PsiMethod.class);
-    def clazz = resolved.containingClass
+    def clazz = assertInstanceOf(resolved, PsiMethod).containingClass
     assertEquals "Script", clazz.name
   }
 
@@ -338,7 +337,7 @@ print ba<caret>r
     def ref = findReference()
     def resolved = ref.resolve();
     assertNotNull resolved
-    assertEquals resolved.getName(), "isFoo"
+    assert ((PsiMethod) resolved).getName() == "isFoo"
   }
 
   public void testExplicitBooleanProperty() throws Exception {
@@ -348,8 +347,7 @@ print ba<caret>r
  print new A().f<caret>oo""");
     def ref = findReference()
     def resolved = ref.resolve();
-    assertNotNull resolved
-    assertEquals resolved.getName(), "isFoo"
+    assert ((PsiMethod) resolved).getName() == "isFoo"
   }
 
   public void testStaticFieldAndNonStaticGetter() {
@@ -636,7 +634,7 @@ set<caret>Foo(2)
 
   public void testPreferAlias() {
     myFixture.addFileToProject "a/B.groovy", "package a; class B {public static def f1; public static def f2}"
-    assertEquals 'f2', resolve("A.groovy").name
+    assertEquals 'f2', ((GrField) resolve("A.groovy")).name
   }
 
   public void testF1property() {
@@ -664,5 +662,56 @@ set<caret>Foo(2)
 
   public void testResolveClosureOverloader() {
     assertInstanceOf resolve("A.groovy"), GrAccessorMethod
+  }
+
+  private PsiReference configureByText(String text) {
+    myFixture.configureByText 'a.groovy', text
+    def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    return ref
+  }
+
+  public void testJavaLoggingTransform() {
+    myFixture.addClass('package groovy.util.logging; public @interface Log { String value() default ""; }')
+    def ref = configureByText("@groovy.util.logging.Log class Foo { { lo<caret>g.inf } }")
+    assert assertInstanceOf(ref.resolve(), PsiVariable).type.canonicalText == 'java.util.logging.Logger'
+  }
+
+  public void testNonLoggingField() {
+    myFixture.addClass('package groovy.util.logging; public @interface Log { String value() default ""; }')
+    assert !configureByText("@groovy.util.logging.Log class Foo { { alo<caret>g.inf } }").resolve()
+  }
+
+  public void testJavaLoggingTransformCustomName() {
+    myFixture.addClass('package groovy.util.logging; public @interface Log { String value() default ""; }')
+    def ref = configureByText("@groovy.util.logging.Log('myLog') class Foo { { myLo<caret>g.inf } }")
+    assert assertInstanceOf(ref.resolve(), PsiVariable).type.canonicalText == 'java.util.logging.Logger'
+  }
+
+  public void testCommonsLoggingTransform() {
+    myFixture.addClass('package groovy.util.logging; public @interface Commons { String value() default ""; }')
+    def ref = configureByText("@groovy.util.logging.Commons('myLog') class Foo { { myLo<caret>g.inf } }")
+    assert assertInstanceOf(ref.resolve(), PsiVariable).type.canonicalText == 'org.apache.commons.logging.Log'
+  }
+
+  public void testFieldTransform() {
+    myFixture.addClass('package groovy.transform; public @interface Field {}')
+    def ref = configureByText("""@groovy.transform.Field def aaa = 2
+def foo() { println <caret>aaa }
+""")
+    assert ref.resolve() instanceof GrVariable
+  }
+
+  public void testScriptFieldVariableOutside() {
+    myFixture.addFileToProject("Foo.groovy", "if (true) { @groovy.transform.Field def a = 2 }")
+
+    def ref = configureByText("println new Foo().<caret>a")
+    assert ref.resolve() instanceof GrVariable
+  }
+
+  public void testScriptVariableFromScriptMethod() {
+    def ref = configureByText("""def aaa = 2
+def foo() { println <caret>aaa }
+""")
+    assert !ref.resolve()
   }
 }

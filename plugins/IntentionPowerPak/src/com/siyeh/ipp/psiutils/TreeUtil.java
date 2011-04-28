@@ -16,6 +16,7 @@
 package com.siyeh.ipp.psiutils;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 public class TreeUtil{
@@ -47,7 +48,7 @@ public class TreeUtil{
 
     @Nullable
     public static PsiElement getPrevLeaf(PsiElement element){
-        if(element == null){
+        if(element == null || element instanceof PsiFile){
             return null;
         }
         final PsiElement sibling = element.getPrevSibling();

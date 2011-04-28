@@ -133,7 +133,7 @@ public class AndroidUtils {
   public static final String EXT_NATIVE_LIB = "so";
   @NonNls public static final String RES_OVERLAY_DIR_NAME = "res-overlay";
 
-  public static final int TIMEOUT = 300000;
+  public static final int TIMEOUT = 3000000;
 
   private static final Key<ConsoleView> CONSOLE_VIEW_KEY = new Key<ConsoleView>("AndroidConsoleView");
 

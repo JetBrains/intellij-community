@@ -24,19 +24,27 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author cdr
  */
-public class ChangeFileEncodingGroup extends ActionGroup{
+public class ChangeFileEncodingGroup extends ActionGroup {
   @NotNull
   public AnAction[] getChildren(@Nullable final AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
     VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-    Collection<Charset> charsets = EncodingManager.getInstance().getFavorites();
-    List<AnAction> children = new ArrayList<AnAction>();
+    if(virtualFile == null || !virtualFile.isInLocalFileSystem()){
+      return EMPTY_ARRAY;
+    }
+
+    List<Charset> charsets = new ArrayList<Charset>(EncodingManager.getInstance().getFavorites());
+    Collections.sort(charsets);
+    Charset current = virtualFile.getCharset();
+    charsets.remove(current);
+
+    List<AnAction> children = new ArrayList<AnAction>(charsets.size());
     for (Charset charset : charsets) {
       ChangeFileEncodingTo action = new ChangeFileEncodingTo(virtualFile, charset);
       children.add(action);

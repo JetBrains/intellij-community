@@ -57,7 +57,7 @@ public class CompareJarsAction extends AnAction {
         final VirtualFile[] result = FileChooserFactory.getInstance()
           .createFileChooser(descriptor, project).choose(project.getBaseDir(), project);
         if (result.length == 1 && result[0] != null && isJar(result[0])) {
-          trg = new VirtualFileDiffElement(result[0]);
+          trg = new JarFileDiffElement(result[0]);
         }
       }
       final DirDiffManager mgr = DirDiffManager.getInstance(project);

@@ -40,6 +40,10 @@ public class ChangeEncodingUpdateGroup extends DefaultActionGroup {
         virtualFile = ((OpenFileDescriptor)navigatable).getFile();
       }
     }
+    if(virtualFile != null && !virtualFile.isInLocalFileSystem()){
+      virtualFile = null;
+    }
+
     Pair<String, Boolean> result = ChooseFileEncodingAction.update(virtualFile);
     e.getPresentation().setText(result.getFirst());
     e.getPresentation().setEnabled(result.getSecond());

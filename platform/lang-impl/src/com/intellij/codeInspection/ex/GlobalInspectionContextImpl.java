@@ -88,14 +88,11 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
 
 
   private ProgressIndicator myProgressIndicator;
-  public static final JobDescriptor BUILD_GRAPH = new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor"));
-  public static final JobDescriptor[] BUILD_GRAPH_ONLY = {BUILD_GRAPH};
-  public static final JobDescriptor FIND_EXTERNAL_USAGES =
-    new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor1"));
-
-
-  private static final JobDescriptor LOCAL_ANALYSIS = new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor2"));
-  public static final JobDescriptor[] LOCAL_ANALYSIS_ARRAY = {LOCAL_ANALYSIS};
+  public final JobDescriptor BUILD_GRAPH = new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor"));
+  public final JobDescriptor[] BUILD_GRAPH_ONLY = {BUILD_GRAPH};
+  public final JobDescriptor FIND_EXTERNAL_USAGES = new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor1"));
+  private final JobDescriptor LOCAL_ANALYSIS = new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor2"));
+  public final JobDescriptor[] LOCAL_ANALYSIS_ARRAY = {LOCAL_ANALYSIS};
 
   private InspectionProfile myExternalProfile = null;
 
@@ -436,6 +433,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
       refManager.inspectionReadActionStarted();
       BUILD_GRAPH.setTotalAmount(scope.getFileCount());
       LOCAL_ANALYSIS.setTotalAmount(scope.getFileCount());
+      FIND_EXTERNAL_USAGES.setTotalAmount(0);
       //to override current progress in order to hide useless messages/%
       ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable() {
           public void run() {
@@ -514,6 +512,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
       GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
       tool.inspectionStarted(manager, this, toolWrapper);
     }
+
     scope.accept(new PsiElementVisitor() {
       @Override
       public void visitFile(final PsiFile file) {
@@ -590,7 +589,9 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     };
 
 
-  public void initializeTools(@NotNull List<Tools> outGlobalTools, @NotNull List<Tools> outLocalTools, @NotNull List<Tools> outGlobalSimpleTools) {
+  public void initializeTools(@NotNull List<Tools> outGlobalTools,
+                              @NotNull List<Tools> outLocalTools,
+                              @NotNull List<Tools> outGlobalSimpleTools) {
     myJobDescriptors = new ArrayList<JobDescriptor>();
     final List<ToolsImpl> usedTools = getUsedTools();
     for (Tools currentTools : usedTools) {
@@ -627,7 +628,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     else {
       outGlobalTools.add(currentTools);
     }
-    JobDescriptor[] jobDescriptors = tool.getJobDescriptors();
+    JobDescriptor[] jobDescriptors = tool.getJobDescriptors(this);
     for (JobDescriptor jobDescriptor : jobDescriptors) {
       appendJobDescriptor(jobDescriptor);
     }
@@ -637,7 +638,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     return myTools;
   }
 
-  private void appendJobDescriptor(JobDescriptor job) {
+  private void appendJobDescriptor(@NotNull JobDescriptor job) {
     if (!myJobDescriptors.contains(job)) {
       myJobDescriptors.add(job);
       job.setDoneAmount(0);
@@ -683,16 +684,21 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     int old = job.getDoneAmount();
     job.setDoneAmount(old + 1);
 
-    int jobCount = myJobDescriptors.size();
-    float totalProgress = 0;
-    for (JobDescriptor jobDescriptor : myJobDescriptors) {
-      totalProgress += jobDescriptor.getProgress();
-    }
-
-    totalProgress /= jobCount;
+    float totalProgress = getTotalProgress();
 
     myProgressIndicator.setFraction(totalProgress);
     myProgressIndicator.setText(job.getDisplayName() + " " + message);
+  }
+
+  private float getTotalProgress() {
+    float totalProgress = 0;
+    int liveDescriptors = 0;
+    for (JobDescriptor jobDescriptor : myJobDescriptors) {
+      totalProgress += jobDescriptor.getProgress();
+      liveDescriptors += jobDescriptor.getTotalAmount() == 0 ? 0 : 1;
+    }
+
+    return totalProgress / liveDescriptors;
   }
 
   public void setExternalProfile(InspectionProfile profile) {

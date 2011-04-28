@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
@@ -163,6 +164,8 @@ public abstract class GroovyPsiElementFactory {
   public abstract PsiElement createDotToken(String newDot);
 
   public abstract GrMethod createMethodFromText(String methodText, @Nullable PsiElement context);
+
+  public abstract GrMethod createMethodFromSignature(String name, GrClosureSignature signature);
 
   public GrMethod createMethodFromText(String methodText) {
     return createMethodFromText(methodText, null);

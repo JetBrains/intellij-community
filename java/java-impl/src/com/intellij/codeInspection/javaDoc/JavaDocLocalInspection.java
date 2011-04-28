@@ -208,8 +208,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
     public OptionsPanel() {
       super(new GridBagLayout());
-      GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0,0,0,0),0,0 );
-      gc.weighty = 0;
+      GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0),0,0 );
       add(createAdditionalJavadocTagsPanel(), gc);
       JTabbedPane tabs = new JTabbedPane(SwingConstants.BOTTOM);
       @NonNls String[] tags = new String[]{"@author", "@version", "@since", "@param"};

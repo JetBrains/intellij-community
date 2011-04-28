@@ -449,27 +449,28 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     }
   }
 
-  public boolean exists(final VirtualFile fileOrDirectory) {
+  public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
     if (myNativeFileSystem == null) return super.exists(fileOrDirectory);
     else return myNativeFileSystem.exists(fileOrDirectory);
   }
 
-  public long getTimeStamp(final VirtualFile file) {
+  public long getTimeStamp(@NotNull final VirtualFile file) {
     if (myNativeFileSystem == null) return super.getTimeStamp(file);
     else return myNativeFileSystem.getTimeStamp(file);
   }
 
-  public boolean isDirectory(final VirtualFile file) {
+  public boolean isDirectory(@NotNull final VirtualFile file) {
     if (myNativeFileSystem == null) return super.isDirectory(file);
     else return myNativeFileSystem.isDirectory(file);
   }
 
-  public boolean isWritable(final VirtualFile file) {
+  public boolean isWritable(@NotNull final VirtualFile file) {
     if (myNativeFileSystem == null) return super.isWritable(file);
     else return myNativeFileSystem.isWritable(file);
   }
 
-  public String[] list(final VirtualFile file) {
+  @NotNull
+  public String[] list(@NotNull final VirtualFile file) {
     if (myNativeFileSystem == null) return super.list(file);
     else return myNativeFileSystem.list(file);
   }

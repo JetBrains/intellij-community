@@ -130,6 +130,7 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction {
     assert element != null;
     String value = getStringLiteralValue(element, file);
     assert value != null;
+    value = value.replace("'", "\\'").replace("\"", "\\\"");
     String aPackage = getPackage(facet);
     if (aPackage == null) {
       Messages.showErrorDialog(project, AndroidBundle.message("package.not.found.error"), CommonBundle.getErrorTitle());

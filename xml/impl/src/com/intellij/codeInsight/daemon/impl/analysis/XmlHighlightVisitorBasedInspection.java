@@ -19,10 +19,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.JobDescriptor;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlRecursiveElementVisitor;
@@ -34,18 +31,10 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class XmlHighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
-  private static final JobDescriptor XML_HIGHLIGHTER =
-    new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor2"));
-
   @NotNull
   @Override
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
-  }
-
-  @Override
-  public JobDescriptor[] getAdditionalJobs() {
-    return new JobDescriptor[]{XML_HIGHLIGHTER};
   }
 
   @Override
@@ -54,7 +43,6 @@ public class XmlHighlightVisitorBasedInspection extends GlobalSimpleInspectionTo
                         @NotNull ProblemsHolder problemsHolder,
                         @NotNull final GlobalInspectionContext globalContext,
                         @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    //XML_HIGHLIGHTER.setTotalAmount(scope.getFileCount());
     file.accept(new XmlRecursiveElementVisitor() {
       final XmlHighlightVisitor highlightVisitor = new XmlHighlightVisitor();
 
@@ -80,10 +68,6 @@ public class XmlHighlightVisitorBasedInspection extends GlobalSimpleInspectionTo
             return true;
           }
         };
-        final VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile != null) {
-          globalContext.incrementJobDoneAmount(XML_HIGHLIGHTER, ProjectUtil.calcRelativeToProjectPath(virtualFile, file.getProject()));
-        }
         super.visitFile(file);
       }
 

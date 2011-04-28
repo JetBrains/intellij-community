@@ -385,4 +385,11 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest(new GroovyAssignabilityCheckInspection());
   }
 
+  public void testCurrying(){
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
+
+  public void testAnotherCurrying(){
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
 }

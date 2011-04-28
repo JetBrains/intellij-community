@@ -21,6 +21,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
@@ -30,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.DominanceAwareMethod;
 /**
 * @author Maxim.Medvedev
 */
-public class GppGdkMethod extends GrGdkMethodImpl implements DominanceAwareMethod {
+public class GppGdkMethod extends GrGdkMethodImpl implements DominanceAwareMethod, GrGdkMethod {
   public GppGdkMethod(PsiMethod method, final boolean isStatic) {
     super(method, isStatic);
   }

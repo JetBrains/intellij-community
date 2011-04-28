@@ -657,6 +657,10 @@ public class ExpressionGenerator extends Generator {
     //doesn't visit constructor invocation
     LOG.assertTrue(!(expr.getParent() instanceof GrConstructorInvocation));
 
+    if (context.isInAnonymousContext() && expr.getQualifier() == null) {
+      builder.append(expr.getReferenceName());
+      return;
+    }
     final PsiElement resolved = expr.resolve();
     LOG.assertTrue(resolved instanceof PsiClass);
 
@@ -681,15 +685,21 @@ public class ExpressionGenerator extends Generator {
 
   @Override
   public void visitSafeCastExpression(GrSafeCastExpression typeCastExpression) {
+    final GrExpression operand = (GrExpression)PsiUtil.skipParenthesesIfSensibly(typeCastExpression.getOperand(), false);
+    final GrTypeElement typeElement = typeCastExpression.getCastTypeElement();
+
+    if (operand instanceof GrListOrMap && ((GrListOrMap)operand).isMap() && typeElement != null) {
+      AnonymousFromMapGenerator.writeAnonymousMap((GrListOrMap)operand, typeElement, builder, context);
+      return;
+    }
     final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(typeCastExpression.multiResolve(false));
     final PsiElement resolved = resolveResult.getElement();
 
-    final GrTypeElement typeElement = typeCastExpression.getCastTypeElement();
     if (resolved instanceof PsiMethod) {
-      final GrExpression typeParam = factory.createExpressionFromText(typeElement.getText());
+      final GrExpression typeParam = factory.createExpressionFromText(typeElement == null ? "null" : typeElement.getText());
       invokeMethodOn(
         ((PsiMethod)resolved),
-        typeCastExpression.getOperand(),
+        operand,
         new GrExpression[]{typeParam},
         GrNamedArgument.EMPTY_ARRAY,
         GrClosableBlock.EMPTY_ARRAY,
@@ -698,7 +708,7 @@ public class ExpressionGenerator extends Generator {
       );
     }
     else {
-      generateCast(typeElement, typeCastExpression.getOperand());
+      generateCast(typeElement, operand);
     }
   }
 
@@ -763,7 +773,7 @@ public class ExpressionGenerator extends Generator {
                               GrClosableBlock[] closures,
                               PsiSubstitutor substitutor,
                               GroovyPsiElement context) {
-    if (method instanceof GrGdkMethod && !method.hasModifierProperty(PsiModifier.STATIC)) {
+    if (method instanceof GrGdkMethod) {
       if (caller == null) {
         caller = factory.createExpressionFromText("this", context);
       }
@@ -810,7 +820,7 @@ public class ExpressionGenerator extends Generator {
       builder.append("new ");
       writeType(builder, type);
       if (isActuallyList) {
-        builder.append("(Arrays.asList(");
+        builder.append("(java.util.Arrays.asList(");
       }
       else {
         builder.append('{');

@@ -21,39 +21,41 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
 public interface FileSystemInterface {
-  boolean exists(VirtualFile fileOrDirectory);
-
-  String[] list(VirtualFile file);
-
-  boolean isDirectory(VirtualFile file);
-
-  long getTimeStamp(VirtualFile file);
-  void setTimeStamp(VirtualFile file, long modstamp) throws IOException;
-
-  boolean isWritable(VirtualFile file);
-  void setWritable(VirtualFile file, boolean writableFlag) throws IOException;
-
-  VirtualFile createChildDirectory(final Object requestor, VirtualFile parent, String dir) throws IOException;
-  VirtualFile createChildFile(final Object requestor, VirtualFile parent, String file) throws IOException;
-
-  void deleteFile(final Object requestor, VirtualFile file) throws IOException;
-  void moveFile(final Object requestor, VirtualFile file, VirtualFile newParent) throws IOException;
-  void renameFile(final Object requestor, VirtualFile file, String newName) throws IOException;
-  VirtualFile copyFile(final Object requestor, VirtualFile file, VirtualFile newParent, final String copyName) throws IOException;
+  boolean exists(@NotNull VirtualFile fileOrDirectory);
 
   @NotNull
-  byte[] contentsToByteArray(final VirtualFile file) throws IOException;
+  String[] list(@NotNull VirtualFile file);
+
+  boolean isDirectory(@NotNull VirtualFile file);
+
+  long getTimeStamp(@NotNull VirtualFile file);
+  void setTimeStamp(@NotNull VirtualFile file, long modstamp) throws IOException;
+
+  boolean isWritable(@NotNull VirtualFile file);
+  void setWritable(@NotNull VirtualFile file, boolean writableFlag) throws IOException;
+
+  VirtualFile createChildDirectory(@Nullable Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException;
+  VirtualFile createChildFile(@Nullable Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException;
+
+  void deleteFile(final Object requestor, @NotNull VirtualFile file) throws IOException;
+  void moveFile(final Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) throws IOException;
+  void renameFile(final Object requestor, @NotNull VirtualFile file, @NotNull String newName) throws IOException;
+  VirtualFile copyFile(final Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException;
 
   @NotNull
-  InputStream getInputStream(VirtualFile file) throws IOException;
+  byte[] contentsToByteArray(@NotNull VirtualFile file) throws IOException;
+
+  @NotNull
+  InputStream getInputStream(@NotNull VirtualFile file) throws IOException;
   @NotNull 
-  OutputStream getOutputStream(VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException;
+  OutputStream getOutputStream(@NotNull VirtualFile file, final Object requestor, final long modStamp, final long timeStamp) throws IOException;
 
-  long getLength(VirtualFile file);
+  long getLength(@NotNull VirtualFile file);
 }

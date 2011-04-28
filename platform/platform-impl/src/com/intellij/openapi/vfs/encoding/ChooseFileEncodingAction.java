@@ -159,7 +159,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     }
 
     Charset charset = charsetFromContent != null ? charsetFromContent : virtualFile != null ? virtualFile.getCharset() : NO_ENCODING;
-    String text = MessageFormat.format(pattern, charset.displayName());
+    String text = charset == NO_ENCODING ? "Change file encoding" : MessageFormat.format(pattern, charset.displayName());
 
     return Pair.create(text, enabled);
   }

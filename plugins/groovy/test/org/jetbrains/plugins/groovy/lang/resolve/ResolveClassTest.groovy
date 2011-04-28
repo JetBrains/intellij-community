@@ -227,7 +227,7 @@ public class Test extends MyMap {
   void testPreferLastImportedAlias() {
     myFixture.addFileToProject "a/C1.groovy", "package a; class C1{}"
     myFixture.addFileToProject "a/C2.groovy", "package a; class C2{}"
-    assertEquals "C2", resolve("A.groovy").getName()
+    assertEquals "C2", ((PsiClass) resolve("A.groovy")).name
   }
 
   void testPreferClassFromCurPackage() {

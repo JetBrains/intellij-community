@@ -23,6 +23,7 @@ package com.intellij.codeInspection.inconsistentLanguageLevel;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
@@ -90,7 +91,7 @@ public class InconsistentLanguageLevelInspection extends DescriptorProviderInspe
   }
 
   @NotNull
-  public JobDescriptor[] getJobDescriptors() {
+  public JobDescriptor[] getJobDescriptors(GlobalInspectionContext globalInspectionContext) {
     return JobDescriptor.EMPTY_ARRAY;
   }
 

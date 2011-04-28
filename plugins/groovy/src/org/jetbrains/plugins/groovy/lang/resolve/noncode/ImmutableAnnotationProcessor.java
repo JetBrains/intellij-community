@@ -42,7 +42,11 @@ public class ImmutableAnnotationProcessor extends NonCodeMembersContributor {
     if (!(psiClass instanceof GrTypeDefinition) || psiClass.getName() == null) return;
 
     PsiModifierList modifierList = psiClass.getModifierList();
-    if (modifierList == null || modifierList.findAnnotation(GroovyImmutableAnnotationInspection.IMMUTABLE) == null) return;
+    if (modifierList == null) return;
+    if (modifierList.findAnnotation(GroovyImmutableAnnotationInspection.IMMUTABLE) == null &&
+        modifierList.findAnnotation("groovy.transform.Immutable") == null &&
+        modifierList.findAnnotation("groovy.transform.Canonical") == null &&
+        modifierList.findAnnotation("groovy.transform.TupleConstructor") == null) return;
 
     final LightMethodBuilder fieldsConstructor = new LightMethodBuilder(psiClass, GroovyFileType.GROOVY_LANGUAGE);
     for (PsiField field : psiClass.getFields()) {
