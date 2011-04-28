@@ -41,7 +41,7 @@ public abstract class GotoRelatedProvider {
   }
 
   @NotNull
-  public List<? extends GotoRelatedItem> getItems(DataContext context) {
+  public List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {
     return Collections.emptyList();
   }
 }
