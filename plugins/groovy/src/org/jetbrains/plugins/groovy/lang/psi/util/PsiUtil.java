@@ -21,6 +21,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.light.LightElement;
@@ -133,7 +134,7 @@ public class PsiUtil {
 
     GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor);
     if (isInUseCategory && method.hasModifierProperty(PsiModifier.STATIC) && method.getParameterList().getParametersCount() > 0) {
-      signature = signature.curry(1);
+      signature = GrClosureSignatureUtil.removeParam(signature, 0);
     }
 
     //check for default constructor
@@ -158,7 +159,7 @@ public class PsiUtil {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length > 0 && parameters[0].getType() instanceof GrMapType &&
           (argumentTypes.length == 0 || !(argumentTypes[0] instanceof GrMapType))) {
-        return GrClosureSignatureUtil.isSignatureApplicable(signature.curry(1), argumentTypes, place);
+        return GrClosureSignatureUtil.isSignatureApplicable(GrClosureSignatureUtil.removeParam(signature, 0), argumentTypes, place);
       }
     }
     return false;
@@ -1033,7 +1034,7 @@ public class PsiUtil {
 
     return null;
   }
-  
+
   @NotNull
   public static PsiClass getOriginalClass(@NotNull PsiClass aClass) {
     PsiFile file = aClass.getContainingFile();
@@ -1055,7 +1056,7 @@ public class PsiUtil {
 
     return aClass;
   }
-  
+
 
   private static String[] visibilityModifiers = new String[]{GrModifier.PRIVATE, GrModifier.PROTECTED, GrModifier.PUBLIC};
 
@@ -1171,5 +1172,19 @@ public class PsiUtil {
     if (!(eMethodCall instanceof GrCall)) return null;
 
     return (GrCall)eMethodCall;
+  }
+
+  public static boolean isInScriptContext(GroovyPsiElement expr) {
+    final GroovyPsiElement fileContext = getFileOrClassContext(expr);
+    return fileContext instanceof GroovyFile && ((GroovyFile)fileContext).isScript();
+  }
+
+  public static GroovyPsiElement getFileOrClassContext(final GroovyPsiElement element) {
+    GroovyPsiElement context = PsiTreeUtil.getContextOfType(element, GrTypeDefinition.class, GroovyFileBase.class);
+    if (context instanceof GroovyFileBase &&
+        GroovyPsiElementFactory.DUMMY_FILE_NAME.equals(FileUtil.getNameWithoutExtension(((GroovyFileBase)context).getName()))) {
+      context = PsiTreeUtil.getContextOfType(context, true, GrTypeDefinition.class, GroovyFileBase.class);
+    }
+    return context;
   }
 }

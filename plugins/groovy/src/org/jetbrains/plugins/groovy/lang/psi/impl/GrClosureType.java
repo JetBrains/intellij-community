@@ -32,29 +32,21 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 /**
  * @author ven
  */
-public class GrClosureType extends PsiClassType {
-  private final GlobalSearchScope myScope;
-  private final PsiManager myManager;
+public class GrClosureType extends GrLiteralClassType {
   private final @NotNull GrClosureSignature mySignature;
   private PsiType[] myTypeArgs = null;
 
   private GrClosureType(LanguageLevel languageLevel,
                         GlobalSearchScope scope,
-                        PsiManager manager,
+                        JavaPsiFacade facade,
                         @NotNull GrClosureSignature closureSignature,
                         boolean shouldInferTypeParameters) {
-    super(languageLevel);
-    myScope = scope;
-    myManager = manager;
+    super(languageLevel, scope, facade);
     mySignature = closureSignature;
     if (!shouldInferTypeParameters) myTypeArgs = PsiType.EMPTY_ARRAY;
   }
 
-  @Nullable
-  public PsiClass resolve() {
-    return GroovyPsiManager.getInstance(myManager.getProject()).findClassWithCache(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, getResolveScope());
-  }
-
+  @NotNull
   public String getClassName() {
     return "Closure";
   }
@@ -74,74 +66,14 @@ public class GrClosureType extends PsiClassType {
   }
 
   @NotNull
-  public ClassResolveResult resolveGenerics() {
-    final PsiType[] parameters = getParameters();
-    final PsiSubstitutor substitutor;
-    final PsiClass closure = resolve();
-    if (parameters.length == 1) {
-      substitutor = PsiSubstitutor.EMPTY.putAll(closure, parameters);
-    }
-    else {
-      substitutor = PsiSubstitutor.EMPTY;
-    }
-
-    return new ClassResolveResult() {
-      public PsiClass getElement() {
-        return closure;
-      }
-
-      public PsiSubstitutor getSubstitutor() {
-        return substitutor;
-      }
-
-      public boolean isPackagePrefixPackageReference() {
-        return false;
-      }
-
-      public boolean isAccessible() {
-        return true;
-      }
-
-      public boolean isStaticsScopeCorrect() {
-        return true;
-      }
-
-      @Nullable
-      public PsiElement getCurrentFileResolveScope() {
-        return null;
-      }
-
-      public boolean isValidResult() {
-        return isStaticsScopeCorrect() && isAccessible();
-      }
-    };
+  @Override
+  protected String getJavaClassName() {
+    return GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
   }
 
   @NotNull
   public PsiClassType rawType() {
     return this;
-  }
-
-  @NotNull
-  public String getPresentableText() {
-    final PsiType[] typeArgs = getParameters();
-    if (typeArgs.length == 0 || typeArgs[0] == null) {
-      return "Closure";
-    }
-    else {
-      return "Closure<" + typeArgs[0].getPresentableText() + ">";
-    }
-  }
-
-  @NotNull
-  public String getCanonicalText() {
-    final PsiType[] typeArgs = getParameters();
-    if (typeArgs.length == 0 || typeArgs[0] == null) {
-      return GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
-    }
-    else {
-      return GroovyCommonClassNames.GROOVY_LANG_CLOSURE + "<" + typeArgs[0].getCanonicalText() + ">";
-    }
   }
 
   @Nullable
@@ -196,51 +128,47 @@ public class GrClosureType extends PsiClassType {
     return text.equals(GroovyCommonClassNames.GROOVY_LANG_CLOSURE);
   }
 
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
-    return myScope;
-  }
-
-  @NotNull
-  public LanguageLevel getLanguageLevel() {
-    return myLanguageLevel;
-  }
-
   public PsiClassType setLanguageLevel(final LanguageLevel languageLevel) {
-    final GrClosureType result = create(mySignature, myManager, myScope, languageLevel, true);
+    final GrClosureType result = create(mySignature, myScope, myFacade, languageLevel, true);
     result.myTypeArgs = this.myTypeArgs;
     return result;
   }
 
   public static GrClosureType create(@NotNull GrClosableBlock closure, boolean shouldInferTypeParameters) {
-    return create(GrClosureSignatureUtil.createSignature(closure), closure.getManager(), closure.getResolveScope(), LanguageLevel.JDK_1_5, shouldInferTypeParameters);
+    final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(closure);
+    final GlobalSearchScope resolveScope = closure.getResolveScope();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(closure.getProject());
+    return create(signature, resolveScope, facade,LanguageLevel.JDK_1_5, shouldInferTypeParameters);
   }
 
   public static GrClosureType create(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
-    return create(GrClosureSignatureUtil.createSignature(method, substitutor), method.getManager(), GlobalSearchScope.allScope(method.getProject()), LanguageLevel.JDK_1_5, true);
+    final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor);
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(method.getProject());
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(method.getProject());
+    return create(signature, scope, facade, LanguageLevel.JDK_1_5, true);
   }
 
   public static GrClosureType create(@NotNull PsiParameter[] parameters,
                                      @Nullable PsiType returnType,
-                                     PsiManager manager,
+                                     JavaPsiFacade facade,
                                      GlobalSearchScope scope,
                                      LanguageLevel languageLevel) {
-    return create(GrClosureSignatureUtil.createSignature(parameters, returnType), manager, scope, languageLevel, true);
+    return create(GrClosureSignatureUtil.createSignature(parameters, returnType), scope, facade, languageLevel, true);
   }
 
   public static GrClosureType create(@NotNull GrClosureSignature signature,
-                                     PsiManager manager,
                                      GlobalSearchScope scope,
+                                     JavaPsiFacade facade,
                                      LanguageLevel languageLevel,
                                      boolean shouldInferTypeParameters) {
-    return new GrClosureType(languageLevel, scope, manager, signature, shouldInferTypeParameters);
+    return new GrClosureType(languageLevel, scope, facade, signature, shouldInferTypeParameters);
   }
 
   @Nullable
-  public PsiType curry(int count) {
-    final GrClosureSignature newSignature = mySignature.curry(count);
+  public PsiType curry(PsiType[] args, int position) {
+    final GrClosureSignature newSignature = mySignature.curry(args, position);
     if (newSignature == null) return null;
-    final GrClosureType result = create(newSignature, myManager, myScope, myLanguageLevel, true);
+    final GrClosureType result = create(newSignature, myScope, myFacade, myLanguageLevel, true);
     result.myTypeArgs = this.myTypeArgs;
     return result;
   }
