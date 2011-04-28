@@ -163,6 +163,23 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testregex$regex_begin() throws Throwable { doTest(); }
   public void testregex$regex_begin2() throws Throwable { doTest(); }
   public void testregex$multiLineSlashy() throws Throwable { doTest(); }
+
+  public void testregex$dollarSlashy() throws Throwable { doTest(); }
+  public void testregex$dollarSlashy2() throws Throwable { doTest(); }
+  public void testregex$dollarSlashy3() throws Throwable { doTest(); }
+  public void testregex$dollarSlashy4() throws Throwable { doTest(); }
+  public void testregex$dollarSlashyCode() throws Throwable { doTest(); }
+  public void testregex$dollarSlashyCodeUnfinished() throws Throwable { doTest(); }
+  public void testregex$dollarSlashyEof() throws Throwable { doTest(); }
+  public void testregex$dollarSlashyRegex() throws Throwable { doTest(); }
+  public void testregex$dollarSlashyRegexFinishedTwice() throws Throwable { doTest(); }
+  public void testregex$dollarSlashyRegexUnfinished() throws Throwable { doTest(); }
+  public void testregex$dollarSlashyUnfinished() throws Throwable { doTest(); }
+  public void testregex$dollarSlashyWindowsPaths() throws Throwable { doTest(); }
+  public void testregex$dollarSlashyXml() throws Throwable { doTest(); }
+  public void testregex$dollarSlashyDouble() throws Throwable { doTest(); }
+  public void testregex$dollarSlashyTriple() throws Throwable { doTest(); }
+
   public void testrelational$eq1() throws Throwable { doTest(); }
   public void testrelational$inst0() throws Throwable { doTest(); }
   public void testrelational$inst1() throws Throwable { doTest(); }

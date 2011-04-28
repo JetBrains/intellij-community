@@ -1,0 +1,21 @@
+def xml = $/
+  <xml>
+  $tic\tac
+  </xml>
+/$
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('xml')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Compound regular expression
+        PsiElement(regex begin)('$/\n  <xml>\n  $')
+        Reference expression
+          PsiElement(identifier)('tic')
+        PsiElement(regex end)('\tac\n  </xml>\n/$')
