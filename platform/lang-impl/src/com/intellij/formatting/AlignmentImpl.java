@@ -16,6 +16,7 @@
 
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -23,6 +24,7 @@ import java.util.*;
 class AlignmentImpl extends Alignment {
   private static final List<LeafBlockWrapper> EMPTY = Collections.unmodifiableList(new ArrayList<LeafBlockWrapper>(0));
   private final boolean myAllowBackwardShift;
+  private final Anchor myAnchor;
   private Collection<LeafBlockWrapper> myOffsetRespBlocks = EMPTY;
   private AlignmentImpl myParentAlignment;
 
@@ -30,21 +32,28 @@ class AlignmentImpl extends Alignment {
    * Creates new <code>AlignmentImpl</code> object with <code>'false'</code> as <code>'allows backward shift'</code> argument flag.
    */
   AlignmentImpl() {
-    this(false);
+    this(false, Anchor.LEFT);
   }
 
   /**
    * Creates new <code>AlignmentImpl</code> object with the given <code>'allows backward shift'</code> argument flag.
    *
    * @param allowBackwardShift    flag that indicates if it should be possible to shift former aligned block to right
-   *                              in order to align to subsequent aligned block (see {@link Alignment#createAlignment(boolean)})
+   *                              in order to align to subsequent aligned block (see {@link Alignment#createAlignment(boolean, Anchor)})
+   * @param anchor                alignment anchor (see {@link Alignment#createAlignment(boolean, Anchor)})
    */
-  AlignmentImpl(boolean allowBackwardShift) {
+  AlignmentImpl(boolean allowBackwardShift, @NotNull Anchor anchor) {
     myAllowBackwardShift = allowBackwardShift;
+    myAnchor = anchor;
   }
 
   public boolean isAllowBackwardShift() {
     return myAllowBackwardShift;
+  }
+
+  @NotNull
+  public Anchor getAnchor() {
+    return myAnchor;
   }
 
   public String getId() {
@@ -153,8 +162,12 @@ class AlignmentImpl extends Alignment {
   }
 
   private boolean continueOffsetResponsibleBlockRetrieval(@Nullable AbstractBlockWrapper block) {
+    if (block == null) {
+      return false;
+    }
+    
     // We don't want to align block that doesn't start new line if it's not configured for 'by columns' alignment.
-    if (!myAllowBackwardShift && block != null && !block.getWhiteSpace().containsLineFeeds()) {
+    if (!myAllowBackwardShift && !block.getWhiteSpace().containsLineFeeds()) {
       return false;
     }
     for (AbstractBlockWrapper offsetBlock : myOffsetRespBlocks) {
@@ -165,7 +178,7 @@ class AlignmentImpl extends Alignment {
         return false;
       }
     }
-    return myParentAlignment == null ? true : myParentAlignment.continueOffsetResponsibleBlockRetrieval(block);
+    return myParentAlignment == null || myParentAlignment.continueOffsetResponsibleBlockRetrieval(block);
   }
 
   private static boolean onDifferentLines(AbstractBlockWrapper block1, AbstractBlockWrapper block2) {

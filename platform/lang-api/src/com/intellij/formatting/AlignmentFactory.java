@@ -15,6 +15,8 @@
  */
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Internal interface for creating alignment object instances.
  */
@@ -22,13 +24,14 @@ package com.intellij.formatting;
 interface AlignmentFactory {
 
   /**
-   * Provides implementation for {@link Alignment#createAlignment(boolean)}
-   *
+   * Provides implementation for {@link Alignment#createAlignment(boolean, Alignment.Anchor)}.
+   * 
    * @param allowBackwardShift    flag that specifies if former aligned block may be shifted to right in order to align to subsequent
    *                              aligned block
-   * @return                      alignment object with the given <code>'allow backward shift'</code> setting
+   * @param anchor                alignment anchor
+   * @return                      alignment object with the given settings
    */
-  Alignment createAlignment(boolean allowBackwardShift);
+  Alignment createAlignment(boolean allowBackwardShift, @NotNull Alignment.Anchor anchor);
 
   /**
    * Provides 
