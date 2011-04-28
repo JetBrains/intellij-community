@@ -535,7 +535,9 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                                        getProjectPath() + "/m2/src/main/java",
                                        getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
     assertRuntimeProductionSearchScope("m1",
-                                       getProjectPath() + "/m1/src/main/java");
+                                       getProjectPath() + "/m1/src/main/java",
+                                       getProjectPath() + "/m2/src/main/java",
+                                       getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar");
     assertAllTestsSearchScope("m1",
                               getProjectPath() + "/m1/src/main/java",
                               getProjectPath() + "/m1/src/test/java",
@@ -683,7 +685,8 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                                        getProjectPath() + "/m2/src/main/java",
                                        getRepositoryPath() + "/jmock/jmock/1.0/jmock-1.0.jar");
     assertRuntimeProductionSearchScope("m2",
-                                       getProjectPath() + "/m2/src/main/java");
+                                       getProjectPath() + "/m2/src/main/java",
+                                       getRepositoryPath() + "/jmock/jmock/1.0/jmock-1.0.jar");
     assertAllTestsSearchScope("m2",
                               getProjectPath() + "/m2/src/main/java",
                               getProjectPath() + "/m2/src/test/java",
