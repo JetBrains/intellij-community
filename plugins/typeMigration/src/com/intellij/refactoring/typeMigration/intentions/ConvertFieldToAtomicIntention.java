@@ -7,6 +7,7 @@ package com.intellij.refactoring.typeMigration.intentions;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -55,6 +56,10 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      System.out.println("ConvertFieldToAtomicIntention.isAvailable");
+    }
+
     PsiVariable psiVariable = PsiTreeUtil.getParentOfType(element, PsiField.class);
     if (psiVariable == null) psiVariable = PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class);
     if (psiVariable == null || psiVariable instanceof PsiResourceVariable) return false;
@@ -71,10 +76,19 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
           return false;
         }
       }
-    } else if (!myFromToMap.containsKey(psiType)) {
+    }
+    else if (!myFromToMap.containsKey(psiType)) {
       return false;
     }
-    return AllowedApiFilterExtension.isClassAllowed(AtomicReference.class.getName(), element);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      System.out.println("ConvertFieldToAtomicIntention.isAvailable2");
+    }
+    boolean classAllowed = AllowedApiFilterExtension.isClassAllowed(AtomicReference.class.getName(), element);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      System.out.println("classAllowed = " + classAllowed);
+    }
+
+    return classAllowed;
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
