@@ -49,7 +49,8 @@ public class VariableInIncompleteCodeSearcher extends QueryExecutorBase<PsiRefer
       public boolean execute(final PsiElement element) {
         if (element instanceof PsiJavaCodeReferenceElement) {
           final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element;
-          if (name.equals(ref.getCanonicalText()) && ref.resolve() == null && ref.advancedResolve(true).getElement() == refElement) {
+          if (!ref.isQualified() && name.equals(ref.getText()) &&
+              ref.resolve() == null && ref.advancedResolve(true).getElement() == refElement) {
             consumer.process(ref);
           }
         }
