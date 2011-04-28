@@ -15,6 +15,7 @@
  */
 package com.intellij.profile.codeInspection;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInspection.InspectionProfile;
@@ -23,6 +24,7 @@ import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
@@ -37,11 +39,12 @@ import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * User: anna
@@ -58,7 +61,7 @@ import java.util.Set;
     }
 )
 public class InspectionProjectProfileManager extends DefaultProjectProfileManager implements SeverityProvider, ProjectComponent, PersistentStateComponent<Element> {
-  private final Map<String, InspectionProfileWrapper>  myName2Profile = new HashMap<String, InspectionProfileWrapper>();
+  private final Map<String, InspectionProfileWrapper>  myName2Profile = new ConcurrentHashMap<String, InspectionProfileWrapper>();
   private final SeverityRegistrar mySeverityRegistrar;
   private TogglePopupHintsPanel myTogglePopupHintsPanel;
 
@@ -107,7 +110,11 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     return getInspectionProfile();
   }
 
-  @NotNull
+  public boolean isProfileLoaded() {
+    return myName2Profile.containsKey(getInspectionProfile().getName());
+  }
+
+  @Nullable
   public InspectionProfileWrapper getProfileWrapper(){
     final InspectionProfile profile = getInspectionProfile();
     final String profileName = profile.getName();
@@ -149,7 +156,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
     myTogglePopupHintsPanel = new TogglePopupHintsPanel(myProject);
     statusBar.addWidget(myTogglePopupHintsPanel, myProject);
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         final Set<Profile> profiles = new HashSet<Profile>();
         profiles.add(getProjectProfileImpl());
@@ -161,6 +168,13 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
             for (Profile profile : profiles) {
               initProfileWrapper(profile);
             }
+            //restart daemon when profiles are ready
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                DaemonCodeAnalyzer.getInstance(myProject).restart();
+              }
+            });
           }
         };
         if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
