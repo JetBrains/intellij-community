@@ -84,7 +84,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
     if (baselineVersionSeparator > 0) {
       try {
         final String baselineVersionString = code.substring(0, baselineVersionSeparator);
-        if (baselineVersionString.isEmpty()) return null;
+        if (baselineVersionString.trim().isEmpty()) return null;
         baselineVersion = Integer.parseInt(baselineVersionString);
         code = code.substring(baselineVersionSeparator + 1);
       }
