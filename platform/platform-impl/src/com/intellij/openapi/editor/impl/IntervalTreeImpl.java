@@ -88,20 +88,27 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     }
 
     public boolean hasAliveKey(boolean purgeDead) {
+      boolean hasAliveInterval = false;
       for (int i = intervals.size() - 1; i >= 0; i--) {
         Getable<T> interval = intervals.get(i);
-        if (interval.get() != null) return true;
+        if (interval.get() != null) {
+          hasAliveInterval = true;
+          if (purgeDead) {
+            continue;
+          }
+          else {
+            break;
+          }
+        }
         if (purgeDead) {
           assertUnderWriteLock();
-          intervals.remove(i);
-          assert keySize > 0 : keySize;
-          keySize--;
+          removeIntervalInternal(i);
         }
       }
-      return false;
+      return hasAliveInterval;
     }
 
-    // removes interval and the node, if node become empty
+    // removes interval and the node, if node became empty
     // returns true if node was removed
     public boolean removeInterval(@NotNull T key) {
       checkBelongsToTheTree(key, true);
@@ -110,9 +117,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
         Getable<T> interval = intervals.get(i);
         T t = interval.get();
         if (t == key) {
-          intervals.remove(i);
-          assert keySize > 0 : keySize;
-          keySize--;
+          removeIntervalInternal(i);
           if (intervals.isEmpty()) {
             removeNode(this);
             return true;
@@ -122,6 +127,12 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       }
       assert false: "interval not found: "+key +"; "+ intervals;
       return false;
+    }
+
+    public void removeIntervalInternal(int i) {
+      intervals.remove(i);
+      assert keySize > 0 : keySize;
+      keySize--;
     }
 
     public void addInterval(@NotNull T interval) {
