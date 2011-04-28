@@ -15,4 +15,9 @@
     <line>51</line>
   <description>"Name 'i' can be not defined"</description>
   </problem>
+  <problem>
+    <file>test.py</file>
+    <line>77</line>
+    <description>"Local variable 'z' might be referenced before assignment"</description>
+  </problem>
 </problems>
