@@ -92,17 +92,20 @@ public interface Notifications {
         return;
       }
 
-      FrameStateManager.getInstance().getApplicationActive().doWhenDone(new Runnable() {
-        @Override
-        public void run() {
-          Application app = ApplicationManager.getApplication();
-          final MessageBus bus =
-            project == null ? (app.isDisposed() ? null : app.getMessageBus()) : (project.isDisposed() ? null : project.getMessageBus());
-          if (bus != null) {
-            notifyLaterIfNeeded(bus, fun);
+      FrameStateManager frameStateManager = FrameStateManager.getInstance();
+      if (frameStateManager != null) {
+        frameStateManager.getApplicationActive().doWhenDone(new Runnable() {
+          @Override
+          public void run() {
+            Application app = ApplicationManager.getApplication();
+            final MessageBus bus =
+              project == null ? app.isDisposed() ? null : app.getMessageBus() : project.isDisposed() ? null : project.getMessageBus();
+            if (bus != null) {
+              notifyLaterIfNeeded(bus, fun);
+            }
           }
-        }
-      });
+        });
+      }
     }
 
     private static void notifyLaterIfNeeded(final MessageBus bus,
