@@ -1,5 +1,5 @@
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
-from pydev.django_debug import DjangoLineBreakpoint
+from django_debug import DjangoLineBreakpoint
 from pydevd_constants import * #@UnusedWildImport
 from pydevd_breakpoints import * #@UnusedWildImport
 
@@ -1137,7 +1137,6 @@ def settrace(host='localhost', stdoutToServer=False, stderrToServer=False, port=
 
 if __name__ == '__main__':
     sys.stderr.write("pydev debugger: starting\n")
-    sys.stderr.flush()
     # parse the command line. --file is our last argument that is required
     try:
         setup = processCommandLine(sys.argv)
@@ -1171,5 +1170,6 @@ if __name__ == '__main__':
     debugger.connect(setup['client'], setup['port'])
 
     connected = True #Mark that we're connected when started from inside eclipse.
+
     debugger.run(setup['file'], None, None)
 

@@ -188,12 +188,12 @@ public class PySkeletonRefresher {
     cleanUpSkeletons(skel_dir);
 
     indicate(PyBundle.message("sdk.gen.updating.$0", readable_path));
-    List<Triplet> skel_errors = updateOrCreateSkeletons(home_path, generator_version, checker, binaries_output, blacklist);
+    List<UpdateResult> skel_errors = updateOrCreateSkeletons(home_path, generator_version, checker, binaries_output, blacklist);
 
     if (skel_errors.size() > 0) {
       indicateMinor(BLACKLIST_FILE_NAME);
-      for (Triplet error : skel_errors) {
-        error_list.add(error.getName());
+      for (UpdateResult error : skel_errors) {
+        if (error.isFresh()) error_list.add(error.getName());
         blacklist.put(error.getPath(), new Pair<Integer, Long>(generator_version, error.getTimestamp()));
       }
       storeBlacklist(skel_dir, blacklist);
@@ -369,15 +369,22 @@ public class PySkeletonRefresher {
     return deleted;
   }
 
-  private static class Triplet {
+  private static class UpdateResult {
     private final String myPath;
     private final String myName;
-    private final Long myTimestamp;
+    private final long myTimestamp;
 
-    private Triplet(String name, String path, Long timestamp) {
+    public boolean isFresh() {
+      return myIsFresh;
+    }
+
+    private final boolean myIsFresh;
+
+    private UpdateResult(String name, String path, long timestamp, boolean fresh) {
       myName = name;
       myPath = path;
       myTimestamp = timestamp;
+      myIsFresh = fresh;
     }
 
     public String getName() {
@@ -402,12 +409,12 @@ public class PySkeletonRefresher {
    * @param binaries  output of generator3 -L, list of prospective binary modules
    * @return blacklist data; whatever was not generated successfully is put here.
    */
-  private List<Triplet> updateOrCreateSkeletons(
+  private List<UpdateResult> updateOrCreateSkeletons(
     final String binaryPath, int generator_version,
     SkeletonVersionChecker checker, List<String> binaries,
     Map<String, Pair<Integer, Long>> blacklist
   ) {
-    List<Triplet> error_list = new SmartList<Triplet>();
+    List<UpdateResult> error_list = new SmartList<UpdateResult>();
     Iterator<String> bin_iter = binaries.iterator();
     bin_iter.next(); // skip version number. if it weren't here, we'd already die up in regenerateSkeletons()
     while (bin_iter.hasNext()) {
@@ -445,7 +452,7 @@ public class PySkeletonRefresher {
             long failed_timestamp = version_info.getSecond();
             must_rebuild &= failed_generator_version < generator_version || failed_timestamp < lib_file_timestamp;
             if (! must_rebuild) { // we're still failing to rebuild, it, keep it in blacklist
-              error_list.add(new Triplet(module_name, module_lib_name, lib_file_timestamp));
+              error_list.add(new UpdateResult(module_name, module_lib_name, lib_file_timestamp, false));
             }
           }
         }
@@ -453,7 +460,7 @@ public class PySkeletonRefresher {
           indicateMinor(module_name);
           LOG.info("Skeleton for " + module_name);
           if (!generateSkeleton(module_name, module_lib_name, null)) { // NOTE: are assembly refs always empty for built-ins?
-            error_list.add(new Triplet(module_name, module_lib_name, lib_file_timestamp));
+            error_list.add(new UpdateResult(module_name, module_lib_name, lib_file_timestamp, true));
           }
         }
       }

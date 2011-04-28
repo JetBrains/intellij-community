@@ -168,8 +168,8 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
         }
 
         final String docString = PyUtil.strValue(func.getDocStringExpression());
-        if (docString != null) {
-          StructuredDocString epydocString = StructuredDocString.parse(docString);
+        StructuredDocString epydocString = StructuredDocString.parse(docString);
+        if (epydocString != null) {
           String typeName = epydocString.getParamType(getName());
           if (typeName != null) {
             return PyTypeParser.getTypeByName(this, typeName);

@@ -1,8 +1,8 @@
 import inspect
-from pydev.pydevd_comm import CMD_SET_BREAK
-from pydev.pydevd_constants import DJANGO_SUSPEND, GetThreadId
-from pydev.pydevd_file_utils import NormFileToServer
-from pydev.runfiles import DictContains
+from pydevd_comm import CMD_SET_BREAK
+from pydevd_constants import DJANGO_SUSPEND, GetThreadId
+from pydevd_file_utils import NormFileToServer
+from runfiles import DictContains
 from pydevd_breakpoints import LineBreakpoint
 import traceback
 

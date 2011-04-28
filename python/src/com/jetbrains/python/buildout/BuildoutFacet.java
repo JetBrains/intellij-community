@@ -6,9 +6,9 @@ import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -19,6 +19,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.buildout.config.BuildoutCfgLanguage;
 import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgFile;
+import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -39,7 +40,7 @@ import java.util.regex.Pattern;
  * User: dcheryasov
  * Date: Jul 25, 2010 3:23:50 PM
  */
-public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements PythonPathContributingFacet {
+public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements PythonPathContributingFacet, LibraryContributingFacet {
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.buildout.BuildoutFacet");
   @NonNls public static final String BUILDOUT_CFG = "buildout.cfg";
@@ -71,7 +72,9 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
       if (eggs != null && eggs.isDirectory()) {
         VirtualFile bin = baseDir.findChild("bin");
         if (bin != null && bin.isDirectory()) {
-          bin.refresh(false, false);
+          if (ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed()) {
+            bin.refresh(false, false);
+          }
           final String exe;
           if (SystemInfo.isWindows || SystemInfo.isOS2) {
             exe = "buildout.exe";
@@ -108,7 +111,18 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
 
   @Override
   public void initFacet() {
+    updateLibrary();
+  }
+
+  @Override
+  public void updateLibrary() {
     updatePaths();
+    BuildoutConfigurable.attachLibrary(getModule());
+  }
+
+  @Override
+  public void removeLibrary() {
+    BuildoutConfigurable.detachLibrary(getModule());
   }
 
   public void updatePaths() {
@@ -274,7 +288,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
     return null;
   }
   
-  public static List<File> getScripts(Project project, @Nullable BuildoutFacet buildoutFacet) {
+  public static List<File> getScripts(@Nullable BuildoutFacet buildoutFacet, final VirtualFile baseDir) {
     File rootPath = null;
     if (buildoutFacet != null) {
       final File configIOFile = buildoutFacet.getConfigFile();
@@ -283,7 +297,6 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
       }
     }
     if (rootPath == null || !rootPath.exists()) {
-      final VirtualFile baseDir = project.getBaseDir();
       if (baseDir != null) {
         rootPath = new File(baseDir.getPath());
       }
@@ -307,9 +320,9 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
   }
 
   @Nullable
-  public static File findScript(Project project, @Nullable BuildoutFacet buildoutFacet, String name) {
+  public static File findScript(@Nullable BuildoutFacet buildoutFacet, String name, final VirtualFile baseDir) {
     String scriptName = SystemInfo.isWindows ? name + SCRIPT_SUFFIX : name;
-    final List<File> scripts = getScripts(project, buildoutFacet);
+    final List<File> scripts = getScripts(buildoutFacet, baseDir);
     for (File script : scripts) {
       if (FileUtil.getNameWithoutExtension(script.getName()).equals(scriptName)) {
         return script;

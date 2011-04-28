@@ -30,7 +30,7 @@ public class BuildoutFacetConfigurator implements DirectoryProjectConfigurator {
         final VirtualFile runner = BuildoutFacet.getRunner(baseDir);
         if (runner != null) {
           // TODO parse buildout.cfg and find out the part to use for the default script
-          final File script = BuildoutFacet.findScript(project, null, "buildout");
+          final File script = BuildoutFacet.findScript(null, "buildout", project.getBaseDir());
           if (script != null) {
             final ProjectFacetManager facetManager = ProjectFacetManager.getInstance(module.getProject());
             final BuildoutFacetConfiguration config = facetManager.createDefaultConfiguration(BuildoutFacetType.getInstance());

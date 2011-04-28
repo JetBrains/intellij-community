@@ -2,7 +2,11 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.XNamedValue;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.XValueModifier;
+import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,12 +14,11 @@ import javax.swing.*;
 
 // todo: load long lists by parts
 // todo: null modifier for modify modules, class objects etc.
-public class PyDebugValue extends XValue {
+public class PyDebugValue extends XNamedValue {
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.PyDebugValue");
   public static final int MAX_VALUE = 512;
 
-  private final String myName;
   private String myTempName = null;
   private final String myType;
   private final String myValue;
@@ -30,17 +33,13 @@ public class PyDebugValue extends XValue {
 
   public PyDebugValue(final String name, final String type, final String value, final boolean container,
                       boolean errorOnEval, final PyDebugValue parent, final IPyDebugProcess debugProcess) {
-    myName = name;
+    super(name);
     myType = type;
     myValue = value;
     myContainer = container;
     myErrorOnEval = errorOnEval;
     myParent = parent;
     myDebugProcess = debugProcess;
-  }
-
-  public String getName() {
-    return myName;
   }
 
   public String getTempName() {

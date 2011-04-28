@@ -1,7 +1,5 @@
-from pydev.django_debug import DjangoTemplateFrame, DjangoLineBreakpoint, is_django_render_call, get_template_file_name, get_template_line, is_django_suspended, suspend_django
-import pydevd_vars
+from django_debug import is_django_render_call, get_template_file_name, get_template_line, is_django_suspended, suspend_django
 from pydevd_comm import * #@UnusedWildImport
-from pydevd_constants import * #@UnusedWildImport
 from pydevd_breakpoints import * #@UnusedWildImport
 import traceback #@Reimport
 import os.path

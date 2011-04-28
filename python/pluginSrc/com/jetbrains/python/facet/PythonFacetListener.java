@@ -24,15 +24,15 @@ public class PythonFacetListener implements ModuleComponent {
     myConnection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerAdapter() {
       @Override
       public void beforeFacetRemoved(@NotNull Facet facet) {
-        if (facet instanceof PythonFacet) {
-          ((PythonFacet) facet).removeSdkLibrary();
+        if (facet instanceof LibraryContributingFacet) {
+          ((LibraryContributingFacet) facet).removeLibrary();
         }
       }
 
       @Override
       public void facetConfigurationChanged(@NotNull Facet facet) {
-        if (facet instanceof PythonFacet) {
-          ((PythonFacet) facet).updateSdkLibrary();
+        if (facet instanceof LibraryContributingFacet) {
+          ((LibraryContributingFacet) facet).updateLibrary();
         }
       }
     });

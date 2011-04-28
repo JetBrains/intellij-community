@@ -2,7 +2,6 @@ package com.jetbrains.python.buildout;
 
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
-import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -10,17 +9,12 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.NonDefaultProjectConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.OrderEntryUtil;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.python.facet.FacetLibraryConfigurator;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,10 +22,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * A silly configurable to add buildout facet configurator to PyCharm
@@ -135,7 +126,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
     if (facet_is_desired && ! got_facet) addFacet(mySettingsPanel.getConfiguration());
     if (! facet_is_desired && got_facet) removeFacet(facet);
     if (facet_is_desired) attachLibrary(myModule);
-    else detachLibrary();
+    else detachLibrary(myModule);
   }
 
   public static void attachLibrary(final Module module) {
@@ -144,76 +135,11 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
       return;
     }
     final List<String> paths = facet.getConfiguration().getPaths();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        // add all paths to library
-        final LibraryOrderEntry orderEntry = findEggsOrderEntry(ModuleRootManager.getInstance(module));
-        if (orderEntry != null) {
-          // update existing
-          Library lib = orderEntry.getLibrary();
-          if (lib != null) {
-            fillLibrary(module.getProject(), lib, paths);
-            return;
-          }
-        }
-        // create new
-        final ModifiableRootModel root_model = ModuleRootManager.getInstance(module).getModifiableModel();
-        Library lib = LibraryTablesRegistrar
-          .getInstance()
-          .getLibraryTable(root_model.getProject())
-          .createLibrary(BUILDOUT_LIB_NAME)
-        ;
-        fillLibrary(module.getProject(), lib, paths);
-        root_model.addLibraryEntry(lib);
-        root_model.commit();
-      }
-    });
+    FacetLibraryConfigurator.attachLibrary(module, null, BUILDOUT_LIB_NAME, paths);
   }
 
-  private static void fillLibrary(Project project, Library lib, List<String> paths) {
-    Library.ModifiableModel modifiableModel = lib.getModifiableModel();
-    for (String root : lib.getUrls(OrderRootType.CLASSES)) {
-      modifiableModel.removeRoot(root, OrderRootType.CLASSES);
-    }
-    Set<VirtualFile> roots = new HashSet<VirtualFile>();
-    ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
-    Collections.addAll(roots, rootManager.getContentRoots());
-    Collections.addAll(roots, rootManager.getContentSourceRoots());
-    if (paths != null) {
-      for (String dir : paths) {
-        VirtualFile pathEntry = LocalFileSystem.getInstance().findFileByPath(dir);
-        if (pathEntry != null && !pathEntry.isDirectory() && pathEntry.getFileType() instanceof ArchiveFileType) {
-          pathEntry = JarFileSystem.getInstance().getJarRootForLocalFile(pathEntry);
-        }
-        // buildout includes source root of project in paths; don't add it as library home
-        if (pathEntry != null && roots.contains(pathEntry)) {
-          continue;
-        }
-        if (pathEntry != null) {
-          modifiableModel.addRoot(pathEntry, OrderRootType.CLASSES);
-        }
-        else {
-          modifiableModel.addRoot("file://"+dir, OrderRootType.CLASSES);
-        }
-      }
-    }
-    modifiableModel.commit();
-  }
-
-  private void detachLibrary() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        // remove the library                                           
-        final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        OrderEntry entry = findEggsOrderEntry(model);
-        OrderEntryUtil.detachModuleLibrary(model, entry);
-      }
-    });
-  }
-
-  @Nullable
-  private static LibraryOrderEntry findEggsOrderEntry(ModuleRootModel model) {
-    return OrderEntryUtil.findLibraryOrderEntry(model, BUILDOUT_LIB_NAME);
+  public static void detachLibrary(final Module module) {
+    FacetLibraryConfigurator.detachLibrary(module, BUILDOUT_LIB_NAME);
   }
 
   private void addFacet(BuildoutFacetConfiguration config) {

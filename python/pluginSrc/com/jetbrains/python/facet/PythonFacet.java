@@ -12,14 +12,13 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public class PythonFacet extends Facet<PythonFacetConfiguration> {
+public class PythonFacet extends Facet<PythonFacetConfiguration> implements LibraryContributingFacet {
   public static final FacetTypeId<PythonFacet> ID = new FacetTypeId<PythonFacet>("python");
 
   @NonNls
@@ -30,7 +29,7 @@ public class PythonFacet extends Facet<PythonFacetConfiguration> {
     super(facetType, module, name, configuration, underlyingFacet);
   }
 
-  public void updateSdkLibrary() {
+  public void updateLibrary() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final Module module = getModule();
@@ -76,7 +75,7 @@ public class PythonFacet extends Facet<PythonFacetConfiguration> {
     });
   }
 
-  public void removeSdkLibrary() {
+  public void removeLibrary() {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run()  {
         final Module module = getModule();
@@ -105,7 +104,6 @@ public class PythonFacet extends Facet<PythonFacetConfiguration> {
   }
 
   public void initFacet() {
-    super.initFacet();
-    updateSdkLibrary();
+    updateLibrary();
   }
 }
