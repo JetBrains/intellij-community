@@ -4,7 +4,7 @@
 
   <id>Pythonid</id>
   <name>Python</name>
-  <idea-version since-build="106.0" until-build="107.0"/>
+  <idea-version since-build="108.0" until-build="109.0"/>
   <description>Smart editing for Python scripts</description>
   <version>2.6.5</version>
   <depends>com.intellij.modules.ultimate</depends>
