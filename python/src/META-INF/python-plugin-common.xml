@@ -466,9 +466,11 @@
 
     <projectService serviceInterface="com.jetbrains.rest.ReSTService"
                     serviceImplementation="com.jetbrains.rest.ReSTService"/>
-    <completion.contributor language="ReST" implementationClass="com.jetbrains.rest.DirectiveCompletionContributor"/>
-    <completion.contributor language="ReST" implementationClass="com.jetbrains.rest.OptionCompletionContributor"/>
+    <completion.contributor language="ReST" implementationClass="com.jetbrains.rest.completion.DirectiveCompletionContributor"/>
+    <completion.contributor language="ReST" implementationClass="com.jetbrains.rest.completion.OptionCompletionContributor"/>
     <gotoDeclarationHandler implementation="com.jetbrains.rest.RestGotoProvider" order="FIRST"/>
+    <lang.fileViewProviderFactory language="ReST"
+                                  implementationClass="com.jetbrains.rest.RestFileProviderFactory"/>
   </extensions>
 
   <extensionPoints>
