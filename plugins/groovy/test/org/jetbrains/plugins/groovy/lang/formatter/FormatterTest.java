@@ -143,6 +143,7 @@ public class FormatterTest extends GroovyFormatterTestCase {
   }
 
   public void testChainCallWithClosures() throws Throwable { doTest(); }
+  public void testFormatDiamonds() throws Throwable { doTest(); }
 
   public void doTest() throws Throwable {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");

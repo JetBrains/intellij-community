@@ -28,9 +28,11 @@ import org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
@@ -216,6 +218,13 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
     }
 
     if (leftType == CLASS_TYPE_ELEMENT && rightType == mTRIPLE_DOT) {
+      return NO_SPACING;
+    }
+
+    // diamonds
+    if ((rightType == mLT || rightType == mGT) &&
+        right.getParent() instanceof GrCodeReferenceElement &&
+        right.getParent().getParent() instanceof GrNewExpression) {
       return NO_SPACING;
     }
 
