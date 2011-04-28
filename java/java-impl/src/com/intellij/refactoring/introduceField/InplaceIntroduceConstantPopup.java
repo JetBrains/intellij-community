@@ -22,10 +22,6 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -232,34 +228,43 @@ public class InplaceIntroduceConstantPopup {
   }
 
   public static void appendActions(final JComboBox visibilityCombo, final Project project) {
-    final AnAction arrow = new AnAction() {
+    final boolean[] moveFocusBack = new boolean[] {true};
+    visibilityCombo.addFocusListener(new FocusAdapter() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (e.getInputEvent() instanceof KeyEvent) {
-          final int code = ((KeyEvent)e.getInputEvent()).getKeyCode();
-          final int delta = code == KeyEvent.VK_DOWN ? 1 : code == KeyEvent.VK_UP ? -1 : 0;
-          if (delta == 0) return;
-          final int size = visibilityCombo.getModel().getSize();
-          int next = visibilityCombo.getSelectedIndex() + delta;
-          if (next < 0 || next >= size) {
-            if (!UISettings.getInstance().CYCLE_SCROLLING) {
-              return;
-            }
-            next = (next + size) % size;
-          }
-          visibilityCombo.setSelectedIndex(next);
+      public void focusGained(FocusEvent e) {
+        if (!moveFocusBack[0]) {
+          moveFocusBack[0] = true;
+          return;
         }
+        final int size = visibilityCombo.getModel().getSize();
+        int next = visibilityCombo.getSelectedIndex() + 1;
+        if (next < 0 || next >= size) {
+          if (!UISettings.getInstance().CYCLE_SCROLLING) {
+            return;
+          }
+          next = (next + size) % size;
+        }
+        visibilityCombo.setSelectedIndex(next);
+        ToolWindowManager.getInstance(project).activateEditorComponent();
       }
-    };
-    arrow.registerCustomShortcutSet(new CustomShortcutSet(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), null),
-                                                          new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), null)), visibilityCombo);
-
+    });
+    visibilityCombo.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        moveFocusBack[0] = false;
+      }
+    });
     visibilityCombo.addKeyListener(new KeyAdapter() {
       @Override
-      public void keyReleased(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-          ToolWindowManager.getInstance(project).activateEditorComponent();
-        }
+      public void keyPressed(KeyEvent e) {
+        moveFocusBack[0] = true;
+      }
+    });
+    visibilityCombo.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        moveFocusBack[0] = true;
+        ToolWindowManager.getInstance(project).activateEditorComponent();
       }
     });
   }
