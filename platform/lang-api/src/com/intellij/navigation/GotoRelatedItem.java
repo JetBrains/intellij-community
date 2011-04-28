@@ -29,10 +29,15 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class GotoRelatedItem {
+
   private final PsiElement myElement;
 
   public GotoRelatedItem(@NotNull PsiElement element) {
     myElement = element;
+  }
+
+  protected GotoRelatedItem() {
+    myElement = null;
   }
 
   public void navigate() {
@@ -49,7 +54,7 @@ public class GotoRelatedItem {
     return null;
   }
 
-  @NotNull
+  @Nullable
   public PsiElement getElement() {
     return myElement;
   }
