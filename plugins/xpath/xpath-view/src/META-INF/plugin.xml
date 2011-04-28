@@ -87,6 +87,7 @@
     <quoteHandler fileType="XPath2" className="org.intellij.lang.xpath.XPathQuoteHandler" />
     <completion.contributor language="XPath" implementationClass="org.intellij.lang.xpath.completion.XPathCompletionContributor" />
     <completion.contributor language="XPath2" implementationClass="org.intellij.lang.xpath.completion.XPathCompletionContributor" />
+    <typedHandler implementation="org.intellij.lang.xpath.XPathTypedHandler"/>
 
     <fileBasedIndex implementation="org.intellij.lang.xpath.xslt.impl.XsltSymbolIndex" />
     <include.provider implementation="org.intellij.lang.xpath.xslt.impl.XsltIncludeProvider"/>
