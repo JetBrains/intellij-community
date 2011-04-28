@@ -192,7 +192,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
     catch (ParseException e) {
 
-      LOG.error(getTFrameworkPrefix(myTestFrameworkName) + "Parsing error.", e);
+      LOG.error(getTFrameworkPrefix(myTestFrameworkName) + "Error parsing text: ["+text+"]", e);
     }
   }
 
