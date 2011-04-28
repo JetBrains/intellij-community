@@ -105,39 +105,36 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   public synchronized void addSubtreeToUpdate(@NotNull TreeUpdatePass toAdd) {
     if (myReleaseRequested) return;
 
+    toAdd.setBuilder(myTreeBuilder);
+
     assert !toAdd.isExpired();
     
     final AbstractTreeUi ui = myTreeBuilder.getUi();
 
-    if (ui.isUpdatingNow(toAdd.getNode())) {
-      toAdd.expire();
-    }
-    else {
-      for (Iterator<TreeUpdatePass> iterator = myNodeQueue.iterator(); iterator.hasNext();) {
-        final TreeUpdatePass passInQueue = iterator.next();
+    for (Iterator<TreeUpdatePass> iterator = myNodeQueue.iterator(); iterator.hasNext();) {
+      final TreeUpdatePass passInQueue = iterator.next();
 
-        if (toAdd.isUpdateChildren() && toAdd.isUpdateStructure()) {
-          if (passInQueue == toAdd) {
-            toAdd.expire();
-            break;
-          }
-          if (passInQueue.getNode() == toAdd.getNode()) {
-            toAdd.expire();
-            break;
-          }
-          if (toAdd.getNode().isNodeAncestor(passInQueue.getNode())) {
-            toAdd.expire();
-            break;
-          }
-          if (passInQueue.getNode().isNodeAncestor(toAdd.getNode())) {
-            iterator.remove();
-            passInQueue.expire();
-          }
-        } else if (!passInQueue.isUpdateStructure()) {
-          if (passInQueue.getNode().isNodeAncestor(toAdd.getNode()) ) {
-            iterator.remove();
-            passInQueue.expire();
-          }
+      if (toAdd.isUpdateChildren() && toAdd.isUpdateStructure()) {
+        if (passInQueue == toAdd) {
+          toAdd.expire();
+          break;
+        }
+        if (passInQueue.getNode() == toAdd.getNode()) {
+          toAdd.expire();
+          break;
+        }
+        if (toAdd.getNode().isNodeAncestor(passInQueue.getNode())) {
+          toAdd.expire();
+          break;
+        }
+        if (passInQueue.getNode().isNodeAncestor(toAdd.getNode())) {
+          iterator.remove();
+          passInQueue.expire();
+        }
+      } else if (!passInQueue.isUpdateStructure()) {
+        if (passInQueue.getNode().isNodeAncestor(toAdd.getNode()) ) {
+          iterator.remove();
+          passInQueue.expire();
         }
       }
     }

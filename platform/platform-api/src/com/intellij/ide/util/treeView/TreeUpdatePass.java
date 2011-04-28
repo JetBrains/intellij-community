@@ -37,6 +37,7 @@ public class TreeUpdatePass {
 
   private boolean myUpdateChildren = true;
   private boolean myUpdateStructure = true;
+  private AbstractTreeBuilder myBuilder;
 
   public TreeUpdatePass(@NotNull final DefaultMutableTreeNode node, @Nullable final ActiveRunnable before, @Nullable final ActiveRunnable after) {
     myNode = node;
@@ -104,5 +105,9 @@ public class TreeUpdatePass {
 
   public boolean isUpdateStructure() {
     return myUpdateStructure;
+  }
+
+  public void setBuilder(AbstractTreeBuilder treeBuilder) {
+    myBuilder = treeBuilder;
   }
 }

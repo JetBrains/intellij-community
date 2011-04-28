@@ -2686,7 +2686,9 @@ public class AbstractTreeUi {
   private void processNodeActionsIfReady(final DefaultMutableTreeNode node) {
     assertIsDispatchThread();
 
-    if (isNodeBeingBuilt(node)) return;
+    if (isNodeBeingBuilt(node)) {
+      return;
+    }
 
     final Object o = node.getUserObject();
     if (!(o instanceof NodeDescriptor)) return;
