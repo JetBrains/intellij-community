@@ -758,7 +758,7 @@ public class Bar {
     lookup.items.each {
       lookup.list.cellRenderer.getListCellRendererComponent(lookup.list, it, 0, false, false)
     }
-    assert myFixture.lookupElementStrings == ['private', 'protected']
+    assert myFixture.lookupElementStrings.containsAll(['private', 'protected'])
   }
 
 
