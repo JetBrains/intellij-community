@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author peter
@@ -61,7 +62,7 @@ public class LoggingContributor extends NonCodeMembersContributor {
         }
         LightFieldBuilder field = new LightFieldBuilder(fieldName, logger, annotation).setContainingClass(psiClass)
           .setModifiers(PsiModifier.FINAL, PsiModifier.STATIC, PsiModifier.PRIVATE);
-        processor.execute(field, state);
+        ResolveUtil.processElement(processor, field, state);
       }
     }
   }
