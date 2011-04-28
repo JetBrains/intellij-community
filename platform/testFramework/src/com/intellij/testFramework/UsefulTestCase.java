@@ -97,7 +97,7 @@ public abstract class UsefulTestCase extends TestCase {
     if (shouldContainTempFiles()) {
       String testName = getTestName(true);
       if (StringUtil.isEmptyOrSpaces(testName)) testName = "unitTest";
-      myTempDir = ORIGINAL_TEMP_DIR + "/" + testName + PRNG.nextInt(Integer.MAX_VALUE);
+      myTempDir = ORIGINAL_TEMP_DIR + "/" + testName + "_"+ PRNG.nextInt(1000);
       FileUtil.resetCanonicalTempPathCache(myTempDir);
     }
   }
