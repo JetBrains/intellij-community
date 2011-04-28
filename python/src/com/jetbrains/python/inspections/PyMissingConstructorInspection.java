@@ -39,6 +39,7 @@ public class PyMissingConstructorInspection extends PyInspection {
     @Override
     public void visitPyClass(final PyClass node) {
       PsiElement[] superClasses = node.getSuperClassExpressions();
+      String name = node.getName();
       if (superClasses.length == 0 || (superClasses.length == 1 && PyNames.OBJECT.equals(superClasses[0].getText())))
         return;
 
@@ -46,7 +47,7 @@ public class PyMissingConstructorInspection extends PyInspection {
       if (node.isNewStyleClass())
         superNames.push(PyNames.SUPER);
 
-      addSuperNames(superNames, superClasses);
+      addSuperNames(superNames, superClasses, name);
 
       if (!superHasConstructor(node)) return;
       PyFunction initMethod = node.findMethodByName(PyNames.INIT, false);
@@ -59,7 +60,7 @@ public class PyMissingConstructorInspection extends PyInspection {
 
     private static boolean superHasConstructor(PyClass node) {
       Stack<PyClass> st = new Stack<PyClass>();
-      addSuperClasses(st, node.getSuperClasses());
+      addSuperClasses(st, node.getSuperClasses(), node.getName());
 
       while (!st.empty()) {
         if ((st.pop()).findMethodByName(PyNames.INIT, false) != null) {
@@ -68,23 +69,27 @@ public class PyMissingConstructorInspection extends PyInspection {
       }
       return false;
     }
-    private static void addSuperClasses(Stack<PyClass> st, PyClass[] superClasses) {
+    private static void addSuperClasses(Stack<PyClass> st, PyClass[] superClasses, String name) {
       for (PyClass cl : superClasses) {
-        st.push(cl);
-        addSuperClasses(st, cl.getSuperClasses());
+        if (!name.equals(cl.getName())) {
+          st.push(cl);
+          addSuperClasses(st, cl.getSuperClasses(), name);
+        }
       }
     }
 
-    private static void addSuperNames(Stack<String> st, PsiElement[] superClasses) {
+    private static void addSuperNames(Stack<String> st, PsiElement[] superClasses, String name) {
       for (PsiElement cl : superClasses) {
-        if (!PyNames.OBJECT.equals(cl.getText()))
-          st.push(cl.getText());
+        if (!name.equals(cl.getText())) {
+          if (!PyNames.OBJECT.equals(cl.getText()))
+            st.push(cl.getText());
 
-        if (cl instanceof PyReferenceExpression) {
-          PyReferenceExpression ref = (PyReferenceExpression) cl;
-          final PsiElement result = ref.getReference(PyResolveContext.noProperties()).resolve();
-          if (result instanceof PyClass)
-            addSuperNames(st, ((PyClass)result).getSuperClassExpressions());
+          if (cl instanceof PyReferenceExpression) {
+            PyReferenceExpression ref = (PyReferenceExpression) cl;
+            final PsiElement result = ref.getReference(PyResolveContext.noProperties()).resolve();
+            if (result instanceof PyClass)
+              addSuperNames(st, ((PyClass)result).getSuperClassExpressions(), name);
+          }
         }
       }
     }
