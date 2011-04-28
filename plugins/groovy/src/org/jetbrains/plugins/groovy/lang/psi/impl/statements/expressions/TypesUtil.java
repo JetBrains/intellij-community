@@ -406,7 +406,7 @@ public class TypesUtil {
         if (signature != null) {
           GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());
           final LanguageLevel languageLevel = ComparatorUtil.max(clType1.getLanguageLevel(), clType2.getLanguageLevel());
-          return GrClosureType.create(signature, manager, scope, languageLevel, true);
+          return GrClosureType.create(signature, scope, JavaPsiFacade.getInstance(manager.getProject()), languageLevel, true);
         }
       }
     }
