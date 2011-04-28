@@ -20,30 +20,47 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileEditor.FileEditor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author Konstantin Bulenkov
+ * @author max
+ */
 public interface EditorSource {
-  FragmentSide getSide();
-  DiffContent getContent();
+  @Nullable FragmentSide getSide();
+
+  @Nullable DiffContent getContent();
+
+  @Nullable EditorEx getEditor();
+
+  @Nullable FileEditor getFileEditor();
+
+  void addDisposable(@NotNull Disposable disposable);
 
   EditorSource NULL = new EditorSource() {
     public EditorEx getEditor() {
       return null;
     }
 
-    public void addDisposable(Disposable disposable) {
+    @Override
+    public FileEditor getFileEditor() {
+      return null;
+    }
+
+    public void addDisposable(@NotNull Disposable disposable) {
       Logger.getInstance("#com.intellij.openapi.diff.impl.EditorSource").assertTrue(false);
     }
 
+    @Nullable
     public FragmentSide getSide() {
       return null;
     }
 
+    @Nullable
     public DiffContent getContent() {
       return null;
     }
   };
-
-  EditorEx getEditor();
-
-  void addDisposable(Disposable disposable);
 }
