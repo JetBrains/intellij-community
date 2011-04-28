@@ -34,10 +34,6 @@ import java.util.concurrent.atomic.*;
 public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction implements LowPriorityAction{
   private static final Logger LOG = Logger.getInstance("#" + ConvertFieldToAtomicIntention.class.getName());
 
-  public ConvertFieldToAtomicIntention() {
-    System.out.println("ConvertFieldToAtomicIntention.ConvertFieldToAtomicIntention");
-  }
-
   private final Map<PsiType, String> myFromToMap = new HashMap<PsiType, String>();
   {
     myFromToMap.put(PsiType.INT, AtomicInteger.class.getName());
