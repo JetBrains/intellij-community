@@ -15,10 +15,12 @@
  */
 package com.intellij.navigation;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -34,5 +36,12 @@ public abstract class GotoRelatedProvider {
   public static final ExtensionPointName<GotoRelatedProvider> EP_NAME = ExtensionPointName.create("com.intellij.gotoRelatedProvider");
 
   @NotNull
-  public abstract List<? extends GotoRelatedItem> getItems(@NotNull PsiElement context);
+  public List<? extends GotoRelatedItem> getItems(@NotNull PsiElement psiElement) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  public List<? extends GotoRelatedItem> getItems(DataContext context) {
+    return Collections.emptyList();
+  }
 }
