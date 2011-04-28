@@ -877,8 +877,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     for (ParameterTablePanel.VariableData data : datas) {
       final List<PsiElement> parameterValue = match.getParameterValues(data.variable);
-      for (PsiElement val : parameterValue) {
-        methodCallExpression.getArgumentList().add(val);
+      if (parameterValue != null) {
+        for (PsiElement val : parameterValue) {
+          methodCallExpression.getArgumentList().add(val);
+        }
       }
     }
     return match.replace(myExtractedMethod, methodCallExpression, myOutputVariable);
