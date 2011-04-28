@@ -23,6 +23,7 @@
     <projectService serviceInterface="com.intellij.coverage.JavaCoverageAnnotator"
                     serviceImplementation="com.intellij.coverage.JavaCoverageAnnotator"/>
     <projectConfigurable implementation="com.intellij.coverage.CoverageOptionsConfigurable"/>
+    <projectService serviceImplementation="com.intellij.coverage.CoverageOptionsProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.theoryinpractice.testng">
@@ -36,7 +37,6 @@
       <interface-class>com.intellij.coverage.CoverageDataManager</interface-class>
       <implementation-class>com.intellij.coverage.CoveragePluginDataManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
-      <skipForDefaultProject/>
     </component>
   </project-components>
   <actions>
