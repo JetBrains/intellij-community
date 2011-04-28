@@ -17,13 +17,12 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -249,30 +248,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
 
   @Override
   public ItemPresentation getPresentation() {
-    return new ItemPresentation() {
-      public String getPresentableText() {
-        return getName();
-      }
-
-      @Nullable
-      public String getLocationString() {
-        PsiClass clazz = getContainingClass();
-        if (clazz == null) return "";
-        String name = clazz.getQualifiedName();
-        assert name != null;
-        return "(in " + name + ")";
-      }
-
-      @Nullable
-      public Icon getIcon(boolean open) {
-        return GrFieldImpl.this.getIcon(ICON_FLAG_VISIBILITY | ICON_FLAG_READ_STATUS);
-      }
-
-      @Nullable
-      public TextAttributesKey getTextAttributesKey() {
-        return null;
-      }
-    };
+    return JavaPresentationUtil.getFieldPresentation(this);
   }
 
   public PsiElement getOriginalElement() {
