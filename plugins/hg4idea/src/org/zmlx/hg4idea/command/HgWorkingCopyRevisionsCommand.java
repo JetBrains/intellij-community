@@ -158,7 +158,7 @@ public class HgWorkingCopyRevisionsCommand {
    * @param silent   pass true if this command shouldn't be mentioned in the VCS console.
    * @return List of revisions.
    */
-  private List<HgRevisionNumber> getRevisions(@NotNull VirtualFile repo,
+  public @NotNull List<HgRevisionNumber> getRevisions(@NotNull VirtualFile repo,
                                               @NotNull String command,
                                               @Nullable FilePath file,
                                               @Nullable HgRevisionNumber revision,
