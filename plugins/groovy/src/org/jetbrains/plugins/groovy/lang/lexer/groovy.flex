@@ -146,7 +146,7 @@ mREGEX_BEGIN = "/""$"
    |  "/" ([^"/""$"] | {mREGEX_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT}"$"
 mREGEX_CONTENT = ({mREGEX_ESC}
    | {ESCAPPED_REGEX_SEP}
-   | [^"/"\r\n"$"])*
+   | [^"/""$"])*
 
 mREGEX_LITERAL = "/" ([^"/"\n\r"$"] | {mREGEX_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT} ("$""/" | "/")
 
@@ -565,7 +565,7 @@ mGSTRING_LITERAL = \"\"
 {mREGEX_BEGIN}                            {  yybegin(KING_STATE);
                                              return mREGEX_BEGIN; }
 
-"/" ([^\""$"\n\r"/"] | {mREGEX_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT} { return mWRONG_REGEX_LITERAL; }
+"/" ([^\"\$\/] | {mREGEX_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT} { return mWRONG_REGEX_LITERAL; }
 
 [^]                                       {  yypushback(1);
                                              if (blockStack.isEmpty()){

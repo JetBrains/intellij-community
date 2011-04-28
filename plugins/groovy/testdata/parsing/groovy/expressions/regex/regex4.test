@@ -2,12 +2,9 @@
 /abcdef
 -----
 Groovy script
-  Literal
-    PsiElement(wrong regex)('/asd')
-    PsiErrorElement:Wrong string literal
-      <empty list>
-  PsiElement(new line)('\n')
-  Literal
-    PsiElement(wrong regex)('/abcdef')
-    PsiErrorElement:Wrong string literal
-      <empty list>
+  Call expression
+    Literal
+      PsiElement(regexp)('/asd\n/')
+    Command arguments
+      Reference expression
+        PsiElement(identifier)('abcdef')
