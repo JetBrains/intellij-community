@@ -76,7 +76,7 @@ public class ReferenceElement implements GroovyElementTypes {
   }
 
   public static ReferenceElementResult parseForPackage(PsiBuilder builder) {
-    return parse(builder, false, false, false, true);
+    return parse(builder, false, false, false, false);
   }
 
   
@@ -89,21 +89,11 @@ public class ReferenceElement implements GroovyElementTypes {
     return parse(builder, isUpperCase, true, false, false);
   }
 
-//  public static GroovyElementType parse(PsiBuilder builder) {
-//    return parse(builder, false, false, false, false);
-//  }
-
-  public static ReferenceElementResult parse(PsiBuilder builder, boolean checkUpperCase, boolean parseTypeArgs, boolean forImport, boolean forPackage) {
+  public static ReferenceElementResult parse(PsiBuilder builder,
+                                             boolean checkUpperCase,
+                                             boolean parseTypeArgs,
+                                             boolean forImport, final boolean allowDiamond) {
     PsiBuilder.Marker internalTypeMarker = builder.mark();
-
-//    char firstChar;
-//    if (builder.getTokenText() != null) firstChar = builder.getTokenText().charAt(0);
-//    else return WRONGWAY;
-
-//    if (checkUpperCase && !Character.isUpperCase(firstChar)) {
-//      internalTypeMarker.rollbackTo();
-//      return WRONGWAY;
-//    }
 
     String lastIdentifier = builder.getTokenText();
 
@@ -113,7 +103,14 @@ public class ReferenceElement implements GroovyElementTypes {
     }
     boolean hasTypeArguments = false;
     if (parseTypeArgs) {
-      hasTypeArguments = TypeArguments.parse(builder);
+      if (allowDiamond && ParserUtils.lookAhead(builder, mLT, mGT)) {
+        builder.advanceLexer();
+        builder.advanceLexer();
+        hasTypeArguments = true;
+      } else {
+        hasTypeArguments = TypeArguments.parse(builder);
+      }
+
     }
 
     internalTypeMarker.done(REFERENCE_ELEMENT);
