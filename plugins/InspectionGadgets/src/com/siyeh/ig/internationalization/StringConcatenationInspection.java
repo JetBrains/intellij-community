@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,17 +38,20 @@ import java.util.Collection;
 
 public class StringConcatenationInspection extends BaseInspection {
 
-    /** @noinspection PublicField*/
+    @SuppressWarnings({"PublicField"})
     public boolean ignoreAsserts = false;
 
-    /** @noinspection PublicField*/
+    @SuppressWarnings({"PublicField"})
     public boolean ignoreSystemOuts = false;
 
-    /** @noinspection PublicField*/
+    @SuppressWarnings({"PublicField"})
     public boolean ignoreSystemErrs = false;
 
     @SuppressWarnings({"PublicField"})
     public boolean ignoreThrowableArguments = false;
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreConstantInitializers = false;
 
     @Override
     @NotNull
@@ -133,6 +136,9 @@ public class StringConcatenationInspection extends BaseInspection {
         optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
                 "string.concatenation.ignore.exceptions.option"),
                 "ignoreThrowableArguments");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "string.concatenation.ignore.constant.initializers.option"),
+                "ignoreConstantInitializers");
         return optionsPanel;
     }
 
@@ -208,6 +214,24 @@ public class StringConcatenationInspection extends BaseInspection {
                     final PsiType type = newExpression.getType();
                     if (type != null && InheritanceUtil.isInheritor(type,
                             "java.lang.Throwable")) {
+                        return;
+                    }
+                }
+            }
+            if (ignoreConstantInitializers) {
+                PsiElement parent = expression.getParent();
+                while (parent instanceof PsiBinaryExpression) {
+                    parent = parent.getParent();
+                }
+                if (parent instanceof PsiField) {
+                    final PsiField field = (PsiField) parent;
+                    if (field.hasModifierProperty(PsiModifier.STATIC) &&
+                            field.hasModifierProperty(PsiModifier.FINAL)) {
+                        return;
+                    }
+                    final PsiClass containingClass = field.getContainingClass();
+                    if (containingClass != null &&
+                            containingClass.isInterface()) {
                         return;
                     }
                 }
