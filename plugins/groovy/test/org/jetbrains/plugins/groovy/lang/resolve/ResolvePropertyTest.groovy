@@ -678,6 +678,11 @@ set<caret>Foo(2)
     assert assertInstanceOf(ref.resolve(), PsiVariable).type.canonicalText == 'java.util.logging.Logger'
   }
 
+  public void testNonLoggingField() {
+    myFixture.addClass('package groovy.util.logging; public @interface Log { String value() default ""; }')
+    assert !configureByText("@groovy.util.logging.Log class Foo { { alo<caret>g.inf } }").resolve()
+  }
+
   public void testJavaLoggingTransformCustomName() {
     myFixture.addClass('package groovy.util.logging; public @interface Log { String value() default ""; }')
     def ref = configureByText("@groovy.util.logging.Log('myLog') class Foo { { myLo<caret>g.inf } }")
