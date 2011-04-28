@@ -31,6 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -43,41 +44,63 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
     return CodeInsightBundle.message("intention.add.on.demand.static.import.family");
   }
 
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(element)) return false;
+  /**
+   * Allows to check if static import may be performed for the given element.
+   * 
+   * @param element     element to check
+   * @return            target class that may be statically imported if any; <code>null</code> otherwise
+   */
+  @Nullable
+  public static PsiClass getClassToPerformStaticImport(@NotNull PsiElement element) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
     if (!(element instanceof PsiIdentifier) || !(element.getParent() instanceof PsiReferenceExpression)) {
-      return false;
+      return null;
     }
     PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
     if (refExpr.getParent() instanceof PsiReferenceExpression &&
-        isParameterizedReference((PsiReferenceExpression)refExpr.getParent())) return false;
+        isParameterizedReference((PsiReferenceExpression)refExpr.getParent())) return null;
 
     PsiElement resolved = refExpr.resolve();
     if (!(resolved instanceof PsiClass)) {
-      return false;
+      return null;
     }
     PsiClass psiClass = (PsiClass)resolved;
     PsiFile file = refExpr.getContainingFile();
-    if (!(file instanceof PsiJavaFile)) return false;
+    if (!(file instanceof PsiJavaFile)) return null;
     PsiImportList importList = ((PsiJavaFile)file).getImportList();
-    if (importList == null) return false;
+    if (importList == null) return null;
     for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
       PsiClass staticResolve = statement.resolveTargetClass();
-      if (psiClass == staticResolve) return false; //already imported
+      if (psiClass == staticResolve) return null; //already imported
     }
-    String text = CodeInsightBundle.message("intention.add.on.demand.static.import.text", psiClass.getQualifiedName());
-    setText(text);
-    return true;
+    
+    return psiClass;
+  }
+  
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    PsiClass classToImport = getClassToPerformStaticImport(element);
+    if (classToImport != null) {
+      String text = CodeInsightBundle.message("intention.add.on.demand.static.import.text", classToImport.getQualifiedName());
+      setText(text);
+    }
+    return classToImport != null;
   }
 
-  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+  public static void invoke(final Project project, PsiFile file, final Editor editor, PsiElement element) {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    
     final PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
     final PsiClass aClass = (PsiClass)refExpr.resolve();
+    if (aClass == null) {
+      return;
+    }
     PsiImportStaticStatement importStaticStatement =
       JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createImportStaticStatement(aClass, "*");
-    ((PsiJavaFile)file).getImportList().add(importStaticStatement);
+    PsiImportList importList = ((PsiJavaFile)file).getImportList();
+    if (importList == null) {
+      return;
+    }
+    importList.add(importStaticStatement);
 
     PsiFile[] roots = file.getPsiRoots();
     for (final PsiFile root : roots) {
@@ -113,6 +136,9 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
       expressionToDequalifyOffsets.forEachDescending(new TIntProcedure() {
         public boolean execute(int offset) {
           PsiReferenceExpression expression = PsiTreeUtil.findElementOfClassAtOffset(root, offset, PsiReferenceExpression.class, false);
+          if (expression == null) {
+            return false;
+          }
           PsiExpression qualifierExpression = expression.getQualifierExpression();
           if (qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).isReferenceTo(aClass)) {
             qualifierExpression.delete();
@@ -127,8 +153,17 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
       });
     }
   }
+  
+  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    invoke(project, file, editor, element);
+  }
 
   private static boolean isParameterizedReference(final PsiReferenceExpression expression) {
-    return expression.getParameterList() != null && expression.getParameterList().getFirstChild() != null;
+    if (expression.getParameterList() == null) {
+      return false;
+    }
+    PsiReferenceParameterList parameterList = expression.getParameterList();
+    return parameterList != null && parameterList.getFirstChild() != null;
   }
 }

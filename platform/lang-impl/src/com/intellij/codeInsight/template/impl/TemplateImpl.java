@@ -27,6 +27,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.xml.bind.annotation.XmlElement;
 import java.util.*;
 
 /**
@@ -183,6 +184,12 @@ public class TemplateImpl extends Template implements SchemeElement {
     template.myIsInline = myIsInline;
     template.myTemplateContext = myTemplateContext.createCopy();
     template.isDeactivated = isDeactivated;
+    for (Property property : Property.values()) {
+      boolean value = getValue(property);
+      if (value != Template.getDefaultValue(property)) {
+        template.setValue(property, value);
+      }
+    }
     for (Variable variable : myVariables) {
       template.addVariable(variable.getName(), variable.getExpressionString(), variable.getDefaultValueString(), variable.isAlwaysStopAt());
     }

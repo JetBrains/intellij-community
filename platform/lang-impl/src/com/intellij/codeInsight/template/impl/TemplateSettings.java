@@ -86,6 +86,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   private static final @NonNls String CONTEXT = "context";
   private static final @NonNls String TO_REFORMAT = "toReformat";
   private static final @NonNls String TO_SHORTEN_FQ_NAMES = "toShortenFQNames";
+  private static final @NonNls String USE_STATIC_IMPORT = "useStaticImport";
 
   private static final @NonNls String DEFAULT_SHORTCUT = "defaultShortcut";
   private static final @NonNls String DEACTIVATED = "deactivated";
@@ -589,6 +590,10 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     template.setToShortenLongNames(Boolean.parseBoolean(element.getAttributeValue(TO_SHORTEN_FQ_NAMES)));
     template.setDeactivated(Boolean.parseBoolean(element.getAttributeValue(DEACTIVATED)));
 
+    String useStaticImport = element.getAttributeValue(USE_STATIC_IMPORT);
+    if (useStaticImport != null) {
+      template.setValue(TemplateImpl.Property.USE_STATIC_IMPORT_IF_POSSIBLE, Boolean.parseBoolean(useStaticImport));
+    }
 
     for (final Object o : element.getChildren(VARIABLE)) {
       Element e = (Element)o;
@@ -627,6 +632,11 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     }
     element.setAttribute(TO_REFORMAT, Boolean.toString(template.isToReformat()));
     element.setAttribute(TO_SHORTEN_FQ_NAMES, Boolean.toString(template.isToShortenLongNames()));
+    if (template.getValue(Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE)
+        != Template.getDefaultValue(Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE))
+    {
+      element.setAttribute(USE_STATIC_IMPORT, Boolean.toString(template.getValue(Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE)));
+    }
     if (template.isDeactivated()) {
       element.setAttribute(DEACTIVATED, Boolean.toString(true));
     }
