@@ -2197,36 +2197,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     });
   }
 
-  public void testParentLoading() throws Exception {
-    myTree.setRootVisible(false);
-
-    buildStructure(myRoot);
-
-    myTree.addTreeExpansionListener(new TreeExpansionListener() {
-      @Override
-      public void treeExpanded(TreeExpansionEvent event) {
-        if (event.getPath().getLastPathComponent().toString().contains("fabrique")) {
-          getBuilder().queueUpdate(false);
-        }
-      }
-
-      @Override
-      public void treeCollapsed(TreeExpansionEvent event) {
-      }
-    });
-
-    select(new NodeElement("ide"), false);
-
-    assertTree("-/\n" +
-               " +com\n" +
-               " -jetbrains\n" +
-               "  -fabrique\n" +
-               "   [ide]\n" +
-               " +org\n" +
-               " +xunit\n");
-  }
-
-
   private void assertReleaseDuringBuilding(final String actionAction, final Object actionElement, Runnable buildAction) throws Exception {
     buildStructure(myRoot);
 
