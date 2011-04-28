@@ -243,10 +243,10 @@ class FTManager {
 
   public File getConfigRoot(boolean create) {
     final File templatesPath = new File(PathManager.getConfigPath(), myTemplatesDir);
-    if (create && !templatesPath.exists()) {
+    if (create) {
       final boolean created = templatesPath.mkdirs();
-      if (!created) {
-        LOG.error("Cannot create directory: " + templatesPath.getAbsolutePath());
+      if (!created && !templatesPath.exists()) {
+        LOG.info("Cannot create directory: " + templatesPath.getAbsolutePath());
       }
     }
     return templatesPath;
