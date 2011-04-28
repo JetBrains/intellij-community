@@ -206,7 +206,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
       for (SmartPsiElementPointer sortedID : sortedIDs) {
         final PsiClass psiClass = (PsiClass)dereferenceInReadAction(sortedID);
         if (psiClass == null) continue;
-        context.incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, ApplicationManager.getApplication().runReadAction(
+        context.incrementJobDoneAmount(((GlobalInspectionContextImpl)context).FIND_EXTERNAL_USAGES, ApplicationManager.getApplication().runReadAction(
           new Computable<String>() {
             public String compute() {
               return psiClass.getQualifiedName();
@@ -230,8 +230,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         if (psiMethod == null) continue;
         final RefMethod refMethod = (RefMethod)refManager.getReference(psiMethod);
 
-        context
-          .incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refMethod));
+        context.incrementJobDoneAmount(((GlobalInspectionContextImpl)context).FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refMethod));
 
         final List<DerivedMethodsProcessor> processors = myDerivedMethodsRequests.get(sortedID);
         LOG.assertTrue(processors != null, psiMethod.getClass().getName());
@@ -250,9 +249,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         final List<UsagesProcessor> processors = myFieldUsagesRequests.get(sortedID);
 
         LOG.assertTrue(processors != null, psiField.getClass().getName());
-        context
-          .incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES,
-                                  refManager.getQualifiedName(refManager.getReference(psiField)));
+        context.incrementJobDoneAmount(((GlobalInspectionContextImpl)context).FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refManager.getReference(psiField)));
 
         ReferencesSearch.search(psiField, searchScope, false)
           .forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
@@ -269,7 +266,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         final List<UsagesProcessor> processors = myClassUsagesRequests.get(sortedID);
 
         LOG.assertTrue(processors != null, psiClass.getClass().getName());
-        context.incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, ApplicationManager.getApplication().runReadAction(
+        context.incrementJobDoneAmount(((GlobalInspectionContextImpl)context).FIND_EXTERNAL_USAGES, ApplicationManager.getApplication().runReadAction(
           new Computable<String>() {
             public String compute() {
               return psiClass.getQualifiedName();
@@ -292,9 +289,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         final List<UsagesProcessor> processors = myMethodUsagesRequests.get(sortedID);
 
         LOG.assertTrue(processors != null, psiMethod.getClass().getName());
-        context
-          .incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES,
-                                  refManager.getQualifiedName(refManager.getReference(psiMethod)));
+        context.incrementJobDoneAmount(((GlobalInspectionContextImpl)context).FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refManager.getReference(psiMethod)));
 
         MethodReferencesSearch.search(psiMethod, searchScope, true)
           .forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
@@ -414,7 +409,8 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
 
 
   public void performPostRunActivities(List<InspectionProfileEntry> needRepeatSearchRequest, final GlobalInspectionContext context) {
-    GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES.setTotalAmount(getRequestCount() * 2);
+    JobDescriptor progress = ((GlobalInspectionContextImpl)context).FIND_EXTERNAL_USAGES;
+    progress.setTotalAmount(getRequestCount());
 
     do {
       processSearchRequests(context);
@@ -425,11 +421,11 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
           needRepeatSearchRequest.remove(requestor);
         }
       }
-      int oldSearchRequestCount = GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES.getTotalAmount();
-      float proportion = GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES.getProgress();
-      int totalAmount = oldSearchRequestCount + getRequestCount() * 2;
-      GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES.setTotalAmount(totalAmount);
-      GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES.setDoneAmount((int)(totalAmount * proportion));
+      int oldSearchRequestCount = progress.getTotalAmount();
+      int oldDoneAmount = progress.getDoneAmount();
+      int totalAmount = oldSearchRequestCount + getRequestCount();
+      progress.setTotalAmount(totalAmount);
+      progress.setDoneAmount(oldDoneAmount);
     }
     while (!needRepeatSearchRequest.isEmpty());
   }

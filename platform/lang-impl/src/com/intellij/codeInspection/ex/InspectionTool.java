@@ -77,7 +77,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   }
 
   @NotNull
-  public abstract JobDescriptor[] getJobDescriptors();
+  public abstract JobDescriptor[] getJobDescriptors(GlobalInspectionContext globalInspectionContext);
 
   public boolean queryExternalUsagesRequests(final InspectionManager manager) {
     return false;

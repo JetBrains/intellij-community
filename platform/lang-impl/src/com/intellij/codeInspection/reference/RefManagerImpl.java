@@ -364,8 +364,7 @@ public class RefManagerImpl extends RefManager {
     public void visitFile(PsiFile file) {
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
-        myContext
-          .incrementJobDoneAmount(GlobalInspectionContextImpl.BUILD_GRAPH, ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject));
+        myContext.incrementJobDoneAmount(myContext.BUILD_GRAPH, ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject));
       }
       final FileViewProvider viewProvider = file.getViewProvider();
       final Set<Language> relevantLanguages = viewProvider.getLanguages();

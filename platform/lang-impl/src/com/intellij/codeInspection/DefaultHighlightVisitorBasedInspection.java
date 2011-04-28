@@ -19,12 +19,10 @@ package com.intellij.codeInspection;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
-import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -36,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
-  private static final JobDescriptor ANNOTATOR = new JobDescriptor(InspectionsBundle.message("inspection.processing.job.descriptor2"));
   private final boolean highlightErrorElements;
   private final boolean runAnnotators;
 
@@ -79,11 +76,6 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     public String getShortName() {
       return "SyntaxError";
     }
-  }
-
-  @Override
-  public JobDescriptor[] getAdditionalJobs() {
-    return new JobDescriptor[]{ANNOTATOR};
   }
 
   @NotNull
@@ -134,7 +126,6 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
       if (virtualFile == null) {
         return;
       }
-      myGlobalContext.incrementJobDoneAmount(ANNOTATOR, ProjectUtil.calcRelativeToProjectPath(virtualFile, file.getProject()));
 
       final Project project = file.getProject();
       Document document = PsiDocumentManager.getInstance(project).getDocument(file);

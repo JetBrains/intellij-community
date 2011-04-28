@@ -39,6 +39,7 @@ public class JobDescriptor {
 
   public void setTotalAmount(int totalAmount) {
     myTotalAmount = totalAmount;
+    myDoneAmount = 0;
   }
 
   public int getDoneAmount() {
@@ -46,15 +47,22 @@ public class JobDescriptor {
   }
 
   public void setDoneAmount(int doneAmount) {
+    if (doneAmount > getTotalAmount()) {
+      int i = 0;
+    }
+    if (doneAmount < getDoneAmount()) {
+      int i = 0;
+    }
     myDoneAmount = doneAmount;
   }
 
   public float getProgress() {
-    float localProgress = getDoneAmount();
-    if (getTotalAmount() != 0) {
-      localProgress /= getTotalAmount();
-    } else {
+    float localProgress;
+    if (getTotalAmount() == 0) {
       localProgress = 0;
+    }
+    else {
+      localProgress = 1.0f * getDoneAmount() / getTotalAmount();
     }
 
     return localProgress;
