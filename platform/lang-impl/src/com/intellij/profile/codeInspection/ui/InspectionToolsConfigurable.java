@@ -214,7 +214,9 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       public void actionPerformed(ActionEvent e) {
         final InspectionProfileImpl model = (InspectionProfileImpl)SingleInspectionProfilePanel.createNewProfile(0, getSelectedObject(), myWholePanel, "");
         if (model != null) {
-          addProfile((InspectionProfileImpl)model.getModifiableModel());
+          final InspectionProfileImpl modifiableModel = (InspectionProfileImpl)model.getModifiableModel();
+          modifiableModel.setModified(true);
+          addProfile(modifiableModel);
           myDeletedProfiles.remove(model.getName());
           myDeleteButton.setEnabled(true);
         }

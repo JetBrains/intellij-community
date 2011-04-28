@@ -22,6 +22,7 @@ import com.intellij.internal.statistic.connect.StatisticsHttpClientSender;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,6 +39,15 @@ public class SendStatisticsProjectComponent implements ProjectComponent {
 
   @Override
   public void projectOpened() {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
+      @Override
+      public void run() {
+          runStatisticsService();
+      }
+    });
+  }
+
+  private void runStatisticsService() {
     final RemotelyConfigurableStatisticsService statisticsService =
       new RemotelyConfigurableStatisticsService(new StatisticsConnectionService(),
                                                 new StatisticsHttpClientSender(),

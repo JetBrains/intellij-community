@@ -145,8 +145,6 @@ public class VariableInplaceRenamer {
       ourRenamersStack.peek().finish();
     }
 
-    ourRenamersStack.push(this);
-
     PsiElement scope = checkLocalScope();
 
     if (scope == null) {
@@ -159,6 +157,9 @@ public class VariableInplaceRenamer {
     }
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, myElementToRename)) return false;
 
+    myEditor.putUserData(INPLACE_RENAMER, this);
+    ourRenamersStack.push(this);
+
     final List<Pair<PsiElement, TextRange>> stringUsages = new ArrayList<Pair<PsiElement, TextRange>>();
     collectAdditionalElementsToRename(processTextOccurrences, stringUsages);
     if (appendAdditionalElement(stringUsages)) {
@@ -167,7 +168,7 @@ public class VariableInplaceRenamer {
       new RenameChooser(myEditor).showChooser(refs, stringUsages, nameSuggestions, scope, containingFile);
     }
 
-    myEditor.putUserData(INPLACE_RENAMER, this);
+
     return true;
   }
 

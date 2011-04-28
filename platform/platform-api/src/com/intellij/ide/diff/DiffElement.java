@@ -141,9 +141,14 @@ public abstract class DiffElement<T> implements Disposable {
   @Nullable
   protected DiffRequest createRequest(Project project, DiffElement element) throws IOException {
     final T src = getValue();
+    final Object trg = element.getValue();
+    if (src instanceof VirtualFile && trg instanceof VirtualFile
+        && ((VirtualFile)src).getFileType().isBinary()
+        && ((VirtualFile)trg).getFileType().isBinary()) {
+      return createRequestForBinaries(project, ((VirtualFile)src), ((VirtualFile)trg));
+    }
     if (src instanceof VirtualFile) {
       if (((VirtualFile)src).getFileType().isBinary()) return null;
-      final Object trg = element.getValue();
       if (trg instanceof VirtualFile) {
         if (((VirtualFile)trg).getFileType().isBinary()) return null;
         final FileDocumentManager mgr = FileDocumentManager.getInstance();
@@ -161,6 +166,11 @@ public abstract class DiffElement<T> implements Disposable {
       return request;
     }
     return null;
+  }
+
+  @Nullable
+  protected DiffRequest createRequestForBinaries(Project project, @NotNull VirtualFile src, @NotNull VirtualFile trg) {
+    return SimpleDiffRequest.compareFiles(src, trg, project);
   }
 
   @Nullable

@@ -22,10 +22,6 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -232,34 +228,43 @@ public class InplaceIntroduceConstantPopup {
   }
 
   public static void appendActions(final JComboBox visibilityCombo, final Project project) {
-    final AnAction arrow = new AnAction() {
+    final boolean[] moveFocusBack = new boolean[] {true};
+    visibilityCombo.addFocusListener(new FocusAdapter() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (e.getInputEvent() instanceof KeyEvent) {
-          final int code = ((KeyEvent)e.getInputEvent()).getKeyCode();
-          final int delta = code == KeyEvent.VK_DOWN ? 1 : code == KeyEvent.VK_UP ? -1 : 0;
-          if (delta == 0) return;
-          final int size = visibilityCombo.getModel().getSize();
-          int next = visibilityCombo.getSelectedIndex() + delta;
-          if (next < 0 || next >= size) {
-            if (!UISettings.getInstance().CYCLE_SCROLLING) {
-              return;
-            }
-            next = (next + size) % size;
-          }
-          visibilityCombo.setSelectedIndex(next);
+      public void focusGained(FocusEvent e) {
+        if (!moveFocusBack[0]) {
+          moveFocusBack[0] = true;
+          return;
         }
+        final int size = visibilityCombo.getModel().getSize();
+        int next = visibilityCombo.getSelectedIndex() + 1;
+        if (next < 0 || next >= size) {
+          if (!UISettings.getInstance().CYCLE_SCROLLING) {
+            return;
+          }
+          next = (next + size) % size;
+        }
+        visibilityCombo.setSelectedIndex(next);
+        ToolWindowManager.getInstance(project).activateEditorComponent();
       }
-    };
-    arrow.registerCustomShortcutSet(new CustomShortcutSet(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), null),
-                                                          new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), null)), visibilityCombo);
-
+    });
+    visibilityCombo.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        moveFocusBack[0] = false;
+      }
+    });
     visibilityCombo.addKeyListener(new KeyAdapter() {
       @Override
-      public void keyReleased(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-          ToolWindowManager.getInstance(project).activateEditorComponent();
-        }
+      public void keyPressed(KeyEvent e) {
+        moveFocusBack[0] = true;
+      }
+    });
+    visibilityCombo.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        moveFocusBack[0] = true;
+        ToolWindowManager.getInstance(project).activateEditorComponent();
       }
     });
   }
@@ -269,7 +274,7 @@ public class InplaceIntroduceConstantPopup {
   }
 
   private void startIntroduceTemplate(final boolean replaceAllOccurrences, @Nullable final PsiType fieldDefaultType) {
-    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         myTypeSelectorManager.setAllOccurences(replaceAllOccurrences);
         PsiType defaultType = myTypeSelectorManager.getTypeSelector().getSelectedType();
@@ -299,7 +304,7 @@ public class InplaceIntroduceConstantPopup {
           renamer.performInplaceRename(false, nameSuggestions);
         }
       }
-    });
+    }, IntroduceConstantHandler.REFACTORING_NAME, IntroduceConstantHandler.REFACTORING_NAME);
   }
 
   private PsiField createFieldToStartTemplateOn(final String[] names, final PsiType psiType) {
@@ -418,53 +423,6 @@ public class InplaceIntroduceConstantPopup {
     @Override
     protected void moveOffsetAfter(boolean success) {
       if (success) {
-        final PsiField psiField = (PsiField)getVariable();
-        if (psiField == null) {
-          super.moveOffsetAfter(false);
-          return;
-        }
-        myFieldTypePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(psiField.getType());
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        myConstantName = psiField.getName();
-
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            final PsiFile containingFile = myParentClass.getContainingFile();
-            final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
-            final RangeMarker exprMarker = getExprMarker();
-            if (exprMarker != null) {
-              myExpr = restoreExpression(containingFile, psiField, elementFactory, exprMarker, myExprText);
-              if (myExpr != null && myExpr.isPhysical()) {
-                myExprMarker = myEditor.getDocument().createRangeMarker(myExpr.getTextRange());
-              }
-            }
-            final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
-            for (int i = 0, occurrenceMarkersSize = occurrenceMarkers.size(); i < occurrenceMarkersSize; i++) {
-              RangeMarker marker = occurrenceMarkers.get(i);
-              if (getExprMarker() != null && marker.getStartOffset() == getExprMarker().getStartOffset()) {
-                myOccurrences[i] = myExpr;
-                continue;
-              }
-              final PsiExpression psiExpression =
-                restoreExpression(containingFile, psiField, elementFactory, marker, myLocalVariable != null ? myLocalName : myExprText);
-              if (psiExpression != null) {
-                myOccurrences[i] = psiExpression;
-              }
-            }
-
-            if (myAnchorIdxIfAll != -1 && myOccurrences[myAnchorIdxIfAll] != null) {
-              myAnchorElementIfAll = myOccurrences[myAnchorIdxIfAll].getParent();
-            }
-
-            if (myAnchorIdx != -1 && myOccurrences[myAnchorIdx] != null) {
-              myAnchorElement = myOccurrences[myAnchorIdx].getParent();
-            }
-            myOccurrenceMarkers = null;
-            if (psiField.isValid()) {
-              psiField.delete();
-            }
-          }
-        });
         if (myLocalVariable == null && myExpr == null) {
           super.moveOffsetAfter(false);
           return;
@@ -496,7 +454,7 @@ public class InplaceIntroduceConstantPopup {
         };
         ApplicationManager.getApplication().runWriteAction(runnable);
       }
-      super.moveOffsetAfter(false);
+      super.moveOffsetAfter(success);
       if (myMoveToAnotherClassCb.isSelected()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
@@ -505,6 +463,57 @@ public class InplaceIntroduceConstantPopup {
           }
         });
       }
+    }
+
+    @Override
+    public void finish() {
+      super.finish();
+      final PsiField psiField = (PsiField)getVariable();
+      if (psiField == null) {
+       return;
+      }
+      myFieldTypePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(psiField.getType());
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      myConstantName = psiField.getName();
+
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          final PsiFile containingFile = myParentClass.getContainingFile();
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
+          final RangeMarker exprMarker = getExprMarker();
+          if (exprMarker != null) {
+            myExpr = restoreExpression(containingFile, psiField, elementFactory, exprMarker, myExprText);
+            if (myExpr != null && myExpr.isPhysical()) {
+              myExprMarker = myEditor.getDocument().createRangeMarker(myExpr.getTextRange());
+            }
+          }
+          final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
+          for (int i = 0, occurrenceMarkersSize = occurrenceMarkers.size(); i < occurrenceMarkersSize; i++) {
+            RangeMarker marker = occurrenceMarkers.get(i);
+            if (getExprMarker() != null && marker.getStartOffset() == getExprMarker().getStartOffset()) {
+              myOccurrences[i] = myExpr;
+              continue;
+            }
+            final PsiExpression psiExpression =
+              restoreExpression(containingFile, psiField, elementFactory, marker, myLocalVariable != null ? myLocalName : myExprText);
+            if (psiExpression != null) {
+              myOccurrences[i] = psiExpression;
+            }
+          }
+
+          if (myAnchorIdxIfAll != -1 && myOccurrences[myAnchorIdxIfAll] != null) {
+            myAnchorElementIfAll = myOccurrences[myAnchorIdxIfAll].getParent();
+          }
+
+          if (myAnchorIdx != -1 && myOccurrences[myAnchorIdx] != null) {
+            myAnchorElement = myOccurrences[myAnchorIdx].getParent();
+          }
+          myOccurrenceMarkers = null;
+          if (psiField.isValid()) {
+            psiField.delete();
+          }
+        }
+      });
     }
 
     @Override

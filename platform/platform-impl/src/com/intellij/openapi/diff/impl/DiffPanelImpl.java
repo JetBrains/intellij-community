@@ -41,6 +41,7 @@ import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -149,6 +150,10 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
 
+  public void removeStatusBar() {
+    myPanel.removeStatusBar();
+  }
+
   private static DiffHighlighterFactory createHighlighter(FileType contentType, VirtualFile file, Project project) {
     return new DiffHighlighterFactoryImpl(contentType, file, project);
   }
@@ -246,11 +251,12 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   public void onContentChangedIn(EditorSource source) {
     myDiffUpdater.contentRemoved(source);
     final EditorEx editor = source.getEditor();
+    final FileEditor fileEditor = source.getFileEditor();
     if (source.getSide() == FragmentSide.SIDE1 && editor != null) {
       editor.setVerticalScrollbarOrientation(EditorEx.VERTICAL_SCROLLBAR_LEFT);
     }
     DiffSideView viewSide = getSideView(source.getSide());
-    viewSide.setEditorSource(source);
+    viewSide.setEditorSource(getProject(), source);
     Disposer.dispose(myScrollSupport);
     if (editor == null) {
       if (!myDisposed) {
@@ -350,6 +356,9 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     final JComponent newBottomComponent = data.getBottomComponent();
     myPanel.setBottomComponent(newBottomComponent);
 
+    if (data.getContents()[0].isBinary() || data.getContents()[1].isBinary()) {
+      myPanel.removeStatusBar();
+    }
 
     if (myIsRequestFocus) {
       if ((isEditor1Focused || isEditor2Focused)) {
