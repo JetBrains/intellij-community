@@ -35,7 +35,7 @@ public class HgRevertCommand {
 
   public void execute(VirtualFile repo, Collection<FilePath> files, HgRevisionNumber vcsRevisionNumber, boolean backupFile) {
     final List<String> options = new LinkedList<String>();
-    if (vcsRevisionNumber != null) {
+    if (vcsRevisionNumber != null && !HgRevisionNumber.NULL_REVISION_NUMBER.equals(vcsRevisionNumber)) {
       options.add("--rev");
       if (StringUtils.isNotBlank(vcsRevisionNumber.getChangeset())) {
         options.add(vcsRevisionNumber.getChangeset());
