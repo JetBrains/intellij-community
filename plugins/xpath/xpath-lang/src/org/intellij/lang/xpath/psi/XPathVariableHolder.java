@@ -15,15 +15,14 @@
  */
 package org.intellij.lang.xpath.psi;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /*
 * Created by IntelliJ IDEA.
 * User: sweinreuter
-* Date: 04.01.11
+* Date: 28.04.11
 */
-public interface XPath2QuantifiedExpr extends XPathExpression, XPathVariableHolder {
-
-  @Nullable
-  XPathExpression getTest();
+public interface XPathVariableHolder extends XPathElement {
+  @NotNull
+  XPathVariableDeclaration[] getVariables();
 }

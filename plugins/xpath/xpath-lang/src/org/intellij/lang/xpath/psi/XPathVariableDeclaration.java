@@ -24,5 +24,8 @@ import org.jetbrains.annotations.Nullable;
 */
 public interface XPathVariableDeclaration extends XPathElement {
   @Nullable
-  XPathVariable getVariable(String name);
+  XPathExpression getInitializer();
+
+  @Nullable
+  XPathVariable getVariable();
 }

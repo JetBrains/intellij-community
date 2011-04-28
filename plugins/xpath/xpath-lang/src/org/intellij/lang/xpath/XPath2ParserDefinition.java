@@ -72,6 +72,8 @@ public class XPath2ParserDefinition extends XPathParserDefinition {
       return new XPath2QuantifiedExprImpl(node);
     } else if (type == XPath2ElementTypes.FOR) {
       return new XPath2ForImpl(node);
+    } else if (type == XPath2ElementTypes.BINDING_SEQ) {
+      return new XPath2VariableDeclarationImpl(node);
     } else if (type == XPath2ElementTypes.SEQUENCE) {
       return new XPath2SequenceImpl(node);
     } else if (type == XPath2ElementTypes.RANGE_EXPRESSION) {

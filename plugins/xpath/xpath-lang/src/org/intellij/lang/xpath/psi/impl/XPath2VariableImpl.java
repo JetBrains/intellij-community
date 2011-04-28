@@ -36,12 +36,17 @@ public class XPath2VariableImpl extends XPathElementImpl implements XPathVariabl
 
   @Override
   public XPathExpression getValue() {
-    final XPath2VariableDeclarationImpl d = PsiTreeUtil.getParentOfType(this, XPath2VariableDeclarationImpl.class);
+    final XPathVariableDeclaration d = PsiTreeUtil.getParentOfType(this, XPathVariableDeclaration.class);
     if (d != null) {
-      return d.getVariableBinding(getName());
+      return d.getInitializer();
     } else {
       return null;
     }
+  }
+
+  @Override
+  public int getTextOffset() {
+    return getTextRange().getStartOffset() + 1;
   }
 
   @Override
