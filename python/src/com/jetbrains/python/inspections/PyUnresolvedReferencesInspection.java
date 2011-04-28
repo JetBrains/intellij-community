@@ -105,6 +105,16 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
     }
 
+    @Override
+    public void visitPyClass(PyClass node) {
+      PyExpression[] supers = node.getSuperClassExpressions();
+      for (PyExpression cl : supers) {
+        if (cl.getText().equals(node.getName())) {
+          registerProblem(cl, PyBundle.message("INSP.unresolved.ref.$0", cl.getText()) );
+        }
+      }
+    }
+
     private void checkSlots(PyQualifiedExpression node) {
       final PyExpression qualifier = node.getQualifier();
       if (qualifier != null) {
