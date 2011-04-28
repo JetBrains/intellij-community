@@ -127,6 +127,8 @@ public class TypeDefinition implements GroovyElementTypes {
 
     TypeParameters.parse(builder);
 
+    ParserUtils.getToken(builder, mNLS);
+
     if (kEXTENDS.equals(builder.getTokenType())) {
       ReferenceElement.parseReferenceList(builder, kEXTENDS, EXTENDS_CLAUSE);
       ParserUtils.getToken(builder, mNLS);
