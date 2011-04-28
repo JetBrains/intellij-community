@@ -36,6 +36,7 @@
       <interface-class>com.intellij.coverage.CoverageDataManager</interface-class>
       <implementation-class>com.intellij.coverage.CoveragePluginDataManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
+      <skipForDefaultProject/>
     </component>
   </project-components>
   <actions>
