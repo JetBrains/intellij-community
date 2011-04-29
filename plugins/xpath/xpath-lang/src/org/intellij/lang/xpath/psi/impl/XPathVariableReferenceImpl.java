@@ -71,13 +71,13 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
     @Nullable
     public XPathVariable resolve() {
       if (getContainingFile().getLanguage() == XPathFileType.XPATH2.getLanguage()) {
-        XPathVariableDeclaration f = PsiTreeUtil.getParentOfType(this, XPathVariableDeclaration.class, true);
+        XPathVariableHolder f = PsiTreeUtil.getParentOfType(this, XPathVariableHolder.class, true);
         while (f != null) {
-          final XPathVariable variable = f.getVariable(getReferencedName());
+          final XPathVariable variable = findVariable(f.getVariables(), getReferencedName());
           if (variable != null) {
             return variable;
           }
-          f = PsiTreeUtil.getParentOfType(f, XPathVariableDeclaration.class, true);
+          f = PsiTreeUtil.getParentOfType(f, XPathVariableHolder.class, true);
         }
       }
       final VariableContext context = getXPathContext().getVariableContext();
@@ -87,7 +87,20 @@ public class XPathVariableReferenceImpl extends XPathElementImpl implements XPat
       return context.resolve(this);
     }
 
-    @NotNull
+  @Nullable
+  private static XPathVariable findVariable(XPathVariableDeclaration[] declarations, String referencedName) {
+    for (XPathVariableDeclaration decl : declarations) {
+      final XPathVariable v = decl.getVariable();
+      if (v != null) {
+        if (referencedName.equals(v.getName())) {
+          return v;
+        }
+      }
+    }
+    return null;
+  }
+
+  @NotNull
     public String getCanonicalText() {
         return getText();
     }

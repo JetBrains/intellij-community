@@ -152,7 +152,6 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
       boolean ok = ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
       if (ok) {
         myReplaceTemplateFix.applyFix(project, descriptor);
-        FileTemplateManager.getInstance().saveAll();
       }
     }
   }

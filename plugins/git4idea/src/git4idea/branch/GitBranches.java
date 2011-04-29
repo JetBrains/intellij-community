@@ -18,8 +18,6 @@ package git4idea.branch;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -27,7 +25,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.concurrency.QueueProcessor;
 import git4idea.GitBranch;
 import git4idea.GitVcs;
 import git4idea.vfs.GitReferenceListener;
@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Container and tracker of git branches information.
@@ -54,15 +53,19 @@ public class GitBranches implements GitReferenceListener {
   private final EventDispatcher<GitBranchesListener> myListeners = EventDispatcher.create(GitBranchesListener.class);
   private Map<VirtualFile, GitBranch> myCurrentBranches = new HashMap<VirtualFile, GitBranch>();
   private final Object myCurrentBranchesLock = new Object();
-  private ChangeListManager myChangeListManager;
   private GitVcs myVcs;
-  private final AtomicBoolean mySoleUseControl;
+
+  private final QueueProcessor<VirtualFile> myUpdateEventProcessor;
 
   public GitBranches(Project project, ChangeListManager changeListManager, ProjectLevelVcsManager vcsManager) {
     myProject = project;
-    myChangeListManager = changeListManager;
     myVcsManager = vcsManager;
-    mySoleUseControl = new AtomicBoolean(false);
+    myUpdateEventProcessor = new QueueProcessor<VirtualFile>(new Consumer<VirtualFile>() {
+      @Override
+      public void consume(VirtualFile root) {
+        updateBranchesInfo(root);
+      }
+    }, myProject.getDisposed());
   }
 
   public static GitBranches getInstance(Project project) {
@@ -71,7 +74,7 @@ public class GitBranches implements GitReferenceListener {
 
   @Override
   public void referencesChanged(VirtualFile root) {
-    updateBranchesInfo(root);
+    myUpdateEventProcessor.add(root);
   }
 
   public void activate(GitVcs vcs) {
@@ -124,54 +127,35 @@ public class GitBranches implements GitReferenceListener {
       return;
     }
 
-    final Task.Backgroundable task = new Task.Backgroundable(myProject, "Git: refresh current branch") {
-      @Override public void run(@NotNull ProgressIndicator indicator) {
-        assert ! mySoleUseControl.get();
-        mySoleUseControl.set(true);
-        try {
-          GitBranch currentBranch = GitBranch.current(myProject, root);
-          synchronized (myCurrentBranchesLock) {
-            myCurrentBranches.put(root, currentBranch);
-          }
-          notifyListeners();
-        } catch (VcsException e) {
-          LOG.info("Exception while trying to get current branch for root " + root, e);
-          // doing nothing - null will be set to myCurrentBranchName
-        } finally {
-          mySoleUseControl.set(false);
-        }
+    try {
+      GitBranch currentBranch = GitBranch.current(myProject, root);
+      synchronized (myCurrentBranchesLock) {
+        myCurrentBranches.put(root, currentBranch);
       }
-    };
-    GitVcs.runInBackground(task);
+      notifyListeners();
+    }
+    catch (VcsException e) {
+      LOG.info("Exception while trying to get current branch for root " + root, e);
+      // doing nothing - null will be set to myCurrentBranchName
+    }
   }
 
   private void fullyUpdateBranchesInfo(final Collection<VirtualFile> roots) {
     if (roots == null) { return; }
-    final Task.Backgroundable task = new Task.Backgroundable(myProject, "Git: refresh current branches") {
-      @Override public void run(@NotNull ProgressIndicator indicator) {
-        assert ! mySoleUseControl.get();
-        mySoleUseControl.set(true);
-        try {
-        Map<VirtualFile, GitBranch> currentBranches = new HashMap<VirtualFile, GitBranch>();
-        for (VirtualFile root : roots) {
-          try {
-            GitBranch currentBranch = GitBranch.current(myProject, root);
-            currentBranches.put(root, currentBranch);
-            notifyListeners();
-          } catch (VcsException e) {
-            LOG.info("Exception while trying to get current branch for root " + root, e);
-            // doing nothing - null will be set to myCurrentBranchName
-          }
-        }
-        synchronized (myCurrentBranchesLock) {
-          myCurrentBranches = currentBranches;
-        }
-        } finally {
-          mySoleUseControl.set(false);
-        }
+    Map<VirtualFile, GitBranch> currentBranches = new HashMap<VirtualFile, GitBranch>();
+    for (VirtualFile root : roots) {
+      try {
+        GitBranch currentBranch = GitBranch.current(myProject, root);
+        currentBranches.put(root, currentBranch);
+        notifyListeners();
+      } catch (VcsException e) {
+        LOG.info("Exception while trying to get current branch for root " + root, e);
+        // doing nothing - null will be set to myCurrentBranchName
       }
-    };
-    GitVcs.runInBackground(task);
+    }
+    synchronized (myCurrentBranchesLock) {
+      myCurrentBranches = currentBranches;
+    }
   }
 
   private void notifyListeners() {

@@ -701,6 +701,13 @@ def foo() { println <caret>aaa }
     assert ref.resolve() instanceof GrVariable
   }
 
+  public void testScriptFieldVariableOutside() {
+    myFixture.addFileToProject("Foo.groovy", "if (true) { @groovy.transform.Field def a = 2 }")
+
+    def ref = configureByText("println new Foo().<caret>a")
+    assert ref.resolve() instanceof GrVariable
+  }
+
   public void testScriptVariableFromScriptMethod() {
     def ref = configureByText("""def aaa = 2
 def foo() { println <caret>aaa }

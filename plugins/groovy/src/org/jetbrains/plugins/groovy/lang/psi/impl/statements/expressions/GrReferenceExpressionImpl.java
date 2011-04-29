@@ -178,7 +178,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
    * priority: inside class C: local variable, c.method, c.property, c.getter
    *           in other places: local variable, c.method, c.getter, c.property
    */
-  private GroovyResolveResult[] resolveMethodOrProperty(boolean allVariants, GrExpression upToArgument) {
+  private GroovyResolveResult[] resolveMethodOrProperty(boolean allVariants, @Nullable GrExpression upToArgument) {
     String name = getReferenceName();
     if (name == null) return GroovyResolveResult.EMPTY_ARRAY;
 
@@ -427,9 +427,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       result = ((PsiVariable) resolved).getType();
     } else
     if (resolved instanceof PsiMethod) {
-      if (dotType == mMEMBER_POINTER) {
-        return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, this);
-      }
       PsiMethod method = (PsiMethod) resolved;
       if (PropertyUtil.isSimplePropertySetter(method) && !method.getName().equals(getReferenceName())) {
         result = method.getParameterList().getParameters()[0].getType();

@@ -421,6 +421,9 @@ public abstract class ChooseByNameBase {
                 });
               }
               else {
+                if (e.getOppositeComponent() != null && myList.isShowing() && (e.getOppositeComponent() == myList || SwingUtilities.isDescendingFrom(myList, e.getOppositeComponent()))) {
+                  return;
+                }
                 hideHint();
               }
             }

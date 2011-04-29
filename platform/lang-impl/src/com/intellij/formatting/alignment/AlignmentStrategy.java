@@ -37,11 +37,11 @@ public abstract class AlignmentStrategy {
   /**
    * Delegates the processing to {@link #wrap(Alignment, boolean, IElementType...)} with <code>'true'</code> as the second argument
    *
-   * @param alignment
-   * @param filterTypes
-   * @return
+   * @param alignment     target alignment to wrap
+   * @param filterTypes   types to use as a filter
+   * @return              alignment strategy for the given parameters
    */
-  public static AlignmentStrategy wrap(Alignment alignment, IElementType... filterTypes) {
+  public static AlignmentStrategy wrap(@Nullable Alignment alignment, IElementType... filterTypes) {
     return new SharedAlignmentStrategy(alignment, true, filterTypes);
   }
 
@@ -61,8 +61,8 @@ public abstract class AlignmentStrategy {
   }
 
   /**
-   * Delegates to {@link #createAlignmentPerTypeStrategy(Collection, IElementType, boolean)} with no parent type
-   * check (<code>null</code> is delivered as a parent type).
+   * Delegates to {@link #createAlignmentPerTypeStrategy(Collection, IElementType, boolean, Alignment.Anchor)} with no parent type
+   * check (<code>null</code> is delivered as a parent type) and {@link Alignment.Anchor#LEFT left anchor}.
    * 
    * @param targetTypes           target child types
    * @param allowBackwardShift    flag that defines if backward alignment shift is allowed
@@ -71,7 +71,23 @@ public abstract class AlignmentStrategy {
   public static AlignmentPerTypeStrategy createAlignmentPerTypeStrategy(@NotNull Collection<IElementType> targetTypes,
                                                                         boolean allowBackwardShift)
   {
-    return new AlignmentPerTypeStrategy(targetTypes, null, allowBackwardShift);
+    return new AlignmentPerTypeStrategy(targetTypes, null, allowBackwardShift, Alignment.Anchor.LEFT);
+  }
+
+  /**
+   * Delegates the processing to {@link #createAlignmentPerTypeStrategy(Collection, IElementType, boolean, Alignment.Anchor)}
+   * with the given arguments and {@link Alignment.Anchor#LEFT left anchor}.
+   * 
+   * @param targetTypes        target types for which cached alignment should be returned
+   * @param parentType         target parent type
+   * @param allowBackwardShift flag that specifies if former aligned element may be shifted to right in order to align
+   *                           to subsequent element
+   * @return                   alignment retrieval strategy that follows the rules described above
+   */
+  public static AlignmentPerTypeStrategy createAlignmentPerTypeStrategy(
+    @NotNull Collection<IElementType> targetTypes, @Nullable IElementType parentType, boolean allowBackwardShift)
+  {
+    return createAlignmentPerTypeStrategy(targetTypes, parentType, allowBackwardShift, Alignment.Anchor.LEFT);
   }
   
   /**
@@ -95,12 +111,13 @@ public abstract class AlignmentStrategy {
    *                           to subsequent element (e.g. <code>'='</code> block of <code>'int start  = 1'</code> statement
    *                           below is shifted one symbol right in order to align to the <code>'='</code> block
    *                           of <code>'int finish  = 1'</code> statement)
-   * @return alignment retrieval strategy that follows the rules described above
+   * @return                   alignment retrieval strategy that follows the rules described above
    */
   public static AlignmentPerTypeStrategy createAlignmentPerTypeStrategy(
-    @NotNull Collection<IElementType> targetTypes, @Nullable IElementType parentType, boolean allowBackwardShift)
+    @NotNull Collection<IElementType> targetTypes, @Nullable IElementType parentType, boolean allowBackwardShift, 
+    @NotNull Alignment.Anchor anchor)
   {
-    return new AlignmentPerTypeStrategy(targetTypes, parentType, allowBackwardShift);
+    return new AlignmentPerTypeStrategy(targetTypes, parentType, allowBackwardShift, anchor);
   }
 
   /**
@@ -155,15 +172,19 @@ public abstract class AlignmentStrategy {
   public static class AlignmentPerTypeStrategy extends AlignmentStrategy {
 
     private final Map<IElementType, Alignment> myAlignments = new HashMap<IElementType, Alignment>();
-    
-    private final IElementType myParentType;
-    private final boolean      myAllowBackwardShift;
 
-    AlignmentPerTypeStrategy(Collection<IElementType> targetElementTypes, IElementType parentType, boolean allowBackwardShift) {
+    private final IElementType     myParentType;
+    private final boolean          myAllowBackwardShift;
+
+    AlignmentPerTypeStrategy(Collection<IElementType> targetElementTypes,
+                             IElementType parentType,
+                             boolean allowBackwardShift,
+                             Alignment.Anchor anchor)
+    {
       myParentType = parentType;
       myAllowBackwardShift = allowBackwardShift;
       for (IElementType elementType : targetElementTypes) {
-        myAlignments.put(elementType, Alignment.createAlignment(myAllowBackwardShift));
+        myAlignments.put(elementType, Alignment.createAlignment(myAllowBackwardShift, anchor));
       }
     }
 

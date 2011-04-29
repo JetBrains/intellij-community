@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.completion
 
-import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.codeInsight.editorActions.CompletionAutoPopupHandler
 import com.intellij.codeInsight.lookup.Lookup
@@ -748,8 +747,6 @@ public class Bar {
   }
 
   public void testExplicitMultipleVariantCompletionAfterAutoPopup() {
-    println CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE
-
     myFixture.configureByText 'a.java', 'class Foo {<caret>}'
     type 'pr'
 
@@ -761,7 +758,7 @@ public class Bar {
     lookup.items.each {
       lookup.list.cellRenderer.getListCellRendererComponent(lookup.list, it, 0, false, false)
     }
-    assert myFixture.lookupElementStrings == ['private', 'protected']
+    assert myFixture.lookupElementStrings.containsAll(['private', 'protected'])
   }
 
 

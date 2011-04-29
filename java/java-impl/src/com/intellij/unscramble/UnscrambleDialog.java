@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -187,10 +188,14 @@ public class UnscrambleDialog extends DialogWrapper{
     JPanel panel = GuiUtils.constructFieldWithBrowseButton(myLogFile, new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
-        VirtualFile[] files = FileChooser.chooseFiles(myLogFile, descriptor);
-        if (files.length != 0) {
-          myLogFile.setText(FileUtil.toSystemDependentName(files[files.length-1].getPath()));
-        }
+        FileChooser.chooseFilesWithSlideEffect(descriptor, myProject, null, new Consumer<VirtualFile[]>() {
+          @Override
+          public void consume(VirtualFile[] files) {
+            if (files.length != 0) {
+              myLogFile.setText(FileUtil.toSystemDependentName(files[files.length - 1].getPath()));
+            }
+          }
+        });
       }
     });
     myLogFileChooserPanel.setLayout(new BorderLayout());

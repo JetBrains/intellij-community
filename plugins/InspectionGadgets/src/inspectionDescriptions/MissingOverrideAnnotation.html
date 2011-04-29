@@ -6,13 +6,16 @@ do not have the <b>@java.lang.Override</b> annotation.
 This inspection only reports if the project or module is configured to use a
 language level of 5.0 or higher.
 <p>
-Use the checkbox below to have this inspection ignore the
+Use the first checkbox below to have this inspection ignore the
 <b>java.lang.Object</b> methods
 <b>equals()</b>,
 <b>hashCode()</b> and
 <b>toString()</b>. The risk of these methods
 going missing and thus your code not compiling anymore due to the
 <b>@Override</b> annotation is vanishingly small.
+<p>
+Use the second checkbox below to have this inspection ignore overriding methods
+in anonymous classes.
 <p>
 <small>Powered by InspectionGadgets</small>
 </body>

@@ -76,8 +76,8 @@ public class FormatterImpl extends FormatterEx
     FormattingModelProvider.setFactory(this);
   }
 
-  public Alignment createAlignment(boolean applyToNonFirstBlocksOnLine) {
-    return new AlignmentImpl(applyToNonFirstBlocksOnLine);
+  public Alignment createAlignment(boolean applyToNonFirstBlocksOnLine, @NotNull Alignment.Anchor anchor) {
+    return new AlignmentImpl(applyToNonFirstBlocksOnLine, anchor);
   }
 
   public Alignment createChildAlignment(final Alignment base) {
@@ -746,6 +746,7 @@ public class FormatterImpl extends FormatterEx
     }
   }
 
+  @Nullable
   public <T> T runWithFormattingDisabled(@NotNull Computable<T> runnable) {
     disableFormatting();
     try {

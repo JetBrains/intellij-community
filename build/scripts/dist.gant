@@ -29,6 +29,9 @@ setProperty("paths", new Paths(out))
 
 def paths = new Paths(out)
 
+// load ApplicationInfo.xml properties
+ant.xmlproperty(file: appInfoFile(), collapseAttributes: "true")
+
 target(compile: "Compile project") {
   loadProject()
 
@@ -60,7 +63,7 @@ target('default': 'The default target') {
   layoutAll(
           buildNumber: "IC-108.SNAPSHOT",
           version: "IdeaX",
-          system_selector: "IntelliJIdeaCE10",
+          system_selector: "IntelliJIdeaCE${p("component.version.major")}",
           home, out)
 }
 
@@ -68,7 +71,6 @@ public def layoutAll(Map args, String home, String out) {
   Paths paths = new Paths(out)
 
   wire_build_date(args.buildNumber)
-  ant.xmlproperty(file: appInfoFile(), collapseAttributes: "true")
 
   def layouts = includeFile("$home/build/scripts/layouts.gant")
   layouts.layoutFull(home, paths.distAll)
@@ -91,6 +93,13 @@ private def layoutWin(Map args, String home, Paths paths) {
       fileset(dir: "$home/bin") { include(name: "*.*") }
       fileset(dir: "$home/bin/win")
     }
+  }
+
+  ant.replace(file: "$paths.distWin/bin/idea.bat") {
+    replacefilter(token: "@@system_selector@@", value: args.system_selector)
+  }
+  ant.replace(file: "$paths.distWin/bin/inspect_diff.bat") {
+    replacefilter(token: "@@system_selector@@", value: args.system_selector)
   }
 
   patchPropertiesFile(paths.distWin)
@@ -127,6 +136,8 @@ private def layoutMac(Map args, String home, Paths paths) {
       </dict>
     </array>
   """
+  // TODO remove the next line when system_selector for Mac and other OS will be unified
+  args["system_selector"] = args.system_selector_mac
 
   layoutMacApp(paths.distMac, home, args)
 
@@ -134,6 +145,13 @@ private def layoutMac(Map args, String home, Paths paths) {
     dir("bin") {
       fileset(dir: "$home/bin") { include(name: "*.*") }
     }
+  }
+
+  ant.replace(file: "$paths.distMac/bin/idea.sh") {
+    replacefilter(token: "@@system_selector@@", value: args.system_selector)
+  }
+  ant.replace(file: "$paths.distMac/bin/inspect_diff.sh") {
+    replacefilter(token: "@@system_selector@@", value: args.system_selector)
   }
 
   patchPropertiesFile(paths.distMac)
@@ -167,6 +185,13 @@ def layoutLinux(Map args, String home, Paths paths) {
       fileset(dir: "$home/build/images")
     }
     fileset(dir: "$home/build", includes: "Install-Linux-tar.txt")
+  }
+
+  ant.replace(file: "$paths.distUnix/bin/idea.sh") {
+    replacefilter(token: "@@system_selector@@", value: args.system_selector)
+  }
+  ant.replace(file: "$paths.distUnix/bin/inspect_diff.sh") {
+    replacefilter(token: "@@system_selector@@", value: args.system_selector)
   }
 
   patchPropertiesFile(paths.distUnix)

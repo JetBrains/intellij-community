@@ -333,8 +333,8 @@ public class TypesUtil {
     return type;
   }
 
-  public static PsiType boxPrimitiveType(PsiType result, PsiManager manager, GlobalSearchScope resolveScope) {
-    if (result instanceof PsiPrimitiveType && result != PsiType.VOID) {
+  public static PsiType boxPrimitiveType(PsiType result, PsiManager manager, GlobalSearchScope resolveScope, boolean boxVoid) {
+    if (result instanceof PsiPrimitiveType && (boxVoid || result != PsiType.VOID)) {
       PsiPrimitiveType primitive = (PsiPrimitiveType)result;
       String boxedTypeName = primitive.getBoxedTypeName();
       if (boxedTypeName != null) {
@@ -345,6 +345,9 @@ public class TypesUtil {
     return result;
   }
 
+  public static PsiType boxPrimitiveType(PsiType result, PsiManager manager, GlobalSearchScope resolveScope) {
+    return boxPrimitiveType(result, manager, resolveScope, false);
+  }
   @NotNull
   public static PsiClassType createType(String fqName, @NotNull PsiElement context) {
     return createTypeByFQClassName(fqName, context);

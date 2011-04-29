@@ -280,7 +280,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   private static boolean isDeclarationVisible(PsiElement lastParent, PsiElement decl) {
     if (lastParent instanceof GrMethod && decl instanceof GrVariableDeclaration) {
-      return ((GrVariableDeclaration)decl).getModifierList().findAnnotation("groovy.transform.Field") != null;
+      return false;
     }
     return true;
   }

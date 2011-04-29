@@ -16,16 +16,12 @@
 package org.intellij.lang.xpath.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.intellij.lang.xpath.XPath2ElementTypes;
 import org.intellij.lang.xpath.psi.XPath2ElementVisitor;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathVariable;
 import org.intellij.lang.xpath.psi.XPathVariableDeclaration;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /*
 * Created by IntelliJ IDEA.
@@ -37,30 +33,14 @@ public class XPath2VariableDeclarationImpl extends XPath2ElementImpl implements 
     super(node);
   }
 
-  @Nullable
-  public XPathExpression getVariableBinding(String name) {
-    List<PsiElement> elements = findChildrenByType(XPath2ElementTypes.BINDING_SEQ);
-    for (PsiElement element : elements) {
-      XPathVariable variable = getVariable(name);
-      if (variable != null && name.equals(variable.getName())) {
-        return PsiTreeUtil.findChildOfType(element, XPathExpression.class);
-      }
-    }
-    return null;
+  @Override
+  public XPathExpression getInitializer() {
+    return PsiTreeUtil.findChildOfType(this, XPathExpression.class);
   }
 
   @Nullable
-  public XPathVariable getVariable(String name) {
-    if (name == null) return null;
-
-    List<PsiElement> elements = findChildrenByType(XPath2ElementTypes.BINDING_SEQ);
-    for (PsiElement element : elements) {
-      XPathVariable variable = PsiTreeUtil.findChildOfType(element, XPathVariable.class);
-      if (variable != null && name.equals(variable.getName())) {
-        return variable;
-      }
-    }
-    return null;
+  public XPathVariable getVariable() {
+    return PsiTreeUtil.findChildOfType(this, XPathVariable.class);
   }
 
   public void accept(XPath2ElementVisitor visitor) {

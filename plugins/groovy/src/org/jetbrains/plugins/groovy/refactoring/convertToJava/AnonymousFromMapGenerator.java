@@ -57,7 +57,7 @@ public class AnonymousFromMapGenerator {
       substitutor = PsiSubstitutor.EMPTY;
     }
     builder.append("new ");
-    writeType(builder, type);
+    writeType(builder, type, operand);
     builder.append("() {\n");
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(operand.getProject());
@@ -112,7 +112,7 @@ public class AnonymousFromMapGenerator {
           returnType = signature.getReturnType();
         }
 
-        writeType(builder, returnType);
+        writeType(builder, returnType, operand);
 
         builder.append(' ').append(name);
         GenerationUtil.writeParameterList(builder, parameters, new GeneratorClassNameProvider());

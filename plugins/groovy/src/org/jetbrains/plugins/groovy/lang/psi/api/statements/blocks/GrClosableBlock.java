@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -33,6 +34,7 @@ public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParameters
   String OWNER_NAME = "owner";
   String IT_PARAMETER_NAME = "it";
 
+  @NotNull
   GrParameterList getParameterList();
 
   void addParameter(GrParameter parameter);

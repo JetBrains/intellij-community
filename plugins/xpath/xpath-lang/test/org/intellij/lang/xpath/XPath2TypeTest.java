@@ -149,6 +149,10 @@ public class XPath2TypeTest extends XPath2HighlightingTestBase {
     doXPathHighlighting();
   }
 
+  public void testQuantifiedExprCondition() throws Throwable {
+    doXPathHighlighting();
+  }
+
   @Override
   protected String getSubPath() {
     return "xpath2/highlighting/types";

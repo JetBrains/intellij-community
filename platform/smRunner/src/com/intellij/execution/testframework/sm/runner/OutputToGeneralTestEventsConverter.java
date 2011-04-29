@@ -87,6 +87,22 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   public void process(final String text, final Key outputType) {
+    final int textLength = text.length();
+    // if text is multi line:
+    if (textLength > 1 && text.substring(0, text.length() - 1).contains("\n")) {
+      // some fake process handler may not auto-split text in lines
+      final String[] lines = StringUtil.splitByLines(text);
+      for (String line : lines) {
+        processLine(line, outputType);
+      }
+    }
+    else {
+      // one line
+      processLine(text, outputType);
+    }
+  }
+
+  private void processLine(String text, Key outputType) {
     if (outputType != ProcessOutputTypes.STDERR && outputType != ProcessOutputTypes.SYSTEM) {
       // we check for consistently only std output
       // because all events must be send to stdout
@@ -199,7 +215,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   protected boolean processServiceMessages(final String text,
                                           final Key outputType,
                                           final ServiceMessageVisitor visitor) throws ParseException {
-    final ServiceMessage message = ServiceMessage.parse(text);
+    // service message parser expects line like "##teamcity[ .... ]" without whitespaces in the end.
+    final ServiceMessage message = ServiceMessage.parse(text.trim());
     if (message != null) {
       message.visit(visitor);
     }
@@ -405,6 +422,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     public void visitTestStarted(@NotNull final TestStarted testStarted) {
+      // TODO
+      // final String locationUrl = testStarted.getLocationHint();
+
       final String locationUrl = testStarted.getAttributes().get(ATTR_KEY_LOCATION_URL);
       fireOnTestStarted(testStarted.getTestName(), locationUrl);
     }

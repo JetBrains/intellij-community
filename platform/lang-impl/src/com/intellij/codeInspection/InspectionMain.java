@@ -45,9 +45,23 @@ public class InspectionMain implements ApplicationStarter {
     //System.setProperty("idea.load.plugins.category", "inspection");
     myApplication = new InspectionApplication();
 
+    myApplication.myHelpProvider = new InspectionToolCmdlineOptionHelpProvider() {
+      @Override
+      public void printHelpAndExit() {
+        printHelp();
+      }
+    };
     myApplication.myProjectPath = args[1];
     myApplication.myProfileName = args[2];
     myApplication.myOutPath = args[3];
+
+    if (myApplication.myProjectPath == null
+        || myApplication.myOutPath == null
+        || myApplication.myProfileName == null) {
+      System.err.println(myApplication.myProjectPath + myApplication.myOutPath + myApplication.myProfileName);
+      printHelp();
+    }
+
 
     try {
       for (int i = 4; i < args.length; i++) {

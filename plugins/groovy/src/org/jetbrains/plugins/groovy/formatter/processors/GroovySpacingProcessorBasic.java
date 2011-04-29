@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExp
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
@@ -222,10 +223,13 @@ public abstract class GroovySpacingProcessorBasic extends SpacingTokens implemen
     }
 
     // diamonds
-    if ((rightType == mLT || rightType == mGT) &&
-        right.getParent() instanceof GrCodeReferenceElement &&
-        right.getParent().getParent() instanceof GrNewExpression) {
-      return NO_SPACING;
+    if (rightType == mLT || rightType == mGT) {
+      if (right.getParent() instanceof GrCodeReferenceElement) {
+        PsiElement p = right.getParent().getParent();
+        if (p instanceof GrNewExpression || p instanceof GrAnonymousClassDefinition) {
+          return NO_SPACING;
+        }
+      }
     }
 
     return COMMON_SPACING;

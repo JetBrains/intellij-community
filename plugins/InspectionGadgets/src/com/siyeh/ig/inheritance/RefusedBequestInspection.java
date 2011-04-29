@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,11 +61,12 @@ public class RefusedBequestInspection extends BaseInspection {
     private class RefusedBequestVisitor extends BaseInspectionVisitor{
 
         @Override public void visitMethod(@NotNull PsiMethod method){
+            super.visitMethod(method);
             final PsiCodeBlock body = method.getBody();
             if(body == null){
                 return;
             }
-            if (method.getNameIdentifier() == null) {
+            if(method.getNameIdentifier() == null){
                 return;
             }
             final PsiMethod leastConcreteSuperMethod =
@@ -76,27 +76,55 @@ public class RefusedBequestInspection extends BaseInspection {
             }
             final PsiClass containingClass =
                     leastConcreteSuperMethod.getContainingClass();
-            if (containingClass == null) {
+            if(containingClass == null){
                 return;
             }
             final String className = containingClass.getQualifiedName();
             if(CommonClassNames.JAVA_LANG_OBJECT.equals(className)){
                 return;
             }
-            if (ignoreEmptySuperMethods){
-                final PsiMethod navigationElement = (PsiMethod)
+            if(ignoreEmptySuperMethods){
+                final PsiMethod superMethod = (PsiMethod)
                         leastConcreteSuperMethod.getNavigationElement();
-                if (MethodUtils.isEmpty(navigationElement)){
+                if(isTrivial(superMethod)){
                     return;
                 }
             }
-            if (TestUtils.isJUnit4BeforeOrAfterMethod(method)) {
+            if(TestUtils.isJUnit4BeforeOrAfterMethod(method)){
                 return;
             }
             if(containsSuperCall(body, leastConcreteSuperMethod)){
                 return;
             }
             registerMethodError(method);
+        }
+
+        private boolean isTrivial(PsiMethod method){
+            final PsiCodeBlock body = method.getBody();
+            if(body == null){
+                return true;
+            }
+            final PsiStatement[] statements = body.getStatements();
+            if(statements.length == 0){
+                return true;
+            }
+            if(statements.length > 1){
+                return false;
+            }
+            final PsiStatement statement = statements[0];
+            if(statement instanceof PsiThrowStatement){
+                return true;
+            }
+            if(statement instanceof PsiReturnStatement){
+                final PsiReturnStatement returnStatement =
+                        (PsiReturnStatement) statement;
+                final PsiExpression returnValue =
+                        returnStatement.getReturnValue();
+                if(returnValue instanceof PsiLiteralExpression){
+                    return true;
+                }
+            }
+            return false;
         }
 
         @Nullable
@@ -130,7 +158,6 @@ public class RefusedBequestInspection extends BaseInspection {
         private boolean hasSuperCall = false;
 
         SuperCallVisitor(PsiMethod methodToSearchFor){
-            super();
             this.methodToSearchFor = methodToSearchFor;
         }
 

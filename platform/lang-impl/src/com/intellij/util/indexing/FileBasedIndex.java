@@ -379,7 +379,11 @@ public class FileBasedIndex implements ApplicationComponent {
         final MapIndexStorage<K, V> storage = new MapIndexStorage<K, V>(IndexInfrastructure.getStorageFile(name), extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getCacheSize());
         final MemoryIndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
         final UpdatableIndex<K, V, FileContent> index = createIndex(name, extension, memStorage);
-        myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, new IndexableFilesFilter(extension.getInputFilter())));
+        final InputFilter inputFilter = extension.getInputFilter();
+        
+        assert inputFilter != null : "Index extension " + name + " must provide non-null input filter";
+        
+        myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, new IndexableFilesFilter(inputFilter)));
         myUnsavedDataIndexingSemaphores.put(name, new Semaphore());
         myNoLimitCheckTypes.addAll(extension.getFileTypesWithSizeLimitNotApplicable());
         break;
@@ -438,8 +442,10 @@ public class FileBasedIndex implements ApplicationComponent {
   private <K, V> UpdatableIndex<K, V, FileContent> createIndex(final ID<K, V> indexId, final FileBasedIndexExtension<K, V> extension, final MemoryIndexStorage<K, V> storage) throws IOException {
     final MapReduceIndex<K, V, FileContent> index;
     if (extension instanceof CustomImplementationFileBasedIndexExtension) {
-      final UpdatableIndex<K, V, FileContent> custom =
-        ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(indexId, this, storage);
+      final UpdatableIndex<K, V, FileContent> custom = ((CustomImplementationFileBasedIndexExtension<K, V, FileContent>)extension).createIndexImplementation(indexId, this, storage);
+      
+      assert custom != null : "Custom index implementation must not be null; index: " + indexId;
+      
       if (!(custom instanceof MapReduceIndex)) {
         return custom;
       }
@@ -1289,13 +1295,19 @@ public class FileBasedIndex implements ApplicationComponent {
 
   private <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
     final Pair<UpdatableIndex<?, ?, FileContent>, InputFilter> pair = myIndices.get(indexId);
+    
+    assert pair != null : "Index data is absent for index " + indexId;
+
     //noinspection unchecked
-    return pair != null? (UpdatableIndex<K,V, FileContent>)pair.getFirst() : null;
+    return (UpdatableIndex<K,V, FileContent>)pair.getFirst();
   }
 
   private InputFilter getInputFilter(ID<?, ?> indexId) {
     final Pair<UpdatableIndex<?, ?, FileContent>, InputFilter> pair = myIndices.get(indexId);
-    return pair != null? pair.getSecond() : null;
+    
+    assert pair != null : "Index data is absent for index " + indexId;
+
+    return pair.getSecond();
   }
 
   public int getNumberOfPendingInvalidations() {

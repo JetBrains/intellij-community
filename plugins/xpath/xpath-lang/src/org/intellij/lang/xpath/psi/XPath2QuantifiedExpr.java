@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 * User: sweinreuter
 * Date: 04.01.11
 */
-public interface XPath2QuantifiedExpr extends XPathExpression, XPathVariableDeclaration {
+public interface XPath2QuantifiedExpr extends XPathExpression, XPathVariableHolder {
 
   @Nullable
   XPathExpression getTest();
