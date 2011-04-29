@@ -23,6 +23,7 @@ import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.IconLoader;
@@ -44,6 +45,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
   private final ProjectView myProjectView;
   private final FavoritesManager myFavoritesManager;
   private final FavoritesManager.FavoritesListener myFavoritesListener;
+  private static final Logger LOG = Logger.getInstance("#" + FavoritesProjectViewPane.class.getName());
 
   protected FavoritesProjectViewPane(final Project project, ProjectView projectView, FavoritesManager favoritesManager) {
     super(project);
@@ -97,7 +99,9 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
   public JComponent createComponent() {
     //if (myViewPanel != null) return myViewPanel;
 
-    myViewPanel = new FavoritesTreeViewPanel(myProject, null, getSubId());
+    final String subId = getSubId();
+    LOG.assertTrue(subId != null, getSubIds());
+    myViewPanel = new FavoritesTreeViewPanel(myProject, null, subId);
     myTree = myViewPanel.getTree();
     setTreeBuilder(myViewPanel.getBuilder());
     myTreeStructure = myViewPanel.getFavoritesTreeStructure();
