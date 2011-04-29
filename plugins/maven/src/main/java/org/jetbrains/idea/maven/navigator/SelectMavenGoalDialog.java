@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.treeStructure.SimpleNode;
 
@@ -26,10 +27,16 @@ public class SelectMavenGoalDialog extends SelectFromMavenProjectsDialog {
   public SelectMavenGoalDialog(Project project, final String projectPath, final String goal, String title) {
     super(project, title, MavenProjectsStructure.GoalNode.class, new NodeSelector() {
       public boolean shouldSelect(SimpleNode node) {
+        if (projectPath == null || goal == null) return false;
+
         if (node instanceof MavenProjectsStructure.GoalNode) {
-          MavenProjectsStructure.GoalNode goalNode = (MavenProjectsStructure.GoalNode)node;
-          return FileUtil.pathsEqual(goalNode.getProjectPath(), projectPath)
-                 && goalNode.getGoal().equals(goal);
+          MavenProjectsStructure.GoalNode eachGoalNode = (MavenProjectsStructure.GoalNode)node;
+          String goalNodeProjectPath = eachGoalNode.getProjectPath();
+          String goalNodeGoal = eachGoalNode.getGoal();
+
+          if (goalNodeProjectPath == null || goalNodeGoal == null) return false;
+
+          return FileUtil.pathsEqual(goalNodeProjectPath, projectPath) && goal.equals(goalNodeGoal);
         }
         return false;
       }
