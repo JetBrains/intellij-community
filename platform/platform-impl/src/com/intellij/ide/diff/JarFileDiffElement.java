@@ -24,8 +24,10 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 public class JarFileDiffElement extends VirtualFileDiffElement {
+  @SuppressWarnings({"ConstantConditions"})
   public JarFileDiffElement(@NotNull VirtualFile file) {
-    super(JarFileSystem.getInstance().getJarRootForLocalFile(file));
+    super(file.getFileSystem() == JarFileSystem.getInstance()
+          ? file : JarFileSystem.getInstance().getJarRootForLocalFile(file));
   }
 
   protected VirtualFileDiffElement createElement(VirtualFile file) {
