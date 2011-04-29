@@ -27,7 +27,7 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
 
   @NotNull
   @Override
-  protected TokenSet getVariableDelimeters() {
+  protected TokenSet getVariableDelimiters() {
     return VARIABLE_DELIMETERS;
   }
 }

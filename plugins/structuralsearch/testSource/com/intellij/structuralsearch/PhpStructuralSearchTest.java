@@ -5,7 +5,7 @@ import com.jetbrains.php.lang.PhpFileType;
 /**
  * @author Eugene.Kudelevsky
  */
-public class PhpStucturalSearchTest extends StructuralSearchTestCase {
+public class PhpStructuralSearchTest extends StructuralSearchTestCase {
   public void test1() throws Exception {
     String s = "<?php\n" +
                "if ($exp) {\n" +

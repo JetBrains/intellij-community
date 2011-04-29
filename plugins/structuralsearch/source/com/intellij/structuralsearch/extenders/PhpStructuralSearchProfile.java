@@ -32,7 +32,7 @@ public class PhpStructuralSearchProfile extends StructuralSearchProfileBase {
 
   @NotNull
   @Override
-  protected TokenSet getVariableDelimeters() {
+  protected TokenSet getVariableDelimiters() {
     return VAR_DELIMITERS;
   }
 }

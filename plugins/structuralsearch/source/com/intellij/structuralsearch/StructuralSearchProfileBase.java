@@ -306,10 +306,10 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   @Override
   public boolean canBeVarDelimeter(@NotNull PsiElement element) {
     final ASTNode node = element.getNode();
-    return node != null && getVariableDelimeters().contains(node.getElementType());
+    return node != null && getVariableDelimiters().contains(node.getElementType());
   }
 
-  protected TokenSet getVariableDelimeters() {
+  protected TokenSet getVariableDelimiters() {
     return TokenSet.EMPTY;
   }
 
