@@ -15,7 +15,10 @@
  */
 package com.intellij.xdebugger;
 
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -125,7 +128,7 @@ public class XDebuggerTestUtil {
     throw new AssertionError("var '" + name + "' not found");
   }
 
-  public static XTestValueNode computePresentation(XValue value) throws InterruptedException {
+  public static XTestValueNode computePresentation(@NotNull XValue value) throws InterruptedException {
     XTestValueNode node = new XTestValueNode();
     if (value instanceof XNamedValue) {
       node.myName = ((XNamedValue)value).getName();
@@ -199,6 +202,17 @@ public class XDebuggerTestUtil {
   public static void assertVariable(Collection<XValue> vars, String name, String type, String value, Boolean hasChildren)
     throws InterruptedException {
     assertVariable(findVar(vars, name), name, type, value, hasChildren);
+  }
+
+  @NotNull
+  public static String getConsoleText(final @NotNull ConsoleViewImpl consoleView) {
+    new WriteAction() {
+      protected void run(Result result) throws Throwable {
+        consoleView.flushDeferredText();
+      }
+    }.execute();
+
+    return consoleView.getEditor().getDocument().getText();
   }
 
   public static class XTestStackFrameContainer extends XTestContainer<XStackFrame> implements XExecutionStack.XStackFrameContainer {

@@ -597,8 +597,9 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private void configureFullEditor() {
     if (myFullEditor == null || myFullEditorActions == null) return;
     final JPanel header = new JPanel(new BorderLayout());
-    header.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myFullEditorActions, true).getComponent(),
-               BorderLayout.EAST);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myFullEditorActions, true);
+    actionToolbar.setTargetComponent(myFullEditor.getContentComponent());
+    header.add(actionToolbar.getComponent(), BorderLayout.EAST);
     myFullEditor.setHeaderComponent(header);
     myFullEditor.getSettings().setLineMarkerAreaShown(false);
   }
