@@ -127,7 +127,7 @@ class Bar {
     myFixture.addFileToProject("java/util/regex/Pattern.java", """
 package java.util.regex;
 
-final class Pattern {
+public final class Pattern {
   public static Pattern compile(String regex) {return new Pattern();}
   public Matcher matcher(CharSequence input){return new Matcher();}
   public static boolean matches(String regex, CharSequence input) {return true;}
@@ -136,7 +136,7 @@ final class Pattern {
     myFixture.addFileToProject("java/util/regex/Matcher.java", """
 package java.util.regex;
 
-final class Matcher {
+public final class Matcher {
   public boolean matches() {return true;}
 }
 
@@ -148,4 +148,5 @@ final class Matcher {
   void testCharInitializer() {doTest()}
 
   void testAnonymousFromMap() {doTest()}
+  void testClosure() {doTest()}
 }

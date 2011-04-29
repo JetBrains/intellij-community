@@ -23,9 +23,11 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -37,7 +39,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.*;
 
@@ -51,7 +56,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
   public ClassItemGeneratorImpl(Project project) {
     myProject = project;
-    classNameProvider=new GeneratorClassNameProvider();
+    classNameProvider = new GeneratorClassNameProvider();
   }
 
   @Override
@@ -133,12 +138,15 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     }
     builder.append(name);
 
+    final ArrayList<GrParameter> actualParams;
     if (method instanceof GrMethod) {
-      final ArrayList<GrParameter> actualParams = getActualParams((GrMethod)method, skipOptional);
+      actualParams = getActualParams((GrMethod)method, skipOptional);
       GenerationUtil.writeParameterList(builder, actualParams.toArray(new GrParameter[actualParams.size()]), classNameProvider);
-    } else {
-      LOG.assertTrue(skipOptional==0);
+    }
+    else {
+      LOG.assertTrue(skipOptional == 0);
       GenerationUtil.writeParameterList(builder, method.getParameterList().getParameters(), classNameProvider);
+      actualParams = null;
     }
 
 
@@ -147,7 +155,12 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     if (!isAbstract) {
       /************* body **********/
       if (method instanceof GrMethod) {
-        ((GrMethod)method).accept(new CodeBlockGenerator(builder, myProject));
+        if (skipOptional == 0) {
+          ((GrMethod)method).accept(new CodeBlockGenerator(builder, myProject));
+        }
+        else {
+          builder.append("{\n").append(generateDelegateCall((GrMethod)method, actualParams)).append("\n}\n");
+        }
       }
       else if (method instanceof GrAccessorMethod) {
         writeAccessorBody(builder, method);
@@ -167,6 +180,46 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     else {
       builder.append(";");
     }
+  }
+
+  private StringBuilder generateDelegateCall(GrMethod method, ArrayList<GrParameter> actualParams) {
+    final GrParameter[] parameters = method.getParameterList().getParameters();
+    StringBuilder builder = new StringBuilder();
+    if (method.isConstructor()) {
+      builder.append("this");
+    }
+    else {
+      if (method.getReturnType() != PsiType.VOID) {
+        builder.append("return ");
+      }
+      builder.append(method.getName());
+    }
+    builder.append("(");
+    for (GrParameter parameter : parameters) {
+      if (actualParams.contains(parameter)) {
+        builder.append(parameter.getName());
+      }
+      else {
+        LOG.assertTrue(parameter.isOptional());
+        final GrExpression initializer = parameter.getDefaultInitializer();
+        LOG.assertTrue(initializer != null);
+        builder.append(initializer.getText());
+      }
+      builder.append(", ");
+    }
+    builder.delete(builder.length() - 2, builder.length());
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
+    final GrStatement delegateCall;
+    if (method.isConstructor()) {
+      delegateCall = factory.createConstructorInvocation(builder.toString(), method);
+    }
+    else {
+      delegateCall = factory.createStatementFromText(builder.toString(), method);
+    }
+
+    final StringBuilder result = new StringBuilder();
+    delegateCall.accept(new CodeBlockGenerator(result, myProject));
+    return result;
   }
 
   private void writeMainScriptMethodBody(StringBuilder builder, PsiMethod method) {
@@ -222,8 +275,10 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     if (typeDefinition instanceof GroovyScriptClass) {
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
       final String name = typeDefinition.getName();
-      result.add(factory.createConstructorFromText(name, new String[]{"groovy.lang.Binding"}, new String[]{"binding"},"{super(binding);}", typeDefinition));
-      result.add(factory.createConstructorFromText(name, ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{super();}", typeDefinition));
+      result.add(factory.createConstructorFromText(name, new String[]{"groovy.lang.Binding"}, new String[]{"binding"}, "{super(binding);}",
+                                                   typeDefinition));
+      result.add(
+        factory.createConstructorFromText(name, ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{super();}", typeDefinition));
     }
     return result;
   }

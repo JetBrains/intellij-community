@@ -80,8 +80,8 @@ public class GenerationUtil {
   private GenerationUtil() {
   }
 
-  public static void writeType(StringBuilder builder, PsiType type) {
-    builder.append(type.getCanonicalText()); //todo make smarter.
+  public static void writeType(StringBuilder builder, PsiType type, PsiElement context) {
+    writeType(builder, type, context, new GeneratorClassNameProvider());
   }
 
   public static void writeType(final StringBuilder builder,
@@ -143,7 +143,7 @@ public class GenerationUtil {
           final String qname = classNameProvider.getQualifiedClassName(psiClass, context);
           builder.append(qname);
         }
-        writeTypeParameters(builder, parameters);
+        writeTypeParameters(builder, parameters, context, classNameProvider);
         return this;
       }
 
@@ -189,12 +189,18 @@ public class GenerationUtil {
            ((PsiParameterList)parent).getParameterIndex((PsiParameter)context) == ((PsiParameterList)parent).getParametersCount() - 1;
   }
 
-  private static void writeTypeParameters(StringBuilder builder, PsiType[] parameters) {
+  private static void writeTypeParameters(StringBuilder builder,
+                                          PsiType[] parameters,
+                                          PsiElement context,
+                                          ClassNameProvider classNameProvider) {
     if (parameters.length == 0) return;
 
     builder.append("<");
     for (PsiType parameter : parameters) {
-      writeType(builder, parameter);
+      if (parameter instanceof PsiPrimitiveType) {
+        parameter = TypesUtil.boxPrimitiveType(parameter, context.getManager(), context.getResolveScope(), true);
+      }
+      writeType(builder, parameter, context, classNameProvider);
       builder.append(", ");
     }
     builder.replace(builder.length() - 2, builder.length(), ">");
@@ -238,7 +244,7 @@ public class GenerationUtil {
     else {
       builder.append(((PsiPackage)resolved).getQualifiedName());
     }
-    writeTypeParameters(builder, referenceElement.getTypeArguments());
+    writeTypeParameters(builder, referenceElement.getTypeArguments(), referenceElement, new GeneratorClassNameProvider());
   }
 
   public static void invokeMethodByName(GrExpression caller,
@@ -460,7 +466,7 @@ public class GenerationUtil {
           if (initializer != null) {
             final PsiType varType = initializer.getType();
             if (varType != null) {
-              types.add(getTypeText(varType));
+              types.add(getTypeText(varType, variableDeclaration));
             }
           }
         }
@@ -469,9 +475,9 @@ public class GenerationUtil {
     return types;
   }
 
-  static String getTypeText(PsiType varType) {
+  static String getTypeText(PsiType varType, PsiElement context) {
     final StringBuilder builder = new StringBuilder();
-    writeType(builder, varType);
+    writeType(builder, varType, context);
     return builder.toString();
   }
 
@@ -522,7 +528,7 @@ public class GenerationUtil {
       return;
     }
     PsiType type = getVarType(variables[0]);
-    writeType(builder, type);
+    writeType(builder, type, variableDeclaration);
 
     builder.append(" ");
     for (GrVariable variable : variables) {
@@ -551,7 +557,7 @@ public class GenerationUtil {
       builder.append(" ");
     }
 
-    writeType(builder, type);
+    writeType(builder, type, variable);
     builder.append(" ");
 
     writeVariableWithoutType(builder, expressionContext, variable);
