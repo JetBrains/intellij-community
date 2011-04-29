@@ -16,7 +16,6 @@
 package com.intellij.formatting;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
@@ -65,8 +64,6 @@ public interface BlockAlignmentProcessor {
     @NotNull public final LeafBlockWrapper targetBlock;
     @NotNull public final Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> alignmentMappings;
     @NotNull public final Map<LeafBlockWrapper, Set<LeafBlockWrapper>> backwardShiftedAlignedBlocks;
-    
-    @Nullable public LeafBlockWrapper backwardAlignmentTarget;
 
     public Context(@NotNull AlignmentImpl alignment,
                    @NotNull LeafBlockWrapper targetBlock,

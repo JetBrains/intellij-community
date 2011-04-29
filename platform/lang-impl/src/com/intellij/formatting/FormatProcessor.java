@@ -789,12 +789,12 @@ class FormatProcessor {
         }
         else {
           final int offsetBeforeBlock = CoreFormatterUtil.getOffsetBefore(offsetResponsibleBlock);
-          final AbstractBlockWrapper prevIndentedBlock = CoreFormatterUtil.getPreviousIndentedBlock(myCurrentBlock);
-          if (prevIndentedBlock == null) {
+          final AbstractBlockWrapper indentedParentBlock = CoreFormatterUtil.getIndentedParentBlock(myCurrentBlock);
+          if (indentedParentBlock == null) {
             return new IndentData(0, offsetBeforeBlock);
           }
           else {
-            final int parentIndent = prevIndentedBlock.getWhiteSpace().getIndentOffset();
+            final int parentIndent = indentedParentBlock.getWhiteSpace().getIndentOffset();
             if (parentIndent > offsetBeforeBlock) {
               return new IndentData(0, offsetBeforeBlock);
             }
@@ -923,12 +923,12 @@ class FormatProcessor {
       return parent.calculateChildOffset(myIndentOption, childAttributes, index).createIndentInfo();
     }
     else {
-      AbstractBlockWrapper previousIndentedBlock = CoreFormatterUtil.getPreviousIndentedBlock(myCurrentBlock);
-      if (previousIndentedBlock == null) {
+      AbstractBlockWrapper indentedParentBlock = CoreFormatterUtil.getIndentedParentBlock(myCurrentBlock);
+      if (indentedParentBlock == null) {
         return new IndentInfo(0, 0, alignOffset);
       }
       else {
-        int indentOffset = previousIndentedBlock.getWhiteSpace().getIndentOffset();
+        int indentOffset = indentedParentBlock.getWhiteSpace().getIndentOffset();
         if (indentOffset > alignOffset) {
           return new IndentInfo(0, 0, alignOffset);
         }

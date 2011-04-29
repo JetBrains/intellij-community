@@ -19,12 +19,12 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * {@link BlockAlignmentProcessor} implementation for {@link Alignment} that
- * {@link Alignment.Anchor#LEFT anchors to the left block edge}.
+ * {@link Alignment.Anchor#RIGHT anchors to the right block edge}.
  * 
  * @author Denis Zhdanov
- * @since 4/28/11 4:03 PM
+ * @since 4/28/11 4:06 PM
  */
-public class LeftEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor {
+public class RightEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor {
 
   @Override
   protected IndentData calculateAlignmentAnchorIndent(@NotNull Context context) {
@@ -35,22 +35,18 @@ public class LeftEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor 
 
     final WhiteSpace whiteSpace = offsetResponsibleBlock.getWhiteSpace();
     if (whiteSpace.containsLineFeeds()) {
-      return new IndentData(whiteSpace.getIndentSpaces(), whiteSpace.getSpaces());
+      return new IndentData(whiteSpace.getIndentSpaces() + offsetResponsibleBlock.getSymbolsAtTheLastLine(), whiteSpace.getSpaces());
     }
     else {
-      final int offsetBeforeBlock = CoreFormatterUtil.getOffsetBefore(offsetResponsibleBlock);
+      final int targetIndent = CoreFormatterUtil.getOffsetBefore(offsetResponsibleBlock)
+                               + offsetResponsibleBlock.getSymbolsAtTheLastLine();
       final AbstractBlockWrapper prevIndentedBlock = CoreFormatterUtil.getIndentedParentBlock(context.targetBlock);
       if (prevIndentedBlock == null) {
-        return new IndentData(0, offsetBeforeBlock);
+        return new IndentData(0, targetIndent);
       }
       else {
         final int parentIndent = prevIndentedBlock.getWhiteSpace().getIndentOffset();
-        if (parentIndent > offsetBeforeBlock) {
-          return new IndentData(0, offsetBeforeBlock);
-        }
-        else {
-          return new IndentData(parentIndent, offsetBeforeBlock - parentIndent);
-        }
+        return new IndentData(parentIndent, targetIndent - parentIndent);
       }
     }
   }
@@ -58,12 +54,19 @@ public class LeftEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor 
   @Override
   protected void applyIndentToTheFirstBlockOnLine(@NotNull IndentData alignmentAnchorIndent, @NotNull Context context) {
     WhiteSpace whiteSpace = context.targetBlock.getWhiteSpace();
-    whiteSpace.setSpaces(alignmentAnchorIndent.getSpaces(), alignmentAnchorIndent.getIndentSpaces());
+    int indentSpaces = alignmentAnchorIndent.getIndentSpaces();
+    int spaces = alignmentAnchorIndent.getSpaces() - context.targetBlock.getSymbolsAtTheLastLine();
+    if (spaces < 0) {
+      indentSpaces = Math.max(0, indentSpaces + spaces);
+      spaces = 0;
+    }
+    whiteSpace.setSpaces(spaces, indentSpaces);
   }
 
   @Override
   protected int getAlignmentIndentDiff(@NotNull IndentData alignmentAnchorIndent, @NotNull Context context) {
     IndentData indentBeforeBlock = context.targetBlock.getNumberOfSymbolsBeforeBlock();
-    return alignmentAnchorIndent.getTotalSpaces() - indentBeforeBlock.getTotalSpaces();
+    int numberOfSymbolsBeforeBlock = indentBeforeBlock.getTotalSpaces() + context.targetBlock.getSymbolsAtTheLastLine();
+    return alignmentAnchorIndent.getTotalSpaces() - numberOfSymbolsBeforeBlock;
   }
 }

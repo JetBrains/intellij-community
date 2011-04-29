@@ -18,6 +18,10 @@ package com.intellij.formatting;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * Contains utility methods for core formatter processing.
  * 
@@ -96,17 +100,111 @@ public class CoreFormatterUtil {
    * @return closest block to the given block that contains line feeds if any; <code>null</code> otherwise
    */
   @Nullable
-  public static AbstractBlockWrapper getPreviousIndentedBlock(@NotNull AbstractBlockWrapper block) {
+  public static AbstractBlockWrapper getIndentedParentBlock(@NotNull AbstractBlockWrapper block) {
     AbstractBlockWrapper current = block.getParent();
     while (current != null) {
       if (current.getStartOffset() != block.getStartOffset() && current.getWhiteSpace().containsLineFeeds()) return current;
       if (current.getParent() != null) {
         AbstractBlockWrapper prevIndented = current.getParent().getPrevIndentedSibling(current);
         if (prevIndented != null) return prevIndented;
-
       }
       current = current.getParent();
     }
     return null;
   }
+  
+    /**
+   * It's possible to configure alignment in a way to allow
+   * {@link AlignmentFactory#createAlignment(boolean, Alignment.Anchor)}  backward shift}.
+   * <p/>
+   * <b>Example:</b>
+   * <pre>
+   *     class Test {
+   *         int i;
+   *         StringBuilder buffer;
+   *     }
+   * </pre>
+   * <p/>
+   * It's possible that blocks <code>'i'</code> and <code>'buffer'</code> should be aligned. As formatter processes document from
+   * start to end that means that requirement to shift block <code>'i'</code> to the right is discovered only during
+   * <code>'buffer'</code> block processing. I.e. formatter returns to the previously processed block (<code>'i'</code>), modifies
+   * its white space and continues from that location (performs 'backward' shift).
+   * <p/>
+   * Here is one very important moment - there is a possible case that formatting blocks are configured in a way that they are
+   * combined in explicit cyclic graph.
+   * <p/>
+   * <b>Example:</b>
+   * <pre>
+   *     blah(bleh(blih,
+   *       bloh), bluh);
+   * </pre>
+   * <p/>
+   * Consider that pairs of blocks <code>'blih'; 'bloh'</code> and <code>'bleh', 'bluh'</code> should be aligned
+   * and backward shift is possible for them. Here is how formatter works:
+   * <ol>
+   *   <li>
+   *      Processing reaches <b>'bloh'</b> block. It's aligned to <code>'blih'</code> block. Current document state:
+   *      <p/>
+   *      <pre>
+   *          blah(bleh(blih,
+   *                    bloh), bluh);
+   *      </pre>
+   *   </li>
+   *   <li>
+   *      Processing reaches <b>'bluh'</b> block. It's aligned to <code>'blih'</code> block and backward shift is allowed, hence,
+   *      <code>'blih'</code> block is moved to the right and processing contnues from it. Current document state:
+   *      <pre>
+   *          blah(            bleh(blih,
+   *                    bloh), bluh);
+   *      </pre>
+   *   </li>
+   *   <li>
+   *      Processing reaches <b>'bloh'</b> block. It's configured to be aligned to <code>'blih'</code> block, hence, it's moved
+   *      to the right:
+   *      <pre>
+   *          blah(            bleh(blih,
+   *                                bloh), bluh);
+   *      </pre>
+   *   </li>
+   *   <li>We have endless loop then;</li>
+   * </ol>
+   * So, that implies that we can't use backward alignment if the blocks are configured in a way that backward alignment
+   * appliance produces endless loop. This method encapsulates the logic for checking if backward alignment can be applied.
+   *
+   * @param first                  the first aligned block
+   * @param second                 the second aligned block
+   * @param alignmentMappings      block aligned mappings info
+   * @return                       <code>true</code> if backward alignment is possible; <code>false</code> otherwise
+   */
+  public static boolean allowBackwardAlignment(@NotNull LeafBlockWrapper first, @NotNull LeafBlockWrapper second,
+                                               @NotNull Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> alignmentMappings)
+  {
+    Set<AbstractBlockWrapper> blocksBeforeCurrent = new HashSet<AbstractBlockWrapper>();
+    for (
+      LeafBlockWrapper previousBlock = second.getPreviousBlock();
+      previousBlock != null;
+      previousBlock = previousBlock.getPreviousBlock())
+    {
+      Set<AbstractBlockWrapper> blocks = alignmentMappings.get(previousBlock);
+      if (blocks != null) {
+        blocksBeforeCurrent.addAll(blocks);
+      }
+
+      if (previousBlock.getWhiteSpace().containsLineFeeds()) {
+        break;
+      }
+    }
+
+    for (
+      LeafBlockWrapper next = first.getNextBlock();
+      next != null && !next.getWhiteSpace().containsLineFeeds();
+      next = next.getNextBlock())
+    {
+      if (blocksBeforeCurrent.contains(next)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
 }
