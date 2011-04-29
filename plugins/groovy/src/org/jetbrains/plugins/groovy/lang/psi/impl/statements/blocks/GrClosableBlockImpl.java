@@ -23,6 +23,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -118,10 +119,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   public GrParameter[] getParameters() {
     if (hasParametersSection()) {
       GrParameterListImpl parameterList = getParameterList();
-      if (parameterList != null) {
-        return parameterList.getParameters();
-      }
-
+      return parameterList.getParameters();
     }
 
     return GrParameter.EMPTY_ARRAY;
@@ -138,8 +136,12 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return findPsiChildByType(GroovyTokenTypes.mCLOSABLE_BLOCK_OP);
   }
 
+
+  @NotNull
   public GrParameterListImpl getParameterList() {
-    return findChildByClass(GrParameterListImpl.class);
+    final GrParameterListImpl childByClass = findChildByClass(GrParameterListImpl.class);
+    assert childByClass != null;
+    return childByClass;
   }
 
   public void addParameter(GrParameter parameter) {
@@ -212,7 +214,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return PsiImplUtil.replaceExpression(this, newExpr, removeUnnecessaryParentheses);
   }
 
-  private static final Function<GrClosableBlock, PsiType> ourTypesCalculator = new Function<GrClosableBlock, PsiType>() {
+  private static final Function<GrClosableBlock, PsiType> ourTypesCalculator = new NullableFunction<GrClosableBlock, PsiType>() {
     public PsiType fun(GrClosableBlock block) {
       return GroovyPsiManager.inferType(block, new MethodTypeInferencer(block));
     }
