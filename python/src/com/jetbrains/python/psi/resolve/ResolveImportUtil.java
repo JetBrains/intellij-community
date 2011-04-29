@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.jetbrains.python.psi.FutureFeature.ABSOLUTE_IMPORT;
+
 /**
  * @author dcheryasov
  */
@@ -49,7 +51,7 @@ public class ResolveImportUtil {
         if (pyFile.getLanguageLevel().isPy3K()) {
           return true;
         }
-        return pyFile.isAbsoluteImportEnabled();
+        return pyFile.hasImportFromFuture(ABSOLUTE_IMPORT);
       }
     }
     // if the relevant import is below the foothold, it is either legal or we've detected the offending statement already

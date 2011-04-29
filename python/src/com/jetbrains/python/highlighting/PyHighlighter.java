@@ -43,7 +43,8 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
   static final TextAttributesKey PY_KEYWORD = _copy("PY.KEYWORD", KEYWORD);
 
-  public static final TextAttributesKey PY_STRING = _copy("PY.STRING", STRING);
+  public static final TextAttributesKey PY_BYTE_STRING = _copy("PY.STRING.B", STRING);
+  public static final TextAttributesKey PY_UNICODE_STRING = _copy("PY.STRING.U", STRING);
   public static final TextAttributesKey PY_NUMBER = _copy("PY.NUMBER", NUMBER);
 
   static final TextAttributesKey PY_LINE_COMMENT = _copy("PY.LINE_COMMENT", LINE_COMMENT);
@@ -103,7 +104,7 @@ public class PyHighlighter extends SyntaxHighlighterBase {
     keys.put(PyTokenTypes.INTEGER_LITERAL, PY_NUMBER);
     keys.put(PyTokenTypes.FLOAT_LITERAL, PY_NUMBER);
     keys.put(PyTokenTypes.IMAGINARY_LITERAL, PY_NUMBER);
-    keys.put(PyTokenTypes.STRING_LITERAL, PY_STRING);
+    keys.put(PyTokenTypes.STRING_LITERAL, PY_BYTE_STRING);
 
     keys.put(PyTokenTypes.LPAR, PY_PARENTHS);
     keys.put(PyTokenTypes.RPAR, PY_PARENTHS);

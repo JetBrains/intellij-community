@@ -41,7 +41,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   private ThreadLocal<List<String>> myGetElementNamedStack = new ArrayListThreadLocal();
 
   private final CachedValue<List<PyImportElement>> myImportTargetsTransitive;
-  private volatile Boolean myAbsoluteImportEnabled;
+  //private volatile Boolean myAbsoluteImportEnabled;
+  private final Map<FutureFeature, Boolean> myFutureFeatures;
   private List<String> myDunderAll;
   private boolean myDunderAllCalculated;
 
@@ -53,6 +54,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
         return new Result<List<PyImportElement>>(calculateImportTargetsTransitive(), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     }, false);
+    myFutureFeatures = new HashMap<FutureFeature, Boolean>();
   }
 
   @NotNull
@@ -489,28 +491,28 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return null;
   }
 
-  @Override
-  public boolean isAbsoluteImportEnabled() {
+  public boolean hasImportFromFuture(FutureFeature feature) {
     final StubElement stub = getStub();
     if (stub instanceof PyFileStub) {
       return ((PyFileStub) stub).isAbsoluteImportEnabled();
     }
-    Boolean enabled = myAbsoluteImportEnabled;
+    Boolean enabled = myFutureFeatures.get(feature);
     if (enabled == null) {
-      enabled = calculateAbsoluteImportEnabled();
-      myAbsoluteImportEnabled = enabled;
+      enabled = calculateImportFromFuture(feature);
+      myFutureFeatures.put(feature, enabled);
+      // NOTE: ^^^ not synchronized. if two threads will try to modify this, both can only set the same value.
     }
     return enabled;
   }
 
-  public boolean calculateAbsoluteImportEnabled() {
+  public boolean calculateImportFromFuture(FutureFeature feature) {
     final List<PyFromImportStatement> fromImports = getFromImports();
     for (PyFromImportStatement fromImport : fromImports) {
       if (fromImport.isFromFuture()) {
         final PyImportElement[] pyImportElements = fromImport.getImportElements();
         for (PyImportElement element : pyImportElements) {
           final PyQualifiedName qName = element.getImportedQName();
-          if (qName != null && qName.matches("absolute_import")) {
+          if (qName != null && qName.matches(feature.toString())) {
             return true;
           }
         }
@@ -518,6 +520,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
     return false;
   }
+
 
   public PyType getType(@NotNull TypeEvalContext context) {
     if (myType == null) myType = new PyModuleType(this);
@@ -531,8 +534,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   public void subtreeChanged() {
     super.subtreeChanged();
     ControlFlowCache.clear(this);
-    myAbsoluteImportEnabled = null;
     myDunderAllCalculated = false;
+    myFutureFeatures.clear(); // probably no need to synchronize
   }
 
   private static class ArrayListThreadLocal extends ThreadLocal<List<String>> {

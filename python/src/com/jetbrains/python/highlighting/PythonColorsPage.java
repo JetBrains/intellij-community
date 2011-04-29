@@ -20,7 +20,8 @@ import java.util.Map;
 public class PythonColorsPage implements ColorSettingsPage, InspectionColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
     new AttributesDescriptor("Keyword", PyHighlighter.PY_KEYWORD),
-    new AttributesDescriptor("String", PyHighlighter.PY_STRING),
+    new AttributesDescriptor("String (bytes)", PyHighlighter.PY_BYTE_STRING),
+    new AttributesDescriptor("String (Unicode)", PyHighlighter.PY_UNICODE_STRING),
     new AttributesDescriptor("Number", PyHighlighter.PY_NUMBER),
     new AttributesDescriptor("Line Comment", PyHighlighter.PY_LINE_COMMENT),
     new AttributesDescriptor("Operation Sign", PyHighlighter.PY_OPERATION_SIGN),
@@ -50,6 +51,7 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
     .put("funcDef", PyHighlighter.PY_FUNC_DEFINITION)
     .put("classDef", PyHighlighter.PY_CLASS_DEFINITION)
     .put("builtin", PyHighlighter.PY_BUILTIN_NAME)
+    .put("unicode", PyHighlighter.PY_UNICODE_STRING)
     .build();
 
   @NotNull
@@ -92,7 +94,7 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
       "    def <predefined>__init__</predefined>(self):\n" +
       "        self.sense = None\n" +
       "        byte_string = 'newline:\\n also newline:\\x0a'\n" +
-      "        text_string = u\"Cyrillic A is \\u0410. Oops: \\u123g\"\n"+
+      "        text_string = <unicode>u\"Cyrillic A is \\u0410. Oops: \\u123g\"</unicode>\n"+
       "    \n" +
       "    def <funcDef>makeSense</funcDef>(self, whatever):\n"+
       "        self.sense = whatever\n"+

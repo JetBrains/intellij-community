@@ -57,7 +57,7 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   List<String> getDunderAll();
 
   /**
-   * Return true if the file contains a 'from __future__ import absolute_import' statement.
+   * Return true if the file contains a 'from __future__ import ...' statement with given feature.
    */
-  boolean isAbsoluteImportEnabled();
+  boolean hasImportFromFuture(FutureFeature feature);
 }
