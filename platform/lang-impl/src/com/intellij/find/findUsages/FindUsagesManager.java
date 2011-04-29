@@ -273,8 +273,11 @@ public class FindUsagesManager implements JDOMExternalizable {
 
     clearFindingNextUsageInFile();
     LOG.assertTrue(handler.getPsiElement().isValid());
-    final UsageInfoToUsageConverter.TargetElementsDescriptor descriptor =
-      new UsageInfoToUsageConverter.TargetElementsDescriptor(handler.getPrimaryElements(), handler.getSecondaryElements());
+    PsiElement[] primaryElements = handler.getPrimaryElements();
+    checkNotNull(primaryElements, handler, "getPrimaryElements()");
+    PsiElement[] secondaryElements = handler.getSecondaryElements();
+    checkNotNull(secondaryElements, handler, "getSecondaryElements()");
+    UsageInfoToUsageConverter.TargetElementsDescriptor descriptor = new UsageInfoToUsageConverter.TargetElementsDescriptor(primaryElements, secondaryElements);
     if (singleFile) {
       findUsagesOptions = (FindUsagesOptions)findUsagesOptions.clone();
       editor.putUserData(KEY_START_USAGE_AGAIN, null);
@@ -282,6 +285,14 @@ public class FindUsagesManager implements JDOMExternalizable {
     }
     else {
       findUsages(descriptor, handler, dialog.isSkipResultsWhenOneUsage(), dialog.isShowInSeparateWindow(), findUsagesOptions);
+    }
+  }
+
+  private static void checkNotNull(PsiElement[] primaryElements, FindUsagesHandler handler, @NonNls String methodName) {
+    for (PsiElement element : primaryElements) {
+      if (element == null) {
+        LOG.error(handler + "." + methodName +" has returned array with null elements: " + Arrays.asList(primaryElements));
+      }
     }
   }
 
