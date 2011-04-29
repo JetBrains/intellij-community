@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author ven
  */
@@ -23,7 +25,7 @@ public class Ref<T> {
 
   public Ref() { }
 
-  public Ref(T value) {
+  public Ref(@Nullable T value) {
     myValue = value;
   }
 
@@ -35,15 +37,15 @@ public class Ref<T> {
     return myValue;
   }
 
-  public void set (T value) {
+  public void set (@Nullable T value) {
     myValue = value;
   }
 
-  public static <T> Ref<T> create(T value) {
+  public static <T> Ref<T> create(@Nullable T value) {
     return new Ref<T>(value);
   }
 
   public String toString() {
-    return myValue == null ? null : myValue.toString();
+    return String.valueOf(myValue);
   }
 }
