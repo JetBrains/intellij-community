@@ -86,14 +86,21 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
   }
 
   private void runDebugger(String mainClass, Closure cl) {
+    boolean trace = name == 'testClassOutOfSourceRoots'
     make()
     edt {
       ProgramRunner runner = ProgramRunner.PROGRAM_RUNNER_EP.extensions.find { it.class == GenericDebuggerRunner }
-      runProcess(mainClass, myModule, DefaultDebugExecutor, [onTextAvailable: { evt, type -> /*print evt.text*/}] as ProcessAdapter, runner)
+      runProcess(mainClass, myModule, DefaultDebugExecutor, [onTextAvailable: { evt, type -> if (trace) print evt.text}] as ProcessAdapter, runner)
     }
     cl.call()
+    if (trace) {
+      println "terminated1?: " + debugProcess.executionResult.processHandler.isProcessTerminated()
+    }
     resume()
     debugProcess.executionResult.processHandler.waitFor()
+    if (trace) {
+      println "terminated2?: " + debugProcess.executionResult.processHandler.isProcessTerminated()
+    }
   }
 
   public void testSimpleEvaluate() {
@@ -186,7 +193,9 @@ cl.parseClass('''$mcText''', 'MyClass.groovy').foo(2)
 
     runDebugger 'Foo', {
       waitForBreakpoint()
+      println 'on a breakpoint'
       SourcePosition position = managed { ContextUtil.getSourcePosition(evaluationContext()) }
+      println "position $position"
       assert myClass == position.file.virtualFile
       eval 'a', '2'
     }
