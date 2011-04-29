@@ -87,8 +87,8 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public void compile(PsiElement element, @NotNull GlobalCompilingVisitor globalVisitor) {
-    element.accept(new MyJsCompilingVisitor(globalVisitor));
+  public void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
+    elements[0].getParent().accept(new MyJsCompilingVisitor(globalVisitor));
   }
 
   private static PsiElement extractOnlyStatement(JSBlockStatement e) {

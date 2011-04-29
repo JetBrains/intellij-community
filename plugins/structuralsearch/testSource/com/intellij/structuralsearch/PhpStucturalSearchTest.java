@@ -64,6 +64,8 @@ public class PhpStucturalSearchTest extends StructuralSearchTestCase {
     doTest(s, "function g($param$) {\n" +
               "  echo $param$;\n" +
               "}", 1);
+    doTest(s, "function f($param$)", 2);
+    doTest(s, "function $f$($param$)", 3);
   }
 
   private void doTest(String source,

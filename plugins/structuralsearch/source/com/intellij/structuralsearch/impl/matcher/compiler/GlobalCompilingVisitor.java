@@ -122,7 +122,7 @@ public class GlobalCompilingVisitor {
     myLexicalNodes.add(node);
   }
 
-  void compile(PsiElement element, CompileContext context) {
+  void compile(PsiElement[] elements, CompileContext context) {
     myCodeBlockLevel = 0;
     this.context = context;
     /*if (element instanceof XmlElement) {
@@ -131,9 +131,9 @@ public class GlobalCompilingVisitor {
     else {
       element.accept(myJavaVisitor);
     }*/
-    StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
+    StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(elements[0]);
     assert profile != null;
-    profile.compile(element, this);
+    profile.compile(elements, this);
 
     if (context.getPattern().getStrategy() == null) {
       context.getPattern().setStrategy(ExprMatchingStrategy.getInstance());

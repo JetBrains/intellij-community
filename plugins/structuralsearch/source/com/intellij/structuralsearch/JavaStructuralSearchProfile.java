@@ -26,8 +26,8 @@ import java.util.List;
 public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   private JavaLexicalNodesFilter myJavaLexicalNodesFilter;
 
-  public void compile(PsiElement element, @NotNull GlobalCompilingVisitor globalVisitor) {
-    element.accept(new JavaCompilingVisitor(globalVisitor));
+  public void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
+    elements[0].getParent().accept(new JavaCompilingVisitor(globalVisitor));
   }
 
   @NotNull

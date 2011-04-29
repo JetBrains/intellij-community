@@ -455,7 +455,6 @@ public class PatternCompiler {
       matchStatements = MatcherImplUtil
         .createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(), options.getDialect(), project, false);
       if (matchStatements.length==0) throw new MalformedPatternException();
-      patternNode = matchStatements[0].getParent();
     } catch (IncorrectOperationException e) {
       throw new MalformedPatternException(e.getMessage());
     }
@@ -463,7 +462,7 @@ public class PatternCompiler {
     NodeFilter filter = LexicalNodesFilter.getInstance();
 
     GlobalCompilingVisitor compilingVisitor = new GlobalCompilingVisitor();
-    compilingVisitor.compile(patternNode,context);
+    compilingVisitor.compile(matchStatements,context);
     List<PsiElement> elements = new LinkedList<PsiElement>();
 
     for (PsiElement matchStatement : matchStatements) {

@@ -43,8 +43,11 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   private PsiElementVisitor myLexicalNodesFilter;
 
   @Override
-  public void compile(PsiElement element, @NotNull final GlobalCompilingVisitor globalVisitor) {
-    element.accept(new MyCompilingVisitor(globalVisitor, element));
+  public void compile(PsiElement[] elements, @NotNull final GlobalCompilingVisitor globalVisitor) {
+    final PsiElement topElement = elements[0].getParent();
+    final PsiElement element = elements.length > 1 ? topElement : elements[0];
+
+    element.accept(new MyCompilingVisitor(globalVisitor, topElement));
 
     element.accept(new PsiRecursiveElementVisitor() {
       @Override

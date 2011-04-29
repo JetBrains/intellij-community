@@ -34,8 +34,8 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
 
   private XmlLexicalNodesFilter myLexicalNodesFilter;
 
-  public void compile(PsiElement element, @NotNull GlobalCompilingVisitor globalVisitor) {
-    element.accept(new XmlCompilingVisitor(globalVisitor));
+  public void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
+    elements[0].getParent().accept(new XmlCompilingVisitor(globalVisitor));
   }
 
   @NotNull
