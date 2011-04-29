@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="cli-parser">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/community/lib/cli-10.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
