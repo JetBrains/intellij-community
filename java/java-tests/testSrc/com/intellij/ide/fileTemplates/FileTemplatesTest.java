@@ -124,7 +124,6 @@ public class FileTemplatesTest extends IdeaTestCase {
       assertEquals("public class XXX {\n}", psiClass.getContainingFile().getText());
     }
     finally {
-      FileTemplateManager.getInstance().saveAll();
       FileTemplateManager.getInstance().removeTemplate(template);
     }
   }
