@@ -34,108 +34,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ExpectedTypeUtil {
-    private ExpectedTypeUtil() {
+  private ExpectedTypeUtil() {
+  }
+
+  @NotNull
+  public static XPathType getExpectedType(XPathExpression expression) {
+
+    final XPathExpression parentExpr = PsiTreeUtil.getParentOfType(expression, XPathExpression.class);
+    if (parentExpr != null) {
+      final ExpectedTypeVisitor visitor = new ExpectedTypeVisitor(expression);
+      parentExpr.accept(visitor);
+      return mapType(expression, visitor.getExpectedType());
+    } else {
+      return mapType(expression, expression.getXPathContext().getExpectedType(expression));
     }
-
-    @NotNull
-    public static XPathType getExpectedType(XPathExpression expression) {
-        XPathType expectedType = XPathType.UNKNOWN;
-
-        final XPathExpression parentExpr = PsiTreeUtil.getParentOfType(expression, XPathExpression.class);
-        if (parentExpr != null) {
-            if (parentExpr instanceof XPathBinaryExpression && expression == ((XPathBinaryExpression)parentExpr).getROperand()) {
-              final XPathElementType op = ((XPathBinaryExpression)parentExpr).getOperator();
-              final XPathExpression lop = ((XPathBinaryExpression)parentExpr).getLOperand();
-                if (op == XPathTokenTypes.AND || op == XPathTokenTypes.OR) {
-                    expectedType = XPathType.BOOLEAN;
-                } else if (XPathTokenTypes.NUMBER_OPERATIONS.contains(op)) {
-                  if (isXPath1(expression)) {
-                    expectedType = XPathType.NUMBER;
-                  } else {
-                    expectedType = matchingType(lop, op);
-                  }
-                } else if (XPath2TokenTypes.COMP_OPS.contains(op)) {
-                  if (lop != null && lop.getType() != XPathType.NODESET) {
-                    if ((expectedType = lop.getType()) == XPathType.BOOLEAN) {
-                      if (!isXPath1(expression)) expectedType = XPath2Type.BOOLEAN_STRICT;
-                    } else if (expectedType == XPath2Type.BOOLEAN) {
-                      expectedType = XPath2Type.BOOLEAN_STRICT;
-                    }
-                  } else {
-                    expectedType = XPathType.UNKNOWN;
-                  }
-                } else if (XPath2TokenTypes.INTERSECT_EXCEPT.contains(op)) {
-                  expectedType = XPath2SequenceType.create(XPath2Type.NODE, XPath2SequenceType.Cardinality.ZERO_OR_MORE);
-                } else if (op == XPath2TokenTypes.TO) {
-                  expectedType = XPath2Type.INTEGER;
-                } else {
-                  expectedType = XPathType.UNKNOWN;
-                }
-            } else if (parentExpr instanceof XPathPrefixExpression) {
-              expectedType = XPathType.NUMBER;
-            } else if (parentExpr instanceof XPathFunctionCall) {
-                final XPathFunctionCall call = (XPathFunctionCall)parentExpr;
-                final XPathFunction xpathFunction = call.resolve();
-                if (xpathFunction != null) {
-                    final Function functionDecl = xpathFunction.getDeclaration();
-                    if (functionDecl != null) {
-                        final Parameter p = findParameterDecl(call.getArgumentList(), expression, functionDecl.getParameters());
-                        if (p != null) {
-                            expectedType = p.type;
-                            if (expectedType == XPath2Type.BOOLEAN) {
-                              expectedType = XPath2Type.BOOLEAN_STRICT;
-                            }
-                        }
-                    }
-                }
-            } else if (parentExpr instanceof XPathStep) {
-                final XPathStep step = (XPathStep)parentExpr;
-                final XPathPredicate[] predicates = step.getPredicates();
-                for (XPathPredicate predicate : predicates) {
-                    if (predicate.getPredicateExpression() == expression) {
-                        return mapType(expression, getPredicateType(expression));
-                    }
-                }
-
-                if (isXPath1(expression)) {
-                  expectedType = XPathType.NODESET;
-                } else {
-                  if (step.getStep() != null) {
-                    expectedType = XPath2Type.SEQUENCE;
-                  } else {
-                    expectedType = XPath2Type.NODE;
-                  }
-                }
-            } else if (parentExpr instanceof XPathLocationPath) {
-                expectedType = isXPath1(expression) ? XPathType.NODESET : XPath2Type.SEQUENCE;
-            } else if (parentExpr instanceof XPath2If) {
-              if (expression == ((XPath2If)parentExpr).getCondition()) {
-                return mapType(expression, XPath2Type.BOOLEAN);
-              }
-            } else if (parentExpr instanceof XPath2QuantifiedExpr) {
-              if (expression == ((XPath2QuantifiedExpr)parentExpr).getTest()) {
-                return mapType(expression, XPath2Type.BOOLEAN);
-              }
-            } else if (parentExpr instanceof XPathFilterExpression) {
-                final XPathFilterExpression filterExpression = (XPathFilterExpression)parentExpr;
-
-              final XPathExpression filteredExpression = filterExpression.getExpression();
-              if (filteredExpression == expression) {
-                    return isXPath1(expression) ? XPathType.NODESET : XPath2Type.SEQUENCE;
-                }
-
-                assert ((XPathFilterExpression)parentExpr).getPredicate().getPredicateExpression() == expression;
-
-                return mapType(expression, getPredicateType(expression));
-            }
-        } else {
-            expectedType = expression.getXPathContext().getExpectedType(expression);
-        }
-        return mapType(expression, expectedType);
-    }
-
-  private static boolean isXPath1(XPathExpression expression) {
-    return expression.getXPathVersion() == XPathVersion.V1;
   }
 
   private static XPathType matchingType(XPathExpression lOperand, XPathElementType op) {
@@ -143,7 +55,9 @@ public class ExpectedTypeUtil {
     if (op == XPathTokenTypes.PLUS) {
       if (XPathType.isAssignable(XPath2Type.NUMERIC, type)) {
         return XPath2Type.NUMERIC;
-      } else if (XPathType.isAssignable(XPath2Type.DATE, type) || XPathType.isAssignable(XPath2Type.TIME, type) || XPathType.isAssignable(XPath2Type.DATETIME, type)) {
+      } else if (XPathType.isAssignable(XPath2Type.DATE, type) ||
+                 XPathType.isAssignable(XPath2Type.TIME, type) ||
+                 XPathType.isAssignable(XPath2Type.DATETIME, type)) {
         return XPath2Type.DURATION;
       } else if (XPathType.isAssignable(XPath2Type.DURATION, type)) {
         return XPathType.ChoiceType.create(XPath2Type.DURATION, XPath2Type.DATE, XPath2Type.TIME, XPath2Type.DATETIME);
@@ -151,7 +65,9 @@ public class ExpectedTypeUtil {
     } else if (op == XPathTokenTypes.MINUS) {
       if (XPathType.isAssignable(XPath2Type.NUMERIC, type)) {
         return XPath2Type.NUMERIC;
-      } else if (XPathType.isAssignable(XPath2Type.DATE, type) || XPathType.isAssignable(XPath2Type.TIME, type) || XPathType.isAssignable(XPath2Type.DATETIME, type)) {
+      } else if (XPathType.isAssignable(XPath2Type.DATE, type) ||
+                 XPathType.isAssignable(XPath2Type.TIME, type) ||
+                 XPathType.isAssignable(XPath2Type.DATETIME, type)) {
         return XPathType.ChoiceType.create(XPath2Type.DATE, XPath2Type.DURATION);
       } else if (XPathType.isAssignable(XPath2Type.DURATION, type)) {
         return XPath2Type.DURATION;
@@ -176,55 +92,182 @@ public class ExpectedTypeUtil {
     return XPathType.UNKNOWN;
   }
 
-    public static XPathType mapType(XPathExpression context, XPathType type) {
-      return context.getXPathVersion() == XPathVersion.V2 ?
-              XPath2Type.mapType(type) : type;
+  public static XPathType mapType(XPathExpression context, XPathType type) {
+    return context.getXPathVersion() == XPathVersion.V2 ? XPath2Type.mapType(type) : type;
+  }
+
+  public static XPathType getPredicateType(XPathExpression expression) {
+    // special: If the result is a number, the result will be converted to true if the number is equal to
+    // the context position and will be converted to false otherwise;
+    // (http://www.w3.org/TR/xpath#predicates)
+    return expression.getType() == XPathType.NUMBER ? XPathType.NUMBER : XPathType.BOOLEAN;
+  }
+
+  @Nullable
+  private static Parameter findParameterDecl(XPathExpression[] argumentList, XPathExpression expr, Parameter[] parameters) {
+    for (int i = 0; i < argumentList.length; i++) {
+      XPathExpression arg = argumentList[i];
+      if (arg == expr) {
+        if (i < parameters.length) {
+          return parameters[i];
+        } else if (parameters.length > 0) {
+          final Parameter last = parameters[parameters.length - 1];
+          if (last.kind == Parameter.Kind.VARARG) {
+            return last;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  public static boolean isExplicitConversion(XPathExpression expression) {
+    expression = unparenthesize(expression);
+
+    if (!(expression instanceof XPathFunctionCall)) {
+      return false;
+    }
+    final XPathFunctionCall call = ((XPathFunctionCall)expression);
+    if (call.getQName().getPrefix() != null || call.getArgumentList().length != 1) {
+      return false;
+    }
+    return XPathType.fromString(call.getFunctionName()) != XPathType.UNKNOWN;
+  }
+
+  // TODO: put this somewhere else
+  @Nullable
+  public static XPathExpression unparenthesize(XPathExpression expression) {
+    while (expression instanceof XPathParenthesizedExpression) {
+      expression = ((XPathParenthesizedExpression)expression).getExpression();
+    }
+    return expression;
+  }
+
+  private static class ExpectedTypeVisitor extends XPath2ElementVisitor {
+    private final XPathExpression myExpression;
+
+    private XPathType myExpectedType = XPathType.UNKNOWN;
+
+    public ExpectedTypeVisitor(XPathExpression expression) {
+      myExpression = expression;
     }
 
-    public static XPathType getPredicateType(XPathExpression expression) {
-        // special: If the result is a number, the result will be converted to true if the number is equal to
-        // the context position and will be converted to false otherwise;
-        // (http://www.w3.org/TR/xpath#predicates)
-        return expression.getType() == XPathType.NUMBER ? XPathType.NUMBER : XPathType.BOOLEAN;
+    @Override
+    public void visitXPathPrefixExpression(XPathPrefixExpression o) {
+      myExpectedType = XPathType.NUMBER;
     }
 
-    @Nullable
-    private static Parameter findParameterDecl(XPathExpression[] argumentList, XPathExpression expr, Parameter[] parameters) {
-        for (int i = 0; i < argumentList.length; i++) {
-            XPathExpression arg = argumentList[i];
-            if (arg == expr) {
-                if (i < parameters.length) {
-                    return parameters[i];
-                } else if (parameters.length > 0) {
-                    final Parameter last = parameters[parameters.length - 1];
-                    if (last.kind == Parameter.Kind.VARARG) {
-                        return last;
-                    }
-                }
+    @Override
+    public void visitXPathBinaryExpression(XPathBinaryExpression parent) {
+      if (myExpression == parent.getROperand()) {
+        final XPathElementType op = parent.getOperator();
+        final XPathExpression lop = parent.getLOperand();
+        if (op == XPathTokenTypes.AND || op == XPathTokenTypes.OR) {
+          myExpectedType = XPathType.BOOLEAN;
+        } else if (XPathTokenTypes.NUMBER_OPERATIONS.contains(op)) {
+          if (isXPath1(myExpression)) {
+            myExpectedType = XPathType.NUMBER;
+          } else {
+            myExpectedType = matchingType(lop, op);
+          }
+        } else if (XPath2TokenTypes.COMP_OPS.contains(op)) {
+          if (lop != null && lop.getType() != XPathType.NODESET) {
+            if ((myExpectedType = lop.getType()) == XPathType.BOOLEAN) {
+              if (!isXPath1(myExpression)) myExpectedType = XPath2Type.BOOLEAN_STRICT;
+            } else if (myExpectedType == XPath2Type.BOOLEAN) {
+              myExpectedType = XPath2Type.BOOLEAN_STRICT;
             }
+          } else {
+            myExpectedType = XPathType.UNKNOWN;
+          }
+        } else if (XPath2TokenTypes.INTERSECT_EXCEPT.contains(op)) {
+          myExpectedType = XPath2SequenceType.create(XPath2Type.NODE, XPath2SequenceType.Cardinality.ZERO_OR_MORE);
+        } else if (op == XPath2TokenTypes.TO) {
+          myExpectedType = XPath2Type.INTEGER;
+        } else {
+          myExpectedType = XPathType.UNKNOWN;
         }
-        return null;
+      } else {
+        super.visitXPathBinaryExpression(parent);
+      }
     }
 
-    public static boolean isExplicitConversion(XPathExpression expression) {
-        expression = unparenthesize(expression);
-
-        if (!(expression instanceof XPathFunctionCall)) {
-            return false;
+    @Override
+    public void visitXPathFunctionCall(XPathFunctionCall call) {
+      final XPathFunction xpathFunction = call.resolve();
+      if (xpathFunction != null) {
+        final Function functionDecl = xpathFunction.getDeclaration();
+        if (functionDecl != null) {
+          final Parameter p = findParameterDecl(call.getArgumentList(), myExpression, functionDecl.getParameters());
+          if (p != null) {
+            if (p.type == XPath2Type.BOOLEAN) {
+              myExpectedType = XPath2Type.BOOLEAN_STRICT;
+            } else {
+              myExpectedType = p.type;
+            }
+          }
         }
-        final XPathFunctionCall call = ((XPathFunctionCall)expression);
-        if (call.getQName().getPrefix() != null || call.getArgumentList().length != 1) {
-            return false;
-        }
-        return XPathType.fromString(call.getFunctionName()) != XPathType.UNKNOWN;
+      }
     }
 
-    // TODO: put this somewhere else
-    @Nullable
-    public static XPathExpression unparenthesize(XPathExpression expression) {
-        while (expression instanceof XPathParenthesizedExpression) {
-            expression = ((XPathParenthesizedExpression)expression).getExpression();
-        }
-        return expression;
+    @Override
+    public void visitXPathFilterExpression(XPathFilterExpression filterExpression) {
+      final XPathExpression filteredExpression = filterExpression.getExpression();
+      if (filteredExpression == myExpression) {
+        myExpectedType = isXPath1(myExpression) ? XPathType.NODESET : XPath2Type.SEQUENCE;
+        return;
+      }
+
+      assert filterExpression.getPredicate().getPredicateExpression() == myExpression;
+      myExpectedType = getPredicateType(myExpression);
     }
+
+    @Override
+    public void visitXPathStep(XPathStep step) {
+      final XPathPredicate[] predicates = step.getPredicates();
+      for (XPathPredicate predicate : predicates) {
+        if (predicate.getPredicateExpression() == myExpression) {
+          myExpectedType = getPredicateType(myExpression);
+          return;
+        }
+      }
+
+      if (isXPath1(step)) {
+        myExpectedType = XPathType.NODESET;
+      } else {
+        if (step.getStep() != null) {
+          myExpectedType = XPath2Type.SEQUENCE;
+        } else {
+          myExpectedType = XPath2Type.NODE;
+        }
+      }
+    }
+
+    @Override
+    public void visitXPathLocationPath(XPathLocationPath expression) {
+      myExpectedType = isXPath1(myExpression) ? XPathType.NODESET : XPath2Type.SEQUENCE;
+    }
+
+    @Override
+    public void visitXPath2If(XPath2If expression) {
+      if (myExpression == expression.getCondition()) {
+        myExpectedType = XPath2Type.BOOLEAN;
+      }
+    }
+
+    @Override
+    public void visitXPath2QuantifiedExpr(XPath2QuantifiedExpr expression) {
+      if (myExpression == expression.getTest()) {
+        myExpectedType = XPath2Type.BOOLEAN;
+      }
+    }
+
+    public XPathType getExpectedType() {
+      return myExpectedType;
+    }
+
+    private static boolean isXPath1(XPathExpression expression) {
+      return expression.getXPathVersion() == XPathVersion.V1;
+    }
+  }
 }
