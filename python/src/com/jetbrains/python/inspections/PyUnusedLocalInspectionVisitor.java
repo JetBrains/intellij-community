@@ -210,7 +210,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     for (Instruction instr : flow.getInstructions()) {
       if (instr instanceof ReadWriteInstruction) {
         ReadWriteInstruction rw = (ReadWriteInstruction)instr;
-        if (rw.getName().equals(name) && rw.getAccess().isWriteAccess()){
+        if (name.equals(rw.getName()) && rw.getAccess().isWriteAccess()){
           result.add(rw.getElement());
         }
       }
