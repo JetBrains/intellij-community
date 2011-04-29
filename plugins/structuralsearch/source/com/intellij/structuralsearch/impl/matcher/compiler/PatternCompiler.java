@@ -2,7 +2,6 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -13,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -25,16 +25,19 @@ import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
-import com.intellij.structuralsearch.impl.matcher.handlers.*;
+import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
+import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.*;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.IncorrectOperationException;
+import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Compiles the handlers for usability
@@ -80,8 +83,9 @@ public class PatternCompiler {
 
     try {
       context.init(result, options, project, options.getScope() instanceof GlobalSearchScope);
-      String firstPrefix = prefixes[0];
-      List<PsiElement> elements = doCompile(project, options, result, firstPrefix, context);
+
+      List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes);
+
       context.getPattern().setNodes(
         new ArrayBackedNodeIterator(PsiUtilBase.toPsiElementArray(elements))
       );
@@ -109,23 +113,6 @@ public class PatternCompiler {
           new LocalSearchScope(PsiUtilBase.toPsiElementArray(filesToScan))
         );
       }
-
-      if (elements.size() > 0) {
-        final PsiElement basePatternRoot = elements.get(0).getParent();
-
-        for (int i = 1; i < prefixes.length; i++) {
-          final String prefix = prefixes[i];
-          final List<PsiElement> elements1 = doCompile(project, options, result, prefix, context);
-
-          if (elements1.size() > 0) {
-            PsiElement alternativePatternRoot = elements1.get(0).getParent();
-            markTree(basePatternRoot, alternativePatternRoot);
-          }
-        }
-
-        assignHandlers(basePatternRoot, result);
-      }
-
     } finally {
       context.clear();
     }
@@ -133,69 +120,175 @@ public class PatternCompiler {
     return result;
   }
 
-  private static void assignHandlers(PsiElement root, final CompiledPattern pattern) {
-    root.accept(new PsiRecursiveElementWalkingVisitor() {
+  @NotNull
+  private static List<PsiElement> compileByAllPrefixes(Project project,
+                                                       MatchOptions options,
+                                                       CompiledPattern pattern,
+                                                       CompileContext context,
+                                                       String[] applicablePrefixes) {
+    if (applicablePrefixes.length == 0) {
+      return Collections.emptyList();
+    }
+
+    List<PsiElement> elements = doCompile(project, options, pattern, new ConstantPrefixProvider(applicablePrefixes[0]), context);
+    if (elements.size() == 0) {
+      return elements;
+    }
+
+    final PsiFile file = elements.get(0).getContainingFile();
+    if (file == null) {
+      return elements;
+    }
+
+    final PsiElement last = elements.get(elements.size() - 1);
+
+    if (elements.size() == 0 || !containsErrorElementBeforeOffset(file, last.getTextRange().getEndOffset() - 1)) {
+      return elements;
+    }
+
+    final Pattern[] patterns = new Pattern[applicablePrefixes.length];
+
+    for (int i = 0; i < applicablePrefixes.length; i++) {
+      String s = StructuralSearchUtil.shieldSpecialChars(applicablePrefixes[i]);
+      patterns[i] = Pattern.compile(s + "\\w+\\b");
+    }
+
+    final int varCount = findAllTypedVarOffsets(file, patterns).length;
+    final String[] prefixSequence = new String[varCount];
+
+    for (int i = 0; i < varCount; i++) {
+      prefixSequence[i] = applicablePrefixes[0];
+    }
+
+    elements = compileByPrefixes(project, options, pattern, context, applicablePrefixes, patterns, prefixSequence, 0);
+    return elements != null
+           ? elements
+           : doCompile(project, options, pattern, new ConstantPrefixProvider(applicablePrefixes[0]), context);
+  }
+
+  @Nullable
+  private static List<PsiElement> compileByPrefixes(Project project,
+                                                    MatchOptions options,
+                                                    CompiledPattern pattern,
+                                                    CompileContext context,
+                                                    String[] applicablePrefixes,
+                                                    Pattern[] substitutionPatterns,
+                                                    String[] prefixSequence,
+                                                    int index) {
+    if (index >= prefixSequence.length) {
+      final List<PsiElement> elements = doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context);
+      if (elements.size() == 0) {
+        return elements;
+      }
+
+      final PsiElement parent = elements.get(0);
+      final PsiElement last = elements.get(elements.size() - 1);
+      return !containsErrorElementBeforeOffset(parent, last.getTextRange().getEndOffset() - 1)
+             ? elements
+             : null;
+    }
+
+    for (String applicablePrefix : applicablePrefixes) {
+      prefixSequence[index] = applicablePrefix;
+
+      List<PsiElement> elements = doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context);
+      if (elements.size() == 0) {
+        return elements;
+      }
+
+      final PsiFile file = elements.get(0).getContainingFile();
+      if (file == null) {
+        return elements;
+      }
+
+      final int[] endOffsets = findAllTypedVarOffsets(file, substitutionPatterns);
+      final int offset = endOffsets[index];
+
+      if (containsErrorElementBeforeOffset(file, offset)) {
+        continue;
+      }
+
+      elements = compileByPrefixes(project, options, pattern, context, applicablePrefixes, substitutionPatterns, prefixSequence, index + 1);
+      if (elements != null) {
+        return elements;
+      }
+    }
+
+    return null;
+  }
+
+  @NotNull
+  private static int[] findAllTypedVarOffsets(final PsiFile file, final Pattern[] substitutionPatterns) {
+    final String text = file.getText();
+    final TIntHashSet result = new TIntHashSet();
+
+    for (Pattern pattern : substitutionPatterns) {
+      final Matcher matcher = pattern.matcher(text);
+
+      while (matcher.find()) {
+        result.add(matcher.end());
+      }
+    }
+
+    final int[] resultArray = result.toArray();
+    Arrays.sort(resultArray);
+    return resultArray;
+  }
+
+  private static boolean containsErrorElementBeforeOffset(PsiElement element, final int offset) {
+    final boolean[] result = {false};
+
+    element.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
         super.visitElement(element);
 
-        if (element.getUserData(ALTERNATIVE_PATTERN_ROOTS) != null) {
-          final MatchingHandler handler = pattern.getHandler(element);
-          pattern.setHandler(element, new CompositeHandler(handler));
+        if (element instanceof PsiErrorElement && element.getTextRange().getStartOffset() <= offset) {
+          result[0] = true;
         }
       }
     });
+
+    return result[0];
   }
 
-  private static void markTree(PsiElement baseRoot, PsiElement alternativeRoot) {
-    if (areEquivalent(baseRoot, alternativeRoot)) {
-      final List<PsiElement> baseChildren = new ArrayList<PsiElement>();
-      final List<PsiElement> altChildren = new ArrayList<PsiElement>();
-
-      for (PsiElement child = baseRoot.getFirstChild(); child != null; child = child.getNextSibling()) {
-        baseChildren.add(child);
-      }
-
-      for (PsiElement child = alternativeRoot.getFirstChild(); child != null; child = child.getNextSibling()) {
-        altChildren.add(child);
-      }
-
-      if (altChildren.size() == baseChildren.size()) {
-        for (int i = 0, n = baseChildren.size(); i < n; i++) {
-          final PsiElement baseChild = baseChildren.get(i);
-          final PsiElement altChild = altChildren.get(i);
-
-          markTree(baseChild, altChild);
-        }
-        return;
-      }
-    }
-
-    List<PsiElement> alternativePatternRoots = baseRoot.getUserData(ALTERNATIVE_PATTERN_ROOTS);
-    if (alternativePatternRoots == null) {
-      alternativePatternRoots = new ArrayList<PsiElement>();
-      baseRoot.putUserData(ALTERNATIVE_PATTERN_ROOTS, alternativePatternRoots);
-    }
-
-    alternativePatternRoots.add(alternativeRoot);
+  private interface PrefixProvider {
+    String getPrefix(int varIndex);
   }
 
-  private static boolean areEquivalent(PsiElement element1, PsiElement element2) {
-    ASTNode node1 = element1.getNode();
-    ASTNode node2 = element2.getNode();
+  private static class ConstantPrefixProvider implements PrefixProvider {
+    private final String myPrefix;
 
-    if (node1 == null || node2 == null) {
-      return node1 == null && node2 == null;
+    private ConstantPrefixProvider(String prefix) {
+      myPrefix = prefix;
     }
 
-    return node1.getElementType() == node2.getElementType();
+    @Override
+    public String getPrefix(int varIndex) {
+      return myPrefix;
+    }
+  }
+
+  private static class ArrayPrefixProvider implements PrefixProvider {
+    private final String[] myPrefixes;
+
+    private ArrayPrefixProvider(String[] prefixes) {
+      myPrefixes = prefixes;
+    }
+
+    @Override
+    public String getPrefix(int varIndex) {
+      return myPrefixes[varIndex];
+    }
   }
 
   private static List<PsiElement> doCompile(Project project,
                                             MatchOptions options,
                                             CompiledPattern result,
-                                            String prefix,
+                                            PrefixProvider prefixProvider,
                                             CompileContext context) {
+    result.clearHandlers();
+
     final StringBuilder buf = new StringBuilder();
 
     Template template = TemplateManager.getInstance(project).createTemplate("","",options.getSearchPattern());
@@ -208,6 +301,8 @@ public class PatternCompiler {
     for(int i=0;i<segmentsCount;++i) {
       final int offset = template.getSegmentOffset(i);
       final String name = template.getSegmentName(i);
+
+      final String prefix = prefixProvider.getPrefix(i);
 
       buf.append(text.substring(prevOffset,offset));
       buf.append(prefix);

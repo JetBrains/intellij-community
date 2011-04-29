@@ -474,7 +474,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     element = element.getParent();
 
     while (element != null) {
-      if (element.getTextOffset() == offset && element.getTextLength() <= patternLength) {
+      if (element.getTextRange().getStartOffset() == offset && element.getTextLength() <= patternLength) {
         topElement = element;
       }
       element = element.getParent();

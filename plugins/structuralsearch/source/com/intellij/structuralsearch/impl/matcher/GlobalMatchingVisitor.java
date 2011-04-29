@@ -10,7 +10,6 @@ import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
-import com.intellij.structuralsearch.impl.matcher.handlers.CompositeHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.DelegatingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
@@ -101,9 +100,6 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   public final boolean handleTypedElement(final PsiElement typedElement, final PsiElement match) {
     MatchingHandler handler = matchContext.getPattern().getHandler(typedElement);
     final MatchingHandler initialHandler = handler;
-    if (handler instanceof CompositeHandler) {
-      handler = ((CompositeHandler)handler).findSubstitutionHandler(typedElement, matchContext);
-    }
     if (handler instanceof DelegatingHandler) {
       handler = ((DelegatingHandler)handler).getDelegate();
     }

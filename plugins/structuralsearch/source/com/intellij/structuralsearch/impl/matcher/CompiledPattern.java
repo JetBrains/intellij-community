@@ -146,6 +146,12 @@ public abstract class CompiledPattern {
     this.scope = scope;
   }
 
+  public void clearHandlers() {
+    handlers.clear();
+    last = null;
+    lastHandler = null;
+  }
+
   void clearHandlersState() {
     for (final MatchingHandler h : handlers.values()) {
       if (h != null) h.reset();
