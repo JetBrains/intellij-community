@@ -467,7 +467,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
               public void run() {
                 if (myTreeBuilder.isDisposed()) return;
                 if (myTreeBuilder.getUi().getExpandedElements().contains(fileDescriptor)) {
-                  myTreeBuilder.queueUpdateFrom(new FileElement(virtualFile, virtualFile.getName()), false);
+                  myTreeBuilder.queueUpdateFrom(virtualFile, false);
                 }
               }
             }, ModalityState.stateForComponent(myTree));
