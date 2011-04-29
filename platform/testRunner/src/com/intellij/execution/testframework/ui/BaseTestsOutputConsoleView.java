@@ -142,7 +142,7 @@ public abstract class BaseTestsOutputConsoleView implements ConsoleView, Observa
     return AnAction.EMPTY_ARRAY;
   }
 
-  protected ConsoleView getConsole() {
+  public ConsoleView getConsole() {
     return myConsole;
   }
 
