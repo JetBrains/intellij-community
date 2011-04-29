@@ -16,6 +16,7 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -40,6 +41,9 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
     @SuppressWarnings({"PublicField"})
     public boolean ignoreObjectMethods = true;
 
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreAnonymousClassMethods = false;
+
     @Override
     @NotNull
     public String getID() {
@@ -61,10 +65,14 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
 
     @Override
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(
-                InspectionGadgetsBundle.message(
-                        "ignore.equals.hashcode.and.tostring"), this,
-                "ignoreObjectMethods");
+        final MultipleCheckboxOptionsPanel panel =
+                new MultipleCheckboxOptionsPanel(this);
+        panel.addCheckbox(InspectionGadgetsBundle.message(
+                "ignore.equals.hashcode.and.tostring"), "ignoreObjectMethods");
+        panel.addCheckbox(InspectionGadgetsBundle.message(
+                "ignore.methods.in.anonymous.classes"),
+                "ignoreAnonymousClassMethods");
+        return panel;
     }
 
     @Override
@@ -111,49 +119,55 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
     }
 
     private class MissingOverrideAnnotationVisitor
-            extends BaseInspectionVisitor{
+            extends BaseInspectionVisitor {
 
         @Override
-        public void visitMethod(@NotNull PsiMethod method){
+        public void visitMethod(@NotNull PsiMethod method) {
+            if (!PsiUtil.isLanguageLevel5OrHigher(method)) {
+                return;
+            }
             if (method.getNameIdentifier() == null) {
                 return;
             }
-            if(method.isConstructor()){
+            if (method.isConstructor()) {
                 return;
             }
-            if(method.hasModifierProperty(PsiModifier.PRIVATE) ||
-               method.hasModifierProperty(PsiModifier.STATIC)){
+            if (method.hasModifierProperty(PsiModifier.PRIVATE) ||
+                    method.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }
-            if(!PsiUtil.isLanguageLevel5OrHigher(method)){
+            final PsiClass methodClass = method.getContainingClass();
+            if (methodClass == null) {
+                return;
+            }
+            if (ignoreAnonymousClassMethods &&
+                    methodClass instanceof PsiAnonymousClass) {
                 return;
             }
             final boolean useJdk6Rules =
                     PsiUtil.isLanguageLevel6OrHigher(method);
-            if(useJdk6Rules){
-                if(!isJdk6Override(method)){
+            if (useJdk6Rules) {
+                if (!isJdk6Override(method, methodClass)) {
                     return;
                 }
-            } else if (!isJdk5Override(method)){
+            } else if (!isJdk5Override(method, methodClass)) {
                 return;
             }
-
-            if(ignoreObjectMethods && (MethodUtils.isHashCode(method) ||
+            if (ignoreObjectMethods && (MethodUtils.isHashCode(method) ||
                     MethodUtils.isEquals(method) ||
-                    MethodUtils.isToString(method))){
+                    MethodUtils.isToString(method))) {
                 return;
             }
-
-            if(hasOverrideAnnotation(method)){
+            if (hasOverrideAnnotation(method)) {
                 return;
             }
             registerMethodError(method);
         }
 
         private boolean hasOverrideAnnotation(
-                PsiModifierListOwner element){
+                PsiModifierListOwner element) {
             final PsiModifierList modifierList = element.getModifierList();
-            if(modifierList == null){
+            if (modifierList == null) {
                 return false;
             }
             final PsiAnnotation annotation =
@@ -161,12 +175,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
             return annotation != null;
         }
 
-        private boolean isJdk6Override(PsiMethod method) {
-            final PsiClass methodClass = method.getContainingClass();
-            if (methodClass == null) {
-                return false;
-            }
-
+        private boolean isJdk6Override(PsiMethod method, PsiClass methodClass) {
             final PsiMethod[] superMethods =
                     getSuperMethodsInJavaSense(method, methodClass);
             if (superMethods.length <= 0) {
@@ -186,11 +195,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
             return false;
         }
 
-        private boolean isJdk5Override(PsiMethod method) {
-            final PsiClass methodClass = method.getContainingClass();
-            if (methodClass == null) {
-                return false;
-            }
+        private boolean isJdk5Override(PsiMethod method, PsiClass methodClass) {
             final PsiMethod[] superMethods =
                     getSuperMethodsInJavaSense(method, methodClass);
             for (PsiMethod superMethod : superMethods) {

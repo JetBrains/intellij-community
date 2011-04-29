@@ -92,7 +92,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     }
   }
 
-  private void writeOutput(final CommonProblemDescriptor[] descriptions, final RefEntity refElement) {
+  private void writeOutput(@NotNull final CommonProblemDescriptor[] descriptions, final RefEntity refElement) {
     final Element parentNode = new Element(InspectionsBundle.message("inspection.problems"));
     exportResults(descriptions, refElement, parentNode);
     final List list = parentNode.getChildren();
@@ -255,13 +255,15 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       @Override public void visitElement(final RefEntity refEntity) {
         if (getProblemElements().containsKey(refEntity)) {
           CommonProblemDescriptor[] descriptions = getDescriptions(refEntity);
-          exportResults(descriptions, refEntity, parentNode);
+          if (descriptions != null) {
+            exportResults(descriptions, refEntity, parentNode);
+          }
         }
       }
     });
   }
 
-  private void exportResults(final CommonProblemDescriptor[] descriptions, final RefEntity refEntity, final Element parentNode) {
+  private void exportResults(@NotNull final CommonProblemDescriptor[] descriptions, final RefEntity refEntity, final Element parentNode) {
     for (CommonProblemDescriptor description : descriptions) {
       @NonNls final String template = description.getDescriptionTemplate();
       int line = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;

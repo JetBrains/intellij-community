@@ -64,6 +64,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -273,9 +274,10 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
   }
 
   public void launchInspectionsOffline(final AnalysisScope scope,
-                                       final String outputPath,
+                                       @Nullable final String outputPath,
                                        final boolean runGlobalToolsOnly,
-                                       final InspectionManager manager) {
+                                       final InspectionManager manager,
+                                       @NotNull final List<File> inspectionsResults) {
     cleanup();
 
     myCurrentScope = scope;
@@ -317,6 +319,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
             try {
               new File(outputPath).mkdirs();
               final File file = new File(outputPath, toolName + ext);
+              inspectionsResults.add(file);
               if (isLocalTool) {
                 FileUtil.writeToFile(file, ("</" + InspectionsBundle.message("inspection.problems") + ">").getBytes("UTF-8"), true);
               }

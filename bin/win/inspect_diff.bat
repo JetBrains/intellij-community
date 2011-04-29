@@ -32,7 +32,7 @@ IF NOT "%IDEA_PROPERTIES%" == "" set IDEA_PROPERTIES_PROPERTY=-Didea.properties.
 SET ACC=
 FOR /F "delims=" %%i in (%IDEA_HOME%\bin\idea.exe.vmoptions) DO call %IDEA_HOME%\bin\append.bat "%%i"
 
-set REQUIRED_IDEA_JVM_ARGS=-Xbootclasspath/a:%IDEA_HOME%/lib/boot.jar %IDEA_PROPERTIES_PROPERTY% %REQUIRED_IDEA_JVM_ARGS%
+set REQUIRED_IDEA_JVM_ARGS=-Xbootclasspath/a:%IDEA_HOME%/lib/boot.jar -Didea.paths.selector=@@system_selector@@ %IDEA_PROPERTIES_PROPERTY% %REQUIRED_IDEA_JVM_ARGS%
 SET JVM_ARGS=%ACC% %REQUIRED_IDEA_JVM_ARGS%
 
 SET OLD_PATH=%PATH%

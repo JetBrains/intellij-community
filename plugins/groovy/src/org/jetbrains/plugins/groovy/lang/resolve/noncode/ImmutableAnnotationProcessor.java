@@ -49,12 +49,14 @@ public class ImmutableAnnotationProcessor extends NonCodeMembersContributor {
         modifierList.findAnnotation("groovy.transform.TupleConstructor") == null) return;
 
     final LightMethodBuilder fieldsConstructor = new LightMethodBuilder(psiClass, GroovyFileType.GROOVY_LANGUAGE);
+    fieldsConstructor.setConstructor(true);
     for (PsiField field : psiClass.getFields()) {
       fieldsConstructor.addParameter(field.getName(), field.getType());
     }
     if (!processor.execute(fieldsConstructor, ResolveState.initial())) return;
 
     final LightMethodBuilder defaultConstructor = new LightMethodBuilder(psiClass, GroovyFileType.GROOVY_LANGUAGE);
+    defaultConstructor.setConstructor(true);
     processor.execute(defaultConstructor, ResolveState.initial());
   }
 }

@@ -18,6 +18,10 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -29,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrCo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -91,11 +96,12 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
     PsiModifierList modifierList = method.getModifierList();
 
-    if (!method.isConstructor()) {
-      writeModifiers(builder, modifierList);
+    final PsiClass containingClass = method.getContainingClass();
+    if (method.isConstructor() && containingClass != null && containingClass.isEnum()) {
+      writeModifiers(builder, modifierList, ENUM_CONSTRUCTOR_MODIFIERS);
     }
     else {
-      writeModifiers(builder, modifierList, CONSTRUCTOR_MODIFIERS);
+      writeModifiers(builder, modifierList);
     }
 
 
@@ -146,6 +152,14 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       else if (method instanceof GrAccessorMethod) {
         writeAccessorBody(builder, method);
       }
+      else if (method instanceof LightMethodBuilder && containingClass instanceof GroovyScriptClass) {
+        if ("main".equals(method.getName())) {
+          writeMainScriptMethodBody(builder, method);
+        }
+        else if ("run".equals(method.getName())) {
+          writeRunScriptMethodBody(builder, method);
+        }
+      }
       else {
         builder.append("{//todo\n}");
       }
@@ -153,6 +167,26 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     else {
       builder.append(";");
     }
+  }
+
+  private void writeMainScriptMethodBody(StringBuilder builder, PsiMethod method) {
+    final PsiClass containingClass = method.getContainingClass();
+    LOG.assertTrue(containingClass instanceof GroovyScriptClass);
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    LOG.assertTrue(parameters.length == 1);
+    builder.append("{\nnew ").append(containingClass.getQualifiedName()).append("(new groovy.lang.Binding(").append(parameters[0].getName())
+      .append(")).run();\n}\n");
+  }
+
+  private void writeRunScriptMethodBody(StringBuilder builder, PsiMethod method) {
+    builder.append("{\n");
+    final PsiClass containingClass = method.getContainingClass();
+    LOG.assertTrue(containingClass instanceof GroovyScriptClass);
+    final PsiFile scriptFile = containingClass.getContainingFile();
+    LOG.assertTrue(scriptFile instanceof GroovyFile);
+    LOG.assertTrue(((GroovyFile)scriptFile).isScript());
+    new CodeBlockGenerator(builder, myProject).visitStatementOwner((GroovyFile)scriptFile);
+    builder.append("\n}\n");
   }
 
   private static void writeAccessorBody(StringBuilder builder, PsiMethod method) {
@@ -183,6 +217,14 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
   @Override
   public Collection<PsiMethod> collectMethods(PsiClass typeDefinition, boolean classDef) {
-    return Arrays.asList(typeDefinition.getMethods());
+    List<PsiMethod> result = new ArrayList<PsiMethod>(Arrays.asList(typeDefinition.getMethods()));
+
+    if (typeDefinition instanceof GroovyScriptClass) {
+      final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
+      final String name = typeDefinition.getName();
+      result.add(factory.createConstructorFromText(name, new String[]{"groovy.lang.Binding"}, new String[]{"binding"},"{super(binding);}", typeDefinition));
+      result.add(factory.createConstructorFromText(name, ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{super();}", typeDefinition));
+    }
+    return result;
   }
 }

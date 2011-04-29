@@ -2,9 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.*;
@@ -32,7 +30,7 @@ public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressio
   public PsiType getType() {
     final GrReferenceExpression qualifier = getQualifier();
     if (qualifier == null) {
-      GroovyPsiElement context = getFileContext();
+      GroovyPsiElement context = PsiUtil.getFileOrClassContext(this);
       if (context instanceof GrTypeDefinition) {
         return createType((PsiClass)context);
       }
@@ -56,15 +54,6 @@ public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressio
     }
 
     return null;
-  }
-
-  private GroovyPsiElement getFileContext() {
-    GroovyPsiElement context = PsiTreeUtil.getContextOfType(this, GrTypeDefinition.class, GroovyFileBase.class);
-    if (context instanceof GroovyFileBase
-        && GroovyPsiElementFactory.DUMMY_FILE_NAME.equals(FileUtil.getNameWithoutExtension(((GroovyFileBase)context).getName()))) {
-      context = PsiTreeUtil.getContextOfType(context, true, GrTypeDefinition.class, GroovyFileBase.class);
-    }
-    return context;
   }
 
   private PsiType createType(PsiClass context) {
@@ -91,7 +80,7 @@ public class GrThisReferenceExpressionImpl extends GrThisSuperReferenceExpressio
       return qualifier.resolve();
     }
 
-    final GroovyPsiElement context = getFileContext();
+    final GroovyPsiElement context = PsiUtil.getFileOrClassContext(this);
     if (context instanceof GrTypeDefinition) {
       return context;
     }

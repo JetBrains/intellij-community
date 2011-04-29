@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,22 +39,11 @@ import java.util.List;
  */
 public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection");
-  private JCheckBox myReportConvertibleCalls;
-  private JPanel myPanel;
   public boolean REPORT_CONVERTIBLE_METHOD_CALLS = true;
-
-  public SuspiciousCollectionsMethodCallsInspection() {
-    myReportConvertibleCalls.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        REPORT_CONVERTIBLE_METHOD_CALLS = myReportConvertibleCalls.isSelected();
-      }
-    });
-  }
 
   @Nullable
   public JComponent createOptionsPanel() {
-    myReportConvertibleCalls.setSelected(REPORT_CONVERTIBLE_METHOD_CALLS);
-    return myPanel;
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("report.suspicious.but.possibly.correct.method.calls"), this, "REPORT_CONVERTIBLE_METHOD_CALLS");
   }
 
   private static void setupPatternMethods(PsiManager manager,

@@ -53,11 +53,6 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
   public LightMethodBuilder(PsiClass constructedClass, Language language) {
     this(constructedClass.getManager(), language, constructedClass.getName());
     setContainingClass(constructedClass);
-    myConstructor = true;
-  }
-
-  public LightMethodBuilder(PsiClass constructedClass) {
-    this(constructedClass.getManager(), StdLanguages.JAVA, constructedClass.getName());
   }
 
   public LightMethodBuilder(PsiManager manager, String name) {
@@ -191,6 +186,11 @@ public class LightMethodBuilder extends LightElement implements PsiMethod {
 
   public PsiCodeBlock getBody() {
     return null;
+  }
+
+  public LightMethodBuilder setConstructor(boolean constructor) {
+    myConstructor = constructor;
+    return this;
   }
 
   public boolean isConstructor() {

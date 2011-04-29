@@ -62,7 +62,7 @@ public abstract class DataManager {
    * @param dataKey key to store value
    * @param data value to store
    */
-  public abstract <T> void saveInDataContext(DataContext dataContext, Key<T> dataKey, T data);
+  public abstract <T> void saveInDataContext(DataContext dataContext, @NotNull Key<T> dataKey, @Nullable T data);
 
   /**
    * @param dataContext find by key if instance of {@link com.intellij.openapi.util.UserDataHolder}

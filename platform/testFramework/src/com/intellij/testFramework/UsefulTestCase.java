@@ -441,6 +441,10 @@ public abstract class UsefulTestCase extends TestCase {
   public static void assertEmpty(final Collection<?> collection) {
     assertEmpty(null, collection);
   }
+  public static void assertNullOrEmpty(final Collection<?> collection) {
+    if (collection == null) return;
+    assertEmpty(null, collection);
+  }
 
   public static void assertEmpty(final String s) {
     assertTrue(s, StringUtil.isEmpty(s));

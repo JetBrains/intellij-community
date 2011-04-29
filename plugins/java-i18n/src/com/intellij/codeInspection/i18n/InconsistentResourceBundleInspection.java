@@ -18,6 +18,7 @@ package com.intellij.codeInspection.i18n;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.RemovePropertyLocalFix;
@@ -44,27 +45,9 @@ import java.util.Set;
  * @author max
  */
 public class InconsistentResourceBundleInspection extends GlobalSimpleInspectionTool {
-  private JCheckBox myReportMissingTranslationsCheckBox;
-  private JCheckBox myReportInconsistentPropertiesCheckBox;
-  private JPanel myOptionsPanel;
-  private JCheckBox myReportDuplicatedPropertiesCheckBox;
-
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_MISSING_TRANSLATIONS = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_INCONSISTENT_PROPERTIES = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_DUPLICATED_PROPERTIES = true;
-
-  public InconsistentResourceBundleInspection() {
-    ActionListener listener = new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        REPORT_INCONSISTENT_PROPERTIES = myReportInconsistentPropertiesCheckBox.isSelected();
-        REPORT_MISSING_TRANSLATIONS = myReportMissingTranslationsCheckBox.isSelected();
-        REPORT_DUPLICATED_PROPERTIES = myReportDuplicatedPropertiesCheckBox.isSelected();
-      }
-    };
-    myReportInconsistentPropertiesCheckBox.addActionListener(listener);
-    myReportMissingTranslationsCheckBox.addActionListener(listener);
-    myReportDuplicatedPropertiesCheckBox.addActionListener(listener);
-  }
 
   @NotNull
   public String getGroupDisplayName() {
@@ -88,10 +71,11 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
 
   @Nullable
   public JComponent createOptionsPanel() {
-    myReportInconsistentPropertiesCheckBox.setSelected(REPORT_INCONSISTENT_PROPERTIES);
-    myReportMissingTranslationsCheckBox.setSelected(REPORT_MISSING_TRANSLATIONS);
-    myReportDuplicatedPropertiesCheckBox.setSelected(REPORT_DUPLICATED_PROPERTIES);
-    return myOptionsPanel;
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionsBundle.message("inconsistent.bundle.report.inconsistent.properties"), "REPORT_INCONSISTENT_PROPERTIES");
+    panel.addCheckbox(InspectionsBundle.message("inconsistent.bundle.report.missing.translations"), "REPORT_MISSING_TRANSLATIONS");
+    panel.addCheckbox(InspectionsBundle.message("inconsistent.bundle.report.duplicate.properties.values"), "REPORT_DUPLICATED_PROPERTIES");
+    return panel;
   }
 
 

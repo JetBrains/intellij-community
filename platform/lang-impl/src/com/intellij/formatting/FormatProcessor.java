@@ -36,6 +36,13 @@ import java.util.*;
 
 class FormatProcessor {
 
+  private static final Map<Alignment.Anchor, BlockAlignmentProcessor> ALIGNMENT_PROCESSORS =
+    new EnumMap<Alignment.Anchor, BlockAlignmentProcessor>(Alignment.Anchor.class);
+  static {
+    ALIGNMENT_PROCESSORS.put(Alignment.Anchor.LEFT, new LeftEdgeAlignmentProcessor());
+    ALIGNMENT_PROCESSORS.put(Alignment.Anchor.RIGHT, new RightEdgeAlignmentProcessor());
+  }
+  
   /**
    * There is a possible case that formatting introduced big number of changes to the underlying document. That number may be
    * big enough for that their subsequent appliance is much slower than direct replacing of the whole document text.
@@ -70,10 +77,6 @@ class FormatProcessor {
    * increases offset of <code>'i3'</code> that, in turn, causes backward shift of <code>'i1'</code> etc.
    * <p/>
    * This map remembers such backward shifts in order to be able to break such infinite cycles.
-   * <p/>
-   * <b>Note:</b> we already have a protection against backward alignment-implied problems
-   * (see {@link #allowBackwardAlignment(LeafBlockWrapper)}), processing based on current collection is left just as
-   * an additional defense.
    */
   private final Map<LeafBlockWrapper, Set<LeafBlockWrapper>> myBackwardShiftedAlignedBlocks
     = new HashMap<LeafBlockWrapper, Set<LeafBlockWrapper>>();
@@ -576,114 +579,61 @@ class FormatProcessor {
    *         because of specified alignment options)
    */
   private boolean adjustIndent() {
-    IndentData alignOffset = getAlignOffset();
+    AlignmentImpl alignment = CoreFormatterUtil.getAlignment(myCurrentBlock);
     WhiteSpace whiteSpace = myCurrentBlock.getWhiteSpace();
 
-    if (alignOffset == null) {
-      if (whiteSpace.containsLineFeeds()) {
-        adjustSpacingByIndentOffset();
-      }
-      else {
-        whiteSpace.arrangeSpaces(myCurrentBlock.getSpaceProperty());
-      }
-      return true;
-    }
-
-    if (whiteSpace.containsLineFeeds()) {
-      whiteSpace.setSpaces(alignOffset.getSpaces(), alignOffset.getIndentSpaces());
-      storeAlignmentMapping();
-      return true;
-    }
-
-    IndentData indentBeforeBlock = myCurrentBlock.getNumberOfSymbolsBeforeBlock();
-    int diff = alignOffset.getTotalSpaces() - indentBeforeBlock.getTotalSpaces();
-    if (diff == 0) {
-      storeAlignmentMapping();
-      return true;
-    }
-
-    if (diff > 0) {
-      whiteSpace.setSpaces(whiteSpace.getSpaces() + diff, whiteSpace.getIndentSpaces());
-
-      // Avoid tabulations usage for aligning blocks that are not the first blocks on a line.
-      if (!whiteSpace.containsLineFeeds()) {
-        whiteSpace.setForceSkipTabulationsUsage(true);
-      }
-      storeAlignmentMapping();
-      return true;
-    }
-    AlignmentImpl alignment = myCurrentBlock.getAlignmentAtStartOffset();
     if (alignment == null) {
-      // Never expect to be here.
-      return true;
-    }
-
-    if (!alignment.isAllowBackwardShift()) {
-      return true;
-    }
-
-    LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(myCurrentBlock);
-    if (offsetResponsibleBlock == null) {
-      return true;
-    }
-
-    // Note that we can't just put this check at the method start because at least adjustSpacingByIndentOffset() may perform
-    // block states modification (e.g. define new value for 'allow to use first child indent as block indent' flag).
-    if (offsetResponsibleBlock.getWhiteSpace().isIsReadOnly()) {
-      // We're unable to perform backward shift because white space for the target element is read-only.
-      return true;
-    }
-
-    if (!allowBackwardAlignment(offsetResponsibleBlock)) {
       if (whiteSpace.containsLineFeeds()) {
         adjustSpacingByIndentOffset();
       }
       else {
         whiteSpace.arrangeSpaces(myCurrentBlock.getSpaceProperty());
       }
+      return true;
+    }
+
+    BlockAlignmentProcessor alignmentProcessor = ALIGNMENT_PROCESSORS.get(alignment.getAnchor());
+    if (alignmentProcessor == null) {
+      LOG.error(String.format("Can't find alignment processor for alignment anchor %s", alignment.getAnchor()));
       return true;
     }
     
-    // There is a possible case that alignment options are defined incorrectly. Consider the following example:
-    //     int i1;
-    //     int i2, i3;
-    // There is a problem if all blocks above use the same alignment - block 'i1' is shifted to right in order to align
-    // to block 'i3' and reformatting starts back after 'i1'. Now 'i2' is shifted to left as well in order to align to the
-    // new 'i1' position. That changes 'i3' position as well that causes 'i1' to be shifted right one more time.
-    // Hence, we have endless cycle here. We remember information about blocks that caused indentation change because of
-    // alignment of blocks located before them and post error every time we detect endless cycle.
-    Set<LeafBlockWrapper> blocksCausedRealignment = myBackwardShiftedAlignedBlocks.get(offsetResponsibleBlock);
-    if (blocksCausedRealignment != null && blocksCausedRealignment.contains(myCurrentBlock)) {
-      LOG.error(String.format("Formatting error - code block %s is set to be shifted right because of its alignment with "
-                                + "block %s more than once. I.e. moving the former block because of alignment algorithm causes "
-                                + "subsequent block to be shifted right as well - cyclic dependency",
-                              offsetResponsibleBlock.getTextRange(), myCurrentBlock.getTextRange()));
-      blocksCausedRealignment.add(myCurrentBlock);
-      return true;
+    BlockAlignmentProcessor.Context context = new BlockAlignmentProcessor.Context(
+      alignment, myCurrentBlock, myAlignmentMappings, myBackwardShiftedAlignedBlocks
+    );
+    BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
+    switch (result) {
+      case TARGET_BLOCK_PROCESSED_NOT_ALIGNED: return true;
+      case TARGET_BLOCK_ALIGNED: storeAlignmentMapping(); return true;
+      case BACKWARD_BLOCK_ALIGNED:
+        LeafBlockWrapper offsetResponsibleBlock = alignment.getOffsetRespBlockBefore(myCurrentBlock);
+        if (offsetResponsibleBlock == null) {
+          return true;
+        }
+        Set<LeafBlockWrapper> blocksCausedRealignment;
+        myBackwardShiftedAlignedBlocks.clear();
+        myBackwardShiftedAlignedBlocks.put(offsetResponsibleBlock, blocksCausedRealignment = new HashSet<LeafBlockWrapper>());
+        blocksCausedRealignment.add(myCurrentBlock);
+        storeAlignmentMapping(myCurrentBlock, offsetResponsibleBlock);
+        myCurrentBlock = offsetResponsibleBlock.getNextBlock();
+        onCurrentLineChanged();
+        return false;
+      case UNABLE_TO_ALIGN_BACKWARD_BLOCK:
+        if (whiteSpace.containsLineFeeds()) {
+          adjustSpacingByIndentOffset();
+        }
+        else {
+          whiteSpace.arrangeSpaces(myCurrentBlock.getSpaceProperty());
+        }
+        return true;
+      default: return true;
     }
-    myBackwardShiftedAlignedBlocks.clear();
-    myBackwardShiftedAlignedBlocks.put(offsetResponsibleBlock, blocksCausedRealignment = new HashSet<LeafBlockWrapper>());
-    blocksCausedRealignment.add(myCurrentBlock);
-
-    storeAlignmentMapping(myCurrentBlock, offsetResponsibleBlock);
-    WhiteSpace previousWhiteSpace = offsetResponsibleBlock.getWhiteSpace();
-    previousWhiteSpace.setSpaces(previousWhiteSpace.getSpaces() - diff, previousWhiteSpace.getIndentOffset());
-    // Avoid tabulations usage for aligning blocks that are not the first blocks on a line.
-    if (!previousWhiteSpace.containsLineFeeds()) {
-      previousWhiteSpace.setForceSkipTabulationsUsage(true);
-    }
-
-    myCurrentBlock = offsetResponsibleBlock.getNextBlock();
-    onCurrentLineChanged();
-    return false;
   }
 
   /**
    * We need to track blocks which white spaces are modified because of alignment rules.
    * <p/>
    * This method encapsulates the logic of storing such information.
-   * 
-   * @see #allowBackwardAlignment(LeafBlockWrapper)
    */
   private void storeAlignmentMapping() {
     AlignmentImpl alignment = null;
@@ -714,96 +664,6 @@ class FormatProcessor {
   }
 
   /**
-   * It's possible to configure alignment in a way to allow {@link AlignmentFactory#createAlignment(boolean) backward shift}.
-   * <p/>
-   * <b>Example:</b>
-   * <pre>
-   *     class Test {
-   *         int i;
-   *         StringBuilder buffer;
-   *     } 
-   * </pre>
-   * <p/>
-   * It's possible that blocks <code>'i'</code> and <code>'buffer'</code> should be aligned. As formatter processes document from
-   * start to end that means that requirement to shift block <code>'i'</code> to the right is discovered only during
-   * <code>'buffer'</code> block processing. I.e. formatter returns to the previously processed block (<code>'i'</code>), modifies
-   * its white space and continues from that location (performs 'backward' shift).
-   * <p/>
-   * Here is one very important moment - there is a possible case that formatting blocks are configured in a way that they are
-   * combined in explicit graph loop.
-   * <p/>
-   * <b>Example:</b>
-   * <pre>
-   *     blah(bleh(blih,
-   *       bloh), bluh);
-   * </pre>
-   * <p/>
-   * Consider that pairs of blocks <code>'blih'; 'bloh'</code> and <code>'bleh', 'bluh'</code> share should be aligned
-   * and backward shift is possible for them. Here is how formatter works:
-   * <ol>
-   *   <li>
-   *      Processing reaches <b>'bloh'</b> block. It's aligned to <code>'blih'</code> block. Current document state:
-   *      <p/>
-   *      <pre>
-   *          blah(bleh(blih,
-   *                    bloh), bluh);
-   *      </pre>
-   *   </li>
-   *   <li>
-   *      Processing reaches <b>'bluh'</b> block. It's aligned to <code>'blih'</code> block and backward shift is allowed, hence,
-   *      <code>'blih'</code> block is moved to the right and processing contnues from it. Current document state:
-   *      <pre>
-   *          blah(            bleh(blih,
-   *                    bloh), bluh);
-   *      </pre>
-   *   </li>
-   *   <li>
-   *      Processing reaches <b>'bloh'</b> block. It's configured to be aligned to <code>'blih'</code> block, hence, it's moved
-   *      to the right:
-   *      <pre>
-   *          blah(            bleh(blih,
-   *                                bloh), bluh);
-   *      </pre>
-   *   </li>
-   *   <li>We have endless loop then;</li>
-   * </ol>
-   * So, that implies that we can't use backward alignment if the blocks are configured in a way that backward alignment
-   * appliance produces endless loop. This method encapsulates the logic for checking if backward alignment can be applied.
-   * 
-   * @param backwardTarget    block that is located before the {@link #myCurrentBlock currently processed block} and that is
-   *                          a candidate for backward alignment
-   * @return                  <code>true</code> if backward alignment is possible; <code>false</code> otherwise
-   */
-  private boolean allowBackwardAlignment(LeafBlockWrapper backwardTarget) {
-    Set<AbstractBlockWrapper> blocksBeforeCurrent = new HashSet<AbstractBlockWrapper>();
-    for (
-      LeafBlockWrapper previousBlock = myCurrentBlock.getPreviousBlock(); 
-      previousBlock != null;
-      previousBlock = previousBlock.getPreviousBlock()) 
-    {
-      Set<AbstractBlockWrapper> blocks = myAlignmentMappings.get(previousBlock);
-      if (blocks != null) {
-        blocksBeforeCurrent.addAll(blocks);
-      }
-      
-      if (previousBlock.getWhiteSpace().containsLineFeeds()) {
-        break;
-      }
-    }
-    
-    for (
-      LeafBlockWrapper next = backwardTarget.getNextBlock();
-      next != null && !next.getWhiteSpace().containsLineFeeds();
-      next = next.getNextBlock()) 
-    {
-      if (blocksBeforeCurrent.contains(next)) {
-        return false;
-      }
-    }
-    return true;
-  }
-  
-  /**
    * Applies indent to the white space of {@link #myCurrentBlock currently processed wrapped block}. Both indentation
    * and alignment options are took into consideration here.
    */
@@ -821,26 +681,6 @@ class FormatProcessor {
   private void adjustSpacingByIndentOffset() {
     IndentData offset = myCurrentBlock.calculateOffset(myIndentOption);
     myCurrentBlock.getWhiteSpace().setSpaces(offset.getSpaces(), offset.getIndentSpaces());
-  }
-
-  /**
-   * Tries to find the closest block that starts before the {@link #myCurrentBlock currently processed block} and contains line feeds.
-   *
-   * @return closest block to the currently processed block that contains line feeds if any; <code>null</code> otherwise
-   */
-  @Nullable
-  private AbstractBlockWrapper getPreviousIndentedBlock() {
-    AbstractBlockWrapper current = myCurrentBlock.getParent();
-    while (current != null) {
-      if (current.getStartOffset() != myCurrentBlock.getStartOffset() && current.getWhiteSpace().containsLineFeeds()) return current;
-      if (current.getParent() != null) {
-        AbstractBlockWrapper prevIndented = current.getParent().getPrevIndentedSibling(current);
-        if (prevIndented != null) return prevIndented;
-
-      }
-      current = current.getParent();
-    }
-    return null;
   }
 
   private boolean wrapCanBeUsedInTheFuture(final WrapImpl wrap) {
@@ -874,10 +714,10 @@ class FormatProcessor {
     final int spaces = whiteSpace.getSpaces();
     int indentSpaces = whiteSpace.getIndentSpaces();
     try {
-      final int offsetBefore = getOffsetBefore(myCurrentBlock);
+      final int offsetBefore = CoreFormatterUtil.getOffsetBefore(myCurrentBlock);
       whiteSpace.ensureLineFeed();
       adjustLineIndent();
-      final int offsetAfter = getOffsetBefore(myCurrentBlock);
+      final int offsetAfter = CoreFormatterUtil.getOffsetBefore(myCurrentBlock);
       return offsetBefore > offsetAfter;
     }
     finally {
@@ -914,44 +754,7 @@ class FormatProcessor {
    */
   private boolean lineOver() {
     return !myCurrentBlock.containsLineFeeds() &&
-      getOffsetBefore(myCurrentBlock) + myCurrentBlock.getLength() > mySettings.RIGHT_MARGIN;
-  }
-
-  /**
-   * Calculates number of non-line feed symbols before the given wrapped block.
-   * <p/>
-   * <b>Example:</b>
-   * <pre>
-   *      whitespace<sub>11</sub> block<sub>11</sub> whitespace<sub>12</sub> block<sub>12</sub>
-   *      whitespace<sub>21</sub> block<sub>21</sub> whitespace<sub>22</sub> block<sub>22</sub>
-   * </pre>
-   * <p/>
-   * Suppose this method is called with the wrapped <code>'block<sub>22</sub>'</code> and <code>'whitespace<sub>21</sub>'</code>
-   * contains line feeds but <code>'whitespace<sub>22</sub>'</code> is not. This method returns number of symbols
-   * from <code>'whitespace<sub>21</sub>'</code> after its last line feed symbol plus number of symbols at
-   * <code>block<sub>21</sub></code> plus number of symbols at <code>whitespace<sub>22</sub></code>.
-   *
-   * @param info target wrapped block to be used at a boundary during counting non-line feed symbols to the left of it
-   * @return non-line feed symbols to the left of the given wrapped block
-   */
-  private static int getOffsetBefore(LeafBlockWrapper info) {
-    if (info != null) {
-      int result = 0;
-      while (true) {
-        final WhiteSpace whiteSpace = info.getWhiteSpace();
-        result += whiteSpace.getTotalSpaces();
-        if (whiteSpace.containsLineFeeds()) {
-          return result;
-        }
-        info = info.getPreviousBlock();
-        if (info == null) return result;
-        result += info.getSymbolsAtTheLastLine();
-        if (info.containsLineFeeds()) return result;
-      }
-    }
-    else {
-      return -1;
-    }
+           CoreFormatterUtil.getOffsetBefore(myCurrentBlock) + myCurrentBlock.getLength() > mySettings.RIGHT_MARGIN;
   }
 
   private void defineAlignOffset(final LeafBlockWrapper block) {
@@ -985,13 +788,13 @@ class FormatProcessor {
           return new IndentData(whiteSpace.getIndentSpaces(), whiteSpace.getSpaces());
         }
         else {
-          final int offsetBeforeBlock = getOffsetBefore(offsetResponsibleBlock);
-          final AbstractBlockWrapper prevIndentedBlock = getPreviousIndentedBlock();
-          if (prevIndentedBlock == null) {
+          final int offsetBeforeBlock = CoreFormatterUtil.getOffsetBefore(offsetResponsibleBlock);
+          final AbstractBlockWrapper indentedParentBlock = CoreFormatterUtil.getIndentedParentBlock(myCurrentBlock);
+          if (indentedParentBlock == null) {
             return new IndentData(0, offsetBeforeBlock);
           }
           else {
-            final int parentIndent = prevIndentedBlock.getWhiteSpace().getIndentOffset();
+            final int parentIndent = indentedParentBlock.getWhiteSpace().getIndentOffset();
             if (parentIndent > offsetBeforeBlock) {
               return new IndentData(0, offsetBeforeBlock);
             }
@@ -1000,12 +803,10 @@ class FormatProcessor {
             }
           }
         }
-
       }
       else {
         current = current.getParent();
-        if (current == null) return null;
-        if (current.getStartOffset() != myCurrentBlock.getStartOffset()) return null;
+        if (current == null || current.getStartOffset() != myCurrentBlock.getStartOffset()) return null;
       }
     }
   }
@@ -1122,12 +923,12 @@ class FormatProcessor {
       return parent.calculateChildOffset(myIndentOption, childAttributes, index).createIndentInfo();
     }
     else {
-      AbstractBlockWrapper previousIndentedBlock = getPreviousIndentedBlock();
-      if (previousIndentedBlock == null) {
+      AbstractBlockWrapper indentedParentBlock = CoreFormatterUtil.getIndentedParentBlock(myCurrentBlock);
+      if (indentedParentBlock == null) {
         return new IndentInfo(0, 0, alignOffset);
       }
       else {
-        int indentOffset = previousIndentedBlock.getWhiteSpace().getIndentOffset();
+        int indentOffset = indentedParentBlock.getWhiteSpace().getIndentOffset();
         if (indentOffset > alignOffset) {
           return new IndentInfo(0, 0, alignOffset);
         }
@@ -1142,7 +943,7 @@ class FormatProcessor {
     if (alignment == null) return -1;
     final LeafBlockWrapper alignRespBlock = ((AlignmentImpl)alignment).getOffsetRespBlockBefore(blockAfter);
     if (alignRespBlock != null) {
-      return getOffsetBefore(alignRespBlock);
+      return CoreFormatterUtil.getOffsetBefore(alignRespBlock);
     }
     else {
       return -1;
