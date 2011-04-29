@@ -142,7 +142,7 @@ public class ExpressionGenerator extends Generator {
     if (hasFieldInitialization) {
       builder = new StringBuilder();
       varName = suggestVarName(type, newExpression, this.context);
-      writeType(builder, type);
+      writeType(builder, type, newExpression);
       builder.append(" ").append(varName).append(" = ");
     }
     else {
@@ -165,7 +165,7 @@ public class ExpressionGenerator extends Generator {
       final PsiType builtIn = typeElement.getType();
       LOG.assertTrue(builtIn instanceof PsiPrimitiveType);
       final PsiType boxed = TypesUtil.boxPrimitiveType(builtIn, newExpression.getManager(), newExpression.getResolveScope());
-      writeType(builder, boxed);
+      writeType(builder, boxed, newExpression);
     }
     else if (referenceElement != null) {
       writeCodeReferenceElement(builder, referenceElement);
@@ -653,7 +653,7 @@ public class ExpressionGenerator extends Generator {
     final String name = suggestVarName(initializer, context);
     final StringBuilder builder = new StringBuilder();
     builder.append("final ");
-    writeType(builder, initializer.getType());
+    writeType(builder, initializer.getType(), initializer);
     builder.append(' ').append(name).append(" = ");
     initializer.accept(new ExpressionGenerator(builder, context));
     builder.append(';');
@@ -824,7 +824,7 @@ public class ExpressionGenerator extends Generator {
     else {
       boolean isActuallyList = type instanceof GrTupleType;
       builder.append("new ");
-      writeType(builder, type);
+      writeType(builder, type, listOrMap);
       if (isActuallyList) {
         builder.append("(java.util.Arrays.asList(");
       }
@@ -876,10 +876,10 @@ public class ExpressionGenerator extends Generator {
   private String generateMapVariableDeclaration(GrListOrMap listOrMap, PsiType type) {
     StringBuilder declaration = new StringBuilder();
 
-    writeType(declaration, type);
+    writeType(declaration, type, listOrMap);
     final String varName = suggestVarName(type, listOrMap, this.context);
     declaration.append(" ").append(varName).append(" = new ");
-    writeType(declaration, type);
+    writeType(declaration, type, listOrMap);
 
     declaration.append("(");
     //insert count of elements in list or map

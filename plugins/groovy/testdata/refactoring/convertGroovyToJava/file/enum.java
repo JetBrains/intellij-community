@@ -10,5 +10,6 @@ java.lang.Integer i = 23;
 E(int x) {
 }
 E() {
+this(2);
 }
 }

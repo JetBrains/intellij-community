@@ -16,19 +16,20 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeType;
 
@@ -48,23 +49,44 @@ public class ClosureGenerator {
 
   public void generate(GrClosableBlock closure) {
     final String owner = getOwner(closure);
-    final PsiType returnType = closure.getReturnType();
-    builder.append("new ").append(GROOVY_LANG_CLOSURE);
-    if (returnType != null) {
-      builder.append("<");
-      writeType(builder, returnType);
-      builder.append(">(");
-    }
+    builder.append("new ");
+    writeType(builder, closure.getType(), closure);
+    builder.append('(');
     builder.append(owner).append(", ").append(owner).append(") {\n");
-    builder.append("public ").append(JAVA_LANG_OBJECT).append(" doCall(");
 
-    final GrParameter[] parameters = closure.getAllParameters();
-    for (GrParameter parameter : parameters) {
-      final String name = parameter.getName();
+    final GrMethod method = generateClosureMethod(closure);
+    ClassGenerator.writeAllSignaturesOfMethod(builder, method, new ClassItemGeneratorImpl(context.project));
+    builder.append("}");
+  }
+
+  private GrMethod generateClosureMethod(GrClosableBlock block) {
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
+    final GrMethod method = factory.createMethodFromText("def doCall(){}");
+
+    final PsiElement first;
+    if (block.hasParametersSection()) {
+      method.getParameterList().replace(block.getParameterList());
+      final PsiElement arrow = block.getArrow();
+      LOG.assertTrue(arrow != null);
+      first = arrow.getNextSibling();
+    }
+    else {
+      final GrParameter[] allParameters = block.getAllParameters();
+      LOG.assertTrue(allParameters.length == 1);
+      final GrParameter itParameter = allParameters[0];
+      final GrParameter parameter = factory.createParameter("it", itParameter.getType().getCanonicalText(), "null", block);
+      method.getParameterList().addParameterToEnd(parameter);
+      final PsiElement lBrace = block.getLBrace();
+      LOG.assertTrue(lBrace != null);
+      first = lBrace.getNextSibling();
     }
 
-    final GrStatement[] statements = closure.getStatements();
+    final PsiElement rBrace = block.getRBrace();
+    final PsiElement last = rBrace != null ? rBrace.getPrevSibling() : block.getLastChild();
 
+    final GrOpenBlock methodBlock = method.getBlock();
+    methodBlock.addRange(first, last);
+    return method;
   }
 
   private static String getOwner(GrClosableBlock closure) {
@@ -75,7 +97,7 @@ public class ClosureGenerator {
       LOG.assertTrue(false, "closure must have member parent");
       return "this";
     }
-    if (context instanceof GrMember && ((GrMember)context).hasModifierProperty(GrModifier.STATIC)) {
+    if (context instanceof GrMember && ((GrMember)context).hasModifierProperty(PsiModifier.STATIC)) {
       return "null";
     }
     return "this";

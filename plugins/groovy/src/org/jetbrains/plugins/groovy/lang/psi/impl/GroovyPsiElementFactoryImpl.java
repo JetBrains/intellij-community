@@ -506,7 +506,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   }
 
   public GrStatement createStatementFromText(String text) {
-    PsiFile file = createGroovyFile(text);
+    return createStatementFromText(text, null);
+  }
+
+  @Override
+  public GrStatement createStatementFromText(String text, PsiElement context) {
+    PsiFile file = createGroovyFile(text, false, context);
     assert ((GroovyFileBase) file).getTopStatements()[0] instanceof GrStatement;
     return (GrStatement) ((GroovyFileBase) file).getTopStatements()[0];
   }
@@ -633,7 +638,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @Override
   public GrConstructorInvocation createConstructorInvocation(String text) {
-    GroovyFile file = (GroovyFile)createGroovyFile("class Foo{ def Foo(){" + text + "}}");
+    return createConstructorInvocation(text, null);
+  }
+
+  @Override
+  public GrConstructorInvocation createConstructorInvocation(String text, @Nullable PsiElement context) {
+    GroovyFile file = createGroovyFile("class Foo{ def Foo(){" + text + "}}", false, context);
     return ((GrConstructor)file.getClasses()[0].getConstructors()[0]).getChainingConstructorInvocation();
   }
 

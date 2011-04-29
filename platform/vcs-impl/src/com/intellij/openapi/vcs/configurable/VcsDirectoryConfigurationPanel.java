@@ -65,7 +65,11 @@ public class VcsDirectoryConfigurationPanel extends PanelWithButtons implements 
       }
       VirtualFile baseDir = myProject.getBaseDir();
       if (baseDir != null) {
-        return FileUtil.getRelativePath(new File(baseDir.getPath()), new File(directory));
+        final File directoryFile = new File(directory);
+        if (directoryFile.isAbsolute() && directory.charAt(0) != baseDir.getPath().charAt(0)) {
+          return directory;
+        }
+        return FileUtil.getRelativePath(new File(baseDir.getPath()), directoryFile);
       }
       return directory;
     }

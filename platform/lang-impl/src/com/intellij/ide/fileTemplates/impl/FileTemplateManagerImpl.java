@@ -522,10 +522,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
     myRecentList.validateNames(allNames);
   }
 
-  public void saveAll() {
-    myDefaultTemplatesManager.saveTemplates();
-  }
-
   @NotNull
   public FileTemplate[] getInternalTemplates() {
     InternalTemplateBean[] internalTemplateBeans = Extensions.getExtensions(InternalTemplateBean.EP_NAME);
@@ -554,8 +550,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
         final String text = normalizeText(getDefaultClassTemplateText(templateName));
         template = myInternalTemplatesManager.addTemplate(templateName, "java");
         template.setText(text);
-        // Important! Must update template files on disk so that Velocity is able to use them
-        myInternalTemplatesManager.saveTemplates();
       }
     }
     return template;

@@ -329,7 +329,7 @@ public class CodeBlockGenerator extends Generator {
     if (GenerationUtil.writeModifiers(builder, var.getModifierList())) {
       builder.append(" ");
     }
-    GenerationUtil.writeType(builder, GenerationUtil.getVarType(var));
+    GenerationUtil.writeType(builder, GenerationUtil.getVarType(var), var);
     builder.append(" ").append(var.getName());
   }
 
@@ -451,7 +451,7 @@ public class CodeBlockGenerator extends Generator {
       for (final GrVariable v : variables) {
         GenerationUtil.writeModifiers(builder, modifierList);
         final PsiType type = GenerationUtil.getVarType(v);
-        GenerationUtil.writeType(builder, type);
+        GenerationUtil.writeType(builder, type, variableDeclaration);
         builder.append(" ").append(v.getName());
         builder.append(" = ").append(iteratorName).append(".hasNext() ? ").append(iteratorName).append(".next() : null;");
       }
