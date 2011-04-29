@@ -199,7 +199,8 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   protected boolean processServiceMessages(final String text,
                                           final Key outputType,
                                           final ServiceMessageVisitor visitor) throws ParseException {
-    final ServiceMessage message = ServiceMessage.parse(text);
+    // service message parser expects line like "##teamcity[ .... ]" without whitespaces in the end.
+    final ServiceMessage message = ServiceMessage.parse(text.trim());
     if (message != null) {
       message.visit(visitor);
     }
@@ -405,6 +406,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     public void visitTestStarted(@NotNull final TestStarted testStarted) {
+      // TODO
+      // final String locationUrl = testStarted.getLocationHint();
+
       final String locationUrl = testStarted.getAttributes().get(ATTR_KEY_LOCATION_URL);
       fireOnTestStarted(testStarted.getTestName(), locationUrl);
     }
