@@ -92,6 +92,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     setNewName(newName);
   }
 
+  @Deprecated
   public RenameProcessor(Project project) {
     this(project, null, "", false, false);
   }
