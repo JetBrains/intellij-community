@@ -327,6 +327,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return getUsageInfo().isNonCodeUsage;
   }
 
+  @NotNull
   public UsageInfo getUsageInfo() {
     return myUsageInfo;
   }
