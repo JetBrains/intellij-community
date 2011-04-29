@@ -87,6 +87,22 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   public void process(final String text, final Key outputType) {
+    final int textLength = text.length();
+    // if text is multi line:
+    if (textLength > 1 && text.substring(0, text.length() - 1).contains("\n")) {
+      // some fake process handler may not auto-split text in lines
+      final String[] lines = StringUtil.splitByLines(text);
+      for (String line : lines) {
+        processLine(line, outputType);
+      }
+    }
+    else {
+      // one line
+      processLine(text, outputType);
+    }
+  }
+
+  private void processLine(String text, Key outputType) {
     if (outputType != ProcessOutputTypes.STDERR && outputType != ProcessOutputTypes.SYSTEM) {
       // we check for consistently only std output
       // because all events must be send to stdout
