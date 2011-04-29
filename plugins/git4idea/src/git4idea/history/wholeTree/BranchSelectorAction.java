@@ -58,6 +58,7 @@ public class BranchSelectorAction extends BasePopupAction {
   @Override
   protected void createActions(Consumer<AnAction> actionConsumer) {
     actionConsumer.consume(new SelectBranchAction("All", null));
+    if (mySymbolicRefs == null) return;
     final GitBranch current = mySymbolicRefs.getCurrent();
     if (current != null) {
       actionConsumer.consume(new SelectBranchAction("*" + minusRefs(current.getFullName()), current.getFullName()));
