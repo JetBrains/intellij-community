@@ -72,7 +72,7 @@ public class GenerationUtil {
     PsiModifier.NATIVE,
   };
 
-  public static final String[] CONSTRUCTOR_MODIFIERS = new String[]{
+  public static final String[] ENUM_CONSTRUCTOR_MODIFIERS = new String[]{
     PsiModifier.PRIVATE,
     PsiModifier.PACKAGE_LOCAL,
   };

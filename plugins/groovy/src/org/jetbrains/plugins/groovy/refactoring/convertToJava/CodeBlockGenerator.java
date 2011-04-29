@@ -20,10 +20,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -34,10 +36,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClaus
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -85,12 +90,44 @@ public class CodeBlockGenerator extends Generator {
 
   public void visitCodeBlock(GrCodeBlock block) {
     builder.append("{\n");
-    final GrStatement[] statements = block.getStatements();
+    visitStatementOwner(block);
+    builder.append("}\n");
+  }
+
+  public void visitStatementOwner(GrStatementOwner owner) {
+    final GrStatement[] statements = owner.getStatements();
     for (GrStatement statement : statements) {
       statement.accept(this);
       builder.append('\n');
     }
-    builder.append("}\n");
+  }
+
+  @Override
+  public void visitConstructorInvocation(final GrConstructorInvocation invocation) {
+    GenerationUtil.writeStatement(builder, context, invocation, new StatementWriter() {
+      @Override
+      public void writeStatement(StringBuilder builder, ExpressionContext context) {
+        final GrThisSuperReferenceExpression thisOrSuperKeyword = invocation.getThisOrSuperKeyword();
+        final GrArgumentList argumentList = invocation.getArgumentList();
+        final GroovyResolveResult resolveResult = invocation.resolveConstructorGenerics();
+        if (thisOrSuperKeyword.getQualifier() == null) {
+          builder.append(thisOrSuperKeyword.getReferenceName());
+        }
+        else {
+          thisOrSuperKeyword.accept(new ExpressionGenerator(builder, context));
+        }
+        new ArgumentListGenerator(builder, context).generate(
+          GrClosureSignatureUtil.createSignature(resolveResult),
+          argumentList.getExpressionArguments(),
+          argumentList.getNamedArguments(),
+          invocation.getClosureArguments(),
+          invocation
+        );
+
+        builder.append(';');
+      }
+    });
+
   }
 
   public void visitStatement(GrStatement statement) {

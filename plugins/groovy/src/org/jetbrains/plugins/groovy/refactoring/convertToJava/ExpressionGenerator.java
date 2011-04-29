@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
@@ -28,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -568,6 +568,15 @@ public class ExpressionGenerator extends Generator {
     final GroovyResolveResult resolveResult = referenceExpression.advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
 
+    if (qualifier == null && (resolved == null || resolved instanceof LightElement) &&
+        !(referenceExpression.getParent() instanceof GrCall) &&
+        PsiUtil.isInScriptContext(referenceExpression)) {
+      final GrExpression thisExpr = factory.createExpressionFromText("this", referenceExpression);
+      thisExpr.accept(this);
+      builder.append(".getBinding().getProperty(\"").append(referenceExpression.getName()).append("\")");
+      return;
+    }
+
     final IElementType type = referenceExpression.getDotTokenType();
 
     GrExpression qualifierToUse = qualifier;
@@ -654,9 +663,6 @@ public class ExpressionGenerator extends Generator {
 
   @Override
   public void visitThisSuperReferenceExpression(GrThisSuperReferenceExpression expr) {
-    //doesn't visit constructor invocation
-    LOG.assertTrue(!(expr.getParent() instanceof GrConstructorInvocation));
-
     if (context.isInAnonymousContext() && expr.getQualifier() == null) {
       builder.append(expr.getReferenceName());
       return;
