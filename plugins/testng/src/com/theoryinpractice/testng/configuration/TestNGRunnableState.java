@@ -58,7 +58,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
@@ -196,6 +195,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
         }
       }
 
+      private int myInsertIndex = 0;
       @Override
       public void onTextAvailable(final ProcessEvent event, final Key outputType) {
         final TestProxy currentTest = console.getCurrentTest();
@@ -210,8 +210,9 @@ public class TestNGRunnableState extends JavaCommandLineState {
           currentTest.addLast(printable);
         }
         else {
-          unboundOutputRoot.addLast(printable);
+          unboundOutputRoot.insert(printable, myInsertIndex);
         }
+        myInsertIndex++;
       }
     });
     console.attachToProcess(processHandler);
