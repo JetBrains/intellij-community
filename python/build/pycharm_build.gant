@@ -253,7 +253,7 @@ target('default': "Build artifacts") {
   installer.nsis_installer([paths.distAll, paths.distWin],
                            "$home/python/build/strings.nsi",
                            "$home/python/build/paths.nsi",
-                           "pycharm", false)
+                           "pycharm", false, true, system_selector)
 }
 
 def build_searchable_options() {
