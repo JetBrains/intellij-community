@@ -9,6 +9,11 @@ includeTool << Jps
 
 requireProperty("buildNumber", requireProperty("build.number", "108.SNAPSHOT"))
 
+// load ApplicationInfo.xml properties
+ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
+
+setProperty("system_selector", "PyCharm${p("component.version.major")}0")
+
 setProperty("ch", "$home/community")
 setProperty("dryRun", false)
 setProperty("jdk16", guessJdk())
@@ -142,8 +147,6 @@ target('default': "Build artifacts") {
     format(property: "todayYear", pattern: "yyyy")
   }
 
-  ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
-
   if (isEap()) {
     binding.setVariable("common_vmoptions",
                         "$common_vmoptions -XX:+HeapDumpOnOutOfMemoryError -agentlib:yjpagent=disablej2ee,disablecounts,disablealloc,sessionname=PyCharm")
@@ -215,7 +218,7 @@ target('default': "Build artifacts") {
   layoutUnix(paths.distUnix)
   layoutMac(buildName: buildName,
             version: "1.0",
-            system_selector: "PyCharm10",
+            system_selector: system_selector,
             paths.distMac)
 
   buildExe()
@@ -527,6 +530,9 @@ def layoutWin(String target) {
       }
     }
   }
+  ant.replace(file: "$target/bin/pycharm.bat") {
+    replacefilter(token: "@@system_selector@@", value: system_selector)
+  }
   ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help")
   ant.echo(file: "$target/bin/pycharm.exe.vmoptions", message: vmoptions32().replace(' ', '\n'))
 }
@@ -535,6 +541,7 @@ def layoutUnix(String target) {
   ant.copy(file: "$home/python/build/pycharm.sh", todir: "$target/bin")
   ant.replace(file: "$target/bin/pycharm.sh") {
     replacefilter(token: "@@isEap@@", value: isEap())
+    replacefilter(token: "@@system_selector@@", value: system_selector)
   }
 }
 

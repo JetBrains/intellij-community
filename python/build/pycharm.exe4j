@@ -34,7 +34,7 @@
     </text>
   </splashScreen>
   <java mainClass="com.intellij.idea.Main"
-        vmParameters="&quot;-Xbootclasspath/a:${EXE4J_EXEDIR}/../lib/boot.jar&quot; &quot;-Didea.properties.file=${IDEA_PROPERTIES}&quot; -Didea.platform.prefix=Python -Didea.no.jre.check=true" 
+        vmParameters="&quot;-Xbootclasspath/a:${EXE4J_EXEDIR}/../lib/boot.jar&quot; &quot;-Didea.properties.file=${IDEA_PROPERTIES}&quot; -Didea.platform.prefix=Python -Didea.no.jre.check=true &quot;-Didea.paths.selector=${PRODUCT_SETTINGS_DIR}&quot;"
         arguments=""
         allowVMPassthroughParameters="true"
         minVersion="1.6"
