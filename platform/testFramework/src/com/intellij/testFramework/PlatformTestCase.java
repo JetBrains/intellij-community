@@ -230,7 +230,14 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   public static String getCreationPlace(Project project) {
     String place = project.getUserData(CREATION_PLACE);
-    return project.toString() + (place != null ? place : "") + (project.isDisposed() ? "" : project.getBaseDir());
+    Object base;
+    try {
+      base = project.isDisposed() ? "" : project.getBaseDir();
+    }
+    catch (Exception e) {
+      base = " (" + e + " while getting base dir)";
+    }
+    return project.toString() + (place != null ? place : "") + base;
   }
 
   protected void runStartupActivities() {

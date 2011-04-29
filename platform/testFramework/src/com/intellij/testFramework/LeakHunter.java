@@ -191,8 +191,8 @@ public class LeakHunter {
         public boolean process(BackLink backLink) {
           UserDataHolder leaked = (UserDataHolder)backLink.value;
           if (leaked.getUserData(REPORTED_LEAKED) == null) {
-            System.out.println("LEAK: hash: "+System.identityHashCode(leaked) + "; " +
-                               "place: "+ (leaked instanceof Project ? PlatformTestCase.getCreationPlace((Project)leaked) : ""));
+            String place = leaked instanceof Project ? PlatformTestCase.getCreationPlace((Project)leaked) : "";
+            System.out.println("LEAK: hash: "+System.identityHashCode(leaked) + "; place: "+ place);
             while (backLink != null) {
               System.out.println("-->"+backLink.field+"; Value: "+backLink.value+"; "+backLink.aClass);
               backLink = backLink.backLink;
