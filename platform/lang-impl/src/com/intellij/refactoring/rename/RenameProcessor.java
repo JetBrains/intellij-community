@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.light.LightElement;
@@ -86,12 +87,15 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     super(project);
     myPrimaryElement = element;
 
+    LOG.assertTrue(!(element instanceof PsiCompiledElement));
+
     mySearchInComments = isSearchInComments;
     mySearchTextOccurrences = isSearchTextOccurrences;
 
     setNewName(newName);
   }
 
+  @Deprecated
   public RenameProcessor(Project project) {
     this(project, null, "", false, false);
   }
