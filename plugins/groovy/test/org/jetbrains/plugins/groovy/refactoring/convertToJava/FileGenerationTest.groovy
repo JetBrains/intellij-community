@@ -40,4 +40,8 @@ class FileGenerationTest extends LightGroovyTestCase {
   }
 
   void testEnum() {doTest()}
+
+  void testGrScript() {doTest()}
+
+  void testConstructor() {doTest()}
 }

@@ -84,6 +84,7 @@ public abstract class GroovyPsiElementFactory {
   public abstract GrNamedArgument createNamedArgument(String name, GrExpression expression);
 
   public abstract GrStatement createStatementFromText(String text);
+  public abstract GrStatement createStatementFromText(String text, PsiElement context);
 
   public abstract GrBlockStatement createBlockStatement(GrStatement... statements);
 
@@ -110,7 +111,7 @@ public abstract class GroovyPsiElementFactory {
   public abstract GrVariableDeclaration createFieldDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type);
   public abstract GrVariableDeclaration createFieldDeclarationFromText(String text);
 
-  public abstract GrVariableDeclaration createVariableDeclaration(String[] modifiers, @Nullable GrExpression initializer, PsiType type, String... identifiers);
+  public abstract GrVariableDeclaration createVariableDeclaration(@Nullable String[] modifiers, @Nullable GrExpression initializer, PsiType type, String... identifiers);
 
   public abstract GrEnumConstant createEnumConstantFromText(String text);
 
@@ -194,6 +195,7 @@ public abstract class GroovyPsiElementFactory {
   public abstract GrDocTag createDocTagFromText(String text) ;
 
   public abstract GrConstructorInvocation createConstructorInvocation(String text);
+  public abstract GrConstructorInvocation createConstructorInvocation(String text, PsiElement context);
 
   public abstract PsiReferenceList createThrownList(PsiClassType[] exceptionTypes);
 

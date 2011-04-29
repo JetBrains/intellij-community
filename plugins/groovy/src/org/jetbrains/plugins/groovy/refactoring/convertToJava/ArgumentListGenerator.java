@@ -75,7 +75,7 @@ class ArgumentListGenerator {
     for (int i = 0; i < argInfos.length; i++) {
       GrClosureSignatureUtil.ArgInfo<PsiElement> arg = argInfos[i];
       final GrClosureParameter param = params[i];
-      if (arg.isMultiArg ? generateMultiArg(arg, param, substitutor, project) : generateSingeArg(arg, param)) {
+      if (arg.isMultiArg ? generateMultiArg(arg, param, substitutor, project, context) : generateSingeArg(arg, param)) {
         hasArgs = true;
         myBuilder.append(", ");
       }
@@ -111,13 +111,14 @@ class ArgumentListGenerator {
   private boolean generateMultiArg(GrClosureSignatureUtil.ArgInfo<PsiElement> arg,
                                    GrClosureParameter param,
                                    PsiSubstitutor substitutor,
-                                   Project project) {
+                                   Project project,
+                                   GroovyPsiElement context) {
     final PsiType type = param.getType();
     //todo find out if param is array in case of it has declared type
 
     if (type instanceof PsiArrayType) {
       myBuilder.append("new ");
-      GenerationUtil.writeType(myBuilder, ((PsiArrayType)type).getComponentType());
+      GenerationUtil.writeType(myBuilder, ((PsiArrayType)type).getComponentType(),context);
       myBuilder.append("[]{");
 
       for (PsiElement element : arg.args) {

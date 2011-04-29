@@ -560,8 +560,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
       templatesManager.setTemplates(FileTemplateManager.J2EE_TEMPLATES_CATEGORY, Arrays.asList(myJ2eeTemplatesList.getTemplates()));
     }
 
-    templatesManager.saveAll();
-
     if (myEditor != null) {
       myModified = false;
       fireListChanged();

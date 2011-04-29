@@ -98,11 +98,12 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
       return result;
     }
 
+    if (!allowToBeyondMaxPreferredOffset) {
+      return -1;
+    }
+
     // Try to find target offset that is beyond preferred offset.
     // Note that we don't consider symbol weights here and just break on the first appropriate position.
-    if (!allowToBeyondMaxPreferredOffset) {
-      return maxPreferredOffset;
-    }
     for (int i = Math.min(maxPreferredOffsetToUse + 1, text.length() - 1); i < endOffset; i++) {
       char c = text.charAt(i);
       if (c == '\n') {

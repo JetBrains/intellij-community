@@ -282,7 +282,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return "DataManager";
   }
 
-  public <T> void saveInDataContext(DataContext dataContext, Key<T> dataKey, T data) {
+  public <T> void saveInDataContext(DataContext dataContext, @NotNull Key<T> dataKey, @Nullable T data) {
     if (dataContext instanceof UserDataHolder) {
       ((UserDataHolder)dataContext).putUserData(dataKey, data);
     }
