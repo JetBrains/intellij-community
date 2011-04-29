@@ -16,6 +16,7 @@
 package org.intellij.lang.xpath;
 
 import com.intellij.util.ArrayUtil;
+import org.intellij.lang.xpath.validation.inspections.RedundantTypeConversion;
 
 /*
 * Created by IntelliJ IDEA.
@@ -23,6 +24,12 @@ import com.intellij.util.ArrayUtil;
 * Date: 10.03.11
 */
 public abstract class XPath2HighlightingTestBase extends TestBase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(RedundantTypeConversion.class);
+  }
+
   protected void doXPathHighlighting(String... moreFiles) throws Throwable {
     final String name = getTestFileName();
     myFixture.testHighlighting(true, false, false, ArrayUtil.append(moreFiles, name + ".xpath2"));

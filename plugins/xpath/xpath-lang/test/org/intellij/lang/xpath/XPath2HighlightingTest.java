@@ -17,8 +17,6 @@ package org.intellij.lang.xpath;
 
 import org.intellij.lang.xpath.context.ContextProvider;
 
-import java.util.Date;
-
 /*
 * Created by IntelliJ IDEA.
 * User: sweinreuter

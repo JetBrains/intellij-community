@@ -153,6 +153,11 @@ public class XPath2TypeTest extends XPath2HighlightingTestBase {
     doXPathHighlighting();
   }
 
+  public void testRedundantTypeConversion() throws Throwable {
+    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    doXPathHighlighting();
+  }
+
   @Override
   protected String getSubPath() {
     return "xpath2/highlighting/types";

@@ -22,6 +22,7 @@
  */
 package org.intellij.lang.xpath.validation;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.xpath.XPath2TokenTypes;
 import org.intellij.lang.xpath.XPathElementType;
@@ -32,6 +33,8 @@ import org.intellij.lang.xpath.context.functions.Parameter;
 import org.intellij.lang.xpath.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.xml.namespace.QName;
 
 public class ExpectedTypeUtil {
   private ExpectedTypeUtil() {
@@ -127,10 +130,24 @@ public class ExpectedTypeUtil {
     if (!(expression instanceof XPathFunctionCall)) {
       return false;
     }
+
     final XPathFunctionCall call = ((XPathFunctionCall)expression);
-    if (call.getQName().getPrefix() != null || call.getArgumentList().length != 1) {
+    if (call.getArgumentList().length != 1) {
+      return false;
+    } else if (call.getQName().getPrefix() != null) {
+      XPathType type = call.getType();
+      if (type instanceof XPath2SequenceType) {
+        type = ((XPath2SequenceType)type).getType();
+      }
+      if (type instanceof XPath2Type) {
+        final QName funcName = expression.getXPathContext().getQName(call);
+        if (Comparing.equal(funcName, ((XPath2Type)type).getQName())) {
+          return true;
+        }
+      }
       return false;
     }
+
     return XPathType.fromString(call.getFunctionName()) != XPathType.UNKNOWN;
   }
 

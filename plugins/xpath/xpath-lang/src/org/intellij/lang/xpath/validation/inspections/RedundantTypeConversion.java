@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.Language;
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.context.ContextProvider;
+import org.intellij.lang.xpath.psi.XPath2SequenceType;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.psi.XPathFunctionCall;
 import org.intellij.lang.xpath.psi.XPathType;
@@ -63,7 +64,7 @@ public class RedundantTypeConversion extends XPathInspection {
     }
 
     protected boolean acceptsLanguage(Language language) {
-      return language == XPathFileType.XPATH.getLanguage();
+      return language == XPathFileType.XPATH.getLanguage() || language == XPathFileType.XPATH2.getLanguage();
     }
 
     final class MyElementVisitor extends Visitor {
@@ -78,7 +79,7 @@ public class RedundantTypeConversion extends XPathInspection {
                 assert expression != null;
                 
                 final XPathType convertedType = ((XPathFunctionCall)expression).getArgumentList()[0].getType();
-                if (convertedType == expression.getType()) {
+                if (isSameType(expression, convertedType)) {
                     final XPathQuickFixFactory fixFactory = ContextProvider.getContextProvider(expression).getQuickFixFactory();
                     LocalQuickFix[] fixes = fixFactory.createRedundantTypeConversionFixes(expression);
 
@@ -98,5 +99,16 @@ public class RedundantTypeConversion extends XPathInspection {
                 }
             }
         }
+
+      private boolean isSameType(XPathExpression expression, XPathType convertedType) {
+        XPathType type = ExpectedTypeUtil.mapType(expression, expression.getType());
+        while (type instanceof XPath2SequenceType) {
+          type = ((XPath2SequenceType)type).getType();
+        }
+        while (convertedType instanceof XPath2SequenceType) {
+          convertedType = ((XPath2SequenceType)convertedType).getType();
+        }
+        return ExpectedTypeUtil.mapType(expression, convertedType) == type;
+      }
     }
 }
