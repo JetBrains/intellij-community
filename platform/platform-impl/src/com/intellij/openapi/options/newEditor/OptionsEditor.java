@@ -479,6 +479,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
               public void run() {
                 initConfigurable(configurable).doWhenDone(new Runnable() {
                   public void run() {
+                    if (myDisposed) return;
                     fireModifiationInt(configurable);
                   }
                 });
