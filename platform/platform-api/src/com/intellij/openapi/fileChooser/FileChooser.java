@@ -17,6 +17,7 @@ package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public class FileChooser {
-  private static final boolean NATIVE_MAC_FILE_CHOOSER_ENABLED =
-    Boolean.valueOf(System.getProperty("native.mac.file.chooser.enabled", "true"));
 
   private FileChooser() {}
 
@@ -53,6 +52,10 @@ public class FileChooser {
   }
 
 
+  public static boolean isNativeMacChooserEnabled() {
+    return Boolean.valueOf(System.getProperty("native.mac.file.chooser.enabled", "true")).booleanValue() && Registry.is("ide.mac.filechooser.native");
+  }
+
   /**
    * Shows file/folder open dialog, allows user to choose files/folders and then passes result to callback in EDT.
    * On MacOS Open Dialog will be shown with slide effect if Macish UI is turned on.
@@ -66,7 +69,7 @@ public class FileChooser {
                                                 @Nullable final VirtualFile toSelect,
                                                 @NotNull final Consumer<VirtualFile[]> onChosenCallback
   ) {
-    if (SystemInfo.isMac && NATIVE_MAC_FILE_CHOOSER_ENABLED) descriptor.putUserData(MacFileChooserDialog.NATIVE_MAC_FILE_CHOOSER_ENABLED, Boolean.TRUE);
+    if (SystemInfo.isMac && isNativeMacChooserEnabled()) descriptor.putUserData(MacFileChooserDialog.NATIVE_MAC_FILE_CHOOSER_ENABLED, Boolean.TRUE);
     final FileChooserDialog dialog = FileChooserFactory.getInstance().createFileChooser(descriptor, project);
     if (dialog instanceof MacFileChooserDialog) {
       ((MacFileChooserDialog)dialog).chooseWithSheet(toSelect, project, new MacFileChooserDialog.MacFileChooserCallback() {
