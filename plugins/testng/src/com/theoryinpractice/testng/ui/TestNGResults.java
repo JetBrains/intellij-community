@@ -88,7 +88,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
                        final TestNGConsoleView console,
                        final RunnerSettings runnerSettings,
                        final ConfigurationPerRunnerSettings configurationSettings) {
-    super(component, console.createConsoleActions(), console.getProperties(),
+    super(component, console.getConsole().createConsoleActions(), console.getProperties(),
           runnerSettings, configurationSettings, TESTNG_SPLITTER_PROPERTY, 0.5f);
     this.project = configuration.getProject();
 

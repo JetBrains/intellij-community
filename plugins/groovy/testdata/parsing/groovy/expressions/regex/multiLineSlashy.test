@@ -1,0 +1,18 @@
+def poem = /
+to be
+or
+not to be
+/
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('poem')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(regexp)('/\nto be\nor\nnot to be\n/')

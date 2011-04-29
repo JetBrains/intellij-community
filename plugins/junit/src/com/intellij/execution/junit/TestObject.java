@@ -317,19 +317,15 @@ public abstract class TestObject implements JavaCommandLine {
             printer.print(text, consoleViewType);
           }
         };
-        if (consoleViewType == ConsoleViewContentType.SYSTEM_OUTPUT) {
-          unboundOutputRoot.addLast(printable);
+        final Extractor extractor;
+        if (consoleViewType == ConsoleViewContentType.ERROR_OUTPUT ||
+            consoleViewType == ConsoleViewContentType.SYSTEM_OUTPUT) {
+          extractor = handler.getErr();
         }
         else {
-          final Extractor extractor;
-          if (consoleViewType == ConsoleViewContentType.ERROR_OUTPUT) {
-            extractor = handler.getErr();
-          }
-          else {
-            extractor = handler.getOut();
-          }
-          extractor.getEventsDispatcher().processOutput(printable);
+          extractor = handler.getOut();
         }
+        extractor.getEventsDispatcher().processOutput(printable);
       }
     });
 

@@ -1,0 +1,158 @@
+def dateRegex = $/(?x)    # enable whitespace and comments
+((?:19|20)\d\d)           # year (group 1) (non-capture alternation for century)
+[- /.]                    # seperator
+(0[1-9]|1[012])           # month (group 2)
+[- /.]                    # seperator
+(0[1-9]|[12][0-9]|3[01])  # day (group 3)
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('dateRegex')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Conditional expression
+        Multiplicative expression
+          Reference expression
+            PsiElement(identifier)('$')
+          PsiElement(/)('/')
+          Parenthesized expression
+            PsiElement(()('(')
+            PsiErrorElement:Expression expected
+              <empty list>
+        PsiElement(?)('?')
+        Reference expression
+          PsiElement(identifier)('x')
+        PsiErrorElement:':' expected
+          <empty list>
+  PsiErrorElement:';' or new line expected
+    PsiElement())(')')
+    PsiWhiteSpace('    ')
+    PsiElement(wrong token)('#')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('enable')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('whitespace')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('and')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('comments')
+  PsiElement(new line)('\n')
+  Parenthesized expression
+    PsiElement(()('(')
+    Elvis expression
+      Parenthesized expression
+        PsiElement(()('(')
+        PsiErrorElement:Expression expected
+          <empty list>
+      PsiElement(?:)('?:')
+      Bitwise expression
+        Literal
+          PsiElement(Integer)('19')
+        PsiElement(|)('|')
+        Literal
+          PsiElement(Integer)('20')
+    PsiElement())(')')
+  PsiErrorElement:';' or new line expected
+    PsiElement(wrong token)('\')
+    PsiElement(identifier)('d')
+    PsiElement(wrong token)('\')
+    PsiElement(identifier)('d')
+    PsiElement())(')')
+    PsiWhiteSpace('           ')
+    PsiElement(wrong token)('#')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('year')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    PsiElement(identifier)('group')
+    PsiWhiteSpace(' ')
+    PsiElement(Integer)('1')
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    PsiElement(identifier)('non')
+    PsiElement(-)('-')
+    PsiElement(identifier)('capture')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('alternation')
+    PsiWhiteSpace(' ')
+    PsiElement(for)('for')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('century')
+    PsiElement())(')')
+  PsiElement(new line)('\n')
+  Generalized list
+    PsiElement([)('[')
+    Unary expression
+      PsiElement(-)('-')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(regexp)('/.]                    # seperator\n(0[1-9]|1[012])           # month (group 2)\n[- /')
+      PsiElement(.)('.')
+      PsiErrorElement:Property selector expected
+        <empty list>
+    PsiElement(])(']')
+  PsiWhiteSpace('                    ')
+  PsiErrorElement:';' or new line expected
+    PsiElement(wrong token)('#')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('seperator')
+  PsiElement(new line)('\n')
+  Parenthesized expression
+    PsiElement(()('(')
+    Bitwise expression
+      Bitwise expression
+        Property by index
+          Literal
+            PsiElement(Integer)('0')
+          Arguments
+            PsiElement([)('[')
+            Additive expression
+              Literal
+                PsiElement(Integer)('1')
+              PsiElement(-)('-')
+              Literal
+                PsiElement(Integer)('9')
+            PsiElement(])(']')
+        PsiElement(|)('|')
+        Property by index
+          Generalized list
+            PsiElement([)('[')
+            Literal
+              PsiElement(Integer)('12')
+            PsiElement(])(']')
+          Arguments
+            PsiElement([)('[')
+            Additive expression
+              Literal
+                PsiElement(Integer)('0')
+              PsiElement(-)('-')
+              Literal
+                PsiElement(Integer)('9')
+            PsiElement(])(']')
+      PsiElement(|)('|')
+      Property by index
+        Literal
+          PsiElement(Integer)('3')
+        Arguments
+          PsiElement([)('[')
+          Literal
+            PsiElement(Integer)('01')
+          PsiElement(])(']')
+    PsiElement())(')')
+  PsiWhiteSpace('  ')
+  PsiErrorElement:';' or new line expected
+    PsiElement(wrong token)('#')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('day')
+    PsiWhiteSpace(' ')
+    PsiElement(()('(')
+    PsiElement(identifier)('group')
+    PsiWhiteSpace(' ')
+    PsiElement(Integer)('3')
+    PsiElement())(')')

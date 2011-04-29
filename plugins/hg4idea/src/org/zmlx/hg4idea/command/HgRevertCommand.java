@@ -35,7 +35,7 @@ public class HgRevertCommand {
 
   public void execute(VirtualFile repo, Collection<FilePath> files, HgRevisionNumber vcsRevisionNumber, boolean backupFile) {
     final List<String> options = new LinkedList<String>();
-    if (vcsRevisionNumber != null) {
+    if (vcsRevisionNumber != null && !HgRevisionNumber.NULL_REVISION_NUMBER.equals(vcsRevisionNumber)) {
       options.add("--rev");
       if (StringUtils.isNotBlank(vcsRevisionNumber.getChangeset())) {
         options.add(vcsRevisionNumber.getChangeset());
@@ -52,7 +52,7 @@ public class HgRevertCommand {
       List<String> args = new LinkedList<String>();
       args.addAll(options);
       args.addAll(chunk);
-      new HgCommandExecutor(project).execute(repo, "revert", args, null);
+      new HgCommandExecutor(project).executeInCurrentThread(repo, "revert", args);
     }
     project.getMessageBus().syncPublisher(HgVcs.BRANCH_TOPIC).update(project);
   }

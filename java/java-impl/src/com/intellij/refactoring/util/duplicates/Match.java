@@ -71,6 +71,7 @@ public final class Match {
     return myMatchEnd;
   }
 
+  @Nullable
   public List<PsiElement> getParameterValues(PsiVariable parameter) {
     return myParameterValues.get(parameter);
   }

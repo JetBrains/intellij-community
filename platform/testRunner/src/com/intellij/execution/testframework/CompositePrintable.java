@@ -79,6 +79,19 @@ public class CompositePrintable implements Printable, Disposable {
     }
   }
 
+  public void insert(@NotNull final Printable printable, int i) {
+    synchronized (myNestedPrintables) {
+      if (i >= myNestedPrintables.size()) {
+        myNestedPrintables.add(printable);
+      } else {
+        myNestedPrintables.add(i, printable);
+      }
+      if (myNestedPrintables.size() > 500) {
+        flush();
+      }
+    }
+  }
+
   protected void clear() {
     synchronized (myNestedPrintables) {
       myCurrentSize += myNestedPrintables.size();

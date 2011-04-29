@@ -16,20 +16,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.HgChange;
-import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.util.HgUtil;
-import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.command.HgMergeCommand;
-import org.zmlx.hg4idea.command.HgStatusCommand;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Set;
 
 import static org.zmlx.hg4idea.HgErrorHandler.ensureSuccess;
 
@@ -59,31 +53,6 @@ final class HgHeadMerger {
       throwException(e);
     }
 
-    HgStatusCommand hgStatusCommand = new HgStatusCommand(project);
-    hgStatusCommand.setIncludeIgnored(false);
-    hgStatusCommand.setIncludeUnknown(false);
-    Set<HgChange> changes = hgStatusCommand.execute(repo);
-    if (!changes.isEmpty()) {
-      for (HgChange change : changes) {
-        HgFile afterFile = change.afterFile();
-        HgFile beforeFile = change.beforeFile();
-        String fileGroupId = null;
-        String filePath = null;
-        if (afterFile != null && beforeFile != null) {
-          fileGroupId = FileGroup.MODIFIED_ID;
-          filePath = afterFile.getFile().getAbsolutePath();
-        } else if (beforeFile != null) {
-          fileGroupId = FileGroup.LOCALLY_REMOVED_ID;
-          filePath = beforeFile.getFile().getAbsolutePath();
-        } else if (afterFile != null) {
-          fileGroupId = FileGroup.LOCALLY_ADDED_ID;
-          filePath = afterFile.getFile().getAbsolutePath();
-        }
-        if (fileGroupId != null && filePath != null) {
-          updatedFiles.getGroupById(fileGroupId).add(filePath, HgVcs.VCS_NAME, revisionNumber);
-        }
-      }
-    }
     return commandResult;
   }
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.*;
 import org.zmlx.hg4idea.execution.HgCommandException;
@@ -131,7 +132,7 @@ public class HgRegularUpdater implements HgUpdater {
     return true;
   }
 
-  private List<HgRevisionNumber> determingRemainingOriginalBranchHeads(List<HgRevisionNumber> branchHeadsBeforePull, List<HgRevisionNumber> branchHeadsAfterPull) {
+  private List<HgRevisionNumber> determingRemainingOriginalBranchHeads(List<HgRevisionNumber> branchHeadsBeforePull, List<HgRevisionNumber> branchHeadsAfterPull) { 
     List<HgRevisionNumber> originalBranchHeadsRemaining = new ArrayList<HgRevisionNumber>();
     for (HgRevisionNumber headAfterPull : branchHeadsAfterPull) {
       if (branchHeadsBeforePull.contains(headAfterPull)) {
@@ -167,8 +168,22 @@ public class HgRegularUpdater implements HgUpdater {
     updateCommand.setClean(true);
     updateCommand.execute();
 
-    HgRevisionNumber parentAfterUpdate = new HgWorkingCopyRevisionsCommand(project).firstParent(repo);
-    addUpdatedFiles(repo, updatedFiles, parentBeforeUpdate, parentAfterUpdate);
+    HgRevisionNumber commonParent = findCommonParent(newHead, parentBeforeUpdate);
+    addUpdatedFiles(repo, updatedFiles, commonParent, newHead);
+  }
+
+  private @Nullable HgRevisionNumber findCommonParent(HgRevisionNumber newHead, HgRevisionNumber parentBeforeUpdate) {
+    // hg log -r 0:source --prune dest --limit 1
+    final List<HgRevisionNumber> pulledRevisions = new HgMergePreviewCommand(project, newHead, parentBeforeUpdate, 1).execute(repository);
+    if (pulledRevisions == null || pulledRevisions.isEmpty()) {
+      return null;
+    }
+    HgRevisionNumber pulledRevision = pulledRevisions.get(0);
+    final List<HgRevisionNumber> parentRevisions = new HgWorkingCopyRevisionsCommand(project).getRevisions(repository, "parent", null, pulledRevision, true);
+    if (parentRevisions.isEmpty()) {
+      return null;
+    }
+    return parentRevisions.get(0);
   }
 
   private void commitOrWarnAboutConflicts(List<VcsException> exceptions, HgCommandResult mergeResult) throws VcsException {
@@ -179,9 +194,9 @@ public class HgRegularUpdater implements HgUpdater {
         throw new VcsException(e);
       }
     } else {
-      reportWarning(exceptions, HgVcsMessages.message("hg4idea.update.warning.merge.conflicts", repository.getPath()));
+        reportWarning(exceptions, HgVcsMessages.message("hg4idea.update.warning.merge.conflicts", repository.getPath()));
+      }
     }
-  }
 
   private HgCommandResult doMerge(UpdatedFiles updatedFiles, ProgressIndicator indicator, List<VcsException> exceptions, HgRevisionNumber headToMerge) throws VcsException {
     indicator.setText2(HgVcsMessages.message("hg4idea.update.progress.merging"));
@@ -190,7 +205,6 @@ public class HgRegularUpdater implements HgUpdater {
     //two heads in this branch
 //    mergeCommand.setRevision(headToMerge.getRevision());
     HgCommandResult mergeResult = new HgHeadMerger(project, mergeCommand).merge(repository, updatedFiles, headToMerge);
-    handlePossibleWarning(exceptions, mergeResult.getWarnings());
     return mergeResult;
   }
 
@@ -249,6 +263,12 @@ public class HgRegularUpdater implements HgUpdater {
   }
 
   private void addUpdatedFiles(VirtualFile repo, UpdatedFiles updatedFiles, HgRevisionNumber parentBeforeUpdate, HgRevisionNumber parentAfterUpdate) {
+    if (parentAfterUpdate == null || parentBeforeUpdate == null) {
+      return;
+    }
+    if (parentAfterUpdate.equals(parentBeforeUpdate)) { // nothing to update => returning not to capture local uncommitted changes
+      return;
+    }
     HgStatusCommand statusCommand = new HgStatusCommand(project);
     statusCommand.setBaseRevision(parentBeforeUpdate);
     statusCommand.setTargetRevision(parentAfterUpdate);

@@ -146,9 +146,13 @@ mREGEX_BEGIN = "/""$"
    |  "/" ([^"/""$"] | {mREGEX_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT}"$"
 mREGEX_CONTENT = ({mREGEX_ESC}
    | {ESCAPPED_REGEX_SEP}
-   | [^"/"\r\n"$"])*
+   | [^"/""$"])*
 
 mREGEX_LITERAL = "/" ([^"/"\n\r"$"] | {mREGEX_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT} ("$""/" | "/")
+mDOLLAR_SLASHY_LITERAL_1 = \$\/ ([^\/] | \/[^\$] )* \/\$
+mDOLLAR_SLASHY_LITERAL_2 = \$\/ ([^\/] | \/[^\$] | {mDOLLAR_SLASHY_LITERAL_1} )* \/\$
+mDOLLAR_SLASHY_LITERAL_3 = \$\/ ([^\/] | \/[^\$] | {mDOLLAR_SLASHY_LITERAL_2} )* \/\$
+mDOLLAR_SLASHY_LITERAL = {mDOLLAR_SLASHY_LITERAL_3}
 
 ////////////////////////////////////////////////////////////////////////////
 
@@ -513,12 +517,7 @@ mGSTRING_LITERAL = \"\"
                                              }
                                              return mREGEX_END; }
 
-  .                                       {  return mREGEX_BEGIN; }
-
-  {mNLS}                                  {  clearStacks();
-                                             yybegin(NLS_AFTER_NLS);
-                                             afterComment = YYINITIAL;
-                                             return mNLS; }
+  . | {mNLS}                              {  return mREGEX_BEGIN; }
 
 }
 
@@ -535,12 +534,9 @@ mGSTRING_LITERAL = \"\"
                                              }
                                              return mREGEX_END; }
 
-  .                                       {  return mREGEX_CONTENT; }
+  . | {mNLS}                                       {  return mREGEX_CONTENT; }
 
-  {mNLS}                                  {  clearStacks();
-                                             yybegin(NLS_AFTER_NLS);
-                                             afterComment = YYINITIAL;
-                                             return mNLS; }
+
 }
 
 
@@ -555,6 +551,13 @@ mGSTRING_LITERAL = \"\"
 {mML_COMMENT}                             {  return mML_COMMENT; }
 {mDOC_COMMENT}                            {  return GROOVY_DOC_COMMENT; }
 
+{mDOLLAR_SLASHY_LITERAL}                  {  if (blockStack.isEmpty()){
+                                               yybegin(YYINITIAL);
+                                             } else {
+                                               yybegin(IN_INNER_BLOCK);
+                                             }
+                                             return(mDOLLAR_SLASHY_LITERAL); }
+
 {mREGEX_LITERAL}                          {  if (blockStack.isEmpty()){
                                                yybegin(YYINITIAL);
                                              } else {
@@ -565,7 +568,7 @@ mGSTRING_LITERAL = \"\"
 {mREGEX_BEGIN}                            {  yybegin(KING_STATE);
                                              return mREGEX_BEGIN; }
 
-"/" ([^\""$"\n\r"/"] | {mREGEX_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT} { return mWRONG_REGEX_LITERAL; }
+"/" ([^\"\$\/] | {mREGEX_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT} { return mWRONG_REGEX_LITERAL; }
 
 [^]                                       {  yypushback(1);
                                              if (blockStack.isEmpty()){

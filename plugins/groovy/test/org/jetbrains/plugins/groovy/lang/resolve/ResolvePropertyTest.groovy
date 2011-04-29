@@ -665,4 +665,55 @@ set<caret>Foo(2)
   public void testResolveClosureOverloader() {
     assertInstanceOf resolve("A.groovy"), GrAccessorMethod
   }
+
+  private PsiReference configureByText(String text) {
+    myFixture.configureByText 'a.groovy', text
+    def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    return ref
+  }
+
+  public void testJavaLoggingTransform() {
+    myFixture.addClass('package groovy.util.logging; public @interface Log { String value() default ""; }')
+    def ref = configureByText("@groovy.util.logging.Log class Foo { { lo<caret>g.inf } }")
+    assert assertInstanceOf(ref.resolve(), PsiVariable).type.canonicalText == 'java.util.logging.Logger'
+  }
+
+  public void testNonLoggingField() {
+    myFixture.addClass('package groovy.util.logging; public @interface Log { String value() default ""; }')
+    assert !configureByText("@groovy.util.logging.Log class Foo { { alo<caret>g.inf } }").resolve()
+  }
+
+  public void testJavaLoggingTransformCustomName() {
+    myFixture.addClass('package groovy.util.logging; public @interface Log { String value() default ""; }')
+    def ref = configureByText("@groovy.util.logging.Log('myLog') class Foo { { myLo<caret>g.inf } }")
+    assert assertInstanceOf(ref.resolve(), PsiVariable).type.canonicalText == 'java.util.logging.Logger'
+  }
+
+  public void testCommonsLoggingTransform() {
+    myFixture.addClass('package groovy.util.logging; public @interface Commons { String value() default ""; }')
+    def ref = configureByText("@groovy.util.logging.Commons('myLog') class Foo { { myLo<caret>g.inf } }")
+    assert assertInstanceOf(ref.resolve(), PsiVariable).type.canonicalText == 'org.apache.commons.logging.Log'
+  }
+
+  public void testFieldTransform() {
+    myFixture.addClass('package groovy.transform; public @interface Field {}')
+    def ref = configureByText("""@groovy.transform.Field def aaa = 2
+def foo() { println <caret>aaa }
+""")
+    assert ref.resolve() instanceof GrVariable
+  }
+
+  public void testScriptFieldVariableOutside() {
+    myFixture.addFileToProject("Foo.groovy", "if (true) { @groovy.transform.Field def a = 2 }")
+
+    def ref = configureByText("println new Foo().<caret>a")
+    assert ref.resolve() instanceof GrVariable
+  }
+
+  public void testScriptVariableFromScriptMethod() {
+    def ref = configureByText("""def aaa = 2
+def foo() { println <caret>aaa }
+""")
+    assert !ref.resolve()
+  }
 }

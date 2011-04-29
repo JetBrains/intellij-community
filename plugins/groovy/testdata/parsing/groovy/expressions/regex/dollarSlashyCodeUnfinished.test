@@ -1,0 +1,101 @@
+def code = $/
+    def normal = '\b\t\n\r'
+    def slashy = /\b\t\n\r/
+    assert '$alphabet'.size() == 26
+    assert normal.size() == 4
+    assert slashy.size() == 8
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('code')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Multiplicative expression
+        Reference expression
+          PsiElement(identifier)('$')
+        PsiElement(/)('/')
+        PsiElement(new line)('\n    ')
+        PsiErrorElement:Expression expected
+          <empty list>
+  PsiErrorElement:';' or new line expected
+    PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('normal')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    PsiElement(string)(''\b\t\n\r'')
+  PsiElement(new line)('\n    ')
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('slashy')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(regexp)('/\b\t\n\r/')
+  PsiElement(new line)('\n    ')
+  ASSERT statement
+    PsiElement(assert)('assert')
+    PsiWhiteSpace(' ')
+    Relational expression
+      Method call
+        Reference expression
+          Literal
+            PsiElement(string)(''$alphabet'')
+          PsiElement(.)('.')
+          PsiElement(identifier)('size')
+        Arguments
+          PsiElement(()('(')
+          PsiElement())(')')
+      PsiWhiteSpace(' ')
+      PsiElement(==)('==')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(Integer)('26')
+  PsiElement(new line)('\n    ')
+  ASSERT statement
+    PsiElement(assert)('assert')
+    PsiWhiteSpace(' ')
+    Relational expression
+      Method call
+        Reference expression
+          Reference expression
+            PsiElement(identifier)('normal')
+          PsiElement(.)('.')
+          PsiElement(identifier)('size')
+        Arguments
+          PsiElement(()('(')
+          PsiElement())(')')
+      PsiWhiteSpace(' ')
+      PsiElement(==)('==')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(Integer)('4')
+  PsiElement(new line)('\n    ')
+  ASSERT statement
+    PsiElement(assert)('assert')
+    PsiWhiteSpace(' ')
+    Relational expression
+      Method call
+        Reference expression
+          Reference expression
+            PsiElement(identifier)('slashy')
+          PsiElement(.)('.')
+          PsiElement(identifier)('size')
+        Arguments
+          PsiElement(()('(')
+          PsiElement())(')')
+      PsiWhiteSpace(' ')
+      PsiElement(==)('==')
+      PsiWhiteSpace(' ')
+      Literal
+        PsiElement(Integer)('8')
