@@ -59,6 +59,9 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
 public class TypesUtil {
   @NonNls
   public static final Map<String, PsiType> ourQNameToUnboxed = new HashMap<String, PsiType>();
+  public static final PsiPrimitiveType[] PRIMITIVES =
+    new PsiPrimitiveType[]{PsiType.BYTE, PsiType.CHAR, PsiType.DOUBLE, PsiType.FLOAT, PsiType.INT, PsiType.SHORT, PsiType.LONG,
+      PsiType.BOOLEAN, PsiType.VOID};
 
   private TypesUtil() {
   }
@@ -496,5 +499,21 @@ public class TypesUtil {
       result = facade.getElementFactory().createType(javaLangClass, substitutor);
     }
     return result;
+  }
+
+  @NotNull
+  public static PsiPrimitiveType getPrimitiveTypeByText(String typeText) {
+    for (final PsiPrimitiveType primitive : PRIMITIVES) {
+      if (PsiType.VOID.equals(primitive)) {
+        return primitive;
+      }
+      if (primitive.getCanonicalText().equals(typeText)) {
+        return primitive;
+      }
+
+    }
+
+    assert false: "Unknown primitive type";
+    return null;
   }
 }

@@ -149,4 +149,5 @@ public final class Matcher {
 
   void testAnonymousFromMap() {doTest()}
   void testClosure() {doTest()}
+  void _testListAsArray() {doTest()}
 }

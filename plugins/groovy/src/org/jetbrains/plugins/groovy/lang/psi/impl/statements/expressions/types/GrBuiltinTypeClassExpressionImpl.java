@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
  * @author ven
@@ -51,19 +52,25 @@ public class GrBuiltinTypeClassExpressionImpl extends GrExpressionImpl implement
     return GroovyPsiManager.getInstance(getProject()).getType(this, TYPES_CALCULATOR);
   }
 
+  @Override
+  public PsiPrimitiveType getPrimitiveType() {
+    return TypesUtil.getPrimitiveTypeByText(getText());
+  }
+
   private static class MyTypesCalculator implements Function<GrBuiltinTypeClassExpressionImpl, PsiType> {
     public PsiType fun(GrBuiltinTypeClassExpressionImpl expression) {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(expression.getProject());
-      PsiClass clazz = facade.findClass("java.lang.Class", expression.getResolveScope());
+      PsiClass clazz = facade.findClass(CommonClassNames.JAVA_LANG_CLASS, expression.getResolveScope());
       if (clazz != null) {
         PsiElementFactory factory = facade.getElementFactory();
         PsiTypeParameter[] typeParameters = clazz.getTypeParameters();
         PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
         if (typeParameters.length == 1) {
           try {
-            PsiType type = factory.createTypeFromText(expression.getText(), null);
+            PsiType type = expression.getPrimitiveType();
             substitutor = substitutor.put(typeParameters[0], type);
-          } catch (IncorrectOperationException e) {
+          }
+          catch (IncorrectOperationException e) {
             LOG.error(e);
           }
         }

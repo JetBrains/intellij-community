@@ -27,7 +27,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -58,6 +60,25 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
 
       final PsiManager manager = index.getManager();
       final GlobalSearchScope resolveScope = index.getResolveScope();
+
+      if (argTypes.length == 0) {
+        PsiType arrType = null;
+        if (selected instanceof GrBuiltinTypeClassExpression) {
+          arrType = ((GrBuiltinTypeClassExpression)selected).getPrimitiveType();
+        }
+
+        if (selected instanceof GrReferenceExpression) {
+          final PsiElement resolved = ((GrReferenceExpression)selected).resolve();
+          if (resolved instanceof PsiClass) {
+            arrType = TypesUtil.createTypeByFQClassName(((PsiClass)resolved).getQualifiedName(), index);
+          }
+        }
+
+        if (arrType != null) {
+          final PsiArrayType param = arrType.createArrayType();
+          return TypesUtil.createJavaLangClassType(param, index.getProject(), resolveScope);
+        }
+      }
 
       if (PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, manager, resolveScope)) {
         return TypesUtil.boxPrimitiveType(((PsiArrayType)thisType).getComponentType(), manager, resolveScope);
