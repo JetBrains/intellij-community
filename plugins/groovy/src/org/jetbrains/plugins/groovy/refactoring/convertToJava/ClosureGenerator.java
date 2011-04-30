@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -30,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE;
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeType;
 
 /**
@@ -61,8 +59,9 @@ public class ClosureGenerator {
 
   private GrMethod generateClosureMethod(GrClosableBlock block) {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
-    final GrMethod method = factory.createMethodFromText("def doCall(){}");
+    final GrMethod method = factory.createMethodFromText("void doCall(){}");
 
+    method.setReturnType(block.getReturnType());
     final PsiElement first;
     if (block.hasParametersSection()) {
       method.getParameterList().replace(block.getParameterList());
