@@ -25,8 +25,9 @@ println v + m
 7(8) element: THROW statement
 8(9) element: Catch clause
 9(10) READ e
-10(14) element: THROW statement
+10(15) element: THROW statement
 11(12) READ println
 12(13) READ v
 13(14) READ m
-14() element: null
+14(15) element: Call expression MAYBE_RETURN
+15() element: null
