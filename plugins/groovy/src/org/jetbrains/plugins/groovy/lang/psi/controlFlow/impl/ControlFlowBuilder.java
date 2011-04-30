@@ -43,7 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -102,6 +102,15 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
+  @Override
+  public void visitFile(GroovyFileBase file) {
+    super.visitFile(file);
+    final GrStatement[] statements = file.getStatements();
+    if (statements.length > 0) {
+      handlePossibleReturn(statements[statements.length - 1]);
+    }
+  }
+
   private void handlePossibleReturn(GrStatement last) {
     if (last instanceof GrExpression && PsiTreeUtil.isAncestor(myLastInScope, last, false)) {
       final MaybeReturnInstruction instruction = new MaybeReturnInstruction((GrExpression)last, myInstructionNumber++);
@@ -119,19 +128,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     myLastInScope = null;
 
-    if (scope instanceof GrCodeBlock) {
-      GrStatement[] statements = ((GrCodeBlock)scope).getStatements();
+    if (scope instanceof GrStatementOwner) {
+      GrStatement[] statements = ((GrStatementOwner)scope).getStatements();
       if (statements.length > 0) {
         myLastInScope = statements[statements.length - 1];
-      }
-    }
-    else if (scope instanceof GroovyFileBase) {
-      GrTopStatement[] topStatements = ((GroovyFileBase)scope).getTopStatements();
-      for (int i = topStatements.length - 1; i >= 0; i--) {
-        if (topStatements[i] instanceof GrStatement) {
-          myLastInScope = topStatements[i];
-          break;
-        }
       }
     }
 

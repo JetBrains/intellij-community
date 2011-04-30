@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -156,7 +157,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       /************* body **********/
       if (method instanceof GrMethod) {
         if (skipOptional == 0) {
-          ((GrMethod)method).accept(new CodeBlockGenerator(builder, myProject));
+          new CodeBlockGenerator(builder, myProject).generateMethodBody((GrMethod)method);
         }
         else {
           builder.append("{\n").append(generateDelegateCall((GrMethod)method, actualParams)).append("\n}\n");
@@ -238,7 +239,9 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     final PsiFile scriptFile = containingClass.getContainingFile();
     LOG.assertTrue(scriptFile instanceof GroovyFile);
     LOG.assertTrue(((GroovyFile)scriptFile).isScript());
-    new CodeBlockGenerator(builder, myProject).visitStatementOwner((GroovyFile)scriptFile);
+    final List<GrStatement> exitPoints = ControlFlowUtils.collectReturns(scriptFile);
+    new CodeBlockGenerator(builder, new ExpressionContext(myProject), exitPoints)
+      .visitStatementOwner((GroovyFile)scriptFile, exitPoints.isEmpty());
     builder.append("\n}\n");
   }
 

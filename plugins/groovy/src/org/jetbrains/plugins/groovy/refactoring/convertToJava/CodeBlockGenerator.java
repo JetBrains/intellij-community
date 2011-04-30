@@ -18,7 +18,9 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
@@ -44,19 +46,32 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 
+import java.util.Collection;
+import java.util.Set;
+
 /**
  * @author Maxim.Medvedev
  */
 public class CodeBlockGenerator extends Generator {
-
-  private final StringBuilder builder;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.CodeBlockGenerator");
 
+  private final StringBuilder builder;
   private final ExpressionContext context;
 
+  private Set<GrStatement> myExitPoints;
+  private boolean myShouldInsertReturnNull;
+
   public CodeBlockGenerator(StringBuilder builder, ExpressionContext context) {
+    this(builder, context, null);
+  }
+
+  public CodeBlockGenerator(StringBuilder builder, ExpressionContext context, @Nullable Collection<GrStatement> exitPoints) {
     this.builder = builder;
     this.context = context;
+    myExitPoints = new HashSet<GrStatement>();
+    if (exitPoints != null) {
+      myExitPoints.addAll(exitPoints);
+    }
   }
 
   public CodeBlockGenerator(StringBuilder builder, Project project) {
@@ -73,10 +88,14 @@ public class CodeBlockGenerator extends Generator {
     return context;
   }
 
-
-  @Override
-  public void visitMethod(GrMethod method) {
+  public void generateMethodBody(GrMethod method) {
     final GrOpenBlock block = method.getBlock();
+
+    myExitPoints.clear();
+    if (!method.isConstructor() && method.getReturnType() != PsiType.VOID) {
+      myExitPoints.addAll(ControlFlowUtils.collectReturns(block));
+      myShouldInsertReturnNull = myExitPoints.isEmpty();
+    }
 
     if (block != null) {
       block.accept(this);
@@ -84,21 +103,29 @@ public class CodeBlockGenerator extends Generator {
   }
 
   @Override
-  public void visitOpenBlock(GrOpenBlock block) {
-    visitCodeBlock(block);
+  public void visitMethod(GrMethod method) {
+    LOG.assertTrue(false, "don't invoke it!!!");
   }
 
-  public void visitCodeBlock(GrCodeBlock block) {
+  @Override
+  public void visitOpenBlock(GrOpenBlock block) {
+    generateCodeBlock(block, myShouldInsertReturnNull && block.getParent() instanceof GrMethod);
+  }
+
+  public void generateCodeBlock(GrCodeBlock block, boolean shouldInsertReturnNull) {
     builder.append("{\n");
-    visitStatementOwner(block);
+    visitStatementOwner(block, shouldInsertReturnNull);
     builder.append("}\n");
   }
 
-  public void visitStatementOwner(GrStatementOwner owner) {
+  public void visitStatementOwner(GrStatementOwner owner, boolean shouldInsertReturnNull) {
     final GrStatement[] statements = owner.getStatements();
     for (GrStatement statement : statements) {
       statement.accept(this);
       builder.append('\n');
+    }
+    if (shouldInsertReturnNull) {
+      builder.append("return null;\n");
     }
   }
 
@@ -194,19 +221,29 @@ public class CodeBlockGenerator extends Generator {
 
         builder.append(label).append(": ");
         if (statement != null) {
-          statement.accept(new CodeBlockGenerator(builder, context));
+          statement.accept(new CodeBlockGenerator(builder, context, myExitPoints));
         }
       }
     });
   }
 
   @Override
-  public void visitExpression(GrExpression expression) {
-    final StringBuilder statementBuilder = new StringBuilder();
-    final ExpressionContext context = this.context.copy();
-    expression.accept(new ExpressionGenerator(statementBuilder, context));
-    statementBuilder.append(";");
-    writeStatement(statementBuilder, expression, context);
+  public void visitExpression(final GrExpression expression) {
+    GenerationUtil.writeStatement(builder, context, expression, new StatementWriter() {
+      @Override
+      public void writeStatement(StringBuilder builder, ExpressionContext context) {
+        if (myExitPoints.contains(expression) && expression.getType() != PsiType.VOID) {
+          builder.append("return ");
+        }
+        expression.accept(new ExpressionGenerator(builder, context));
+        builder.append(";");
+
+        if (myExitPoints.contains(expression) && expression.getType() == PsiType.VOID) {
+          context.myStatements.add(builder.toString());
+          builder.replace(0, builder.length(), "return null;");
+        }
+      }
+    });
   }
 
   @Override
@@ -242,9 +279,9 @@ public class CodeBlockGenerator extends Generator {
           }
         }
         builder.append(")");
-        if (thenBranch != null) thenBranch.accept(new CodeBlockGenerator(builder, context.extend()));
+        if (thenBranch != null) thenBranch.accept(new CodeBlockGenerator(builder, context.extend(), myExitPoints));
         if (ifStatement.getElseKeyword() != null) builder.append(" else ");
-        if (elseBranch != null) elseBranch.accept(new CodeBlockGenerator(builder, context.extend()));
+        if (elseBranch != null) elseBranch.accept(new CodeBlockGenerator(builder, context.extend(), myExitPoints));
       }
     });
   }
@@ -291,7 +328,7 @@ public class CodeBlockGenerator extends Generator {
         if (initialization != null) {
           StringBuilder partBuilder = new StringBuilder();
           final ExpressionContext partContext = forContext.copy();
-          genForPart(builder, initialization, new CodeBlockGenerator(partBuilder, partContext));
+          genForPart(builder, initialization, new CodeBlockGenerator(partBuilder, partContext, null));
         }
       }
 
@@ -309,7 +346,7 @@ public class CodeBlockGenerator extends Generator {
 
     final GrStatement body = forStatement.getBody();
     if (body != null) {
-      body.accept(new CodeBlockGenerator(builder, forContext));
+      body.accept(new CodeBlockGenerator(builder, forContext, null));
     }
   }
 
@@ -346,7 +383,7 @@ public class CodeBlockGenerator extends Generator {
     }
     builder.append(" )");
     if (body != null) {
-      body.accept(new CodeBlockGenerator(builder, copy.extend()));
+      body.accept(new CodeBlockGenerator(builder, copy.extend(), null));
     }
     writeStatement(builder, whileStatement, copy);
   }
@@ -408,7 +445,7 @@ public class CodeBlockGenerator extends Generator {
     statementBuilder.append("synchronized(");
     monitor.accept(new ExpressionGenerator(statementBuilder, expressionContext));
     statementBuilder.append(")");
-    body.accept(new CodeBlockGenerator(statementBuilder, context));
+    body.accept(new CodeBlockGenerator(statementBuilder, context, myExitPoints));
     writeStatement(statementBuilder, synchronizedStatement, expressionContext);
   }
 

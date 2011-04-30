@@ -120,7 +120,7 @@ public class AnonymousFromMapGenerator {
         final ExpressionContext extended = context.extend();
         extended.setInAnonymousContext(true);
         if (param == allParameters.length) {
-          new CodeBlockGenerator(builder, extended).visitCodeBlock((GrCodeBlock)expression);
+          new CodeBlockGenerator(builder, extended).generateCodeBlock((GrCodeBlock)expression, false);
         }
         else {
           builder.append("{\n");
