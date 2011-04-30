@@ -555,23 +555,11 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
         if (parserDefinition != null) {
           String text = element.getText();
-          IElementType elementType = ((LeafElement)element).getElementType();
 
-          GlobalCompilingVisitor.OccurenceKind kind = null;
-
-          if (parserDefinition.getCommentTokens().contains(elementType)) {
-            kind = GlobalCompilingVisitor.OccurenceKind.COMMENT;
-          }
-          else if (parserDefinition.getStringLiteralElements().contains(elementType)) {
-            kind = GlobalCompilingVisitor.OccurenceKind.LITERAL;
-          }
-          else if (StringUtil.isJavaIdentifier(text)) {
-            kind = GlobalCompilingVisitor.OccurenceKind.CODE;
-          }
-
-          if (kind != null) {
-            // todo: support variables inside comments and literals (use handler returned by method)
-            myGlobalVisitor.processPatternStringWithFragments(text, kind);
+          // todo: support variables inside comments
+          boolean flag = true;
+          if (StringUtil.isJavaIdentifier(text) && flag) {
+            myGlobalVisitor.processTokenizedName(text, true, GlobalCompilingVisitor.OccurenceKind.CODE);
           }
         }
       }
