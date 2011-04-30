@@ -14,17 +14,16 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.structuralsearch.equivalence.*;
-import com.intellij.structuralsearch.impl.matcher.AbstractMatchingVisitor;
-import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
-import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
-import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
+import com.intellij.structuralsearch.impl.matcher.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
+import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -186,6 +185,12 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   @Override
   public CompiledPattern createCompiledPattern() {
     return new CompiledPattern() {
+
+      @Override
+      protected SubstitutionHandler doCreateSubstitutionHandler(String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
+        return new MySubstitutionHandler(name, target, minOccurs, maxOccurs, greedy);
+      }
+
       @Override
       public String[] getTypedVarPrefixes() {
         return getVarPrefixes();
@@ -653,6 +658,14 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       myGlobalVisitor = globalVisitor;
     }
 
+    private boolean shouldIgnoreVarNode(PsiElement element) {
+      MatchingHandler handler = myGlobalVisitor.getMatchContext().getPattern().getHandlerSimple(element);
+      if (handler instanceof DelegatingHandler) {
+        handler = ((DelegatingHandler)handler).getDelegate();
+      }
+      return handler instanceof MySubstitutionHandler && ((MySubstitutionHandler)handler).myExceptedNodes.contains(element);
+    }
+
     @Override
     public void visitElement(PsiElement element) {
       super.visitElement(element);
@@ -675,7 +688,10 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         return;
       }
 
-      if (canBePatternVariable(element) && myGlobalVisitor.getMatchContext().getPattern().isRealTypedVar(element)) {
+      if (canBePatternVariable(element) &&
+          myGlobalVisitor.getMatchContext().getPattern().isRealTypedVar(element) &&
+          !shouldIgnoreVarNode(element)) {
+
         PsiElement matchedElement = myGlobalVisitor.getElement();
         PsiElement newElement = SkippingHandler.skipNodeIfNeccessary(matchedElement);
         while (newElement != matchedElement) {
@@ -725,6 +741,29 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       else {
         myGlobalVisitor.setResult(literal.textMatches(l2));
       }
+    }
+  }
+
+  private static class MySubstitutionHandler extends SubstitutionHandler {
+    final Set<PsiElement> myExceptedNodes;
+
+    public MySubstitutionHandler(String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
+      super(name, target, minOccurs, maxOccurs, greedy);
+      myExceptedNodes = new HashSet<PsiElement>();
+    }
+
+    @Override
+    public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
+      if (doMatchSequentially(nodes, nodes2, context)) {
+        return true;
+      }
+      final PsiElement current = nodes.current();
+      if (current != null) {
+        myExceptedNodes.add(current);
+      }
+      final boolean result = doMatchSequentiallyBySimpleHandler(nodes, nodes2, context);
+      myExceptedNodes.remove(current);
+      return result;
     }
   }
 }

@@ -348,9 +348,19 @@ public class SubstitutionHandler extends MatchingHandler {
   }
 
   public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
+    return doMatchSequentially(nodes, nodes2, context);
+  }
+
+  protected boolean doMatchSequentiallyBySimpleHandler(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
+    context.setShouldRecursivelyMatch(false);
+    final boolean result = super.matchSequentially(nodes, nodes2, context);
+    context.setShouldRecursivelyMatch(true);
+    return result;
+  }
+
+  protected boolean doMatchSequentially(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
     final int previousMatchedOccurs = matchedOccurs;
 
-    FilteringNodeIterator fNodes = new FilteringNodeIterator(nodes, VARS_DELIM_FILTER);
     FilteringNodeIterator fNodes2 = new FilteringNodeIterator(nodes2, VARS_DELIM_FILTER);
 
     try {

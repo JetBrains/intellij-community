@@ -125,17 +125,15 @@ public abstract class CompiledPattern {
     SubstitutionHandler handler = (SubstitutionHandler) handlers.get(compiledName);
     if (handler != null) return handler;
 
-    handler = new SubstitutionHandler(
-      name,
-      target,
-      minOccurs,
-      maxOccurs,
-      greedy
-    );
+    handler = doCreateSubstitutionHandler(name, target, minOccurs, maxOccurs, greedy);
 
     handlers.put(compiledName,handler);
 
     return handler;
+  }
+
+  protected SubstitutionHandler doCreateSubstitutionHandler(String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
+    return new SubstitutionHandler(name, target, minOccurs, maxOccurs, greedy);
   }
 
   public SearchScope getScope() {
