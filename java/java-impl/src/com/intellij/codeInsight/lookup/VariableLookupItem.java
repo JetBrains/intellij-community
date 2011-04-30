@@ -108,7 +108,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     }
 
     PsiClass containingClass = field.getContainingClass();
-    if (containingClass != null) {
+    if (containingClass != null && containingClass.getName() != null) {
       context.getDocument().insertString(context.getStartOffset(), ".");
       JavaCompletionUtil.insertClassReference(containingClass, file, context.getStartOffset());
       PsiDocumentManager.getInstance(context.getProject()).commitDocument(context.getDocument());
