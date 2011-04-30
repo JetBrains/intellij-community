@@ -68,7 +68,7 @@ public class DFAEngine<E> {
     boolean[] visited = new boolean[myFlow.length];
 
     final boolean forward = myDfa.isForward();
-    int[] order = ControlFlowUtil.postorder(myFlow); //todo for backward?
+    int[] order = ControlFlowBuilderUtil.postorder(myFlow); //todo for backward?
     for (int i = forward ? 0 : myFlow.length - 1; forward ? i < myFlow.length : i >= 0;) {
       Instruction instr = myFlow[order[i]];
 
