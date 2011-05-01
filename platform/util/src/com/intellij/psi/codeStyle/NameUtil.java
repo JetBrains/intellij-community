@@ -539,7 +539,9 @@ public class NameUtil {
       }
       // there's more in the pattern, but no more words
       if (nextStart == name.length()) {
-        if (patternIndex + i == myPattern.length - 1 && ' ' == myPattern[patternIndex + i] && (i == 1 || i + nameIndex == name.length())) {
+        if (patternIndex + i == myPattern.length - 1 &&
+            ' ' == myPattern[patternIndex + i] &&
+            (i == 1 && isWordStart(myPattern[patternIndex]) || i + nameIndex == name.length())) {
           return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
         }
 
