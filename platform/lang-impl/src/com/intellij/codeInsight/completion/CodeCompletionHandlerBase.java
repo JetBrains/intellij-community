@@ -28,7 +28,6 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,7 +44,10 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -572,39 +574,7 @@ public class CodeCompletionHandlerBase implements CodeInsightActionHandler {
           final String oldCopyText = copy.getText();
           final String newText = file.getText();
           document.setText(newText);
-          try {
-            PsiDocumentManager.getInstance(copy.getProject()).commitDocument(document);
-            return copy;
-          }
-          catch (Throwable e) {
-            document.setText("");
-            if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
-              final StringBuilder sb = new StringBuilder();
-              boolean oldsAreSame = Comparing.equal(oldCopyText, oldDocumentText);
-              if (oldsAreSame) {
-                sb.append("oldCopyText == oldDocumentText");
-              }
-              else {
-                sb.append("oldCopyText != oldDocumentText");
-                sb.append("\n--- oldCopyText ------------------------------------------------\n").append(oldCopyText);
-                sb.append("\n--- oldDocumentText ------------------------------------------------\n").append(oldDocumentText);
-              }
-              if (Comparing.equal(oldCopyText, newText)) {
-                sb.insert(0, "newText == oldCopyText; ");
-              }
-              else if (!oldsAreSame && Comparing.equal(oldDocumentText, newText)) {
-                sb.insert(0, "newText == oldDocumentText; ");
-              }
-              else {
-                sb.insert(0, "newText != oldCopyText, oldDocumentText; ");
-                if (oldsAreSame) {
-                  sb.append("\n--- oldCopyText ------------------------------------------------\n").append(oldCopyText);
-                }
-                sb.append("\n--- newText ------------------------------------------------\n").append(newText);
-              }
-              LOG.error(sb.toString(), e);
-            }
-          }
+          return copy;
         }
       }
     }
