@@ -56,11 +56,15 @@ public class PyDocStubIntention extends BaseIntentionAction {
       if (spaces.length > 1)
         ws = ws + whitespace.getText().split("\n")[1];
     }
-    String docContent = documentationProvider.generateDocumentationContentStub(function, ws);
+    String docContent = ws + documentationProvider.generateDocumentationContentStub(function, ws);
     PyExpressionStatement string = elementGenerator.createFromText(LanguageLevel.forElement(function), PyExpressionStatement.class,
                                                                        "\"\"\"" + docContent + "\"\"\"");
     if (list.getStatements().length != 0)
       list.addBefore(string, list.getStatements()[0]);
+
+    int offset = function.getDocStringExpression().getTextOffset();
+    editor.getCaretModel().moveToOffset(offset);
+    editor.getCaretModel().moveCaretRelatively(0, 1, false, false, false);
   }
 
 }

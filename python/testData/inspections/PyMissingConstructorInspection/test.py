@@ -63,3 +63,8 @@ class B(A):
 class C(B):
     def <warning descr="Call to constructor of super class is missed">__init__</warning>(self):
         print ("Constructor C was called")
+
+#PY-3395
+class Over(Over):
+  def __init__(self):
+    pass

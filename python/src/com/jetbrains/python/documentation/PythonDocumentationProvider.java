@@ -861,6 +861,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       result += generateContent(element, offset, EPYDOC_PREFIX);
     else if (documentationSettings.isReSTFormat())
       result += generateContent(element, offset, RST_PREFIX);
+    else
+      result += offset;
     return result;
   }
 

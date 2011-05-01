@@ -42,10 +42,6 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         if (node.getContainingFile() instanceof PyExpressionCodeFragment || PydevConsoleRunner.isInPydevConsole(node)){
           return;
         }
-        // Ignore callee expressions
-        if (PyCallExpressionNavigator.getPyCallExpressionByCallee(node) != null){
-          return;
-        }
         // Ignore global statements arguments
         if (PyGlobalStatementNavigator.getByArgument(node) != null){
           return;
@@ -82,7 +78,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
             if (element == null){
               continue;
             }
-            // Ingore builtin elements here
+            // Ignore builtin elements here
             final PsiFile containingFile = element.getContainingFile();
             if (containingFile != null) {
               final String fileName = containingFile.getName();
@@ -92,7 +88,8 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
             }
             if (PyAssignmentStatementNavigator.getStatementByTarget(element) != null || 
                 PyForStatementNavigator.getPyForStatementByIterable(element) != null ||
-                PyExceptPartNavigator.getPyExceptPartByTarget(element) != null) {
+                PyExceptPartNavigator.getPyExceptPartByTarget(element) != null ||
+                PyListCompExpressionNavigator.getPyListCompExpressionByVariable(element) != null) {
               resolves2LocalVariable = true;
               resolve2Scope = PsiTreeUtil.isAncestor(owner, element, false);
               break;
