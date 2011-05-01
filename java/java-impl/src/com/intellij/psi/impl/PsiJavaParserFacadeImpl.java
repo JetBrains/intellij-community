@@ -393,15 +393,17 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
 
   @NotNull
   @Override
-  public PsiCatchSection createCatchSection(@NotNull final PsiClassType exceptionType,
+  public PsiCatchSection createCatchSection(@NotNull final PsiType exceptionType,
                                             @NotNull final String exceptionName,
                                             @Nullable final PsiElement context) throws IncorrectOperationException {
-    final String text = StringUtil
-      .join("catch (", exceptionType.getCanonicalText(), " ", exceptionName, ") {}");
+    if (!(exceptionType instanceof PsiClassType || exceptionType instanceof PsiDisjunctionType)) {
+      throw new IncorrectOperationException("Unexpected type:" + exceptionType);
+    }
+    final String text = StringUtil.join("catch (", exceptionType.getCanonicalText(), " ", exceptionName, ") {}");
     final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, CATCH_SECTION, level(context)), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiCatchSection)) {
-      throw new IncorrectOperationException("Incorrect catch section '" + text + "'. Parsed element: "+element);
+      throw new IncorrectOperationException("Incorrect catch section '" + text + "'. Parsed element: " + element);
     }
     setupCatchBlock(exceptionName, context, (PsiCatchSection)element);
     return (PsiCatchSection)myManager.getCodeStyleManager().reformat(element);
