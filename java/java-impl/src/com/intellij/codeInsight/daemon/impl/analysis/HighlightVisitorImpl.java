@@ -695,21 +695,28 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myHolder.add(AnnotationsHighlightUtil.checkPackageAnnotationContainingFile(statement));
   }
 
-  @Override public void visitParameter(PsiParameter parameter) {
+  @Override
+  public void visitParameter(PsiParameter parameter) {
     super.visitParameter(parameter);
-    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkVarArgParameterIsLast(parameter));
-    if (!myHolder.hasErrorResults() && parameter.getParent() instanceof PsiForeachStatement) {
-      myHolder.add(GenericsHighlightUtil.checkForeachLoopParameterType((PsiForeachStatement)parameter.getParent()));
+
+    final PsiElement parent = parameter.getParent();
+    if (parent instanceof PsiParameterList) {
+      if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkVarArgParameterIsLast(parameter));
+    }
+    else if (parent instanceof PsiForeachStatement) {
+      if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkForeachLoopParameterType((PsiForeachStatement)parent));
+    }
+    else if (parent instanceof PsiCatchSection) {
+      if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkCatchParameterIsThrowable(parameter));
+      if (!myHolder.hasErrorResults()) myHolder.addAll(GenericsHighlightUtil.checkCatchParameterIsClass(parameter));
+      if (!myHolder.hasErrorResults()) myHolder.addAll(HighlightUtil.checkCatchTypeIsDisjoint(parameter));
     }
   }
 
-  @Override public void visitParameterList(PsiParameterList list) {
-    PsiElement parent = list.getParent();
-    if (parent instanceof PsiAnnotationMethod && list.getParametersCount() > 0) {
-      myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                     list,
-                                                     JavaErrorMessages.message("annotation.interface.members.may.not.have.parameters")));
-    }
+  @Override
+  public void visitParameterList(PsiParameterList list) {
+    super.visitParameterList(list);
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkAnnotationMethodParameters(list));
   }
 
   @Override public void visitPostfixExpression(PsiPostfixExpression expression) {
@@ -736,7 +743,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
-  @Override public void visitReferenceElement(PsiJavaCodeReferenceElement ref) {
+  @Override
+  public void visitReferenceElement(PsiJavaCodeReferenceElement ref) {
     JavaResolveResult result;
     try {
       result = ref.advancedResolve(true);
@@ -755,10 +763,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkAbstractInstantiation(ref));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkExtendsDuplicate(ref, resolved));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkExceptionAlreadyCaught(ref, resolved));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkClassExtendsForeignInnerClass(ref, resolved));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkSelectStaticClassFromParameterizedType(resolved, ref));
-    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, ref, result.getSubstitutor()));
+    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, ref,
+                                                                                                                 result.getSubstitutor()));
 
     if (resolved != null && parent instanceof PsiReferenceList) {
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkElementInReferenceList(ref, (PsiReferenceList)parent, result));
@@ -898,13 +906,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) visitStatement(statement);
   }
 
-  @Override public void visitTryStatement(PsiTryStatement statement) {
+  @Override
+  public void visitTryStatement(PsiTryStatement statement) {
     super.visitTryStatement(statement);
     if (!myHolder.hasErrorResults()) {
       for (PsiParameter parameter : statement.getCatchBlockParameters()) {
-        myHolder.addAll(HighlightUtil.checkExceptionThrownInTry(parameter));
-        myHolder.add(HighlightUtil.checkCatchParameterIsThrowable(parameter));
-        myHolder.add(GenericsHighlightUtil.checkCatchParameterIsClass(parameter));
+        boolean added = myHolder.addAll(HighlightUtil.checkExceptionAlreadyCaught(parameter));
+        if (!added) myHolder.addAll(HighlightUtil.checkExceptionThrownInTry(parameter));
       }
     }
   }
