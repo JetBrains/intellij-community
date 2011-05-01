@@ -279,11 +279,8 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
           if (unmatchedCatchSections != null) {
             for (int i = unmatchedCatchSections.size() - 1; i >= 0; --i) {
               final PsiParameter parameter = unmatchedCatchSections.get(i).getParameter();
-              final PsiCatchSection catchSection = JavaPsiFacade.getInstance(project).getElementFactory().createCatchSection(
-                (PsiClassType)parameter.getType(),
-                parameter.getName(),
-                null
-              );
+              final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+              final PsiCatchSection catchSection = elementFactory.createCatchSection(parameter.getType(), parameter.getName(), null);
 
               catchSection.getCatchBlock().replace(
                 unmatchedCatchSections.get(i).getCatchBlock()
