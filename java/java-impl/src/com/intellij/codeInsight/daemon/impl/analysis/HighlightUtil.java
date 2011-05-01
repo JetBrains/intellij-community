@@ -34,6 +34,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,6 +49,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -554,11 +556,15 @@ public class HighlightUtil {
   }
 
   private static String getUnhandledExceptionsDescriptor(final Collection<PsiClassType> unhandled, final String source) {
-    final String exceptions = StringUtil.join(unhandled, new Function<PsiClassType, String>() {
-      @Override public String fun(PsiClassType type) { return formatType(type); }
-    }, ", ");
+    final String exceptions = formatTypes(unhandled);
     return source != null ? JavaErrorMessages.message("unhandled.close.exceptions", exceptions, unhandled.size(), source)
                           : JavaErrorMessages.message("unhandled.exceptions", exceptions, unhandled.size());
+  }
+
+  private static String formatTypes(Collection<PsiClassType> unhandled) {
+    return StringUtil.join(unhandled, new Function<PsiClassType, String>() {
+      @Override public String fun(PsiClassType type) { return formatType(type); }
+    }, ", ");
   }
 
   @Nullable
@@ -888,22 +894,27 @@ public class HighlightUtil {
   }
 
 
-  @Nullable
-  static Collection<HighlightInfo> checkExceptionThrownInTry(final PsiParameter parameter) {
-    final PsiElement declarationScope = parameter.getDeclarationScope();
-    if (!(declarationScope instanceof PsiCatchSection)) return null;
-
+  @NotNull
+  static Set<PsiClassType> collectUnhandledExceptions(final PsiTryStatement statement) {
     final Set<PsiClassType> thrownTypes = Sets.newHashSet();
 
-    final PsiTryStatement statement = ((PsiCatchSection)declarationScope).getTryStatement();
     final PsiCodeBlock tryBlock = statement.getTryBlock();
-    assert tryBlock != null : statement;
-    thrownTypes.addAll(ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock));
+    if (tryBlock != null) {
+      thrownTypes.addAll(ExceptionUtil.collectUnhandledExceptions(tryBlock, tryBlock));
+    }
 
     final PsiResourceList resources = statement.getResourceList();
     if (resources != null) {
       thrownTypes.addAll(ExceptionUtil.collectUnhandledExceptions(resources, resources));
     }
+
+    return thrownTypes;
+  }
+
+  @Nullable
+  static Collection<HighlightInfo> checkExceptionThrownInTry(final PsiParameter parameter, final Set<PsiClassType> thrownTypes) {
+    final PsiElement declarationScope = parameter.getDeclarationScope();
+    if (!(declarationScope instanceof PsiCatchSection)) return null;
 
     final PsiType caughtType = parameter.getType();
     if (caughtType instanceof PsiClassType) {
@@ -929,7 +940,7 @@ public class HighlightUtil {
     final String description = JavaErrorMessages.message("exception.never.thrown.try", formatType(caughtType));
     final HighlightInfo errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameter, description);
     QuickFixAction.registerQuickFixAction(errorResult, new DeleteCatchFix(parameter));
-    return Lists.newArrayList(errorResult);
+    return Collections.singleton(errorResult);
   }
 
   @Nullable
@@ -959,6 +970,63 @@ public class HighlightUtil {
     }
 
     return highlights;
+  }
+
+
+  @Nullable
+  static Collection<HighlightInfo> checkWithImprovedCatchAnalysis(final PsiParameter parameter, Collection<PsiClassType> thrownTypes) {
+    final PsiElement scope = parameter.getDeclarationScope();
+    if (!(scope instanceof PsiCatchSection)) return null;
+
+    final PsiCatchSection catchSection = (PsiCatchSection)scope;
+    final PsiCatchSection[] allCatchSections = catchSection.getTryStatement().getCatchSections();
+    final int idx = ArrayUtil.find(allCatchSections, catchSection);
+    if (idx <= 0) return null;
+
+    thrownTypes = Sets.newHashSet(thrownTypes);
+    thrownTypes.add(PsiType.getJavaLangError(parameter.getManager(), parameter.getResolveScope()));
+    thrownTypes.add(PsiType.getJavaLangRuntimeException(parameter.getManager(), parameter.getResolveScope()));
+    final Collection<HighlightInfo> result = Lists.newArrayList();
+
+    final List<PsiTypeElement> parameterTypeElements = PsiUtil.getParameterTypeElements(parameter);
+    final boolean isMultiCatch = parameterTypeElements.size() > 1;
+    for (PsiTypeElement catchTypeElement : parameterTypeElements) {
+      // collect exceptions which are caught by this type
+      final PsiType catchType = catchTypeElement.getType();
+      Collection<PsiClassType> caught = ContainerUtil.findAll(thrownTypes, new Condition<PsiClassType>() {
+        @Override public boolean value(PsiClassType type) { return catchType.isAssignableFrom(type); }
+      });
+      if (caught.isEmpty()) continue;
+      final Collection<PsiClassType> caughtCopy = Sets.newHashSet(caught);
+
+      // exclude all which are caught by previous catch sections
+      for (int i = 0; i < idx; i++) {
+        final PsiParameter prevCatchParameter = allCatchSections[i].getParameter();
+        if (prevCatchParameter == null) continue;
+        for (PsiTypeElement prevCatchTypeElement : PsiUtil.getParameterTypeElements(prevCatchParameter)) {
+          final PsiType prevCatchType = prevCatchTypeElement.getType();
+          for (Iterator<PsiClassType> iterator = caught.iterator(); iterator.hasNext(); ) {
+            if (prevCatchType.isAssignableFrom(iterator.next())) iterator.remove();
+          }
+          if (caught.isEmpty()) break;
+        }
+      }
+
+      // check & warn
+      if (caught.isEmpty()) {
+        final String message = JavaErrorMessages.message("exception.already.caught.warn", formatTypes(caughtCopy), caughtCopy.size());
+        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.WARNING, catchSection, message);
+        if (isMultiCatch) {
+          QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteMultiCatchFix(catchTypeElement));
+        }
+        else {
+          QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteCatchFix(parameter));
+        }
+        result.add(highlightInfo);
+      }
+    }
+
+    return result;
   }
 
 

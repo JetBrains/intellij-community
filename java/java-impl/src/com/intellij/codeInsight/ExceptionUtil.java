@@ -197,7 +197,9 @@ public class ExceptionUtil {
   }
 
   @Nullable
-  private static Set<PsiClassType> collectUnhandledExceptions(@NotNull PsiElement element, PsiElement topElement, Set<PsiClassType> foundExceptions) {
+  private static Set<PsiClassType> collectUnhandledExceptions(@NotNull PsiElement element,
+                                                              PsiElement topElement,
+                                                              @Nullable Set<PsiClassType> foundExceptions) {
     Collection<PsiClassType> unhandledExceptions = null;
     if (element instanceof PsiCallExpression) {
       PsiCallExpression expression = (PsiCallExpression)element;
@@ -330,7 +332,7 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getUnhandledExceptions(final PsiCallExpression methodCall, final PsiElement topElement) {
+  public static List<PsiClassType> getUnhandledExceptions(final PsiCallExpression methodCall, @Nullable final PsiElement topElement) {
     final JavaResolveResult result = methodCall.resolveMethodGenerics();
     final PsiMethod method = (PsiMethod)result.getElement();
     final PsiSubstitutor substitutor = ApplicationManager.getApplication().runReadAction(new Computable<PsiSubstitutor>() {
@@ -342,7 +344,7 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getUnhandledCloserExceptions(final PsiResourceVariable resource, final PsiElement topElement) {
+  public static List<PsiClassType> getUnhandledCloserExceptions(final PsiResourceVariable resource, @Nullable final PsiElement topElement) {
     final PsiType resourceType = resource.getType();
     if (resourceType instanceof PsiClassType) {
       final PsiClass resourceClass = ((PsiClassType)resourceType).resolve();
@@ -359,7 +361,7 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getUnhandledExceptions(final PsiThrowStatement throwStatement, final PsiElement topElement) {
+  public static List<PsiClassType> getUnhandledExceptions(final PsiThrowStatement throwStatement, @Nullable final PsiElement topElement) {
     final PsiExpression exception = throwStatement.getException();
     final List<PsiType> types = getPreciseThrowTypes(exception);
     return ContainerUtil.mapNotNull(types, new NullableFunction<PsiType, PsiClassType>() {
