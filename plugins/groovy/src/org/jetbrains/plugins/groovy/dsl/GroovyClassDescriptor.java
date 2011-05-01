@@ -59,7 +59,7 @@ public class GroovyClassDescriptor {
   }
 
   public Project getProject() {
-    return myPlace.getProject();
+    return myFile.getProject();
   }
 
   public GlobalSearchScope getResolveScope() {
