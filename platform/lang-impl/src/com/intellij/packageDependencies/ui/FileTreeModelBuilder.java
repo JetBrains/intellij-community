@@ -71,11 +71,12 @@ public class FileTreeModelBuilder {
 
   public FileTreeModelBuilder(Project project, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
     myProject = project;
-    myShowModules = settings.UI_SHOW_MODULES;
+    final boolean multiModuleProject = ModuleManager.getInstance(myProject).getModules().length > 1;
+    myShowModules = settings.UI_SHOW_MODULES && multiModuleProject;
     myFlattenPackages = settings.UI_FLATTEN_PACKAGES;
     myCompactEmptyMiddlePackages = settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES;
     myShowFiles = settings.UI_SHOW_FILES;
-    myShowModuleGroups = settings.UI_SHOW_MODULE_GROUPS;
+    myShowModuleGroups = settings.UI_SHOW_MODULE_GROUPS && multiModuleProject;
     myMarker = marker;
     myAddUnmarkedFiles = !settings.UI_FILTER_LEGALS;
     myRoot = new RootNode();
