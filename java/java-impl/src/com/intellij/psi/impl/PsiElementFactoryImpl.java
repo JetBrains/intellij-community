@@ -63,6 +63,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiClass getArrayClass(@NotNull final LanguageLevel languageLevel) {
     if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) {
       if (myArrayClass == null) {
@@ -81,6 +82,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiClassType getArrayClassType(@NotNull final PsiType componentType, @NotNull final LanguageLevel languageLevel) {
     final PsiClass arrayClass = getArrayClass(languageLevel);
     final PsiTypeParameter[] typeParameters = arrayClass.getTypeParameters();
@@ -94,11 +96,13 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiClassType createType(@NotNull final PsiClass resolve, @NotNull final PsiSubstitutor substitutor) {
     return new PsiImmediateClassType(resolve, substitutor);
   }
 
   @NotNull
+  @Override
   public PsiClassType createType(@NotNull final PsiClass resolve,
                                  @NotNull final PsiSubstitutor substitutor,
                                  @NotNull final LanguageLevel languageLevel) {
@@ -106,6 +110,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiClassType createType(@NotNull final PsiClass resolve,
                                  @NotNull final PsiSubstitutor substitutor,
                                  @NotNull final LanguageLevel languageLevel,
@@ -114,16 +119,19 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiClass createClass(@NotNull final String name) throws IncorrectOperationException {
     return createClassInner("class", name);
   }
 
   @NotNull
+  @Override
   public PsiClass createInterface(@NotNull final String name) throws IncorrectOperationException {
     return createClassInner("interface", name);
   }
 
   @NotNull
+  @Override
   public PsiClass createEnum(@NotNull final String name) throws IncorrectOperationException {
     return createClassInner("enum", name);
   }
@@ -139,6 +147,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiTypeElement createTypeElement(@NotNull final PsiType psiType) {
     final LightTypeElement element = new LightTypeElement(myManager, psiType);
     CodeEditUtil.setNodeGenerated(element.getNode(), true);
@@ -146,6 +155,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiJavaCodeReferenceElement createReferenceElementByType(@NotNull final PsiClassType type) {
     if (type instanceof PsiClassReferenceType) {
       return ((PsiClassReferenceType)type).getReference();
@@ -158,6 +168,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiField createField(@NotNull final String name, @NotNull final PsiType type) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(myManager, name);
     if (PsiType.NULL.equals(type)) {
@@ -172,6 +183,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiMethod createMethod(@NotNull final String name, final PsiType returnType) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(myManager, name);
     if (PsiType.NULL.equals(returnType)) {
@@ -185,6 +197,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiMethod createConstructor() {
     final PsiJavaFile aFile = createDummyJavaFile("class _Dummy_ { public _Dummy_() {} }");
     final PsiMethod method = aFile.getClasses()[0].getMethods()[0];
@@ -192,6 +205,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiClassInitializer createClassInitializer() throws IncorrectOperationException {
     final PsiJavaFile aFile = createDummyJavaFile("class _Dummy_ { {} }");
     final PsiClassInitializer classInitializer = aFile.getClasses()[0].getInitializers()[0];
@@ -199,6 +213,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiParameter createParameter(@NotNull final String name, @NotNull final PsiType type) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(myManager, name);
     if (PsiType.NULL.equals(type)) {
@@ -216,22 +231,26 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiCodeBlock createCodeBlock() {
     final PsiCodeBlock block = createCodeBlockFromText("{}", null);
     return (PsiCodeBlock)CodeStyleManager.getInstance(myManager.getProject()).reformat(block);
   }
 
   @NotNull
+  @Override
   public PsiClassType createType(@NotNull final PsiClass aClass) {
     return new PsiImmediateClassType(aClass, aClass instanceof PsiTypeParameter ? PsiSubstitutor.EMPTY : createRawSubstitutor(aClass));
   }
 
   @NotNull
+  @Override
   public PsiClassType createType(@NotNull final PsiJavaCodeReferenceElement classReference) {
     return new PsiClassReferenceType(classReference, null);
   }
 
   @NotNull
+  @Override
   public PsiClassType createType(@NotNull final PsiClass aClass, final PsiType parameter) {
     final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
     assert typeParameters.length == 1 : aClass;
@@ -241,6 +260,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiClassType createType(@NotNull final PsiClass aClass, final PsiType... parameters) {
     final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
     assert parameters.length == typeParameters.length;
@@ -253,11 +273,13 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiType detachType(@NotNull final PsiType type) {
     return type;
   }
 
   @NotNull
+  @Override
   public PsiSubstitutor createRawSubstitutor(@NotNull final PsiTypeParameterListOwner owner) {
     Map<PsiTypeParameter, PsiType> substitutorMap = null;
     for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(owner)) {
@@ -268,6 +290,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiSubstitutor createRawSubstitutor(@NotNull final PsiSubstitutor baseSubstitutor, @NotNull final PsiTypeParameter[] typeParameters) {
     Map<PsiTypeParameter, PsiType> substitutorMap = null;
     for (PsiTypeParameter parameter : typeParameters) {
@@ -278,6 +301,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiElement createDummyHolder(@NotNull final String text, @NotNull final IElementType type, @Nullable final PsiElement context) {
     final DummyHolder result = DummyHolderFactory.createHolder(myManager, context);
     final FileElement holder = result.getTreeElement();
@@ -295,26 +319,31 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiSubstitutor createSubstitutor(@NotNull final Map<PsiTypeParameter, PsiType> map) {
     return PsiSubstitutorImpl.createSubstitutor(map);
   }
 
   @Nullable
+  @Override
   public PsiPrimitiveType createPrimitiveType(@NotNull final String text) {
     return PsiJavaParserFacadeImpl.getPrimitiveType(text);
   }
 
   @NotNull
+  @Override
   public PsiClassType createTypeByFQClassName(@NotNull final String qName) {
     return createTypeByFQClassName(qName, GlobalSearchScope.allScope(myManager.getProject()));
   }
 
   @NotNull
+  @Override
   public PsiClassType createTypeByFQClassName(@NotNull final String qName, @NotNull final GlobalSearchScope resolveScope) {
     return new PsiClassReferenceType(createReferenceElementByFQClassName(qName, resolveScope), null);
   }
 
   @NotNull
+  @Override
   public PsiJavaCodeReferenceElement createClassReferenceElement(@NotNull final PsiClass aClass) {
     final String text;
     if (aClass instanceof PsiAnonymousClass) {
@@ -327,6 +356,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiJavaCodeReferenceElement createReferenceElementByFQClassName(@NotNull final String qName,
                                                                          @NotNull final GlobalSearchScope resolveScope) {
     final String shortName = PsiNameHelper.getShortClassName(qName);
@@ -334,12 +364,14 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiJavaCodeReferenceElement createFQClassNameReferenceElement(@NotNull final String qName,
                                                                        @NotNull final GlobalSearchScope resolveScope) {
     return new LightClassReference(myManager, qName, qName, resolveScope);
   }
 
   @NotNull
+  @Override
   public PsiJavaCodeReferenceElement createPackageReferenceElement(@NotNull final PsiPackage aPackage) throws IncorrectOperationException {
     if (aPackage.getQualifiedName().length() == 0) {
       throw new IncorrectOperationException("Cannot create reference to default package.");
@@ -348,6 +380,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiPackageStatement createPackageStatement(@NotNull final String name) throws IncorrectOperationException {
     final PsiJavaFile aFile = createDummyJavaFile(join("package ", name, ";"));
     final PsiPackageStatement stmt = aFile.getPackageStatement();
@@ -358,6 +391,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiJavaCodeReferenceCodeFragment createReferenceCodeFragment(@NotNull final String text,
                                                                       final PsiElement context,
                                                                       final boolean isPhysical,
@@ -369,6 +403,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiImportStaticStatement createImportStaticStatement(@NotNull final PsiClass aClass,
                                                               @NotNull final String memberName) throws IncorrectOperationException {
     if (aClass instanceof PsiAnonymousClass) {
@@ -384,6 +419,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiParameterList createParameterList(@NotNull final String[] names, @NotNull final PsiType[] types) throws IncorrectOperationException {
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
@@ -400,6 +436,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiReferenceList createReferenceList(@NotNull final PsiJavaCodeReferenceElement[] references) throws IncorrectOperationException {
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
@@ -419,6 +456,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiJavaCodeReferenceElement createPackageReferenceElement(@NotNull final String packageName) throws IncorrectOperationException {
     if (packageName.length() == 0) {
       throw new IncorrectOperationException("Cannot create reference to default package.");
@@ -427,6 +465,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiReferenceExpression createReferenceExpression(@NotNull final PsiClass aClass) throws IncorrectOperationException {
     final String text;
     if (aClass instanceof PsiAnonymousClass) {
@@ -439,6 +478,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiReferenceExpression createReferenceExpression(@NotNull final PsiPackage aPackage) throws IncorrectOperationException {
     if (aPackage.getQualifiedName().length() == 0) {
       throw new IncorrectOperationException("Cannot create reference to default package.");
@@ -447,12 +487,14 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiIdentifier createIdentifier(@NotNull final String text) throws IncorrectOperationException {
     PsiUtil.checkIsIdentifier(myManager, text);
     return new LightIdentifier(myManager, text);
   }
 
   @NotNull
+  @Override
   public PsiKeyword createKeyword(@NotNull final String text) throws IncorrectOperationException {
     if (!JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isKeyword(text)) {
       throw new IncorrectOperationException("\"" + text + "\" is not a keyword.");
@@ -461,6 +503,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiImportStatement createImportStatement(@NotNull final PsiClass aClass) throws IncorrectOperationException {
     if (aClass instanceof PsiAnonymousClass) {
       throw new IncorrectOperationException("Cannot create import statement for anonymous class.");
@@ -475,6 +518,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiImportStatement createImportStatementOnDemand(@NotNull final String packageName) throws IncorrectOperationException {
     if (packageName.length() == 0) {
       throw new IncorrectOperationException("Cannot create import statement for default package.");
@@ -489,6 +533,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiDeclarationStatement createVariableDeclarationStatement(@NotNull final String name,
                                                                     @NotNull final PsiType type,
                                                                     final PsiExpression initializer) throws IncorrectOperationException {
@@ -521,6 +566,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiDocTag createParamTag(@NotNull final String parameterName, @NonNls final String description) throws IncorrectOperationException {
     final StringBuilder builder = StringBuilderSpinAllocator.alloc();
     try {
@@ -540,6 +586,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiExpressionCodeFragment createExpressionCodeFragment(@NotNull final String text,
                                                                 final PsiElement context,
                                                                 final PsiType expectedType,
@@ -551,7 +598,8 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
-  public JavaCodeFragment createCodeBlockCodeFragment(@NotNull final String text, final PsiElement context, final boolean isPhysical) {
+  @Override
+  public JavaCodeFragment createCodeBlockCodeFragment(@NotNull final String text, @Nullable final PsiElement context, final boolean isPhysical) {
     final PsiCodeFragmentImpl result =
       new PsiCodeFragmentImpl(myManager.getProject(), JavaElementType.STATEMENTS, isPhysical, "fragment.java", text);
     result.setContext(context);
@@ -559,18 +607,21 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
-  public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text, final PsiElement context, final boolean isPhysical) {
+  @Override
+  public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text, @Nullable final PsiElement context, final boolean isPhysical) {
     return createTypeCodeFragment(text, context, isPhysical, 0);
   }
 
   @NotNull
-  public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text, final PsiElement context, final boolean isPhysical, final int flags) {
+  @Override
+  public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text, @Nullable final PsiElement context, final boolean isPhysical, final int flags) {
     final PsiTypeCodeFragmentImpl result = new PsiTypeCodeFragmentImpl(myManager.getProject(), isPhysical, "fragment.java", text, flags);
     result.setContext(context);
     return result;
   }
 
   @NotNull
+  @Override
   public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text,
                                                     final PsiElement context,
                                                     final boolean isVoidValid,
@@ -581,6 +632,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiTypeCodeFragment createTypeCodeFragment(@NotNull final String text,
                                                     final PsiElement context,
                                                     final boolean isVoidValid,
@@ -593,60 +645,69 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
-  public PsiAnnotation createAnnotationFromText(@NotNull final String annotationText, final PsiElement context) throws IncorrectOperationException {
+  @Override
+  public PsiAnnotation createAnnotationFromText(@NotNull final String annotationText, @Nullable final PsiElement context) throws IncorrectOperationException {
     final PsiAnnotation psiAnnotation = super.createAnnotationFromText(annotationText, context);
     markGenerated(psiAnnotation);
     return psiAnnotation;
   }
 
   @NotNull
-  public PsiCodeBlock createCodeBlockFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+  @Override
+  public PsiCodeBlock createCodeBlockFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
     final PsiCodeBlock psiCodeBlock = super.createCodeBlockFromText(text, context);
     markGenerated(psiCodeBlock);
     return psiCodeBlock;
   }
 
   @NotNull
-  public PsiEnumConstant createEnumConstantFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+  @Override
+  public PsiEnumConstant createEnumConstantFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
     final PsiEnumConstant enumConstant = super.createEnumConstantFromText(text, context);
     markGenerated(enumConstant);
     return enumConstant;
   }
 
   @NotNull
-  public PsiExpression createExpressionFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+  @Override
+  public PsiExpression createExpressionFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
     final PsiExpression expression = super.createExpressionFromText(text, context);
     markGenerated(expression);
     return expression;
   }
 
   @NotNull
-  public PsiField createFieldFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+  @Override
+  public PsiField createFieldFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
     final PsiField psiField = super.createFieldFromText(text, context);
     markGenerated(psiField);
     return psiField;
   }
 
   @NotNull
-  public PsiParameter createParameterFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+  @Override
+  public PsiParameter createParameterFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
     final PsiParameter parameter = super.createParameterFromText(text, context);
     markGenerated(parameter);
     return parameter;
   }
 
   @NotNull
-  public PsiStatement createStatementFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+  @Override
+  public PsiStatement createStatementFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
     final PsiStatement statement = super.createStatementFromText(text, context);
     markGenerated(statement);
     return statement;
   }
 
   @NotNull
-  public PsiType createTypeFromText(@NotNull final String text, final PsiElement context) throws IncorrectOperationException {
+  @Override
+  public PsiType createTypeFromText(@NotNull final String text, @Nullable final PsiElement context) throws IncorrectOperationException {
     return createTypeInner(text, context, true);
   }
 
   @NotNull
+  @Override
   public PsiTypeParameter createTypeParameterFromText(@NotNull final String text,
                                                       final PsiElement context) throws IncorrectOperationException {
     final PsiTypeParameter typeParameter = super.createTypeParameterFromText(text, context);
@@ -655,6 +716,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiElement createWhiteSpaceFromText(@NotNull @NonNls final String text) throws IncorrectOperationException {
     final PsiElement whitespace = super.createWhiteSpaceFromText(text);
     markGenerated(whitespace);
@@ -662,6 +724,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
+  @Override
   public PsiMethod createMethodFromText(@NotNull final String text,
                                         final PsiElement context,
                                         final LanguageLevel level) throws IncorrectOperationException {
@@ -671,7 +734,8 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   @NotNull
-  public PsiCatchSection createCatchSection(@NotNull final PsiClassType exceptionType,
+  @Override
+  public PsiCatchSection createCatchSection(@NotNull final PsiType exceptionType,
                                             @NotNull final String exceptionName,
                                             final PsiElement context) throws IncorrectOperationException {
     final PsiCatchSection psiCatchSection = super.createCatchSection(exceptionType, exceptionName, context);

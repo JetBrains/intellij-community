@@ -65,12 +65,12 @@ class CatchBodyVisitor extends JavaRecursiveElementWalkingVisitor {
     PsiCodeBlock catchBlock = section.getCatchBlock();
     if (catchBlock == null) return;
     PsiType type = parameter.getType();
-    if (!(type instanceof PsiClassType)) return;
+    if (!(type instanceof PsiClassType || type instanceof PsiDisjunctionType)) return;
     PsiCodeBlock templateCatchBlock;
     final PsiParameter templateParameter;
     try {
       final PsiJavaParserFacade elementFactory = JavaPsiFacade.getInstance(section.getProject()).getParserFacade();
-      PsiCatchSection sectionTemplate = elementFactory.createCatchSection((PsiClassType)type, parameter.getName(), parameter);
+      PsiCatchSection sectionTemplate = elementFactory.createCatchSection(type, parameter.getName(), parameter);
       templateCatchBlock = sectionTemplate.getCatchBlock();
 
       // replace with default template text
@@ -126,7 +126,7 @@ class CatchBodyVisitor extends JavaRecursiveElementWalkingVisitor {
         if (!(type instanceof PsiClassType)) return;
         final PsiJavaParserFacade elementFactory = JavaPsiFacade.getInstance(section.getProject()).getParserFacade();
         try {
-          PsiCatchSection sectionTemplate = elementFactory.createCatchSection((PsiClassType)type, parameter.getName(), parameter);
+          PsiCatchSection sectionTemplate = elementFactory.createCatchSection(type, parameter.getName(), parameter);
           section.replace(sectionTemplate);
         }
         catch (IncorrectOperationException e) {

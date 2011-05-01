@@ -1,5 +1,5 @@
 package x;
-import java.io.File;
+import java.io.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -23,7 +23,7 @@ public class X implements Runnable{
         }
     }
 
-    private void g() {
+    private void g() throws EOFException, FileNotFoundException {
         //To change body of created methods use File | Settings | File Templates.
     }
 
@@ -56,5 +56,12 @@ public class X implements Runnable{
             super.finalize();    
      }
 
+    private void multi() {
+        try {
+            g();
+        } catch (EOFException | FileNotFoundException ex) {
+            ex.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+    }
 }
 
