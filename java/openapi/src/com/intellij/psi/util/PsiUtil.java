@@ -37,10 +37,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 public final class PsiUtil extends PsiUtilBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtil");
@@ -393,6 +390,11 @@ public final class PsiUtil extends PsiUtilBase {
     return null;
   }
 
+  @Nullable
+  public static PsiClass resolveClassInClassTypeOnly(@Nullable PsiType type) {
+    return type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
+  }
+
   public static PsiClassType.ClassResolveResult resolveGenericsClassInType(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
       final PsiClassType classType = (PsiClassType) type;
@@ -642,6 +644,14 @@ public final class PsiUtil extends PsiUtilBase {
 
   public static boolean isInsideJavadocComment(PsiElement element) {
     return PsiTreeUtil.getParentOfType(element, PsiDocComment.class, true) != null;
+  }
+
+  @NotNull
+  public static List<PsiTypeElement> getParameterTypeElements(@NotNull PsiParameter parameter) {
+    PsiTypeElement typeElement = parameter.getTypeElement();
+    return typeElement.getType() instanceof PsiDisjunctionType
+           ? PsiTreeUtil.getChildrenOfTypeAsList(typeElement, PsiTypeElement.class)
+           : Collections.singletonList(typeElement);
   }
 
   private static class ParamWriteProcessor implements Processor<PsiReference> {

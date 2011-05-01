@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.google.common.collect.Lists;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -927,20 +928,21 @@ public class GenericsHighlightUtil {
     return null;
   }
 
-  public static HighlightInfo checkCatchParameterIsClass(PsiParameter parameter) {
-    if (parameter.getDeclarationScope() instanceof PsiCatchSection) {
-      PsiType type = parameter.getType();
-      if (type instanceof PsiClassType) {
-        PsiClass aClass = ((PsiClassType)type).resolve();
-        if (aClass instanceof PsiTypeParameter) {
-          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
-                                                   parameter.getTypeElement(),
-                                                   JavaErrorMessages.message("generics.cannot.catch.type.parameters"));
-        }
+  @Nullable
+  public static Collection<HighlightInfo> checkCatchParameterIsClass(PsiParameter parameter) {
+    if (!(parameter.getDeclarationScope() instanceof PsiCatchSection)) return null;
+    final Collection<HighlightInfo> result = Lists.newArrayList();
+
+    final List<PsiTypeElement> typeElements = PsiUtil.getParameterTypeElements(parameter);
+    for (PsiTypeElement typeElement : typeElements) {
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(typeElement.getType());
+      if (aClass instanceof PsiTypeParameter) {
+        final String message = JavaErrorMessages.message("generics.cannot.catch.type.parameters");
+        result.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement, message));
       }
     }
 
-    return null;
+    return result;
   }
 
   public static HighlightInfo checkInstanceOfGenericType(PsiInstanceOfExpression expression) {
