@@ -63,6 +63,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   @NonNls private static final String RST_PREFIX = ":";
   @NonNls private static final String EPYDOC_PREFIX = "@";
 
+  private static final Pattern ourSpacesPattern = Pattern.compile("^\\s+");
+
   // provides ctrl+hover info
   public String getQuickNavigateInfo(final PsiElement element, PsiElement originalElement) {
     if (element instanceof PyFunction) {
@@ -223,7 +225,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       Module module = ModuleUtil.findModuleForPsiElement(element);
       String formatted = null;
       if (module != null) {
-        formatted = ReSTRunner.formatDocstring(module, docstring);
+        String[] lines = removeCommonIndentation(docstring);
+        formatted = ReSTRunner.formatDocstring(module, StringUtil.join(lines, "\n"));
       }
       if (formatted == null) {
         formatted = new SphinxDocString(docstring).getDescription();
@@ -232,16 +235,38 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       unformattedOutput.add(result);
       return;
     }
+    String[] lines = removeCommonIndentation(docstring);
+    boolean is_first;
+
+    // reconstruct back, dropping first empty fragment as needed
+    is_first = true;
+    int tabSize = CodeStyleSettingsManager.getSettings(project).getTabSize(PythonFileType.INSTANCE);
+    for (String line : lines) {
+      if (is_first && ourSpacesPattern.matcher(line).matches()) continue; // ignore all initial whitespace
+      if (is_first) is_first = false;
+      else result.add(BR);
+      int leadingTabs = 0;
+      while (leadingTabs < line.length() && line.charAt(leadingTabs) == '\t') {
+        leadingTabs++;
+      }
+      if (leadingTabs > 0) {
+        line = StringUtil.repeatSymbol(' ', tabSize * leadingTabs) + line.substring(leadingTabs);
+      }
+      result.add(combUp(line));
+    }
+    formattedOutput.add(result);
+  }
+
+  private static String[] removeCommonIndentation(String docstring) {
     // detect common indentation
     String[] lines = LineTokenizer.tokenize(docstring, false);
-    Pattern spaces_pat = Pattern.compile("^\\s+");
     boolean is_first = true;
     int cut_width = Integer.MAX_VALUE;
     int firstIndentedLine = 0;
     for (String frag : lines) {
       if (frag.length() == 0) continue;
       int pad_width = 0;
-      final Matcher matcher = spaces_pat.matcher(frag);
+      final Matcher matcher = ourSpacesPattern.matcher(frag);
       if (matcher.find()) {
         pad_width = matcher.end();
       }
@@ -260,23 +285,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         if (lines[i].length() > 0) lines[i] = lines[i].substring(cut_width);
       }
     }
-    // reconstruct back, dropping first empty fragment as needed
-    is_first = true;
-    int tabSize = CodeStyleSettingsManager.getSettings(project).getTabSize(PythonFileType.INSTANCE);
-    for (String line : lines) {
-      if (is_first && spaces_pat.matcher(line).matches()) continue; // ignore all initial whitespace
-      if (is_first) is_first = false;
-      else result.add(BR);
-      int leadingTabs = 0;
-      while (leadingTabs < line.length() && line.charAt(leadingTabs) == '\t') {
-        leadingTabs++;
-      }
-      if (leadingTabs > 0) {
-        line = StringUtil.repeatSymbol(' ', tabSize * leadingTabs) + line.substring(leadingTabs);
-      }
-      result.add(combUp(line));
-    }
-    formattedOutput.add(result);
+    return lines;
   }
 
   private static String formatStructuredDocString(StructuredDocString docString) {
