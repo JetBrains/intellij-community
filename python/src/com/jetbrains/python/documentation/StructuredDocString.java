@@ -126,7 +126,7 @@ public abstract class StructuredDocString {
   public abstract String getReturnDescription();
 
   @Nullable
-  public abstract String getParamType(String paramName);
+  public abstract String getParamType(@Nullable String paramName);
 
   @Nullable
   public abstract String getParamDescription(String paramName);

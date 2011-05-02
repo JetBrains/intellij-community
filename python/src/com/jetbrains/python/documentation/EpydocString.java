@@ -57,8 +57,8 @@ public class EpydocString extends StructuredDocString {
 
   @Override
   @Nullable
-  public String getParamType(String paramName) {
-    String value = getTagValue("type", paramName);
+  public String getParamType(@Nullable String paramName) {
+    String value = paramName == null ? getTagValue("type") : getTagValue("type", paramName);
     return removeInlineMarkup(value);
   }
 

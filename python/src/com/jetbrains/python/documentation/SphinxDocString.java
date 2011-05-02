@@ -1,5 +1,7 @@
 package com.jetbrains.python.documentation;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
 
 /**
@@ -36,8 +38,8 @@ public class SphinxDocString extends StructuredDocString {
   }
 
   @Override
-  public String getParamType(String paramName) {
-    return getTagValue("type", paramName);
+  public String getParamType(@Nullable String paramName) {
+    return paramName == null ? getTagValue("type") : getTagValue("type", paramName);
   }
 
   @Override
