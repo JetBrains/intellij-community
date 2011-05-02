@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.generation;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfo {
   private T myMember;
   private final boolean myMergeIfExists;
+  private static final Logger LOG = Logger.getInstance("#" + PsiGenerationInfo.class.getName());
 
   public PsiGenerationInfo(@NotNull final T member) {
     myMember = member;
@@ -52,10 +54,13 @@ public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfo {
     else if (myMember instanceof PsiMethod) {
       existingMember = aClass.findMethodBySignature((PsiMethod)myMember, false);
     }
-    else existingMember = null;
+    else {
+      existingMember = null;
+    }
     if (existingMember == null || !myMergeIfExists) {
       PsiElement newMember = GenerateMembersUtil.insert(aClass, myMember, anchor, before);
       myMember = (T)JavaCodeStyleManager.getInstance(aClass.getProject()).shortenClassReferences(newMember);
+      LOG.assertTrue(myMember.isValid(), myMember);
     }
     else {
       final PsiModifierList modifierList = myMember.getModifierList();
@@ -72,6 +77,12 @@ public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfo {
         }
       }
       myMember = (T)existingMember;
+      if (!myMember.isValid()) {
+        LOG.error("invalid member: " + myMember +
+                  " existing member: " + existingMember.isValid() +
+                  " self modified list: " + modifierList +
+                  " existing modified list: " + existingModifierList);
+      }
     }
 
     if (myMember instanceof PsiMethod) {
