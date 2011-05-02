@@ -342,7 +342,6 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       final int modelColumn = myTable.convertColumnIndexToModel(column);
       final M memberInfo = myTable.myMemberInfos.get(row);
       setToolTipText(myTable.myMemberInfoModel.getTooltipText(memberInfo));
-      T member = memberInfo.getMember();
       switch (modelColumn) {
         case DISPLAY_NAME_COLUMN:
           {
