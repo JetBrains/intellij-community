@@ -406,6 +406,10 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     return myPanels.get(inspectionProfile.getName());
   }
 
+  protected Set<String> getKnownNames() {
+    return myPanels.keySet();
+  }
+
   public InspectionProfileImpl getSelectedObject() {
     return (InspectionProfileImpl)myProfiles.getSelectedItem();
   }

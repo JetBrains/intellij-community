@@ -21,12 +21,16 @@
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 
+import java.util.Arrays;
+
 public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigurable {
+  private static final Logger LOG = Logger.getInstance("#" + ProjectInspectionToolsConfigurable.class.getName());
   public ProjectInspectionToolsConfigurable(InspectionProfileManager profileManager, InspectionProjectProfileManager projectProfileManager) {
     super(projectProfileManager, profileManager);
   }
@@ -38,10 +42,15 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
   @Override
   public void apply() throws ConfigurationException {
     super.apply();
-    if (getSelectedPanel().isProfileShared()) {
-      myProjectProfileManager.setProjectProfile(getSelectedObject().getName());
+    final InspectionProfileImpl selectedObject = getSelectedObject();
+    LOG.assertTrue(selectedObject != null);
+    final String profileName = selectedObject.getName();
+    final SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
+    LOG.assertTrue(selectedPanel != null, "selected profile: " + profileName + " panels: " + Arrays.toString(getKnownNames().toArray()));
+    if (selectedPanel.isProfileShared()) {
+      myProjectProfileManager.setProjectProfile(profileName);
     } else {
-      myProfileManager.setRootProfile(getSelectedObject().getName());
+      myProfileManager.setRootProfile(profileName);
       myProjectProfileManager.setProjectProfile(null);
     }
   }
