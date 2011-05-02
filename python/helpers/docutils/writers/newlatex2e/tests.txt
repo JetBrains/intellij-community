@@ -1,0 +1,7 @@
+These tests will have to be migrated to a test suite (either
+functional tests or unit tests).
+
+::
+
+    Newline followed by
+    *an asterisk.
