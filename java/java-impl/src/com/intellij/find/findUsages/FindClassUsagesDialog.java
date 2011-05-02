@@ -94,12 +94,12 @@ public class FindClassUsagesDialog extends JavaFindUsagesDialog<JavaClassFindUsa
   }
 
   protected void update() {
-    if(myCbToSearchForTextOccurences != null){
+    if(myCbToSearchForTextOccurrences != null){
       if (isSelected(myCbUsages)){
-        myCbToSearchForTextOccurences.makeSelectable();
+        myCbToSearchForTextOccurrences.makeSelectable();
       }
       else{
-        myCbToSearchForTextOccurences.makeUnselectable(false);
+        myCbToSearchForTextOccurrences.makeUnselectable(false);
       }
     }
 
