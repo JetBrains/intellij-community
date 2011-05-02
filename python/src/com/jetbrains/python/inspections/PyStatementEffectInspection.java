@@ -9,7 +9,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.StatementEffectFunctionCallQuickFix;
 import com.jetbrains.python.actions.StatementEffectIntroduceVariableQuickFix;
 import com.jetbrains.python.console.PydevConsoleRunner;
-import com.jetbrains.python.documentation.EpydocUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyType;
@@ -78,13 +77,7 @@ public class PyStatementEffectInspection extends PyInspection {
       }
 
       if (expression instanceof PyStringLiteralExpression) {
-        final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(expression, PyDocStringOwner.class);
-        if (docStringOwner != null) {
-          if (docStringOwner.getDocStringExpression() == expression) {
-            return true;
-          }
-        }
-        if (EpydocUtil.isVariableDocString((PyStringLiteralExpression)expression)) return true;
+        if (PyUtil.isDocString(expression)) return true;
       }
       else if (expression instanceof PyListCompExpression) {
         if (hasEffect(((PyListCompExpression)expression).getResultExpression())) {

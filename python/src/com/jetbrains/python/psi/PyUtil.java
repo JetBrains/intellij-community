@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.documentation.EpydocUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -478,6 +479,17 @@ public class PyUtil {
     final PyTargetExpression targetExpr = (PyTargetExpression)target;
     PyExpression qualifier = targetExpr.getQualifier();
     return qualifier != null && qualifier.getText().equals(params[0].getName());
+  }
+
+  public static boolean isDocString(PyExpression expression) {
+    final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(expression, PyDocStringOwner.class);
+    if (docStringOwner != null) {
+      if (docStringOwner.getDocStringExpression() == expression) {
+        return true;
+      }
+    }
+    if (EpydocUtil.isVariableDocString((PyStringLiteralExpression)expression)) return true;
+    return false;
   }
 
   public static class KnownDecoratorProviderHolder {
