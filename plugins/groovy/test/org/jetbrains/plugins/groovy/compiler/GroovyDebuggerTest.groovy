@@ -193,13 +193,10 @@ cl.parseClass('''$mcText''', 'MyClass.groovy').foo(2)
 
     runDebugger 'Foo', {
       waitForBreakpoint()
-      println 'on a breakpoint'
       SourcePosition position = managed {
         EvaluationContextImpl context = evaluationContext()
-        println "evalCtx: $context.frameProxy $context.thisObject"
         ContextUtil.getSourcePosition(context)
       }
-      println "position $position"
       assert myClass == position.file.virtualFile
       eval 'a', '2'
     }
@@ -246,12 +243,17 @@ cl.parseClass('''$mcText''', 'MyClass.groovy').foo(2)
   private <T> T managed(Closure cl) {
     def result = null
     def ctx = DebuggerContextUtil.createDebuggerContext(debugSession, debugProcess.suspendManager.pausedContext)
+    Semaphore semaphore = new Semaphore()
+    semaphore.down()
     debugProcess.managerThread.invokeAndWait(new DebuggerContextCommandImpl(ctx) {
       @Override
       void threadAction() {
         result = cl()
+        semaphore.up()
       }
     })
+    def finished = semaphore.waitFor(20000)
+    assert finished : 'Too long debugger action'
     return result
   }
 
