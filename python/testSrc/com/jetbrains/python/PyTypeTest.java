@@ -169,6 +169,15 @@ public class PyTypeTest extends PyLightFixtureTestCase {
     assertEquals("str", type.getName());
   }
 
+  public void testEpydocIvarType() {
+    PyClassType type = (PyClassType) doTest("class C:\n" +
+                                            "    s = None\n" +
+                                            "    '''@type: C{int}'''\n" +
+                                            "    def foo(self):\n" +
+                                            "        expr = self.s");
+    assertEquals("int", type.getName());
+  }
+
   private PyType doTest(final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

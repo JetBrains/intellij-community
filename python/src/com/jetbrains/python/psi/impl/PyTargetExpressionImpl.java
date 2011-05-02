@@ -18,6 +18,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
@@ -125,6 +126,10 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       if (!context.maySwitchToAST(this)) {
         return null;
       }
+      PyType type = getTypeFromDocString(this);
+      if (type != null) {
+        return type;
+      }
       if (getParent() instanceof PyAssignmentStatement) {
         final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)getParent();
         final PyExpression assignedValue = assignmentStatement.getAssignedValue();
@@ -174,6 +179,21 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     finally {
       TypeEvalStack.evaluated(this);
     }
+  }
+
+  @Nullable
+  public static PyType getTypeFromDocString(PyTargetExpressionImpl targetExpression) {
+    final String docString = PyUtil.strValue(PyUtil.getAttributeDocString(targetExpression));
+    if (docString != null) {
+      StructuredDocString structuredDocString = StructuredDocString.parse(docString);
+      if (structuredDocString != null) {
+        String typeName = structuredDocString.getParamType(null);
+        if (typeName != null) {
+          return PyTypeParser.getTypeByName(targetExpression, typeName);
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
