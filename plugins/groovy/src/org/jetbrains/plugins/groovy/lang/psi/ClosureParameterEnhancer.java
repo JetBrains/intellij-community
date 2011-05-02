@@ -251,7 +251,7 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
       return res;
     }
 
-    if (TypesUtil.typeEqualsToText(iterType, CommonClassNames.JAVA_LANG_STRING) || TypesUtil.typeEqualsToText(iterType, "java.io.File")) {
+    if (TypesUtil.isClassType(iterType, CommonClassNames.JAVA_LANG_STRING) || TypesUtil.isClassType(iterType, "java.io.File")) {
       return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, context);
     }
 

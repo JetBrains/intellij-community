@@ -96,7 +96,7 @@ public class GrMethodMergingContributor extends CompletionContributor {
     final PsiParameter[] params = method.getParameterList().getParameters();
     for (PsiParameter param : params) {
       final PsiType type = param.getType();
-      if (!TypesUtil.typeEqualsToText(type, GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
+      if (!TypesUtil.isClassType(type, GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
         return false;
       }
     }
