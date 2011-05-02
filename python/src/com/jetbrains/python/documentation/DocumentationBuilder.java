@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
@@ -25,9 +24,7 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.ChainIterable;
-import com.jetbrains.python.toolbox.FP;
 import com.jetbrains.python.toolbox.Maybe;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +33,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.jetbrains.python.documentation.PythonDocumentationProvider.$;
+import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
+import static com.jetbrains.python.documentation.DocumentationBuilderKit.combUp;
 
 class DocumentationBuilder {
   private final PsiElement myElement;
@@ -113,8 +111,7 @@ class DocumentationBuilder {
                   if (dir == AccessDirection.READ) accessor_kind = "Getter";
                   else if (dir == AccessDirection.WRITE) accessor_kind = "Setter";
                   else accessor_kind = "Deleter";
-                  if (followed != null) myEpilog.addWith(TagSmall,
-                                                         $(BR, BR, accessor_kind, " of property")).add(BR);
+                  if (followed != null) myEpilog.addWith(TagSmall, $(BR, BR, accessor_kind, " of property")).add(BR);
                 }
               }
             }
@@ -257,7 +254,7 @@ class DocumentationBuilder {
             myEpilog.add(BR).add(BR);
             String ancestor_name = ancestor.getName();
             String marker = (cls == ancestor)? PythonDocumentationProvider.LINK_TYPE_CLASS : PythonDocumentationProvider.LINK_TYPE_PARENT;
-            final String ancestor_link = $().addWith(new PythonDocumentationProvider.LinkWrapper(marker + ancestor_name), $(ancestor_name)).toString();
+            final String ancestor_link = $().addWith(new DocumentationBuilderKit.LinkWrapper(marker + ancestor_name), $(ancestor_name)).toString();
             if (is_from_class) myEpilog.add(PyBundle.message("QDOC.copied.from.class.$0", ancestor_link));
             else {
               myEpilog.add(PyBundle.message("QDOC.copied.from.$0.$1", ancestor_link, meth_name));
@@ -449,42 +446,6 @@ class DocumentationBuilder {
       }
     }
   }
-
-  private static ChainIterable<String> wrapInTag(String tag, Iterable<String> content) {
-    return new ChainIterable<String>("<" + tag + ">").add(content).add("</" + tag + ">");
-  }
-
-  // make a first-order curried objects out of wrapInTag()
-  private static class TagWrapper implements FP.Lambda1<Iterable<String>, Iterable<String>> {
-    private final String myTag;
-
-    TagWrapper(String tag) {
-      myTag = tag;
-    }
-
-    public Iterable<String> apply(Iterable<String> contents) {
-      return wrapInTag(myTag, contents);
-    }
-
-  }
-
-  private static final TagWrapper TagBold = new TagWrapper("b");
-  private static final TagWrapper TagItalic = new TagWrapper("i");
-  private static final TagWrapper TagSmall = new TagWrapper("small");
-  private static final TagWrapper TagCode = new TagWrapper("code");
-
-  private static final FP.Lambda1<String, String> LCombUp = new FP.Lambda1<String, String>() {
-    public String apply(String argname) {
-      return combUp(argname);
-    }
-  };
-
-  @NonNls
-  private static String combUp(@NonNls String what) {
-    return XmlStringUtil.escapeString(what).replace("\n", BR).replace(" ", "&nbsp;");
-  }
-
-  private final static @NonNls String BR = "<br>";
 
   private static class RootFinder implements RootVisitor {
     private String myResult;

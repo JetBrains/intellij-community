@@ -1,6 +1,5 @@
 package com.jetbrains.python.documentation;
 
-import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,10 +30,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
+
+import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
 
 /**
  * Provides quick docs for classes, methods, and functions.
@@ -134,7 +133,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         if (is_not_first) cat.add(", ");
         else is_not_first = true;
         final String parent_name = parent.getName();
-        if (allow_html) cat.addWith(new LinkWrapper(LINK_TYPE_PARENT + parent_name), $(parent_name));
+        if (allow_html) cat.addWith(new DocumentationBuilderKit.LinkWrapper(LINK_TYPE_PARENT + parent_name), $(parent_name));
         else cat.add(parent_name);
       }
       cat.add(")");
@@ -343,58 +342,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     else return PsiTreeUtil.getParentOfType(context, PyClass.class);
   }
 
-  private static final FP.Lambda1<String, String> LSame1 = new FP.Lambda1<String, String>() {
-    public String apply(String name) {
-      return name;
-    }
-  };
-
-
-  static ChainIterable<String> $(String... content) {
-    return new ChainIterable<String>(Arrays.asList(content));
-  }
-
-
-  static class LinkWrapper implements FP.Lambda1<Iterable<String>, Iterable<String>> {
-    private String myLink;
-
-    LinkWrapper(String link) {
-      myLink = link;
-    }
-
-    public Iterable<String> apply(Iterable<String> contents) {
-      return new ChainIterable<String>()
-        .add("<a href=\"").add(DocumentationManager.PSI_ELEMENT_PROTOCOL).add(myLink).add("\">")
-        .add(contents).add("</a>")
-      ;
-    }
-  }
-
-  private static final LinkWrapper LinkMyClass = new LinkWrapper(LINK_TYPE_CLASS); // link item to containing class
- 
-
-  private static final FP.Lambda1<Iterable<String>, Iterable<String>> LSame2 = new FP.Lambda1<Iterable<String>, Iterable<String>>() {
-    public Iterable<String> apply(Iterable<String> what) {
-      return what;
-    }
-  };
-
-  public static FP.Lambda1<PyExpression, String> LReadableRepr = new FP.Lambda1<PyExpression, String>() {
-    public String apply(PyExpression arg) {
-      return PyUtil.getReadableRepr(arg, true);
-    }
-  };
-
-  private static <T> Iterable<T> interleave(Iterable<T> source, T filler) {
-    List<T> ret = new LinkedList<T>();
-    boolean is_next = false;
-    for (T what : source) {
-      if (is_next) ret.add(filler);
-      else is_next = true;
-      ret.add(what);
-    }
-    return ret;
-  }
+  private static final DocumentationBuilderKit.LinkWrapper LinkMyClass = new DocumentationBuilderKit.LinkWrapper(LINK_TYPE_CLASS); // link item to containing class
 
   public String generateDocumentationContentStub(PyFunction element, String offset) {
     Project project = element.getProject();
