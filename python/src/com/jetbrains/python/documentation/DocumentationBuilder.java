@@ -420,6 +420,16 @@ class DocumentationBuilder {
 
   private static String formatStructuredDocString(StructuredDocString docString) {
     StringBuilder result = new StringBuilder();
+
+    final String attributeDescription = docString.getAttributeDescription();
+    if (attributeDescription != null) {
+      result.append(attributeDescription);
+      final String attrType = docString.getParamType(null);
+      if (attrType != null) {
+        result.append(" <i>Type: ").append(attrType).append("</i>");
+      }
+    }
+
     formatParameterDescriptions(docString, result, false);
     formatParameterDescriptions(docString, result, true);
 

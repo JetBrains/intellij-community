@@ -15,6 +15,7 @@ public class EpydocString extends StructuredDocString {
   public static String[] RETURN_TAGS = new String[] { "return", "returns" };
   public static String[] RTYPE_TAGS = new String[] { "rtype", "returntype" };
   public static String[] KEYWORD_ARGUMENT_TAGS = new String[] { "keyword", "kwarg", "kwparam" };
+  public static String[] VARIABLE_TAGS = new String[] { "ivar", "cvar", "var" };
 
   public static String[] ALL_TAGS = new String[] {
     "@param", "@type", "@return", "@rtype", "@keyword", "@raise", "@ivar", "@cvar", "@var", "@group", "@sort", "@note", "@attention",
@@ -88,6 +89,11 @@ public class EpydocString extends StructuredDocString {
   @Override
   public String getRaisedExceptionDescription(String exceptionName) {
     return removeInlineMarkup(getTagValue(RAISES_TAGS, exceptionName));
+  }
+
+  @Override
+  public String getAttributeDescription() {
+    return convertInlineMarkup(getTagValue(VARIABLE_TAGS), true);
   }
 
   @Nullable

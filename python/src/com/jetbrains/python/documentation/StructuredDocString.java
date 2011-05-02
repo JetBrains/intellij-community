@@ -135,4 +135,7 @@ public abstract class StructuredDocString {
   public abstract List<String> getRaisedExceptions();
 
   public abstract String getRaisedExceptionDescription(String exceptionName);
+
+  @Nullable
+  public abstract String getAttributeDescription();
 }

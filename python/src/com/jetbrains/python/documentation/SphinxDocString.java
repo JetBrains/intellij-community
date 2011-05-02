@@ -61,4 +61,9 @@ public class SphinxDocString extends StructuredDocString {
   public String getRaisedExceptionDescription(String exceptionName) {
     return getTagValue(EpydocString.RAISES_TAGS, exceptionName);
   }
+
+  @Override
+  public String getAttributeDescription() {
+    return getTagValue(EpydocString.VARIABLE_TAGS);
+  }
 }
