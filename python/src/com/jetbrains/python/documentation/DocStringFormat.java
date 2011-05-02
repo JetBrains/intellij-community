@@ -10,7 +10,7 @@ import java.util.List;
 public class DocStringFormat {
   public static final String PLAIN = "Plain";
   public static final String EPYTEXT = "Epytext";
-  public static final String REST = "Restructuredtext";
+  public static final String REST = "reStructuredText";
 
   public static final List<String> ALL = ImmutableList.of(PLAIN, EPYTEXT, REST);
 

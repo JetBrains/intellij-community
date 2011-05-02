@@ -37,7 +37,7 @@ public class PyIntegratedToolsConfigurable implements Configurable, NonDefaultPr
     myDocstringFormatComboBox.setModel(new CollectionComboBoxModel(DocStringFormat.ALL, myDocumentationSettings.myDocStringFormat));
 
     final FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myWorkDir.addBrowseFolderListener("Please, choose working directory:", null, project, fileChooserDescriptor);
+    myWorkDir.addBrowseFolderListener("Please choose working directory:", null, project, fileChooserDescriptor);
     ReSTService service = ReSTService.getInstance(myProject);
     myWorkDir.setText(service.getWorkdir());
   }
