@@ -150,21 +150,7 @@ class DocumentationBuilder {
         }
       }
       else if (followed instanceof PyFile) {
-        // what to prepend to a module description?
-        String path = VfsUtil.urlToPath(((PyFile)followed).getUrl());
-        if ("".equals(path)) {
-          myProlog.addWith(TagSmall, $(PyBundle.message("QDOC.module.path.unknown")));
-        }
-        else {
-          RootFinder finder = new RootFinder(path);
-          ResolveImportUtil.visitRoots(followed, finder);
-          final String root_path = finder.getResult();
-          if (root_path != null) {
-            String after_part = path.substring(root_path.length());
-            myProlog.addWith(TagSmall, $(root_path).addWith(TagBold, $(after_part)));
-          }
-          else myProlog.addWith(TagSmall, $(path));
-        }
+        addModulePath((PyFile) followed);
       }
       if (docString != null) {
         myBody.add(BR);
@@ -275,20 +261,24 @@ class DocumentationBuilder {
         // for well-known methods, copy built-in doc string.
         // TODO: also handle predefined __xxx__ that are not part of 'object'.
         if (PyNames.UnderscoredAttributes.contains(meth_name)) {
-          PyClassType objtype = PyBuiltinCache.getInstance(fun).getObjectType(); // old- and new-style classes share the __xxx__ stuff
-          if (objtype != null) {
-            PyClass objcls = objtype.getPyClass();
-            if (objcls != null) {
-              PyFunction obj_underscored = objcls.findMethodByName(meth_name, false);
-              if (obj_underscored != null) {
-                PyStringLiteralExpression predefined_doc_expr = obj_underscored.getDocStringExpression();
-                String predefined_doc = predefined_doc_expr != null? predefined_doc_expr.getStringValue() : null;
-                if (predefined_doc != null && predefined_doc.length() > 1) { // only a real-looking doc string counts
-                  addFormattedDocString(fun, predefined_doc, myBody, myBody);
-                  myEpilog.add(BR).add(BR).add(PyBundle.message("QDOC.copied.from.builtin"));
-                }
-              }
-            }
+          addPredefinedMethodDoc(fun, meth_name);
+        }
+      }
+    }
+  }
+
+  private void addPredefinedMethodDoc(PyFunction fun, String meth_name) {
+    PyClassType objtype = PyBuiltinCache.getInstance(fun).getObjectType(); // old- and new-style classes share the __xxx__ stuff
+    if (objtype != null) {
+      PyClass objcls = objtype.getPyClass();
+      if (objcls != null) {
+        PyFunction obj_underscored = objcls.findMethodByName(meth_name, false);
+        if (obj_underscored != null) {
+          PyStringLiteralExpression predefined_doc_expr = obj_underscored.getDocStringExpression();
+          String predefined_doc = predefined_doc_expr != null? predefined_doc_expr.getStringValue() : null;
+          if (predefined_doc != null && predefined_doc.length() > 1) { // only a real-looking doc string counts
+            addFormattedDocString(fun, predefined_doc, myBody, myBody);
+            myEpilog.add(BR).add(BR).add(PyBundle.message("QDOC.copied.from.builtin"));
           }
         }
       }
@@ -444,6 +434,24 @@ class DocumentationBuilder {
         }
         result.append("<br>");
       }
+    }
+  }
+
+  private void addModulePath(PyFile followed) {
+    // what to prepend to a module description?
+    String path = VfsUtil.urlToPath(followed.getUrl());
+    if ("".equals(path)) {
+      myProlog.addWith(TagSmall, $(PyBundle.message("QDOC.module.path.unknown")));
+    }
+    else {
+      RootFinder finder = new RootFinder(path);
+      ResolveImportUtil.visitRoots(followed, finder);
+      final String root_path = finder.getResult();
+      if (root_path != null) {
+        String after_part = path.substring(root_path.length());
+        myProlog.addWith(TagSmall, $(root_path).addWith(TagBold, $(after_part)));
+      }
+      else myProlog.addWith(TagSmall, $(path));
     }
   }
 
