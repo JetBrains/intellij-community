@@ -349,6 +349,7 @@ public class InplaceIntroduceFieldPopup {
           return;
         }
         ourLastInitializerPlace = myIntroduceFieldPanel.getInitializerPlace();
+        myIntroduceFieldPanel.saveFinalState();
         final BaseExpressionToFieldHandler.Settings settings =
           new BaseExpressionToFieldHandler.Settings(myFieldName, myIntroduceFieldPanel.isReplaceAllOccurrences(), myStatic,
                                                     myIntroduceFieldPanel.isDeclareFinal(),
