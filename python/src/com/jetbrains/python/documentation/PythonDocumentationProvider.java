@@ -342,7 +342,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     else return PsiTreeUtil.getParentOfType(context, PyClass.class);
   }
 
-  private static final DocumentationBuilderKit.LinkWrapper LinkMyClass = new DocumentationBuilderKit.LinkWrapper(LINK_TYPE_CLASS); // link item to containing class
+  public static final DocumentationBuilderKit.LinkWrapper LinkMyClass = new DocumentationBuilderKit.LinkWrapper(LINK_TYPE_CLASS); // link item to containing class
 
   public String generateDocumentationContentStub(PyFunction element, String offset) {
     Project project = element.getProject();

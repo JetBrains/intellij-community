@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
@@ -120,7 +121,9 @@ class DocumentationBuilder {
       }
     }
 
-    if (myProlog.isEmpty() && ! is_property) myProlog.add(reassign_cat);
+    if (myProlog.isEmpty() && !is_property && !isAttribute()) {
+      myProlog.add(reassign_cat);
+    }
 
     // now followed may contain a doc string
     if (followed instanceof PyDocStringOwner) {
@@ -135,7 +138,7 @@ class DocumentationBuilder {
       }
       else if (followed instanceof PyFunction) {
         PyFunction fun = (PyFunction)followed;
-        if (! is_property) {
+        if (!is_property) {
           cls = fun.getContainingClass();
           if (cls != null) {
             myBody.addWith(TagSmall, PythonDocumentationProvider.describeClass(cls, TagCode, true, true)).add(BR).add(BR);
@@ -165,6 +168,9 @@ class DocumentationBuilder {
       myBody.addWith(TagItalic, $(accessor_message)).add(BR);
       if (followed != null) myBody.add(combUp(PyUtil.getReadableRepr(followed, false)));
     }
+    else if (isAttribute()) {
+      addAttributeDoc();
+    }
     else if (followed != null && outer instanceof PyReferenceExpression) {
       Class[] uninteresting_classes = {PyTargetExpression.class, PyAugAssignmentStatement.class};
       boolean is_interesting = myElement != null && ! PyUtil.instanceOf(myElement, uninteresting_classes);
@@ -181,6 +187,12 @@ class DocumentationBuilder {
     }
     if (myBody.isEmpty() && myEpilog.isEmpty()) return null; // got nothing substantial to say!
     else return myResult.toString();
+  }
+
+  private boolean isAttribute() {
+    return myElement instanceof PyTargetExpression &&
+             (PyUtil.isInstanceAttribute((PyTargetExpression)myElement)) ||
+              PsiTreeUtil.getParentOfType(myElement, ScopeOwner.class) instanceof PyClass;
   }
 
   @Nullable
@@ -357,6 +369,21 @@ class DocumentationBuilder {
           myEpilog.add(BR).add(desc);
         }
       }
+    }
+  }
+
+  private void addAttributeDoc() {
+    PyClass cls = PsiTreeUtil.getParentOfType(myElement, PyClass.class);
+    assert cls != null;
+    String type = PyUtil.isInstanceAttribute((PyExpression)myElement) ? "Instance attribute " : "Class attribute ";
+    myProlog
+      .add(type).addWith(TagBold, $().addWith(TagCode, $(((PyTargetExpression)myElement).getName())))
+      .add(" of class ").addWith(PythonDocumentationProvider.LinkMyClass, $().addWith(TagCode, $(cls.getName()))).add(BR)
+    ;
+
+    final String docString = PyUtil.strValue(PyUtil.getAttributeDocString((PyTargetExpression)myElement));
+    if (docString != null) {
+      addFormattedDocString(myElement, docString, myBody, myEpilog);
     }
   }
 

@@ -187,6 +187,14 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
+  public void testInstanceAttr() {
+    checkHTMLOnly();
+  }
+
+  public void testClassAttr() {
+    checkHTMLOnly();
+  }
+
   public void testHoverOverClass() {
     checkHover();
   }
