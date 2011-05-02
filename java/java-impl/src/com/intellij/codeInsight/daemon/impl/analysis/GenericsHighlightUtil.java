@@ -133,11 +133,16 @@ public class GenericsHighlightUtil {
     if (targetParametersNum != refParametersNum && refParametersNum != 0) {
       final String description;
       if (targetParametersNum == 0) {
-        description = JavaErrorMessages.message(
-          "generics.type.or.method.does.not.have.type.parameters",
-          typeParameterListOwnerCategoryDescription(typeParameterListOwner),
-          typeParameterListOwnerDescription(typeParameterListOwner)
-        );
+        if (PsiTreeUtil.getParentOfType(referenceParameterList, PsiCall.class) != null &&
+            PsiUtil.isLanguageLevel7OrHigher(referenceParameterList)) {
+          description = null;
+        } else {
+          description = JavaErrorMessages.message(
+            "generics.type.or.method.does.not.have.type.parameters",
+            typeParameterListOwnerCategoryDescription(typeParameterListOwner),
+            typeParameterListOwnerDescription(typeParameterListOwner)
+          );
+        }
       }
       else {
         description = JavaErrorMessages.message(
@@ -145,17 +150,19 @@ public class GenericsHighlightUtil {
         );
       }
 
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceParameterList, description);
-      if (registerIntentions) {
-        PsiElement pparent = referenceParameterList.getParent().getParent();
-        if (pparent instanceof PsiTypeElement) {
-          PsiElement variable = pparent.getParent();
-          if (variable instanceof PsiVariable) {
-            VariableParameterizedTypeFix.registerIntentions(highlightInfo, (PsiVariable)variable, referenceParameterList);
+      if (description != null) {
+        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceParameterList, description);
+        if (registerIntentions) {
+          PsiElement pparent = referenceParameterList.getParent().getParent();
+          if (pparent instanceof PsiTypeElement) {
+            PsiElement variable = pparent.getParent();
+            if (variable instanceof PsiVariable) {
+              VariableParameterizedTypeFix.registerIntentions(highlightInfo, (PsiVariable)variable, referenceParameterList);
+            }
           }
         }
+        return highlightInfo;
       }
-      return highlightInfo;
     }
 
     // bounds check
@@ -226,6 +233,14 @@ public class GenericsHighlightUtil {
     } else {
       referenceClass = null;
     }
+    final PsiType psiType = substitutor.substitute(classParameter);
+    if (psiType instanceof PsiClassType && !(PsiUtil.resolveClassInType(psiType) instanceof PsiTypeParameter)) {
+      if (checkNotInBounds(type, psiType)) {
+        final String description = "Actual type argument and inferred type contradict each other";
+        return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, typeElement2Highlight, description);
+      }
+    }
+
     final PsiClassType[] bounds = classParameter.getSuperTypes();
     for (PsiClassType type1 : bounds) {
       PsiType bound = substitutor.substitute(type1);

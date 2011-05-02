@@ -109,3 +109,25 @@ class FI1 {
     }
   };
 }
+
+class Super<X,Y> {
+    private Super(Integer i, Y y, X x) {}
+    public Super(Number n, X x, Y y) {}
+}
+
+class TestMySuper {
+    Super<String,Integer> ssi1 = new Super<>(1, "", 2);
+}
+
+class TestLocal<X> {
+    class Member { }
+    static class Nested {}
+
+    void test() {
+        class Local {}
+
+        Member m = new Member<<error descr="Diamond operator is not applicable for non-parameterized types"></error>>();
+        Nested n = new Nested<<error descr="Diamond operator is not applicable for non-parameterized types"></error>>();
+        Local l = new Local<<error descr="Diamond operator is not applicable for non-parameterized types"></error>>();
+    }
+}
