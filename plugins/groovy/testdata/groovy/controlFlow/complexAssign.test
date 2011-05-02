@@ -5,4 +5,5 @@ msg += "aaa"
 1(2) WRITE msg
 2(3) READ msg
 3(4) WRITE msg
-4() element: null
+4(5) element: Assignment expression MAYBE_RETURN
+5() element: null

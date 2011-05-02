@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionBase;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowUtil;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -61,7 +61,7 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
 
   protected void check(GrControlFlowOwner owner, ProblemsHolder problemsHolder) {
     Instruction[] flow = owner.getControlFlow();
-    ReadWriteVariableInstruction[] reads = ControlFlowUtil.getReadsWithoutPriorWrites(flow);
+    ReadWriteVariableInstruction[] reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(flow);
     for (ReadWriteVariableInstruction read : reads) {
       PsiElement element = read.getElement();
       if (element instanceof GroovyPsiElement) {

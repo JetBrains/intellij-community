@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.psi.*;
+import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -17,6 +18,12 @@ public class DynamicMembersContributor extends NonCodeMembersContributor {
                                      GroovyPsiElement place,
                                      ResolveState state) {
     final DynamicManager manager = DynamicManager.getInstance(place.getProject());
+    NameHint nameHint = processor.getHint(NameHint.KEY);
+    if (nameHint != null && !((DynamicManagerImpl)manager).containsDynamicMember(nameHint.getName(state))) {
+      return;
+    }
+
+
     for (String qName : ResolveUtil.getAllSuperTypes(qualifierType, place.getProject()).keySet()) {
       for (PsiMethod method : manager.getMethods(qName)) {
         if (!ResolveUtil.processElement(processor, method, state)) return;

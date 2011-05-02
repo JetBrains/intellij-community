@@ -25,8 +25,11 @@ import java.util.List;
 /**
  * @author ven
  */
-public class ControlFlowUtil {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowUtil");
+public class ControlFlowBuilderUtil {
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil");
+
+  private ControlFlowBuilderUtil() {
+  }
 
   public static int[] postorder(Instruction[] flow) {
     int[] result = new int[flow.length];

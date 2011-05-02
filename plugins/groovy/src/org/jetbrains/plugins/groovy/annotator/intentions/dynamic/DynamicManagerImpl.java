@@ -370,6 +370,20 @@ public class DynamicManagerImpl extends DynamicManager {
     fireChange();
   }
 
+  public boolean containsDynamicMember(String name) {
+    for (DClassElement element : getRootElement().getContainingClasses()) {
+      for (DMethodElement methodElement : element.getMethods()) {
+        if (methodElement.getName().equals(name)) {
+          return true;
+        }
+      }
+      if (element.getPropertyByName(name) != null) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public Iterable<PsiMethod> getMethods(final String classQname) {
     DClassElement classElement = getRootElement().getClassElement(classQname);
     if (classElement == null) return Collections.emptyList();

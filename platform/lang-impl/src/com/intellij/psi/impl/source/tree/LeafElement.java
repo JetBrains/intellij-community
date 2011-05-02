@@ -56,10 +56,11 @@ public abstract class LeafElement extends TreeElement {
   }
 
   public int copyTo(@Nullable char[] buffer, int start) {
+    final int length = myText.length();
     if (buffer != null) {
-      CharArrayUtil.getChars(myText, buffer, start);
+      CharArrayUtil.getChars(myText, buffer, start, length);
     }
-    return start + myText.length();
+    return start + length;
   }
 
   @NotNull

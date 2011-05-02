@@ -93,6 +93,12 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   }
 
   @Override
+  public void insert(@NotNull final Printable printable, int i) {
+    super.insert(printable, i);
+    fireOnNewPrintable(printable);
+  }
+
+  @Override
   public void dispose() {
     super.dispose();
     for (AbstractTestProxy proxy : getChildren()) {

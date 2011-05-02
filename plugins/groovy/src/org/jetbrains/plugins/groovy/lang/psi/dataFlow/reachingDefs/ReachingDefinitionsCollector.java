@@ -58,7 +58,7 @@ public class ReachingDefinitionsCollector {
     final TIntObjectHashMap<TIntHashSet> dfaResult = postprocess(engine.performDFA(), flow, dfaInstance);
 
     final LinkedHashSet<Integer> fragmentInstructions = getFragmentInstructions(first, last, flow);
-    final int[] postorder = ControlFlowUtil.postorder(flow);
+    final int[] postorder = ControlFlowBuilderUtil.postorder(flow);
     LinkedHashSet<Integer> reachableFromFragmentReads = getReachable(fragmentInstructions, flow, dfaResult, postorder);
     LinkedHashSet<Integer> fragmentReads = filterReads(fragmentInstructions, flow);
 

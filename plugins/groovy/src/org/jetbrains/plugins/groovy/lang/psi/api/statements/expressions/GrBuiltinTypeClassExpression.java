@@ -16,10 +16,12 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import com.intellij.psi.PsiPrimitiveType;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 /**
  * @author ven
  */
 public interface GrBuiltinTypeClassExpression extends GrExpression {
+  PsiPrimitiveType getPrimitiveType();
 }

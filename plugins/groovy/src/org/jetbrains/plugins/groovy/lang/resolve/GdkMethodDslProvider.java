@@ -18,9 +18,11 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
@@ -34,12 +36,15 @@ import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * @author Maxim.Medvedev
  */
 @SuppressWarnings({"MethodMayBeStatic"})
 public class GdkMethodDslProvider implements GdslMembersProvider {
-  private static final Key<CachedValue<MultiMap<String, PsiMethod>>> METHOD_KEY = Key.create("Category methods");
+  private static final Key<CachedValue<Pair<Set<String>, MultiMap<String, PsiMethod>>>> METHOD_KEY = Key.create("Category methods");
 
   public void category(String className, GdslMembersHolderConsumer consumer) {
     processCategoryMethods(className, consumer, new Function<PsiMethod, PsiMethod>() {
@@ -68,10 +73,10 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
       return;
     }
 
-    final VolatileNotNullLazyValue<MultiMap<String, PsiMethod>> methodsMap = new VolatileNotNullLazyValue<MultiMap<String, PsiMethod>>() {
+    final VolatileNotNullLazyValue<Pair<Set<String>, MultiMap<String, PsiMethod>>> methodsMap = new VolatileNotNullLazyValue<Pair<Set<String>, MultiMap<String, PsiMethod>>>() {
       @NotNull
       @Override
-      protected MultiMap<String, PsiMethod> compute() {
+      protected Pair<Set<String>, MultiMap<String, PsiMethod>> compute() {
         return retrieveMethodMap(consumer.getProject(), scope, converter, categoryClass);
       }
     };
@@ -83,9 +88,14 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
         final PsiType psiType = descriptor.getPsiType();
         if (psiType == null)  return true;
 
-        final MultiMap<String, PsiMethod> map = methodsMap.getValue();
+        final Pair<Set<String>, MultiMap<String, PsiMethod>> pair = methodsMap.getValue();
+        NameHint nameHint = processor.getHint(NameHint.KEY);
+        if (nameHint != null && !pair.first.contains(nameHint.getName(state))) {
+          return true;
+        }
+
         for (String superType : ResolveUtil.getAllSuperTypes(psiType, descriptor.getProject()).keySet()) {
-          for (PsiMethod method : map.get(superType)) {
+          for (PsiMethod method : pair.second.get(superType)) {
             if (!processor.execute(method, state)) {
               return false;
             }
@@ -97,14 +107,15 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
     });
   }
 
-  public static MultiMap<String, PsiMethod> retrieveMethodMap(final Project project,
+  public static Pair<Set<String>, MultiMap<String, PsiMethod>> retrieveMethodMap(final Project project,
                                                               final GlobalSearchScope scope,
                                                               final Function<PsiMethod, PsiMethod> converter,
                                                               @NotNull final PsiClass categoryClass) {
     return CachedValuesManager.getManager(project)
-      .getCachedValue(categoryClass, METHOD_KEY, new CachedValueProvider<MultiMap<String, PsiMethod>>() {
+      .getCachedValue(categoryClass, METHOD_KEY, new CachedValueProvider<Pair<Set<String>, MultiMap<String, PsiMethod>>>() {
         @Override
-        public Result<MultiMap<String, PsiMethod>> compute() {
+        public Result<Pair<Set<String>, MultiMap<String, PsiMethod>>> compute() {
+          Set<String> methodNames = new HashSet<String>();
           MultiMap<String, PsiMethod> map = new MultiMap<String, PsiMethod>();
           PsiManager manager = PsiManager.getInstance(project);
           for (PsiMethod m : categoryClass.getMethods()) {
@@ -112,15 +123,16 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
             if (params.length == 0) continue;
             final PsiType parameterType = params[0].getType();
             PsiType targetType = TypesUtil.boxPrimitiveType(TypeConversionUtil.erasure(parameterType), manager, scope);
+            methodNames.add(m.getName());
             map.putValue(targetType.getCanonicalText(), converter.fun(m));
           }
           final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
           final VirtualFile vfile = categoryClass.getContainingFile().getVirtualFile();
           if (vfile != null && (rootManager.getFileIndex().isInLibraryClasses(vfile) || rootManager.getFileIndex().isInLibrarySource(vfile))) {
-            return Result.create(map, rootManager);
+            return Result.create(Pair.create(methodNames, map), rootManager);
           }
 
-          return Result.create(map, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, rootManager);
+          return Result.create(Pair.create(methodNames, map), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, rootManager);
         }
       }, false);
   }

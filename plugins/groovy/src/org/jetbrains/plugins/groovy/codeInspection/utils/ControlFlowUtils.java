@@ -20,7 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -240,16 +240,6 @@ public class ControlFlowUtils {
     return PsiTreeUtil.isAncestor(body, element, true);
   }
 
-  public static boolean isInCatchBlock(@NotNull GroovyPsiElement element) {
-    final GrCatchClause containingClause =
-        PsiTreeUtil.getParentOfType(element, GrCatchClause.class);
-    if (containingClause == null) {
-      return false;
-    }
-    final GrOpenBlock body = containingClause.getBody();
-    return PsiTreeUtil.isAncestor(body, element, true);
-  }
-
   private static boolean isInWhileStatementBody(@NotNull GroovyPsiElement element) {
     final GrWhileStatement whileStatement =
         PsiTreeUtil.getParentOfType(element, GrWhileStatement.class);
@@ -453,14 +443,14 @@ public class ControlFlowUtils {
   }
 
   public static List<GrStatement> collectReturns(@Nullable PsiElement element) {
-    return collectReturns(element, element instanceof GrCodeBlock);
+    return collectReturns(element, element instanceof GrCodeBlock || element instanceof GroovyFile);
   }
   public static List<GrStatement> collectReturns(@Nullable PsiElement element, final boolean allExitPoints) {
     if (element == null) return Collections.emptyList();
 
     final Instruction[] flow;
-    if (element instanceof GrCodeBlock) {
-      flow = ((GrCodeBlock)element).getControlFlow();
+    if (element instanceof GrControlFlowOwner) {
+      flow = ((GrControlFlowOwner)element).getControlFlow();
     }
     else {
       flow = new ControlFlowBuilder(element.getProject()).buildControlFlow((GroovyPsiElement)element);
@@ -492,7 +482,7 @@ public class ControlFlowUtils {
     if (parent instanceof GrPostfixExpression) return true;
     if (parent instanceof GrUnaryExpression) {
       final IElementType opType = ((GrUnaryExpression)parent).getOperationTokenType();
-      return opType == GroovyElementTypes.mDEC || opType == GroovyElementTypes.mINC;
+      return opType == GroovyTokenTypes.mDEC || opType == GroovyTokenTypes.mINC;
     }
 
     return false;
@@ -572,27 +562,6 @@ public class ControlFlowUtils {
         m_found = true;
       }
     }
-  }
-
-  public static boolean isInExitStatement(@NotNull GrExpression expression) {
-    return isInReturnStatementArgument(expression) ||
-        isInThrowStatementArgument(expression);
-  }
-
-  private static boolean isInReturnStatementArgument(
-      @NotNull GrExpression expression) {
-    final GrReturnStatement returnStatement =
-        PsiTreeUtil
-            .getParentOfType(expression, GrReturnStatement.class);
-    return returnStatement != null;
-  }
-
-  private static boolean isInThrowStatementArgument(
-      @NotNull GrExpression expression) {
-    final GrThrowStatement throwStatement =
-        PsiTreeUtil
-            .getParentOfType(expression, GrThrowStatement.class);
-    return throwStatement != null;
   }
 
 

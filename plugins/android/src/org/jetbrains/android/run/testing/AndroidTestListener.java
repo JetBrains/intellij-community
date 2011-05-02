@@ -20,6 +20,7 @@ import com.android.ddmlib.testrunner.ITestRunListener;
 import com.android.ddmlib.testrunner.TestIdentifier;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.testframework.sm.ServiceMessageBuilder;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.android.run.AndroidRunningState;
 
@@ -44,27 +45,6 @@ public class AndroidTestListener implements ITestRunListener {
     return myProcessHandler;
   }
 
-  private static class TeamcityCommandBuilder {
-    private final StringBuilder stringBuilder = new StringBuilder("##teamcity[");
-
-    private TeamcityCommandBuilder(String command) {
-      stringBuilder.append(command);
-    }
-
-    public void addAttribute(String name, String value) {
-      stringBuilder.append(' ').append(name).append("='").append(replaceEscapeSymbols(value)).append('\'');
-    }
-
-    @Override
-    public String toString() {
-      return stringBuilder.toString() + ']';
-    }
-
-    private static String replaceEscapeSymbols(String text) {
-      return text.replace("\\", "||").replace("'", "|'").replace("\n", "|n").replace("\r", "|r").replace("]", "|]");
-    }
-  }
-
   public AndroidTestListener(AndroidRunningState runningState) {
     myRunningState = runningState;
   }
@@ -73,7 +53,7 @@ public class AndroidTestListener implements ITestRunListener {
   public void testRunStarted(int testCount) {
     ProcessHandler handler = getProcessHandler();
     handler.notifyTextAvailable("Test running started\n", ProcessOutputTypes.STDOUT);
-    TeamcityCommandBuilder builder = new TeamcityCommandBuilder("testCount");
+    ServiceMessageBuilder builder = new ServiceMessageBuilder("testCount");
     builder.addAttribute("count", Integer.toString(testCount));
     handler.notifyTextAvailable(builder.toString() + '\n', ProcessOutputTypes.STDOUT);
   }
@@ -102,7 +82,7 @@ public class AndroidTestListener implements ITestRunListener {
       myTestClassName = test.getClassName();
       testSuiteStarted();
     }
-    TeamcityCommandBuilder builder = new TeamcityCommandBuilder("testStarted");
+    ServiceMessageBuilder builder = new ServiceMessageBuilder("testStarted");
     builder.addAttribute("name", test.getTestName());
     builder
       .addAttribute("locationHint", "android://" + myRunningState.getModule() + ':' + test.getClassName() + '.' + test.getTestName() + "()");
@@ -112,14 +92,14 @@ public class AndroidTestListener implements ITestRunListener {
 
   private void testSuiteStarted() {
     myTestSuiteStartingTime = System.currentTimeMillis();
-    TeamcityCommandBuilder builder = new TeamcityCommandBuilder("testSuiteStarted");
+    ServiceMessageBuilder builder = new ServiceMessageBuilder("testSuiteStarted");
     builder.addAttribute("name", myTestClassName);
     builder.addAttribute("locationHint", "android://" + myRunningState.getModule() + ':' + myTestClassName);
     getProcessHandler().notifyTextAvailable(builder.toString() + '\n', ProcessOutputTypes.STDOUT);
   }
 
   private void testSuiteFinished() {
-    TeamcityCommandBuilder builder = new TeamcityCommandBuilder("testSuiteFinished");
+    ServiceMessageBuilder builder = new ServiceMessageBuilder("testSuiteFinished");
     builder.addAttribute("name", myTestClassName);
     builder.addAttribute("duration", Long.toString(System.currentTimeMillis() - myTestSuiteStartingTime));
     getProcessHandler().notifyTextAvailable(builder.toString() + '\n', ProcessOutputTypes.STDOUT);
@@ -128,14 +108,14 @@ public class AndroidTestListener implements ITestRunListener {
 
   @Override
   public void testEnded(TestIdentifier test) {
-    TeamcityCommandBuilder builder = new TeamcityCommandBuilder("testFinished");
+    ServiceMessageBuilder builder = new ServiceMessageBuilder("testFinished");
     builder.addAttribute("name", test.getTestName());
     builder.addAttribute("duration", Long.toString(System.currentTimeMillis() - myTestStartingTime));
     getProcessHandler().notifyTextAvailable(builder.toString() + '\n', ProcessOutputTypes.STDOUT);
   }
 
   public void testFailed(TestFailure status, TestIdentifier test, String stackTrace) {
-    TeamcityCommandBuilder builder = new TeamcityCommandBuilder("testFailed");
+    ServiceMessageBuilder builder = new ServiceMessageBuilder("testFailed");
     builder.addAttribute("name", test.getTestName());
     builder.addAttribute("message", "");
     builder.addAttribute("details", stackTrace);

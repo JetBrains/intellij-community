@@ -95,7 +95,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
   private String myListName;
   private final IdeView myIdeView = new MyIdeView();
 
-  public FavoritesTreeViewPanel(Project project, String helpId, String name) {
+  public FavoritesTreeViewPanel(Project project, String helpId, @NotNull String name) {
     super(new BorderLayout());
     myProject = project;
     myHelpId = helpId;

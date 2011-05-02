@@ -23,12 +23,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
  * @author ilyas
  */
 public class GrBuiltInTypeElementImpl extends GroovyPsiElementImpl implements GrBuiltInTypeElement {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.types.GrBuiltInTypeElementImpl");
 
   public GrBuiltInTypeElementImpl(@NotNull ASTNode node) {
     super(node);
@@ -42,31 +42,8 @@ public class GrBuiltInTypeElementImpl extends GroovyPsiElementImpl implements Gr
     return "Built in type";
   }
 
-  private static final PsiType[] PRIMITIVES = new PsiType[]{PsiType.BYTE, PsiType.CHAR,
-      PsiType.DOUBLE, PsiType.FLOAT,
-      PsiType.INT, PsiType.SHORT,
-      PsiType.LONG, PsiType.BOOLEAN,
-      PsiType.VOID
-  };
-
   @NotNull
   public PsiType getType() {
-    String typeText = getText();
-    for (final PsiType primitive : PRIMITIVES) {
-      if (PsiType.VOID.equals(primitive)) {
-        return primitive;
-      }
-      if (primitive.getCanonicalText().equals(typeText)) {
-        return primitive;
-      }
-
-//      if (primitive.getCanonicalText().equals(typeText)) {
-//        final String boxedQName = ((PsiPrimitiveType) primitive).getBoxedTypeName();
-//        return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeByFQClassName(boxedQName, getResolveScope());
-//      }
-    }
-
-    LOG.error("Unknown primitive type");
-    return null;
+    return TypesUtil.getPrimitiveTypeByText(getText());
   }
 }

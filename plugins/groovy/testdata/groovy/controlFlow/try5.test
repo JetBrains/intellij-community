@@ -14,7 +14,7 @@ fScript.previewTask(taskName)
 1(2,5) element: IF statement
 2(3) READ ddd
 3(4) READ fXRec
-4(14) element: RETURN statement
+4(15) element: RETURN statement
 5(6) element: IF statement
 6(7) WRITE fScript
 7(9) element: Open block
@@ -24,4 +24,5 @@ fScript.previewTask(taskName)
 11(10)  RETURN
 12(13) READ fScript
 13(14) READ taskName
-14() element: null
+14(15) element: Method call MAYBE_RETURN
+15() element: null

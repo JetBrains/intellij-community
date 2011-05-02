@@ -39,14 +39,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 
 /**
  * @author peter
@@ -86,14 +86,21 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
   }
 
   private void runDebugger(String mainClass, Closure cl) {
+    boolean trace = name == 'testClassOutOfSourceRoots'
     make()
     edt {
       ProgramRunner runner = ProgramRunner.PROGRAM_RUNNER_EP.extensions.find { it.class == GenericDebuggerRunner }
-      runProcess(mainClass, myModule, DefaultDebugExecutor, [onTextAvailable: { evt, type -> /*print evt.text*/}] as ProcessAdapter, runner)
+      runProcess(mainClass, myModule, DefaultDebugExecutor, [onTextAvailable: { evt, type -> if (trace) print evt.text}] as ProcessAdapter, runner)
     }
     cl.call()
+    if (trace) {
+      println "terminated1?: " + debugProcess.executionResult.processHandler.isProcessTerminated()
+    }
     resume()
     debugProcess.executionResult.processHandler.waitFor()
+    if (trace) {
+      println "terminated2?: " + debugProcess.executionResult.processHandler.isProcessTerminated()
+    }
   }
 
   public void testSimpleEvaluate() {
@@ -186,7 +193,13 @@ cl.parseClass('''$mcText''', 'MyClass.groovy').foo(2)
 
     runDebugger 'Foo', {
       waitForBreakpoint()
-      SourcePosition position = managed { ContextUtil.getSourcePosition(evaluationContext()) }
+      println 'on a breakpoint'
+      SourcePosition position = managed {
+        EvaluationContextImpl context = evaluationContext()
+        println "evalCtx: $context.frameProxy $context.thisObject"
+        ContextUtil.getSourcePosition(context)
+      }
+      println "position $position"
       assert myClass == position.file.virtualFile
       eval 'a', '2'
     }
@@ -230,15 +243,15 @@ cl.parseClass('''$mcText''', 'MyClass.groovy').foo(2)
     return DebuggerPanelsManager.getInstance(project).sessionTab.session
   }
 
-  private def managed(Closure cl) {
+  private <T> T managed(Closure cl) {
     def result = null
     def ctx = DebuggerContextUtil.createDebuggerContext(debugSession, debugProcess.suspendManager.pausedContext)
     debugProcess.managerThread.invokeAndWait(new DebuggerContextCommandImpl(ctx) {
-                                             @Override
-                                             void threadAction() {
-                                               result = cl()
-                                             }
-                                             })
+      @Override
+      void threadAction() {
+        result = cl()
+      }
+    })
     return result
   }
 

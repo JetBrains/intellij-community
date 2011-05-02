@@ -87,9 +87,18 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
 
   @NotNull
   public String getNamespace() {
-    if(getNamespacePrefix().length() == 0)
+    final String xmlNamespace = super.getNamespace();
+
+    if (getNamespacePrefix().length() > 0) {
+      return xmlNamespace;
+    }
+
+    if (xmlNamespace.length() == 0 || xmlNamespace.equals(XmlUtil.XHTML_URI)) {
       return XmlUtil.HTML_URI;
-    return super.getNamespace();
+    }
+
+    // ex.: mathML and SVG namespaces can be used inside html file
+    return xmlNamespace;
   }
 
   protected String getRealNs(final String value) {
