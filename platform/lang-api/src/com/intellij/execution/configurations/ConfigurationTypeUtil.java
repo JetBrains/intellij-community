@@ -18,6 +18,8 @@ package com.intellij.execution.configurations;
 
 import com.intellij.openapi.extensions.Extensions;
 
+import java.util.Arrays;
+
 /**
  * @author yole
  */
@@ -33,7 +35,7 @@ public class ConfigurationTypeUtil {
         return (T)type;
       }
     }
-    assert false;
+    assert false : Arrays.toString(types) + " loader: " + configurationTypeClass.getClassLoader();
     return null;
   }
 }
