@@ -2,12 +2,15 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyUtil;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -34,7 +37,10 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
       PyTargetExpression expr = ((PyFile) file).findTopLevelAttribute(PyNames.DOCFORMAT);
       if (expr != null) {
         String docformat = PyUtil.strValue(expr.findAssignedValue());
-        return format.equalsIgnoreCase(docformat);
+        if (docformat != null) {
+          final List<String> words = StringUtil.split(docformat, " ");
+          return words.size() > 0 && format.equalsIgnoreCase(words.get(0));
+        }
       }
     }
     return format.equalsIgnoreCase(myDocStringFormat);
