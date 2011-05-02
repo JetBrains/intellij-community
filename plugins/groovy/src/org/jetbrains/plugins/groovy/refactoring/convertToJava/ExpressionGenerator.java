@@ -758,7 +758,7 @@ public class ExpressionGenerator extends Generator {
     final GrNamedArgument[] namedArgs = argList.getNamedArguments();
 
     if (PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, manager, resolveScope)) {
-      expression.accept(this);
+      selectedExpression.accept(this);
       builder.append("[");
       final GrExpression arg = exprArgs[0];
       arg.accept(this);
