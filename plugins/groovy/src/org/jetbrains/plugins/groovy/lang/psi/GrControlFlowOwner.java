@@ -15,12 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi;
 
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 
 /**
  * Represents elements with control flow cached
  * @author ven
  */
-public interface GrControlFlowOwner extends GroovyPsiElement {
+public interface GrControlFlowOwner extends GrStatementOwner {
   Instruction[] getControlFlow();
 }

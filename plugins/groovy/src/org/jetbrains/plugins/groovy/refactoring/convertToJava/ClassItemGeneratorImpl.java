@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -240,8 +241,9 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     LOG.assertTrue(scriptFile instanceof GroovyFile);
     LOG.assertTrue(((GroovyFile)scriptFile).isScript());
     final List<GrStatement> exitPoints = ControlFlowUtils.collectReturns(scriptFile);
+
     new CodeBlockGenerator(builder, new ExpressionContext(myProject), exitPoints)
-      .visitStatementOwner((GroovyFile)scriptFile, exitPoints.isEmpty());
+      .visitStatementOwner((GroovyFile)scriptFile, MissingReturnInspection.methodMissesSomeReturns((GroovyFile)scriptFile, true));
     builder.append("\n}\n");
   }
 

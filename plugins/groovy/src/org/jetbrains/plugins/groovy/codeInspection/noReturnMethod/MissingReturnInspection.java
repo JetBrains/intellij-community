@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -84,6 +85,12 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
   }
 
   private static void check(GrCodeBlock block, ProblemsHolder holder, boolean mustReturnValue) {
+    if (methodMissesSomeReturns(block, mustReturnValue)) {
+      addNoReturnMessage(block, holder);
+    }
+  }
+
+  public static boolean methodMissesSomeReturns(GrControlFlowOwner block, boolean mustReturnValue) {
     final Ref<Boolean> always = new Ref<Boolean>(true);
     final Ref<Boolean> hasExplicitReturn = new Ref<Boolean>(false);
     final Ref<Boolean> sometimes = new Ref<Boolean>(false);
@@ -115,15 +122,8 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
         return true;
       }
     });
-    if (!hasExplicitReturn.get()) {
-      if (!mustReturnValue) {
-        return;
-      }
-      mustReturnValue = true;
-    }
-    if ((mustReturnValue && !sometimes.get()) || (sometimes.get() && !always.get())) {
-      addNoReturnMessage(block, holder);
-    }
+    final boolean returnSomething = hasExplicitReturn.get() || mustReturnValue;
+    return returnSomething && ((mustReturnValue && !sometimes.get()) || (sometimes.get() && !always.get()));
   }
 
   private static void addNoReturnMessage(GrCodeBlock block, ProblemsHolder holder) {

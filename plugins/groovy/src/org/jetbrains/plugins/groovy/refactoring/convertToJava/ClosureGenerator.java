@@ -59,7 +59,7 @@ public class ClosureGenerator {
 
   private GrMethod generateClosureMethod(GrClosableBlock block) {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
-    final GrMethod method = factory.createMethodFromText("void doCall(){}");
+    final GrMethod method = factory.createMethodFromText("def doCall(){}");
 
     method.setReturnType(block.getReturnType());
     final PsiElement first;
