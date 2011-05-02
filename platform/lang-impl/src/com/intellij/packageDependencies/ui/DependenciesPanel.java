@@ -30,6 +30,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
@@ -288,8 +289,10 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     group.add(new RerunAction(this));
     group.add(new FlattenPackagesAction());
     group.add(new ShowFilesAction());
-    group.add(new ShowModulesAction());
-    group.add(new ShowModuleGroupsAction());
+    if (ModuleManager.getInstance(myProject).getModules().length > 1) {
+      group.add(new ShowModulesAction());
+      group.add(new ShowModuleGroupsAction());
+    }
     group.add(new GroupByScopeTypeAction());
     //group.add(new GroupByFilesAction());
     group.add(new FilterLegalsAction());
