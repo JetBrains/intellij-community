@@ -16,7 +16,7 @@ public class EpydocUtil {
   }
 
   public static boolean isVariableDocString(PyStringLiteralExpression expr) {
-    if (PyDocumentationSettings.getInstance(expr.getProject()).isEpydocFormat()) {
+    if (PyDocumentationSettings.getInstance(expr.getProject()).isEpydocFormat(expr.getContainingFile())) {
       final PsiElement parent = expr.getParent();
       if (!(parent instanceof PyExpressionStatement)) {
         return false;

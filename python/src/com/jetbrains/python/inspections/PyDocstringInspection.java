@@ -96,9 +96,9 @@ public class PyDocstringInspection extends PyInspection {
     private boolean checkParameters(PyDocStringOwner pyDocStringOwner, PyStringLiteralExpression node) {
       PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(node.getProject());
       List<String> docstringParams;
-      if (documentationSettings.isEpydocFormat())
+      if (documentationSettings.isEpydocFormat(node.getContainingFile()))
         docstringParams = new EpydocString(node.getText()).getParameters();
-      else if (documentationSettings.isReSTFormat())
+      else if (documentationSettings.isReSTFormat(node.getContainingFile()))
         docstringParams = new SphinxDocString(node.getText()).getParameters();
       else
         return false;

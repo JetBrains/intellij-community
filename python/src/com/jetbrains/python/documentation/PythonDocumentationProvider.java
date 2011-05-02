@@ -192,10 +192,10 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       return false;
     }
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(docStringExpression.getProject());
-    if (documentationSettings.isEpydocFormat()) {
+    if (documentationSettings.isEpydocFormat(docStringExpression.getContainingFile())) {
       return value.contains("@rtype");
     }
-    else if (documentationSettings.isReSTFormat()) {
+    else if (documentationSettings.isReSTFormat(docStringExpression.getContainingFile())) {
       return value.contains(":rtype:");
     }
     return false;
@@ -206,7 +206,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     Project project = element.getProject();
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
     List<String> result = new ArrayList<String>();
-    if (documentationSettings.isEpydocFormat()) {
+    if (documentationSettings.isEpydocFormat(element.getContainingFile())) {
       final EpydocString epydocString = new EpydocString(docstring);
       Module module = ModuleUtil.findModuleForPsiElement(element);
       String formatted = null;
@@ -221,7 +221,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       unformattedOutput.add(result);
       return;
     }
-    else if (documentationSettings.isReSTFormat()) {
+    else if (documentationSettings.isReSTFormat(element.getContainingFile())) {
       Module module = ModuleUtil.findModuleForPsiElement(element);
       String formatted = null;
       if (module != null) {
@@ -869,9 +869,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     Project project = element.getProject();
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
     String result = "";
-    if (documentationSettings.isEpydocFormat())
+    if (documentationSettings.isEpydocFormat(element.getContainingFile()))
       result += generateContent(element, offset, EPYDOC_PREFIX);
-    else if (documentationSettings.isReSTFormat())
+    else if (documentationSettings.isReSTFormat(element.getContainingFile()))
       result += generateContent(element, offset, RST_PREFIX);
     else
       result += offset;

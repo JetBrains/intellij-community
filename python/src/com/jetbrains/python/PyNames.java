@@ -44,6 +44,8 @@ public class PyNames {
 
   @NonNls public static final String ISINSTANCE = "isinstance";
 
+  @NonNls public static final String DOCFORMAT = "__docformat__";
+
   /**
    * Contains all known predefined names of "__foo__" form.
    */

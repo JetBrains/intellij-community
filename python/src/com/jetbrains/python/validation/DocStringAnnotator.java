@@ -45,8 +45,8 @@ public class DocStringAnnotator extends PyAnnotator {
       ann.setTextAttributes(PyHighlighter.PY_DOC_COMMENT);
 
       final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(stmt.getProject());
-      if (settings.isEpydocFormat() || settings.isReSTFormat()) {
-        String[] tags = settings.isEpydocFormat() ? EpydocString.ALL_TAGS : SphinxDocString.ALL_TAGS;
+      if (settings.isEpydocFormat(stmt.getContainingFile()) || settings.isReSTFormat(stmt.getContainingFile())) {
+        String[] tags = settings.isEpydocFormat(stmt.getContainingFile()) ? EpydocString.ALL_TAGS : SphinxDocString.ALL_TAGS;
         int pos = 0;
         while(true) {
           TextRange textRange = DocStringReferenceProvider.findNextTag(stmt.getText(), pos, tags);

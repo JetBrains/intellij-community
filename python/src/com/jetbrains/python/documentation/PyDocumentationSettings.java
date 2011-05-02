@@ -2,7 +2,12 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.PyUtil;
 
 /**
  * @author yole
@@ -16,11 +21,23 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 public class PyDocumentationSettings implements PersistentStateComponent<PyDocumentationSettings> {
   public String myDocStringFormat = DocStringFormat.PLAIN;
 
-  public boolean isEpydocFormat() {
-    return DocStringFormat.EPYTEXT.equals(myDocStringFormat);
+  public boolean isEpydocFormat(PsiFile file) {
+    return isFormat(file, DocStringFormat.EPYTEXT);
   }
-  public boolean isReSTFormat() {
-    return DocStringFormat.REST.equals(myDocStringFormat);
+
+  public boolean isReSTFormat(PsiFile file) {
+    return isFormat(file, DocStringFormat.REST);
+  }
+
+  private boolean isFormat(PsiFile file, final String format) {
+    if (file instanceof PyFile) {
+      PyTargetExpression expr = ((PyFile) file).findTopLevelAttribute(PyNames.DOCFORMAT);
+      if (expr != null) {
+        String docformat = PyUtil.strValue(expr.findAssignedValue());
+        return format.equalsIgnoreCase(docformat);
+      }
+    }
+    return format.equalsIgnoreCase(myDocStringFormat);
   }
 
   public static PyDocumentationSettings getInstance(Project project) {

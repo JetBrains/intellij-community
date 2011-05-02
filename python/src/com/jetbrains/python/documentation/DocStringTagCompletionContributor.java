@@ -27,11 +27,11 @@ public class DocStringTagCompletionContributor extends CompletionContributor {
                                            ProcessingContext context,
                                            @NotNull CompletionResultSet result) {
                final PyDocumentationSettings settings = PyDocumentationSettings.getInstance(parameters.getPosition().getProject());
-               if (settings.isEpydocFormat() || settings.isReSTFormat()) {
+               final PsiFile file = parameters.getOriginalFile();
+               if (settings.isEpydocFormat(file) || settings.isReSTFormat(file)) {
                  int offset = parameters.getOffset();
-                 final PsiFile file = parameters.getOriginalFile();
                  final String text = file.getText();
-                 char prefix = settings.isEpydocFormat() ? '@' : ':';
+                 char prefix = settings.isEpydocFormat(file) ? '@' : ':';
                  if (offset > 0) {
                    offset--;
                  }
@@ -53,7 +53,7 @@ public class DocStringTagCompletionContributor extends CompletionContributor {
                      return;
                    }
                  }
-                 String[] allTags = settings.isEpydocFormat() ? EpydocString.ALL_TAGS : SphinxDocString.ALL_TAGS;
+                 String[] allTags = settings.isEpydocFormat(file) ? EpydocString.ALL_TAGS : SphinxDocString.ALL_TAGS;
                  if (prefixBuilder.length() > 0) {
                    result = result.withPrefixMatcher(prefixBuilder.toString());
                  }

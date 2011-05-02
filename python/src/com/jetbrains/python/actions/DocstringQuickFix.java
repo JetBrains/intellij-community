@@ -42,7 +42,7 @@ public class DocstringQuickFix implements LocalQuickFix {
     PsiElement element = descriptor.getPsiElement();
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(element.getProject());
-    if (documentationSettings.isEpydocFormat())
+    if (documentationSettings.isEpydocFormat(element.getContainingFile()))
       myPrefix = "@";
     else
       myPrefix = ":";
