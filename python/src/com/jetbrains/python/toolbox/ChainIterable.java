@@ -1,5 +1,6 @@
 package com.jetbrains.python.toolbox;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -20,12 +21,12 @@ public class ChainIterable<T> extends ChainedListBase<Iterable<T>> implements It
     super(null);
   }
   
-  public ChainIterable(T initial) {
+  public ChainIterable(@NotNull T initial) {
     super(Collections.singleton(initial));
   }
 
 
-  public ChainIterable<T> add(Iterable<T> another) {
+  public ChainIterable<T> add(@NotNull Iterable<T> another) {
     return (ChainIterable<T>)super.add(another);
   }
 
@@ -42,7 +43,7 @@ public class ChainIterable<T> extends ChainedListBase<Iterable<T>> implements It
   /**
    * Convenience: add an item wrapping it into a SingleIterable behind the scenes.
    */
-  public ChainIterable<T> add(T item) {
+  public ChainIterable<T> add(@NotNull T item) {
     return (ChainIterable<T>)super.add(Collections.<T>singleton(item));
   }
 

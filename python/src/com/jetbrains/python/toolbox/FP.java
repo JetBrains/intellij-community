@@ -269,6 +269,9 @@ public class FP {
    */
   public static class StringCollector<T> implements FP.Lambda2<StringBuilder, T, StringBuilder>  {
     public StringBuilder apply(StringBuilder builder, T arg2) {
+      if (arg2 == null) {
+        throw new IllegalArgumentException("Null item in list of strings to concatenate. Text so far: " + builder.toString());
+      }
       return builder.append(arg2.toString());
     }
   }

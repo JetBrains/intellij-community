@@ -225,6 +225,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       if (module != null) {
         formatted = ReSTRunner.formatDocstring(module, docstring);
       }
+      if (formatted == null) {
+        formatted = new SphinxDocString(docstring).getDescription();
+      }
       result.add(formatted);
       unformattedOutput.add(result);
       return;
