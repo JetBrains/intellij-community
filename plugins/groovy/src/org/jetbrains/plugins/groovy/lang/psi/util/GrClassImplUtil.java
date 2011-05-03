@@ -90,7 +90,10 @@ public class GrClassImplUtil {
     if (grType.isInterface() /*|| extendsTypes.length > 0*/) return extendsTypes;
     for (PsiClassType type : extendsTypes) {
       final PsiClass superClass = type.resolve();
-      if (superClass instanceof GrTypeDefinition && !superClass.isInterface()) return extendsTypes;
+      if (superClass instanceof GrTypeDefinition && !superClass.isInterface() ||
+          superClass != null && GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(superClass.getQualifiedName())) {
+        return extendsTypes;
+      }
     }
 
     PsiClass grObSupport = GroovyPsiManager.getInstance(grType.getProject()).findClassWithCache(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT, grType.getResolveScope());

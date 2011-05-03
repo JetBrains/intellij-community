@@ -37,16 +37,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT;
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeType;
 
 /**
@@ -276,21 +276,35 @@ public class StubGenerator implements ClassItemGenerator {
     if (classDef) {
       final Collection<MethodSignature> toOverride = OverrideImplementUtil.getMethodSignaturesToOverride(typeDefinition);
       for (MethodSignature signature : toOverride) {
-        if (signature instanceof MethodSignatureBackedByPsiMethod) {
-          final PsiMethod method = ((MethodSignatureBackedByPsiMethod)signature).getMethod();
-          final PsiClass baseClass = method.getContainingClass();
-          if (GenerationUtil.isAbstractInJava(method) && baseClass != null && typeDefinition.isInheritor(baseClass, true)) {
-            methods.add(mirrorMethod(typeDefinition, method, baseClass, PsiSubstitutor.EMPTY, GenerationUtil.JAVA_MODIFIERS));
-          }
+        if (!(signature instanceof MethodSignatureBackedByPsiMethod)) continue;
+
+        final PsiMethod method = ((MethodSignatureBackedByPsiMethod)signature).getMethod();
+        final PsiClass baseClass = method.getContainingClass();
+        if (baseClass == null) continue;
+        final String qname = baseClass.getQualifiedName();
+        if (DEFAULT_BASE_CLASS_NAME.equals(qname) || GROOVY_OBJECT_SUPPORT.equals(qname) ||
+            GenerationUtil.isAbstractInJava(method) && typeDefinition.isInheritor(baseClass, true)) {
+          if (method.isConstructor()) continue;
+          methods.add(mirrorMethod(typeDefinition, method, baseClass, signature.getSubstitutor()));
         }
       }
 
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+      final Collection<MethodSignature> toImplement = OverrideImplementUtil.getMethodSignaturesToImplement(typeDefinition);
+      for (MethodSignature signature : toImplement) {
+        if (!(signature instanceof MethodSignatureBackedByPsiMethod)) continue;
+        final PsiMethod resolved = ((MethodSignatureBackedByPsiMethod)signature).getMethod();
+        final PsiClass baseClass = resolved.getContainingClass();
+        if (baseClass == null) continue;
+        if (!DEFAULT_BASE_CLASS_NAME.equals(baseClass.getQualifiedName())) continue;
+
+        methods.add(mirrorMethod(typeDefinition, resolved, baseClass, signature.getSubstitutor()));
+      }
+      /*final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
       methods.add(factory.createMethodFromText("public groovy.lang.MetaClass getMetaClass() {}", null));
       methods.add(factory.createMethodFromText("public void setMetaClass(groovy.lang.MetaClass mc) {}", null));
       methods.add(factory.createMethodFromText("public Object invokeMethod(String name, Object args) {}", null));
       methods.add(factory.createMethodFromText("public Object getProperty(String propertyName) {}", null));
-      methods.add(factory.createMethodFromText("public void setProperty(String propertyName, Object newValue) {}", null));
+      methods.add(factory.createMethodFromText("public void setProperty(String propertyName, Object newValue) {}", null));*/
     }
 
     /*if (typeDefinition instanceof GrTypeDefinition) {
@@ -305,15 +319,14 @@ public class StubGenerator implements ClassItemGenerator {
   private static LightMethodBuilder mirrorMethod(PsiClass typeDefinition,
                                                  PsiMethod method,
                                                  PsiClass baseClass,
-                                                 PsiSubstitutor substitutor,
-                                                 String... modifierFilter) {
+                                                 PsiSubstitutor substitutor) {
     final LightMethodBuilder builder = new LightMethodBuilder(method.getManager(), method.getName());
     substitutor = substitutor.putAll(TypeConversionUtil.getSuperClassSubstitutor(baseClass, typeDefinition, PsiSubstitutor.EMPTY));
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
       builder.addParameter(StringUtil.notNullize(parameter.getName()), substitutor.substitute(GenerationUtil.findOutParameterType(parameter)));
     }
     builder.setReturnType(substitutor.substitute(method.getReturnType()));
-    for (String modifier : modifierFilter) {
+    for (String modifier : GenerationUtil.JAVA_MODIFIERS) {
       if (method.hasModifierProperty(modifier)) {
         builder.addModifier(modifier);
       }
