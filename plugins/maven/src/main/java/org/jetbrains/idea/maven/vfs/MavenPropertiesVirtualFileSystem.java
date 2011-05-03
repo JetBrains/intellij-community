@@ -15,9 +15,8 @@
  */
 package org.jetbrains.idea.maven.vfs;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -27,7 +26,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.Map;
 
-public class MavenPropertiesVirtualFileSystem extends DummyFileSystem implements ApplicationComponent {
+public class MavenPropertiesVirtualFileSystem extends DummyFileSystem {
   @NonNls public static final String PROTOCOL = "maven-properties";
 
   @NonNls public static final String SYSTEM_PROPERTIES_FILE = "System.properties";
@@ -38,12 +37,7 @@ public class MavenPropertiesVirtualFileSystem extends DummyFileSystem implements
   private final Map<String, VirtualFile> myFiles = new THashMap<String, VirtualFile>();
 
   public static MavenPropertiesVirtualFileSystem getInstance() {
-    return ApplicationManager.getApplication().getComponent(MavenPropertiesVirtualFileSystem.class);
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return MavenPropertiesVirtualFileSystem.class.getName();
+    return (MavenPropertiesVirtualFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
   }
 
   @NotNull

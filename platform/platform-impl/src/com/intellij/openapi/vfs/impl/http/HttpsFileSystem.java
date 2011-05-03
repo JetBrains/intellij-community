@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.http;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +30,7 @@ public class HttpsFileSystem extends HttpFileSystemBase {
   }
 
   public static HttpsFileSystem getHttpsInstance() {
-    return ApplicationManager.getApplication().getComponent(HttpsFileSystem.class);
+    return (HttpsFileSystem)VirtualFileManager.getInstance().getFileSystem(HTTPS_PROTOCOL);
   }
 
   @NotNull

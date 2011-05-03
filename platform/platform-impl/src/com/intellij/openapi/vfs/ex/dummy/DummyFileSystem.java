@@ -15,11 +15,10 @@
  */
 package com.intellij.openapi.vfs.ex.dummy;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,21 +28,12 @@ import java.io.IOException;
 /**
  *
  */
-public class DummyFileSystem extends DeprecatedVirtualFileSystem implements ApplicationComponent {
+public class DummyFileSystem extends DeprecatedVirtualFileSystem {
   @NonNls public static final String PROTOCOL = "dummy";
   private VirtualFileDirectoryImpl myRoot;
 
   public static DummyFileSystem getInstance() {
-    return ApplicationManager.getApplication().getComponent(DummyFileSystem.class);
-  }
-
-  public DummyFileSystem() {
-  }
-
-  public void disposeComponent() {
-  }
-
-  public void initComponent() {
+    return (DummyFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
   }
 
   public VirtualFile createRoot(String name) {
@@ -90,11 +80,6 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements Appl
 
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
     return findFileByPath(path);
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "DummyFileSystem";
   }
 
   public void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {

@@ -34,6 +34,7 @@ public abstract class VirtualFileSystem {
 
   /**
    * Gets the protocol for this file system. Protocols should differ for all file systems.
+   * Should be the same as corresponding {@link com.intellij.util.KeyedLazyInstanceEP#key}.
    *
    * @return String representing the protocol
    * @see VirtualFile#getUrl

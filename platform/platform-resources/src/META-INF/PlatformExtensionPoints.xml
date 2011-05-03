@@ -25,6 +25,9 @@
   <extensionPoint name="fileTypeFactory"
                   interface="com.intellij.openapi.fileTypes.FileTypeFactory"/>
 
+  <extensionPoint name="virtualFileSystem"
+                  beanClass="com.intellij.util.KeyedLazyInstanceEP"/>
+
   <extensionPoint name="keymapExtension"
                   interface="com.intellij.openapi.keymap.KeymapExtension"/>
 

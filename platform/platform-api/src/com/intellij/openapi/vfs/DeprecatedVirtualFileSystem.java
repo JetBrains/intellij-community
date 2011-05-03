@@ -68,7 +68,7 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     }
   }
 
-  protected void fireFileCreated(Object requestor, VirtualFile file) {
+  protected void fireFileCreated(@Nullable Object requestor, VirtualFile file) {
     assertWriteAccessAllowed();
 
     if (!myFileListeners.isEmpty()) {
