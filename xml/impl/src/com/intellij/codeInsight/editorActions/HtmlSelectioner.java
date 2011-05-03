@@ -58,7 +58,6 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
 
   static boolean canSelectElement(final PsiElement e) {
     if (e instanceof XmlToken) {
-      Language language = e.getLanguage();
       return HtmlUtil.hasHtml(e.getContainingFile()) ||
              (ourStyleSelectioner != null && ourStyleSelectioner.canSelect(e));
     }
