@@ -26,7 +26,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public enum DirDiffOperation {
-  COPY_TO, COPY_FROM, MERGE, EQUAL;
+  COPY_TO, COPY_FROM, MERGE, EQUAL, NONE;
 
   public Icon getIcon() {
     switch (this) {
@@ -34,6 +34,7 @@ public enum DirDiffOperation {
       case COPY_FROM: return IconLoader.getIcon("/vcs/arrow_left.png");
       case MERGE:     return IconLoader.getIcon("/vcs/not_equal.png");
       case EQUAL:     return IconLoader.getIcon("/vcs/equal.png");
+      case NONE:
     }
     return EmptyIcon.create(16);
   }
@@ -46,6 +47,7 @@ public enum DirDiffOperation {
       case MERGE:
         return FileStatus.COLOR_MODIFIED;
       case EQUAL:
+      case NONE:
     }
     return Color.BLACK;
   }

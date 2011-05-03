@@ -18,4 +18,4 @@ package com.intellij.openapi.diff.impl.dir;
 /**
 * @author Konstantin Bulenkov
 */
-public enum DType {SOURCE, TARGET, SEPARATOR, CHANGED, EQUAL}
+public enum DType {SOURCE, TARGET, SEPARATOR, CHANGED, EQUAL, ERROR}
