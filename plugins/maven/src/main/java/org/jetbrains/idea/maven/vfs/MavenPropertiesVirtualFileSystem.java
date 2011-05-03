@@ -46,12 +46,6 @@ public class MavenPropertiesVirtualFileSystem extends DummyFileSystem implements
     return MavenPropertiesVirtualFileSystem.class.getName();
   }
 
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
   @NotNull
   public String getProtocol() {
     return PROTOCOL;
@@ -78,14 +72,6 @@ public class MavenPropertiesVirtualFileSystem extends DummyFileSystem implements
     if (SYSTEM_PROPERTIES_FILE.equals(path)) return new MavenPropertiesVirtualFile(path, MavenUtil.getSystemProperties(), this);
     if (ENV_PROPERTIES_FILE.equals(path)) return new MavenPropertiesVirtualFile(path, MavenUtil.getEnvProperties(), this);
     return null;
-  }
-
-
-  public void refresh(boolean asynchronous) {
-  }
-
-  public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
-    return findFileByPath(path);
   }
 
   //protected void deleteFile(Object requestor, VirtualFile vFile) throws IOException {
