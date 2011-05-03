@@ -24,14 +24,12 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.AsyncProcessIcon;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -181,19 +179,21 @@ public class DirDiffPanel implements Disposable {
     }
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DirDiff", new DirDiffToolbarActions(myModel), true);
     myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
-    final LoadingDecorator decorator = new LoadingDecorator(myComponent, dirDiffDialog.getDisposable(), -1) {
-      @Override
-      protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
-        final NonOpaquePanel panel = super.customizeLoadingLayer(parent, text, icon);
-        final Font font = text.getFont();
-        text.setFont(font.deriveFont(font.getStyle(), font.getSize() + 6));
-        text.setForeground(new Color(0,0,0,150));
-        return panel;
-      }
-    };
+    final JBLoadingPanel loadingPanel = new JBLoadingPanel(new BorderLayout(), dirDiffDialog.getDisposable());
+    loadingPanel.add(myComponent, BorderLayout.CENTER);
+    //final LoadingDecorator decorator = new LoadingDecorator(myComponent, dirDiffDialog.getDisposable(), -1) {
+    //  @Override
+    //  protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
+    //    final NonOpaquePanel panel = super.customizeLoadingLayer(parent, text, icon);
+    //    final Font font = text.getFont();
+    //    text.setFont(font.deriveFont(font.getStyle(), font.getSize() + 6));
+    //    text.setForeground(new Color(0,0,0,150));
+    //    return panel;
+    //  }
+    //};
     //mySplitPanel.setTopComponent(decorator.getComponent());
     //decorator.getComponent().setMinimumSize(new Dimension(400, 100));
-    myTable.putClientProperty(myModel.DECORATOR, decorator);
+    myTable.putClientProperty(myModel.DECORATOR, loadingPanel);
     myTable.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentShown(ComponentEvent e) {
@@ -202,7 +202,7 @@ public class DirDiffPanel implements Disposable {
       }
     });
     myRootPanel.removeAll();
-    myRootPanel.add(decorator.getComponent(), BorderLayout.CENTER);
+    myRootPanel.add(loadingPanel, BorderLayout.CENTER);
     myModel.addModelListener(new DirDiffModelListener() {
       @Override
       public void updateStarted() {
