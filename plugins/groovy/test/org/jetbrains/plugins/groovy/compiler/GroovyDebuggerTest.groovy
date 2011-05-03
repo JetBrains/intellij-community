@@ -233,12 +233,17 @@ cl.parseClass('''$mcText''', 'MyClass.groovy').foo(2)
   private def managed(Closure cl) {
     def result = null
     def ctx = DebuggerContextUtil.createDebuggerContext(debugSession, debugProcess.suspendManager.pausedContext)
+    Semaphore semaphore = new Semaphore()
+    semaphore.down()
     debugProcess.managerThread.invokeAndWait(new DebuggerContextCommandImpl(ctx) {
-                                             @Override
-                                             void threadAction() {
-                                               result = cl()
-                                             }
-                                             })
+      @Override
+      void threadAction() {
+        result = cl()
+        semaphore.up()
+      }
+    })
+    def finished = semaphore.waitFor(20000)
+    assert finished : 'Too long debugger action'
     return result
   }
 
