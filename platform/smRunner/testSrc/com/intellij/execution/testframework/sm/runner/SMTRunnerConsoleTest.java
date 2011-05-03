@@ -252,8 +252,8 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
                      // std err
                      "\n" +
                      "error msg\n" +
-                     "actual\n" +
                      "expected\n" +
+                     "actual\n" +
                      "\n" +
                      "method1:1\n" +
                      "method2:2\n" +
@@ -268,8 +268,8 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
                      "stdout1 ",
                      // std err
                      "stderr1 \nerror msg\n" +
-                     "actual\n" +
                      "expected\n" +
+                     "actual\n" +
                      "\n" +
                      "method1:1\nmethod2:2\n",
                      // std sys
