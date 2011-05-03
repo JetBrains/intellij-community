@@ -114,7 +114,7 @@ public class LoadAlgorithm {
     protected void processResult(Result result) {
       assert LoadType.TEST.equals(myState.myValue);
 
-      myState.takeDecision(result.getTime() > ourTestTimeThreshold);
+      myState.takeDecision(false);
     }
   }
 
