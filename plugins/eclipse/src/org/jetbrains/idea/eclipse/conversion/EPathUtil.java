@@ -214,10 +214,11 @@ public class EPathUtil {
     final VirtualFile contentRoot = getContentRoot(model);
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
     if (file != null) {
+      LOG.assertTrue(file.isValid());
       if (file.getFileSystem() instanceof JarFileSystem) {
         file = JarFileSystem.getInstance().getVirtualFileForJar(file);
       }
-      LOG.assertTrue(file != null);
+      LOG.assertTrue(file != null, url);
       if (contentRoot != null && VfsUtil.isAncestor(contentRoot, file, false)) { //inside current project
         return VfsUtil.getRelativePath(file, contentRoot, '/');
       } else {
