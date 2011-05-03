@@ -173,13 +173,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
 
     private FileHistoryPanelImpl resetHistoryPanel() {
+      final VcsHistorySession copy = mySession.copyWithCachedRevision();
       if (myFileHistoryPanel == null) {
         ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
-        final VcsHistorySession copy = mySession.copyWithCachedRevision();
         myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, copy, myVcsHistoryProvider,
                                                       contentManager, myRefresher);
       } else {
-        myFileHistoryPanel.getHistoryPanelRefresh().consume(mySession);
+        myFileHistoryPanel.getHistoryPanelRefresh().consume(copy);
       }
       return myFileHistoryPanel;
     }

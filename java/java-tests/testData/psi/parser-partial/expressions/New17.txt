@@ -1,0 +1,19 @@
+PsiJavaFile:New17.java
+  PsiNewExpression:new <T>C()
+    PsiKeyword:new('new')
+    PsiWhiteSpace(' ')
+    PsiReferenceParameterList
+      PsiJavaToken:LT('<')
+      PsiTypeElement:T
+        PsiJavaCodeReferenceElement:T
+          PsiIdentifier:T('T')
+          PsiReferenceParameterList
+            <empty list>
+      PsiJavaToken:GT('>')
+    PsiJavaCodeReferenceElement:C
+      PsiIdentifier:C('C')
+      PsiReferenceParameterList
+        <empty list>
+    PsiExpressionList
+      PsiJavaToken:LPARENTH('(')
+      PsiJavaToken:RPARENTH(')')

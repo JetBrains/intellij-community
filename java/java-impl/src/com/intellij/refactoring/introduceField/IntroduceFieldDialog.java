@@ -38,7 +38,6 @@ class IntroduceFieldDialog extends DialogWrapper {
 
 
   static BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace;
-  static boolean ourLastCbFinalState = false;
 
   private final Project myProject;
   private final PsiClass myParentClass;
@@ -246,7 +245,7 @@ class IntroduceFieldDialog extends DialogWrapper {
       }
     }
 
-    ourLastCbFinalState = myCentralPanel.isDeclareFinal();
+    myCentralPanel.saveFinalState();
     ourLastInitializerPlace = myCentralPanel.getInitializerPlace();
     JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY = getFieldVisibility();
 

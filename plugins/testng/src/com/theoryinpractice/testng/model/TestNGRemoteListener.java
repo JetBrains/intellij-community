@@ -55,7 +55,6 @@ public class TestNGRemoteListener implements IRemoteSuiteListener, IRemoteTestLi
   }
 
   public void onStart(TestMessage tm) {
-    unboundOutputRoot.addChild(console.getResultsView().getRoot());
     final TestNGResults view = console.getResultsView();
     if (view != null) {
       view.setTotal(tm.getTestMethodCount());

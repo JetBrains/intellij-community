@@ -75,8 +75,6 @@ public abstract class FileTemplateManager{
 
   public abstract void addRecentName(@NotNull @NonNls String name);
 
-  public abstract void saveAll();
-
   public abstract FileTemplate getInternalTemplate(@NotNull @NonNls String templateName);
   @NotNull 
   public abstract FileTemplate[] getInternalTemplates();

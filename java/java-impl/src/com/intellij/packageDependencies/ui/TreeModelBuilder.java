@@ -84,12 +84,13 @@ public class TreeModelBuilder {
 
   public TreeModelBuilder(Project project, boolean showIndividualLibs, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
     myProject = project;
-    myShowModules = settings.UI_SHOW_MODULES;
+    final boolean multiModuleProject = ModuleManager.getInstance(project).getModules().length > 1;
+    myShowModules = settings.UI_SHOW_MODULES && multiModuleProject;
     myGroupByScopeType = settings.UI_GROUP_BY_SCOPE_TYPE;
     myFlattenPackages = settings.UI_FLATTEN_PACKAGES;
     myShowFiles = settings.UI_SHOW_FILES;
     myShowIndividualLibs = showIndividualLibs;
-    myShowModuleGroups = settings.UI_SHOW_MODULE_GROUPS;
+    myShowModuleGroups = settings.UI_SHOW_MODULE_GROUPS && multiModuleProject;
     myMarker = marker;
     myAddUnmarkedFiles = !settings.UI_FILTER_LEGALS;
     myRoot = new RootNode();

@@ -78,6 +78,11 @@ public class ExpressionParserTest extends JavaParsingTestCase {
     withLevel(LanguageLevel.JDK_1_7,
               new Runnable() { public void run() { doParserTest("new C<>()"); } });
   }
+  public void testNew17() { doParserTest("new <T>C()"); }
+  public void testNew18() {
+    withLevel(LanguageLevel.JDK_1_7,
+              new Runnable() { public void run() { doParserTest("new <>C()"); } });
+  }
 
   public void testExprList0() { doParserTest("f(1,2)"); }
   public void testExprList1() { doParserTest("f("); }
