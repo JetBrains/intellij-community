@@ -88,7 +88,8 @@ public class ProjectUtil {
       }
       final Module module = ModuleUtil.findModuleForFile(file, project);
       if (module == null) return url;
-      return new StringBuffer().append("[").append(module.getName()).append("] - ").append(url).toString();
+      return SystemInfo.isMac ? new StringBuffer().append(url).append(" - [").append(module.getName()).append("]").toString() :
+        new StringBuffer().append("[").append(module.getName()).append("] - ").append(url).toString();
     }
   }  
   
