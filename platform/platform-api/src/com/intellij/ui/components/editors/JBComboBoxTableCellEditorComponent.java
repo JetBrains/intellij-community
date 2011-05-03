@@ -26,6 +26,9 @@ import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 /**
  * Solves rendering problems in JTable components when JComboBox objects are used as cell
@@ -43,6 +46,7 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
   private Object[] myOptions = {};
   private Object myValue;
   private Function<Object, String> myToString = StringUtil.createToStringFunction(Object.class);
+  private ArrayList<ActionListener> myListeners = new ArrayList<ActionListener>();
 
   @SuppressWarnings({"GtkPreferredJComboBoxRenderer"})
   private ListCellRenderer myRenderer = new DefaultListCellRenderer() {
@@ -126,15 +130,20 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
       .setItemChoosenCallback(new Runnable() {
         @Override
         public void run() {
-          myValue = myList.getSelectedValue();
-          myTable.setValueAt(myValue, myRow, myColumn); // on Mac getCellEditorValue() called before myValue is set.
+          final ActionEvent event = new ActionEvent(myList, ActionEvent.ACTION_PERFORMED, "elementChosen");
+          for (ActionListener listener : myListeners) {
+            listener.actionPerformed(event);
+          }
+          //myValue = myList.getSelectedValue();
+          //myTable.setValueAt(myValue, myRow, myColumn); // on Mac getCellEditorValue() called before myValue is set.
+          //myTable.tableChanged(new TableModelEvent(myTable.getModel(), myRow));
         }
       }).createPopup()
       .show(new RelativePoint(myTable, point));
   }
 
   public Object getEditorValue() {
-    return myValue;
+    return myList.getSelectedValue();
   }
 
   public void setRenderer(ListCellRenderer renderer) {
@@ -147,5 +156,9 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
 
   public void setToString(Function<Object, String> toString) {
     myToString = toString;
+  }
+
+  public void addActionListener(ActionListener listener) {
+    myListeners.add(listener);
   }
 }

@@ -613,19 +613,28 @@ public abstract class OptionTableWithPreviewPanel extends MultilanguageCodeStyle
     private MyTreeNode myCurrentNode = null;
 
     public MyValueEditor() {
-      myBooleanEditor.addActionListener(new ActionListener() {
+      final ActionListener itemChoosen = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           if (myCurrentNode != null) {
             myCurrentNode.setValue(getCellEditorValue());
+            somethingChanged();
           }
         }
-      });
+      };
+      myBooleanEditor.addActionListener(itemChoosen);
+      myOptionsEditor.addActionListener(itemChoosen);
       myBooleanEditor.putClientProperty("JComponent.sizeVariant", "small");
       myOptionsEditor.putClientProperty("JComponent.sizeVariant", "small");
     }
 
     public Object getCellEditorValue() {
       if (myCurrentEditor == myOptionsEditor) {
+        //new Alarm(Alarm.ThreadToUse.SWING_THREAD).addRequest(new Runnable() {
+        //                                                       @Override
+        //                                                       public void run() {
+        //                                                         somethingChanged();
+        //                                                       }
+        //                                                     }, 100);
         return myOptionsEditor.getEditorValue();
       }
       else if (myCurrentEditor == myBooleanEditor) {
