@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion.impl;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 
 import java.util.*;
@@ -90,16 +91,22 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
           }
           Collections.sort(prefixes);
           for (String prefix : prefixes) {
+            List<LookupElement> shorter = new SmartList<LookupElement>();
             for (LookupElement shorterElement : myElements.get(prefix)) {
               if (srcSet.contains(shorterElement) && processed.add(shorterElement)) {
-                lifted.add(shorterElement);
-                if (group.isEmpty()) {
-                  result.add(Collections.singletonList(shorterElement));
-                } else {
-                  group.add(shorterElement);
-                }
+                shorter.add(shorterElement);
               }
             }
+
+            lifted.addAll(shorter);
+
+            final Iterable<List<LookupElement>> shorterClassified = myNext.classify(shorter);
+            if (group.isEmpty()) {
+              ContainerUtil.addAll(result, shorterClassified);
+            } else {
+              group.addAll(ContainerUtil.flatten(shorterClassified));
+            }
+
           }
 
           group.add(element);
