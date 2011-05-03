@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,7 +197,9 @@ public class ExceptionUtil {
   }
 
   @Nullable
-  private static Set<PsiClassType> collectUnhandledExceptions(@NotNull PsiElement element, PsiElement topElement, @Nullable Set<PsiClassType> foundExceptions) {
+  private static Set<PsiClassType> collectUnhandledExceptions(@NotNull PsiElement element,
+                                                              PsiElement topElement,
+                                                              @Nullable Set<PsiClassType> foundExceptions) {
     Collection<PsiClassType> unhandledExceptions = null;
     if (element instanceof PsiCallExpression) {
       PsiCallExpression expression = (PsiCallExpression)element;

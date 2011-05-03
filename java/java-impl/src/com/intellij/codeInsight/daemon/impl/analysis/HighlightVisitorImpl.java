@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor, DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl");
@@ -910,9 +911,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitTryStatement(PsiTryStatement statement) {
     super.visitTryStatement(statement);
     if (!myHolder.hasErrorResults()) {
+      final Set<PsiClassType> thrownTypes = HighlightUtil.collectUnhandledExceptions(statement);
+      final boolean improvedCheck = PsiUtil.isLanguageLevel7OrHigher(statement);
       for (PsiParameter parameter : statement.getCatchBlockParameters()) {
         boolean added = myHolder.addAll(HighlightUtil.checkExceptionAlreadyCaught(parameter));
-        if (!added) myHolder.addAll(HighlightUtil.checkExceptionThrownInTry(parameter));
+        if (!added) {
+          added = myHolder.addAll(HighlightUtil.checkExceptionThrownInTry(parameter, thrownTypes));
+        }
+        if (!added && improvedCheck) {
+          myHolder.addAll(HighlightUtil.checkWithImprovedCatchAnalysis(parameter, thrownTypes));
+        }
       }
     }
   }
