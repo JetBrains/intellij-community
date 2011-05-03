@@ -29,11 +29,11 @@ setProperty("paths", new Paths(out))
 
 def paths = new Paths(out)
 
-// load ApplicationInfo.xml properties
-ant.xmlproperty(file: appInfoFile(), collapseAttributes: "true")
-
 target(compile: "Compile project") {
   loadProject()
+
+  // load ApplicationInfo.xml properties
+  ant.xmlproperty(file: appInfoFile(), collapseAttributes: "true")
 
   project.stage("Cleaning up sandbox folder")
   ant.delete(dir: paths.sandbox)

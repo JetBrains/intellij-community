@@ -58,7 +58,7 @@ import java.util.*;
 public class GrClassImplUtil {
   private static final Condition<PsiClassType> IS_GROOVY_OBJECT = new Condition<PsiClassType>() {
     public boolean value(PsiClassType psiClassType) {
-      return TypesUtil.typeEqualsToText(psiClassType, GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME);
+      return TypesUtil.isClassType(psiClassType, GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME);
     }
   };
 

@@ -71,6 +71,10 @@ public abstract class PsiClassType extends PsiType {
    */
   @NotNull public abstract PsiType[] getParameters();
 
+  public int getParameterCount() {
+    return getParameters().length;
+  }
+
   public boolean equals(Object obj) {
     if (this == obj) return true;
     if (!(obj instanceof PsiClassType)) return false;
@@ -80,9 +84,9 @@ public abstract class PsiClassType extends PsiType {
     String className = getClassName();
     String otherClassName = otherClassType.getClassName();
     if (!Comparing.equal(className, otherClassName)) return false;
-    final PsiType[] parameters = getParameters();
-    final PsiType[] otherParameters = otherClassType.getParameters();
-    if (parameters.length != otherParameters.length) return false;
+
+    if (getParameterCount() != otherClassType.getParameterCount()) return false;
+
     final ClassResolveResult result = resolveGenerics();
     final ClassResolveResult otherResult = otherClassType.resolveGenerics();
     if (result == otherResult) return true;

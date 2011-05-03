@@ -1006,7 +1006,7 @@ public abstract class DialogWrapper {
   /**
    * Sets margine for command buttons ("OK", "Cance", "Help").
    */
-  public final void setButtonsMargin(Insets insets) {
+  public final void setButtonsMargin(@Nullable Insets insets) {
     myButtonMargins = insets;
   }
 

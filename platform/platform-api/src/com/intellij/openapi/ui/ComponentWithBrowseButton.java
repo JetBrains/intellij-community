@@ -106,13 +106,13 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     myBrowseButton.removeActionListener(listener);
   }
 
-  public void addBrowseFolderListener(String title, String description, @Nullable Project project,
+  public void addBrowseFolderListener(@Nullable String title, @Nullable String description, @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<Comp> accessor) {
     addBrowseFolderListener(title, description, project, fileChooserDescriptor, accessor, true);
   }
 
-  public void addBrowseFolderListener(String title, String description, @Nullable Project project,
+  public void addBrowseFolderListener(@Nullable String title, @Nullable String description, @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<Comp> accessor, boolean autoRemoveOnHide) {
     addBrowseFolderListener(project, new BrowseFolderActionListener<Comp>(title, description, this, project, fileChooserDescriptor, accessor), autoRemoveOnHide);
@@ -178,7 +178,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     private final Project myProject;
     private final FileChooserDescriptor myFileChooserDescriptor;
 
-    public BrowseFolderActionListener(String title, String description, ComponentWithBrowseButton<T> textField, @Nullable Project project, FileChooserDescriptor fileChooserDescriptor, TextComponentAccessor<T> accessor) {
+    public BrowseFolderActionListener(@Nullable String title, @Nullable String description, ComponentWithBrowseButton<T> textField, @Nullable Project project, FileChooserDescriptor fileChooserDescriptor, TextComponentAccessor<T> accessor) {
       myTitle = title;
       myDescription = description;
       myTextComponent = textField;

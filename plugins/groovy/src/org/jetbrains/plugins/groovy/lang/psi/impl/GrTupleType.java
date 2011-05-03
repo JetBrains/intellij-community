@@ -106,7 +106,7 @@ public class GrTupleType extends GrLiteralClassType {
         PsiType componentType = myComponentTypes[i];
         PsiType otherComponent = otherComponents[i];
         if (otherComponent == null) {
-          if (componentType != null && !TypesUtil.typeEqualsToText(componentType, "java.lang.Object")) return false;
+          if (componentType != null && !TypesUtil.isClassType(componentType, CommonClassNames.JAVA_LANG_OBJECT)) return false;
         }
         else if (componentType != null && !componentType.isAssignableFrom(otherComponent)) return false;
       }

@@ -32,9 +32,11 @@ public class AutomaticParametersRenamer extends AutomaticRenamer {
     if (scope instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)scope;
       final int parameterIndex = method.getParameterList().getParameterIndex(param);
-
+      if (parameterIndex < 0) return;
       for (PsiMethod overrider : OverridingMethodsSearch.search(method)) {
-        final PsiParameter inheritedParam = overrider.getParameterList().getParameters()[parameterIndex];
+        final PsiParameter[] parameters = overrider.getParameterList().getParameters();
+        if (parameterIndex >= parameters.length) continue;
+        final PsiParameter inheritedParam = parameters[parameterIndex];
         if (!Comparing.strEqual(inheritedParam.getName(), newParamName)) {
           myElements.add(inheritedParam);
           suggestAllNames(inheritedParam.getName(), newParamName);

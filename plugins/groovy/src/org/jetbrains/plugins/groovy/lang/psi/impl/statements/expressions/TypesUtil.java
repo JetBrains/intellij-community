@@ -246,7 +246,7 @@ public class TypesUtil {
       if (isNumericType(lType)) {
         return isNumericType(rType) || rType == PsiType.NULL;
       }
-      else if (typeEqualsToText(lType, JAVA_LANG_STRING)) {
+      else if (isClassType(lType, JAVA_LANG_STRING)) {
         return true;
       }
     }
@@ -288,7 +288,7 @@ public class TypesUtil {
       }
     }
 
-    if (typeEqualsToText(rType, GroovyCommonClassNames.GROOVY_LANG_GSTRING)) {
+    if (isClassType(rType, GroovyCommonClassNames.GROOVY_LANG_GSTRING)) {
       if (isAssignable(lType, GroovyPsiManager.getInstance(manager.getProject()).createTypeByFQClassName(JAVA_LANG_STRING, scope), manager, scope)) {
         return true;
       }
@@ -296,9 +296,9 @@ public class TypesUtil {
 
     if (isNumericType(lType) && isNumericType(rType)) {
       lType = unboxPrimitiveTypeWrapper(lType);
-      if (typeEqualsToText(lType, JAVA_MATH_BIG_DECIMAL)) lType = PsiType.DOUBLE;
+      if (isClassType(lType, JAVA_MATH_BIG_DECIMAL)) lType = PsiType.DOUBLE;
       rType = unboxPrimitiveTypeWrapper(rType);
-      if (typeEqualsToText(rType, JAVA_MATH_BIG_DECIMAL)) rType = PsiType.DOUBLE;
+      if (isClassType(rType, JAVA_MATH_BIG_DECIMAL)) rType = PsiType.DOUBLE;
     }
     else {
       if (rType == PsiType.NULL && lType instanceof PsiPrimitiveType) return false;
@@ -308,7 +308,7 @@ public class TypesUtil {
     }
 
     if (unboxPrimitiveTypeWrapper(lType) == PsiType.CHAR &&
-        (typeEqualsToText(rType, GROOVY_LANG_GSTRING) || typeEqualsToText(rType, JAVA_LANG_STRING))) {
+        (isClassType(rType, GROOVY_LANG_GSTRING) || isClassType(rType, JAVA_LANG_STRING))) {
       return true;
     }
 
@@ -464,9 +464,12 @@ public class TypesUtil {
     return type;
   }
 
-
-  public static boolean typeEqualsToText(@NotNull PsiType type, @NotNull String text) {
-    return text.endsWith(type.getPresentableText()) && text.equals(type.getCanonicalText());
+  public static boolean isClassType(@NotNull PsiType type, @NotNull String qName) {
+    if (type instanceof PsiClassType) {
+      final PsiClass psiClass = ((PsiClassType)type).resolve();
+      return psiClass != null && qName.equals(psiClass.getQualifiedName());
+    }
+    return false;
   }
 
   public static PsiSubstitutor composeSubstitutors(PsiSubstitutor s1, PsiSubstitutor s2) {

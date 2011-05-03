@@ -62,12 +62,12 @@ public class FindPackageUsagesDialog extends JavaFindUsagesDialog<JavaPackageFin
   }
 
   protected void update() {
-    if(myCbToSearchForTextOccurences != null){
+    if(myCbToSearchForTextOccurrences != null){
       if (isSelected(myCbUsages)){
-        myCbToSearchForTextOccurences.makeSelectable();
+        myCbToSearchForTextOccurrences.makeSelectable();
       }
       else{
-        myCbToSearchForTextOccurences.makeUnselectable(false);
+        myCbToSearchForTextOccurrences.makeUnselectable(false);
       }
     }
 

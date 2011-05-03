@@ -244,6 +244,7 @@ public abstract class IntroduceFieldCentralPanel {
   }
 
 
-
-
+  public void saveFinalState() {
+    ourLastCbFinalState = myCbFinal.isEnabled() && myCbFinal.isSelected();
+  }
 }

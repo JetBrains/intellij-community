@@ -385,7 +385,7 @@ public class ExpressionGenerator extends Generator {
     }
     if (GenerationSettings.dontReplaceOperatorsWithMethodsForNumbers &&
         (TypesUtil.isNumericType(ltype) && (right == null || TypesUtil.isNumericType(right.getType())) ||
-         op == mPLUS && ltype != null && TypesUtil.typeEqualsToText(ltype, CommonClassNames.JAVA_LANG_STRING))) {
+         op == mPLUS && ltype != null && TypesUtil.isClassType(ltype, CommonClassNames.JAVA_LANG_STRING))) {
       writeSimpleBinaryExpression(token, left, right);
       return;
     }

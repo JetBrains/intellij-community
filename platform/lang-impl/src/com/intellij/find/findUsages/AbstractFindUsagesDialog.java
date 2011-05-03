@@ -46,13 +46,13 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   private final boolean myIsShowInNewTabEnabled;
   private final boolean myIsShowInNewTabVisible;
 
-  private final boolean mySearchForTextOccurencesAvailable;
+  private final boolean mySearchForTextOccurrencesAvailable;
 
   private final boolean mySearchInLibrariesAvailable;
 
   private JCheckBox myCbToOpenInNewTab;
 
-  protected StateRestoringCheckBox myCbToSearchForTextOccurences;
+  protected StateRestoringCheckBox myCbToSearchForTextOccurrences;
   protected JCheckBox myCbToSkipResultsWhenOneUsage;
 
   private final ActionListener myUpdateAction;
@@ -64,7 +64,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
                                      boolean toShowInNewTab,
                                      boolean mustOpenInNewTab,
                                      boolean isSingleFile,
-                                     boolean searchForTextOccurencesAvailable,
+                                     boolean searchForTextOccurrencesAvailable,
                                      boolean searchInLibrariesAvailable) {
     super(project, true);
     myProject = project;
@@ -72,7 +72,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     myToShowInNewTab = toShowInNewTab;
     myIsShowInNewTabEnabled = !mustOpenInNewTab && UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
     myIsShowInNewTabVisible = !isSingleFile;
-    mySearchForTextOccurencesAvailable = searchForTextOccurencesAvailable;
+    mySearchForTextOccurrencesAvailable = searchForTextOccurrencesAvailable;
     mySearchInLibrariesAvailable = searchInLibrariesAvailable;
 
     myUpdateAction = new ActionListener() {
@@ -150,7 +150,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   public void calcFindUsagesOptions(FindUsagesOptions options) {
     options.searchScope = myScopeCombo == null ? GlobalSearchScope.allScope(myProject) : myScopeCombo.getSelectedScope();
 
-    options.isSearchForTextOccurrences = isToChange(myCbToSearchForTextOccurences) && isSelected(myCbToSearchForTextOccurences);
+    options.isSearchForTextOccurrences = isToChange(myCbToSearchForTextOccurrences) && isSelected(myCbToSearchForTextOccurrences);
   }
 
   protected void update() {
@@ -172,8 +172,8 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     if (myScopeCombo != null) {
       settings.setDefaultScopeName(myScopeCombo.getSelectedScopeName());
     }
-    if (mySearchForTextOccurencesAvailable && myCbToSearchForTextOccurences != null && myCbToSearchForTextOccurences.isEnabled()) {
-      myFindUsagesOptions.isSearchForTextOccurrences = myCbToSearchForTextOccurences.isSelected();
+    if (mySearchForTextOccurrencesAvailable && myCbToSearchForTextOccurrences != null && myCbToSearchForTextOccurrences.isEnabled()) {
+      myFindUsagesOptions.isSearchForTextOccurrences = myCbToSearchForTextOccurrences.isSelected();
     }
 
     if (myCbToSkipResultsWhenOneUsage != null) {
@@ -242,8 +242,8 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   protected abstract JPanel createFindWhatPanel();
 
   protected void addUsagesOptions(JPanel optionsPanel) {
-    if (mySearchForTextOccurencesAvailable) {
-      myCbToSearchForTextOccurences = addCheckboxToPanel(FindBundle.message("find.options.search.for.text.occurences.checkbox"),
+    if (mySearchForTextOccurrencesAvailable) {
+      myCbToSearchForTextOccurrences = addCheckboxToPanel(FindBundle.message("find.options.search.for.text.occurences.checkbox"),
                                                          myFindUsagesOptions.isSearchForTextOccurrences, optionsPanel, false);
 
     }

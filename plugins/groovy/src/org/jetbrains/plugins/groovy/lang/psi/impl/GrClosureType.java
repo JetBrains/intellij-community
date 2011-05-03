@@ -51,6 +51,16 @@ public class GrClosureType extends GrLiteralClassType {
     return "Closure";
   }
 
+  @Override
+  public int getParameterCount() {
+    if (myTypeArgs != null) {
+      return myTypeArgs.length;
+    }
+
+    final PsiClass psiClass = resolve();
+    return psiClass != null && psiClass.getTypeParameters().length == 1 ? 1 : 0;
+  }
+
   @NotNull
   public PsiType[] getParameters() {
     if (myTypeArgs == null) {
@@ -73,7 +83,11 @@ public class GrClosureType extends GrLiteralClassType {
 
   @NotNull
   public PsiClassType rawType() {
-    return this;
+    if (myTypeArgs != null && myTypeArgs.length == 0) {
+      return this;
+    }
+
+    return new GrClosureType(getLanguageLevel(), getResolveScope(), myFacade, mySignature, false);
   }
 
   @Nullable
