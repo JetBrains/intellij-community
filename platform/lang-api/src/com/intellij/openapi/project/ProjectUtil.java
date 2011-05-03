@@ -20,9 +20,6 @@
 package com.intellij.openapi.project;
 
 import com.intellij.ide.highlighter.InternalFileType;
-import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -71,18 +68,18 @@ public class ProjectUtil {
 
     return _path;
   }
-  
-  public static String calcRelativeToProjectPath(final VirtualFile file, final Project project) {
+
+  public static String calcRelativeToProjectPath(final VirtualFile file, final Project project, final boolean includeFilePath) {
     if (file instanceof VirtualFilePathWrapper) {
-      return ((VirtualFilePathWrapper)file).getPresentablePath();
+      return includeFilePath ? ((VirtualFilePathWrapper)file).getPresentablePath() : file.getName();
     }    
-    String url = file.getPresentableUrl();
+    String url = includeFilePath ? file.getPresentableUrl() : file.getName();
     if (project == null) {
       return url;
     }
     else {
       final VirtualFile baseDir = project.getBaseDir();
-      if (baseDir != null) {
+      if (baseDir != null && includeFilePath) {
         //noinspection ConstantConditions
         final String projectHomeUrl = baseDir.getPresentableUrl();
         if (url.startsWith(projectHomeUrl)) {
@@ -93,6 +90,10 @@ public class ProjectUtil {
       if (module == null) return url;
       return new StringBuffer().append("[").append(module.getName()).append("] - ").append(url).toString();
     }
+  }  
+  
+  public static String calcRelativeToProjectPath(final VirtualFile file, final Project project) {
+    return calcRelativeToProjectPath(file, project, true);
   }
 
   @Nullable
