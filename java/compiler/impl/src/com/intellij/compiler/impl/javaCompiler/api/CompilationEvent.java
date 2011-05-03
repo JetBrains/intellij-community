@@ -49,7 +49,14 @@ abstract class CompilationEvent {
   }
 
   private static void showProgressFor(String title, URI uri, OutputParser.Callback callback) {
-    callback.setProgressText(title + StringUtil.last(uri.toString(), 70, true));
+    String normalizedPath;
+    try {
+      normalizedPath = new File(uri).getPath();
+    }
+    catch (IllegalArgumentException e) {
+      normalizedPath = uri.toString();
+    }
+    callback.setProgressText(title + StringUtil.last(normalizedPath, 100, true));
   }
 
   static CompilationEvent generateClass(final URI uri, final byte[] bytes) {
@@ -57,7 +64,7 @@ abstract class CompilationEvent {
       @Override
       protected void process(OutputParser.Callback callback) {
         showProgressFor("Writing ", uri, callback);
-        File file = new File(uri.getPath());
+        File file = new File(uri);
         callback.fileGenerated(new FileObject(file,bytes));
       }
       @NonNls

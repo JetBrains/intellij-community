@@ -142,6 +142,7 @@ public class ExpressionStatement implements GroovyElementTypes {
 
   private static GroovyElementType namePartParse(PsiBuilder builder, GroovyParser parser) {
     if (BINARY_OP_SET.contains(builder.getTokenType())) return WRONGWAY;
+    if (KEYWORDS.contains(builder.getTokenType())) return WRONGWAY;
     final GroovyElementType type = PathExpression.namePartParse(builder, parser);
     if (type == WRONGWAY && NUMBERS.contains(builder.getTokenType())) {
       builder.advanceLexer();

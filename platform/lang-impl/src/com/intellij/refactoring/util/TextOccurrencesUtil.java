@@ -75,7 +75,7 @@ public class TextOccurrencesUtil {
       public boolean execute(PsiElement element, int offsetInElement) {
         final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
         final ASTNode node = element.getNode();
-        if (node != null && definition.getStringLiteralElements().contains(node.getElementType())) {
+        if (definition != null && node != null && definition.getStringLiteralElements().contains(node.getElementType())) {
           return processor.process(element);
         }
         return true;

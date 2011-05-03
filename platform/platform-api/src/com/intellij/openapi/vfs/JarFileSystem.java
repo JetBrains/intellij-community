@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -32,7 +31,7 @@ public abstract class JarFileSystem extends NewVirtualFileSystem {
   @NonNls public static final String JAR_SEPARATOR = "!/";
 
   public static JarFileSystem getInstance(){
-    return ApplicationManager.getApplication().getComponent(JarFileSystem.class);
+    return (JarFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
   }
 
   @Nullable

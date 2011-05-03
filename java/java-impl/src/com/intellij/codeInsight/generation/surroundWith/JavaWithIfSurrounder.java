@@ -50,6 +50,7 @@ public class JavaWithIfSurrounder extends JavaStatementsSurrounder{
     final PsiStatement thenBranch = ifStatement.getThenBranch();
     if (thenBranch != null) {
       PsiCodeBlock thenBlock = ((PsiBlockStatement)thenBranch).getCodeBlock();
+      SurroundWithUtil.indentCommentIfNecessary(thenBlock, statements, factory);
       thenBlock.addRange(statements[0], statements[statements.length - 1]);
       container.deleteChildRange(statements[0], statements[statements.length - 1]);
     }

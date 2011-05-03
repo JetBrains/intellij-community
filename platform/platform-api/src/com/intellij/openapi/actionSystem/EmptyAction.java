@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 
 /**
  * @author Gregory.Shrago
@@ -36,11 +37,24 @@ public class EmptyAction extends AnAction {
 
   public static void setupAction(@NotNull AnAction action, @NotNull String id, @Nullable JComponent component) {
     final AnAction emptyAction = ActionManager.getInstance().getAction(id);
-    if (action.getTemplatePresentation().getIcon() == null) {
-      action.getTemplatePresentation().setIcon(emptyAction.getTemplatePresentation().getIcon());
+    final Presentation copyFrom = emptyAction.getTemplatePresentation();
+    final Presentation copyTo = action.getTemplatePresentation();
+    if (copyTo.getIcon() == null) {
+      copyTo.setIcon(copyFrom.getIcon());
     }
-    action.getTemplatePresentation().setText(emptyAction.getTemplatePresentation().getText());
+    copyTo.setText(copyFrom.getText());
+    copyTo.setDescription(copyFrom.getDescription());
     action.registerCustomShortcutSet(emptyAction.getShortcutSet(), component);
+  }
+
+  public static void registerActionShortcuts(JComponent component, final JComponent fromComponent) {
+    final ArrayList<AnAction> actionList =
+      (ArrayList<AnAction>)fromComponent.getClientProperty(ourClientProperty);
+    if (actionList != null) {
+      for (AnAction anAction : actionList) {
+        anAction.registerCustomShortcutSet(anAction.getShortcutSet(), component);
+      }
+    }
   }
 
   public static AnAction wrap(final AnAction action) {

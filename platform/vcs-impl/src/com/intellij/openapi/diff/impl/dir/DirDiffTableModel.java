@@ -20,8 +20,8 @@ import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.Nullable;
 
@@ -163,12 +163,12 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
 
   public void reloadModel() {
     myUpdating.set(true);
-    final LoadingDecorator decorator = getDecorator();
-    decorator.startLoading(false);
+    final JBLoadingPanel loadingPanel = getLoadingPanel();
+    loadingPanel.startLoading();
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         try {
-          updater = new Updater(decorator, 100);
+          updater = new Updater(loadingPanel, 100);
           updater.start();
           myTree = new DTree(null, "", true);
           scan(mySrc, myTree, true);
@@ -185,16 +185,17 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
     });
   }
 
-  private LoadingDecorator getDecorator() {
-    return (LoadingDecorator)myTable.getClientProperty(DECORATOR);
+  private JBLoadingPanel getLoadingPanel() {
+    return (JBLoadingPanel)myTable.getClientProperty(DECORATOR);
   }
 
   public void applySettings() {
     if (! myUpdating.get()) myUpdating.set(true);
-    if (!getDecorator().isLoading()) {
-      getDecorator().startLoading(false);
+    final JBLoadingPanel loadingPanel = getLoadingPanel();
+    if (!loadingPanel.isLoading()) {
+      loadingPanel.startLoading();
       if (updater == null) {
-        updater = new Updater(getDecorator(), 100);
+        updater = new Updater(loadingPanel, 100);
         updater.start();
       }
     }
@@ -211,8 +212,8 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
             fireTableDataChanged();
             selectFirstRow();
             DirDiffTableModel.this.text.set("");
-            if (getDecorator().isLoading()) {
-              getDecorator().stopLoading();
+            if (loadingPanel.isLoading()) {
+              loadingPanel.stopLoading();
             }
           }
         });
@@ -245,6 +246,8 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
             case EQUAL:
               elements.add(DirDiffElement.createEqual(child.getSource(), child.getTarget()));
               break;
+            case ERROR:
+              elements.add(DirDiffElement.createError(child.getSource(), child.getTarget()));
           }
         }
       } else {
@@ -419,18 +422,18 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
   }
 
   class Updater extends Thread {
-    private final LoadingDecorator myDecorator;
+    private final JBLoadingPanel myLoadingPanel;
     private final int mySleep;
 
-    Updater(LoadingDecorator decorator, int sleep) {
+    Updater(JBLoadingPanel loadingPanel, int sleep) {
       super("Loading Updater");
-      myDecorator = decorator;
+      myLoadingPanel = loadingPanel;
       mySleep = sleep;
     }
 
     @Override
     public void run() {
-      if (myDecorator.isLoading()) {
+      if (myLoadingPanel.isLoading()) {
         try {
           Thread.sleep(mySleep);
         }
@@ -440,12 +443,12 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
           @Override
           public void run() {
             final String s = text.get();
-            if (s != null && myDecorator.isLoading()) {
-              myDecorator.setLoadingText(s);
+            if (s != null && myLoadingPanel.isLoading()) {
+              myLoadingPanel.setLoadingText(s);
             }
           }
         });
-        updater = new Updater(myDecorator, mySleep);
+        updater = new Updater(myLoadingPanel, mySleep);
         updater.start();
       } else {
         updater = null;

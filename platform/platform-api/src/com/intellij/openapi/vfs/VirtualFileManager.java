@@ -45,14 +45,6 @@ public abstract class VirtualFileManager implements ModificationTracker{
   }
 
   /**
-   * Gets the array of supported file systems.
-   *
-   * @return array of {@link VirtualFileSystem} objects
-   */
-  @NotNull
-  public abstract VirtualFileSystem[] getFileSystems();
-
-  /**
    * Gets VirtualFileSystem with the specified protocol.
    *
    * @param protocol String representing the protocol

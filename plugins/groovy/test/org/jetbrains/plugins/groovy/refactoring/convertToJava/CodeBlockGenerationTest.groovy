@@ -150,4 +150,8 @@ public final class Matcher {
   void testAnonymousFromMap() {doTest()}
   void testClosure() {doTest()}
   void _testListAsArray() {doTest()}
+
+  void testUnresolvedArrayAccess() {doTest()}
+  void testArrayAccess() {doTest()}
+  void testCastWithEquality() {doTest()}
 }

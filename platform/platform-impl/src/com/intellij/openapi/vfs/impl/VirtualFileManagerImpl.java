@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -28,29 +28,31 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class VirtualFileManagerImpl extends VirtualFileManagerEx implements ApplicationComponent {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFileManagerImpl");
 
-  private final ArrayList<VirtualFileSystem> myFileSystems = new ArrayList<VirtualFileSystem>();
-  private final Map<String, VirtualFileSystem> myProtocolToSystemMap = new HashMap<String, VirtualFileSystem>();
+  private final KeyedExtensionCollector<VirtualFileSystem, String> myCollector =
+    new KeyedExtensionCollector<VirtualFileSystem, String>("com.intellij.virtualFileSystem") {
+      @Override
+      protected String keyToString(String key) {
+        return key;
+      }
+    };
+
+  private final List<VirtualFileSystem> myPhysicalFileSystems = new ArrayList<VirtualFileSystem>();
 
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
   private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createEmptyCOWList();
   private final EventDispatcher<ModificationAttemptListener> myModificationAttemptListenerMulticaster = EventDispatcher.create(ModificationAttemptListener.class);
 
-  @NonNls private static final String USER_HOME = "user.home";
   private int myRefreshCount = 0;
   private final ManagingFS myPersistence;
 
@@ -79,26 +81,25 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   }
 
   public void registerFileSystem(VirtualFileSystem fileSystem) {
-    myFileSystems.add(fileSystem);
+    myCollector.addExplicitExtension(fileSystem.getProtocol(), fileSystem);
     if (!(fileSystem instanceof NewVirtualFileSystem)) {
       fileSystem.addVirtualFileListener(myVirtualFileListenerMulticaster.getMulticaster());
     }
-    myProtocolToSystemMap.put(fileSystem.getProtocol(), fileSystem);
+    myPhysicalFileSystems.add(fileSystem);
   }
 
   public void unregisterFileSystem(VirtualFileSystem fileSystem) {
-    myFileSystems.remove(fileSystem);
+    myCollector.removeExplicitExtension(fileSystem.getProtocol(), fileSystem);
     fileSystem.removeVirtualFileListener(myVirtualFileListenerMulticaster.getMulticaster());
-    myProtocolToSystemMap.remove(fileSystem.getProtocol());
+    myPhysicalFileSystems.remove(fileSystem);
   }
 
-  @NotNull
-  public VirtualFileSystem[] getFileSystems() {
-    return myFileSystems.toArray(new VirtualFileSystem[myFileSystems.size()]);
-  }
-
+  @Nullable
   public VirtualFileSystem getFileSystem(String protocol) {
-    return myProtocolToSystemMap.get(protocol);
+    List<VirtualFileSystem> systems = myCollector.forKey(protocol);
+    if (systems.isEmpty()) return null;
+    LOG.assertTrue(systems.size() == 1);
+    return systems.get(0);
   }
 
   public void refresh(boolean asynchronous) {
@@ -110,7 +111,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
 
-    for (VirtualFileSystem fileSystem : myFileSystems) {
+    for (VirtualFileSystem fileSystem : getPhysicalFileSystems()) {
       if (fileSystem instanceof NewVirtualFileSystem) {
         ((NewVirtualFileSystem)fileSystem).refreshWithoutFileWatcher(asynchronous);
       }
@@ -120,7 +121,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     }
   }
 
-  public void refresh(boolean asynchronous, final Runnable postAction) {
+  public void refresh(boolean asynchronous, @Nullable final Runnable postAction) {
     if (!asynchronous) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
@@ -134,28 +135,34 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     //  RefreshQueue.getInstance().refresh(asynchronous, true, last ? postAction : null, root);
     //}
 
-    for (VirtualFileSystem fileSystem : myFileSystems) {
+    for (VirtualFileSystem fileSystem : getPhysicalFileSystems()) {
       if (!(fileSystem instanceof NewVirtualFileSystem)) {
         fileSystem.refresh(asynchronous);
       }
     }
   }
 
+  private List<VirtualFileSystem> getPhysicalFileSystems() {
+    return myPhysicalFileSystems;
+  }
+
   public VirtualFile findFileByUrl(@NotNull String url) {
-    String protocol = extractProtocol(url);
-    if (protocol == null) return null;
-    VirtualFileSystem fileSystem = myProtocolToSystemMap.get(protocol);
+    VirtualFileSystem fileSystem = getFileSystemForUrl(url);
     if (fileSystem == null) return null;
     return fileSystem.findFileByPath(extractPath(url));
   }
 
   public VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
+    VirtualFileSystem fileSystem = getFileSystemForUrl(url);
+    if (fileSystem == null) return null;
+    return fileSystem.refreshAndFindFileByPath(extractPath(url));
+  }
+
+  @Nullable
+  private VirtualFileSystem getFileSystemForUrl(String url) {
     String protocol = extractProtocol(url);
     if (protocol == null) return null;
-    VirtualFileSystem fileSystem = myProtocolToSystemMap.get(protocol);
-    if (fileSystem == null) return null;
-    String path = extractPath(url);
-    return fileSystem.refreshAndFindFileByPath(path);
+    return getFileSystem(protocol);
   }
 
   public void addVirtualFileListener(@NotNull VirtualFileListener listener) {
@@ -228,41 +235,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
         }
       }
     }
-  }
-
-  private static String convertLocalPathToUrl(@NonNls @NotNull String path) {
-    if (path.startsWith("~")) {
-      path = System.getProperty(USER_HOME) + path.substring(1);
-    }
-
-    if (SystemInfo.isWindows || SystemInfo.isOS2) {
-      if (path.endsWith(":/")) { // instead of getting canonical path - see below
-        path = Character.toUpperCase(path.charAt(0)) + path.substring(1);
-      }
-    }
-
-    if (path.length() == 0) {
-      try {
-        path = new File("").getCanonicalPath();
-      }
-      catch (IOException e) {
-        return null;
-      }
-    }
-
-    if (SystemInfo.isWindows) {
-      if (path.charAt(0) == '/') path = path.substring(1); //hack over new File(path).toUrl().getFile()
-      if (path.contains("~")) {
-        try {
-          path = new File(path.replace('/', File.separatorChar)).getCanonicalPath().replace(File.separatorChar, '/');
-        }
-        catch (IOException e) {
-          return null;
-        }
-      }
-    }
-
-    return LocalFileSystem.PROTOCOL_PREFIX + path.replace(File.separatorChar, '/');
   }
 
   private static class LoggingListener implements VirtualFileListener {

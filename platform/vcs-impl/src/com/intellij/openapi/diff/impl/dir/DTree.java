@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.diff.DiffElement;
+import com.intellij.ide.diff.DiffErrorElement;
 import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.SortedList;
@@ -26,6 +27,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+
+import static com.intellij.openapi.diff.impl.dir.DType.ERROR;
 
 /**
  * @author Konstantin Bulenkov
@@ -143,7 +146,9 @@ public class DTree {
     for (DTree tree : getChildren()) {
       final DiffElement<?> src = tree.getSource();
       final DiffElement<?> trg = tree.getTarget();
-      if (src == null && trg != null) {
+      if (src instanceof DiffErrorElement || trg instanceof DiffErrorElement) {
+        tree.setType(ERROR);
+      } else if (src == null && trg != null) {
         tree.setType(DType.TARGET);
       } else if (src != null && trg == null) {
         tree.setType(DType.SOURCE);
@@ -172,6 +177,10 @@ public class DTree {
 
   public void updateVisibility(DirDiffSettings settings) {
     if (children.isEmpty()) {
+     if (type == ERROR) {
+        myVisible = true;
+       return;
+      }
       if (type != DType.SEPARATOR && !"".equals(settings.getFilter())) {
         if (!settings.getFilterPattern().matcher(getName()).matches()) {
           myVisible = false;
@@ -189,6 +198,7 @@ public class DTree {
           myVisible = settings.showNewOnTarget;
           break;
         case SEPARATOR:
+        case ERROR:
           myVisible = true;
           break;
         case CHANGED:

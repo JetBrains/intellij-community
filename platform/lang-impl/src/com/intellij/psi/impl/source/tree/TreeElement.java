@@ -50,7 +50,6 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
       clone.myPrevSibling = null;
       clone.myParent = null;
       clone.myStartOffsetInParent = -1;
-      clone.clearCaches();
     }
 
     return clone;

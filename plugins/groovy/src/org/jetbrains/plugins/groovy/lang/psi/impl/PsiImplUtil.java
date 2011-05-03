@@ -448,9 +448,10 @@ public class PsiImplUtil {
            TypesUtil.isAssignable(PsiType.INT, argTypes[0], manager, resolveScope);
   }
 
-  public static GroovyResolveResult getIndexPropertyMethodCandidate(PsiType thisType,
+  public static GroovyResolveResult getIndexPropertyMethodCandidate(@Nullable PsiType thisType,
                                                                     PsiType[] argTypes,
                                                                     GroovyPsiElement place) {
+    if (thisType == null) return GroovyResolveResult.EMPTY_RESULT;
     GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(thisType, "getAt", place, argTypes);
     if (candidates.length != 1) {
       final GrTupleType tupleType = new GrTupleType(argTypes, JavaPsiFacade.getInstance(place.getProject()), place.getResolveScope());

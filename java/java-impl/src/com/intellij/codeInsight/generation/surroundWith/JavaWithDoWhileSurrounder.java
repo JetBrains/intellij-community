@@ -46,10 +46,16 @@ class JavaWithDoWhileSurrounder extends JavaStatementsSurrounder{
 
     doWhileStatement = (PsiDoWhileStatement)container.addAfter(doWhileStatement, statements[statements.length - 1]);
 
-    PsiCodeBlock bodyBlock = ((PsiBlockStatement)doWhileStatement.getBody()).getCodeBlock();
+    PsiStatement body = doWhileStatement.getBody();
+    if (!(body instanceof PsiBlockStatement)) {
+      return null;
+    }
+    PsiCodeBlock bodyBlock = ((PsiBlockStatement)body).getCodeBlock();
+    SurroundWithUtil.indentCommentIfNecessary(bodyBlock, statements, factory);
     bodyBlock.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
-    return doWhileStatement.getCondition().getTextRange();
+    PsiExpression condition = doWhileStatement.getCondition();
+    return condition == null ? null : condition.getTextRange();
   }
 }

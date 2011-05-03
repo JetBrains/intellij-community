@@ -530,20 +530,6 @@ public class TemplateState implements Disposable {
       offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, context.getTailOffset());
       offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, context.getTailOffset());
 
-      Integer bracketCount = (Integer)item.getUserData(LookupItem.BRACKETS_COUNT_ATTR);
-      if (bracketCount != null) {
-        final StringBuilder tail = new StringBuilder();
-        for (int i = 0; i < bracketCount.intValue(); i++) {
-          tail.append("[]");
-        }
-        new WriteCommandAction(myProject) {
-          protected void run(com.intellij.openapi.application.Result result) throws Throwable {
-            EditorModificationUtil.insertStringAtCaret(myEditor, tail.toString());
-          }
-        }.execute();
-        PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-      }
-
       final TemplateLookupSelectionHandler handler =
         item instanceof LookupItem ? ((LookupItem<?>)item).getAttribute(TemplateLookupSelectionHandler.KEY_IN_LOOKUP_ITEM) : null;
       if (handler != null) {

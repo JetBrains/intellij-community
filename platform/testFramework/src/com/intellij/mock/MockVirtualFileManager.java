@@ -28,12 +28,6 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
     super();
   }
 
-  @NotNull
-  @Override
-  public VirtualFileSystem[] getFileSystems() {
-    return new VirtualFileSystem[0];
-  }
-
   @Override
   public VirtualFileSystem getFileSystem(String protocol) {
     return null;

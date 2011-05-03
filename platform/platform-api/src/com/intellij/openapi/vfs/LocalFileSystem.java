@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.Processor;
 import com.intellij.util.io.fs.IFile;
@@ -33,7 +32,7 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   @NonNls public static final String PROTOCOL_PREFIX = PROTOCOL + "://";
 
   private static class LocalFileSystemHolder {
-    private static final LocalFileSystem ourInstance = ApplicationManager.getApplication().getComponent(LocalFileSystem.class);
+    private static final LocalFileSystem ourInstance = (LocalFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
   }
 
   public static LocalFileSystem getInstance() {

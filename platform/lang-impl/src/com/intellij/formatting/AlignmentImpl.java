@@ -162,19 +162,15 @@ class AlignmentImpl extends Alignment {
   }
 
   private boolean continueOffsetResponsibleBlockRetrieval(@Nullable AbstractBlockWrapper block) {
-    if (block == null) {
-      return false;
-    }
-    
     // We don't want to align block that doesn't start new line if it's not configured for 'by columns' alignment.
-    if (!myAllowBackwardShift && !block.getWhiteSpace().containsLineFeeds()) {
+    if (!myAllowBackwardShift && block != null && !block.getWhiteSpace().containsLineFeeds()) {
       return false;
     }
     for (AbstractBlockWrapper offsetBlock : myOffsetRespBlocks) {
       if (offsetBlock == block) {
         continue;
       }
-      if (!onDifferentLines(offsetBlock, block) && offsetBlock.getStartOffset() < block.getStartOffset()) {
+      if (!onDifferentLines(offsetBlock, block) && block != null && offsetBlock.getStartOffset() < block.getStartOffset()) {
         return false;
       }
     }

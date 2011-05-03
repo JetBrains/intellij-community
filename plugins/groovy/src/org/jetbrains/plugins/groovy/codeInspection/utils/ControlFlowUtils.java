@@ -569,7 +569,7 @@ public class ControlFlowUtils {
     boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue);
   }
 
-  public static void visitAllExitPoints(@Nullable GrCodeBlock block, ExitPointVisitor visitor) {
+  public static void visitAllExitPoints(@Nullable GrControlFlowOwner block, ExitPointVisitor visitor) {
     if (block == null) return;
     final Instruction[] flow = block.getControlFlow();
     boolean[] visited = new boolean[flow.length];

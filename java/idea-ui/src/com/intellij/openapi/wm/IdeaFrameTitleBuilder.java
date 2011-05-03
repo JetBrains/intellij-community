@@ -17,6 +17,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder;
 
@@ -25,6 +26,6 @@ import com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder;
  */
 public class IdeaFrameTitleBuilder extends PlatformFrameTitleBuilder {
   public String getFileTitle(final Project project, final VirtualFile file) {
-    return ProjectUtil.calcRelativeToProjectPath(file, project);
+    return ProjectUtil.calcRelativeToProjectPath(file, project, !SystemInfo.isMac);
   }
 }

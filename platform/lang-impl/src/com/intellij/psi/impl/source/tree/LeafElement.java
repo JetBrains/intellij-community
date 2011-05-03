@@ -39,6 +39,13 @@ public abstract class LeafElement extends TreeElement {
     myText = text;
   }
 
+  @Override
+  public LeafElement clone() {
+    LeafElement clone = (LeafElement)super.clone();
+    clone.clearCaches();
+    return clone;
+  }
+
   public int getTextLength() {
     return myText.length();
   }

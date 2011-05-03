@@ -30,6 +30,8 @@ import org.jetbrains.plugins.groovy.annotator.intentions.CreateClassActionBase;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
@@ -49,8 +51,8 @@ public class MoveClassToNewFileIntention extends Intention {
     if (dir != null) {
       if (dir.findFile(newFileName) != null) {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          CommonRefactoringUtil
-            .showErrorHint(project, editor, GroovyIntentionsBundle.message("file.exists", newFileName, dir.getName()), getFamilyName(), null);
+          final String message = GroovyIntentionsBundle.message("file.exists", newFileName, dir.getName());
+          CommonRefactoringUtil.showErrorHint(project, editor, message, getFamilyName(), null);
         }
         return;
       }
@@ -59,6 +61,19 @@ public class MoveClassToNewFileIntention extends Intention {
     final GroovyFile newFile = (GroovyFile)GroovyTemplatesFactory.createFromTemplate(dir, name, newFileName, "GroovyClass.groovy");
     final GrTypeDefinition template = newFile.getTypeDefinitions()[0];
     final PsiElement newClass = template.replace(psiClass);
+    final GrDocComment docComment = psiClass.getDocComment();
+    if (newClass instanceof GrTypeDefinition && docComment != null) {
+      final GrDocComment newDoc = ((GrTypeDefinition)newClass).getDocComment();
+      if (newDoc != null) {
+        newDoc.replace(docComment);
+      }
+      else {
+        final PsiElement parent = newClass.getParent();
+        parent.addBefore(docComment, psiClass);
+        parent.getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", psiClass.getNode());
+      }
+      docComment.delete();
+    }
     psiClass.delete();
     CreateClassActionBase.putCursor(project, newClass.getContainingFile(), newClass.getNavigationElement());
   }

@@ -44,6 +44,7 @@ import java.util.concurrent.Callable;
  */
 public abstract class DiffElement<T> implements Disposable {
   public static final DiffElement[] EMPTY_ARRAY = new DiffElement[0];
+  public static final DiffElement ERROR_NODE = new DiffErrorElement("Can't load elements", "An error has been occurred while getting children");
   private DiffPanel myDiffPanel;
   private Editor myEditor;
   private static final Logger LOG = Logger.getInstance(DiffElement.class.getName());

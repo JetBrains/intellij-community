@@ -45,10 +45,15 @@ class JavaWithBlockSurrounder extends JavaStatementsSurrounder{
     blockStatement = (PsiBlockStatement)container.addBefore(blockStatement, statements[0]);
 
     PsiCodeBlock body = blockStatement.getCodeBlock();
+    SurroundWithUtil.indentCommentIfNecessary(body, statements, factory);
     body.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
-    TextRange range = blockStatement.getFirstChild().getTextRange();
+    PsiElement firstChild = blockStatement.getFirstChild();
+    if (firstChild == null) {
+      return null;
+    }
+    TextRange range = firstChild.getTextRange();
     return new TextRange(range.getEndOffset(), range.getEndOffset());
   }
 }

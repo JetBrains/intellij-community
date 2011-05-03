@@ -159,7 +159,7 @@ public class GenerationUtil {
         PsiType bound = wildcardType.getBound();
         if (bound == null) return this;
         if (wildcardType.isExtends()) {
-          builder.append(" extends");
+          builder.append(" extends ");
         }
         else {
           builder.append(" super ");

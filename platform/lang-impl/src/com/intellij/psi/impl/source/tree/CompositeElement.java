@@ -41,6 +41,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.text.CharArrayCharSequence;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +70,6 @@ public class CompositeElement extends TreeElement {
     CompositeElement clone = (CompositeElement)super.clone();
 
     synchronized (PsiLock.LOCK) {
-      clone.clearCaches();
       clone.firstChild = null;
       clone.lastChild = null;
       clone.myModificationsCount = 0;
@@ -77,6 +77,7 @@ public class CompositeElement extends TreeElement {
       for (ASTNode child = rawFirstChild(); child != null; child = child.getTreeNext()) {
         clone.rawAddChildren((TreeElement)child.clone());
       }
+      clone.clearCaches();
     }
     return clone;
   }
@@ -104,19 +105,30 @@ public class CompositeElement extends TreeElement {
   public void clearCaches() {
     if (ASSERT_THREADING) {
       PsiElement wrapper = myWrapper;
-      FileElement fileElement;
-      PsiFile psiFile;
-      LOG.assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed() ||
-                     Thread.holdsLock(START_OFFSET_LOCK) ||
-                     wrapper != null && !wrapper.isPhysical() ||
-                     (fileElement = TreeUtil.getFileElement(this)) == null ||
-                     (psiFile = (PsiFile)fileElement.getPsi()) == null ||
-                     psiFile instanceof DummyHolder ||
-                     psiFile.getViewProvider() instanceof InjectedFileViewProvider ||
-                     !psiFile.isPhysical()
-      );
+      FileElement fileElement = null;
+      PsiFile psiFile = null;
+      boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() ||
+                   Thread.holdsLock(START_OFFSET_LOCK) ||
+                   wrapper != null && !wrapper.isPhysical() ||
+                   (fileElement = TreeUtil.getFileElement(this)) == null ||
+                   (psiFile = (PsiFile)fileElement.getPsi()) == null ||
+                   psiFile instanceof DummyHolder ||
+                   psiFile.getViewProvider() instanceof InjectedFileViewProvider ||
+                   !psiFile.isPhysical();
+      if (!ok) {
+        LOG.error("Threading assertion. " +
+                  " Under write: " + ApplicationManager.getApplication().isWriteAccessAllowed() +
+                  "; Thread.holdsLock(START_OFFSET_LOCK): " + Thread.holdsLock(START_OFFSET_LOCK) +
+                  "; Thread.holdsLock(PsiLock.LOCK): " + Thread.holdsLock(PsiLock.LOCK) +
+                  "; wrapper: " + wrapper +
+                  "; wrapper.isPhysical(): " + (wrapper != null && wrapper.isPhysical()) +
+                  "; fileElement: " +fileElement +
+                  "; psiFile: " + psiFile +
+                  "; psiFile.getViewProvider(): " + (psiFile == null ? null : psiFile.getViewProvider()) +
+                  "; psiFile.isPhysical(): " + (psiFile != null && psiFile.isPhysical())
+        );
+      }
     }
-    super.clearCaches();
     myCachedLength = NOT_CACHED;
 
     myModificationsCount++;
@@ -226,7 +238,7 @@ public class CompositeElement extends TreeElement {
       endOffset = AstBufferUtil.toBuffer(this, buffer, 0);
     }
     catch (ArrayIndexOutOfBoundsException e) {
-      String msg = "Underestimated text length: " + len;
+      @NonNls String msg = "Underestimated text length: " + len;
       msg += diagnoseTextInconsistency(new String(buffer));
       try {
         int length = AstBufferUtil.toBuffer(this, new char[len], 0);
@@ -238,7 +250,7 @@ public class CompositeElement extends TreeElement {
       throw new RuntimeException(msg, e);
     }
     if (endOffset != len) {
-      String msg = "len=" + len + ";\n endOffset=" + endOffset;
+      @NonNls String msg = "len=" + len + ";\n endOffset=" + endOffset;
       msg += diagnoseTextInconsistency(new String(buffer, 0, endOffset));
       throw new AssertionError(msg);
     }
@@ -246,7 +258,7 @@ public class CompositeElement extends TreeElement {
   }
 
   private String diagnoseTextInconsistency(String text) {
-    String msg = ";\n buffer=" + text;
+    @NonNls String msg = ";\n buffer=" + text;
     msg += ";\n this=" + this;
     int shitStart = textMatches(text, 0);
     msg += ";\n matches until " + shitStart;

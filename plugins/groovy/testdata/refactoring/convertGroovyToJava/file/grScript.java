@@ -7,13 +7,13 @@ public java.lang.Object run() {
 print("foo");
 if (true){
 print("false");
-return null;
 }
  else {
 print("true");
 java.lang.Integer a = 5;
 }
 
+return null;
 
 }
 

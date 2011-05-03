@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -59,7 +60,6 @@ public class CodeBlockGenerator extends Generator {
   private final ExpressionContext context;
 
   private Set<GrStatement> myExitPoints;
-  private boolean myShouldInsertReturnNull;
 
   public CodeBlockGenerator(StringBuilder builder, ExpressionContext context) {
     this(builder, context, null);
@@ -91,14 +91,15 @@ public class CodeBlockGenerator extends Generator {
   public void generateMethodBody(GrMethod method) {
     final GrOpenBlock block = method.getBlock();
 
+    boolean shouldInsertReturnNull = false;
     myExitPoints.clear();
     if (!method.isConstructor() && method.getReturnType() != PsiType.VOID) {
       myExitPoints.addAll(ControlFlowUtils.collectReturns(block));
-      myShouldInsertReturnNull = myExitPoints.isEmpty();
+      shouldInsertReturnNull = MissingReturnInspection.methodMissesSomeReturns(block, method.getReturnType() != null);
     }
 
     if (block != null) {
-      block.accept(this);
+      generateCodeBlock(block, shouldInsertReturnNull);
     }
   }
 
@@ -109,7 +110,7 @@ public class CodeBlockGenerator extends Generator {
 
   @Override
   public void visitOpenBlock(GrOpenBlock block) {
-    generateCodeBlock(block, myShouldInsertReturnNull && block.getParent() instanceof GrMethod);
+    generateCodeBlock(block, false);
   }
 
   public void generateCodeBlock(GrCodeBlock block, boolean shouldInsertReturnNull) {
@@ -237,11 +238,6 @@ public class CodeBlockGenerator extends Generator {
         }
         expression.accept(new ExpressionGenerator(builder, context));
         builder.append(";");
-
-        if (myExitPoints.contains(expression) && expression.getType() == PsiType.VOID) {
-          context.myStatements.add(builder.toString());
-          builder.replace(0, builder.length(), "return null;");
-        }
       }
     });
   }
