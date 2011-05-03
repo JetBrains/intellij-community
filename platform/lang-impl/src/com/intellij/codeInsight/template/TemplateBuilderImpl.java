@@ -19,6 +19,7 @@ package com.intellij.codeInsight.template;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -26,11 +27,13 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -54,6 +57,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   private RangeMarker mySelection;
   private final Document myDocument;
   private final PsiFile myFile;
+  private static final Logger LOG = Logger.getInstance("#" + TemplateBuilderImpl.class.getName());
 
   public TemplateBuilderImpl(@NotNull PsiElement element) {
     myFile = InjectedLanguageUtil.getTopLevelFile(element);
@@ -186,6 +190,13 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     int start = 0;
     for (final RangeMarker element : myElements) {
       int offset = element.getStartOffset() - containerStart;
+      LOG.assertTrue(start < offset, "container: " + myContainerElement.getClass() + " markers: " +
+                                     StringUtil.join(myElements, new Function<RangeMarker, String>() {
+                                                       @Override
+                                                       public String fun(RangeMarker rangeMarker) {
+                                                         return "[" + rangeMarker.getStartOffset() + ", " + rangeMarker.getEndOffset() + "]";
+                                                       }
+                                                     }, ", "));
       template.addTextSegment(text.substring(start, offset));
 
       if (element == mySelection) {
