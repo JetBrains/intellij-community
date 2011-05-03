@@ -47,4 +47,6 @@ class FileGenerationTest extends LightGroovyTestCase {
 
   void testReturns() {doTest()}
   void testReturn2() {doTest()}
+
+  void testGenericTypes() {doTest()}
 }
