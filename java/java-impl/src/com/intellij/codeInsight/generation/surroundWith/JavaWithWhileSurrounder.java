@@ -46,10 +46,16 @@ class JavaWithWhileSurrounder extends JavaStatementsSurrounder{
 
     whileStatement = (PsiWhileStatement)container.addAfter(whileStatement, statements[statements.length - 1]);
 
-    PsiCodeBlock bodyBlock = ((PsiBlockStatement)whileStatement.getBody()).getCodeBlock();
+    PsiStatement body = whileStatement.getBody();
+    if (!(body instanceof PsiBlockStatement)) {
+      return null;
+    }
+    PsiCodeBlock bodyBlock = ((PsiBlockStatement)body).getCodeBlock();
+    SurroundWithUtil.indentCommentIfNecessary(bodyBlock, statements, factory);
     bodyBlock.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
-    return whileStatement.getCondition().getTextRange();
+    PsiExpression condition = whileStatement.getCondition();
+    return condition == null ? null : condition.getTextRange();
   }
 }

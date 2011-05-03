@@ -48,11 +48,19 @@ class JavaWithSynchronizedSurrounder extends JavaStatementsSurrounder{
     synchronizedStatement = (PsiSynchronizedStatement)container.addAfter(synchronizedStatement, statements[statements.length - 1]);
 
     PsiCodeBlock synchronizedBlock = synchronizedStatement.getBody();
+    if (synchronizedBlock == null) {
+      return null;
+    }
+    SurroundWithUtil.indentCommentIfNecessary(synchronizedBlock, statements, factory);
     synchronizedBlock.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
     synchronizedStatement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(synchronizedStatement);
-    TextRange range = synchronizedStatement.getLockExpression().getTextRange();
+    PsiExpression lockExpression = synchronizedStatement.getLockExpression();
+    if (lockExpression == null) {
+      return null;
+    }
+    TextRange range = lockExpression.getTextRange();
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
     return new TextRange(range.getStartOffset(), range.getStartOffset());
   }

@@ -16,20 +16,29 @@
  */
 package com.intellij.codeInsight.generation.surroundWith;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
 public class SurroundWithUtil {
+  
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil");
+
+  private SurroundWithUtil() {
+  }
+
   static PsiElement[] moveDeclarationsOut(PsiElement block, PsiElement[] statements, boolean generateInitializers) {
     try{
       PsiManager psiManager = block.getManager();
@@ -38,7 +47,7 @@ public class SurroundWithUtil {
       for (PsiElement statement : statements) {
         if (statement instanceof PsiDeclarationStatement) {
           PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
-          if (needToDeclareOut(block, statements, declaration)) {
+          if (needToDeclareOut(statements, declaration)) {
             PsiElement[] elements = declaration.getDeclaredElements();
             for (PsiElement element : elements) {
               PsiVariable var = (PsiVariable)element;
@@ -90,7 +99,7 @@ public class SurroundWithUtil {
     }
   }
 
-  private static boolean needToDeclareOut(PsiElement block, PsiElement[] statements, PsiDeclarationStatement statement) {
+  private static boolean needToDeclareOut(PsiElement[] statements, PsiDeclarationStatement statement) {
     PsiElement[] elements = statement.getDeclaredElements();
     PsiElement lastStatement = statements[statements.length - 1];
     int endOffset = lastStatement.getTextRange().getEndOffset();
@@ -109,7 +118,7 @@ public class SurroundWithUtil {
     return false;
   }
 
-  public static TextRange getRangeToSelect (PsiCodeBlock block) {
+  public static TextRange getRangeToSelect (@NotNull PsiCodeBlock block) {
     PsiElement first = block.getFirstBodyElement();
     if (first instanceof PsiWhiteSpace) {
       first = first.getNextSibling();
@@ -118,10 +127,111 @@ public class SurroundWithUtil {
       int offset = block.getTextRange().getStartOffset() + 1;
       return new TextRange(offset, offset);
     }
-    PsiElement last = block.getRBrace().getPrevSibling();
+    PsiJavaToken rBrace = block.getRBrace();
+    PsiElement last = rBrace.getPrevSibling();
     if (last instanceof PsiWhiteSpace) {
       last = last.getPrevSibling();
     }
     return new TextRange(first.getTextRange().getStartOffset(), last.getTextRange().getEndOffset());
+  }
+
+  /**
+   * Performs indentation (if necessary) of the given code block that surrounds target statements.
+   * <p/>
+   * The main trick here is to handle situations like the one below:
+   * <pre>
+   *   void test() {
+   *     // This is comment
+   *         int i = 1;
+   *   }
+   * </pre>
+   * The problem is that surround block doesn't contain any indent spaces, hence, the first statement is inserted to the
+   * zero column. But we have a dedicated code style setting <code>'keep comment at first column'</code>, i.e. the comment
+   * will not be moved if that setting is checked.
+   * <p/>
+   * Current method handles that situation.
+   * 
+   * @param container     code block that surrounds target statements
+   * @param statements    target statements being surrounded
+   * @param factory       factory to use for the new white space element construction
+   */
+  public static void indentCommentIfNecessary(@NotNull PsiCodeBlock container, @Nullable PsiElement[] statements, 
+                                              @NotNull PsiElementFactory factory)
+  {
+    if (statements == null || statements.length <= 0) {
+      return;
+    }
+
+    PsiElement first = statements[0];
+    ASTNode node = first.getNode();
+    if (node == null || !ElementType.JAVA_COMMENT_BIT_SET.contains(node.getElementType())) {
+      return;
+    }
+
+    ASTNode commentWsText = node.getTreePrev();
+    if (commentWsText == null || !ElementType.WHITE_SPACE_BIT_SET.contains(commentWsText.getElementType())) {
+      return;
+    }
+
+    int indent = 0;
+    CharSequence text = commentWsText.getChars();
+    for (int i = text.length() - 1; i >= 0; i--, indent++) {
+      if (text.charAt(i) == '\n') {
+        break;
+      }
+    }
+
+    if (indent <= 0) {
+      return;
+    }
+    
+    PsiElement codeBlockWsElement = null;
+    ASTNode codeBlockWsNode = null;
+    boolean lbraceFound = false;
+    for (PsiElement codeBlockChild = container.getFirstChild(); codeBlockChild != null; codeBlockChild = codeBlockChild.getNextSibling()) {
+      ASTNode childNode = codeBlockChild.getNode();
+      if (childNode == null) {
+        continue;
+      }
+      
+      if (!lbraceFound) {
+        if (JavaTokenType.LBRACE == childNode.getElementType()) {
+          lbraceFound = true;
+        }
+        continue;
+      }
+
+      if (ElementType.WHITE_SPACE_BIT_SET.contains(childNode.getElementType())) {
+        codeBlockWsElement = codeBlockChild;
+        codeBlockWsNode = childNode;
+        break;
+      }
+      else if (JavaTokenType.RBRACE == childNode.getElementType()) {
+        break;
+      }
+    }
+
+    if (codeBlockWsElement != null) {
+      CharSequence existingWhiteSpaceText = codeBlockWsNode.getChars();
+      int existingWhiteSpaceEndOffset = existingWhiteSpaceText.length();
+      for (int i = existingWhiteSpaceEndOffset - 1; i >= 0; i--) {
+        if (existingWhiteSpaceText.charAt(i) == '\n') {
+          existingWhiteSpaceEndOffset = i;
+          break;
+        }
+      }
+      String newWsText = text.subSequence(text.length() - indent, text.length()).toString();
+      
+      // Add white spaces from all lines except the last one.
+      if (existingWhiteSpaceEndOffset < existingWhiteSpaceText.length()) {
+        newWsText = existingWhiteSpaceText.subSequence(0, existingWhiteSpaceEndOffset + 1).toString() + newWsText;
+      }
+      PsiElement indentElement = factory.createWhiteSpaceFromText(newWsText);
+      codeBlockWsElement.replace(indentElement);
+    }
+    else {
+      PsiElement indentElement = factory.createWhiteSpaceFromText(text.subSequence(text.length() - indent, text.length()).toString());
+      container.add(indentElement);
+    }
   }
 }

@@ -47,13 +47,27 @@ class JavaWithForSurrounder extends JavaStatementsSurrounder{
 
     forStatement = (PsiForStatement)container.addAfter(forStatement, statements[statements.length - 1]);
 
-    PsiCodeBlock bodyBlock = ((PsiBlockStatement)forStatement.getBody()).getCodeBlock();
+    PsiStatement body = forStatement.getBody();
+    if (!(body instanceof PsiBlockStatement)) {
+      return null;
+    }
+    PsiCodeBlock bodyBlock = ((PsiBlockStatement)body).getCodeBlock();
+    SurroundWithUtil.indentCommentIfNecessary(bodyBlock, statements, factory);
     bodyBlock.addRange(statements[0], statements[statements.length - 1]);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
     forStatement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(forStatement);
-    TextRange range1 = forStatement.getInitialization().getTextRange();
-    TextRange range3 = forStatement.getUpdate().getTextRange();
+    PsiStatement initialization = forStatement.getInitialization();
+    if (initialization == null) {
+      return null;
+    }
+    TextRange range1 = initialization.getTextRange();
+    
+    PsiStatement update = forStatement.getUpdate();
+    if (update == null) {
+      return null;
+    }
+    TextRange range3 = update.getTextRange();
     editor.getDocument().deleteString(range1.getStartOffset(), range3.getEndOffset());
     return new TextRange(range1.getStartOffset(), range1.getStartOffset());
   }
