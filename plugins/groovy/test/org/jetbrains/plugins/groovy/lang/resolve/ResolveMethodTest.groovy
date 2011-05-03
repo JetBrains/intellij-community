@@ -695,4 +695,13 @@ class Zoo {
     final PsiElement resolved = resolve("A.groovy")
     assertEquals("plus", assertInstanceOf(resolved, GrMethod).name)
   }
+
+  public void testStaticImportInSamePackage() {
+    myFixture.addFileToProject "pack/Foo.groovy", """package pack
+class Foo {
+  static def foo()
+}"""
+    PsiReference ref = configureByFile("staticImportInSamePackage/A.groovy", "A.groovy");
+    assertNotNull(ref.resolve())
+  }
 }

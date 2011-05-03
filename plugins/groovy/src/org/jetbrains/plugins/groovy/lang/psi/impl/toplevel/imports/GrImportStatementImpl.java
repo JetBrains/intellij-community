@@ -75,7 +75,6 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
   }
 
   private boolean processDeclarationsForSingleElement(PsiScopeProcessor processor, ResolveState state) {
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     String name = getImportedName();
     if (name == null) return true;
 
@@ -84,48 +83,44 @@ public class GrImportStatementImpl extends GroovyPsiElementImpl implements GrImp
     GrCodeReferenceElement ref = getImportReference();
     if (ref == null) return true;
 
-    String qName = ref.getCanonicalText();
-
     if (isStatic()) {
-      if (qName.indexOf('.') <= 0) return true;
-      final int i = qName.lastIndexOf('.');
-      if (i > 0) {
-        final String classQName = qName.substring(0, i);
-        PsiClass clazz = facade.findClass(classQName, getResolveScope());
-        if (clazz != null) {
-          final String refName = ref.getReferenceName();
-          if (nameHint == null || name.equals(nameHint.getName(state))) {
-            final PsiField field = clazz.findFieldByName(refName, false);
-            if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) {
-              if (!processor.execute(field, state)) return false;
-            }
+      GrCodeReferenceElement qualifier = ref.getQualifier();
+      if (qualifier == null) return true;
+      PsiElement resolved = qualifier.resolve();
+      if (!(resolved instanceof PsiClass)) return true;
+      PsiClass clazz = (PsiClass)resolved;
 
-            for (PsiMethod method : clazz.findMethodsByName(refName, false)) {
-              if (method.hasModifierProperty(PsiModifier.STATIC)) {
-                if (!processor.execute(method, state)) return false;
-              }
-            }
-          }
+      final String refName = ref.getReferenceName();
+      if (nameHint == null || name.equals(nameHint.getName(state))) {
+        final PsiField field = clazz.findFieldByName(refName, false);
+        if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) {
+          if (!processor.execute(field, state)) return false;
+        }
 
-          final PsiMethod getter = GroovyPropertyUtils.findPropertyGetter(clazz, refName, true, true);
-          if (getter != null &&
-              (nameHint == null || name.equals(GroovyPropertyUtils.getPropertyNameByGetterName(nameHint.getName(state), true)))) {
-            if (!processor.execute(getter, state)) return false;
-          }
-
-          final PsiMethod setter = GroovyPropertyUtils.findPropertySetter(clazz, refName, true, true);
-          if (setter != null &&
-              (nameHint == null || name.equals(GroovyPropertyUtils.getPropertyNameBySetterName(nameHint.getName(state))))) {
-            if (!processor.execute(setter, state)) return false;
+        for (PsiMethod method : clazz.findMethodsByName(refName, false)) {
+          if (method.hasModifierProperty(PsiModifier.STATIC)) {
+            if (!processor.execute(method, state)) return false;
           }
         }
+      }
+
+      final PsiMethod getter = GroovyPropertyUtils.findPropertyGetter(clazz, refName, true, true);
+      if (getter != null &&
+          (nameHint == null || name.equals(GroovyPropertyUtils.getPropertyNameByGetterName(nameHint.getName(state), true)))) {
+        if (!processor.execute(getter, state)) return false;
+      }
+
+      final PsiMethod setter = GroovyPropertyUtils.findPropertySetter(clazz, refName, true, true);
+      if (setter != null &&
+          (nameHint == null || name.equals(GroovyPropertyUtils.getPropertyNameBySetterName(nameHint.getName(state))))) {
+        if (!processor.execute(setter, state)) return false;
       }
     }
     else {
       if (nameHint == null || name.equals(nameHint.getName(state))) {
-        PsiClass clazz = facade.findClass(qName, getResolveScope());
-        if (clazz != null) {
-          if (!processor.execute(clazz, state)) return false;
+        final PsiElement resolved = ref.resolve();
+        if (resolved instanceof PsiClass) {
+          if (!processor.execute(resolved, state)) return false;
         }
       }
     }
