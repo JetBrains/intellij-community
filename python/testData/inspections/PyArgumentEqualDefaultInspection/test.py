@@ -38,3 +38,14 @@ class C(object):
         del self._x
 
     x = property(getx, <warning descr="Argument equals to default parameter value">None</warning>, fdel = delx, doc = "I'm the 'x' property.")
+
+
+# PY-3455
+import optparse
+
+class Option(optparse.Option):
+    pass
+
+class OptionParser(optparse.OptionParser):
+  def __init__(self):
+        optparse.OptionParser.__init__(self, option_class=Option)
