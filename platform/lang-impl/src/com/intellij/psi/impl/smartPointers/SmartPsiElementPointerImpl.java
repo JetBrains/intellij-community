@@ -67,7 +67,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   public boolean equals(Object obj) {
     if (!(obj instanceof SmartPsiElementPointer)) return false;
     SmartPsiElementPointer pointer = (SmartPsiElementPointer)obj;
-    return SmartPointerManager.getInstance(getProject()).pointToTheSameElement(this, pointer);
+    Project project = getProject();
+    return !project.isDisposed() && SmartPointerManager.getInstance(project).pointToTheSameElement(this, pointer);
   }
 
   public int hashCode() {

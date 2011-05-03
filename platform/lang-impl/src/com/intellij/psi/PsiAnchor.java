@@ -204,12 +204,6 @@ public abstract class PsiAnchor {
 
       return result;
     }
-
-    @Override
-    public boolean pointsToTheSameElementAs(PsiAnchor other) {
-      if (other instanceof TreeRangeReference) return equals(other);
-      return Comparing.equal(retrieve(), other.retrieve());
-    }
   }
 
   private static class HardReference extends PsiAnchor {
@@ -247,11 +241,6 @@ public abstract class PsiAnchor {
 
     public int hashCode() {
       return myElement.hashCode();
-    }
-
-    @Override
-    public boolean pointsToTheSameElementAs(PsiAnchor other) {
-      return myElement == other.retrieve();
     }
   }
 
@@ -291,12 +280,6 @@ public abstract class PsiAnchor {
 
     public int hashCode() {
       return myFile.hashCode();
-    }
-
-    @Override
-    public boolean pointsToTheSameElementAs(PsiAnchor other) {
-      if (other instanceof PsiFileReference) return myFile == ((PsiFileReference)other).myFile;
-      return Comparing.equal(retrieve(), other.retrieve());
     }
   }
   private static class PsiDirectoryReference extends PsiFileReference {
@@ -433,12 +416,6 @@ public abstract class PsiAnchor {
       return resolved.getTextRange().getEndOffset();
     }
 
-    @Override
-    public boolean pointsToTheSameElementAs(PsiAnchor other) {
-      if (other instanceof StubIndexReference) return equals(other);
-      return Comparing.equal(retrieve(), other.retrieve());
-    }
-
     public VirtualFile getVirtualFile() {
       return myVirtualFile;
     }
@@ -447,7 +424,5 @@ public abstract class PsiAnchor {
       return myProject;
     }
   }
-
-  public abstract boolean pointsToTheSameElementAs(PsiAnchor other);
 }
 
