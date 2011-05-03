@@ -32,9 +32,6 @@ def paths = new Paths(out)
 target(compile: "Compile project") {
   loadProject()
 
-  // load ApplicationInfo.xml properties
-  ant.xmlproperty(file: appInfoFile(), collapseAttributes: "true")
-
   project.stage("Cleaning up sandbox folder")
   ant.delete(dir: paths.sandbox)
 
@@ -60,6 +57,10 @@ def wire_build_date(String buildNumber) {
 
 target('default': 'The default target') {
   depends(compile)
+
+  // load ApplicationInfo.xml properties
+  ant.xmlproperty(file: appInfoFile(), collapseAttributes: "true")
+
   layoutAll(
           buildNumber: "IC-108.SNAPSHOT",
           version: "IdeaX",
