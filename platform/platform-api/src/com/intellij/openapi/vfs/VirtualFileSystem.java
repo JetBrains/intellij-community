@@ -45,11 +45,11 @@ public abstract class VirtualFileSystem {
   /**
    * Searches for the file specified by given path. Path is a string which uniquely identifies file within given
    * <code>{@link VirtualFileSystem}</code>. Format of the path depends on the concrete file system.
-   * For <code>LocalFileSystem</code> it is an absoulute file path with file separator characters (File.separatorChar)
+   * For <code>LocalFileSystem</code> it is an absolute file path with file separator characters (File.separatorChar)
    * replaced to the forward slash ('/').<p>
    * <p/>
    * Example: to find a <code>{@link VirtualFile}</code> corresponding to the physical file with the specified path one
-   * can use the followoing code: <code>LocalFileSystem.getInstance().findFileByPath(path.replace(File.separatorChar, '/'));</code>
+   * can use the following code: <code>LocalFileSystem.getInstance().findFileByPath(path.replace(File.separatorChar, '/'));</code>
    *
    * @param path the path to find file by
    * @return <code>{@link VirtualFile}</code> if the file was found, <code>null</code> otherwise
