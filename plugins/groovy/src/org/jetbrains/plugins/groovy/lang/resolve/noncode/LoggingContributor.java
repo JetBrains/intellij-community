@@ -22,9 +22,8 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -52,19 +51,11 @@ public class LoggingContributor extends NonCodeMembersContributor {
       String qname = annotation.getQualifiedName();
       String logger = ourLoggers.get(qname);
       if (logger != null) {
-        String fieldName = "log";
-        PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("value");
-        if (value instanceof GrExpression) {
-          Object o = GroovyConstantExpressionEvaluator.evaluate((GrExpression)value);
-          if (o instanceof String) {
-            fieldName = (String)o;
-          }
-        }
+        String fieldName = PsiUtil.getAnnoAttributeValue(annotation, "value", "log");
         LightFieldBuilder field = new LightFieldBuilder(fieldName, logger, annotation).setContainingClass(psiClass)
           .setModifiers(PsiModifier.FINAL, PsiModifier.STATIC, PsiModifier.PRIVATE);
         ResolveUtil.processElement(processor, field, state);
       }
     }
   }
-
 }

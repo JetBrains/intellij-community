@@ -377,6 +377,19 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testTupleConstructorAttributes() throws Exception {
+    myFixture.addClass("package groovy.transform; public @interface TupleConstructor {" +
+                       "    java.lang.String excludes() default \"\";\n" +
+                       "    boolean includeFields() default false;\n" +
+                       "    boolean includeProperties() default true;\n" +
+                       "    boolean includeSuperFields() default false;\n" +
+                       "    boolean includeSuperProperties() default false;\n" +
+                       "    boolean callSuper() default false;\n" +
+                       "    boolean force() default false;" +
+                       "}");
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
+
   public void testUnusedDefsForArgs() {
     doTest(new UnusedDefInspection());
   }
