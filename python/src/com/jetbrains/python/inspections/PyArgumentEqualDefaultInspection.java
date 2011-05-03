@@ -84,6 +84,10 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
         if (key.getText().equals(defaultValue.getText()))
           return true;
       }
+      else if (key instanceof PyStringLiteralExpression && defaultValue instanceof PyStringLiteralExpression) {
+        if (((PyStringLiteralExpression)key).getStringValue().equals(((PyStringLiteralExpression)defaultValue).getStringValue()))
+          return true;
+      }
       else {
         PsiReference keyRef = key.getReference();
         PsiReference defRef = defaultValue.getReference();

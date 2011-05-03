@@ -49,3 +49,10 @@ class Option(optparse.Option):
 class OptionParser(optparse.OptionParser):
   def __init__(self):
         optparse.OptionParser.__init__(self, option_class=Option)
+
+##
+
+def bar(a = "qwer"):
+  pass
+
+bar(<warning descr="Argument equals to default parameter value">a = 'qwer'</warning>)
