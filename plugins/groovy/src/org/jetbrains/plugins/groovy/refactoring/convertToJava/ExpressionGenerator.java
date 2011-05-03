@@ -25,6 +25,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.conversions.ConvertGStringToStringIntention;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -682,11 +683,16 @@ public class ExpressionGenerator extends Generator {
 
   private void generateCast(GrTypeElement typeElement, GrExpression operand) {
     builder.append("(");
-    typeElement.accept(this);
+    writeType(builder, typeElement.getType(), typeElement);
     builder.append(")");
+
+    boolean insertParentheses = operand instanceof GrBinaryExpression && ((GrBinaryExpression)operand).getOperationTokenType() == GroovyTokenTypes.mEQUAL;
+    if (insertParentheses) builder.append('(');
+
     if (operand != null) {
       operand.accept(this);
     }
+    if (insertParentheses) builder.append(')');
   }
 
   @Override

@@ -153,4 +153,5 @@ public final class Matcher {
 
   void testUnresolvedArrayAccess() {doTest()}
   void testArrayAccess() {doTest()}
+  void testCastWithEquality() {doTest()}
 }
