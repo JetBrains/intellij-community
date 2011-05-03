@@ -248,7 +248,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
       }
       
       if (fileTitle != null && fileTitle.length() > 0) {
-        sb.append(" - ").append(fileTitle);
+        if (sb.length() > 0) sb.append(" - ");
+        sb.append(fileTitle);
       } 
 
       frame.getRootPane().putClientProperty("Window.documentFile", currentFile);
