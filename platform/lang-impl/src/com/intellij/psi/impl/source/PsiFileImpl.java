@@ -129,10 +129,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   public FileElement getTreeElementNoLock() {
-    if (!getViewProvider().isPhysical() && _getTreeElement() == null) {
-      setTreeElement(loadTreeElement());
+    ASTNode node = _getTreeElement();
+    if (node == null && !getViewProvider().isPhysical()) {
+      setTreeElement(node = loadTreeElement());
     }
-    return (FileElement)_getTreeElement();
+    return (FileElement)node;
   }
 
   protected boolean isKeepTreeElementByHardReference() {
