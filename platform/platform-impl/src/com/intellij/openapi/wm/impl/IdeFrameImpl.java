@@ -245,16 +245,19 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
       final StringBuilder sb = new StringBuilder();
       if (title != null && title.length() > 0) {
         sb.append(title);
-        sb.append(" - ");
       }
+      
       if (fileTitle != null && fileTitle.length() > 0) {
-        sb.append(fileTitle);
-        sb.append(" - ");
-      }
+        sb.append(" - ").append(fileTitle);
+      } 
 
       frame.getRootPane().putClientProperty("Window.documentFile", currentFile);
 
-      sb.append(((ApplicationInfoEx)ApplicationInfo.getInstance()).getFullApplicationName());
+      if (!SystemInfo.isMac || ProjectManager.getInstance().getOpenProjects().length == 0) {
+        if (sb.length() > 0) sb.append(" - ");
+        sb.append(((ApplicationInfoEx)ApplicationInfo.getInstance()).getFullApplicationName());
+      }
+      
       frame.setTitle(sb.toString());
     }
     finally {
