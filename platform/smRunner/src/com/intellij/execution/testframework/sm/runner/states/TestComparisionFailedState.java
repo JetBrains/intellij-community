@@ -39,7 +39,7 @@ public class TestComparisionFailedState extends TestFailedState implements Abstr
                                     @NotNull final String actualText,
                                     @NotNull final String expectedText) {
     super(localizedMessage, stackTrace);
-    myHyperlink = new DiffHyperlink(actualText, expectedText, null);
+    myHyperlink = new DiffHyperlink(expectedText, actualText, null);
 
     myErrorMsgPresentation = StringUtil.isEmptyOrSpaces(localizedMessage) ? ""
                                                                           : localizedMessage;
