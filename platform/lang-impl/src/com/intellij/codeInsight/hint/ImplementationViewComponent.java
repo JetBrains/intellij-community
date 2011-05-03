@@ -117,7 +117,7 @@ public class ImplementationViewComponent extends JPanel {
     for (PsiElement element : elements) {
       PsiFile file = getContainingFile(element);
       if (file == null) continue;
-      files.add(new FileDescriptor(file, element));
+      files.add(new FileDescriptor(file, element.getParent()));
       candidates.add(element.getNavigationElement());
     }
     myElements = PsiUtilBase.toPsiElementArray(candidates);
