@@ -1,6 +1,43 @@
 import sys
+from docutils.core import publish_string
 from epydoc.markup import DocstringLinker
-from epydoc.markup.restructuredtext import parse_docstring
+from epydoc.markup.restructuredtext import ParsedRstDocstring, _EpydocHTMLTranslator, _DocumentPseudoWriter, _EpydocReader
+
+class RestHTMLTranslator(_EpydocHTMLTranslator):
+  def visit_field_name(self, node):
+    atts = {}
+    if self.in_docinfo:
+        atts['class'] = 'docinfo-name'
+    else:
+        atts['class'] = 'field-name'
+    if ( self.settings.field_name_limit
+         and len(node.astext()) > self.settings.field_name_limit):
+        atts['colspan'] = 2
+        self.context.append('</tr>\n<tr><td>&nbsp;</td>')
+    else:
+        self.context.append('')
+    atts['align'] = "right"
+    self.body.append(self.starttag(node, 'th', '', **atts))
+
+class MyParsedRstDocstring(ParsedRstDocstring):
+  def __init__(self, document):
+    ParsedRstDocstring.__init__(self, document)
+
+  def to_html(self, docstring_linker, directory=None,
+            docindex=None, context=None, **options):
+    visitor = RestHTMLTranslator(self._document, docstring_linker,
+                                    directory, docindex, context)
+    self._document.walkabout(visitor)
+    return ''.join(visitor.body)
+
+def parse_docstring(docstring, errors, **options):
+    writer = _DocumentPseudoWriter()
+    reader = _EpydocReader(errors) # Outputs errors to the list.
+    publish_string(docstring, writer=writer, reader=reader,
+                   settings_overrides={'report_level':10000,
+                                       'halt_level':10000,
+                                       'warning_stream':None})
+    return MyParsedRstDocstring(writer.document)
 
 try:
     src = "".join(sys.argv[1:])

@@ -472,7 +472,10 @@
     <gotoDeclarationHandler implementation="com.jetbrains.rest.RestGotoProvider" order="FIRST"/>
     <lang.fileViewProviderFactory language="ReST"
                                   implementationClass="com.jetbrains.rest.RestFileProviderFactory"/>
-    <!-- <languageInjector implementation="com.jetbrains.python.documentation.DocStringInjector"/> -->
+    <lang.psiStructureViewFactory language="ReST"
+                                  implementationClass="com.jetbrains.rest.structureView.RestStructureViewFactory"/>
+    <annotator language="ReST" implementationClass="com.jetbrains.rest.validation.RestAnnotatingVisitor"/>
+
   </extensions>
 
   <extensionPoints>

@@ -1,7 +1,9 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.RemoveArgumentEqualDefaultQuickFix;
 import com.jetbrains.python.psi.*;
@@ -55,11 +57,10 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
         PyExpression defaultValue = e.getValue().getDefaultValue();
         if (defaultValue != null) {
           PyExpression key = e.getKey();
-          String text = e.getKey().getText();
           if (key instanceof PyKeywordArgument && ((PyKeywordArgument)key).getValueExpression() != null) {
-            text = ((PyKeywordArgument)key).getValueExpression().getText();
+            key = ((PyKeywordArgument)key).getValueExpression();
           }
-          if (text.equals(defaultValue.getText())) {
+          if (isEqual(key, defaultValue)) {
             problemElements.add(e.getKey());
           }
         }
@@ -76,6 +77,28 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
         }
         if (!(arguments[i] instanceof PyKeywordArgument)) canDelete = false;
       }
+    }
+
+    private boolean isEqual(PyExpression key, PyExpression defaultValue) {
+      if (key instanceof PyNumericLiteralExpression && defaultValue instanceof PyNumericLiteralExpression) {
+        if (key.getText().equals(defaultValue.getText()))
+          return true;
+      }
+      else if (key instanceof PyStringLiteralExpression && defaultValue instanceof PyStringLiteralExpression) {
+        if (((PyStringLiteralExpression)key).getStringValue().equals(((PyStringLiteralExpression)defaultValue).getStringValue()))
+          return true;
+      }
+      else {
+        PsiReference keyRef = key.getReference();
+        PsiReference defRef = defaultValue.getReference();
+        if (keyRef != null && defRef != null) {
+          PsiElement keyResolve = keyRef.resolve();
+          PsiElement defResolve = defRef.resolve();
+          if (keyResolve != null && keyResolve.equals(defResolve))
+            return true;
+        }
+      }
+      return false;
     }
   }
 }
