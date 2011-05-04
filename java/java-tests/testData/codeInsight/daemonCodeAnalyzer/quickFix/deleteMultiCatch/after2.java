@@ -6,7 +6,7 @@ class C {
     try {
       int p = 0;
     }
-    catch (IOException /*somethihg*/ e) {
+    catch (EOFException /*somethihg*/ e) {
     }
   }
 }

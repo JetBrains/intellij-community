@@ -435,18 +435,22 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
                                final boolean isCovariantPosition) {
     final TypeView right = new TypeView(value);
     final TypeView left = new TypeView(variable, varSubstitutor, evalSubstitutor);
+    final PsiType declarationType = left.getType();
 
     switch (TypeInfection.getInfection(left, right)) {
       case TypeInfection.NONE_INFECTED:
         break;
 
       case TypeInfection.LEFT_INFECTED:
-        myLabeler.migrateExpressionType(value, left.getType(), myStatement, TypeConversionUtil.isAssignable(left.getType(), right.getType()), true);
+        final PsiType valueType = right.getType();
+        if (valueType != null && declarationType != null) {
+          myLabeler.migrateExpressionType(value, declarationType, myStatement, TypeConversionUtil.isAssignable(declarationType, valueType), true);
+        }
         break;
 
       case TypeInfection.RIGHT_INFECTED:
         PsiType psiType = migrationType != null ? migrationType : right.getType();
-        if (!myLabeler.addMigrationRoot(variable, psiType, myStatement, TypeConversionUtil.isAssignable(left.getType(), psiType), true)) {
+        if (psiType != null && declarationType != null && !myLabeler.addMigrationRoot(variable, psiType, myStatement, TypeConversionUtil.isAssignable(declarationType, psiType), true)) {
           myLabeler.convertExpression(value, psiType, left.getType(), isCovariantPosition);
         }
         break;

@@ -285,7 +285,7 @@ public class EditorActionUtil {
       // Don't expect to be here.
       int column = findFirstNonSpaceColumnOnTheLine(editor, currentVisual.line);
       int columnToMove = column;
-      if (currentVisual.column <= column && currentVisual.column > 0) {
+      if (column < 0 || (currentVisual.column <= column && currentVisual.column > 0)) {
         columnToMove = 0;
       }
       caretModel.moveToVisualPosition(new VisualPosition(currentVisual.line, columnToMove));

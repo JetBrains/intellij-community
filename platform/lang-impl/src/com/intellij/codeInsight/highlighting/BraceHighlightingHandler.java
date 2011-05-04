@@ -214,7 +214,7 @@ public class BraceHighlightingHandler {
       // Try to find matched brace backwards.
       if (offset >= originalOffset || c != '\n') {
         int backwardNonWsOffset = CharArrayUtil.shiftBackward(chars, offset - 1, "\t ");
-        if (backwardNonWsOffset < offset - 1 || c == ' ' || c == '\t' || c == '\n') {
+        if (backwardNonWsOffset >= 0 && (backwardNonWsOffset < offset - 1 || c == ' ' || c == '\t' || c == '\n')) {
           iterator = getEditorHighlighter().createIterator(backwardNonWsOffset);
           if (BraceMatchingUtil.isLBraceToken(iterator, chars, myFileType) || BraceMatchingUtil.isRBraceToken(iterator, chars, myFileType)) {
             offset = backwardNonWsOffset;

@@ -95,7 +95,8 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   }
 
   @Nullable
-  public VirtualFileSystem getFileSystem(String protocol) {
+  public VirtualFileSystem getFileSystem(@Nullable String protocol) {
+    if (protocol == null) return null;
     List<VirtualFileSystem> systems = myCollector.forKey(protocol);
     if (systems.isEmpty()) return null;
     LOG.assertTrue(systems.size() == 1);

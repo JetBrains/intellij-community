@@ -140,7 +140,11 @@ class UpdateFoldRegionsOperation implements Runnable {
       final Document document = myEditor.getDocument();
       final int firstLine = document.getLineNumber(range.getStartOffset());
       final int lastLine = document.getLineNumber(range.getEndOffset());
-      final int currentLine = document.getLineNumber(myEditor.getCaretModel().getOffset());
+      int caretOffset = myEditor.getCaretModel().getOffset();
+      if (caretOffset > myEditor.getDocument().getTextLength()) {
+        return false;
+      }
+      final int currentLine = document.getLineNumber(caretOffset);
       caretInside = firstLine <= currentLine && currentLine <= lastLine;
     }
 

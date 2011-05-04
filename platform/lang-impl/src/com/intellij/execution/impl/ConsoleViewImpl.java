@@ -1586,7 +1586,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         super.setSelected(e, state);
 
         final String placeholder = myCommandLineFolding.getPlaceholder(0);
-        if (state && placeholder == null) {
+        if (myEditor == null || (state && placeholder == null)) {
           return;
         }
 

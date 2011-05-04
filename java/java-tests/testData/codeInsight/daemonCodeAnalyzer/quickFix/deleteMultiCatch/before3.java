@@ -6,7 +6,7 @@ class C {
     try {
       int p = 0;
     }
-    catch (IOException | <caret>FileNotFoundException | RuntimeException e) {
+    catch (EOFException | <caret>FileNotFoundException | RuntimeException e) {
     }
   }
 }

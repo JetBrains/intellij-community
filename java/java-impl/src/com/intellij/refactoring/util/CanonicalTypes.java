@@ -46,6 +46,10 @@ public class CanonicalTypes {
     public abstract String getTypeText();
 
     public abstract void addImportsTo(final JavaCodeFragment codeFragment);
+
+    public boolean isValid() {
+      return true;
+    }
   }
 
   private static class Primitive extends Type {
@@ -86,6 +90,11 @@ public class CanonicalTypes {
     public void addImportsTo(final JavaCodeFragment codeFragment) {
       myComponentType.addImportsTo(codeFragment);
     }
+
+    @Override
+    public boolean isValid() {
+      return myComponentType.isValid();
+    }
   }
 
   private static class Ellipsis extends Type {
@@ -106,6 +115,11 @@ public class CanonicalTypes {
 
     public void addImportsTo(final JavaCodeFragment codeFragment) {
       myComponentType.addImportsTo(codeFragment);
+    }
+
+    @Override
+    public boolean isValid() {
+      return myComponentType.isValid();
     }
   }
 
@@ -137,6 +151,11 @@ public class CanonicalTypes {
     public void addImportsTo(final JavaCodeFragment codeFragment) {
       if (myBound != null) myBound.addImportsTo(codeFragment);
     }
+
+    @Override
+    public boolean isValid() {
+      return myBound == null || myBound.isValid();
+    }
   }
 
   private static class WrongType extends Type {
@@ -156,6 +175,11 @@ public class CanonicalTypes {
     }
 
     public void addImportsTo(final JavaCodeFragment codeFragment) {}
+
+    @Override
+    public boolean isValid() {
+      return false;
+    }
   }
 
   private static class ClassType extends Type {

@@ -60,6 +60,11 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
       try {
         newReturnType = returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null;
         parameterInfos = ParameterInfoImpl.fromMethod(method);
+        for (ParameterInfoImpl parameterInfo : parameterInfos) {
+          if (!parameterInfo.getTypeWrapper().isValid()) {
+            return null;
+          }
+        }
       }
       catch (IncorrectOperationException e) {
         return null;

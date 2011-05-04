@@ -96,4 +96,16 @@
   <description>Default File template</description>
 </problem>
 
+  <problem>
+    <file>X.java</file>
+    <line>63</line>
+    <package>x</package>
+    <class>
+      <name>X</name>
+      <display_name>X</display_name>
+    </class>
+    <problem_class>Default File Template Usage</problem_class>
+    <description>Default File template</description>
+  </problem>
+
 </problems>
