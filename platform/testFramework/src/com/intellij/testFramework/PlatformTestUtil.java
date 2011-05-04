@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -499,7 +500,14 @@ public class PlatformTestUtil {
       assertJarFilesEqual(VfsUtil.virtualToIoFile(fileAfter), VfsUtil.virtualToIoFile(fileBefore));
     }
     catch (IOException e) {
-      Assert.assertArrayEquals(fileAfter.getPath(), fileAfter.contentsToByteArray(), fileBefore.contentsToByteArray());
+      FileDocumentManager manager = FileDocumentManager.getInstance();
+      Document docBefore = manager.getDocument(fileBefore);
+      Document docAfter = manager.getDocument(fileAfter);
+      if (docBefore != null && docAfter != null) {
+        Assert.assertEquals(fileAfter.getPath(), docAfter.getText(), docBefore.getText());
+      } else {
+        Assert.assertArrayEquals(fileAfter.getPath(), fileAfter.contentsToByteArray(), fileBefore.contentsToByteArray());
+      }
     }
   }
 
