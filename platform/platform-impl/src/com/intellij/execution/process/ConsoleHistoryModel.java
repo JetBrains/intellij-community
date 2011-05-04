@@ -89,6 +89,12 @@ public class ConsoleHistoryModel implements ModificationTracker {
     }
   }
 
+  public int getHistoryCursor() {
+    synchronized (myHistory) {
+      return myHistoryCursor;
+    }
+  }
+
   @Override
   public long getModificationCount() {
     return myModificationTracker;
