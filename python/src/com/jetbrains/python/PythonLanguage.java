@@ -1,7 +1,6 @@
 package com.jetbrains.python;
 
 import com.intellij.lang.Language;
-import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.jetbrains.python.psi.PyFileElementType;
 import com.jetbrains.python.validation.*;
@@ -34,9 +33,9 @@ public class PythonLanguage extends Language {
     _annotators.add(GlobalAnnotator.class);
     _annotators.add(ImportAnnotator.class);
     _annotators.add(StringConstantAnnotator.class);
+    _annotators.add(UnicodeOrByteLiteralAnnotator.class);
     _annotators.add(PyBuiltinAnnotator.class);
     _annotators.add(UnsupportedFeatures.class);
-    _annotators.add(StringLiteralAnnotator.class);
   }
 
 

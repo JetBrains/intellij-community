@@ -94,7 +94,7 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
       "    def <predefined>__init__</predefined>(self):\n" +
       "        self.sense = None\n" +
       "        byte_string = 'newline:\\n also newline:\\x0a'\n" +
-      "        text_string = <unicode>u\"Cyrillic A is \\u0410. Oops: \\u123g\"</unicode>\n"+
+      "        text_string = <unicode>u\"Cyrillic \u042f is \\u042f. Oops: </unicode>\\u042g<unicode>\"</unicode>\n"+
       "    \n" +
       "    def <funcDef>makeSense</funcDef>(self, whatever):\n"+
       "        self.sense = whatever\n"+
