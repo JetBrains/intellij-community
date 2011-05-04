@@ -95,27 +95,32 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
               return null;
             }
           }
-          final MyJavaChangeInfo javaChangeInfo =
-            new MyJavaChangeInfo(newVisibility, method, newReturnType, parameterInfos, info.getNewExceptions(), method.getName(), info.getOldName()) {
-              @Override
-              protected void fillOldParams(PsiMethod method) {
-                oldParameterNames = info.getOldParameterNames();
-                oldParameterTypes = info.getOldParameterTypes();
-                if (!method.isConstructor()) {
-                  try {
-                    isReturnTypeChanged = info.isReturnTypeChanged ||
-                                          (info.getNewReturnType() != null
-                                             ? !Comparing.strEqual(info.getNewReturnType().getTypeText(), newReturnType.getTypeText())
-                                             : newReturnType != null);
-                  }
-                  catch (IncorrectOperationException e) {
-                    isReturnTypeChanged = true;
+          try {
+            final MyJavaChangeInfo javaChangeInfo =
+              new MyJavaChangeInfo(newVisibility, method, newReturnType, parameterInfos, info.getNewExceptions(), method.getName(), info.getOldName()) {
+                @Override
+                protected void fillOldParams(PsiMethod method) {
+                  oldParameterNames = info.getOldParameterNames();
+                  oldParameterTypes = info.getOldParameterTypes();
+                  if (!method.isConstructor()) {
+                    try {
+                      isReturnTypeChanged = info.isReturnTypeChanged ||
+                                            (info.getNewReturnType() != null
+                                               ? !Comparing.strEqual(info.getNewReturnType().getTypeText(), newReturnType.getTypeText())
+                                               : newReturnType != null);
+                    }
+                    catch (IncorrectOperationException e) {
+                      isReturnTypeChanged = true;
+                    }
                   }
                 }
-              }
-            };
-          javaChangeInfo.setSuperMethod(info.getSuperMethod());
-          return javaChangeInfo;
+              };
+            javaChangeInfo.setSuperMethod(info.getSuperMethod());
+            return javaChangeInfo;
+          }
+          catch (IncorrectOperationException e) {
+            return null;
+          }
         }
         return changeInfo;
       }
