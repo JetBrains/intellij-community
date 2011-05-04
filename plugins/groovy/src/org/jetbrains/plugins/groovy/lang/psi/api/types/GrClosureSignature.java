@@ -37,7 +37,7 @@ public interface GrClosureSignature {
   PsiType getReturnType();
 
   @Nullable
-  GrClosureSignature curry(int count);
+  GrCurriedClosureSignature curry(PsiType[] args, int position);
 
   boolean isValid();
 }

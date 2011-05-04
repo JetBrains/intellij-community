@@ -123,7 +123,7 @@ public class InplaceIntroduceConstantPopup {
     myOccurenceManager = occurenceManager;
 
     myExprMarker = expr != null && expr.isPhysical() ? myEditor.getDocument().createRangeMarker(expr.getTextRange()) : null;
-    myExprText = expr != null ? expr.getText() : null;
+    myExprText = getExprText(expr, localVariable);
     myLocalName = localVariable != null ? localVariable.getName() : null;
 
     myWholePanel = new JPanel(new GridBagLayout());
@@ -143,6 +143,18 @@ public class InplaceIntroduceConstantPopup {
     gc.insets.left = 6;
     myWholePanel.add(createRightPanel(), gc);
 
+  }
+
+  @Nullable
+  private static String getExprText(PsiExpression expr, PsiLocalVariable localVariable) {
+    final String exprText = expr != null ? expr.getText() : null;
+    if (localVariable != null) {
+      final PsiExpression initializer = localVariable.getInitializer();
+      return initializer != null ? initializer.getText() : exprText;
+    }
+    else {
+      return exprText;
+    }
   }
 
   private JPanel createRightPanel() {

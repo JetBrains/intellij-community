@@ -73,7 +73,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -241,7 +240,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     for (AnAction action : createActions()) {
       action.registerCustomShortcutSet(action.getShortcutSet(), myConsoleEditor.getComponent());
     }
-    registerActionShortcuts(myHistoryViewer.getComponent());
+    EmptyAction.registerActionShortcuts(myHistoryViewer.getComponent(), myConsoleEditor.getComponent());
   }
 
   protected AnAction[] createActions() {
@@ -516,7 +515,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
           for (FileEditor fileEditor : source.getAllEditors(file)) {
             if (!(fileEditor instanceof TextEditor)) continue;
             final Editor editor = ((TextEditor)fileEditor).getEditor();
-            registerActionShortcuts(editor.getComponent());
+            EmptyAction.registerActionShortcuts(editor.getComponent(), myConsoleEditor.getComponent());
             editor.getCaretModel().addCaretListener(new CaretListener() {
               public void caretPositionChanged(CaretEvent e) {
                 queueUiUpdate(false);
@@ -534,16 +533,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         }
       }
     });
-  }
-
-  protected void registerActionShortcuts(JComponent component) {
-    final ArrayList<AnAction> actionList =
-      (ArrayList<AnAction>)myConsoleEditor.getComponent().getClientProperty(AnAction.ourClientProperty);
-    if (actionList != null) {
-      for (AnAction anAction : actionList) {
-        anAction.registerCustomShortcutSet(anAction.getShortcutSet(), component);
-      }
-    }
   }
 
   public Editor getCurrentEditor() {

@@ -132,7 +132,7 @@ public class PsiUtil {
 
     GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor);
     if (isInUseCategory && method.hasModifierProperty(PsiModifier.STATIC) && method.getParameterList().getParametersCount() > 0) {
-      signature = signature.curry(1);
+      signature = GrClosureSignatureUtil.removeParam(signature, 0);
     }
 
     //check for default constructor
@@ -157,7 +157,7 @@ public class PsiUtil {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length > 0 && parameters[0].getType() instanceof GrMapType &&
           (argumentTypes.length == 0 || !(argumentTypes[0] instanceof GrMapType))) {
-        return GrClosureSignatureUtil.isSignatureApplicable(signature.curry(1), argumentTypes, place);
+        return GrClosureSignatureUtil.isSignatureApplicable(GrClosureSignatureUtil.removeParam(signature, 0), argumentTypes, place);
       }
     }
     return false;
@@ -1032,7 +1032,7 @@ public class PsiUtil {
 
     return null;
   }
-  
+
   @NotNull
   public static PsiClass getOriginalClass(@NotNull PsiClass aClass) {
     PsiFile file = aClass.getContainingFile();
@@ -1054,7 +1054,7 @@ public class PsiUtil {
 
     return aClass;
   }
-  
+
 
   private static String[] visibilityModifiers = new String[]{GrModifier.PRIVATE, GrModifier.PROTECTED, GrModifier.PUBLIC};
 

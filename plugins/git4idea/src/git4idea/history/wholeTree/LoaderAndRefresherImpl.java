@@ -33,7 +33,7 @@ import java.util.*;
  * @author irengrig
  */
 public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlusParents> {
-  private final static int ourTestCount = 5;
+  private final static int ourFirstLoadCount = 15;
   private final static int ourPreload = (! parameterCheck(Integer.getInteger("git.log.preload.size"))) ? 100 : Integer.getInteger("git.log.preload.size");
 
   private final Collection<String> myStartingPoints;
@@ -144,7 +144,7 @@ public class LoaderAndRefresherImpl implements LoaderAndRefresher<CommitHashPlus
     int count = MediatorImpl.ourManyLoadedStep;
     boolean shouldFull = true;
     if (LoadAlgorithm.LoadType.TEST.equals(loadType)) {
-      count = ourTestCount;
+      count = ourFirstLoadCount;
     } else if (LoadAlgorithm.LoadType.SHORT.equals(loadType) || LoadAlgorithm.LoadType.SHORT_START.equals(loadType)) {
       shouldFull = false;
     } else if (LoadAlgorithm.LoadType.FULL_PREVIEW.equals(loadType)) {

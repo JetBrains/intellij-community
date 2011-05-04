@@ -17,21 +17,26 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+
+import java.util.Set;
 
 /**
  * @author sergey.evdokimov
@@ -55,7 +60,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
             final PsiType propertyType = PsiUtil.getSmartReturnType(method);
             returnType = extractReturnTypeFromType(propertyType, true, callExpression);
           } else {
-            returnType = getClosureCallOrCurryReturnType(callExpression, refExpr, method);
+            returnType = getClosureMethodsReturnType(callExpression, refExpr, method);
             if (returnType == null) {
               returnType = PsiUtil.getSmartReturnType(method);
             }
@@ -66,8 +71,10 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
           returnType = extractReturnTypeFromType(type, false, callExpression);
         }
         if (returnType == null) return null;
-        returnType = resolveResult.getSubstitutor().substitute(returnType);
-        returnType = TypesUtil.boxPrimitiveType(returnType, manager, scope);
+        if (!(returnType instanceof GrLiteralClassType)) {
+          returnType = resolveResult.getSubstitutor().substitute(returnType);
+          returnType = TypesUtil.boxPrimitiveType(returnType, manager, scope);
+        }
 
         if (result == null || returnType.isAssignableFrom(result)) result = returnType;
         else if (!result.isAssignableFrom(returnType))
@@ -123,25 +130,58 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
     return GroovyCommonClassNames.GROOVY_LANG_CLOSURE.equals(psiClass.getQualifiedName());
   }
 
+  private static final Set<String> CLOSURE_METHODS = new HashSet<String>();
+  static {
+    CLOSURE_METHODS.add("call");
+    CLOSURE_METHODS.add("curry");
+    CLOSURE_METHODS.add("ncurry");
+    CLOSURE_METHODS.add("rcurry");
+    CLOSURE_METHODS.add("memoize");
+    CLOSURE_METHODS.add("trampoline");
+  }
   @Nullable
-  private static PsiType getClosureCallOrCurryReturnType(GrMethodCall callExpression, GrReferenceExpression refExpr, PsiMethod resolved) {
+  private static PsiType getClosureMethodsReturnType(GrMethodCall callExpression, GrReferenceExpression refExpr, PsiMethod resolved) {
     PsiClass clazz = resolved.getContainingClass();
-    if (clazz != null && GroovyCommonClassNames.GROOVY_LANG_CLOSURE.equals(clazz.getQualifiedName())) {
-      if ("call".equals(resolved.getName()) || "curry".equals(resolved.getName())) {
-        GrExpression qualifier = refExpr.getQualifierExpression();
-        if (qualifier != null) {
-          PsiType qType = qualifier.getType();
-          if (qType instanceof GrClosureType) {
-            if ("call".equals(resolved.getName())) {
-              return ((GrClosureType)qType).getSignature().getReturnType();
-            }
-            else if ("curry".equals(resolved.getName())) {
-              final GrArgumentList argumentList = callExpression.getArgumentList();
-              return ((GrClosureType)qType).curry(argumentList == null ? 0 : argumentList.getExpressionArguments().length);
+    if (clazz == null || !GroovyCommonClassNames.GROOVY_LANG_CLOSURE.equals(clazz.getQualifiedName())) return null;
+
+    if (!CLOSURE_METHODS.contains(resolved.getName())) return null;
+
+    GrExpression qualifier = refExpr.getQualifierExpression();
+    if (qualifier == null) return null;
+
+    PsiType qType = qualifier.getType();
+    if (!(qType instanceof GrClosureType)) return null;
+
+    if ("call".equals(resolved.getName())) {
+      return ((GrClosureType)qType).getSignature().getReturnType();
+    }
+    else if ("curry".equals(resolved.getName()) || "trampoline".equals(resolved.getName())) {
+      return ((GrClosureType)qType).curry(PsiUtil.getArgumentTypes(refExpr, false), 0);
+    }
+    else if ("memoize".equals(resolved.getName())) {
+      return qType;
+    }
+    else if ("rcurry".equals(resolved.getName())) {
+      return ((GrClosureType)qType).curry(PsiUtil.getArgumentTypes(refExpr, false), -1);
+    }
+    else if ("ncurry".equals(resolved.getName())) {
+      final GrArgumentList argList = callExpression.getArgumentList();
+      if (argList != null) {
+        final GrExpression[] arguments = argList.getExpressionArguments();
+        if (arguments.length > 0) {
+          final GrExpression first = arguments[0];
+          if (first instanceof GrLiteral) {
+            final Object value = ((GrLiteral)first).getValue();
+            if (value instanceof Integer) {
+              final PsiType[] argTypes = PsiUtil.getArgumentTypes(refExpr, false);
+              if (argTypes != null) {
+                return ((GrClosureType)qType).curry(ArrayUtil.remove(argTypes, 0), (Integer)value);
+              }
             }
           }
         }
       }
+      return qType;
     }
     return null;
   }

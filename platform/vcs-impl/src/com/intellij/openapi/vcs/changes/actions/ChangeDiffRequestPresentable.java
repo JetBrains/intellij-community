@@ -24,6 +24,7 @@ import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -93,6 +94,10 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
 
     boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
+        final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+        if (pi != null) {
+          pi.setIndeterminate(true);
+        }
         request.setContents(createContent(bRev), createContent(aRev));
       }
     }, VcsBundle.message("progress.loading.diff.revisions"), true, myProject);

@@ -238,6 +238,10 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     doTest(false, false);
   }
 
+  public void testImprovedCatchAnalysis() throws Exception {
+    doTest(true, false);
+  }
+
   public void testJavacQuirks() throws Exception {
     doTest(true, false);
   }

@@ -13,9 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.diff.impl.dir;
+package org.jetbrains.plugins.groovy.lang.psi.api.types;
+
+import com.intellij.psi.PsiType;
 
 /**
-* @author Konstantin Bulenkov
-*/
-public enum DType {SOURCE, TARGET, SEPARATOR, CHANGED, EQUAL, ERROR}
+ * @author Maxim.Medvedev
+ */
+public interface GrCurriedClosureSignature extends GrClosureSignature{
+
+  PsiType[] getCurriedArgs();
+
+  /**
+   *
+   * @return position or -1 if position is right
+   */
+  int getCurriedPosition();
+
+  GrClosureSignature getOriginalSignature();
+
+}

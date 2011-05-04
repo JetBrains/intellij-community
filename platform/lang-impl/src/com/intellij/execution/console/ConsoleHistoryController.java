@@ -68,6 +68,7 @@ public class ConsoleHistoryController {
   private boolean myMultiline;
   private long myLastSaveStamp;
 
+  private String myUserValue;
 
   public ConsoleHistoryController(@NotNull final String type,
                                   @Nullable final String persistenceId,
@@ -118,6 +119,7 @@ public class ConsoleHistoryController {
     EmptyAction.setupAction(myHistoryPrev, "Console.History.Previous", null);
     EmptyAction.setupAction(myBrowseHistory, "Console.History.Browse", null);
     if (!myMultiline) {
+      EmptyAction.setupAction(myBrowseHistory, "Console.History.BrowseTW", null);
       myHistoryNext.registerCustomShortcutSet(KeyEvent.VK_UP, 0, null);
       myHistoryPrev.registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, null);
     }
@@ -201,7 +203,6 @@ public class ConsoleHistoryController {
     }
   }
 
-
   public AnAction getHistoryNext() {
     return myHistoryNext;
   }
@@ -214,11 +215,14 @@ public class ConsoleHistoryController {
     return myBrowseHistory;
   }
 
-  protected void actionTriggered(final String command) {
+  protected void actionTriggered(final String command, final boolean storeUserText) {
     final Editor editor = myConsole.getCurrentEditor();
     final Document document = editor.getDocument();
     new WriteCommandAction(myConsole.getProject(), myConsole.getFile()) {
       protected void run(final Result result) throws Throwable {
+        if (storeUserText) {
+          myUserValue = document.getText();
+        }
         document.setText(StringUtil.notNullize(command));
         editor.getCaretModel().moveToOffset(document.getTextLength());
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
@@ -237,14 +241,16 @@ public class ConsoleHistoryController {
 
     @Override
     public void actionPerformed(final AnActionEvent e) {
-      actionTriggered(myNext ? myModel.getHistoryNext() : myModel.getHistoryPrev());
+      final String command;
+      command = myNext ? myModel.getHistoryNext() : StringUtil.notNullize(myModel.getHistoryPrev(), StringUtil.notNullize(myUserValue));
+      actionTriggered(command, myNext && myModel.getHistoryCursor() == 0);
     }
 
     @Override
     public void update(final AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(myModel.hasHistory(myNext) &&
-                                     (myMultiline || canMoveInEditor(myNext)));
+      final boolean hasStuff = myModel.hasHistory(myNext);
+      e.getPresentation().setEnabled(hasStuff && (myMultiline || canMoveInEditor(myNext)));
     }
   }
 
@@ -259,7 +265,8 @@ public class ConsoleHistoryController {
       return document.getLineNumber(caretModel.getOffset()) == 0;
     }
     else {
-      return document.getLineNumber(caretModel.getOffset()) == document.getLineCount() - 1 &&
+      final int lineCount = document.getLineCount();
+      return (lineCount == 0 || document.getLineNumber(caretModel.getOffset()) == lineCount - 1) &&
              StringUtil.isEmptyOrSpaces(document.getText().substring(caretModel.getOffset()));
     }
   }
@@ -285,7 +292,7 @@ public class ConsoleHistoryController {
   }
 
   private void saveHistory(final XmlSerializer out) throws IOException {
-    out.startDocument("UTF-8", null);
+    out.startDocument(CharsetToolkit.UTF8, null);
     out.startTag(null, "console-history");
     out.attribute(null, "id", myId);
     for (String s : myModel.getHistory()) {
@@ -325,7 +332,7 @@ public class ConsoleHistoryController {
       };
       chooser.show();
       if (chooser.isOK()) {
-        actionTriggered(myModel.getHistory().get(chooser.getSelectedIndex()));
+        actionTriggered(myModel.getHistory().get(chooser.getSelectedIndex()), false);
       }
     }
   }

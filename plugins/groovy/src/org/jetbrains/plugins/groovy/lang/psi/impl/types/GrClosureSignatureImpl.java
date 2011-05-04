@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCurriedClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 /**
@@ -88,18 +89,8 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
   }
 
   @Nullable
-  public GrClosureSignature curry(int count) {
-    if (count > myParameters.length) {
-      if (isVarargs()) {
-        return new DerivedClosureSignature();
-      }
-      else {
-        return null;
-      }
-    }
-    GrClosureParameter[] newParams = new GrClosureParameter[myParameters.length - count];
-    System.arraycopy(myParameters, count, newParams, 0, newParams.length);
-    return new DerivedClosureSignature(newParams, null, myIsVarargs);
+  public GrCurriedClosureSignature curry(PsiType[] args, int position) {
+    return new GrCurriedClosureSignatureImpl(this, args, position);
   }
 
   public boolean isValid() {
@@ -144,20 +135,6 @@ public class GrClosureSignatureImpl implements GrClosureSignature {
     }
     return null; //todo
   }
-
-  private class DerivedClosureSignature extends GrClosureSignatureImpl {
-    DerivedClosureSignature() {
-      super(PsiParameter.EMPTY_ARRAY, null);
-    }
-
-    DerivedClosureSignature(@NotNull GrClosureParameter[] params, @Nullable PsiType returnType, boolean isVarArgs) {
-      super(params, returnType, isVarArgs);
-    }
-
-    @Override
-    public PsiType getReturnType() {
-      return GrClosureSignatureImpl.this.getReturnType();
-    }
-  }
 }
+
 
