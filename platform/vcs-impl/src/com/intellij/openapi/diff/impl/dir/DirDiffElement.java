@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-import static com.intellij.openapi.diff.impl.dir.DirDiffOperation.*;
+import static com.intellij.openapi.diff.impl.dir.DirDiffOperation.COPY_TO;
 
 /**
  * @author Konstantin Bulenkov
@@ -43,7 +43,10 @@ public class DirDiffElement {
     myTarget = target;
     myTargetLength = target == null || target.isContainer() ? -1 : target.getSize();
     myName = name;
-    if (isSource()) {
+    if (type == DType.ERROR) {
+      myOperation = DirDiffOperation.NONE;
+    }
+    else if (isSource()) {
       myOperation = COPY_TO;
     }
     else if (isTarget()) {
@@ -67,11 +70,16 @@ public class DirDiffElement {
   }
 
   private static String getLastModification(DiffElement file) {
-    return DateFormatUtil.formatDateTime(file.getTimeStamp());
+    final long timeStamp = file.getTimeStamp();
+    return timeStamp < 0 ? "" : DateFormatUtil.formatDateTime(timeStamp);
   }
 
   public static DirDiffElement createChange(@NotNull DiffElement source, @NotNull DiffElement target) {
     return new DirDiffElement(source, target, DType.CHANGED, source.getName());
+  }
+
+  public static DirDiffElement createError(@Nullable DiffElement source, @Nullable DiffElement target) {
+    return new DirDiffElement(source, target, DType.ERROR, source == null ? target.getName() : source.getName());
   }
 
   public static DirDiffElement createSourceOnly(@NotNull DiffElement source) {
@@ -109,7 +117,7 @@ public class DirDiffElement {
   @Nullable
   public String getSourceName() {
     return myType == DType.CHANGED || myType == DType.SOURCE || myType == DType.EQUAL
-           ? mySource.getName() : null;
+           ? mySource.getName() : mySource == null ? null : mySource.getName();
   }
 
   @Nullable
@@ -120,7 +128,7 @@ public class DirDiffElement {
   @Nullable
   public String getTargetName() {
     return myType == DType.CHANGED || myType == DType.TARGET || myType == DType.EQUAL
-           ? myTarget.getName() : null;
+           ? myTarget.getName() : myTarget == null ? null : myTarget.getName();
   }
 
   @Nullable

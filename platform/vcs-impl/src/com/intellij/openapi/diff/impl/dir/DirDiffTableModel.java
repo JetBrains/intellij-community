@@ -246,6 +246,8 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
             case EQUAL:
               elements.add(DirDiffElement.createEqual(child.getSource(), child.getTarget()));
               break;
+            case ERROR:
+              elements.add(DirDiffElement.createError(child.getSource(), child.getTarget()));
           }
         }
       } else {

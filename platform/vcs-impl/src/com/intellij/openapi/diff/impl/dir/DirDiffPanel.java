@@ -113,14 +113,20 @@ public class DirDiffPanel implements Disposable {
             }
 
           } else {
-            final DiffElement object = element.isSource() ? element.getSource() : element.getTarget();
+            final DiffElement object;
+            if (element.getType() == DType.ERROR) {
+              object = element.getSource() == null ? element.getTarget() : element.getSource();
+            } else {
+              object = element.isSource() ? element.getSource() : element.getTarget();
+            }
             myViewComponent = object.getViewComponent(project, null);
 
             if (myViewComponent != null) {
               myCurrentElement = object;
               myDiffPanel.add(myViewComponent, BorderLayout.CENTER);
               DataManager.registerDataProvider(myDiffPanel, myCurrentElement.getDataProvider(project));
-              myViewComponent.revalidate();
+              myDiffPanel.revalidate();
+              myDiffPanel.repaint();
             } else {
               myDiffPanel.add(getErrorLabel(), BorderLayout.CENTER);
               myDiffPanel.revalidate();
