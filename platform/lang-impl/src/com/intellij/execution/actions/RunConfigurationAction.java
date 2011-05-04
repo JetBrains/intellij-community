@@ -16,7 +16,10 @@
 
 package com.intellij.execution.actions;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.DataManager;
@@ -30,8 +33,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,6 +77,7 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
       else {
         if (DumbService.getInstance(project).isDumb()) {
           presentation.setEnabled(false);
+          presentation.setText("");
         }
         else {
           final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
@@ -111,7 +113,7 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
   }
 
   public JComponent createCustomComponent(final Presentation presentation) {
-    return new ComboBoxButton(presentation) {
+    final ComboBoxButton comboBoxButton = new ComboBoxButton(presentation) {
       public void addNotify() {
         super.addNotify();    //To change body of overriden methods use Options | File Templates.;
         final IdeFrame frame = findFrame(this);
@@ -119,6 +121,12 @@ public class RunConfigurationAction extends ComboBoxAction implements DumbAware 
         frame.getComponent().getRootPane().putClientProperty(BUTTON_KEY, this);
       }
     };
+
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
+    panel.add(comboBoxButton);
+    panel.setOpaque(false);
+    return panel;
   }
 
 

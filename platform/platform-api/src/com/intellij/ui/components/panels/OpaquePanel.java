@@ -15,8 +15,6 @@
  */
 package com.intellij.ui.components.panels;
 
-import com.intellij.util.ui.UIUtil;
-
 import javax.swing.*;
 import java.awt.*;
 
@@ -44,7 +42,7 @@ public class OpaquePanel extends JPanel {
   }
 
   protected void paintComponent(Graphics g) {
-    if (myOpaqueActive) {
+    if (isOpaqueActive()) {
       final Color bg = getBackground();
       g.setColor(bg);
       final Dimension size = getSize();

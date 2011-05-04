@@ -26,9 +26,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +66,42 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
   public JComponent getComponent() {
     if (myWrapperPanel == null) {
-      myWrapperPanel = new JPanel(new BorderLayout());
+      myWrapperPanel = new JPanel(new BorderLayout()) {
+        @Override
+        protected void paintChildren(Graphics g) {
+          super.paintChildren(g);
+          if (UIUtil.isUnderAquaLookAndFeel() && !UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
+            final Rectangle r = getBounds();
+            g.setColor(new Color(255, 255, 255, 90));
+            g.drawLine(0, r.height - 4, r.width, r.height - 4);
+            g.setColor(new Color(0, 0, 0, 90));
+            g.drawLine(0, r.height - 3, r.width, r.height - 3);
+            g.setColor(new Color(0, 0, 0, 20));
+            g.drawLine(0, r.height - 2, r.width, r.height - 2);
+          }
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+          if (!UIUtil.isUnderAquaLookAndFeel() || UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
+            super.paintComponent(g);
+            return;
+          }
+          
+          final Rectangle r = getBounds();
+          UIUtil.drawGradientHToolbarBackground(g, r.width, r.height);            
+        }
+
+        @Override
+        public Insets getInsets() {
+          final Insets i = super.getInsets();
+          if (!UIUtil.isUnderAquaLookAndFeel()) {
+            return i;
+          }
+          
+          return new Insets(i.top, i.left, i.bottom + 3, i.right);
+        }
+      };
       myWrapperPanel.add(buildNavBarPanel(), BorderLayout.CENTER);
       myWrapperPanel.putClientProperty("NavBarPanel", myNavigationBar);
       toggleRunPanel(!UISettings.getInstance().SHOW_MAIN_TOOLBAR);
@@ -82,14 +118,14 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         final DefaultActionGroup group = (DefaultActionGroup)toolbarRunGroup;
         final boolean needGap = isNeedGap(group);
         final ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+        actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
         final JComponent component = actionToolbar.getComponent();
-        component.setBackground(Color.WHITE);
+        component.setOpaque(false);
         myRunPanel = new JPanel(new BorderLayout());
-        final Color color = myRunPanel.getBackground() != null ? myRunPanel.getBackground().darker() : Color.darkGray;
-        myRunPanel.setBackground(Color.WHITE);
-        myRunPanel.add(component);
-        myRunPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 1, 1, 0, color),
-                                                                BorderFactory.createEmptyBorder(1, needGap ? 5 : 1, 0, 0)));
+        myRunPanel.setOpaque(false);
+        myRunPanel.add(component, BorderLayout.CENTER);
+        
+        myRunPanel.setBorder(BorderFactory.createEmptyBorder(0, needGap ? 5 : 1, 0, 0));
         myWrapperPanel.add(myRunPanel, BorderLayout.EAST);
       }
     }
@@ -99,6 +135,11 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     }
   }
 
+  private boolean isUndocked() {
+    final Window ancestor = SwingUtilities.getWindowAncestor(myWrapperPanel);
+    return ancestor != null && !(ancestor instanceof IdeFrameImpl);
+  }
+  
   private static boolean isNeedGap(final DefaultActionGroup group) {
     final AnAction firstAction = getFirstAction(group);
     return firstAction instanceof ComboBoxAction;
@@ -124,31 +165,101 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   }
 
   private JComponent buildNavBarPanel() {
-    final JComponent result = new OpaquePanel.List(new BorderLayout());
+    final JComponent result = new JPanel(new BorderLayout()) {
+      @Override
+      protected void paintComponent(Graphics g) {
+        if (UIUtil.isUnderAquaLookAndFeel()) {
+          final Rectangle r = getBounds();
+          final Graphics2D g2d = (Graphics2D)g;
+          if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
+            //UIUtil.drawGradientHToolbarBackground(g, r.width, r.height);
+
+            final Dimension d = getPreferredSize();
+            final int topOffset = (r.height - d.height) / 2 + 2;
+            //
+            //g2d.setPaint(new GradientPaint(0, 0, new Color(240, 240, 240), 0, d.height, new Color(210, 210, 210)));
+            //g.fillRect(0, topOffset, r.width, d.height);
+            //
+            //g.setColor(new Color(0, 0, 0, 90));
+            //g.drawLine(0, topOffset, r.width, topOffset);
+            //g.drawLine(0, topOffset + d.height, r.width - 1, topOffset + d.height);
+            
+            UIUtil.drawDoubleSpaceDottedLine(g2d, topOffset, topOffset + d.height - 1, r.width - 1, Color.GRAY, false);
+          }
+          else {
+            final boolean undocked = isUndocked();
+
+            g2d.setPaint(new GradientPaint(0, 0, new Color(240, 240, 240), 0, r.height, new Color(210, 210, 210)));
+            g.fillRect(0, 0, r.width, r.height);
+
+            if (!undocked) {
+              g.setColor(new Color(255, 255, 255, 220));
+              g.drawLine(0, 1, r.width, 1);
+            }
+            
+            g.setColor(new Color(0, 0, 0, 80));
+            if (!undocked) g.drawLine(0, 0, r.width, 0);
+            g.drawLine(0, r.height - 1, r.width - 1, r.height - 1);
+          }
+        } else {
+          super.paintComponent(g);
+        }
+      }
+
+      @Override
+      public void doLayout() {
+        // align vertically
+        final Rectangle r = getBounds();
+        final Insets insets = getInsets();
+        int x = insets.left;
+        
+        final Component navBar = getComponent(0);
+        final Component closeLabel = getComponentCount() == 2 ? getComponent(1) : null;
+
+        final Dimension preferredSize = navBar.getPreferredSize();
+        final Dimension closePreferredSize = closeLabel == null ? new Dimension() : closeLabel.getPreferredSize();
+
+        navBar.setBounds(x, insets.top + ((r.height - preferredSize.height - insets.top - insets.bottom) / 2),
+                         r.width - insets.left - insets.right - closePreferredSize.width, preferredSize.height);
+        
+        if(closeLabel != null) {
+          closeLabel.setBounds(x + r.width - insets.left - insets.right - closePreferredSize.width, 
+                               insets.top + ((r.height - closePreferredSize.height - insets.top - insets.bottom) / 2),
+                               closePreferredSize.width, closePreferredSize.height);
+        }
+      }
+    };
+    
     result.setBackground(UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
+    result.setOpaque(!UIUtil.isUnderAquaLookAndFeel() || UISettings.getInstance().SHOW_MAIN_TOOLBAR);
+    
     myNavigationBar = new NavBarPanel(myProject);
     myNavigationBar.getModel().setFixedComponent(true);
-
+    
     JScrollPane scroller = ScrollPaneFactory.createScrollPane(myNavigationBar);
-    scroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+    scroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
     scroller.setHorizontalScrollBar(null);
     scroller.setBorder(null);
 
+    scroller.setOpaque(false);
+    scroller.getViewport().setOpaque(false);
+
     result.add(scroller, BorderLayout.CENTER);
 
-    JLabel closeLabel = new JLabel(CROSS_ICON);
+    if (!SystemInfo.isMac) {
+      JLabel closeLabel = new JLabel(CROSS_ICON);
+      closeLabel.addMouseListener(new MouseAdapter() {
+        public void mouseClicked(final MouseEvent e) {
+          UISettings.getInstance().SHOW_NAVIGATION_BAR = false;
+          uiSettingsChanged(UISettings.getInstance());
+        }
+      });
+      result.add(closeLabel, BorderLayout.EAST);
+    }
 
-    closeLabel.addMouseListener(new MouseAdapter() {
-      public void mouseClicked(final MouseEvent e) {
-        UISettings.getInstance().SHOW_NAVIGATION_BAR = false;
-        uiSettingsChanged(UISettings.getInstance());
-      }
-    });
-    result.add(closeLabel, BorderLayout.EAST);
-
-    myNavigationBar.setBorder(new NavBarBorder(true, 0));
-    result.setBorder(myNavigationBar.getBorder());
+    result.setBorder(UIUtil.isUnderAquaLookAndFeel() ? BorderFactory.createEmptyBorder(2, 0, 2, 4) : new NavBarBorder(true, 0));
     myNavigationBar.setBorder(null);
+    
     return result;
   }
 
@@ -156,6 +267,12 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     if (myNavigationBar != null) {
       myNavigationBar.updateState(settings.SHOW_NAVIGATION_BAR);
       myWrapperPanel.setVisible(settings.SHOW_NAVIGATION_BAR);
+      
+      if (myWrapperPanel.getComponentCount() > 0) {
+        final Component c = myWrapperPanel.getComponent(0);
+        if (c instanceof JComponent) ((JComponent)c).setOpaque(
+          !UIUtil.isUnderAquaLookAndFeel() || UISettings.getInstance().SHOW_MAIN_TOOLBAR);
+      }
     }
   }
 

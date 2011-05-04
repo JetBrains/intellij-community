@@ -24,7 +24,6 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -81,6 +80,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
     myDockManager = dockManager;
     final ActionManager actionManager = ActionManager.getInstance();
     myTabs = new JBTabsImpl(project, actionManager, IdeFocusManager.getInstance(project), this);
+    ((JBTabsImpl)myTabs).putClientProperty(JBTabsImpl.EDITOR_TABS, Boolean.TRUE);
     myTabs.setDataProvider(new MyDataProvider()).setPopupGroup(new Getter<ActionGroup>() {
       public ActionGroup get() {
         return (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP);

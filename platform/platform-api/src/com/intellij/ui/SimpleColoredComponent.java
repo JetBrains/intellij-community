@@ -370,7 +370,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     if (icon != null) {
       final Container parent = getParent();
       Color iconBackgroundColor = null;
-      if (isIconOpaque()) {
+      if (isOpaque() || isIconOpaque()) {
         if (parent != null && !myFocusBorderAroundIcon && !UIUtil.isFullRowSelectionLAF()) {
           iconBackgroundColor = parent.getBackground();
         }
@@ -389,7 +389,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
       xOffset += myIpad.left + icon.getIconWidth() + myIconTextGap;
     }
 
-    if (isOpaque()) {
+    if (isOpaque() || shouldDrawBackground()) {
       // Paint text background
       g.setColor(getBackground());
       g.fillRect(xOffset, 0, getWidth() - xOffset, getHeight());
@@ -437,7 +437,15 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
       final int textBaseline = getTextBaseLine(metrics, getHeight());
 
-      if (!attributes.isSearchMatch()) g.drawString(fragment, xOffset, textBaseline);
+      if (!attributes.isSearchMatch()) {
+        if (shouldDrawMacShadow()) {
+          g.setColor(new Color(250, 250, 250, 140));
+          g.drawString(fragment, xOffset, textBaseline + 1);
+        }
+        
+        g.setColor(color);
+        g.drawString(fragment, xOffset, textBaseline);
+      }
 
       // 1. Strikeout effect
       if (attributes.isStrikeout()) {
@@ -494,11 +502,25 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     for (final Object[] info: searchMatches) {
       UIUtil.drawSearchMatch((Graphics2D)g, (Integer) info[0], (Integer) info[1], getHeight());
       g.setFont((Font) info[4]);
+
+      if (shouldDrawMacShadow()) {
+        g.setColor(new Color(250, 250, 250, 140));
+        g.drawString((String) info[3], (Integer) info[0], (Integer) info[2] + 1);
+      }
+
       g.setColor(new Color(50, 50, 50));
       g.drawString((String) info[3], (Integer) info[0], (Integer) info[2]);
     }
   }
+  
+  protected boolean shouldDrawMacShadow() {
+    return false;
+  }
 
+  protected boolean shouldDrawBackground() {
+    return false;
+  }
+  
   protected void paintIcon(Graphics g, Icon icon) {
     icon.paintIcon(this, g, myIpad.left, (getHeight() - icon.getIconHeight()) / 2);
   }

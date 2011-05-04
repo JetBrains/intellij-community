@@ -52,6 +52,8 @@ class NavBarBorder implements Border {
     else {
       if (drawTopBorder) {
         g.drawLine(0, 0, width - myRightOffset + 3, 0);
+      } else {
+        g.drawLine(width - 1, 0, width - 1, height);
       }
     }
     g.drawLine(0, height - 1, width, height - 1);
@@ -67,6 +69,6 @@ class NavBarBorder implements Border {
   }
 
   public boolean isBorderOpaque() {
-    return true;
+    return false;
   }
 }

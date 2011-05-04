@@ -17,15 +17,15 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PairFunction;
+import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -876,6 +876,31 @@ public class UIUtil {
 
     // restore color
     g.setColor(oldColor);
+  }
+  
+  public static void drawGradientHToolbarBackground(final Graphics g, final int width, final int height) {
+    final Graphics2D g2d = (Graphics2D)g;
+    final GradientPaint gradientPaint = new GradientPaint(0, 0, new Color(220, 220, 220), 0, height, new Color(200, 200, 200));
+    g2d.setPaint(gradientPaint);
+    g2d.fillRect(0, 0, width, height);
+  }
+  
+  public static void drawDoubleSpaceDottedLine(final Graphics2D g,
+                                          final int start,
+                                          final int end,
+                                          final int xOrY,
+                                          final Color fgColor,
+                                          boolean horizontal) {
+    
+    g.setColor(fgColor);
+    for (int dot = start; dot < end; dot+=3) {
+      if (horizontal) {
+        g.drawLine(dot, xOrY, dot, xOrY);
+      } else {
+        g.drawLine(xOrY, dot, xOrY, dot);
+      }
+    }
+    
   }
 
   private static void drawAppleDottedLine(final Graphics2D g,
@@ -1922,6 +1947,168 @@ public class UIUtil {
       }
     }
     return null;
+  }
+  
+  public static class TextPainter {
+    private List<Pair<String, LineInfo>> myLines = new ArrayList<Pair<String, LineInfo>>();
+    private boolean myDrawMacShadow;
+    private Color myMacShadowColor;
+    private float myLineSpacing;
+
+
+    public TextPainter() {
+      this(true, new Color(220, 220, 220), 1.0f);
+    }
+
+    public TextPainter(final float lineSpacing) {
+      this(true, new Color(220, 220, 220), lineSpacing);
+    }
+
+    public TextPainter(final boolean drawMacShadow, final Color shadowColor, final float lineSpacing) {
+      myDrawMacShadow = drawMacShadow;
+      myMacShadowColor = shadowColor;
+      myLineSpacing = lineSpacing;
+    }
+
+    public TextPainter appendLine(final String text) {
+      if (text == null || text.length() == 0) return this;
+      myLines.add(Pair.create(text, new LineInfo()));
+      return this;
+    }
+
+    public TextPainter underlined(final Color color) {
+      if (myLines.size() > 0) {
+        final LineInfo info = myLines.get(myLines.size() - 1).getSecond();
+        info.underlined = true;
+        info.underlineColor = color;
+      }
+      
+      return this;
+    }
+
+    public TextPainter underlined() {
+      if (myLines.size() > 0) {
+        myLines.get(myLines.size() - 1).getSecond().underlined = true;
+      }
+      
+      return this;
+    }
+    
+    public TextPainter smaller() {
+      if (myLines.size() > 0) {
+        myLines.get(myLines.size() - 1).getSecond().smaller = true;
+      }
+      
+      return this;
+    }
+
+    public TextPainter center() {
+      if (myLines.size() > 0) {
+        myLines.get(myLines.size() - 1).getSecond().center = true;
+      }
+      
+      return this;
+    }
+    
+    /**
+     * _position(block width, block height) => (x, y) of the block
+     */
+    public void draw(@NotNull final Graphics g, final PairFunction<Integer, Integer, Pair<Integer, Integer>> _position) {
+      final int[] maxWidth = new int[] {0};
+      final int[] height = new int[] {0};
+      ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
+        @Override
+        public boolean process(final Pair<String, LineInfo> pair) {
+          final LineInfo info = pair.getSecond();
+          Font old = null;
+          if (info.smaller) {
+            old = g.getFont();
+            g.setFont(old.deriveFont(old.getSize() * 0.75f));
+          }
+          
+          final FontMetrics fm = g.getFontMetrics();
+          
+          maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst()), maxWidth[0]);
+          height[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
+          
+          if (old != null) {
+            g.setFont(old);
+          }
+          
+          return true;
+        }
+      });
+
+      final Pair<Integer, Integer> position = _position.fun(maxWidth[0], height[0]);
+      assert position != null;
+      
+      final int[] yOffset = new int[] {position.getSecond()};
+      ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
+        @Override
+        public boolean process(final Pair<String, LineInfo> pair) {
+          final LineInfo info = pair.getSecond();
+          Font old = null;
+          if (info.smaller) {
+            old = g.getFont();
+            g.setFont(old.deriveFont(old.getSize() * 0.75f));
+          }
+          
+          final int x = position.getFirst();
+
+          final FontMetrics fm = g.getFontMetrics();
+          int xOffset = x;
+          if (info.center) {
+            xOffset = x + (maxWidth[0] - fm.stringWidth(pair.getFirst())) / 2;
+          }
+          
+          if (myDrawMacShadow && UIUtil.isUnderAquaLookAndFeel()) {
+            final Color oldColor = g.getColor();
+            g.setColor(myMacShadowColor);
+            g.drawString(pair.getFirst(), xOffset, yOffset[0] + 1);
+            g.setColor(oldColor);
+          }
+          
+          g.drawString(pair.getFirst(), xOffset, yOffset[0]);
+          
+          Color c = null;
+          if (info.underlined) {
+            if (info.underlineColor != null) {
+              c = g.getColor();
+              g.setColor(info.underlineColor);
+            }
+            
+            g.drawLine(x, yOffset[0] + fm.getDescent(), x + maxWidth[0], yOffset[0] + fm.getDescent());
+            if (c != null) {
+              g.setColor(c);
+              c = null;
+            }
+                          
+            if (myDrawMacShadow && UIUtil.isUnderAquaLookAndFeel()) {
+              c = g.getColor();
+              g.setColor(myMacShadowColor);
+              g.drawLine(x, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0], yOffset[0] + fm.getDescent() + 1);
+              g.setColor(c);
+              c = null;
+            }
+          }
+          
+          yOffset[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing; 
+
+          if (old != null) {
+            g.setFont(old);
+          }
+          
+          return true;
+        }
+      });
+    }
+    
+    private static class LineInfo {
+      boolean underlined;
+      Color underlineColor;
+      boolean smaller;
+      public boolean center;
+    }
   }
 
   public static JRootPane getRootPane(Component c) {
