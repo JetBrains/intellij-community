@@ -157,7 +157,7 @@ class JavaChangeSignatureUsageSearcher {
 
             for (PsiMethod overrider : overriders) {
               PsiParameter parameter1 = overrider.getParameterList().getParameters()[info.getOldIndex()];
-              if (parameter.getName().equals(parameter1.getName())) {
+              if (parameter1 != null && Comparing.strEqual(parameter.getName(), parameter1.getName())) {
                 addParameterUsages(parameter1, result, info);
               }
             }
