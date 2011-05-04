@@ -35,7 +35,6 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -47,7 +46,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
-import junit.framework.Assert;
+import org.junit.Assert;
 import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -442,11 +441,15 @@ public class PlatformTestUtil {
   public static void assertDirectoriesEqual(VirtualFile dirAfter, VirtualFile dirBefore, VirtualFileFilter fileFilter) throws IOException {
     FileDocumentManager.getInstance().saveAllDocuments();
     VirtualFile[] childrenAfter = dirAfter.getChildren();
-    File[] ioAfter = new File(dirAfter.getPath()).listFiles();
-    shallowCompare(childrenAfter, ioAfter);
+    if (dirAfter.isInLocalFileSystem()) {
+      File[] ioAfter = new File(dirAfter.getPath()).listFiles();
+      shallowCompare(childrenAfter, ioAfter);
+    }
     VirtualFile[] childrenBefore = dirBefore.getChildren();
-    File[] ioBefore = new File(dirBefore.getPath()).listFiles();
-    shallowCompare(childrenBefore, ioBefore);
+    if (dirBefore.isInLocalFileSystem()) {
+      File[] ioBefore = new File(dirBefore.getPath()).listFiles();
+      shallowCompare(childrenBefore, ioBefore);
+    }
 
     HashMap<String, VirtualFile> mapAfter = buildNameToFileMap(childrenAfter, fileFilter);
     HashMap<String, VirtualFile> mapBefore = buildNameToFileMap(childrenBefore, fileFilter);
@@ -492,25 +495,17 @@ public class PlatformTestUtil {
   }
 
   public static void assertFilesEqual(VirtualFile fileAfter, VirtualFile fileBefore) throws IOException {
-    assertJarFilesEqual(VfsUtil.virtualToIoFile(fileAfter), VfsUtil.virtualToIoFile(fileBefore));
+    try {
+      assertJarFilesEqual(VfsUtil.virtualToIoFile(fileAfter), VfsUtil.virtualToIoFile(fileBefore));
+    }
+    catch (IOException e) {
+      Assert.assertArrayEquals(fileAfter.getPath(), fileAfter.contentsToByteArray(), fileBefore.contentsToByteArray());
+    }
   }
 
   public static void assertJarFilesEqual(File file1, File file2) throws IOException {
-    final JarFile jarFile1;
-    final JarFile jarFile2;
-    try {
-      jarFile1 = new JarFile(file1);
-      jarFile2 = new JarFile(file2);
-    }
-    catch (IOException e) {
-      String textAfter = FileUtil.loadFile(file1);
-      String textBefore = FileUtil.loadFile(file2);
-      textAfter = StringUtil.convertLineSeparators(textAfter);
-      textBefore = StringUtil.convertLineSeparators(textBefore);
-      Assert.assertEquals(file1.getPath(), textAfter, textBefore);
-      return;
-    }
-
+    final JarFile jarFile1 = new JarFile(file1);
+    final JarFile jarFile2 = new JarFile(file2);
     final File tempDirectory1 = PlatformTestCase.createTempDir("tmp1");
     final File tempDirectory2 = PlatformTestCase.createTempDir("tmp2");
     ZipUtil.extract(jarFile1, tempDirectory1, CVS_FILE_FILTER);
