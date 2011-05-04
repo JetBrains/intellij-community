@@ -64,7 +64,7 @@ public class HgDiffProvider implements DiffProvider {
     }
 
     HgWorkingCopyRevisionsCommand command = new HgWorkingCopyRevisionsCommand(project);
-    HgRevisionNumber currentRevision = command.identify(vcsRoot);
+    HgRevisionNumber currentRevision = command.identify(vcsRoot).getFirst();
     if (currentRevision == null) {
       return null;
     }

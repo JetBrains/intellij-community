@@ -34,6 +34,7 @@ import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -175,15 +176,24 @@ public class HgIntegrateDialog implements Configurable {
           return;
         }
 
-        otherHeadRadioButton.setVisible(true);
-        otherHeadLabel.setVisible(true);
-
-        HgRevisionNumber currentParent = new HgWorkingCopyRevisionsCommand(project).identify(root);
-        heads.remove(currentParent);
+        HgRevisionNumber currentParent = new HgWorkingCopyRevisionsCommand(project).identify(root).getFirst();
+        for (Iterator<HgRevisionNumber> it = heads.iterator() ; it.hasNext(); ) {
+          final HgRevisionNumber rev = it.next();
+          if (rev.getRevisionNumber().equals(currentParent.getRevisionNumber())) {
+            it.remove();
+          }
+        }
 
         if (heads.size() == 1) {
-          otherHead = heads.get(0);
-          otherHeadLabel.setText(HgVcsMessages.message("hg4idea.integrate.other.head", otherHead.asString()));
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              otherHeadRadioButton.setVisible(true);
+              otherHeadLabel.setVisible(true);
+              otherHead = heads.get(0);
+              otherHeadLabel.setText(HgVcsMessages.message("hg4idea.integrate.other.head", otherHead.asString()));
+            }
+          });
         } else {
           //apparently we are not at one of the heads
           disableOtherHeadsChoice();
@@ -193,8 +203,13 @@ public class HgIntegrateDialog implements Configurable {
   }
 
   private void disableOtherHeadsChoice() {
-    otherHeadLabel.setVisible(false);
-    otherHeadRadioButton.setVisible(false);
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        otherHeadLabel.setVisible(false);
+        otherHeadRadioButton.setVisible(false);
+      }
+    });
   }
 
   private List<VirtualFile> pathsToFiles(Collection<FilePath> paths) {
