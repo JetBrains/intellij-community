@@ -251,7 +251,21 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     final String propName = ((GrAccessorMethod)method).getProperty().getName();
     if (((GrAccessorMethod)method).isSetter()) {
       final String paramName = method.getParameterList().getParameters()[0].getName();
-      builder.append("{\n this.").append(propName).append(" = ").append(paramName).append(";\n}");
+      builder.append("{\n");
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null) {
+          builder.append(containingClass.getName());
+          builder.append('.');
+        }
+      }
+      else {
+        builder.append("this.");
+      }
+      builder.append(propName);
+      builder.append(" = ");
+      builder.append(paramName);
+      builder.append(";\n}");
     }
     else {
       builder.append("{\n return ");
