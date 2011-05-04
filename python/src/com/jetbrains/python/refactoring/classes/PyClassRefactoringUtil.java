@@ -170,30 +170,30 @@ public class PyClassRefactoringUtil {
     node.putCopyableUserData(ENCODED_IMPORT, null);
   }
 
-  public static void insertImport(PyClass target, Collection<PyClass> newClasses) {
-    for (PyClass newClass : newClasses) {
-      insertImport(target, newClass);
+  public static void insertImport(PsiElement anchor, Collection<PsiNamedElement> elements) {
+    for (PsiNamedElement newClass : elements) {
+      insertImport(anchor, newClass);
     }
   }
 
-  private static void insertImport(PyClass target, PyClass newClass) {
-    if (PyBuiltinCache.getInstance(newClass).hasInBuiltins(newClass)) return;
-    final PsiFile newFile = newClass.getContainingFile();
+  public static void insertImport(PsiElement anchor, PsiNamedElement element) {
+    if (PyBuiltinCache.getInstance(element).hasInBuiltins(element)) return;
+    final PsiFile newFile = element.getContainingFile();
     final VirtualFile vFile = newFile.getVirtualFile();
     assert vFile != null;
-    final PsiFile file = target.getContainingFile();
+    final PsiFile file = anchor.getContainingFile();
     if (newFile == file) return;
-    final String importableName = ResolveImportUtil.findShortestImportableName(target, vFile);
-    final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(target, newFile);
-    if (!PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT || newClass instanceof PyFile) {
-      if (newClass instanceof PyFile) {
+    final String importableName = ResolveImportUtil.findShortestImportableName(anchor, vFile);
+    final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(anchor, newFile);
+    if (!PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT || element instanceof PyFile) {
+      if (element instanceof PyFile) {
         AddImportHelper.addImportStatement(file, importableName, null, priority);
       } else {
-        final String name = newClass.getName();
+        final String name = element.getName();
         AddImportHelper.addImportStatement(file, importableName + "." + name, null, priority);
       }
     } else {
-      AddImportHelper.addImportFrom(file, importableName, newClass.getName(), priority);
+      AddImportHelper.addImportFrom(file, importableName, element.getName(), priority);
     }
   }
 
