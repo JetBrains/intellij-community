@@ -21,6 +21,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.light.LightElement;
@@ -58,10 +59,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
@@ -1171,5 +1170,41 @@ public class PsiUtil {
     if (!(eMethodCall instanceof GrCall)) return null;
 
     return (GrCall)eMethodCall;
+  }
+
+  public static boolean isInScriptContext(GroovyPsiElement expr) {
+    final GroovyPsiElement fileContext = getFileOrClassContext(expr);
+    return fileContext instanceof GroovyFile && ((GroovyFile)fileContext).isScript();
+  }
+
+  public static GroovyPsiElement getFileOrClassContext(final GroovyPsiElement element) {
+    GroovyPsiElement context = PsiTreeUtil.getContextOfType(element, GrTypeDefinition.class, GroovyFileBase.class);
+    if (context instanceof GroovyFileBase &&
+        GroovyPsiElementFactory.DUMMY_FILE_NAME.equals(FileUtil.getNameWithoutExtension(((GroovyFileBase)context).getName()))) {
+      context = PsiTreeUtil.getContextOfType(context, true, GrTypeDefinition.class, GroovyFileBase.class);
+    }
+    return context;
+  }
+
+  public static String getAnnoAttributeValue(PsiAnnotation annotation, final String attributeName, String defaultValue) {
+    PsiAnnotationMemberValue value = annotation.findAttributeValue(attributeName);
+    if (value instanceof GrExpression) {
+      Object o = GroovyConstantExpressionEvaluator.evaluate((GrExpression)value);
+      if (o instanceof String) {
+        return (String)o;
+      }
+    }
+    return defaultValue;
+  }
+
+  public static boolean getAnnoAttributeValue(PsiAnnotation annotation, final String attributeName, boolean defaultValue) {
+    PsiAnnotationMemberValue value = annotation.findAttributeValue(attributeName);
+    if (value instanceof GrExpression) {
+      Object o = GroovyConstantExpressionEvaluator.evaluate((GrExpression)value);
+      if (o instanceof Boolean) {
+        return (Boolean)o;
+      }
+    }
+    return defaultValue;
   }
 }

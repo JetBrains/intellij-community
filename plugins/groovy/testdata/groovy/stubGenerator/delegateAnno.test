@@ -38,7 +38,7 @@ return ;
 
 }
 ---
-public class DelegateBarImpl extends groovy.lang.GroovyObjectSupport implements DelegateFoo, java.lang.Runnable, java.io.Serializable, groovy.lang.GroovyObject {
+public class DelegateBarImpl extends groovy.lang.GroovyObjectSupport implements DelegateFoo, java.io.Serializable, groovy.lang.GroovyObject {
 public DelegateFoo getFoo() {
 return null;
 }

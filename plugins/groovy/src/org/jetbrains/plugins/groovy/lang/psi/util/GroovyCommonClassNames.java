@@ -37,6 +37,9 @@ public final class GroovyCommonClassNames {
   @NonNls public static final String ORG_CODEHAUS_GROOVY_RUNTIME_METHOD_CLOSURE = "org.codehaus.groovy.runtime.MethodClosure";
   @NonNls public static final String JAVA_UTIL_REGEX_MATCHER = "java.util.regex.Matcher";
   public static final String GROOVY_TRANSFORM_FIELD = "groovy.transform.Field";
+  public static final String GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR = "groovy.transform.TupleConstructor";
+  public static final String GROOVY_TRANSFORM_IMMUTABLE = "groovy.transform.Immutable";
+  public static final String GROOVY_TRANSFORM_CANONICAL = "groovy.transform.Canonical";
 
   private GroovyCommonClassNames() {
   }

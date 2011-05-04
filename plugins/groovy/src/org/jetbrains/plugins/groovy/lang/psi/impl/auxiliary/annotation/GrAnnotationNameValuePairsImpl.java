@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePairs;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
@@ -29,6 +30,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 public class GrAnnotationNameValuePairsImpl extends GroovyPsiElementImpl implements GrAnnotationNameValuePairs {
   public GrAnnotationNameValuePairsImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  @NotNull
+  public GrAnnotationNameValuePair[] getAttributes() {
+    return findChildrenByClass(GrAnnotationNameValuePair.class);
   }
 
   public void accept(GroovyElementVisitor visitor) {
