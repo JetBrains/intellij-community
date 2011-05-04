@@ -190,7 +190,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     int start = 0;
     for (final RangeMarker element : myElements) {
       int offset = element.getStartOffset() - containerStart;
-      LOG.assertTrue(start > offset, "container: " + myContainerElement.getClass() + " markers: " +
+      LOG.assertTrue(start <= offset,"container: " + myContainerElement.getClass() + " markers: " +
                                      StringUtil.join(myElements, new Function<RangeMarker, String>() {
                                                        @Override
                                                        public String fun(RangeMarker rangeMarker) {
