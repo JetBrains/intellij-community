@@ -25,8 +25,5 @@
     <action id="RunAPT">
       <keyboard-shortcut first-keystroke="control alt shift 9"/>
     </action>
-
-    <action id="Console.Hibernate.Close"/>
-    <action id="Console.Jpa.Close"/>
   </keymap>
 </component>
