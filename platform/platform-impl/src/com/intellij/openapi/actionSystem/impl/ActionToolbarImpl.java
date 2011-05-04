@@ -906,7 +906,15 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       }
     });
     myPopup = builder.createPopup();
-
+    ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+      @Override
+      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+        if (myPopup != null && !myPopup.isDisposed() && myPopup.isVisible()) {
+          myPopup.cancel();
+        }
+        ActionManager.getInstance().removeAnActionListener(this);
+      }
+    });
     Disposer.register(myPopup, popupToolbar);
 
     myPopup.showInScreenCoordinates(this, location);
