@@ -27,6 +27,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -104,11 +105,16 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
   public int getFileCount(PsiDirectory directory) {
     Iterator<PsiFile> iterator = myBuilder.getFiles(directory);
     int count = 0;
-    while (iterator.hasNext()) {
-      PsiFile psiFile = iterator.next();
-      if (getStructure().accept(psiFile)) {
-        count++;
+    try {
+      while (iterator.hasNext()) {
+        PsiFile psiFile = iterator.next();
+        if (getStructure().accept(psiFile)) {
+          count++;
+        }
       }
+    }
+    catch (IndexNotReadyException e) {
+      return count;
     }
     return count;
   }
