@@ -494,13 +494,13 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   public boolean hasImportFromFuture(FutureFeature feature) {
     final StubElement stub = getStub();
     if (stub instanceof PyFileStub) {
-      return ((PyFileStub) stub).isAbsoluteImportEnabled();
+      return ((PyFileStub) stub).getFutureFeatures().get(feature.ordinal());
     }
     Boolean enabled = myFutureFeatures.get(feature);
     if (enabled == null) {
       enabled = calculateImportFromFuture(feature);
       myFutureFeatures.put(feature, enabled);
-      // NOTE: ^^^ not synchronized. if two threads will try to modify this, both can only set the same value.
+      // NOTE: ^^^ not synchronized. if two threads will try to modify this, both can only be expected to set the same value.
     }
     return enabled;
   }

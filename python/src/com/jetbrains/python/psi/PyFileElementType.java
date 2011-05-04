@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
 /**
@@ -41,7 +42,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
 
   @Override
   public int getStubVersion() {
-    return 32;
+    return 33;
   }
 
   @Override
@@ -82,14 +83,35 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   @Override
   public void serialize(PyFileStub stub, StubOutputStream dataStream) throws IOException {
     writeNullableList(dataStream, stub.getDunderAll());
-    dataStream.writeBoolean(stub.isAbsoluteImportEnabled());
+    writeBitSet(dataStream, stub.getFutureFeatures());
   }
 
   @Override
   public PyFileStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
     List<String> all = readNullableList(dataStream);
-    boolean isAbsoluteImportEnabled = dataStream.readBoolean();
-    return new PyFileStubImpl(all, isAbsoluteImportEnabled);
+    BitSet future_features = readBitSet(dataStream);
+    return new PyFileStubImpl(all, future_features);
+  }
+
+  private static BitSet readBitSet(StubInputStream dataStream) throws IOException {
+    // NOTE: here we assume that bitset has no more than 32 bits so that the value fits into an int.
+    BitSet ret = new BitSet(32); // see PyFileStubImpl: we assume that all bits fit into an int
+    int bits = dataStream.readInt();
+    for (int i=0; i<32; i+=1) {
+      boolean bit = (bits & (1 << i)) != 0;
+      ret.set(i, bit);
+    }
+    return ret;
+  }
+
+  private static void writeBitSet(StubOutputStream dataStream, BitSet bitset) throws IOException {
+    // NOTE: here we assume that bitset has no more than 32 bits so that the value fits into an int.
+    int result = 0;
+    for (int i=0; i <32; i+=1) {
+      int bit = (bitset.get(i)? 1 : 0) << i;
+      result |= bit;
+    }
+    dataStream.writeInt(result);
   }
 
   public static void writeNullableList(StubOutputStream dataStream, final List<String> names) throws IOException {
