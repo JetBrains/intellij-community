@@ -81,15 +81,6 @@ public abstract class GenericNotifierImpl<T, Key> {
     final Application application = ApplicationManager.getApplication();
     final Runnable runnable = new Runnable() {
       public void run() {
-        final Iterator<MyNotification<T>> iterator = notifications.iterator();
-        while (iterator.hasNext()) {
-          final MyNotification<T> notification = iterator.next();
-          synchronized (myLock) {
-            if (myState.containsKey(getKey(notification.getObj()))) {
-              iterator.remove();
-            }
-          }
-        }
         for (MyNotification<T> notification : notifications) {
           notification.expire();
         }
@@ -106,11 +97,6 @@ public abstract class GenericNotifierImpl<T, Key> {
     final Application application = ApplicationManager.getApplication();
     final Runnable runnable = new Runnable() {
       public void run() {
-        synchronized (myLock) {
-          if (myState.containsKey(getKey(notification.getObj()))) {
-            return;
-          }
-        }
         notification.expire();
       }
     };
@@ -138,7 +124,7 @@ public abstract class GenericNotifierImpl<T, Key> {
       application.invokeLater(new Runnable() {
         public void run() {
           synchronized (myLock) {
-            if (! myState.containsKey(getKey(notification.getObj()))) return;
+            if (notification.isExpired() || ! myState.containsKey(getKey(notification.getObj()))) return;
           }
           Notifications.Bus.notify(notification, NotificationDisplayType.STICKY_BALLOON, myProject);
         }
