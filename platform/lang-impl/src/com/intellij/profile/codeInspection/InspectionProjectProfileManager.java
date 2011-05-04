@@ -174,7 +174,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
               public void run() {
                 DaemonCodeAnalyzer.getInstance(myProject).restart();
               }
-            });
+            }, myProject.getDisposed());
           }
         };
         if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
