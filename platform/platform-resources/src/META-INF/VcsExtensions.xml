@@ -26,4 +26,5 @@
 
   <keymapExtension implementation="com.intellij.openapi.vcs.impl.VcsKeymapExtension"/>
   <fileTypeFactory implementation="com.intellij.openapi.vcs.impl.VcsFileTypeFactory"/>
+  <virtualFileSystem key="vcs" implementationClass="com.intellij.openapi.vcs.vfs.VcsFileSystem"/>
 </extensions>
