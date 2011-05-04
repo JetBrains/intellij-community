@@ -3,25 +3,23 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.patterns.PlatformPatterns;
-import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
-import static com.intellij.patterns.XmlPatterns.xmlTag;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
-import com.intellij.openapi.project.Project;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
+import static com.intellij.patterns.XmlPatterns.xmlTag;
 
 /**
  * @author peter
  */
 public class JavaReferenceContributor extends PsiReferenceContributor{
   public void registerReferenceProviders(final PsiReferenceRegistrar registrar) {
-    final Project project = registrar.getProject();
-    if (project == null) return;
 
-    final JavaClassListReferenceProvider classListProvider = new JavaClassListReferenceProvider(project);
+    final JavaClassListReferenceProvider classListProvider = new JavaClassListReferenceProvider();
     registrar.registerReferenceProvider(xmlAttributeValue(), classListProvider, PsiReferenceRegistrar.LOWER_PRIORITY);
     registrar.registerReferenceProvider(xmlTag(), classListProvider, PsiReferenceRegistrar.LOWER_PRIORITY);
 

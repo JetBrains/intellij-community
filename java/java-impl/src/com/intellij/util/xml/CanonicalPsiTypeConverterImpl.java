@@ -17,8 +17,6 @@ package com.intellij.util.xml;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataCache;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
@@ -35,16 +33,10 @@ import org.jetbrains.annotations.NotNull;
 */
 public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter implements CustomReferenceConverter<PsiType> {
 
-  private static final UserDataCache<JavaClassReferenceProvider, Project, Object> REFERENCE_PROVIDER = new UserDataCache<JavaClassReferenceProvider, Project, Object>("CanonicalPsiTypeConverterImpl") {
-    @Override
-    protected JavaClassReferenceProvider compute(Project project, Object p) {
-      return new JavaClassReferenceProvider(project);
-    }
-  };
-
   @NonNls private static final String[] PRIMITIVES = new String[]{"boolean", "byte",
     "char", "double", "float", "int", "long", "short"};
   @NonNls private static final String ARRAY_PREFIX = "[L";
+  private static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider();
 
   public PsiType fromString(final String s, final ConvertContext context) {
     if (s == null) return null;
@@ -76,7 +68,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
           trimmed = trimmed.substring(ARRAY_PREFIX.length());          
         }
       }
-      return new JavaClassReferenceSet(trimmed, element, offset, false, REFERENCE_PROVIDER.get(genericDomValue.getManager().getProject(), null)) {
+      return new JavaClassReferenceSet(trimmed, element, offset, false, CLASS_REFERENCE_PROVIDER) {
         protected JavaClassReference createReference(final int referenceIndex, final String subreferenceText, final TextRange textRange,
                                                      final boolean staticImport) {
           return new JavaClassReference(this, textRange, referenceIndex, subreferenceText, staticImport) {

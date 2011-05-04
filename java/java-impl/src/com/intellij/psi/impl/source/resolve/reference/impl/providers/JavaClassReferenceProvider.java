@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
@@ -56,17 +57,12 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   public static final CustomizationKey<Boolean> JVM_FORMAT = new CustomizationKey<Boolean>("JVM_FORMAT");
   public static final CustomizationKey<Boolean> ALLOW_DOLLAR_NAMES = new CustomizationKey<Boolean>("ALLOW_DOLLAR_NAMES");
   public static final CustomizationKey<String> DEFAULT_PACKAGE = new CustomizationKey<String>("DEFAULT_PACKAGE");
-
   @Nullable private Map<CustomizationKey, Object> myOptions;
+
   private boolean myAllowEmpty;
-  @Nullable private final GlobalSearchScope myScope;
-  private final CachedValue<List<PsiElement>> myDefaltPackages;
 
-
-  public JavaClassReferenceProvider(GlobalSearchScope scope, final Project project) {
-    myScope = scope;
-    myDefaltPackages = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<List<PsiElement>>() {
-      public Result<List<PsiElement>> compute() {
+  private ParameterizedCachedValueProvider<List<PsiElement>, Project> myProvider = new ParameterizedCachedValueProvider<List<PsiElement>, Project>() {
+      public CachedValueProvider.Result<List<PsiElement>> compute(Project project) {
         final List<PsiElement> psiPackages = new ArrayList<PsiElement>();
         final String defPackageName = DEFAULT_PACKAGE.getValue(myOptions);
         if (StringUtil.isNotEmpty(defPackageName)) {
@@ -79,14 +75,11 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
         if (rootPackage != null) {
           psiPackages.addAll(getSubPackages(rootPackage));
         }
-        return Result.createSingleDependency(psiPackages, PsiModificationTracker.MODIFICATION_COUNT);
+        return CachedValueProvider.Result.createSingleDependency(psiPackages, PsiModificationTracker.MODIFICATION_COUNT);
       }
-    }, false);
-  }
+    };
 
-  public JavaClassReferenceProvider(final Project project) {
-    this(null, project);
-  }
+  private static final Key<ParameterizedCachedValue<List<PsiElement>, Project>> KEY = Key.create("default packages");
 
   public <T> void setOption(CustomizationKey<T> option, T value) {
     if (myOptions == null) {
@@ -102,7 +95,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
   @Nullable
   public GlobalSearchScope getScope() {
-    return myScope;
+    return null;
   }
 
   @NotNull
@@ -117,7 +110,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   }
 
   @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
+  public PsiReference[] getReferencesByString(String str, @NotNull PsiElement position, int offsetInPosition) {
     if (myAllowEmpty && StringUtil.isEmpty(str)) {
       return PsiReference.EMPTY_ARRAY;
     }
@@ -129,15 +122,15 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     final ElementClassHint hint = processor.getHint(ElementClassHint.KEY);
     if (position == null) return;
     if (hint == null || hint.shouldProcess(ElementClassHint.DeclarationKind.PACKAGE) || hint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) {
-      final List<PsiElement> cachedPackages = getDefaultPackages();
+      final List<PsiElement> cachedPackages = getDefaultPackages(position.getProject());
       for (final PsiElement psiPackage : cachedPackages) {
         if (!processor.execute(psiPackage, ResolveState.initial())) return;
       }
     }
   }
 
-  protected List<PsiElement> getDefaultPackages() {
-    return myDefaltPackages.getValue();
+  protected List<PsiElement> getDefaultPackages(Project project) {
+    return CachedValuesManager.getManager(project).getParameterizedCachedValue(project, KEY, myProvider, false, project);
   }
 
   private static Collection<PsiPackage> getSubPackages(final PsiPackage defaultPackage) {

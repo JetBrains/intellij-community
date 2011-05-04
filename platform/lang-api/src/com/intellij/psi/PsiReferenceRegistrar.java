@@ -15,7 +15,6 @@
  */
 package com.intellij.psi;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
@@ -60,10 +59,4 @@ public abstract class PsiReferenceRegistrar {
 
   public abstract <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern, @NotNull PomReferenceProvider<T> provider, double priority);
 
-  /**
-   * Return the project to register providers for.
-   * @return project or null, if POM references are registered
-   */
-  @Deprecated
-  public abstract Project getProject();
 }

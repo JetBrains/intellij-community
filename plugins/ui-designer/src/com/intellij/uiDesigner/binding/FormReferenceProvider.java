@@ -144,7 +144,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
         return;
       }
       final String className = valueElement.getValue().replace('$','.');
-      final PsiReference[] referencesByString = new JavaClassReferenceProvider(project).getReferencesByString(className, file, valueElement.getTextRange().getStartOffset() + 1);
+      final PsiReference[] referencesByString = new JavaClassReferenceProvider().getReferencesByString(className, file, valueElement.getTextRange().getStartOffset() + 1);
       if(referencesByString.length < 1){
         // There are no references there
         return;
@@ -205,7 +205,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     // component class
     {
       if (clsAttribute != null) {
-        final JavaClassReferenceProvider provider = new JavaClassReferenceProvider(tag.getProject());
+        final JavaClassReferenceProvider provider = new JavaClassReferenceProvider();
         final PsiReference[] referencesByString = provider.getReferencesByString(classNameStr, file, clsAttribute.getValueElement().getTextRange().getStartOffset() + 1);
         if(referencesByString.length < 1){
           // There are no references there

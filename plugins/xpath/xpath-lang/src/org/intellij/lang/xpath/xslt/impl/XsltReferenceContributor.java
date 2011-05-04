@@ -46,7 +46,7 @@ public class XsltReferenceContributor extends PsiReferenceContributor {
             PlatformPatterns.psiElement(XmlAttributeValue.class).withParent(xmlAttribute().withLocalName(string().oneOf(
               "name", "href", "mode", "elements", "exclude-result-prefixes", "extension-element-prefixes", "stylesheet-prefix"
             )).withParent(xmlTag().withNamespace(XsltSupport.XSLT_NS))),
-            new XsltReferenceProvider(registrar.getProject()));
+            new XsltReferenceProvider());
 
 // TODO: 1. SchemaReferencesProvider doesn't know about "as" attribute / 2. what to do with non-schema types (xs:yearMonthDuretion, xs:dayTimeDuration)?
 //    registrar.registerReferenceProvider(

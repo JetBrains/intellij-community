@@ -16,12 +16,10 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,13 +39,12 @@ import java.util.Set;
  */
 public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
 
-  public JavaClassListReferenceProvider(final Project project) {
-    super(GlobalSearchScope.allScope(project), project);
+  public JavaClassListReferenceProvider() {
     setOption(ADVANCED_RESOLVE, Boolean.TRUE);
   }
 
   @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition){
+  public PsiReference[] getReferencesByString(String str, @NotNull final PsiElement position, int offsetInPosition){
     if (position instanceof XmlTag && ((XmlTag)position).getValue().getTextElements().length == 0) {
       return PsiReference.EMPTY_ARRAY; 
     }
@@ -56,12 +53,10 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
       return PsiReference.EMPTY_ARRAY;
     }
 
-    if (position != null) {
-      int offset = position.getTextRange().getStartOffset() + offsetInPosition;
-      for(PsiElement child = position.getFirstChild(); child != null; child = child.getNextSibling()){
-        if (child instanceof OuterLanguageElement && child.getTextRange().contains(offset)) {
-          return PsiReference.EMPTY_ARRAY;
-        }
+    int offset = position.getTextRange().getStartOffset() + offsetInPosition;
+    for(PsiElement child = position.getFirstChild(); child != null; child = child.getNextSibling()){
+      if (child instanceof OuterLanguageElement && child.getTextRange().contains(offset)) {
+        return PsiReference.EMPTY_ARRAY;
       }
     }
 
@@ -70,7 +65,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
       @Override
       protected Set<String> compute() {
         final Set<String> knownTopLevelPackages = new HashSet<String>();
-        final List<PsiElement> defaultPackages = getDefaultPackages();
+        final List<PsiElement> defaultPackages = getDefaultPackages(position.getProject());
         for (final PsiElement pack : defaultPackages) {
           if (pack instanceof PsiPackage) {
             knownTopLevelPackages.add(((PsiPackage)pack).getName());

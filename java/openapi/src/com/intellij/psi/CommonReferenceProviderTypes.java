@@ -23,10 +23,17 @@ import com.intellij.openapi.project.Project;
  */
 public abstract class CommonReferenceProviderTypes {
 
+  /**
+   * @deprecated
+   * @see #getInstance()
+   */
   public static CommonReferenceProviderTypes getInstance(final Project project) {
-    return ServiceManager.getService(project, CommonReferenceProviderTypes.class);
+    return getInstance();
   }
 
+  public static CommonReferenceProviderTypes getInstance() {
+    return ServiceManager.getService(CommonReferenceProviderTypes.class);
+  }
 
   public static final ReferenceProviderType PROPERTIES_FILE_KEY_PROVIDER = new ReferenceProviderType("Properties File Key Provider");
   public static final ReferenceProviderType URI_PROVIDER = new ReferenceProviderType("Uri references provider");

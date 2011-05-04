@@ -72,8 +72,8 @@ public class WordCompletionTest extends CompletionTestCase {
         }};
       }
     };
-    ReferenceProvidersRegistry.getInstance(getProject()).registerReferenceProvider(PsiLiteralExpression.class, softProvider);
-    ReferenceProvidersRegistry.getInstance(getProject()).registerReferenceProvider(PsiLiteralExpression.class, hardProvider);
+    ReferenceProvidersRegistry.getInstance().registerReferenceProvider(PsiLiteralExpression.class, softProvider);
+    ReferenceProvidersRegistry.getInstance().registerReferenceProvider(PsiLiteralExpression.class, hardProvider);
 
     configureByFile(BASE_PATH + "3.java");
     checkResultByFile(BASE_PATH + "3_after.java");

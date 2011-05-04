@@ -15,15 +15,13 @@
  */
 package com.intellij.util.xml.converters;
 
-import com.intellij.util.xml.converters.values.ClassArrayConverter;
-import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.ConvertContext;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataCache;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.converters.values.ClassArrayConverter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -33,15 +31,12 @@ import java.util.List;
  * User: Sergey.Vasiliev
  */
 public class ClassArrayConverterImpl extends ClassArrayConverter {
-  private static final UserDataCache<JavaClassReferenceProvider, Project, Object> REFERENCE_PROVIDER = new UserDataCache<JavaClassReferenceProvider, Project, Object>("ClassArrayConverterImpl") {
-    @Override
-    protected JavaClassReferenceProvider compute(Project project, Object p) {
-      JavaClassReferenceProvider provider = new JavaClassReferenceProvider(project);
-      provider.setSoft(true);
-      provider.setAllowEmpty(true);
-      return provider;
-    }
-  };
+  private static final JavaClassReferenceProvider REFERENCE_PROVIDER = new JavaClassReferenceProvider();
+
+  static {
+    REFERENCE_PROVIDER.setSoft(true);
+    REFERENCE_PROVIDER.setAllowEmpty(true);
+  }
 
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
@@ -73,7 +68,7 @@ public class ClassArrayConverterImpl extends ClassArrayConverter {
   }
 
   private static void createReference(final PsiElement element, final String s, final int offset, List<PsiReference> list) {
-    final PsiReference[] references = REFERENCE_PROVIDER.get(element.getProject(), null).getReferencesByString(s, element, offset);
+    final PsiReference[] references = REFERENCE_PROVIDER.getReferencesByString(s, element, offset);
     //noinspection ManualArrayToCollectionCopy
     for (PsiReference ref: references) {
       list.add(ref);
