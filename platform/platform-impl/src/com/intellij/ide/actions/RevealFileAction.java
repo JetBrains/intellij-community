@@ -45,7 +45,7 @@ public class RevealFileAction extends AnAction {
 
   @NotNull
   public static String getActionName() {
-    return SystemInfo.isMac ? "Reveal in Finder" : "Show in " + ShowFilePathAction.getFileExplorerName();
+    return SystemInfo.isMac ? "Reveal in Finder" : "Show in " + SystemInfo.nativeFileManagerName;
   }
 
   @Override

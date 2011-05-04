@@ -91,7 +91,7 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   public int getLineStartOffset(int line) {
     //int oldso = oldso(line);
-    int newso = newso(line);
+    int newso = newStartOffset(line);
     //if (newso != oldso) {
     //  int i = 0;
     //}
@@ -99,39 +99,42 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return newso;
   }
 
-  private int newso(int line) {
+  // returns startOffset found, or -1 if need to continue searching
+  private static int countNewLinesIn(String text, int[] pos, int line) {
+    int offsetInside = 0;
+    for (int i = text.indexOf('\n'); i != -1; i = text.indexOf('\n', offsetInside)) {
+      int curLine = ++pos[0];
+      int lineLength = i + 1 - offsetInside;
+      int offset = pos[1] += lineLength;
+      offsetInside += lineLength;
+      if (curLine == line) return offset;
+    }
+    pos[1] += text.length() - offsetInside;
+    return -1;
+  }
+
+  private int newStartOffset(int line) {
     LOG.assertTrue(line >= 0, line);
+    if (line == 0) return 0;
     String hostText = myDelegate.getText();
 
-    int curLine = 0;
-    int startOffset = 0;
+    int[] pos = new int[2]; // pos[0] = curLine; pos[1] == offset;
     for (PsiLanguageInjectionHost.Shred shred : myShreds) {
       RangeMarker hostRange = shred.getHostRangeMarker();
       if (!hostRange.isValid()) continue;
 
-      startOffset += shred.prefix.length();
-      curLine += StringUtil.getLineBreakCount(shred.prefix);
-      if (curLine >= line) return startOffset;
+      int found = countNewLinesIn(shred.prefix, pos, line);
+      if (found != -1) return found;
+
       String text = hostText.substring(hostRange.getStartOffset(), hostRange.getEndOffset());
+      found = countNewLinesIn(text, pos, line);
+      if (found != -1) return found;
 
-      for (int i=text.indexOf('\n'), offsetInside = 0; i!=-1;i=text.substring(offsetInside).indexOf('\n')) {
-        curLine++;
-        offsetInside += i + 1;
-        if (curLine >= line) return startOffset + offsetInside;
-      }
-
-      startOffset += text.length();
-
-      text = shred.suffix;
-      for (int i=text.indexOf('\n'), offsetInside = 0; i!=-1;i=text.substring(offsetInside).indexOf('\n')) {
-        curLine++;
-        offsetInside += i + 1;
-        if (curLine >= line) return startOffset + offsetInside;
-      }
-      startOffset += text.length();
+      found = countNewLinesIn(shred.suffix, pos, line);
+      if (found != -1) return found;
     }
 
-    return startOffset;
+    return pos[1];
   }
 
   private int oldso(int line) {

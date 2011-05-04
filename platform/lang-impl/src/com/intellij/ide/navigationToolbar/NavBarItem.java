@@ -60,6 +60,9 @@ class NavBarItem extends SimpleColoredComponent {
       myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
     }
 
+    setOpaque(false);
+    setFont(UIUtil.isUnderAquaLookAndFeel() ? UIUtil.getLabelFont().deriveFont(11.0f) : getFont());
+    
     setIpad(new Insets(1, 2, 1, 2));
     update();
   }
@@ -85,12 +88,10 @@ class NavBarItem extends SimpleColoredComponent {
     clear();
 
     setIcon(myIcon);
-    final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    final boolean focused = isPopupElement || (focusOwner == myPanel && !myPanel.isNodePopupShowing());
+    final boolean focused = isFocused();
 
     final NavBarModel model = myPanel.getModel();
-    final boolean selected = isPopupElement ? myPanel.isSelectedInPopup(myObject)
-                                            : model.getSelectedIndex() == myIndex;
+    final boolean selected = isSelected();
 
     setPaintFocusBorder(!focused && selected && !isPopupElement);
     setFocusBorderAroundIcon(false);
@@ -106,10 +107,34 @@ class NavBarItem extends SimpleColoredComponent {
                        : myAttributes.getFgColor();
 
     final Color bg = selected && focused ? UIUtil.getListSelectionBackground() : myAttributes.getBgColor();
-
     append(myText, new SimpleTextAttributes(bg, fg, myAttributes.getWaveColor(), myAttributes.getStyle()));
 
     repaint();
+  }
+
+  private boolean isFocused() {
+    final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    return isPopupElement || (focusOwner == myPanel && !myPanel.isNodePopupShowing());
+  }
+
+  private boolean isSelected() {
+    final NavBarModel model = myPanel.getModel();
+    return isPopupElement ? myPanel.isSelectedInPopup(myObject) : model.getSelectedIndex() == myIndex;
+  }
+
+  @Override
+  protected boolean shouldDrawBackground() {
+    return isSelected() && isFocused();
+  }
+
+  @Override
+  protected boolean shouldDrawMacShadow() {
+    return UIUtil.isUnderAquaLookAndFeel() && !isSelected();
+  }
+
+  @Override
+  public boolean isIconOpaque() {
+    return false;
   }
 
   private Icon wrapIcon(final Icon openIcon, final Icon closedIcon, final int idx) {

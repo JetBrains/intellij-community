@@ -66,12 +66,12 @@ public abstract class TextFieldAction extends AnAction implements CustomComponen
         actionPerformed(null);
       }
     });
-    myField.addFocusListener(new FocusAdapter() {
+    /*myField.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
         actionPerformed(null);
       }
-    });
+    });*/
     myField.addKeyListener(new KeyAdapter() {
       @Override
       public void keyTyped(KeyEvent e) {

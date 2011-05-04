@@ -245,7 +245,7 @@ public abstract class IntroduceParameterSettingsUI {
     if(myIsLocalVariable && !myIsInvokedOnDeclaration) {
       myCbDeleteLocalVariable = new StateRestoringCheckBox();
       myCbDeleteLocalVariable.setText(RefactoringBundle.message("delete.variable.definition"));
-
+      myCbDeleteLocalVariable.setFocusable(false);
 
       gbConstraints.gridy++;
       panel.add(myCbDeleteLocalVariable, gbConstraints);
@@ -256,6 +256,7 @@ public abstract class IntroduceParameterSettingsUI {
         myCbUseInitializer = new StateRestoringCheckBox();
         myCbUseInitializer.setText(RefactoringBundle.message("use.variable.initializer.to.initialize.parameter"));
         myCbUseInitializer.setSelected(settings.INTRODUCE_PARAMETER_USE_INITIALIZER);
+        myCbUseInitializer.setFocusable(false);
 
         gbConstraints.gridy++;
         panel.add(myCbUseInitializer, gbConstraints);

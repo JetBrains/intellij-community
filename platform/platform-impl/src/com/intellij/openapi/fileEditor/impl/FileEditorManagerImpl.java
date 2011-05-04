@@ -60,6 +60,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageListenerList;
@@ -221,6 +222,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private class MyBorder implements Border {
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      if (UIUtil.isUnderAquaLookAndFeel()) {
+        g.setColor(JBTabsImpl.MAC_AQUA_BG_COLOR);
+        final Insets insets = getBorderInsets(c);
+        if (insets.top > 0) {
+          g.fillRect(x, y, width, height + insets.top);
+        }
+      }
     }
 
     @Override

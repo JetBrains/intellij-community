@@ -62,7 +62,7 @@ public class ViewStructureAction extends AnAction {
     if (dialog != null) {
       final VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
-        dialog.setTitle(virtualFile.getPresentableUrl());
+        dialog.setTitle(virtualFile.getName());
       }
       dialog.show();
     }

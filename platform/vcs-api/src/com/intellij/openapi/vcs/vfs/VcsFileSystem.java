@@ -15,27 +15,27 @@
  */
 package com.intellij.openapi.vcs.vfs;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 
-public class VcsFileSystem extends DeprecatedVirtualFileSystem implements ApplicationComponent {
+public class VcsFileSystem extends DeprecatedVirtualFileSystem {
 
   public static final String COULD_NOT_IMPLEMENT_MESSAGE = VcsBundle.message("exception.text.internal.errror.could.not.implement.method");
+  private static final String PROTOCOL = "vcs";
 
   public static VcsFileSystem getInstance() {
-    return ApplicationManager.getApplication().getComponent(VcsFileSystem.class);
+    return (VcsFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
   }
 
   @NotNull
   public String getProtocol() {
-    return "vcs";
+    return PROTOCOL;
   }
 
   public VirtualFile findFileByPath(@NotNull String path) {
@@ -59,17 +59,6 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem implements Applic
 
   protected void fireFileDeleted(Object requestor, VirtualFile file, String fileName, VirtualFile parent) {
     super.fireFileDeleted(requestor, file, fileName, parent);
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "VcsFileSystem";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   protected void fireBeforeContentsChange(Object requestor, VirtualFile file) {

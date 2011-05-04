@@ -120,9 +120,9 @@ public class HgUpdateTest extends HgCollaborativeTest {
     List<HgRevisionNumber> branchHeads = new HgHeadsCommand(myProject, projectRepoVirtualFile).execute();
     assertEquals(branchHeads.size(), 2);
 
-    HgRevisionNumber parentBeforeUpdate = new HgWorkingCopyRevisionsCommand(myProject).identify(projectRepoVirtualFile);
+    HgRevisionNumber parentBeforeUpdate = new HgWorkingCopyRevisionsCommand(myProject).identify(projectRepoVirtualFile).getFirst();
     assertUpdateThroughPluginFails();
-    HgRevisionNumber parentAfterUpdate = new HgWorkingCopyRevisionsCommand(myProject).identify(projectRepoVirtualFile);
+    HgRevisionNumber parentAfterUpdate = new HgWorkingCopyRevisionsCommand(myProject).identify(projectRepoVirtualFile).getFirst();
     List<HgRevisionNumber> branchHeadsAfterUpdate = new HgHeadsCommand(myProject, projectRepoVirtualFile).execute();
 
     assertEquals(branchHeadsAfterUpdate.size(), 3);

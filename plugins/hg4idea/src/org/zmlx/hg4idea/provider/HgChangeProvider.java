@@ -80,7 +80,7 @@ public class HgChangeProvider implements ChangeProvider {
     for (Map.Entry<VirtualFile, Collection<FilePath>> entry : HgUtil.groupFilePathsByHgRoots(myProject, files).entrySet()) {
       VirtualFile repo = entry.getKey();
 
-      final HgRevisionNumber workingRevision = new HgWorkingCopyRevisionsCommand(myProject).identify(repo);
+      final HgRevisionNumber workingRevision = new HgWorkingCopyRevisionsCommand(myProject).identify(repo).getFirst();
       final HgRevisionNumber parentRevision = new HgWorkingCopyRevisionsCommand(myProject).firstParent(repo);
       final Map<HgFile, HgResolveStatusEnum> list = new HgResolveCommand(myProject).getListSynchronously(repo);
 

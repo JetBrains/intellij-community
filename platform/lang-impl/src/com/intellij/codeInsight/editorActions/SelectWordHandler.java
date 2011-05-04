@@ -19,7 +19,6 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -29,14 +28,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class SelectWordHandler extends EditorActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.SelectWordHandler");
@@ -104,7 +103,7 @@ public class SelectWordHandler extends EditorActionHandler {
       }
     }
 
-    while (element instanceof PsiWhiteSpace || element != null && StringUtil.isEmpty(element.getText().trim())) {
+    while (element instanceof PsiWhiteSpace || element != null && StringUtil.isEmptyOrSpaces(element.getText())) {
       while (element.getNextSibling() == null) {
         if (element instanceof PsiFile) return;
         final PsiElement parent = element.getParent();
@@ -124,31 +123,25 @@ public class SelectWordHandler extends EditorActionHandler {
       caretOffset = element.getTextRange().getStartOffset();
     }
 
-    TextRange selectionRange = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
+    final TextRange selectionRange = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
 
-    TextRange newRange = null;
+    final Ref<TextRange> minimumRange = new Ref<TextRange>(new TextRange(0, editor.getDocument().getTextLength()));
 
-    int textLength = editor.getDocument().getTextLength();
-
-    while (element != null && !(element instanceof PsiFile)) {
-      newRange = advance(selectionRange, element, text, caretOffset, editor);
-
-      if (newRange != null && !newRange.isEmpty()) {
-        break;
+    SelectWordUtil.processRanges(element, text, caretOffset, editor, new Processor<TextRange>() {
+      @Override
+      public boolean process(TextRange range) {
+        if (range.contains(selectionRange) && !range.equals(selectionRange)) {
+          if (minimumRange.get().contains(range)) {
+            minimumRange.set(range);
+            return true;
+          }
+        }
+        return false;
       }
+    });
 
-      element = getUpperElement(element);
-    }
-
-    if (newRange == null) {
-      newRange = new TextRange(0, textLength);
-    }
-
-    if (!editor.getSelectionModel().hasSelection() || newRange.contains(selectionRange)) {
-      selectionRange = newRange;
-    }
-
-    editor.getSelectionModel().setSelection(selectionRange.getStartOffset(), selectionRange.getEndOffset());
+    TextRange range = minimumRange.get();
+    editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
   }
 
   @Nullable
@@ -174,62 +167,4 @@ public class SelectWordHandler extends EditorActionHandler {
     return false;
   }
 
-  @NotNull
-  private static PsiElement getUpperElement(final PsiElement e) {
-    final PsiElement parent = e.getParent();
-
-    if (!(e instanceof PsiErrorElement)) {
-      final PsiFile file = e.getContainingFile();
-      final FileViewProvider viewProvider = file.getViewProvider();
-      if (viewProvider.getBaseLanguage() != e.getLanguage()) {
-        final PsiFile baseRoot = viewProvider.getPsi(viewProvider.getBaseLanguage());
-        if (baseRoot != file && parent.getTextLength() == baseRoot.getTextLength()) {
-          final ASTNode node = baseRoot.getNode();
-          if (node == null) return parent;
-          final ASTNode leafElementAt = node.findLeafElementAt(e.getTextRange().getStartOffset());
-          return leafElementAt != null ? leafElementAt.getPsi() : parent;
-        }
-      }
-    }
-
-    return parent;
-  }
-
-  @Nullable
-  private static TextRange advance(TextRange selectionRange, PsiElement element, CharSequence text, int cursorOffset, Editor editor) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: advance(selectionRange='" + selectionRange + "', element='" + element + "')");
-    }
-    TextRange minimumRange = null;
-
-    for (ExtendWordSelectionHandler selectioner : SelectWordUtil.getExtendWordSelectionHandlers()) {
-      if (!selectioner.canSelect(element)) {
-        continue;
-      }
-      List<TextRange> ranges = selectioner.select(element, text, cursorOffset, editor);
-
-      if (ranges == null) {
-        continue;
-      }
-
-      for (TextRange range : ranges) {
-        if (range == null) {
-          continue;
-        }
-
-        if (range.contains(selectionRange) && !range.equals(selectionRange)) {
-          if (minimumRange == null || minimumRange.contains(range)) {
-            minimumRange = range;
-          }
-        }
-      }
-    }
-
-    //TODO remove assert
-    if (minimumRange != null) {
-      LOG.assertTrue(minimumRange.getEndOffset() <= text.length());
-    }
-
-    return minimumRange;
-  }
 }

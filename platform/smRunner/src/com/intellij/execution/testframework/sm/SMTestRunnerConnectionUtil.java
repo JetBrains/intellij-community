@@ -37,7 +37,9 @@ import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.testIntegration.TestLocationProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Roman Chernyatchik
@@ -80,11 +82,11 @@ public class SMTestRunnerConnectionUtil {
     return console;
   }
 
-  public static BaseTestsOutputConsoleView createConsole(@NotNull final String testFrameworkName,
-                                                         @NotNull final TestConsoleProperties consoleProperties,
-                                                         final RunnerSettings runnerSettings,
-                                                         final ConfigurationPerRunnerSettings configurationSettings) {
-
+  public static BaseTestsOutputConsoleView createConsoleWithCustomLocator(@NotNull final String testFrameworkName,
+                                                                          @NotNull final TestConsoleProperties consoleProperties,
+                                                                          final RunnerSettings runnerSettings,
+                                                                          final ConfigurationPerRunnerSettings configurationSettings,
+                                                                          @Nullable final TestLocationProvider locator) {
     // Console
     final String splitterPropertyName = testFrameworkName + ".Splitter.Proportion";
     final SMTRunnerConsoleView console =
@@ -95,12 +97,19 @@ public class SMTestRunnerConnectionUtil {
           super.attachToProcess(processHandler);
           attachEventsProcessors(consoleProperties, getResultsViewer(),
                                  getResultsViewer().getStatisticsPane(),
-                                 processHandler, testFrameworkName);
+                                 processHandler, testFrameworkName, locator);
         }
       };
     console.setHelpId("reference.runToolWindow.testResultsTab");
     console.initUI();
     return console;
+  }
+  public static BaseTestsOutputConsoleView createConsole(@NotNull final String testFrameworkName,
+                                                         @NotNull final TestConsoleProperties consoleProperties,
+                                                         final RunnerSettings runnerSettings,
+                                                         final ConfigurationPerRunnerSettings configurationSettings) {
+
+    return createConsoleWithCustomLocator(testFrameworkName, consoleProperties, runnerSettings, configurationSettings, null);
   }
 
   /**
@@ -176,7 +185,8 @@ public class SMTestRunnerConnectionUtil {
                                                        final SMTestRunnerResultsForm resultsViewer,
                                                        final StatisticsPanel statisticsPane,
                                                        final ProcessHandler processHandler,
-                                                       @NotNull final String testFrameworkName) {
+                                                       @NotNull final String testFrameworkName,
+                                                       @Nullable final TestLocationProvider locator) {
     //build messages consumer
     final OutputToGeneralTestEventsConverter outputConsumer = consoleProperties instanceof SMCustomMessagesParsing
                                                               ? ((SMCustomMessagesParsing)consoleProperties).createTestEventsConverter(testFrameworkName, consoleProperties)
@@ -185,6 +195,9 @@ public class SMTestRunnerConnectionUtil {
     //events processor
     final GeneralToSMTRunnerEventsConvertor eventsProcessor = new GeneralToSMTRunnerEventsConvertor(resultsViewer.getTestsRootNode(),
                                                                                                     testFrameworkName);
+    if (locator != null) {
+      eventsProcessor.setLocator(locator);
+    }
 
     // ui actions
     final SMTRunnerUIActionsHandler uiActionsHandler = new SMTRunnerUIActionsHandler(consoleProperties);

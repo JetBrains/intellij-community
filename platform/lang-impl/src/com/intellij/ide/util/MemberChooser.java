@@ -32,7 +32,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Icons;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashMap;
@@ -59,7 +58,7 @@ import java.util.List;
 public class MemberChooser<T extends ClassMember> extends DialogWrapper implements TypeSafeDataProvider {
   protected Tree myTree;
   private DefaultTreeModel myTreeModel;
-  protected JCheckBox[] myCheckboxes;
+  protected JComponent[] myOptionControls;
   private JCheckBox myCopyJavadocCheckbox;
   private JCheckBox myInsertOverrideAnnotationCheckbox;
 
@@ -94,8 +93,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
                        boolean allowEmptySelection,
                        boolean allowMultiSelection,
                        @NotNull Project project,
-                       JCheckBox[] checkboxes) {
-    this(elements, allowEmptySelection, allowMultiSelection, project, false, null, checkboxes);
+                       JComponent[] optionControls) {
+    this(elements, allowEmptySelection, allowMultiSelection, project, false, null, optionControls);
   }
 
   public MemberChooser(T[] elements,
@@ -122,7 +121,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
                        @NotNull Project project,
                        boolean isInsertOverrideVisible,
                        JComponent headerPanel,
-                       @Nullable JCheckBox[] checkboxes
+                       @Nullable JComponent[] optionControls
                        ) {
     super(project, true);
     myAllowEmptySelection = allowEmptySelection;
@@ -131,7 +130,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     myIsInsertOverrideVisible = isInsertOverrideVisible;
     myHeaderPanel = headerPanel;
     myTree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode()));
-    myCheckboxes = checkboxes;
+    myOptionControls = optionControls;
     resetElements(elements);
     init();
   }
@@ -156,14 +155,14 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
     TreeUtil.expandAll(myTree);
 
-    if (myCheckboxes == null) {
+    if (myOptionControls == null) {
       myCopyJavadocCheckbox = new NonFocusableCheckBox(IdeBundle.message("checkbox.copy.javadoc"));
       if (myIsInsertOverrideVisible) {
         myInsertOverrideAnnotationCheckbox = new NonFocusableCheckBox(IdeBundle.message("checkbox.insert.at.override"));
-        myCheckboxes = new JCheckBox[] {myCopyJavadocCheckbox, myInsertOverrideAnnotationCheckbox};
+        myOptionControls = new JCheckBox[] {myCopyJavadocCheckbox, myInsertOverrideAnnotationCheckbox};
       }
       else {
-        myCheckboxes = new JCheckBox[] {myCopyJavadocCheckbox};
+        myOptionControls = new JCheckBox[] {myCopyJavadocCheckbox};
       }
     }
 
@@ -240,7 +239,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
     customizeOptionsPanel();
     JPanel optionsPanel = new JPanel(new VerticalFlowLayout());
-    for (final JComponent component : myCheckboxes) {
+    for (final JComponent component : myOptionControls) {
       optionsPanel.add(component);
     }
 
@@ -377,8 +376,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     return myTree;
   }
 
-  public JCheckBox[] getCheckboxes() {
-    return myCheckboxes;
+  public JComponent[] getOptionControls() {
+    return myOptionControls;
   }
 
   @Nullable

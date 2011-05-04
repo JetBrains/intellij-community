@@ -23,11 +23,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.util.Processor;
 
 import java.util.List;
 
@@ -65,18 +67,18 @@ public class UnSelectWordHandler extends EditorActionHandler {
 
     CharSequence text = editor.getDocument().getCharsSequence();
 
-    int caretOffset = editor.getCaretModel().getOffset();
+    int cursorOffset = editor.getCaretModel().getOffset();
 
-    if (caretOffset > 0 && caretOffset < text.length() &&
-       !Character.isJavaIdentifierPart(text.charAt(caretOffset)) &&
-       Character.isJavaIdentifierPart(text.charAt(caretOffset - 1))) {
-      caretOffset--;
+    if (cursorOffset > 0 && cursorOffset < text.length() &&
+       !Character.isJavaIdentifierPart(text.charAt(cursorOffset)) &&
+       Character.isJavaIdentifierPart(text.charAt(cursorOffset - 1))) {
+      cursorOffset--;
     }
 
-    PsiElement element = file.findElementAt(caretOffset);
+    PsiElement element = file.findElementAt(cursorOffset);
 
-    if (element instanceof PsiWhiteSpace && caretOffset > 0) {
-      PsiElement anotherElement = file.findElementAt(caretOffset - 1);
+    if (element instanceof PsiWhiteSpace && cursorOffset > 0) {
+      PsiElement anotherElement = file.findElementAt(cursorOffset - 1);
 
       if (!(anotherElement instanceof PsiWhiteSpace)) {
         element = anotherElement;
@@ -89,64 +91,34 @@ public class UnSelectWordHandler extends EditorActionHandler {
       }
 
       element = element.getNextSibling();
-      caretOffset = element.getTextRange().getStartOffset();
+      cursorOffset = element.getTextRange().getStartOffset();
     }
 
-    if (element != null) {
-      file = element.getContainingFile();
-    }
+    final TextRange selectionRange = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
 
-    TextRange selectionRange = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
+    final Ref<TextRange> maximumRange = new Ref<TextRange>();
 
-    TextRange newRange = null;
-
-    while (element != null && element.getContainingFile() == file) {
-      TextRange range = advance(selectionRange, element, text, caretOffset, editor);
-
-      if (range != null &&
-         (newRange == null || range.contains(newRange))) {
-        newRange = range;
-      }
-
-      element = element.getParent();
-    }
-
-    if (newRange == null) {
-      editor.getSelectionModel().setSelection(caretOffset, caretOffset);
-    } else {
-      editor.getSelectionModel().setSelection(newRange.getStartOffset(), newRange.getEndOffset());
-    }
-  }
-
-  private static TextRange advance(TextRange selectionRange,
-                                   PsiElement element,
-                                   CharSequence text,
-                                   int cursorOffset,
-                                   Editor editor) {
-    TextRange maximum = null;
-
-    for (ExtendWordSelectionHandler selectioner : SelectWordUtil.getExtendWordSelectionHandlers()) {
-      if (selectioner.canSelect(element)) {
-        List<TextRange> ranges = selectioner.select(element, text, cursorOffset, editor);
-
-        if (ranges == null) {
-          continue;
-        }
-
-        for (TextRange range : ranges) {
-          if (range == null || range.isEmpty()) {
-            continue;
-          }
-
-          if (selectionRange.contains(range) && !range.equals(selectionRange) && (range.contains(cursorOffset) || cursorOffset == range.getEndOffset())) {
-            if (maximum == null || range.contains(maximum)) {
-              maximum = range;
-            }
+    final int finalCursorOffset = cursorOffset;
+    SelectWordUtil.processRanges(element, text, cursorOffset, editor, new Processor<TextRange>() {
+      @Override
+      public boolean process(TextRange range) {
+        if (selectionRange.contains(range) && !range.equals(selectionRange) && (range.contains(finalCursorOffset) || finalCursorOffset == range.getEndOffset())) {
+          if (maximumRange.get() == null || range.contains(maximumRange.get())) {
+            maximumRange.set(range);
           }
         }
-      }
-    }
 
-    return maximum;
+        return false;
+      }
+    });
+
+    TextRange range = maximumRange.get();
+
+    if (range == null) {
+      editor.getSelectionModel().setSelection(cursorOffset, cursorOffset);
+    }
+    else {
+      editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+    }
   }
 }

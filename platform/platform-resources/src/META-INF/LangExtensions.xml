@@ -362,7 +362,7 @@
   <programRunner implementation="com.intellij.tools.ToolProgramRunner"/>
 
   <ideRootPaneNorth implementation="com.intellij.ide.navigationToolbar.NavBarRootPaneExtension"/>
-  <navbar implementation="com.intellij.ide.navigationToolbar.DefaultNavBarExtension"/>
+  <navbar implementation="com.intellij.ide.navigationToolbar.DefaultNavBarExtension" id="defaultNavbar"/>
 
   <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.DecoratorCompletionStatistician" order="first" id="decorator"/>
   <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.DefaultCompletionStatistician" order="last"/>

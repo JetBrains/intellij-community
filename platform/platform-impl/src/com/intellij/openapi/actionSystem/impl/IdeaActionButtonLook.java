@@ -29,22 +29,59 @@ public class IdeaActionButtonLook extends ActionButtonLook {
   public void paintBackground(Graphics g, JComponent component, int state) {
     Dimension dimension = component.getSize();
     if (state != ActionButtonComponent.NORMAL) {
-      if (state == ActionButtonComponent.POPPED) {
-        g.setColor(new Color(181, 190, 214));
-        g.fillRect(0, 0, dimension.width, dimension.height);
+      if (!UIUtil.isUnderAquaLookAndFeel()) {
+        if (state == ActionButtonComponent.POPPED) {
+          g.setColor(new Color(181, 190, 214));
+          g.fillRect(0, 0, dimension.width, dimension.height);
+        }
+        else {
+          g.setColor(new Color(130, 146, 185));
+          g.fillRect(0, 0, dimension.width, dimension.height);
+        }
+      }
+    }
+    if (state == ActionButtonComponent.PUSHED) {
+      if (UIUtil.isUnderAquaLookAndFeel()) {
+        ((Graphics2D)g).setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 40), dimension.width, dimension.height, new Color(0, 0, 0, 20)));
+        g.fillRect(0, 0, dimension.width - 1, dimension.height - 1);
+        
+        g.setColor(new Color(0, 0, 0, 120));
+        g.drawLine(0, 0, 0, dimension.height - 2);
+        g.drawLine(1, 0, dimension.width - 2, 0);
+        
+        g.setColor(new Color(0, 0, 0, 30));
+        g.drawRect(1, 1, dimension.width - 3, dimension.height - 3);
+
+        /*
+        final Graphics2D g2d = (Graphics2D)g;
+        
+        final int x = 1;
+        
+        g2d.setPaint(new LinearGradientPaint(0, 0, 0, dimension.height, new float[] {0f, 0.5f, 1.0f}, 
+                                             new Color[] {new Color(0, 0, 0, 0), new Color(0, 0, 0, 40), new Color(0, 0, 0, 0)}));
+        g2d.fillRect(x, 0, dimension.width - 2, dimension.height);
+        
+        g2d.setPaint(new LinearGradientPaint(0, 0, 0, dimension.height, new float[] {0f, 0.5f, 1.0f}, 
+                                             new Color[] {new Color(0, 0, 0, 40), new Color(0, 0, 0, 150), new Color(0, 0, 0, 40)}));
+        g2d.drawLine(x, 0, x, dimension.height);
+        g2d.drawLine(dimension.width - 2, 0, dimension.width - 2, dimension.height);
+
+        g2d.setPaint(new LinearGradientPaint(0, 0, 0, dimension.height, new float[] {0f, 0.5f, 1.0f}, 
+                                             new Color[] {new Color(0, 0, 0, 0), new Color(0, 0, 0, 60), new Color(0, 0, 0, 0)}));
+        g2d.drawLine(x + 1, 0, x + 1, dimension.height);
+        g2d.drawLine(dimension.width - 3, 0, dimension.width - 3, dimension.height);
+        */
       }
       else {
         g.setColor(new Color(130, 146, 185));
         g.fillRect(0, 0, dimension.width, dimension.height);
       }
     }
-    if (state == ActionButtonComponent.PUSHED) {
-      g.setColor(new Color(130, 146, 185));
-      g.fillRect(0, 0, dimension.width, dimension.height);
-    }
   }
 
   public void paintBorder(Graphics g, JComponent component, int state) {
+    if (UIUtil.isUnderAquaLookAndFeel()) return;
+
     if (state == ActionButtonComponent.NORMAL) return;
     Rectangle rectangle = new Rectangle(component.getWidth(), component.getHeight());
     Color color = new Color(8, 36, 107);
@@ -66,7 +103,7 @@ public class IdeaActionButtonLook extends ActionButtonLook {
   }
 
   public void paintIconAt(Graphics g, ActionButtonComponent button, Icon icon, int x, int y) {
-    if (button.getPopState() == ActionButtonComponent.PUSHED) {
+    if (button.getPopState() == ActionButtonComponent.PUSHED && !UIUtil.isUnderAquaLookAndFeel()) {
       x++;
       y++;
     }

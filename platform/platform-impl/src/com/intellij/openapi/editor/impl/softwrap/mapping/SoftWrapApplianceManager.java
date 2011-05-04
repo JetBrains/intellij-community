@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorTextRepresentationHelper;
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -51,7 +50,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since Jul 5, 2010 10:01:27 AM
  */
-public class SoftWrapApplianceManager implements FoldingListener, DocumentListener {
+public class SoftWrapApplianceManager implements SoftWrapFoldingListener, DocumentListener {
 
   /** Enumerates possible type of soft wrap indents to use. */
   enum IndentType {
@@ -750,19 +749,19 @@ public class SoftWrapApplianceManager implements FoldingListener, DocumentListen
   }
 
   @Override
-  public void onFoldRegionStateChange(@NotNull FoldRegion region) {
+  public void onFoldRegionStateChange(int startOffset, int endOffset) {
     assert ApplicationManagerEx.getApplicationEx().isDispatchThread();
 
     Document document = myEditor.getDocument();
-    int startLine = document.getLineNumber(region.getStartOffset());
-    int endLine = document.getLineNumber(region.getEndOffset());
+    int startLine = document.getLineNumber(startOffset);
+    int endLine = document.getLineNumber(endOffset);
 
-    int startOffset = document.getLineStartOffset(startLine);
-    int endOffset = document.getLineEndOffset(endLine);
+    int recalculationStartOffset = document.getLineStartOffset(startLine);
+    int recalculationEndOffset = document.getLineEndOffset(endLine);
 
     //CachingSoftWrapDataMapper.log(String.format("xxxxxxxxxxx On fold region state change. Exact offsets: %d-%d, recalculation offsets: %d-%d",
     //                                            region.getStartOffset(), region.getEndOffset(), startOffset, endOffset));
-    myEventsStorage.add(document, new IncrementalCacheUpdateEvent(document, startOffset, endOffset));
+    myEventsStorage.add(document, new IncrementalCacheUpdateEvent(document, recalculationStartOffset, recalculationEndOffset));
   }
 
   @Override

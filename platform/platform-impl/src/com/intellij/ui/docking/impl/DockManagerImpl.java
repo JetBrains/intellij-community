@@ -42,6 +42,7 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.docking.*;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jdom.Element;
@@ -416,6 +417,11 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       myUiContainer = new NonOpaquePanel(new BorderLayout());
 
       NonOpaquePanel center = new NonOpaquePanel(new BorderLayout(0, 2));
+      if (UIUtil.isUnderAquaLookAndFeel()) {
+        center.setOpaque(true);
+        center.setBackground(JBTabsImpl.MAC_AQUA_BG_COLOR);
+      }
+      
       center.add(myNorthPanel, BorderLayout.NORTH);
 
       myDockContentUiContainer = new NonOpaquePanel(new BorderLayout());

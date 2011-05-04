@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -22,15 +24,14 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -38,10 +39,13 @@ import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +76,7 @@ public class EditorsSplitters extends JPanel {
   public EditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
     super(new BorderLayout());
     setOpaque(true);
-    setBackground(Color.GRAY);
+    setBackground(UIUtil.isUnderAquaLookAndFeel() ? JBTabsImpl.MAC_AQUA_BG_COLOR : Color.GRAY);
     myManager = manager;
     myFocusWatcher = new MyFocusWatcher();
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
@@ -119,6 +123,48 @@ public class EditorsSplitters extends JPanel {
     return null;
   }
 
+  @Override
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+    
+    if (myCurrentWindow == null || myCurrentWindow.getFiles().length == 0) {
+      final boolean aquaLookAndFeel = UIUtil.isUnderAquaLookAndFeel();
+      UIUtil.applyRenderingHints(g);
+      g.setColor(aquaLookAndFeel ? new Color(100, 100, 100) : Color.LIGHT_GRAY);
+      g.setFont(UIUtil.getLabelFont().deriveFont(aquaLookAndFeel ? 17f : 19f));
+
+      final UIUtil.TextPainter painter = new UIUtil.TextPainter(1.3f);
+      painter.appendLine("No files are open").underlined(aquaLookAndFeel ? new Color(150, 150, 150) : Color.LIGHT_GRAY)
+        .appendLine("\u2022 Open Project Navigator with " +
+                    KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke("meta 1"), null))).smaller()
+        .appendLine("\u2022 Open Recent files with " + getActionShortcutText("RecentFiles")).smaller()
+        .appendLine("\u2022 Open NavBar with " + getActionShortcutText("ShowNavBar")).smaller()
+        .appendLine("\u2022 Drag'n'Drop file(s) here from " + SystemInfo.nativeFileManagerName).smaller().draw(g,
+                                              new PairFunction<Integer, Integer, Pair<Integer, Integer>>() {
+                                                @Override
+                                                public Pair<Integer, Integer> fun(
+                                                  Integer width,
+                                                  Integer height) {
+                                                  final Dimension s = getSize();
+                                                  return Pair.create((s.width - width) / 2,
+                                                                     (s.height - height) / 5);
+                                                }
+                                              });
+    }
+  }
+
+  private static String getActionShortcutText(final String actionId) {
+    final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
+    String shortcutText = "";
+    for (final Shortcut shortcut : shortcuts) {
+      if (shortcut instanceof KeyboardShortcut) {
+        shortcutText = KeymapUtil.getShortcutText(shortcut);
+        break;
+      }
+    }
+
+    return shortcutText;
+  }
 
   public void writeExternal(final Element element) {
     if (getComponentCount() != 0) {

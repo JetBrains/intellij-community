@@ -16,7 +16,10 @@
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.testframework.*;
+import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.Printable;
+import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.sm.TestsLocationProviderUtil;
 import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
@@ -55,12 +58,17 @@ public class SMTestProxy extends AbstractTestProxy {
   private final boolean myIsSuite;
   private boolean myIsEmptyIsCached = false; // is used for separating unknown and unset values
   private boolean myIsEmpty = true;
+  TestLocationProvider myLocator = null;
 
   public SMTestProxy(final String testName, final boolean isSuite,
                      @Nullable final String locationUrl) {
     myName = testName;
     myIsSuite = isSuite;
     myLocationUrl = locationUrl;
+  }
+
+  public void setLocator(@NotNull TestLocationProvider locator) {
+    myLocator = locator;
   }
 
   public boolean isInProgress() {
@@ -172,6 +180,12 @@ public class SMTestProxy extends AbstractTestProxy {
     final String path = TestsLocationProviderUtil.extractPath(myLocationUrl);
 
     if (protocolId != null && path != null) {
+      if (myLocator != null) {
+        List<Location> locations = myLocator.getLocation(protocolId, path, project);
+        if (!locations.isEmpty()) {
+          return locations.iterator().next();
+        }
+      }
       for (TestLocationProvider provider : Extensions.getExtensions(TestLocationProvider.EP_NAME)) {
         final List<Location> locations = provider.getLocation(protocolId, path, project);
         if (!locations.isEmpty()) {

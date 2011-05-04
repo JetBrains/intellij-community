@@ -64,8 +64,8 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   private final LogicalToVisualTask   myLogicalToVisualTask   = new LogicalToVisualTask();
   private final FoldProcessingEndTask myFoldProcessingEndTask = new FoldProcessingEndTask();
 
-  private final List<DocumentListener> myDocumentListeners   = new ArrayList<DocumentListener>();
-  private final List<FoldingListener>  myFoldListeners       = new ArrayList<FoldingListener>();
+  private final List<DocumentListener>        myDocumentListeners = new ArrayList<DocumentListener>();
+  private final List<SoftWrapFoldingListener> myFoldListeners     = new ArrayList<SoftWrapFoldingListener>();
   
   /**
    * There is a possible case that particular activity performs batch fold regions operations (addition, removal etc).
@@ -75,7 +75,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
    * <p/>
    * So, our strategy is to collect information about changed fold regions and process it only when batch folding processing ends.
    */
-  private final List<FoldRegion>       myDeferredFoldRegions = new ArrayList<FoldRegion>();
+  private final List<FoldRegionInfo> myDeferredFoldRegions = new ArrayList<FoldRegionInfo>();
 
   private final SoftWrapFoldBasedApplianceStrategy myFoldBasedApplianceStrategy;
   private final CachingSoftWrapDataMapper          myDataMapper;
@@ -568,7 +568,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       return;
     }
     
-    myDeferredFoldRegions.add(region);
+    myDeferredFoldRegions.add(new FoldRegionInfo(region));
   }
 
   @Override
@@ -729,18 +729,18 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
       }
 
       try {
-        for (FoldRegion region : myDeferredFoldRegions) {
+        for (FoldRegionInfo info : myDeferredFoldRegions) {
           // There is a possible case that given fold region is contained inside another collapsed fold region. We don't want to process
           // such nested region then.
-          FoldRegion outerRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(region.getStartOffset());
-          if (outerRegion != null && outerRegion != region && outerRegion.getStartOffset() <= region.getStartOffset()
-              && outerRegion.getEndOffset() >= region.getEndOffset())
+          FoldRegion outerRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(info.start);
+          if (outerRegion != null && outerRegion != info.region && outerRegion.getStartOffset() <= info.start
+              && outerRegion.getEndOffset() >= info.end)
           {
             continue;
           }
         
-          for (FoldingListener listener : myFoldListeners) {
-            listener.onFoldRegionStateChange(region);
+          for (SoftWrapFoldingListener listener : myFoldListeners) {
+            listener.onFoldRegionStateChange(info.start, info.end);
           }
         }
       }
@@ -748,7 +748,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
         myDeferredFoldRegions.clear();
       }
       
-      for (FoldingListener listener : myFoldListeners) {
+      for (SoftWrapFoldingListener listener : myFoldListeners) {
         listener.onFoldProcessingEnd();
       }
     }
@@ -756,6 +756,19 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     @Override
     public String toString() {
       return "fold regions state change processing";
+    }
+  }
+  
+  private static class FoldRegionInfo {
+    
+    public final FoldRegion region;
+    public final int start;
+    public final int end;
+
+    FoldRegionInfo(@NotNull FoldRegion region) {
+      this.region = region;
+      start = region.getStartOffset();
+      end = region.getEndOffset();
     }
   }
 }

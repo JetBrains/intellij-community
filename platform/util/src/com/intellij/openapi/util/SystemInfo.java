@@ -55,6 +55,8 @@ public class SystemInfo {
 
   public static final boolean isMacIntel64 = isMac && "x86_64".equals(OS_ARCH);
 
+  public static final String nativeFileManagerName = isMac ? "Finder" : isGnome ? "Nautilus" : isKDE ? "Konqueror" : "Explorer";
+  
   /**
    * Whether IDEA is running under MacOS X version 10.4 or later.
    *

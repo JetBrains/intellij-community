@@ -23,6 +23,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.testIntegration.TestLocationProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -46,11 +47,16 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
   private final SMTestProxy.SMRootTestProxy myTestsRootNode;
   private final String myTestFrameworkName;
   private boolean myIsTestingFinished;
+  private TestLocationProvider myLocator = null;
 
   public GeneralToSMTRunnerEventsConvertor(@NotNull final SMTestProxy.SMRootTestProxy testsRootNode,
                                            @NotNull final String testFrameworkName) {
     myTestsRootNode = testsRootNode;
     myTestFrameworkName = testFrameworkName;
+  }
+
+  public void setLocator(TestLocationProvider customLocator) {
+    myLocator = customLocator;
   }
 
   public void addEventsListener(final SMTRunnerEventsListener listener) {
@@ -124,6 +130,9 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
 
         // creates test
         final SMTestProxy testProxy = new SMTestProxy(testName, false, locationUrl);
+        if (myLocator != null) {
+          testProxy.setLocator(myLocator);
+        }
         parentSuite.addChild(testProxy);
         // adds to running tests map
         myRunningTestsFullNameToProxy.put(fullName, testProxy);
@@ -143,6 +152,9 @@ public class GeneralToSMTRunnerEventsConvertor implements GeneralTestEventsProce
         final SMTestProxy parentSuite = getCurrentSuite();
         //new suite
         final SMTestProxy newSuite = new SMTestProxy(suiteName, true, locationUrl);
+        if (myLocator != null) {
+          newSuite.setLocator(myLocator);
+        }
         parentSuite.addChild(newSuite);
 
         mySuitesStack.pushSuite(newSuite);

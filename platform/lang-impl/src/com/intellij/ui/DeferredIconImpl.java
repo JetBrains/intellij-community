@@ -33,7 +33,6 @@ import javax.swing.*;
 import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import java.awt.*;
-import java.lang.ref.WeakReference;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -43,7 +42,6 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   private Function<T, Icon> myEvaluator;
   private volatile boolean myIsScheduled = false;
   private T myParam;
-  private WeakReference<Component> myLastTarget = null;
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
   private boolean myNeedReadAction;
   private boolean myDone;
@@ -107,8 +105,6 @@ public class DeferredIconImpl<T> implements DeferredIcon {
         paintingParentRec.set(((PaintingParent)pp).getChildRec(c));
       }
 
-      myLastTarget = new WeakReference<Component>(target.get());
-
       JobUtil.submitToJobThread(new Runnable() {
         public void run() {
           int oldWidth = myDelegateIcon.getIconWidth();
@@ -126,13 +122,10 @@ public class DeferredIconImpl<T> implements DeferredIcon {
                 actualTarget = paintingParent.get();
                 if (actualTarget == null || SwingUtilities.getWindowAncestor(actualTarget) == null) {
                   actualTarget = null;
-                  myLastTarget = null;
                 }
               }
 
               if (actualTarget == null) return;
-
-              myLastTarget = new WeakReference<Component>(actualTarget);
 
               if (shouldRevalidate) {
                 // revalidate will not work: jtree caches size of nodes
@@ -259,8 +252,8 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   }
 
   private static class RepaintRequest {
-    private Component myComponent;
-    private Rectangle myRectangle;
+    private final Component myComponent;
+    private final Rectangle myRectangle;
 
     private RepaintRequest(Component component, Rectangle rectangle) {
       myComponent = component;

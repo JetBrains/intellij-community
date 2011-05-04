@@ -74,7 +74,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
   private boolean myStoppedAlready = false;
   protected final FocusTrackback myFocusTrackback;
   private boolean myStarted      = false;
-  private boolean myBackgrounded = false;
+  protected boolean myBackgrounded = false;
   private boolean myWasShown;
   private String myProcessId = "<unknown>";
   @Nullable private volatile Runnable myBackgroundHandler;
