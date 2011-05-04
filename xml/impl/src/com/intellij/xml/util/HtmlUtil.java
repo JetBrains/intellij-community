@@ -87,6 +87,9 @@ public class HtmlUtil {
             , "video/quicktime", "video/x-msvideo", "video/x-sgi-movie", "x-conference/x-cooltalk", "x-world/x-vrml"};
   @NonNls public static final String LINK = "link";
 
+  @NonNls public static final String MATH_ML_NAMESPACE = "http://www.w3.org/1998/Math/MathML";
+  @NonNls public static final String SVG_NAMESPACE = "http://www.w3.org/2000/svg";
+
   private HtmlUtil() {}
   @NonNls private static final String[] EMPTY_TAGS = {
     "base","hr","meta","link","frame","br","basefont","param","img","area","input","isindex","col", /*html 5*/ "source","wbr"
