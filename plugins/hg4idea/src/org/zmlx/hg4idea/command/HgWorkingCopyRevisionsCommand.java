@@ -127,22 +127,37 @@ public class HgWorkingCopyRevisionsCommand {
     else return HgRevisionNumber.NULL_REVISION_NUMBER;
   }
 
-  @Nullable
-  public HgRevisionNumber identify(@NotNull VirtualFile repo) {
+  /**
+   * Returns the result of 'hg id' execution, i.e. current state of the repository.
+   * @return one or two revision numbers. Two revisions is the case of unresolved merge. In other cases there are only one revision.
+   */
+  @NotNull
+  public Pair<HgRevisionNumber, HgRevisionNumber> identify(@NotNull VirtualFile repo) {
     HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
     commandExecutor.setSilent(true);
     HgCommandResult result = commandExecutor.executeInCurrentThread(repo, "identify", Arrays.asList("--num", "--id"));
     if (result == null) {
-      return HgRevisionNumber.NULL_REVISION_NUMBER;
+      return Pair.create(HgRevisionNumber.NULL_REVISION_NUMBER, null);
     }
+
     final List<String> lines = result.getOutputLines();
     if (lines != null && !lines.isEmpty()) {
       String[] parts = StringUtils.split(lines.get(0), ' ');
+      String changesets = parts[0];
+      String revisions = parts[1];
       if (parts.length >= 2) {
-        return HgRevisionNumber.getInstance(parts[1], parts[0]);
+        if (changesets.indexOf('+') != changesets.lastIndexOf('+')) {
+          // in the case of unresolved merge we have 2 revisions at once, both current, so with "+"
+          // 9f2e6c02913c+b311eb4eb004+ 186+183+
+          String[] chsets = StringUtils.split(changesets, "+");
+          String[] revs = StringUtils.split(revisions, "+");
+          return Pair.create(HgRevisionNumber.getInstance(revs[0] + "+", chsets[0] + "+"), HgRevisionNumber.getInstance(revs[1] + "+", chsets[1] + "+"));
+        } else {
+          return Pair.create(HgRevisionNumber.getInstance(revisions, changesets), null);
+        }
       }
     }
-    return HgRevisionNumber.NULL_REVISION_NUMBER;
+    return Pair.create(HgRevisionNumber.NULL_REVISION_NUMBER, null);
   }
 
   /**

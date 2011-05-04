@@ -127,7 +127,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   /**
    * Returns the numeric part of the revision, i. e. the revision without trailing '+' if one exists. 
    */
-  private String getRevisionNumber() {
+  public String getRevisionNumber() {
     if (isWorkingVersion) {
       return revision.substring(0, revision.length()-1);
     }
