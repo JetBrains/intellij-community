@@ -49,16 +49,15 @@ import javax.swing.*;
 import java.util.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
+ * @author ik
  * Date: 24.10.2003
- * Time: 16:50:37
- * To change this template use Options | File Templates.
  */
 public class PsiClassImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiClassImplUtil");
 
   private static final Key<CachedValue<Map>> MAP_IN_CLASS_KEY = Key.create("MAP_KEY");
+
+  private PsiClassImplUtil() { }
 
   @NotNull public static PsiField[] getAllFields(final PsiClass aClass) {
     List<PsiField> map = getAllByMap(aClass, PsiField.class);
@@ -312,10 +311,8 @@ public class PsiClassImplUtil {
     PsiFile file = aClass.getContainingFile();
     if (JspPsiUtil.isInJspFile(file)) return maximalUseScope;
     final PsiClass containingClass = aClass.getContainingClass();
-    if (aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
-      return containingClass != null ? containingClass.getUseScope() : maximalUseScope;
-    }
-    else if (aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
+    if (aClass.hasModifierProperty(PsiModifier.PUBLIC) ||
+        aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
       return containingClass != null ? containingClass.getUseScope() : maximalUseScope;
     }
     else if (aClass.hasModifierProperty(PsiModifier.PRIVATE) || aClass instanceof PsiTypeParameter) {
@@ -347,17 +344,26 @@ public class PsiClassImplUtil {
 
   public static boolean isMainMethod(PsiMethod method) {
     if (!PsiType.VOID.equals(method.getReturnType())) return false;
+    String name = method.getName();
+    if (!("main".equals(name) || "premain".equals(name))) return false;
+
     PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+    MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
     try {
-      PsiMethod appMain = factory.createMethodFromText("void main(String[] args);", null);
-      if (MethodSignatureUtil.areSignaturesEqual(method, appMain)) return true;
-      PsiMethod appPremain = factory.createMethodFromText("void premain(String args, java.lang.instrument.Instrumentation i);", null);
-      if (MethodSignatureUtil.areSignaturesEqual(method, appPremain)) return true;
+      MethodSignature main = createSignatureFromText(factory, "void main(String[] args);");
+      if (MethodSignatureUtil.areSignaturesEqual(signature, main)) return true;
+      MethodSignature premain = createSignatureFromText(factory, "void premain(String args, java.lang.instrument.Instrumentation i);");
+      if (MethodSignatureUtil.areSignaturesEqual(signature, premain)) return true;
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+
     return false;
+  }
+
+  private static MethodSignature createSignatureFromText(PsiElementFactory factory, String text) {
+    return factory.createMethodFromText(text, null).getSignature(PsiSubstitutor.EMPTY);
   }
 
   private static class ByNameCachedValueProvider implements CachedValueProvider<Map> {
