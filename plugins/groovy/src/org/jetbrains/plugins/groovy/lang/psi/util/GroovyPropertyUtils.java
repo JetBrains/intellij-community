@@ -140,7 +140,7 @@ public class GroovyPropertyUtils {
   }
 
   @NotNull
-  public static PsiMethod[] getAllSetters(PsiClass aClass, String propertyName, boolean isStatic, boolean checkSuperClasses) {
+  public static PsiMethod[] getAllSetters(PsiClass aClass, @NotNull String propertyName, boolean isStatic, boolean checkSuperClasses) {
     if (aClass == null) return PsiMethod.EMPTY_ARRAY;
     PsiMethod[] methods;
     if (checkSuperClasses) {

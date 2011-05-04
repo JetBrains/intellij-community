@@ -1193,7 +1193,7 @@ public class PsiUtil {
     return context;
   }
 
-  public static String getAnnoAttributeValue(PsiAnnotation annotation, final String attributeName, String defaultValue) {
+  public static String getAnnoAttributeValue(@NotNull PsiAnnotation annotation, final String attributeName, String defaultValue) {
     PsiAnnotationMemberValue value = annotation.findAttributeValue(attributeName);
     if (value instanceof GrExpression) {
       Object o = GroovyConstantExpressionEvaluator.evaluate((GrExpression)value);
@@ -1204,7 +1204,7 @@ public class PsiUtil {
     return defaultValue;
   }
 
-  public static boolean getAnnoAttributeValue(PsiAnnotation annotation, final String attributeName, boolean defaultValue) {
+  public static boolean getAnnoAttributeValue(@NotNull PsiAnnotation annotation, final String attributeName, boolean defaultValue) {
     PsiAnnotationMemberValue value = annotation.findAttributeValue(attributeName);
     if (value instanceof GrExpression) {
       Object o = GroovyConstantExpressionEvaluator.evaluate((GrExpression)value);
