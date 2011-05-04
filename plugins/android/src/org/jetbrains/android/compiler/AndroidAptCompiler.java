@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -46,6 +47,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Apt compiler.
@@ -178,6 +180,8 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     final String myPackage;
     final boolean myCustomPackage;
 
+    private final boolean myFileExists;
+
     private AptGenerationItem(@NotNull Module module,
                               @NotNull VirtualFile manifestFile,
                               @NotNull String[] resourcesPaths,
@@ -196,6 +200,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       myCustomPackage = customPackage;
       myGeneratedFile =
         new File(sourceRootPath, aPackage.replace('.', File.separatorChar) + File.separator + AndroidUtils.R_JAVA_FILENAME);
+      myFileExists = myGeneratedFile.exists();
     }
 
     public File getGeneratedFile() {
@@ -207,7 +212,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     }
 
     public ValidityState getValidityState() {
-      return new MyValidityState(myModule);
+      return new MyValidityState(myModule, myFileExists);
     }
 
     public Module getModule() {
@@ -290,12 +295,17 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
           AndroidCompileUtil.createSourceRootIfNotExist(sourceRootPath, module);
           String assetsDirPath = assetsDir != null ? assetsDir.getPath() : null;
 
+          final Set<String> packageSet = new HashSet<String>();
+
           items.add(new AptGenerationItem(module, manifestFile, resPaths, assetsDirPath, sourceRootPath, target,
                                         packageName, false));
+          packageSet.add(packageName);
 
           for (String libPackage : AndroidUtils.getDepLibsPackages(module)) {
-            items.add(new AptGenerationItem(module, manifestFile, resPaths, assetsDirPath, sourceRootPath, target,
-                                            libPackage, true));
+            if (packageSet.add(libPackage)) {
+              items.add(new AptGenerationItem(module, manifestFile, resPaths, assetsDirPath, sourceRootPath, target,
+                                              libPackage, true));
+            }
           }
         }
       }
@@ -305,9 +315,11 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
   private static class MyValidityState extends ResourcesValidityState {
     private final String myCustomGenPathR;
+    private final boolean myOutputFileExists;
 
-    MyValidityState(Module module) {
+    MyValidityState(Module module, boolean fileExists) {
       super(module);
+      myOutputFileExists = fileExists;
       AndroidFacet facet = AndroidFacet.getInstance(module);
       if (facet == null) {
         myCustomGenPathR = "";
@@ -321,6 +333,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       super(is);
       String path = is.readUTF();
       myCustomGenPathR = path != null ? path : "";
+      myOutputFileExists = true;
     }
 
     @Override
@@ -328,10 +341,15 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
       if (!(otherState instanceof MyValidityState)) {
         return false;
       }
+
+      final MyValidityState otherState1 = (MyValidityState)otherState;
+      if (otherState1.myOutputFileExists != myOutputFileExists) {
+        return false;
+      }
       if (!super.equalsTo(otherState)) {
         return false;
       }
-      return Comparing.equal(myCustomGenPathR, ((MyValidityState)otherState).myCustomGenPathR);
+      return Comparing.equal(myCustomGenPathR, otherState1.myCustomGenPathR);
     }
 
     @Override
