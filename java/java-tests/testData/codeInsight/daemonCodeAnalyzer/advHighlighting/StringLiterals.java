@@ -21,6 +21,8 @@ public class a {
   char c7 = <error descr="Illegal escape character in character literal">'\u000d'</error>;
   char c8  = <error descr="Illegal escape character in character literal">'\u000a'</error>;
 
+  String perverts = "\uuuuuuuuuuuu1234";
+  char perv2 = '\uu3264';
 
   void foo(String a) {
      foo(<error descr="Illegal line end in string literal">"aaa</error>

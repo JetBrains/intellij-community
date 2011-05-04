@@ -61,6 +61,7 @@ import com.intellij.psi.stubs.SerializationManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -785,7 +786,7 @@ public class FileBasedIndex implements ApplicationComponent {
 
   @NotNull
   public <K, V> List<V> getValues(final ID<K, V> indexId, @NotNull K dataKey, @NotNull final GlobalSearchScope filter) {
-    final List<V> values = new ArrayList<V>();
+    final List<V> values = new SmartList<V>();
     processValuesImpl(indexId, dataKey, true, null, new ValueProcessor<V>() {
       public boolean process(final VirtualFile file, final V value) {
         values.add(value);

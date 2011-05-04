@@ -24,7 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -45,7 +45,7 @@ import java.util.List;
 
 public class PsiLiteralExpressionImpl
        extends ExpressionPsiElement
-       implements PsiLiteralExpression, PsiLanguageInjectionHost, Constants, ContributedReferenceHost, IntentionProvider {
+       implements PsiLiteralExpression, PsiLanguageInjectionHost, ContributedReferenceHost, IntentionProvider {
   @NonNls private static final String QUOT = "&quot;";
   @NonNls private static final String HEX_PREFIX = "0x";
   @NonNls private static final String HEX_PREFIX2 = "0X";
@@ -58,38 +58,38 @@ public class PsiLiteralExpressionImpl
   @NonNls private static final String _2_IN_31 = Long.toString(-1L << 31).substring(1);
   @NonNls private static final String _2_IN_63_L = _2_IN_63 + "l";
 
-  private static final TokenSet INTEGER_LITERALS = TokenSet.create(INTEGER_LITERAL, LONG_LITERAL);
-  private static final TokenSet REAL_LITERALS = TokenSet.create(FLOAT_LITERAL, DOUBLE_LITERAL);
+  private static final TokenSet INTEGER_LITERALS = TokenSet.create(JavaTokenType.INTEGER_LITERAL, JavaTokenType.LONG_LITERAL);
+  private static final TokenSet REAL_LITERALS = TokenSet.create(JavaTokenType.FLOAT_LITERAL, JavaTokenType.DOUBLE_LITERAL);
   private static final TokenSet NUMERIC_LITERALS = TokenSet.orSet(INTEGER_LITERALS, REAL_LITERALS);
 
   public PsiLiteralExpressionImpl() {
-    super(LITERAL_EXPRESSION);
+    super(JavaElementType.LITERAL_EXPRESSION);
   }
 
   public PsiType getType() {
     final IElementType type = getFirstChildNode().getElementType();
-    if (type == INTEGER_LITERAL) {
+    if (type == JavaTokenType.INTEGER_LITERAL) {
       return PsiType.INT;
     }
-    if (type == LONG_LITERAL) {
+    if (type == JavaTokenType.LONG_LITERAL) {
       return PsiType.LONG;
     }
-    if (type == FLOAT_LITERAL) {
+    if (type == JavaTokenType.FLOAT_LITERAL) {
       return PsiType.FLOAT;
     }
-    if (type == DOUBLE_LITERAL) {
+    if (type == JavaTokenType.DOUBLE_LITERAL) {
       return PsiType.DOUBLE;
     }
-    if (type == CHARACTER_LITERAL) {
+    if (type == JavaTokenType.CHARACTER_LITERAL) {
       return PsiType.CHAR;
     }
-    if (type == STRING_LITERAL) {
+    if (type == JavaTokenType.STRING_LITERAL) {
       return PsiType.getJavaLangString(getManager(), getResolveScope());
     }
-    if (type == TRUE_KEYWORD || type == FALSE_KEYWORD) {
+    if (type == JavaTokenType.TRUE_KEYWORD || type == JavaTokenType.FALSE_KEYWORD) {
       return PsiType.BOOLEAN;
     }
-    if (type == NULL_KEYWORD) {
+    if (type == JavaTokenType.NULL_KEYWORD) {
       return PsiType.NULL;
     }
     return null;
@@ -107,7 +107,7 @@ public class PsiLiteralExpressionImpl
     String text = getCanonicalText();
     final int textLength = text.length();
 
-    if (type == INTEGER_LITERAL) {
+    if (type == JavaTokenType.INTEGER_LITERAL) {
       try {
         if (text.startsWith(HEX_PREFIX) || text.startsWith(HEX_PREFIX2)) {
           // should fit in 32 bits
@@ -133,7 +133,7 @@ public class PsiLiteralExpressionImpl
         return null;
       }
     }
-    if (type == LONG_LITERAL) {
+    if (type == JavaTokenType.LONG_LITERAL) {
       if (StringUtil.endsWithChar(text, 'L') || StringUtil.endsWithChar(text, 'l')) {
         text = text.substring(0, textLength - 1);
       }
@@ -155,7 +155,7 @@ public class PsiLiteralExpressionImpl
         return null;
       }
     }
-    if (type == FLOAT_LITERAL) {
+    if (type == JavaTokenType.FLOAT_LITERAL) {
       try {
         return Float.valueOf(text);
       }
@@ -163,7 +163,7 @@ public class PsiLiteralExpressionImpl
         return null;
       }
     }
-    if (type == DOUBLE_LITERAL) {
+    if (type == JavaTokenType.DOUBLE_LITERAL) {
       try {
         return Double.valueOf(text);
       }
@@ -171,7 +171,7 @@ public class PsiLiteralExpressionImpl
         return null;
       }
     }
-    if (type == CHARACTER_LITERAL) {
+    if (type == JavaTokenType.CHARACTER_LITERAL) {
       if (StringUtil.endsWithChar(text, '\'')) {
         if (textLength == 1) return null;
         text = text.substring(1, textLength - 1);
@@ -185,7 +185,7 @@ public class PsiLiteralExpressionImpl
       if (chars.length() != 1) return null;
       return Character.valueOf(chars.charAt(0));
     }
-    if (type == STRING_LITERAL) {
+    if (type == JavaTokenType.STRING_LITERAL) {
       if (StringUtil.endsWithChar(text, '\"')) {
         if (textLength == 1) return null;
         text = text.substring(1, textLength - 1);
@@ -200,10 +200,10 @@ public class PsiLiteralExpressionImpl
       }
       return internedParseStringCharacters(text);
     }
-    if (type == TRUE_KEYWORD) {
+    if (type == JavaTokenType.TRUE_KEYWORD) {
       return Boolean.TRUE;
     }
-    if (type == FALSE_KEYWORD) {
+    if (type == JavaTokenType.FALSE_KEYWORD) {
       return Boolean.FALSE;
     }
 
@@ -254,11 +254,11 @@ public class PsiLiteralExpressionImpl
       }
     }
 
-    if (type == INTEGER_LITERAL) {
+    if (type == JavaTokenType.INTEGER_LITERAL) {
       //literal 2147483648 may appear only as the operand of the unary negation operator -.
       if (!(text.equals(_2_IN_31)
             && getParent() instanceof PsiPrefixExpression
-            && ((PsiPrefixExpression)getParent()).getOperationSign().getTokenType() == MINUS)) {
+            && ((PsiPrefixExpression)getParent()).getOperationSign().getTokenType() == JavaTokenType.MINUS)) {
         if (text.equals(HEX_PREFIX)) {
           return JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
         }
@@ -270,11 +270,11 @@ public class PsiLiteralExpressionImpl
         }
       }
     }
-    else if (type == LONG_LITERAL) {
+    else if (type == JavaTokenType.LONG_LITERAL) {
       //literal 9223372036854775808L may appear only as the operand of the unary negation operator -.
       if (!(text.equals(_2_IN_63_L)
             && getParent() instanceof PsiPrefixExpression
-            && ((PsiPrefixExpression)getParent()).getOperationSign().getTokenType() == MINUS)) {
+            && ((PsiPrefixExpression)getParent()).getOperationSign().getTokenType() == JavaTokenType.MINUS)) {
         if (text.equals(LONG_HEX_EMPTY)) {
           return JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
         }
@@ -286,15 +286,15 @@ public class PsiLiteralExpressionImpl
         }
       }
     }
-    else if (type == FLOAT_LITERAL || type == DOUBLE_LITERAL) {
+    else if (type == JavaTokenType.FLOAT_LITERAL || type == JavaTokenType.DOUBLE_LITERAL) {
       if (value == null) {
         return JavaErrorMessages.message("malformed.floating.point.literal");
       }
     }
-    else if (type == TRUE_KEYWORD || type == FALSE_KEYWORD || type == NULL_KEYWORD) {
+    else if (type == JavaTokenType.TRUE_KEYWORD || type == JavaTokenType.FALSE_KEYWORD || type == JavaTokenType.NULL_KEYWORD) {
       return null;
     }
-    else if (type == CHARACTER_LITERAL) {
+    else if (type == JavaTokenType.CHARACTER_LITERAL) {
       if (value == null) {
         if (!StringUtil.startsWithChar(text, '\'')) return null;
         if (StringUtil.endsWithChar(text, '\'')) {
@@ -313,7 +313,7 @@ public class PsiLiteralExpressionImpl
         else if (chars.length() == 0) return JavaErrorMessages.message("empty.character.literal");
       }
     }
-    else if (type == STRING_LITERAL) {
+    else if (type == JavaTokenType.STRING_LITERAL) {
       if (value == null) {
         for (final PsiElement element : getChildren()) {
           if (element instanceof OuterLanguageElement) {
@@ -456,7 +456,7 @@ public class PsiLiteralExpressionImpl
         case'4':
         case'5':
         case'6':
-        case'7': {
+        case'7':
           char startC = c;
           int v = (int)c - '0';
           if (index < chars.length()) {
@@ -480,18 +480,21 @@ public class PsiLiteralExpressionImpl
             }
           }
           outChars.append((char)v);
-        }
-        break;
+          break;
 
         case'u':
+          // uuuuu1234 is valid too
+          while (index != chars.length() && chars.charAt(index) == 'u') {
+            index++;
+          }
           if (index + 4 <= chars.length()) {
             try {
-              int v = Integer.parseInt(chars.substring(index, index + 4), 16);
+              int code = Integer.parseInt(chars.substring(index, index + 4), 16);
               //line separators are invalid here
-              if (v == 0x000a || v == 0x000d) return false;
+              if (code == 0x000a || code == 0x000d) return false;
               c = chars.charAt(index);
               if (c == '+' || c == '-') return false;
-              outChars.append((char)v);
+              outChars.append((char)code);
               index += 4;
             }
             catch (Exception e) {

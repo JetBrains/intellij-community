@@ -889,6 +889,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       .setCancelOnOtherWindowOpen(true)
       .setCancelCallback(new Computable<Boolean>() {
         public Boolean compute() {
+
           return myActionManager.isActionPopupStackEmpty();
         }
       })
@@ -906,8 +907,22 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       }
     });
     myPopup = builder.createPopup();
-
+    final AnActionListener.Adapter listener = new AnActionListener.Adapter() {
+      @Override
+      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+        if (!myPopup.isDisposed() && myPopup.isVisible()) {
+          myPopup.cancel();
+        }
+      }
+    };
+    ActionManager.getInstance().addAnActionListener(listener);
     Disposer.register(myPopup, popupToolbar);
+    Disposer.register(popupToolbar, new Disposable() {
+      @Override
+      public void dispose() {
+        ActionManager.getInstance().removeAnActionListener(listener);
+      }
+    });
 
     myPopup.showInScreenCoordinates(this, location);
 

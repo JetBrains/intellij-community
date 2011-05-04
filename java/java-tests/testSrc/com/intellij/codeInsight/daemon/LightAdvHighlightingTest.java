@@ -79,7 +79,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testAbstractMethods() throws Exception { doTest(false, false); }
   public void testInstantiateAbstract() throws Exception { doTest(false, false); }
   public void testDuplicateClassMethod() throws Exception { doTest(false, false); }
-  public void testa10() throws Exception { doTest(false, false); }
+  public void testStringLiterals() throws Exception { doTest(false, false); }
   public void testa11() throws Exception { doTest(false, false); }
   public void testInvalidExpressions() throws Exception { doTest(false, false); }
   public void testIllegalVoidType() throws Exception { doTest(false, false); }
