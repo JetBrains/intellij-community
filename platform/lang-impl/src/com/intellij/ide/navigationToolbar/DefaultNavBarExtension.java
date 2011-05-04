@@ -26,10 +26,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.Collections;
 
 public class DefaultNavBarExtension implements NavBarModelExtension{
   @Nullable
@@ -71,5 +75,8 @@ public class DefaultNavBarExtension implements NavBarModelExtension{
     return psiElement;
   }
 
-
+  @Override
+  public Collection<VirtualFile> additionalRoots(Project project) {
+    return Collections.emptyList();
+  }
 }

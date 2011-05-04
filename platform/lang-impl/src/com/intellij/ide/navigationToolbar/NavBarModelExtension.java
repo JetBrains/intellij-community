@@ -21,8 +21,12 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 public interface NavBarModelExtension {
   ExtensionPointName<NavBarModelExtension> EP_NAME = ExtensionPointName.create("com.intellij.navbar");
@@ -36,4 +40,5 @@ public interface NavBarModelExtension {
   @Nullable
   PsiElement adjustElement(PsiElement psiElement);
 
+  Collection<VirtualFile> additionalRoots(Project project);
 }
