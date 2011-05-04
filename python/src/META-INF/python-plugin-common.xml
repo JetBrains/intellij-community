@@ -474,6 +474,7 @@
                                   implementationClass="com.jetbrains.rest.RestFileProviderFactory"/>
     <lang.psiStructureViewFactory language="ReST"
                                   implementationClass="com.jetbrains.rest.structureView.RestStructureViewFactory"/>
+    <annotator language="ReST" implementationClass="com.jetbrains.rest.validation.RestAnnotatingVisitor"/>
 
   </extensions>
 
