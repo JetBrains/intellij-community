@@ -15,11 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.MoveClassToSeparateFileFix;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
@@ -85,7 +89,25 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
       document.setText(builder);
       PsiDocumentManager.getInstance(myProject).commitDocument(document);
       String fileName = getNewFileName(file);
-      file.setName(fileName);
+      PsiElement newFile = file.setName(fileName);
+
+      if (ApplicationManager.getApplication().isUnitTestMode()) return;
+      // don't move classes to new files with corresponding class names and reformat
+
+      if (!(newFile instanceof PsiJavaFile)) {
+        LOG.info(".java is not assigned to java file type");
+        return;
+      }
+
+      newFile = JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(newFile);
+      newFile = CodeStyleManager.getInstance(myProject).reformat(newFile);
+      PsiClass[] inner = ((PsiJavaFile)newFile).getClasses();
+      for (PsiClass psiClass : inner) {
+        MoveClassToSeparateFileFix fix = new MoveClassToSeparateFileFix(psiClass);
+        if (fix.isAvailable(myProject, null, (PsiFile)newFile)) {
+          fix.invoke(myProject, null, (PsiFile)newFile);
+        }
+      }
     }
   }
 
