@@ -56,7 +56,8 @@ public class ConstructorAnnotationsProcessor extends NonCodeMembersContributor {
     final PsiAnnotation tupleConstructor = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
     final boolean immutable = modifierList.findAnnotation(GroovyImmutableAnnotationInspection.IMMUTABLE) != null ||
                               modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_IMMUTABLE) != null;
-    if (!immutable && modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_CANONICAL) == null && tupleConstructor == null) {
+    final PsiAnnotation canonical = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_CANONICAL);
+    if (!immutable && canonical == null && tupleConstructor == null) {
       return;
     }
 
@@ -92,15 +93,15 @@ public class ConstructorAnnotationsProcessor extends NonCodeMembersContributor {
 
     addParameters(typeDefinition, fieldsConstructor,
                   tupleConstructor == null || PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeProperties", true),
-                  tupleConstructor == null || PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeFields", false),
+                  tupleConstructor != null ? PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeFields", false) : canonical == null,
                   !immutable, excludes);
 
 
-    if (!processor.execute(fieldsConstructor, ResolveState.initial())) return;
+    if (!processor.execute(fieldsConstructor, state)) return;
 
     final LightMethodBuilder defaultConstructor = new LightMethodBuilder(psiClass, GroovyFileType.GROOVY_LANGUAGE);
     defaultConstructor.setConstructor(true);
-    processor.execute(defaultConstructor, ResolveState.initial());
+    processor.execute(defaultConstructor, state);
   }
 
   private static void addParametersForSuper(@NotNull PsiClass typeDefinition,
