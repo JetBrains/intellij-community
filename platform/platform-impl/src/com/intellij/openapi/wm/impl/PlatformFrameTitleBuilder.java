@@ -29,7 +29,7 @@ public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
   public String getProjectTitle(final Project project) {
     final VirtualFile baseDir = project.getBaseDir();
     if (baseDir != null) {
-      if (baseDir.getName().equals(project.getName())) {
+      if (SystemInfo.isMac && baseDir.getName().equals(project.getName())) {
         return "[" + ProjectUtil.getLocationRelativeToUserHome(baseDir.getPresentableUrl()) + "]";  
       }
       
