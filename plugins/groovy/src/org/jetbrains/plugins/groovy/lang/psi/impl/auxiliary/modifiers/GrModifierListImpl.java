@@ -145,10 +145,9 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   }
 
   public static boolean checkModifierProperty(@NotNull GrModifierList modifierList, @NotNull String modifier) {
-    final PsiElement parent = modifierList.getParent();
-    if (parent instanceof GrVariableDeclaration &&
-        parent.getParent() instanceof GrTypeDefinitionBody) {
-      PsiElement pParent = parent.getParent().getParent();
+    final PsiElement owner = modifierList.getParent();
+    if (owner instanceof GrVariableDeclaration && owner.getParent() instanceof GrTypeDefinitionBody) {
+      PsiElement pParent = owner.getParent().getParent();
       if (!modifierList.hasExplicitVisibilityModifiers()) { //properties are backed by private fields
         if (!(pParent instanceof PsiClass) || !((PsiClass)pParent).isInterface()) {
           if (modifier.equals(GrModifier.PRIVATE)) return true;
@@ -174,17 +173,20 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     }
 
     if (modifier.equals(GrModifier.PUBLIC)) {
+      if (owner instanceof GrVariableDeclaration && !(owner.getParent() instanceof GrTypeDefinitionBody)) {
+        return false;
+      }
       //groovy type definitions and methods are public by default
       return !modifierList.hasExplicitModifier(GrModifier.PRIVATE) && !modifierList.hasExplicitModifier(GrModifier.PROTECTED);
     }
 
-    if (parent instanceof GrTypeDefinition) {
+    if (owner instanceof GrTypeDefinition) {
       if (modifier.equals(GrModifier.STATIC)) {
-        final PsiClass containingClass = ((GrTypeDefinition)parent).getContainingClass();
+        final PsiClass containingClass = ((GrTypeDefinition)owner).getContainingClass();
         return containingClass != null && containingClass.isInterface();
       }
       if (modifier.equals(GrModifier.ABSTRACT)) {
-        return ((GrTypeDefinition)parent).isInterface();
+        return ((GrTypeDefinition)owner).isInterface();
       }
     }
 
