@@ -375,8 +375,8 @@ public class EditorUtil {
       for (int i = start; i < offset; i++) {
         char c = text.charAt(i);
         assert c != '\n' && c != '\r' :
-          String.format("Symbol: %c, its index: %d, given start: %d, given offset: %d, given tab size: %d, document info: %s%ntext: '%s'",
-                        c, i, start, offset, tabSize, editor.getDocument(), text);
+          String.format("Symbol: '%c', its index: %d, given start: %d, given offset: %d, given tab size: %d, document info: %s%ntext: '%s'",
+                        c, i, start, offset, tabSize, editor == null ? null : editor.getDocument(), text);
         if (c == '\t') {
           shift += getTabLength(i + shift - start, tabSize) - 1;
         }
