@@ -559,7 +559,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
           throw e;
         }
         catch (Exception e) {
-          LOG.error(e);
+          LOG.error("In file:" + file, e);
         }
         finally {
           psiManager.dropFileCaches(file);
