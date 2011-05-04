@@ -16,9 +16,16 @@
 
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,6 +143,77 @@ public class SelectWordUtil {
     }
 
     return null;
+  }
+
+  public static void processRanges(@Nullable PsiElement element,
+                                   CharSequence text,
+                                   int cursorOffset,
+                                   Editor editor,
+                                   Processor<TextRange> consumer) {
+    if (element == null) return;
+
+    PsiFile file = element.getContainingFile();
+
+    FileViewProvider viewProvider = file.getViewProvider();
+
+    processInFile(element, consumer, text, cursorOffset, editor);
+
+    for (PsiFile psiFile : viewProvider.getAllFiles()) {
+      if (psiFile == file) continue;
+
+      FileASTNode fileNode = psiFile.getNode();
+      if (fileNode == null) continue;
+
+      ASTNode nodeAt = fileNode.findLeafElementAt(element.getTextOffset());
+      if (nodeAt == null) continue;
+
+      PsiElement elementAt = nodeAt.getPsi();
+
+      while (!(elementAt instanceof PsiFile) && elementAt != null) {
+        if (elementAt.getTextRange().contains(element.getTextRange())) break;
+
+        elementAt = elementAt.getParent();
+      }
+
+      if (elementAt == null) continue;
+
+      processInFile(elementAt, consumer, text, cursorOffset, editor);
+    }
+  }
+
+  private static void processInFile(@NotNull PsiElement element,
+                                    Processor<TextRange> consumer,
+                                    CharSequence text,
+                                    int cursorOffset,
+                                    Editor editor) {
+    PsiElement e = element;
+    while (e != null && !(e instanceof PsiFile)) {
+      if (processElement(e, consumer, text, cursorOffset, editor)) return;
+      e = e.getParent();
+    }
+  }
+
+  private static boolean processElement(@NotNull PsiElement element,
+                                     Processor<TextRange> processor,
+                                     CharSequence text,
+                                     int cursorOffset,
+                                     Editor editor) {
+    boolean stop = false;
+
+    for (ExtendWordSelectionHandler selectioner : getExtendWordSelectionHandlers()) {
+      if (!selectioner.canSelect(element)) continue;
+
+      List<TextRange> ranges = selectioner.select(element, text, cursorOffset, editor);
+      if (ranges == null) continue;
+
+      for (TextRange range : ranges) {
+        if (range == null) continue;
+
+        stop |= processor.process(range);
+      }
+    }
+
+    return stop;
   }
 
 }
