@@ -210,13 +210,16 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       builder.append(", ");
     }
     builder.delete(builder.length() - 2, builder.length());
+    builder.append(")");
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
     final GrStatement delegateCall;
+
+    PsiElement context = method.getContainingClass() == null ? method : method.getContainingClass();
     if (method.isConstructor()) {
-      delegateCall = factory.createConstructorInvocation(builder.toString(), method);
+      delegateCall = factory.createConstructorInvocation(builder.toString(), context);
     }
     else {
-      delegateCall = factory.createStatementFromText(builder.toString(), method);
+      delegateCall = factory.createStatementFromText(builder.toString(), context);
     }
 
     final StringBuilder result = new StringBuilder();

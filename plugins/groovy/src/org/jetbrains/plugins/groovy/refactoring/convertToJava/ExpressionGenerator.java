@@ -559,7 +559,7 @@ public class ExpressionGenerator extends Generator {
   @Override
   public void visitGStringExpression(GrString gstring) {
     final String newExprText = ConvertGStringToStringIntention.convertGStringLiteralToStringLiteral(gstring);
-    final GrExpression newExpr = factory.createExpressionFromText(newExprText);
+    final GrExpression newExpr = factory.createExpressionFromText(newExprText, gstring);
     newExpr.accept(this);
   }
 

@@ -1186,7 +1186,7 @@ public class PsiUtil {
 
   public static GroovyPsiElement getFileOrClassContext(final GroovyPsiElement element) {
     GroovyPsiElement context = PsiTreeUtil.getContextOfType(element, GrTypeDefinition.class, GroovyFileBase.class);
-    if (context instanceof GroovyFileBase &&
+    while (context instanceof GroovyFileBase &&
         GroovyPsiElementFactory.DUMMY_FILE_NAME.equals(FileUtil.getNameWithoutExtension(((GroovyFileBase)context).getName()))) {
       context = PsiTreeUtil.getContextOfType(context, true, GrTypeDefinition.class, GroovyFileBase.class);
     }
