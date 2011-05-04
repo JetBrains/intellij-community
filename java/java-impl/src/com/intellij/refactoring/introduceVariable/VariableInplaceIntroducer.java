@@ -206,6 +206,11 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
             }
           });
         }
+      } else {
+        if (myExprMarker != null) {
+          myEditor.getCaretModel().moveToOffset(myExprMarker.getStartOffset());
+          myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+        }
       }
     }
     finally {
