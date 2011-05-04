@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.patterns.PsiElementPattern;
@@ -140,7 +141,7 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
     for (String variant : variants) {
       if (myAddPrefixes) {
         int dotIndex = variant.indexOf('.');
-        if (dotIndex > 0) {
+        if (dotIndex > 0 && dotIndex < variant.length() - 1) {
           String s = variant.substring(0, dotIndex);
           if (processedPrefixes.add(s)) {
             result.addElement(LookupElementBuilder.create(s));
@@ -148,7 +149,12 @@ class GroovyConfigSlurperCompletionProvider extends CompletionProvider<Completio
         }
       }
 
-      result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(variant), TailType.EQ));
+      LookupElement lookupElement = LookupElementBuilder.create(variant);
+      if (!variant.endsWith(".")) {
+        lookupElement = TailTypeDecorator.withTail(lookupElement, TailType.EQ);
+      }
+
+      result.addElement(lookupElement);
     }
   }
 
