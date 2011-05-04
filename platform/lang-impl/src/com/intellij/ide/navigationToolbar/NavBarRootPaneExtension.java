@@ -83,13 +83,19 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
         @Override
         protected void paintComponent(Graphics g) {
-          if (!UIUtil.isUnderAquaLookAndFeel() || UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
+          if (!UIUtil.isUnderAquaLookAndFeel()) {
             super.paintComponent(g);
             return;
           }
-          
+
           final Rectangle r = getBounds();
-          UIUtil.drawGradientHToolbarBackground(g, r.width, r.height);            
+          if (UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
+            g.setColor(new Color(200, 200, 200));
+            g.fillRect(0, 0, r.width, r.height);
+          }
+          else {
+            UIUtil.drawGradientHToolbarBackground(g, r.width, r.height);
+          }
         }
 
         @Override
