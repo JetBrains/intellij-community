@@ -388,9 +388,14 @@
         <option name="FOREGROUND" value="F92672" />
       </value>
     </option>
-    <option name="PY.STRING">
+    <option name="PY.STRING.B">
       <value>
-        <option name="FOREGROUND" value="E6DB74" />
+        <option name="FOREGROUND" value="e6a774" />
+      </value>
+    </option>
+    <option name="PY.STRING.U">
+      <value>
+        <option name="FOREGROUND" value="e6db74" />
       </value>
     </option>
     <option name="PY.NUMBER">
@@ -425,7 +430,7 @@
     </option>
     <option name="PY.DOC_COMMENT">
       <value>
-        <option name="FOREGROUND" value="75715E" />
+        <option name="FOREGROUND" value="a19b81" />
       </value>
     </option>
     <option name="PY.DECORATOR">

@@ -1416,7 +1416,7 @@
     </option>
     <option name="PY.DOC_COMMENT">
       <value>
-        <option name="FOREGROUND" value="99cc00" />
+        <option name="FOREGROUND" value="d2c200" />
         <option name="BACKGROUND" />
         <option name="FONT_TYPE" value="1" />
         <option name="EFFECT_COLOR" />
@@ -1524,14 +1524,16 @@
         <option name="ERROR_STRIPE_COLOR" />
       </value>
     </option>
-    <option name="PY.STRING">
+    <option name="PY.STRING.B">
       <value>
-        <option name="FOREGROUND" value="b501" />
-        <option name="BACKGROUND" />
-        <option name="FONT_TYPE" value="1" />
-        <option name="EFFECT_COLOR" />
-        <option name="EFFECT_TYPE" value="0" />
-        <option name="ERROR_STRIPE_COLOR" />
+        <option name="FOREGROUND" value="85cd00" />
+	<option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="PY.STRING.U">
+      <value>
+        <option name="FOREGROUND" value="b580" />
+	<option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="PY.VALID_STRING_ESCAPE">
