@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
+import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.impl.AbstractEditorProcessingOnDocumentModificationTest;
@@ -701,6 +702,39 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorP
     home();
     visLine = caretModel.getVisualPosition().line;
     assertEquals(new VisualPosition(visLine, 0), caretModel.getVisualPosition());
+  }
+  
+  public void testFoldRegionsUpdate() throws IOException {
+    String text = 
+      "import java.util.List;\n" +
+      "import java.util.ArrayList;\n" +
+      "\n" +
+      "class Test {\n" +
+      "}";
+    init(300, text);
+    
+    final int foldStartOffset = "import".length() + 1;
+    int foldEndOffset = text.indexOf("class") - 2;
+    addCollapsedFoldRegion(foldStartOffset, foldEndOffset, "...");
+    
+    // Simulate addition of the new import that modifies existing fold region.
+    myEditor.getDocument().insertString(foldEndOffset, "\nimport java.util.Date;\n");
+    final FoldingModel foldingModel = myEditor.getFoldingModel();
+    foldingModel.runBatchFoldingOperation(new Runnable() {
+      @Override
+      public void run() {
+        FoldRegion oldFoldRegion = getFoldRegion(foldStartOffset);
+        assertNotNull(oldFoldRegion);
+        foldingModel.removeFoldRegion(oldFoldRegion);
+        
+        int newFoldEndOffset = myEditor.getDocument().getText().indexOf("class") - 2;
+        FoldRegion newFoldRegion = foldingModel.addFoldRegion(foldStartOffset, newFoldEndOffset, "...");
+        assertNotNull(newFoldRegion);
+        newFoldRegion.setExpanded(false);
+      }
+    });
+    CodeFoldingManager.getInstance(getProject()).updateFoldRegions(myEditor);
+    assertEquals(new VisualPosition(2, 0), myEditor.logicalToVisualPosition(new LogicalPosition(5, 0)));
   }
   
   private void init(final int visibleWidth, String fileText) throws IOException {
