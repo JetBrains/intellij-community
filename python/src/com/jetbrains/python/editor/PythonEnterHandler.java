@@ -72,7 +72,7 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
           if (spaces.length > 1)
             ws = ws + whitespace.getText().split("\n")[1];
         }
-        String docStub = provider.generateDocumentationContentStub(fun, ws);
+        String docStub = provider.generateDocumentationContentStub(fun, ws, false);
         docStub += element.getParent().getText().substring(0,3);
         if (docStub != null && docStub.length() != 0) {
           editor.getDocument().insertString(editor.getCaretModel().getOffset(), docStub);

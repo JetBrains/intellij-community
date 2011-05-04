@@ -344,20 +344,20 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   public static final DocumentationBuilderKit.LinkWrapper LinkMyClass = new DocumentationBuilderKit.LinkWrapper(LINK_TYPE_CLASS); // link item to containing class
 
-  public String generateDocumentationContentStub(PyFunction element, String offset) {
+  public String generateDocumentationContentStub(PyFunction element, String offset, boolean checkReturn) {
     Project project = element.getProject();
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
     String result = "";
     if (documentationSettings.isEpydocFormat(element.getContainingFile()))
-      result += generateContent(element, offset, EPYDOC_PREFIX);
+      result += generateContent(element, offset, EPYDOC_PREFIX, checkReturn);
     else if (documentationSettings.isReSTFormat(element.getContainingFile()))
-      result += generateContent(element, offset, RST_PREFIX);
+      result += generateContent(element, offset, RST_PREFIX, checkReturn);
     else
       result += offset;
     return result;
   }
 
-  private String generateContent(PyFunction element, String offset, String prefix) {
+  private String generateContent(PyFunction element, String offset, String prefix, boolean checkReturn) {
     PyParameter[] list = element.getParameterList().getParameters();
     StringBuilder builder = new StringBuilder(offset);
     for(PyParameter p : list) {
@@ -367,8 +367,32 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       builder.append(": ");
       builder.append(offset);
     }
-    builder.append(prefix).append("return:").append(offset);
+    if (checkReturn) {
+      RaiseVisitor visitor = new RaiseVisitor();
+      PyStatementList statementList = element.getStatementList();
+      if (statementList != null) {
+        statementList.accept(visitor);
+      }
+      if (visitor.myHasReturn)
+        builder.append(prefix).append("return:").append(offset);
+      if (visitor.myHasRaise)
+        builder.append(prefix).append("raise:").append(offset);
+    }
+    else
+      builder.append(prefix).append("return:").append(offset);
     return builder.toString();
   }
 
+  private static class RaiseVisitor extends PyRecursiveElementVisitor {
+    private boolean myHasRaise = false;
+    private boolean myHasReturn = false;
+    @Override
+    public void visitPyRaiseStatement(PyRaiseStatement node) {
+      myHasRaise = true;
+    }
+    @Override
+    public void visitPyReturnStatement(PyReturnStatement node) {
+      myHasReturn = true;
+    }
+  }
 }
