@@ -110,9 +110,10 @@ public class EditorAdapter {
         document.insertString(endBefore, buffer.toString());
         for (Line line : lines) {
           myEditor.getMarkupModel()
-              .addRangeHighlighter(endBeforeLine, endBeforeLine + line.getValue().length(), HighlighterLayer.ADDITIONAL_SYNTAX,
+              .addRangeHighlighter(endBeforeLine, Math.min(document.getTextLength(), endBeforeLine + line.getValue().length()), HighlighterLayer.ADDITIONAL_SYNTAX,
                                    line.getAttributes(), HighlighterTargetArea.EXACT_RANGE);
           endBeforeLine += line.getValue().length();
+          if (endBeforeLine > document.getTextLength()) break;
         }
         shiftCursorToTheEndOfDocument();
       }
