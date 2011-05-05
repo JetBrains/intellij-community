@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonReferenceProviderTypes;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
@@ -27,8 +26,8 @@ public class CommonReferenceProviderTypesImpl extends CommonReferenceProviderTyp
 
   private final JavaClassReferenceProvider myProvider;
 
-  public CommonReferenceProviderTypesImpl(Project project) {
-    myProvider = new JavaClassReferenceProvider(project);
+  public CommonReferenceProviderTypesImpl() {
+    myProvider = new JavaClassReferenceProvider();
   }
 
   public PsiReferenceProvider getClassReferenceProvider() {

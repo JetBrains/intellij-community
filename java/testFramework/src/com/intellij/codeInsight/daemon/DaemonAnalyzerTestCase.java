@@ -178,7 +178,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     if (isPerformanceTest()) {
       IntentionManager.getInstance().getAvailableIntentionActions();  // hack to avoid slowdowns in PyExtensionFactory
       PathManagerEx.getTestDataPath(); // to cache stuff
-      ReferenceProvidersRegistry.getInstance(getProject()); // preload tons of classes
+      ReferenceProvidersRegistry.getInstance(); // preload tons of classes
       InjectedLanguageManager.getInstance(getProject()); // zillion of Dom Sem classes
       LanguageAnnotators.INSTANCE.allForLanguage(StdLanguages.JAVA); // pile of annotator classes loads
       LanguageAnnotators.INSTANCE.allForLanguage(StdLanguages.XML);

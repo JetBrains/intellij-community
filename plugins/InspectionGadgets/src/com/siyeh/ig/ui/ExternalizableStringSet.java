@@ -23,9 +23,6 @@ import com.intellij.util.containers.OrderedSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
@@ -59,6 +56,7 @@ public class ExternalizableStringSet extends OrderedSet<String>
         return true;
     }
 
+    @Override
     public void readExternal(Element element) throws InvalidDataException {
         boolean dataFound = false;
         for (Element item : (List<Element>) element.getChildren(ITEM)) {
@@ -70,6 +68,7 @@ public class ExternalizableStringSet extends OrderedSet<String>
         }
     }
 
+    @Override
     public void writeExternal(Element element) throws WriteExternalException {
         if (hasDefaultValues()) {
             return;

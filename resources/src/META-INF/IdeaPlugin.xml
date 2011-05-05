@@ -429,7 +429,7 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsPathPresenter"/>
 
-    <projectService serviceInterface="com.intellij.psi.CommonReferenceProviderTypes"
+    <applicationService serviceInterface="com.intellij.psi.CommonReferenceProviderTypes"
                     serviceImplementation="com.intellij.psi.impl.CommonReferenceProviderTypesImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory"
                     serviceImplementation="com.intellij.psi.impl.file.PsiJavaDirectoryFactory"/>

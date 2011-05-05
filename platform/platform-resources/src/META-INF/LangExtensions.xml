@@ -221,7 +221,7 @@
   <projectService serviceInterface="com.intellij.diagnostic.logging.LogConsolePreferences"
                   serviceImplementation="com.intellij.diagnostic.logging.LogConsolePreferences"/>
 
-  <projectService serviceInterface="com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry"
+  <applicationService serviceInterface="com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry"
                   serviceImplementation="com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry"/>
 
   <projectService serviceInterface="com.intellij.find.FindManager"

@@ -18,17 +18,25 @@ package com.intellij.lang.properties;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
 import com.intellij.patterns.PsiJavaPatterns;
-import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
-import static com.intellij.patterns.PsiJavaPatterns.psiNameValuePair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
+import static com.intellij.patterns.PsiJavaPatterns.psiNameValuePair;
+
 /**
  * @author peter
  */
 public class PropertiesReferenceContributor extends PsiReferenceContributor{
+
+  private static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider() {
+    public boolean isSoft() {
+      return true;
+    }
+  };
+
   public void registerReferenceProviders(final PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(literalExpression(), new PropertiesReferenceProvider(true));
     registrar.registerReferenceProvider(literalExpression().withParent(
@@ -42,11 +50,7 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
         String text = element.getText();
         String[] words = text.split("\\s");
         if (words.length != 1) return PsiReference.EMPTY_ARRAY;
-        return new JavaClassReferenceProvider(element.getProject()){
-          public boolean isSoft() {
-            return true;
-          }
-        }.getReferencesByString(words[0], element, 0);
+        return CLASS_REFERENCE_PROVIDER.getReferencesByString(words[0], element, 0);
       }
     });
   }

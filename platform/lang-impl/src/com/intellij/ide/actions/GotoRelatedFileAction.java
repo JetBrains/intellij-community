@@ -20,6 +20,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.navigation.GotoRelatedProvider;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -59,7 +60,9 @@ public class GotoRelatedFileAction extends AnAction {
       items.get(0).navigate();
       return;
     }
-
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      System.out.println(items);
+    }
     createPopup(items, "Goto Related").showInBestPositionFor(context);
   }
 

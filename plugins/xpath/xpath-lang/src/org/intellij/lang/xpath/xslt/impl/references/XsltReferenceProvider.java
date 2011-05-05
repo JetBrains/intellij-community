@@ -1,7 +1,6 @@
 package org.intellij.lang.xpath.xslt.impl.references;
 
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -35,14 +34,12 @@ import java.util.regex.Pattern;
 public class XsltReferenceProvider extends PsiReferenceProvider {
   private static final Key<CachedValue<PsiReference[]>> CACHED_XSLT_REFS = Key.create("CACHED_XSLT_REFS");
 
-  private final CachedValuesManager myCacheManager;
   private final XsltElementFactory myXsltElementFactory = XsltElementFactory.getInstance();
 
   private static final Pattern ELEMENT_PATTERN = Pattern.compile("(?:(\\w+):)?(?:\\w+|\\*)");
   private static final Pattern PREFIX_PATTERN = Pattern.compile("(?:^|\\s)(\\w+)");
 
-  public XsltReferenceProvider(Project project) {
-    myCacheManager = CachedValuesManager.getManager(project);
+  public XsltReferenceProvider() {
   }
 
   @NotNull
@@ -53,7 +50,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
 
       CachedValue<PsiReference[]> cachedValue = attribute.getUserData(CACHED_XSLT_REFS);
       if (cachedValue == null) {
-        cachedValue = myCacheManager.createCachedValue(new ReferenceProvider(attribute), false);
+        cachedValue = CachedValuesManager.getManager(element.getProject()).createCachedValue(new ReferenceProvider(attribute), false);
         attribute.putUserData(CACHED_XSLT_REFS, cachedValue);
       }
 

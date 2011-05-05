@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2008 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,16 +66,12 @@ public class ColoredProcessHandler extends OSProcessHandler {
   }
 
   public final void notifyTextAvailable(final String text, final Key outputType) {
-    if (outputType != ProcessOutputTypes.STDOUT) {
-      textAvailable(text, outputType);
-      return;
-    }
     int pos = 0;
     while(true) {
       int macroPos = text.indexOf(TEXT_ATTRS_PREFIX, pos);
       if (macroPos < 0) break;
       if (pos != macroPos) {
-        textAvailable(text.substring(pos, macroPos), getCurrentOutputAttributes());
+        textAvailable(text.substring(pos, macroPos), getCurrentOutputAttributes(outputType));
       }
       int macroEndPos = text.indexOf('m', macroPos);
       if (macroEndPos < 0) break;
@@ -85,7 +81,7 @@ public class ColoredProcessHandler extends OSProcessHandler {
       pos = macroEndPos+1;
     }
     if (pos < text.length()) {
-      textAvailable(text.substring(pos), getCurrentOutputAttributes());
+      textAvailable(text.substring(pos), getCurrentOutputAttributes(outputType));
     }
   }
 
@@ -93,8 +89,8 @@ public class ColoredProcessHandler extends OSProcessHandler {
     super.notifyTextAvailable(text, attributes);
   }
 
-  private Key getCurrentOutputAttributes() {
-    return myCurrentColor != null ? myCurrentColor : ProcessOutputTypes.STDOUT;
+  private Key getCurrentOutputAttributes(final Key outputType) {
+    return myCurrentColor != null ? myCurrentColor : outputType;
   }
 
 }

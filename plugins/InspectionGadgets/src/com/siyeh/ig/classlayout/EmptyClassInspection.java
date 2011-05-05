@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,23 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.ui.ExternalizableStringSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+
 public class EmptyClassInspection extends BaseInspection {
+
+    @SuppressWarnings({"PublicField"})
+    public final ExternalizableStringSet ignorableAnnotations =
+            new ExternalizableStringSet();
 
     @Override
     @NotNull
@@ -32,18 +42,24 @@ public class EmptyClassInspection extends BaseInspection {
     @Override
     @NotNull
     protected String buildErrorString(Object... infos) {
-      final Object element = infos[0];
-      if (element instanceof PsiAnonymousClass) {
+        final Object element = infos[0];
+        if (element instanceof PsiAnonymousClass) {
             return InspectionGadgetsBundle.message(
-                     "empty.anonymous.class.problem.descriptor");
+                    "empty.anonymous.class.problem.descriptor");
         } else if (element instanceof PsiClass){
             return InspectionGadgetsBundle.message(
                     "empty.class.problem.descriptor");
+        } else {
+            return InspectionGadgetsBundle.message(
+                    "empty.class.file.without.class.problem.descriptor");
         }
-        else {
-          return InspectionGadgetsBundle.message(
-                  "empty.class.file.without.class.problem.descriptor");
-        }
+    }
+
+    @Override
+    public JComponent createOptionsPanel() {
+        return SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+                ignorableAnnotations,
+                InspectionGadgetsBundle.message("ignore.if.annotated.by"));
     }
 
     @Override
@@ -51,7 +67,7 @@ public class EmptyClassInspection extends BaseInspection {
         return new EmptyClassVisitor();
     }
 
-    private static class EmptyClassVisitor extends BaseInspectionVisitor {
+    private class EmptyClassVisitor extends BaseInspectionVisitor {
 
         @Override public void visitFile(PsiFile file) {
             if (!(file instanceof PsiJavaFile)) {
@@ -61,7 +77,7 @@ public class EmptyClassInspection extends BaseInspection {
             if (javaFile.getClasses().length != 0) {
                 return;
             }
-            final String fileName = javaFile.getName();
+            @NonNls final String fileName = javaFile.getName();
             if ("package-info.java".equals(fileName)) {
                 return;
             }
@@ -70,7 +86,6 @@ public class EmptyClassInspection extends BaseInspection {
 
         @Override public void visitClass(@NotNull PsiClass aClass) {
             //don't call super, to prevent drilldown
-
             if (JspPsiUtil.isInJspFile(aClass.getContainingFile())) {
                 return;
             }
@@ -95,6 +110,9 @@ public class EmptyClassInspection extends BaseInspection {
             }
             final PsiClassInitializer[] initializers = aClass.getInitializers();
             if (initializers.length > 0) {
+                return;
+            }
+            if (AnnotationUtil.isAnnotated(aClass, ignorableAnnotations)) {
                 return;
             }
             registerClassError(aClass, aClass);

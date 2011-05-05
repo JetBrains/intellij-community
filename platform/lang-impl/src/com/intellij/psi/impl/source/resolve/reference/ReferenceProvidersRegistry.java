@@ -21,8 +21,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.patterns.*;
 import com.intellij.pom.references.PomReferenceProvider;
@@ -82,17 +80,12 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
         return o2.getThird().compareTo(o1.getThird());
       }
     };
-  private final Project myProject;
 
-  private static final NotNullLazyKey<ReferenceProvidersRegistry, Project> INSTANCE_CACHE =
-    ServiceManager.createLazyKey(ReferenceProvidersRegistry.class);
-
-  public static ReferenceProvidersRegistry getInstance(Project project) {
-    return INSTANCE_CACHE.getValue(project);
+  public static ReferenceProvidersRegistry getInstance() {
+    return ServiceManager.getService(ReferenceProvidersRegistry.class);
   }
 
-  public ReferenceProvidersRegistry(Project project) {
-    myProject = project;
+  public ReferenceProvidersRegistry() {
     for (final PsiReferenceContributor contributor : ourExtensions) {
       contributor.registerReferenceProviders(this);
     }
@@ -154,10 +147,6 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
     }
   }
 
-  public Project getProject() {
-    return myProject;
-  }
-
   /**
    * @deprecated {@link com.intellij.psi.PsiReferenceContributor}
    */
@@ -199,7 +188,7 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
   }
 
   @NotNull
-  public List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> getPairsByElement(@NotNull PsiElement element,
+  private List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> getPairsByElement(@NotNull PsiElement element,
                                                                                           @NotNull PsiReferenceService.Hints hints) {
     final Class<? extends PsiElement> clazz = element.getClass();
     List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> ret = null;
@@ -229,7 +218,7 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
     assert context.isValid() : "Invalid context: " + context;
 
     final List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> providers =
-      getInstance(context.getProject()).getPairsByElement(context, hints);
+      getInstance().getPairsByElement(context, hints);
     if (providers.isEmpty()) {
       return PsiReference.EMPTY_ARRAY;
     }

@@ -254,10 +254,6 @@ public class PomReferenceServiceImpl extends PomReferenceService {
                                                                  double priority) {
     }
 
-    public Project getProject() {
-      return null;
-    }
-
     @Override
     public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern,
                                                                  @NotNull PomReferenceProvider<T> provider,
