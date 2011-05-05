@@ -38,7 +38,7 @@ public abstract class PsiReferenceRegistrar {
   /**
    * Register reference provider with default priority ({@link #DEFAULT_PRIORITY})
    * @param pattern reference place description. See {@link StandardPatterns}, {@link PlatformPatterns} and their extenders
-   * @param provider
+   * @param provider provider to be registered
    */
   public void registerReferenceProvider(@NotNull ElementPattern<? extends PsiElement> pattern, @NotNull PsiReferenceProvider provider) {
     registerReferenceProvider(pattern, provider, DEFAULT_PRIORITY);
@@ -48,7 +48,7 @@ public abstract class PsiReferenceRegistrar {
   /**
    * Register reference provider
    * @param pattern reference place description. See {@link StandardPatterns}, {@link PlatformPatterns} and their extenders
-   * @param provider
+   * @param provider provider to be registered
    * @param priority @see DEFAULT_PRIORITY, HIGHER_PRIORITY, LOWER_PRIORITY
    */
   public abstract <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern, @NotNull PsiReferenceProvider provider, double priority);
