@@ -34,6 +34,8 @@ public class DirDiffSettings {
   public boolean showCompareModes = true;
   public CompareMode compareMode = CompareMode.CONTENT;
 
+  public boolean showInFrame = true; // in dialog otherwise
+
   private String filter = "";
   private Pattern filterPattern = PatternUtil.fromMask("*");
 
