@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -34,8 +33,6 @@ import git4idea.vfs.GitReferenceListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -113,17 +110,11 @@ public class GitBranches implements GitReferenceListener {
   /**
    * Updates branch information for the given root.
    * If root is null, updates branch information for all Git roots in the project.
-   * @see #fullyUpdateBranchesInfo(java.util.Collection)
+   * @see #fullyUpdateBranchesInfo(com.intellij.openapi.vfs.VirtualFile[])
    */
   private void updateBranchesInfo(final VirtualFile root) {
     if (root == null) { // all roots may be affected
-      Collection<VirtualFile> roots = new ArrayList<VirtualFile>(1);
-      for (VcsRoot vcsRoot : myVcsManager.getAllVcsRoots()) {
-        if (vcsRoot.vcs != null && vcsRoot.vcs instanceof GitVcs && vcsRoot.path != null) {
-          roots.add(vcsRoot.path);
-        }
-      }
-      fullyUpdateBranchesInfo(roots);
+      fullyUpdateBranchesInfo(myVcsManager.getRootsUnderVcs(myVcs));
       return;
     }
 
@@ -140,7 +131,7 @@ public class GitBranches implements GitReferenceListener {
     }
   }
 
-  private void fullyUpdateBranchesInfo(final Collection<VirtualFile> roots) {
+  private void fullyUpdateBranchesInfo(final VirtualFile[] roots) {
     if (roots == null) { return; }
     Map<VirtualFile, GitBranch> currentBranches = new HashMap<VirtualFile, GitBranch>();
     for (VirtualFile root : roots) {
