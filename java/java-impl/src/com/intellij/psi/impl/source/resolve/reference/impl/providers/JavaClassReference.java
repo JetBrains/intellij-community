@@ -428,7 +428,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   private GlobalSearchScope getScope() {
-    final GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope();
+    final GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope(getElement().getProject());
     if (scope == null) {
       final Module module = ModuleUtil.findModuleForPsiElement(getElement());
       if (module != null) {
@@ -503,7 +503,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   private Object[] getSubclassVariants(@NotNull PsiPackage context, @NotNull String[] extendClasses) {
     HashSet<Object> lookups = new HashSet<Object>();
     GlobalSearchScope packageScope = PackageScope.packageScope(context, true);
-    GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope();
+    GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope(getElement().getProject());
     if (scope != null) {
       packageScope = packageScope.intersectWith(scope);
     }
