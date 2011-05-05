@@ -120,7 +120,7 @@ public class InplaceIntroduceFieldPopup {
 
     myIntroduceFieldPanel =
       new IntroduceFieldPopupPanel(parentClass, initializerExpression, localVariable, currentMethodConstructor, localVariable != null, aStatic,
-                               myOccurrences.length, allowInitInMethod, allowInitInMethodIfAll, typeSelectorManager);
+                               myOccurrences, allowInitInMethod, allowInitInMethodIfAll, typeSelectorManager);
 
     myWholePanel = new JPanel(new GridBagLayout());
     myWholePanel.setBorder(null);
