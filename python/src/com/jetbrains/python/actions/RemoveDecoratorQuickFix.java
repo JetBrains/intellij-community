@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User: catherine
  *
- * QuickFix to remove redundant argument equal default
+ * QuickFix to remove redundant decorator
  */
 public class RemoveDecoratorQuickFix implements LocalQuickFix {
   @NotNull
