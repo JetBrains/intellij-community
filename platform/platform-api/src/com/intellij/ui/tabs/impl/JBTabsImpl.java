@@ -65,6 +65,9 @@ public class JBTabsImpl extends JComponent
   implements JBTabs, PropertyChangeListener, TimerListener, DataProvider, PopupMenuListener, Disposable, JBTabsPresentation, Queryable, QuickActionProvider {
 
   static DataKey<JBTabsImpl> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
+  
+  public static final String EDITOR_TABS = "main.editor.tabs";
+  public static final Color MAC_AQUA_BG_COLOR = new Color(200, 200, 200);
 
   ActionManager myActionManager;
   private final List<TabInfo> myVisibleInfos = new ArrayList<TabInfo>();
@@ -1455,7 +1458,11 @@ public class JBTabsImpl extends JComponent
     config.setAntialiasing(true);
 
 
-    g2d.setColor(getBackground());
+    if (getClientProperty(EDITOR_TABS) != null && UIUtil.isUnderAquaLookAndFeel()) {
+      g2d.setColor(MAC_AQUA_BG_COLOR);
+    } else {
+      g2d.setColor(getBackground());
+    }
     final Rectangle clip = g2d.getClipBounds();
     g2d.fillRect(clip.x, clip.y, clip.width, clip.height);
 

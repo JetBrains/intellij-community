@@ -124,7 +124,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       if (psiField != null && psiField.getParent() == aClass) break;
       aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
     }
-    if (classes.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (classes.size() == 1 || editor == null || ApplicationManager.getApplication().isUnitTestMode()) {
       return !convertExpressionToField(selectedExpr, editor, file, project, tempType);
     }
     else {
@@ -143,7 +143,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   }
 
   private boolean convertExpressionToField(PsiExpression selectedExpr,
-                                           Editor editor,
+                                           @Nullable Editor editor,
                                            PsiFile file,
                                            final Project project,
                                            PsiType tempType) {

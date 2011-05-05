@@ -247,7 +247,7 @@ public class Messages {
 
   public static int showCheckboxOkCancelDialog(String message, String title, String checkboxText, final boolean checked,
                                                   final int defaultOptionIndex, final int focusedOptionIndex, Icon icon) {
-    return showCheckboxMessageDialog(message, title, checkboxText, checked, defaultOptionIndex, focusedOptionIndex, icon,
+    return showCheckboxMessageDialog(message, title, new String[] {OK_BUTTON, CANCEL_BUTTON}, checkboxText, checked, defaultOptionIndex, focusedOptionIndex, icon,
                                      new PairFunction<Integer, JCheckBox, Integer>() {
                                        @Override
                                        public Integer fun(final Integer exitCode, final JCheckBox cb) {
@@ -256,14 +256,14 @@ public class Messages {
                                      });
   }
 
-  public static int showCheckboxMessageDialog(String message, String title, String checkboxText, final boolean checked,
+  public static int showCheckboxMessageDialog(String message, String title, String[] options, String checkboxText, final boolean checked,
                                                   final int defaultOptionIndex, final int focusedOptionIndex, Icon icon,
                                                   @Nullable final PairFunction<Integer, JCheckBox, Integer> exitFunc) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestImplementation.show(message);
     }
     else {
-      TwoStepConfirmationDialog dialog = new TwoStepConfirmationDialog(message, title, checkboxText, checked, defaultOptionIndex,
+      TwoStepConfirmationDialog dialog = new TwoStepConfirmationDialog(message, title, options, checkboxText, checked, defaultOptionIndex,
                                                                        focusedOptionIndex, icon, exitFunc);
       dialog.show();
       return dialog.getExitCode();
@@ -272,7 +272,7 @@ public class Messages {
 
 
   public static int showTwoStepConfirmationDialog(String message, String title, String checkboxText, Icon icon) {
-    return showCheckboxMessageDialog(message, title, checkboxText, true, -1, -1, icon, null);
+    return showCheckboxMessageDialog(message, title, new String[] {OK_BUTTON, CANCEL_BUTTON}, checkboxText, true, -1, -1, icon, null);
   }
 
   public static void showErrorDialog(Project project, @Nls String message, @Nls String title) {
@@ -801,13 +801,13 @@ public class Messages {
     private boolean myChecked;
     private PairFunction<Integer, JCheckBox, Integer> myExitFunc;
 
-    public TwoStepConfirmationDialog(String message, String title, String checkboxText, boolean checked, final int defaultOptionInxed,
+    public TwoStepConfirmationDialog(String message, String title, String[] options, String checkboxText, boolean checked, final int defaultOptionInxed,
                                      final int focusedOptionIndex, Icon icon, @Nullable final PairFunction<Integer, JCheckBox, Integer> exitFunc) {
       myCheckboxText = checkboxText;
       myChecked = checked;
       myExitFunc = exitFunc;
 
-      _init(title, message, new String[] {OK_BUTTON, CANCEL_BUTTON}, defaultOptionInxed, focusedOptionIndex, icon, null);
+      _init(title, message, options, defaultOptionInxed, focusedOptionIndex, icon, null);
     }
 
     @Override

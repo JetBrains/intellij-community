@@ -50,7 +50,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -69,7 +68,7 @@ import java.util.Set;
  * @author Konstantin Bulenkov
  * @author Anna Kozlova
  */
-public class NavBarPanel extends OpaquePanel.List implements DataProvider, PopupOwner, Disposable {
+public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Disposable {
 
   private final NavBarModel myModel;
 
@@ -96,9 +95,8 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
   private RelativePoint myLocationCache;
   private boolean initialized = false;
 
-
   public NavBarPanel(final Project project) {
-    super(new FlowLayout(FlowLayout.LEFT, 5, 0), UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
+    super(new FlowLayout(FlowLayout.LEFT, 5, 0));
     myProject = project;
     myModel = new NavBarModel(myProject);
     myIdeView = new NavBarIdeView(this);
@@ -108,6 +106,7 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.NAVIGATION_BAR);
 
     setBorder(new NavBarBorder(false, -1));
+    setOpaque(false);
 
     myCopyPasteDelegator = new CopyPasteDelegator(myProject, NavBarPanel.this) {
       @NotNull
@@ -690,7 +689,12 @@ public class NavBarPanel extends OpaquePanel.List implements DataProvider, Popup
       @Override
       public void run() {
         if (myModel.isEmpty()) return;
-        myHint = new LightweightHint(NavBarPanel.this) {
+        final JPanel panel = new JPanel(new BorderLayout());
+        panel.add(NavBarPanel.this);
+        panel.setOpaque(true);
+        panel.setBackground(UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
+
+        myHint = new LightweightHint(panel) {
           public void hide() {
             super.hide();
             cancelPopup();

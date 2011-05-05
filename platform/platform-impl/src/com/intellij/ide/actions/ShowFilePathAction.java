@@ -168,13 +168,6 @@ public class ShowFilePathAction extends AnAction {
     return SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isGnome || SystemInfo.isKDE || Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
   }
 
-  public static String getFileExplorerName() {
-    if (SystemInfo.isMac) return "Finder";
-    if (SystemInfo.isGnome) return "Nautilus";
-    if (SystemInfo.isKDE) return "Konqueror";
-    return "Explorer";
-  }
-
   public static void open(final File ioFile, File toSelect) {
     try {
       if (SystemInfo.isWindows || SystemInfo.isMac) {

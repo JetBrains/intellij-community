@@ -390,6 +390,11 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest(new GroovyAssignabilityCheckInspection());
   }
 
+  public void testCanonicalConstructorApplicability() throws Exception {
+    myFixture.addClass("package groovy.transform; public @interface Canonical {}");
+    doTest(new GroovyAssignabilityCheckInspection());
+  }
+
   public void testUnusedDefsForArgs() {
     doTest(new UnusedDefInspection());
   }

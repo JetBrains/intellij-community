@@ -151,14 +151,14 @@ public class ClassTypeArgumentMigrationProcessor {
   private void prepareMethodsChangeSignature(final PsiClass currentClass, final PsiElement memberToChangeSignature, final PsiType memberType) {
     if (memberToChangeSignature instanceof PsiMethod) {
       final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(currentClass, (PsiMethod)memberToChangeSignature, true);
-      if (method.getContainingClass() == currentClass) {
+      if (method != null && method.getContainingClass() == currentClass) {
         myLabeler.addRoot(new TypeMigrationUsageInfo(method), memberType, method, false);
       }
     } else if (memberToChangeSignature instanceof PsiParameter && ((PsiParameter)memberToChangeSignature).getDeclarationScope() instanceof PsiMethod) {
       final PsiMethod superMethod = (PsiMethod)((PsiParameter)memberToChangeSignature).getDeclarationScope();
       final int parameterIndex = superMethod.getParameterList().getParameterIndex((PsiParameter)memberToChangeSignature);
       final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(currentClass, superMethod, true);
-      if (method.getContainingClass() == currentClass) {
+      if (method != null && method.getContainingClass() == currentClass) {
         final PsiParameter parameter = method.getParameterList().getParameters()[parameterIndex];
         myLabeler.addRoot(new TypeMigrationUsageInfo(parameter), memberType, parameter, false);
       }
