@@ -24,6 +24,7 @@ import java.util.*;
  */
 public class PyClassRefactoringUtil {
   private static final Logger LOG = Logger.getInstance(PyClassRefactoringUtil.class.getName());
+  private static final Key<PsiNamedElement> ENCODED_IMPORT = Key.create("PyEncodedImport");
 
   private PyClassRefactoringUtil() {}
 
@@ -102,9 +103,11 @@ public class PyClassRefactoringUtil {
     return false;
   }
 
-  public static void moveMethods(List<PyFunction> methods, PyClass superClass) {
+  public static void moveMethods(Collection<PyFunction> methods, PyClass superClass) {
     if (methods.size() == 0) return;
-    rememberNamedReferences(methods);
+    for (PsiElement e : methods) {
+      rememberNamedReferences(e);
+    }
     final PyElement[] elements = methods.toArray(new PyElement[methods.size()]);
     addMethods(superClass, elements, true);
     removeMethodsWithComments(elements);
@@ -139,7 +142,7 @@ public class PyClassRefactoringUtil {
       }
       if (newStatement instanceof PyExpressionStatement && newStatement.getFirstChild() instanceof PyStringLiteralExpression) continue;
       final PsiElement anchor = statements.add(newStatement);
-      restoreReferences((PyElement)anchor);
+      restoreNamedReferences(anchor);
       final Set<PsiElement> comments = PyUtil.getComments(newStatement);
       for (PsiElement comment : comments) {
         statements.addBefore(comment, anchor);
@@ -148,8 +151,8 @@ public class PyClassRefactoringUtil {
     PyPsiUtils.removeRedundantPass(statements);
   }
 
-  private static void restoreReferences(PyElement newStatement) {
-    newStatement.acceptChildren(new PyRecursiveElementVisitor() {
+  public static void restoreNamedReferences(PsiElement element) {
+    element.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
         super.visitPyReferenceExpression(node);
@@ -209,15 +212,23 @@ public class PyClassRefactoringUtil {
     }
   }
 
+  public static void rememberNamedReferences(final PsiElement element) {
+    element.acceptChildren(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyReferenceExpression(PyReferenceExpression node) {
+        super.visitPyReferenceExpression(node);
+        rememberReference(node, element);
+      }
+    });
+  }
 
-  private static final Key<PsiNamedElement> ENCODED_IMPORT = Key.create("PyEncodedImport");
-  private static void rememberReference(PyReferenceExpression node, PyFunction method) {
+  private static void rememberReference(PyReferenceExpression node, PsiElement element) {
     // we will remember reference in deepest node
     if (node.getQualifier() instanceof PyReferenceExpression) return;
 
     final PsiPolyVariantReference ref = node.getReference();
     final PsiElement target = ref.resolve();
-    if (target instanceof PsiNamedElement && !PsiTreeUtil.isAncestor(method, target, false)) {
+    if (target instanceof PsiNamedElement && !PsiTreeUtil.isAncestor(element, target, false)) {
       node.putCopyableUserData(ENCODED_IMPORT, (PsiNamedElement)target);
     }
   }
