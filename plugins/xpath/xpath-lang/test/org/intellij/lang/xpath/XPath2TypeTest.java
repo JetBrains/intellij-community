@@ -140,7 +140,17 @@ public class XPath2TypeTest extends XPath2HighlightingTestBase {
     doXPathHighlighting();
   }
 
+  public void testNumericIDivDuration() throws Throwable {
+    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    doXPathHighlighting();
+  }
+
   public void testDurationDivNumeric() throws Throwable {
+    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    doXPathHighlighting();
+  }
+
+  public void testDurationIDivNumeric() throws Throwable {
     ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
     doXPathHighlighting();
   }

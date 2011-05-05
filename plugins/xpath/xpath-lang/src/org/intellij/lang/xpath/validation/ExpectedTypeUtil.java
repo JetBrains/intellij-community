@@ -181,7 +181,7 @@ public class ExpectedTypeUtil {
         final XPathExpression lop = parent.getLOperand();
         if (op == XPathTokenTypes.AND || op == XPathTokenTypes.OR) {
           myExpectedType = XPathType.BOOLEAN;
-        } else if (XPathTokenTypes.NUMBER_OPERATIONS.contains(op)) {
+        } else if (XPath2TokenTypes.NUMBER_OPERATIONS.contains(op)) {
           if (isXPath1(myExpression)) {
             myExpectedType = XPathType.NUMBER;
           } else {
