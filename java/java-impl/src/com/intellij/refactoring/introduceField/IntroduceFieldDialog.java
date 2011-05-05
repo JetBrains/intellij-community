@@ -60,7 +60,7 @@ class IntroduceFieldDialog extends DialogWrapper {
                               PsiExpression initializerExpression,
                               PsiLocalVariable localVariable,
                               boolean isCurrentMethodConstructor, boolean isInvokedOnDeclaration, boolean willBeDeclaredStatic,
-                              int occurrencesCount, boolean allowInitInMethod, boolean allowInitInMethodIfAll,
+                              PsiExpression[] occurrences, boolean allowInitInMethod, boolean allowInitInMethodIfAll,
                               TypeSelectorManager typeSelectorManager) {
     super(project, true);
     myProject = project;
@@ -68,7 +68,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     myInitializerExpression = initializerExpression;
     myCentralPanel =
       new IntroduceFieldDialogPanel(parentClass, initializerExpression, localVariable, isCurrentMethodConstructor, isInvokedOnDeclaration,
-                                     willBeDeclaredStatic, occurrencesCount, allowInitInMethod, allowInitInMethodIfAll,
+                                     willBeDeclaredStatic, occurrences, allowInitInMethod, allowInitInMethodIfAll,
                                      typeSelectorManager);
     myLocalVariable = localVariable;
     myIsInvokedOnDeclaration = isInvokedOnDeclaration;

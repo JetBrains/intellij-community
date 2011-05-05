@@ -29,6 +29,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -66,10 +67,11 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private NameSuggestionsField.DataChanged myParameterNameChangedListener;
 
   private IntroduceParameterSettingsPanel myPanel;
+  private boolean myHasWriteAccess = false;
 
   IntroduceParameterDialog(@NotNull Project project,
                            @NotNull List<UsageInfo> classMembersList,
-                           int occurenceNumber,
+                           PsiExpression[] occurences,
                            PsiLocalVariable onLocalVariable,
                            PsiExpression onExpression,
                            @NotNull NameSuggestionsGenerator generator,
@@ -82,7 +84,13 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     myPanel = new IntroduceParameterSettingsPanel(project, onLocalVariable, onExpression, methodToReplaceIn, parametersToRemove);
     myProject = project;
     myClassMembersList = classMembersList;
-    myOccurenceNumber = occurenceNumber;
+    myOccurenceNumber = occurences.length;
+    for (PsiExpression occurence : occurences) {
+      if (PsiUtil.isAccessedForWriting(occurence)) {
+        myHasWriteAccess = true;
+        break;
+      }
+    }
     myExpression = onExpression;
     myLocalVar = onLocalVariable;
     myMethodToReplaceIn = methodToReplaceIn;
@@ -209,6 +217,9 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     if (myMustBeFinal) {
       myCbDeclareFinal.setSelected(true);
       myCbDeclareFinal.setEnabled(false);
+    } else if (myHasWriteAccess) {
+      myCbDeclareFinal.setSelected(false);
+      myCbDeclareFinal.setEnabled(false);
     }
 
     gbConstraints.gridy++;
@@ -230,7 +241,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     final JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     settings.INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS =
             myPanel.getReplaceFieldsWithGetters();
-    if (myCbDeclareFinal != null && !myMustBeFinal) {
+    if (myCbDeclareFinal != null && myCbDeclareFinal.isEnabled()) {
       settings.INTRODUCE_PARAMETER_CREATE_FINALS = Boolean.valueOf(myCbDeclareFinal.isSelected());
     }
 
