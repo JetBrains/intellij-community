@@ -25,6 +25,7 @@
     <orderEntry type="library" name="commons-lang" level="project" />
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="smRunner" />
   </component>
 </module>
 
