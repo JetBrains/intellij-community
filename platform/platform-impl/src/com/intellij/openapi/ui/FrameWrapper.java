@@ -36,6 +36,7 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -66,7 +67,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     this(project, null);
   }
 
-  public FrameWrapper(Project project, @NonNls String dimensionServiceKey) {
+  public FrameWrapper(Project project, @Nullable @NonNls String dimensionServiceKey) {
     myProject = project;
     myDimensionKey = dimensionServiceKey;
   }
@@ -123,7 +124,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     frame.setIconImage(myImage);
 
     if (restoreBounds) {
-      loadFrameState(myProject, myDimensionKey, frame);
+      loadFrameState();
     }
 
     myFocusWatcher = new FocusWatcher() {
@@ -223,20 +224,21 @@ public class FrameWrapper implements Disposable, DataProvider {
     myImage = image;
   }
 
-  private static void loadFrameState(Project project, String dimensionKey, JFrame frame) {
+  protected void loadFrameState() {
+    final JFrame frame = getFrame();
     final Point location;
     final Dimension size;
     final int extendedState;
     DimensionService dimensionService = DimensionService.getInstance();
-    if (dimensionKey == null || dimensionService == null) {
+    if (myDimensionKey == null || dimensionService == null) {
       location = null;
       size = null;
       extendedState = -1;
     }
     else {
-      location = dimensionService.getLocation(dimensionKey);
-      size = dimensionService.getSize(dimensionKey);
-      extendedState = dimensionService.getExtendedState(dimensionKey);
+      location = dimensionService.getLocation(myDimensionKey);
+      size = dimensionService.getSize(myDimensionKey);
+      extendedState = dimensionService.getExtendedState(myDimensionKey);
     }
 
     if (size != null && location != null) {
@@ -246,7 +248,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     }
     else {
       frame.pack();
-      frame.setBounds(WindowManagerEx.getInstanceEx().getIdeFrame(project).suggestChildFrameBounds());
+      frame.setBounds(WindowManagerEx.getInstanceEx().getIdeFrame(myProject).suggestChildFrameBounds());
     }
 
     if (extendedState == Frame.ICONIFIED || extendedState == Frame.MAXIMIZED_BOTH) {
