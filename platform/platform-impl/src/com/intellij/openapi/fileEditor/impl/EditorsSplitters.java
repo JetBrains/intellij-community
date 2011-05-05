@@ -131,15 +131,15 @@ public class EditorsSplitters extends JPanel {
       final boolean aquaLookAndFeel = UIUtil.isUnderAquaLookAndFeel();
       UIUtil.applyRenderingHints(g);
       g.setColor(aquaLookAndFeel ? new Color(100, 100, 100) : Color.LIGHT_GRAY);
-      g.setFont(UIUtil.getLabelFont().deriveFont(aquaLookAndFeel ? 17f : 19f));
+      g.setFont(UIUtil.getLabelFont().deriveFont(18f));
 
-      final UIUtil.TextPainter painter = new UIUtil.TextPainter(1.3f);
+      final UIUtil.TextPainter painter = new UIUtil.TextPainter(1.4f);
       painter.appendLine("No files are open").underlined(aquaLookAndFeel ? new Color(150, 150, 150) : Color.LIGHT_GRAY)
-        .appendLine("\u2022 Open Project Navigator with " +
-                    KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke("meta 1"), null))).smaller()
-        .appendLine("\u2022 Open Recent files with " + getActionShortcutText("RecentFiles")).smaller()
-        .appendLine("\u2022 Open NavBar with " + getActionShortcutText("ShowNavBar")).smaller()
-        .appendLine("\u2022 Drag'n'Drop file(s) here from " + SystemInfo.nativeFileManagerName).smaller().draw(g,
+        .appendLine("Open Project Navigator with " +
+                    KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke("meta 1"), null))).smaller().withBullet()
+        .appendLine("Open Recent files with " + getActionShortcutText("RecentFiles")).smaller().withBullet()
+        .appendLine("Open NavBar with " + getActionShortcutText("ShowNavBar")).smaller().withBullet()
+        .appendLine("Drag'n'Drop file(s) here from " + SystemInfo.nativeFileManagerName).smaller().withBullet().draw(g,
                                               new PairFunction<Integer, Integer, Pair<Integer, Integer>>() {
                                                 @Override
                                                 public Pair<Integer, Integer> fun(

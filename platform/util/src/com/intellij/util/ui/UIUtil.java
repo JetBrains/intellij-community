@@ -1986,12 +1986,22 @@ public class UIUtil {
       return this;
     }
 
-    public TextPainter underlined() {
+    public TextPainter withBullet(final char c) {
       if (myLines.size() > 0) {
-        myLines.get(myLines.size() - 1).getSecond().underlined = true;
+        final LineInfo info = myLines.get(myLines.size() - 1).getSecond();
+        info.withBullet = true;
+        info.bulletChar = c;
       }
       
       return this;
+    }
+
+    public TextPainter withBullet() {
+      return withBullet('\u2022');
+    }
+
+    public TextPainter underlined() {
+      return underlined(null);
     }
     
     public TextPainter smaller() {
@@ -2016,6 +2026,7 @@ public class UIUtil {
     public void draw(@NotNull final Graphics g, final PairFunction<Integer, Integer, Pair<Integer, Integer>> _position) {
       final int[] maxWidth = new int[] {0};
       final int[] height = new int[] {0};
+      final int[] maxBulletWidth = new int[] {0};
       ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
         @Override
         public boolean process(final Pair<String, LineInfo> pair) {
@@ -2023,12 +2034,15 @@ public class UIUtil {
           Font old = null;
           if (info.smaller) {
             old = g.getFont();
-            g.setFont(old.deriveFont(old.getSize() * 0.75f));
+            g.setFont(old.deriveFont(old.getSize() * 0.70f));
           }
           
           final FontMetrics fm = g.getFontMetrics();
           
-          maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst()), maxWidth[0]);
+          final int bulletWidth = info.withBullet ? fm.stringWidth(" " + info.bulletChar) : 0;
+          maxBulletWidth[0] = Math.max(maxBulletWidth[0], bulletWidth);
+          
+          maxWidth[0] = Math.max(fm.stringWidth(pair.getFirst() + bulletWidth), maxWidth[0]);
           height[0] += (fm.getHeight() + fm.getLeading()) * myLineSpacing;
           
           if (old != null) {
@@ -2039,7 +2053,7 @@ public class UIUtil {
         }
       });
 
-      final Pair<Integer, Integer> position = _position.fun(maxWidth[0], height[0]);
+      final Pair<Integer, Integer> position = _position.fun(maxWidth[0] + 20, height[0]);
       assert position != null;
       
       final int[] yOffset = new int[] {position.getSecond()};
@@ -2050,10 +2064,10 @@ public class UIUtil {
           Font old = null;
           if (info.smaller) {
             old = g.getFont();
-            g.setFont(old.deriveFont(old.getSize() * 0.75f));
+            g.setFont(old.deriveFont(old.getSize() * 0.70f));
           }
           
-          final int x = position.getFirst();
+          final int x = position.getFirst() + maxBulletWidth[0] + 10;
 
           final FontMetrics fm = g.getFontMetrics();
           int xOffset = x;
@@ -2064,10 +2078,19 @@ public class UIUtil {
           if (myDrawMacShadow && UIUtil.isUnderAquaLookAndFeel()) {
             final Color oldColor = g.getColor();
             g.setColor(myMacShadowColor);
+
+            if (info.withBullet) {
+              g.drawString(String.valueOf(info.bulletChar) + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0] + 1);
+            }
+
             g.drawString(pair.getFirst(), xOffset, yOffset[0] + 1);
             g.setColor(oldColor);
           }
           
+          if (info.withBullet) {
+            g.drawString(String.valueOf(info.bulletChar) + " ", x - fm.stringWidth(" " + info.bulletChar), yOffset[0]);
+          }
+
           g.drawString(pair.getFirst(), xOffset, yOffset[0]);
           
           Color c = null;
@@ -2077,7 +2100,7 @@ public class UIUtil {
               g.setColor(info.underlineColor);
             }
             
-            g.drawLine(x, yOffset[0] + fm.getDescent(), x + maxWidth[0], yOffset[0] + fm.getDescent());
+            g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
             if (c != null) {
               g.setColor(c);
               c = null;
@@ -2086,7 +2109,7 @@ public class UIUtil {
             if (myDrawMacShadow && UIUtil.isUnderAquaLookAndFeel()) {
               c = g.getColor();
               g.setColor(myMacShadowColor);
-              g.drawLine(x, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0], yOffset[0] + fm.getDescent() + 1);
+              g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10, yOffset[0] + fm.getDescent() + 1);
               g.setColor(c);
               c = null;
             }
@@ -2105,6 +2128,8 @@ public class UIUtil {
     
     private static class LineInfo {
       boolean underlined;
+      boolean withBullet;
+      char bulletChar;
       Color underlineColor;
       boolean smaller;
       public boolean center;
