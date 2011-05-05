@@ -1,11 +1,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceBase;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProviderBase;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +32,7 @@ public class WordCompletionTest extends CompletionTestCase {
   }
 
   public void testNoWordCompletionForNonSoftReference() throws Throwable {
-    final PsiReferenceProviderBase softProvider = new PsiReferenceProviderBase() {
+    final PsiReferenceProvider softProvider = new PsiReferenceProvider() {
       @Override
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
@@ -54,7 +50,7 @@ public class WordCompletionTest extends CompletionTestCase {
         }};
       }
     };
-    final PsiReferenceProviderBase hardProvider = new PsiReferenceProviderBase() {
+    final PsiReferenceProvider hardProvider = new PsiReferenceProvider() {
       @Override
       @NotNull
       public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
@@ -72,11 +68,17 @@ public class WordCompletionTest extends CompletionTestCase {
         }};
       }
     };
-    ReferenceProvidersRegistry.getInstance().registerReferenceProvider(PsiLiteralExpression.class, softProvider);
-    ReferenceProvidersRegistry.getInstance().registerReferenceProvider(PsiLiteralExpression.class, hardProvider);
+    try {
+      ReferenceProvidersRegistry.getInstance().registerReferenceProvider(PsiLiteralExpression.class, softProvider);
+      ReferenceProvidersRegistry.getInstance().registerReferenceProvider(PsiLiteralExpression.class, hardProvider);
 
-    configureByFile(BASE_PATH + "3.java");
-    checkResultByFile(BASE_PATH + "3_after.java");
+      configureByFile(BASE_PATH + "3.java");
+      checkResultByFile(BASE_PATH + "3_after.java");
+    }
+    finally {
+      ReferenceProvidersRegistry.getInstance().unregisterReferenceProvider(PsiLiteralExpression.class, softProvider);
+      ReferenceProvidersRegistry.getInstance().unregisterReferenceProvider(PsiLiteralExpression.class, hardProvider);
+    }
   }
 
   public void testInJavaLiterals() throws Exception {
