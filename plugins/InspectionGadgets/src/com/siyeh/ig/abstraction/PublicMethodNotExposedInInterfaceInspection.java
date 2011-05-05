@@ -15,7 +15,8 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -25,15 +26,22 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.TestUtils;
+import com.siyeh.ig.ui.CheckBox;
+import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class PublicMethodNotExposedInInterfaceInspection
         extends BaseInspection {
 
     @SuppressWarnings({"PublicField"})
     public boolean onlyWarnIfContainingClassImplementsAnInterface = false;
+
+    @SuppressWarnings({"PublicField"})
+    public final ExternalizableStringSet ignorableAnnotations =
+            new ExternalizableStringSet();
 
     @Override
     @NotNull
@@ -51,9 +59,25 @@ public class PublicMethodNotExposedInInterfaceInspection
 
     @Override
     public JComponent createOptionsPanel() {
-        return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+        final JPanel panel = new JPanel(new GridBagLayout());
+        final JPanel annotationsListControl =
+                SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+                        ignorableAnnotations,
+                        InspectionGadgetsBundle.message(
+                                "ignore.if.annotated.by"));
+        final GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.weightx = 1.0;
+        constraints.anchor = GridBagConstraints.WEST;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(annotationsListControl, constraints);
+        final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message(
                 "public.method.not.in.interface.option"),
                 this, "onlyWarnIfContainingClassImplementsAnInterface");
+        constraints.gridy = 1;
+        panel.add(checkBox, constraints);
+        return panel;
     }
 
     @Override
@@ -87,6 +111,9 @@ public class PublicMethodNotExposedInInterfaceInspection
                 return;
             }
             if (!containingClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+                return;
+            }
+            if (AnnotationUtil.isAnnotated(method, ignorableAnnotations)) {
                 return;
             }
             if (onlyWarnIfContainingClassImplementsAnInterface) {
