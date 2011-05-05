@@ -44,7 +44,9 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   static final TextAttributesKey PY_KEYWORD = _copy("PY.KEYWORD", KEYWORD);
 
   public static final TextAttributesKey PY_BYTE_STRING = _copy("PY.STRING.B", STRING);
-  public static final TextAttributesKey PY_UNICODE_STRING = _copy("PY.STRING.U", STRING);
+  public static final TextAttributesKey PY_UNICODE_STRING = TextAttributesKey.createTextAttributesKey(
+    "PY.STRING.U", new TextAttributes(new Color(0, 128, 128), null, null, null, STRING.getDefaultAttributes().getFontType())
+  );
   public static final TextAttributesKey PY_NUMBER = _copy("PY.NUMBER", NUMBER);
 
   static final TextAttributesKey PY_LINE_COMMENT = _copy("PY.LINE_COMMENT", LINE_COMMENT);

@@ -3,11 +3,13 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.stubs.PyFileStub;
 
+import java.util.BitSet;
 import java.util.List;
 
 import static com.jetbrains.python.psi.FutureFeature.ABSOLUTE_IMPORT;
@@ -17,19 +19,24 @@ import static com.jetbrains.python.psi.FutureFeature.ABSOLUTE_IMPORT;
  */
 public class PyFileStubImpl extends PsiFileStubImpl<PyFile> implements PyFileStub {
   private final List<String> myDunderAll;
-  private final boolean myAbsoluteImportEnabled;
+  private final BitSet myFutureFeatures; // stores IDs of features
+
+  private static final int FUTURE_FEATURE_SET_SIZE = 32; // 32 features is ought to be enough for everybody! all bits fit into an int.
 
   public PyFileStubImpl(final PyFile file) {
     super(file);
     final PyFileImpl fileImpl = (PyFileImpl)file;
+    myFutureFeatures = new BitSet(FUTURE_FEATURE_SET_SIZE);
     myDunderAll = fileImpl.calculateDunderAll();
-    myAbsoluteImportEnabled = fileImpl.calculateImportFromFuture(ABSOLUTE_IMPORT);
+    for (FutureFeature fuf : FutureFeature.ALL) {
+      myFutureFeatures.set(fuf.ordinal(), fileImpl.calculateImportFromFuture(fuf));
+    }
   }
 
-  public PyFileStubImpl(List<String> dunderAll, final boolean absoluteImportEnabled) {
+  public PyFileStubImpl(List<String> dunderAll, final BitSet future_features) {
     super(null);
     myDunderAll = dunderAll;
-    myAbsoluteImportEnabled = absoluteImportEnabled;
+    myFutureFeatures = future_features;
   }
 
   @Override
@@ -38,8 +45,8 @@ public class PyFileStubImpl extends PsiFileStubImpl<PyFile> implements PyFileStu
   }
 
   @Override
-  public boolean isAbsoluteImportEnabled() {
-    return myAbsoluteImportEnabled;
+  public BitSet getFutureFeatures() {
+    return myFutureFeatures;
   }
 
   @Override

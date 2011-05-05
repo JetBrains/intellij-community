@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.85" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.86" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -129,7 +129,7 @@ def _searchbases(cls, accum):
 
 def getMRO(a_class):
 # logic copied from inspect.py
-    "Returns a tuple of MRO classes."
+    """Returns a tuple of MRO classes."""
     if hasattr(a_class, "__mro__"):
         return a_class.__mro__
     elif hasattr(a_class, "__bases__"):
@@ -141,7 +141,7 @@ def getMRO(a_class):
 
 
 def getBases(a_class): # TODO: test for classes that don't fit this scheme
-    "Returns a sequence of class's bases."
+    """Returns a sequence of class's bases."""
     if hasattr(a_class, "__bases__"):
         return a_class.__bases__
     else:
@@ -153,7 +153,7 @@ def isCallable(x):
 
 
 def sortedNoCase(p_array):
-    "Sort an array case insensitevely, returns a sorted copy"
+    """Sort an array case insensitevely, returns a sorted copy"""
     p_array = list(p_array)
     if version[0] < 3:
         def c(x, y):
@@ -221,7 +221,7 @@ def isProperty(x):
     return isinstance(x, _prop_types)
 
 def sanitizeIdent(x, is_clr=False):
-    "Takes an identifier and returns it sanitized"
+    """Takes an identifier and returns it sanitized"""
     if x in ("class", "object", "def", "list", "tuple", "int", "float", "str", "unicode" "None"):
         return "p_" + x
     else:
@@ -243,7 +243,7 @@ def reliable_repr(value):
     return repr(value)
 
 def sanitizeValue(p_value):
-    "Returns p_value or its part if it represents a sane simple value, else returns 'None'"
+    """Returns p_value or its part if it represents a sane simple value, else returns 'None'"""
     if isinstance(p_value, STR_TYPES):
         match = SIMPLE_VALUE_RE.match(p_value)
         if match:
@@ -261,7 +261,7 @@ def sanitizeValue(p_value):
             return repr(repr(p_value)) # function -> "<function ...>", etc
 
 def extractAlphaPrefix(p_string, default="some"):
-    "Returns 'foo' for things like 'foo1' or 'foo2'; if prefix cannot be found, the default is returned"
+    """Returns 'foo' for things like 'foo1' or 'foo2'; if prefix cannot be found, the default is returned"""
     match = NUM_IDENT_PATTERN.match(p_string)
     name = match and match.groups()[match.lastindex - 1] or None
     return name or default
@@ -814,6 +814,8 @@ class ModuleRedeclarator(object):
     # keyed by (module_name, class_name, method_name). PREDEFINED_BUILTIN_SIGS might be a layer of it.
     # value is ("signature", "return_literal")
     PREDEFINED_MOD_CLASS_SIGS = {
+        (BUILTIN_MOD_NAME, None, 'divmod'): ("(x, y)", "(0, 0)"),
+
         ("binascii", None, "hexlify"): ("(data)", BYTES_LIT),
         ("binascii", None, "unhexlify"): ("(hexstr)", BYTES_LIT),
 
