@@ -99,4 +99,6 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   public void testDontShortenRefsIncorrect() {doTest();}
 
   public void testLastBlockStatementInterruptsControlFlow() {doTest();}
+
+  public void testAOOBE() {doTest();}
 }
