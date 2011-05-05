@@ -176,7 +176,7 @@ public class CompletionLists {
     final ContextProvider contextProvider = ContextProvider.getContextProvider(element);
     final XmlElement context = contextProvider.getContextElement();
 
-    final boolean insidePrefix = suffix.indexOf(INTELLIJ_IDEA_RULEZ + ":") != -1;
+    final boolean insidePrefix = suffix.contains(INTELLIJ_IDEA_RULEZ + ":");
 
     final Set<Lookup> list = new HashSet<Lookup>();
     addNameCompletions(contextProvider, element, list);
@@ -230,12 +230,12 @@ public class CompletionLists {
 
     final XPathNodeTest.PrincipalType principalType = element.getPrincipalType();
     if (principalType == XPathNodeTest.PrincipalType.ELEMENT) {
-      final Set<javax.xml.namespace.QName> elementNames = contextProvider.getElements(false);
+      final Set<QName> elementNames = contextProvider.getElements(false);
       if (elementNames != null) {
-        for (javax.xml.namespace.QName pair : elementNames) {
+        for (QName pair : elementNames) {
           if ("*".equals(pair.getLocalPart())) continue;
 
-          if (namespaceMatches(prefixedName, pair.getNamespaceURI(), namespaceContext, context)) {
+          if (namespaceMatches(prefixedName, pair.getNamespaceURI(), namespaceContext, context, true)) {
             if (prefixedName.getPrefix() == null && namespaceContext != null) {
               final String p = namespaceContext.getPrefixForURI(pair.getNamespaceURI(), context);
               list.add(new NodeLookup(makePrefix(p) + pair.getLocalPart(), XPathNodeTest.PrincipalType.ELEMENT));
@@ -246,12 +246,12 @@ public class CompletionLists {
         }
       }
     } else if (principalType == XPathNodeTest.PrincipalType.ATTRIBUTE) {
-      final Set<javax.xml.namespace.QName> attributeNames = contextProvider.getAttributes(false);
+      final Set<QName> attributeNames = contextProvider.getAttributes(false);
       if (attributeNames != null) {
-        for (javax.xml.namespace.QName pair : attributeNames) {
+        for (QName pair : attributeNames) {
           if ("*".equals(pair.getLocalPart())) continue;
 
-          if (namespaceMatches(prefixedName, pair.getNamespaceURI(), namespaceContext, context)) {
+          if (namespaceMatches(prefixedName, pair.getNamespaceURI(), namespaceContext, context, false)) {
             if (prefixedName.getPrefix() == null && namespaceContext != null) {
               final String p = namespaceContext.getPrefixForURI(pair.getNamespaceURI(), context);
               list.add(new NodeLookup(makePrefix(p) + pair.getLocalPart(), XPathNodeTest.PrincipalType.ATTRIBUTE));
@@ -300,7 +300,7 @@ public class CompletionLists {
               final PrefixedName _prefixedName = nodeTest.getQName();
               if (_prefixedName != null && prefixedName != null) {
                 final String localName = _prefixedName.getLocalName();
-                if (!"*".equals(localName) && localName.indexOf(INTELLIJ_IDEA_RULEZ) == -1) {
+                if (!"*".equals(localName) && !localName.contains(INTELLIJ_IDEA_RULEZ)) {
                   if (Comparing.equal(_prefixedName.getPrefix(), prefixedName.getPrefix())) {
                     list.add(new NodeLookup(localName, _principalType));
                   } else if (prefixedName.getPrefix() == null) {
@@ -316,9 +316,24 @@ public class CompletionLists {
     }
   }
 
-  private static boolean namespaceMatches(PrefixedName prefixedName, String uri, NamespaceContext namespaceContext, XmlElement context) {
-    if (namespaceContext == null || prefixedName.getPrefix() == null || uri == null) return true;
-    return uri.equals(namespaceContext.getNamespaceURI(prefixedName.getPrefix(), context));
+  private static boolean namespaceMatches(PrefixedName prefixedName,
+                                          String uri,
+                                          NamespaceContext namespaceContext,
+                                          XmlElement context,
+                                          boolean allowDefault) {
+    if (namespaceContext == null) return true;
+    if (uri == null) return true;
+
+    final String namespaceURI;
+    if (prefixedName.getPrefix() != null) {
+      namespaceURI = namespaceContext.getNamespaceURI(prefixedName.getPrefix(), context);
+    } else {
+      if (!allowDefault) return false;
+      if ((namespaceURI = namespaceContext.getDefaultNamespace(context)) == null) {
+        return false;
+      }
+    }
+    return uri.equals(namespaceURI);
   }
 
   public static Collection<Lookup> getNodeTypeCompletions(XPathElement context) {

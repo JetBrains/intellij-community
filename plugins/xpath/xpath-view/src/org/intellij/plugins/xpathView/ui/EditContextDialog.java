@@ -469,6 +469,11 @@ public class EditContextDialog extends DialogWrapper {
         public IntentionAction[] getUnresolvedNamespaceFixes(PsiReference reference, String localName) {
             return new IntentionAction[0];
         }
+
+        @Override
+        public String getDefaultNamespace(XmlElement context) {
+          return null;
+        }
     }
 
     private class MyVariableContext extends AbstractVariableContext<String> {

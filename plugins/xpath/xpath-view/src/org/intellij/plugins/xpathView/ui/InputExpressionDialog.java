@@ -564,6 +564,11 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         public IntentionAction[] getUnresolvedNamespaceFixes(PsiReference reference, String localName) {
             return new IntentionAction[]{ new MyRegisterPrefixAction(reference) };
         }
+
+        @Override
+        public String getDefaultNamespace(XmlElement context) {
+          return null;
+      }
     }
 
     private class MyRegisterPrefixAction implements IntentionAction {
