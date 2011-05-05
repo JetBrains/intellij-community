@@ -188,7 +188,7 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
   }
 
   @NotNull
-  public List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> getPairsByElement(@NotNull PsiElement element,
+  private List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> getPairsByElement(@NotNull PsiElement element,
                                                                                           @NotNull PsiReferenceService.Hints hints) {
     final Class<? extends PsiElement> clazz = element.getClass();
     List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> ret = null;
