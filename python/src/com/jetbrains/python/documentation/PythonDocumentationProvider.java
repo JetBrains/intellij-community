@@ -357,6 +357,17 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     return result;
   }
 
+  public String generateDocumentationContentStub(PyFunction element, boolean checkReturn) {
+    PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(element.getStatementList(), PsiWhiteSpace.class);
+    String ws = "\n";
+    if (whitespace != null) {
+      String[] spaces = whitespace.getText().split("\n");
+      if (spaces.length > 1)
+        ws = ws + whitespace.getText().split("\n")[1];
+    }
+    return generateDocumentationContentStub(element, ws, checkReturn);
+  }
+
   private String generateContent(PyFunction element, String offset, String prefix, boolean checkReturn) {
     PyParameter[] list = element.getParameterList().getParameters();
     StringBuilder builder = new StringBuilder(offset);

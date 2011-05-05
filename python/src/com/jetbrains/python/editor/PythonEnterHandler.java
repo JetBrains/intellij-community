@@ -61,18 +61,11 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
       return Result.Continue;
     }
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
-    if (codeInsightSettings.JAVADOC_STUB_ON_ENTER && inDocComment(element)) {
+    if (codeInsightSettings.JAVADOC_STUB_ON_ENTER && PythonDocCommentUtil.inDocComment(element)) {
       PythonDocumentationProvider provider = new PythonDocumentationProvider();
       PyFunction fun = PsiTreeUtil.getParentOfType(element, PyFunction.class);
       if (fun != null) {
-        PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(fun.getStatementList(), PsiWhiteSpace.class);
-        String ws = "\n";
-        if (whitespace != null) {
-          String[] spaces = whitespace.getText().split("\n");
-          if (spaces.length > 1)
-            ws = ws + whitespace.getText().split("\n")[1];
-        }
-        String docStub = provider.generateDocumentationContentStub(fun, ws, false);
+        String docStub = provider.generateDocumentationContentStub(fun, false);
         docStub += element.getParent().getText().substring(0,3);
         if (docStub != null && docStub.length() != 0) {
           editor.getDocument().insertString(editor.getCaretModel().getOffset(), docStub);
@@ -81,17 +74,8 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
       }
       PyElement klass = PsiTreeUtil.getParentOfType(element, PyClass.class, PyFile.class);
       if (klass != null) {
-        String ws = "\n";
-        if (klass instanceof PyClass) {
-          PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(((PyClass)klass).getStatementList(), PsiWhiteSpace.class);
-          if (whitespace != null) {
-            String[] spaces = whitespace.getText().split("\n");
-            if (spaces.length > 1)
-              ws = ws + whitespace.getText().split("\n")[1];
-          }
-        }
-
-        editor.getDocument().insertString(editor.getCaretModel().getOffset(), ws+element.getParent().getText().substring(0,3));
+        editor.getDocument().insertString(editor.getCaretModel().getOffset(),
+                        PythonDocCommentUtil.generateDocForClass(klass, element.getParent().getText().substring(0,3)));
         return Result.Continue;
       }
     }
@@ -153,33 +137,6 @@ public class PythonEnterHandler implements EnterHandlerDelegate {
       caretOffset.set(offset+1);
     }
     return Result.Continue;
-  }
-
-  private boolean inDocComment(PsiElement element) {
-    PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class);
-    if (string != null) {
-      PyElement func = PsiTreeUtil.getParentOfType(element, PyFunction.class, PyClass.class, PyFile.class);
-      if (func != null) {
-        final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(element,
-                                                                            PyDocStringOwner.class);
-        if (docStringOwner == func) {
-          PyStringLiteralExpression str = docStringOwner.getDocStringExpression();
-          String text = element.getText();
-          if (str != null && text.equals(str.getText())) {
-            PsiErrorElement error = PsiTreeUtil.getNextSiblingOfType(string, PsiErrorElement.class);
-            if (error != null)
-              return true;
-            error = PsiTreeUtil.getNextSiblingOfType(string.getParent(), PsiErrorElement.class);
-            if (error != null)
-              return true;
-
-            if (text.length() < 6 || (!text.endsWith("\"\"\"") && !text.endsWith("'''")))
-              return true;
-          }
-        }
-      }
-    }
-    return false;
   }
 
   @Nullable
