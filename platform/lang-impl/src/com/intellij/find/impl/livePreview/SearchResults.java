@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.regex.PatternSyntaxException;
 
 public class SearchResults {
 
@@ -166,8 +167,13 @@ public class SearchResults {
 
           while (true) {
             FindManager findManager = FindManager.getInstance(editor.getProject());
-            FindResult result = findManager.findString(editor.getDocument().getCharsSequence(), offset, findModel, virtualFile);
-            if (!result.isStringFound()) break;
+            FindResult result;
+            try {
+              result = findManager.findString(editor.getDocument().getCharsSequence(), offset, findModel, virtualFile);
+            } catch(PatternSyntaxException e) {
+              result = null;
+            }
+            if (result == null || !result.isStringFound()) break;
             int newOffset = result.getEndOffset();
             if (offset == newOffset || result.getEndOffset() > r.getEndOffset()) break;
             offset = newOffset;
