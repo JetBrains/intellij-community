@@ -49,7 +49,6 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
   private final List<DirDiffElement> myElements = new ArrayList<DirDiffElement>();
   private final AtomicBoolean myUpdating = new AtomicBoolean(false);
   private JBTable myTable;
-  private Disposable myDisposableParent;
   public String DECORATOR = "DIFF_TABLE_DECORATOR";
   public volatile AtomicReference<String> text = new AtomicReference<String>(prepareText(""));
   private Updater updater;
@@ -264,10 +263,6 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
     }
   }
 
-  public void setDisposableParent(Disposable parent) {
-    myDisposableParent = parent;
-  }
-
   private void scan(DiffElement element, DTree root, boolean source) {
     if (!myUpdating.get()) return;
     if (element.isContainer()) {
@@ -284,7 +279,7 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
   }
 
   public String getTitle() {
-    return "Diff for " + mySrc.getPresentablePath() + " and " + myTrg.getPresentablePath();
+    return "Diff between " + mySrc.getPresentablePath() + " and " + myTrg.getPresentablePath();
   }
 
   @Nullable

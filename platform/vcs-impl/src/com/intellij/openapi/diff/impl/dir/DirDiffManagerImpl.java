@@ -34,7 +34,11 @@ public class DirDiffManagerImpl extends DirDiffManager {
   @Override
   public void showDiff(@NotNull final DiffElement dir1, @NotNull final DiffElement dir2, final DirDiffSettings settings) {
     final DirDiffTableModel model = new DirDiffTableModel(myProject, dir1, dir2, settings);
-    new DirDiffDialog(myProject, model, settings).show();
+    if (settings.showInFrame) {
+      new DirDiffFrame(myProject, model, settings).show();
+    } else {
+      new DirDiffDialog(myProject, model, settings).show();
+    }
   }
 
   @Override
