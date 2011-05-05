@@ -81,7 +81,6 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       int startLine = doc.getLineNumber(startOffset);
       IndentGuideDescriptor descriptor = editor.getIndentsModel().getDescriptor(startLine, endLine);
 
-      int lineShift = 1;
       final CharSequence chars = doc.getCharsSequence();
       do {
         int pos = doc.getLineStartOffset(startLine);
@@ -96,6 +95,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       // It's considered that indent guide can cross not only white space but comments, javadocs etc. Hence, there is a possible
       // case that the first indent guide line is, say, single-line comment where comment symbols ('//') are located at the first
       // visual column. We need to calculate correct indent guide column then.
+      int lineShift = 1;
       if (indentColumn <= 0 && descriptor != null) {
         indentColumn = descriptor.indentLevel;
         lineShift = 0;
