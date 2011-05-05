@@ -928,6 +928,23 @@ public class FileUtil {
     return file.canExecute();
   }
 
+  public static boolean isSymbolicLink(File file) {
+      return isSymbolicLink(file.getParentFile(), file.getName());
+  }
+
+  public static boolean isSymbolicLink(File parent, String name) {
+    try {
+      File toTest = parent != null
+          ? new File(parent.getCanonicalPath(), name)
+          : new File(name);
+      return !toTest.getAbsolutePath().equals(toTest.getCanonicalPath());
+    }
+    catch (IOException e) {
+      return false;
+    }
+  }
+
+
   public static void setReadOnlyAttribute(@NotNull String path, boolean readOnlyStatus) throws IOException {
     new File(path).setWritable(!readOnlyStatus);
   }
