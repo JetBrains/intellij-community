@@ -27,6 +27,8 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 
 public class IDEInspectionToolsConfigurable extends InspectionToolsConfigurable {
+  private String myCurrentSelection;
+
   public IDEInspectionToolsConfigurable(InspectionProjectProfileManager projectProfileManager, InspectionProfileManager profileManager) {
     super(projectProfileManager, profileManager);
   }
@@ -36,14 +38,28 @@ public class IDEInspectionToolsConfigurable extends InspectionToolsConfigurable 
   }
 
   @Override
+  public void reset() {
+    super.reset();
+    myCurrentSelection = getSelectedObject().getName();
+  }
+
+  @Override
+  public void selectProfile(String name) {
+    super.selectProfile(name);
+    myCurrentSelection = name;
+  }
+
+  @Override
   public void apply() throws ConfigurationException {
     super.apply();
-    myProfileManager.setRootProfile(getSelectedObject().getName());
+    final String rootProfile = getSelectedObject().getName();
+    myProfileManager.setRootProfile(rootProfile);
+    myCurrentSelection = rootProfile;
   }
 
   @Override
   public boolean isModified() {
-    if (!Comparing.strEqual(getSelectedObject().getName(), getCurrentProfile().getName())) return true;
+    if (!Comparing.strEqual(getSelectedObject().getName(), myCurrentSelection)) return true;
     return super.isModified();
   }
 }
