@@ -406,7 +406,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   private static boolean shallUseSafeStream(Object requestor, File file) {
-    return requestor instanceof SafeWriteRequestor && !FileUtil.canExecute(file);
+    return requestor instanceof SafeWriteRequestor && !FileUtil.canExecute(file) && !FileUtil.isSymbolicLink(file);
   }
 
   public void moveFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent) throws IOException {
