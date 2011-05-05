@@ -1737,7 +1737,7 @@ public class AbstractTreeUi {
     }
 
     if (myResettingToReadyNow.get()) {
-      getReady(this).notify(result);
+      _getReady().notify(result);
       return result;
     }
 
@@ -1796,7 +1796,7 @@ public class AbstractTreeUi {
     myDeferredExpansions.clear();
     myDeferredSelections.clear();
 
-    ActionCallback result = getReady(this);
+    ActionCallback result = _getReady();
     result.doWhenDone(new Runnable() {
       public void run() {
         myResettingToReadyNow.set(false);
@@ -2011,7 +2011,11 @@ public class AbstractTreeUi {
       }
 
       if (myInitialized.isDone()) {
-        myBusyObject.onReady();
+        if (isReleaseRequested() || isCancelProcessed()) {
+          myBusyObject.onReady(AbstractTreeUi.this);
+        } else {
+          myBusyObject.onReady();
+        }
       }
 
       if (canInitiateNewActivity()) {
@@ -2222,6 +2226,10 @@ public class AbstractTreeUi {
     return myBusyObject.getReady(requestor);
   }
 
+  private ActionCallback _getReady() {
+    return getReady(this);
+  }
+
   private void addToUpdating(DefaultMutableTreeNode node) {
     synchronized (myUpdatingChildren) {
       myUpdatingChildren.add(node);
@@ -2303,7 +2311,7 @@ public class AbstractTreeUi {
         }
 
         if (myResettingToReadyNow.get()) {
-          getReady(this).notify(done);
+          _getReady().notify(done);
         } else if (isReady()) {
           resetToReadyNow();
           done.setDone();
@@ -2312,7 +2320,7 @@ public class AbstractTreeUi {
             resetToReadyNow();
             done.setDone();
           } else {
-            getReady(this).notify(done);
+            _getReady().notify(done);
           }
         }
 
@@ -2379,7 +2387,7 @@ public class AbstractTreeUi {
     finally {
       if (isReleased()) return new ActionCallback.Rejected();
 
-      getReady(this).doWhenDone(new Runnable() {
+      _getReady().doWhenDone(new Runnable() {
         public void run() {
           if (myBatchIndicators.containsKey(progressive)) {
             ProgressIndicator indicator = myBatchIndicators.remove(progressive);
@@ -2741,6 +2749,7 @@ public class AbstractTreeUi {
 
 
   private boolean canSmartExpand(DefaultMutableTreeNode node, boolean canSmartExpand) {
+    if (!canInitiateNewActivity()) return false;
     if (!getBuilder().isSmartExpand()) return false;
 
     boolean smartExpand = !myNotForSmartExpand.contains(node) && canSmartExpand;
@@ -2748,6 +2757,7 @@ public class AbstractTreeUi {
   }
 
   private void processSmartExpand(final DefaultMutableTreeNode node, final boolean canSmartExpand, boolean forced) {
+    if (!canInitiateNewActivity()) return;
     if (!getBuilder().isSmartExpand()) return;
 
     boolean can = canSmartExpand(node, canSmartExpand);
@@ -3644,7 +3654,7 @@ public class AbstractTreeUi {
     final boolean oldCanProcessDeferredSelection = myCanProcessDeferredSelections;
 
     if (!deferred && wasRootNodeInitialized() && willAffectSelection) {
-      getReady(this).doWhenDone(new Runnable() {
+      _getReady().doWhenDone(new Runnable() {
         @Override
         public void run() {
           myCanProcessDeferredSelections = false;
@@ -4513,7 +4523,7 @@ public class AbstractTreeUi {
       dropUpdaterStateIfExternalChange();
 
       if (myRequestedExpand != null && !myRequestedExpand.equals(path)) {
-        getReady(AbstractTreeUi.this).doWhenDone(new Runnable() {
+        _getReady().doWhenDone(new Runnable() {
           public void run() {
             Object element = getElementFor(path.getLastPathComponent());
             expand(element, null);
