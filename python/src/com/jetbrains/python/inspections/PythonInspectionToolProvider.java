@@ -59,6 +59,7 @@ public class PythonInspectionToolProvider implements InspectionToolProvider {
       PyMissingConstructorInspection.class,
       PyArgumentEqualDefaultInspection.class,
       PySetFunctionToLiteralInspection.class,
+      PyDecoratorInspection.class,
     };
   }
 }
