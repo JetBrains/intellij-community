@@ -200,7 +200,7 @@ public class InspectionApplication {
       }
 
       InspectionsReportConverter reportConverter = getReportConverter(myOutputFormat);
-      if (reportConverter == null && myOutputFormat.endsWith(".xsl")) {
+      if (reportConverter == null && myOutputFormat != null && myOutputFormat.endsWith(".xsl")) {
         // xslt converter
         reportConverter = new XSLTReportConverter(myOutputFormat);
       }
