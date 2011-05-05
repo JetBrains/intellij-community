@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,11 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.extensions.Extensions;
@@ -48,7 +47,6 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.TitlePanel;
 import com.intellij.ui.awt.RelativePoint;
@@ -208,25 +206,6 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
           });
         }
       } else {
-        final PsiVariable variable = getVariable();
-        if (variable != null) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              final PsiFile containingFile = variable.getContainingFile();
-              for (RangeMarker occurrenceMarker : myOccurrenceMarkers) {
-                final PsiElement refVariableElement = containingFile.findElementAt(occurrenceMarker.getStartOffset());
-                final PsiExpression expression = PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
-                if (expression instanceof PsiReferenceExpression &&
-                    (((PsiReferenceExpression)expression).resolve() == variable ||
-                     Comparing.strEqual(variable.getName(), ((PsiReferenceExpression)expression).getReferenceName()))) {
-                  InlineUtil.inlineVariable(variable, variable.getInitializer(), (PsiJavaCodeReferenceElement)expression);
-                }
-              }
-              variable.delete();
-            }
-          });
-        }
         if (myExprMarker != null) {
           myEditor.getCaretModel().moveToOffset(myExprMarker.getStartOffset());
           myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
