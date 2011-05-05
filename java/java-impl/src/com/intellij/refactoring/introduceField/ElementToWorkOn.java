@@ -74,13 +74,16 @@ public class ElementToWorkOn {
       if (element instanceof PsiLocalVariable) {
         localVar = (PsiLocalVariable) element;
         PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
-        if (elementAt instanceof PsiWhiteSpace) {
-          elementAt = PsiTreeUtil.skipSiblingsBackward(elementAt, PsiWhiteSpace.class);
-        }
-        if (elementAt instanceof PsiReferenceExpression) {
-          expr = (PsiExpression)elementAt;
-        } else if (elementAt instanceof PsiIdentifier && elementAt.getParent() instanceof PsiReferenceExpression) {
+        if (elementAt instanceof PsiIdentifier && elementAt.getParent() instanceof PsiReferenceExpression) {
           expr = (PsiExpression) elementAt.getParent();
+        } else {
+          final PsiReference reference = TargetElementUtilBase.findReference(editor);
+          if (reference != null) {
+            final PsiElement refElement = reference.getElement();
+            if (refElement instanceof PsiReferenceExpression) {
+              expr = (PsiReferenceExpression)refElement;
+            }
+          }
         }
       } else {
         final PsiLocalVariable variable = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiLocalVariable.class);
