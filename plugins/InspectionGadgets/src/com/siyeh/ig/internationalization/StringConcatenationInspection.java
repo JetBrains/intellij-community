@@ -173,6 +173,9 @@ public class StringConcatenationInspection extends BaseInspection {
                     NonNlsUtils.isNonNlsAnnotated(rhs)) {
                 return;
             }
+            if (isInsideAnnotation(expression)) {
+                return;
+            }
             if (ignoreAsserts) {
                 final PsiAssertStatement assertStatement =
                         PsiTreeUtil.getParentOfType(expression,
@@ -240,6 +243,17 @@ public class StringConcatenationInspection extends BaseInspection {
                 return;
             }
             registerError(sign, expression);
+        }
+
+        private boolean isInsideAnnotation(PsiBinaryExpression expression) {
+            while (true) {
+                final PsiElement parent = expression.getParent();
+                if (!(parent instanceof PsiBinaryExpression)) {
+                    return parent instanceof PsiArrayInitializerMemberValue ||
+                            parent instanceof PsiNameValuePair;
+                }
+                expression = (PsiBinaryExpression) parent;
+            }
         }
     }
 }
