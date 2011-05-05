@@ -71,7 +71,7 @@ public class ExpectedTypeUtil {
       } else if (XPathType.isAssignable(XPath2Type.DATE, type) ||
                  XPathType.isAssignable(XPath2Type.TIME, type) ||
                  XPathType.isAssignable(XPath2Type.DATETIME, type)) {
-        return XPathType.ChoiceType.create(XPath2Type.DATE, XPath2Type.DURATION);
+        return XPathType.ChoiceType.create((XPath2Type)type, XPath2Type.DURATION);
       } else if (XPathType.isAssignable(XPath2Type.DURATION, type)) {
         return XPath2Type.DURATION;
       }
