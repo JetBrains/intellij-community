@@ -63,6 +63,15 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   public IdeRootPaneNorthExtension copy() {
     return new NavBarRootPaneExtension(myProject);
   }
+  
+  public static boolean isMainToolbarVisible() {
+    return UISettings.getInstance().SHOW_MAIN_TOOLBAR || !runToolbarExists();
+  }
+  
+  private static boolean runToolbarExists() {
+    final AnAction navBarToolBar = ActionManager.getInstance().getAction("NavBarToolBar");
+    return navBarToolBar instanceof DefaultActionGroup && ((DefaultActionGroup)navBarToolBar).getChildrenCount() > 0;
+  }
 
   public JComponent getComponent() {
     if (myWrapperPanel == null) {
@@ -70,7 +79,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         @Override
         protected void paintChildren(Graphics g) {
           super.paintChildren(g);
-          if (UIUtil.isUnderAquaLookAndFeel() && !UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
+          if (UIUtil.isUnderAquaLookAndFeel() && !isMainToolbarVisible()) {
             final Rectangle r = getBounds();
             g.setColor(new Color(255, 255, 255, 90));
             g.drawLine(0, r.height - 4, r.width, r.height - 4);
@@ -89,7 +98,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
           }
 
           final Rectangle r = getBounds();
-          if (UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
+          if (isMainToolbarVisible()) {
             g.setColor(new Color(200, 200, 200));
             g.fillRect(0, 0, r.width, r.height);
           }
@@ -117,7 +126,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   }
 
   private void toggleRunPanel(final boolean show) {
-    if (show && myRunPanel == null) {
+    if (show && myRunPanel == null && runToolbarExists()) {
       final ActionManager manager = ActionManager.getInstance();
       final AnAction toolbarRunGroup = manager.getAction("NavBarToolBar");
       if (toolbarRunGroup instanceof DefaultActionGroup) {
@@ -143,7 +152,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
   private boolean isUndocked() {
     final Window ancestor = SwingUtilities.getWindowAncestor(myWrapperPanel);
-    return ancestor != null && !(ancestor instanceof IdeFrameImpl);
+    return (ancestor != null && !(ancestor instanceof IdeFrameImpl)) || !UISettings.getInstance().SHOW_MAIN_TOOLBAR;
   }
   
   private static boolean isNeedGap(final DefaultActionGroup group) {
@@ -177,7 +186,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         if (UIUtil.isUnderAquaLookAndFeel()) {
           final Rectangle r = getBounds();
           final Graphics2D g2d = (Graphics2D)g;
-          if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
+          if (!isMainToolbarVisible()) {
             //UIUtil.drawGradientHToolbarBackground(g, r.width, r.height);
 
             final Dimension d = getPreferredSize();
@@ -277,7 +286,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       if (myWrapperPanel.getComponentCount() > 0) {
         final Component c = myWrapperPanel.getComponent(0);
         if (c instanceof JComponent) ((JComponent)c).setOpaque(
-          !UIUtil.isUnderAquaLookAndFeel() || UISettings.getInstance().SHOW_MAIN_TOOLBAR);
+          !UIUtil.isUnderAquaLookAndFeel() || isMainToolbarVisible());
       }
     }
   }
