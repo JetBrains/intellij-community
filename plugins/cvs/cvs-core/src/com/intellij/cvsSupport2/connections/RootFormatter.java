@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,16 +37,16 @@ public class RootFormatter<Settings extends CvsSettings> {
   public Settings createConfiguration(String rootAsString, boolean check) {
     final CvsRootParser root = CvsRootParser.valueOf(rootAsString, check);
     final Settings result = myBuilder.createSettings(root.METHOD, rootAsString);
-    if (root.METHOD.equals(CvsMethod.LOCAL_METHOD)) {
+    if (CvsMethod.LOCAL_METHOD.equals(root.METHOD)) {
       fillLocalSettings(root.REPOSITORY, result);
     }
-    else if (root.METHOD.equals(CvsMethod.PSERVER_METHOD)) {
+    else if (CvsMethod.PSERVER_METHOD.equals(root.METHOD)) {
       fillPServerSettings(root, result, rootAsString);
     }
-    else if (root.METHOD.equals(CvsMethod.EXT_METHOD)) {
+    else if (CvsMethod.EXT_METHOD.equals(root.METHOD)) {
       fillSettings(root, result);
     }
-    else if (root.METHOD.equals(CvsMethod.SSH_METHOD)) {
+    else if (CvsMethod.SSH_METHOD.equals(root.METHOD)) {
       fillSettings(root, result);
     }
     else {
