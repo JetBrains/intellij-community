@@ -2,6 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.util.SystemInfo;
 import com.jetbrains.python.fixtures.PyLightFixtureTestCase;
 
 /**
@@ -40,10 +41,14 @@ public class PyCopyPasteTest extends PyLightFixtureTestCase {
   }
 
   private void doTest() {
+    if (!SystemInfo.isWindows) {
+      System.out.println("System is not windows. Skipping.");
+      return;
+    }
     String name = getTestName(false);
     myFixture.configureByFile("copyPaste/" + name + ".src.py");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COPY);
-    myFixture.configureByFile("copyPaste/"+ name + ".dst.py");
+    myFixture.configureByFile("copyPaste/" + name + ".dst.py");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
     myFixture.checkResultByFile("copyPaste/" + name + ".after.py");
   }
