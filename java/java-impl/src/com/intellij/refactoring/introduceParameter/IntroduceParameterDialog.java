@@ -189,8 +189,14 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       gbConstraints.gridy++;
       myPanel.createOccurrencesCb(gbConstraints, panel, myOccurenceNumber);
     }
-
+    if(myPanel.myCbReplaceAllOccurences != null) {
+      gbConstraints.insets = new Insets(0, 16, 4, 8);
+    }
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
+    myPanel.createLocalVariablePanel(gbConstraints, panel, settings);
+
+    myPanel.createRemoveParamsPanel(gbConstraints, panel);
+    gbConstraints.insets =  new Insets(4, 0, 4, 8);
 
     gbConstraints.gridy++;
     myCbDeclareFinal = new NonFocusableCheckBox(RefactoringBundle.message("declare.final"));
@@ -205,12 +211,6 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       myCbDeclareFinal.setEnabled(false);
     }
 
-    if(myPanel.myCbReplaceAllOccurences != null) {
-      gbConstraints.insets = new Insets(0, 16, 4, 8);
-    }
-    myPanel.createLocalVariablePanel(gbConstraints, panel, settings);
-    myPanel.createRemoveParamsPanel(gbConstraints, panel);
-    gbConstraints.insets =  new Insets(4, 0, 4, 8);
     gbConstraints.gridy++;
     myPanel.createDelegateCb(gbConstraints, panel);
 
