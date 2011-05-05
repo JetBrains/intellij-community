@@ -108,7 +108,7 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract GrExpression createExpressionFromText(String exprText, @Nullable PsiElement context);
 
-  public abstract GrVariableDeclaration createFieldDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type);
+  public abstract GrVariableDeclaration createFieldDeclaration(String[] modifiers, String identifier, @Nullable GrExpression initializer, @Nullable PsiType type);
   public abstract GrVariableDeclaration createFieldDeclarationFromText(String text);
 
   public abstract GrVariableDeclaration createVariableDeclaration(@Nullable String[] modifiers, @Nullable GrExpression initializer, PsiType type, String... identifiers);
