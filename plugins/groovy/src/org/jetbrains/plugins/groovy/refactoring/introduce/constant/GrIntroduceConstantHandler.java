@@ -23,7 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -91,7 +90,7 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
     while (place != null) {
       final GrTypeDefinition typeDefinition = PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, true, GroovyFileBase.class);
       if (typeDefinition == null) return null;
-      if (typeDefinition.hasModifierProperty(GrModifier.STATIC) || typeDefinition.getContainingClass() == null) return typeDefinition;
+      if (typeDefinition.hasModifierProperty(PsiModifier.STATIC) || typeDefinition.getContainingClass() == null) return typeDefinition;
       place = typeDefinition;
     }
     return null;
@@ -111,8 +110,8 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
 
     final GrVariableDeclaration declaration = createField(context, settings);
     if (targetClass.isInterface()) {
-      declaration.getModifierList().setModifierProperty(GrModifier.STATIC, false);
-      declaration.getModifierList().setModifierProperty(GrModifier.FINAL, false);
+      declaration.getModifierList().setModifierProperty(PsiModifier.STATIC, false);
+      declaration.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
     }
 
     final GrVariableDeclaration added;
@@ -130,33 +129,33 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
     if (settings.replaceAllOccurrences()) {
       GroovyRefactoringUtil.sortOccurrences(context.occurrences);
       for (PsiElement occurrence : context.occurrences) {
-        replaceOccurence(field, occurrence, isEscalateVisibility(settings.getVisibilityModifier()));
+        replaceOccurrence(field, occurrence, isEscalateVisibility(settings.getVisibilityModifier()));
       }
     }
     else {
-      replaceOccurence(field, context.expression, isEscalateVisibility(settings.getVisibilityModifier()));
+      replaceOccurrence(field, context.expression, isEscalateVisibility(settings.getVisibilityModifier()));
     }
     return (GrField)added.getVariables()[0];
   }
 
-  private static void replaceOccurence(GrField field, PsiElement occurence, boolean escalateVisibility) {
+  private static void replaceOccurrence(GrField field, PsiElement occurrence, boolean escalateVisibility) {
     final PsiElement replaced;
-    final GrReferenceExpression newExpr = createRefExpression(field, occurence);
-    if (occurence instanceof GrExpression) {
-      replaced = ((GrExpression)occurence).replaceWithExpression(newExpr, false);
+    final GrReferenceExpression newExpr = createRefExpression(field, occurrence);
+    if (occurrence instanceof GrExpression) {
+      replaced = ((GrExpression)occurrence).replaceWithExpression(newExpr, false);
     }
     else {
-      replaced = occurence.replace(newExpr);
+      replaced = occurrence.replace(newExpr);
     }
     if (escalateVisibility) {
       PsiUtil.escalateVisibility(field, replaced);
     }
     if (replaced instanceof GrReferenceExpression) {
-      if (!PsiUtil.shortenReference((GrReferenceElement)replaced)) {
-        final PsiElement qualifier = ((GrReferenceElement)replaced).getQualifier();
-        if (qualifier instanceof GrReferenceExpression) {
-          PsiUtil.shortenReference((GrReferenceElement)qualifier);
-        }
+      if (PsiUtil.shortenReference((GrReferenceExpression)replaced)) return;
+
+      final PsiElement qualifier = ((GrReferenceElement)replaced).getQualifier();
+      if (qualifier instanceof GrReferenceExpression) {
+        PsiUtil.shortenReference((GrReferenceExpression)qualifier);
       }
     }
   }
@@ -173,13 +172,13 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
     final PsiType type = settings.getSelectedType();
     final String modifier;
     if (isEscalateVisibility(settings.getVisibilityModifier())) {
-      modifier = GrModifier.PRIVATE;
+      modifier = PsiModifier.PRIVATE;
     } else {
       modifier = settings.getVisibilityModifier();
     }
-    String[] modifiers = modifier == null || GrModifier.PACKAGE_LOCAL.equals(modifier)
-                         ? new String[]{GrModifier.STATIC, GrModifier.FINAL}
-                         : new String[]{modifier, GrModifier.STATIC, GrModifier.FINAL};
+    String[] modifiers = modifier == null || PsiModifier.PACKAGE_LOCAL.equals(modifier)
+                         ? new String[]{PsiModifier.STATIC, PsiModifier.FINAL}
+                         : new String[]{modifier, PsiModifier.STATIC, PsiModifier.FINAL};
     return GroovyPsiElementFactory.getInstance(context.project).createFieldDeclaration(modifiers, name, context.expression, type);
   }
 
@@ -192,7 +191,7 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
     PsiElement cur = occurrence;
     while (true) {
       final PsiClass parentClass = PsiTreeUtil.getParentOfType(cur, PsiClass.class, true);
-      if (parentClass == null || parentClass.hasModifierProperty(GrModifier.STATIC)) return parentClass;
+      if (parentClass == null || parentClass.hasModifierProperty(PsiModifier.STATIC)) return parentClass;
       cur = parentClass;
     }
   }
@@ -220,7 +219,7 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
         final GrExpression qualifier = referenceExpression.getQualifierExpression();
         if (qualifier == null ||
             (qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass)) {
-          if (!((PsiMethod)resolved).hasModifierProperty(GrModifier.STATIC)) {
+          if (!((PsiMethod)resolved).hasModifierProperty(PsiModifier.STATIC)) {
             throw new GrIntroduceRefactoringError(RefactoringBundle.message("selected.expression.cannot.be.a.constant.initializer"));
           }
         }
@@ -228,7 +227,7 @@ public class GrIntroduceConstantHandler extends GrIntroduceHandlerBase<GrIntrodu
     }
 
     private static boolean isStaticFinalField(PsiVariable var) {
-      return var instanceof PsiField && var.hasModifierProperty(GrModifier.FINAL) && var.hasModifierProperty(GrModifier.STATIC);
+      return var instanceof PsiField && var.hasModifierProperty(PsiModifier.FINAL) && var.hasModifierProperty(PsiModifier.STATIC);
     }
 
     @Override
