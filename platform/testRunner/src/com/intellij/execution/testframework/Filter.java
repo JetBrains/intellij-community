@@ -15,11 +15,13 @@
  */
 package com.intellij.execution.testframework;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class Filter {
+public abstract class Filter<T extends AbstractTestProxy> {
   /**
    * All instances (and subclasses's instances) should be singletons.
    *
@@ -28,18 +30,19 @@ public abstract class Filter {
   protected Filter() {
   }
 
-  public abstract boolean shouldAccept(AbstractTestProxy test);
+  public abstract boolean shouldAccept(T test);
 
-  public List<AbstractTestProxy> select(final List<? extends AbstractTestProxy> tests) {
-    final ArrayList<AbstractTestProxy> result = new ArrayList<AbstractTestProxy>();
-    for (final AbstractTestProxy test : tests) {
+  public List<T> select(final List<? extends T> tests) {
+    final List<T> result = new ArrayList<T>();
+    for (final T test : tests) {
       if (shouldAccept(test)) result.add(test);
     }
     return result;
   }
 
-  public AbstractTestProxy detectIn(final Collection<? extends AbstractTestProxy> collection) {
-    for (final AbstractTestProxy test : collection) {
+  @Nullable
+  public T detectIn(final Collection<? extends T> collection) {
+    for (final T test : collection) {
       if (shouldAccept(test)) return test;
     }
     return null;
@@ -72,6 +75,12 @@ public abstract class Filter {
   public static final Filter NOT_PASSED = new Filter() {
     public boolean shouldAccept(final AbstractTestProxy test) {
       return !test.isPassed();
+    }
+  };
+
+  public static final Filter PASSED = new Filter() {
+    public boolean shouldAccept(final AbstractTestProxy test) {
+      return test.isPassed();
     }
   };
 
