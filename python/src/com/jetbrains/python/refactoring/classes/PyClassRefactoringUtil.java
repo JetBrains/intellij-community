@@ -200,18 +200,6 @@ public class PyClassRefactoringUtil {
     }
   }
 
-  private static void rememberNamedReferences(final List<PyFunction> methods) {
-    for (final PyFunction method : methods) {
-      method.acceptChildren(new PyRecursiveElementVisitor() {
-        @Override
-        public void visitPyReferenceExpression(PyReferenceExpression node) {
-          super.visitPyReferenceExpression(node);
-          rememberReference(node, method);
-        }
-      });
-    }
-  }
-
   public static void rememberNamedReferences(final PsiElement element) {
     element.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
