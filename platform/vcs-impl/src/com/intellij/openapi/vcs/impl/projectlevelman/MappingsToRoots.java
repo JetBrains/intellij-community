@@ -70,11 +70,6 @@ public class MappingsToRoots {
     // same as above, but no compression
     List<VirtualFile> result = myMappings.getMappingsAsFilesUnderVcs(vcs);
 
-    final AbstractVcs.RootsConvertor convertor = vcs.getCustomConvertor();
-    if (convertor != null) {
-      result = convertor.convertRoots(result);
-    }
-
     boolean addInnerModules = true;
     final String vcsName = vcs.getName();
     final List<VcsDirectoryMapping> directoryMappings = myMappings.getDirectoryMappings(vcsName);

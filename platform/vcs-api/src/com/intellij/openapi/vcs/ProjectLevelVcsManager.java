@@ -221,6 +221,7 @@ public abstract class ProjectLevelVcsManager {
    */
   public abstract boolean isBackgroundVcsOperationRunning();
 
+  public abstract List<VirtualFile> getRootsUnderVcsWithoutFiltering(final AbstractVcs vcs);
   public abstract VirtualFile[] getRootsUnderVcs(AbstractVcs vcs);
 
   /**
