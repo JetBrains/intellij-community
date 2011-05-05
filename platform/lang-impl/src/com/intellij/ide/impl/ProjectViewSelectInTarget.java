@@ -24,6 +24,7 @@ import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -109,7 +111,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
   public void select(PsiElement element, final boolean requestFocus) {
     PsiElement toSelect = null;
-    for (TreeStructureProvider provider : Extensions.getExtensions(TreeStructureProvider.EP_NAME, myProject)) {
+    for (TreeStructureProvider provider : getProvidersDumbAware()) {
       if (provider instanceof SelectableTreeStructureProvider) {
         toSelect = ((SelectableTreeStructureProvider) provider).getTopLevelElement(element);
       }
@@ -130,6 +132,12 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     PsiElement originalElement = toSelect.getOriginalElement();
     final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(originalElement);
     select(originalElement, virtualFile, requestFocus);
+  }
+
+  private TreeStructureProvider[] getProvidersDumbAware() {
+    List<TreeStructureProvider> allProviders = Arrays.asList(Extensions.getExtensions(TreeStructureProvider.EP_NAME, myProject));
+    List<TreeStructureProvider> dumbAware = DumbService.getInstance(myProject).filterByDumbAwareness(allProviders);
+    return dumbAware.toArray(new TreeStructureProvider[dumbAware.size()]);
   }
 
   public final String getToolWindowId() {
