@@ -73,8 +73,13 @@ public class ElementToWorkOn {
         .LOOKUP_ITEM_ACCEPTED);
       if (element instanceof PsiLocalVariable) {
         localVar = (PsiLocalVariable) element;
-        final PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
-        if (elementAt instanceof PsiIdentifier && elementAt.getParent() instanceof PsiReferenceExpression) {
+        PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
+        if (elementAt instanceof PsiWhiteSpace) {
+          elementAt = PsiTreeUtil.skipSiblingsBackward(elementAt, PsiWhiteSpace.class);
+        }
+        if (elementAt instanceof PsiReferenceExpression) {
+          expr = (PsiExpression)elementAt;
+        } else if (elementAt instanceof PsiIdentifier && elementAt.getParent() instanceof PsiReferenceExpression) {
           expr = (PsiExpression) elementAt.getParent();
         }
       } else {
