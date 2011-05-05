@@ -17,13 +17,6 @@ package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.zmlx.hg4idea.HgVcs;
-
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * @author Kirill Likhodedov
@@ -52,16 +45,5 @@ public abstract class HgAction extends AnAction {
   }
 
   public abstract void execute(Project project);
-
-  private static List<VirtualFile> findRepos(Project project) {
-    List<VirtualFile> repos = new LinkedList<VirtualFile>();
-    VcsRoot[] roots = ProjectLevelVcsManager.getInstance(project).getAllVcsRoots();
-    for (VcsRoot root : roots) {
-      if (HgVcs.VCS_NAME.equals(root.vcs.getName())) {
-        repos.add(root.path);
-      }
-    }
-    return repos;
-  }
 
 }
