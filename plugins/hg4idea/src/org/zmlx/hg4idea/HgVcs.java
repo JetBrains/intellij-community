@@ -276,7 +276,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     }
 
     // updaters and listeners
-    final HgRemoteStatusUpdater remoteUpdater = new HgRemoteStatusUpdater(incomingChangesStatus, outgoingChangesStatus, projectSettings);
+    final HgRemoteStatusUpdater remoteUpdater = new HgRemoteStatusUpdater(this, incomingChangesStatus, outgoingChangesStatus, projectSettings);
     changesUpdaterScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(
       new Runnable() {
         public void run() {

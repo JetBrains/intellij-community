@@ -19,8 +19,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.HgIncomingCommand;
 import org.zmlx.hg4idea.command.HgOutgoingCommand;
@@ -39,8 +40,10 @@ class HgRemoteStatusUpdater implements HgUpdater {
   private final HgChangesetStatus myOutgoingStatus;
   private final HgProjectSettings myProjectSettings;
   private final AtomicBoolean myUpdateStarted = new AtomicBoolean();
+  private final AbstractVcs myVcs;
 
-  public HgRemoteStatusUpdater(HgChangesetStatus incomingStatus, HgChangesetStatus outgoingStatus, HgProjectSettings projectSettings) {
+  public HgRemoteStatusUpdater(@NotNull HgVcs vcs, HgChangesetStatus incomingStatus, HgChangesetStatus outgoingStatus, HgProjectSettings projectSettings) {
+    myVcs = vcs;
     myIncomingStatus = incomingStatus;
     myOutgoingStatus = outgoingStatus;
     myProjectSettings = projectSettings;
@@ -56,7 +59,7 @@ class HgRemoteStatusUpdater implements HgUpdater {
         new Task.Backgroundable(project, getProgressTitle(), true) {
           public void run(@NotNull ProgressIndicator indicator) {
             if (project.isDisposed()) return;
-            VcsRoot[] roots = ProjectLevelVcsManager.getInstance(project).getAllVcsRoots();
+            VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(myVcs);
             if (myProjectSettings.isCheckIncoming()) {
               updateChangesetStatus(project, roots, myIncomingStatus, true);
             }
@@ -71,13 +74,13 @@ class HgRemoteStatusUpdater implements HgUpdater {
     });
   }
 
-  private void updateChangesetStatus(Project project, VcsRoot[] roots, HgChangesetStatus status, boolean incoming) {
+  private void updateChangesetStatus(Project project, VirtualFile[] roots, HgChangesetStatus status, boolean incoming) {
     final List<HgRevisionNumber> changesets = new LinkedList<HgRevisionNumber>();
-    for (VcsRoot root : roots) {
+    for (VirtualFile root : roots) {
       if (incoming) {
-        changesets.addAll(new HgIncomingCommand(project).execute(root.path));
+        changesets.addAll(new HgIncomingCommand(project).execute(root));
       } else {
-        changesets.addAll(new HgOutgoingCommand(project).execute(root.path));
+        changesets.addAll(new HgOutgoingCommand(project).execute(root));
       }
     }
     status.setChanges(changesets.size(), new ChangesetFormatter(status, changesets));
