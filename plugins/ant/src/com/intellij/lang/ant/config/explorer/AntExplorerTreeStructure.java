@@ -50,6 +50,11 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     myProject = project;
   }
 
+  @Override
+  public boolean isToBuildChildrenInBackground(final Object element) {
+    return true;
+  }
+
   @NotNull
   public AntNodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     if (element == myRoot) {
