@@ -87,7 +87,12 @@ class FunctionTestCase(TestBase):
         self.suite = TestBase.Suite()
         self.suite.__module__ = self.__get_module()
         self.suite.__name__ = ""
-        if sys.version.find("IronPython") != -1:
+        has_module = True
+        try:
+          imp.find_module(self.suite.__module__)[1]
+        except ImportError:
+          has_module  = False
+        if sys.version.find("IronPython") != -1 or not has_module:
           # Iron Python doesn't fully support imp
           self.suite.abs_location = ""
           self.suite.location = ""
