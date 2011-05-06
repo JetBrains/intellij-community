@@ -72,5 +72,9 @@ public interface BalloonBuilder {
 
   boolean isHideOnAction();
 
+  @NotNull
   BalloonBuilder setHideOnAction(boolean hideOnAction);
+
+  @NotNull
+  BalloonBuilder setDialogMode(boolean dialogMode);
 }
