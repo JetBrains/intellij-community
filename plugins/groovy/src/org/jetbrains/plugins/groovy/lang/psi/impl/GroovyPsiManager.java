@@ -70,8 +70,6 @@ public class GroovyPsiManager {
   private final ConcurrentMap<String, SoftReference<Map<GlobalSearchScope, PsiClass>>> myClassCache = new ConcurrentHashMap<String, SoftReference<Map<GlobalSearchScope, PsiClass>>>();
   private final GroovyShortNamesCache myCache;
 
-  private final TypeInferenceHelper myTypeInferenceHelper;
-
   private static final String SYNTHETIC_CLASS_TEXT = "class __ARRAY__ { public int length }";
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("groovyPsiManager");
 
@@ -90,8 +88,6 @@ public class GroovyPsiManager {
       }
     });
 
-    myTypeInferenceHelper = new TypeInferenceHelper(myProject);
-
     myProject.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void beforeRootsChange(ModuleRootEvent event) {
       }
@@ -101,10 +97,6 @@ public class GroovyPsiManager {
         myClassCache.clear();
       }
     });
-  }
-
-  public TypeInferenceHelper getTypeInferenceHelper() {
-    return myTypeInferenceHelper;
   }
 
   public void dropTypesCache() {
