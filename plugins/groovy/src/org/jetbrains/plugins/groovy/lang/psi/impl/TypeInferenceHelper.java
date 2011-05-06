@@ -54,16 +54,6 @@ public class TypeInferenceHelper {
     return RecursionManager.createGuard("refType").doPreventingRecursion(refExpr, new Computable<PsiType>() {
       @Override
       public PsiType compute() {
-        return CachedValuesManager.getManager(refExpr.getProject()).getCachedValue(refExpr, new CachedValueProvider<PsiType>() {
-          @Override
-          public Result<PsiType> compute() {
-            return Result.create(inferType(), PsiModificationTracker.MODIFICATION_COUNT);
-          }
-        });
-      }
-
-      @Nullable
-      private PsiType inferType() {
         GroovyPsiElement scope =
           PsiTreeUtil.getParentOfType(refExpr, GrMethod.class, GrClosableBlock.class, GrClassInitializer.class, GroovyFileBase.class);
         if (scope instanceof GrMethod) {
