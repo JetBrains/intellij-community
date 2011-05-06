@@ -20,7 +20,6 @@ import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationListener;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -28,7 +27,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
@@ -81,22 +79,7 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
 
   public void setTargetsFiltered(boolean value) {
     ((AntExplorerTreeStructure)getTreeStructure()).setFilteredTargets(value);
-    refresh();
-  }
-
-  public final void refresh() {
-    final List<Object> pathsToExpand = new ArrayList<Object>();
-    final List<Object> selectionPaths = new ArrayList<Object>();
-    TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, true);
-    ApplicationManager.getApplication().runReadAction(
-      new Runnable() {
-        public void run() {
-          queueUpdate();
-        }
-      }
-    );
-    getTree().setSelectionPaths(EMPTY_TREE_PATH);
-    TreeBuilderUtil.restorePaths(this, pathsToExpand, selectionPaths, true);
+    queueUpdate();
   }
 
   protected ProgressIndicator createProgressIndicator() {
