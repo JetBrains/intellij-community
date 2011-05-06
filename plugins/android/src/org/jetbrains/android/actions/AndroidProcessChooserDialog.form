@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="4f662"/>
-          <text value="&amp;Select process to debug:"/>
+          <text value="&amp;Select a process to debug:"/>
         </properties>
       </component>
       <vspacer id="447d8">
