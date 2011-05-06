@@ -38,6 +38,10 @@ public class IdeaActionButtonLook extends ActionButtonLook {
           g.setColor(new Color(130, 146, 185));
           g.fillRect(0, 0, dimension.width, dimension.height);
         }
+      } else if (state == ActionButtonComponent.POPPED) {
+        ((Graphics2D)g).setPaint(new GradientPaint(0, 0, new Color(235, 235, 235), 0, dimension.height, new Color(200, 200, 200)));
+        //g.setColor(new Color(190, 190, 190));
+        g.fillRect(1, 1, dimension.width - 3, dimension.height - 3);
       }
     }
     if (state == ActionButtonComponent.PUSHED) {
@@ -80,18 +84,28 @@ public class IdeaActionButtonLook extends ActionButtonLook {
   }
 
   public void paintBorder(Graphics g, JComponent component, int state) {
-    if (UIUtil.isUnderAquaLookAndFeel()) return;
-
     if (state == ActionButtonComponent.NORMAL) return;
-    Rectangle rectangle = new Rectangle(component.getWidth(), component.getHeight());
-    Color color = new Color(8, 36, 107);
-    g.setColor(color);
-    UIUtil.drawLine(g, rectangle.x, rectangle.y, rectangle.x, (rectangle.y + rectangle.height) - 1);
-    UIUtil.drawLine(g, rectangle.x, rectangle.y, (rectangle.x + rectangle.width) - 1, rectangle.y);
-    UIUtil.drawLine(g, (rectangle.x + rectangle.width) - 1, rectangle.y, (rectangle.x + rectangle.width) - 1,
-                    (rectangle.y + rectangle.height) - 1);
-    UIUtil.drawLine(g, rectangle.x, (rectangle.y + rectangle.height) - 1, (rectangle.x + rectangle.width) - 1,
-                    (rectangle.y + rectangle.height) - 1);
+    Rectangle r = new Rectangle(component.getWidth(), component.getHeight());
+
+    if (UIUtil.isUnderAquaLookAndFeel()) {
+      if (state == ActionButtonComponent.POPPED) {
+        g.setColor(new Color(0, 0, 0, 30));
+        g.drawRoundRect(r.x, r.y, r.width - 2, r.height - 2, 4, 4);
+        
+        //g.setColor(new Color(0, 0, 0, 30));
+        //g.drawLine(1, r.height - 2, r.width - 3, r.height - 2);
+        //g.drawLine(r.width - 2, 1, r.width - 2, r.height - 3);
+      }
+    } else {
+      Color color = new Color(8, 36, 107);
+      g.setColor(color);
+      UIUtil.drawLine(g, r.x, r.y, r.x, (r.y + r.height) - 1);
+      UIUtil.drawLine(g, r.x, r.y, (r.x + r.width) - 1, r.y);
+      UIUtil.drawLine(g, (r.x + r.width) - 1, r.y, (r.x + r.width) - 1,
+                      (r.y + r.height) - 1);
+      UIUtil.drawLine(g, r.x, (r.y + r.height) - 1, (r.x + r.width) - 1,
+                      (r.y + r.height) - 1);
+    }
   }
 
   public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon) {

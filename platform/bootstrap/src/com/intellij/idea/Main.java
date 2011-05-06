@@ -58,15 +58,18 @@ public class Main {
   public static boolean isHeadless(final String[] args) {
     final Boolean forceEnabledHeadlessMode = Boolean.valueOf(System.getProperty("java.awt.headless"));
 
-    @NonNls final String inspectAppCode = "inspect";
     @NonNls final String antAppCode = "ant";
     @NonNls final String duplocateCode = "duplocate";
     @NonNls final String traverseUI = "traverseUI";
-    return args.length > 0 && (forceEnabledHeadlessMode ||
-                               Comparing.strEqual(args[0], inspectAppCode) ||
-                               Comparing.strEqual(args[0], antAppCode) ||
-                               Comparing.strEqual(args[0], duplocateCode) ||
-                               Comparing.strEqual(args[0], traverseUI));
+    if (args.length == 0) {
+      return false;
+    }
+    final String firstArg = args[0];
+    return  forceEnabledHeadlessMode ||
+             Comparing.strEqual(firstArg, antAppCode) ||
+             Comparing.strEqual(firstArg, duplocateCode) ||
+             Comparing.strEqual(firstArg, traverseUI) ||
+             (firstArg.length() < 20 && firstArg.endsWith("inspect"));
   }
 
   public static boolean isCommandLine(final String[] args) {

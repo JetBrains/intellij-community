@@ -43,7 +43,7 @@
 
       <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag Files..."/>
       <action id="Git.Merge" class="git4idea.actions.GitMerge" text="Merge Changes..." icon="/vcs/mergeSourcesTree.png"/>
-      <action id="Git.MergeTool" class="git4idea.actions.GitMergeTool" text="Merge Tool..."/>
+      <action id="Git.ResolveConflicts" class="git4idea.actions.GitResolveConflictsAction" text="Resolve Conflicts..."/>
       <action id="Git.Stash" class="git4idea.actions.GitStash" text="Stash Changes..."/>
       <action id="Git.Unstash" class="git4idea.actions.GitUnstash" text="UnStash Changes..."/>
       <action id="Git.Reset" class="git4idea.actions.GitResetHead" text="Reset HEAD..." icon="/actions/reset.png"/>

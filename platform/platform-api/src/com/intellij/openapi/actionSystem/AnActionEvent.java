@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -70,6 +71,14 @@ public class AnActionEvent {
    */
   public InputEvent getInputEvent() {
     return myInputEvent;
+  }
+
+  /**
+   * @return Project from the context of this event.
+   */
+  @Nullable
+  public Project getProject() {
+    return getData(PlatformDataKeys.PROJECT);
   }
 
   @NonNls

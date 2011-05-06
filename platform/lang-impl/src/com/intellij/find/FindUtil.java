@@ -471,7 +471,7 @@ public class FindUtil {
     return true;
   }
 
-  private static boolean doReplace(Project project, Editor editor, FindModel model, final Document document, int caretOffset,
+  private static boolean doReplace(Project project, final Editor editor, FindModel model, final Document document, int caretOffset,
                                    boolean toPrompt, ReplaceDelegate delegate) {
     FindManager findManager = FindManager.getInstance(project);
     model = (FindModel)model.clone();
@@ -480,6 +480,8 @@ public class FindUtil {
     List<Pair<TextRange,String>> rangesToChange = new ArrayList<Pair<TextRange, String>>();
 
     boolean replaced = false;
+    boolean reallyReplaced = false;
+
     int offset = caretOffset;
     while (offset >= 0 && offset < editor.getDocument().getTextLength()) {
       caretOffset = offset;
@@ -518,23 +520,25 @@ public class FindUtil {
           ((DocumentEx) document).setInBulkUpdate(true);
         }
       }
-
-      boolean reallyReplace = toPrompt;
-      TextRange textRange = doReplace(project, document, model, result, toReplace, reallyReplace, rangesToChange);
-
-      int newOffset = model.isForward() ? textRange.getEndOffset() : textRange.getStartOffset();
-      if (newOffset == offset) {
-        newOffset += model.isForward() ? 1 : -1;
+      if (delegate == null || delegate.shouldReplace(result, toReplace)){
+        boolean reallyReplace = toPrompt;
+        if (reallyReplace) {
+          //[SCR 7258]
+          if (!reallyReplaced) {
+            editor.getCaretModel().moveToOffset(0);
+            reallyReplaced = true;
+          }
+        }
+        TextRange textRange = doReplace(project, document, model, result, toReplace, reallyReplace, rangesToChange);
+        replaced = true;
+        int newOffset = model.isForward() ? textRange.getEndOffset() : textRange.getStartOffset();
+        if (newOffset == offset) {
+          newOffset += model.isForward() ? 1 : -1;
+        }
+        offset = newOffset;
+        occurrences++;
       }
-      offset = newOffset;
-      occurrences++;
 
-      //[SCR 7258]
-      if (!replaced) {
-        editor.getCaretModel().moveToOffset(0);
-      }
-
-      replaced = true;
     }
 
     if (replaced) {
@@ -551,7 +555,7 @@ public class FindUtil {
           TextRange range = pair.getFirst();
           String replace = pair.getSecond();
           newText.append(text, offsetBefore, range.getStartOffset()); //before change
-          if (delegate.shouldReplace(range, replace)) {
+          if (delegate == null || delegate.shouldReplace(range, replace)) {
             newText.append(replace);
           } else {
             newText.append(text.subSequence(range.getStartOffset(), range.getEndOffset()));
@@ -562,19 +566,28 @@ public class FindUtil {
           }
         }
         newText.append(text, offsetBefore, text.length()); //tail
+        if (caretOffset > newText.length()) {
+          caretOffset = newText.length();
+        }
+        final int finalCaretOffset = caretOffset;
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
                 document.setText(newText);
+                editor.getCaretModel().moveToOffset(finalCaretOffset);
               }
             });
           }
         }, null, document);
-
-        if (caretOffset > document.getTextLength()) caretOffset = document.getTextLength();
+      } else {
+        if (reallyReplaced) {
+          if (caretOffset > document.getTextLength()) {
+            caretOffset = document.getTextLength();
+          }
+          editor.getCaretModel().moveToOffset(caretOffset);
+        }
       }
-      editor.getCaretModel().moveToOffset(caretOffset);
     }
 
     ReplaceInProjectManager.reportNumberReplacedOccurences(project, occurrences);

@@ -339,6 +339,7 @@ public class FileUtil {
     File file = doCreateTempFile(prefix, suffix);
     file.delete();
     file.mkdir();
+    file.deleteOnExit();
     return file;
   }
 
@@ -347,6 +348,7 @@ public class FileUtil {
     File file = doCreateTempFile(prefix, suffix, dir);
     file.delete();
     file.mkdir();
+    file.deleteOnExit();
     return file;
   }
 
@@ -357,6 +359,7 @@ public class FileUtil {
     if (create) {
       file.createNewFile();
     }
+    file.deleteOnExit();
     return file;
   }
 
@@ -365,6 +368,7 @@ public class FileUtil {
     File file = doCreateTempFile(prefix, suffix);
     file.delete();
     file.createNewFile();
+    file.deleteOnExit();
     return file;
   }
 

@@ -33,9 +33,12 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
@@ -123,11 +126,29 @@ public class EditorsSplitters extends JPanel {
     return null;
   }
 
+  
+  private boolean showEmptyText() {
+    return (myCurrentWindow == null || myCurrentWindow.getFiles().length == 0) && !isProjectViewVisible();  
+  }
+  
+  private boolean isProjectViewVisible() {
+    final Window frame = SwingUtilities.getWindowAncestor(this);
+    if (frame instanceof IdeFrameImpl) {
+      final Project project = ((IdeFrameImpl)frame).getProject();
+      if (project != null) {
+        if (!project.isInitialized()) return true;
+        return ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW).isVisible();
+      }
+    }
+    
+    return false;
+  }
+  
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
     
-    if (myCurrentWindow == null || myCurrentWindow.getFiles().length == 0) {
+    if (showEmptyText()) {
       final boolean aquaLookAndFeel = UIUtil.isUnderAquaLookAndFeel();
       UIUtil.applyRenderingHints(g);
       g.setColor(aquaLookAndFeel ? new Color(100, 100, 100) : Color.LIGHT_GRAY);
@@ -147,7 +168,7 @@ public class EditorsSplitters extends JPanel {
                                                   Integer height) {
                                                   final Dimension s = getSize();
                                                   return Pair.create((s.width - width) / 2,
-                                                                     (s.height - height) / 5);
+                                                                     (s.height - height) / 2);
                                                 }
                                               });
     }

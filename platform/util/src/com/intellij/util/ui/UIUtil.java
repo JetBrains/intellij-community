@@ -628,7 +628,7 @@ public class UIUtil {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderAquaLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().contains("Mac OS X");
+    return SystemInfo.isMac && UIManager.getLookAndFeel().getName().contains("Mac OS X");
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

@@ -26,6 +26,7 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
@@ -36,7 +37,7 @@ import java.util.Set;
  * @author kir
  */
 public class LinkLabel extends JLabel {
-  private boolean myUnderline;
+  protected boolean myUnderline;
 
   private LinkListener myLinkListener;
   private Object myLinkData;
@@ -124,13 +125,13 @@ public class LinkLabel extends JLabel {
       shiftY = border.getBorderInsets(this).top;
     }
 
-    setForeground(getActiveColor());
+    setForeground(getTextColor());
 
     super.paintComponent(g);
 
 
     if (getText() != null) {
-      g.setColor(getActiveColor());
+      g.setColor(getTextColor());
       int x = myIconWidth;
       int y = getTextBaseLine();
 
@@ -166,7 +167,7 @@ public class LinkLabel extends JLabel {
     }
   }
 
-  private Color getActiveColor() {
+  protected Color getTextColor() {
     return myIsLinkActive ? getActive() : isVisited() ? getVisited() : getNormal();
   }
 
@@ -257,15 +258,15 @@ public class LinkLabel extends JLabel {
     ourVisitedLinks.clear();
   }
 
-  private static Color getVisited() {
+  protected Color getVisited() {
     return UI.getColor("link.visited.foreground");
   }
 
-  private static Color getActive() {
+  protected Color getActive() {
     return UI.getColor("link.pressed.foreground");
   }
 
-  private static Color getNormal() {
+  protected Color getNormal() {
     return UI.getColor("link.foreground");
   }
 
@@ -278,13 +279,13 @@ public class LinkLabel extends JLabel {
   }
 
   public void pressed(MouseEvent e) {
-    doClick();
+    doClick(e);
   }
 
   private class MyMouseHandler extends MouseAdapter implements MouseMotionListener {
     public void mouseClicked(MouseEvent e) {
       if (isInClickableArea(e.getPoint()) && e.getClickCount() == 1) {
-        doClick();
+        doClick(e);
       }
     }
 
@@ -313,6 +314,10 @@ public class LinkLabel extends JLabel {
 
     public void mouseDragged(MouseEvent e) {
     }
+  }
+
+  public void doClick(InputEvent e) {
+    doClick();
   }
 
   public void setDefaultIconPainted(boolean paintDefaultIcon) {

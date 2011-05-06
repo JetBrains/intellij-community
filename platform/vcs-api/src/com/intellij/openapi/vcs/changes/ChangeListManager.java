@@ -56,6 +56,12 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract List<VirtualFile> getAffectedFiles();
   public abstract boolean isFileAffected(final VirtualFile file);
 
+  /**
+   * @return all changes in all changelists.
+   */
+  @NotNull
+  public abstract Collection<Change> getAllChanges();
+
   @Nullable
   public abstract LocalChangeList findChangeList(final String name);
   @Nullable
