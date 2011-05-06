@@ -136,7 +136,7 @@ public class EditorsSplitters extends JPanel {
       final UIUtil.TextPainter painter = new UIUtil.TextPainter(1.4f);
       painter.appendLine("No files are open").underlined(aquaLookAndFeel ? new Color(150, 150, 150) : Color.LIGHT_GRAY)
         .appendLine("Open Project Navigator with " +
-                    KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke("meta 1"), null))).smaller().withBullet()
+                    KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke((SystemInfo.isMac ? "meta" : "alt") + " 1"), null))).smaller().withBullet()
         .appendLine("Open Recent files with " + getActionShortcutText("RecentFiles")).smaller().withBullet()
         .appendLine("Open NavBar with " + getActionShortcutText("ShowNavBar")).smaller().withBullet()
         .appendLine("Drag'n'Drop file(s) here from " + SystemInfo.nativeFileManagerName).smaller().withBullet().draw(g,
