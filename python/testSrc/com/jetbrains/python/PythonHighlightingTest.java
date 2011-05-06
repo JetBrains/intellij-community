@@ -106,9 +106,11 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
     doTest(false, false);
   }
 
+  /*
   public void testStringEscapedOK() {
     doTest();
   }
+  */
 
   public void testStringMixedSeparatorsOK() {   // PY-299
     doTest();
@@ -164,6 +166,11 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
     doTest();
   }
 
+  public void testUnicodeOrByte25() {
+    doTest(LanguageLevel.PYTHON25, true, true);
+  }
+
+  // ---
   private void doTest(final LanguageLevel languageLevel, final boolean checkWarnings, final boolean checkInfos) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
     try {

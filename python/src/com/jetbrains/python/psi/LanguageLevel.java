@@ -25,17 +25,24 @@ public enum LanguageLevel {
   }
 
   private final int myVersion;
+
   private final boolean myHasWithStatement;
   private final boolean myHasPrintStatement;
   private final boolean mySupportsSetLiterals;
   private final boolean myIsPy3K;
-
   LanguageLevel(int version, boolean hasWithStatement, boolean hasPrintStatement, boolean supportsSetLiterals, boolean isPy3K) {
     myVersion = version;
     myHasWithStatement = hasWithStatement;
     myHasPrintStatement = hasPrintStatement;
     mySupportsSetLiterals = supportsSetLiterals;
     myIsPy3K = isPy3K;
+  }
+
+  /**
+   * @return an int where major and minor version are represented decimally: "version 2.5" is 25.
+   */
+  public int getVersion() {
+    return myVersion;
   }
 
   public boolean hasWithStatement() {

@@ -296,6 +296,16 @@ public class PyStubsTest extends PyLightFixtureTestCase {
     assertNotParsed(file);
   }
 
+
+  public void testImportFeatures() {
+    final PyFileImpl file = (PyFileImpl) getTestFile();
+    assertTrue(file.hasImportFromFuture(FutureFeature.DIVISION));
+    assertTrue(file.hasImportFromFuture(FutureFeature.UNICODE_LITERALS));
+    assertNotParsed(file);
+  }
+
+  // ---
+
   private PyFile getTestFile() {
     return getTestFile(getTestName(false) + ".py");
   }
