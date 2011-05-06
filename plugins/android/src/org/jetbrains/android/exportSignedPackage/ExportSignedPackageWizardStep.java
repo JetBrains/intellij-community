@@ -19,6 +19,7 @@ package org.jetbrains.android.exportSignedPackage;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.ide.wizard.StepAdapter;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -81,6 +82,11 @@ public abstract class ExportSignedPackageWizardStep extends StepAdapter {
 
   @Override
   public Icon getIcon() {
+    return null;
+  }
+
+  @Nullable
+  protected JComponent getPreferredFocusedComponent() {
     return null;
   }
 }
