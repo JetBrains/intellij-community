@@ -247,7 +247,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
       final String applicationName = ((ApplicationInfoEx)ApplicationInfo.getInstance()).getFullApplicationName();
       final Builder builder = new Builder();
       if (SystemInfo.isMac) {
-        builder.append(fileTitle).append(title).append(ProjectManager.getInstance().getOpenProjects().length == 0 ? applicationName : null);
+        builder.append(fileTitle).append(title)
+          .append(ProjectManager.getInstance().getOpenProjects().length == 0 
+                  || ((ApplicationInfoEx)ApplicationInfo.getInstance()).isEAP() ? applicationName : null);
       } else {
         builder.append(title).append(fileTitle).append(applicationName);
       }

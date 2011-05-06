@@ -150,13 +150,40 @@ public class SwitchUtils{
         if(operation.equals(JavaTokenType.OROR)){
             return determinePossibleSwitchExpressions(lhs, languageLevel);
         } else if(operation.equals(JavaTokenType.EQEQ)){
-            if(canBeCaseLabel(lhs, languageLevel)){
+            if (canBeCaseLabel(lhs, languageLevel) && canBeSwitchExpression(rhs, languageLevel)) {
                 return rhs;
-            } else if (canBeCaseLabel(rhs, languageLevel)){
+            } else if (canBeCaseLabel(rhs, languageLevel) && canBeSwitchExpression(lhs, languageLevel)) {
                 return lhs;
             }
         }
         return null;
+    }
+
+    private static boolean canBeSwitchExpression(PsiExpression expression, LanguageLevel languageLevel) {
+      final PsiType type = expression.getType();
+
+      if (PsiType.CHAR.equals(type) || PsiType.BYTE.equals(type) ||
+          PsiType.SHORT.equals(type) || PsiType.INT.equals(type)) {
+          return true;
+      }
+      else if (type instanceof PsiClassType) {
+          final PsiClass aClass = ((PsiClassType)type).resolve();
+          if (aClass != null) {
+              final String fqn = aClass.getQualifiedName();
+              if (CommonClassNames.JAVA_LANG_CHARACTER.equals(fqn) || CommonClassNames.JAVA_LANG_BYTE.equals(fqn) ||
+                  CommonClassNames.JAVA_LANG_SHORT.equals(fqn) || CommonClassNames.JAVA_LANG_INTEGER.equals(fqn)) {
+                  return true;
+              }
+              if (languageLevel.isAtLeast(LanguageLevel.JDK_1_5) && aClass.isEnum()) {
+                  return true;
+              }
+              if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7) && CommonClassNames.JAVA_LANG_STRING.equals(fqn)) {
+                  return true;
+              }
+          }
+      }
+
+      return false;
     }
 
     private static PsiExpression determinePossibleStringSwitchExpression(
@@ -217,9 +244,7 @@ public class SwitchUtils{
         final PsiType type = expression.getType();
         return type != null &&
                 (type.equals(PsiType.INT) ||
-                        type.equals(PsiType.CHAR) ||
-                        type.equals(PsiType.LONG) ||
-                        type.equals(PsiType.SHORT)) &&
+                        type.equals(PsiType.CHAR)) &&
                 PsiUtil.isConstantExpression(expression);
     }
 

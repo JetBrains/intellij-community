@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -64,9 +63,9 @@ public class GrPropertySelectionImpl extends GrReferenceExpressionImpl implement
 
   @NotNull
   @Override
-  public GrExpression getReferenceNameElement() {
+  public PsiElement getReferenceNameElement() {
     final PsiElement last = getLastChild();
-//    assert last instanceof GrExpression;
-    return (GrExpression)last;
+    assert last != null;
+    return last;
   }
 }

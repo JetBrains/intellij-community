@@ -419,17 +419,23 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
         if ((action == COPY || action == MOVE)
                 && (getSourceActions(comp) & action) != 0) {
 
-            Transferable t = new TextTransferrable(myComments.getText(), myOriginalComment);
-            if (t != null) {
-                try {
-                    clip.setContents(t, null);
-                    exportDone(comp, t, action);
-                    return;
-                } catch (IllegalStateException ise) {
-                    exportDone(comp, t, NONE);
-                    throw ise;
-                }
-            }
+          String selectedText = myComments.getSelectedText();
+          final Transferable t;
+          if (selectedText == null) {
+            t = new TextTransferrable(myComments.getText(), myOriginalComment);
+          }
+          else {
+            t = new TextTransferrable(selectedText, selectedText);
+          }
+          try {
+            clip.setContents(t, null);
+            exportDone(comp, t, action);
+            return;
+          }
+          catch (IllegalStateException ise) {
+            exportDone(comp, t, NONE);
+            throw ise;
+          }
         }
 
         exportDone(comp, null, NONE);
@@ -597,11 +603,13 @@ public class FileHistoryPanelImpl<S extends CommittedChangeList, U extends Chang
     }
     else {
       revision = getFirstSelectedRevision();
-      final String message = revision.getCommitMessage();
-      myOriginalComment = message;
-      @NonNls final String text = IssueLinkHtmlRenderer.formatTextIntoHtml(myVcs.getProject(), message);
-      myComments.setText(text);
-      myComments.setCaretPosition(0);
+      if (revision != null) {
+        final String message = revision.getCommitMessage();
+        myOriginalComment = message;
+        @NonNls final String text = IssueLinkHtmlRenderer.formatTextIntoHtml(myVcs.getProject(), message);
+        myComments.setText(text);
+        myComments.setCaretPosition(0);
+      }
     }
     if (myListener != null) {
       myListener.consume(revision);

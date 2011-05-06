@@ -210,13 +210,16 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       builder.append(", ");
     }
     builder.delete(builder.length() - 2, builder.length());
+    builder.append(")");
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
     final GrStatement delegateCall;
+
+    PsiElement context = method.getContainingClass() == null ? method : method.getContainingClass();
     if (method.isConstructor()) {
-      delegateCall = factory.createConstructorInvocation(builder.toString(), method);
+      delegateCall = factory.createConstructorInvocation(builder.toString(), context);
     }
     else {
-      delegateCall = factory.createStatementFromText(builder.toString(), method);
+      delegateCall = factory.createStatementFromText(builder.toString(), context);
     }
 
     final StringBuilder result = new StringBuilder();
@@ -251,7 +254,21 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     final String propName = ((GrAccessorMethod)method).getProperty().getName();
     if (((GrAccessorMethod)method).isSetter()) {
       final String paramName = method.getParameterList().getParameters()[0].getName();
-      builder.append("{\n this.").append(propName).append(" = ").append(paramName).append(";\n}");
+      builder.append("{\n");
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null) {
+          builder.append(containingClass.getName());
+          builder.append('.');
+        }
+      }
+      else {
+        builder.append("this.");
+      }
+      builder.append(propName);
+      builder.append(" = ");
+      builder.append(paramName);
+      builder.append(";\n}");
     }
     else {
       builder.append("{\n return ");

@@ -33,5 +33,5 @@ public interface GrPropertySelection extends GrReferenceExpression {
   PsiElement getDotToken();
 
   @Override
-  GrExpression getReferenceNameElement();
+  PsiElement getReferenceNameElement();
 }

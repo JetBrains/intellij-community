@@ -17,6 +17,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -66,7 +67,7 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
       new JavaClassReferenceProvider() {
 
         @Override
-        public GlobalSearchScope getScope() {
+        public GlobalSearchScope getScope(Project project) {
           return PsiClassConverter.this.getScope(genericDomValue);
         }
       };

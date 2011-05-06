@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -112,5 +113,9 @@ public class BinaryDiffTool implements DiffTool {
       }
     }
     return true;
+  }
+
+  public static boolean canShow(@NotNull Project project, VirtualFile file) {
+    return file != null && FileEditorProviderManager.getInstance().getProviders(project, file).length > 0;
   }
 }

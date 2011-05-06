@@ -19,6 +19,7 @@ import com.intellij.codeInsight.TestUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
@@ -57,12 +58,13 @@ public abstract class IntroduceFieldCentralPanel {
   private JCheckBox myCbReplaceAll;
   private StateRestoringCheckBox myCbDeleteVariable;
   private StateRestoringCheckBox myCbFinal;
+  private boolean myHasWriteAccess;
 
   public IntroduceFieldCentralPanel(PsiClass parentClass,
                                     PsiExpression initializerExpression,
                                     PsiLocalVariable localVariable,
                                     boolean isCurrentMethodConstructor, boolean isInvokedOnDeclaration, boolean willBeDeclaredStatic,
-                                    int occurrencesCount, boolean allowInitInMethod, boolean allowInitInMethodIfAll,
+                                    PsiExpression[] occurrences, boolean allowInitInMethod, boolean allowInitInMethodIfAll,
                                     TypeSelectorManager typeSelectorManager) {
     myParentClass = parentClass;
     myInitializerExpression = initializerExpression;
@@ -70,7 +72,14 @@ public abstract class IntroduceFieldCentralPanel {
     myIsCurrentMethodConstructor = isCurrentMethodConstructor;
     myIsInvokedOnDeclaration = isInvokedOnDeclaration;
     myWillBeDeclaredStatic = willBeDeclaredStatic;
-    myOccurrencesCount = occurrencesCount;
+    myOccurrencesCount = occurrences.length;
+    myHasWriteAccess = false;
+    for (PsiExpression occurrence : occurrences) {
+      if (PsiUtil.isAccessedForWriting(occurrence)) {
+        myHasWriteAccess = true;
+        break;
+      }
+    }
     myAllowInitInMethod = allowInitInMethod;
     myAllowInitInMethodIfAll = allowInitInMethodIfAll;
     myTypeSelectorManager = typeSelectorManager;
@@ -216,7 +225,7 @@ public abstract class IntroduceFieldCentralPanel {
   }
 
   protected boolean allowFinal() {
-    return true;
+    return !myHasWriteAccess;
   }
 
   public void addOccurrenceListener(ItemListener itemListener) {
@@ -245,6 +254,8 @@ public abstract class IntroduceFieldCentralPanel {
 
 
   public void saveFinalState() {
-    ourLastCbFinalState = myCbFinal.isEnabled() && myCbFinal.isSelected();
+    if (myCbFinal.isEnabled()) {
+      ourLastCbFinalState = myCbFinal.isSelected();
+    }
   }
 }

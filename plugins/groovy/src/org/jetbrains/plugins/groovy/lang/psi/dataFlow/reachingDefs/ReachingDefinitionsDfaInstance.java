@@ -51,14 +51,18 @@ public class ReachingDefinitionsDfaInstance implements DfaInstance<TIntObjectHas
       assert myVarToIndexMap.containsKey(name);
       final int num = myVarToIndexMap.get(name);
       if (varInsn.isWrite()) {
-        TIntHashSet defs = m.get(num);
-        if (defs == null) {
-          defs = new TIntHashSet();
-          m.put(num, defs);
-        } else defs.clear();
-        defs.add(varInsn.num());
+        registerDef(m, varInsn, num);
       }
     }
+  }
+
+  protected static void registerDef(TIntObjectHashMap<TIntHashSet> m, Instruction varInsn, int num) {
+    TIntHashSet defs = m.get(num);
+    if (defs == null) {
+      defs = new TIntHashSet();
+      m.put(num, defs);
+    } else defs.clear();
+    defs.add(varInsn.num());
   }
 
   @NotNull

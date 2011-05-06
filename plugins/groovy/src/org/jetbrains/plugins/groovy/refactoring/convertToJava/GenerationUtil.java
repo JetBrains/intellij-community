@@ -527,6 +527,8 @@ public class GenerationUtil {
       }
       return;
     }
+    writeModifiers(builder, variableDeclaration.getModifierList());
+
     PsiType type = getVarType(variables[0]);
     writeType(builder, type, variableDeclaration);
 
@@ -553,9 +555,7 @@ public class GenerationUtil {
   static void writeVariableSeparately(GrVariable variable, StringBuilder builder, ExpressionContext expressionContext) {
     PsiType type = getVarType(variable);
 
-    if (writeModifiers(builder, variable.getModifierList())) {
-      builder.append(" ");
-    }
+    writeModifiers(builder, variable.getModifierList());
 
     writeType(builder, type, variable);
     builder.append(" ");

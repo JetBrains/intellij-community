@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -111,18 +112,18 @@ public class UsageInfo {
    * @return range in element
    */
   @Nullable("null means range is invalid")
-  public TextRange getRangeInElement() {
+  public ProperTextRange getRangeInElement() {
     PsiElement element = getElement();
     if (element == null) return null;
     TextRange elementRange = element.getTextRange();
     if (myPsiFileRange == null) {
       int startOffset = element.getTextOffset();
-      return TextRange.create(startOffset, elementRange.getEndOffset()).shiftRight(-elementRange.getStartOffset());
+      return ProperTextRange.create(startOffset, elementRange.getEndOffset()).shiftRight(-elementRange.getStartOffset());
     }
     else {
       Segment rangeInFile = myPsiFileRange.getRange();
       if (rangeInFile == null) return null;
-      return TextRange.create(rangeInFile).shiftRight(-elementRange.getStartOffset());
+      return ProperTextRange.create(rangeInFile).shiftRight(-elementRange.getStartOffset());
     }
   }
 
@@ -162,10 +163,11 @@ public class UsageInfo {
     PsiElement element = getElement();
     if (element == null) return null;
     TextRange range = element.getTextRange();
-    TextRange rangeInElement = getRangeInElement();
+    ProperTextRange.assertProperRange(range, element);
+    ProperTextRange rangeInElement = getRangeInElement();
     if (rangeInElement == null) return null;
-    return new TextRange(range.getStartOffset() + rangeInElement.getStartOffset(),
-                         Math.min(range.getEndOffset(), range.getStartOffset() + rangeInElement.getEndOffset()));
+    return new ProperTextRange(Math.min(range.getEndOffset(), range.getStartOffset() + rangeInElement.getStartOffset()),
+                               Math.min(range.getEndOffset(), range.getStartOffset() + rangeInElement.getEndOffset()));
   }
 
   public Project getProject() {

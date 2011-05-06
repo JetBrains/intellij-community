@@ -119,7 +119,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     return true;
   }
 
-  private PsiSubstitutor obtainSubstitutor(PsiSubstitutor substitutor, PsiMethod method, ResolveState state) {
+  protected PsiSubstitutor obtainSubstitutor(PsiSubstitutor substitutor, PsiMethod method, ResolveState state) {
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (myTypeArguments.length == typeParameters.length) {
       for (int i = 0; i < typeParameters.length; i++) {

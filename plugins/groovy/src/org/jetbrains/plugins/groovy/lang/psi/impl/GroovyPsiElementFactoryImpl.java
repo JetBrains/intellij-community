@@ -205,11 +205,16 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     return enumClass.getEnumConstants()[0];
   }
 
-  public GrVariableDeclaration createFieldDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type) {
+  public GrVariableDeclaration createFieldDeclaration(String[] modifiers,
+                                                      String identifier,
+                                                      @Nullable GrExpression initializer,
+                                                      @Nullable PsiType type) {
     final String varDeclaration = createVariableDeclaration(modifiers, initializer, type, identifier).getText();
 
     final GroovyFileBase file = (GroovyFileBase) createGroovyFile("class A { " + varDeclaration + "}");
     final GrTypeDefinitionBody body = file.getTypeDefinitions()[0].getBody();
+    LOG.assertTrue(body.getMemberDeclarations().length == 1 && body.getMemberDeclarations()[0] instanceof GrVariableDeclaration,
+                   "ident = <" + identifier + "> initializer = " + (initializer == null ? "_null_" : ("<" + initializer.getText()) + ">"));
     return (GrVariableDeclaration) body.getMemberDeclarations()[0];
   }
 

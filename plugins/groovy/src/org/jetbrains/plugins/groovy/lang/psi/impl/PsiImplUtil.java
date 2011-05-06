@@ -383,13 +383,7 @@ public class PsiImplUtil {
   }
 
   public static PsiType getNominalType(final GrExpression expr) {
-    final TypeInferenceHelper helper = GroovyPsiManager.getInstance(expr.getProject()).getTypeInferenceHelper();
-
-    return helper.doWithInferenceDisabled(new Computable<PsiType>() {
-      public PsiType compute() {
-        return expr.getType();
-      }
-    });
+    return expr.getType();
   }
 
   public static void deleteStatementTail(PsiElement container, @NotNull PsiElement statement) {

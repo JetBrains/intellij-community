@@ -16,10 +16,12 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
@@ -102,5 +104,10 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
       }
     }
     return ContainerUtil.toArray(results, new PsiReference[results.size()]);
+  }
+
+  @Override
+  public GlobalSearchScope getScope(Project project) {
+    return GlobalSearchScope.allScope(project);
   }
 }

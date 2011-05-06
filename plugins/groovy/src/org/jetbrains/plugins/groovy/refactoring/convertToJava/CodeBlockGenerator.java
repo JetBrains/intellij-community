@@ -359,9 +359,7 @@ public class CodeBlockGenerator extends Generator {
   }
 
   private static void writeVariableWithoutSemicolonAndInitializer(StringBuilder builder, GrVariable var) {
-    if (GenerationUtil.writeModifiers(builder, var.getModifierList())) {
-      builder.append(" ");
-    }
+    GenerationUtil.writeModifiers(builder, var.getModifierList());
     GenerationUtil.writeType(builder, GenerationUtil.getVarType(var), var);
     builder.append(" ").append(var.getName());
   }

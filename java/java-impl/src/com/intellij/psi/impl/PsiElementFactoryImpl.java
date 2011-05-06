@@ -428,6 +428,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
         if (i > 0) builder.append(", ");
         builder.append(types[i].getCanonicalText()).append(' ').append(names[i]);
       }
+      builder.append(");");
       return createMethodFromText(builder.toString(), null).getParameterList();
     }
     finally {
@@ -443,11 +444,12 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       builder.append("void method()");
       if (references.length > 0){
         builder.append(" throws ");
+        for (int i = 0; i < references.length; i++) {
+          if (i > 0) builder.append(", ");
+          builder.append(references[i].getCanonicalText());
+        }
       }
-      for (int i = 0; i < references.length; i++) {
-        if (i > 0) builder.append(", ");
-        builder.append(references[i].getCanonicalText());
-      }
+      builder.append(';');
       return createMethodFromText(builder.toString(), null).getThrowsList();
     }
     finally {

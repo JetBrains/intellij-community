@@ -73,9 +73,17 @@ public class ElementToWorkOn {
         .LOOKUP_ITEM_ACCEPTED);
       if (element instanceof PsiLocalVariable) {
         localVar = (PsiLocalVariable) element;
-        final PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
+        PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
         if (elementAt instanceof PsiIdentifier && elementAt.getParent() instanceof PsiReferenceExpression) {
           expr = (PsiExpression) elementAt.getParent();
+        } else {
+          final PsiReference reference = TargetElementUtilBase.findReference(editor);
+          if (reference != null) {
+            final PsiElement refElement = reference.getElement();
+            if (refElement instanceof PsiReferenceExpression) {
+              expr = (PsiReferenceExpression)refElement;
+            }
+          }
         }
       } else {
         final PsiLocalVariable variable = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiLocalVariable.class);

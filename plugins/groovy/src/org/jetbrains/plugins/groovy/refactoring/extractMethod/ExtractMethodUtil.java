@@ -63,6 +63,10 @@ import java.util.*;
  */
 public class ExtractMethodUtil {
 
+  private ExtractMethodUtil() {
+  }
+
+  @Nullable
   static PsiElement calculateAnchorToInsertBefore(GrMemberOwner owner, PsiElement startElement) {
     while (startElement != null && !isEnclosingDefinition(owner, startElement)) {
       if (startElement.getParent() instanceof GroovyFile) {
@@ -147,7 +151,7 @@ public class ExtractMethodUtil {
 
   private static boolean haveDifferentTypes(List<VariableInfo> varInfos) {
     if (varInfos.size() < 2) return true;
-    Set<String> diffTypes = new com.intellij.util.containers.hash.HashSet<String>();
+    Set<String> diffTypes = new HashSet<String>();
     for (VariableInfo info : varInfos) {
       final PsiType t = info.getType();
       diffTypes.add(t == null ? null : TypesUtil.unboxPrimitiveTypeWrapper(t).getCanonicalText());
@@ -287,7 +291,7 @@ public class ExtractMethodUtil {
   }
 
   static GrMethod createMethodByHelper(@NotNull String name, ExtractMethodInfoHelper helper) {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
 
     //Add signature
     PsiType type = helper.getOutputType();
@@ -308,9 +312,9 @@ public class ExtractMethodUtil {
 
     ParameterInfo[] infos = helper.getParameterInfos();
     boolean[] outputIsParameter = new boolean[outputInfos.length];
-    for (VariableInfo outputName : outputInfos) {
-      for (int i = 0; i < infos.length; i++) {
-        if (outputName.getName().equals(infos[i].getOldName())) {
+    for (int i = 0; i < outputInfos.length; i++) {
+      for (ParameterInfo info : infos) {
+        if (outputInfos[i].getName().equals(info.getOldName())) {
           outputIsParameter[i] = true;
         }
       }
@@ -348,7 +352,7 @@ public class ExtractMethodUtil {
       }
     }
     else {
-      GrExpression expr = (GrExpression)PsiUtil.skipParentheses((GrExpression)helper.getStatements()[0], false);
+      GrExpression expr = (GrExpression)PsiUtil.skipParentheses(helper.getStatements()[0], false);
       buffer.append(PsiType.VOID.equals(type) ? "" : "return ").append(expr != null ? expr.getText() : "");
     }
 
@@ -428,7 +432,7 @@ public class ExtractMethodUtil {
       if (parent instanceof GroovyFileBase) return (GrMemberOwner) ((GroovyFileBase) parent).getScriptClass();
       parent = parent.getParent();
     }
-    return parent instanceof GrMemberOwner ? ((GrMemberOwner) parent) : null;
+    return parent != null ? ((GrMemberOwner) parent) : null;
   }
 
   @Nullable
@@ -443,7 +447,7 @@ public class ExtractMethodUtil {
   }
 
   static GrMethodCallExpression createMethodCallByHelper(@NotNull String name, ExtractMethodInfoHelper helper) {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     buffer.append(name).append("(");
     int number = 0;
     for (ParameterInfo info : helper.getParameterInfos()) {
@@ -478,13 +482,12 @@ public class ExtractMethodUtil {
           return initializer.getTextOffset();
         }
       }
-    } else if (statement instanceof GrAssignmentExpression) {
+    }
+    else if (statement instanceof GrAssignmentExpression) {
       GrExpression value = ((GrAssignmentExpression) statement).getRValue();
       if (value != null) {
         return value.getTextOffset();
       }
-    } else if (statement instanceof GrMethodCallExpression) {
-      return statement.getTextOffset();
     }
     return statement.getTextOffset();
   }

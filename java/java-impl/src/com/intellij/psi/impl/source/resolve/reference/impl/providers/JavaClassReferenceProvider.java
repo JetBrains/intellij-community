@@ -79,7 +79,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       }
     };
 
-  private static final Key<ParameterizedCachedValue<List<PsiElement>, Project>> KEY = Key.create("default packages");
+  private final Key<ParameterizedCachedValue<List<PsiElement>, Project>> myKey = Key.create("default packages");
 
   public <T> void setOption(CustomizationKey<T> option, T value) {
     if (myOptions == null) {
@@ -94,7 +94,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   }
 
   @Nullable
-  public GlobalSearchScope getScope() {
+  public GlobalSearchScope getScope(Project project) {
     return null;
   }
 
@@ -130,7 +130,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   }
 
   protected List<PsiElement> getDefaultPackages(Project project) {
-    return CachedValuesManager.getManager(project).getParameterizedCachedValue(project, KEY, myProvider, false, project);
+    return CachedValuesManager.getManager(project).getParameterizedCachedValue(project, myKey, myProvider, false, project);
   }
 
   private static Collection<PsiPackage> getSubPackages(final PsiPackage defaultPackage) {

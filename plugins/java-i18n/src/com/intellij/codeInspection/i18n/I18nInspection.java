@@ -293,7 +293,8 @@ public class I18nInspection extends BaseLocalInspectionTool {
   @Override
   @Nullable
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (isClassNonNls(method.getContainingClass())) {
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null || isClassNonNls(containingClass)) {
       return null;
     }
     final PsiCodeBlock body = method.getBody();
@@ -324,7 +325,8 @@ public class I18nInspection extends BaseLocalInspectionTool {
   @Override
   @Nullable
   public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (isClassNonNls(field.getContainingClass())) {
+    PsiClass containingClass = field.getContainingClass();
+    if (containingClass == null || isClassNonNls(containingClass)) {
       return null;
     }
     if (AnnotationUtil.isAnnotated(field, AnnotationUtil.NON_NLS, false)) {
@@ -567,7 +569,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     return false;
   }
 
-  private static boolean isClassNonNls(final PsiClass clazz) {
+  private static boolean isClassNonNls(@NotNull PsiClass clazz) {
     final PsiDirectory directory = clazz.getContainingFile().getContainingDirectory();
     return directory != null && isPackageNonNls(JavaDirectoryService.getInstance().getPackage(directory));
   }

@@ -25,9 +25,13 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.PomDeclarationSearcher;
+import com.intellij.pom.PomTarget;
+import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
@@ -35,6 +39,8 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.CollectConsumer;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
@@ -238,6 +244,13 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
       if (!GroovyUnresolvedHighlightFilter.shouldHighlight(referenceExpression)) return;
 
+      CollectConsumer<PomTarget> consumer = new CollectConsumer<PomTarget>();
+
+      for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
+        searcher.findDeclarationsAt(referenceExpression, 0, consumer);
+        if (consumer.getResult().size() > 0) return;
+      }
+
       registerReferenceFixes(referenceExpression, annotation);
       annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
     }
@@ -246,7 +259,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   private void checkStringNameIdentifier(GrReferenceExpression ref) {
     final PsiElement nameElement = ref.getReferenceNameElement();
     if (nameElement == null) return;
-    if (!GroovyElementTypes.mSTRING_LITERAL.equals(nameElement.getNode().getElementType())) return;
+    if (!GroovyTokenTypes.mSTRING_LITERAL.equals(nameElement.getNode().getElementType())) return;
     final String text = nameElement.getText();
     checkStringLiteral(nameElement, text);
   }

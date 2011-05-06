@@ -168,8 +168,8 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
       actions.add(map.get(projectName) > 1 ? new ReopenProjectAction(path, path) : new ReopenProjectAction(path, projectName));
     }
 
-    if (actions.size() == 0) {
-      return new AnAction[0];
+    if (actions.isEmpty()) {
+      return AnAction.EMPTY_ARRAY;
     }
 
     ArrayList<AnAction> list = new ArrayList<AnAction>();
@@ -211,7 +211,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
   protected abstract void doOpenProject(String projectPath, Project projectToClose, final boolean forceOpenInNewFrame);
 
-  protected boolean isValidProjectPath(String projectPath) {
+  private static boolean isValidProjectPath(String projectPath) {
     final File file = new File(projectPath);
     return file.exists() && (!file.isDirectory() || new File(file, ProjectUtil.DIRECTORY_BASED_PROJECT_DIR).exists());
   }
@@ -304,7 +304,7 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
       GeneralSettings generalSettings = GeneralSettings.getInstance();
       if (generalSettings.isReopenLastProject()) {
         List<String> openPaths = myState.openPaths;
-        if (openPaths.size() > 0) {
+        if (!openPaths.isEmpty()) {
           for (String openPath : openPaths) {
             if (isValidProjectPath(openPath)) doOpenProject(openPath, null, true);
           }
