@@ -35,7 +35,10 @@ import java.util.List;
  */
 abstract class CharArray implements CharSequenceBackedByArray {
   
-  private static final boolean DISABLE_DEFERRED_PROCESSING = Boolean.getBoolean("idea.document.deny.deferred.changes");
+  //TODO den remove
+  private static final boolean DISABLE_DEFERRED_PROCESSING = true;
+  //TODO den uncomment
+  //private static final boolean DISABLE_DEFERRED_PROCESSING = Boolean.getBoolean("idea.document.deny.deferred.changes");
   private static final boolean DEBUG_DEFERRED_PROCESSING = Boolean.getBoolean("idea.document.debug.bulk.processing");
   
   private static final Logger LOG = Logger.getInstance("#" + CharArray.class.getName());
