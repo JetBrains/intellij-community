@@ -20,8 +20,8 @@ import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationListener;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -87,7 +87,7 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
 
   @NotNull
   protected ProgressIndicator createProgressIndicator() {
-    return ProgressIndicatorUtils.forceWriteActionPriority(new EmptyProgressIndicator(), this);
+    return ProgressIndicatorUtils.forceWriteActionPriority(new ProgressIndicatorBase(), this);
   }
 
   private final class ConfigurationListener implements AntConfigurationListener {
