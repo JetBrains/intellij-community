@@ -785,10 +785,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @Override
   public String toString() {
-    StringBuilder buffer = new StringBuilder();
+    StringBuilder buffer = new StringBuilder("document: ");
     int linesNumber = getLineCount();
     for (int i = 0; i < linesNumber; i++) {
-      buffer.append(i).append(": ").append(getLineStartOffset(i)).append("-").append(getLineEndOffset(i)).append("\n");
+      buffer.append(i).append(":").append(getLineStartOffset(i)).append("-").append(getLineEndOffset(i)).append(";");
     }
     return buffer.toString();
   }
