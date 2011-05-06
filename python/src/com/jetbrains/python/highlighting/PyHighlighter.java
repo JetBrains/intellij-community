@@ -6,10 +6,8 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
-import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.lexer.PyStringLiteralLexer;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -29,12 +27,7 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
   @NotNull
   public Lexer getHighlightingLexer() {
-    LayeredLexer ret = new LayeredLexer(new PythonHighlightingLexer(myLanguageLevel));
-    ret.registerSelfStoppingLayer(
-      new PyStringLiteralLexer(PyTokenTypes.STRING_LITERAL, myLanguageLevel.isPy3K()),
-      new IElementType[]{PyTokenTypes.STRING_LITERAL}, IElementType.EMPTY_ARRAY
-    );
-    return ret;
+    return new LayeredLexer(new PythonHighlightingLexer(myLanguageLevel));
   }
 
   private static TextAttributesKey _copy(String name, TextAttributesKey src) {
@@ -95,7 +88,10 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
   public static final TextAttributesKey PY_INVALID_STRING_ESCAPE = _copy("PY.INVALID_STRING_ESCAPE", INVALID_STRING_ESCAPE);
 
-
+  /**
+   * The 'heavy' constructor that initializes everything. PySyntaxHighlighterFactory caches such instances per level.
+   * @param languageLevel
+   */
   public PyHighlighter(LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
     keys = new HashMap<IElementType, TextAttributesKey>();
@@ -122,10 +118,6 @@ public class PyHighlighter extends SyntaxHighlighterBase {
 
     keys.put(PyTokenTypes.END_OF_LINE_COMMENT, PY_LINE_COMMENT);
     keys.put(PyTokenTypes.BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
-
-    keys.put(StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN, PY_VALID_STRING_ESCAPE);
-    keys.put(StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN, PY_INVALID_STRING_ESCAPE);
-    keys.put(StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN, PY_INVALID_STRING_ESCAPE);
   }
 
   @NotNull

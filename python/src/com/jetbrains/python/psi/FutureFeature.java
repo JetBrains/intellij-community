@@ -20,8 +20,8 @@ public enum FutureFeature {
   ;
   // TODO: link it to LanguageLevel
   private final String myName;
-  private final int myProposed;
-  private final int myIncluded;
+  private final int myOptionalVersion;
+  private final int myRequiredVersion;
 
   /**
    * @param name what is imported from __future__
@@ -30,21 +30,46 @@ public enum FutureFeature {
    */
   FutureFeature(final @NotNull String name, final int proposed, final int included) {
     myName = name;
-    myProposed = proposed;
-    myIncluded = included;
+    myOptionalVersion = proposed;
+    myRequiredVersion = included;
   }
 
+  /**
+   * @return the Python importable name of the feature.
+   */
   @Override
   public String toString() {
     return myName;
   }
 
-  public int getProposedVersion() {
-    return myProposed;
+  /**
+   * @return Version since which it is possible to import the feature from __future__
+   */
+  public int getOptionalVersion() {
+    return myOptionalVersion;
   }
 
-  public int getIncludedVersion() {
-    return myIncluded;
+  /**
+   * @return Version since which the feature is built into the language (required from the language).
+   */
+  public int getRequiredVersion() {
+    return myRequiredVersion;
+  }
+
+  /**
+   * @param level
+   * @return true iff the feature can either be imported from __future__ at given level, or is already built-in.
+   */
+  public boolean availableAt(LanguageLevel level) {
+    return level.getVersion() >= myOptionalVersion;
+  }
+
+  /**
+   * @param level
+   * @return true iff the feature is already present (required) at given level, and there's no need to import it.
+   */
+  public boolean requiredAt(LanguageLevel level) {
+    return level.getVersion() >= myRequiredVersion;
   }
 
   public static final FutureFeature[] ALL = {
