@@ -25,7 +25,7 @@
       <scrollpane id="4f662" class="com.intellij.ui.components.JBScrollPane">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false">
-            <preferred-size width="300" height="400"/>
+            <preferred-size width="250" height="200"/>
           </grid>
         </constraints>
         <properties/>
