@@ -537,6 +537,14 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     mySwitchedHolder.notifyVcsStarted(vcs);
   }
 
+  public Collection<Change> getAllChanges() {
+    final Collection<Change> changes = new HashSet<Change>();
+    for (LocalChangeList list : myMap.values()) {
+      changes.addAll(list.getChanges());
+    }
+    return changes;
+  }
+
   private abstract class ExternalVsInternalChangesIntersection {
     protected final Collection<Change> myInChanges;
     protected final Map<Pair<String, String>, LocalChangeList> myInternalMap;

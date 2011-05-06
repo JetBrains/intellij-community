@@ -587,6 +587,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  @NotNull
+  public Collection<Change> getAllChanges() {
+    synchronized (myDataLock) {
+      return myWorker.getAllChanges();
+    }
+  }
+
   public List<VirtualFile> getUnversionedFiles() {
     synchronized (myDataLock) {
       return myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
