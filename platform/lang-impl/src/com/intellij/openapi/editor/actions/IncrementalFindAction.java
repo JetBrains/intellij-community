@@ -57,7 +57,7 @@ public class IncrementalFindAction extends EditorAction {
             model = new FindModel();
             model.copyFrom(findManager.getFindInFileModel());
           }
-          FindUtil.configureFindModel(myReplace, myReplace ? editor.getSelectionModel().getSelectedText() : null, model);
+          FindUtil.configureFindModel(myReplace, editor.getSelectionModel().getSelectedText(), model);
           final EditorSearchComponent header = new EditorSearchComponent(editor, project, model);
           editor.setHeaderComponent(header);
           header.requestFocus();
