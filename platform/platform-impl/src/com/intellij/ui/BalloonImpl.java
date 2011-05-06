@@ -428,7 +428,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
       proxyFocusRequest.get().doWhenDone(new Runnable() {
         @Override
         public void run() {
-          focusRequestor.get().requestFocus(originalFocusOwner.get(), true);
+          myFocusManager.requestFocus(originalFocusOwner.get(), true);
         }
       });
     }
