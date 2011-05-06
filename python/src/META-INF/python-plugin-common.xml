@@ -476,8 +476,8 @@
     <lang.psiStructureViewFactory language="ReST"
                                   implementationClass="com.jetbrains.rest.structureView.RestStructureViewFactory"/>
     <annotator language="ReST" implementationClass="com.jetbrains.rest.validation.RestAnnotatingVisitor"/>
-
-
+    <projectService serviceInterface="com.jetbrains.rest.actions.PyRestructuredSettings"
+                    serviceImplementation="com.jetbrains.rest.actions.PyRestructuredSettings"/>
 
   </extensions>
 
