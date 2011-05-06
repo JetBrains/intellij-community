@@ -230,6 +230,7 @@ public class GitChangeUtils {
     handler.addParameters("--timestamp", "--max-count=1", revisionNumber);
     handler.endOptions();
     handler.setNoSSH(true);
+    handler.setSilent(true);
     //handler.setSilent(true);
     String output = handler.run();
     StringTokenizer stk = new StringTokenizer(output, "\n\r \t", false);

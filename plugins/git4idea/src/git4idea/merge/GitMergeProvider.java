@@ -242,6 +242,7 @@ public class GitMergeProvider implements MergeProvider2 {
           GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LS_FILES);
           h.setNoSSH(true);
           h.setStdoutSuppressed(true);
+          h.setSilent(true);
           h.addParameters("--exclude-standard", "--unmerged", "-t", "-z");
           h.endOptions();
           String output = h.run();
