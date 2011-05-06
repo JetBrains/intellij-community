@@ -220,4 +220,25 @@ public class PyClassRefactoringUtil {
       node.putCopyableUserData(ENCODED_IMPORT, (PsiNamedElement)target);
     }
   }
+
+  public static void updateImportOfElement(PyImportStatementBase importStatement, PsiNamedElement element) {
+    final String name = element.getName();
+    if (name != null) {
+      PyImportElement importElement = null;
+      for (PyImportElement e: importStatement.getImportElements()) {
+        if (name.equals(e.getVisibleName())) {
+          importElement = e;
+        }
+      }
+      if (importElement != null) {
+        insertImport(importStatement, element);
+        if (importStatement.getImportElements().length == 1) {
+          importStatement.delete();
+        }
+        else {
+          importElement.delete();
+        }
+      }
+    }
+  }
 }
