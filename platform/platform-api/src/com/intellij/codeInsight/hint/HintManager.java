@@ -47,6 +47,7 @@ public abstract class HintManager {
   public static final int HIDE_BY_SCROLLING = 0x20;
   public static final int HIDE_IF_OUT_OF_EDITOR = 0x40;
   public static final int UPDATE_BY_SCROLLING = 0x80;
+  public static final int HIDE_BY_MOUSEOVER = 0x100;
 
   public abstract void showHint(@NotNull JComponent component, @NotNull RelativePoint p, int flags, int timeout);
 
