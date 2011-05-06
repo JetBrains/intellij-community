@@ -301,6 +301,15 @@ public class HintManagerImpl extends HintManager implements Disposable {
       }
     });
 
+    if ((flags & HIDE_BY_MOUSEOVER) != 0) {
+      ListenerUtil.addMouseMotionListener(component, new MouseMotionAdapter() {
+        @Override
+        public void mouseMoved(MouseEvent e) {
+          hideHints(HIDE_BY_MOUSEOVER, true, false);
+        }
+      });
+    }
+
     final HintInfo info = new HintInfo(hint, flags, reviveOnEditorChange);
     myHintsStack.add(info);
     if (timeout > 0) {
