@@ -31,7 +31,7 @@ import java.util.*;
 /**
  * Git merge tool for resolving conflicts. Use IDEA built-in 3-way merge tool.
  */
-public class GitMergeTool extends GitAction {
+public class GitResolveConflictsAction extends GitAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
