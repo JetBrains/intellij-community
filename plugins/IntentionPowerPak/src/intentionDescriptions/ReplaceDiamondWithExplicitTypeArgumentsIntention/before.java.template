@@ -1,0 +1,7 @@
+import java.util.*;
+
+public class X {
+  void f() {
+    Map<String, Number> m = new HashMap<spot><></spot>();
+  }
+}

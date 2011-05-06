@@ -190,6 +190,11 @@
       <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.siyeh.ipp.types.ReplaceDiamondWithExplicitTypeArgumentsIntention</className>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
     <!-- Imports -->
 
     <intentionAction>
