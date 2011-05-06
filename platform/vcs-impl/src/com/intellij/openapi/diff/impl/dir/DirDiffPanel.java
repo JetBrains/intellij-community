@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBLabel;
@@ -60,22 +61,22 @@ public class DirDiffPanel implements Disposable {
   private JTextField myFilter;
   private final DirDiffTableModel myModel;
   public JLabel myErrorLabel;
-  private final DirDiffDialog myDialog;
+  private final DirDiffWindow myDiffWindow;
   private JComponent myDiffPanelComponent;
   private JComponent myViewComponent;
   private DiffElement myCurrentElement;
   private String oldFilter;
 
-  public DirDiffPanel(DirDiffTableModel model, DirDiffDialog dirDiffDialog, DirDiffSettings settings) {
+  public DirDiffPanel(DirDiffTableModel model, DirDiffWindow wnd, DirDiffSettings settings) {
     myModel = model;
-    myDialog = dirDiffDialog;
+    myDiffWindow = wnd;
     mySourceDirField.setText(model.getSourceDir().getPath());
     myTargetDirField.setText(model.getTargetDir().getPath());
     mySourceDirLabel.setIcon(model.getSourceDir().getIcon());
     myTargetDirLabel.setIcon(model.getTargetDir().getIcon());
     myModel.setTable(myTable);
     myModel.setPanel(this);
-    myModel.setDisposableParent(dirDiffDialog.getDisposable());
+    Disposer.register(this, myModel);
     myTable.setModel(myModel);
 
     final DirDiffTableCellRenderer renderer = new DirDiffTableCellRenderer(myTable);
@@ -102,7 +103,7 @@ public class DirDiffPanel implements Disposable {
           }
           clearDiffPanel();
           if (element.getType() == DType.CHANGED) {
-            myDiffPanelComponent = element.getSource().getDiffComponent(element.getTarget(), project, myDialog.getWindow());
+            myDiffPanelComponent = element.getSource().getDiffComponent(element.getTarget(), project, myDiffWindow.getWindow());
             if (myDiffPanelComponent != null) {
               myDiffPanel.add(myDiffPanelComponent, BorderLayout.CENTER);
               myCurrentElement = element.getSource();
@@ -134,7 +135,7 @@ public class DirDiffPanel implements Disposable {
             }
           }
         }
-        myDialog.setTitle(myModel.getTitle());
+        myDiffWindow.setTitle(myModel.getTitle());
       }
     });
     myTable.addKeyListener(new KeyAdapter() {
@@ -150,14 +151,16 @@ public class DirDiffPanel implements Disposable {
           if (element.isSeparator()) {
             row++;
           }
-        } else if (keyCode == KeyEvent.VK_UP && row != 0) {
+        }
+        else if (keyCode == KeyEvent.VK_UP && row != 0) {
           row--;
           final DirDiffElement element = myModel.getElementAt(row);
           if (element == null) return;
           if (element.isSeparator()) {
             row--;
           }
-        } else {
+        }
+        else {
           return;
         }
         final DirDiffElement element = myModel.getElementAt(row);
@@ -185,9 +188,9 @@ public class DirDiffPanel implements Disposable {
     }
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DirDiff", new DirDiffToolbarActions(myModel), true);
     myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
-    final JBLoadingPanel loadingPanel = new JBLoadingPanel(new BorderLayout(), dirDiffDialog.getDisposable());
+    final JBLoadingPanel loadingPanel = new JBLoadingPanel(new BorderLayout(), wnd.getDisposable());
     loadingPanel.add(myComponent, BorderLayout.CENTER);
-    //final LoadingDecorator decorator = new LoadingDecorator(myComponent, dirDiffDialog.getDisposable(), -1) {
+    //final LoadingDecorator decorator = new LoadingDecorator(myComponent, wnd.getDisposable(), -1) {
     //  @Override
     //  protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
     //    final NonOpaquePanel panel = super.customizeLoadingLayer(parent, text, icon);
