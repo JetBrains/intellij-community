@@ -15,71 +15,66 @@
  */
 package git4idea.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
-import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Git merge tool for resolving conflicts. Use IDEA built-in 3-way merge tool.
  */
-public class GitMergeTool extends BasicAction {
-  /**
-   * {@inheritDoc}
-   */
+public class GitMergeTool extends GitAction {
+
   @Override
-  public boolean perform(@NotNull Project project,
-                         GitVcs vcs,
-                         @NotNull List<VcsException> exceptions,
-                         @NotNull VirtualFile[] affectedFiles) {
-    saveAll();
-    // ensure that all selected files actually has unresolved conflicts
-    ChangeListManager changes = ChangeListManager.getInstance(project);
-    for (VirtualFile file : affectedFiles) {
-      Change change = changes.getChange(file);
-      if (change != null && change.getFileStatus() != FileStatus.MERGED_WITH_CONFLICTS) {
-        File f = new File(file.getPath());
-        //noinspection ThrowableInstanceNeverThrown
-        exceptions.add(new VcsException(GitBundle.message("merge.is.not.needed", f.getAbsolutePath())));
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    final Project project = event.getProject();
+
+    final Set<VirtualFile> conflictedFiles = new TreeSet<VirtualFile>(new Comparator<VirtualFile>() {
+      @Override
+      public int compare(@NotNull VirtualFile f1, @NotNull VirtualFile f2) {
+        return f1.getPresentableUrl().compareTo(f2.getPresentableUrl());
+      }
+    });
+    for (Change change : ChangeListManager.getInstance(project).getAllChanges()) {
+      final ContentRevision before = change.getBeforeRevision();
+      final ContentRevision after = change.getAfterRevision();
+      if (before != null) {
+        final VirtualFile file = before.getFile().getVirtualFile();
+        if (file != null) {
+          conflictedFiles.add(file);
+        }
+      }
+      if (after != null) {
+        final VirtualFile file = after.getFile().getVirtualFile();
+        if (file != null) {
+          conflictedFiles.add(file);
+        }
+      }
+    }
+
+    AbstractVcsHelper.getInstance(project).showMergeDialog(new ArrayList<VirtualFile>(conflictedFiles), GitVcs.getInstance(project).getMergeProvider());
+  }
+
+  @Override
+  protected boolean isEnabled(@NotNull AnActionEvent event) {
+    final Collection<Change> changes = ChangeListManager.getInstance(event.getProject()).getAllChanges();
+    if (changes.size() > 1000) {
+      return true;
+    }
+    for (Change change : changes) {
+      if (change.getFileStatus() == FileStatus.MERGED_WITH_CONFLICTS) {
         return true;
       }
     }
-    // perform merge
-    AbstractVcsHelper.getInstance(project).showMergeDialog(Arrays.asList(affectedFiles), vcs.getMergeProvider());
     return false;
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  @NotNull
-  protected String getActionName() {
-    return GitBundle.getString("merge.tool.action.name");
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  protected boolean isEnabled(@NotNull Project project, @NotNull GitVcs vcs, @NotNull VirtualFile... vFiles) {
-    FileStatusManager fs = FileStatusManager.getInstance(project);
-    for (VirtualFile f : vFiles) {
-      if (fs.getStatus(f) != FileStatus.MERGED_WITH_CONFLICTS) {
-        return false;
-      }
-    }
-    return true;
-  }
 }
