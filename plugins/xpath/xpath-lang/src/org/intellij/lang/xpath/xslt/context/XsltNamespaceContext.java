@@ -134,7 +134,7 @@ public class XsltNamespaceContext implements NamespaceContext {
               String uri;
               if ((uri = tag.getAttributeValue("xpath-default-namespace", null)) != null ||
                   (uri = tag.getAttributeValue("xpath-default-namespace", XsltSupport.XSLT_NS)) != null) {
-                return uri;
+                return uri.length() > 0 ? uri : null;
               }
               context = PsiTreeUtil.getParentOfType(context, XmlTag.class, true);
             }
