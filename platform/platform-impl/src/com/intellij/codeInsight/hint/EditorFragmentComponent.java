@@ -156,10 +156,13 @@ public class EditorFragmentComponent extends JPanel {
       y  = Math.max(0,y);
     }
 
+    x = -3; //IDEA-68016
+
     Point p = new Point(x, y);
     LightweightHint hint = new MyComponentHint(fragmentComponent);
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, (hideByAnyKey ? HintManager.HIDE_BY_ANY_KEY : 0) |
-                                                                      HintManager.HIDE_BY_TEXT_CHANGE, 0, false, new HintHint(editor, p));
+                                                                      HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_MOUSEOVER,
+                                                     0, false, new HintHint(editor, p));
     return hint;
   }
 

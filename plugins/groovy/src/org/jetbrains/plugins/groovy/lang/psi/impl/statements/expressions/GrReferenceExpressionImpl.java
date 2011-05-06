@@ -887,13 +887,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   public GroovyResolveResult advancedResolve() {
-    ResolveResult[] results = getManager().getResolveCache().resolveWithCaching(this, POLY_RESOLVER, false, false);
+    ResolveResult[] results = getManager().getResolveCache().resolveWithCaching(this, POLY_RESOLVER, true, false);
     return results.length == 1 ? (GroovyResolveResult) results[0] : GroovyResolveResult.EMPTY_RESULT;
   }
 
   @NotNull
   public GroovyResolveResult[] multiResolve(boolean incomplete) {  //incomplete means we do not take arguments into consideration
-    return (GroovyResolveResult[]) getManager().getResolveCache().resolveWithCaching(this, POLY_RESOLVER, false, incomplete);
+    final ResolveResult[] results = getManager().getResolveCache().resolveWithCaching(this, POLY_RESOLVER, true, incomplete);
+    return results.length == 0 ? GroovyResolveResult.EMPTY_ARRAY :  (GroovyResolveResult[])results;
   }
 
   public void processVariants(Consumer<Object> consumer) {
