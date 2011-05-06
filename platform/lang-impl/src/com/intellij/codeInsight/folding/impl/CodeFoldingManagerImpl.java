@@ -43,6 +43,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -115,9 +116,34 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
               myCurrentHint.hide();
               myCurrentHint = null;
             }
+            
+            
+            // We want to show a hint with the top fold region content that is above the current viewport position.
+            // However, there is a possible case that complete region has a big height and only a little bottom part
+            // is shown at the moment. We can't just show hint with the whole top content because it would hide actual
+            // editor content, hence, we show max(2; available visual lines number) instead.
+            // P.S. '2' is used here in assumption that many java methods have javadocs which first line is just '/**'.
+            // So, it's not too useful to show only it even when available vertical space is not big enough.
+            int availableVisualLines = 2;
+            JComponent editorComponent = editor.getComponent();
+            Container editorComponentParent = editorComponent.getParent();
+            if (editorComponentParent != null) {
+              Container contentPane = editorComponent.getRootPane().getContentPane();
+              if (contentPane != null) {
+                int y = SwingUtilities.convertPoint(editorComponentParent, editorComponent.getLocation(), contentPane).y;
+                int visualLines = y / editor.getLineHeight();
+                availableVisualLines = Math.max(availableVisualLines, visualLines);
+              }
+            }
+            int startVisualLine = editor.offsetToVisualPosition(textOffset).line;
+            int desiredEndVisualLine = Math.max(0, editor.xyToVisualPosition(new Point(0, visibleArea.y)).line - 1);
+            int endVisualLine = startVisualLine + availableVisualLines;
+            if (endVisualLine > desiredEndVisualLine) {
+              endVisualLine = desiredEndVisualLine;
+            }
+
             // Show only the non-displayed top part of the target fold region
-            int visualLine = Math.max(0, editor.xyToVisualPosition(new Point(0, visibleArea.y)).line - 1);
-            int endOffset = editor.logicalPositionToOffset(editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)));
+            int endOffset = editor.logicalPositionToOffset(editor.visualToLogicalPosition(new VisualPosition(endVisualLine, 0)));
             TextRange textRange = new TextRange(textOffset, endOffset);
             hint = EditorFragmentComponent.showEditorFragmentHint(editor, textRange, true, true);
             myCurrentFold = fold;
