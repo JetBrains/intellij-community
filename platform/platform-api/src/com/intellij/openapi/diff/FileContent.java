@@ -22,9 +22,14 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class FileContent extends DiffContent {
@@ -64,5 +69,23 @@ public class FileContent extends DiffContent {
   public boolean isBinary() {
     if (myFile.isDirectory()) return false;
     return FileTypeManager.getInstance().getFileTypeByFile(myFile).isBinary();
+  }
+
+  @Nullable
+  public static FileContent createFromTempFile(Project project, String name, String ext, byte[] content) {
+    try {
+      final File tempFile = FileUtil.createTempFile(name, ext);
+      tempFile.deleteOnExit();
+      final FileOutputStream fos = new FileOutputStream(tempFile);
+      fos.write(content);
+      fos.close();
+      final VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(tempFile);
+      if (file != null) {
+        return new FileContent(project, file);
+      }
+    }
+    catch (IOException e) {//
+    }
+    return null;
   }
 }
