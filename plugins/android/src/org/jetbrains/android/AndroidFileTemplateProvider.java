@@ -63,22 +63,36 @@ public class AndroidFileTemplateProvider implements FileTemplateGroupDescriptorF
   // must be invoked in a write action
   @Nullable
   public static PsiElement createFromTemplate(@NotNull Project project,
-                                        @NotNull VirtualFile rootDir,
-                                        @NotNull String templateName,
-                                        @NotNull String fileName) throws Exception {
+                                              @NotNull VirtualFile rootDir,
+                                              @NotNull String templateName,
+                                              @NotNull String fileName,
+                                              @NotNull Properties properties) throws Exception {
     rootDir.refresh(false, false);
     PsiDirectory directory = PsiManager.getInstance(project).findDirectory(rootDir);
     if (directory != null) {
-      return createFromTemplate(templateName, fileName, directory);
+      return createFromTemplate(templateName, fileName, directory, properties);
     }
     return null;
   }
 
-  public static PsiElement createFromTemplate(String templateName, String fileName, PsiDirectory directory) throws Exception {
+
+  @Nullable
+  public static PsiElement createFromTemplate(@NotNull Project project,
+                                        @NotNull VirtualFile rootDir,
+                                        @NotNull String templateName,
+                                        @NotNull String fileName) throws Exception {
+    return createFromTemplate(project, rootDir, templateName, fileName, FileTemplateManager.getInstance().getDefaultProperties());
+  }
+
+  public static PsiElement createFromTemplate(String templateName, String fileName, PsiDirectory directory, Properties properties)
+    throws Exception {
     FileTemplateManager manager = FileTemplateManager.getInstance();
     FileTemplate template = manager.getJ2eeTemplate(templateName);
-    Properties properties = manager.getDefaultProperties();
     return FileTemplateUtil.createFromTemplate(template, fileName, properties, directory);
+  }
+
+  public static PsiElement createFromTemplate(String templateName, String fileName, PsiDirectory directory) throws Exception {
+    return createFromTemplate(templateName, fileName, directory, FileTemplateManager.getInstance().getDefaultProperties());
   }
 
   @NotNull
