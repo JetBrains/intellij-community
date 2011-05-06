@@ -3,11 +3,10 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.util.containers.Stack;
+import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,106 +38,87 @@ public class PyMissingConstructorInspection extends PyInspection {
     @Override
     public void visitPyClass(final PyClass node) {
       PsiElement[] superClasses = node.getSuperClassExpressions();
-      String name = node.getName();
       if (superClasses.length == 0 || (superClasses.length == 1 && PyNames.OBJECT.equals(superClasses[0].getText())))
         return;
-
-      Stack<String> superNames = new Stack<String>();
-      if (node.isNewStyleClass())
-        superNames.push(PyNames.SUPER);
-
-      Iterable<PyClassRef> ansectors = node.iterateAncestors();
-      addSuperNames(superNames, ansectors);
 
       if (!superHasConstructor(node)) return;
       PyFunction initMethod = node.findMethodByName(PyNames.INIT, false);
       if (initMethod != null) {
-        if (hasConstructorCall(initMethod, superNames))
+        if (hasConstructorCall(node, initMethod))
           return;
         registerProblem(initMethod.getNameIdentifier(), "Call to constructor of super class is missed");
       }
     }
 
     private static boolean superHasConstructor(PyClass node) {
-      Stack<PyClass> st = new Stack<PyClass>();
-      addSuperClasses(st, node.getSuperClasses(), node.getName());
-
-      while (!st.empty()) {
-        if ((st.pop()).findMethodByName(PyNames.INIT, false) != null) {
+      for (PyClass s : node.iterateAncestorClasses()) {
+        if (!PyNames.OBJECT.equals(s.getName()) && !PyNames.FAKE_OLD_BASE.equals(s.getName()) &&
+            !node.getName().equals(s.getName())
+            && s.findMethodByName(PyNames.INIT, false) != null) {
           return true;
         }
       }
       return false;
     }
-    private static void addSuperClasses(Stack<PyClass> st, PyClass[] superClasses, String name) {
-      for (PyClass cl : superClasses) {
-        if (!name.equals(cl.getName())) {
-          st.push(cl);
-          addSuperClasses(st, cl.getSuperClasses(), name);
-        }
-      }
-    }
 
-    private static void addSuperNames(Stack<String> st, Iterable<PyClassRef> superClasses) {
-      for (PyClassRef cl : superClasses) {
-        if (!PyNames.OBJECT.equals(cl.getClassName()))
-          st.push(cl.getClassName());
-
-        if (cl instanceof PyReferenceExpression) {
-          PyReferenceExpression ref = (PyReferenceExpression) cl;
-          final PsiElement result = ref.getReference(PyResolveContext.noProperties()).resolve();
-          if (result instanceof PyClass)
-            addSuperNames(st, ((PyClass)result).iterateAncestors());
-        }
-      }
-    }
-
-    private static boolean hasConstructorCall(PyFunction initMethod, Stack<String> superNames) {
-      Stack<PsiElement> stack = new Stack<PsiElement>();
+    private static boolean hasConstructorCall(PyClass node, PyFunction initMethod) {
       PyStatementList statementList = initMethod.getStatementList();
-      boolean hasConstructor = false;
+      CallVisitor visitor = new CallVisitor(node);
       if (statementList != null) {
-        for (PyStatement st : statementList.getStatements()) {
-          stack.push(st);
-          while (!stack.isEmpty()) {
-            PsiElement e = stack.pop();
-            if (e instanceof PyExpressionStatement) {
-              PyExpression expression = ((PyExpressionStatement)e).getExpression();
-              if (expression instanceof PyCallExpression) {
-                if (isConstructorCall((PyCallExpression)expression, superNames))
-                  hasConstructor = true;
-              }
-            }
-            for (PsiElement psiElement : e.getChildren()) {
-              stack.push(psiElement);
-            }
-          }
-        }
-      }
-      return hasConstructor;
-    }
-
-    private static boolean isConstructorCall(PyCallExpression expression, Stack<String> superNames) {
-      PyExpression callee = expression.getCallee();
-      if (callee instanceof PyQualifiedExpression) {
-        PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
-        if (qualifier != null) {
-          String tmp = "";
-          if (qualifier instanceof PyCallExpression) {
-            PyExpression innerCallee = ((PyCallExpression)qualifier).getCallee();
-            if (innerCallee != null)
-              tmp = innerCallee.getName();
-          }
-          else
-            tmp = qualifier.getText();
-          if (superNames.contains(tmp)) {
-            if(PyNames.INIT.equals(callee.getName())){
-              return true;
-            }
-          }
-        }
+        statementList.accept(visitor);
+        return visitor.myHasConstructorCall;
       }
       return false;
+    }
+
+    private static class CallVisitor extends PyRecursiveElementVisitor {
+      private boolean myHasConstructorCall = false;
+      private PyClass myClass;
+      CallVisitor(PyClass node) {
+        myClass = node;
+      }
+
+      @Override
+      public void visitPyCallExpression(PyCallExpression node) {
+        if (isConstructorCall(node, myClass))
+          myHasConstructorCall = true;
+      }
+
+      private static boolean isConstructorCall(PyCallExpression expression, PyClass cl) {
+        PyExpression callee = expression.getCallee();
+        if (callee instanceof PyQualifiedExpression) {
+          PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
+          if (qualifier != null) {
+            String tmp = "";
+            PsiElement callingClass = null;
+            if (qualifier instanceof PyCallExpression) {
+              PyExpression innerCallee = ((PyCallExpression)qualifier).getCallee();
+              if (innerCallee != null) {
+                tmp = innerCallee.getName();
+                PsiReference ref = innerCallee.getReference();
+                if (ref != null)
+                  callingClass = ref.resolve();
+              }
+            }
+            else {
+              tmp = qualifier.getText();
+              PsiReference ref = qualifier.getReference();
+              if (ref != null)
+                callingClass = ref.resolve();
+            }
+            for (PyClass s : cl.iterateAncestorClasses()) {
+              if (s.equals(callingClass)) {
+                if(PyNames.INIT.equals(callee.getName())){
+                  return true;
+                }
+              }
+            }
+            if (PyNames.SUPER.equals(tmp) && (PyNames.INIT.equals(callee.getName())))
+              return true;
+          }
+        }
+        return false;
+      }
     }
   }
 }

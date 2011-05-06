@@ -30,6 +30,7 @@
     <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PythonEnterHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterBetweenBracketsHandler"/>
+    <editorTypedHandler implementationClass="com.jetbrains.python.editor.PythonSpaceHandler"/>
     <sdkType implementation="com.jetbrains.python.sdk.PythonSdkType"/>
     <gotoClassContributor implementation="com.jetbrains.python.PyGotoClassContributor"/>
     <gotoSymbolContributor implementation="com.jetbrains.python.PyGotoSymbolContributor"/>
@@ -475,6 +476,8 @@
     <lang.psiStructureViewFactory language="ReST"
                                   implementationClass="com.jetbrains.rest.structureView.RestStructureViewFactory"/>
     <annotator language="ReST" implementationClass="com.jetbrains.rest.validation.RestAnnotatingVisitor"/>
+
+
 
   </extensions>
 
