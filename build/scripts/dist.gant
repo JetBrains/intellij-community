@@ -137,6 +137,7 @@ private def layoutMac(Map args, String home, Paths paths) {
       </dict>
     </array>
   """
+  args["idea.properties.path"] = "$home/bin/idea.properties"
   // TODO remove the next line when system_selector for Mac and other OS will be unified
   args["system_selector"] = args.system_selector_mac
 
@@ -164,6 +165,7 @@ private def layoutMac(Map args, String home, Paths paths) {
     [paths.distAll, paths.distMac].each {
       tarfileset(dir: it, prefix: root) {
         exclude(name: "bin/*.sh")
+        exclude(name: "bin/idea.properties")
         exclude(name: "Contents/MacOS/idea")
       }
     }

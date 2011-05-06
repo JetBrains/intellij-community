@@ -162,12 +162,6 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     icns = new File((String)args.icns).getName();
   }
 
-  String platform = args.get("platform_prefix", null) != null ?
-  """
-        <key>idea.platform.prefix</key>
-        <string>$args.platform_prefix</string>
-  """ : ""
-
   def version = isEap() ? "EAP " + args.buildNumber : p("component.version.major") + "." +  p("component.version.minor")
 
   ant.replace(file: "$path/Contents/Info.plist") {
@@ -183,8 +177,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@vmoptions@@", value: "$common_vmoptions -Xverify:none")
     replacefilter(token: "@@vmoptions32@@", value: "$mem32")
     replacefilter(token: "@@vmoptions64@@", value: "$mem64 -XX:+UseCompressedOops")
-    replacefilter(token: "@@system_selector@@", value: args.system_selector)
-    replacefilter(token: "@@platform@@", value: platform)
+    replacefilter(token: "@@idea_properties@@", value: readIdeaProperties(args))
   }
 
   if (args.executable != "idea") {
@@ -232,3 +225,73 @@ binding.setVariable("zipSources", {String home, String targetDir ->
     }
   }
 })
+
+/**
+ * E.g.
+ *
+ * Load all properties from file:
+ *    readIdeaProperties("idea.properties.path" : "$home/ruby/build/idea.properties")
+ *
+ * Load all properties except "idea.cycle.buffer.size", change "idea.max.intellisense.filesize" to 3000
+ * and enable "idea.is.internal" mode:
+ *    readIdeaProperties("idea.properties.path" : "$home/ruby/build/idea.properties",
+ *                       "idea.properties" : ["idea.max.intellisense.filesize" : 3000,
+ *                                           "idea.cycle.buffer.size" : null,
+ *                                           "idea.is.internal" : true ])
+
+layoutMacApp("idea.properties.path" : "/Users/romeo/work/git/IDEA_master/ruby/build/idea.properties")
+ * @param args
+ * @return text xml properties description in xml
+ */
+private String readIdeaProperties(Map args) {
+  String ideaPropertiesPath =  args == null ? null : args.get("idea.properties.path")
+  if (ideaPropertiesPath == null) {
+    return ""
+  }
+
+  // read idea.properties file
+  Properties ideaProperties = new Properties();
+  FileInputStream ideaPropertiesFile = new FileInputStream(ideaPropertiesPath);
+  ideaProperties.load(ideaPropertiesFile);
+  ideaPropertiesFile.close();
+
+  //Map properties =
+  def userCustomProperties = args.get("idea.properties")
+  def defaultProperties = ["CVS_PASSFILE": "~/.cvspass",
+                           "com.apple.mrj.application.live-resize": "false",
+                           "idea.paths.selector": args.system_selector,
+                           "java.endorsed.dirs": "",
+                           "idea.smooth.progress": "false",
+                           "apple.laf.useScreenMenuBar": "true",
+                           "apple.awt.graphics.UseQuartz": "true",
+                           "apple.awt.fullscreencapturealldisplays": "false",
+                          ]
+  if (args.get("platform_prefix", null) != null) {
+    defaultProperties.put("idea.platform.prefix", args.platform_prefix)
+  }
+
+  Map properties =  defaultProperties + (userCustomProperties != null ? userCustomProperties : [:]);
+  properties.each {k, v ->
+    if (v == null) {
+      // if overridden with null - ignore property
+      ideaProperties.remove(k)
+    } else {
+      // if property is overridden in args map - use new value
+      ideaProperties.put(k, v)
+    }
+  }
+
+  // generate properties description for Info.plist
+  StringBuilder buff = new StringBuilder()
+  ideaProperties.each { key, value ->
+    if (value != null) {
+      buff.append(
+  """
+        <key>$key</key>
+        <string>$value</string>
+  """
+      )
+    }
+  }
+  return buff.toString()
+}
