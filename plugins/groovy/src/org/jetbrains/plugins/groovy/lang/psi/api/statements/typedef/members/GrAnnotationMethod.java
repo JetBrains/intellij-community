@@ -15,9 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrDefaultAnnotationValue;
+
 /**
  * User: Dmitry.Krasilschikov
  * Date: 04.06.2007
  */
 public interface GrAnnotationMethod extends GrMethod {
+  @Nullable
+  GrDefaultAnnotationValue getDefaultAnnotationValue();
 }

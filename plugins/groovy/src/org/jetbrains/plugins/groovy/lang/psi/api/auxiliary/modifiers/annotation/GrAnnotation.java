@@ -29,8 +29,12 @@ public interface GrAnnotation extends GrCondition, PsiAnnotation, GrAnnotationMe
 
   GrAnnotation[] EMPTY_ARRAY = new GrAnnotation[0];
 
+  @NotNull
   GrCodeReferenceElement getClassReference();
 
   @NotNull
   String getShortName();
+
+  @NotNull
+  GrAnnotationArgumentList getParameterList();
 }

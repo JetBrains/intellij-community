@@ -359,7 +359,7 @@ public class CodeBlockGenerator extends Generator {
   }
 
   private static void writeVariableWithoutSemicolonAndInitializer(StringBuilder builder, GrVariable var) {
-    GenerationUtil.writeModifiers(builder, var.getModifierList());
+    ModifierListGenerator.writeModifiers(builder, var.getModifierList());
     GenerationUtil.writeType(builder, GenerationUtil.getVarType(var), var);
     builder.append(" ").append(var.getName());
   }
@@ -480,7 +480,7 @@ public class CodeBlockGenerator extends Generator {
                                         variableDeclaration);
       final GrModifierList modifierList = variableDeclaration.getModifierList();
       for (final GrVariable v : variables) {
-        GenerationUtil.writeModifiers(builder, modifierList);
+        ModifierListGenerator.writeModifiers(builder, modifierList);
         final PsiType type = GenerationUtil.getVarType(v);
         GenerationUtil.writeType(builder, type, variableDeclaration);
         builder.append(" ").append(v.getName());

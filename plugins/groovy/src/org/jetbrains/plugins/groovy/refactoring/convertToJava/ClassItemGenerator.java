@@ -20,6 +20,7 @@ import com.intellij.psi.PsiMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 
 import java.util.Collection;
 
@@ -33,4 +34,6 @@ public interface ClassItemGenerator {
   void writeVariableDeclarations(StringBuilder text, GrVariableDeclaration variableDeclaration);
 
   Collection<PsiMethod> collectMethods(PsiClass typeDefinition, boolean classDef);
+
+  boolean generateAnnotations();
 }

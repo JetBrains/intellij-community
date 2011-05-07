@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
 
@@ -173,6 +174,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     }
 
     if (modifier.equals(GrModifier.PUBLIC)) {
+      if (owner instanceof GrPackageDefinition) return false;
       if (owner instanceof GrVariableDeclaration && !(owner.getParent() instanceof GrTypeDefinitionBody)) {
         return false;
       }

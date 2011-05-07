@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
@@ -50,9 +51,9 @@ public class GrAnnotationArgumentListImpl extends GroovyPsiElementImpl implement
   }
 
   @NotNull
-  public PsiNameValuePair[] getAttributes() {
+  public GrAnnotationNameValuePair[] getAttributes() {
     final GrAnnotationNameValuePairsImpl pairs = findChildByClass(GrAnnotationNameValuePairsImpl.class);
-    return pairs == null ? findChildrenByClass(PsiNameValuePair.class) : pairs.getAttributes();
+    return pairs == null ? findChildrenByClass(GrAnnotationNameValuePair.class) : pairs.getAttributes();
   }
 
   @Override

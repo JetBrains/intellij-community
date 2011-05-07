@@ -52,8 +52,10 @@ public class ClassGenerator {
     this.classItemGenerator = classItemGenerator;
   }
 
-  private static void writePackageStatement(StringBuilder text, GrPackageDefinition packageDefinition) {
+  private void writePackageStatement(StringBuilder text, GrPackageDefinition packageDefinition) {
     if (packageDefinition != null) {
+      ModifierListGenerator.writeModifiers(text, packageDefinition.getAnnotationList(), ModifierListGenerator.JAVA_MODIFIERS,
+                                           classItemGenerator.generateAnnotations());
       text.append("package ");
       text.append(packageDefinition.getPackageName());
       text.append(";");
@@ -75,7 +77,8 @@ public class ClassGenerator {
     boolean isInterface = !isAnnotationType && typeDefinition.isInterface();
     boolean isClassDef = !isInterface && !isEnum && !isAnnotationType && !isScript;
 
-    GenerationUtil.writeClassModifiers(text, typeDefinition.getModifierList(), typeDefinition.isInterface(), toplevel);
+    ModifierListGenerator.writeClassModifiers(text, typeDefinition.getModifierList(), typeDefinition.isInterface(), toplevel,
+                                              classItemGenerator.generateAnnotations());
 
     if (isInterface) {
       text.append("interface");

@@ -43,7 +43,6 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -51,31 +50,6 @@ import java.util.Set;
  */
 public class GenerationUtil {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil");
-  public static final String[] JAVA_MODIFIERS = new String[]{
-    PsiModifier.PUBLIC,
-    PsiModifier.PROTECTED,
-    PsiModifier.PRIVATE,
-    PsiModifier.PACKAGE_LOCAL,
-    PsiModifier.STATIC,
-    PsiModifier.ABSTRACT,
-    PsiModifier.FINAL,
-    PsiModifier.NATIVE,
-  };
-
-  public static final String[] JAVA_MODIFIERS_WITHOUT_ABSTRACT = new String[] {
-    PsiModifier.PUBLIC,
-    PsiModifier.PROTECTED,
-    PsiModifier.PRIVATE,
-    PsiModifier.PACKAGE_LOCAL,
-    PsiModifier.STATIC,
-    PsiModifier.FINAL,
-    PsiModifier.NATIVE,
-  };
-
-  public static final String[] ENUM_CONSTRUCTOR_MODIFIERS = new String[]{
-    PsiModifier.PRIVATE,
-    PsiModifier.PACKAGE_LOCAL,
-  };
 
   private GenerationUtil() {
   }
@@ -100,86 +74,7 @@ public class GenerationUtil {
 
     final boolean acceptEllipsis = isLastParameter(context);
 
-    type.accept(new PsiTypeVisitor<Object>() {
-      @Override
-      public Object visitEllipsisType(PsiEllipsisType ellipsisType) {
-        final PsiType componentType = ellipsisType.getComponentType();
-        componentType.accept(this);
-        if (acceptEllipsis) {
-          builder.append("...");
-        }
-        else {
-          builder.append("[]");
-        }
-        return this;
-      }
-
-      @Override
-      public Object visitPrimitiveType(PsiPrimitiveType primitiveType) {
-        if (classNameProvider.forStubs()) {
-          builder.append(primitiveType.getCanonicalText());
-          return this;
-        }
-        final PsiType boxed = TypesUtil.boxPrimitiveType(primitiveType, context.getManager(), context.getResolveScope());
-        boxed.accept(this);
-        return this;
-      }
-
-      @Override
-      public Object visitArrayType(PsiArrayType arrayType) {
-        arrayType.getComponentType().accept(this);
-        builder.append("[]");
-        return this;
-      }
-
-      @Override
-      public Object visitClassType(PsiClassType classType) {
-        final PsiType[] parameters = classType.getParameters();
-        final PsiClass psiClass = classType.resolve();
-        if (psiClass == null) {
-          builder.append(classType.getClassName());
-        }
-        else {
-          final String qname = classNameProvider.getQualifiedClassName(psiClass, context);
-          builder.append(qname);
-        }
-        writeTypeParameters(builder, parameters, context, classNameProvider);
-        return this;
-      }
-
-      @Override
-      public Object visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
-        capturedWildcardType.getWildcard().accept(this);
-        return this;
-      }
-
-      @Override
-      public Object visitWildcardType(PsiWildcardType wildcardType) {
-        builder.append("?");
-        PsiType bound = wildcardType.getBound();
-        if (bound == null) return this;
-        if (wildcardType.isExtends()) {
-          builder.append(" extends ");
-        }
-        else {
-          builder.append(" super ");
-        }
-        bound.accept(this);
-        return this;
-      }
-
-      @Override
-      public Object visitDisjunctionType(PsiDisjunctionType disjunctionType) {
-        //todo
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public Object visitType(PsiType type) {
-        //todo
-        throw new UnsupportedOperationException();
-      }
-    });
+    type.accept(new TypeWriter(builder, classNameProvider, acceptEllipsis, context));
   }
 
   private static boolean isLastParameter(PsiElement context) {
@@ -189,7 +84,7 @@ public class GenerationUtil {
            ((PsiParameterList)parent).getParameterIndex((PsiParameter)context) == ((PsiParameterList)parent).getParametersCount() - 1;
   }
 
-  private static void writeTypeParameters(StringBuilder builder,
+  public static void writeTypeParameters(StringBuilder builder,
                                           PsiType[] parameters,
                                           PsiElement context,
                                           ClassNameProvider classNameProvider) {
@@ -290,44 +185,6 @@ public class GenerationUtil {
     builder.append(".").append(methodName);
     final ArgumentListGenerator argumentListGenerator = new ArgumentListGenerator(builder, expressionContext);
     argumentListGenerator.generate(null, exprs, namedArgs, closureArgs, psiContext);
-  }
-
-  public static boolean writeModifiers(StringBuilder text, PsiModifierList modifierList) {
-    return writeModifiers(text, modifierList, JAVA_MODIFIERS);
-  }
-
-  public static boolean writeModifiers(StringBuilder text, PsiModifierList modifierList, String[] modifiers) {
-    boolean wasAddedModifiers = false;
-    for (String modifierType : modifiers) {
-      if (modifierList.hasModifierProperty(modifierType)) {
-        text.append(modifierType);
-        text.append(" ");
-        wasAddedModifiers = true;
-      }
-    }
-    return wasAddedModifiers;
-  }
-
-  public static void writeClassModifiers(StringBuilder text,
-                                         @Nullable PsiModifierList modifierList,
-                                         boolean isInterface,
-                                         boolean toplevel) {
-    if (modifierList == null) {
-      text.append("public ");
-      return;
-    }
-
-    List<String> allowedModifiers = new ArrayList<String>();
-    allowedModifiers.add(PsiModifier.PUBLIC);
-    allowedModifiers.add(PsiModifier.FINAL);
-    if (!toplevel) {
-      allowedModifiers.addAll(Arrays.asList(PsiModifier.PROTECTED, PsiModifier.PRIVATE, PsiModifier.STATIC));
-    }
-    if (!isInterface) {
-      allowedModifiers.add(PsiModifier.ABSTRACT);
-    }
-
-    writeModifiers(text, modifierList, allowedModifiers.toArray(new String[allowedModifiers.size()]));
   }
 
   static void writeStatement(final StringBuilder codeBlockBuilder,
@@ -527,7 +384,7 @@ public class GenerationUtil {
       }
       return;
     }
-    writeModifiers(builder, variableDeclaration.getModifierList());
+    ModifierListGenerator.writeModifiers(builder, variableDeclaration.getModifierList());
 
     PsiType type = getVarType(variables[0]);
     writeType(builder, type, variableDeclaration);
@@ -555,7 +412,7 @@ public class GenerationUtil {
   static void writeVariableSeparately(GrVariable variable, StringBuilder builder, ExpressionContext expressionContext) {
     PsiType type = getVarType(variable);
 
-    writeModifiers(builder, variable.getModifierList());
+    ModifierListGenerator.writeModifiers(builder, variable.getModifierList());
 
     writeType(builder, type, variable);
     builder.append(" ");

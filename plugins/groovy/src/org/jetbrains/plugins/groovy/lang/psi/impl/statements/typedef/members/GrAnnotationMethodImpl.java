@@ -20,6 +20,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrDefaultAnnotationValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 
@@ -49,4 +50,8 @@ public class GrAnnotationMethodImpl extends GrMethodBaseImpl implements GrAnnota
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @Override
+  public GrDefaultAnnotationValue getDefaultAnnotationValue() {
+    return findChildByClass(GrDefaultAnnotationValue.class);
+  }
 }

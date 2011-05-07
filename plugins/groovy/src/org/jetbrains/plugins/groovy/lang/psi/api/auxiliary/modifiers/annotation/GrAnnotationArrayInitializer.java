@@ -26,5 +26,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 public interface GrAnnotationArrayInitializer extends GrAnnotationMemberValue {
 
   @NotNull
-  GrExpression[] getInitializers();
+  GrAnnotationMemberValue[] getInitializers();
 }

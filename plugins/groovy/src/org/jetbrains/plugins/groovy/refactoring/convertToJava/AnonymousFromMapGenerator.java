@@ -32,8 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.JAVA_MODIFIERS_WITHOUT_ABSTRACT;
-import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeModifiers;
+import static org.jetbrains.plugins.groovy.refactoring.convertToJava.ModifierListGenerator.JAVA_MODIFIERS_WITHOUT_ABSTRACT;
 import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationUtil.writeType;
 
 /**
@@ -98,7 +97,7 @@ public class AnonymousFromMapGenerator {
         }
 
         if (found != null) {
-          writeModifiers(builder, found.getModifierList(), JAVA_MODIFIERS_WITHOUT_ABSTRACT);
+          ModifierListGenerator.writeModifiers(builder, found.getModifierList(), JAVA_MODIFIERS_WITHOUT_ABSTRACT);
         }
         else {
           builder.append("public ");
