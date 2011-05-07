@@ -40,16 +40,25 @@ public class ModifierListGenerator {
     PsiModifier.ABSTRACT,
     PsiModifier.FINAL,
     PsiModifier.NATIVE,
+    PsiModifier.SYNCHRONIZED,
+    PsiModifier.STRICTFP,
+    PsiModifier.TRANSIENT,
+    PsiModifier.VOLATILE
   };
 
   public static final String[] JAVA_MODIFIERS_WITHOUT_ABSTRACT = new String[]{
     PsiModifier.PUBLIC,
-    PsiModifier.PROTECTED,
-    PsiModifier.PRIVATE,
-    PsiModifier.PACKAGE_LOCAL,
-    PsiModifier.STATIC,
-    PsiModifier.FINAL,
-    PsiModifier.NATIVE,
+  PsiModifier.PROTECTED,
+  PsiModifier.PRIVATE,
+  PsiModifier.PACKAGE_LOCAL,
+  PsiModifier.STATIC,
+  //PsiModifier.ABSTRACT,
+  PsiModifier.FINAL,
+  PsiModifier.NATIVE,
+  PsiModifier.SYNCHRONIZED ,
+  PsiModifier.STRICTFP ,
+  PsiModifier.TRANSIENT ,
+  PsiModifier.VOLATILE
   };
 
   public static final String[] ENUM_CONSTRUCTOR_MODIFIERS = new String[]{
