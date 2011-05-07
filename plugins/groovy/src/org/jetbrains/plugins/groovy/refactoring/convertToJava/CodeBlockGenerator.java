@@ -284,7 +284,7 @@ public class CodeBlockGenerator extends Generator {
 
   @Override
   public void visitForStatement(GrForStatement forStatement) {
-    final StringBuilder builder = new StringBuilder();
+    //final StringBuilder builder = new StringBuilder();
     builder.append("for(");
 
     final GrForClause clause = forStatement.getClause();
