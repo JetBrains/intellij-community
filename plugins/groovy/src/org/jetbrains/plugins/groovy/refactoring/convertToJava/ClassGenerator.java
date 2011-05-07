@@ -64,11 +64,11 @@ public class ClassGenerator {
     }
   }
 
-  public void writeTypeDefinition(StringBuilder text, @NotNull final PsiClass typeDefinition, boolean toplevel) {
+  public void writeTypeDefinition(StringBuilder text, @NotNull final PsiClass typeDefinition, boolean toplevel, boolean insertPackageSmst) {
     final boolean isScript = typeDefinition instanceof GroovyScriptClass;
 
     final GroovyFile containingFile = (GroovyFile)typeDefinition.getContainingFile();
-    if (toplevel) {
+    if (insertPackageSmst) {
       writePackageStatement(text, containingFile.getPackageDefinition());
     }
 
@@ -134,7 +134,7 @@ public class ClassGenerator {
         }
       }
       for (PsiClass inner : typeDefinition.getInnerClasses()) {
-        writeTypeDefinition(text, inner, false);
+        writeTypeDefinition(text, inner, false, false);
         text.append("\n");
       }
     }
