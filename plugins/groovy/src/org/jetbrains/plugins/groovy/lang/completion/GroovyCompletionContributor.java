@@ -365,7 +365,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
 
     final ElementFilter classFilter = getClassFilter(position);
 
-    reference.processVariants(new Consumer<Object>() {
+    reference.processVariants(result.getPrefixMatcher(), new Consumer<Object>() {
       public void consume(Object element) {
         if (element instanceof PsiClass && inheritorsHolder.alreadyProcessed((PsiClass)element)) {
           return;

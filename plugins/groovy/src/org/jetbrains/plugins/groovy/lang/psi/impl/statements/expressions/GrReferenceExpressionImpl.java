@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -897,8 +898,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return results.length == 0 ? GroovyResolveResult.EMPTY_ARRAY :  (GroovyResolveResult[])results;
   }
 
-  public void processVariants(Consumer<Object> consumer) {
-    CompleteReferenceExpression.processVariants(consumer, this);
+  @Override
+  public void processVariants(PrefixMatcher matcher, Consumer<Object> consumer) {
+    CompleteReferenceExpression.processVariants(matcher, consumer, this);
   }
 
   @NotNull

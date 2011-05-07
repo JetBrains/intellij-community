@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -62,9 +63,9 @@ public class CompleteReferenceExpression {
   private CompleteReferenceExpression() {
   }
 
-  public static void processVariants(Consumer<Object> consumer, GrReferenceExpressionImpl refExpr) {
+  public static void processVariants(PrefixMatcher matcher, Consumer<Object> consumer, GrReferenceExpressionImpl refExpr) {
     final CompleteReferenceProcessor processor = new CompleteReferenceProcessor(refExpr, consumer);
-    getVariantsImpl(refExpr, processor);
+    getVariantsImpl(matcher, refExpr, processor);
     final GroovyResolveResult[] candidates = processor.getCandidates();
     for (Object o : GroovyCompletionUtil.getCompletionVariants(candidates)) {
       consumer.consume(o);
@@ -83,9 +84,9 @@ public class CompleteReferenceExpression {
     }
   }
 
-  private static void getVariantsImpl(GrReferenceExpression refExpr, CompleteReferenceProcessor processor) {
+  private static void getVariantsImpl(PrefixMatcher matcher, GrReferenceExpression refExpr, CompleteReferenceProcessor processor) {
     GrExpression qualifier = refExpr.getQualifierExpression();
-    getVariantsWithSameQualifier(qualifier, refExpr, processor);
+    getVariantsWithSameQualifier(matcher, qualifier, refExpr, processor);
     if (qualifier == null) {
       ResolveUtil.treeWalkUp(refExpr, processor, true);
 
@@ -246,16 +247,16 @@ public class CompleteReferenceExpression {
     }
   }
 
-  private static String[] getVariantsWithSameQualifier(GrExpression qualifier, GrReferenceExpression refExpr, CompleteReferenceProcessor processor) {
+  private static String[] getVariantsWithSameQualifier(PrefixMatcher matcher,GrExpression qualifier, GrReferenceExpression refExpr, CompleteReferenceProcessor processor) {
     if (qualifier != null && qualifier.getType() != null) return ArrayUtil.EMPTY_STRING_ARRAY;
 
     final PsiElement scope = PsiTreeUtil.getParentOfType(refExpr, GrMember.class, GroovyFileBase.class);
     Set<String> result = new LinkedHashSet<String>();
-    addVariantsWithSameQualifier(scope, refExpr, qualifier, result, processor);
+    addVariantsWithSameQualifier(matcher, scope, refExpr, qualifier, result, processor);
     return ArrayUtil.toStringArray(result);
   }
 
-  private static void addVariantsWithSameQualifier(PsiElement element,
+  private static void addVariantsWithSameQualifier(PrefixMatcher matcher, PsiElement element,
                                                    GrReferenceExpression patternExpression,
                                                    GrExpression patternQualifier,
                                                    Set<String> result,
@@ -263,7 +264,7 @@ public class CompleteReferenceExpression {
     if (element instanceof GrReferenceExpression && element != patternExpression && !PsiUtil.isLValue((GroovyPsiElement)element)) {
       final GrReferenceExpression refExpr = (GrReferenceExpression)element;
       final String refName = refExpr.getReferenceName();
-      if (refName != null && !result.contains(refName)) {
+      if (refName != null && !result.contains(refName) && matcher.prefixMatches(refName)) {
         final GrExpression hisQualifier = refExpr.getQualifierExpression();
         if (hisQualifier != null && patternQualifier != null) {
           if (PsiEquivalenceUtil.areElementsEquivalent(hisQualifier, patternQualifier)) {
@@ -283,7 +284,7 @@ public class CompleteReferenceExpression {
     }
 
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-      addVariantsWithSameQualifier(child, patternExpression, patternQualifier, result, processor);
+      addVariantsWithSameQualifier(matcher, child, patternExpression, patternQualifier, result, processor);
     }
   }
 
