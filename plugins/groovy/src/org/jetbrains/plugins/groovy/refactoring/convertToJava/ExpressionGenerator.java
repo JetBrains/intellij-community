@@ -786,12 +786,18 @@ public class ExpressionGenerator extends Generator {
                               PsiSubstitutor substitutor,
                               GroovyPsiElement context) {
     if (method instanceof GrGdkMethod) {
-      if (caller == null) {
-        caller = factory.createExpressionFromText("this", context);
-      }
+
       GrExpression[] newArgs = new GrExpression[exprs.length + 1];
       System.arraycopy(exprs, 0, newArgs, 1, exprs.length);
-      newArgs[0] = caller;
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        newArgs[0] = factory.createExpressionFromText("null");
+      }
+      else {
+        if (caller == null) {
+          caller = factory.createExpressionFromText("this", context);
+        }
+        newArgs[0] = caller;
+      }
       invokeMethodOn(((GrGdkMethod)method).getStaticMethod(), null, newArgs, namedArgs, closures, substitutor, context);
       return;
     }
