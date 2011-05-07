@@ -38,7 +38,7 @@ import java.awt.event.KeyEvent;
 public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements DataProvider {
   public static final DataKey<DebuggerTreePanel> DATA_KEY = DataKey.create("DebuggerPanel");
   
-  protected final DebuggerTree myTree;
+  protected DebuggerTree myTree;
 
   public DebuggerTreePanel(Project project, DebuggerStateManager stateManager) {
     super(project, stateManager);
@@ -84,8 +84,17 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
   }
 
   public void dispose() {
-    super.dispose();
-    Disposer.dispose(myTree);
+    try {
+      super.dispose();
+    }
+    finally {
+      final DebuggerTree tree = myTree;
+      if (tree != null) {
+        Disposer.dispose(tree);
+      }
+      // prevent mem leak from inside Swing
+      myTree = null;
+    }
   }
 
 
