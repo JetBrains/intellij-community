@@ -19,8 +19,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.inline.InlineParameterHandler;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.util.ui.GridBag;
@@ -28,7 +29,6 @@ import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -89,7 +89,7 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
 
     myDeclareFinalCheckBox.setSelected(hasFinalModifier());
 
-    setTitle(InlineParameterHandler.REFACTORING_NAME);
+    setTitle(RefactoringBundle.message("introduce.parameter.title"));
     init();
   }
 
@@ -173,6 +173,11 @@ public class GrIntroduceParameterDialog extends RefactoringDialog implements GrI
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameSuggestionsField;
+  }
+
+  @Override
+  protected String getHelpId() {
+    return HelpID.INTRODUCE_PARAMETER;
   }
 
   private TIntArrayList getParametersToRemove() {
