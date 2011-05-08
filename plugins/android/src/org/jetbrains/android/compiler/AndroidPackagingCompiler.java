@@ -128,7 +128,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
               continue;
             }
             items.add(createItem(module, facet, manifestFile, sourceRoots, externalJars, resPackagePath, classesDexPath, sdkPath,
-                                 outputPath, configuration.GENERATE_UNSIGNED_APK));
+                                 outputPath, configuration.GENERATE_UNSIGNED_APK, AndroidCompileUtil.isReleaseBuild(context)));
           }
         }
       }
@@ -145,8 +145,10 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
                                              String classesDexPath,
                                              String sdkPath,
                                              String outputPath,
-                                             boolean generateSignedApk) {
-    AptPackagingItem item = new AptPackagingItem(sdkPath, manifestFile, resPackagePath, outputPath, generateSignedApk, module);
+                                             boolean generateSignedApk,
+                                             boolean releaseBuild) {
+    AptPackagingItem item =
+      new AptPackagingItem(sdkPath, manifestFile, resPackagePath, outputPath, generateSignedApk, releaseBuild, module);
     item.setNativeLibsFolders(collectNativeLibsFolders(facet));
     item.setClassesDexPath(classesDexPath);
     item.setSourceRoots(sourceRoots);
@@ -291,18 +293,21 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
     private VirtualFile[] myExternalLibraries;
     private final boolean myGenerateUnsigendApk;
     private final Module myModule;
+    private boolean myReleaseBuild;
 
     private AptPackagingItem(String sdkPath,
                              @NotNull VirtualFile manifestFile,
                              @NotNull String resPackagePath,
                              @NotNull String finalPath,
                              boolean generateUnsigendApk,
+                             boolean releaseBuild,
                              @NotNull Module module) {
       mySdkPath = sdkPath;
       myManifestFile = manifestFile;
       myResPackagePath = resPackagePath;
       myFinalPath = finalPath;
       myGenerateUnsigendApk = generateUnsigendApk;
+      myReleaseBuild = releaseBuild;
       myModule = module;
     }
 
@@ -359,8 +364,8 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
 
     @Nullable
     public ValidityState getValidityState() {
-      return new MyValidityState(myManifestFile, myResPackagePath, myClassesDexPath, myFinalPath, myGenerateUnsigendApk, mySourceRoots,
-                                 myExternalLibraries, myNativeLibsFolders);
+      return new MyValidityState(myManifestFile, myResPackagePath, myClassesDexPath, myFinalPath, myGenerateUnsigendApk, myReleaseBuild,
+                                 mySourceRoots, myExternalLibraries, myNativeLibsFolders);
     }
   }
 
@@ -368,6 +373,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
     private final Map<String, Long> myResourceTimestamps = new HashMap<String, Long>();
     private final String myApkPath;
     private final boolean myGenerateUnsignedApk;
+    private final boolean myReleaseBuild;
 
     MyValidityState(DataInput is) throws IOException {
       int size = is.readInt();
@@ -377,6 +383,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
         myResourceTimestamps.put(key, value);
       }
       myGenerateUnsignedApk = is.readBoolean();
+      myReleaseBuild = is.readBoolean();
       myApkPath = is.readUTF();
     }
 
@@ -385,6 +392,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
                     String classesDexPath,
                     String apkPath,
                     boolean generateUnsignedApk,
+                    boolean releaseBuild,
                     VirtualFile[] sourceRoots,
                     VirtualFile[] externalLibs,
                     VirtualFile[] nativeLibFolders) {
@@ -393,6 +401,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
       myResourceTimestamps.put(FileUtil.toSystemIndependentName(classesDexPath), new File(classesDexPath).lastModified());
       myApkPath = apkPath;
       myGenerateUnsignedApk = generateUnsignedApk;
+      myReleaseBuild = releaseBuild;
       for (VirtualFile sourceRoot : sourceRoots) {
         myResourceTimestamps.put(sourceRoot.getPath(), sourceRoot.getTimeStamp());
       }
@@ -417,6 +426,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
       }
       MyValidityState mvs = (MyValidityState)otherState;
       return mvs.myGenerateUnsignedApk == myGenerateUnsignedApk &&
+             mvs.myReleaseBuild == myReleaseBuild &&
              mvs.myResourceTimestamps.equals(myResourceTimestamps) &&
              mvs.myApkPath.equals(myApkPath);
     }
@@ -429,6 +439,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
         out.writeLong(entry.getValue());
       }
       out.writeBoolean(myGenerateUnsignedApk);
+      out.writeBoolean(myReleaseBuild);
       out.writeUTF(myApkPath);
     }
   }
