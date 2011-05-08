@@ -433,7 +433,8 @@ public class JavaSdkImpl extends JavaSdk {
       jarDirs = new File[]{jreLibEndorsedFile, jreLibFile, jreLibExtFile};
     }
 
-    Set<File> childrenSet = new LinkedHashSet<File>();
+    Set<File> filter = new LinkedHashSet<File>();
+    List<File> children = new ArrayList<File>();
     for (File jarDir : jarDirs) {
       if (jarDir != null && jarDir.isDirectory()) {
         File[] jarFiles = jarDir.listFiles(jarFileFilter);
@@ -441,7 +442,7 @@ public class JavaSdkImpl extends JavaSdk {
           try {
             // File.getCanonicalFile() allows us to filter out duplicate (symbolically linked) jar files,
             // commonly found in osx JDK distributions
-            childrenSet.add(jarFile.getCanonicalFile());
+            if (filter.add(jarFile.getCanonicalFile())) children.add(jarFile);
           }
           catch (IOException e) {
             // Symbolic links may fail to resolve. Just skip those jars as we won't be able to find virtual file in this case anyway. 
@@ -451,7 +452,7 @@ public class JavaSdkImpl extends JavaSdk {
     }
 
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (File child : childrenSet) {
+    for (File child : children) {
       String url = JarFileSystem.PROTOCOL_PREFIX + child.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
       VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
       if (vFile != null) {

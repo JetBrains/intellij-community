@@ -5594,6 +5594,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                   x = 0;
                   //noinspection AssignmentToForLoopParameter
                   line++;
+                  if (line == lineCount - 1) {
+                     lastLineLengthCalculated = true;
+                  }
                 }
                 else {
                   x += ComplementaryFontsRegistry.getFontAbleToDisplay(c, fontSize, fontType, fontName).charWidth(c, myEditorComponent);

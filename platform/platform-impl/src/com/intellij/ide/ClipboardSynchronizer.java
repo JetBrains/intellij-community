@@ -23,11 +23,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.text.DefaultEditorKit;
 import java.awt.*;
 import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
+import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -91,17 +93,53 @@ public class ClipboardSynchronizer implements ApplicationComponent {
         LOG.warn(key + " property not initialized");
       }
     }
+    setupEditorPanes();
+  }
+
+  /**
+   * Performs changes that make copy/cut from editor panes trigger system clipboard content synchronization.
+   */
+  private void setupEditorPanes() {
+    try {
+      Field field = DefaultEditorKit.class.getDeclaredField("defaultActions");
+      field.setAccessible(true);
+      Action[] actions = (Action[])field.get(null);
+      for (int i = 0; i < actions.length; i++) {
+        Action action = actions[i];
+        if (DefaultEditorKit.copyAction.equals(action.getValue(Action.NAME))
+              || DefaultEditorKit.cutAction.equals(action.getValue(Action.NAME)))
+        {
+          actions[i] = wrap(action);
+        }
+      }
+    }
+    catch (Exception e) {
+      LOG.warn("Can't setup clipboard actions for editor pane kit", e);
+    }
   }
 
   private void replaceAction(ActionMap actionMap, final Action action) {
     final String actionName = (String)action.getValue(Action.NAME);
-    actionMap.put(actionName, new AbstractAction(actionName) {
+    if (actionName != null) {
+      actionMap.put(actionName, wrap(action));
+    }
+  }
+
+  /**
+   * Wraps given action to the new action that triggers system clipboard content synchronization in addition to the basic
+   * functionality.
+   * 
+   * @param action      action to wrap
+   * @return            wrapped action
+   */
+  private Action wrap(@NotNull final Action action) {
+    return new AbstractAction(action.getValue(Action.NAME).toString()) {
       @Override
       public void actionPerformed(ActionEvent e) {
         action.actionPerformed(e);
         scheduleSynchronization();
       }
-    });
+    };
   }
 
   public Transferable getContents() {

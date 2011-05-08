@@ -557,6 +557,10 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
     return myBackgroundOperationCounter > 0;
   }
 
+  public List<VirtualFile> getRootsUnderVcsWithoutFiltering(final AbstractVcs vcs) {
+    return myMappings.getMappingsAsFilesUnderVcs(vcs);
+  }
+
   public VirtualFile[] getRootsUnderVcs(AbstractVcs vcs) {
     return myMappingsToRoots.getRootsUnderVcs(vcs);
   }

@@ -46,12 +46,12 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
                                    boolean isCurrentMethodConstructor,
                                    boolean isInvokedOnDeclaration,
                                    boolean willBeDeclaredStatic,
-                                   int occurrencesCount,
+                                   PsiExpression[] occurrences,
                                    boolean allowInitInMethod,
                                    boolean allowInitInMethodIfAll,
                                    TypeSelectorManager typeSelectorManager) {
     super(parentClass, initializerExpression, localVariable, isCurrentMethodConstructor, isInvokedOnDeclaration, willBeDeclaredStatic,
-          occurrencesCount, allowInitInMethod, allowInitInMethodIfAll, typeSelectorManager);
+          occurrences, allowInitInMethod, allowInitInMethodIfAll, typeSelectorManager);
   }
 
   protected void initializeControls(PsiExpression initializerExpression, BaseExpressionToFieldHandler.InitializationPlace ourLastInitializerPlace) {
@@ -236,7 +236,7 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
       final PsiMethod[] constructors = myParentClass.getConstructors();
       allowFinal = constructors.length <= 1;
     }
-    return allowFinal;
+    return super.allowFinal() && allowFinal;
   }
 
   @Override

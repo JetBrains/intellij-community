@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.process;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 
 import java.nio.charset.Charset;
@@ -25,6 +26,7 @@ import java.nio.charset.Charset;
  * @author yole
  */
 public class CapturingProcessHandler extends OSProcessHandler {
+  private static final Logger LOG = Logger.getInstance(CapturingProcessHandler.class);
   private final Charset myCharset;
   private final ProcessOutput myOutput = new ProcessOutput();
 
@@ -54,8 +56,11 @@ public class CapturingProcessHandler extends OSProcessHandler {
 
   public ProcessOutput runProcess() {
     startNotify();
-    waitFor();
-    myOutput.setExitCode(getProcess().exitValue());
+    if (waitFor()) {
+      myOutput.setExitCode(getProcess().exitValue());
+    } else {
+      LOG.info("runProcess: exit value unavailable");
+    }
     return myOutput;
   }
 

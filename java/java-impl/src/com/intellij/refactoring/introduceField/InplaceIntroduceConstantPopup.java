@@ -78,6 +78,7 @@ public class InplaceIntroduceConstantPopup {
   private String myConstantName;
   private List<RangeMarker> myOccurrenceMarkers;
   private final String myExprText;
+  private final String myInitializerText;
   private final String myLocalName;
   private RangeMarker myExprMarker;
 
@@ -123,7 +124,8 @@ public class InplaceIntroduceConstantPopup {
     myOccurenceManager = occurenceManager;
 
     myExprMarker = expr != null && expr.isPhysical() ? myEditor.getDocument().createRangeMarker(expr.getTextRange()) : null;
-    myExprText = getExprText(expr, localVariable);
+    myExprText = expr != null ? expr.getText() : null;
+    myInitializerText = getExprText(expr, localVariable);
     myLocalName = localVariable != null ? localVariable.getName() : null;
 
     myWholePanel = new JPanel(new GridBagLayout());
@@ -327,7 +329,7 @@ public class InplaceIntroduceConstantPopup {
         final Ref<PsiField> ref = new Ref<PsiField>();
         final Runnable runnable = new Runnable() {
           public void run() {
-            PsiField field = elementFactory.createFieldFromText(psiType.getCanonicalText() + " " + (myConstantName != null ? myConstantName : names[0]) + " = " + myExprText + ";", myParentClass);
+            PsiField field = elementFactory.createFieldFromText(psiType.getCanonicalText() + " " + (myConstantName != null ? myConstantName : names[0]) + " = " + myInitializerText + ";", myParentClass);
             PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
             PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
             final String visibility = getSelectedVisibility();

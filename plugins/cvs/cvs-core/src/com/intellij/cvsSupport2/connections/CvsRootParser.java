@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,13 @@ public final class CvsRootParser {
     CvsRootParser result = new CvsRootParser();
 
     if (!StringUtil.startsWithChar(str, ':')) {
-      throw new CvsRootException(CvsBundle.message("message.error.invalid.cvs.root", str));
+      if (check) {
+        throw new CvsRootException(CvsBundle.message("message.error.invalid.cvs.root", str));
+      } else {
+        result.METHOD = CvsMethod.LOCAL_METHOD;
+        result.REPOSITORY = str;
+        return result;
+      }
     }
 
     @NonNls String local2 = ":local:";
@@ -82,7 +88,7 @@ public final class CvsRootParser {
       if (result.HOST != null && result.HOST.length() > 0 && result.USER_NAME != null && result.USER_NAME.length() > 0) {
         result.REPOSITORY = suffix.trim();
       }
-      else if (suffix.indexOf("@") >= 0 || suffix.indexOf(":") >= 0){
+      else if (suffix.contains("@") || suffix.contains(":")){
         Matcher matcher = ourPattern.matcher(suffix);
 
         if (matcher.matches()) {

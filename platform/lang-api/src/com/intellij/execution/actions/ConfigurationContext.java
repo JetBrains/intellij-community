@@ -124,6 +124,11 @@ public class ConfigurationContext {
       return null;
     }
 
+    final PsiElement psiElement = myLocation.getPsiElement();
+    if (!psiElement.isValid()) {
+      return null;
+    }
+
     final List<RuntimeConfigurationProducer> producers = findPreferredProducers();
     if (producers == null) return null;
     if (myRuntimeConfiguration != null) {

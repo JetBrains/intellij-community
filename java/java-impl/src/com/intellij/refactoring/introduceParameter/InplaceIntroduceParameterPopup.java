@@ -81,6 +81,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
   private boolean myInitialized = false;
   private static final Logger LOG = Logger.getInstance("#" + InplaceIntroduceParameterPopup.class.getName());
 
+  private boolean myHasWriteAccess = false;
 
   InplaceIntroduceParameterPopup(final Project project,
                                  final Editor editor,
@@ -143,6 +144,13 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     gc.gridheight = myCbReplaceAllOccurences != null ? 3 : 2;
     gc.gridy = 1;
     myWholePanel.add(rightPanel, gc);
+
+    for (PsiExpression occurrence : occurrences) {
+      if (PsiUtil.isAccessedForWriting(occurrence)) {
+        myHasWriteAccess = true;
+        break;
+      }
+    }
   }
 
 
@@ -256,7 +264,13 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     protected JComponent getComponent() {
       if (!myInitialized) {
         myInitialized = true;
-        myWholePanel.add(myCanBeFinal, new GridBagConstraints(0, myCbReplaceAllOccurences == null ? 2 : 3, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 5, 2, 5), 0, 0));
+        myWholePanel.add(myCanBeFinal,
+                         new GridBagConstraints(0, myCbReplaceAllOccurences == null ? 2 : 3, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
+                                                GridBagConstraints.NONE, new Insets(0, 5, 2, 5), 0, 0));
+        if (myHasWriteAccess) {
+          myCanBeFinal.setSelected(false);
+          myCanBeFinal.setEnabled(false);
+        }
       }
       return myWholePanel;
     }
@@ -291,7 +305,9 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     protected void saveSettings(PsiVariable psiVariable) {
       final JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
       InplaceIntroduceParameterPopup.super.saveSettings(settings);
-      settings.INTRODUCE_PARAMETER_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
+      if (myCanBeFinal.isEnabled()) {
+        settings.INTRODUCE_PARAMETER_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
+      }
       TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myDefaultParameterTypePointer.getType());
     }
 
@@ -406,6 +422,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
   }
 
   private boolean hasFinalModifier() {
+    if (myHasWriteAccess) return false;
     final Boolean createFinals = JavaRefactoringSettings.getInstance().INTRODUCE_PARAMETER_CREATE_FINALS;
     return createFinals == null ? CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS : createFinals.booleanValue();
   }

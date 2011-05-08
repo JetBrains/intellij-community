@@ -244,7 +244,7 @@ public abstract class IntroduceParameterSettingsUI {
   protected void createLocalVariablePanel(GridBagConstraints gbConstraints, JPanel panel, JavaRefactoringSettings settings) {
     if(myIsLocalVariable && !myIsInvokedOnDeclaration) {
       myCbDeleteLocalVariable = new StateRestoringCheckBox();
-      myCbDeleteLocalVariable.setText(RefactoringBundle.message("delete.variable.definition"));
+      myCbDeleteLocalVariable.setText(RefactoringBundle.message("delete.variable.declaration"));
       myCbDeleteLocalVariable.setFocusable(false);
 
       gbConstraints.gridy++;

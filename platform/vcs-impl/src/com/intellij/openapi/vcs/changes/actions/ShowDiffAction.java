@@ -20,10 +20,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.diff.DiffNavigationContext;
-import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.DiffTool;
+import com.intellij.openapi.diff.*;
+import com.intellij.openapi.diff.impl.external.BinaryDiffTool;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.DumbAware;
@@ -33,6 +31,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -200,12 +199,54 @@ public class ShowDiffAction extends AnAction implements DumbAware {
 
   public static void showDiffForChange(final Change[] changes, int index, final Project project, @NotNull ShowDiffUIContext context) {
     final Change selected = index >= 0 ? changes[index] : null;
+    if (isBinaryDiff(project, changes, index)) {
+      showBinaryDiff(project, changes[index]);
+      return;
+    }
     showDiffForChange(Arrays.asList(changes), new Condition<Change>() {
-      @Override
-      public boolean value(final Change change) {
-        return selected == null ? false : selected.equals(change);
+                        @Override
+                        public boolean value(final Change change) {
+                          return selected == null ? false : selected.equals(change);
+                        }
+                      }, project, context);
+  }
+
+  private static void showBinaryDiff(Project project, Change change) {
+    final ContentRevision bRev = change.getBeforeRevision();
+    final ContentRevision aRev = change.getAfterRevision();
+
+    final VirtualFile vf = change.getVirtualFile();
+    if (vf != null) {
+      try {
+      final FileContent before = FileContent.createFromTempFile(project,
+                                                                "",
+                                                                vf.getName(),
+                                                                ((BinaryContentRevision)bRev).getBinaryContent());
+      final FileContent after = FileContent.createFromTempFile(project,
+                                                               "",
+                                                               vf.getName(),
+                                                               ((BinaryContentRevision)aRev).getBinaryContent());
+        final SimpleDiffRequest request = new SimpleDiffRequest(project,vf.getPath());
+        request.setContents(before, after);
+        if (DiffManager.getInstance().getDiffTool().canShow(request)) {
+          DiffManager.getInstance().getDiffTool().show(request);
+        }
+      } catch (VcsException e){//
       }
-    }, project, context);
+    }
+  }
+
+  private static boolean isBinaryDiff(Project project, Change[] changes, int index) {
+    if (index >= 0 && index < changes.length) {
+      final Change change = changes[index];
+      final ContentRevision bRev = change.getBeforeRevision();
+      final ContentRevision aRev = change.getAfterRevision();
+
+      return aRev instanceof BinaryContentRevision
+             && bRev instanceof BinaryContentRevision
+             && BinaryDiffTool.canShow(project, change.getVirtualFile());
+    }
+    return false;
   }
 
   public static void showDiffImpl(final Project project, List<DiffRequestPresentable> changeList, int index, @NotNull final ShowDiffUIContext context) {

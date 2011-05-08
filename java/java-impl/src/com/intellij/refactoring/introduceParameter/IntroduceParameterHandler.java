@@ -423,7 +423,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
           if (myEditor != null) {
             RefactoringUtil.highlightAllOccurences(myProject, occurences, myEditor);
           }
-          new IntroduceParameterDialog(myProject, classMemberRefs, occurences.length, myLocalVar, myExpr, nameSuggestionsGenerator,
+          new IntroduceParameterDialog(myProject, classMemberRefs, occurences, myLocalVar, myExpr, nameSuggestionsGenerator,
                                        typeSelectorManager, methodToSearchFor, method, parametersToRemove, mustBeFinal).show();
           if (myEditor != null) {
             myEditor.getSelectionModel().removeSelection();

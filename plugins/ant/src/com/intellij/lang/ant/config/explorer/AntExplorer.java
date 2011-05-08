@@ -53,8 +53,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import com.intellij.util.xml.DomEventListener;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.events.DomEvent;
@@ -80,7 +78,6 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   private Tree myTree;
   private KeymapListener myKeymapListener;
   private final AntBuildFilePropertiesAction myAntBuildFilePropertiesAction;
-  private final MergingUpdateQueue myQueue;
   private AntConfiguration myConfig;
   
   private final TreeExpander myTreeExpander = new TreeExpander() {
@@ -146,23 +143,14 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     ToolTipManager.sharedInstance().registerComponent(myTree);
     myKeymapListener = new KeymapListener();
 
-    myQueue = new MergingUpdateQueue("AntExplorer.Queue", 300, true, this, this);
     DomManager.getDomManager(project).addDomEventListener(new DomEventListener() {
       public void eventOccured(DomEvent event) {
-        myQueue.queue(new Update(AntExplorer.this) {
-          public void run() {
-            myBuilder.refresh();
-          }
-
-          public boolean canEat(Update update) {
-            return true;
-          }
-        });
+        myBuilder.queueUpdate();
       }
     }, this);
     RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerAdapter() {
       public void beforeRunTasksChanged() {
-        myBuilder.refresh();
+        myBuilder.queueUpdate();
       }
     });
   }
@@ -276,7 +264,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     final AntBuildFileBase buildFile = getCurrentBuildFile();
     if (buildFile != null && BuildFilePropertiesPanel.editBuildFile(buildFile)) {
       myConfig.updateBuildFile(buildFile);
-      myBuilder.refresh();
+      myBuilder.queueUpdate();
       myTree.repaint();
     }
   }
@@ -628,7 +616,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       else {
         antConfiguration.clearTargetForEvent(myExecutionEvent);
       }
-      myBuilder.refresh();
+      myBuilder.queueUpdate();
     }
 
     public void update(AnActionEvent e) {
@@ -671,7 +659,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       dialog.setTitle(e.getPresentation().getText());
       dialog.show();
       if (dialog.isOK()) {
-        myBuilder.refresh();
+        myBuilder.queueUpdate();
         myTree.repaint();
       }
     }
@@ -734,7 +722,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         }
       }
       finally {
-        myBuilder.refresh();
+        myBuilder.queueUpdate();
         myTree.repaint();
       }
     }

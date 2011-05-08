@@ -242,12 +242,16 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
     if (newColumnNumber < 0) newColumnNumber = 0;
 
-    // There is a possible case that caret is located at the first line and use presses 'Shift+Up'. We want to select all text
+    // There is a possible case that caret is located at the first line and user presses 'Shift+Up'. We want to select all text
     // from the document start to the current caret position then. So, we have a dedicated flag for tracking that.
     boolean selectToDocumentStart = false;
     if (newLineNumber < 0) {
       selectToDocumentStart = true;
       newLineNumber = 0;
+
+      // We want to move caret to the first column if it's already located at the first line and 'Up' is pressed.
+      newColumnNumber = 0;
+      desiredX = -1;
     }
 
     VisualPosition pos = new VisualPosition(newLineNumber, newColumnNumber);
@@ -255,9 +259,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (!editorSettings.isCaretInsideTabs() && !myEditor.getSoftWrapModel().isInsideSoftWrap(pos)) {
       LogicalPosition log = myEditor.visualToLogicalPosition(new VisualPosition(newLineNumber, newColumnNumber));
       int offset = myEditor.logicalPositionToOffset(log);
-      if (offset >= document.getTextLength() && myEditor.getSelectionModel().hasSelection()) {
+      if (offset >= document.getTextLength()) {
         int lastOffsetColumn = myEditor.offsetToVisualPosition(document.getTextLength()).column;
-        newColumnNumber = Math.max(lastOffsetColumn, newColumnNumber);
+        // We want to move caret to the last column if if it's located at the last line and 'Down' is pressed.
+        newColumnNumber = lastColumnNumber = Math.max(lastOffsetColumn, newColumnNumber);
+        desiredX = -1;
       }
       CharSequence text = document.getCharsSequence();
       if (offset >= 0 && offset < document.getTextLength()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.cvsSupport2.cvsExecution;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -48,7 +47,8 @@ public class ModalityContextImpl implements ModalityContext {
       action.run();
     }
     else {
-      WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(action);
+      ModalityState modalityState = getCurrentModalityState();
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(action, modalityState, project);
     }
   }
 
