@@ -143,6 +143,16 @@ class InitialKeyStep extends ExportSignedPackageWizardStep {
   }
 
   @Override
+  protected JComponent getPreferredFocusedComponent() {
+    if (myExistingKeyButton.isSelected()) {
+      if (myAliasCombo.getSelectedItem() != null) {
+        return myKeyPasswordField;
+      }
+    }
+    return null;
+  }
+
+  @Override
   public JComponent getComponent() {
     return myContentPanel;
   }
