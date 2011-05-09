@@ -121,7 +121,8 @@ public class GroovyCompletionData extends CompletionData {
         if (suggestModifiers(position)) {
           addKeywords(result, MODIFIERS);
         }
-        if (psiElement().afterLeaf(MODIFIERS).accepts(position)) {
+        if (psiElement().afterLeaf(MODIFIERS).accepts(position) ||
+            GroovyCompletionUtil.isInTypeDefinitionBody(position) && GroovyCompletionUtil.isNewStatement(position, true)) {
           addKeywords(result, PsiKeyword.SYNCHRONIZED);
         }
       }
@@ -187,7 +188,6 @@ public class GroovyCompletionData extends CompletionData {
    * Registers completions on top level of Groovy script file
    */
   private void registerAllCompletions() {
-    registerSynchronizedCompletion();
     registerFinalCompletion();
 
     registerSuggestVariableNameCompletion();
@@ -220,10 +220,6 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerFinalCompletion() {
     registerStandardCompletion(new AndFilter(new FinalFilter(), new NotFilter(new ThrowsFilter())), "final", "def");
-  }
-
-  private void registerSynchronizedCompletion() {
-    registerStandardCompletion(new SynchronizedFilter(), "synchronized");
   }
 
   @Override
