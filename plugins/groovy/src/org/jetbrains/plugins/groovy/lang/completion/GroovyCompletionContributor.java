@@ -317,6 +317,8 @@ public class GroovyCompletionContributor extends CompletionContributor {
   }
 
   private static void addKeywords(CompletionParameters parameters, CompletionResultSet result) {
+    GroovyCompletionData.addGroovyKeywords(parameters, result);
+
     PsiElement position = parameters.getPosition();
     final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
     final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();

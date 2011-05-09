@@ -25,12 +25,14 @@ import com.intellij.codeInsight.completion.CompletionVariant;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ExtendsFilter;
@@ -43,17 +45,21 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.control.additional.E
 import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.InstanceOfFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.SimpleExpressionFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.*;
-import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.AnnotationFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.ClassInterfaceEnumFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.ImportFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.PackageFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeAsArgumentFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeFilter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.util.Set;
 
@@ -71,13 +77,39 @@ public class GroovyCompletionData extends CompletionData {
     registerAllCompletions();
   }
 
+  public static void addGroovyKeywords(CompletionParameters parameters, CompletionResultSet result) {
+    PsiElement position = parameters.getPosition();
+    if (!PlatformPatterns.psiElement().afterLeaf(".", ".&").accepts(position)) {
+      if (suggestPackage(position)) {
+        result.addElement(keyword("package"));
+      }
+      if (suggestImport(position)) {
+        result.addElement(keyword("import"));
+      }
+      //---
+      if (suggestClassInterfaceEnum(position)) {
+        result.addElement(keyword("class"));
+        result.addElement(keyword("interface"));
+        result.addElement(keyword("enum"));
+      }
+      if (afterAtInType(position)) {
+        result.addElement(keyword("interface"));
+      }
+      //---
+
+
+    }
+  }
+
+  private static TailTypeDecorator<LookupElementBuilder> keyword(final String keyword) {
+    return TailTypeDecorator
+      .withTail(LookupElementBuilder.create(keyword).setBold().setInsertHandler(GroovyInsertHandler.INSTANCE), TailType.SPACE);
+  }
+
   /**
    * Registers completions on top level of Groovy script file
    */
   private void registerAllCompletions() {
-    registerPackageCompletion();
-    registerImportCompletion();
-
     registerClassInterfaceEnumAnnotationCompletion();
     registerControlCompletion();
     registerSimpleExprsCompletion();
@@ -101,13 +133,7 @@ public class GroovyCompletionData extends CompletionData {
   }
 
 
-  private void registerPackageCompletion() {
-    registerStandardCompletion(new PackageFilter(), "package");
-  }
-
   private void registerClassInterfaceEnumAnnotationCompletion() {
-    registerStandardCompletion(new ClassInterfaceEnumFilter(), "class", "interface", "enum");
-    registerStandardCompletion(new AnnotationFilter(), "interface");
     registerStandardCompletion(new ExtendsFilter(), "extends");
     registerStandardCompletion(new ImplementsFilter(), "implements");
   }
@@ -152,10 +178,6 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerSynchronizedCompletion() {
     registerStandardCompletion(new SynchronizedFilter(), "synchronized");
-  }
-
-  private void registerImportCompletion() {
-    registerStandardCompletion(new ImportFilter(), "import");
   }
 
   private void registerInstanceofCompletion() {
@@ -242,5 +264,100 @@ public class GroovyCompletionData extends CompletionData {
         result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(docTag), TailType.SPACE));
       }
     }
+  }
+
+  private static boolean suggestPackage(PsiElement context) {
+    if (context.getParent() != null &&
+        !(context.getParent() instanceof PsiErrorElement) &&
+        context.getParent().getParent() instanceof GroovyFile &&
+        ((GroovyFile) context.getParent().getParent()).getPackageDefinition() == null) {
+      if (context.getParent() instanceof GrReferenceExpression) {
+        return true;
+      }
+      if (context.getParent() instanceof GrApplicationStatement &&
+          ((GrApplicationStatement) context.getParent()).getExpressionArguments()[0] instanceof GrReferenceExpression) {
+        return true;
+      }
+      return false;
+    }
+    if (context.getTextRange().getStartOffset() == 0 && !(context instanceof OuterLanguageElement)) {
+      return true;
+    }
+
+    final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
+    if (leaf != null) {
+      PsiElement parent = leaf.getParent();
+      if (parent instanceof GroovyFile) {
+        GroovyFile groovyFile = (GroovyFile) parent;
+        if (groovyFile.getPackageDefinition() == null) {
+          return GroovyCompletionUtil.isNewStatement(context, false);
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private static boolean suggestImport(PsiElement context) {
+    if (context.getParent() != null &&
+        !(context.getParent() instanceof PsiErrorElement) &&
+        GroovyCompletionUtil.isNewStatement(context, false) &&
+        context.getParent().getParent() instanceof GroovyFile) {
+      return true;
+    }
+    final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
+    if (leaf != null) {
+      PsiElement parent = leaf.getParent();
+      if (parent instanceof GroovyFile) {
+        return GroovyCompletionUtil.isNewStatement(context, false);
+      }
+    }
+    return context.getTextRange().getStartOffset() == 0 && !(context instanceof OuterLanguageElement);
+  }
+
+  public static boolean suggestClassInterfaceEnum(PsiElement context) {
+    if (context.getParent() != null &&
+        (context.getParent() instanceof GrReferenceExpression) &&
+        context.getParent().getParent() instanceof GroovyFile) {
+      return true;
+    }
+    if (context.getParent() != null &&
+        (context.getParent() instanceof GrReferenceExpression) &&
+        (context.getParent().getParent() instanceof GrApplicationStatement ||
+            context.getParent().getParent() instanceof GrCall) &&
+        context.getParent().getParent().getParent() instanceof GroovyFile) {
+      return true;
+    }
+    final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
+    if (leaf != null) {
+      PsiElement prev = leaf;
+      prev = PsiImplUtil.realPrevious(prev);
+      if (prev instanceof GrModifierList &&
+          prev.getParent() != null &&
+          prev.getParent().getParent() instanceof GroovyFile)
+        return true;
+
+      PsiElement parent = leaf.getParent();
+      if (parent instanceof GroovyFile) {
+        return GroovyCompletionUtil.isNewStatement(context, false);
+      }
+    }
+
+    return false;
+  }
+
+  public static boolean afterAtInType(PsiElement context) {
+    PsiElement previous = PsiImplUtil.realPrevious(context.getPrevSibling());
+    if (previous != null &&
+        GroovyTokenTypes.mAT.equals(previous.getNode().getElementType()) &&
+        context.getParent() != null &&
+        context.getParent().getParent() instanceof GroovyFile) {
+      return true;
+    }
+    if (context.getParent() instanceof PsiErrorElement &&
+        context.getParent().getParent() instanceof GrAnnotation) {
+      return true;
+    }
+    return false;
   }
 }
