@@ -315,7 +315,7 @@ public class GroovyCompletionData extends CompletionData {
     return context.getTextRange().getStartOffset() == 0 && !(context instanceof OuterLanguageElement);
   }
 
-  public static boolean suggestClassInterfaceEnum(PsiElement context) {
+  private static boolean suggestClassInterfaceEnum(PsiElement context) {
     if (context.getParent() != null &&
         (context.getParent() instanceof GrReferenceExpression) &&
         context.getParent().getParent() instanceof GroovyFile) {
@@ -346,7 +346,7 @@ public class GroovyCompletionData extends CompletionData {
     return false;
   }
 
-  public static boolean afterAtInType(PsiElement context) {
+  private static boolean afterAtInType(PsiElement context) {
     PsiElement previous = PsiImplUtil.realPrevious(context.getPrevSibling());
     if (previous != null &&
         GroovyTokenTypes.mAT.equals(previous.getNode().getElementType()) &&
