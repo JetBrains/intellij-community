@@ -34,13 +34,13 @@ import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.BranchFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.InstanceOfFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.*;
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeAsArgumentFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeFilter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
@@ -51,10 +51,16 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -91,6 +97,10 @@ public class GroovyCompletionData extends CompletionData {
 
       if (position.getParent() instanceof GrExpression && !(position.getParent() instanceof GrLiteral)) {
         addKeywords(result, "true", "false", "null", "super", "new", "this", "as");
+      }
+
+      if (suggestPrimitiveTypes(position) && !suggestThrows(position)) {
+        addKeywords(result, BUILT_IN_TYPES);
       }
     }
   }
@@ -154,7 +164,6 @@ public class GroovyCompletionData extends CompletionData {
    * Registers completions on top level of Groovy script file
    */
   private void registerAllCompletions() {
-    registerBuiltInTypeCompletion();
     registerBuiltInTypesAsArgumentCompletion();
     registerInstanceofCompletion();
     registerThrowsCompletion();
@@ -189,10 +198,6 @@ public class GroovyCompletionData extends CompletionData {
     if (afterIfOrElse(context)) {
       addKeywords(result, "else");
     }
-  }
-
-  private void registerBuiltInTypeCompletion() {
-    registerStandardCompletion(new AndFilter(new BuiltInTypeFilter(), new NotFilter(new ThrowsFilter())), BUILT_IN_TYPES);
   }
 
   private void registerBuiltInTypesAsArgumentCompletion() {
@@ -504,5 +509,64 @@ public class GroovyCompletionData extends CompletionData {
       }
     }
     return false;
+  }
+
+  public static boolean suggestThrows(PsiElement context) {
+    PsiElement candidate = null;
+    if (GroovyCompletionUtil.isInTypeDefinitionBody(context)) {
+      PsiElement run = context;
+      while(!(run.getParent() instanceof GrTypeDefinitionBody)) {
+        run = run.getParent();
+        assert run != null;
+      }
+      candidate = PsiTreeUtil.getPrevSiblingOfType(run, GrMember.class);
+    }
+    else if (context.getParent() instanceof PsiErrorElement) {
+     candidate = context.getParent().getPrevSibling();
+    }
+
+    return candidate instanceof GrMethod && ((GrMethod) candidate).getBlock() == null;
+  }
+
+  private static boolean suggestPrimitiveTypes(PsiElement context) {
+    if (InstanceOfFilter.isInfixOperatorPosition(context)) {
+      return false;
+    }
+
+    final PsiElement parent = context.getParent();
+    if (parent == null) return false;
+
+    PsiElement previous = PsiImplUtil.realPrevious(parent.getPrevSibling());
+    if (previous != null && GroovyTokenTypes.mAT.equals(previous.getNode().getElementType())) {
+      return false;
+    }
+    if (GroovyCompletionUtil.asSimpleVariable(context) ||
+        GroovyCompletionUtil.asTypedMethod(context) ||
+        GroovyCompletionUtil.asVariableInBlock(context)) {
+      return true;
+    }
+    if ((parent instanceof GrParameter &&
+         ((GrParameter)parent).getTypeElementGroovy() == null) ||
+        parent instanceof GrReferenceElement &&
+        !(parent.getParent() instanceof GrImportStatement) &&
+        !(parent.getParent() instanceof GrPackageDefinition) &&
+        !(parent.getParent() instanceof GrArgumentList)) {
+      PsiElement prevSibling = context.getPrevSibling();
+      if (parent instanceof GrReferenceElement && prevSibling != null && prevSibling.getNode() != null) {
+        ASTNode node = prevSibling.getNode();
+        return !TokenSets.DOTS.contains(node.getElementType());
+      } else {
+        return true;
+      }
+    }
+    if (PsiImplUtil.realPrevious(parent.getPrevSibling()) instanceof GrModifierList) {
+      return true;
+    }
+    if (PsiImplUtil.realPrevious(context.getPrevSibling()) instanceof GrModifierList) {
+      return true;
+    }
+    return parent instanceof GrExpression &&
+           parent.getParent() instanceof GroovyFile &&
+           GroovyCompletionUtil.isNewStatement(context, false);
   }
 }
