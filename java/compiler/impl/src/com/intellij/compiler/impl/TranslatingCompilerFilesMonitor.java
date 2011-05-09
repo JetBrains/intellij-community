@@ -282,7 +282,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     return IndexInfrastructure.findFileById((PersistentFS)ManagingFS.getInstance(), id);
   }
 
-  public void update(final CompileContext context, final String outputRoot, final Collection<TranslatingCompiler.OutputItem> successfullyCompiled, final VirtualFile[] filesToRecompile)
+  public void update(final CompileContext context, @Nullable final String outputRoot, final Collection<TranslatingCompiler.OutputItem> successfullyCompiled, final VirtualFile[] filesToRecompile)
       throws IOException {
     final Project project = context.getProject();
     final int projectId = getProjectId(project);
@@ -316,11 +316,10 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
                 final VirtualFile outputFile = lfs.findFileByPath(outputPath);
 
                 //assert outputFile != null : "Virtual file was not found for \"" + outputPath + "\"";
-                assert outputRoot != null;
 
                 if (outputFile != null) {
                   if (!sourceFile.equals(outputFile)) {
-                    final String className = MakeUtil.relativeClassPathToQName(outputPath.substring(outputRoot.length()), '/');
+                    final String className = outputRoot == null? null : MakeUtil.relativeClassPathToQName(outputPath.substring(outputRoot.length()), '/');
                     if (isSourceValid) {
                       srcInfo.addOutputPath(projectId, outputPath);
                       saveOutputInfo(outputFile, new OutputFileInfo(sourceFile.getPath(), className));
