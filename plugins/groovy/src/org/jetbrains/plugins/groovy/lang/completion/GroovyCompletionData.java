@@ -95,9 +95,7 @@ public class GroovyCompletionData extends CompletionData {
 
   private static void addTypeDefinitionKeywords(CompletionResultSet result, PsiElement position) {
     if (suggestClassInterfaceEnum(position)) {
-      result.addElement(keyword("class"));
-      result.addElement(keyword("interface"));
-      result.addElement(keyword("enum"));
+      addKeywords(result, "class", "interface", "enum");
     }
     if (afterAtInType(position)) {
       result.addElement(keyword("interface"));
@@ -136,6 +134,12 @@ public class GroovyCompletionData extends CompletionData {
     }
     if (impl) {
       result.addElement(keyword("implements"));
+    }
+  }
+
+  private static void addKeywords(CompletionResultSet result, String... keywords) {
+    for (String s : keywords) {
+      result.addElement(keyword(s));
     }
   }
 
