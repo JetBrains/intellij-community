@@ -115,9 +115,12 @@ public class AnnotationProcessingCompiler implements TranslatingCompiler{
   }
 
   private boolean isExcludedFromAnnotationProcessing(VirtualFile file, CompileContext context) {
+    if (!context.isAnnotationProcessorsEnabled()) {
+      return true;
+    }
     final Module module = context.getModuleByFile(file);
     if (module != null) {
-      if (!context.isAnnotationProcessorsEnabled()) {
+      if (!myConfig.isAnnotationProcessingEnabled(module)) {
         return true;
       }
       final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
@@ -141,7 +144,7 @@ public class AnnotationProcessingCompiler implements TranslatingCompiler{
   }
 
   private JavacCompiler getBackEndCompiler() {
-    CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)myConfig;
     return configuration.getJavacCompiler();
   }
 
