@@ -34,7 +34,6 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.*;
 import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
@@ -125,6 +124,9 @@ public class GroovyCompletionData extends CompletionData {
             GroovyCompletionUtil.isInTypeDefinitionBody(position) && GroovyCompletionUtil.isNewStatement(position, true)) {
           addKeywords(result, PsiKeyword.SYNCHRONIZED);
         }
+        if (suggestFinalDef(position)) {
+          addKeywords(result, PsiKeyword.FINAL, "def");
+        }
       }
     }
   }
@@ -188,8 +190,6 @@ public class GroovyCompletionData extends CompletionData {
    * Registers completions on top level of Groovy script file
    */
   private void registerAllCompletions() {
-    registerFinalCompletion();
-
     registerSuggestVariableNameCompletion();
   }
 
@@ -216,10 +216,6 @@ public class GroovyCompletionData extends CompletionData {
     if (afterIfOrElse(context)) {
       addKeywords(result, "else");
     }
-  }
-
-  private void registerFinalCompletion() {
-    registerStandardCompletion(new AndFilter(new FinalFilter(), new NotFilter(new ThrowsFilter())), "final", "def");
   }
 
   @Override
@@ -642,5 +638,30 @@ public class GroovyCompletionData extends CompletionData {
            contextParent.getParent() instanceof GrApplicationStatement &&
            contextParent.getParent().getParent() instanceof GroovyFile &&
            GroovyCompletionUtil.isNewStatement(context, false);
+  }
+
+  public static boolean suggestFinalDef(PsiElement context) {
+    if (GroovyCompletionUtil.asSimpleVariable(context) ||
+        GroovyCompletionUtil.asTypedMethod(context) ||
+        GroovyCompletionUtil.asVariableInBlock(context)) {
+      return true;
+    }
+    if ((context.getParent() instanceof GrParameter &&
+        ((GrParameter) context.getParent()).getTypeElementGroovy() == null) ||
+        context.getParent() instanceof GrReferenceElement &&
+            !(context.getParent() instanceof GrReferenceExpression) &&
+            !(context.getParent().getParent() instanceof GrImportStatement) &&
+            !(context.getParent().getParent() instanceof GrPackageDefinition)) {
+      return true;
+    }
+    if (PsiImplUtil.realPrevious(context.getParent().getPrevSibling()) instanceof GrModifierList) {
+      return true;
+    }
+    if (PsiImplUtil.realPrevious(context.getPrevSibling()) instanceof GrModifierList) {
+      return true;
+    }
+    return context.getParent() instanceof GrExpression &&
+        context.getParent().getParent() instanceof GroovyFile &&
+        GroovyCompletionUtil.isNewStatement(context, false);
   }
 }
