@@ -38,7 +38,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.BranchFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.InstanceOfFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.SimpleExpressionFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.*;
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeAsArgumentFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeFilter;
@@ -89,6 +88,10 @@ public class GroovyCompletionData extends CompletionData {
       addTypeDefinitionKeywords(result, position);
       addExtendsImplements(position, result);
       registerControlCompletion(position, result);
+
+      if (position.getParent() instanceof GrExpression && !(position.getParent() instanceof GrLiteral)) {
+        addKeywords(result, "true", "false", "null", "super", "new", "this", "as");
+      }
     }
   }
 
@@ -151,7 +154,6 @@ public class GroovyCompletionData extends CompletionData {
    * Registers completions on top level of Groovy script file
    */
   private void registerAllCompletions() {
-    registerSimpleExprsCompletion();
     registerBuiltInTypeCompletion();
     registerBuiltInTypesAsArgumentCompletion();
     registerInstanceofCompletion();
@@ -196,16 +198,6 @@ public class GroovyCompletionData extends CompletionData {
   private void registerBuiltInTypesAsArgumentCompletion() {
     AndFilter filter = new AndFilter(new BuiltInTypeAsArgumentFilter(), new NotFilter(new ThrowsFilter()));
     registerStandardCompletion(filter, BUILT_IN_TYPES);
-  }
-
-  private void registerSimpleExprsCompletion() {
-    String[] exprs = {"true", "false", "null", "super", "new", "this", "as"};
-    registerStandardCompletion(new SimpleExpressionFilter() {
-      @Override
-      public boolean isAcceptable(Object element, PsiElement context) {
-        return super.isAcceptable(element, context) && !(context.getParent() instanceof GrLiteral);
-      }
-    }, exprs);
   }
 
   private void registerThrowsCompletion() {
@@ -493,7 +485,6 @@ public class GroovyCompletionData extends CompletionData {
   private static boolean afterIfOrElse(PsiElement context) {
     if (context.getParent() != null &&
         GroovyCompletionUtil.nearestLeftSibling(context.getParent()) instanceof GrIfStatement) {
-      GrIfStatement statement = (GrIfStatement) GroovyCompletionUtil.nearestLeftSibling(context.getParent());
       return true;
     }
     if (context.getParent() != null &&
