@@ -37,7 +37,6 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.completion.filters.control.BranchFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.*;
 import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
@@ -65,6 +64,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Set;
 
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.or;
+
 /**
  * @author ilyas
  */
@@ -81,6 +83,7 @@ public class GroovyCompletionData extends CompletionData {
 
   public static void addGroovyKeywords(CompletionParameters parameters, CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
+    PsiElement parent = position.getParent();
     if (!PlatformPatterns.psiElement().afterLeaf(".", ".&").accepts(position)) {
       if (suggestPackage(position)) {
         result.addElement(keyword("package"));
@@ -93,7 +96,7 @@ public class GroovyCompletionData extends CompletionData {
       addExtendsImplements(position, result);
       registerControlCompletion(position, result);
 
-      if (position.getParent() instanceof GrExpression && !(position.getParent() instanceof GrLiteral)) {
+      if (parent instanceof GrExpression && !(parent instanceof GrLiteral)) {
         addKeywords(result, "true", "false", "null", "super", "new", "this", "as");
       }
 
@@ -103,6 +106,13 @@ public class GroovyCompletionData extends CompletionData {
         addKeywords(result, "throws");
       } else if (suggestPrimitiveTypes(position)) {
         addKeywords(result, BUILT_IN_TYPES);
+      }
+
+      if (psiElement(GrReferenceExpression.class).inside(or(psiElement(GrWhileStatement.class), psiElement(GrForStatement.class))).accepts(parent)) {
+        addKeywords(result, "break", "continue");
+      }
+      else if (psiElement(GrReferenceExpression.class).inside(GrCaseSection.class).accepts(parent)) {
+        addKeywords(result, "break");
       }
     }
   }
@@ -166,7 +176,6 @@ public class GroovyCompletionData extends CompletionData {
    * Registers completions on top level of Groovy script file
    */
   private void registerAllCompletions() {
-    registerBranchCompletion();
     registerModifierCompletion();
     registerSynchronizedCompletion();
     registerFinalCompletion();
@@ -205,10 +214,6 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerSynchronizedCompletion() {
     registerStandardCompletion(new SynchronizedFilter(), "synchronized");
-  }
-
-  private void registerBranchCompletion() {
-    registerStandardCompletion(new BranchFilter(), "break", "continue");
   }
 
   private void registerModifierCompletion() {
