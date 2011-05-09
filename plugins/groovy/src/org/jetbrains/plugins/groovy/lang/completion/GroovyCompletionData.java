@@ -35,8 +35,6 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ExtendsFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.classdef.ImplementsFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.BranchFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.ControlStructureFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.additional.CaseDefaultFilter;
@@ -59,7 +57,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplic
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Set;
 
@@ -86,18 +86,56 @@ public class GroovyCompletionData extends CompletionData {
       if (suggestImport(position)) {
         result.addElement(keyword("import"));
       }
-      //---
-      if (suggestClassInterfaceEnum(position)) {
-        result.addElement(keyword("class"));
-        result.addElement(keyword("interface"));
-        result.addElement(keyword("enum"));
-      }
-      if (afterAtInType(position)) {
-        result.addElement(keyword("interface"));
-      }
-      //---
 
+      addTypeDefinitionKeywords(result, position);
+      addExtendsImplements(position, result);
 
+    }
+  }
+
+  private static void addTypeDefinitionKeywords(CompletionResultSet result, PsiElement position) {
+    if (suggestClassInterfaceEnum(position)) {
+      result.addElement(keyword("class"));
+      result.addElement(keyword("interface"));
+      result.addElement(keyword("enum"));
+    }
+    if (afterAtInType(position)) {
+      result.addElement(keyword("interface"));
+    }
+  }
+
+  private static void addExtendsImplements(PsiElement context, CompletionResultSet result) {
+    if (context.getParent() == null) {
+      return;
+    }
+
+    PsiElement elem = context.getParent();
+    boolean ext = !(elem instanceof GrExtendsClause);
+    boolean impl = !(elem instanceof GrImplementsClause);
+
+    if (elem instanceof GrTypeDefinitionBody) { //inner class
+      elem = PsiUtil.skipWhitespaces(context.getPrevSibling(), false);
+    }
+    else {
+      elem = PsiUtil.skipWhitespaces(elem.getPrevSibling(), false);
+    }
+
+    ext &= elem instanceof GrInterfaceDefinition || elem instanceof GrClassDefinition;
+    impl &= elem instanceof GrEnumTypeDefinition || elem instanceof GrClassDefinition;
+    if (!ext && !impl) return;
+
+    PsiElement[] children = elem.getChildren();
+    for (PsiElement child : children) {
+      ext &= !(child instanceof GrExtendsClause);
+      if (child instanceof GrImplementsClause || child instanceof GrTypeDefinitionBody) {
+        return;
+      }
+    }
+    if (ext) {
+      result.addElement(keyword("extends"));
+    }
+    if (impl) {
+      result.addElement(keyword("implements"));
     }
   }
 
@@ -110,7 +148,6 @@ public class GroovyCompletionData extends CompletionData {
    * Registers completions on top level of Groovy script file
    */
   private void registerAllCompletions() {
-    registerClassInterfaceEnumAnnotationCompletion();
     registerControlCompletion();
     registerSimpleExprsCompletion();
     registerBuiltInTypeCompletion();
@@ -132,11 +169,6 @@ public class GroovyCompletionData extends CompletionData {
     registerVariant(variant);
   }
 
-
-  private void registerClassInterfaceEnumAnnotationCompletion() {
-    registerStandardCompletion(new ExtendsFilter(), "extends");
-    registerStandardCompletion(new ImplementsFilter(), "implements");
-  }
 
   private void registerControlCompletion() {
     String[] controlKeywords = {"try", "while", "with", "switch", "for", "return", "throw", "assert", "synchronized",};
