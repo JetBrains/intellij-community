@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,6 @@
 package com.intellij.cvsSupport2.cvsoperations.cvsAdd.ui;
 
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
-import com.intellij.cvsSupport2.util.CvsVfsUtil;
-import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
-import com.intellij.util.ui.FileLabel;
 import com.intellij.util.ui.FileLabel;
 
 import java.awt.*;
@@ -31,8 +28,7 @@ public abstract class AbstractAddFileConfirmationPanel {
 
   public static AbstractAddFileConfirmationPanel createOn(AddedFileInfo info){
     return info.getFile().isDirectory() ?
-           new AddDirectoryConfirmationPanel(info) :
-           (AbstractAddFileConfirmationPanel)new AddFileConfirmationPanel(info);
+           new AddDirectoryConfirmationPanel(info) : new AddFileConfirmationPanel(info);
   }
 
   public AbstractAddFileConfirmationPanel(AddedFileInfo addedFileInfo) {
