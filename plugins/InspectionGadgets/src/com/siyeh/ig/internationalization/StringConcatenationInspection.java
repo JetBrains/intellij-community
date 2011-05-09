@@ -16,6 +16,7 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.TestUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
@@ -27,6 +28,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +54,9 @@ public class StringConcatenationInspection extends BaseInspection {
 
     @SuppressWarnings({"PublicField"})
     public boolean ignoreConstantInitializers = false;
+
+    @SuppressWarnings({"PublicField"})
+    public boolean ignoreInTestCode = false;
 
     @Override
     @NotNull
@@ -139,6 +144,9 @@ public class StringConcatenationInspection extends BaseInspection {
         optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
                 "string.concatenation.ignore.constant.initializers.option"),
                 "ignoreConstantInitializers");
+        optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
+                "string.concatenation.ignore.in.test.code"),
+                "ignoreInTestCode");
         return optionsPanel;
     }
 
@@ -175,6 +183,17 @@ public class StringConcatenationInspection extends BaseInspection {
             }
             if (isInsideAnnotation(expression)) {
                 return;
+            }
+            if (ignoreInTestCode) {
+                if (TestUtils.isPartOfJUnitTestMethod(expression)) {
+                    return;
+                }
+                final PsiClass containingClass =
+                        PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+                if (containingClass != null &&
+                        TestUtil.isTestClass(containingClass)) {
+                    return;
+                }
             }
             if (ignoreAsserts) {
                 final PsiAssertStatement assertStatement =
