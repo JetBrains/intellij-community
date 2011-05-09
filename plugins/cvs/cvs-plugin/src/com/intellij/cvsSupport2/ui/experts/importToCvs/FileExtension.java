@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.cvsSupport2.ui.experts.importToCvs;
 
 import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionListWithSelection;
 import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
-import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionListWithSelection;
 
 /**
  * author: lesya
@@ -64,8 +63,6 @@ public class FileExtension {
   }
 
   public KeywordSubstitutionWrapper getKeywordSubstitution() {
-    return (KeywordSubstitutionWrapper)getKeywordSubstitutionsWithSelection().getSelection();
+    return getKeywordSubstitutionsWithSelection().getSelection();
   }
-
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@ package com.intellij.cvsSupport2.cvsoperations.cvsAdd.ui;
 
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
 import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
-import com.intellij.cvsSupport2.ui.KeywordSubstitutionComboBoxWrapper;
 import com.intellij.util.ui.FileLabel;
-import com.intellij.util.ui.FileLabel;
+import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,6 +29,7 @@ import java.awt.event.ActionListener;
  * author: lesya
  */
 public class AddFileConfirmationPanel extends AbstractAddFileConfirmationPanel {
+
   private JComboBox mySubstitutionComboBox;
   private FileLabel myFileLabel;
   private JPanel myPanel;
@@ -38,21 +38,17 @@ public class AddFileConfirmationPanel extends AbstractAddFileConfirmationPanel {
   public AddFileConfirmationPanel(AddedFileInfo addedFileInfo) {
     super(addedFileInfo);
 
-    KeywordSubstitutionWrapper defaultSubst = (KeywordSubstitutionWrapper)myAddedFileInfo.getKeywordSubstitutionsWithSelection()
-      .getSelection();
-    final KeywordSubstitutionComboBoxWrapper wrapper = new KeywordSubstitutionComboBoxWrapper(mySubstitutionComboBox,
-                                                                                              defaultSubst.getStringRepresentation()
-    );
-
+    KeywordSubstitution defaultSubstitution = myAddedFileInfo.getKeywordSubstitution();
+    KeywordSubstitutionWrapper.fillComboBox(mySubstitutionComboBox, defaultSubstitution);
 
     mySubstitutionComboBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        myAddedFileInfo.setKeywordSubstitution(wrapper.getSelection().getSubstitution());
+        final KeywordSubstitutionWrapper selectedItem = (KeywordSubstitutionWrapper)mySubstitutionComboBox.getSelectedItem();
+        myAddedFileInfo.setKeywordSubstitution(selectedItem.getSubstitution());
       }
     });
 
     init();
-
   }
 
   public Component getPanel() {
@@ -62,5 +58,4 @@ public class AddFileConfirmationPanel extends AbstractAddFileConfirmationPanel {
   protected FileLabel getFileLabel() {
     return myFileLabel;
   }
-
 }

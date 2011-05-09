@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.ui.experts.checkout;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
@@ -31,6 +32,7 @@ import java.io.File;
  * author: lesya
  */
 public class CheckoutWizard extends CvsWizard {
+
   private final SelectCVSConfigurationStep mySelectCVSConfigurationStep;
   private final SelectCvsElementStep mySelectCvsElementStep;
   private final SelectLocationStep mySelectLocationStep;
@@ -38,9 +40,9 @@ public class CheckoutWizard extends CvsWizard {
   private final ChooseCheckoutMode myChooseModeStep;
 
   public CheckoutWizard(final Project project) {
-    super(com.intellij.CvsBundle.message("dialog.tittle.check.out.from.cvs.repository"), project);
+    super(CvsBundle.message("dialog.tittle.check.out.from.cvs.repository"), project);
     mySelectCVSConfigurationStep = new SelectCVSConfigurationStep(project, this);
-    mySelectCvsElementStep = new SelectCvsElementStep(com.intellij.CvsBundle.message("dialog.title.select.cvs.element.to.check.out"),
+    mySelectCvsElementStep = new SelectCvsElementStep(CvsBundle.message("dialog.title.select.cvs.element.to.check.out"),
                                                       this, project, mySelectCVSConfigurationStep,
                                                       true, TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION, false, true);
 
@@ -50,7 +52,6 @@ public class CheckoutWizard extends CvsWizard {
     addStep(mySelectCVSConfigurationStep);
     addStep(mySelectCvsElementStep);
     addStep(mySelectLocationStep);
-
     addStep(myChooseModeStep);
 
     init();
@@ -59,13 +60,12 @@ public class CheckoutWizard extends CvsWizard {
   protected void doOKAction() {
     CvsApplicationLevelConfiguration config = CvsApplicationLevelConfiguration.getInstance();
 
-    config.MAKE_CHECKED_OUT_FILES_READONLY = myChooseModeStep.getMakeNewFielsReadOnly();
+    config.MAKE_CHECKED_OUT_FILES_READONLY = myChooseModeStep.getMakeNewFilesReadOnly();
     config.CHECKOUT_PRUNE_EMPTY_DIRECTORIES = myChooseModeStep.getPruneEmptyDirectories();
-    config.CHECKOUT_KEYWORD_SUBSTITUTION = myChooseModeStep.getKeywordSubstitution();
+    config.CHECKOUT_KEYWORD_SUBSTITUTION = myChooseModeStep.getKeywordSubstitution().toString();
 
     super.doOKAction();
   }
-
 
   public CvsElement[] getSelectedElements() {
     return mySelectCvsElementStep.getSelectedCvsElements();
@@ -89,7 +89,7 @@ public class CheckoutWizard extends CvsWizard {
 
   private class MySelectLocationStep extends SelectLocationStep {
     public MySelectLocationStep(Project project) {
-      super(com.intellij.CvsBundle.message("dialog.title.select.check.out.location"), CheckoutWizard.this, project);
+      super(CvsBundle.message("dialog.title.select.check.out.location"), CheckoutWizard.this, project);
       init();
     }
   }
@@ -97,5 +97,4 @@ public class CheckoutWizard extends CvsWizard {
   protected String getHelpID() {
     return "cvs.checkOutPrj";
   }
-
 }
