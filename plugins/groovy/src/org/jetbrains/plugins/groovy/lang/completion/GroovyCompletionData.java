@@ -72,7 +72,7 @@ import static com.intellij.patterns.StandardPatterns.or;
  */
 public class GroovyCompletionData extends CompletionData {
   public static final String[] BUILT_IN_TYPES = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "void"};
-  public static final String[] MODIFIERS = new String[]{"private", "public", "protected", "transient", "abstract", "native", "volatile", "strictfp"};
+  public static final String[] MODIFIERS = new String[]{"private", "public", "protected", "transient", "abstract", "native", "volatile", "strictfp", "static"};
   static final String[] INLINED_DOC_TAGS = {"code", "docRoot", "inheritDoc", "link", "linkplain", "literal"};
   static final String[] DOC_TAGS = {"author", "deprecated", "exception", "param", "return", "see", "serial", "serialData",
       "serialField", "since", "throws", "version"};
@@ -113,6 +113,10 @@ public class GroovyCompletionData extends CompletionData {
       }
       else if (psiElement(GrReferenceExpression.class).inside(GrCaseSection.class).accepts(parent)) {
         addKeywords(result, "break");
+      }
+
+      if (psiElement().afterLeaf("import").withSuperParent(2, GrImportStatement.class).accepts(position)) {
+        addKeywords(result, "static");
       }
     }
   }
@@ -218,9 +222,8 @@ public class GroovyCompletionData extends CompletionData {
 
   private void registerModifierCompletion() {
     registerStandardCompletion(new ModifiersFilter(), MODIFIERS);
-    registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()), "private", "public", "protected", "transient", "abstract",
-                               "native", "volatile", "strictfp", "synchronized", "static");
-    registerStandardCompletion(new StaticFilter(), "static");
+    registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()), MODIFIERS);
+    registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()), "synchronized");
   }
 
 
