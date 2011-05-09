@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
 */
 class CvsCheckinHandlerFactory extends VcsCheckinHandlerFactory {
+
   CvsCheckinHandlerFactory() {
     super(CvsVcs2.getKey());
   }
@@ -40,7 +41,7 @@ class CvsCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     return new CheckinHandler() {
       @Nullable
       public RefreshableOnComponent getAfterCheckinConfigurationPanel(Disposable parentDisposable) {
-        return new AdditionalOptionsPanel(true, CvsConfiguration.getInstance(panel.getProject()));
+        return new AdditionalOptionsPanel(CvsConfiguration.getInstance(panel.getProject()));
       }
     };
   }
