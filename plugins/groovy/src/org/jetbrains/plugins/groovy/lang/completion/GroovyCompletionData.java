@@ -26,15 +26,16 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.*;
+import com.intellij.psi.filters.AndFilter;
+import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.filters.NotFilter;
+import com.intellij.psi.filters.TextFilter;
 import com.intellij.psi.filters.position.LeftNeighbour;
-import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -73,10 +74,6 @@ public class GroovyCompletionData extends CompletionData {
   static final String[] INLINED_DOC_TAGS = {"code", "docRoot", "inheritDoc", "link", "linkplain", "literal"};
   static final String[] DOC_TAGS = {"author", "deprecated", "exception", "param", "return", "see", "serial", "serialData",
       "serialField", "since", "throws", "version"};
-
-  public GroovyCompletionData() {
-    registerAllCompletions();
-  }
 
   public static void addGroovyKeywords(CompletionParameters parameters, CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
@@ -185,21 +182,6 @@ public class GroovyCompletionData extends CompletionData {
     return TailTypeDecorator
       .withTail(LookupElementBuilder.create(keyword).setBold().setInsertHandler(GroovyInsertHandler.INSTANCE), TailType.SPACE);
   }
-
-  /**
-   * Registers completions on top level of Groovy script file
-   */
-  private void registerAllCompletions() {
-    registerSuggestVariableNameCompletion();
-  }
-
-  private void registerSuggestVariableNameCompletion() {
-    CompletionVariant variant = new CompletionVariant(new ParentElementFilter(new ClassFilter(GrVariable.class)));
-    variant.includeScopeClass(LeafPsiElement.class);
-    variant.addCompletion(new SuggestedVariableNamesGetter(), TailType.NONE);
-    registerVariant(variant);
-  }
-
 
   private static void registerControlCompletion(PsiElement context, CompletionResultSet result) {
     String[] controlKeywords = {"try", "while", "with", "switch", "for", "return", "throw", "assert", "synchronized",};
