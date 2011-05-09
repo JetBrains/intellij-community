@@ -194,12 +194,16 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   }
 
   public void refreshErrors() {
-    myComponentTree.refreshIntentionHint();
-    myComponentTree.repaint(myComponentTree.getVisibleRect());
+    if (myComponentTree != null) {
+      myComponentTree.refreshIntentionHint();
+      myComponentTree.repaint(myComponentTree.getVisibleRect());
+    }
 
     // PropertyInspector
-    myPropertyInspector.refreshIntentionHint();
-    myPropertyInspector.repaint(myPropertyInspector.getVisibleRect());
+    if (myPropertyInspector != null) {
+      myPropertyInspector.refreshIntentionHint();
+      myPropertyInspector.repaint(myPropertyInspector.getVisibleRect());
+    }
   }
 
   public void updateComponentTree() {
