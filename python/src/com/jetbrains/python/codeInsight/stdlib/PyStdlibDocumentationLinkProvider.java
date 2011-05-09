@@ -569,6 +569,9 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     if (qnameString.equals("ntpath") || qnameString.equals("posixpath")) {
       qnameString = "os.path";
     }
+    else if (qnameString.equals("nt")) {
+      qnameString = "os";
+    }
     else if (qnameString.equals("cPickle")) {
       qnameString = "pickle";
     }
