@@ -126,19 +126,18 @@ public class PyDictKeyNamesCompletionContributor extends PySeeingOriginalComplet
   private static void addDictConstructorKeys(PyCallExpression dictConstructor, CompletionResultSet result) {
     String name = dictConstructor.getCallee().getText();
     if ("dict".equals(name)) {
-      PyType type = dictConstructor.getType(TypeEvalContext.fast());
-      if (type != null) {
-        if (type.isBuiltin()) {
-          PyExpression[] argumentList = dictConstructor.getArgumentList().getArguments();
-          for (PyExpression argument : argumentList) {
-            if (argument instanceof PyKeywordArgument) {
-              LookupElementBuilder item;
-              item = LookupElementBuilder
-                .create("'" + ((PyKeywordArgument)argument).getKeyword() + "'")
-                .setTypeText("dict key")
-                .setIcon(Icons.PARAMETER_ICON);
-              result.addElement(item);
-            }
+      final TypeEvalContext context = TypeEvalContext.fast();
+      PyType type = dictConstructor.getType(context);
+      if (type != null && type.isBuiltin(context)) {
+        PyExpression[] argumentList = dictConstructor.getArgumentList().getArguments();
+        for (PyExpression argument : argumentList) {
+          if (argument instanceof PyKeywordArgument) {
+            LookupElementBuilder item;
+            item = LookupElementBuilder
+              .create("'" + ((PyKeywordArgument)argument).getKeyword() + "'")
+              .setTypeText("dict key")
+              .setIcon(Icons.PARAMETER_ICON);
+            result.addElement(item);
           }
         }
       }

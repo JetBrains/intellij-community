@@ -61,11 +61,12 @@ public class PyUnionType implements PyType {
 
   /**
    * @return true if all types in the union are built-in.
+   * @param context
    */
   @Override
-  public boolean isBuiltin() {
+  public boolean isBuiltin(TypeEvalContext context) {
     for (PyType one : myMembers) {
-      if (one == null || !one.isBuiltin()) return false;
+      if (one == null || !one.isBuiltin(context)) return false;
     }
     return true;
   }
