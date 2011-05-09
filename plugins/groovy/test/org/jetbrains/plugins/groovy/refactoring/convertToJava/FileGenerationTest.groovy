@@ -58,4 +58,6 @@ class FileGenerationTest extends LightGroovyTestCase {
 
   void testConcurency() {doTest()}
   void testHash() {doTest()}
+  void testAnonymous() {doTest()}
+  void testAnonymous2() {doTest()}
 }
