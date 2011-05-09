@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.BranchFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.InstanceOfFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.*;
-import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeAsArgumentFilter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
@@ -164,7 +163,6 @@ public class GroovyCompletionData extends CompletionData {
    * Registers completions on top level of Groovy script file
    */
   private void registerAllCompletions() {
-    registerBuiltInTypesAsArgumentCompletion();
     registerInstanceofCompletion();
     registerThrowsCompletion();
     registerBranchCompletion();
@@ -198,11 +196,6 @@ public class GroovyCompletionData extends CompletionData {
     if (afterIfOrElse(context)) {
       addKeywords(result, "else");
     }
-  }
-
-  private void registerBuiltInTypesAsArgumentCompletion() {
-    AndFilter filter = new AndFilter(new BuiltInTypeAsArgumentFilter(), new NotFilter(new ThrowsFilter()));
-    registerStandardCompletion(filter, BUILT_IN_TYPES);
   }
 
   private void registerThrowsCompletion() {
@@ -537,6 +530,18 @@ public class GroovyCompletionData extends CompletionData {
     if (parent == null) return false;
 
     PsiElement previous = PsiImplUtil.realPrevious(parent.getPrevSibling());
+    if (parent instanceof GrReferenceElement && parent.getParent() instanceof GrArgumentList) {
+      PsiElement prevSibling = context.getPrevSibling();
+      if (prevSibling != null && prevSibling.getNode() != null) {
+        if (!TokenSets.DOTS.contains(prevSibling.getNode().getElementType())) {
+          return true;
+        }
+      } else if (!(previous != null && GroovyTokenTypes.mAT.equals(previous.getNode().getElementType()))) {
+        return true;
+      }
+
+    }
+
     if (previous != null && GroovyTokenTypes.mAT.equals(previous.getNode().getElementType())) {
       return false;
     }
