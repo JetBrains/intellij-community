@@ -38,7 +38,7 @@ import java.util.Arrays;
  * @author Maxim.Medvedev
  */
 class ArgumentListGenerator {
-  private Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ArgumentListGenerator");
+  private static Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ArgumentListGenerator");
 
   private final StringBuilder myBuilder;
   private final ExpressionGenerator myExpressionGenerator;

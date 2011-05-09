@@ -283,8 +283,10 @@ public class ExpressionGenerator extends Generator {
   }
 
   private void writeTypeBody(StringBuilder builder, GrAnonymousClassDefinition anonymous) {
-    //todo write type body for anonymous class
-    throw new UnsupportedOperationException();
+    builder.append("{\n");
+    new ClassGenerator(context.project, new GeneratorClassNameProvider(), new ClassItemGeneratorImpl(context.project))
+      .writeMembers(builder, anonymous, true);
+    builder.append('}');
   }
 
   @Override
@@ -684,7 +686,10 @@ public class ExpressionGenerator extends Generator {
     final PsiElement resolved = expr.resolve();
     LOG.assertTrue(resolved instanceof PsiClass);
 
-    builder.append(((PsiClass)resolved).getQualifiedName()).append(".").append(expr.getReferenceName());
+    if (!(resolved instanceof PsiAnonymousClass)) {
+      builder.append(((PsiClass)resolved).getQualifiedName()).append(".");
+    }
+    builder.append(expr.getReferenceName());
   }
 
   @Override
