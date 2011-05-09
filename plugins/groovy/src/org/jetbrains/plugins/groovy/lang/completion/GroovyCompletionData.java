@@ -25,10 +25,7 @@ import com.intellij.codeInsight.completion.CompletionVariant;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.position.ParentElementFilter;
@@ -58,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -101,22 +99,31 @@ public class GroovyCompletionData extends CompletionData {
       }
 
       if (isInfixOperatorPosition(position)) {
-        addKeywords(result, "in", "instanceof");
+        addKeywords(result, "in", PsiKeyword.INSTANCEOF);
       } else if (suggestThrows(position)) {
-        addKeywords(result, "throws");
+        addKeywords(result, PsiKeyword.THROWS);
       } else if (suggestPrimitiveTypes(position)) {
         addKeywords(result, BUILT_IN_TYPES);
       }
 
       if (psiElement(GrReferenceExpression.class).inside(or(psiElement(GrWhileStatement.class), psiElement(GrForStatement.class))).accepts(parent)) {
-        addKeywords(result, "break", "continue");
+        addKeywords(result, PsiKeyword.BREAK, PsiKeyword.CONTINUE);
       }
       else if (psiElement(GrReferenceExpression.class).inside(GrCaseSection.class).accepts(parent)) {
-        addKeywords(result, "break");
+        addKeywords(result, PsiKeyword.BREAK);
       }
 
-      if (psiElement().afterLeaf("import").withSuperParent(2, GrImportStatement.class).accepts(position)) {
-        addKeywords(result, "static");
+      if (psiElement().withSuperParent(2, GrImportStatement.class).accepts(position)) {
+        if (psiElement().afterLeaf(PsiKeyword.IMPORT).accepts(position)) {
+          addKeywords(result, PsiKeyword.STATIC);
+        }
+      } else {
+        if (suggestModifiers(position)) {
+          addKeywords(result, MODIFIERS);
+        }
+        if (psiElement().afterLeaf(MODIFIERS).accepts(position)) {
+          addKeywords(result, PsiKeyword.SYNCHRONIZED);
+        }
       }
     }
   }
@@ -180,7 +187,6 @@ public class GroovyCompletionData extends CompletionData {
    * Registers completions on top level of Groovy script file
    */
   private void registerAllCompletions() {
-    registerModifierCompletion();
     registerSynchronizedCompletion();
     registerFinalCompletion();
 
@@ -219,13 +225,6 @@ public class GroovyCompletionData extends CompletionData {
   private void registerSynchronizedCompletion() {
     registerStandardCompletion(new SynchronizedFilter(), "synchronized");
   }
-
-  private void registerModifierCompletion() {
-    registerStandardCompletion(new ModifiersFilter(), MODIFIERS);
-    registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()), MODIFIERS);
-    registerStandardCompletion(new LeftNeighbour(new PreviousModifierFilter()), "synchronized");
-  }
-
 
   @Override
   public void completeReference(final PsiReference reference,
@@ -600,5 +599,52 @@ public class GroovyCompletionData extends CompletionData {
     }
 
     return false;
+  }
+
+  private static boolean suggestModifiers(PsiElement context) {
+    if (GroovyCompletionUtil.asSimpleVariable(context) || GroovyCompletionUtil.asTypedMethod(context)) {
+      return true;
+    }
+    if (GroovyCompletionUtil.isFirstElementAfterPossibleModifiersInVariableDeclaration(context, false)) {
+      return true;
+    }
+
+    if (psiElement().afterLeaf(MODIFIERS).accepts(context) || psiElement().afterLeaf("synchronized").accepts(context)) {
+      return true;
+    }
+
+    final PsiElement contextParent = context.getParent();
+    if (contextParent instanceof GrReferenceElement && contextParent.getParent() instanceof GrTypeElement) {
+      PsiElement parent = contextParent.getParent().getParent();
+      if (parent instanceof GrVariableDeclaration &&
+          (parent.getParent() instanceof GrTypeDefinitionBody || parent.getParent() instanceof GroovyFile) || parent instanceof GrMethod) {
+        return true;
+      }
+    }
+    if (contextParent instanceof GrField) {
+      final GrVariable variable = (GrVariable)contextParent;
+      if (variable.getTypeElementGroovy() == null) {
+        return true;
+      }
+    }
+    if (contextParent instanceof GrExpression &&
+        contextParent.getParent() instanceof GroovyFile &&
+        GroovyCompletionUtil.isNewStatement(context, false)) {
+      return true;
+    }
+    if (context.getTextRange().getStartOffset() == 0 && !(context instanceof OuterLanguageElement)) {
+      return true;
+    }
+    final PsiElement leaf = GroovyCompletionUtil.getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
+    if (leaf != null && GroovyCompletionUtil.isNewStatement(context, false)) {
+      PsiElement parent = leaf.getParent();
+      if (parent instanceof GroovyFile) {
+        return true;
+      }
+    }
+    return contextParent instanceof GrExpression &&
+           contextParent.getParent() instanceof GrApplicationStatement &&
+           contextParent.getParent().getParent() instanceof GroovyFile &&
+           GroovyCompletionUtil.isNewStatement(context, false);
   }
 }
