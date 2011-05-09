@@ -19,7 +19,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.LanguageSubstitutors;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +41,7 @@ public class SubstitutedFileType extends LanguageFileType{
 
   public static FileType substituteFileType(VirtualFile file, @NotNull FileType fileType, Project project) {
     if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
+      return fileType;
     }
     if (fileType instanceof LanguageFileType) {
       final Language language = ((LanguageFileType)fileType).getLanguage();
