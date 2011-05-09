@@ -22,7 +22,7 @@ public class PyDecoratorInspection extends PyInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return PyBundle.message("INSP.NAME.too.broad.exception.clauses");
+    return PyBundle.message("INSP.NAME.decorator.outside.class");
   }
 
   @NotNull
