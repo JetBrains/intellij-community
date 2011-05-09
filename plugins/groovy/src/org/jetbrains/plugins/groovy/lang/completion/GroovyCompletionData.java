@@ -38,7 +38,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.filters.control.BranchFilter;
-import org.jetbrains.plugins.groovy.lang.completion.filters.exprs.InstanceOfFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.modifiers.*;
 import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
@@ -98,7 +97,11 @@ public class GroovyCompletionData extends CompletionData {
         addKeywords(result, "true", "false", "null", "super", "new", "this", "as");
       }
 
-      if (suggestPrimitiveTypes(position) && !suggestThrows(position)) {
+      if (isInfixOperatorPosition(position)) {
+        addKeywords(result, "in", "instanceof");
+      } else if (suggestThrows(position)) {
+        addKeywords(result, "throws");
+      } else if (suggestPrimitiveTypes(position)) {
         addKeywords(result, BUILT_IN_TYPES);
       }
     }
@@ -163,8 +166,6 @@ public class GroovyCompletionData extends CompletionData {
    * Registers completions on top level of Groovy script file
    */
   private void registerAllCompletions() {
-    registerInstanceofCompletion();
-    registerThrowsCompletion();
     registerBranchCompletion();
     registerModifierCompletion();
     registerSynchronizedCompletion();
@@ -198,20 +199,12 @@ public class GroovyCompletionData extends CompletionData {
     }
   }
 
-  private void registerThrowsCompletion() {
-    registerStandardCompletion(new ThrowsFilter(), "throws");
-  }
-
   private void registerFinalCompletion() {
     registerStandardCompletion(new AndFilter(new FinalFilter(), new NotFilter(new ThrowsFilter())), "final", "def");
   }
 
   private void registerSynchronizedCompletion() {
     registerStandardCompletion(new SynchronizedFilter(), "synchronized");
-  }
-
-  private void registerInstanceofCompletion() {
-    registerStandardCompletion(new InstanceOfFilter(), "instanceof", "in");
   }
 
   private void registerBranchCompletion() {
@@ -522,10 +515,6 @@ public class GroovyCompletionData extends CompletionData {
   }
 
   private static boolean suggestPrimitiveTypes(PsiElement context) {
-    if (InstanceOfFilter.isInfixOperatorPosition(context)) {
-      return false;
-    }
-
     final PsiElement parent = context.getParent();
     if (parent == null) return false;
 
@@ -573,5 +562,35 @@ public class GroovyCompletionData extends CompletionData {
     return parent instanceof GrExpression &&
            parent.getParent() instanceof GroovyFile &&
            GroovyCompletionUtil.isNewStatement(context, false);
+  }
+
+  private static boolean isInfixOperatorPosition(PsiElement context) {
+    if (context.getParent() != null &&
+        context.getParent() instanceof GrReferenceExpression &&
+        context.getParent().getParent() != null &&
+        context.getParent().getParent() instanceof GrCommandArgumentList) {
+      return true;
+    }
+    if (GroovyCompletionUtil.nearestLeftSibling(context) instanceof PsiErrorElement &&
+        GroovyCompletionUtil.endsWithExpression(GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling())) {
+      return true;
+    }
+    if (context.getParent() instanceof PsiErrorElement) {
+      PsiElement leftSibling = GroovyCompletionUtil.nearestLeftSibling(context.getParent());
+      if (leftSibling != null && leftSibling.getLastChild() instanceof GrExpression) {
+        return true;
+      }
+    }
+    if (context.getParent() instanceof GrReferenceExpression &&
+        GroovyCompletionUtil.nearestLeftSibling(context.getParent()) instanceof PsiErrorElement &&
+        GroovyCompletionUtil.endsWithExpression(GroovyCompletionUtil.nearestLeftSibling(context.getParent()).getPrevSibling())) {
+      return true;
+    }
+    if (context.getParent() instanceof PsiErrorElement &&
+        GroovyCompletionUtil.endsWithExpression(GroovyCompletionUtil.nearestLeftSibling(context.getParent()))) {
+      return true;
+    }
+
+    return false;
   }
 }
