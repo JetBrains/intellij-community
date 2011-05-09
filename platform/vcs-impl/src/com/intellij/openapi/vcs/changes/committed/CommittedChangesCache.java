@@ -789,7 +789,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
             debug("Incoming changes refresh complete, clearing cached incoming changes");
             notifyReloadIncomingChanges();
           }
-        }, ModalityState.NON_MODAL);
+        }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
     };
     myTaskQueue.run(task);    
