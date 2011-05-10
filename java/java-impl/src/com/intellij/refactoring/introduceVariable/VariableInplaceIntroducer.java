@@ -208,25 +208,6 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
           });
         }
       } else {
-        final PsiVariable variable = getVariable();
-        if (variable != null) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              final PsiFile containingFile = variable.getContainingFile();
-              for (RangeMarker occurrenceMarker : myOccurrenceMarkers) {
-                final PsiElement refVariableElement = containingFile.findElementAt(occurrenceMarker.getStartOffset());
-                final PsiExpression expression = PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
-                if (expression instanceof PsiReferenceExpression &&
-                    (((PsiReferenceExpression)expression).resolve() == variable ||
-                     Comparing.strEqual(variable.getName(), ((PsiReferenceExpression)expression).getReferenceName()))) {
-                  InlineUtil.inlineVariable(variable, variable.getInitializer(), (PsiJavaCodeReferenceElement)expression);
-                }
-              }
-              variable.delete();
-            }
-          });
-        }
         if (myExprMarker != null) {
           myEditor.getCaretModel().moveToOffset(myExprMarker.getStartOffset());
           myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);

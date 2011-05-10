@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -113,7 +114,11 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
   protected void actionPerformed(VcsContext vcsContext) {
     final VirtualFile file = vcsContext.getSelectedFiles()[0];
     final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-    fileDocumentManager.saveDocument(fileDocumentManager.getDocument(file));
+    final Document document = fileDocumentManager.getDocument(file);
+    if (document != null) {
+      fileDocumentManager.saveDocument(document);
+    }
+
     final Project project = vcsContext.getProject();
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
     final VcsHistoryProvider vcsHistoryProvider = vcs.getVcsHistoryProvider();

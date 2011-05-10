@@ -146,6 +146,17 @@ class KeystoreStep extends ExportSignedPackageWizardStep {
   }
 
   @Override
+  protected JComponent getPreferredFocusedComponent() {
+    if (myExistingKeystoreButton.isSelected()) {
+      final String text = myKeystoreLocationField.getText();
+      if (text != null && text.length() > 0) {
+        return myKeystorePasswordField;
+      }
+    }
+    return null;
+  }
+
+  @Override
   public JComponent getComponent() {
     return myContentPanel;
   }

@@ -25,6 +25,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
+import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -67,8 +68,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Properties;
 
 import static com.android.sdklib.SdkConstants.FN_ANDROID_MANIFEST_XML;
+import static com.android.sdklib.SdkConstants.FN_DEFAULT_PROPERTIES;
 import static org.jetbrains.android.util.AndroidUtils.createChildDirectoryIfNotExist;
 
 /**
@@ -149,7 +152,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       }
     }
     Project project = facet.getModule().getProject();
-    createManifestFile(project, contentRoot);
+    createManifestFileAndAntFiles(project, contentRoot);
     createResourcesAndLibs(project, contentRoot);
     PsiDirectory sourceDir = sourceRoot != null ? PsiManager.getInstance(project).findDirectory(sourceRoot) : null;
     createActivityAndSetupManifest(facet, sourceDir);
@@ -326,7 +329,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     from.delete(project);
   }
 
-  private static void createManifestFile(Project project, VirtualFile contentRoot) {
+  private void createManifestFileAndAntFiles(Project project, VirtualFile contentRoot) {
     VirtualFile existingManifestFile = contentRoot.findChild(FN_ANDROID_MANIFEST_XML);
     if (existingManifestFile != null) {
       return;
@@ -334,6 +337,17 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     try {
       AndroidFileTemplateProvider
         .createFromTemplate(project, contentRoot, AndroidFileTemplateProvider.ANDROID_MANIFEST_TEMPLATE, FN_ANDROID_MANIFEST_XML);
+
+      AndroidPlatform platform = AndroidPlatform.parse(mySdk);
+
+      if (platform == null) {
+        Messages.showErrorDialog(project, "Cannot parse Android SDK: 'default.properties' won't be generated", CommonBundle.getErrorTitle());
+        return;
+      }
+
+      Properties properties = FileTemplateManager.getInstance().getDefaultProperties();
+      properties.setProperty("TARGET", "android-" + platform.getTarget().getVersion().getApiString());
+      AndroidFileTemplateProvider.createFromTemplate(project, contentRoot, "default.properties", FN_DEFAULT_PROPERTIES, properties);
     }
     catch (Exception e) {
       LOG.error(e);

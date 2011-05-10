@@ -60,6 +60,11 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   }
 
   @Override
+  public String getPresentablePath() {
+    return getPath();
+  }
+
+  @Override
   public long getSize() {
     return myFile.getLength();
   }

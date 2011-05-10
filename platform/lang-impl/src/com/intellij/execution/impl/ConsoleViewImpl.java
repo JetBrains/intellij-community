@@ -27,7 +27,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.OccurenceNavigator;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -71,7 +70,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -93,8 +91,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.io.IOException;
@@ -244,8 +240,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   protected final CompositeFilter myPredefinedMessageFilter;
   protected final CompositeFilter myCustomFilter;
 
-  private final ArrayList<String> myHistory = new ArrayList<String>();
-
   private final ArrayList<ConsoleInputListener> myConsoleInputListeners = new ArrayList<ConsoleInputListener>();
 
   private final Alarm myFoldingAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
@@ -253,33 +247,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   public void addConsoleUserInputListener(ConsoleInputListener consoleInputListener) {
     myConsoleInputListeners.add(consoleInputListener);
-  }
-
-  /**
-   * By default history works for one session. If
-   * you want to import previous session, set it up here.
-   *
-   * @param history where you can save history
-   */
-  public void importHistory(Collection<String> history) {
-    myHistory.clear();
-    myHistory.addAll(history);
-    final int maxSize = UISettings.getInstance().CONSOLE_COMMAND_HISTORY_LIMIT;
-    while (myHistory.size() > maxSize) {
-      myHistory.remove(0);
-    }
-  }
-
-  public List<String> getHistory() {
-    return Collections.unmodifiableList(myHistory);
-  }
-
-  public void setHistorySize(int historySize) {
-    // todo remove all history code
-  }
-
-  public int getHistorySize() {
-    return UISettings.getInstance().CONSOLE_COMMAND_HISTORY_LIMIT;
   }
 
   private FileType myFileType;
@@ -786,59 +753,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
     scheme.setColor(EditorColors.RIGHT_MARGIN_COLOR, null);
 
-    final ConsoleViewImpl consoleView = this;
-    editor.getContentComponent().addKeyListener(new KeyListener() {
-      private int historyPosition = myHistory.size();
-
-      public void keyTyped(KeyEvent e) {
-
-      }
-
-      public void keyPressed(KeyEvent e) {
-      }
-
-      public void keyReleased(KeyEvent e) {
-        if (e.isAltDown() && !e.isControlDown() && !e.isMetaDown() && !e.isShiftDown()) {
-          if (e.getKeyCode() == KeyEvent.VK_UP) {
-            historyPosition--;
-            if (historyPosition < 0) historyPosition = 0;
-            replaceString();
-            e.consume();
-          }
-          else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-            historyPosition++;
-            if (historyPosition > myHistory.size()) historyPosition = myHistory.size();
-            replaceString();
-            e.consume();
-          }
-        }
-        else {
-          historyPosition = myHistory.size();
-        }
-      }
-
-      private void replaceString() {
-        final String str;
-
-        if (myHistory.size() == historyPosition) {
-          str = "";
-        }
-        else {
-          str = myHistory.get(historyPosition);
-        }
-        synchronized (LOCK) {
-          if (myTokens.isEmpty()) return;
-          final TokenInfo info = myTokens.get(myTokens.size() - 1);
-          if (info.contentType != ConsoleViewContentType.USER_INPUT) {
-            consoleView.insertUserText(str, 0);
-          }
-          else {
-            consoleView.replaceUserText(str, info.startOffset, info.endOffset);
-          }
-        }
-      }
-    });
-
     if (!isViewer) {
       setEditorUpActions(editor);
     }
@@ -1341,14 +1255,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private static class EnterHandler extends ConsoleAction {
     public void execute(final ConsoleViewImpl consoleView, final DataContext context) {
-      final int maxSize = UISettings.getInstance().CONSOLE_COMMAND_HISTORY_LIMIT;
       synchronized (consoleView.LOCK) {
         String str = consoleView.myBuffer.getUserInput();
-        if (StringUtil.isNotEmpty(str)) {
-          consoleView.myHistory.remove(str);
-          consoleView.myHistory.add(str);
-          if (consoleView.myHistory.size() > maxSize) consoleView.myHistory.remove(0);
-        }
         for (ConsoleInputListener listener : consoleView.myConsoleInputListeners) {
           listener.textEntered(str);
         }

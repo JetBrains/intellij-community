@@ -27,11 +27,8 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.refactoring.actions.MoveAction;
 import com.intellij.uiDesigner.binding.FormClassIndex;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -64,28 +61,36 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
     Collection<AbstractTreeNode> result = new LinkedHashSet<AbstractTreeNode>(children);
     ProjectViewNode[] copy = children.toArray(new ProjectViewNode[children.size()]);
     for (ProjectViewNode element : copy) {
+      PsiClass psiClass = null;
       if (element.getValue() instanceof PsiClass) {
-        PsiClass aClass = (PsiClass)element.getValue();
-        final String qName = aClass.getQualifiedName();
-        if (qName == null) continue;
-        List<PsiFile> forms;
-        try {
-          forms = FormClassIndex.findFormsBoundToClass(myProject, qName);
+        psiClass = (PsiClass)element.getValue();
+      }
+      else if (element.getValue() instanceof PsiClassOwner) {
+        final PsiClass[] psiClasses = ((PsiClassOwner) element.getValue()).getClasses();
+        if (psiClasses.length == 1) {
+          psiClass = psiClasses[0];
         }
-        catch (ProcessCanceledException e) {
-          continue;
-        }
-        Collection<BasePsiNode<? extends PsiElement>> formNodes = findFormsIn(children, forms);
-        if (!formNodes.isEmpty()) {
-          Collection<PsiFile> formFiles = convertToFiles(formNodes);
-          Collection<BasePsiNode<? extends PsiElement>> subNodes = new ArrayList<BasePsiNode<? extends PsiElement>>();
-          //noinspection unchecked
-          subNodes.add((BasePsiNode<? extends PsiElement>) element);
-          subNodes.addAll(formNodes);
-          result.add(new FormNode(myProject, new Form(aClass, formFiles), settings, subNodes));
-          result.remove(element);
-          result.removeAll(formNodes);
-        }
+      }
+      if (psiClass == null) continue;
+      String qName = psiClass.getQualifiedName();
+      if (qName == null) continue;
+      List<PsiFile> forms;
+      try {
+        forms = FormClassIndex.findFormsBoundToClass(myProject, qName);
+      }
+      catch (ProcessCanceledException e) {
+        continue;
+      }
+      Collection<BasePsiNode<? extends PsiElement>> formNodes = findFormsIn(children, forms);
+      if (!formNodes.isEmpty()) {
+        Collection<PsiFile> formFiles = convertToFiles(formNodes);
+        Collection<BasePsiNode<? extends PsiElement>> subNodes = new ArrayList<BasePsiNode<? extends PsiElement>>();
+        //noinspection unchecked
+        subNodes.add((BasePsiNode<? extends PsiElement>) element);
+        subNodes.addAll(formNodes);
+        result.add(new FormNode(myProject, new Form(psiClass, formFiles), settings, subNodes));
+        result.remove(element);
+        result.removeAll(formNodes);
       }
     }
     return result;

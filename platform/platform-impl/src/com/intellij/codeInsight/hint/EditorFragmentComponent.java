@@ -28,6 +28,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -156,10 +157,14 @@ public class EditorFragmentComponent extends JPanel {
       y  = Math.max(0,y);
     }
 
+    final JComponent c = editor.getComponent();
+    x = SwingUtilities.convertPoint(c, new Point(-3,0), UIUtil.getRootPane(c)).x; //IDEA-68016
+
     Point p = new Point(x, y);
     LightweightHint hint = new MyComponentHint(fragmentComponent);
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, (hideByAnyKey ? HintManager.HIDE_BY_ANY_KEY : 0) |
-                                                                      HintManager.HIDE_BY_TEXT_CHANGE, 0, false, new HintHint(editor, p));
+                                                                      HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_MOUSEOVER,
+                                                     0, false, new HintHint(editor, p));
     return hint;
   }
 

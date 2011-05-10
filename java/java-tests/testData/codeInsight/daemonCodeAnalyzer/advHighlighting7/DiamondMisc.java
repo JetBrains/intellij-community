@@ -131,3 +131,7 @@ class TestLocal<X> {
         Local l = new Local<<error descr="Diamond operator is not applicable for non-parameterized types"></error>>();
     }
 }
+
+class QualifiedTest {
+  java.util.Map<String, String> s = new java.util.HashMap<>();
+}

@@ -62,6 +62,7 @@ public class CheckModulePanel extends JPanel {
     if (debuggable != null && BooleanValueConverter.getInstance(true).isTrue(debuggable)) {
       addWarning(AndroidBundle.message("android.export.signed.package.debuggable.warning"));
     }*/
+    revalidate();
   }
 
   public boolean hasError() {

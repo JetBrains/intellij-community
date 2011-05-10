@@ -20,8 +20,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 
 /**
  * @author Dmitry Avdeev
- * @deprecated
- * @see StandardResourceEP
  */
 public interface StandardResourceProvider {
 

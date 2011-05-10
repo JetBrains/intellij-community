@@ -80,7 +80,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
             }
 
             items.add(new MyItem(module, target, manifestFile, resourcesDirPaths, assetsDirPath, outputPath,
-                                 configuration.GENERATE_UNSIGNED_APK));
+                                 configuration.GENERATE_UNSIGNED_APK, AndroidCompileUtil.isReleaseBuild(context)));
             //items.add(new MyItem(module, target, manifestFile, resourcesDirPaths, assetsDirPath, outputPath + RELEASE_SUFFIX, true));
           }
         }
@@ -241,6 +241,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
 
     private final boolean myFileExists;
     private final boolean myGenerateUnsignedApk;
+    private boolean myReleaseBuild;
 
     private MyItem(Module module,
                    IAndroidTarget androidTarget,
@@ -248,7 +249,8 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
                    String[] resourceDirPaths,
                    String assetsDirPath,
                    String outputPath,
-                   boolean generateUnsignedApk) {
+                   boolean generateUnsignedApk,
+                   boolean releaseBuild) {
       myModule = module;
       myAndroidTarget = androidTarget;
       myManifestFile = manifestFile;
@@ -257,6 +259,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
       myOutputPath = outputPath;
       myFileExists = new File(outputPath).exists();
       myGenerateUnsignedApk = generateUnsignedApk;
+      myReleaseBuild = releaseBuild;
     }
 
     @NotNull
@@ -268,23 +271,26 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
 
     @Override
     public ValidityState getValidityState() {
-      return new MyValidityState(myModule, myFileExists, myGenerateUnsignedApk);
+      return new MyValidityState(myModule, myFileExists, myGenerateUnsignedApk, myReleaseBuild);
     }
   }
 
   private static class MyValidityState extends ResourcesValidityState {
     private final boolean myOutputFileExists;
     private final boolean myGenerateUnsignedApk;
+    private final boolean myReleaseBuild;
 
-    public MyValidityState(Module module, boolean outputFileExists, boolean generateUnsignedApk) {
+    public MyValidityState(Module module, boolean outputFileExists, boolean generateUnsignedApk, boolean releaseBuild) {
       super(module);
       myOutputFileExists = outputFileExists;
       myGenerateUnsignedApk = generateUnsignedApk;
+      myReleaseBuild = releaseBuild;
     }
 
     public MyValidityState(DataInput is) throws IOException {
       super(is);
       myGenerateUnsignedApk = is.readBoolean();
+      myReleaseBuild = is.readBoolean();
       myOutputFileExists = true;
     }
 
@@ -300,6 +306,9 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
       if (myGenerateUnsignedApk != otherState1.myGenerateUnsignedApk) {
         return false;
       }
+      if (myReleaseBuild != otherState1.myReleaseBuild) {
+        return false;
+      }
       return super.equalsTo(otherState);
     }
 
@@ -307,6 +316,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     public void save(DataOutput os) throws IOException {
       super.save(os);
       os.writeBoolean(myGenerateUnsignedApk);
+      os.writeBoolean(myReleaseBuild);
     }
   }
 }

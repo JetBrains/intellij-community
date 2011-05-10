@@ -74,12 +74,17 @@ public abstract class ProcessHandler extends UserDataHolderBase {
 
   public abstract boolean detachIsDefault();
 
-  public void waitFor() {
+  /**
+   * Wait for process execution.
+   * @return true if target process has actually ended; false if we stopped watching the process execution and don't know if it has completed.
+   */
+  public boolean waitFor() {
     try {
       myWaitSemaphore.waitFor();
+      return true;
     }
     catch (ProcessCanceledException e) {
-      // Ignore
+      return false;
     }
   }
 

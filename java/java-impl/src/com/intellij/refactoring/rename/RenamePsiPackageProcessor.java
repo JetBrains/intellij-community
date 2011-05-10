@@ -97,7 +97,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
       public void run() {
         final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(newQualifiedName);
         if (aPackage == null) {
-          LOG.error("Package cannot be found: "+newQualifiedName+"; listener="+listener);
+          return; //rename failed e.g. when the dir is used by another app
         }
         listener.elementRenamed(aPackage);
       }
