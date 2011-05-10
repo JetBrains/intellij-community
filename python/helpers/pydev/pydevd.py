@@ -822,13 +822,13 @@ class PyDB:
                     self.force_post_mortem_stop -= 1
                     frame, frames_byid = additionalInfo.pydev_force_stop_at_exception
                     thread_id = GetThreadId(t)
-                    used_id = pydev_vars.additional_frames_container.addAdditionalFrameById(thread_id, frames_byid)
+                    used_id = pydevd_vars.additional_frames_container.addAdditionalFrameById(thread_id, frames_byid)
                     try:
                         self.setSuspend(t, CMD_ADD_EXCEPTION_BREAK)
                         self.doWaitSuspend(t, frame, 'exception', None)
                     finally:
                         additionalInfo.pydev_force_stop_at_exception = None
-                        pydev_vars.additional_frames_container.removeAdditionalFrameById(thread_id)
+                        pydevd_vars.additional_frames_container.removeAdditionalFrameById(thread_id)
 
             # if thread is not alive, cancel trace_dispatch processing
             if not t.isAlive():
