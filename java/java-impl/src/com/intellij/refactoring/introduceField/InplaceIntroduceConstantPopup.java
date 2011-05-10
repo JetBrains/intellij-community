@@ -437,7 +437,7 @@ public class InplaceIntroduceConstantPopup {
     @Override
     protected void moveOffsetAfter(boolean success) {
       if (success) {
-        if (myLocalVariable == null && myExpr == null) {
+        if (myLocalVariable == null && myExpr == null || myConstantName == null) {
           super.moveOffsetAfter(false);
           return;
         }
