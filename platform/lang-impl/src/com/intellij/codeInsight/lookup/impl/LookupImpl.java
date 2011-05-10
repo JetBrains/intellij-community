@@ -335,7 +335,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   void appendPrefix(char c) {
     checkReused();
-    LOG.assertTrue(!myDisposed);
+    LOG.assertTrue(!myDisposed, disposeTrace);
     myAdditionalPrefix += c;
     myInitialPrefix = null;
     myFrozenItems.clear();
@@ -377,7 +377,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
-    assert !myDisposed;
+    assert !myDisposed : disposeTrace;
 
     final Pair<List<LookupElement>,Iterable<List<LookupElement>>> snapshot = myModel.getModelSnapshot();
 
@@ -720,8 +720,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     int lookupStart = caretOffset - prefix.length();
 
     int len = myEditor.getDocument().getTextLength();
-    LOG.assertTrue(lookupStart >= 0 && lookupStart <= len, "ls: " + lookupStart + "doc: " + len);
-    LOG.assertTrue(caretOffset >= 0 && caretOffset <= len, "co: " + caretOffset + "doc: " + len);
+    LOG.assertTrue(lookupStart >= 0 && lookupStart <= len, "ls: " + lookupStart + "caret: " + caretOffset + " prefix:" + prefix + " doc: " + len);
+    LOG.assertTrue(caretOffset >= 0 && caretOffset <= len, "co: " + caretOffset + " doc: " + len);
 
     myEditor.getDocument().replaceString(lookupStart, caretOffset, lookupString);
 
