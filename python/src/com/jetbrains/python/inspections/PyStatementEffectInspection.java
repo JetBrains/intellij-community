@@ -92,7 +92,7 @@ public class PyStatementEffectInspection extends PyInspection {
           // maybe the op is overridden and may produce side effects, like cout << "hello"
           PyType type = myTypeEvalContext.getType(binary.getLeftExpression());
           if (type != null &&
-              !type.isBuiltin() &&
+              !type.isBuiltin(myTypeEvalContext) &&
               type.resolveMember(method, null, AccessDirection.READ, PyResolveContext.defaultContext()) != null) {
             return true;
           }
@@ -101,7 +101,7 @@ public class PyStatementEffectInspection extends PyInspection {
             type = myTypeEvalContext.getType(rhs);
             if (type != null) {
               String rmethod = "__r" + method.substring(2); // __add__ -> __radd__
-              if (!type.isBuiltin() && type.resolveMember(rmethod, null, AccessDirection.READ, PyResolveContext.defaultContext()) != null) {
+              if (!type.isBuiltin(myTypeEvalContext) && type.resolveMember(rmethod, null, AccessDirection.READ, PyResolveContext.defaultContext()) != null) {
                 return true;
               }
             }

@@ -36,7 +36,7 @@ public class PyNoneType implements PyType { // TODO must extend ClassType. It's 
   }
 
   @Override
-  public boolean isBuiltin() {
+  public boolean isBuiltin(TypeEvalContext context) {
     return true;
   }
 }

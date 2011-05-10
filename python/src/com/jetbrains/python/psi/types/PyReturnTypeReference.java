@@ -2,8 +2,6 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.Callable;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -26,8 +24,8 @@ public class PyReturnTypeReference extends PyTypeReferenceImpl {
   }
 
   @Override
-  public boolean isBuiltin() {
-    PyType type = myCallable.getReturnType(TypeEvalContext.slow(), null);
-    return type != null && type.isBuiltin();
+  public boolean isBuiltin(TypeEvalContext context) {
+    PyType type = myCallable.getReturnType(context, null);
+    return type != null && type.isBuiltin(context);
   }
 }

@@ -228,9 +228,12 @@ target('default': "Build artifacts") {
   def root = isEap() ? "PyCharm-${buildNumber}.app" : "PyCharm ${p("component.version.major")}.${p("component.version.minor")}.app"
 
   ant.zip(zipfile: "${paths.artifacts}/pycharm${buildName}.sit") {
-    tarfileset(dir: paths.distAll, prefix: root)
+    tarfileset(dir: paths.distAll, prefix: root) {
+      exclude(name: "bin/idea.properties")
+    }
     tarfileset(dir: paths.distMac, prefix: root) {
       exclude(name: "bin/*.sh")
+      exclude(name: "bin/idea.properties")
       exclude(name: "Contents/MacOS/idea")
     }
     tarfileset(dir: paths.distMac, filemode: "755", prefix: root) {
@@ -509,6 +512,7 @@ def layoutMac(Map args, String target) {
   args["bundle_name"] = "PyCharm"
   args["bundleIdentifier"] = "com.jetbrains.pycharm"
   args["platform_prefix"] = "Python"
+  args["idea.properties.path"] = "$home/python/build/idea.properties"
 
   layoutMacApp(target, "$home/community", args)
 

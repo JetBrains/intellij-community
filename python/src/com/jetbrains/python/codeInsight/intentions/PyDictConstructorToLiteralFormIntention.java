@@ -37,15 +37,14 @@ public class PyDictConstructorToLiteralFormIntention extends BaseIntentionAction
       PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyCallExpression.class);
     
     if (expression != null && expression.isCalleeText("dict")) {
-      PyType type = expression.getType(TypeEvalContext.fast());
-      if (type != null) {
-        if (type.isBuiltin()) {
-          PyExpression[] argumentList = expression.getArguments();
-          for (PyExpression argument : argumentList) {
-            if (!(argument instanceof PyKeywordArgument)) return false;
-          }
-          return true;
+      final TypeEvalContext context = TypeEvalContext.fast();
+      PyType type = expression.getType(context);
+      if (type != null && type.isBuiltin(context)) {
+        PyExpression[] argumentList = expression.getArguments();
+        for (PyExpression argument : argumentList) {
+          if (!(argument instanceof PyKeywordArgument)) return false;
         }
+        return true;
       }
     }
     return false;
