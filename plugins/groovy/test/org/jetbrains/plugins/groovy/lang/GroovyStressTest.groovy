@@ -90,7 +90,16 @@ class GroovyStressTest extends LightCodeInsightFixtureTestCase {
     text += "}"
 
     myFixture.configureByText("a.groovy", text)
-    IdeaTestUtil.assertTiming "slow", 5000, { myFixture.doHighlighting() } as Runnable
+    IdeaTestUtil.assertTiming "slow", 5000, { myFixture.doHighlighting() }
+  }
+
+  public void testDeeplyNestedClosures() {
+    String text = "println 'hi'"
+    for (i in 1..10) {
+      text = "foo$i { $text }"
+    }
+    myFixture.configureByText("a.groovy", text)
+    IdeaTestUtil.assertTiming "slow", 10000, { myFixture.doHighlighting() }
   }
 
 }

@@ -88,7 +88,7 @@ public abstract class SuspendContextImpl implements SuspendContext {
         myKeptReferences.clear();
       }
 
-      for(SuspendContextCommandImpl cmd = myPostponedCommands.poll(); cmd != null; cmd = myPostponedCommands.poll()) {
+      for(SuspendContextCommandImpl cmd = pollPostponedCommand(); cmd != null; cmd = pollPostponedCommand()) {
         cmd.notifyCancelled();
       }
 
@@ -199,8 +199,11 @@ public abstract class SuspendContextImpl implements SuspendContext {
     }
   }
 
-  public void postponeCommand(final SuspendContextCommandImpl command) {
+  public final void postponeCommand(final SuspendContextCommandImpl command) {
     if (!isResumed()) {
+      // Important! when postponing increment the holds counter, so that the action is not released too early.
+      // This will ensure that the counter becomes zero only when the command is actually executed or canceled
+      command.hold();
       myPostponedCommands.add(command);
     }
     else {
@@ -208,7 +211,7 @@ public abstract class SuspendContextImpl implements SuspendContext {
     }
   }
 
-  public SuspendContextCommandImpl pollPostponedCommand() {
+  public final SuspendContextCommandImpl pollPostponedCommand() {
     return myPostponedCommands.poll();
   }
 }
