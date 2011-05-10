@@ -18,6 +18,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.javaee.ExternalResourceManager;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -49,6 +50,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
+    if (!element.getLanguage().isKindOf(StdLanguages.JAVA)) return false;
     final Pair<PsiElement, Handler> pair = findHandler(element);
     if (pair == null) return false;
 
