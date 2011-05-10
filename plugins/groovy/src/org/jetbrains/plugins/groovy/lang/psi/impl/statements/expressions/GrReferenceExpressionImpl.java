@@ -431,7 +431,18 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Nullable
   public PsiElement resolve() {
-    return getManager().getResolveCache().resolveWithCaching(this, SIMPLE_RESOLVER, true, false);
+    final GroovyResolveResult[] results = resolveByShape();
+    return results.length == 1 ? results[0].getElement() : null;
+  }
+
+  @Override
+  public GroovyResolveResult[] resolveByShape() {
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, new CachedValueProvider<GroovyResolveResult[]>() {
+      @Override
+      public Result<GroovyResolveResult[]> compute() {
+        return Result.create(doPolyResolve(false, false), PsiModificationTracker.MODIFICATION_COUNT);
+      }
+    });
   }
 
   private static final ResolveCache.PolyVariantResolver<GrReferenceExpressionImpl> POLY_RESOLVER =
@@ -440,15 +451,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         return refExpr.doPolyResolve(incompleteCode, true);
       }
     };
-  private static final ResolveCache.Resolver SIMPLE_RESOLVER = new ResolveCache.Resolver() {
-    @Override
-    @Nullable
-    public PsiElement resolve(PsiReference psiReference, boolean incompleteCode) {
-      final GroovyResolveResult[] results = ((GrReferenceExpressionImpl)psiReference).doPolyResolve(incompleteCode, false);
-      return results.length == 1 ? results[0].getElement() : null;
-    }
-  };
-
   private static final OurTypesCalculator TYPES_CALCULATOR = new OurTypesCalculator();
 
   public PsiType getNominalType() {
