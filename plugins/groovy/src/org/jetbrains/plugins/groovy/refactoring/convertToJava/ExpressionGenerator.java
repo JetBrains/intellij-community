@@ -284,7 +284,7 @@ public class ExpressionGenerator extends Generator {
 
   private void writeTypeBody(StringBuilder builder, GrAnonymousClassDefinition anonymous) {
     builder.append("{\n");
-    new ClassGenerator(context.project, new GeneratorClassNameProvider(), new ClassItemGeneratorImpl(context.project))
+    new ClassGenerator(context.project, new GeneratorClassNameProvider(), new ClassItemGeneratorImpl(context.extend()))
       .writeMembers(builder, anonymous, true);
     builder.append('}');
   }
