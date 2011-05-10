@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class ClsElementImpl extends PsiElementBase implements PsiCompiledElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsElementImpl");
@@ -233,7 +234,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     return null;
   }
 
-  protected void setMirrorCheckingType(@NotNull TreeElement element, IElementType type) {
+  protected void setMirrorCheckingType(@NotNull TreeElement element, @Nullable IElementType type) {
     if (CHECK_MIRROR_ENABLED) {
       LOG.assertTrue(myMirror == null);
     }
