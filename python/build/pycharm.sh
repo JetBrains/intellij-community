@@ -9,7 +9,7 @@
 # Before you run PyCharm specify the location of the
 # JDK 1.6 installation directory which will be used for running PyCharm
 # ---------------------------------------------------------------------
-[[ `uname -s` = "Darwin" ]] && OS_TYPE="MAC" || OS_TYPE="NOT_MAC"
+[ `uname -s` = "Darwin" ] && OS_TYPE="MAC" || OS_TYPE="NOT_MAC"
 
 if [ -z "$PYCHARM_JDK" ]; then
   PYCHARM_JDK=$JDK_HOME
@@ -23,7 +23,7 @@ if [ -z "$PYCHARM_JDK" ]; then
 
     if [ -n "$JAVA_BIN_PATH" ]; then
       # Mac readlink doesn't support -f option.
-      [[ "$OS_TYPE" = "MAC" ]] && CANONICALIZE_OPTION="" || CANONICALIZE_OPTION="-f"
+      [ "$OS_TYPE" = "MAC" ] && CANONICALIZE_OPTION="" || CANONICALIZE_OPTION="-f"
 
       JAVA_LOCATION=`readlink $CANONICALIZE_OPTION $JAVA_BIN_PATH | xargs dirname | xargs dirname | xargs dirname`
       if [ "$OS_TYPE" = "MAC" ]; then
@@ -105,7 +105,7 @@ if [ "@@isEap@@" = "true" ]; then
  AGENT="-agentlib:yjpagent$BITS=disablej2ee,sessionname=pycharm"
 fi
 
-[[ -e $PYCHARM_HOME/Contents/Info.plist ]] && BUNDLE_TYPE="MAC" || BUNDLE_TYPE="NOT_MAC"
+[ -e $PYCHARM_HOME/Contents/Info.plist ] && BUNDLE_TYPE="MAC" || BUNDLE_TYPE="NOT_MAC"
 
 # If vmoptions file exists - use it
 if [ -e "$PYCHARM_VM_OPTIONS" ]; then
@@ -114,11 +114,11 @@ if [ -e "$PYCHARM_VM_OPTIONS" ]; then
   # don't extract vm options from Info.plist in mac bundle
   INFO_PLIST_PARSER_OPTIONS=""
 else
-  [[ "$BUNDLE_TYPE" = "MAC" ]] && [[ "$BITS" == "64" ]] && INFO_PLIST_PARSER_OPTIONS=" 64" || INFO_PLIST_PARSER_OPTIONS=" 32"
+  [ "$BUNDLE_TYPE" = "MAC" ] && [ "$BITS" == "64" ] && INFO_PLIST_PARSER_OPTIONS=" 64" || INFO_PLIST_PARSER_OPTIONS=" 32"
 fi
 
 # In MacOS ./Contents/Info.plist describes all vm options & system properties
-[[ "$OS_TYPE" = "MAC" ]] && [[ "$BUNDLE_TYPE" = "MAC" ]] && [[ -z "$PYCHARM_PROPERTIES_PROPERTY" ]] && MAC_IDEA_PROPERTIES="`\"osascript $PYCHARM_BIN_HOME/info_plist_parser.scpt\"$INFO_PLIST_PARSER_OPTIONS`" || MAC_IDEA_PROPERTIES=""
+[ "$OS_TYPE" = "MAC" ] && [ "$BUNDLE_TYPE" = "MAC" ] && [ -z "$PYCHARM_PROPERTIES_PROPERTY" ] && MAC_IDEA_PROPERTIES="`\"osascript $PYCHARM_BIN_HOME/info_plist_parser.scpt\"$INFO_PLIST_PARSER_OPTIONS`" || MAC_IDEA_PROPERTIES=""
 REQUIRED_JVM_ARGS="-Xbootclasspath/a:../lib/boot.jar -Didea.platform.prefix=Python -Didea.no.jre.check=true -Didea.paths.selector=@@system_selector@@ $MAC_IDEA_PROPERTIES $AGENT $PYCHARM_PROPERTIES_PROPERTY $REQUIRED_JVM_ARGS"
 
 JVM_ARGS="$JVM_ARGS $REQUIRED_JVM_ARGS"
