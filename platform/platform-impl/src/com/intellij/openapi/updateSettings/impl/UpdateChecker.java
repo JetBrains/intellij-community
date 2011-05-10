@@ -52,6 +52,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -157,7 +158,12 @@ public final class UpdateChecker {
     if (!failed.isEmpty()) {
       final String failedMessage = IdeBundle.message("connection.failed.message", StringUtil.join(failed, ","));
       if (showErrorDialog) {
-        Messages.showErrorDialog(failedMessage, IdeBundle.message("title.connection.error"));
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            Messages.showErrorDialog(failedMessage, IdeBundle.message("title.connection.error"));
+          }
+        });
       }
       else {
         LOG.info(failedMessage);
