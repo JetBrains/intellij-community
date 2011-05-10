@@ -271,7 +271,8 @@ public class GroovyCompletionContributor extends CompletionContributor {
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
                                     @NotNull final CompletionResultSet result) {
-        addKeywords(parameters, result);
+        GroovyCompletionData.addGroovyKeywords(parameters, result);
+        GroovyCompletionData.addGroovyDocKeywords(parameters, result);
 
         PsiElement position = parameters.getPosition();
 
@@ -322,23 +323,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     });
 
-  }
-
-  private static void addKeywords(CompletionParameters parameters, CompletionResultSet result) {
-    GroovyCompletionData.addGroovyKeywords(parameters, result);
-
-    PsiElement position = parameters.getPosition();
-    final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
-    final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-    final GroovyCompletionData completionData = new GroovyCompletionData();
-    completionData.addKeywordVariants(keywordVariants, position, parameters.getOriginalFile());
-    completionData.completeKeywordsBySet(lookupSet, keywordVariants, position, result.getPrefixMatcher(), parameters.getOriginalFile());
-
-    for (final LookupElement item : lookupSet) {
-      result.addElement(item);
-    }
-
-    GroovyCompletionData.addGroovyDocKeywords(parameters, result);
   }
 
 

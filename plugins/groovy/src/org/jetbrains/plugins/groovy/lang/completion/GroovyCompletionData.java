@@ -18,24 +18,17 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.completion.CompletionData;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.CompletionVariant;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.psi.*;
-import com.intellij.psi.filters.AndFilter;
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.NotFilter;
-import com.intellij.psi.filters.TextFilter;
-import com.intellij.psi.filters.position.LeftNeighbour;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -60,15 +53,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-import java.util.Set;
-
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.or;
 
 /**
  * @author ilyas
  */
-public class GroovyCompletionData extends CompletionData {
+public class GroovyCompletionData {
   public static final String[] BUILT_IN_TYPES = {"boolean", "byte", "char", "short", "int", "float", "long", "double", "void"};
   public static final String[] MODIFIERS = new String[]{"private", "public", "protected", "transient", "abstract", "native", "volatile", "strictfp", "static"};
   static final String[] INLINED_DOC_TAGS = {"code", "docRoot", "inheritDoc", "link", "linkplain", "literal"};
@@ -199,66 +190,6 @@ public class GroovyCompletionData extends CompletionData {
       addKeywords(result, "else");
     }
   }
-
-  @Override
-  public void completeReference(final PsiReference reference,
-                                final Set<LookupElement> set,
-                                @NotNull final PsiElement position,
-                                final PsiFile file,
-                                final int offset) {
-    super.completeReference(reference, set, position, file, offset);
-    Set<LookupElement> result = new THashSet<LookupElement>();
-    for (final LookupElement element : set) {
-      result.add(LookupElementDecorator.withInsertHandler(element, new GroovyInsertHandlerAdapter()));
-    }
-    set.clear();
-    set.addAll(result);
-  }
-
-
-  /**
-   * Template to add all standard keywords completions
-   *
-   * @param filter   - Semantic filter for given keywords
-   * @param keywords - Keywords to be completed
-   */
-  private void registerStandardCompletion(ElementFilter filter, String... keywords) {
-    LeftNeighbour afterDotFilter = new LeftNeighbour(new TextFilter(".", ".&"));
-    CompletionVariant variant = new CompletionVariant(new AndFilter(new NotFilter(afterDotFilter), filter));
-    variant.setItemProperty(LookupItem.HIGHLIGHTED_ATTR, "");
-    variant.includeScopeClass(LeafPsiElement.class);
-    variant.setInsertHandler(new GroovyInsertHandlerAdapter());
-    addCompletions(variant, keywords);
-    registerVariant(variant);
-  }
-
-
-  public String findPrefix(PsiElement insertedElement, int offset) {
-    if (insertedElement == null) return "";
-    final String text = insertedElement.getText();
-    final int offsetInElement = offset - insertedElement.getTextRange().getStartOffset();
-    int start = offsetInElement - 1;
-    while (start >= 0) {
-      final char c = text.charAt(start);
-      if (!Character.isJavaIdentifierPart(c) && c != '\'') break;
-      --start;
-    }
-
-    return text.substring(start + 1, offsetInElement).trim();
-  }
-
-  /**
-   * Adds all completion variants in sequence
-   *
-   * @param comps   Given completions
-   * @param variant Variant for completions
-   */
-  private void addCompletions(CompletionVariant variant, String... comps) {
-    for (String completion : comps) {
-      variant.addCompletion(completion, TailType.SPACE);
-    }
-  }
-
 
   public static void addGroovyDocKeywords(CompletionParameters parameters, CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
