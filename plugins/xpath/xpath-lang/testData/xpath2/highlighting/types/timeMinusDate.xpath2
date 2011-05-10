@@ -1,0 +1,1 @@
+current-time() - <error descr="Expected type 'one of xs:time, xs:duration', got 'xs:date'">current-date()</error>

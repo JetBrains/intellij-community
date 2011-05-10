@@ -68,7 +68,7 @@ public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPath
             return XPathType.BOOLEAN;
         } else if (operator == XPath2TokenTypes.IDIV) {
             return XPath2Type.INTEGER;
-        } else if (XPathTokenTypes.NUMBER_OPERATIONS.contains(operator)) {
+        } else if (XPath2TokenTypes.NUMBER_OPERATIONS.contains(operator)) {
           final XPathExpression lop = getLOperand();
           final XPathExpression rop = getROperand();
           if (is(lop, XPathType.UNKNOWN) || is(rop, XPathType.UNKNOWN)) {
@@ -88,7 +88,7 @@ public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPath
 
           if (XPathTokenTypes.MUL_OPS.contains(operator)) {
             if (is(lop, XPath2Type.DURATION) || is(rop, XPath2Type.DURATION)) {
-              return lop.getType();
+              return lop != null ? lop.getType() : XPath2Type.DURATION;
             }
           } else {
             if (is(lop, XPath2Type.DATE) || is(lop, XPath2Type.DATETIME)) {
