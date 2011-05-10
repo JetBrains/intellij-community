@@ -128,6 +128,9 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     if (mySelected && (myFocused || UIUtil.isUnderNimbusLookAndFeel())) {
       super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeSelectionForeground()), isMainText);
     }
+    else if (mySelected && UIUtil.isUnderAquaLookAndFeel()) {
+      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeForeground()), isMainText);
+    }
     else {
       super.append(fragment, attributes, isMainText);
     }
