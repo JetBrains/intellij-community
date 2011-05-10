@@ -41,15 +41,10 @@ public class ChooseItemReplaceAction extends EditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
-    private boolean lastEnabled;
     @Override
     public void execute(Editor editor, DataContext dataContext) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_REPLACE);
-      LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-      if (lookup == null) {
-        throw new AssertionError("Null lookup: lastEnabled=" + lastEnabled);
-      }
-      lookup.finishLookup(Lookup.REPLACE_SELECT_CHAR);
+      ChooseItemAction.getLookup(editor).finishLookup(Lookup.REPLACE_SELECT_CHAR);
     }
 
     @Override
@@ -60,16 +55,16 @@ public class ChooseItemReplaceAction extends EditorAction {
 
         CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
         if (completion != null && completion.isAutopopupCompletion() && hasTemplatePrefix(lookup, TemplateSettings.TAB_CHAR)) {
-          return lastEnabled = false;
+          return false;
         }
 
         if (lookup.isFocused()) {
-          return lastEnabled = true;
+          return true;
         }
 
-        return lastEnabled = !lookup.getItems().isEmpty();
+        return !lookup.getItems().isEmpty();
       }
-      return lastEnabled = false;
+      return false;
     }
   }
 
