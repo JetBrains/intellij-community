@@ -15,8 +15,10 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Segment;
@@ -32,7 +34,7 @@ import java.util.List;
 * User: cdr
 */
 class InjectedSelfElementInfo extends SelfElementInfo {
-  private final SmartPsiFileRange myInjectedFileRangeInHostElement;
+  private final SmartPsiFileRange myInjectedFileRangeInHostFile;
   private final Class<? extends PsiElement> anchorClass;
   private final Language anchorLanguage;
 
@@ -40,9 +42,9 @@ class InjectedSelfElementInfo extends SelfElementInfo {
     super(project, context);
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
     TextRange range = InjectedLanguageManager.getInstance(project).injectedToHost(anchor, anchor.getTextRange());
-    myInjectedFileRangeInHostElement = smartPointerManager.createSmartPsiFileRangePointer(context.getContainingFile(), range);
+    myInjectedFileRangeInHostFile = smartPointerManager.createSmartPsiFileRangePointer(context.getContainingFile(), range);
     anchorClass = anchor.getClass();
-    anchorLanguage = anchor.getLanguage();
+    anchorLanguage = anchor.getContainingFile().getLanguage();
   }
 
   @Override
@@ -57,35 +59,36 @@ class InjectedSelfElementInfo extends SelfElementInfo {
     PsiElement host = super.restoreElement();
     if (host == null) return null;
 
-    Segment segment = myInjectedFileRangeInHostElement.getRange();
+    Segment segment = myInjectedFileRangeInHostFile.getRange();
     if (segment == null) return null;
-    final TextRange rangeInHostElement = TextRange.create(segment);
+    final TextRange rangeInHostFile = TextRange.create(segment);
     final Ref<PsiElement> result = new Ref<PsiElement>();
 
+    final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(getProject());
     InjectedLanguageUtil.enumerate(host, host.getContainingFile(), new PsiLanguageInjectionHost.InjectedPsiVisitor() {
         @Override
         public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
           if (result.get() != null) return;
-          TextRange hostRange =
-            InjectedLanguageManager.getInstance(getProject()).injectedToHost(injectedPsi, new TextRange(0, injectedPsi.getTextLength()));
-          if (hostRange.contains(rangeInHostElement)) {
-            TextRange rangeInside = rangeInHostElement.shiftRight(-hostRange.getStartOffset());
-            PsiElement element = findElementInside(injectedPsi, rangeInside.getStartOffset(), rangeInside.getEndOffset(), anchorClass,
-                                                   anchorLanguage);
+          TextRange hostRange = manager.injectedToHost(injectedPsi, new TextRange(0, injectedPsi.getTextLength()));
+          Document document = PsiDocumentManager.getInstance(getProject()).getDocument(injectedPsi);
+          if (hostRange.contains(rangeInHostFile) && document instanceof DocumentWindow) {
+            int start = ((DocumentWindow)document).hostToInjected(rangeInHostFile.getStartOffset());
+            int end = ((DocumentWindow)document).hostToInjected(rangeInHostFile.getEndOffset());
+            PsiElement element = findElementInside(injectedPsi, start, end, anchorClass, anchorLanguage);
             result.set(element);
           }
         }
       }, false);
 
-    return result.get();
+      return result.get();
   }
 
   @Override
   public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
     if (getClass() != other.getClass()) return false;
     if (!super.pointsToTheSameElementAs(other)) return false;
-    SmartPointerElementInfo myElementInfo = ((SmartPsiElementPointerImpl)myInjectedFileRangeInHostElement).getElementInfo();
-    SmartPointerElementInfo oElementInfo = ((SmartPsiElementPointerImpl)((InjectedSelfElementInfo)other).myInjectedFileRangeInHostElement).getElementInfo();
+    SmartPointerElementInfo myElementInfo = ((SmartPsiElementPointerImpl)myInjectedFileRangeInHostFile).getElementInfo();
+    SmartPointerElementInfo oElementInfo = ((SmartPsiElementPointerImpl)((InjectedSelfElementInfo)other).myInjectedFileRangeInHostFile).getElementInfo();
     return myElementInfo.pointsToTheSameElementAs(oElementInfo);
   }
 }
