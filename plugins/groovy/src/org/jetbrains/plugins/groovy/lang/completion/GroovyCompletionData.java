@@ -71,10 +71,10 @@ public class GroovyCompletionData {
     PsiElement parent = position.getParent();
     if (!PlatformPatterns.psiElement().afterLeaf(".", ".&").accepts(position)) {
       if (suggestPackage(position)) {
-        result.addElement(keyword("package"));
+        result.addElement(keyword(PsiKeyword.PACKAGE));
       }
       if (suggestImport(position)) {
-        result.addElement(keyword("import"));
+        result.addElement(keyword(PsiKeyword.IMPORT));
       }
 
       addTypeDefinitionKeywords(result, position);
@@ -82,7 +82,7 @@ public class GroovyCompletionData {
       registerControlCompletion(position, result);
 
       if (parent instanceof GrExpression && !(parent instanceof GrLiteral)) {
-        addKeywords(result, "true", "false", "null", "super", "new", "this", "as");
+        addKeywords(result, PsiKeyword.TRUE, PsiKeyword.FALSE, PsiKeyword.NULL, PsiKeyword.SUPER, PsiKeyword.NEW, PsiKeyword.THIS, "as");
       }
 
       if (isInfixOperatorPosition(position)) {
@@ -121,10 +121,10 @@ public class GroovyCompletionData {
 
   private static void addTypeDefinitionKeywords(CompletionResultSet result, PsiElement position) {
     if (suggestClassInterfaceEnum(position)) {
-      addKeywords(result, "class", "interface", "enum");
+      addKeywords(result, PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM);
     }
     if (afterAtInType(position)) {
-      result.addElement(keyword("interface"));
+      result.addElement(keyword(PsiKeyword.INTERFACE));
     }
   }
 
@@ -163,7 +163,7 @@ public class GroovyCompletionData {
     }
   }
 
-  private static void addKeywords(CompletionResultSet result, String... keywords) {
+  public static void addKeywords(CompletionResultSet result, String... keywords) {
     for (String s : keywords) {
       result.addElement(keyword(s));
     }
