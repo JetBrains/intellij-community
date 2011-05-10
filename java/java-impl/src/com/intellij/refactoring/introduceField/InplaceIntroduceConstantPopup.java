@@ -47,6 +47,7 @@ import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.TitlePanel;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -206,8 +207,12 @@ public class InplaceIntroduceConstantPopup {
 
   private JPanel createLeftPanel() {
     final JPanel left = new JPanel(new GridBagLayout());
+    String initialVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY;
+    if (initialVisibility == null) {
+      initialVisibility = PsiModifier.PUBLIC;
+    }
     myVisibilityCombo = createVisibilityCombo(left, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHEAST, GridBagConstraints.NONE, new Insets(6,5,0,0), 0, 0),
-                                              myProject);
+                                              myProject, initialVisibility);
     myMoveToAnotherClassCb = new JCheckBox("Move to another class");
     myMoveToAnotherClassCb.setMnemonic('m');
     myMoveToAnotherClassCb.setFocusable(false);
@@ -217,7 +222,8 @@ public class InplaceIntroduceConstantPopup {
 
   public static JComboBox createVisibilityCombo(final JPanel left,
                                                 final GridBagConstraints lgc,
-                                                final Project project) {
+                                                final Project project,
+                                                @NotNull final String initialVisibility) {
 
     final JLabel label = new JLabel("Visibility:");
     label.setDisplayedMnemonic('V');
@@ -231,12 +237,12 @@ public class InplaceIntroduceConstantPopup {
       }
     });
     label.setLabelFor(visibilityCombo);
-    visibilityCombo.setSelectedItem(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY);
+    visibilityCombo.setSelectedItem(initialVisibility);
 
     appendActions(visibilityCombo, project);
     lgc.gridx++;
     lgc.insets.top = 2;
-    lgc.insets.left = 0;
+    lgc.insets.left = 2;
     left.add(visibilityCombo, lgc);
     return visibilityCombo;
   }

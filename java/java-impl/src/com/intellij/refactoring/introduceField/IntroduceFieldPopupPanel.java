@@ -179,7 +179,12 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     gridBagConstraints.gridy = 1;
     gridBagConstraints.insets.top = 8;
     gridBagConstraints.insets.left = 5;
-    myVisibilityCombo = InplaceIntroduceConstantPopup.createVisibilityCombo(groupPanel, gridBagConstraints, myParentClass.getProject());
+    String visibility = JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY;
+    if (visibility == null) {
+      visibility = PsiModifier.PRIVATE;
+    }
+    myVisibilityCombo = InplaceIntroduceConstantPopup.createVisibilityCombo(groupPanel, gridBagConstraints, myParentClass.getProject(),
+                                                                            visibility);
 
     mainPanel.add(groupPanel, BorderLayout.CENTER);
 
