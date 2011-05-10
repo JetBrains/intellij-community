@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
@@ -259,7 +260,10 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     LOG.assertTrue(((GroovyFile)scriptFile).isScript());
     final List<GrStatement> exitPoints = ControlFlowUtils.collectReturns(scriptFile);
 
-    new CodeBlockGenerator(builder, context.extend(), exitPoints)
+
+    ExpressionContext extended = context.extend();
+    extended.searchForLocalVarsToWrap((GroovyPsiElement)scriptFile);
+    new CodeBlockGenerator(builder, extended, exitPoints)
       .visitStatementOwner((GroovyFile)scriptFile, MissingReturnInspection.methodMissesSomeReturns((GroovyFile)scriptFile, true));
     builder.append("\n}\n");
   }

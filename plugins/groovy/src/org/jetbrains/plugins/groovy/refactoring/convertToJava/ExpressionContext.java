@@ -15,9 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +29,9 @@ import java.util.Set;
 class ExpressionContext implements Cloneable {
   List<String> myStatements = new ArrayList<String>();
   Set<String> myUsedVarNames;
-  Project project;
+  LocalVarAnalyzer.Result analyzedVars = LocalVarAnalyzer.initialResult();
 
+  Project project;
   private Map<String, Boolean> myProps = new HashMap<String, Boolean>();
   private static final String myShouldInsertCurlyBrackets = "shouldInsertCurly";
   private static final String myInAnonymousContext = "inAnonymousContext";
@@ -50,6 +53,7 @@ class ExpressionContext implements Cloneable {
   ExpressionContext copy() {
     final ExpressionContext expressionContext = new ExpressionContext(project, myUsedVarNames);
     expressionContext.myProps.putAll(myProps);
+    expressionContext.analyzedVars = analyzedVars;
     return expressionContext;
   }
 
@@ -58,6 +62,7 @@ class ExpressionContext implements Cloneable {
     usedVarNames.addAll(myUsedVarNames);
     final ExpressionContext expressionContext = new ExpressionContext(project, usedVarNames);
     expressionContext.myProps.putAll(myProps);
+    expressionContext.analyzedVars = analyzedVars;
     return expressionContext;
   }
 
@@ -80,5 +85,9 @@ class ExpressionContext implements Cloneable {
 
   public void setInAnonymousContext(boolean inAnonymousContext) {
     myProps.put(myInAnonymousContext, inAnonymousContext);
+  }
+
+  public void searchForLocalVarsToWrap(GroovyPsiElement root) {
+    analyzedVars = LocalVarAnalyzer.searchForVarsToWrap(root, analyzedVars);
   }
 }

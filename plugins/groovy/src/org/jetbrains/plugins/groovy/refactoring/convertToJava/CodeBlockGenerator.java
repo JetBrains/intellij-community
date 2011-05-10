@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.Nullable;
@@ -74,10 +73,6 @@ public class CodeBlockGenerator extends Generator {
     }
   }
 
-  public CodeBlockGenerator(StringBuilder builder, Project project) {
-    this(builder, new ExpressionContext(project));
-  }
-
   @Override
   public StringBuilder getBuilder() {
     return builder;
@@ -89,6 +84,7 @@ public class CodeBlockGenerator extends Generator {
   }
 
   public void generateMethodBody(GrMethod method) {
+    context.searchForLocalVarsToWrap(method);
     final GrOpenBlock block = method.getBlock();
 
     boolean shouldInsertReturnNull = false;
@@ -105,7 +101,7 @@ public class CodeBlockGenerator extends Generator {
 
   @Override
   public void visitMethod(GrMethod method) {
-    LOG.assertTrue(false, "don't invoke it!!!");
+    LOG.error("don't invoke it!!!");
   }
 
   @Override
@@ -159,7 +155,7 @@ public class CodeBlockGenerator extends Generator {
   }
 
   public void visitStatement(GrStatement statement) {
-    LOG.assertTrue(false, "all statements must be overloaded");
+    LOG.error("all statements must be overloaded");
   }
 
   @Override

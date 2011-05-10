@@ -4,7 +4,7 @@ new anonymous(new groovy.lang.Binding(args)).run();
 }
 
 public java.lang.Object run() {
-java.lang.Integer foo = 2;
+final java.lang.Integer foo = 2;
 java.lang.Runnable an = new java.lang.Runnable(){
 public void run() {
 org.codehaus.groovy.runtime.DefaultGroovyMethods.println(this, foo);
