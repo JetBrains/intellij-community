@@ -37,6 +37,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -335,7 +336,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   void appendPrefix(char c) {
     checkReused();
-    LOG.assertTrue(!myDisposed);
+    LOG.assertTrue(!myDisposed, disposeTrace);
     myAdditionalPrefix += c;
     myInitialPrefix = null;
     myFrozenItems.clear();
@@ -377,7 +378,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
-    assert !myDisposed;
+    assert !myDisposed : disposeTrace;
 
     final Pair<List<LookupElement>,Iterable<List<LookupElement>>> snapshot = myModel.getModelSnapshot();
 
@@ -720,8 +721,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     int lookupStart = caretOffset - prefix.length();
 
     int len = myEditor.getDocument().getTextLength();
-    LOG.assertTrue(lookupStart >= 0 && lookupStart <= len, "ls: " + lookupStart + "doc: " + len);
-    LOG.assertTrue(caretOffset >= 0 && caretOffset <= len, "co: " + caretOffset + "doc: " + len);
+    LOG.assertTrue(lookupStart >= 0 && lookupStart <= len, "ls: " + lookupStart + "caret: " + caretOffset + " prefix:" + prefix + " doc: " + len);
+    LOG.assertTrue(caretOffset >= 0 && caretOffset <= len, "co: " + caretOffset + " doc: " + len);
 
     myEditor.getDocument().replaceString(lookupStart, caretOffset, lookupString);
 
@@ -756,16 +757,22 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   public void performGuardedChange(Runnable change) {
     LOG.assertTrue(!myDisposed, disposeTrace);
+    assert myLookupStartMarker.isValid();
     assert !myChangeGuard;
+
     myChangeGuard = true;
+    RangeMarkerEx marker = (RangeMarkerEx) myEditor.getDocument().createRangeMarker(myLookupStartMarker.getStartOffset(), myLookupStartMarker.getEndOffset());
+    marker.trackInvalidation(true);
     try {
       change.run();
     }
     finally {
+      marker.trackInvalidation(false);
       myChangeGuard = false;
     }
     LOG.assertTrue(!myDisposed, disposeTrace);
-    LOG.assertTrue(myLookupStartMarker.isValid());
+    LOG.assertTrue(myLookupStartMarker.isValid(), "invalid lookup start");
+    LOG.assertTrue(marker.isValid(), "invalid marker");
     if (isVisible()) {
       updateLookupBounds();
     }

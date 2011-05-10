@@ -19,6 +19,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -142,17 +143,23 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
       return getName();
     }
 
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final FileTemplateConfigurable configurable = new FileTemplateConfigurable();
       SwingUtilities.invokeLater(new Runnable(){
         public void run() {
           configurable.setTemplate(myTemplateToEdit, null);
+
+          boolean ok = ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
+          if (ok) {
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                myReplaceTemplateFix.applyFix(project, descriptor);
+              }
+            });
+          }
         }
       });
-      boolean ok = ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
-      if (ok) {
-        myReplaceTemplateFix.applyFix(project, descriptor);
-      }
     }
   }
 }

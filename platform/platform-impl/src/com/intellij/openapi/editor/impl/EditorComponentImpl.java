@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -24,11 +25,14 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.util.ReflectionUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
+import java.awt.event.FocusEvent;
 import java.awt.event.InputMethodEvent;
+import java.awt.im.InputContext;
 import java.awt.im.InputMethodRequests;
 import java.util.Map;
 
@@ -108,7 +112,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
   }
 
   public InputMethodRequests getInputMethodRequests() {
-    return myEditor.getInputMethodRequests();
+    return IdeEventQueue.getInstance().isInputMethodEnabled() ? myEditor.getInputMethodRequests() : null;
   }
 
   public void paintComponent(Graphics g) {

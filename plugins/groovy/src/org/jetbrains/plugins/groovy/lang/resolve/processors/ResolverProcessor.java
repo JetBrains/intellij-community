@@ -103,6 +103,8 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   }
 
   protected final void addCandidate(GroovyResolveResult candidate) {
+    assert candidate.getElement().isValid() : "invalid resolve candidate";
+
     if (myCandidates == null) myCandidates = new ArrayList<GroovyResolveResult>();
     myCandidates.add(candidate);
   }

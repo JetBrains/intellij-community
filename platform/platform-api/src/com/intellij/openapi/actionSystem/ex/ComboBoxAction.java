@@ -120,6 +120,11 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       popup.showUnderneathOf(this);
     }
 
+    @Override
+    public String getToolTipText() {
+      return myForcePressed ? null : super.getToolTipText();
+    }
+
     protected ListPopup createPopup(Runnable onDispose) {
       DefaultActionGroup group = createPopupActionGroup(this);
 

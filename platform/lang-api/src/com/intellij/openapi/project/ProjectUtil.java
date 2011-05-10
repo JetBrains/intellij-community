@@ -23,8 +23,12 @@ import com.intellij.ide.highlighter.InternalFileType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.util.SystemProperties;
@@ -87,6 +91,23 @@ public class ProjectUtil {
         }
       }
       final Module module = ModuleUtil.findModuleForFile(file, project);
+      
+      if (SystemInfo.isMac && file.getFileSystem() instanceof JarFileSystem) {
+        final VirtualFile fileForJar = ((JarFileSystem)file.getFileSystem()).getVirtualFileForJar(file);
+        if (fileForJar != null) {
+          final OrderEntry libraryEntry = LibraryUtil.findLibraryEntry(file, project);
+          if (libraryEntry != null) {
+            if (libraryEntry instanceof JdkOrderEntry) {
+              url = new StringBuilder(url).append(" - [").append(((JdkOrderEntry)libraryEntry).getJdkName()).append("]").toString();
+            } else {
+              url = new StringBuilder(url).append(" - [").append(libraryEntry.getPresentableName()).append("]").toString();
+            }
+          } else {
+            url = new StringBuilder(url).append(" - [").append(fileForJar.getName()).append("]").toString();
+          }
+        }
+      }
+      
       if (module == null) return url;
       return SystemInfo.isMac ? new StringBuffer().append(url).append(" - [").append(module.getName()).append("]").toString() :
         new StringBuffer().append("[").append(module.getName()).append("] - ").append(url).toString();

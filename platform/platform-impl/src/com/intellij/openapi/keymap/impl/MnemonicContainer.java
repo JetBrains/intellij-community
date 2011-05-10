@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,33 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.impl;
+package com.intellij.openapi.keymap.impl;
 
 /**
- * @author lex
+ * Created by IntelliJ IDEA.
+ * User: kirillk
+ * Date: 5/5/11
+ * Time: 1:25 PM
+ * To change this template use File | Settings | File Templates.
  */
-public abstract class DebuggerTaskImpl implements DebuggerTask {
-  private int myHolds = 0;
-  
-  public synchronized final void release() {
-    if (myHolds > 0) {
-      if (--myHolds == 0) {
-        notifyAll();
-      }
-    }
-  }
-
-  public synchronized final void hold() {
-    myHolds++;
-  }
-
-  public synchronized final void waitFor() {
-    while (myHolds > 0) {
-      try {
-        wait();
-      }
-      catch (InterruptedException ignored) {
-      }
-    }
-  }
+public interface MnemonicContainer {
 }

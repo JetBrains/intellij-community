@@ -384,10 +384,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     if (SystemInfo.isMac) {
-      if (e.getModifiersEx() == InputEvent.ALT_DOWN_MASK &&
-        (e.getID() == KeyEvent.KEY_PRESSED && hasMnemonicInWindow(focusOwner, e.getKeyCode()) ||
-         e.getID() == KeyEvent.KEY_TYPED && hasMnemonicInWindow(focusOwner, e.getKeyChar())))
-      {
+      boolean keyTyped = e.getID() == KeyEvent.KEY_TYPED;
+      boolean hasMnemonicsInWindow = e.getID() == KeyEvent.KEY_PRESSED && hasMnemonicInWindow(focusOwner, e.getKeyCode()) ||
+                  keyTyped && hasMnemonicInWindow(focusOwner, e.getKeyChar());
+      boolean imEnabled = IdeEventQueue.getInstance().isInputMethodEnabled();
+
+      if (e.getModifiersEx() == InputEvent.ALT_DOWN_MASK && (hasMnemonicsInWindow || (!imEnabled && keyTyped)))  {
         setPressedWasProcessed(true);
         setState(KeyState.STATE_PROCESSED);
         return false;

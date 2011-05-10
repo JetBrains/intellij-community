@@ -1933,7 +1933,8 @@ public class AbstractTreeUi {
            "isCancelProcessed=" + isCancelProcessed() + "\n" +
            " isCancelRequested=" + myCancelRequest + "\n" +
            " isResettingToReadyNow=" + myResettingToReadyNow + "\n" +
-           "canInitiateNewActivity=" + canInitiateNewActivity();
+           "canInitiateNewActivity=" + canInitiateNewActivity() +
+           "batchIndicators=" + myBatchIndicators;
   }
 
   public boolean hasPendingWork() {

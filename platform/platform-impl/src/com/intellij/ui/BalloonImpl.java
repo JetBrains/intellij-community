@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -27,9 +28,14 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindow;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.FocusRequestor;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -38,25 +44,10 @@ import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Range;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.ui.Animator;
-import com.intellij.util.ui.BaseButtonBehavior;
-import com.intellij.util.ui.PositionTracker;
-import com.intellij.util.ui.TimedDeadzone;
-import com.intellij.util.ui.Tree;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JLayeredPane;
-import javax.swing.JPanel;
-import javax.swing.JRootPane;
-import javax.swing.JTree;
-import javax.swing.JWindow;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
@@ -156,6 +147,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
   private int myPositionChangeXShift;
   private int myPositionChangeYShift;
+  private boolean myDialogMode;
+  private IdeFocusManager myFocusManager;
 
   public boolean isInsideBalloon(MouseEvent me) {
     return isInside(new RelativePoint(me));
@@ -207,7 +200,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
                      int animationCycle,
                      int calloutShift,
                      int positioChangeXShfit,
-                     int positionChangeYShift) {
+                     int positionChangeYShift,
+                     boolean dialogMode) {
     myBorderColor = borderColor;
     myFillColor = fillColor;
     myContent = content;
@@ -222,6 +216,30 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     myCalloutshift = calloutShift;
     myPositionChangeXShift = positioChangeXShfit;
     myPositionChangeYShift = positionChangeYShift;
+    myDialogMode = dialogMode;
+
+
+    if (!myDialogMode) {
+      new AwtVisitor(content) {
+        @Override
+        public boolean visit(Component component) {
+          if (component instanceof JLabel) {
+            JLabel label = (JLabel)component;
+            if (label.getDisplayedMnemonic() != '\0' || label.getDisplayedMnemonicIndex() >= 0) {
+              myDialogMode = true;
+              return true;
+            }
+          } else if (component instanceof JCheckBox) {
+            JCheckBox checkBox = (JCheckBox)component;
+            if (checkBox.getMnemonic() >= 0 || checkBox.getDisplayedMnemonicIndex() >= 0) {
+              myDialogMode = true;
+              return true;
+            }
+          }
+          return false;
+        }
+      };
+    }
 
     myFadeoutTime = fadeoutTime;
     myAnimationCycle = animationCycle;
@@ -312,6 +330,34 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     myPosition = position;
     UIUtil.setFutureRootPane(myContent, root);
 
+    myFocusManager = IdeFocusManager.findInstanceByComponent(myLayeredPane);
+    final Ref<Component> originalFocusOwner = new Ref<Component>();
+    final Ref<FocusRequestor> focusRequestor = new Ref<FocusRequestor>();
+    final Ref<ActionCallback> proxyFocusRequest = new Ref<ActionCallback>(new ActionCallback.Done());
+
+    boolean mnemonicsFix = myDialogMode && SystemInfo.isMac && Registry.is("ide.mac.inplaceDialogMnemonicsFix");
+    if (mnemonicsFix) {
+      final IdeGlassPaneEx glassPane = (IdeGlassPaneEx)IdeGlassPaneUtil.find(myLayeredPane);
+      assert glassPane != null;
+
+      proxyFocusRequest.set(new ActionCallback());
+
+      myFocusManager.doWhenFocusSettlesDown(new ExpirableRunnable() {
+        @Override
+        public boolean isExpired() {
+          return isDisposed();
+        }
+
+        @Override
+        public void run() {
+          IdeEventQueue.getInstance().disableInputMethods(BalloonImpl.this);
+          originalFocusOwner.set(myFocusManager.getFocusOwner());
+          myFocusManager.requestFocus(glassPane.getProxyComponent(), true).notify(proxyFocusRequest.get());
+          focusRequestor.set(myFocusManager.getFurtherRequestor());
+        }
+      });
+    }
+
     myLayeredPane.addComponentListener(myComponentListener);
 
     myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(myLayeredPane), myCalloutshift);
@@ -376,6 +422,16 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     myLayeredPane.revalidate();
     myLayeredPane.repaint();
 
+
+
+    if (mnemonicsFix) {
+      proxyFocusRequest.get().doWhenDone(new Runnable() {
+        @Override
+        public void run() {
+          myFocusManager.requestFocus(originalFocusOwner.get(), true);
+        }
+      });
+    }
 
     Toolkit.getDefaultToolkit().addAWTEventListener(myAwtActivityListener, MouseEvent.MOUSE_EVENT_MASK |
                                                                            MouseEvent.MOUSE_MOTION_EVENT_MASK |
@@ -1246,7 +1302,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
           //pane.setBorder(new LineBorder(Color.blue));
 
-          balloon.set(new BalloonImpl(new JLabel("FUCK"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, null, false, 500, 5, 0, 0));
+          balloon.set(new BalloonImpl(new JLabel("FUCK"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, null, false, 500, 5, 0, 0, false));
           balloon.get().setShowPointer(true);
 
           if (e.isShiftDown()) {

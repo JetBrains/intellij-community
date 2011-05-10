@@ -49,11 +49,20 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   private Cursor myLastOriginalCursor;
   private MouseEvent myPrevPressEvent;
 
+  private JPanel myFocusProxy = new JPanel();
+
   public IdeGlassPaneImpl(JRootPane rootPane) {
     myRootPane = rootPane;
     setOpaque(false);
     setVisible(false);
     setLayout(null);
+
+    myFocusProxy.setOpaque(false);
+    myFocusProxy.setPreferredSize(new Dimension(0, 0));
+    myFocusProxy.setFocusable(true);
+    UIUtil.setFocusProxy(myFocusProxy, true);
+    add(myFocusProxy);
+    myFocusProxy.setBounds(0, 0, 0, 0);
   }
 
   public boolean dispatch(final AWTEvent e) {
@@ -541,5 +550,10 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   @Override
   public boolean isOptimizedDrawingEnabled() {
     return !hasPainters() && super.isOptimizedDrawingEnabled();
+  }
+
+  @Override
+  public JComponent getProxyComponent() {
+    return myFocusProxy;
   }
 }
