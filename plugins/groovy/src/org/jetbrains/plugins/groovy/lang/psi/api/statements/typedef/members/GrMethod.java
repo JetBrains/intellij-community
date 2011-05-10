@@ -41,7 +41,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterListOwner;
 public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMethod, GrMember,
         GrParametersOwner, GrTopLevelDefinition, GrTypeParameterListOwner, GrDocCommentOwner {
   GrMethod[] EMPTY_ARRAY = new GrMethod[0];
-  Key<Boolean> BUILDER_METHOD = Key.create("BUILDER_METHOD");
   ArrayFactory<GrMethod> ARRAY_FACTORY = new ArrayFactory<GrMethod>() {
     @Override
     public GrMethod[] create(int count) {

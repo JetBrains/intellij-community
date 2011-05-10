@@ -263,12 +263,12 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     protected JComponent getComponent() {
       if (!myInitialized) {
         myInitialized = true;
-        myWholePanel.add(myCanBeFinal,
+        myWholePanel.add(myCanBeFinalCb,
                          new GridBagConstraints(0, myCbReplaceAllOccurences == null ? 2 : 3, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
                                                 GridBagConstraints.NONE, new Insets(0, 5, 2, 5), 0, 0));
         if (myHasWriteAccess) {
-          myCanBeFinal.setSelected(false);
-          myCanBeFinal.setEnabled(false);
+          myCanBeFinalCb.setSelected(false);
+          myCanBeFinalCb.setEnabled(false);
         }
       }
       return myWholePanel;
@@ -304,7 +304,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     protected void saveSettings(PsiVariable psiVariable) {
       final JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
       InplaceIntroduceParameterPopup.super.saveSettings(settings);
-      if (myCanBeFinal.isEnabled()) {
+      if (myCanBeFinalCb.isEnabled()) {
         settings.INTRODUCE_PARAMETER_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
       }
       TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myDefaultParameterTypePointer.getType());
@@ -323,7 +323,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
           isDeleteLocalVariable = isDeleteLocalVariable();
         }
 
-        if (!myMethod.isValid() || myLocalVar == null && myExpr == null) {
+        if (!myMethod.isValid() || myParameterName == null || myLocalVar == null && myExpr == null) {
           super.moveOffsetAfter(false);
           return;
         }

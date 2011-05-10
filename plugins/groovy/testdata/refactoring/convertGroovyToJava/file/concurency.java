@@ -4,7 +4,7 @@ new concurency(new groovy.lang.Binding(args)).run();
 }
 
 public java.lang.Object run() {
-java.util.concurrent.atomic.AtomicInteger counter = new java.util.concurrent.atomic.AtomicInteger();
+final java.util.concurrent.atomic.AtomicInteger counter = new java.util.concurrent.atomic.AtomicInteger();
 java.lang.Thread th = org.codehaus.groovy.runtime.DefaultGroovyStaticMethods.start(null, new groovy.lang.Closure<java.lang.Void>(this, this) {
 public void doCall(java.lang.Object it) {
 for(java.lang.Integer i : new groovy.lang.IntRange(1, 8)){
@@ -32,9 +32,8 @@ return null;
 
 }
 
-public synchronized java.lang.Object out(java.lang.Object message) {
+public synchronized void out(java.lang.Object message) {
 println(message);
-return null;
 }
 
 public concurency(groovy.lang.Binding binding) {

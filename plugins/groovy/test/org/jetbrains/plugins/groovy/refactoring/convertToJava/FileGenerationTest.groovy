@@ -60,4 +60,9 @@ class FileGenerationTest extends LightGroovyTestCase {
   void testHash() {doTest()}
   void testAnonymous() {doTest()}
   void testAnonymous2() {doTest()}
+  void testRefInAnonymous() {doTest()}
+  void testRefInClosureInMethod() {doTest()}
+  void testRefInClosureInScript() {doTest()}
+  void testMethodParamsInClosures() {doTest()}
+  void testClosureParamInInnerClosure() {doTest()}
 }

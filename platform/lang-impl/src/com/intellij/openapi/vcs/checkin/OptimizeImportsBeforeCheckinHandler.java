@@ -81,6 +81,8 @@ public class OptimizeImportsBeforeCheckinHandler extends CheckinHandler implemen
 
     if (configuration.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT) {
       new OptimizeImportsProcessor(myProject, BeforeCheckinHandlerUtil.getPsiFiles(myProject, files), performCheckoutAction).run();
+    }  else {
+      finishAction.run();
     }
 
   }

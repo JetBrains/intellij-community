@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -41,14 +42,23 @@ public class DefaultGroovyVariableNameValidator implements NameValidator {
   private final Set<String> mySet = new HashSet<String>();
 
   public DefaultGroovyVariableNameValidator(GroovyPsiElement context) {
-    this(context, Collections.<String>emptyList());
+    this(context, Collections.<String>emptyList(), true, false);
   }
 
   public DefaultGroovyVariableNameValidator(GroovyPsiElement context, Collection<String> restrictedNames) {
-    this(context, restrictedNames, true);
+    this(context, restrictedNames, true, false);
   }
 
-  public DefaultGroovyVariableNameValidator(GroovyPsiElement context, Collection<String> restrictedNames, boolean includeFields) {
+  public DefaultGroovyVariableNameValidator(GroovyPsiElement context,
+                                            Collection<String> restrictedNames,
+                                            boolean includeFields) {
+    this(context, restrictedNames, includeFields, false);
+  }
+
+  public DefaultGroovyVariableNameValidator(GroovyPsiElement context,
+                                            Collection<String> restrictedNames,
+                                            boolean includeFields,
+                                            final boolean checkIntoInner) {
     myContext = context;
     mySet.addAll(restrictedNames);
     PropertyResolverProcessor processor = new PropertyResolverProcessor(null, myContext);
@@ -68,10 +78,18 @@ public class DefaultGroovyVariableNameValidator implements NameValidator {
       }
 
       @Override
-      public void visitClosure(GrClosableBlock closure) {}
+      public void visitClosure(GrClosableBlock closure) {
+        if (checkIntoInner) {
+          super.visitClosure(closure);
+        }
+      }
 
       @Override
-      public void visitTypeDefinition(GrTypeDefinition typeDefinition) {}
+      public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+        if (checkIntoInner && !typeDefinition.hasModifierProperty(PsiModifier.STATIC) ) {
+          super.visitTypeDefinition(typeDefinition);
+        }
+      }
     });
   }
 

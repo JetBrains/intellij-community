@@ -12,7 +12,7 @@ println("Invalid file " + java.lang.String.valueOf(f) + " provided");
 println("Usage: groovy sha1.groovy <file_to_hash>");
 }
 
-java.lang.Object messageDigest = hash.this.getBinding().getProperty("MessageDigest").getInstance.call("SHA1");
+final java.lang.Object messageDigest = hash.this.getBinding().getProperty("MessageDigest").getInstance.call("SHA1");
 long start = java.lang.System.currentTimeMillis();
 org.codehaus.groovy.runtime.DefaultGroovyMethods.eachByte(f, MB, new groovy.lang.Closure<java.lang.Object>(this, this) {
 public java.lang.Object doCall(java.lang.Byte[] buf, int bytesRead) {

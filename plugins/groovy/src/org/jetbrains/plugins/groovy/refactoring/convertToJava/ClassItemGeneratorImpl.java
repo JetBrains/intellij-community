@@ -20,9 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
@@ -35,11 +37,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,13 +52,17 @@ import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationU
  * @author Maxim.Medvedev
  */
 public class ClassItemGeneratorImpl implements ClassItemGenerator {
-  private Project myProject;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ClassItemGeneratorImpl");
   private ClassNameProvider classNameProvider;
+  private ExpressionContext context;
 
   public ClassItemGeneratorImpl(Project project) {
-    myProject = project;
+    this(new ExpressionContext(project));
+  }
+
+  public ClassItemGeneratorImpl(@NotNull ExpressionContext context) {
     classNameProvider = new GeneratorClassNameProvider();
+    this.context = context;
   }
 
   @Override
@@ -66,11 +70,10 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     builder.append(constant.getName());
 
     final GrArgumentList argumentList = constant.getArgumentList();
-    final ExpressionContext context = new ExpressionContext(myProject);
     if (argumentList != null) {
       final GroovyResolveResult resolveResult = constant.resolveConstructorGenerics();
       GrClosureSignature signature = GrClosureSignatureUtil.createSignature(resolveResult);
-      new ArgumentListGenerator(builder, context).generate(
+      new ArgumentListGenerator(builder, context.extend()).generate(
         signature,
         argumentList.getExpressionArguments(),
         argumentList.getNamedArguments(),
@@ -82,11 +85,9 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     final GrEnumConstantInitializer anonymousBlock = constant.getConstantInitializer();
     if (anonymousBlock != null) {
       builder.append("{\n");
-      new ClassGenerator(myProject, classNameProvider, this).writeMembers(builder, anonymousBlock, true);
+      new ClassGenerator(classNameProvider, this).writeMembers(builder, anonymousBlock, true);
       builder.append("\n}");
     }
-
-    //todo make something with context???
   }
 
   @Override
@@ -119,7 +120,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
     //append return type
     if (!method.isConstructor()) {
-      PsiType retType = PsiUtil.getSmartReturnType(method);
+      PsiType retType = TypeProvider.getReturnType(method);
 
       /*
       if (!method.hasModifierProperty(PsiModifier.STATIC)) {
@@ -157,7 +158,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
         builder.append("default ");
         GrAnnotationMemberValue defaultValue = defaultAnnotationValue.getDefaultValue();
         if (defaultValue != null) {
-          defaultValue.accept(new AnnotationGenerator(builder, myProject));
+          defaultValue.accept(new AnnotationGenerator(builder, context.project));
         }
       }
     }
@@ -169,7 +170,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       /************* body **********/
       if (method instanceof GrMethod) {
         if (skipOptional == 0) {
-          new CodeBlockGenerator(builder, myProject).generateMethodBody((GrMethod)method);
+          new CodeBlockGenerator(builder, context.extend()).generateMethodBody((GrMethod)method);
         }
         else {
           builder.append("{\n").append(generateDelegateCall((GrMethod)method, actualParams)).append("\n}\n");
@@ -202,7 +203,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       builder.append("this");
     }
     else {
-      if (method.getReturnType() != PsiType.VOID) {
+      if (TypeProvider.getReturnType(method) != PsiType.VOID) {
         builder.append("return ");
       }
       builder.append(method.getName());
@@ -222,7 +223,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     }
     builder.delete(builder.length() - 2, builder.length());
     builder.append(")");
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
     final GrStatement delegateCall;
 
     PsiElement context = method.getContainingClass() == null ? method : method.getContainingClass();
@@ -234,10 +235,11 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     }
 
     final StringBuilder result = new StringBuilder();
-    delegateCall.accept(new CodeBlockGenerator(result, myProject));
+    delegateCall.accept(new CodeBlockGenerator(result, this.context.extend()));
     return result;
   }
 
+  @SuppressWarnings({"MethodMayBeStatic"})
   private void writeMainScriptMethodBody(StringBuilder builder, PsiMethod method) {
     final PsiClass containingClass = method.getContainingClass();
     LOG.assertTrue(containingClass instanceof GroovyScriptClass);
@@ -256,7 +258,10 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     LOG.assertTrue(((GroovyFile)scriptFile).isScript());
     final List<GrStatement> exitPoints = ControlFlowUtils.collectReturns(scriptFile);
 
-    new CodeBlockGenerator(builder, new ExpressionContext(myProject), exitPoints)
+
+    ExpressionContext extended = context.extend();
+    extended.searchForLocalVarsToWrap((GroovyPsiElement)scriptFile);
+    new CodeBlockGenerator(builder, extended, exitPoints)
       .visitStatementOwner((GroovyFile)scriptFile, MissingReturnInspection.methodMissesSomeReturns((GroovyFile)scriptFile, true));
     builder.append("\n}\n");
   }
@@ -288,6 +293,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     }
   }
 
+  @SuppressWarnings({"MethodMayBeStatic"})
   private PsiClassType[] getMethodExceptions(PsiMethod method) {
     return method.getThrowsList().getReferencedTypes();
 
@@ -296,8 +302,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
   @Override
   public void writeVariableDeclarations(StringBuilder builder, GrVariableDeclaration variableDeclaration) {
-    final ExpressionContext context = new ExpressionContext(myProject);
-    GenerationUtil.writeSimpleVarDeclaration(variableDeclaration, builder, context);
+    GenerationUtil.writeSimpleVarDeclaration(variableDeclaration, builder, context.extend());
     builder.append('\n');
   }
 
@@ -306,7 +311,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     List<PsiMethod> result = new ArrayList<PsiMethod>(Arrays.asList(typeDefinition.getMethods()));
 
     if (typeDefinition instanceof GroovyScriptClass) {
-      final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
+      final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.project);
       final String name = typeDefinition.getName();
       result.add(factory.createConstructorFromText(name, new String[]{"groovy.lang.Binding"}, new String[]{"binding"}, "{super(binding);}",
                                                    typeDefinition));

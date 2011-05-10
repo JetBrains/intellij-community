@@ -16,9 +16,9 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.containers.hash.HashSet;
+import org.codehaus.groovy.util.ManagedConcurrentMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -46,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.Collection;
 import java.util.Set;
@@ -74,10 +75,6 @@ public class CodeBlockGenerator extends Generator {
     }
   }
 
-  public CodeBlockGenerator(StringBuilder builder, Project project) {
-    this(builder, new ExpressionContext(project));
-  }
-
   @Override
   public StringBuilder getBuilder() {
     return builder;
@@ -89,13 +86,16 @@ public class CodeBlockGenerator extends Generator {
   }
 
   public void generateMethodBody(GrMethod method) {
+    context.searchForLocalVarsToWrap(method);
     final GrOpenBlock block = method.getBlock();
 
     boolean shouldInsertReturnNull = false;
     myExitPoints.clear();
-    if (!method.isConstructor() && method.getReturnType() != PsiType.VOID) {
+    PsiType returnType = TypeProvider.getReturnType(method);
+    if (!method.isConstructor() && returnType != PsiType.VOID) {
       myExitPoints.addAll(ControlFlowUtils.collectReturns(block));
-      shouldInsertReturnNull = MissingReturnInspection.methodMissesSomeReturns(block, method.getReturnType() != null);
+      shouldInsertReturnNull = !(returnType instanceof PsiPrimitiveType) &&
+                               MissingReturnInspection.methodMissesSomeReturns(block, method.getReturnTypeElementGroovy() != null);
     }
 
     if (block != null) {
@@ -105,7 +105,7 @@ public class CodeBlockGenerator extends Generator {
 
   @Override
   public void visitMethod(GrMethod method) {
-    LOG.assertTrue(false, "don't invoke it!!!");
+    LOG.error("don't invoke it!!!");
   }
 
   @Override
@@ -115,6 +115,19 @@ public class CodeBlockGenerator extends Generator {
 
   public void generateCodeBlock(GrCodeBlock block, boolean shouldInsertReturnNull) {
     builder.append("{\n");
+    if (block.getParent() instanceof GrMethod) {
+      GrMethod method = (GrMethod)block.getParent();
+      GrParameter[] parameters = method.getParameters();
+      for (GrParameter parameter : parameters) {
+        if (context.analyzedVars.toWrap(parameter)) {
+          StringBuilder typeText = new StringBuilder(GroovyCommonClassNames.GROOVY_LANG_REFERENCE);
+          GenerationUtil.writeTypeParameters(typeText, new PsiType[]{TypeProvider.getParameterType(parameter)}, method,
+                                             new GeneratorClassNameProvider());
+          builder.append("final ").append(typeText).append(' ').append(context.analyzedVars.toVarName(parameter))
+            .append(" = new ").append(typeText).append('(').append(parameter.getName()).append(");\n");
+        }
+      }
+    }
     visitStatementOwner(block, shouldInsertReturnNull);
     builder.append("}\n");
   }
@@ -159,7 +172,7 @@ public class CodeBlockGenerator extends Generator {
   }
 
   public void visitStatement(GrStatement statement) {
-    LOG.assertTrue(false, "all statements must be overloaded");
+    LOG.error("all statements must be overloaded");
   }
 
   @Override
@@ -360,7 +373,7 @@ public class CodeBlockGenerator extends Generator {
 
   private static void writeVariableWithoutSemicolonAndInitializer(StringBuilder builder, GrVariable var) {
     ModifierListGenerator.writeModifiers(builder, var.getModifierList());
-    GenerationUtil.writeType(builder, GenerationUtil.getVarType(var), var);
+    GenerationUtil.writeType(builder, TypeProvider.getVarType(var), var);
     builder.append(" ").append(var.getName());
   }
 
@@ -481,7 +494,7 @@ public class CodeBlockGenerator extends Generator {
       final GrModifierList modifierList = variableDeclaration.getModifierList();
       for (final GrVariable v : variables) {
         ModifierListGenerator.writeModifiers(builder, modifierList);
-        final PsiType type = GenerationUtil.getVarType(v);
+        final PsiType type = TypeProvider.getVarType(v);
         GenerationUtil.writeType(builder, type, variableDeclaration);
         builder.append(" ").append(v.getName());
         builder.append(" = ").append(iteratorName).append(".hasNext() ? ").append(iteratorName).append(".next() : null;");

@@ -53,7 +53,7 @@ public class ClosureGenerator {
     builder.append(owner).append(", ").append(owner).append(") {\n");
 
     final GrMethod method = generateClosureMethod(closure);
-    ClassGenerator.writeAllSignaturesOfMethod(builder, method, new ClassItemGeneratorImpl(context.project));
+    ClassGenerator.writeAllSignaturesOfMethod(builder, method, new ClassItemGeneratorImpl(context));
     builder.append("}");
   }
 

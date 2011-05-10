@@ -284,7 +284,7 @@ public class ExpressionGenerator extends Generator {
 
   private void writeTypeBody(StringBuilder builder, GrAnonymousClassDefinition anonymous) {
     builder.append("{\n");
-    new ClassGenerator(context.project, new GeneratorClassNameProvider(), new ClassItemGeneratorImpl(context.project))
+    new ClassGenerator(new GeneratorClassNameProvider(), new ClassItemGeneratorImpl(context.extend()))
       .writeMembers(builder, anonymous, true);
     builder.append('}');
   }
@@ -326,12 +326,30 @@ public class ExpressionGenerator extends Generator {
     GrExpression rValue = expression.getRValue();
     final IElementType token = expression.getOperationToken();
 
+    boolean toWrap = false;
+
+    PsiElement realLValue = PsiUtil.skipParentheses(lValue, false);
+    if (realLValue instanceof GrReferenceExpression) {
+      PsiElement resolved = ((GrReferenceExpression)realLValue).resolve();
+      if (resolved instanceof GrVariable && context.analyzedVars.toWrap((GrVariable)resolved)) toWrap = true;
+    }
+
+
 
     if (token == mASSIGN) {
       lValue.accept(this);
-      builder.append(" = ");
+
+      if (toWrap) {
+        builder.append(".set(");
+      }
+      else {
+        builder.append(" = ");
+      }
       if (rValue != null) {
         rValue.accept(this);
+      }
+      if (toWrap) {
+        builder.append(')');
       }
       return;
     }
@@ -341,23 +359,44 @@ public class ExpressionGenerator extends Generator {
 
     if (resolved instanceof PsiMethod) {
       lValue.accept(this);
-      builder.append(" = ");
+      if (toWrap) {
+        builder.append(".set(");
+      }
+      else {
+        builder.append(" = ");
+      }
+
       if (rValue == null) {
         rValue = factory.createExpressionFromText("null");
       }
       invokeMethodOn(
         ((PsiMethod)resolved),
-        lValue,
+        (GrExpression)lValue.copy(),
         new GrExpression[]{rValue},
         GrNamedArgument.EMPTY_ARRAY,
         GrClosableBlock.EMPTY_ARRAY,
         resolveResult.getSubstitutor(),
         expression
       );
+      if (toWrap) {
+        builder.append(')');
+      }
     }
     else {
+      if (toWrap) {
+        lValue.accept(this);
+        builder.append(".set(");
+
+        GrBinaryExpression bin =
+          (GrBinaryExpression)factory.createExpressionFromText("a" + expression.getOpToken().getText().charAt(0) + "b", expression);
+        GrExpression newLValue = (GrExpression)bin.getLeftOperand().replace(lValue);
+        GrExpression newRValue = rValue == null ? null : (GrExpression)bin.getRightOperand().replace(rValue);
+        writeSimpleBinaryExpression(bin.getOperationToken(), newLValue, newRValue);
+        builder.append(')');
+      }
       writeSimpleBinaryExpression(expression.getOpToken(), lValue, rValue);
     }
+
   }
 
   @Override
@@ -521,15 +560,25 @@ public class ExpressionGenerator extends Generator {
       if (addParentheses) {
         builder.append('(');
       }
-      operand.accept(this);
-      builder.append(" = ");
+      boolean wrap = context.analyzedVars.toWrap((GrVariable)resolved);
+      if (wrap) {
+        operand.accept(this);
+        builder.append(".set(");
+      }
+      else {
+        operand.accept(this);
+        builder.append(" = ");
+      }
       invokeMethodOn(
         method,
-        operand,
+        (GrExpression)operand.copy(),
         GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
         resolveResult.getSubstitutor(),
         unary
       );
+      if (wrap) {
+        builder.append(')');
+      }
       if (addParentheses) {
         builder.append(')');
       }
@@ -634,7 +683,16 @@ public class ExpressionGenerator extends Generator {
       }
       if (resolved instanceof PsiNamedElement) {
         final String refName = ((PsiNamedElement)resolved).getName();
-        builder.append(refName);
+
+        if (resolved instanceof GrVariable && context.analyzedVars.toWrap((GrVariable)resolved)) {
+          builder.append(context.analyzedVars.toVarName((GrVariable)resolved));
+          if (!PsiUtil.isAccessedForWriting(referenceExpression)) {
+            builder.append(".get()");
+          }
+        }
+        else {
+          builder.append(refName);
+        }
       }
       else {
         final String refName = referenceExpression.getReferenceName();
