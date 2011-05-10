@@ -37,108 +37,122 @@ import java.io.IOException;
  */
 public final class AnnotateCommand extends AbstractCommand {
 
-	// Fields =================================================================
+  // Fields =================================================================
 
-	private boolean useHeadIfNotFound;
-	private String date;
-	private String revisionOrTag;
+  private boolean useHeadIfNotFound;
+  private String date;
+  private String revisionOrTag;
+  private boolean annotateBinary;
 
-	// Setup ==================================================================
+  // Setup ==================================================================
 
-	public AnnotateCommand() {
-	}
+  public AnnotateCommand() {
+  }
 
-	// Implemented ============================================================
+  // Implemented ============================================================
 
-	public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
-                                                                                                                                                                                                                  AuthenticationException {
-		final ICvsFiles cvsFiles;
-		try {
-			cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);
-		}
-		catch (IOException ex) {
-			throw new IOCommandException(ex);
-		}
+  public boolean execute(IRequestProcessor requestProcessor, IEventSender eventManager, ICvsListenerRegistry listenerRegistry, IClientEnvironment clientEnvironment, IProgressViewer progressViewer) throws CommandException,
+                                                                                                                                                                                                            AuthenticationException {
+    final ICvsFiles cvsFiles;
+    try {
+      cvsFiles = scanFileSystem(getFileObjects(), clientEnvironment);
+    }
+    catch (IOException ex) {
+      throw new IOCommandException(ex);
+    }
 
-		final Requests requests = new Requests(CommandRequest.ANNOTATE, clientEnvironment);
-		requests.addArgumentRequest(isUseHeadIfNotFound(), "-f");
-		requests.addArgumentRequest(getDate(), "-D");
-		requests.addArgumentRequest(getRevisionOrTag(), "-r");
-		addFileRequests(cvsFiles, requests, clientEnvironment);
-		requests.addLocalPathDirectoryRequest();
-		addArgumentRequests(requests);
+    final Requests requests = new Requests(CommandRequest.ANNOTATE, clientEnvironment);
+    requests.addArgumentRequest(isUseHeadIfNotFound(), "-f");
+    requests.addArgumentRequest(getDate(), "-D");
+    requests.addArgumentRequest(getRevisionOrTag(), "-r");
+    requests.addArgumentRequest(isAnnotateBinary(), "-F");
+    addFileRequests(cvsFiles, requests, clientEnvironment);
+    requests.addLocalPathDirectoryRequest();
+    addArgumentRequests(requests);
 
-		final ICvsListener parser = new AnnotateMessageParser(eventManager, clientEnvironment.getCvsFileSystem());
-		parser.registerListeners(listenerRegistry);
-		try {
-			return requestProcessor.processRequests(requests, FileStateRequestsProgressHandler.create(progressViewer, cvsFiles));
-		}
-		finally {
-			parser.unregisterListeners(listenerRegistry);
-		}
-	}
+    final ICvsListener parser = new AnnotateMessageParser(eventManager, clientEnvironment.getCvsFileSystem());
+    parser.registerListeners(listenerRegistry);
+    try {
+      return requestProcessor.processRequests(requests, FileStateRequestsProgressHandler.create(progressViewer, cvsFiles));
+    }
+    finally {
+      parser.unregisterListeners(listenerRegistry);
+    }
+  }
 
-	public void resetCvsCommand() {
-		super.resetCvsCommand();
-		setRecursive(true);
-		setDate(null);
-		setAnnotateByRevisionOrTag(null);
-		setUseHeadIfNotFound(false);
-	}
+  public void resetCvsCommand() {
+    super.resetCvsCommand();
+    setRecursive(true);
+    setDate(null);
+    setAnnotateByRevisionOrTag(null);
+    setUseHeadIfNotFound(false);
+    setAnnotateBinary(false);
+  }
 
-	public String getCvsCommandLine() {
-		@NonNls final StringBuffer cvsCommandLine = new StringBuffer("annotate ");
-		cvsCommandLine.append(getCvsArguments());
-		appendFileArguments(cvsCommandLine);
-		return cvsCommandLine.toString();
-	}
+  public String getCvsCommandLine() {
+    @NonNls final StringBuffer cvsCommandLine = new StringBuffer("annotate ");
+    cvsCommandLine.append(getCvsArguments());
+    appendFileArguments(cvsCommandLine);
+    return cvsCommandLine.toString();
+  }
 
-	// Accessing ==============================================================
+  // Accessing ==============================================================
 
-	private String getDate() {
-		return date;
-	}
+  private String getDate() {
+    return date;
+  }
 
-	public void setDate(String date) {
-		this.date = date;
-	}
+  public void setDate(String date) {
+    this.date = date;
+  }
 
-	private String getRevisionOrTag() {
-		return revisionOrTag;
-	}
+  private String getRevisionOrTag() {
+    return revisionOrTag;
+  }
 
-	public void setAnnotateByRevisionOrTag(String annotateByRevision) {
-		this.revisionOrTag = annotateByRevision;
-	}
+  public void setAnnotateByRevisionOrTag(String annotateByRevision) {
+    this.revisionOrTag = annotateByRevision;
+  }
 
-	private boolean isUseHeadIfNotFound() {
-		return useHeadIfNotFound;
-	}
+  private boolean isUseHeadIfNotFound() {
+    return useHeadIfNotFound;
+  }
 
-	private void setUseHeadIfNotFound(boolean useHeadIfNotFound) {
-		this.useHeadIfNotFound = useHeadIfNotFound;
-	}
+  private void setUseHeadIfNotFound(boolean useHeadIfNotFound) {
+    this.useHeadIfNotFound = useHeadIfNotFound;
+  }
 
-	// Utils ==================================================================
+  private boolean isAnnotateBinary() {
+    return annotateBinary;
+  }
 
-	private String getCvsArguments() {
-		@NonNls final StringBuffer cvsArguments = new StringBuffer("");
-		if (!isRecursive()) {
-			cvsArguments.append("-l ");
-		}
-		if (getRevisionOrTag() != null) {
-			cvsArguments.append("-r ");
-			cvsArguments.append(getRevisionOrTag());
-			cvsArguments.append(" ");
-		}
-		if (getDate() != null) {
-			cvsArguments.append("-D ");
-			cvsArguments.append(getDate());
-			cvsArguments.append(" ");
-		}
-		if (isUseHeadIfNotFound()) {
-			cvsArguments.append("-f ");
-		}
-		return cvsArguments.toString();
-	}
+  public void setAnnotateBinary(boolean annotateBinary) {
+    this.annotateBinary = annotateBinary;
+  }
+
+  // Utils ==================================================================
+
+  private String getCvsArguments() {
+    @NonNls final StringBuilder cvsArguments = new StringBuilder("");
+    if (!isRecursive()) {
+      cvsArguments.append("-l ");
+    }
+    if (getRevisionOrTag() != null) {
+      cvsArguments.append("-r ");
+      cvsArguments.append(getRevisionOrTag());
+      cvsArguments.append(" ");
+    }
+    if (getDate() != null) {
+      cvsArguments.append("-D ");
+      cvsArguments.append(getDate());
+      cvsArguments.append(" ");
+    }
+    if (isUseHeadIfNotFound()) {
+      cvsArguments.append("-f ");
+    }
+    if (isAnnotateBinary()) {
+      cvsArguments.append("-F");
+    }
+    return cvsArguments.toString();
+  }
 }
