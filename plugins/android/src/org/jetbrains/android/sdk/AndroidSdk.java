@@ -228,7 +228,9 @@ public abstract class AndroidSdk {
         AndroidDebugBridge.createBridge(adbPath, true);
       }
       else {
-        AndroidDebugBridge.createBridge(adbPath, myAdbCrashed);
+        final AndroidDebugBridge bridge = AndroidDebugBridge.getBridge();
+        final boolean forceRestart = myAdbCrashed || (bridge != null && !bridge.isConnected());
+        AndroidDebugBridge.createBridge(adbPath, forceRestart);
       }
     }
   }

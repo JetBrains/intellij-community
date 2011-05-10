@@ -538,11 +538,12 @@ public class GrClosureSignatureUtil {
       if (expression instanceof GrNewExpression && com.intellij.psi.util.PsiUtil.resolveClassInType(type) == null) {
         type = null;
       }
+      type = TypeConversionUtil.erasure(type);
       innerArgs.add(new InnerArg(type, expression));
     }
 
     for (GrClosableBlock closureArgument : closureArguments) {
-      innerArgs.add(new InnerArg(closureArgument.getType(), closureArgument));
+      innerArgs.add(new InnerArg(TypeConversionUtil.erasure(closureArgument.getType()), closureArgument));
     }
 
     final ArgInfo<InnerArg>[] innerMap =

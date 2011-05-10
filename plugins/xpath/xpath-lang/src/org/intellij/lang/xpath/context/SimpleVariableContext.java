@@ -12,7 +12,7 @@ import org.intellij.lang.xpath.psi.XPathVariableReference;
 * User: sweinreuter
 * Date: 08.01.2008
 */
-public abstract class AbstractVariableContext<VarType> implements VariableContext<VarType> {
+public abstract class SimpleVariableContext implements VariableContext<String> {
 
     public XPathVariable resolve(XPathVariableReference reference) {
         return null;
@@ -24,7 +24,7 @@ public abstract class AbstractVariableContext<VarType> implements VariableContex
 
     @NotNull
     public IntentionAction[] getUnresolvedVariableFixes(XPathVariableReference reference) {
-        return new IntentionAction[0];
+        return IntentionAction.EMPTY_ARRAY;
     }
 
     public boolean isReferenceTo(PsiElement element, XPathVariableReference reference) {

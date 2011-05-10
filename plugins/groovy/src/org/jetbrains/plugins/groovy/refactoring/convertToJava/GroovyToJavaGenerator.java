@@ -115,7 +115,7 @@ public class GroovyToJavaGenerator {
       StringBuilder text = new StringBuilder();
       final ClassNameProvider classNameProvider = new StubClassNameProvider(myAllToCompile);
       ClassItemGenerator classItemGenerator = new StubGenerator(classNameProvider, myProject);
-      new ClassGenerator(myProject, classNameProvider, classItemGenerator).writeTypeDefinition(text, typeDefinition, true);
+      new ClassGenerator(myProject, classNameProvider, classItemGenerator).writeTypeDefinition(text, typeDefinition, true, true);
       return text;
     }
     catch (ProcessCanceledException e) {

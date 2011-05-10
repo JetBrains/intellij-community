@@ -1470,6 +1470,15 @@ public class StringUtil {
     return indexOf(s, c, start, end) >= 0;
   }
 
+  public static boolean containsWhitespaces(@Nullable CharSequence s) {
+    if (s == null) return false;
+
+    for (int i = 0; i < s.length(); i++) {
+      if (Character.isWhitespace(s.charAt(i))) return true;
+    }
+    return false;
+  }
+
   public static int indexOf(@NotNull CharSequence s, char c) {
     return indexOf(s, c, 0, s.length());
   }

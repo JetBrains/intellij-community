@@ -65,23 +65,7 @@
       <string>com.intellij.idea.Main</string>
       <key>Properties</key>
       <dict>
-        <key>CVS_PASSFILE</key>
-        <string>~/.cvspass</string>
-        <key>com.apple.mrj.application.live-resize</key>
-        <string>false</string>
-        <key>idea.paths.selector</key>
-        <string>@@system_selector@@</string>
-        <key>java.endorsed.dirs</key>
-        <string></string>
-        <key>idea.smooth.progress</key>
-        <string>false</string>
-        <key>apple.laf.useScreenMenuBar</key>
-        <string>true</string>
-        <key>apple.awt.graphics.UseQuartz</key>
-        <string>true</string>
-        <key>apple.awt.fullscreencapturealldisplays</key>
-        <string>false</string>
-        @@platform@@
+        @@idea_properties@@
       </dict>
 
       <key>VMOptions</key>

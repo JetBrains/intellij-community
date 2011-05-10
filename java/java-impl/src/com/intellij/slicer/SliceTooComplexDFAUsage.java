@@ -62,7 +62,7 @@ public class SliceTooComplexDFAUsage extends SliceUsage {
       }
 
       public String getTooltipText() {
-        return "Too complex to analyze, analysis stoppped here";
+        return "Too complex to analyze, analysis stopped here";
       }
     };
   }

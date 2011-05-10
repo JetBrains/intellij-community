@@ -51,4 +51,13 @@ class FileGenerationTest extends LightGroovyTestCase {
   void testGenericTypes() {doTest()}
   void testStaticProperty() {doTest()}
   void testResolveMethodInsideClosure() {doTest()}
+  void testAnno() {doTest()}
+  void testAnno1() {doTest()}
+
+  void testUseAnno() {doTest()}
+
+  void testConcurency() {doTest()}
+  void testHash() {doTest()}
+  void testAnonymous() {doTest()}
+  void testAnonymous2() {doTest()}
 }

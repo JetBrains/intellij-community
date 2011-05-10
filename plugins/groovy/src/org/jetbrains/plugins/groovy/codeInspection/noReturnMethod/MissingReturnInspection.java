@@ -113,8 +113,18 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
             hasExplicitReturn.set(true);
           }
         }
-        else if (element instanceof GrThrowStatement || element instanceof GrAssertStatement) {
+        else if (element instanceof GrThrowStatement) {
           sometimes.set(true);
+        }
+        else if (element instanceof GrAssertStatement) {
+          sometimes.set(true);
+          int count = 0;
+          for (Instruction _i : instruction.allSucc()) {
+            count++;
+          }
+          if (count <= 1) {
+            always.set(false);
+          }
         }
         else {
           always.set(false);

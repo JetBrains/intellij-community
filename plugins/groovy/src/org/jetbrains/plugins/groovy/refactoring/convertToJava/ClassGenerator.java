@@ -52,8 +52,10 @@ public class ClassGenerator {
     this.classItemGenerator = classItemGenerator;
   }
 
-  private static void writePackageStatement(StringBuilder text, GrPackageDefinition packageDefinition) {
+  private void writePackageStatement(StringBuilder text, GrPackageDefinition packageDefinition) {
     if (packageDefinition != null) {
+      ModifierListGenerator.writeModifiers(text, packageDefinition.getAnnotationList(), ModifierListGenerator.JAVA_MODIFIERS,
+                                           classItemGenerator.generateAnnotations());
       text.append("package ");
       text.append(packageDefinition.getPackageName());
       text.append(";");
@@ -62,11 +64,11 @@ public class ClassGenerator {
     }
   }
 
-  public void writeTypeDefinition(StringBuilder text, @NotNull final PsiClass typeDefinition, boolean toplevel) {
+  public void writeTypeDefinition(StringBuilder text, @NotNull final PsiClass typeDefinition, boolean toplevel, boolean insertPackageSmst) {
     final boolean isScript = typeDefinition instanceof GroovyScriptClass;
 
     final GroovyFile containingFile = (GroovyFile)typeDefinition.getContainingFile();
-    if (toplevel) {
+    if (insertPackageSmst) {
       writePackageStatement(text, containingFile.getPackageDefinition());
     }
 
@@ -75,7 +77,8 @@ public class ClassGenerator {
     boolean isInterface = !isAnnotationType && typeDefinition.isInterface();
     boolean isClassDef = !isInterface && !isEnum && !isAnnotationType && !isScript;
 
-    GenerationUtil.writeClassModifiers(text, typeDefinition.getModifierList(), typeDefinition.isInterface(), toplevel);
+    ModifierListGenerator.writeClassModifiers(text, typeDefinition.getModifierList(), typeDefinition.isInterface(), toplevel,
+                                              classItemGenerator.generateAnnotations());
 
     if (isInterface) {
       text.append("interface");
@@ -131,7 +134,7 @@ public class ClassGenerator {
         }
       }
       for (PsiClass inner : typeDefinition.getInnerClasses()) {
-        writeTypeDefinition(text, inner, false);
+        writeTypeDefinition(text, inner, false, false);
         text.append("\n");
       }
     }

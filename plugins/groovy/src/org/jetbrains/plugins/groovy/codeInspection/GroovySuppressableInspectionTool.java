@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -109,7 +108,7 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
     final GrAnnotationMemberValue attributeValue = (GrAnnotationMemberValue)annotation.findAttributeValue(null);
     Collection<String> result = new ArrayList<String>();
     if (attributeValue instanceof GrAnnotationArrayInitializer) {
-      for (GrExpression annotationMemberValue : ((GrAnnotationArrayInitializer)attributeValue).getInitializers()) {
+      for (GrAnnotationMemberValue annotationMemberValue : ((GrAnnotationArrayInitializer)attributeValue).getInitializers()) {
         final String id = getInspectionIdSuppressedInAnnotationAttribute(annotationMemberValue);
         if (id != null) {
           result.add(id);

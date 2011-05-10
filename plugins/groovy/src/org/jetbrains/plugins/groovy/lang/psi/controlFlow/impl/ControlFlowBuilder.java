@@ -149,12 +149,12 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   public static Instruction[] assertValidPsi(Instruction[] instructions) {
-    for (Instruction instruction : instructions) {
+    /*for (Instruction instruction : instructions) {
       PsiElement element = instruction.getElement();
       if (element != null && !element.isValid()) {
         throw new AssertionError("invalid element in dfa: " + element);
       }
-    }
+    }*/
     return instructions;
   }
 

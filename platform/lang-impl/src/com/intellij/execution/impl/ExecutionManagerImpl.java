@@ -33,6 +33,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -50,6 +51,8 @@ import java.util.Map;
  * @author dyoma
  */
 public class ExecutionManagerImpl extends ExecutionManager implements ProjectComponent {
+  private static final Logger LOG = Logger.getInstance("com.intellij.execution.impl.ExecutionManagerImpl");
+
   private final Project myProject;
 
   private RunContentManagerImpl myContentManager;
@@ -169,6 +172,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
         }
         catch (ExecutionException e) {
           ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), profile, e);
+          LOG.info(e);
         }
         finally {
           if (!started) {

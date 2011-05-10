@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2010 Bas Leijdekkers
+ * Copyright 2005-2011 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,6 +154,7 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
             methodClass = method.getContainingClass();
         }
 
+        @Override
         public boolean process(PsiReference reference) {
             final PsiElement element = reference.getElement();
             final PsiMethod containingMethod =
@@ -167,10 +168,19 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
                 onlyAccessedFromInnerClass = false;
                 return false;
             }
-            if (ignoreMethodsAccessedFromAnonymousClass &&
-                    containingClass instanceof PsiAnonymousClass) {
-                onlyAccessedFromInnerClass = false;
-                return false;
+            if (containingClass instanceof PsiAnonymousClass) {
+                final PsiAnonymousClass anonymousClass =
+                        (PsiAnonymousClass) containingClass;
+                final PsiExpressionList argumentList =
+                        anonymousClass.getArgumentList();
+                if (PsiTreeUtil.isAncestor(argumentList, element, true)) {
+                    onlyAccessedFromInnerClass = false;
+                    return false;
+                }
+                if (ignoreMethodsAccessedFromAnonymousClass) {
+                    onlyAccessedFromInnerClass = false;
+                    return false;
+                }
             }
             if (cache != null) {
                 if (!cache.equals(containingClass)) {

@@ -26,6 +26,8 @@ public class EmptyProgressIndicator implements ProgressIndicator {
 
   public void start() {
     myIsRunning = true;
+    myIsCanceled = false;
+    myFinished = false;
   }
 
   public void stop() {

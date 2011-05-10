@@ -24,6 +24,7 @@ import com.intellij.psi.util.*;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -54,16 +55,6 @@ public class TypeInferenceHelper {
     return RecursionManager.createGuard("refType").doPreventingRecursion(refExpr, new Computable<PsiType>() {
       @Override
       public PsiType compute() {
-        return CachedValuesManager.getManager(refExpr.getProject()).getCachedValue(refExpr, new CachedValueProvider<PsiType>() {
-          @Override
-          public Result<PsiType> compute() {
-            return Result.create(inferType(), PsiModificationTracker.MODIFICATION_COUNT);
-          }
-        });
-      }
-
-      @Nullable
-      private PsiType inferType() {
         GroovyPsiElement scope =
           PsiTreeUtil.getParentOfType(refExpr, GrMethod.class, GrClosableBlock.class, GrClassInitializer.class, GroovyFileBase.class);
         if (scope instanceof GrMethod) {
@@ -195,6 +186,10 @@ public class TypeInferenceHelper {
             return PsiUtil.extractIterableTypeParameter(rType, false);
           }
         }
+      }
+      if (parent instanceof GrUnaryExpression && TokenSets.POSTFIX_UNARY_OP_SET.contains(
+        ((GrUnaryExpression)parent).getOperationTokenType())) {
+        return ((GrUnaryExpression)parent).getType();
       }
 
       return null;

@@ -23,6 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
@@ -30,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -57,7 +57,7 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
 
   @Nullable
   public PsiElement getNameIdentifierGroovy() {
-    return findChildByType(GroovyElementTypes.mIDENT);
+    return findChildByType(GroovyTokenTypes.mIDENT);
   }
 
   public PsiIdentifier getNameIdentifier() {
@@ -70,8 +70,13 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue) {
-    getValue().replace(newValue);
-    return getValue();
+    GrAnnotationMemberValue value = getValue();
+    if (value == null) {
+      return (PsiAnnotationMemberValue)add(newValue);
+    }
+    else {
+      return (PsiAnnotationMemberValue)value.replace(newValue);
+    }
   }
 
   public PsiReference getReference() {
@@ -95,19 +100,18 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
     GrAnnotation anno = getAnnotation();
     if (anno != null) {
       GrCodeReferenceElement ref = anno.getClassReference();
-      if (ref != null) {
-        PsiElement resolved = ref.resolve();
-        if (resolved instanceof PsiClass && ((PsiClass) resolved).isAnnotationType()) {
-          String declaredName = getName();
-          String name = declaredName == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : declaredName;
-          PsiMethod[] methods = ((PsiClass) resolved).findMethodsByName(name, false);
-          return methods.length == 1 ? methods[0] : null;
-        }
+      PsiElement resolved = ref.resolve();
+      if (resolved instanceof PsiClass && ((PsiClass) resolved).isAnnotationType()) {
+        String declaredName = getName();
+        String name = declaredName == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : declaredName;
+        PsiMethod[] methods = ((PsiClass) resolved).findMethodsByName(name, false);
+        return methods.length == 1 ? methods[0] : null;
       }
     }
     return null;
   }
 
+  @Nullable
   private GrAnnotation getAnnotation() {
     PsiElement pParent = getParent().getParent();
     if (pParent instanceof GrAnnotation) return (GrAnnotation) pParent;
@@ -131,7 +135,7 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
     } else {
       PsiElement first = getFirstChild();
       ASTNode anchorBefore = first != null ? first.getNode() : null;
-      getNode().addLeaf(GroovyElementTypes.mASSIGN, "=", anchorBefore);
+      getNode().addLeaf(GroovyTokenTypes.mASSIGN, "=", anchorBefore);
       getNode().addChild(newNameNode, anchorBefore);
     }
 
@@ -151,11 +155,9 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
     GrAnnotation anno = getAnnotation();
     if (anno != null) {
       GrCodeReferenceElement ref = anno.getClassReference();
-      if (ref != null) {
-        PsiElement resolved = ref.resolve();
-        if (resolved instanceof PsiClass && ((PsiClass) resolved).isAnnotationType()) {
-          return ((PsiClass) resolved).getMethods();
-        }
+      PsiElement resolved = ref.resolve();
+      if (resolved instanceof PsiClass && ((PsiClass) resolved).isAnnotationType()) {
+        return ((PsiClass) resolved).getMethods();
       }
     }
 

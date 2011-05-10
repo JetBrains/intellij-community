@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsUpdate.ui;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsHelper;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProviderOnVirtualFiles;
@@ -25,7 +26,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.CvsBundle;
+import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,10 +63,11 @@ public class UpdateOptionsPanel {
   public UpdateOptionsPanel(Project project,
                             final Collection<FilePath> files) {
     myProject = project;
+    final CvsConfiguration configuration = CvsConfiguration.getInstance(myProject);
     myChangeKeywordSubstitutionPanel =
-    new ChangeKeywordSubstitutionPanel(CvsConfiguration.getInstance(myProject).UPDATE_KEYWORD_SUBSTITUTION);
-    CvsConfiguration.getInstance(myProject).CLEAN_COPY = false;
-    CvsConfiguration.getInstance(myProject).RESET_STICKY = false;
+      new ChangeKeywordSubstitutionPanel(KeywordSubstitution.getValue(configuration.UPDATE_KEYWORD_SUBSTITUTION));
+    configuration.CLEAN_COPY = false;
+    configuration.RESET_STICKY = false;
     myMergingGroup = new JRadioButton[]{myDoNotMerge, myMergeWithBranch, myMergeTwoBranches};
 
     myKeywordSubstitutionPanel.setLayout(new BorderLayout());
@@ -78,9 +80,7 @@ public class UpdateOptionsPanel {
 
 
     TagsHelper.addChooseBranchAction(myBranch, files, project);
-
     TagsHelper.addChooseBranchAction(myBranch2, files, project);
-
   }
 
   public void reset() {
@@ -105,31 +105,23 @@ public class UpdateOptionsPanel {
     }
 
     enableBranchField();
-
   }
 
   private void enableBranchField() {
     int mergingMode = getSelected(myMergingGroup);
     switch (mergingMode) {
       case CvsConfiguration.DO_NOT_MERGE:
-        {
-          myBranch.setEnabled(false);
-          myBranch2.setEnabled(false);
-          return;
-        }
+        myBranch.setEnabled(false);
+        myBranch2.setEnabled(false);
+        break;
       case CvsConfiguration.MERGE_WITH_BRANCH:
-        {
-          myBranch.setEnabled(true);
-          myBranch2.setEnabled(false);
-          return;
-        }
+        myBranch.setEnabled(true);
+        myBranch2.setEnabled(false);
+        break;
       case CvsConfiguration.MERGE_TWO_BRANCHES:
-        {
-          myBranch.setEnabled(true);
-          myBranch2.setEnabled(true);
-          return;
-        }
-
+        myBranch.setEnabled(true);
+        myBranch2.setEnabled(true);
+        break;
     }
   }
 
@@ -145,15 +137,13 @@ public class UpdateOptionsPanel {
       }
     }
 
-
     configuration.PRUNE_EMPTY_DIRECTORIES = myPruneEmptyDirectories.isSelected();
     configuration.MERGING_MODE = getSelected(myMergingGroup);
     configuration.MERGE_WITH_BRANCH1_NAME = myBranch.getText();
     configuration.MERGE_WITH_BRANCH2_NAME = myBranch2.getText();
     configuration.RESET_STICKY = mySwitchToHeadRevision.isSelected();
     configuration.CREATE_NEW_DIRECTORIES = myCreateNewDirectories.isSelected();
-    configuration.UPDATE_KEYWORD_SUBSTITUTION = myChangeKeywordSubstitutionPanel.getKeywordSubstitution();
-
+    configuration.UPDATE_KEYWORD_SUBSTITUTION = myChangeKeywordSubstitutionPanel.getKeywordSubstitution().toString();
 
     myDateOrRevisionOrTagSettings.saveTo(configuration.UPDATE_DATE_OR_REVISION_SETTINGS);
   }

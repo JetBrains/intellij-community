@@ -43,6 +43,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
 
@@ -151,10 +152,13 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
                             file.getVirtualFile());
                     final PsiElementFactory elementFactory =
                             JavaPsiFacade.getElementFactory(project);
-                    final String packageInfoText = getPackageInfoText(xmlFile);
+                    String packageInfoText = getPackageInfoText(xmlFile);
+                    if (packageInfoText == null) {
+                        packageInfoText = xmlFile.getText();
+                    }
+                    final StringBuilder commentText = new StringBuilder("/**\n");
                     final String[] lines =
                             StringUtil.splitByLines(packageInfoText);
-                    final StringBuilder commentText = new StringBuilder("/**\n");
                     boolean appended = false;
                     for (String line : lines) {
                         if (!appended && line.length() == 0) {
@@ -168,10 +172,14 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
                     final PsiDocComment comment =
                             elementFactory.createDocCommentFromText(
                                     commentText.toString());
-                    final PsiPackageStatement packageStatement =
-                            elementFactory.createPackageStatement(aPackage);
-                    final PsiElement addedElement = file.add(packageStatement);
-                    file.addBefore(comment, addedElement);
+                    if (aPackage.length() > 0) {
+                        final PsiPackageStatement packageStatement =
+                                elementFactory.createPackageStatement(aPackage);
+                        final PsiElement addedElement = file.add(packageStatement);
+                        file.addBefore(comment, addedElement);
+                    } else {
+                        file.add(comment);
+                    }
                     element.delete();
                     if (!isOnTheFly()) {
                         return;
@@ -200,6 +208,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
             }.execute();
         }
 
+        @Nullable
         private static String getPackageInfoText(XmlFile xmlFile) {
             final XmlTag rootTag = xmlFile.getRootTag();
             if (rootTag == null) {

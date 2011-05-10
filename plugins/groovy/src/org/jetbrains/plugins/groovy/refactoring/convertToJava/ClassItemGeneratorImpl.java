@@ -25,6 +25,8 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrDefaultAnnotationValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -32,10 +34,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
@@ -105,10 +105,10 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
     final PsiClass containingClass = method.getContainingClass();
     if (method.isConstructor() && containingClass != null && containingClass.isEnum()) {
-      writeModifiers(builder, modifierList, ENUM_CONSTRUCTOR_MODIFIERS);
+      ModifierListGenerator.writeModifiers(builder, modifierList, ModifierListGenerator.ENUM_CONSTRUCTOR_MODIFIERS);
     }
     else {
-      writeModifiers(builder, modifierList);
+      ModifierListGenerator.writeModifiers(builder, modifierList);
     }
 
 
@@ -149,6 +149,17 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       LOG.assertTrue(skipOptional == 0);
       GenerationUtil.writeParameterList(builder, method.getParameterList().getParameters(), classNameProvider);
       actualParams = null;
+    }
+
+    if (method instanceof GrAnnotationMethod) {
+      GrDefaultAnnotationValue defaultAnnotationValue = ((GrAnnotationMethod)method).getDefaultAnnotationValue();
+      if (defaultAnnotationValue!=null) {
+        builder.append("default ");
+        GrAnnotationMemberValue defaultValue = defaultAnnotationValue.getDefaultValue();
+        if (defaultValue != null) {
+          defaultValue.accept(new AnnotationGenerator(builder, myProject));
+        }
+      }
     }
 
 
@@ -303,5 +314,10 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
         factory.createConstructorFromText(name, ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, "{super();}", typeDefinition));
     }
     return result;
+  }
+
+  @Override
+  public boolean generateAnnotations() {
+    return true;
   }
 }

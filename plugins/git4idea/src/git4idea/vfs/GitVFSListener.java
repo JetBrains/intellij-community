@@ -131,6 +131,7 @@ public class GitVFSListener extends VcsVFSListener {
             try {
               GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LS_FILES);
               h.setNoSSH(true);
+              h.setSilent(true);
               h.addParameters("--exclude-standard", "--others");
               h.endOptions();
               h.addParameters(paths);

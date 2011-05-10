@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,29 +15,37 @@
  */
 package com.intellij.cvsSupport2.keywordSubstitution;
 
+import com.intellij.CvsBundle;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
+
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * author: lesya
  */
-public class KeywordSubstitutionWrapper{
+public class KeywordSubstitutionWrapper {
 
   private final KeywordSubstitution myKeywordSubstitution;
   private final String myDisplayName;
 
-  public static final KeywordSubstitutionWrapper BINARY = new KeywordSubstitutionWrapper(KeywordSubstitution.BINARY, com.intellij.CvsBundle.message("keyword.substitution.binary"));
-  public static final KeywordSubstitutionWrapper KEYWORD_COMPRESSION = new KeywordSubstitutionWrapper(KeywordSubstitution.KEYWORD_COMPRESSION, com.intellij.CvsBundle.message("keyword.substitution.compression"));
-  public static final KeywordSubstitutionWrapper KEYWORD_EXPANSION = new KeywordSubstitutionWrapper(KeywordSubstitution.KEYWORD_EXPANSION, com.intellij.CvsBundle.message("keyword.substitution.expansion"));
-  public static final KeywordSubstitutionWrapper KEYWORD_EXPANSION_LOCKER = new KeywordSubstitutionWrapper(KeywordSubstitution.KEYWORD_EXPANSION_LOCKER, com.intellij.CvsBundle.message("keyword.substitution.expansion.locker"));
-  public static final KeywordSubstitutionWrapper NO_SUBSTITUTION = new KeywordSubstitutionWrapper(KeywordSubstitution.NO_SUBSTITUTION, com.intellij.CvsBundle.message("keyword.substitution.no.substitution"));
-  public static final KeywordSubstitutionWrapper KEYWORD_REPLACEMENT = new KeywordSubstitutionWrapper(KeywordSubstitution.KEYWORD_REPLACEMENT, com.intellij.CvsBundle.message("keyword.substitution.replacement"));
+  public static final KeywordSubstitutionWrapper KEYWORD_EXPANSION = new KeywordSubstitutionWrapper(KeywordSubstitution.KEYWORD_EXPANSION, CvsBundle.message("keyword.substitution.expansion"));
+  public static final KeywordSubstitutionWrapper KEYWORD_EXPANSION_LOCKER = new KeywordSubstitutionWrapper(KeywordSubstitution.KEYWORD_EXPANSION_LOCKER, CvsBundle.message("keyword.substitution.expansion.locker"));
+  public static final KeywordSubstitutionWrapper KEYWORD_COMPRESSION = new KeywordSubstitutionWrapper(KeywordSubstitution.KEYWORD_COMPRESSION, CvsBundle.message("keyword.substitution.compression"));
+  public static final KeywordSubstitutionWrapper NO_SUBSTITUTION = new KeywordSubstitutionWrapper(KeywordSubstitution.NO_SUBSTITUTION, CvsBundle.message("keyword.substitution.no.substitution"));
+  public static final KeywordSubstitutionWrapper BINARY = new KeywordSubstitutionWrapper(KeywordSubstitution.BINARY, CvsBundle.message("keyword.substitution.binary"));
+  public static final KeywordSubstitutionWrapper KEYWORD_REPLACEMENT = new KeywordSubstitutionWrapper(KeywordSubstitution.KEYWORD_REPLACEMENT, CvsBundle.message("keyword.substitution.replacement"));
+
+  private static List<KeywordSubstitutionWrapper> values = null;
 
   private KeywordSubstitutionWrapper(KeywordSubstitution keywordSubstitution, String displayName) {
     myKeywordSubstitution = keywordSubstitution;
     myDisplayName = displayName;
   }
 
-  public KeywordSubstitution getSubstitution(){
+  public KeywordSubstitution getSubstitution() {
     return myKeywordSubstitution;
   }
 
@@ -51,17 +59,33 @@ public class KeywordSubstitutionWrapper{
   }
 
   public static KeywordSubstitutionWrapper getValue(KeywordSubstitution substitution) {
-    if (substitution == KeywordSubstitution.BINARY) return KeywordSubstitutionWrapper.BINARY;
-    if (substitution == KeywordSubstitution.KEYWORD_COMPRESSION) return KeywordSubstitutionWrapper.KEYWORD_COMPRESSION;
-    if (substitution == KeywordSubstitution.KEYWORD_EXPANSION) return KeywordSubstitutionWrapper.KEYWORD_EXPANSION;
-    if (substitution == KeywordSubstitution.KEYWORD_EXPANSION_LOCKER) return KeywordSubstitutionWrapper.KEYWORD_EXPANSION_LOCKER;
-    if (substitution == KeywordSubstitution.NO_SUBSTITUTION) return KeywordSubstitutionWrapper.NO_SUBSTITUTION;
-    if (substitution == KeywordSubstitution.KEYWORD_REPLACEMENT) return KeywordSubstitutionWrapper.KEYWORD_REPLACEMENT;
+    if (substitution == KeywordSubstitution.BINARY) return BINARY;
+    if (substitution == KeywordSubstitution.KEYWORD_COMPRESSION) return KEYWORD_COMPRESSION;
+    if (substitution == KeywordSubstitution.KEYWORD_EXPANSION) return KEYWORD_EXPANSION;
+    if (substitution == KeywordSubstitution.KEYWORD_EXPANSION_LOCKER) return KEYWORD_EXPANSION_LOCKER;
+    if (substitution == KeywordSubstitution.NO_SUBSTITUTION) return NO_SUBSTITUTION;
+    if (substitution == KeywordSubstitution.KEYWORD_REPLACEMENT) return KEYWORD_REPLACEMENT;
     return null;
   }
 
-  public String getStringRepresentation(){
-    if (myKeywordSubstitution == null) return null;
-    return myKeywordSubstitution.toString();
+  public static void fillComboBox(JComboBox comboBox, KeywordSubstitution defaultSubstitution) {
+    for (KeywordSubstitutionWrapper value : values()) {
+      comboBox.addItem(value);
+    }
+    comboBox.setSelectedItem(getValue(defaultSubstitution));
+  }
+
+  public static List<KeywordSubstitutionWrapper> values() {
+    if (values == null) {
+      final ArrayList<KeywordSubstitutionWrapper> list = new ArrayList();
+      list.add(KEYWORD_EXPANSION);
+      list.add(KEYWORD_EXPANSION_LOCKER);
+      list.add(KEYWORD_COMPRESSION);
+      list.add(NO_SUBSTITUTION);
+      list.add(BINARY);
+      list.add(KEYWORD_REPLACEMENT);
+      values = Collections.unmodifiableList(list);
+    }
+    return values;
   }
 }

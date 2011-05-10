@@ -18,6 +18,7 @@ package org.jetbrains.android.exportSignedPackage;
 
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.CommitStepException;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -119,12 +120,22 @@ public class ExportSignedPackageWizard extends AbstractWizard<ExportSignedPackag
   protected void updateStep() {
     super.updateStep();
     final int step = getCurrentStep();
+    final ExportSignedPackageWizardStep currentStep = mySteps.get(step);
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         getRootPane().setDefaultButton(getNextStep(step) != step ? getNextButton() : getFinishButton());
+
+        final JComponent component = currentStep.getPreferredFocusedComponent();
+        if (component != null) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              component.requestFocus();
+            }
+          });
+        }
       }
     });
-    ExportSignedPackageWizardStep currentStep = mySteps.get(step);
     getFinishButton().setEnabled(currentStep.canFinish());
   }
 

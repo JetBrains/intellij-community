@@ -53,6 +53,16 @@ import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationU
  * @author Maxim.Medvedev
  */
 public class StubGenerator implements ClassItemGenerator {
+  public static final String[] STUB_MODIFIERS = new String[]{
+    PsiModifier.PUBLIC,
+    PsiModifier.PROTECTED,
+    PsiModifier.PRIVATE,
+    PsiModifier.PACKAGE_LOCAL,
+    PsiModifier.STATIC,
+    PsiModifier.ABSTRACT,
+    PsiModifier.FINAL,
+    PsiModifier.NATIVE,
+  };
 
   private ClassNameProvider classNameProvider;
   private Project myProject;
@@ -172,7 +182,7 @@ public class StubGenerator implements ClassItemGenerator {
 
     PsiModifierList modifierList = method.getModifierList();
 
-    GenerationUtil.writeModifiers(text, modifierList, GenerationUtil.JAVA_MODIFIERS);
+    ModifierListGenerator.writeModifiers(text, modifierList, STUB_MODIFIERS, false);
     if (method.hasTypeParameters()) {
       GenerationUtil.writeTypeParameters(text, method, classNameProvider);
       text.append(" ");
@@ -316,6 +326,11 @@ public class StubGenerator implements ClassItemGenerator {
     return methods;
   }
 
+  @Override
+  public boolean generateAnnotations() {
+    return false;
+  }
+
   private static LightMethodBuilder mirrorMethod(PsiClass typeDefinition,
                                                  PsiMethod method,
                                                  PsiClass baseClass,
@@ -326,7 +341,7 @@ public class StubGenerator implements ClassItemGenerator {
       builder.addParameter(StringUtil.notNullize(parameter.getName()), substitutor.substitute(GenerationUtil.findOutParameterType(parameter)));
     }
     builder.setReturnType(substitutor.substitute(method.getReturnType()));
-    for (String modifier : GenerationUtil.JAVA_MODIFIERS) {
+    for (String modifier : STUB_MODIFIERS) {
       if (method.hasModifierProperty(modifier)) {
         builder.addModifier(modifier);
       }
@@ -345,7 +360,7 @@ public class StubGenerator implements ClassItemGenerator {
         continue; //does not have a java image
       }
 
-      GenerationUtil.writeModifiers(text, modifierList, GenerationUtil.JAVA_MODIFIERS);
+      ModifierListGenerator.writeModifiers(text, modifierList, STUB_MODIFIERS, false);
 
       //type
       PsiType declaredType =

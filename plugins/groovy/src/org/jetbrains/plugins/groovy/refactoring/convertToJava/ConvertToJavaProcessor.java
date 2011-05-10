@@ -79,8 +79,10 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
     for (GroovyFile file : myFiles) {
       final PsiClass[] classes = file.getClasses();
       StringBuilder builder = new StringBuilder();
+      boolean first = true;
       for (PsiClass aClass : classes) {
-        classGenerator.writeTypeDefinition(builder, aClass, true);
+        classGenerator.writeTypeDefinition(builder, aClass, true, first);
+        first = false;
         builder.append('\n');
       }
 

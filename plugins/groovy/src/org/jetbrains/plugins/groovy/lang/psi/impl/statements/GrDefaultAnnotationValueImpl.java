@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrDefaultAnnotationValue;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
@@ -26,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
  * Date: 04.06.2007
  */
 public class GrDefaultAnnotationValueImpl extends GroovyPsiElementImpl implements GrDefaultAnnotationValue {
+
   public GrDefaultAnnotationValueImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -36,5 +38,10 @@ public class GrDefaultAnnotationValueImpl extends GroovyPsiElementImpl implement
 
   public String toString() {
     return "Default annotation value";
+  }
+
+  @Override
+  public GrAnnotationMemberValue getDefaultValue() {
+    return findChildByClass(GrAnnotationMemberValue.class);
   }
 }

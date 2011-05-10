@@ -35,12 +35,10 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.xmlb.DefaultSerializationFilter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -192,7 +190,10 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
               synchronized (myFilesToRefresh) {
                 filesToRefresh = new THashSet<VirtualFile>(myFilesToRefresh);
               }
-              updateNodesContaining(filesToRefresh, getRootNode());
+              final DefaultMutableTreeNode rootNode = getRootNode();
+              if (rootNode != null) {
+                updateNodesContaining(filesToRefresh, rootNode);
+              }
               synchronized (myFilesToRefresh) {
                 myFilesToRefresh.removeAll(filesToRefresh);
               }

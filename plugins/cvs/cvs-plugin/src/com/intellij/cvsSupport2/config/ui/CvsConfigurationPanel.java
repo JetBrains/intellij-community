@@ -18,7 +18,6 @@ package com.intellij.cvsSupport2.config.ui;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.config.CvsRootConfiguration;
-import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionListWithSelection;
 import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -97,10 +96,8 @@ public class CvsConfigurationPanel {
 
     myOnFileMergedWithConflictGroup[config.SHOW_CORRUPTED_PROJECT_FILES].setSelected(true);
 
-    //noinspection MismatchedQueryAndUpdateOfCollection
-    KeywordSubstitutionListWithSelection keywordSubstitutions = new KeywordSubstitutionListWithSelection();
     myDefaultTextFileKeywordSubstitution.removeAllItems();
-    for (final KeywordSubstitutionWrapper keywordSubstitution : keywordSubstitutions) {
+    for (final KeywordSubstitutionWrapper keywordSubstitution : KeywordSubstitutionWrapper.values()) {
       myDefaultTextFileKeywordSubstitution.addItem(keywordSubstitution);
     }
     myDefaultTextFileKeywordSubstitution.setSelectedItem(

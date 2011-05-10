@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ListWithSelection;
 import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
@@ -38,8 +37,9 @@ import java.util.*;
  * author: lesya
  */
 public class AddedFileInfo extends DefaultMutableTreeNode {
+
   private final VirtualFile myAddedFile;
-  private ListWithSelection mySubstitution = new ListWithSelection();
+  private final KeywordSubstitutionListWithSelection mySubstitution;
   private boolean myIncluded = true;
   private AddedFileInfo myParent;
   private final MyComparator myComparator = new MyComparator();
@@ -59,7 +59,7 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
       return null;
     }
     else {
-      return ((KeywordSubstitutionWrapper)mySubstitution.getSelection()).getSubstitution();
+      return mySubstitution.getSelection().getSubstitution();
     }
   }
 
@@ -86,14 +86,14 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
       excludeAllChildren();
     }
     else {
-      encludeAllParents();
+      includeAllParents();
     }
 
     myExcludedObservable.setChanged();
     myExcludedObservable.notifyObservers();
   }
 
-  private void encludeAllParents() {
+  private void includeAllParents() {
     if (myParent != null) myParent.setIncluded(true);
   }
 
@@ -141,12 +141,12 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
   public void sort() {
     if (children == null) return;
     Collections.sort(children, myComparator);
-    for (Iterator each = children.iterator(); each.hasNext();) {
-      ((AddedFileInfo)each.next()).sort();
+    for (Object aChildren : children) {
+      ((AddedFileInfo)aChildren).sort();
     }
   }
 
-  public ListWithSelection getKeywordSubstitutionsWithSelection() {
+  public KeywordSubstitutionListWithSelection getKeywordSubstitutionsWithSelection() {
     return mySubstitution;
   }
 
@@ -204,5 +204,4 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
     CvsStorageComponent cvsStorageComponent = CvsStorageSupportingDeletionComponent.getInstance(myProject);
     cvsStorageComponent.deleteIfAdminDirCreated(myAddedFile);
   }
-
 }

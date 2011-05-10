@@ -20,7 +20,7 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMMA;
@@ -43,13 +43,13 @@ public class GrAnnotationArrrayInitializerImpl extends GroovyPsiElementImpl impl
   }
 
   @NotNull
-  public GrExpression[] getInitializers() {
-    return findChildrenByClass(GrExpression.class);
+  public GrAnnotationMemberValue[] getInitializers() {
+    return findChildrenByClass(GrAnnotationMemberValue.class);
   }
 
   @Override
   public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
-    final GrExpression[] initializers = getInitializers();
+    final GrAnnotationMemberValue[] initializers = getInitializers();
     if (initializers.length == 0) {
       return super.addInternal(first, last, getNode().getFirstChildNode(), false);
     }
@@ -57,5 +57,4 @@ public class GrAnnotationArrrayInitializerImpl extends GroovyPsiElementImpl impl
     getNode().addLeaf(mCOMMA, ",", lastChild);
     return super.addInternal(first, last, lastChild.getTreePrev(), false);
   }
-
 }

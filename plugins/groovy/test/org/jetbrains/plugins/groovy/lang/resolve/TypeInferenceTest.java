@@ -217,4 +217,8 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   public void testTraditionalForVar() {
     assertTypeEquals(JAVA_LANG_INTEGER, "A.groovy");
   }
+
+  public void testIncMethod() {
+    assertTypeEquals(JAVA_LANG_INTEGER, "A.groovy");
+  }
 }

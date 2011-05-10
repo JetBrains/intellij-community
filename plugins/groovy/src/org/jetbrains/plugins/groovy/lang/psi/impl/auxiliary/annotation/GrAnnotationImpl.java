@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrAnnotationStub;
@@ -66,18 +67,16 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
   }
 
   @NotNull
-  public PsiAnnotationParameterList getParameterList() {
-    return findNotNullChildByClass(PsiAnnotationParameterList.class);
+  public GrAnnotationArgumentList getParameterList() {
+    return findNotNullChildByClass(GrAnnotationArgumentList.class);
   }
 
   @Nullable
   @NonNls
   public String getQualifiedName() {
     final GrCodeReferenceElement nameRef = getClassReference();
-    if (nameRef != null) {
-      final PsiElement resolved = nameRef.resolve();
-      if (resolved instanceof PsiClass) return ((PsiClass) resolved).getQualifiedName();
-    }
+    final PsiElement resolved = nameRef.resolve();
+    if (resolved instanceof PsiClass) return ((PsiClass) resolved).getQualifiedName();
     return null;
   }
 
@@ -104,13 +103,9 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
     return null;
   }
 
+  @NotNull
   public GrCodeReferenceElement getClassReference() {
-    final GrAnnotationStub stub = getStub();
-    if (stub != null) {
-      return GroovyPsiElementFactory.getInstance(getProject()).createReferenceElementFromText(stub.getAnnotationName(), this);
-    }
-
-    return findChildByClass(GrCodeReferenceElement.class);
+    return findNotNullChildByClass(GrCodeReferenceElement.class);
   }
 
   @NotNull

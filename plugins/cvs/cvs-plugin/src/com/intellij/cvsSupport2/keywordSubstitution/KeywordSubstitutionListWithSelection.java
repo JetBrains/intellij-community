@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,12 @@ import com.intellij.util.ListWithSelection;
 public class KeywordSubstitutionListWithSelection extends ListWithSelection<KeywordSubstitutionWrapper> {
 
   public KeywordSubstitutionListWithSelection() {
-
-    add(KeywordSubstitutionWrapper.BINARY);
-    add(KeywordSubstitutionWrapper.KEYWORD_COMPRESSION);
     add(KeywordSubstitutionWrapper.KEYWORD_EXPANSION);
     add(KeywordSubstitutionWrapper.KEYWORD_EXPANSION_LOCKER);
-    add(KeywordSubstitutionWrapper.KEYWORD_REPLACEMENT);
+    add(KeywordSubstitutionWrapper.KEYWORD_COMPRESSION);
     add(KeywordSubstitutionWrapper.NO_SUBSTITUTION);
+    add(KeywordSubstitutionWrapper.BINARY);
+    add(KeywordSubstitutionWrapper.KEYWORD_REPLACEMENT);
   }
 
   public static KeywordSubstitutionListWithSelection createOnFileName(String fileName,
@@ -41,7 +40,6 @@ public class KeywordSubstitutionListWithSelection extends ListWithSelection<Keyw
     result.select(binary ? KeywordSubstitutionWrapper.BINARY :
         KeywordSubstitutionWrapper.getValue(config.DEFAULT_TEXT_FILE_SUBSTITUTION));
     return result;
-    
   }
   
   public static KeywordSubstitutionListWithSelection createOnExtension(String extension){
@@ -49,7 +47,5 @@ public class KeywordSubstitutionListWithSelection extends ListWithSelection<Keyw
     boolean binary = FileTypeManager.getInstance().getFileTypeByExtension(extension).isBinary();
     result.select(binary ? KeywordSubstitutionWrapper.BINARY : KeywordSubstitutionWrapper.KEYWORD_EXPANSION);
     return result;
-
   }
-
 }

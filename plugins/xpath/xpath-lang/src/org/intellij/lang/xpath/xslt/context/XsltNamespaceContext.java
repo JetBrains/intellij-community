@@ -33,6 +33,8 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.context.NamespaceContext;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,6 +120,30 @@ public class XsltNamespaceContext implements NamespaceContext {
 
     public IntentionAction[] getUnresolvedNamespaceFixes(PsiReference reference, String localName) {
         return getUnresolvedNamespaceFixesStatic(reference, localName);
+    }
+
+    @Override
+    public String getDefaultNamespace(XmlElement context) {
+      if (context != null) {
+        if (XsltSupport.getXsltLanguageLevel(context.getContainingFile()) == XsltChecker.LanguageLevel.V2) {
+          context = PsiTreeUtil.getParentOfType(context, XmlTag.class, false);
+
+          if (context != null) {
+            do {
+              final XmlTag tag = (XmlTag)context;
+              String uri;
+              if ((uri = tag.getAttributeValue("xpath-default-namespace", null)) != null ||
+                  (uri = tag.getAttributeValue("xpath-default-namespace", XsltSupport.XSLT_NS)) != null) {
+                return uri.length() > 0 ? uri : null;
+              }
+              context = PsiTreeUtil.getParentOfType(context, XmlTag.class, true);
+            }
+            while (context != null);
+          }
+        }
+      }
+
+      return null;
     }
 
     public static IntentionAction[] getUnresolvedNamespaceFixesStatic(PsiReference reference, String localName) {

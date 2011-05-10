@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import com.intellij.psi.PsiAnnotationParameterList;
 
@@ -24,4 +25,6 @@ import com.intellij.psi.PsiAnnotationParameterList;
  * @date: 04.04.2007
  */
 public interface GrAnnotationArgumentList extends GroovyPsiElement, PsiAnnotationParameterList {
+  @NotNull
+  GrAnnotationNameValuePair[] getAttributes();
 }
