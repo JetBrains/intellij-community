@@ -1,5 +1,5 @@
 /**<caret>
-def foo(int x, int y){}
+def foo(int x, int y){2}
 -----
 /**
  * <caret>
@@ -8,4 +8,4 @@ def foo(int x, int y){}
  * @return
  */
 
-def foo(int x, int y){}
+def foo(int x, int y){2}
