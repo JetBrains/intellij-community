@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -207,6 +207,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
         gbConstraints.insets = new Insets(0, 8, 0, 0);
         gbConstraints.gridy++;
         panel.add(myCbReplaceWrite, gbConstraints);
+        myCbReplaceWrite.addItemListener(myReplaceAllListener);
       }
     }
 
@@ -252,7 +253,11 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     if (myDeclareFinalIfAll && myCbReplaceAll != null && myCbReplaceAll.isSelected()) {
       myCbFinal.setEnabled(false);
       myCbFinal.setSelected(true);
-    } else {
+    } else if (myCbReplaceWrite != null && myCbReplaceWrite.isEnabled() && myCbReplaceWrite.isSelected()) {
+      myCbFinal.setEnabled(false);
+      myCbFinal.setSelected(false);
+    }
+    else {
       myCbFinal.setEnabled(true);
       myCbFinal.setSelected(myCbFinalState);
     }
