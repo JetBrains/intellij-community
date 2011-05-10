@@ -166,6 +166,13 @@ public class PyClassRefactoringUtil {
     if (target instanceof PsiDirectory) {
       target = (PsiNamedElement)PyUtil.turnDirIntoInit(target);
     }
+    if (target instanceof PyFunction) {
+      final PyFunction f = (PyFunction)target;
+      final PyClass c = f.getContainingClass();
+      if (c != null && c.findInitOrNew(false) == f) {
+        target = c;
+      }
+    }
     if (target == null) return;
     if (PyBuiltinCache.getInstance(target).hasInBuiltins(target)) return;
     if (PsiTreeUtil.isAncestor(node.getContainingFile(), target, false)) return;
