@@ -209,6 +209,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     final Pair<Boolean, GroovyResolveResult[]> shapeResults = resolveByShape(allVariants, upToArgument);
     if (!genericsMatter && !allVariants && shapeResults.first) {
+      for (GroovyResolveResult candidate : shapeResults.second) {
+        assert candidate.getElement().isValid();
+      }
       return shapeResults.second;
     }
 
@@ -278,7 +281,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     final MethodResolverProcessor shapeProcessor = createMethodProcessor(allVariants, name, true, upToArgument);
     processMethods(shapeProcessor);
-    return Pair.create(shapeProcessor.hasApplicableCandidates(), shapeProcessor.getCandidates());
+    GroovyResolveResult[] candidates = shapeProcessor.getCandidates();
+    for (GroovyResolveResult candidate : candidates) {
+      assert candidate.getElement().isValid();
+    }
+    return Pair.create(shapeProcessor.hasApplicableCandidates(), candidates);
   }
 
   private MethodResolverProcessor createMethodProcessor(boolean allVariants, String name, final boolean byShape, @Nullable GrExpression upToArgument) {
@@ -593,10 +600,17 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       final PsiType nominal = refExpr.getNominalTypeImpl();
       if (inferred == null || PsiType.NULL.equals(inferred)) {
         if (nominal == null) {
-          /*inside nested closure we could still try to infer from variable initializer.
-          * Not sound, but makes sense*/
+          //inside nested closure we could still try to infer from variable initializer. Not sound, but makes sense
+          if (!refExpr.isValid()) {
+            throw new AssertionError("invalid reference");
+          }
           final PsiElement resolved = refExpr.resolve();
-          if (resolved instanceof GrVariable) return ((GrVariable) resolved).getTypeGroovy();
+          if (resolved instanceof GrVariable) {
+            if (!resolved.isValid()) {
+              throw new AssertionError("Invalid target of a valid reference");
+            }
+            return ((GrVariable) resolved).getTypeGroovy();
+          }
         }
 
         return nominal;
