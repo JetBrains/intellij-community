@@ -132,6 +132,10 @@ class SkeletonVersionChecker {
   }
 
   public int getBuiltinVersion() {
+    if (myBuiltinsVersion == null) {
+      myBuiltinsVersion = myDefaultVersion;
+      // we could have started with no default and no builtins set, then default set by withDefaultVersionIfUnknown
+    }
     return myBuiltinsVersion;
   }
 
