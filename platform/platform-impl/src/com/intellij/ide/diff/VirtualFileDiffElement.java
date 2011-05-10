@@ -141,8 +141,12 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
 
   @Override
   protected DiffRequest createRequestForBinaries(Project project, @NotNull VirtualFile src, @NotNull VirtualFile trg) {
-
-    return super.createRequestForBinaries(project, src, trg);
+    if (FileEditorProviderManager.getInstance().getProviders(project, src).length > 0
+        && FileEditorProviderManager.getInstance().getProviders(project, trg).length > 0) {
+      return super.createRequestForBinaries(project, src, trg);
+    } else {
+      return null;
+    }
   }
 
   @Override
