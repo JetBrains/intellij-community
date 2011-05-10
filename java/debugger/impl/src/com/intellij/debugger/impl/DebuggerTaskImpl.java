@@ -19,21 +19,22 @@ package com.intellij.debugger.impl;
  * @author lex
  */
 public abstract class DebuggerTaskImpl implements DebuggerTask {
-  private boolean myOnHold = false;
+  private int myHolds = 0;
   
   public synchronized final void release() {
-    if (myOnHold) {
-      myOnHold = false;
-      notifyAll();
+    if (myHolds > 0) {
+      if (--myHolds == 0) {
+        notifyAll();
+      }
     }
   }
 
   public synchronized final void hold() {
-    myOnHold = true;
+    myHolds++;
   }
 
   public synchronized final void waitFor() {
-    while (myOnHold) {
+    while (myHolds > 0) {
       try {
         wait();
       }
