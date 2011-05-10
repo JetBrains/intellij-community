@@ -64,6 +64,9 @@ public class XmlElementSignatureProvider extends ElementSignatureProvider {
 
       if (parent instanceof XmlFile) {
         parent = ((XmlFile)parent).getDocument();
+        if (parent == null) {
+          return null;
+        }
       }
 
       try {
