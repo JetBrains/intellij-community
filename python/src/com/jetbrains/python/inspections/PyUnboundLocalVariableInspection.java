@@ -13,7 +13,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.AddGlobalQuickFix;
-import com.jetbrains.python.actions.AddNoinspectionQuickFix;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -142,16 +141,14 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
               registerProblem(node, PyBundle.message("INSP.unbound.local.variable", node.getName()),
                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                               null,
-                              new AddGlobalQuickFix(), new AddNoinspectionQuickFix("PyUnboundLocalVariable",
-                                                                                   PsiTreeUtil.getParentOfType(node, PyStatement.class)));
+                              new AddGlobalQuickFix());
             }
           } else
           if (owner instanceof PyFunction && PsiTreeUtil.getParentOfType(owner, PyClass.class, PyFile.class) instanceof PyFile){
             registerProblem(node, PyBundle.message("INSP.unbound.local.variable", node.getName()),
                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                             null,
-                            new AddGlobalQuickFix(), new AddNoinspectionQuickFix("PyUnboundLocalVariable",
-                                                                                 PsiTreeUtil.getParentOfType(node, PyStatement.class)));
+                            new AddGlobalQuickFix());
           }
         }
       }
