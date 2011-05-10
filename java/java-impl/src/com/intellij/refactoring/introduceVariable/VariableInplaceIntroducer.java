@@ -74,7 +74,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
   private final List<RangeMarker> myOccurrenceMarkers;
   private final SmartTypePointer myDefaultType;
 
-  protected JCheckBox myCanBeFinal;
+  protected JCheckBox myCanBeFinalCb;
   private Balloon myBalloon;
 
   public VariableInplaceIntroducer(final Project project,
@@ -105,10 +105,10 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
                        occurrenceMarkers.toArray(new RangeMarker[occurrenceMarkers.size()]));
     setAdvertisementText(getAdvertisementText(declarationStatement, defaultType, hasTypeSuggestion));
     if (!cantChangeFinalModifier) {
-      myCanBeFinal = new NonFocusableCheckBox("Declare final");
-      myCanBeFinal.setSelected(createFinals());
-      myCanBeFinal.setMnemonic('f');
-      myCanBeFinal.addActionListener(new FinalListener(project, commandName));
+      myCanBeFinalCb = new NonFocusableCheckBox("Declare final");
+      myCanBeFinalCb.setSelected(createFinals());
+      myCanBeFinalCb.setMnemonic('f');
+      myCanBeFinalCb.addActionListener(new FinalListener(project, commandName));
     }
   }
 
@@ -236,6 +236,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
 
   @Nullable
   protected JComponent getComponent() {
+    if (myCanBeFinalCb == null) return null;
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(null);
 
@@ -244,8 +245,8 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     titlePanel.setText(IntroduceVariableBase.REFACTORING_NAME);
     panel.add(titlePanel, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
 
-    if (myCanBeFinal != null) {
-      panel.add(myCanBeFinal, new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 0, 0));
+    if (myCanBeFinalCb != null) {
+      panel.add(myCanBeFinalCb, new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 0, 0));
     }
 
     panel.add(Box.createVerticalBox(), new GridBagConstraints(0, 2, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(0,0,0,0), 0,0));
@@ -393,7 +394,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      perform(myCanBeFinal.isSelected());
+      perform(myCanBeFinalCb.isSelected());
     }
 
     public void perform(final boolean generateFinal) {

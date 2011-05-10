@@ -15,10 +15,14 @@
  */
 package com.intellij.openapi.diff;
 
+import com.intellij.ide.diff.DiffElement;
+import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ApplicationStarterEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -27,7 +31,9 @@ import java.io.FileNotFoundException;
 
 /**
  * @author max
+ * @author Konstantin Bulenkov
  */
+@SuppressWarnings({"UseOfSystemOutOrSystemErr"})
 public class DiffApplication implements ApplicationStarterEx {
   public String getCommandName() {
     return "diff";
@@ -54,6 +60,7 @@ public class DiffApplication implements ApplicationStarterEx {
     }
     catch (Exception e) {
       e.printStackTrace();
+      System.exit(1);
     }
     finally {
       System.exit(0);
@@ -77,21 +84,54 @@ public class DiffApplication implements ApplicationStarterEx {
   }
 
   private static void processDiffCommand(String[] args) throws FileNotFoundException {
-    String path1 = args[1];
-    String path2 = args[2];
-    VirtualFile file1 = findFile(path1);
-    VirtualFile file2 = findFile(path2);
-    SimpleDiffRequest request = SimpleDiffRequest.compareFiles(file1, file2, null);
-    request.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);
-    DiffManager.getInstance().getIdeaDiffTool().show(request);
-    FileDocumentManager.getInstance().saveAllDocuments();
+    final String path1 = args[1];
+    final String path2 = args[2];
+    final VirtualFile file1 = findFile(path1);
+    final VirtualFile file2 = findFile(path2);
+    final boolean isDirs = isDirs(file1, file2);
+    final boolean isJars = isJars(file1, file2);
+    if (isDirs || isJars) {
+      final DirDiffManager diffManager = DirDiffManager.getInstance(ProjectManager.getInstance().getDefaultProject());
+      final DiffElement d1 = diffManager.createDiffElement(file1);
+      final DiffElement d2 = diffManager.createDiffElement(file2);
+      if (d1 == null) {
+        System.err.println("Can't create diff element from " + path1);
+        return;
+      }
+      if (d2 == null) {
+        System.err.println("Can't create diff element from " + path2);
+        return;
+      }
+      if (!diffManager.canShow(d1, d2)) {
+        System.err.println("Diff manager can't compare '" + path1 + "' and '" + path2 + "'");
+        return;
+      }
+
+      final DirDiffSettings settings = new DirDiffSettings();
+      settings.showInFrame = false;
+      diffManager.showDiff(d1, d2, settings);
+    } else {
+      SimpleDiffRequest request = SimpleDiffRequest.compareFiles(file1, file2, null);
+      request.addHint(DiffTool.HINT_SHOW_MODAL_DIALOG);
+      DiffManager.getInstance().getIdeaDiffTool().show(request);
+      FileDocumentManager.getInstance().saveAllDocuments();
+    }
   }
 
-  private static VirtualFile findFile(final String path1) throws FileNotFoundException {
-    final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path1));
-    if (vFile == null) {
-      throw new FileNotFoundException(DiffBundle.message("cannot.file.file.error.message", path1));
+  private static boolean isJars(VirtualFile file1, VirtualFile file2) {
+    return JarFileSystem.PROTOCOL.equalsIgnoreCase(file1.getExtension())
+      && JarFileSystem.PROTOCOL.equalsIgnoreCase(file2.getExtension());
+  }
+
+  private static boolean isDirs(VirtualFile file1, VirtualFile file2) {
+    return file1.isDirectory() && file2.isDirectory();
+  }
+
+  private static VirtualFile findFile(final String path) throws FileNotFoundException {
+    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(path));
+    if (file == null) {
+      throw new FileNotFoundException(DiffBundle.message("cannot.file.file.error.message", path));
     }
-    return vFile;
+    return file;
   }
 }

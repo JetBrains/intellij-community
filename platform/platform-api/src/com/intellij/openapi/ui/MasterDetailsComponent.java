@@ -401,6 +401,16 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     myAutoScrollHandler.cancelAllRequests();
     myDetails.disposeUIResources();
     myInitializedConfigurables.clear();
+    clearChildren();
+    final String key = getComponentStateKey();
+    final MasterDetailsStateService stateService = getStateService();
+    if (key != null && stateService != null) {
+      stateService.setComponentState(key, getState());
+    }
+    myCurrentConfigurable = null;
+  }
+
+  protected void clearChildren() {
     TreeUtil.traverseDepth(myRoot, new TreeUtil.Traverse() {
       public boolean accept(Object node) {
         if (node instanceof MyNode) {
@@ -414,12 +424,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       }
     });
     myRoot.removeAllChildren();
-    final String key = getComponentStateKey();
-    final MasterDetailsStateService stateService = getStateService();
-    if (key != null && stateService != null) {
-      stateService.setComponentState(key, getState());
-    }
-    myCurrentConfigurable = null;
   }
 
   @Nullable

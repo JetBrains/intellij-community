@@ -112,7 +112,6 @@ public class DirDiffPanel implements Disposable {
               myDiffPanel.revalidate();
               myDiffPanel.repaint();
             }
-
           } else {
             final DiffElement object;
             if (element.getType() == DType.ERROR) {
@@ -190,18 +189,6 @@ public class DirDiffPanel implements Disposable {
     myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
     final JBLoadingPanel loadingPanel = new JBLoadingPanel(new BorderLayout(), wnd.getDisposable());
     loadingPanel.add(myComponent, BorderLayout.CENTER);
-    //final LoadingDecorator decorator = new LoadingDecorator(myComponent, wnd.getDisposable(), -1) {
-    //  @Override
-    //  protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
-    //    final NonOpaquePanel panel = super.customizeLoadingLayer(parent, text, icon);
-    //    final Font font = text.getFont();
-    //    text.setFont(font.deriveFont(font.getStyle(), font.getSize() + 6));
-    //    text.setForeground(new Color(0,0,0,150));
-    //    return panel;
-    //  }
-    //};
-    //mySplitPanel.setTopComponent(decorator.getComponent());
-    //decorator.getComponent().setMinimumSize(new Dimension(400, 100));
     myTable.putClientProperty(myModel.DECORATOR, loadingPanel);
     myTable.addComponentListener(new ComponentAdapter() {
       @Override
@@ -235,7 +222,7 @@ public class DirDiffPanel implements Disposable {
         }
         else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
           e.consume();
-          IdeFocusManager.getInstance(project).requestFocus(myTable, true);
+          focusTable();
         }
       }
     });
@@ -286,6 +273,17 @@ public class DirDiffPanel implements Disposable {
       myTargetDirField.getButton().setVisible(false);
       myTargetDirField.setEditable(false);
     }
+  }
+
+  public void focusTable() {
+    final IdeFocusManager focusManager = myModel.getProject().isDefault()
+                                         ? IdeFocusManager.getGlobalInstance() : IdeFocusManager.getInstance(myModel.getProject());
+    focusManager.doWhenFocusSettlesDown(new Runnable() {
+      @Override
+      public void run() {
+        focusManager.requestFocus(myTable, true);
+      }
+    });
   }
 
   public JTextField getFilter() {

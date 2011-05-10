@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsAnnotate;
 
+import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
-import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperationHelper;
-import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperation;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
-import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperation;
+import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperationHelper;
 import com.intellij.openapi.diagnostic.Logger;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.annotate.AnnotateCommand;

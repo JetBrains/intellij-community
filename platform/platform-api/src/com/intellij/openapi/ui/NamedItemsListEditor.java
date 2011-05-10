@@ -81,7 +81,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
         myResultItems = myOriginalItems;
         myItems.clear();
 
-        myRoot.removeAllChildren();
+        clearChildren();
         for (T item : myOriginalItems) {
             addNewNode(myCloner.cloneOf(item));
         }
@@ -177,6 +177,11 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
       });
       return result.get();
     }
+
+  @Override
+  public void disposeUIResources() {
+    super.disposeUIResources();    //To change body of overridden methods use File | Settings | File Templates.
+  }
 
   private class ItemConfigurable extends NamedConfigurable {
         private final T myItem;

@@ -17,7 +17,6 @@ package com.intellij.cvsSupport2.annotate;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.CvsUtil;
-import com.intellij.cvsSupport2.CvsVcs2;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
@@ -28,6 +27,7 @@ import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.AnnotateOperation;
 import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.Annotation;
 import com.intellij.cvsSupport2.history.CvsHistoryProvider;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
+import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,28 +45,30 @@ import java.io.File;
 import java.util.*;
 
 public class CvsAnnotationProvider implements AnnotationProvider{
-  private final Project myProject;
 
-  public CvsAnnotationProvider(final Project project) {
+  @NonNls private static final String INVALID_OPTION_F = "invalid option -- F";
+
+  private final Project myProject;
+  private final CvsHistoryProvider myCvsHistoryProvider;
+
+  public CvsAnnotationProvider(final Project project, CvsHistoryProvider cvsHistoryProvider) {
     myProject = project;
+    myCvsHistoryProvider = cvsHistoryProvider;
   }
 
-  public FileAnnotation annotate(VirtualFile file) throws VcsException {
-    final AnnotateOperation operation = AnnotateOperation.createForFile(new File(file.getPath()));
-    final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
-    executor.performActionSync(new CommandCvsHandler(CvsBundle.getAnnotateOperationName(), operation),
-                               CvsOperationExecutorCallback.EMPTY);
-    if (executor.getResult().hasNoErrors()) {
-      final CvsVcs2 cvsVcs2 = CvsVcs2.getInstance(myProject);
-      final CvsHistoryProvider historyProvider = (CvsHistoryProvider) cvsVcs2.getVcsHistoryProvider();
-      final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
-      final List<VcsFileRevision> revisions = historyProvider.createRevisions(filePath);
-      final Annotation[] lineAnnotations = operation.getLineAnnotations();
-      adjustAnnotation(revisions, lineAnnotations);
-      return new CvsFileAnnotation(operation.getContent(), lineAnnotations, revisions, file);
-    } else {
-      throw executor.getFirstError();
-    }
+  public FileAnnotation annotate(VirtualFile virtualFile) throws VcsException {
+    final File file = new File(virtualFile.getPath());
+    File cvsLightweightFile = CvsUtil.getCvsLightweightFileForFile(file);
+    String revision = CvsUtil.getRevisionFor(file);
+    final CvsConnectionSettings root =
+      CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(file.getParentFile());
+    final AnnotateOperation operation = executeOperation(cvsLightweightFile, revision, root, true);
+
+    final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(virtualFile);
+    final List<VcsFileRevision> revisions = myCvsHistoryProvider.createRevisions(filePath);
+    final Annotation[] lineAnnotations = operation.getLineAnnotations();
+    adjustAnnotation(revisions, lineAnnotations);
+    return new CvsFileAnnotation(operation.getContent(), lineAnnotations, revisions, virtualFile);
   }
 
   public FileAnnotation annotate(VirtualFile file, VcsFileRevision revision) throws VcsException {
@@ -87,40 +90,53 @@ public class CvsAnnotationProvider implements AnnotationProvider{
       hasLocalFile = true;
       cvsFile = new File(CvsUtil.getModuleName(cvsVirtualFile));
     }
-    final AnnotateOperation annotateOperation = new AnnotateOperation(cvsFile, revision, environment);
-    CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
-    executor.performActionSync(new CommandCvsHandler(CvsBundle.getAnnotateOperationName(), annotateOperation),
-                               CvsOperationExecutorCallback.EMPTY);
 
-    if (executor.getResult().hasNoErrors()) {
-      final List<VcsFileRevision> revisions;
-      final Annotation[] lineAnnotations = annotateOperation.getLineAnnotations();
-      if (hasLocalFile) {
-        final CvsVcs2 cvsVcs2 = CvsVcs2.getInstance(myProject);
-        final CvsHistoryProvider historyProvider = (CvsHistoryProvider) cvsVcs2.getVcsHistoryProvider();
-        final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(cvsVirtualFile);
-        revisions = historyProvider.createRevisions(filePath);
-        // in annotation cvs returns only 8 symbols of username
-        // try to find usernames in history and use them
-        adjustAnnotation(revisions, lineAnnotations);
+    final AnnotateOperation annotateOperation = executeOperation(cvsFile, revision, environment, true);
+    final Annotation[] lineAnnotations = annotateOperation.getLineAnnotations();
+    final List<VcsFileRevision> revisions;
+    if (hasLocalFile) {
+      final FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(cvsVirtualFile);
+      revisions = myCvsHistoryProvider.createRevisions(filePath);
+      // in annotation cvs returns only 8 symbols of username
+      // try to find usernames in history and use them
+      adjustAnnotation(revisions, lineAnnotations);
+    }
+    else {
+      // imitation
+      revisions = new ArrayList<VcsFileRevision>();
+      final Set<String> usedRevisions = new HashSet<String>();
+      for (Annotation annotation : lineAnnotations) {
+        if (! usedRevisions.contains(annotation.getRevision())) {
+          revisions.add(new RevisionPresentation(annotation.getRevision(), annotation.getUserName(), annotation.getDate()));
+          usedRevisions.add(annotation.getRevision());
+        }
       }
-      else {
-        // imitation
-        revisions = new ArrayList<VcsFileRevision>();
-        final Set<String> usedRevisions = new HashSet<String>();
-        for (Annotation annotation : lineAnnotations) {
-          if (! usedRevisions.contains(annotation.getRevision())) {
-            revisions.add(new RevisionPresentation(annotation.getRevision(), annotation.getUserName(), annotation.getDate()));
-            usedRevisions.add(annotation.getRevision());
+    }
+    return new CvsFileAnnotation(annotateOperation.getContent(), lineAnnotations, revisions, cvsVirtualFile);
+  }
+
+  private AnnotateOperation executeOperation(File cvsLightweightFile, String revision, CvsEnvironment root, boolean retryOnFailure)
+    throws VcsException {
+    final AnnotateOperation operation = new AnnotateOperation(cvsLightweightFile, revision, root);
+    final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
+    executor.performActionSync(new CommandCvsHandler(CvsBundle.getAnnotateOperationName(), operation),
+                               CvsOperationExecutorCallback.EMPTY);
+    final CvsResult result = executor.getResult();
+    if (!result.hasNoErrors()) {
+      if (!retryOnFailure) {
+        throw result.composeError();
+      }
+      for (VcsException error : result.getErrors()) {
+        for (String message : error.getMessages()) {
+          if (message.contains(INVALID_OPTION_F)) {
+            AnnotateOperation.doesNotSupportAnnotateBinary(root);
+            return executeOperation(cvsLightweightFile, revision, root, false);
           }
         }
       }
-      return new CvsFileAnnotation(annotateOperation.getContent(), lineAnnotations, revisions, cvsVirtualFile);
+      throw result.composeError();
     }
-    else {
-      throw executor.getResult().composeError();
-    }
-
+    return operation;
   }
 
   private static void adjustAnnotation(@Nullable List<VcsFileRevision> revisions, @NotNull Annotation[] lineAnnotations) {

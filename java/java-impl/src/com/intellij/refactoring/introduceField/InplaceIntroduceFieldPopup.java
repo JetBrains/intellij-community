@@ -344,7 +344,7 @@ public class InplaceIntroduceFieldPopup {
     @Override
     protected void moveOffsetAfter(boolean success) {
       if (success) {
-        if (myLocalVariable == null && myInitializerExpression == null) {
+        if (myLocalVariable == null && myInitializerExpression == null || myFieldName == null) {
           super.moveOffsetAfter(false);
           return;
         }
