@@ -24,7 +24,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 
 public class ConvertToBasicLatinTest extends JavaCodeInsightFixtureTestCase {
-
   private String myIntention;
 
   @Override
@@ -54,5 +53,4 @@ public class ConvertToBasicLatinTest extends JavaCodeInsightFixtureTestCase {
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/convertToBasicLatin/";
   }
-
 }
