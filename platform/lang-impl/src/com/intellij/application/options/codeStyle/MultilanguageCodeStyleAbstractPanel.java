@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -150,7 +151,7 @@ public abstract class MultilanguageCodeStyleAbstractPanel extends CodeStyleAbstr
   @Nullable
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
     if (getFileType() instanceof LanguageFileType) {
-      return ((LanguageFileType)getFileType()).getEditorHighlighter(getCurrentProject(), null, scheme);
+      return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(getFileType()).getEditorHighlighter(getCurrentProject(), null, scheme);
     }
     return null;
   }

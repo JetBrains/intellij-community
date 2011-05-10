@@ -16,6 +16,8 @@
 
 package org.jetbrains.plugins.groovy;
 
+import com.intellij.openapi.fileTypes.EditorHighlighterProvider;
+import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -42,6 +44,14 @@ public class GroovyFileType extends LanguageFileType {
 
   private GroovyFileType() {
     super(new GroovyLanguage());
+    FileTypeEditorHighlighterProviders.INSTANCE.addExplicitExtension(this, new EditorHighlighterProvider() {
+      @Override
+      public EditorHighlighter getEditorHighlighter(@Nullable Project project,
+                                                    @Nullable VirtualFile virtualFile,
+                                                    @NotNull EditorColorsScheme colors) {
+        return new GroovyEditorHighlighter(colors, project, virtualFile);
+      }
+    });
   }
 
   @NotNull
@@ -68,9 +78,5 @@ public class GroovyFileType extends LanguageFileType {
 
   public boolean isJVMDebuggingSupported() {
     return true;
-  }
-
-  public EditorHighlighter getEditorHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile, @NotNull EditorColorsScheme colors) {
-    return new GroovyEditorHighlighter(colors, project, virtualFile);
   }
 }
