@@ -40,7 +40,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -86,11 +85,9 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     final GrEnumConstantInitializer anonymousBlock = constant.getConstantInitializer();
     if (anonymousBlock != null) {
       builder.append("{\n");
-      new ClassGenerator(context.project, classNameProvider, this).writeMembers(builder, anonymousBlock, true);
+      new ClassGenerator(classNameProvider, this).writeMembers(builder, anonymousBlock, true);
       builder.append("\n}");
     }
-
-    //todo make something with context???
   }
 
   @Override
@@ -123,7 +120,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
     //append return type
     if (!method.isConstructor()) {
-      PsiType retType = PsiUtil.getSmartReturnType(method);
+      PsiType retType = TypeProvider.getReturnType(method);
 
       /*
       if (!method.hasModifierProperty(PsiModifier.STATIC)) {
@@ -206,7 +203,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       builder.append("this");
     }
     else {
-      if (method.getReturnType() != PsiType.VOID) {
+      if (TypeProvider.getReturnType(method) != PsiType.VOID) {
         builder.append("return ");
       }
       builder.append(method.getName());
@@ -242,6 +239,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     return result;
   }
 
+  @SuppressWarnings({"MethodMayBeStatic"})
   private void writeMainScriptMethodBody(StringBuilder builder, PsiMethod method) {
     final PsiClass containingClass = method.getContainingClass();
     LOG.assertTrue(containingClass instanceof GroovyScriptClass);
@@ -295,6 +293,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     }
   }
 
+  @SuppressWarnings({"MethodMayBeStatic"})
   private PsiClassType[] getMethodExceptions(PsiMethod method) {
     return method.getThrowsList().getReferencedTypes();
 

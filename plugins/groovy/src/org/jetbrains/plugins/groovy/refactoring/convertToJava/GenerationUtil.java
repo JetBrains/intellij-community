@@ -239,10 +239,6 @@ public class GenerationUtil {
     return curClass;
   }
 
-  static PsiType findOutParameterType(PsiParameter parameter) {
-    return parameter.getType(); //todo make smarter
-  }
-
   static boolean isAbstractInJava(PsiMethod method) {
     if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return true;
@@ -286,7 +282,7 @@ public class GenerationUtil {
       if (parameter == null) continue;
 
       if (i > 0) text.append(", ");  //append ','
-      writeType(text, findOutParameterType(parameter), parameter, classNameProvider);
+      writeType(text, TypeProvider.getParameterType(parameter), parameter, classNameProvider);
       text.append(" ");
       text.append(parameter.getName());
 
@@ -357,17 +353,6 @@ public class GenerationUtil {
     return actual;
   }
 
-  public static PsiType getVarType(GrVariable variable) {
-    PsiType type = variable.getDeclaredType();
-    if (type == null) {
-      type = variable.getTypeGroovy();
-    }
-    if (type == null) {
-      type = variable.getType();
-    }
-    return type;
-  }
-
   public static void writeSimpleVarDeclaration(GrVariableDeclaration variableDeclaration,
                                                StringBuilder builder,
                                                ExpressionContext expressionContext) {
@@ -430,7 +415,7 @@ public class GenerationUtil {
   }
 
   static void writeVariableSeparately(GrVariable variable, StringBuilder builder, ExpressionContext expressionContext) {
-    PsiType type = getVarType(variable);
+    PsiType type = TypeProvider.getVarType(variable);
     ModifierListGenerator.writeModifiers(builder, variable.getModifierList());
 
     PsiType originalType = type;

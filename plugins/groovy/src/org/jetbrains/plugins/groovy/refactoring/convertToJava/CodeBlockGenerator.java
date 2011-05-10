@@ -89,9 +89,11 @@ public class CodeBlockGenerator extends Generator {
 
     boolean shouldInsertReturnNull = false;
     myExitPoints.clear();
-    if (!method.isConstructor() && method.getReturnType() != PsiType.VOID) {
+    PsiType returnType = TypeProvider.getReturnType(method);
+    if (!method.isConstructor() && returnType != PsiType.VOID) {
       myExitPoints.addAll(ControlFlowUtils.collectReturns(block));
-      shouldInsertReturnNull = MissingReturnInspection.methodMissesSomeReturns(block, method.getReturnType() != null);
+      shouldInsertReturnNull = !(returnType instanceof PsiPrimitiveType) &&
+                               MissingReturnInspection.methodMissesSomeReturns(block, method.getReturnTypeElementGroovy() != null);
     }
 
     if (block != null) {
@@ -356,7 +358,7 @@ public class CodeBlockGenerator extends Generator {
 
   private static void writeVariableWithoutSemicolonAndInitializer(StringBuilder builder, GrVariable var) {
     ModifierListGenerator.writeModifiers(builder, var.getModifierList());
-    GenerationUtil.writeType(builder, GenerationUtil.getVarType(var), var);
+    GenerationUtil.writeType(builder, TypeProvider.getVarType(var), var);
     builder.append(" ").append(var.getName());
   }
 
@@ -477,7 +479,7 @@ public class CodeBlockGenerator extends Generator {
       final GrModifierList modifierList = variableDeclaration.getModifierList();
       for (final GrVariable v : variables) {
         ModifierListGenerator.writeModifiers(builder, modifierList);
-        final PsiType type = GenerationUtil.getVarType(v);
+        final PsiType type = TypeProvider.getVarType(v);
         GenerationUtil.writeType(builder, type, variableDeclaration);
         builder.append(" ").append(v.getName());
         builder.append(" = ").append(iteratorName).append(".hasNext() ? ").append(iteratorName).append(".next() : null;");

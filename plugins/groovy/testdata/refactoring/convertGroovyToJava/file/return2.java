@@ -8,7 +8,7 @@ return null;
 
 }
 
-public java.lang.Boolean foo() {
+public boolean foo() {
 java.lang.Integer a = 5;
 org.codehaus.groovy.runtime.DefaultGroovyMethods.times(a, new groovy.lang.Closure<java.lang.Integer>(this, this) {
 public java.lang.Integer doCall(java.lang.Object it) {
@@ -21,7 +21,6 @@ return doCall(null);
 }
 
 });
-return null;
 }
 
 public return2(groovy.lang.Binding binding) {

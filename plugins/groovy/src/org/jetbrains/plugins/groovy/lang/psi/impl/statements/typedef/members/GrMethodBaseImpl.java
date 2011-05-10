@@ -49,7 +49,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnnotationTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -61,7 +60,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
@@ -185,10 +183,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     public PsiType fun(GrMethodBaseImpl method) {
       PsiType nominal = method.getNominalType();
       if (nominal != null) {
-        if (!(nominal instanceof PsiClassType) || !hasTypeParametersToInfer((PsiClassType)nominal)) {
-          if (!(method.getContainingClass() instanceof GrAnnotationTypeDefinition)) {
-            nominal = TypesUtil.boxPrimitiveType(nominal, method.getManager(), method.getResolveScope()); //for converter
-          }
+        if (!(nominal instanceof PsiClassType && hasTypeParametersToInfer((PsiClassType)nominal))) {
           return nominal;
         }
       }
@@ -201,8 +196,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
           assert block.isValid() : "invalid code block";
           PsiType inferred = GroovyPsiManager.inferType(method, new MethodTypeInferencer(block));
           if (inferred != null) {
-            if (nominal == null && inferred != PsiType.VOID || //for converter
-                nominal != null && nominal.isAssignableFrom(inferred)) {
+            if (nominal == null || nominal.isAssignableFrom(inferred)) {
               return inferred;
             }
           }
@@ -231,6 +225,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     return PsiType.getJavaLangObject(getManager(), getResolveScope());
   }
 
+  @Nullable
   private PsiType getNominalType() {
     final GrTypeElement element = getReturnTypeElementGroovy();
     if (element != null) {

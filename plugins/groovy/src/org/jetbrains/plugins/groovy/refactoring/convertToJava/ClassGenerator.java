@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -40,14 +38,11 @@ import static org.jetbrains.plugins.groovy.refactoring.convertToJava.GenerationU
  * @author Maxim.Medvedev
  */
 public class ClassGenerator {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.ClassGenerator");
 
-  private Project myProject;
   private ClassNameProvider classNameProvider;
   private ClassItemGenerator classItemGenerator;
 
-  public ClassGenerator(Project project, ClassNameProvider classNameProvider, ClassItemGenerator classItemGenerator) {
-    myProject = project;
+  public ClassGenerator(ClassNameProvider classNameProvider, ClassItemGenerator classItemGenerator) {
     this.classNameProvider = classNameProvider;
     this.classItemGenerator = classItemGenerator;
   }
@@ -191,9 +186,9 @@ public class ClassGenerator {
   private static boolean shouldBeGenerated(PsiMethod method) {
     for (PsiMethod psiMethod : method.findSuperMethods()) {
       if (!psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        final PsiType type = method.getReturnType();
-        final PsiType superType = psiMethod.getReturnType();
-        if (type != null && superType != null && !superType.isAssignableFrom(type)) {
+        final PsiType type = TypeProvider.getReturnType(method);
+        final PsiType superType = TypeProvider.getReturnType(psiMethod);
+        if (!superType.isAssignableFrom(type)) {
           return false;
         }
       }

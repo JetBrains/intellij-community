@@ -1,5 +1,5 @@
 public class X extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
-public java.lang.Object foo() {
+public void foo() {
 final groovy.lang.Reference<java.lang.Integer> ab = new groovy.lang.Reference<java.lang.Integer>(4);
 org.codehaus.groovy.runtime.DefaultGroovyMethods.each(X.this, new groovy.lang.Closure<java.lang.Object>(this, this) {
 public java.lang.Object doCall(java.lang.Object it) {
@@ -21,7 +21,6 @@ return doCall(null);
 
 });
 org.codehaus.groovy.runtime.DefaultGroovyMethods.print(X.this, ab.get());
-return null;
 }
 
 }

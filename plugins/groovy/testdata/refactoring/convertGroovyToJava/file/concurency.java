@@ -32,9 +32,8 @@ return null;
 
 }
 
-public synchronized java.lang.Object out(java.lang.Object message) {
+public synchronized void out(java.lang.Object message) {
 println(message);
-return null;
 }
 
 public concurency(groovy.lang.Binding binding) {

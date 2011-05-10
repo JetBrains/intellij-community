@@ -105,7 +105,7 @@ public class AnonymousFromMapGenerator {
 
         PsiType returnType;
         if (found != null) {
-          returnType = substitutor.substitute(found.getReturnType());
+          returnType = substitutor.substitute(TypeProvider.getReturnType(found));
         }
         else {
           returnType = signature.getReturnType();
