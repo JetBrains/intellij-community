@@ -156,7 +156,14 @@ public class ITNReporter extends ErrorReportSubmitter {
             }
             else {
               if (e instanceof NoSuchEAPUserException) {
-                new JetBrainsAccountDialog(parentComponent).show();
+                final JetBrainsAccountDialog dialog;
+                if (parentComponent != null && parentComponent.isShowing()) {
+                  dialog = new JetBrainsAccountDialog(parentComponent);
+                }
+                else {
+                  dialog = new JetBrainsAccountDialog(project);
+                }
+                dialog.show();
               }
               ApplicationManager.getApplication().invokeLater(new Runnable() {
                 @Override

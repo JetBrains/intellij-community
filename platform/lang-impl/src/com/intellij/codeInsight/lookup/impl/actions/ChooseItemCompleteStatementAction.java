@@ -35,9 +35,7 @@ public class ChooseItemCompleteStatementAction extends EditorAction {
     @Override
     public void execute(Editor editor, DataContext dataContext) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_FINISH_BY_SMART_ENTER);
-
-      LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-      lookup.finishLookup(Lookup.COMPLETE_STATEMENT_SELECT_CHAR);
+      ChooseItemAction.getLookup(editor).finishLookup(Lookup.COMPLETE_STATEMENT_SELECT_CHAR);
     }
 
     @Override
