@@ -41,10 +41,17 @@ public interface BusyObject {
     public final void onReady(@Nullable Object readyRequestor) {
       if (!isReady()) return;
 
-      Pair<ActionCallback, List<ActionCallback>> callbacks = getReadyCallbacks(readyRequestor);
-      callbacks.getFirst().setDone();
-      for (ActionCallback each : callbacks.getSecond()) {
-        each.setRejected();
+      if (readyRequestor != null) {
+        Pair<ActionCallback, List<ActionCallback>> callbacks = getReadyCallbacks(readyRequestor);
+        callbacks.getFirst().setDone();
+        for (ActionCallback each : callbacks.getSecond()) {
+          each.setRejected();
+        }
+      } else {
+        ActionCallback[] callbacks = getReadyCallbacks();
+        for (ActionCallback each : callbacks) {
+          each.setDone();
+        }
       }
     }
 
