@@ -987,7 +987,7 @@ public class JavaDocInfoGenerator {
         }
       }
       else {
-        buffer.append(element.getText());
+        buffer.append(StringUtil.unescapeStringCharacters(element.getText()));
       }
     }
   }

@@ -28,6 +28,9 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.filters.TrueFilter;
@@ -50,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -58,6 +62,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolver;
 
 import java.util.*;
 
@@ -266,9 +271,13 @@ public class GroovyCompletionContributor extends CompletionContributor {
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
                                     @NotNull final CompletionResultSet result) {
-        addKeywords(parameters, result);
+        GroovyCompletionData.addGroovyKeywords(parameters, result);
+        GroovyCompletionData.addGroovyDocKeywords(parameters, result);
 
         PsiElement position = parameters.getPosition();
+
+        suggestVariableNames(position, result);
+
         final PsiElement parent = position.getParent();
         if (parent instanceof GrReferenceElement) {
           GrReferenceElement reference = (GrReferenceElement)parent;
@@ -314,21 +323,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
       }
     });
 
-  }
-
-  private static void addKeywords(CompletionParameters parameters, CompletionResultSet result) {
-    PsiElement position = parameters.getPosition();
-    final Set<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
-    final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-    final GroovyCompletionData completionData = new GroovyCompletionData();
-    completionData.addKeywordVariants(keywordVariants, position, parameters.getOriginalFile());
-    completionData.completeKeywordsBySet(lookupSet, keywordVariants, position, result.getPrefixMatcher(), parameters.getOriginalFile());
-
-    for (final LookupElement item : lookupSet) {
-      result.addElement(item);
-    }
-
-    GroovyCompletionData.addGroovyDocKeywords(parameters, result);
   }
 
 
@@ -610,5 +604,33 @@ public class GroovyCompletionContributor extends CompletionContributor {
       iterator.advance();
     }
     return true;
+  }
+
+  public static void suggestVariableNames(PsiElement context, CompletionResultSet result) {
+    final PsiElement parent = context.getParent();
+    if (parent instanceof GrVariable) {
+      final GrVariable variable = (GrVariable) parent;
+      if (context.equals(variable.getNameIdentifierGroovy())) {
+        final PsiType type = variable.getTypeGroovy();
+        if (type != null) {
+          final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(context.getProject());
+          VariableKind kind = variable instanceof GrParameter ? VariableKind.PARAMETER :
+              variable instanceof GrField ? VariableKind.FIELD : VariableKind.LOCAL_VARIABLE;
+          SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(kind, null, null, type);
+          String[] names = suggestedNameInfo.names;
+          if (names.length > 0) {
+            String name = names[0];
+            String newName = InlineMethodConflictSolver.suggestNewName(name, null, parent);
+            if (!name.equals(newName)) {
+              result.addElement(LookupElementBuilder.create(newName));
+              return;
+            }
+          }
+          for (String name : names) {
+            result.addElement(LookupElementBuilder.create(name));
+          }
+        }
+      }
+    }
   }
 }

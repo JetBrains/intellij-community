@@ -572,6 +572,7 @@ public class NameUtil {
       }
 
       String nextChar = String.valueOf(myPattern[patternIndex]);
+      boolean wordStart = isWordStart(myPattern[patternIndex]);
 
       int fromIndex = nameIndex;
       while (true) {
@@ -579,6 +580,11 @@ public class NameUtil {
         if (next < 0) {
           break;
         }
+        if (wordStart && next > 0 && next != nextWord(name, next - 1)) {
+          fromIndex = next + 1;
+          continue;
+        }
+
         FList<TextRange> ranges = matchName(name, patternIndex, next);
         if (ranges != null) {
           return ranges;
