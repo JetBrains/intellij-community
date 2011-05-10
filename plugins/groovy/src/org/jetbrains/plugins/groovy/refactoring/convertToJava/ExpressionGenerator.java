@@ -683,12 +683,15 @@ public class ExpressionGenerator extends Generator {
       }
       if (resolved instanceof PsiNamedElement) {
         final String refName = ((PsiNamedElement)resolved).getName();
-        builder.append(refName);
-        if (context.analyzedVars != null &&
-            resolved instanceof GrVariable &&
-            context.analyzedVars.toWrap((GrVariable)resolved) &&
-            !PsiUtil.isAccessedForWriting(referenceExpression)) {
-          builder.append(".get()");
+
+        if (resolved instanceof GrVariable && context.analyzedVars.toWrap((GrVariable)resolved)) {
+          builder.append(context.analyzedVars.toVarName((GrVariable)resolved));
+          if (!PsiUtil.isAccessedForWriting(referenceExpression)) {
+            builder.append(".get()");
+          }
+        }
+        else {
+          builder.append(refName);
         }
       }
       else {

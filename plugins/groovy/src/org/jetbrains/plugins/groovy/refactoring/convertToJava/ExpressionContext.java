@@ -88,6 +88,6 @@ class ExpressionContext implements Cloneable {
   }
 
   public void searchForLocalVarsToWrap(GroovyPsiElement root) {
-    analyzedVars = LocalVarAnalyzer.searchForVarsToWrap(root, analyzedVars);
+    analyzedVars = LocalVarAnalyzer.searchForVarsToWrap(root, analyzedVars, this);
   }
 }

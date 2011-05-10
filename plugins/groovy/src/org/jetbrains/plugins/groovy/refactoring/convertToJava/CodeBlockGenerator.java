@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.util.containers.hash.HashSet;
+import org.codehaus.groovy.util.ManagedConcurrentMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -45,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.Collection;
 import java.util.Set;
@@ -113,6 +115,19 @@ public class CodeBlockGenerator extends Generator {
 
   public void generateCodeBlock(GrCodeBlock block, boolean shouldInsertReturnNull) {
     builder.append("{\n");
+    if (block.getParent() instanceof GrMethod) {
+      GrMethod method = (GrMethod)block.getParent();
+      GrParameter[] parameters = method.getParameters();
+      for (GrParameter parameter : parameters) {
+        if (context.analyzedVars.toWrap(parameter)) {
+          StringBuilder typeText = new StringBuilder(GroovyCommonClassNames.GROOVY_LANG_REFERENCE);
+          GenerationUtil.writeTypeParameters(typeText, new PsiType[]{TypeProvider.getParameterType(parameter)}, method,
+                                             new GeneratorClassNameProvider());
+          builder.append("final ").append(typeText).append(' ').append(context.analyzedVars.toVarName(parameter))
+            .append(" = new ").append(typeText).append('(').append(parameter.getName()).append(");\n");
+        }
+      }
+    }
     visitStatementOwner(block, shouldInsertReturnNull);
     builder.append("}\n");
   }

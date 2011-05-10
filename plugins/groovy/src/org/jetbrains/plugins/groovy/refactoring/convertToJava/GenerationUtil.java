@@ -114,7 +114,8 @@ public class GenerationUtil {
 
   static String suggestVarName(PsiType type, GroovyPsiElement context, ExpressionContext expressionContext) {
     final DefaultGroovyVariableNameValidator nameValidator =
-      new DefaultGroovyVariableNameValidator(context, expressionContext.myUsedVarNames, true);
+      new DefaultGroovyVariableNameValidator(context, expressionContext.myUsedVarNames, true, true);
+    if (type instanceof PsiPrimitiveType) type = TypesUtil.boxPrimitiveType(type, context.getManager(), context.getResolveScope());
     final String[] varNames = GroovyNameSuggestionUtil.suggestVariableNameByType(type, nameValidator);
 
     LOG.assertTrue(varNames.length > 0);
@@ -428,7 +429,7 @@ public class GenerationUtil {
       else if (analyzedVars.toWrap(variable)) {
         builder.append(PsiModifier.FINAL).append(' ');
         type = JavaPsiFacade.getElementFactory(expressionContext.project).createTypeFromText(
-          GroovyCommonClassNames.GROOVY_LANG_REFERENCE + "<" + getTypeText(type, variable) + ">", variable);
+          GroovyCommonClassNames.GROOVY_LANG_REFERENCE + "<" + getTypeText(originalType, variable) + ">", variable);
         wrapped = true;
       }
     }

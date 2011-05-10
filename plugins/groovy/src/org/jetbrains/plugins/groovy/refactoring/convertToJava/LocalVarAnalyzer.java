@@ -15,19 +15,22 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -35,47 +38,62 @@ import java.util.Set;
  */
 class LocalVarAnalyzer extends GroovyRecursiveElementVisitor {
   static class Result {
-    private final Set<GrVariable> toMakeFinal;
-    private final Set<GrVariable> toWrap;
+    private final Set<PsiVariable> toMakeFinal;
+    private final Set<PsiVariable> toWrap;
+    private final Map<PsiVariable, String> varToName;
 
-    private Result(Set<GrVariable> toMakeFinal, Set<GrVariable> toWrap) {
+    private Result(Set<PsiVariable> toMakeFinal, Set<PsiVariable> toWrap, Map<PsiVariable, String> varToName) {
       this.toMakeFinal = toMakeFinal;
       this.toWrap = toWrap;
+      this.varToName = varToName;
     }
 
-    boolean toWrap(GrVariable variable) {
+    boolean toWrap(PsiVariable variable) {
       return toWrap.contains(variable);
     }
-    boolean toMakeFinal(GrVariable variable) {
+
+    boolean toMakeFinal(PsiVariable variable) {
       return toMakeFinal.contains(variable);
+    }
+
+    String toVarName(PsiVariable variable) {
+      return varToName.get(variable);
     }
   }
 
 
-  public static Result searchForVarsToWrap(GroovyPsiElement root, Result analyzedVars) {
+  public static Result searchForVarsToWrap(GroovyPsiElement root, Result analyzedVars, ExpressionContext context) {
     LocalVarAnalyzer visitor = new LocalVarAnalyzer();
     root.accept(visitor);
 
-    Set<GrVariable> toWrap = analyzedVars == null ? new HashSet<GrVariable>() : analyzedVars.toWrap;
-    Set<GrVariable> toMakeFinal = analyzedVars == null ? new HashSet<GrVariable>() : analyzedVars.toMakeFinal;
-    for (GrVariable v : visitor.touched) {
+    Map<PsiVariable, String> varToName = analyzedVars == null ? new HashMap<PsiVariable, String>() : analyzedVars.varToName;
+    Set<PsiVariable> toWrap = analyzedVars == null ? new HashSet<PsiVariable>() : analyzedVars.toWrap;
+    Set<PsiVariable> toMakeFinal = analyzedVars == null ? new HashSet<PsiVariable>() : analyzedVars.toMakeFinal;
+    for (PsiVariable v : visitor.touched) {
       if (visitor.rewritten.contains(v)) {
         toWrap.add(v);
+        if (v instanceof PsiParameter) {
+          varToName.put(v, GenerationUtil.suggestVarName(v.getType(), root, context));
+        }
+        else {
+          varToName.put(v, v.getName());
+        }
       }
       else {
         toMakeFinal.add(v);
+        varToName.put(v, v.getName());
       }
     }
-    return analyzedVars == null ? new Result(toMakeFinal, toWrap) : analyzedVars;
+    return analyzedVars == null ? new Result(toMakeFinal, toWrap, varToName) : analyzedVars;
   }
 
   public static Result initialResult() {
-    return new Result(new HashSet<GrVariable>(), new HashSet<GrVariable>());
+    return new Result(new HashSet<PsiVariable>(), new HashSet<PsiVariable>(), new HashMap<PsiVariable, String>());
   }
 
-  private final Set<GrVariable> touched = new HashSet<GrVariable>();
-  private final Set<GrVariable> rewritten = new HashSet<GrVariable>();
-  private final TObjectIntHashMap<GrVariable> allVars = new TObjectIntHashMap<GrVariable>();
+  private final Set<PsiVariable> touched = new HashSet<PsiVariable>();
+  private final Set<PsiVariable> rewritten = new HashSet<PsiVariable>();
+  private final TObjectIntHashMap<PsiVariable> allVars = new TObjectIntHashMap<PsiVariable>();
 
   private int grade = 0;
 
@@ -101,7 +119,7 @@ class LocalVarAnalyzer extends GroovyRecursiveElementVisitor {
   @Override
   public void visitVariable(GrVariable variable) {
     super.visitVariable(variable);
-    if (!GroovyRefactoringUtil.isLocalVariable(variable)) return;
+    if (variable instanceof GrField) return;
     allVars.put(variable, grade);
   }
 
@@ -117,9 +135,7 @@ class LocalVarAnalyzer extends GroovyRecursiveElementVisitor {
     }
 
     if (allVars.get(var) < grade) {
-      touched.add((GrVariable)resolved);
+      touched.add((PsiVariable)resolved);
     }
   }
-
-
 }
