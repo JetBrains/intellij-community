@@ -249,7 +249,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
       if (SystemInfo.isMac) {
         builder.append(fileTitle).append(title)
           .append(ProjectManager.getInstance().getOpenProjects().length == 0 
-                  || ((ApplicationInfoEx)ApplicationInfo.getInstance()).isEAP() ? applicationName : null);
+                  || ((ApplicationInfoEx)ApplicationInfo.getInstance()).isEAP() && !applicationName.endsWith("SNAPSHOT") ? applicationName : null);
       } else {
         builder.append(title).append(fileTitle).append(applicationName);
       }

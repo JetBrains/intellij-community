@@ -47,6 +47,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   private int myPositionChangeXShift;
   private int myPositionChangeYShift;
   private boolean myHideOnAction = true;
+  private boolean myDialogMode;
 
   public BalloonPopupBuilderImpl(@NotNull final JComponent content) {
     myContent = content;
@@ -58,8 +59,16 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   }
 
   @Override
+  @NotNull
   public BalloonBuilder setHideOnAction(boolean hideOnAction) {
     myHideOnAction = hideOnAction;
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public BalloonBuilder setDialogMode(boolean dialogMode) {
+    myDialogMode = dialogMode;
     return this;
   }
 
@@ -135,7 +144,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   @NotNull
   public Balloon createBalloon() {
     return new BalloonImpl(myContent, myBorder, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myHideOnAction, myShowCalllout, myCloseButtonEnabled, myFadeoutTime, myHideOnFrameResize, myClickHandler, myCloseOnClick, myAnimationCycle,
-                           myCalloutShift, myPositionChangeXShift, myPositionChangeYShift);
+                           myCalloutShift, myPositionChangeXShift, myPositionChangeYShift, myDialogMode);
   }
 
   @NotNull

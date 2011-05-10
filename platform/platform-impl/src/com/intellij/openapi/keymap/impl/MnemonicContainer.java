@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.wm.impl;
-
-import com.intellij.openapi.wm.IdeGlassPane;
-
-import javax.swing.*;
-import java.awt.*;
+package com.intellij.openapi.keymap.impl;
 
 /**
- * @author spleaner
+ * Created by IntelliJ IDEA.
+ * User: kirillk
+ * Date: 5/5/11
+ * Time: 1:25 PM
+ * To change this template use File | Settings | File Templates.
  */
-public interface IdeGlassPaneEx extends IdeGlassPane {
-  Component add(final Component comp);
-  void remove(final Component comp);
-
-  int getComponentCount();
-  Component getComponent(int index);
-
-  boolean isInModalContext();
-
-  JComponent getProxyComponent();
+public interface MnemonicContainer {
 }

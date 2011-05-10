@@ -29,6 +29,8 @@ import org.netbeans.lib.cvsclient.command.annotate.AnnotateCommand;
 import java.io.File;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -37,6 +39,8 @@ import java.util.List;
 public class AnnotateOperation extends LocalPathIndifferentOperation {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.AnnotateOperation");
+
+  private static final Collection<String> ourDoNotSupportingAnnotateBinaryRoots = new HashSet<String>();
 
   private final String myRevision;
   private final List<Annotation> myAnnotations = new ArrayList<Annotation>();
@@ -67,7 +71,16 @@ public class AnnotateOperation extends LocalPathIndifferentOperation {
     AnnotateCommand result = new AnnotateCommand();
     myHelper.addFilesTo(result);
     result.setAnnotateByRevisionOrTag(myRevision);
+
+    if (!ourDoNotSupportingAnnotateBinaryRoots.contains(root.getCvsRootAsString())) {
+      result.setAnnotateBinary(true);
+    }
+
     return result;
+  }
+
+  public static void doesNotSupportAnnotateBinary(CvsEnvironment root) {
+    ourDoNotSupportingAnnotateBinaryRoots.add(root.getCvsRootAsString());
   }
 
   public Annotation[] getLineAnnotations(){

@@ -47,6 +47,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   private final Project myProject;
   private NavBarPanel myNavigationBar;
   private JPanel myRunPanel;
+  private boolean myNavToolbarGroupExist;
 
   public NavBarRootPaneExtension(Project project) {
     myProject = project;
@@ -57,6 +58,9 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         toggleRunPanel(!source.SHOW_MAIN_TOOLBAR);
       }
     }, this);
+    
+    final AnAction navBarToolBar = ActionManager.getInstance().getAction("NavBarToolBar");
+    myNavToolbarGroupExist = navBarToolBar instanceof DefaultActionGroup && ((DefaultActionGroup)navBarToolBar).getChildrenCount() > 0; 
   }
 
   @Override
@@ -64,8 +68,8 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     return new NavBarRootPaneExtension(myProject);
   }
   
-  public static boolean isMainToolbarVisible() {
-    return UISettings.getInstance().SHOW_MAIN_TOOLBAR || !runToolbarExists();
+  public boolean isMainToolbarVisible() {
+    return UISettings.getInstance().SHOW_MAIN_TOOLBAR || !myNavToolbarGroupExist;
   }
   
   private static boolean runToolbarExists() {

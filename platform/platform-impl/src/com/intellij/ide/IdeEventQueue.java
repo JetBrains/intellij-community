@@ -131,6 +131,8 @@ public class IdeEventQueue extends EventQueue {
   private boolean myKeyboardBusy;
   private boolean myDispatchingFocusEvent;
 
+  private int myInputMethodLock;
+
   private static class IdeEventQueueHolder {
     private static final IdeEventQueue INSTANCE = new IdeEventQueue();
   }
@@ -902,5 +904,19 @@ public class IdeEventQueue extends EventQueue {
 
       return !dispatch;
     }
+  }
+
+  public boolean isInputMethodEnabled() {
+    return !SystemInfo.isMac || myInputMethodLock == 0;
+  }
+
+  public void disableInputMethods(Disposable parentDisposable) {
+    myInputMethodLock++;
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myInputMethodLock--;
+      }
+    });
   }
 }
