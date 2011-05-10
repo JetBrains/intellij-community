@@ -42,7 +42,7 @@ public class GitHubSettingsConfigurable implements SearchableConfigurable {
 
   public boolean isModified() {
     return mySettingsPane == null || !mySettings.getLogin().equals(mySettingsPane.getLogin()) ||
-           !mySettings.getPassword().equals(mySettingsPane.getPassword()) ||
+           (mySettings.getPassword() != null && !mySettings.getPassword().equals(mySettingsPane.getPassword())) ||
            !mySettings.getHost().equals(mySettingsPane.getHost());
   }
 
