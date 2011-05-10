@@ -35,7 +35,7 @@ public class XPathStringImpl extends XPathElementImpl implements XPathString {
   public boolean isWellFormed() {
     final String text = getUnescapedText();
     final char quoteChar = getQuoteChar();
-    if (!text.endsWith(String.valueOf(quoteChar))) {
+    if (!text.endsWith(String.valueOf(quoteChar)) || text.indexOf(quoteChar) == text.lastIndexOf(quoteChar)) {
       return false;
     }
 
@@ -62,7 +62,11 @@ public class XPathStringImpl extends XPathElementImpl implements XPathString {
 
   private String getStringBetweenQuotes() {
     final String text = getUnescapedText();
-    return text.endsWith(String.valueOf(getQuoteChar())) ? text.substring(1, text.length() - 1) : text.substring(1, text.length());
+    if (text.endsWith(String.valueOf(getQuoteChar())) && text.length() > 1) {
+      return text.substring(1, text.length() - 1);
+    } else {
+      return text.substring(1, text.length());
+    }
   }
 
   private char getQuoteChar() {
