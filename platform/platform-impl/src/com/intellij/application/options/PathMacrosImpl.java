@@ -270,11 +270,15 @@ public class PathMacrosImpl extends PathMacros implements ApplicationComponent, 
       for (Object aChildren : children) {
         Element macro = (Element)aChildren;
         final String name = macro.getAttributeValue(NAME_ATTR);
-        final String value = macro.getAttributeValue(VALUE_ATTR);
+        String value = macro.getAttributeValue(VALUE_ATTR);
         if (name == null || value == null) {
           throw new InvalidDataException();
         }
 
+        if (value.length() > 1 && value.charAt(value.length() - 1) == '/') {
+          value = value.substring(0, value.length() - 1); 
+        }
+        
         myMacros.put(name, value);
       }
 
