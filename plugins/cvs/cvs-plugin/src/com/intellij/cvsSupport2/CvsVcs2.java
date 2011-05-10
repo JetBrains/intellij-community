@@ -56,7 +56,6 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,8 +72,6 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
   private static final String NAME = "CVS";
   private static final VcsKey ourKey = createKey(NAME);
   private final Cvs2Configurable myConfigurable;
-
-  @NonNls private static final String ourRevisionPattern = "\\d+(\\.\\d+)*";
 
   private CvsStorageComponent myStorageComponent = CvsStorageComponent.ABSENT_STORAGE;
   private final CvsHistoryProvider myCvsHistoryProvider;
@@ -110,7 +107,7 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
 
     myConfigurable = new Cvs2Configurable(getProject());
     myStorageComponent = cvsStorageComponent;
-    myCvsAnnotationProvider = new CvsAnnotationProvider(myProject);
+    myCvsAnnotationProvider = new CvsAnnotationProvider(myProject, myCvsHistoryProvider);
     myDiffProvider = new CvsDiffProvider(myProject);
     myCommittedChangesProvider = new CvsCommittedChangesProvider(myProject);
 
@@ -329,11 +326,7 @@ public class CvsVcs2 extends AbstractVcs implements TransactionProvider, EditFil
 
   @Override
   public String getRevisionPattern() {
-    return ourRevisionPattern;
-  }
-
-  public static String staticRevisionPattern() {
-    return ourRevisionPattern;
+    return CvsUtil.REVISION_PATTERN;
   }
 
   @Override
