@@ -105,9 +105,11 @@ public class FileTemplateConfigurable implements Configurable {
   public void setTemplate(FileTemplate template, URL defaultDescription) {
     myDefaultDescriptionUrl = defaultDescription;
     myTemplate = template;
-    reset();
-    myNameField.selectAll();
-    myExtensionField.selectAll();
+    if (myMainPanel != null) {
+      reset();
+      myNameField.selectAll();
+      myExtensionField.selectAll();
+    }
   }
 
   public void setShowInternalMessage(String message) {
