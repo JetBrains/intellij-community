@@ -16,6 +16,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.net.HTTPProxySettingsDialog;
 
@@ -50,7 +51,12 @@ public class JetBrainsAccountDialog extends DialogWrapper {
 
   public JetBrainsAccountDialog(Component parent) throws HeadlessException {
     super(parent, false);
-    init ();
+    init();
+  }
+
+  public JetBrainsAccountDialog(Project project) throws HeadlessException {
+    super(project, false);
+    init();
   }
 
   protected JPanel myMainPanel;
