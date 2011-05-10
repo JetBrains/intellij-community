@@ -495,7 +495,7 @@ public class PyCallExpressionHelper {
               }
               else {
                 PyType arg_type = type_context.getType(arg);
-                if (arg_type != null && arg_type.isBuiltin() && "list".equals(arg_type.getName())) {
+                if (arg_type != null && arg_type.isBuiltin(type_context) && "list".equals(arg_type.getName())) {
                   mapped_args.add(arg); // we can't really analyze arbitrary lists statically yet
                   // but ListLiteralExpressions are handled by visitor
                 }

@@ -53,7 +53,7 @@ public class PyBroadExceptionInspection extends PyInspection {
           PyReferenceExpression exceptClassRef = (PyReferenceExpression)exceptClass;
           PyType classRefType = myTypeEvalContext.getType(exceptClassRef);
           if (classRefType != null) {
-            if (classRefType.isBuiltin())
+            if (classRefType.isBuiltin(myTypeEvalContext))
               registerProblem(exceptClassRef, "Too broad exception clause");
           }
         }

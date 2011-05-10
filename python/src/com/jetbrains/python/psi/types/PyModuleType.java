@@ -183,7 +183,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @Override
-  public boolean isBuiltin() {
+  public boolean isBuiltin(TypeEvalContext context) {
     return true;
   }
 
