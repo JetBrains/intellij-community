@@ -72,6 +72,7 @@ public final class XPath2TokenTypes {
   public static final TokenSet OCCURRENCE_OPS = TokenSet.create(XPathTokenTypes.PLUS, XPathTokenTypes.STAR, QUEST);
 
   public static final TokenSet BOOLEAN_OPERATIONS = TokenSet.orSet(XPathTokenTypes.BOOLEAN_OPERATIONS, COMP_OPS);
+  public static final TokenSet NUMBER_OPERATIONS = TokenSet.orSet(XPathTokenTypes.NUMBER_OPERATIONS, TokenSet.create(IDIV));
 
 
   public static final TokenSet KEYWORDS = TokenSet.orSet(

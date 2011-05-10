@@ -48,7 +48,7 @@ public class ExpectedTypeUtil {
               final XPathExpression lop = ((XPathBinaryExpression)parentExpr).getLOperand();
                 if (op == XPathTokenTypes.AND || op == XPathTokenTypes.OR) {
                     expectedType = XPathType.BOOLEAN;
-                } else if (XPathTokenTypes.NUMBER_OPERATIONS.contains(op)) {
+                } else if (XPath2TokenTypes.NUMBER_OPERATIONS.contains(op)) {
                   if (isXPath1(expression)) {
                     expectedType = XPathType.NUMBER;
                   } else {
@@ -148,7 +148,7 @@ public class ExpectedTypeUtil {
       if (XPathType.isAssignable(XPath2Type.NUMERIC, type)) {
         return XPath2Type.NUMERIC;
       } else if (XPathType.isAssignable(XPath2Type.DATE, type) || XPathType.isAssignable(XPath2Type.TIME, type) || XPathType.isAssignable(XPath2Type.DATETIME, type)) {
-        return XPathType.ChoiceType.create(XPath2Type.DATE, XPath2Type.DURATION);
+        return XPathType.ChoiceType.create((XPath2Type)type, XPath2Type.DURATION);
       } else if (XPathType.isAssignable(XPath2Type.DURATION, type)) {
         return XPath2Type.DURATION;
       }

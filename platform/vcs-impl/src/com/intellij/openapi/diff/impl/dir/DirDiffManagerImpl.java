@@ -17,8 +17,12 @@ package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffSettings;
+import com.intellij.ide.diff.JarFileDiffElement;
+import com.intellij.ide.diff.VirtualFileDiffElement;
 import com.intellij.openapi.diff.DirDiffManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,12 +41,27 @@ public class DirDiffManagerImpl extends DirDiffManager {
     if (settings.showInFrame) {
       new DirDiffFrame(myProject, model, settings).show();
     } else {
-      new DirDiffDialog(myProject, model, settings).show();
+      final DirDiffDialog dirDiffDialog = new DirDiffDialog(myProject, model, settings);
+      if (myProject == null || myProject.isDefault()) {
+        dirDiffDialog.setModal(true);
+      }
+      dirDiffDialog.show();
     }
   }
 
   @Override
   public boolean canShow(@NotNull DiffElement dir1, @NotNull DiffElement dir2) {
     return dir1.isContainer() && dir2.isContainer();
+  }
+
+  @Override
+  public DiffElement createDiffElement(Object obj) {
+    //TODO make EP
+    if (obj instanceof VirtualFile) {
+      final VirtualFile file = (VirtualFile)obj;
+      return JarFileSystem.PROTOCOL.equalsIgnoreCase(file.getExtension())
+        ? new JarFileDiffElement(file) : new VirtualFileDiffElement(file);
+    }
+    return null;
   }
 }

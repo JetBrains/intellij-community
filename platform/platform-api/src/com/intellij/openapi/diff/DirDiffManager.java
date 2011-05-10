@@ -20,6 +20,7 @@ import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
@@ -32,4 +33,7 @@ public abstract class DirDiffManager {
   public abstract void showDiff(@NotNull DiffElement dir1, @NotNull DiffElement dir2, DirDiffSettings settings);
 
   public abstract boolean canShow(@NotNull DiffElement dir1, @NotNull DiffElement dir2);
+
+  @Nullable
+  public abstract DiffElement createDiffElement(Object obj);
 }
