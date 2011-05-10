@@ -2,7 +2,7 @@ def foo() {}
 
 
 /**<caret>
-def bar(aaa, bbb) {}
+def bar(aaa, bbb) { 2 }
 -----
 def foo() {}
 
@@ -12,4 +12,4 @@ def foo() {}
  * @param bbb
  * @return
  */
-def bar(aaa, bbb) {}
+def bar(aaa, bbb) { 2 }

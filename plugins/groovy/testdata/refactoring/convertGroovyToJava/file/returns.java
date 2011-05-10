@@ -8,7 +8,7 @@ public void foo2() {
 org.codehaus.groovy.runtime.DefaultGroovyMethods.print(returns.this, "foo");
 }
 
-public int foo3() {
+public java.lang.Integer foo3() {
 org.codehaus.groovy.runtime.DefaultGroovyMethods.print(returns.this, "foo");
 return null;
 }
