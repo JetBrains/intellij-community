@@ -81,14 +81,14 @@ public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPath
             return mostSpecificType(lop, rop, XPath2Type.NUMERIC);
           }
 
-          if (sameType(lop, rop)) {
-            assert lop != null : unexpectedPsiAssertion();
-            return lop.getType();
-          }
-
           if (XPathTokenTypes.MUL_OPS.contains(operator)) {
             if (is(lop, XPath2Type.DURATION) || is(rop, XPath2Type.DURATION)) {
               return lop != null ? lop.getType() : XPath2Type.DURATION;
+            }
+
+            if (sameType(lop, rop)) {
+              assert lop != null : unexpectedPsiAssertion();
+              return lop.getType();
             }
           } else {
             if (is(lop, XPath2Type.DATE) || is(lop, XPath2Type.DATETIME)) {
@@ -100,6 +100,11 @@ public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPath
             if (is(lop, XPath2Type.YEARMONTHDURATION)) {
               return XPathType.ChoiceType.create(XPath2Type.DATE, XPath2Type.DATETIME);
             }
+          }
+
+          if (sameType(lop, rop)) {
+            assert lop != null : unexpectedPsiAssertion();
+            return lop.getType();
           }
 
           if (is(lop, XPath2Type.NUMERIC) || is(rop, XPath2Type.NUMERIC) ) {
