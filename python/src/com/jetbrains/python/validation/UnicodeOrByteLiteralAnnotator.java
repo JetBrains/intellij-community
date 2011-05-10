@@ -1,6 +1,5 @@
 package com.jetbrains.python.validation;
 
-import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -99,16 +98,14 @@ public class UnicodeOrByteLiteralAnnotator extends PyAnnotator {
                 else if (escaped_char >= '0' && escaped_char <= '7') {
                   int span = 4; // 4 = len("\\ooo")
                   if (pos < length-span) {
-                    int end_pos = pos+span;
-                    if (allOctal(text, pos + 2, end_pos)) markAsValidEscape(start+pos, start+end_pos);
-                    else markAsInvalidEscape(start+pos, start+end_pos); // XXX: too much! e.g. \7 fails
+                    markAsValidEscape(start + pos, start + firstNonOctalPos(text, pos+1, pos + span));
                   }
                 }
                 else { // plain 1-char escape, unless it's Unicode-specific in byte-mode
                   if (is_unicode || "UuN".indexOf(escaped_char) < 0)
                   markAsValidEscape(start + pos, start+pos+2);
                 }
-              } // else: a non-interpreted sequente like \Q: not an error, just don't highlight
+              } // else: a non-interpreted sequence like \Q: not an error, just don't highlight
             }
             // else: lone backslash at EOL, we ignore it
           }
@@ -128,12 +125,14 @@ public class UnicodeOrByteLiteralAnnotator extends PyAnnotator {
     else markAsInvalidEscape(start+pos, start+length-1);
   }
 
-  private static boolean allOctal(CharSequence text, int start, int end) {
-    for (int i=start; i<end; i+=1) {
+  // how many octal characters are there in [start, end)
+  private static int firstNonOctalPos(CharSequence text, int start, int end) {
+    int i;
+    for (i=start; i<end; i+=1) {
       char c = text.charAt(i);
-      if (c < '0' || c > '7') return false;
+      if (c < '0' || c > '7') break;
     }
-    return true;
+    return i;
   }
 
   private static boolean allHex(CharSequence text, int start, int end) {

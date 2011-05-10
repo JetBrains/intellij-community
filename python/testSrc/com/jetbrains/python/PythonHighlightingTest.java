@@ -170,6 +170,15 @@ public class PythonHighlightingTest extends PyLightFixtureTestCase {
     doTest(LanguageLevel.PYTHON25, true, true);
   }
 
+  public void testUnicodeOrByte26future() {
+    doTest(LanguageLevel.PYTHON26, true, true);
+  }
+
+  public void testUnicodeOrByte30() {
+    doTest(LanguageLevel.PYTHON30, true, true);
+  }
+
+
   // ---
   private void doTest(final LanguageLevel languageLevel, final boolean checkWarnings, final boolean checkInfos) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
