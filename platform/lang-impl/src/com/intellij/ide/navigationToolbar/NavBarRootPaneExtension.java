@@ -64,11 +64,12 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     return new NavBarRootPaneExtension(myProject);
   }
   
-  public static boolean isMainToolbarVisible() {
-    return UISettings.getInstance().SHOW_MAIN_TOOLBAR || !runToolbarExists();
+  public static boolean isMainToolbarVisible(final Project project) {
+    return UISettings.getInstance().SHOW_MAIN_TOOLBAR || !runToolbarExists(project);
   }
   
-  private static boolean runToolbarExists() {
+  private static boolean runToolbarExists(final Project project) {
+    if (project != null && !project.isInitialized()) return false;
     final AnAction navBarToolBar = ActionManager.getInstance().getAction("NavBarToolBar");
     return navBarToolBar instanceof DefaultActionGroup && ((DefaultActionGroup)navBarToolBar).getChildrenCount() > 0;
   }
@@ -79,7 +80,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         @Override
         protected void paintChildren(Graphics g) {
           super.paintChildren(g);
-          if (UIUtil.isUnderAquaLookAndFeel() && !isMainToolbarVisible()) {
+          if (UIUtil.isUnderAquaLookAndFeel() && !isMainToolbarVisible(myProject)) {
             final Rectangle r = getBounds();
             g.setColor(new Color(255, 255, 255, 90));
             g.drawLine(0, r.height - 4, r.width, r.height - 4);
@@ -98,7 +99,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
           }
 
           final Rectangle r = getBounds();
-          if (isMainToolbarVisible()) {
+          if (isMainToolbarVisible(myProject)) {
             g.setColor(new Color(200, 200, 200));
             g.fillRect(0, 0, r.width, r.height);
           }
@@ -126,7 +127,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   }
 
   private void toggleRunPanel(final boolean show) {
-    if (show && myRunPanel == null && runToolbarExists()) {
+    if (show && myRunPanel == null && runToolbarExists(myProject)) {
       final ActionManager manager = ActionManager.getInstance();
       final AnAction toolbarRunGroup = manager.getAction("NavBarToolBar");
       if (toolbarRunGroup instanceof DefaultActionGroup) {
@@ -186,7 +187,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         if (UIUtil.isUnderAquaLookAndFeel()) {
           final Rectangle r = getBounds();
           final Graphics2D g2d = (Graphics2D)g;
-          if (!isMainToolbarVisible()) {
+          if (!isMainToolbarVisible(myProject)) {
             //UIUtil.drawGradientHToolbarBackground(g, r.width, r.height);
 
             final Dimension d = getPreferredSize();
@@ -286,7 +287,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       if (myWrapperPanel.getComponentCount() > 0) {
         final Component c = myWrapperPanel.getComponent(0);
         if (c instanceof JComponent) ((JComponent)c).setOpaque(
-          !UIUtil.isUnderAquaLookAndFeel() || isMainToolbarVisible());
+          !UIUtil.isUnderAquaLookAndFeel() || isMainToolbarVisible(myProject));
       }
     }
   }
