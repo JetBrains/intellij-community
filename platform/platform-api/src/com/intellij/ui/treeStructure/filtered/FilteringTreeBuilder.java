@@ -202,7 +202,8 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
   }
 
   public FilteringTreeStructure.Node getVisibleNodeFor(Object nodeObject) {
-    return getFilteredStructure().getVisibleNodeFor(nodeObject);
+    FilteringTreeStructure structure = getFilteredStructure();
+    return structure != null ? structure.getVisibleNodeFor(nodeObject) : null;
   }
 
   public Object getOriginalNode(Object node) {
