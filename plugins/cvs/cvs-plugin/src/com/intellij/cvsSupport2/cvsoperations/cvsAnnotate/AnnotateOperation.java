@@ -15,6 +15,8 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsAnnotate;
 
+import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
@@ -44,6 +46,13 @@ public class AnnotateOperation extends LocalPathIndifferentOperation {
   private final List<Annotation> myAnnotations = new ArrayList<Annotation>();
   private final StringBuffer myBuffer = new StringBuffer();
   private final LocalPathIndifferentOperationHelper myHelper;
+
+  public static AnnotateOperation createForFile(File file){
+    File cvsLightweightFile = CvsUtil.getCvsLightweightFileForFile(file);
+    String revision = CvsUtil.getRevisionFor(file);
+    return new AnnotateOperation(cvsLightweightFile,
+        revision, CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(file.getParentFile()));
+  }
 
   public AnnotateOperation(File cvsLightweightFile, String revision, CvsEnvironment env) {
     this(cvsLightweightFile, revision, env, new LocalPathIndifferentOperationHelper(revision));
