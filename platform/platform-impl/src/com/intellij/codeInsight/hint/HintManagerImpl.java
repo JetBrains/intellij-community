@@ -281,6 +281,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
+    if (!ApplicationManager.getApplication().isActive()) return;
 
     updateLastEditor(editor);
 
