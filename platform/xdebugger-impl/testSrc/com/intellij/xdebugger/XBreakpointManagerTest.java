@@ -19,8 +19,10 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
-import org.jetbrains.annotations.NotNull;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 /**
  * @author nik
@@ -58,7 +60,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
 
     reload();
     XBreakpoint<?>[] breakpoints = myBreakpointManager.getAllBreakpoints();
-    assertEquals(3, breakpoints.length);
+    assertEquals("Expected 3 breakpoints, actual: " + Arrays.toString(breakpoints), 3, breakpoints.length);
 
     assertTrue(myBreakpointManager.isDefaultBreakpoint(breakpoints[0]));
     assertEquals("default", assertInstanceOf(breakpoints[0].getProperties(), MyBreakpointProperties.class).myOption);
