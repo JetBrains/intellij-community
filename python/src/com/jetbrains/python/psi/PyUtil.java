@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi;
 
+import com.google.common.collect.Maps;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -39,10 +40,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.EnumSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 import static com.jetbrains.python.psi.PyFunction.Flag.*;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.interpretAsStaticmethodOrClassmethodWrappingCall;
@@ -748,6 +747,18 @@ public class PyUtil {
   @Nullable
   public static String strValue(@Nullable PyExpression expression) {
     return expression instanceof PyStringLiteralExpression ? ((PyStringLiteralExpression) expression).getStringValue() : null;
+  }
+
+  public static Map<String, PyExpression> dictValue(PyDictLiteralExpression dict) {
+    Map<String, PyExpression> result = Maps.newLinkedHashMap();
+    for (PyKeyValueExpression keyValue : dict.getElements()) {
+      PyExpression key = keyValue.getKey();
+      PyExpression value = keyValue.getValue();
+      if (key instanceof PyStringLiteralExpression) {
+        result.put(((PyStringLiteralExpression)key).getStringValue(), value);
+      }
+    }
+    return result;
   }
 
   /**
