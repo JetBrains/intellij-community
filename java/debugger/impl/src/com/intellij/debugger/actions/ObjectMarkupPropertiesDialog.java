@@ -40,7 +40,7 @@ public class ObjectMarkupPropertiesDialog extends ValueMarkerPresentationDialogB
     mySuggestAdditionalMarkup = suggestAdditionalMarkup;
     myDescriptionLabel.setText("If the value is referenced by a constant field of an abstract class,\n" +
                                "IDEA could additionally mark all values referenced from this class with the names of referencing fields.");
-    myCbMarkAdditionalFields.setSelected(suggestAdditionalMarkup && PropertiesComponent.getInstance().getBoolean(MARK_ALL_REFERENCED_VALUES_KEY, true));
+    myCbMarkAdditionalFields.setSelected(PropertiesComponent.getInstance().getBoolean(MARK_ALL_REFERENCED_VALUES_KEY, true));
     init();
   }
 
