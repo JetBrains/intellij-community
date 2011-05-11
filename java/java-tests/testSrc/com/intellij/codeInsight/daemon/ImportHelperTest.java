@@ -368,4 +368,27 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
      }
    }
 
+   public void testAutoInsertImportForInnerClass() throws Throwable {
+     @NonNls String text = "package x; class S { void f(ReadLock r){} } <caret> ";
+     configureByText(StdFileTypes.JAVA, text);
+
+     boolean old = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
+     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
+
+     try {
+       List<HighlightInfo> errs = filter(doHighlighting(), HighlightSeverity.ERROR);
+       assertEquals(1, errs.size());
+
+       assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+       type("/* */");
+       doHighlighting();
+       UIUtil.dispatchAllInvocationEvents();
+       assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+     }
+     finally {
+        CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = old;
+     }
+   }
+
 }

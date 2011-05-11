@@ -16,6 +16,7 @@
 package com.intellij.usageView;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -164,6 +165,13 @@ public class UsageInfo {
     if (element == null) return null;
     TextRange range = element.getTextRange();
     ProperTextRange.assertProperRange(range, element);
+    if (element instanceof PsiFile) {
+      // hack: it's actually a range inside file, use document for range checking since during the "find|replace all" operation, file range might have been changed
+      Document document = PsiDocumentManager.getInstance(getProject()).getDocument((PsiFile)element);
+      if (document != null) {
+        range = new ProperTextRange(0, document.getTextLength());
+      }
+    }
     ProperTextRange rangeInElement = getRangeInElement();
     if (rangeInElement == null) return null;
     return new ProperTextRange(Math.min(range.getEndOffset(), range.getStartOffset() + rangeInElement.getStartOffset()),

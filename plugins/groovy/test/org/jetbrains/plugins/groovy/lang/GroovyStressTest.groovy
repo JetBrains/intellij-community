@@ -10,8 +10,9 @@ import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
+import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
 
- /**
+/**
  * @author peter
  */
 class GroovyStressTest extends LightCodeInsightFixtureTestCase {
@@ -95,10 +96,13 @@ class GroovyStressTest extends LightCodeInsightFixtureTestCase {
 
   public void testDeeplyNestedClosures() {
     String text = "println 'hi'"
+    String defs = ""
     for (i in 1..10) {
       text = "foo$i { $text }"
+      defs += "def foo$i(Closure cl) {}\n"
     }
-    myFixture.configureByText("a.groovy", text)
+    myFixture.configureByText("a.groovy", defs + text)
+    myFixture.enableInspections(new MissingReturnInspection())
     IdeaTestUtil.assertTiming "slow", 10000, { myFixture.doHighlighting() }
   }
 

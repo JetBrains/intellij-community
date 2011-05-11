@@ -696,7 +696,7 @@ class Zoo {
     assertEquals("plus", assertInstanceOf(resolved, GrMethod).name)
   }
 
-  public void _testWrongGdkCallGenerics() {
+  public void testWrongGdkCallGenerics() {
     myFixture.configureByText("a.groovy",
                               "Map<File,String> map = [:]\n" +
                               "println map.ge<caret>t('', '')"
