@@ -42,7 +42,7 @@ import java.util.Collection;
 public class GitMergeConflictResolver {
 
   private static final Logger LOG = Logger.getInstance(GitMergeConflictResolver.class);
-  private final @NotNull Project myProject;
+  protected final @NotNull Project myProject;
   private final boolean myReverseMerge;
   private final @NotNull String myErrorNotificationTitle;
   private final @NotNull String myErrorNotificationAdditionalDescription;

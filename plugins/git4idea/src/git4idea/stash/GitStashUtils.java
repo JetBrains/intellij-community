@@ -15,6 +15,7 @@
  */
 package git4idea.stash;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,10 +30,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 
+import static com.intellij.notification.NotificationType.WARNING;
+
 /**
  * The class contains utilities for creating and removing stashes.
  */
 public class GitStashUtils {
+
+  private static final Logger LOG = Logger.getInstance(GitStashUtils.class);
 
   private GitStashUtils() {
   }
@@ -76,4 +81,21 @@ public class GitStashUtils {
       consumer.consume(new StashInfo(s.boundedToken(':'), s.boundedToken(':'), s.line().trim()));
     }
   }
+
+  // drops stash (after completing conflicting merge during unstashing), shows a warning in case of error
+  public static void dropStash(Project project, VirtualFile root) {
+    final GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.STASH);
+    handler.setNoSSH(true);
+    handler.addParameters("drop");
+    String output = null;
+    try {
+      output = handler.run();
+    } catch (VcsException e) {
+      LOG.info("dropStash " + output, e);
+      GitUIUtil.notifyMessage(project, "Couldn't drop stash",
+                              "Couldn't drop stash after resolving conflicts.<br/>Please drop stash manually.",
+                              WARNING, false, handler.errors());
+    }
+  }
+
 }
