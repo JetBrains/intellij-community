@@ -66,7 +66,8 @@ public class UpdateStrategy {
     for (UpdateChannel channel : product.getChannels()) {
       if (!myUpdateSettings.getKnownChannelsIds().contains(channel.getId()) &&
           channel.getMajorVersion() >= myMajorVersion &&
-          channel.getStatus().compareTo(myChannelStatus) >= 0) {
+          channel.getStatus().compareTo(myChannelStatus) >= 0 &&
+          hasNewVersion(channel)) {
         result.addNewChannel(channel);
         if (channelToPropose == null || isBetter(channelToPropose, channel)) {
           channelToPropose = channel;
