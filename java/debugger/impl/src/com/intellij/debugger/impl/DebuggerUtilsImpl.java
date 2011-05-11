@@ -66,7 +66,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   public Element writeTextWithImports(TextWithImports text) {
     Element element = new Element("TextWithImports");
 
-    element.setAttribute("text", text.toString());
+    element.setAttribute("text", text.toExternalForm());
     element.setAttribute("type", text.getKind() == CodeFragmentKind.EXPRESSION ? "expression" : "code fragment");
     return element;
   }
@@ -85,7 +85,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
 
   public void writeTextWithImports(Element root, String name, TextWithImports value) {
     LOG.assertTrue(value.getKind() == CodeFragmentKind.EXPRESSION);
-    JDOMExternalizerUtil.writeField(root, name, value.toString());
+    JDOMExternalizerUtil.writeField(root, name, value.toExternalForm());
   }
 
   public TextWithImports readTextWithImports(Element root, String name) {
