@@ -8,12 +8,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -186,6 +188,22 @@ public class PyClassRefactoringUtil {
     }
   }
 
+  public static boolean isValidQualifiedName(PyQualifiedName name) {
+    if (name == null) {
+      return false;
+    }
+    final Collection<String> components = name.getComponents();
+    if (components.isEmpty()) {
+      return false;
+    }
+    for (String s: components) {
+      if (!PyNames.isIdentifier(s) || PyNames.isReserved(s)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public static void insertImport(PsiElement anchor, PsiNamedElement element) {
     if (PyBuiltinCache.getInstance(element).hasInBuiltins(element)) return;
     final PsiFile newFile = element.getContainingFile();
@@ -193,7 +211,9 @@ public class PyClassRefactoringUtil {
     assert vFile != null;
     final PsiFile file = anchor.getContainingFile();
     if (newFile == file) return;
-    final String importableName = ResolveImportUtil.findShortestImportableName(anchor, vFile);
+    final PyQualifiedName qName = ResolveImportUtil.findShortestImportableQName(anchor, vFile);
+    assert isValidQualifiedName(qName);
+    final String importableName = (qName != null) ? qName.toString() : null;
     final AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(anchor, newFile);
     if (!PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT || element instanceof PyFile) {
       if (element instanceof PyFile) {
