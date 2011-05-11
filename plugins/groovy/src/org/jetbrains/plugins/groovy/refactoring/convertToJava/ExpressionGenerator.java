@@ -373,7 +373,8 @@ public class ExpressionGenerator extends Generator {
       final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(expression.multiResolve(false));
       final PsiElement resolved = resolveResult.getElement();
 
-      if (resolved instanceof PsiMethod) {
+      if (resolved instanceof PsiMethod &&
+          !shouldNotReplaceOperatorWithMethod(lValue.getType(), rValue, expression.getOperationToken())) {
         if (rValue == null) {
           rValue = factory.createExpressionFromText("null");
         }
@@ -439,9 +440,7 @@ public class ExpressionGenerator extends Generator {
       builder.append(')');
       return;
     }
-    if (GenerationSettings.dontReplaceOperatorsWithMethodsForNumbers &&
-        (TypesUtil.isNumericType(ltype) && (right == null || TypesUtil.isNumericType(right.getType())) ||
-         op == mPLUS && ltype != null && TypesUtil.isClassType(ltype, CommonClassNames.JAVA_LANG_STRING))) {
+    if (shouldNotReplaceOperatorWithMethod(ltype, right, op)) {
       writeSimpleBinaryExpression(token, left, right);
       return;
     }
@@ -469,6 +468,12 @@ public class ExpressionGenerator extends Generator {
     else {
       writeSimpleBinaryExpression(token, left, right);
     }
+  }
+
+  private static boolean shouldNotReplaceOperatorWithMethod(PsiType ltype, @Nullable GrExpression right, IElementType op) {
+    return GenerationSettings.dontReplaceOperatorsWithMethodsForNumbers &&
+        (TypesUtil.isNumericType(ltype) && (right == null || TypesUtil.isNumericType(right.getType())) ||
+         (op == mPLUS || op == mPLUS_ASSIGN) && ltype != null && TypesUtil.isClassType(ltype, CommonClassNames.JAVA_LANG_STRING));
   }
 
   private void writeSimpleBinaryExpression(PsiElement opToken, GrExpression left, GrExpression right) {
@@ -501,15 +506,20 @@ public class ExpressionGenerator extends Generator {
         }
       }
 
-      invokeMethodOn(
-        ((PsiMethod)resolved),
-        operand,
-        GrExpression.EMPTY_ARRAY,
-        GrNamedArgument.EMPTY_ARRAY,
-        GrClosableBlock.EMPTY_ARRAY,
-        resolveResult.getSubstitutor(),
-        expression
-      );
+      if (operand != null && shouldNotReplaceOperatorWithMethod(operand.getType(), null, expression.getOperationTokenType())) {
+        writeSimpleUnary(operand, expression, this);
+      }
+      else {
+        invokeMethodOn(
+          ((PsiMethod)resolved),
+          operand,
+          GrExpression.EMPTY_ARRAY,
+          GrNamedArgument.EMPTY_ARRAY,
+          GrClosableBlock.EMPTY_ARRAY,
+          resolveResult.getSubstitutor(),
+          expression
+        );
+      }
     }
     else if (operand != null) {
       if (postfix) {
@@ -546,14 +556,19 @@ public class ExpressionGenerator extends Generator {
       if (setter == null) return false;
 
       final ExpressionGenerator generator = new ExpressionGenerator(new StringBuilder(), context);
-      generator.invokeMethodOn(
-        method,
-        operand,
-        GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
-        resolveResult.getSubstitutor(),
-        unary
-      );
 
+      if (shouldNotReplaceOperatorWithMethod(operand.getType(), null, unary.getOperationTokenType())) {
+        writeSimpleUnary(operand, unary, generator);
+      }
+      else {
+        generator.invokeMethodOn(
+          method,
+          operand,
+          GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
+          resolveResult.getSubstitutor(),
+          unary
+        );
+      }
       final GrExpression fromText = factory.createExpressionFromText(generator.toString(), unary);
       invokeMethodOn(
         setter,
@@ -591,13 +606,18 @@ public class ExpressionGenerator extends Generator {
       else {
         curBuilder.append(" = ");
       }
-      curGenerator.invokeMethodOn(
-        method,
-        (GrExpression)operand.copy(),
-        GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
-        resolveResult.getSubstitutor(),
-        unary
-      );
+      if (shouldNotReplaceOperatorWithMethod(operand.getType(), null, unary.getOperationTokenType())) {
+        writeSimpleUnary((GrExpression)operand.copy(), unary, curGenerator);
+      }
+      else {
+        curGenerator.invokeMethodOn(
+          method,
+          (GrExpression)operand.copy(),
+          GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
+          resolveResult.getSubstitutor(),
+          unary
+        );
+      }
       if (shouldInsertParentheses) {
         curBuilder.append(')');
       }
@@ -612,6 +632,18 @@ public class ExpressionGenerator extends Generator {
       }
     }
     return true;
+  }
+
+  private static void writeSimpleUnary(GrExpression operand, GrUnaryExpression unary, ExpressionGenerator generator) {
+    String opTokenText = unary.getOperationToken().getText();
+    boolean isPrefix = !(unary instanceof GrPostfixExpression);
+    if (isPrefix) {
+      generator.getBuilder().append(opTokenText);
+    }
+    operand.accept(generator);
+    if (!isPrefix) {
+      generator.getBuilder().append(opTokenText);
+    }
   }
 
   @Override
