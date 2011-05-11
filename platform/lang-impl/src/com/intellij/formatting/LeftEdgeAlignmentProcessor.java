@@ -56,9 +56,10 @@ public class LeftEdgeAlignmentProcessor extends AbstractBlockAlignmentProcessor 
   }
 
   @Override
-  protected void applyIndentToTheFirstBlockOnLine(@NotNull IndentData alignmentAnchorIndent, @NotNull Context context) {
+  protected boolean applyIndentToTheFirstBlockOnLine(@NotNull IndentData alignmentAnchorIndent, @NotNull Context context) {
     WhiteSpace whiteSpace = context.targetBlock.getWhiteSpace();
     whiteSpace.setSpaces(alignmentAnchorIndent.getSpaces(), alignmentAnchorIndent.getIndentSpaces());
+    return true;
   }
 
   @Override

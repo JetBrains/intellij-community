@@ -134,36 +134,6 @@ public abstract class AbstractBlockWrapper {
     if (wrap != null) wrap.reset();
   }
 
-  /**
-   * Calculates indent for the given block and target start offset according to the given indent options.
-   *
-   * @param options                 indent options to use
-   * @param block                   target wrapped block
-   * @param tokenBlockStartOffset   target wrapped block offset
-   * @return                        indent to use for the given parameters
-   */
-  private static IndentData getIndent(CodeStyleSettings.IndentOptions options,
-                                      AbstractBlockWrapper block,
-                                      final int tokenBlockStartOffset) {
-    final IndentImpl indent = block.getIndent();
-    if (indent.getType() == Indent.Type.CONTINUATION) {
-      return new IndentData(options.CONTINUATION_INDENT_SIZE);
-    }
-    if (indent.getType() == Indent.Type.CONTINUATION_WITHOUT_FIRST) {
-      if (block.getStartOffset() != block.getParent().getStartOffset() && block.getStartOffset() == tokenBlockStartOffset) {
-        return new IndentData(options.CONTINUATION_INDENT_SIZE);
-      }
-      else {
-        return new IndentData(0);
-      }
-    }
-    if (indent.getType() == Indent.Type.LABEL) return new IndentData(options.LABEL_INDENT_SIZE);
-    if (indent.getType() == Indent.Type.NONE) return new IndentData(0);
-    if (indent.getType() == Indent.Type.SPACES) return new IndentData(0, indent.getSpaces());
-    return new IndentData(options.INDENT_SIZE);
-
-  }
-
   public IndentData getChildOffset(AbstractBlockWrapper child, CodeStyleSettings.IndentOptions options, int targetBlockStartOffset) {
     final boolean childStartsNewLine = child.getWhiteSpace().containsLineFeeds();
     IndentImpl.Type childIndentType = child.getIndent().getType();
@@ -173,7 +143,7 @@ public abstract class AbstractBlockWrapper {
     if (childStartsNewLine
         || (!getWhiteSpace().containsLineFeeds() && RELATIVE_INDENT_TYPES.contains(childIndentType) && indentAlreadyUsedBefore(child)))
     {
-      childIndent = getIndent(options, child, targetBlockStartOffset);
+      childIndent = CoreFormatterUtil.getIndent(options, child, targetBlockStartOffset);
     }
     else if (child.getIndent().isEnforceIndentToChildren() && !child.getWhiteSpace().containsLineFeeds()) {
       // Enforce indent if child doesn't start new line, e.g. prefer the code below:
@@ -231,7 +201,7 @@ public abstract class AbstractBlockWrapper {
         }
         return anchorBlock.getNumberOfSymbolsBeforeBlock();
       }
-      childIndent = getIndent(options, child, getStartOffset());
+      childIndent = CoreFormatterUtil.getIndent(options, child, getStartOffset());
     }
     else {
       childIndent = new IndentData(0);
