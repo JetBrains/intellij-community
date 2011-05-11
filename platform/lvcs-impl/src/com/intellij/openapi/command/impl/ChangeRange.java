@@ -21,20 +21,22 @@ import com.intellij.history.core.changes.Change;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.revertion.ChangeRevertingVisitor;
 import com.intellij.openapi.util.Ref;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
 public class ChangeRange {
   private final IdeaGateway myGateway;
   private final LocalHistoryFacade myVcs;
-  private final long myFromChangeId;
-  private final long myToChangeId;
+  private final Long myFromChangeId;
+  @Nullable private final Long myToChangeId;
 
-  public ChangeRange(IdeaGateway gw, LocalHistoryFacade vcs, long change) {
-    this(gw, vcs, change, change);
+  public ChangeRange(IdeaGateway gw, LocalHistoryFacade vcs, @NotNull Long changeId) {
+    this(gw, vcs, changeId, changeId);
   }
 
-  public ChangeRange(IdeaGateway gw, LocalHistoryFacade vcs, long fromChangeId, long toChangeId) {
+  private ChangeRange(IdeaGateway gw, LocalHistoryFacade vcs, @Nullable Long fromChangeId, @Nullable Long toChangeId) {
     myGateway = gw;
     myVcs = vcs;
     myFromChangeId = fromChangeId;
@@ -54,13 +56,13 @@ public class ChangeRange {
     try {
       myVcs.accept(new ChangeRevertingVisitor(myGateway, myToChangeId, myFromChangeId));
     }
-    catch(ChangeRevertingVisitor.RuntimeIOException e) {
+    catch (ChangeRevertingVisitor.RuntimeIOException e) {
       throw (IOException)e.getCause();
     }
     finally {
       myVcs.removeListener(l);
     }
-    
+
     if (reverse != null) {
       if (first.isNull()) first.set(reverse.myFromChangeId);
       if (last.isNull()) last.set(reverse.myToChangeId);
