@@ -19,26 +19,40 @@ package com.intellij.psi;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.ElementPatternBean;
 import com.intellij.patterns.StandardPatterns;
-import com.intellij.patterns.compiler.PatternCompilerFactory;
-import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Registers a {@link PsiReferenceProvider} in plugin.xml
+ */
 public class PsiReferenceProviderBean extends AbstractExtensionPointBean {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiReferenceProviderBean");
+
+  public static final ExtensionPointName<PsiReferenceProviderBean> EP_NAME =
+    new ExtensionPointName<PsiReferenceProviderBean>("com.intellij.psi.referenceProvider");
   @Attribute("providerClass")
   public String className;
+
   @Tag("description")
   public String description;
 
   @Property(surroundWithTag = false)
   @AbstractCollection(surroundWithTag = false)
-  public Info[] patterns;
+  public ElementPatternBean[] patterns;
 
   public String getDescription() {
     return description;
   }
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiReferenceProviderBean");
 
   public PsiReferenceProvider instantiate() {
     try {
@@ -50,30 +64,25 @@ public class PsiReferenceProviderBean extends AbstractExtensionPointBean {
     return null;
   }
 
+  private static final NullableFunction<ElementPatternBean,ElementPattern<? extends PsiElement>> PATTERN_NULLABLE_FUNCTION = new NullableFunction<ElementPatternBean, ElementPattern<? extends PsiElement>>() {
+    @Override
+    public ElementPattern<? extends PsiElement> fun(ElementPatternBean elementPatternBean) {
+      return elementPatternBean.compilePattern();
+    }
+  };
+
   @Nullable
   public ElementPattern<PsiElement> createElementPattern() {
-    final PatternCompilerFactory factory = PatternCompilerFactory.getFactory();
     if (patterns.length > 1) {
-      final ElementPattern[] result = new ElementPattern[this.patterns.length];
-      for (int i = 0, len = this.patterns.length; i < len; i++) {
-        result[i] = factory.getPatternCompiler(patterns[i].type).compileElementPattern(patterns[i].text);
-      }
-      return StandardPatterns.or(result);
+      return StandardPatterns.or(ContainerUtil.mapNotNull(patterns,
+                                                          PATTERN_NULLABLE_FUNCTION).toArray(new ElementPattern[0]));
     }
     else if (patterns.length == 1) {
-      return factory.<PsiElement>getPatternCompiler(patterns[0].type).compileElementPattern(patterns[0].text);
+      return patterns[0].compilePattern();
     }
     else {
       LOG.error("At least one pattern should be specified");
       return null;
     }
-  }
-
-  @Tag("pattern")
-  public static class Info {
-    @Attribute("type")
-    public String type;
-    @Text
-    public String text;
   }
 }
