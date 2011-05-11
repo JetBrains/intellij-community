@@ -156,6 +156,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
         @Override
         public void run() {
           try {
+            PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
             PsiMethod method = generateDummyMethod(editor, file);
             if (method == null) return;
 
