@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.ui.BalloonImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,6 +49,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   private int myPositionChangeYShift;
   private boolean myHideOnAction = true;
   private boolean myDialogMode;
+  private String myTitle;
 
   public BalloonPopupBuilderImpl(@NotNull final JComponent content) {
     myContent = content;
@@ -144,7 +146,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   @NotNull
   public Balloon createBalloon() {
     return new BalloonImpl(myContent, myBorder, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myHideOnAction, myShowCalllout, myCloseButtonEnabled, myFadeoutTime, myHideOnFrameResize, myClickHandler, myCloseOnClick, myAnimationCycle,
-                           myCalloutShift, myPositionChangeXShift, myPositionChangeYShift, myDialogMode);
+                           myCalloutShift, myPositionChangeXShift, myPositionChangeYShift, myDialogMode, myTitle);
   }
 
   @NotNull
@@ -164,6 +166,13 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   @Override
   public BalloonBuilder setCalloutShift(int length) {
     myCalloutShift = length;
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public BalloonBuilder setTitle(@Nullable String title) {
+    myTitle = title;
     return this;
   }
 }
