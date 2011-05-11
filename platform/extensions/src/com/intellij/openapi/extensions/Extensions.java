@@ -122,7 +122,7 @@ public class Extensions {
     if (!ourAreaClass2Configuration.containsKey(areaClass)) {
       throw new IllegalArgumentException("Area class is not registered: " + areaClass);
     }
-    if (ourAreaInstance2area.containsKey(areaInstance)) {
+    if ((areaInstance == null && ourRootArea != null) || ourAreaInstance2area.containsKey(areaInstance)) {
       throw new IllegalArgumentException("Area already instantiated for: " + areaInstance);
     }
     ExtensionsArea parentArea = getArea(parentAreaInstance);

@@ -270,4 +270,9 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       return new XBreakpointBase<B, P, BreakpointState<B,P,?>>(type, breakpointManager, this);
     }
   }
+
+  @Override
+  public String toString() {
+    return "XBreakpointBase(type=" + myType + ")";
+  }
 }
