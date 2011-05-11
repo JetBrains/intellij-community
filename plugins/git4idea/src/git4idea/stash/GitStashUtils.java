@@ -23,7 +23,6 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.commands.StringScanner;
 import git4idea.config.GitConfigUtil;
-import git4idea.config.GitVersion;
 import git4idea.ui.GitUIUtil;
 import git4idea.ui.StashInfo;
 import org.jetbrains.annotations.NotNull;
@@ -34,10 +33,6 @@ import java.nio.charset.Charset;
  * The class contains utilities for creating and removing stashes.
  */
 public class GitStashUtils {
-  /**
-   * The version when quiet stash supported
-   */
-  private final static GitVersion QUIET_STASH_SUPPORTED = new GitVersion(1, 6, 4, 0);
 
   private GitStashUtils() {
   }
