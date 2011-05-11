@@ -36,7 +36,6 @@ import com.intellij.refactoring.introduceParameter.AbstractInplaceIntroducer;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
-import com.intellij.ui.TitlePanel;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,15 +124,10 @@ public class InplaceIntroduceFieldPopup {
     myWholePanel = new JPanel(new GridBagLayout());
     myWholePanel.setBorder(null);
 
-    final TitlePanel titlePanel = new TitlePanel();
-    titlePanel.setBorder(null);
-    titlePanel.setText(IntroduceFieldHandler.REFACTORING_NAME);
-
     GridBagConstraints gc =
       new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                              new Insets(0,0,0,0), 0, 0);
 
-    myWholePanel.add(titlePanel, gc);
 
     gc.gridy++;
     gc.insets.top = 5;
@@ -253,7 +247,7 @@ public class InplaceIntroduceFieldPopup {
             myEditor, psiVariable, false,
             myTypeSelectorManager.getTypesForAll().length > 1,
             myInitializerExpression != null && myInitializerExpression.isPhysical() ? myEditor.getDocument().createRangeMarker(myInitializerExpression.getTextRange()) : null, InplaceIntroduceFieldPopup.this.getOccurrenceMarkers(),
-            IntroduceFieldHandler.REFACTORING_NAME);
+            IntroduceFieldHandler.REFACTORING_NAME, IntroduceFieldHandler.REFACTORING_NAME);
       myDefaultParameterTypePointer =
         SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(myTypeSelectorManager.getDefaultType());
       myFieldRangeStart = myEditor.getDocument().createRangeMarker(psiVariable.getTextRange());

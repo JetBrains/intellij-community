@@ -132,12 +132,6 @@ public class InplaceIntroduceConstantPopup {
     myWholePanel = new JPanel(new GridBagLayout());
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0 , 0, 0), 0, 0);
 
-    final TitlePanel titlePanel = new TitlePanel();
-    titlePanel.setBorder(null);
-    titlePanel.setText(IntroduceConstantHandler.REFACTORING_NAME);
-    gc.gridwidth = 2;
-    myWholePanel.add(titlePanel, gc);
-
     gc.gridwidth = 1;
     gc.gridy = 1;
     myWholePanel.add(createLeftPanel(), gc);
@@ -388,7 +382,7 @@ public class InplaceIntroduceConstantPopup {
             myEditor, field, false,
             myTypeSelectorManager.getTypesForAll().length > 1,
             myExpr != null && myExpr.isPhysical() ? myEditor.getDocument().createRangeMarker(myExpr.getTextRange()) : null, InplaceIntroduceConstantPopup.this.getOccurrenceMarkers(),
-            IntroduceConstantHandler.REFACTORING_NAME);
+            IntroduceConstantHandler.REFACTORING_NAME, IntroduceConstantHandler.REFACTORING_NAME);
 
       myDefaultParameterTypePointer =
         SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(myTypeSelectorManager.getDefaultType());

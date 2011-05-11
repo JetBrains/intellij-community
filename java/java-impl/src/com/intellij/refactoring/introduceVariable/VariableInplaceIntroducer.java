@@ -76,6 +76,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
 
   protected JCheckBox myCanBeFinalCb;
   private Balloon myBalloon;
+  private String myTitle;
 
   public VariableInplaceIntroducer(final Project project,
                                    final TypeExpression expression,
@@ -85,12 +86,14 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
                                    final boolean hasTypeSuggestion,
                                    final RangeMarker exprMarker,
                                    final List<RangeMarker> occurrenceMarkers,
-                                   final String commandName) {
+                                   final String commandName,
+                                   final String title) {
     super(elementToRename, editor);
     myProject = project;
     myEditor = editor;
     myElementToRename = elementToRename;
     myExpression = expression;
+    myTitle = title;
 
     myExprMarker = exprMarker;
     myOccurrenceMarkers = occurrenceMarkers;
@@ -240,11 +243,6 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(null);
 
-    final TitlePanel titlePanel = new TitlePanel();
-    titlePanel.setBorder(null);
-    titlePanel.setText(IntroduceVariableBase.REFACTORING_NAME);
-    panel.add(titlePanel, new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-
     if (myCanBeFinalCb != null) {
       panel.add(myCanBeFinalCb, new GridBagConstraints(0, 1, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(5, 5, 5, 5), 0, 0));
     }
@@ -360,18 +358,23 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
   }
 
 
+  protected String getTitle() {
+    return myTitle;
+  }
+
   private void showBalloon() {
     final JComponent component = getComponent();
     if (component == null) return;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(component);
     balloonBuilder.setFadeoutTime(0)
-      .setFillColor(IdeTooltipManager.GRAPHITE_COLOR.brighter().brighter())
-      .setAnimationCycle(0)
+      .setFillColor(UIManager.getColor("Panel.background"))
+      .setAnimationCycle(100)
       .setHideOnClickOutside(false)
       .setHideOnKeyOutside(false)
       .setHideOnAction(false)
-      .setCloseButtonEnabled(true);
+      .setCloseButtonEnabled(true)
+      .setTitle(getTitle());
 
     final RelativePoint target = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
     final Point screenPoint = target.getScreenPoint();

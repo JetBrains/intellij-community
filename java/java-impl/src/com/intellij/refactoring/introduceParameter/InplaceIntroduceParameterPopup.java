@@ -111,12 +111,6 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     final GridBagConstraints gc =
       new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
 
-    final TitlePanel titlePanel = new TitlePanel();
-    titlePanel.setBorder(null);
-    titlePanel.setText(IntroduceParameterHandler.REFACTORING_NAME);
-    gc.gridwidth = 2;
-    myWholePanel.add(titlePanel, gc);
-
     gc.insets = new Insets(0, 5, 0, 0);
     gc.gridwidth = 1;
     gc.fill = GridBagConstraints.NONE;
@@ -255,7 +249,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
       super(myProject, new TypeExpression(myProject, myTypeSelectorManager.getTypesForAll()),
             myEditor, parameter, myMustBeFinal,
             myTypeSelectorManager.getTypesForAll().length > 1, myExprMarker, InplaceIntroduceParameterPopup.this.getOccurrenceMarkers(),
-            IntroduceParameterHandler.REFACTORING_NAME);
+            IntroduceParameterHandler.REFACTORING_NAME, IntroduceParameterHandler.REFACTORING_NAME);
       myDefaultParameterTypePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(parameter.getType());
     }
 
