@@ -509,6 +509,8 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
           inGeneratedContext = oldGeneratedContext;
         }
       });
+
+      CodeEditUtil.enablePostponedFormattingInTree(node);
     }
   }
 

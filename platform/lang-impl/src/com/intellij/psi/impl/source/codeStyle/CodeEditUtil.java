@@ -29,10 +29,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilBase;
@@ -331,12 +328,7 @@ public class CodeEditUtil {
   }
 
   public static void markToReformatBefore(final ASTNode right, boolean value) {
-    if (value) {
-      right.putCopyableUserData(REFORMAT_BEFORE_KEY, true);
-    }
-    else {
-      right.putCopyableUserData(REFORMAT_BEFORE_KEY, null);
-    }
+    right.putCopyableUserData(REFORMAT_BEFORE_KEY, value ? true : null);
   }
 
   private static int getBlankLines(final String text) {
@@ -401,12 +393,7 @@ public class CodeEditUtil {
 
   public static void setNodeGenerated(final ASTNode next, final boolean value) {
     if (next == null) return;
-    if (value) {
-      next.putCopyableUserData(GENERATED_FLAG, true);
-    }
-    else {
-      next.putCopyableUserData(GENERATED_FLAG, null);
-    }
+    next.putCopyableUserData(GENERATED_FLAG, value ? true : null);
   }
 
   public static void setOldIndentation(final TreeElement treeElement, final int oldIndentation) {
@@ -430,7 +417,7 @@ public class CodeEditUtil {
    * @return        <code>true</code> if given node is configured to be reformatted; <code>false</code> otherwise
    */
   public static boolean isMarkedToReformat(final ASTNode node) {
-    return node.getCopyableUserData(REFORMAT_KEY) != null && ALLOW_NODES_REFORMATTING.get();
+    return node.getCopyableUserData(REFORMAT_KEY) != null && isSuspendedNodesReformattingAllowed();
   }
 
   /**
@@ -449,6 +436,16 @@ public class CodeEditUtil {
     markToReformat(node, false);
     markToReformatBefore(node, false);
     node.putUserData(DISABLE_POSTPONED_REFORMAT_KEY, true);
+  }
+
+  public static void enablePostponedFormattingInTree(@NotNull ASTNode root) {
+    ((TreeElement)root).acceptTree(new RecursiveTreeElementVisitor() {
+      protected boolean visitNode(TreeElement element) {
+        element.putUserData(DISABLE_POSTPONED_REFORMAT_KEY, null);
+        return true;
+      }
+    });
+
   }
 
   public static boolean isPostponedFormattingDisabled(@NotNull final ASTNode node) {
