@@ -20,6 +20,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 
 import java.util.*;
 
@@ -76,7 +78,7 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   }
 
   private Iterable<List<LookupElement>> liftShorterElements(List<LookupElement> source, Set<LookupElement> lifted) {
-    final Set<LookupElement> srcSet = new HashSet<LookupElement>(source);
+    final Set<LookupElement> srcSet = new THashSet<LookupElement>(source, TObjectHashingStrategy.IDENTITY);
     final Iterable<List<LookupElement>> classified = myNext.classify(source);
     final Set<LookupElement> processed = new HashSet<LookupElement>();
 
@@ -84,6 +86,7 @@ class LiftShorterItemsClassifier extends Classifier<LookupElement> {
     for (List<LookupElement> list : classified) {
       final ArrayList<LookupElement> group = new ArrayList<LookupElement>();
       for (LookupElement element : list) {
+        assert srcSet.contains(element) : myNext;
         if (processed.add(element)) {
           final List<String> prefixes = new SmartList<String>();
           for (String string : getAllLookupStrings(element)) {
