@@ -66,7 +66,7 @@ import java.util.*;
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final VirtualFileSystemEntry NULL_VIRTUAL_FILE = new VirtualFileImpl("*?;%NULL", null, -42);
   private final NewVirtualFileSystem myFS;
-  private static final boolean IS_UNIT_TESTS = ApplicationManager.getApplication().isUnitTestMode();
+  private static final boolean IS_UNIT_TESTS = false;//ApplicationManager.getApplication().isUnitTestMode();
 
   // guarded by this
   private Object myChildren; // Either HashMap<String, VFile> or VFile[]
