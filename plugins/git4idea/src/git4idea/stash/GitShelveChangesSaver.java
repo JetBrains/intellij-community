@@ -62,7 +62,7 @@ public class GitShelveChangesSaver extends GitChangesSaver {
       String oldProgressTitle = myProgressIndicator.getText();
       myProgressIndicator.setText(GitBundle.getString("update.shelving.changes"));
       List<VcsException> exceptions = new ArrayList<VcsException>(1);
-      myShelvedChangeList = GitStashUtils.shelveChanges(myProject, myShelveManager, changes, myStashMessage, exceptions);
+      myShelvedChangeList = GitShelveUtils.shelveChanges(myProject, myShelveManager, changes, myStashMessage, exceptions);
       myProgressIndicator.setText(oldProgressTitle);
       if (!exceptions.isEmpty()) {
         LOG.info("save " + exceptions, exceptions.get(0));
@@ -77,7 +77,7 @@ public class GitShelveChangesSaver extends GitChangesSaver {
       String oldProgressTitle = myProgressIndicator.getText();
       myProgressIndicator.setText(GitBundle.getString("update.unshelving.changes"));
       if (myShelvedChangeList != null) {
-        GitStashUtils.doSystemUnshelve(myProject, myShelvedChangeList, myShelveManager, restoreListsRunnable, context);
+        GitShelveUtils.doSystemUnshelve(myProject, myShelvedChangeList, myShelveManager, restoreListsRunnable, context);
       }
       myProgressIndicator.setText(oldProgressTitle);
     }

@@ -44,7 +44,7 @@ import git4idea.checkout.branches.GitBranchConfigurations.BranchChanges;
 import git4idea.checkout.branches.GitBranchConfigurations.ChangeInfo;
 import git4idea.checkout.branches.GitBranchConfigurations.ChangeListInfo;
 import git4idea.commands.*;
-import git4idea.stash.GitStashUtils;
+import git4idea.stash.GitShelveUtils;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -591,52 +591,53 @@ public class GitCheckoutProcess {
     };
     continuation.addExceptionHandler(VcsException.class, exceptionConsumer);
     final GatheringContinuationContext initContext = new GatheringContinuationContext();
-    GitStashUtils.doSystemUnshelve(myProject, shelve, myShelveManager, new Runnable() {
-      @Override
-      public void run() {
-        final HashMap<Pair<String, String>, String> parsedChanges = new HashMap<Pair<String, String>, String>();
-        for (ChangeInfo changeInfo : changes.CHANGES) {
-          String before = changeInfo.BEFORE_PATH;
-          String after = changeInfo.AFTER_PATH;
-          parsedChanges.put(Pair.create(before, after), changeInfo.CHANGE_LIST_NAME);
-        }
-        try {
-          HashMap<String, LocalChangeList> lists = new HashMap<String, LocalChangeList>();
-          final List<LocalChangeList> existedChangeLists = myChangeManager.getChangeLists();
-          for (LocalChangeList localChangeList : existedChangeLists) {
-            lists.put(localChangeList.getName(), localChangeList);
-          }
-          LocalChangeList defaultList = myChangeManager.getDefaultChangeList();
-          for (ChangeListInfo changeListInfo : changes.CHANGE_LISTS) {
-            LocalChangeList changeList = lists.get(changeListInfo.NAME);
-            if (changeList == null) {
-              changeList = myChangeManager.addChangeList(changeListInfo.NAME, changeListInfo.COMMENT);
-              lists.put(changeListInfo.NAME, changeList);
-            }
-            if (changeListInfo.IS_DEFAULT) {
-              myChangeManager.setDefaultChangeList(changeList);
-            }
-          }
-          for (Change change : defaultList.getChanges()) {
-            ContentRevision beforeRevision = change.getBeforeRevision();
-            String before = beforeRevision == null ? null : beforeRevision.getFile().getPath();
-            ContentRevision afterRevision = change.getAfterRevision();
-            String after = afterRevision == null ? null : afterRevision.getFile().getPath();
-            Pair<String, String> key = Pair.create(before, after);
-            String listName = parsedChanges.get(key);
-            assert listName != null : "List name should be found: " + key;
-            if (!listName.equals(defaultList.getName())) {
-              LocalChangeList changeList = lists.get(listName);
-              assert changeList != null : "Change List should be found: " + listName;
-              myChangeManager.moveChangesTo(changeList, new Change[]{change});
-            }
-          }
-        }
-        catch (Throwable t) {
-         exceptionConsumer.consume(new VcsException(t));
-        }
-      }
-    }, initContext);
+    GitShelveUtils.doSystemUnshelve(myProject, shelve, myShelveManager, new Runnable() {
+                                      @Override
+                                      public void run() {
+                                        final HashMap<Pair<String, String>, String> parsedChanges =
+                                          new HashMap<Pair<String, String>, String>();
+                                        for (ChangeInfo changeInfo : changes.CHANGES) {
+                                          String before = changeInfo.BEFORE_PATH;
+                                          String after = changeInfo.AFTER_PATH;
+                                          parsedChanges.put(Pair.create(before, after), changeInfo.CHANGE_LIST_NAME);
+                                        }
+                                        try {
+                                          HashMap<String, LocalChangeList> lists = new HashMap<String, LocalChangeList>();
+                                          final List<LocalChangeList> existedChangeLists = myChangeManager.getChangeLists();
+                                          for (LocalChangeList localChangeList : existedChangeLists) {
+                                            lists.put(localChangeList.getName(), localChangeList);
+                                          }
+                                          LocalChangeList defaultList = myChangeManager.getDefaultChangeList();
+                                          for (ChangeListInfo changeListInfo : changes.CHANGE_LISTS) {
+                                            LocalChangeList changeList = lists.get(changeListInfo.NAME);
+                                            if (changeList == null) {
+                                              changeList = myChangeManager.addChangeList(changeListInfo.NAME, changeListInfo.COMMENT);
+                                              lists.put(changeListInfo.NAME, changeList);
+                                            }
+                                            if (changeListInfo.IS_DEFAULT) {
+                                              myChangeManager.setDefaultChangeList(changeList);
+                                            }
+                                          }
+                                          for (Change change : defaultList.getChanges()) {
+                                            ContentRevision beforeRevision = change.getBeforeRevision();
+                                            String before = beforeRevision == null ? null : beforeRevision.getFile().getPath();
+                                            ContentRevision afterRevision = change.getAfterRevision();
+                                            String after = afterRevision == null ? null : afterRevision.getFile().getPath();
+                                            Pair<String, String> key = Pair.create(before, after);
+                                            String listName = parsedChanges.get(key);
+                                            assert listName != null : "List name should be found: " + key;
+                                            if (!listName.equals(defaultList.getName())) {
+                                              LocalChangeList changeList = lists.get(listName);
+                                              assert changeList != null : "Change List should be found: " + listName;
+                                              myChangeManager.moveChangesTo(changeList, new Change[]{change});
+                                            }
+                                          }
+                                        }
+                                        catch (Throwable t) {
+                                          exceptionConsumer.consume(new VcsException(t));
+                                        }
+                                      }
+                                    }, initContext);
     continuation.run(initContext.getList());
   }
 
@@ -742,7 +743,7 @@ public class GitCheckoutProcess {
     if (progress != null) {
       progress.setText("Creating shelve: " + description);
     }
-    ShelvedChangeList shelved = GitStashUtils.shelveChanges(myProject, myShelveManager, toShelve, description, myExceptions);
+    ShelvedChangeList shelved = GitShelveUtils.shelveChanges(myProject, myShelveManager, toShelve, description, myExceptions);
     if (shelved == null) {
       return null;
     }
