@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
-//import com.google.common.collect.Lists;
+import com.google.common.collect.Lists;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
@@ -339,7 +339,7 @@ public class SMTestProxy extends AbstractTestProxy {
   public List<? extends SMTestProxy> collectChildren() {
     final List<? extends SMTestProxy> allChildren = getChildren();
 
-    final List<SMTestProxy> result = null;//Lists.newArrayList();
+    final List<SMTestProxy> result = Lists.newArrayList();
 
     result.addAll(allChildren);
 
