@@ -206,6 +206,10 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
     assertTypeEquals("java.lang.String", "A.groovy");
   }
 
+  public void testSafeInvocationInClassQualifier() {
+    assertTypeEquals("java.lang.Class", "SafeInvocationInClassQualifier.groovy");
+  }
+
   public void testReturnTypeFromMethodClosure() {
     assertTypeEquals("java.lang.String","A.groovy");
   }
