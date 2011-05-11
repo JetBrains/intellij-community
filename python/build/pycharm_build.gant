@@ -35,7 +35,10 @@ setProperty("pluginFilter", [
             "tasks", "tasks-core", "tasks-api", "jira-connector",
             "github",
             "python-spellchecker-common", "pycharm-spellchecker",
-            "webDeployment"
+            "webDeployment",
+            "jdbc-console", "django-db-config",
+            "database-impl", "DatabaseSupport",
+            "sql"
             ])
 
 private List platformImplementationModules() {
@@ -475,6 +478,13 @@ def layoutFull(String target, Set usedJars) {
           jar("pycharm-spellchecker.jar") {
             module("python-spellchecker-common")
             module("pycharm-spellchecker")
+          }
+        }
+      }
+      dir("django-db-config") {
+        dir("lib") {
+          jar("django-db-config.jar") {
+            module("django-db-config")
           }
         }
       }
