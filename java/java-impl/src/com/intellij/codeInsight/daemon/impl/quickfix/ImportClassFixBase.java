@@ -145,7 +145,9 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
         && (JspPsiUtil.isInJspFile(psiFile) ?
             CodeInsightSettings.getInstance().JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY :
             CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY)
-        && codeAnalyzer.canChangeFileSilently(psiFile)) {
+        && codeAnalyzer.canChangeFileSilently(psiFile)
+        && !autoImportWillInsertUnexpectedCharacters(classes[0])
+      ) {
       CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
         public void run() {
           action.execute();
@@ -163,6 +165,12 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
       return Result.POPUP_SHOWN;
     }
     return Result.POPUP_NOT_SHOWN;
+  }
+
+  private static boolean autoImportWillInsertUnexpectedCharacters(PsiClass aClass) {
+    PsiClass containingClass = aClass.getContainingClass();
+    // when importing inner class, the reference might be qualified with outer class name and it can be confusing
+    return containingClass != null;
   }
 
   private boolean canImportHere(boolean allowCaretNearRef, Editor editor, PsiFile psiFile, String exampleClassName) {
