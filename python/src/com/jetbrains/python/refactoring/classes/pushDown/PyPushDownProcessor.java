@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
@@ -66,7 +67,7 @@ public class PyPushDownProcessor extends BaseRefactoringProcessor {
   @Override
   protected void performRefactoring(UsageInfo[] usages) {
     final Set<String> superClasses = new HashSet<String>();
-    final Set<PyClass> extractedClasses = new HashSet<PyClass>();
+    final Set<PsiNamedElement> extractedClasses = new HashSet<PsiNamedElement>();
     final List<PyFunction> methods = new ArrayList<PyFunction>();
     for (PyMemberInfo member : mySelectedMemberInfos) {
       final PyElement element = member.getMember();

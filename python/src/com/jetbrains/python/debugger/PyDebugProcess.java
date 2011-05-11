@@ -68,7 +68,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     super(session);
     session.setPauseActionSupported(true);
     myDebugger = new RemoteDebugger(this, serverSocket, 10);
-    myBreakpointHandlers = new XBreakpointHandler[]{new PyLineBreakpointHandler(this), new PyExceptionBreakpointHandler(this), new DjangoLineBreakpointHandler(this)};
+    myBreakpointHandlers = new XBreakpointHandler[]{new PyLineBreakpointHandler(this), new PyExceptionBreakpointHandler(this),
+      new DjangoLineBreakpointHandler(this)};
     myEditorsProvider = new PyDebuggerEditorsProvider();
     myProcessHandler = processHandler;
     myExecutionConsole = executionConsole;
@@ -150,14 +151,19 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if ("@@BUILD_NUMBER@@".equals(remoteVersion)) {
       remoteVersion = currentBuild;
     }
-    if (remoteVersion.startsWith("PY-")) {
+    else if (remoteVersion.startsWith("PY-")) {
       remoteVersion = remoteVersion.substring(3);
+    }
+    else {
+      remoteVersion = null;
     }
     printToConsole("Connected to pydev debugger (build " + remoteVersion + ")\n", ConsoleViewContentType.SYSTEM_OUTPUT);
 
-    if (!remoteVersion.equals(currentBuild)) {
-      printToConsole("Warning: wrong debugger version. Use pycharm-debugger.egg from PyCharm installation folder.\n",
-                     ConsoleViewContentType.ERROR_OUTPUT);
+    if (remoteVersion != null) {
+      if (!remoteVersion.equals(currentBuild)) {
+        printToConsole("Warning: wrong debugger version. Use pycharm-debugger.egg from PyCharm installation folder.\n",
+                       ConsoleViewContentType.ERROR_OUTPUT);
+      }
     }
   }
 
@@ -336,7 +342,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     if (breakpoint != null) {
       myRegisteredBreakpoints.remove(position);
       if (myDebugger.isConnected()) {
-        final RemoveBreakpointCommand command = new RemoveBreakpointCommand(myDebugger, breakpoint.getType().getId(), position.getFile(), position.getLine());
+        final RemoveBreakpointCommand command =
+          new RemoveBreakpointCommand(myDebugger, breakpoint.getType().getId(), position.getFile(), position.getLine());
         myDebugger.execute(command);
       }
     }

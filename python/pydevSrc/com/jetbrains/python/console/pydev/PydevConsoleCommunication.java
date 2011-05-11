@@ -73,15 +73,16 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     webServer.addHandler("$default", this);
     this.webServer.start();
 
-    IPydevXmlRpcClient client = new PydevXmlRpcClient(process, port);
-    this.client = client;
+    this.client = new PydevXmlRpcClient(process, port);
   }
 
   public boolean handshake() throws XmlRpcException {
-    Object ret = client.execute("handshake", new Object[]{});
-    if (ret instanceof String) {
-      String retVal = (String) ret;
-      return "PyCharm".equals(retVal);
+    if (client != null) {
+      Object ret = client.execute("handshake", new Object[]{});
+      if (ret instanceof String) {
+        String retVal = (String)ret;
+        return "PyCharm".equals(retVal);
+      }
     }
     return false;
   }
@@ -128,10 +129,11 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   public Object execute(String method, Vector params) throws Exception {
     if ("NotifyFinished".equals(method)) {
       return execNotifyFinished();
-    } else
-    if ("RequestInput".equals(method)) {
+    }
+    else if ("RequestInput".equals(method)) {
       return execRequestInput();
-    } else {
+    }
+    else {
       throw new NotImplementedException();
     }
   }
