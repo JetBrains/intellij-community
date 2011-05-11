@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ public class JavaDummyElement extends FileElement {
   private final JavaParserUtil.ParserWrapper myParser;
   private final LanguageLevel myLanguageLevel;
   private final boolean myConsumeAll;
+  private Throwable myParserError = null;
 
   public JavaDummyElement(@Nullable final CharSequence text,
                           @NotNull final JavaParserUtil.ParserWrapper parser,
@@ -68,6 +69,7 @@ public class JavaDummyElement extends FileElement {
       return super.getFirstChildNode();
     }
     catch (AssertionError e) {
+      myParserError = e;
       return null;  // masquerade parser errors
     }
   }
@@ -78,7 +80,13 @@ public class JavaDummyElement extends FileElement {
       return super.getLastChildNode();
     }
     catch (AssertionError e) {
+      myParserError = e;
       return null;  // masquerade parser errors
     }
+  }
+
+  @Nullable
+  public Throwable getParserError() {
+    return myParserError;
   }
 }
