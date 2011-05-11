@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -417,7 +418,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
                                                   : new TypeSelectorManagerImpl(myProject, initializerType, occurences);
 
         NameSuggestionsGenerator nameSuggestionsGenerator = createNameSuggestionGenerator(myExpr, propName, myProject);
-        boolean isInplaceAvailableOnDataContext = myEditor != null && myEditor.getSettings().isVariableInplaceRenameEnabled();
+        boolean isInplaceAvailableOnDataContext = myEditor != null && myEditor.getSettings().isVariableInplaceRenameEnabled() &&
+                                                  Registry.is("inplace.introduce.enabled");
 
         if (!isInplaceAvailableOnDataContext) {
           if (myEditor != null) {
