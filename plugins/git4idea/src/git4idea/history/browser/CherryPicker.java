@@ -129,9 +129,8 @@ public class CherryPicker {
 
   private void cherryPickStep(CheckinEnvironment ce, int i) {
     final GitCommit commit = myCommits.get(i);
-    final SHAHash hash = commit.getHash();
     try {
-      myAccess.cherryPick(hash);
+      myAccess.cherryPick(commit);
     }
     catch (VcsException e) {
       myExceptions.add(e);
@@ -141,7 +140,7 @@ public class CherryPicker {
     final Collection<FilePath> paths = ChangesUtil.getPaths(changes);
     String message = ce.getDefaultMessageFor(paths.toArray(new FilePath[paths.size()]));
     message = (message == null) ? new StringBuilder().append(commit.getDescription()).append("(cherry picked from commit ")
-      .append(hash.getValue()).append(")").toString() : message;
+      .append(commit.getShortHash()).append(")").toString() : message;
 
     myMessagesInOrder.add(message);
     myFilesToMove.put(message, paths);

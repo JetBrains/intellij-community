@@ -16,7 +16,6 @@
 package git4idea.history.browser;
 
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
@@ -57,7 +56,7 @@ public interface LowLevelAccess {
 
   void loadAllTags(final Collection<String> sink) throws VcsException;
 
-  void cherryPick(SHAHash hash) throws VcsException;
+  void cherryPick(GitCommit hash) throws VcsException;
   void loadHashesWithParents(final @NotNull Collection<String> startingPoints, @NotNull final Collection<ChangesFilter.Filter> filters,
                              final AsynchConsumer<CommitHashPlusParents> consumer, Getter<Boolean> isCanceled, int useMaxCnt) throws VcsException;
   List<GitCommit> getCommitDetails(final Collection<String> commitIds, SymbolicRefs refs) throws VcsException;
