@@ -39,6 +39,7 @@ import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileTypeLoader;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -1133,6 +1134,8 @@ public class PsiUtil {
       final PsiElement nameElement = ((GrReferenceExpression)qualifier).getReferenceNameElement();
       if (((GrReferenceExpression)qualifier).getTypeArguments().length > 0) return false;
       if (nameElement == null || nameElement.getNode().getElementType() != GroovyTokenTypes.mIDENT) return false;
+      IElementType dotType = ((GrReferenceExpression)qualifier).getDotTokenType();
+      if (dotType != null && dotType != GroovyTokenTypes.mDOT) return false;
       qualifier = ((GrReferenceExpression)qualifier).getQualifierExpression();
     }
     return qualifier == null;
@@ -1146,7 +1149,8 @@ public class PsiUtil {
         parent instanceof GrReturnStatement ||
         parent instanceof GrAssertStatement ||
         parent instanceof GrThrowStatement ||
-        parent instanceof GrSwitchStatement) {
+        parent instanceof GrSwitchStatement ||
+        parent instanceof GrVariable) {
       return false;
     }
     return true;
@@ -1214,5 +1218,21 @@ public class PsiUtil {
       }
     }
     return defaultValue;
+  }
+
+  public static boolean resultOfExpressionUsed(GrExpression expr) {
+    while (expr.getParent() instanceof GrParenthesizedExpression) expr = (GrExpression)expr.getParent();
+
+    final PsiElement parent = expr.getParent();
+    if (parent instanceof GrExpression ||
+        parent instanceof GrArgumentList ||
+        parent instanceof GrReturnStatement ||
+        parent instanceof GrAssertStatement ||
+        parent instanceof GrThrowStatement ||
+        parent instanceof GrSwitchStatement ||
+        parent instanceof GrVariable) {
+      return true;
+    }
+    return ControlFlowUtils.collectReturns(ControlFlowUtils.findControlFlowOwner(expr), true).contains(expr);
   }
 }

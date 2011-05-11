@@ -5,7 +5,8 @@ org.codehaus.groovy.runtime.DefaultGroovyMethods.each(X.this, new groovy.lang.Cl
 public java.lang.Object doCall(java.lang.Object it) {
 return org.codehaus.groovy.runtime.DefaultGroovyMethods.each(X.this, new groovy.lang.Closure<java.lang.Integer>(this, this) {
 public java.lang.Integer doCall(java.lang.Object it) {
-return ab.set(2);
+ab.set(2);
+return ab.get();
 }
 
 public java.lang.Integer doCall() {

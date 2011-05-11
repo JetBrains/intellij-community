@@ -141,14 +141,17 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     }
     builder.append(name);
 
+    if (method instanceof GroovyPsiElement) {
+      context.searchForLocalVarsToWrap((GroovyPsiElement)method);
+    }
     final ArrayList<GrParameter> actualParams;
     if (method instanceof GrMethod) {
       actualParams = getActualParams((GrMethod)method, skipOptional);
-      GenerationUtil.writeParameterList(builder, actualParams.toArray(new GrParameter[actualParams.size()]), classNameProvider);
+      GenerationUtil.writeParameterList(builder, actualParams.toArray(new GrParameter[actualParams.size()]), classNameProvider, context);
     }
     else {
       LOG.assertTrue(skipOptional == 0);
-      GenerationUtil.writeParameterList(builder, method.getParameterList().getParameters(), classNameProvider);
+      GenerationUtil.writeParameterList(builder, method.getParameterList().getParameters(), classNameProvider, context);
       actualParams = null;
     }
 

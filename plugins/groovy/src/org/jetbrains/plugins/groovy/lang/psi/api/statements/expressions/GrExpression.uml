@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Diagram>
+  <ID>JAVA</ID>
+  <OriginalElement>org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression</OriginalElement>
+  <nodes>
+    <node x="2737.25" y="148.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression</node>
+    <node x="1828.25" y="148.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression</node>
+    <node x="1547.25" y="226.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall</node>
+    <node x="1421.25" y="304.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement</node>
+    <node x="2593.25" y="148.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock</node>
+    <node x="848.2750000000003" y="148.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral</node>
+    <node x="1456.2750000000003" y="148.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty</node>
+    <node x="1266.2750000000003" y="148.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression</node>
+    <node x="951.2750000000003" y="148.0">org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap</node>
+    <node x="2415.75" y="226.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection</node>
+    <node x="88.27500000000055" y="148.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression</node>
+    <node x="2946.25" y="148.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression</node>
+    <node x="1075.2750000000003" y="148.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression</node>
+    <node x="849.2750000000003" y="226.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString</node>
+    <node x="209.0" y="226.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSuperReferenceExpression</node>
+    <node x="848.2750000000003" y="304.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex</node>
+    <node x="330.27500000000055" y="148.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression</node>
+    <node x="1992.25" y="148.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression</node>
+    <node x="1469.5" y="0.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression</node>
+    <node x="1677.25" y="226.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression</node>
+    <node x="1094.2750000000003" y="226.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrElvisExpression</node>
+    <node x="1828.25" y="226.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression</node>
+    <node x="2187.25" y="148.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression</node>
+    <node x="2407.25" y="148.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression</node>
+    <node x="511.27500000000055" y="148.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleExpression</node>
+    <node x="1606.2750000000003" y="148.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression</node>
+    <node x="0.0" y="226.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression</node>
+    <node x="670.2750000000004" y="148.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression</node>
+    <node x="1612.25" y="304.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression</node>
+    <node x="2943.75" y="226.0">org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrPostfixExpression</node>
+  </nodes>
+  <notes />
+  <edges>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="580.7750000000004" y="68.0" />
+      <point x="1485.3823529411766" y="68.0" />
+      <point x="-38.11764705882342" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="749.2750000000004" y="78.0" />
+      <point x="1491.735294117647" y="78.0" />
+      <point x="-31.764705882352928" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrElvisExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="0.0" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="1160.7750000000003" y="108.0" />
+      <point x="1510.7941176470588" y="108.0" />
+      <point x="-12.705882352941217" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="2655.25" y="78.0" />
+      <point x="1561.6176470588234" y="78.0" />
+      <point x="38.11764705882342" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="1900.25" y="118.0" />
+      <point x="1536.2058823529412" y="118.0" />
+      <point x="12.705882352941217" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="0.0" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall">
+      <point x="0.0" y="-14.0" />
+      <point x="1697.75" y="279.0" />
+      <point x="1629.75" y="279.0" />
+      <point x="27.5" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="2831.75" y="68.0" />
+      <point x="1567.9705882352941" y="68.0" />
+      <point x="44.470588235294144" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="2490.25" y="88.0" />
+      <point x="1555.264705882353" y="88.0" />
+      <point x="31.764705882352928" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmetic.GrRangeExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="0.0" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTypeCastExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="410.77500000000055" y="58.0" />
+      <point x="1479.0294117647059" y="58.0" />
+      <point x="-44.470588235294144" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisReferenceExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="94.5" y="201.0" />
+      <point x="143.77500000000055" y="201.0" />
+      <point x="-55.5" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall">
+      <point x="0.0" y="-14.0" />
+      <point x="1506.75" y="279.0" />
+      <point x="1574.75" y="279.0" />
+      <point x="-27.5" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSuperReferenceExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="308.5" y="201.0" />
+      <point x="254.77500000000055" y="201.0" />
+      <point x="55.5" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="2287.25" y="98.0" />
+      <point x="1548.9117647058824" y="98.0" />
+      <point x="25.411764705882433" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrPostfixExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="0.0" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="1602.25" y="201.0" />
+      <point x="1638.2750000000003" y="201.0" />
+      <point x="-32.0" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="1670.2750000000003" y="128.0" />
+      <point x="1529.8529411764705" y="128.0" />
+      <point x="6.352941176470495" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="889.7750000000003" y="88.0" />
+      <point x="1498.0882352941176" y="88.0" />
+      <point x="-25.411764705882433" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrThisSuperReferenceExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="199.27500000000055" y="48.0" />
+      <point x="1472.6764705882354" y="48.0" />
+      <point x="-50.82352941176464" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="2079.75" y="108.0" />
+      <point x="1542.5588235294117" y="108.0" />
+      <point x="19.05882352941171" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="1521.2750000000003" y="128.0" />
+      <point x="1523.5" y="128.0" />
+      <point x="0.0" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="1351.2750000000003" y="118.0" />
+      <point x="1517.1470588235295" y="118.0" />
+      <point x="-6.352941176470495" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="1742.75" y="201.0" />
+      <point x="1702.2750000000003" y="201.0" />
+      <point x="32.0" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString">
+      <point x="0.0" y="-14.0" />
+      <point x="0.0" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral">
+      <point x="0.0" y="-14.0" />
+      <point x="0.0" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="1003.2750000000003" y="98.0" />
+      <point x="1504.4411764705883" y="98.0" />
+      <point x="-19.05882352941171" y="14.0" />
+    </edge>
+    <edge source="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression" target="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression">
+      <point x="0.0" y="-14.0" />
+      <point x="3017.25" y="58.0" />
+      <point x="1574.3235294117646" y="58.0" />
+      <point x="50.82352941176464" y="14.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0" x="1440.0" y="209.0" />
+  <SelectedNodes />
+  <Categories />
+  <SCOPE>All</SCOPE>
+  <VISIBILITY>private</VISIBILITY>
+</Diagram>
+
