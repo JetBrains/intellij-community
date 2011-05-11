@@ -1128,7 +1128,7 @@ public class PsiUtil {
     return ((GrListOrMap)firstArg).getNamedArguments();
   }
 
-  public static boolean seemsToBeQualifiedClassName(@Nullable GrExpression qualifier) {
+  private static boolean seemsToBeQualifiedClassName(@Nullable GrExpression qualifier) {
     if (qualifier == null) return false;
     while (qualifier instanceof GrReferenceExpression) {
       final PsiElement nameElement = ((GrReferenceExpression)qualifier).getReferenceNameElement();
