@@ -1125,6 +1125,8 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
       setLayout(null);
       myBalloon = balloon;
 
+      setFocusCycleRoot(true);
+      putClientProperty(Balloon.KEY, BalloonImpl.this);
 
       myContent = new JPanel(new BorderLayout(2, 2));
       Wrapper contentWrapper = new Wrapper(content);
