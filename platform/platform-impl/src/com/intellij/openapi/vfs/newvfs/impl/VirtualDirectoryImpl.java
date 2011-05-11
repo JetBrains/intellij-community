@@ -206,7 +206,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
       if (!isUnder) {
         if (!allowed.isEmpty()) {
-          assert false : "File accessed outside project: " + child +"; project roots: "+new ArrayList(allowed);
+          //assert false : "File accessed outside project: " + child +"; project roots: "+new ArrayList(allowed);
         }
       }
     }
