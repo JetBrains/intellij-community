@@ -84,7 +84,7 @@ public class ConversionContextImpl implements ConversionContext {
       myWorkspaceFile = new File(StringUtil.trimEnd(projectPath, ProjectFileType.DOT_DEFAULT_EXTENSION) + WorkspaceFileType.DOT_DEFAULT_EXTENSION);
     }
 
-    myModuleFiles = findModuleFiles(JDomConvertingUtil.loadDocument(modulesFile).getRootElement());
+    myModuleFiles = modulesFile.exists() ? findModuleFiles(JDomConvertingUtil.loadDocument(modulesFile).getRootElement()) : new File[0];
   }
 
   public Set<File> getAllProjectFiles() {
