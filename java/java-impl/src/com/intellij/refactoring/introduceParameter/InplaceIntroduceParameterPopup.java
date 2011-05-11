@@ -263,12 +263,14 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     protected JComponent getComponent() {
       if (!myInitialized) {
         myInitialized = true;
-        myWholePanel.add(myCanBeFinalCb,
-                         new GridBagConstraints(0, myCbReplaceAllOccurences == null ? 2 : 3, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
-                                                GridBagConstraints.NONE, new Insets(0, 5, 2, 5), 0, 0));
-        if (myHasWriteAccess) {
-          myCanBeFinalCb.setSelected(false);
-          myCanBeFinalCb.setEnabled(false);
+        if (myCanBeFinalCb != null) {
+          myWholePanel.add(myCanBeFinalCb,
+                           new GridBagConstraints(0, myCbReplaceAllOccurences == null ? 2 : 3, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
+                                                  GridBagConstraints.NONE, new Insets(0, 5, 2, 5), 0, 0));
+          if (myHasWriteAccess) {
+            myCanBeFinalCb.setSelected(false);
+            myCanBeFinalCb.setEnabled(false);
+          }
         }
       }
       return myWholePanel;
@@ -304,7 +306,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     protected void saveSettings(PsiVariable psiVariable) {
       final JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
       InplaceIntroduceParameterPopup.super.saveSettings(settings);
-      if (myCanBeFinalCb.isEnabled()) {
+      if (myCanBeFinalCb != null && myCanBeFinalCb.isEnabled()) {
         settings.INTRODUCE_PARAMETER_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
       }
       TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myDefaultParameterTypePointer.getType());
