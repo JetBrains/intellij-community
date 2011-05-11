@@ -56,7 +56,14 @@ public interface LowLevelAccess {
 
   void loadAllTags(final Collection<String> sink) throws VcsException;
 
-  void cherryPick(GitCommit hash) throws VcsException;
+  /**
+   * Cherry-picks the specified commit.
+   * Doesn't autocommit - instead puts the changes into a separate changelist.
+   * In the case of merge conflict provides the Conflict Resolver dialog.
+   * @return true if all conflicts were resolved or there were no merge conflicts; false if unresolved files remain.
+   * @throws VcsException
+   */
+  boolean cherryPick(GitCommit hash) throws VcsException;
   void loadHashesWithParents(final @NotNull Collection<String> startingPoints, @NotNull final Collection<ChangesFilter.Filter> filters,
                              final AsynchConsumer<CommitHashPlusParents> consumer, Getter<Boolean> isCanceled, int useMaxCnt) throws VcsException;
   List<GitCommit> getCommitDetails(final Collection<String> commitIds, SymbolicRefs refs) throws VcsException;

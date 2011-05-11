@@ -195,7 +195,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     GitTag.listAsStrings(myProject, myRoot, sink, null);
   }
 
-  public void cherryPick(GitCommit commit) throws VcsException {
+  public boolean cherryPick(GitCommit commit) throws VcsException {
     final GitLineHandler handler = new GitLineHandler(myProject, myRoot, GitCommand.CHERRY_PICK);
     handler.addParameters("-x", "-n", commit.getHash().getValue());
     handler.endOptions();
@@ -213,14 +213,16 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     handler.runInCurrentThread(null);
 
     if (conflict.get()) {
-      new CherryPickConflictResolver(myProject, commit.getShortHash().getString(), commit.getAuthor(), commit.getSubject()).merge(Collections.singleton(myRoot));
+      boolean allConflictsResolved = new CherryPickConflictResolver(myProject, commit.getShortHash().getString(), commit.getAuthor(), commit.getSubject()).merge(Collections.singleton(myRoot));
+      return allConflictsResolved;
     } else {
       final List<VcsException> errors = handler.errors();
       if (!errors.isEmpty()) {
         throw errors.get(0);
+      } else { // no conflicts, no errors
+        return true;
       }
     }
-
   }
 
   private static class CherryPickConflictResolver extends GitMergeConflictResolver {
