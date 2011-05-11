@@ -114,7 +114,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant, P
     assert clazz != null;
     PsiType thisType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(clazz, PsiSubstitutor.EMPTY);
     MethodResolverProcessor processor =
-      new MethodResolverProcessor(clazz.getName(), this, true, thisType, argTypes, PsiType.EMPTY_ARRAY, allVariants);
+      new MethodResolverProcessor(clazz.getName(), this, true, thisType, argTypes, PsiType.EMPTY_ARRAY, allVariants, false);
     clazz.processDeclarations(processor, ResolveState.initial(), null, this);
     return processor.getCandidates();
   }

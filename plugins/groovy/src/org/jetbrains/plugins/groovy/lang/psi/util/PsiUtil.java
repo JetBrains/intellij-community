@@ -127,10 +127,11 @@ public class PsiUtil {
   public static boolean isApplicable(@Nullable PsiType[] argumentTypes,
                                      PsiMethod method,
                                      PsiSubstitutor substitutor,
-                                     boolean isInUseCategory, GroovyPsiElement place) {
+                                     boolean isInUseCategory, GroovyPsiElement place, final boolean eraseParameterTypes) {
     if (argumentTypes == null) return true;
 
-    GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor);
+    GrClosureSignature signature = eraseParameterTypes
+                                   ? GrClosureSignatureUtil.createSignatureWithErasedParameterTypes(method) : GrClosureSignatureUtil.createSignature(method, substitutor);
     if (isInUseCategory && method.hasModifierProperty(PsiModifier.STATIC) && method.getParameterList().getParametersCount() > 0) {
       signature = GrClosureSignatureUtil.removeParam(signature, 0);
     }

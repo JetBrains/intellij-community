@@ -215,7 +215,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       return shapeResults.second;
     }
 
-    final MethodResolverProcessor methodResolver = createMethodProcessor(allVariants, name, false, upToArgument);
+    final MethodResolverProcessor methodResolver = createMethodProcessor(allVariants, name, !genericsMatter, upToArgument);
 
     for (GroovyResolveResult result : shapeResults.second) {
       final ResolveState state = ResolveState.initial().
@@ -295,13 +295,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         argTypes[i] = TypeConversionUtil.erasure(argTypes[i]);
       }
     }
-    PsiType thisType = getThisType();
-    return new MethodResolverProcessor(name, this, false, thisType, argTypes, getTypeArguments(), allVariants) {
-      @Override
-      protected PsiSubstitutor obtainSubstitutor(PsiSubstitutor substitutor, PsiMethod method, ResolveState state) {
-        return byShape ? substitutor : super.obtainSubstitutor(substitutor, method, state);
-      }
-    };
+    return new MethodResolverProcessor(name, this, false, getThisType(), argTypes, getTypeArguments(), allVariants, byShape);
   }
 
   public void accept(GroovyElementVisitor visitor) {
