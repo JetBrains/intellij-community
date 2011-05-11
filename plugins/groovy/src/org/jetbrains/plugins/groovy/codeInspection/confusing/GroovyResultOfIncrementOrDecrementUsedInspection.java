@@ -17,14 +17,21 @@ package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspection {
 
@@ -54,14 +61,29 @@ public class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspec
     
     public void visitUnaryExpression(GrUnaryExpression grUnaryExpression) {
       super.visitUnaryExpression(grUnaryExpression);
-      final PsiElement parent = grUnaryExpression.getParent();
-      if (parent instanceof GrCodeBlock) {
-        return;
-      }
+
       final IElementType tokenType = grUnaryExpression.getOperationTokenType();
       if (!GroovyTokenTypes.mINC.equals(tokenType) && !GroovyTokenTypes.mDEC.equals(tokenType)) {
         return;
       }
+
+      final PsiElement parent = PsiTreeUtil.skipParentsOfType(grUnaryExpression, GrParenthesizedExpression.class);
+      PsiElement skipped = PsiUtil.skipParentheses(grUnaryExpression, true);
+      assert skipped != null;
+
+      if (ControlFlowUtils.collectReturns(ControlFlowUtils.findControlFlowOwner(parent)).contains(skipped)) {
+          registerError(grUnaryExpression);
+          return;
+        }
+
+      if (parent instanceof GrStatementOwner || parent instanceof GrControlStatement) {
+        return;
+      }
+
+      if (parent instanceof GrTraditionalForClause) {
+        if (PsiTreeUtil.isAncestor(((GrTraditionalForClause)parent).getUpdate(), skipped, false)) return;
+      }
+
       registerError(grUnaryExpression);
     }
   }
