@@ -1,7 +1,9 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.lang.StdLanguages;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -68,16 +70,18 @@ public class WordCompletionTest extends CompletionTestCase {
         }};
       }
     };
+    PsiReferenceRegistrarImpl registrar =
+      (PsiReferenceRegistrarImpl)ReferenceProvidersRegistry.getInstance().getRegistrar(StdLanguages.JAVA);
     try {
-      ReferenceProvidersRegistry.getInstance().registerReferenceProvider(PsiLiteralExpression.class, softProvider);
-      ReferenceProvidersRegistry.getInstance().registerReferenceProvider(PsiLiteralExpression.class, hardProvider);
+      registrar.registerReferenceProvider(PsiLiteralExpression.class, softProvider);
+      registrar.registerReferenceProvider(PsiLiteralExpression.class, hardProvider);
 
       configureByFile(BASE_PATH + "3.java");
       checkResultByFile(BASE_PATH + "3_after.java");
     }
     finally {
-      ReferenceProvidersRegistry.getInstance().unregisterReferenceProvider(PsiLiteralExpression.class, softProvider);
-      ReferenceProvidersRegistry.getInstance().unregisterReferenceProvider(PsiLiteralExpression.class, hardProvider);
+      registrar.unregisterReferenceProvider(PsiLiteralExpression.class, softProvider);
+      registrar.unregisterReferenceProvider(PsiLiteralExpression.class, hardProvider);
     }
   }
 

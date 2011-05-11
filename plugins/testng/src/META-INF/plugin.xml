@@ -13,7 +13,7 @@
         <configurationProducer implementation="com.theoryinpractice.testng.configuration.TestNGSuiteConfigurationProducer"/>
         <inspectionToolProvider implementation="com.theoryinpractice.testng.inspection.TestNGInspectionsToolProvider"/>
         <configurationType implementation="com.theoryinpractice.testng.configuration.TestNGConfigurationType"/>
-       <psi.referenceContributor implementation="com.theoryinpractice.testng.TestNGReferenceContributor"/>
+       <psi.referenceContributor language="JAVA" implementation="com.theoryinpractice.testng.TestNGReferenceContributor"/>
         <intentionAction>
           <className>com.theoryinpractice.testng.intention.TestNGOrderEntryFix</className>
         </intentionAction>

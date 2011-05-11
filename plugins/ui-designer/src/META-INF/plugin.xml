@@ -104,7 +104,7 @@
     <compiler implementation="com.intellij.uiDesigner.make.Form2ByteCodeCompiler"/>
     <compiler implementation="com.intellij.uiDesigner.make.Form2SourceCompiler"/>
 
-    <psi.referenceContributor implementation="com.intellij.uiDesigner.binding.FormReferenceContributor"/>
+    <psi.referenceContributor language="TEXT" implementation="com.intellij.uiDesigner.binding.FormReferenceContributor"/>
 
     <refactoring.elementListenerProvider implementation="com.intellij.uiDesigner.palette.PaletteRefactoringListenerProvider"/>
     <refactoring.moveHandler implementation="com.intellij.uiDesigner.projectView.FormMoveProvider"/>
