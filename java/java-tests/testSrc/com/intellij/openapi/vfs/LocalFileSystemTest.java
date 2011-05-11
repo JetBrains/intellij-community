@@ -1,6 +1,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
@@ -18,6 +19,22 @@ import java.util.Arrays;
 
 public class LocalFileSystemTest extends IdeaTestCase{
   private static final String KEY = "filesystem.useNative";
+
+  public static void setContentOnDisk(File file, byte[] bom, String content, Charset charset) throws IOException {
+    FileOutputStream stream = new FileOutputStream(file);
+    stream.write(bom);
+    OutputStreamWriter writer = new OutputStreamWriter(stream, charset);
+    writer.write(content);
+    writer.close();
+  }
+
+  public static VirtualFile createTempFile(@NonNls String ext, byte[] bom, @NonNls String content, Charset charset) throws IOException {
+    File temp = FileUtil.createTempFile("copy", "." + ext);
+    setContentOnDisk(temp, bom, content, charset);
+
+    myFilesToDelete.add(temp);
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+  }
 
   public void testChildrenAccessedButNotCached() throws Exception{
     ApplicationManager.getApplication().runWriteAction(
@@ -116,7 +133,7 @@ public class LocalFileSystemTest extends IdeaTestCase{
       new Runnable() {
         @Override
         public void run() {
-          try{
+          try {
             File fromDir = createTempDirectory();
             File toDir = createTempDirectory();
 
@@ -132,7 +149,7 @@ public class LocalFileSystemTest extends IdeaTestCase{
             assertEquals(newName, copy.getName());
             assertTrue(Arrays.equals(byteContent, copy.contentsToByteArray()));
           }
-          catch(Exception e){
+          catch (Exception e) {
             LOG.error(e);
           }
         }
@@ -222,22 +239,22 @@ public class LocalFileSystemTest extends IdeaTestCase{
         }
       }
     );
-
   }
 
-  public static void setContentOnDisk(File file, byte[] bom, String content, Charset charset) throws IOException {
-    FileOutputStream stream = new FileOutputStream(file);
-    stream.write(bom);
-    OutputStreamWriter writer = new OutputStreamWriter(stream, charset);
-    writer.write(content);
-    writer.close();
-  }
+  public void testFindRoot() {
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath("wrong_path");
+    assertNull(file);
 
-  public static VirtualFile createTempFile(@NonNls String ext, byte[] bom, @NonNls String content, Charset charset) throws IOException {
-    File temp = FileUtil.createTempFile("copy", "." + ext);
-    setContentOnDisk(temp, bom, content, charset);
+    if (SystemInfo.isWindows && new File("c:").exists()) {
+      VirtualFile root = LocalFileSystem.getInstance().findFileByPath("c:");
+      assertNotNull(root);
+    }
+    if (SystemInfo.isUnix) {
+      VirtualFile root = LocalFileSystem.getInstance().findFileByPath("/");
+      assertNotNull(root);
+    }
 
-    myFilesToDelete.add(temp);
-    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    VirtualFile root = LocalFileSystem.getInstance().findFileByPath("");
+    assertNotNull(root);
   }
 }

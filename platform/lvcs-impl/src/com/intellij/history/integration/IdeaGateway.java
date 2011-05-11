@@ -139,7 +139,8 @@ public class IdeaGateway {
 
   public static Iterable<VirtualFile> iterateDBChildren(VirtualFile f) {
     if (!(f instanceof NewVirtualFile)) return ContainerUtil.emptyIterable();
-    return ((NewVirtualFile)f).iterInDbChildren();
+    NewVirtualFile nf = (NewVirtualFile)f;
+    return nf.getCachedChildren();
   }
 
   public RootEntry createTransientRootEntry() {
