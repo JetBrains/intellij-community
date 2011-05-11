@@ -215,17 +215,20 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       return shapeResults.second;
     }
 
-    final MethodResolverProcessor methodResolver = createMethodProcessor(allVariants, name, !genericsMatter, upToArgument);
+    MethodResolverProcessor methodResolver = null;
+    if (genericsMatter) {
+      methodResolver = createMethodProcessor(allVariants, name, false, upToArgument);
 
-    for (GroovyResolveResult result : shapeResults.second) {
-      final ResolveState state = ResolveState.initial().
-        put(PsiSubstitutor.KEY, result.getSubstitutor()).
-        put(ResolverProcessor.RESOLVE_CONTEXT, result.getCurrentFileResolveContext());
-      methodResolver.execute(result.getElement(), state);
-    }
+      for (GroovyResolveResult result : shapeResults.second) {
+        final ResolveState state = ResolveState.initial().
+          put(PsiSubstitutor.KEY, result.getSubstitutor()).
+          put(ResolverProcessor.RESOLVE_CONTEXT, result.getCurrentFileResolveContext());
+        methodResolver.execute(result.getElement(), state);
+      }
 
-    if (!allVariants && methodResolver.hasApplicableCandidates()) {
-      return methodResolver.getCandidates();
+      if (!allVariants && methodResolver.hasApplicableCandidates()) {
+        return methodResolver.getCandidates();
+      }
     }
 
     //search for fields inside its class
@@ -241,7 +244,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     List<GroovyResolveResult> allCandidates = new ArrayList<GroovyResolveResult>();
     ContainerUtil.addAll(allCandidates, propertyCandidates);
-    ContainerUtil.addAll(allCandidates, methodResolver.getCandidates());
+    ContainerUtil.addAll(allCandidates, genericsMatter ? methodResolver.getCandidates() : shapeResults.second);
 
     //search for getters
     for (String getterName : GroovyPropertyUtils.suggestGettersName(name)) {
