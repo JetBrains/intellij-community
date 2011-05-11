@@ -44,8 +44,8 @@ import git4idea.checkout.branches.GitBranchConfigurations.BranchChanges;
 import git4idea.checkout.branches.GitBranchConfigurations.ChangeInfo;
 import git4idea.checkout.branches.GitBranchConfigurations.ChangeListInfo;
 import git4idea.commands.*;
+import git4idea.stash.GitStashUtils;
 import git4idea.ui.GitUIUtil;
-import git4idea.update.GitStashUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
