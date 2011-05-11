@@ -186,9 +186,9 @@ public class ClassGenerator {
   private static boolean shouldBeGenerated(PsiMethod method) {
     for (PsiMethod psiMethod : method.findSuperMethods()) {
       if (!psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        final PsiType type = TypeProvider.getReturnType(method);
-        final PsiType superType = TypeProvider.getReturnType(psiMethod);
-        if (!superType.isAssignableFrom(type)) {
+        final PsiType type = method.getReturnType();
+        final PsiType superType = method.getReturnType();
+        if (type != null && superType != null && !superType.isAssignableFrom(type)) {
           return false;
         }
       }

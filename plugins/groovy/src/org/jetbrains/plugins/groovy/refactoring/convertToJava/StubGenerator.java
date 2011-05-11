@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrCo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.*;
 
@@ -97,7 +98,7 @@ public class StubGenerator implements ClassItemGenerator {
     for (int j = 0; j < superParams.length; j++) {
       if (j > 0) text.append(", ");
       text.append("(");
-      final PsiType type = TypeProvider.getParameterType(superParams[j]);
+      final PsiType type = superParams[j].getType();
       writeType(text, substitutor.substitute(type), invocation, classNameProvider);
       text.append(")").append(GroovyToJavaGenerator.getDefaultValueText(type.getCanonicalText()));
     }
@@ -185,7 +186,10 @@ public class StubGenerator implements ClassItemGenerator {
     }
 
     //append return type
-    PsiType retType = TypeProvider.getReturnType(method, true);
+    PsiType retType = method.getReturnType();
+    if (retType == null) {
+      retType = TypesUtil.getJavaLangObject(method);
+    }
 
     if (!method.hasModifierProperty(PsiModifier.STATIC)) {
       final List<MethodSignatureBackedByPsiMethod> superSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
@@ -320,7 +324,7 @@ public class StubGenerator implements ClassItemGenerator {
     final LightMethodBuilder builder = new LightMethodBuilder(method.getManager(), method.getName());
     substitutor = substitutor.putAll(TypeConversionUtil.getSuperClassSubstitutor(baseClass, typeDefinition, PsiSubstitutor.EMPTY));
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      builder.addParameter(StringUtil.notNullize(parameter.getName()), substitutor.substitute(TypeProvider.getParameterType(parameter)));
+      builder.addParameter(StringUtil.notNullize(parameter.getName()), substitutor.substitute(parameter.getType()));
     }
     builder.setReturnType(substitutor.substitute(method.getReturnType()));
     for (String modifier : STUB_MODIFIERS) {

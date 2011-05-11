@@ -83,7 +83,7 @@ public class ModifierListGenerator {
 
     if (writeAnnotations && modifierList instanceof GrModifierList) {
       GrAnnotation[] annotations = ((GrModifierList)modifierList).getAnnotations();
-      AnnotationGenerator annotationGenerator = new AnnotationGenerator(builder, modifierList.getProject());
+      AnnotationGenerator annotationGenerator = new AnnotationGenerator(builder, new ExpressionContext(modifierList.getProject()));
       wasAddedModifiers = annotations.length > 0;
       for (GrAnnotation annotation : annotations) {
         annotation.accept(annotationGenerator);

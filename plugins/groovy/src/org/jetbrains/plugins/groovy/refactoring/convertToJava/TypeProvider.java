@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -30,23 +29,11 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  * @author Medvedev Max
  */
 public class TypeProvider {
-
-  private TypeProvider() {
+  public TypeProvider() {
   }
 
   @NotNull
-  public static PsiType getReturnType(PsiMethod method) {
-    return getReturnType(method, false);
-  }
-
-  @NotNull
-  public static PsiType getReturnType(PsiMethod method, boolean forStubs) {
-
-    if (forStubs) {
-      PsiType returnType = method.getReturnType();
-      if (returnType != null) return returnType;
-      return TypesUtil.getJavaLangObject(method);
-    }
+  public PsiType getReturnType(PsiMethod method) {
     if (method instanceof GrMethod) {
       GrTypeElement typeElement = ((GrMethod)method).getReturnTypeElementGroovy();
       if (typeElement != null) return typeElement.getType();
@@ -59,7 +46,7 @@ public class TypeProvider {
   }
 
   @NotNull
-  public static PsiType getVarType(GrVariable variable) {
+  public  PsiType getVarType(GrVariable variable) {
     PsiType type = variable.getDeclaredType();
     if (type == null) {
       type = variable.getTypeGroovy();
@@ -71,7 +58,9 @@ public class TypeProvider {
   }
 
   @NotNull
-  public static PsiType getParameterType(PsiParameter parameter) {
+  public PsiType getParameterType(PsiParameter parameter) {
     return parameter.getType(); //todo make smarter
   }
+
+
 }
