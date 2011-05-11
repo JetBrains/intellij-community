@@ -127,6 +127,16 @@ public class AddImportHelper {
     else {
       as_clause = " as " + asName;
     }
+    List<PyImportElement> existingImports = ((PyFile)file).getImportTargets();
+    for (PyImportElement element : existingImports) {
+      final PyQualifiedName qName = element.getImportedQName();
+      if (qName != null && name.equals(qName.toString())) {
+        if ((asName != null && asName.equals(element.getAsName())) || asName == null) {
+          return;
+        }
+      }
+    }
+
     final PyImportStatement importNodeToInsert = PyElementGenerator.getInstance(file.getProject()).createImportStatementFromText(
       "import " + name + as_clause);
     try {
