@@ -19,7 +19,7 @@ class TestRestoreFuncByDocComment(unittest.TestCase):
     """
 
     def setUp(self):
-        self.m = ModuleRedeclarator(None, None)
+        self.m = ModuleRedeclarator(None, None, '/dev/null')
 
     def testTrivial(self):
         result, ret_sig, note = self.m.parseFuncDoc("blah f(a, b, c) ololo", "f", "f", None)
@@ -175,10 +175,12 @@ class TestRestoreFuncByDocComment(unittest.TestCase):
 
 
 class TestRestoreMethodByDocComment(unittest.TestCase):
-    "Restoring with a class name set"
+    """
+    Restoring with a class name set
+    """
 
     def setUp(self):
-        self.m = ModuleRedeclarator(None, None)
+        self.m = ModuleRedeclarator(None, None, '/dev/null')
 
     def testPlainMethod(self):
         result, ret_sig, note = self.m.parseFuncDoc("blah f(self, foo, bar) ololo", "f", "f", "SomeClass")
@@ -192,10 +194,12 @@ class TestRestoreMethodByDocComment(unittest.TestCase):
 
 
 class TestAnnotatedParameters(unittest.TestCase):
-    "f(foo: int) and friends; in doc comments, happen in 2.x world, too."
+    """
+    f(foo: int) and friends; in doc comments, happen in 2.x world, too.
+    """
 
     def setUp(self):
-        self.m = ModuleRedeclarator(None, None)
+        self.m = ModuleRedeclarator(None, None, '/dev/null')
 
     def testMixed(self):
         result, ret_sig, note = self.m.parseFuncDoc('blah f(i: int, foo) ololo', "f", "f", None)
@@ -215,10 +219,12 @@ class TestAnnotatedParameters(unittest.TestCase):
 
 if not IS_CLI:
     class TestInspect(unittest.TestCase):
-        "See that inspect actually works if needed"
+        """
+        See that inspect actually works if needed
+        """
 
         def setUp(self):
-            self.m = ModuleRedeclarator(None, None)
+            self.m = ModuleRedeclarator(None, None, '/dev/null')
 
         def testSimple(self):
             def target(a, b, c=1, *d, **e):
@@ -260,7 +266,9 @@ class _DiffPrintingTestCase(unittest.TestCase):
 
 
 class TestSpecialCases(unittest.TestCase):
-    "Tests cases where predefined overrides kick in"
+    """
+    Tests cases where predefined overrides kick in
+    """
 
     def setUp(self):
         import sys
@@ -274,7 +282,7 @@ class TestSpecialCases(unittest.TestCase):
             import __builtin__ as the_builtins
 
             self.builtins_name = the_builtins.__name__
-        self.m = ModuleRedeclarator(the_builtins, None, doing_builtins=True)
+        self.m = ModuleRedeclarator(the_builtins, None, '/dev/null', doing_builtins=True)
 
     def _testBuiltinFuncName(self, func_name, expected):
         class_name = None
@@ -294,7 +302,9 @@ class TestSpecialCases(unittest.TestCase):
 
 if not IS_CLI:
     class TestNonDictClasses(_DiffPrintingTestCase):
-        "Tests classes that don't have a __dict__"
+        """
+        Tests classes that don't have a __dict__
+        """
 
         def setUp(self):
             self.m = ModuleRedeclarator(self, None, 4)
@@ -306,13 +316,13 @@ if not IS_CLI:
 
         def testOne(self):
             class One(object):
-                "Doc of One"
+                """Doc of One"""
                 __slots__ = ('A', 'B', 'foo')
                 A = 1
                 B = "boo"
 
                 def foo(self, x):
-                    "blah foo(x) -> int"
+                    """blah foo(x) -> int"""
                     return x + 1
 
             expected = "\n".join((
@@ -336,7 +346,9 @@ if not IS_CLI:
             self.checkRedoClass(One, expected)
 
 class TestDataOutput(_DiffPrintingTestCase):
-    "Tests for sanity of output of data members"
+    """
+    Tests for sanity of output of data members
+    """
 
     def setUp(self):
         self.m = ModuleRedeclarator(self, None, 4) # Pass anything with __dict__ as module
@@ -379,7 +391,9 @@ class TestDataOutput(_DiffPrintingTestCase):
 
 if not IS_CLI:
     class TestReturnTypes(unittest.TestCase):
-        "Tests for sanity of output of data members"
+        """
+        Tests for sanity of output of data members
+        """
 
         def setUp(self):
             self.m = ModuleRedeclarator(None, None, 4)
