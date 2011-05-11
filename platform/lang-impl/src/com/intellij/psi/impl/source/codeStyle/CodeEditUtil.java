@@ -45,6 +45,7 @@ public class CodeEditUtil {
   private static final Key<Integer> INDENT_INFO = new Key<Integer>("INDENT_INFO");
   private static final Key<Boolean> REFORMAT_BEFORE_KEY = new Key<Boolean>("REFORMAT_BEFORE_KEY");
   private static final Key<Boolean> REFORMAT_KEY = new Key<Boolean>("REFORMAT_KEY");
+  private static final Key<Boolean> DISABLE_POSTPONED_REFORMAT_KEY = new Key<Boolean>("DISABLE_POSTPONED_REFORMAT_KEY");
   private static final ThreadLocal<Boolean> ALLOW_TO_MARK_NODES_TO_REFORMAT = new ThreadLocal<Boolean>() {
     @Override
     protected Boolean initialValue() {
@@ -442,6 +443,16 @@ public class CodeEditUtil {
     if (ALLOW_TO_MARK_NODES_TO_REFORMAT.get()) {
       node.putCopyableUserData(REFORMAT_KEY, value ? true : null);
     }
+  }
+
+  public static void disablePostponedFormatting(@NotNull final ASTNode node) {
+    markToReformat(node, false);
+    markToReformatBefore(node, false);
+    node.putUserData(DISABLE_POSTPONED_REFORMAT_KEY, true);
+  }
+
+  public static boolean isPostponedFormattingDisabled(@NotNull final ASTNode node) {
+    return node.getUserData(DISABLE_POSTPONED_REFORMAT_KEY) != null;
   }
 
   /**

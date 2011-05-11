@@ -477,6 +477,8 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
 
         protected boolean visitNode(TreeElement element) {
           if (nodesToProcess.contains(element)) return false;
+          if (CodeEditUtil.isPostponedFormattingDisabled(element)) return false;
+
           final boolean currentNodeGenerated = CodeEditUtil.isNodeGenerated(element);
           CodeEditUtil.setNodeGenerated(element, false);
           if (currentNodeGenerated && !inGeneratedContext) {
