@@ -502,7 +502,7 @@ public class GitHistoryUtils {
     final String s = parseRefs(refs, currentRefs, locals, remotes, tags);
     gitCommit = new GitCommit(AbstractHash.create(record.getShortHash()), new SHAHash(record.getHash()), record.getAuthorName(),
                                       record.getCommitterName(),
-                                      record.getDate(), record.getFullMessage(),
+                                      record.getDate(), record.getSubject(), record.getFullMessage(),
                                       new HashSet<String>(Arrays.asList(record.getParentsShortHashes())), record.getFilePaths(root),
                                       record.getAuthorEmail(),
                                       record.getCommitterEmail(), tags, locals, remotes,
