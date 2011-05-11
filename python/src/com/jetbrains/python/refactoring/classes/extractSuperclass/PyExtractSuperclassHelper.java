@@ -40,7 +40,7 @@ public class PyExtractSuperclassHelper {
                                              final String superBaseName,
                                              final String targetFile) {
     final Set<String> superClasses = new HashSet<String>();
-    final Set<PyClass> extractedClasses = new HashSet<PyClass>();
+    final Set<PsiNamedElement> extractedClasses = new HashSet<PsiNamedElement>();
     final List<PyFunction> methods = new ArrayList<PyFunction>();
     for (PyMemberInfo member : selectedMemberInfos) {
       final PyElement element = member.getMember();
@@ -124,7 +124,7 @@ public class PyExtractSuperclassHelper {
       psiFile.add(PyElementGenerator.getInstance(project).createFromText(LanguageLevel.PYTHON24, PsiWhiteSpace.class, "\n\n"));
     }
     newClass = (PyClass)psiFile.add(newClass);
-    PyClassRefactoringUtil.insertImport(clazz, Collections.singleton(newClass));
+    PyClassRefactoringUtil.insertImport(clazz, Collections.singleton((PsiNamedElement)newClass));
     return newClass;
   }
 
