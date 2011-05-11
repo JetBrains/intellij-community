@@ -25,10 +25,7 @@ import gnu.trove.TLongHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -37,16 +34,15 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * User: cdr
  */
-public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<T> implements IntervalTree<T> {
+public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<T> implements IntervalTree<T>/*, Iterable<T>*/{
   private int keySize; // number of all intervals, counting all duplicates, some of them maybe gced
   protected final ReadWriteLock l = new ReentrantReadWriteLock();
-  private IntervalNode minNode; // left most node in the tree
 
   protected abstract EqualStartIntervalComparator<IntervalNode> getComparator();
   private final ReferenceQueue<T> myReferenceQueue = new ReferenceQueue<T>();
   private int deadReferenceCount;
 
-  protected class IntervalNode extends Node<T> implements MutableInterval {
+  protected class IntervalNode extends RedBlackTree.Node<T> implements MutableInterval {
     private volatile int myStart;
     private volatile int myEnd;
     private volatile boolean isValid = true;
@@ -314,6 +310,121 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     }
   }
 
+  @NotNull
+  Iterator<T> overlappingIterator(final int startOffset, final int endOffset) {
+    final IntervalNode firstOverlap = findMinOverlappingWith(getRoot(), new TextRangeInterval(startOffset, endOffset), modCount, 0);
+    if (firstOverlap == null) {
+      return ContainerUtil.emptyIterator();
+    }
+    normalize();
+    final int modCountBefore = modCount;
+    return new Iterator<T>() {
+      IntervalNode currentNode = firstOverlap;
+      int[] deltaUpToRootExclusive = {0};
+      private int indexInCurrentList = 0;
+      T current;
+
+      @Override
+      public boolean hasNext() {
+        if (current != null) return true;
+        if (currentNode == null) return false;
+
+        if (modCount != modCountBefore) throw new ConcurrentModificationException();
+        while (indexInCurrentList != currentNode.intervals.size()) {
+          T t = currentNode.intervals.get(indexInCurrentList++).get();
+          if (t != null) {
+            current = t;
+            return true;
+          }
+        }
+        indexInCurrentList = 0;
+        while (true) {
+          currentNode = nextNode(currentNode, startOffset, endOffset, deltaUpToRootExclusive);
+          if (currentNode == null) {
+            return false;
+          }
+          if (overlaps(currentNode, startOffset, endOffset, deltaUpToRootExclusive[0])) {
+            assert currentNode.intervalStart() >= firstOverlap.intervalStart();
+            indexInCurrentList = 0;
+            while (indexInCurrentList != currentNode.intervals.size()) {
+              T t = currentNode.intervals.get(indexInCurrentList++).get();
+              if (t != null) {
+                current = t;
+                return true;
+              }
+            }
+            indexInCurrentList = 0;
+          }
+        }
+      }
+
+      @Override
+      public T next() {
+        if (!hasNext()) throw new NoSuchElementException();
+        T t = current;
+        current = null;
+        return t;
+      }
+
+      @Override
+      public void remove() {
+        throw new IncorrectOperationException();
+      }
+    };
+  }
+
+  private boolean overlaps(IntervalNode root,
+                           int startOffset, int endOffset,
+                           int deltaUpToRootExclusive) {
+    if (root == null) return false;
+    int delta = root.delta + deltaUpToRootExclusive;
+    int start = root.intervalStart() + delta;
+    int end = root.intervalEnd() + delta;
+    return Math.max(start, startOffset) <= Math.min(end, endOffset);
+  }
+
+  private IntervalNode nextNode(@NotNull IntervalNode root,
+                                int startOffset, int endOffset,
+                                @NotNull int[] newDeltaUpToRootExclusive) {
+    assert root.isValid();
+    int deltaUpToRootExclusive = newDeltaUpToRootExclusive[0];
+    int delta = deltaUpToRootExclusive + root.delta;
+    //int myStartOffset = root.intervalStart() + delta;
+    //int myEndOffset = root.intervalEnd() + delta;
+    int myMaxEnd = maxEndOf(root, deltaUpToRootExclusive);
+    assert startOffset <= myMaxEnd;
+
+    // try to go right down
+    IntervalNode right = root.getRight();
+    if (right != null) {
+      int rightMaxEnd = maxEndOf(right, delta);
+      if (startOffset <= rightMaxEnd) {
+        int rightDelta = delta + right.delta;
+        while (right.getLeft() != null && startOffset <= maxEndOf(right.getLeft(), rightDelta)) {
+          right = right.getLeft();
+          rightDelta += right.delta;
+        }
+        newDeltaUpToRootExclusive[0] = rightDelta - right.delta;
+        return right;
+      }
+    }
+
+    // go up
+    while (true) {
+      IntervalNode parent = root.getParent();
+      if (parent == null) return null;
+      if (parent.intervalStart() + deltaUpToRootExclusive > endOffset) return null; // can't move right
+      deltaUpToRootExclusive -= parent.delta;
+
+      if (parent.getLeft() == root) {
+        newDeltaUpToRootExclusive[0] = deltaUpToRootExclusive;
+        return parent;
+      }
+
+      root = parent;
+    }
+  }
+
   private boolean processOverlapping(IntervalNode root,
                                      int offset,
                                      Processor<? super T> processor,
@@ -355,7 +466,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     node.setLeft(null);
     node.setRight(null);
 
-    List<IntervalNode> gced = new ArrayList<IntervalNode>();
+    List<IntervalNode> gced = new SmartList<IntervalNode>();
     if (root == null) {
       root = node;
     }
@@ -387,7 +498,6 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       node.delta = -delta;
       node.setParent(current);
     }
-    linkNode(node);
     correctMaxUp(node);
     onInsertNode();
     assertUnderWriteLock();
@@ -397,29 +507,6 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
 
     deleteNodes(gced);
     return node;
-  }
-
-  private void linkNode(@NotNull IntervalNode node) {
-    IntervalNode previous = previous(node);
-    if (previous == null) {
-      node.next = minNode;
-      minNode = node;
-    }
-    else {
-      node.next = previous.next;
-      previous.next = node;
-    }
-  }
-
-  private void unlinkNode(@NotNull IntervalNode node) {
-    IntervalNode previous = previous(node);
-    if (previous == null) {
-      minNode = node.next;
-    }
-    else {
-      previous.next = node.next;
-    }
-    node.next = null;
   }
 
   // finds previous in the in-order traversal
@@ -447,7 +534,6 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       for (IntervalNode node : collectedAway) {
         removeNode(node);
       }
-      checkMax(true);
     }
     finally {
       l.writeLock().unlock();
@@ -493,10 +579,6 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
         assert nodeSize() == nodeCounter.get() : "node size: "+ nodeSize() +"; actual: "+nodeCounter;
         assert keySize == keyCounter.get() : "key size: "+ keySize +"; actual: "+keyCounter;
         assert keySize >= nodeSize() : keySize + "; "+nodeSize();
-
-        IntervalNode left = getRoot();
-        while (left != null && left.getLeft() != null) left = left.getLeft();
-        assert minNode == left;
       }
       return allValid.get();
     }
@@ -640,7 +722,6 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     assertUnderWriteLock();
     IntervalNode node = (IntervalNode)n;
     pushDeltaFromRoot(node);
-    unlinkNode(node);
 
     super.deleteNode(n);
 
@@ -744,6 +825,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     if (r2 != null) r2.setParent(n1);
   }
 
+  // returns real max endOffset of all intervals below
   private int maxEndOf(IntervalNode node, int deltaUpToRootExclusive) {
     if (node == null) {
       return 0;
@@ -751,6 +833,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     if (node.isValid()) {
       return node.maxEnd + node.delta + deltaUpToRootExclusive;
     }
+    // since node is invalid, ignore node.delta
     return Math.max(maxEndOf(node.getLeft(), deltaUpToRootExclusive), maxEndOf(node.getRight(), deltaUpToRootExclusive));
   }
 
@@ -831,14 +914,6 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     }
   }
 
-  public Iterator<T> iterator() {
-    IntervalNode firstNode = minNode;
-    if (firstNode == null) {
-      return ContainerUtil.emptyIterator();
-    }
-    return createIteratorFrom(firstNode);
-  }
-
   private IntervalNode findMinOverlappingWith(IntervalNode root, Interval interval, int modCountBefore, int deltaUpToRootExclusive) {
     if (root == null) {
       return null;
@@ -865,59 +940,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     return findMinOverlappingWith(root.getRight(), interval, modCountBefore, delta);
   }
 
-  @NotNull
-  Iterator<T> iteratorFrom(@NotNull Interval interval) {
-    IntervalNode firstOverlap = findMinOverlappingWith(getRoot(), interval, modCount, 0);
-    if (firstOverlap == null) {
-      return ContainerUtil.emptyIterator();
-    }
-    return createIteratorFrom(firstOverlap);
-  }
-
-  private Iterator<T> createIteratorFrom(@NotNull final IntervalNode firstNode) {
-    checkMax(true);
-    normalize();
-
-    final int modCountBefore = modCount;
-    return new Iterator<T>() {
-      private IntervalNode node = firstNode;
-      private int indexInCurrentList = 0;
-      T current;
-
-      public boolean hasNext() {
-        if (current != null) return true;
-        while (node != null) {
-          while (indexInCurrentList != node.intervals.size()) {
-            current = node.intervals.get(indexInCurrentList).get();
-            if (current != null) return true;
-            indexInCurrentList++;
-          }
-          indexInCurrentList = 0;
-          node = node.next;
-        }
-        return false;
-      }
-
-      public T next() {
-        assert modCount == modCountBefore : "Must not modify range markers during iterate";
-        if (!hasNext()) throw new NoSuchElementException();
-
-        T t = current;
-        current = null;
-
-        indexInCurrentList++;
-        return t;
-      }
-
-
-      public void remove() {
-        throw new IncorrectOperationException();
-      }
-    };
-  }
-
   protected volatile boolean normalized = true;
-
   public void normalize() {
     if (normalized) return;
     try {
@@ -982,13 +1005,13 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     List<IntervalNode> gced = new ArrayList<IntervalNode>();
     collectGced(getRoot(), gced);
     deleteNodes(gced);
+    checkMax(true);
   }
 
   @Override
   public void clear() {
     super.clear();
     keySize = 0;
-    minNode = null;
   }
 
   private void collectGced(IntervalNode root, List<IntervalNode> gced) {
