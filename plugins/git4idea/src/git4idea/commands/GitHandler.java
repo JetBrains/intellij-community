@@ -35,20 +35,14 @@ import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.git4idea.ssh.GitSSHHandler;
 import org.jetbrains.git4idea.ssh.GitSSHService;
 
 import java.io.File;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -635,7 +629,7 @@ public abstract class GitHandler {
     return myCommandLine.getCommandLineString().length() > VcsFileUtil.FILE_PATH_LIMIT;
   }
 
-  public void runInCurrentThread(Runnable postStartAction) {
+  public void runInCurrentThread(@Nullable Runnable postStartAction) {
         final GitVcs vcs = GitVcs.getInstance(myProject);
     if (vcs == null) { return; }
 
