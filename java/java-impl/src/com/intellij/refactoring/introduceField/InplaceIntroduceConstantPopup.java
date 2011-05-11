@@ -29,8 +29,10 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -47,6 +49,7 @@ import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.TitlePanel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -241,40 +244,54 @@ public class InplaceIntroduceConstantPopup {
     return visibilityCombo;
   }
 
-  public static void appendActions(final JComboBox visibilityCombo, final Project project) {
+  public static void appendActions(final JComboBox comboBox, final Project project) {
+    final boolean toggleStrategy = !UIUtil.isUnderAquaLookAndFeel();
     final boolean[] moveFocusBack = new boolean[] {true};
-    visibilityCombo.addFocusListener(new FocusAdapter() {
+    comboBox.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
         if (!moveFocusBack[0]) {
           moveFocusBack[0] = true;
           return;
         }
-        final int size = visibilityCombo.getModel().getSize();
-        int next = visibilityCombo.getSelectedIndex() + 1;
-        if (next < 0 || next >= size) {
-          if (!UISettings.getInstance().CYCLE_SCROLLING) {
-            return;
+
+        if (toggleStrategy) {
+          final int size = comboBox.getModel().getSize();
+          int next = comboBox.getSelectedIndex() + 1;
+          if (next < 0 || next >= size) {
+            if (!UISettings.getInstance().CYCLE_SCROLLING) {
+              return;
+            }
+            next = (next + size) % size;
           }
-          next = (next + size) % size;
+          comboBox.setSelectedIndex(next);
+          ToolWindowManager.getInstance(project).activateEditorComponent();
         }
-        visibilityCombo.setSelectedIndex(next);
-        ToolWindowManager.getInstance(project).activateEditorComponent();
+        else {
+          JBPopupFactory popupFactory = JBPopupFactory.getInstance();
+          boolean fromTheSameBalloon = popupFactory.getParentBalloonFor(e.getComponent()) == popupFactory.getParentBalloonFor(e.getOppositeComponent());
+          if (!fromTheSameBalloon) {
+            comboBox.showPopup();
+          }
+        }
       }
     });
-    visibilityCombo.addMouseListener(new MouseAdapter() {
+    comboBox.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseEntered(MouseEvent e) {
         moveFocusBack[0] = false;
       }
     });
-    visibilityCombo.addKeyListener(new KeyAdapter() {
+    comboBox.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
         moveFocusBack[0] = true;
+        if (!toggleStrategy && e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0) {
+          ToolWindowManager.getInstance(project).activateEditorComponent();
+        }
       }
     });
-    visibilityCombo.addActionListener(new ActionListener() {
+    comboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         moveFocusBack[0] = true;
