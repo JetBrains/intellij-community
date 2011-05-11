@@ -116,7 +116,7 @@ public class StubGenerator implements ClassItemGenerator {
 
     /************* parameters **********/
     final ArrayList<GrParameter> actual = GenerationUtil.getActualParams(constructor, skipOptional);
-    GenerationUtil.writeParameterList(text, actual.toArray(new GrParameter[actual.size()]), classNameProvider);
+    GenerationUtil.writeParameterList(text, actual.toArray(new GrParameter[actual.size()]), classNameProvider, null);
 
     final Set<String> throwsTypes = collectThrowsTypes(constructor, new THashSet<PsiMethod>());
     if (!throwsTypes.isEmpty()) {
@@ -207,11 +207,11 @@ public class StubGenerator implements ClassItemGenerator {
 
     if (method instanceof GrMethod) {
       final ArrayList<GrParameter> actualParams = GenerationUtil.getActualParams(((GrMethod)method), skipOptional);
-      GenerationUtil.writeParameterList(text, actualParams.toArray(new GrParameter[actualParams.size()]), classNameProvider);
+      GenerationUtil.writeParameterList(text, actualParams.toArray(new GrParameter[actualParams.size()]), classNameProvider, null);
     }
     else {
       LOG.assertTrue(skipOptional==0);
-      GenerationUtil.writeParameterList(text, method.getParameterList().getParameters(), classNameProvider);
+      GenerationUtil.writeParameterList(text, method.getParameterList().getParameters(), classNameProvider, null);
     }
 
     writeThrowsList(text, method);

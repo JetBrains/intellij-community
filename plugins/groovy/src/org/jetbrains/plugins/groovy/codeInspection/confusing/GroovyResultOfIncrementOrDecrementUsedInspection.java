@@ -15,22 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspection {
@@ -50,7 +42,6 @@ public class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspec
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Result of increment or decrement expression used #loc";
-
   }
 
   public BaseInspectionVisitor buildVisitor() {
@@ -58,7 +49,7 @@ public class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspec
   }
 
   private static class Visitor extends BaseInspectionVisitor {
-    
+
     public void visitUnaryExpression(GrUnaryExpression grUnaryExpression) {
       super.visitUnaryExpression(grUnaryExpression);
 
@@ -67,24 +58,9 @@ public class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspec
         return;
       }
 
-      final PsiElement parent = PsiTreeUtil.skipParentsOfType(grUnaryExpression, GrParenthesizedExpression.class);
-      PsiElement skipped = PsiUtil.skipParentheses(grUnaryExpression, true);
-      assert skipped != null;
-
-      if (ControlFlowUtils.collectReturns(ControlFlowUtils.findControlFlowOwner(parent)).contains(skipped)) {
-          registerError(grUnaryExpression);
-          return;
-        }
-
-      if (parent instanceof GrStatementOwner || parent instanceof GrControlStatement) {
-        return;
+      if (PsiUtil.resultOfExpressionUsed(grUnaryExpression)) {
+        registerError(grUnaryExpression);
       }
-
-      if (parent instanceof GrTraditionalForClause) {
-        if (PsiTreeUtil.isAncestor(((GrTraditionalForClause)parent).getUpdate(), skipped, false)) return;
-      }
-
-      registerError(grUnaryExpression);
     }
   }
 }

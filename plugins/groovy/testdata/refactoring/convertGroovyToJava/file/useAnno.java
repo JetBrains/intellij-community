@@ -18,7 +18,7 @@ return null;
 
 }
 
-@p.I public void foo(java.lang.Object x) {
+@p.I public void foo(@p.I final java.lang.Object x) {
 @p.I java.lang.Object a;
 }
 

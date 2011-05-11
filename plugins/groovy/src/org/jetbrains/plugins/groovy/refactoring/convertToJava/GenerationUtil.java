@@ -273,7 +273,10 @@ public class GenerationUtil {
     text.append(">");
   }
 
-  static void writeParameterList(StringBuilder text, PsiParameter[] parameters, final ClassNameProvider classNameProvider) {
+  static void writeParameterList(StringBuilder text,
+                                 PsiParameter[] parameters,
+                                 final ClassNameProvider classNameProvider,
+                                 @Nullable ExpressionContext context) {
     text.append("(");
 
     //writes myParameters
@@ -283,6 +286,12 @@ public class GenerationUtil {
       if (parameter == null) continue;
 
       if (i > 0) text.append(", ");  //append ','
+      if (!classNameProvider.forStubs()) {
+        ModifierListGenerator.writeModifiers(text, parameter.getModifierList(), ModifierListGenerator.JAVA_MODIFIERS, true);
+      }
+      if (context != null && context.analyzedVars.toMakeFinal(parameter)) {
+        text.append(PsiModifier.FINAL).append(' ');
+      }
       writeType(text, TypeProvider.getParameterType(parameter), parameter, classNameProvider);
       text.append(" ");
       text.append(parameter.getName());
