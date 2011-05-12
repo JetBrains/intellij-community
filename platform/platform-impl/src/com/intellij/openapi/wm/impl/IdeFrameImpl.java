@@ -103,6 +103,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
       setFocusableWindowState(false);
     }
 
+    // to show window thumbnail under Macs
+    // http://lists.apple.com/archives/java-dev/2009/Dec/msg00240.html
+    if (SystemInfo.isMac) setIconImage(null); 
+    
     MouseGestureManager.getInstance().add(this);
   }
 
