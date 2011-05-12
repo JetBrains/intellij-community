@@ -404,6 +404,11 @@ public class GroovyHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest(new GroovyAssignabilityCheckInspection());
   }
 
+  public void _testInnerClassConstructorThis() {
+    myFixture.enableInspections(new GroovyResultOfAssignmentUsedInspection());
+    myFixture.testHighlighting(true, true, true, getTestName(false) + ".groovy");
+  }
+
   public void testCurrying(){
     doTest(new GroovyAssignabilityCheckInspection());
   }
