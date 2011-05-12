@@ -209,6 +209,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "else", "element");
   }
 
+  public void testPreferMoreMatching() {
+    checkPreferredItems(0, "FooOCSomething", "FooObjectCollector");
+  }
+
   public void testPreferSamePackageOverImported() {
     myFixture.addClass("package bar; public class Bar1 {}");
     myFixture.addClass("package bar; public class Bar2 {}");
