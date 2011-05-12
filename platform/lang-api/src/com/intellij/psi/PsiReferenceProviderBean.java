@@ -16,6 +16,7 @@
 
 package com.intellij.psi;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
@@ -23,6 +24,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.ElementPatternBean;
 import com.intellij.patterns.StandardPatterns;
+import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -31,13 +33,19 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Registers a {@link PsiReferenceProvider} in plugin.xml
  */
-public class PsiReferenceProviderBean extends AbstractExtensionPointBean {
+public class PsiReferenceProviderBean extends AbstractExtensionPointBean implements KeyedLazyInstance<PsiReferenceProviderBean> {
 
   public static final ExtensionPointName<PsiReferenceProviderBean> EP_NAME =
     new ExtensionPointName<PsiReferenceProviderBean>("com.intellij.psi.referenceProvider");
+
+  @Attribute("language")
+  public String language = Language.ANY.getID();
+
   @Attribute("providerClass")
   public String className;
 
@@ -74,8 +82,9 @@ public class PsiReferenceProviderBean extends AbstractExtensionPointBean {
   @Nullable
   public ElementPattern<PsiElement> createElementPattern() {
     if (patterns.length > 1) {
-      return StandardPatterns.or(ContainerUtil.mapNotNull(patterns,
-                                                          PATTERN_NULLABLE_FUNCTION).toArray(new ElementPattern[0]));
+      List<ElementPattern<? extends PsiElement>> list = ContainerUtil.mapNotNull(patterns, PATTERN_NULLABLE_FUNCTION);
+      //noinspection unchecked
+      return StandardPatterns.or(list.toArray(new ElementPattern[list.size()]));
     }
     else if (patterns.length == 1) {
       return patterns[0].compilePattern();
@@ -84,5 +93,15 @@ public class PsiReferenceProviderBean extends AbstractExtensionPointBean {
       LOG.error("At least one pattern should be specified");
       return null;
     }
+  }
+
+  @Override
+  public String getKey() {
+    return language;
+  }
+
+  @Override
+  public PsiReferenceProviderBean getInstance() {
+    return this;
   }
 }
