@@ -22,6 +22,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
@@ -52,9 +53,16 @@ public class ReferenceProvidersRegistry {
         return o2.getThird().compareTo(o1.getThird());
       }
     };
+  public final static PsiReferenceProvider NULL_REFERENCE_PROVIDER = new PsiReferenceProvider() {
+      @NotNull
+      @Override
+      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+        return PsiReference.EMPTY_ARRAY;
+      }
+    };
 
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-  private final static Map<Language, PsiReferenceRegistrarImpl> ourRegistrars = new FactoryMap<Language, PsiReferenceRegistrarImpl>() {
+  private final Map<Language, PsiReferenceRegistrarImpl> myRegistrars = new FactoryMap<Language, PsiReferenceRegistrarImpl>() {
     @Override
     protected PsiReferenceRegistrarImpl create(Language language) {
       PsiReferenceRegistrarImpl registrar = new PsiReferenceRegistrarImpl();
@@ -70,8 +78,36 @@ public class ReferenceProvidersRegistry {
     return ServiceManager.getService(ReferenceProvidersRegistry.class);
   }
 
-  public PsiReferenceRegistrar getRegistrar(Language language) {
-    return ourRegistrars.get(language);
+  public ReferenceProvidersRegistry() {
+
+    PsiReferenceRegistrarImpl registrar = getRegistrar(Language.ANY);
+    for (final PsiReferenceProviderBean providerBean : PsiReferenceProviderBean.EP_NAME.getExtensions()) {
+      final ElementPattern<PsiElement> pattern = providerBean.createElementPattern();
+      if (pattern != null) {
+        registrar.registerReferenceProvider(pattern, new PsiReferenceProvider() {
+
+          PsiReferenceProvider myProvider;
+
+          @NotNull
+          @Override
+          public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+            if (myProvider == null) {
+
+              myProvider = providerBean.instantiate();
+              if (myProvider == null) {
+                myProvider = NULL_REFERENCE_PROVIDER;
+              }
+            }
+            return myProvider.getReferencesByElement(element, context);
+          }
+        });
+      }
+    }
+
+  }
+
+  public PsiReferenceRegistrarImpl getRegistrar(Language language) {
+    return myRegistrars.get(language);
   }
 
   @Deprecated
@@ -83,10 +119,11 @@ public class ReferenceProvidersRegistry {
     ProgressManager.checkCanceled();
     assert context.isValid() : "Invalid context: " + context;
 
-    PsiReferenceRegistrarImpl registrar = ourRegistrars.get(context.getLanguage());
+    ReferenceProvidersRegistry registry = getInstance();
+    PsiReferenceRegistrarImpl registrar = registry.getRegistrar(context.getLanguage());
     SmartList<Trinity<PsiReferenceProvider, ProcessingContext, Double>> providers = new SmartList<Trinity<PsiReferenceProvider, ProcessingContext, Double>>();
     providers.addAll(registrar.getPairsByElement(context, hints));
-    providers.addAll(ourRegistrars.get(Language.ANY).getPairsByElement(context, hints));
+    providers.addAll(registry.getRegistrar(Language.ANY).getPairsByElement(context, hints));
     if (providers.isEmpty()) {
       return PsiReference.EMPTY_ARRAY;
     }

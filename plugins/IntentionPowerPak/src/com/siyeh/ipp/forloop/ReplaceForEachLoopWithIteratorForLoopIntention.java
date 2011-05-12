@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,19 +49,6 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
         if (iteratedValue == null) {
             return;
         }
-        final PsiType type = iteratedValue.getType();
-        final PsiType iteratedValueParameterType;
-        if (type instanceof PsiClassType) {
-            final PsiClassType classType = (PsiClassType)type;
-            final PsiType[] parameterTypes = classType.getParameters();
-            if (parameterTypes.length == 0) {
-                iteratedValueParameterType = null;
-            } else {
-                iteratedValueParameterType = parameterTypes[0];
-            }
-        } else {
-            iteratedValueParameterType = null;
-        }
         @NonNls final StringBuilder newStatement = new StringBuilder();
         final PsiParameter iterationParameter =
                 statement.getIterationParameter();
@@ -71,13 +58,9 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
                         statement, true);
         final String typeText = parameterType.getCanonicalText();
         newStatement.append("for(java.util.Iterator");
-        if (iteratedValueParameterType == null) {
-            newStatement.append(' ');
-        } else {
-            newStatement.append('<');
-            newStatement.append(iteratedValueParameterType.getCanonicalText());
-            newStatement.append("> ");
-        }
+        newStatement.append('<');
+        newStatement.append(typeText);
+        newStatement.append("> ");
         newStatement.append(iterator);
         newStatement.append(" = ");
         if (iteratedValue instanceof PsiTypeCastExpression) {
@@ -99,12 +82,6 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
         newStatement.append(' ');
         newStatement.append(iterationParameter.getName());
         newStatement.append(" = ");
-        if (iteratedValueParameterType == null && !
-                "java.lang.Object".equals(typeText)) {
-            newStatement.append('(');
-            newStatement.append(typeText);
-            newStatement.append(')');
-        }
         newStatement.append(iterator);
         newStatement.append(".next();");
         final PsiStatement body = statement.getBody();

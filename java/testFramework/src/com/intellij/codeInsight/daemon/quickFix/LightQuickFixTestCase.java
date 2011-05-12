@@ -23,6 +23,7 @@ import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -61,7 +62,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     final String relativePath = quickFixTestCase.getBasePath() + "/" + BEFORE_PREFIX + testName;
     final String testFullPath = quickFixTestCase.getTestDataPath().replace(File.separatorChar, '/') + relativePath;
     final File testFile = new File(testFullPath);
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+    CommandProcessor.getInstance().executeCommand(quickFixTestCase.getProject(), new Runnable() {
       @Override
       public void run() {
         try {
@@ -263,17 +264,22 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
 
       @Override
       public void configureFromFileText(String name, String contents) throws IOException {
-        LightCodeInsightTestCase.configureFromFileText(name, contents);
+        LightQuickFixTestCase.configureFromFileText(name, contents);
       }
 
       @Override
       public PsiFile getFile() {
-        return LightCodeInsightTestCase.getFile();
+        return LightQuickFixTestCase.getFile();
+      }
+
+      @Override
+      public Project getProject() {
+        return LightQuickFixTestCase.getProject();
       }
 
       @Override
       public void bringRealEditorBack() {
-        LightCodeInsightTestCase.bringRealEditorBack();
+        LightQuickFixTestCase.bringRealEditorBack();
       }
     });
   }

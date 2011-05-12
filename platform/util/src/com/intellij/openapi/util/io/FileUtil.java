@@ -354,12 +354,18 @@ public class FileUtil {
 
   @NotNull
   public static File createTempFile(@NonNls final File dir, @NotNull @NonNls String prefix, @NonNls String suffix, final boolean create) throws IOException{
+    return createTempFile(dir, prefix, suffix, create, true);
+  }
+
+  public static File createTempFile(@NonNls final File dir, @NotNull @NonNls String prefix, @NonNls String suffix, final boolean create, boolean removeOnExit) throws IOException {
     File file = doCreateTempFile(prefix, suffix, dir);
     file.delete();
     if (create) {
       file.createNewFile();
     }
-    file.deleteOnExit();
+    if (removeOnExit) {
+      file.deleteOnExit();
+    }
     return file;
   }
 

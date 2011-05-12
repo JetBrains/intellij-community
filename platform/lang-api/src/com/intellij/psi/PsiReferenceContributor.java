@@ -15,7 +15,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
  * Some elements return them from {@link PsiElement#getReferences()} directly though, but one should not rely on that
  * behavior since it may be changed in the future.
  *
+ * The alternative way to register {@link PsiReferenceProvider} is by using {@link PsiReferenceProviderBean}.
+ *
  * @author peter
+ * @see PsiReferenceProviderBean
  */
 public abstract class PsiReferenceContributor implements Disposable {
   public static final ExtensionPointName<PsiReferenceContributor> EP_NAME = ExtensionPointName.create("com.intellij.psi.referenceContributor");

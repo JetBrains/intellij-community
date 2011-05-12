@@ -491,14 +491,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         PsiClass containingClass = method.getContainingClass();
         if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
                 "getClass".equals(method.getName())) {
-          final GrExpression qualifier = getQualifier();
-          if (PsiUtil.seemsToBeQualifiedClassName(qualifier)) {
-            result = TypesUtil.createJavaLangClassType(facade.getElementFactory().createTypeFromText(qualifier.getText(), this),
-                                                       getProject(), getResolveScope());
-          }
-          else {
-            result = getTypeForObjectGetClass(method);
-          }
+          result = TypesUtil.createJavaLangClassType(getQualifierType(), getProject(), getResolveScope());
         } else {
           result = PsiUtil.getSmartReturnType(method);
         }
@@ -520,13 +513,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     else if (resolved == null) {
       GrExpression qualifier = getQualifierExpression();
       if ("class".equals(getReferenceName())) {
-        if (PsiUtil.seemsToBeQualifiedClassName(qualifier)) {
-          assert qualifier != null;
-          result = TypesUtil.createJavaLangClassType(facade.getElementFactory().createTypeFromText(qualifier.getText(), this), getProject(),
-                                                     getResolveScope());
-        } else {
-          result = TypesUtil.createJavaLangClassType(getQualifierType(), getProject(), getResolveScope());
-        }
+        result = TypesUtil.createJavaLangClassType(getQualifierType(), getProject(), getResolveScope());
       }
       else {
         if (qualifier != null) {
@@ -575,21 +562,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     else {
       return qualifier.getType();
     }
-  }
-
-  @Nullable
-  private PsiType getTypeForObjectGetClass(PsiMethod method) {
-    PsiType type = PsiUtil.getSmartReturnType(method);
-    if (type instanceof PsiClassType) {
-      PsiClass clazz = ((PsiClassType)type).resolve();
-      if (clazz != null && CommonClassNames.JAVA_LANG_CLASS.equals(clazz.getQualifiedName())) {
-        PsiTypeParameter[] typeParameters = clazz.getTypeParameters();
-        if (typeParameters.length == 1) {
-          return TypesUtil.createJavaLangClassType(getQualifierType(), getProject(), getResolveScope());
-        }
-      }
-    }
-    return type;
   }
 
   private static final class OurTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {

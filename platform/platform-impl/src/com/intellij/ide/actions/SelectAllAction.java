@@ -16,10 +16,12 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
 import com.intellij.openapi.project.DumbAware;
@@ -27,7 +29,6 @@ import com.intellij.openapi.project.DumbAware;
 public class SelectAllAction extends TextComponentEditorAction implements DumbAware {
   public SelectAllAction() {
     super(new Handler());
-    setEnabledInModalContext(true);
   }
 
   private static class Handler extends EditorActionHandler {

@@ -15,6 +15,11 @@
  */
 package git4idea.ui;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -23,6 +28,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.Consumer;
@@ -33,19 +40,19 @@ import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
-import git4idea.update.GitStashUtils;
+import git4idea.merge.GitMergeConflictResolver;
+import git4idea.stash.GitStashUtils;
 import git4idea.validators.GitBranchNameValidator;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -102,6 +109,7 @@ public class GitUnstashDialog extends DialogWrapper {
    */
   private final Project myProject;
   private GitVcs myVcs;
+  private static final Logger LOG = Logger.getInstance(GitUnstashDialog.class);
 
   /**
    * A constructor
@@ -406,10 +414,14 @@ public class GitUnstashDialog extends DialogWrapper {
     affectedRoots.add(d.getGitRoot());
     GitLineHandler h = d.handler(false);
     final AtomicBoolean needToEscapedBraces = new AtomicBoolean(false);
+    final AtomicBoolean conflict = new AtomicBoolean();
+
     h.addLineListener(new GitLineHandlerAdapter() {
       public void onLineAvailable(String line, Key outputType) {
         if (line.startsWith("fatal: Needed a single revision")) {
           needToEscapedBraces.set(true);
+        } else if (line.contains("Merge conflict")) {
+          conflict.set(true);
         }
       }
     });
@@ -418,8 +430,66 @@ public class GitUnstashDialog extends DialogWrapper {
       h = d.handler(true);
       rc = GitHandlerUtil.doSynchronously(h, GitBundle.getString("unstash.unstashing"), h.printableCommandLine(), false);
     }
-    if (rc != 0) {
+
+    if (conflict.get()) {
+      VirtualFile root = d.getGitRoot();
+      boolean conflictsResolved = new UnstashConflictResolver(project, d.getSelectedStash()).merge(Collections.singleton(root));
+      if (conflictsResolved) {
+        LOG.info("loadRoot " + root + " conflicts resolved, dropping stash");
+        GitStashUtils.dropStash(project, root);
+      }
+    } else if (rc != 0) {
       GitUIUtil.showOperationErrors(project, h.errors(), h.printableCommandLine());
+    }
+  }
+
+  private static class UnstashConflictResolver extends GitMergeConflictResolver {
+    private StashInfo myStashInfo;
+
+    public UnstashConflictResolver(Project project, StashInfo stashInfo) {
+      super(project, false, new UnstashMergeDialogCustomizer(stashInfo), "Unstashed with conflicts", "");
+      myStashInfo = stashInfo;
+    }
+
+    @Override
+    protected void notifyUnresolvedRemain(final Collection<VirtualFile> roots) {
+      Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Conflicts were not resolved during unstash",
+                                                "Unstash is not complete, you have unresolved merges in your working tree<br/>" +
+                                                "<a href='resolve'>Resolve</a> conflicts.",
+                                                NotificationType.WARNING, new NotificationListener() {
+          @Override
+          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+            if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+              if (event.getDescription().equals("resolve")) {
+                new UnstashConflictResolver(myProject, myStashInfo).justMerge(roots);
+              }
+            }
+          }
+      }));
+    }
+  }
+
+  private static class UnstashMergeDialogCustomizer extends MergeDialogCustomizer {
+
+    private final StashInfo myStashInfo;
+
+    public UnstashMergeDialogCustomizer(StashInfo stashInfo) {
+      myStashInfo = stashInfo;
+    }
+
+    @Override
+    public String getMultipleFileMergeDescription(Collection<VirtualFile> files) {
+      return "<html>Conflicts during unstashing <code>" + myStashInfo.getStash() + "\"" + myStashInfo.getMessage() + "\"</code></html>";
+    }
+
+    @Override
+    public String getLeftPanelTitle(VirtualFile file) {
+      return "Local changes";
+    }
+
+    @Override
+    public String getRightPanelTitle(VirtualFile file, VcsRevisionNumber lastRevisionNumber) {
+      return "Changes from stash";
     }
   }
 }

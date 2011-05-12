@@ -19,8 +19,15 @@ import org.jetbrains.annotations.NotNull;
 
 public interface TextWithImports {
   String getText();
+
   void setText(String newText);
-  @NotNull String getImports();
+
+  @NotNull
+  String getImports();
+
   CodeFragmentKind getKind();
+
   boolean isEmpty();
+
+  String toExternalForm();
 }

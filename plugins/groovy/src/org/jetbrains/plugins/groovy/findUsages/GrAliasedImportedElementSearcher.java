@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.findUsages;
 
 import com.intellij.openapi.application.QueryExecutorBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -42,7 +43,7 @@ public class GrAliasedImportedElementSearcher extends QueryExecutorBase<PsiRefer
     if (!(target instanceof PsiMember) || !(target instanceof PsiNamedElement)) return;
 
     final String name = ((PsiNamedElement)target).getName();
-    if (name == null) return;
+    if (name == null || StringUtil.isEmptyOrSpaces(name)) return;
 
     final SearchScope onlyGroovy = PsiUtil.restrictScopeToGroovyFiles(parameters.getEffectiveSearchScope());
 

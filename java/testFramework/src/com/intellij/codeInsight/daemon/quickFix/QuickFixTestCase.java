@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 
@@ -57,4 +58,6 @@ public interface QuickFixTestCase {
   void configureFromFileText(String name, String contents) throws Throwable;
 
   PsiFile getFile();
+
+  Project getProject();
 }

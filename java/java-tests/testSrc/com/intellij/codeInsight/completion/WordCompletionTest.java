@@ -71,7 +71,7 @@ public class WordCompletionTest extends CompletionTestCase {
       }
     };
     PsiReferenceRegistrarImpl registrar =
-      (PsiReferenceRegistrarImpl)ReferenceProvidersRegistry.getInstance().getRegistrar(StdLanguages.JAVA);
+      ReferenceProvidersRegistry.getInstance().getRegistrar(StdLanguages.JAVA);
     try {
       registrar.registerReferenceProvider(PsiLiteralExpression.class, softProvider);
       registrar.registerReferenceProvider(PsiLiteralExpression.class, hardProvider);

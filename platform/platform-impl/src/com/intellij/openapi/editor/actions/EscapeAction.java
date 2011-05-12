@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 public class EscapeAction extends EditorAction {
   public EscapeAction() {
     super(new Handler());
+    setInjectedContext(true);
   }
 
   private static class Handler extends EditorActionHandler {

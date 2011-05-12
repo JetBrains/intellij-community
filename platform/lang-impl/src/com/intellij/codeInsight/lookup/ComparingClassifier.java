@@ -18,6 +18,8 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.StripedLockConcurrentHashMap;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -26,7 +28,7 @@ import java.util.*;
 * @author peter
 */
 public abstract class ComparingClassifier<T> extends Classifier<T> {
-  private final Map<T, Comparable> myWeights = new HashMap<T, Comparable>();
+  private final Map<T, Comparable> myWeights = new StripedLockConcurrentHashMap<T, Comparable>(TObjectHashingStrategy.IDENTITY);
   private final Classifier<T> myNext;
   private final String myName;
 
@@ -49,7 +51,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
     for (T t : source) {
       final Comparable weight = myWeights.get(t);
       if (weight == null) {
-        throw new AssertionError(myName + "; " + myWeights.containsKey(t));
+        throw new AssertionError(myName + "; " + myWeights.containsKey(t) + "; element=" + t);
       }
       List<T> list = map.get(weight);
       if (list == null) {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.update;
+package git4idea.stash;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -176,28 +176,12 @@ public class GitStashChangesSaver extends GitChangesSaver {
         boolean conflictsResolved = new UnstashConflictResolver().merge(Collections.singleton(root));
         if (conflictsResolved) {
           LOG.info("loadRoot " + root + " conflicts resolved, dropping stash");
-          dropStash(root);
+          GitStashUtils.dropStash(myProject, root);
         }
       } else {
         LOG.info("unstash failed " + handler.errors());
         GitUIUtil.notifyImportantError(myProject, "Couldn't unstash", "<br/>" + GitUIUtil.stringifyErrors(handler.errors()));
       }
-    }
-  }
-
-  // drops stash (after completing conflicting merge during unstashing), shows a warning in case of error
-  private void dropStash(VirtualFile root) {
-    final GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.STASH);
-    handler.setNoSSH(true);
-    handler.addParameters("drop");
-    String output = null;
-    try {
-      output = handler.run();
-    } catch (VcsException e) {
-      LOG.info("dropStash " + output, e);
-      GitUIUtil.notifyMessage(myProject, "Couldn't drop stash",
-                              "Couldn't drop stash after resolving conflicts.<br/>Please drop stash manually.",
-                              WARNING, false, handler.errors());
     }
   }
 

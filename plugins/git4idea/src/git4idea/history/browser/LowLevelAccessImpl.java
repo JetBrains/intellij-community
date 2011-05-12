@@ -16,24 +16,37 @@
  */
 package git4idea.history.browser;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.AsynchConsumer;
 import git4idea.GitBranch;
 import git4idea.GitTag;
-import git4idea.commands.GitFileUtils;
+import git4idea.GitVcs;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
+import git4idea.commands.GitLineHandlerAdapter;
 import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.wholeTree.CommitHashPlusParents;
+import git4idea.merge.GitMergeConflictResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class LowLevelAccessImpl implements LowLevelAccess {
   private final static Logger LOG = Logger.getInstance("#git4idea.history.browser.LowLevelAccessImpl");
@@ -181,7 +194,94 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     GitTag.listAsStrings(myProject, myRoot, sink, null);
   }
 
-  public void cherryPick(SHAHash hash) throws VcsException {
-    GitFileUtils.cherryPick(myProject, myRoot, hash.getValue());
+  public boolean cherryPick(GitCommit commit) throws VcsException {
+    final GitLineHandler handler = new GitLineHandler(myProject, myRoot, GitCommand.CHERRY_PICK);
+    handler.addParameters("-x", "-n", commit.getHash().getValue());
+    handler.endOptions();
+    handler.setNoSSH(true);
+
+    final AtomicBoolean conflict = new AtomicBoolean();
+
+    handler.addLineListener(new GitLineHandlerAdapter() {
+      public void onLineAvailable(String line, Key outputType) {
+        if (line.contains("after resolving the conflicts, mark the corrected paths")) {
+          conflict.set(true);
+        }
+      }
+    });
+    handler.runInCurrentThread(null);
+
+    if (conflict.get()) {
+      boolean allConflictsResolved = new CherryPickConflictResolver(myProject, commit.getShortHash().getString(), commit.getAuthor(), commit.getSubject()).merge(Collections.singleton(myRoot));
+      return allConflictsResolved;
+    } else {
+      final List<VcsException> errors = handler.errors();
+      if (!errors.isEmpty()) {
+        throw errors.get(0);
+      } else { // no conflicts, no errors
+        return true;
+      }
+    }
   }
+
+  private static class CherryPickConflictResolver extends GitMergeConflictResolver {
+
+    private String myCommitHash;
+    private String myCommitAuthor;
+    private String myCommitMessage;
+
+    public CherryPickConflictResolver(Project project, String commitHash, String commitAuthor, String commitMessage) {
+      super(project, false, new CherryPickMergeDialogCustomizer(commitHash, commitAuthor, commitMessage), "Cherry-picked with conflicts", "");
+      myCommitHash = commitHash;
+      myCommitAuthor = commitAuthor;
+      myCommitMessage = commitMessage;
+    }
+
+    @Override
+    protected void notifyUnresolvedRemain(final Collection<VirtualFile> roots) {
+      Notifications.Bus.notify(new Notification(GitVcs.IMPORTANT_ERROR_NOTIFICATION, "Conflicts were not resolved during cherry-pick",
+                                                "Cherry-pick is not complete, you have unresolved merges in your working tree<br/>" +
+                                                "<a href='resolve'>Resolve</a> conflicts.",
+                                                NotificationType.WARNING, new NotificationListener() {
+          @Override
+          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+            if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+              if (event.getDescription().equals("resolve")) {
+                new CherryPickConflictResolver(myProject, myCommitHash, myCommitAuthor, myCommitMessage).justMerge(roots);
+              }
+            }
+          }
+      }));
+    }
+  }
+
+  private static class CherryPickMergeDialogCustomizer extends MergeDialogCustomizer {
+
+    private String myCommitHash;
+    private String myCommitAuthor;
+    private String myCommitMessage;
+
+    public CherryPickMergeDialogCustomizer(String commitHash, String commitAuthor, String commitMessage) {
+      myCommitHash = commitHash;
+      myCommitAuthor = commitAuthor;
+      myCommitMessage = commitMessage;
+    }
+
+    @Override
+    public String getMultipleFileMergeDescription(Collection<VirtualFile> files) {
+      return "<html>Conflicts during cherry-picking commit <code>" + myCommitHash + "</code> made by " + myCommitAuthor + "<br/>" +
+             "<code>\"" + myCommitMessage + "\"</code></html>";
+    }
+
+    @Override
+    public String getLeftPanelTitle(VirtualFile file) {
+      return "Local changes";
+    }
+
+    @Override
+    public String getRightPanelTitle(VirtualFile file, VcsRevisionNumber lastRevisionNumber) {
+      return "<html>Changes from cherry-pick <code>" + myCommitHash + "</code>";
+    }
+  }
+
 }

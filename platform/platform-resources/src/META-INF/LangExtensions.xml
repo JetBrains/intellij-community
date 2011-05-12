@@ -397,8 +397,6 @@
   <applicationService serviceInterface="com.intellij.execution.console.ConsoleFoldingSettings" serviceImplementation="com.intellij.execution.console.ConsoleFoldingSettings"/>
   <console.folding implementation="com.intellij.execution.console.SubstringConsoleFolding"/>
 
-  <psi.referenceContributor implementation="com.intellij.psi.PsiReferenceContributorImpl"/>
-
   <lookup.charFilter implementation="com.intellij.codeInsight.template.impl.LiveTemplateCharFilter" order="first" id="liveTemplate"/>
   <lookup.charFilter implementation="com.intellij.codeInsight.completion.CompletionCharFilter" order="last" id="completion"/>
   <lookup.charFilter implementation="com.intellij.refactoring.IdentifierCharFilter" id="identifier"/>
