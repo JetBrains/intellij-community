@@ -53,4 +53,10 @@ public class LanguageLineWrapPositionStrategy extends LanguageExtension<LineWrap
     }
     return result;
   }
+
+  @NotNull
+  @Override
+  public LineWrapPositionStrategy getDefaultImplementation() {
+    return super.getDefaultImplementation();
+  }
 }

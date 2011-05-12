@@ -370,7 +370,8 @@ public class CodeFormatterFacade {
 
       // We know that current line exceeds right margin if control flow reaches this place, so, wrap it.
       int wrapOffset = strategy.calculateWrapPosition(
-        document, Math.max(startLineOffset, startOffsetToUse), Math.min(endLineOffset, endOffsetToUse), preferredWrapPosition, false
+        document, editor.getProject(), Math.max(startLineOffset, startOffsetToUse), Math.min(endLineOffset, endOffsetToUse),
+        preferredWrapPosition, false
       );
       if (wrapOffset < 0) {
         continue;

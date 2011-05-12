@@ -150,6 +150,9 @@
     <lang.formatter language="XML" implementationClass="com.intellij.lang.xml.XmlFormattingModelBuilder"/>
     <lang.formatter language="HTML" implementationClass="com.intellij.lang.html.HtmlFormattingModelBuilder"/>
     <lang.formatter language="XHTML" implementationClass="com.intellij.lang.xhtml.XhtmlFormattingModelBuilder"/>
+    <lang.lineWrapStrategy language="XML" implementationClass="com.intellij.psi.formatter.MarkupLineWrapPositionStrategy"/>
+    <lang.lineWrapStrategy language="HTML" implementationClass="com.intellij.psi.formatter.MarkupLineWrapPositionStrategy"/>
+    <lang.lineWrapStrategy language="XHTML" implementationClass="com.intellij.psi.formatter.MarkupLineWrapPositionStrategy"/>
 
     <lang.documentationProvider language="XML" implementationClass="com.intellij.xml.util.documentation.XmlDocumentationProvider"
                                 order="last"/>

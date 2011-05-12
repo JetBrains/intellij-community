@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Defines contract for the strategy that calculates the best place to apply wrap to particular line (sequence of characters).
@@ -33,6 +35,7 @@ public interface LineWrapPositionStrategy {
    * Allows to calculate the most appropriate position to wrap target line.
    *
    * @param document                          target document which text is being processed
+   * @param project                           target project
    * @param startOffset                       start offset to use with the given text holder (inclusive)
    * @param endOffset                         end offset to use with the given text holder (exclusive)
    * @param maxPreferredOffset                this method is expected to do its best to return offset that belongs to
@@ -46,7 +49,7 @@ public interface LineWrapPositionStrategy {
    *                                          target line should be wrapped OR <code>-1</code> if no wrapping should be performed
    */
   int calculateWrapPosition(
-    @NotNull Document document, int startOffset, int endOffset, int maxPreferredOffset,
+    @NotNull Document document, @Nullable Project project, int startOffset, int endOffset, int maxPreferredOffset,
     boolean allowToBeyondMaxPreferredOffset
   );
 }

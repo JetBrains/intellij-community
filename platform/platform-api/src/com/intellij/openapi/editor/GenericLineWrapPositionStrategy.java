@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.project.Project;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -42,6 +44,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
 
   @Override
   public int calculateWrapPosition(@NotNull Document document,
+                                   @Nullable Project project,
                                    int startOffset,
                                    int endOffset,
                                    int maxPreferredOffset,
