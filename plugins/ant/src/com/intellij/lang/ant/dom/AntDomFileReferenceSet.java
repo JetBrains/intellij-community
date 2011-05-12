@@ -129,8 +129,9 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
           else {
             basedir = containingProject.getContextAntProject().getProjectBasedirPath();
           }
-          assert basedir != null;
-          root = LocalFileSystem.getInstance().findFileByPath(basedir);
+          if (basedir != null) {
+            root = LocalFileSystem.getInstance().findFileByPath(basedir);
+          }
         }
       }
 
