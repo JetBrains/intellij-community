@@ -424,14 +424,19 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
   protected void updateControls(JCheckBox[] removeParamsCb) {
     super.updateControls(removeParamsCb);
     if (myParameterIndex < 0) return;
-    final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-    if (templateState != null) {
-      PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
-      final PsiParameter parameter = getParameter();
-      final boolean hasFinalModifier = parameter.hasModifierProperty(PsiModifier.FINAL);
-      templateState.gotoEnd(true);
-      startIntroduceTemplate(isReplaceAllOccurences(), hasFinalModifier);
-    }
+    Runnable restartTemplateRunnable = new Runnable() {
+      public void run() {
+        final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+        if (templateState != null) {
+          PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
+          final PsiParameter parameter = getParameter();
+          final boolean hasFinalModifier = parameter.hasModifierProperty(PsiModifier.FINAL);
+          templateState.gotoEnd(true);
+          startIntroduceTemplate(isReplaceAllOccurences(), hasFinalModifier);
+        }
+      }
+    };
+    CommandProcessor.getInstance().executeCommand(myProject, restartTemplateRunnable, IntroduceParameterHandler.REFACTORING_NAME, IntroduceParameterHandler.REFACTORING_NAME);
   }
 
 
