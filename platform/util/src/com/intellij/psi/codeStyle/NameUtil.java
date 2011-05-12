@@ -599,6 +599,21 @@ public class NameUtil {
       return null;
     }
 
+    public int matchingDegree(String name) {
+      Iterable<TextRange> iterable = matchingFragments(name);
+      if (iterable == null) return Integer.MIN_VALUE;
+
+      int matchingCaps = 0;
+      int fragmentCount = 0;
+      for (TextRange range : iterable) {
+        matchingCaps += StringUtil.capitalsOnly(name.substring(range.getStartOffset(), range.getEndOffset())).length();
+        fragmentCount++;
+      }
+
+      int patternCaps = StringUtil.capitalsOnly(new String(myPattern)).length();
+      return -fragmentCount - Math.max(0, patternCaps - matchingCaps) * 10;
+    }
+
     private static boolean isWordSeparator(char c) {
       return Character.isWhitespace(c) || c == '_' || c == '-';
     }
