@@ -34,7 +34,7 @@ public class Extensions {
   public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<AreaListener>("com.intellij.arealistener");
 
   private static final Map<AreaInstance,ExtensionsAreaImpl> ourAreaInstance2area = new HashMap<AreaInstance, ExtensionsAreaImpl>();
-  private static final ExtensionsAreaImpl ourRootArea = createRootArea();
+  private static ExtensionsAreaImpl ourRootArea = createRootArea();
   private static final MultiMap<String, AreaInstance> ourAreaClass2instances = new MultiMap<String, AreaInstance>();
   private static final Map<AreaInstance,String> ourAreaInstance2class = new HashMap<AreaInstance, String>();
   private static final Map<String,AreaClassConfiguration> ourAreaClass2Configuration = new HashMap<String, AreaClassConfiguration>();
@@ -73,6 +73,7 @@ public class Extensions {
     oldRootArea.notifyAreaReplaced();
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
+        ourRootArea = oldRootArea;
         ourAreaInstance2area.put(null, oldRootArea);
         newArea.notifyAreaReplaced();
       }
