@@ -107,7 +107,7 @@ public class NavBarModel {
       updateModel(psiElement);
     }
     else {
-      if (UISettings.getInstance().SHOW_NAVIGATION_BAR) return;
+      if (UISettings.getInstance().SHOW_NAVIGATION_BAR && !myModel.isEmpty()) return;
 
       Object moduleOrProject = LangDataKeys.MODULE.getData(dataContext);
       if (moduleOrProject == null) {
