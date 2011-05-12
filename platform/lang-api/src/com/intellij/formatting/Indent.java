@@ -252,6 +252,21 @@ public abstract class Indent {
     return myFactory.getIndent(type, relativeToDirectParent, enforceIndentToChildren);
   }
 
+  /**
+   * Base factory method for {@link Indent} objects construction, i.e. all other methods may be expressed in terms of this method.
+   *
+   * @param type                      indent type
+   * @param spaces                    the number of spaces in the indent
+   * @param relativeToDirectParent    flag the indicates if current indent object anchors direct block parent (feel free
+   *                                  to get more information about that at class-level javadoc)
+   * @param enforceIndentToChildren   flag the indicates if current indent object should be enforced for multiline block children
+   *                                  (feel free to get more information about that at class-level javadoc)
+   * @return                          newly created indent configured in accordance with the given arguments
+   */
+  public static Indent getIndent(@NotNull Type type, int spaces, boolean relativeToDirectParent, boolean enforceIndentToChildren) {
+    return myFactory.getIndent(type, spaces, relativeToDirectParent, enforceIndentToChildren);
+  }
+
   public static class Type {
     private final String myName;
 
