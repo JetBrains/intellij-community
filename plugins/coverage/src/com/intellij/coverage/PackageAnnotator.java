@@ -268,7 +268,7 @@ public class PackageAnnotator {
                                                final Map<String, ClassCoverageInfo> toplevelClassCoverage,
                                                final String className,
                                                final String toplevelClassSrcFQName) {
-    final ClassCoverageInfo toplevelClassCoverageInfo = getOrCreateClassCoverageInfo(toplevelClassCoverage, toplevelClassSrcFQName);
+    final ClassCoverageInfo toplevelClassCoverageInfo = new ClassCoverageInfo();
     final ClassData classData = projectInfo.getClassData(className);
 
     if (classData != null && classData.getLines() != null) {
@@ -305,6 +305,14 @@ public class PackageAnnotator {
     } else {
       collectNonCoveredClassInfo(classFile, toplevelClassCoverageInfo, packageCoverageInfo);
     }
+
+    ClassCoverageInfo classCoverageInfo = getOrCreateClassCoverageInfo(toplevelClassCoverage, toplevelClassSrcFQName);
+    classCoverageInfo.totalLineCount += toplevelClassCoverageInfo.totalLineCount;
+    classCoverageInfo.fullyCoveredLineCount += toplevelClassCoverageInfo.fullyCoveredLineCount;
+    classCoverageInfo.partiallyCoveredLineCount += toplevelClassCoverageInfo.partiallyCoveredLineCount;
+
+    classCoverageInfo.totalMethodCount += toplevelClassCoverageInfo.totalMethodCount;
+    classCoverageInfo.coveredMethodCount += toplevelClassCoverageInfo.coveredMethodCount;
   }
 
   private static ClassCoverageInfo getOrCreateClassCoverageInfo(final Map<String, ClassCoverageInfo> toplevelClassCoverage,
