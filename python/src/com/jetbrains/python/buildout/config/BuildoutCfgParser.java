@@ -67,10 +67,10 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
       section.done(SECTION);
 
       if (is(VALUE_CHARACTERS)) {
-        advance();        
+        advance();
         error("Key expected.");
       }
-      while (is(VALUE_CHARACTERS) ) {
+      while (is(VALUE_CHARACTERS)) {
         skipLine();
       }
 
@@ -102,8 +102,14 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
 
         advance();
         PsiBuilder.Marker sectionName = mark();
-        if (is(SECTION_NAME)) {
-          doneAdvance(sectionName, SECTION_NAME);
+        boolean flag = false;
+        while (is(SECTION_NAME)) {
+          advance();
+          flag = true;
+        }
+
+        if (flag) {
+          sectionName.done(SECTION_NAME);
         }
         else {
           sectionName.drop();
@@ -117,7 +123,6 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
           error("] expected.");
           skipLine();
         }
-
 
         return true;
       }
