@@ -208,7 +208,7 @@ public class PluginDownloader {
         pluginsTemp.mkdirs();
       }
 
-      File file = FileUtil.createTempFile(pluginsTemp, "plugin", "download", true);
+      File file = FileUtil.createTempFile(pluginsTemp, "plugin", "download", true, false);
 
       int responseCode = connection.getResponseCode();
       switch (responseCode) {
