@@ -336,7 +336,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   void appendPrefix(char c) {
     checkReused();
-    LOG.assertTrue(!myDisposed, disposeTrace);
+    checkValid();
     myAdditionalPrefix += c;
     myInitialPrefix = null;
     myFrozenItems.clear();
@@ -378,7 +378,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
-    assert !myDisposed : disposeTrace;
+    checkValid();
 
     final Pair<List<LookupElement>,Iterable<List<LookupElement>>> snapshot = myModel.getModelSnapshot();
 
@@ -756,7 +756,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void performGuardedChange(Runnable change) {
-    LOG.assertTrue(!myDisposed, disposeTrace);
+    checkValid();
     assert myLookupStartMarker.isValid();
     assert !myChangeGuard;
 
@@ -770,13 +770,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       marker.trackInvalidation(false);
       myChangeGuard = false;
     }
-    LOG.assertTrue(!myDisposed, disposeTrace);
+    checkValid();
     LOG.assertTrue(myLookupStartMarker.isValid(), "invalid lookup start");
     LOG.assertTrue(marker.isValid(), "invalid marker");
     if (isVisible()) {
       updateLookupBounds();
     }
-    LOG.assertTrue(!myDisposed, disposeTrace);
+    checkValid();
   }
 
   @Override
@@ -791,7 +791,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   public void show(){
     ApplicationManager.getApplication().assertIsDispatchThread();
-    LOG.assertTrue(!myDisposed, disposeTrace);
+    checkValid();
     LOG.assertTrue(!myShown);
     myShown = true;
     myStampShown = System.currentTimeMillis();
@@ -1319,11 +1319,16 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return myDisposed;
   }
 
+  public void checkValid() {
+    if (myDisposed) {
+      throw new AssertionError("Disposed at: " + disposeTrace);
+    }
+  }
+
   @Override
   public void showItemPopup(JBPopup hint) {
     final Rectangle bounds = getCurrentItemBounds();
-    hint.show(new RelativePoint(getComponent(), new Point(bounds.x + bounds.width,
-                                                                 bounds.y)));
+    hint.show(new RelativePoint(getComponent(), new Point(bounds.x + bounds.width, bounds.y)));
   }
 
   @Override
