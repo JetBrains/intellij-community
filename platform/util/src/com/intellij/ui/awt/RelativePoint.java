@@ -40,9 +40,21 @@ public class RelativePoint {
 
   public RelativePoint(Point screenPoint) {
     Point p = new Point(screenPoint.x, screenPoint.y);
-    Frame c = JOptionPane.getRootFrame();
-    SwingUtilities.convertPointFromScreen(p, c);
-    init(c, p);
+    Window[] windows = Frame.getWindows();
+    Window targetWindow = null;
+    for (Window each : windows) {
+      if (each.isActive()) {
+        targetWindow = each;
+        break;
+      }
+    }
+
+    if (targetWindow == null) {
+      targetWindow = JOptionPane.getRootFrame();
+    }
+
+    SwingUtilities.convertPointFromScreen(p, targetWindow);
+    init(targetWindow, p);
   }
 
   private void init(Component aComponent, Point aPointOnComponent) {
