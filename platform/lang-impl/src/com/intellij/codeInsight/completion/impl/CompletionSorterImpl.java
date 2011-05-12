@@ -39,13 +39,7 @@ public class CompletionSorterImpl extends CompletionSorter {
     return new ClassifierFactory<LookupElement>(id) {
       @Override
       public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
-        return new ComparingClassifier<LookupElement>(next, id) {
-          @NotNull
-          @Override
-          public Comparable getWeight(LookupElement element) {
-            return weigher.weigh(element);
-          }
-        };
+        return new CachingComparingClassifier(next, weigher);
       }
     };
   }
