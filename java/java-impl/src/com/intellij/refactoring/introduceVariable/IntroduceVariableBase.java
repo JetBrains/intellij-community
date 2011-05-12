@@ -771,9 +771,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     final String variableName = suggestedName.names[0];
     final boolean replaceAll =
       replaceChoice == OccurrencesChooser.ReplaceChoice.ALL || replaceChoice == OccurrencesChooser.ReplaceChoice.NO_WRITE;
-    final boolean declareFinal =
-      !anyAssignmentLHS && (replaceAll &&
-                            declareFinalIfAll || createFinals(project));
+    final boolean declareFinal = replaceAll && (declareFinalIfAll || !anyAssignmentLHS) || createFinals(project);
     final boolean replaceWrite = anyAssignmentLHS && replaceChoice == OccurrencesChooser.ReplaceChoice.ALL;
     return new IntroduceVariableSettings() {
       @Override
