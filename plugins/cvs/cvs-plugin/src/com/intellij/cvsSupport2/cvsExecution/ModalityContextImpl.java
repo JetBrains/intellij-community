@@ -47,8 +47,7 @@ public class ModalityContextImpl implements ModalityContext {
       action.run();
     }
     else {
-      ModalityState modalityState = getCurrentModalityState();
-      WaitForProgressToShow.runOrInvokeLaterAboveProgress(action, modalityState, project);
+      WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(action, getCurrentModalityState());
     }
   }
 
