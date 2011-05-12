@@ -3,6 +3,7 @@ package com.jetbrains.python.refactoring.move;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -18,6 +19,9 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,6 +77,8 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
         if (e instanceof PyFunction && file.findTopLevelFunction(e.getName()) != null) {
           throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.destination.file.contains.function.$0", e.getName()));
         }
+        checkValidImportableFile(file, e.getContainingFile().getVirtualFile());
+        checkValidImportableFile(e, file.getVirtualFile());
       }
       // TODO: Check for resulting circular imports
       final BaseRefactoringProcessor processor = new PyMoveClassOrFunctionProcessor(project, elementsToMove, (PyFile)targetFile,
@@ -82,6 +88,13 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
     catch (IncorrectOperationException e) {
       CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(),
                                              null, project);
+    }
+  }
+
+  private static void checkValidImportableFile(PsiElement anchor, VirtualFile file) {
+    final PyQualifiedName qName = ResolveImportUtil.findShortestImportableQName(anchor, file);
+    if (!PyClassRefactoringUtil.isValidQualifiedName(qName)) {
+      throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.cannot.use.module.name.$0", qName));
     }
   }
 
