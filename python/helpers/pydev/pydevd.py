@@ -287,9 +287,11 @@ class PyDB:
         global bufferStdErrToServer
 
         if bufferStdOutToServer:
+                initStdoutRedierct()
                 self.checkOutput(sys.stdoutBuf, 1) #@UndefinedVariable
 
         if bufferStdErrToServer:
+                initStderrRedirect()
                 self.checkOutput(sys.stderrBuf, 2) #@UndefinedVariable
 
     def checkOutput(self, out, outCtx):
@@ -1022,6 +1024,16 @@ def SetTraceForParents(frame, dispatch_func):
 def exit_hook():
     GetGlobalDebugger().checkOutputRedirect()
 
+def initStdoutRedierct():
+    if not getattr(sys, 'stdoutBuf', None):
+        sys.stdoutBuf = pydevd_io.IOBuf()
+        sys.stdout = pydevd_io.IORedirector(sys.stdout, sys.stdoutBuf) #@UndefinedVariable
+
+def initStderrRedirect():
+    if not getattr(sys, 'stderrBuf', None):
+        sys.stderrBuf = pydevd_io.IOBuf()
+        sys.stderr = pydevd_io.IORedirector(sys.stderr, sys.stderrBuf) #@UndefinedVariable
+
 def settrace(host='localhost', stdoutToServer=False, stderrToServer=False, port=5678, suspend=True, trace_only_current_thread=False):
     '''Sets the tracing function with the pydev debug function and initializes needed facilities.
     
@@ -1058,12 +1070,10 @@ def settrace(host='localhost', stdoutToServer=False, stderrToServer=False, port=
         debugger.writer.addCommand(net)
 
         if bufferStdOutToServer:
-            sys.stdoutBuf = pydevd_io.IOBuf()
-            sys.stdout = pydevd_io.IORedirector(sys.stdout, sys.stdoutBuf) #@UndefinedVariable
+            initStdoutRedierct()
 
         if bufferStdErrToServer:
-            sys.stderrBuf = pydevd_io.IOBuf()
-            sys.stderr = pydevd_io.IORedirector(sys.stderr, sys.stderrBuf) #@UndefinedVariable
+            initStderrRedirect()
 
         SetTraceForParents(GetFrame(), debugger.trace_dispatch)
 
