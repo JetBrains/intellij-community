@@ -61,12 +61,8 @@ public class JavaIndentOptionsEditor extends SmartIndentOptionsEditor {
 
   public void apply(final CodeStyleSettings settings, final CodeStyleSettings.IndentOptions options) {
     super.apply(settings, options);
-    try {
-      options.LABEL_INDENT_SIZE = Integer.parseInt(myLabelIndent.getText());
-    }
-    catch (NumberFormatException e) {
-      //stay with default
-    }
+    options.LABEL_INDENT_SIZE = getFieldValue(myLabelIndent, 0, options.LABEL_INDENT_SIZE);
+
     options.LABEL_INDENT_ABSOLUTE = myLabelIndentAbsolute.isSelected();
     settings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = myCbDontIndentTopLevelMembers.isSelected();
     options.USE_RELATIVE_INDENTS = myCbUseRelativeIndent.isSelected();

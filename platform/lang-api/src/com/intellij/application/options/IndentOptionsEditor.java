@@ -41,15 +41,19 @@ public class IndentOptionsEditor extends OptionGroup {
   protected void addComponents() {
     addTabOptions();
 
-    myTabSizeField = new JTextField(4);
-    myTabSizeField.setMinimumSize(myTabSizeField.getPreferredSize());
+    myTabSizeField = createIndentTextField();
     myTabSizeLabel = new JLabel(ApplicationBundle.message("editbox.indent.tab.size"));
     add(myTabSizeLabel, myTabSizeField);
 
-    myIndentField = new JTextField(4);
-    myIndentField.setMinimumSize(myTabSizeField.getPreferredSize());
+    myIndentField = createIndentTextField();
     myIndentLabel = new JLabel(ApplicationBundle.message("editbox.indent.indent"));
     add(myIndentLabel, myIndentField);
+  }
+
+  protected JTextField createIndentTextField() {
+    JTextField field = new JTextField(4);
+    field.setMinimumSize(field.getPreferredSize());
+    return field;
   }
 
   protected void addTabOptions() {
@@ -71,6 +75,15 @@ public class IndentOptionsEditor extends OptionGroup {
     }
   }
 
+  protected int getFieldValue(JTextField field, int minValue, int defValue) {
+    try {
+      return Math.max(Integer.parseInt(field.getText()), minValue);
+    }
+    catch (NumberFormatException e) {
+      return defValue;
+    }
+  }
+
   public boolean isModified(final CodeStyleSettings settings, CodeStyleSettings.IndentOptions options) {
     boolean isModified;
     isModified = isFieldModified(myTabSizeField, options.TAB_SIZE);
@@ -81,26 +94,11 @@ public class IndentOptionsEditor extends OptionGroup {
   }
 
   protected int getUIIndent() {
-    final String indentText = myIndentField.getText();
-    try {
-      return Math.max(Integer.parseInt(indentText), 1);
-    }
-    catch (NumberFormatException e) {
-      //stay with default
-    }
-
-    return 4;
+    return getFieldValue(myIndentField, 1, 4);
   }
 
   protected int getUITabSize() {
-    try {
-      return Math.max(Integer.parseInt(myTabSizeField.getText()), 1);
-    }
-    catch (NumberFormatException e) {
-      //stay with default
-    }
-
-    return 4;
+    return getFieldValue(myTabSizeField, 1, 4);
   }
 
   public void apply(final CodeStyleSettings settings, CodeStyleSettings.IndentOptions options) {

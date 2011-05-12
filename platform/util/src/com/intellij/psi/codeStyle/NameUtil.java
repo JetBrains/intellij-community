@@ -539,10 +539,12 @@ public class NameUtil {
       }
       // there's more in the pattern, but no more words
       if (nextStart == name.length()) {
-        if (patternIndex + i == myPattern.length - 1 &&
-            ' ' == myPattern[patternIndex + i] &&
-            (i == 1 && isWordStart(myPattern[patternIndex]) || i + nameIndex == name.length())) {
-          return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
+        if (patternIndex + i == myPattern.length - 1) {
+          char last = myPattern[patternIndex + i];
+          if (' ' == last && (i == 1 && isWordStart(myPattern[patternIndex]) || i + nameIndex == name.length()) ||
+              '*' == last) {
+            return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i));
+          }
         }
 
         return null;

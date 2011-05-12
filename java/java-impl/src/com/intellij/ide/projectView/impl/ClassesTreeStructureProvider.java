@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.jsp.JspFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     for (final AbstractTreeNode child : children) {
       Object o = child.getValue();
-      if (o instanceof PsiClassOwner) {
+      if (o instanceof PsiClassOwner && !(o instanceof JspFile)) {
         final ViewSettings settings1 = ((ProjectViewNode)parent).getSettings();
         final PsiClassOwner classOwner = (PsiClassOwner)o;
         final VirtualFile file = classOwner.getVirtualFile();
@@ -64,8 +65,8 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
           }
         }
 
-        PsiClass[] classes = classOwner.getClasses();
         if (fileInRoots(file)) {
+          PsiClass[] classes = classOwner.getClasses();
           if (classes.length == 1 && !(classes[0] instanceof SyntheticElement) &&
               (file == null || file.getNameWithoutExtension().equals(classes[0].getName()))) {
             result.add(new ClassTreeNode(myProject, classes[0], settings1));

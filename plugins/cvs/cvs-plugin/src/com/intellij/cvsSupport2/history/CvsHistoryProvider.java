@@ -20,7 +20,6 @@ import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.changeBrowser.CvsChangeList;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
-import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutor;
 import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvsExecution.ModalityContext;
@@ -37,7 +36,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.TreeItem;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.log.LogInformation;
@@ -216,24 +214,23 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     else {
       return new CvsRevisionNumber(entryFor.getRevision());
     }
-
   }
 
   @Nullable
   public List<VcsFileRevision> createRevisions(final FilePath filePath) {
     final ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
-    final VirtualFile root = CvsVfsUtil.refreshAndFindFileByIoFile(filePath.getIOFile().getParentFile());
+    final File file = filePath.getIOFile();
+    final VirtualFile root = CvsVfsUtil.refreshAndFindFileByIoFile(file.getParentFile());
     // check if we have a history pane open for a file in a package which has just been deleted
     if (root == null) return null;
-    final LocalPathIndifferentLogOperation logOperation =
-      new LocalPathIndifferentLogOperation(filePath.getIOFile());
+    final LocalPathIndifferentLogOperation logOperation = new LocalPathIndifferentLogOperation(file);
     CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(new CommandCvsHandler(CvsBundle.message("operation.name.load.file.content"), logOperation),
                                new CvsOperationExecutorCallback() {
                                  public void executionFinished(boolean successfully) {
                                  }
 
-                                 public void executeInProgressAfterAction(ModalityContext modaityContext) {
+                                 public void executeInProgressAfterAction(ModalityContext modalityContext) {
                                  }
 
                                  public void executionFinishedSuccessfully() {
@@ -241,25 +238,14 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
                                      .getCvsConnectionSettingsFor(filePath.getVirtualFileParent());
                                    final LogInformation firstLogInformation = logOperation.getFirstLogInformation();
                                    if (firstLogInformation != null) {
-                                     result.addAll(createRevisionListOn(CvsUtil.getCvsLightweightFileForFile(filePath.getIOFile()),
-                                                                        firstLogInformation, env, myProject));
+                                     final List<Revision> revisionList = firstLogInformation.getRevisionList();
+                                     for (Revision revision : revisionList) {
+                                       result.add(new CvsFileRevisionImpl(revision, CvsUtil.getCvsLightweightFileForFile(file),
+                                                                          firstLogInformation, env, myProject));
+                                     }
                                    }
                                  }
                                });
-    return result;
-
-  }
-
-  private static List<VcsFileRevision> createRevisionListOn(File file,
-                                                            @NotNull LogInformation logInformation,
-                                                            CvsEnvironment env,
-                                                            Project project) {
-    List revisionList = logInformation.getRevisionList();
-    ArrayList<VcsFileRevision> result = new ArrayList<VcsFileRevision>();
-    for (final Object aRevisionList : revisionList) {
-      Revision revision = (Revision)aRevisionList;
-      result.add(new CvsFileRevisionImpl(revision, file, logInformation, env, project));
-    }
     return result;
   }
 

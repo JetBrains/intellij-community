@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,21 +37,20 @@ public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
 
   private PsiMethod myHashCode;
   private PsiMethod myEquals;
-  private JavaPsiFacade myPsiFacade;
   private final AtomicBoolean myInitialized = new AtomicBoolean();
 
   public void projectOpened(Project project) {
-    myPsiFacade = JavaPsiFacade.getInstance(project);
   }
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     if (!myInitialized.getAndSet(true)) {
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(holder.getProject());
       final PsiClass psiObjectClass = ApplicationManager.getApplication().runReadAction(
           new Computable<PsiClass>() {
             @Nullable
             public PsiClass compute() {
-              return myPsiFacade.findClass("java.lang.Object");
+              return psiFacade.findClass("java.lang.Object");
             }
           }
       );
@@ -124,6 +123,5 @@ public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
   public void projectClosed(Project project) {
     myEquals = null;
     myHashCode = null;
-    myPsiFacade = null;
   }
 }

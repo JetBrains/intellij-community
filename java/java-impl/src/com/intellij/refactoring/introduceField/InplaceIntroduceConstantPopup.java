@@ -566,12 +566,17 @@ public class InplaceIntroduceConstantPopup {
         myReplaceAllCb.addItemListener(new ItemListener() {
           @Override
           public void itemStateChanged(ItemEvent e) {
-            final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-            if (templateState != null) {
-              templateState.gotoEnd(true);
-              myTypeSelectorManager = new TypeSelectorManagerImpl(myProject, myDefaultParameterTypePointer.getType(), null, myExpr, myOccurrences);
-              startIntroduceTemplate(isReplaceAllOccurrences(), myFieldTypePointer.getType());
-            }
+            Runnable restartTemplateRunnable = new Runnable() {
+              public void run() {
+                final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+                if (templateState != null) {
+                  templateState.gotoEnd(true);
+                  myTypeSelectorManager = new TypeSelectorManagerImpl(myProject, myDefaultParameterTypePointer.getType(), null, myExpr, myOccurrences);
+                  startIntroduceTemplate(isReplaceAllOccurrences(), myFieldTypePointer.getType());
+                }
+              }
+            };
+            CommandProcessor.getInstance().executeCommand(myProject, restartTemplateRunnable, IntroduceConstantHandler.REFACTORING_NAME, IntroduceConstantHandler.REFACTORING_NAME);
           }
         });
 

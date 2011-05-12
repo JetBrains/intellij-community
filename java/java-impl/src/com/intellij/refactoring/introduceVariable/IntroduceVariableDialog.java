@@ -104,11 +104,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
   }
 
   public boolean isDeclareFinal() {
-    if (myCbFinal.isEnabled()) {
-      return myCbFinalState;
-    } else {
-      return true;
-    }
+    return myCbFinal.isEnabled() && myCbFinalState;
   }
 
   public boolean isReplaceLValues() {

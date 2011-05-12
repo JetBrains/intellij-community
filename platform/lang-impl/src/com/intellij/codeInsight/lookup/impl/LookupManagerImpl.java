@@ -225,6 +225,12 @@ public class LookupManagerImpl extends LookupManager {
   }
 
   public LookupEx getActiveLookup() {
+    if (myActiveLookup != null && myActiveLookup.isLookupDisposed()) {
+      LookupImpl lookup = myActiveLookup;
+      myActiveLookup = null;
+      lookup.checkValid();
+    }
+
     return myActiveLookup;
   }
 

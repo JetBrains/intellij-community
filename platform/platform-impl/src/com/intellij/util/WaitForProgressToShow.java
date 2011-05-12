@@ -46,6 +46,22 @@ public class WaitForProgressToShow {
     }
   }
 
+  public static void runOrInvokeAndWaitAboveProgress(final Runnable command, @Nullable final ModalityState modalityState) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      command.run();
+    } else {
+      final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+      if (pi != null) {
+        execute(pi);
+        application.invokeAndWait(command, pi.getModalityState());
+      } else {
+        final ModalityState notNullModalityState = modalityState == null ? ModalityState.NON_MODAL : modalityState;
+        application.invokeAndWait(command, notNullModalityState);
+      }
+    }
+  }
+
   public static void runOrInvokeLaterAboveProgress(final Runnable command, @Nullable final ModalityState modalityState, @NotNull final Project project) {
     final Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {

@@ -151,7 +151,11 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
   @Nullable
   protected PsiVariable getVariable() {
     final PsiDeclarationStatement declarationStatement = myPointer.getElement();
-    return declarationStatement != null ? (PsiVariable)declarationStatement.getDeclaredElements()[0] : null;
+    if (declarationStatement != null) {
+      PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
+      return declaredElements.length == 0 ? null : (PsiVariable)declaredElements[0];
+    }
+    return null;
   }
 
   @Override

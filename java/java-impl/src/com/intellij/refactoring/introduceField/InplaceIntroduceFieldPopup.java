@@ -15,11 +15,14 @@
  */
 package com.intellij.refactoring.introduceField;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
@@ -309,12 +312,21 @@ public class InplaceIntroduceFieldPopup {
         myIntroduceFieldPanel.addOccurrenceListener(new ItemListener() {
           @Override
           public void itemStateChanged(ItemEvent e) {
-            final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-            if (templateState != null) {
-              templateState.gotoEnd(true);
-              myTypeSelectorManager = new TypeSelectorManagerImpl(myProject, myDefaultParameterTypePointer.getType(), null, myInitializerExpression, myOccurrences);
-              startTemplate(myIntroduceFieldPanel.isReplaceAllOccurrences(), myFieldTypePointer.getType());
-            }
+            final Runnable restartTemplate = new Runnable() {
+              @Override
+              public void run() {
+                final TemplateState templateState =
+                  TemplateManagerImpl.getTemplateState(myEditor);
+                if (templateState != null) {
+                  templateState.gotoEnd(true);
+                  myTypeSelectorManager = new TypeSelectorManagerImpl(myProject, myDefaultParameterTypePointer.getType(), null, myInitializerExpression, myOccurrences);
+                  startTemplate(myIntroduceFieldPanel.isReplaceAllOccurrences(), myFieldTypePointer.getType());
+                }
+              }
+            };
+            CommandProcessor.getInstance().executeCommand(myProject, restartTemplate,
+                                                          IntroduceFieldHandler.REFACTORING_NAME,
+                                                          IntroduceFieldHandler.REFACTORING_NAME);
           }
         });
       }

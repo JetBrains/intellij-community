@@ -88,12 +88,12 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
   }
 
   @NotNull
-  public final String getPresentableName() {
+  public String getPresentableName() {
     return myPresentableName;
   }
 
   /**
-   * Default name wich will be used then user creates a facet of this type
+   * Default name which will be used then user creates a facet of this type
    * @return
    */
   @NotNull @NonNls

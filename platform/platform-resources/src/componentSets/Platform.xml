@@ -76,9 +76,6 @@
       <implementation-class>com.intellij.ide.TipOfTheDayManager</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.ide.ui.customization.CustomActionsSchema</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.ide.ui.LafManager</interface-class>
       <implementation-class>com.intellij.ide.ui.LafManagerImpl</implementation-class>
       <headless-implementation-class>com.intellij.ide.ui.HeadlessLafManagerImpl</headless-implementation-class>

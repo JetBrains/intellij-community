@@ -40,8 +40,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
   protected void addComponents() {
     super.addComponents();
 
-    myContinuationIndentField = new JTextField(4);
-    myContinuationIndentField.setMinimumSize(myContinuationIndentField.getPreferredSize());
+    myContinuationIndentField = createIndentTextField();
     myContinuationIndentLabel = new JLabel(ApplicationBundle.message("editbox.indent.continuation.indent"));
     add(myContinuationIndentLabel, myContinuationIndentField);
   }
@@ -55,12 +54,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
 
   public void apply(final CodeStyleSettings settings, final CodeStyleSettings.IndentOptions options) {
     super.apply(settings, options);
-    try {
-      options.CONTINUATION_INDENT_SIZE = Math.max(Integer.parseInt(myContinuationIndentField.getText()), 0);
-    }
-    catch (NumberFormatException e) {
-      //stay with default
-    }
+    options.CONTINUATION_INDENT_SIZE = getFieldValue(myContinuationIndentField, 0, options.CONTINUATION_INDENT_SIZE);
     options.SMART_TABS = isSmartTabValid(options.INDENT_SIZE, options.TAB_SIZE) && myCbSmartTabs.isSelected();
   }
 

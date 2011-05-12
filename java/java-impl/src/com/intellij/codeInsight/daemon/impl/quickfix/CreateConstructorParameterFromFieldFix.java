@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -109,11 +110,16 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       expressions[i] = factory.createExpressionFromText(value, parameter);
     }
     expressions[parameters.length] = factory.createExpressionFromText(getField().getName(), constructor);
+    if (constructor.isVarArgs()) {
+      ArrayUtil.swap(expressions, expressions.length - 1, expressions.length - 2);
+    }
     final SmartPointerManager manager = SmartPointerManager.getInstance(getField().getProject());
     final SmartPsiElementPointer constructorPointer = manager.createSmartPsiElementPointer(constructor);
 
     final ChangeMethodSignatureFromUsageFix addParamFix = new ChangeMethodSignatureFromUsageFix(constructor, expressions, PsiSubstitutor.EMPTY, constructor, true, 1);
-    addParamFix.invoke(project, editor, file);
+    if (addParamFix.isAvailable(project, editor, file)) {
+      addParamFix.invoke(project, editor, file);
+    }
     return ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
       public Boolean compute() {
         return doCreate(project, editor, parameters, constructorPointer, addParamFix);
