@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.AsynchConsumer;
 import git4idea.GitBranch;
-import git4idea.GitRevisionNumber;
 import git4idea.GitTag;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
@@ -232,7 +231,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
     private String myCommitMessage;
 
     public CherryPickConflictResolver(Project project, String commitHash, String commitAuthor, String commitMessage) {
-      super(project, true, new CherryPickMergeDialogCustomizer(commitHash, commitAuthor, commitMessage), "Cherry-picked with conflicts", "");
+      super(project, false, new CherryPickMergeDialogCustomizer(commitHash, commitAuthor, commitMessage), "Cherry-picked with conflicts", "");
       myCommitHash = commitHash;
       myCommitAuthor = commitAuthor;
       myCommitMessage = commitMessage;
@@ -281,7 +280,7 @@ public class LowLevelAccessImpl implements LowLevelAccess {
 
     @Override
     public String getRightPanelTitle(VirtualFile file, VcsRevisionNumber lastRevisionNumber) {
-      return "<html>Changes from cherry-pick <code>" + ((GitRevisionNumber)lastRevisionNumber).toShortString() + "</code>";
+      return "<html>Changes from cherry-pick <code>" + myCommitHash + "</code>";
     }
   }
 

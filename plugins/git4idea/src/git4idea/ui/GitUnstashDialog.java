@@ -447,7 +447,7 @@ public class GitUnstashDialog extends DialogWrapper {
     private StashInfo myStashInfo;
 
     public UnstashConflictResolver(Project project, StashInfo stashInfo) {
-      super(project, true, new UnstashMergeDialogCustomizer(stashInfo), "Unstashed with conflicts", "");
+      super(project, false, new UnstashMergeDialogCustomizer(stashInfo), "Unstashed with conflicts", "");
       myStashInfo = stashInfo;
     }
 
