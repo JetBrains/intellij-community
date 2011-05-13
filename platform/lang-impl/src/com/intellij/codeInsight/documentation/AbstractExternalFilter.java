@@ -228,9 +228,9 @@ public abstract class AbstractExternalFilter {
     String charset = null;
     do {
       read = buf.readLine();
-      if (read != null && read.contains("charset")) {
+      /*if (read != null && read.contains("charset")) {
         charset = read;
-      }
+      }*/
     }
     while (read != null && read.toUpperCase().indexOf(startSection) == -1);
 
