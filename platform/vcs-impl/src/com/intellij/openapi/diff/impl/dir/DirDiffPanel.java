@@ -28,15 +28,18 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.FilterComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.concurrent.Callable;
@@ -58,7 +61,9 @@ public class DirDiffPanel implements Disposable {
   private JBLabel mySourceDirLabel;
   private JPanel myToolBarPanel;
   private JPanel myRootPanel;
-  private JTextField myFilter;
+  private JPanel myFilterPanel;
+  private JBLabel myFilterLabel;
+  private FilterComponent myFilter;
   private final DirDiffTableModel myModel;
   public JLabel myErrorLabel;
   private final DirDiffWindow myDiffWindow;
@@ -199,6 +204,24 @@ public class DirDiffPanel implements Disposable {
     });
     myRootPanel.removeAll();
     myRootPanel.add(loadingPanel, BorderLayout.CENTER);
+    myFilter = new FilterComponent("dir.diff.filter", 15, false) {
+      @Override
+      public void filter() {
+        fireFilterUpdated();
+      }
+
+      @Override
+      protected void onEscape(KeyEvent e) {
+        e.consume();
+        focusTable();
+      }
+
+      @Override
+      protected JComponent getPopupLocationComponent() {
+        return UIUtil.findComponentOfType(super.getPopupLocationComponent(), JTextComponent.class);
+      }
+    };
+
     myModel.addModelListener(new DirDiffModelListener() {
       @Override
       public void updateStarted() {
@@ -210,22 +233,12 @@ public class DirDiffPanel implements Disposable {
         myFilter.setEnabled(true);
       }
     });
-
-    myFilter.setText(settings.getFilter());
-    oldFilter = myFilter.getText();
-    myFilter.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-          e.consume();
-          fireFilterUpdated();
-        }
-        else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-          e.consume();
-          focusTable();
-        }
-      }
-    });
+    myFilter.getTextEditor().setColumns(10);
+    myFilter.setFilter(settings.getFilter());
+    //oldFilter = myFilter.getText();
+    oldFilter = myFilter.getFilter();
+    myFilterPanel.add(myFilter, BorderLayout.CENTER);
+    myFilterLabel.setLabelFor(myFilter);
     final Callable<DiffElement> srcChooser = myModel.getSourceDir().getElementChooser(project);
     final Callable<DiffElement> trgChooser = myModel.getTargetDir().getElementChooser(project);
     if (srcChooser != null) {
@@ -286,12 +299,12 @@ public class DirDiffPanel implements Disposable {
     });
   }
 
-  public JTextField getFilter() {
-    return myFilter;
+  public String getFilter() {
+    return myFilter.getFilter();
   }
 
   private void fireFilterUpdated() {
-    final String newFilter = myFilter.getText();
+    final String newFilter = myFilter.getFilter();
     if (!StringUtil.equals(oldFilter, newFilter)) {
       oldFilter = newFilter;
       myModel.getSettings().setFilter(newFilter);
