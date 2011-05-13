@@ -69,6 +69,7 @@ public abstract class AbstractExternalFilter {
   @NonNls private static final String DT = "<DT>";
   private static final Pattern CHARSET_META_PATTERN =
     Pattern.compile("<meta.*content\\s*=\".*[;|\\s]*charset=\\s*(.*)\\s*[;|\\s]*\">", Pattern.CASE_INSENSITIVE);
+    private final HttpConfigurable myHttpConfigurable = HttpConfigurable.getInstance();
 
   protected static abstract class RefConvertor {
     private final Pattern mySelector;
@@ -209,6 +210,10 @@ public abstract class AbstractExternalFilter {
   }
 
   protected void doBuildFromStream(String surl, Reader input, StringBuffer data) throws IOException {
+    doBuildFromStream(surl, input, data, true);
+  }
+
+  protected void doBuildFromStream(String surl, Reader input, StringBuffer data, boolean search4Encoding) throws IOException {
     BufferedReader buf = new BufferedReader(input);
     Matcher anchorMatcher = ourAnchorsuffix.matcher(surl);
     @NonNls String startSection = "<!-- ======== START OF CLASS DATA ======== -->";
@@ -225,20 +230,30 @@ public abstract class AbstractExternalFilter {
     data.append(HTML);
 
     String read;
-    String charset = null;
+    String contentEncoding = null;
     do {
       read = buf.readLine();
-      /*if (read != null && read.contains("charset")) {
-        charset = read;
-      }*/
+      if (read != null && search4Encoding && read.contains("charset")) {
+        String foundEncoding = parseContentEncoding(read);
+        if (foundEncoding != null) {
+          contentEncoding = foundEncoding;
+        }
+      }
     }
     while (read != null && read.toUpperCase().indexOf(startSection) == -1);
 
-    if (input instanceof MyReader && charset != null) {
-      String contentEncoding = parseContentEncoding(charset);
-      if (contentEncoding != null) { //restart page parsing with correct encoding
-        input = new MyReader(((MyReader)input).getInputStream(), contentEncoding);
-        buf = new BufferedReader(input);
+    if (input instanceof MyReader && contentEncoding != null) {
+      if (contentEncoding != null && !contentEncoding.equals("UTF-8") && !contentEncoding.equals(((MyReader)input).getEncoding())) { //restart page parsing with correct encoding
+        Reader stream;
+        try {
+          stream = getReaderByUrl(surl, myHttpConfigurable, new ProgressIndicatorBase());
+        }
+        catch (ProcessCanceledException e) {
+          return;
+        }
+        data.delete(0, data.length());
+        doBuildFromStream(surl, new MyReader(((MyReader)stream).getInputStream(), contentEncoding), data, false);
+        return;
       }
     }
 
