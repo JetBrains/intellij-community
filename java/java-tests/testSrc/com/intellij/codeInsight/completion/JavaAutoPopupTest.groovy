@@ -761,7 +761,18 @@ public class Bar {
     assert myFixture.lookupElementStrings.containsAll(['private', 'protected'])
   }
 
+  public void testExactMatchesFirst() {
+    myFixture.configureByText("a.java", """
+public class UTest {
+    void nextWord() {}
 
+    void foo() {
+        n<caret>
+    }
+}""")
+    type 'ew'
+    assert myFixture.lookupElementStrings == ['new', 'nextWord']
+  }
 
 
 }

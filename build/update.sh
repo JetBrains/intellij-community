@@ -11,12 +11,12 @@
 #
 
 if [ -z "$WORK_IDEA_HOME" ]; then
-   echo WORK_IDEA_HOME must be defined and point to build you're updating
+   echo "WORK_IDEA_HOME must be defined and point to build you're updating."
    exit
 fi
 
 if [ -z "$DEV_IDEA_HOME" ]; then
-   echo DEV_IDEA_HOME must be defined and point to source base your're updating from
+   echo "DEV_IDEA_HOME must be defined and point to source base your're updating from."
    exit
 fi
 
