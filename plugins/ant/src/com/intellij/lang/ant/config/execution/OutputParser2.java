@@ -16,7 +16,10 @@
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.junit.JUnitProcessHandler;
-import com.intellij.execution.junit2.segments.*;
+import com.intellij.execution.junit2.segments.DeferredActionsQueue;
+import com.intellij.execution.junit2.segments.DeferredActionsQueueImpl;
+import com.intellij.execution.junit2.segments.InputConsumer;
+import com.intellij.execution.junit2.segments.SegmentReader;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.lang.ant.config.AntBuildFile;
@@ -85,9 +88,8 @@ final class OutputParser2 extends OutputParser implements PacketProcessor, Input
                                           final AntBuildMessageView errorView,
                                           final ProgressIndicator progress,
                                           final AntBuildFile buildFile) {
-    OutputParser2 parser = new OutputParser2(myProject, handler, errorView, progress, buildFile.getName());
-    DeferredActionsQueue queue = new DeferredActionsQueueImpl();
-    handler.getOut().setPacketDispatcher(parser, queue);
+    final OutputParser2 parser = new OutputParser2(myProject, handler, errorView, progress, buildFile.getName());
+    final DeferredActionsQueue queue = new DeferredActionsQueueImpl();
     handler.getErr().setPacketDispatcher(parser, queue);
     return parser;
   }
