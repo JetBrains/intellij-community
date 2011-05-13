@@ -227,22 +227,18 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
             myHighlights.addAll(toApplyInside);
             gotHighlights.clear();
             gotHighlights.addAll(outsideResult);
-
+            final long modificationStamp = myDocument.getModificationStamp();
             UIUtil.invokeLaterIfNeeded(new Runnable() {
               @Override
               public void run() {
-                if (myProject.isDisposed()) return;
+                if (myProject.isDisposed() || modificationStamp != myDocument.getModificationStamp()) return;
                 MarkupModel markupModel = myDocument.getMarkupModel(myProject);
 
                 UpdateHighlightersUtil.setHighlightersInRange(myProject, myDocument, priorityIntersection, getColorsScheme(), toApplyInside,
                                                               (MarkupModelEx)markupModel, Pass.UPDATE_ALL);
-              }
-            });
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                if (myProject.isDisposed() || myEditor == null) return;
-                new ShowAutoImportPass(myProject, myFile, myEditor).applyInformationToEditor();
+                if (myEditor != null) {
+                  new ShowAutoImportPass(myProject, myFile, myEditor).applyInformationToEditor();
+                }
               }
             });
           }
