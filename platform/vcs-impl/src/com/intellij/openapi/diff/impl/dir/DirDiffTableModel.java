@@ -128,7 +128,7 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
   }
 
   public void updateFromUI() {
-    getSettings().setFilter(myPanel.getFilter().getText());
+    getSettings().setFilter(myPanel.getFilter());
   }
 
   private static String prepareText(String text) {

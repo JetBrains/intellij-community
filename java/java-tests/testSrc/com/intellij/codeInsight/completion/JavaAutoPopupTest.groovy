@@ -774,5 +774,13 @@ public class UTest {
     assert myFixture.lookupElementStrings == ['new', 'nextWord']
   }
 
+  public void testUpdatePrefixMatchingOnTyping() {
+    myFixture.addClass("class CertificateEncodingException {}")
+    myFixture.addClass("class CertificateException {}")
+    myFixture.configureByText 'a.java', 'class Foo {<caret>}'
+    type 'CertificateExce'
+    assert myFixture.lookupElementStrings == ['CertificateException', 'CertificateEncodingException']
+  }
+
 
 }

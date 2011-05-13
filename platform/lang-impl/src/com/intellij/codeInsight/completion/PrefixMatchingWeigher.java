@@ -25,7 +25,12 @@ import org.jetbrains.annotations.NotNull;
 */
 public class PrefixMatchingWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
+  @Override
+  public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  public static int getPrefixMatchingDegree(LookupElement item, CompletionLocation location) {
     final String prefix = location.getCompletionParameters().getLookup().itemPattern(item);
 
     final int setting = CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE;

@@ -55,6 +55,10 @@ public class DirDiffSettings {
   public static enum CompareMode {
     CONTENT, // the most honest, the slowest. Compares size, if equal compares contents. Ignores timestamps
     SIZE, // Compares size only
-    TIMESTAMP // Compares size, if equal compares timestamps
+    TIMESTAMP; // Compares size, if equal compares timestamps
+
+    public String getPresentableName() {
+      return StringUtil.capitalize(name().toLowerCase());
+    }
   }
 }
