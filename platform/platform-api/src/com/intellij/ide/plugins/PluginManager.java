@@ -674,18 +674,20 @@ public class PluginManager {
       }, new Condition<PluginId>() {
         public boolean value(final PluginId pluginId) {
           if (!idToDescriptorMap.containsKey(pluginId)) {
-            if (message.length() > 0) {
-              message.append("<br>");
-            }
             pluginDescriptor.setEnabled(false);
-            disabledPluginIds.add(pluginDescriptor.getPluginId().getIdString());
-            final String name = pluginDescriptor.getName();
-            final IdeaPluginDescriptorImpl descriptor = idToDescriptorMap.get(pluginId);            
-            String pluginName = descriptor == null ? pluginId.getIdString() : descriptor.getName();
+            if (!pluginId.getIdString().startsWith(MODULE_DEPENDENCY_PREFIX)) {
+              disabledPluginIds.add(pluginDescriptor.getPluginId().getIdString());
+              if (message.length() > 0) {
+                message.append("<br>");
+              }
+              final String name = pluginDescriptor.getName();
+              final IdeaPluginDescriptorImpl descriptor = idToDescriptorMap.get(pluginId);
+              String pluginName = descriptor == null ? pluginId.getIdString() : descriptor.getName();
 
-            message.append(getDisabledPlugins().contains(pluginId.getIdString())
-                           ? IdeBundle.message("error.required.plugin.disabled", name, pluginName)
-                           : IdeBundle.message("error.required.plugin.not.installed", name, pluginName));
+              message.append(getDisabledPlugins().contains(pluginId.getIdString())
+                             ? IdeBundle.message("error.required.plugin.disabled", name, pluginName)
+                             : IdeBundle.message("error.required.plugin.not.installed", name, pluginName));
+            }
             it.remove();
             return false;
           }
