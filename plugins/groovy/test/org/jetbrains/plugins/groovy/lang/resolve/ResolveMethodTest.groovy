@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 
-import com.intellij.psi.util.PropertyUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
