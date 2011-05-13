@@ -106,6 +106,13 @@ public class GitChangeProviderTest extends GitSingleUserTest {
   }
 
   @Test
+  public void testMoveNewFile() throws Exception {
+    VirtualFile file = myRepo.createFile("new.txt");
+    moveFileInCommand(file, myRepo.getDir().findChild("dir"));
+    assertChanges(file, ADDED);
+  }
+
+  @Test
   public void testSimultaneousOperationsOnMultipleFiles() throws Exception {
     VirtualFile dfile = myFiles.get("dir/subdir/d.txt");
     VirtualFile cfile = myFiles.get("dir/c.txt");
