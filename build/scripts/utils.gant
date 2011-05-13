@@ -92,16 +92,6 @@ binding.setVariable("loadProject", {
     }
   }
   IdeaProjectLoader.loadFromPath(project, "${home}")
-
-  binding.ant.patternset(id: "idea.compiler.resources") {
-    exclude(name: "**/*.java")
-    exclude(name: "**/*.form")
-    exclude(name: "**/*.class")
-    exclude(name: "**/*.scala")
-    exclude(name: "**/*.groovy")
-  }
-
-  project["compiler.resources.id"] = "idea.compiler.resources"
 })
 
 boolean hasSourceRoots(Module module) {
