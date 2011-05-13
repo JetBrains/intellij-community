@@ -88,6 +88,16 @@ public class SearchTextField extends JPanel {
       }
     });
     add(myTextField, BorderLayout.CENTER);
+    myTextField.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+          if (myPopup == null || !myPopup.isVisible()) {
+            showPopup();
+          }
+        }
+      }
+    });
 
     if (hasNativeLeopardSearchControl()) {
       myTextField.putClientProperty("JTextField.variant", "search");
@@ -318,13 +328,8 @@ public class SearchTextField extends JPanel {
     }
   }
 
-  protected void showPopup() {
-    if (myPopup == null) {
-      final JList list = new JBList(myModel);
-      if (myListener != null) {
-        removeKeyListener(myListener);
-      }
-      final Runnable chooseRunnable = new Runnable() {
+  protected Runnable createItemChosenCallback(final JList list) {
+    return new Runnable() {
         public void run() {
           final String value = (String)list.getSelectedValue();
           getTextEditor().setText(value != null ? value : "");
@@ -334,33 +339,48 @@ public class SearchTextField extends JPanel {
           }
         }
       };
-      myListener = new KeyAdapter() {
-        public void keyPressed(KeyEvent e) {
-          if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-            if (list.getSelectedIndex() < list.getModel().getSize() - 1) {
-              list.setSelectedIndex(list.getSelectedIndex() + 1);
-            }
-          }
-          else if (e.getKeyCode() == KeyEvent.VK_UP) {
-            if (list.getSelectedIndex() > 0) {
-              list.setSelectedIndex(list.getSelectedIndex() - 1);
-            }
-          }
-          else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            if (list.getSelectedIndex() > -1) {
-              chooseRunnable.run();
-            }
-          }
-        }
-      };
-      addKeyboardListener(myListener);
+  }
+
+  protected void showPopup() {
+    //removeKeyListener(myListener);
+    if (myPopup == null) {
+      final JList list = new JBList(myModel);
+      //if (myListener != null) {
+      //  removeKeyListener(myListener);
+      //}
+      final Runnable chooseRunnable = createItemChosenCallback(list);
+      //myListener = new KeyAdapter() {
+      //  public void keyPressed(KeyEvent e) {
+      //    if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+      //      if (list.getSelectedIndex() < list.getModel().getSize() - 1) {
+      //        list.setSelectedIndex(list.getSelectedIndex() + 1);
+      //      }
+      //    }
+      //    else if (e.getKeyCode() == KeyEvent.VK_UP) {
+      //      if (list.getSelectedIndex() > 0) {
+      //        list.setSelectedIndex(list.getSelectedIndex() - 1);
+      //      }
+      //    }
+      //    else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+      //      if (list.getSelectedIndex() > -1) {
+      //        chooseRunnable.run();
+      //      }
+      //    }
+      //  }
+      //};
+      //addKeyboardListener(myListener);
       myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setMovable(false)
-        .setRequestFocus(false)
+        .setRequestFocus(true)
         .setItemChoosenCallback(chooseRunnable).createPopup();
-
-      if (isShowing()) myPopup.showUnderneathOf(this);
+      if (isShowing()) {
+        myPopup.showUnderneathOf(getPopupLocationComponent());
+      }
     }
+  }
+
+  protected Component getPopupLocationComponent() {
+    return this;
   }
 
   private void togglePopup() {
