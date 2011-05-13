@@ -41,6 +41,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.ui.IdeBorderFactory;
@@ -117,7 +118,8 @@ public class ImplementationViewComponent extends JPanel {
     for (PsiElement element : elements) {
       PsiFile file = getContainingFile(element);
       if (file == null) continue;
-      files.add(new FileDescriptor(file, element.getParent()));
+      final PsiElement parent = element.getParent();
+      files.add(new FileDescriptor(file, parent == file ? element : parent));
       candidates.add(element.getNavigationElement());
     }
     myElements = PsiUtilBase.toPsiElementArray(candidates);
