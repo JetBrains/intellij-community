@@ -588,6 +588,7 @@ public class FindUtil {
               public void run() {
                 document.setText(newText);
                 editor.getCaretModel().moveToOffset(finalCaretOffset);
+                editor.getSelectionModel().removeSelection();
               }
             });
           }
