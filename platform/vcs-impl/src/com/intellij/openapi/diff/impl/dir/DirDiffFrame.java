@@ -15,10 +15,14 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.diff.DirDiffSettings;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 
@@ -36,6 +40,15 @@ public class DirDiffFrame extends FrameWrapper {
     setComponent(myPanel.getPanel());
     setProject(project);
     closeOnEsc();
+    DataManager.registerDataProvider(myPanel.getPanel(), new DataProvider() {
+      @Override
+      public Object getData(@NonNls String dataId) {
+        if (PlatformDataKeys.HELP_ID.is(dataId)) {
+          return "reference.dialogs.diff.folder";
+        }
+        return null;
+      }
+    });
   }
 
 

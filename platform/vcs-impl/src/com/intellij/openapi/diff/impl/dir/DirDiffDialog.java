@@ -70,4 +70,9 @@ public class DirDiffDialog extends DialogWrapper {
   protected Action[] createActions() {
     return new Action[]{};
   }
+
+  @Override
+  protected String getHelpId() {
+    return "reference.dialogs.diff.folder";
+  }
 }
