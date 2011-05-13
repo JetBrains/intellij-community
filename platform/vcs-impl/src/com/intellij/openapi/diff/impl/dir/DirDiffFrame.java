@@ -35,6 +35,7 @@ public class DirDiffFrame extends FrameWrapper {
     Disposer.register(this, myPanel);
     setComponent(myPanel.getPanel());
     setProject(project);
+    closeOnEsc();
   }
 
 
