@@ -31,7 +31,7 @@ public class ReplaceConcatenationWithFormatStringIntention
     @Override
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
-        return new SimpleStringConcatenationPredicate();
+        return new SimpleStringConcatenationPredicate(true);
     }
 
     @Override
