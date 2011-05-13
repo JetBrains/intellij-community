@@ -302,10 +302,10 @@ public class PsiTreeUtil {
     return result;
   }
 
-  private static boolean instanceOf(final PsiElement child, final Class<?>... classes) {
+  public static boolean instanceOf(final Object object, final Class<?>... classes) {
     if (classes != null) {
-      for (final Class<?> each : classes) {
-        if (each.isInstance(child)) return true;
+      for (final Class<?> c : classes) {
+        if (c.isInstance(object)) return true;
       }
     }
     return false;
