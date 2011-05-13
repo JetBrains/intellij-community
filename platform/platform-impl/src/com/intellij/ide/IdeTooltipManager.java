@@ -431,7 +431,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   private boolean useGraphite(boolean awtHint) {
-    return !isUseSystemLook() && awtHint;
+    return false;
   }
 
   public void hide(IdeTooltip tooltip) {

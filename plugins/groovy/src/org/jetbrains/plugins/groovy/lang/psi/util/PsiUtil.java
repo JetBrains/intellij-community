@@ -1125,6 +1125,8 @@ public class PsiUtil {
       final PsiElement nameElement = ((GrReferenceExpression)qualifier).getReferenceNameElement();
       if (((GrReferenceExpression)qualifier).getTypeArguments().length > 0) return false;
       if (nameElement == null || nameElement.getNode().getElementType() != GroovyTokenTypes.mIDENT) return false;
+      IElementType dotType = ((GrReferenceExpression)qualifier).getDotTokenType();
+      if (dotType != null && dotType != GroovyTokenTypes.mDOT) return false;
       qualifier = ((GrReferenceExpression)qualifier).getQualifierExpression();
     }
     return qualifier == null;
