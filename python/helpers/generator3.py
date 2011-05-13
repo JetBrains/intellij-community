@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.86" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.87" # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -794,18 +794,18 @@ class ModuleRedeclarator(object):
     }
 
     if version[0] < 3:
-        PREDEFINED_BUILTIN_SIGS[("unicode", "__init__")] = "(self, x, encoding=None, errors='strict')" # overrides a fake
+        PREDEFINED_BUILTIN_SIGS[("unicode", "__init__")] = "(self, string=u'', encoding=None, errors='strict')" # overrides a fake
         PREDEFINED_BUILTIN_SIGS[("super", "__init__")] = "(self, type1, type2=None)"
         PREDEFINED_BUILTIN_SIGS[(None, "min")] = "(*args, **kwargs)" # too permissive, but py2.x won't allow a better sig
         PREDEFINED_BUILTIN_SIGS[(None, "max")] = "(*args, **kwargs)"
-        PREDEFINED_BUILTIN_SIGS[("str", "__init__")] = "(self, x)" # overrides a fake
+        PREDEFINED_BUILTIN_SIGS[("str", "__init__")] = "(self, string='')" # overrides a fake
     else:
         PREDEFINED_BUILTIN_SIGS[("super", "__init__")] = "(self, type1=None, type2=None)"
         PREDEFINED_BUILTIN_SIGS[(None, "min")] = "(*args, key=None)"
         PREDEFINED_BUILTIN_SIGS[(None, "max")] = "(*args, key=None)"
         PREDEFINED_BUILTIN_SIGS[(None, "open")] = "(file, mode='r', buffering=None, encoding=None, errors=None, newline=None, closefd=True)"
-        PREDEFINED_BUILTIN_SIGS[("str", "__init__")] = "(self, value, encoding=None, errors='strict')" # overrides a fake
-        PREDEFINED_BUILTIN_SIGS[("bytes", "__init__")] = "(self, value, encoding=None, errors='strict')" # overrides a fake
+        PREDEFINED_BUILTIN_SIGS[("str", "__init__")] = "(self, value='', encoding=None, errors='strict')" # overrides a fake
+        PREDEFINED_BUILTIN_SIGS[("bytes", "__init__")] = "(self, value=b'', encoding=None, errors='strict')" # overrides a fake
 
     if version == (2, 5):
         PREDEFINED_BUILTIN_SIGS[("unicode", "splitlines")] = "(keepends=None)" # a typo in docstring there
@@ -1656,6 +1656,7 @@ class ModuleRedeclarator(object):
         # add fake __init__s to have the right sig
         if p_class in self.FAKE_BUILTIN_INITS:
             methods["__init__"] = self.fake_builtin_init
+            note("Faking init of %s", p_name)
         elif '__init__' not in methods:
             init_method = getattr(p_class, '__init__', None)
             if init_method:
