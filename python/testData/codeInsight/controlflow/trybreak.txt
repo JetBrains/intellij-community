@@ -1,10 +1,10 @@
 0(1) element: null
 1(2) element: PyTryExceptStatement
 2(3) element: PyTryPart
-3(4) element: PyForStatement
+3(4,8) element: PyForStatement
 4(5,8,11) READ ACCESS: bar
 5(6) element: PyStatementList
-6(7) WRITE ACCESS: i
+6(7,8) WRITE ACCESS: i
 7(8,11) element: PyBreakStatement
 8(9) element: PyExceptPart
 9(10) element: PyRaiseStatement

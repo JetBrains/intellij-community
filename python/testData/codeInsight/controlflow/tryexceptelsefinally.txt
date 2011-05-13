@@ -5,14 +5,14 @@
 4(5) element: PyTryExceptStatement
 5(6) element: PyTryPart
 6(7) element: PyAssignmentStatement
-7(8) element: PySubscriptionExpression
-8(9) READ ACCESS: d
-9(10,13) WRITE ACCESS: v
+7(8,13,16) element: PySubscriptionExpression
+8(9,13,16) READ ACCESS: d
+9(10,13,16) WRITE ACCESS: v
 10(11) element: PyElsePart
-11(12) element: PyPrintStatement
+11(12,16) element: PyPrintStatement
 12(16) READ ACCESS: v
 13(14) element: PyExceptPart
-14(15) READ ACCESS: KeyError
+14(15,16) READ ACCESS: KeyError
 15(16) element: PyPrintStatement
 16(17) element: PyFinallyPart
 17(18) element: PyPrintStatement
