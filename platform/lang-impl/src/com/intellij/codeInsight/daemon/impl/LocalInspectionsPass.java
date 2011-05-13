@@ -73,7 +73,6 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LocalInspectionsPass");
-  private static final int NUM_ELEMENTS_PER_CHECK_CANCELLED = 5;
   public static final TextRange EMPTY_PRIORITY_RANGE = TextRange.EMPTY_RANGE;
   private final int myStartOffset;
   private final int myEndOffset;
@@ -255,7 +254,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             }
           }
         };
-        PsiElementVisitor visitor = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, indicator);
+        PsiElementVisitor visitor = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements);
 
         synchronized (init) {
           init.add(Trinity.create(tool, holder, visitor));
@@ -277,8 +276,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                                   @NotNull ProblemsHolder holder,
                                                                   boolean isOnTheFly,
                                                                   @NotNull LocalInspectionToolSession session,
-                                                                  @NotNull List<PsiElement> elements,
-                                                                  @NotNull ProgressIndicator indicator) {
+                                                                  @NotNull List<PsiElement> elements) {
     PsiElementVisitor visitor = tool.buildVisitor(holder, isOnTheFly, session);
     //noinspection ConstantConditions
     if(visitor == null) {
@@ -288,7 +286,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       : "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive. "+tool;
 
     tool.inspectionStarted(session, isOnTheFly);
-    acceptElements(elements, visitor, indicator);
+    acceptElements(elements, visitor);
     return visitor;
   }
 
@@ -310,7 +308,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
           ProblemsHolder holder = trinity.second;
           PsiElementVisitor elementVisitor = trinity.third;
-          acceptElements(elements, elementVisitor, indicator);
+          acceptElements(elements, elementVisitor);
 
           advanceProgress(1);
 
@@ -329,11 +327,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     inspectInjectedPsi(elements, tools, isOnTheFly, indicator, iManager, false);
   }
 
-  private static void acceptElements(@NotNull List<PsiElement> elements, @NotNull PsiElementVisitor elementVisitor, @NotNull ProgressIndicator indicator) {
+  private static void acceptElements(@NotNull List<PsiElement> elements,
+                                     @NotNull PsiElementVisitor elementVisitor) {
     for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
       PsiElement element = elements.get(i);
       element.accept(elementVisitor);
-      if (i % NUM_ELEMENTS_PER_CHECK_CANCELLED == 0) indicator.checkCanceled();
+      ProgressManager.checkCanceled();
     }
   }
 
@@ -669,7 +668,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       };
 
       LocalInspectionToolSession injSession = new LocalInspectionToolSession(injectedPsi, 0, injectedPsi.getTextLength());
-      createVisitorAndAcceptElements(tool, holder, isOnTheFly, injSession, elements, indicator);
+      createVisitorAndAcceptElements(tool, holder, isOnTheFly, injSession, elements);
       tool.inspectionFinished(injSession,holder);
       List<ProblemDescriptor> problems = holder.getResults();
       if (problems != null && !problems.isEmpty()) {
