@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.cvsSupport2.javacvsImpl.io;
 
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import org.netbeans.lib.cvsclient.io.IStreamLogger;
 import org.jetbrains.annotations.NonNls;
@@ -39,7 +40,7 @@ public class StreamLogger implements IStreamLogger {
   private OutputStream myLogOutput;
 
   private static final long MAX_OUTPUT_SIZE = 1000000;
-  @NonNls private static final String OUTPUT_PATHNAME = "cvs.output";
+  @NonNls private static final String OUTPUT_FILE_NAME = "cvs.log";
 
   private static OutputStream createFileOutputStream(final File cvsOutputFile) {
     try {
@@ -113,7 +114,7 @@ public class StreamLogger implements IStreamLogger {
 
   private void initLogOutput() {
     if (CvsApplicationLevelConfiguration.getInstance().DO_OUTPUT) {
-      File cvsOutputFile = new File(OUTPUT_PATHNAME);
+      File cvsOutputFile = new File(PathManager.getLogPath(), OUTPUT_FILE_NAME);
       if (cvsOutputFile.isFile() && cvsOutputFile.length() > MAX_OUTPUT_SIZE) {
         FileUtil.delete(cvsOutputFile);
       }

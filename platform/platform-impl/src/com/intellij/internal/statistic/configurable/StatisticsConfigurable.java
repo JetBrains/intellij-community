@@ -55,7 +55,7 @@ public class StatisticsConfigurable implements SearchableConfigurable {
   @Nullable
   @NonNls
   public String getHelpTopic() {
-    return null;
+    return "preferences.usage.statictics";
   }
 
   public JComponent createComponent() {

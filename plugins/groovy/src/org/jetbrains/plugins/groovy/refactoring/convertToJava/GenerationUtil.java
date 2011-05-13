@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator;
@@ -113,7 +114,8 @@ public class GenerationUtil {
 
   static String suggestVarName(PsiType type, GroovyPsiElement context, ExpressionContext expressionContext) {
     final DefaultGroovyVariableNameValidator nameValidator =
-      new DefaultGroovyVariableNameValidator(context, expressionContext.myUsedVarNames, true);
+      new DefaultGroovyVariableNameValidator(context, expressionContext.myUsedVarNames, true, true);
+    if (type instanceof PsiPrimitiveType) type = TypesUtil.boxPrimitiveType(type, context.getManager(), context.getResolveScope());
     final String[] varNames = GroovyNameSuggestionUtil.suggestVariableNameByType(type, nameValidator);
 
     LOG.assertTrue(varNames.length > 0);
@@ -238,10 +240,6 @@ public class GenerationUtil {
     return curClass;
   }
 
-  static PsiType findOutParameterType(PsiParameter parameter) {
-    return parameter.getType(); //todo make smarter
-  }
-
   static boolean isAbstractInJava(PsiMethod method) {
     if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return true;
@@ -275,7 +273,10 @@ public class GenerationUtil {
     text.append(">");
   }
 
-  static void writeParameterList(StringBuilder text, PsiParameter[] parameters, final ClassNameProvider classNameProvider) {
+  static void writeParameterList(StringBuilder text,
+                                 PsiParameter[] parameters,
+                                 final ClassNameProvider classNameProvider,
+                                 @Nullable ExpressionContext context) {
     text.append("(");
 
     //writes myParameters
@@ -285,7 +286,13 @@ public class GenerationUtil {
       if (parameter == null) continue;
 
       if (i > 0) text.append(", ");  //append ','
-      writeType(text, findOutParameterType(parameter), parameter, classNameProvider);
+      if (!classNameProvider.forStubs()) {
+        ModifierListGenerator.writeModifiers(text, parameter.getModifierList(), ModifierListGenerator.JAVA_MODIFIERS, true);
+      }
+      if (context != null && context.analyzedVars.toMakeFinal(parameter)) {
+        text.append(PsiModifier.FINAL).append(' ');
+      }
+      writeType(text, TypeProvider.getParameterType(parameter), parameter, classNameProvider);
       text.append(" ");
       text.append(parameter.getName());
 
@@ -356,25 +363,14 @@ public class GenerationUtil {
     return actual;
   }
 
-  public static PsiType getVarType(GrVariable variable) {
-    PsiType type = variable.getDeclaredType();
-    if (type == null) {
-      type = variable.getTypeGroovy();
-    }
-    if (type == null) {
-      type = variable.getType();
-    }
-    return type;
-  }
-
   public static void writeSimpleVarDeclaration(GrVariableDeclaration variableDeclaration,
                                                StringBuilder builder,
                                                ExpressionContext expressionContext) {
     GrVariable[] variables = variableDeclaration.getVariables();
 
-    Set<String> types = getVarTypes(variableDeclaration);
+    //Set<String> types = getVarTypes(variableDeclaration);
 
-    if (types.size() > 1) {
+    //if (types.size() > 1) {
       if (variableDeclaration.getParent() instanceof GrControlStatement) {
         expressionContext.setInsertCurlyBrackets();
       }
@@ -382,8 +378,11 @@ public class GenerationUtil {
         writeVariableSeparately(variable, builder, expressionContext);
         builder.append(";\n");
       }
-      return;
+      builder.delete(builder.length() - 1, builder.length());
+      /*return;
     }
+
+
     ModifierListGenerator.writeModifiers(builder, variableDeclaration.getModifierList());
 
     PsiType type = getVarType(variables[0]);
@@ -397,26 +396,56 @@ public class GenerationUtil {
     if (variables.length > 0) {
       builder.delete(builder.length() - 2, builder.length());
     }
-    builder.append(";");
+    builder.append(";");*/
   }
 
-  static void writeVariableWithoutType(StringBuilder builder, ExpressionContext expressionContext, GrVariable variable) {
+  static void writeVariableWithoutType(StringBuilder builder,
+                                       ExpressionContext expressionContext,
+                                       GrVariable variable,
+                                       boolean wrapped,
+                                       PsiType original) {
     builder.append(variable.getName());
     final GrExpression initializer = variable.getInitializerGroovy();
     if (initializer != null) {
       builder.append(" = ");
+      if (wrapped) {
+        builder.append("new ").append(GroovyCommonClassNames.GROOVY_LANG_REFERENCE);
+        if (original != null) {
+          builder.append('<');
+          writeType(builder, original, variable, new GeneratorClassNameProvider());
+          builder.append('>');
+        }
+        builder.append('(');
+      }
       initializer.accept(new ExpressionGenerator(builder, expressionContext));
+      if (wrapped) {
+        builder.append(')');
+      }
     }
   }
 
   static void writeVariableSeparately(GrVariable variable, StringBuilder builder, ExpressionContext expressionContext) {
-    PsiType type = getVarType(variable);
-
+    PsiType type = TypeProvider.getVarType(variable);
     ModifierListGenerator.writeModifiers(builder, variable.getModifierList());
+
+    PsiType originalType = type;
+    LocalVarAnalyzer.Result analyzedVars = expressionContext.analyzedVars;
+    boolean wrapped = false;
+    if (analyzedVars != null) {
+      if (analyzedVars.toMakeFinal(variable) && !variable.hasModifierProperty(PsiModifier.FINAL)) {
+        builder.append(PsiModifier.FINAL).append(' ');
+      }
+      else if (analyzedVars.toWrap(variable)) {
+        builder.append(PsiModifier.FINAL).append(' ');
+        type = JavaPsiFacade.getElementFactory(expressionContext.project).createTypeFromText(
+          GroovyCommonClassNames.GROOVY_LANG_REFERENCE + "<" + getTypeText(originalType, variable) + ">", variable);
+        wrapped = true;
+      }
+    }
 
     writeType(builder, type, variable);
     builder.append(" ");
 
-    writeVariableWithoutType(builder, expressionContext, variable);
+    writeVariableWithoutType(builder, expressionContext, variable, wrapped, originalType);
   }
 }

@@ -106,6 +106,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     final StringBuilder newText = StringBuilderSpinAllocator.alloc();
     try {
       //check that this is complete path (ends with "/" or "!/")
+      // do not collapse partial paths, i.e. do not substitute "/a/b/cd" in paths like "/a/b/cdef"
       int endOfOccurence = path.length();
       final boolean isWindowsRoot = path.endsWith(":/");
       if (!isWindowsRoot &&

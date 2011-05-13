@@ -139,7 +139,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
 
                 // avoid documents piling up during batch processing
                 if (areTooManyDocumentsInTheQueue(myUnsavedDocuments)) {
-                  saveAllDocuments();
+                  saveAllDocumentsLater();
                 }
               }
             }
@@ -208,6 +208,18 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       fireUnsavedDocumentsDropped();
     }
     myTrailingSpacesStripper.dropAll();
+  }
+
+  private void saveAllDocumentsLater() {
+    // later because some document might have been blocked by PSI right now
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        if (!ApplicationManager.getApplication().isDisposed()) {
+          saveAllDocuments();
+        }
+      }
+    });
   }
 
   public void saveAllDocuments() {

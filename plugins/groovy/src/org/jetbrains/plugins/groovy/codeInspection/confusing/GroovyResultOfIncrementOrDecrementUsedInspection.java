@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -23,8 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspection {
 
@@ -43,7 +42,6 @@ public class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspec
   @Nullable
   protected String buildErrorString(Object... args) {
     return "Result of increment or decrement expression used #loc";
-
   }
 
   public BaseInspectionVisitor buildVisitor() {
@@ -51,18 +49,18 @@ public class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspec
   }
 
   private static class Visitor extends BaseInspectionVisitor {
-    
+
     public void visitUnaryExpression(GrUnaryExpression grUnaryExpression) {
       super.visitUnaryExpression(grUnaryExpression);
-      final PsiElement parent = grUnaryExpression.getParent();
-      if (parent instanceof GrCodeBlock) {
-        return;
-      }
+
       final IElementType tokenType = grUnaryExpression.getOperationTokenType();
       if (!GroovyTokenTypes.mINC.equals(tokenType) && !GroovyTokenTypes.mDEC.equals(tokenType)) {
         return;
       }
-      registerError(grUnaryExpression);
+
+      if (PsiUtil.resultOfExpressionUsed(grUnaryExpression)) {
+        registerError(grUnaryExpression);
+      }
     }
   }
 }

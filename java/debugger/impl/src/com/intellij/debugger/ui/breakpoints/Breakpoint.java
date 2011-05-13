@@ -260,7 +260,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
 
   public void writeExternal(Element parentNode) throws WriteExternalException {
     super.writeExternal(parentNode);
-    JDOMExternalizerUtil.writeField(parentNode, LOG_MESSAGE_OPTION_NAME, getLogMessage().toString());
+    JDOMExternalizerUtil.writeField(parentNode, LOG_MESSAGE_OPTION_NAME, getLogMessage().toExternalForm());
   }
 
   public TextWithImports getLogMessage() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,32 @@ package com.siyeh.ipp.concatenation;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConcatenationUtils;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceConcatenationWithStringBufferIntention extends Intention {
+public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedIntention {
+
+    @Override
+    protected String getTextForElement(PsiElement element) {
+        if (PsiUtil.isLanguageLevel5OrHigher(element)) {
+            return IntentionPowerPackBundle.message(
+                    "replace.concatenation.with.string.builder.intention.name");
+        } else {
+            return IntentionPowerPackBundle.message(
+                    "replace.concatenation.with.string.buffer.intention.name");
+        }
+    }
 
     @Override
     @NotNull
     public PsiElementPredicate getElementPredicate() {
-        return new SimpleStringConcatenationPredicate();
+        return new SimpleStringConcatenationPredicate(true);
     }
 
     @Override

@@ -200,7 +200,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
         }
       }
       catch (AbstractMethodError e) {
-        throw new RuntimeException(handler.toString(), e);
+        LOG.error(handler.toString(), e);
       }
     }
 

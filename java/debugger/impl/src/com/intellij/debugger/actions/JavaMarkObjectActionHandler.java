@@ -44,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -205,20 +204,11 @@ public class JavaMarkObjectActionHandler extends MarkObjectActionHandler {
   }
 
   private static List<ObjectReference> getReferringObjects(ObjectReference value) {
-    // invoke the following method using Reflection in order to remain compilable on jdk 1.5
-    //  java.util.List<com.sun.jdi.ObjectReference> referringObjects(long l);
     try {
-      final Method apiMethod = ObjectReference.class.getMethod("referringObjects", long.class);
-      //noinspection unchecked
-      return (List<ObjectReference>)apiMethod.invoke(value, AUTO_MARKUP_REFERRING_OBJECTS_LIMIT);
+      return value.referringObjects(AUTO_MARKUP_REFERRING_OBJECTS_LIMIT);
     }
-    catch (IllegalAccessException e) {
-      LOG.error(e); // should not happen
-    }
-    catch (InvocationTargetException e) {
-      throw new RuntimeException(e);
-    }
-    catch (NoSuchMethodException ignored) {
+    catch (UnsupportedOperationException e) {
+      LOG.info(e);
     }
     return Collections.emptyList();
   }

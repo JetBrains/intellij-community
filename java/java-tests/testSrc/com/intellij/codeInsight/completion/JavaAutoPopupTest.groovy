@@ -761,7 +761,26 @@ public class Bar {
     assert myFixture.lookupElementStrings.containsAll(['private', 'protected'])
   }
 
+  public void testExactMatchesFirst() {
+    myFixture.configureByText("a.java", """
+public class UTest {
+    void nextWord() {}
 
+    void foo() {
+        n<caret>
+    }
+}""")
+    type 'ew'
+    assert myFixture.lookupElementStrings == ['new', 'nextWord']
+  }
+
+  public void testUpdatePrefixMatchingOnTyping() {
+    myFixture.addClass("class CertificateEncodingException {}")
+    myFixture.addClass("class CertificateException {}")
+    myFixture.configureByText 'a.java', 'class Foo {<caret>}'
+    type 'CertificateExce'
+    assert myFixture.lookupElementStrings == ['CertificateException', 'CertificateEncodingException']
+  }
 
 
 }

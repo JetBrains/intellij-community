@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui.popup;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.ActionListener;
@@ -72,5 +73,12 @@ public interface BalloonBuilder {
 
   boolean isHideOnAction();
 
+  @NotNull
   BalloonBuilder setHideOnAction(boolean hideOnAction);
+
+  @NotNull
+  BalloonBuilder setDialogMode(boolean dialogMode);
+
+  @NotNull
+  BalloonBuilder setTitle(@Nullable String title);
 }

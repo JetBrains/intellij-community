@@ -559,9 +559,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
 
     final boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES && isFullyQualified();
-    final PsiManager manager = aClass.getManager();
     final PsiReferenceParameterList parameterList = getParameterList();
-    String text = (parameterList != null ? qName + parameterList.getText() : qName);
+    String text = parameterList == null ? qName : qName + parameterList.getText();
     PsiJavaCodeReferenceElement ref = facade.getParserFacade().createReferenceFromText(text, getParent());
     getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
     if (!preserveQualification /*&& (TreeUtil.findParent(ref, ElementType.DOC_COMMENT) == null)*/) {

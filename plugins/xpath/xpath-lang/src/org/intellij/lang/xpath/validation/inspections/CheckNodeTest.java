@@ -23,6 +23,7 @@ import com.intellij.psi.xml.XmlElement;
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.NamespaceContext;
+import org.intellij.lang.xpath.context.XPathVersion;
 import org.intellij.lang.xpath.psi.PrefixedName;
 import org.intellij.lang.xpath.psi.XPathNodeTest;
 import org.jetbrains.annotations.NonNls;
@@ -82,7 +83,7 @@ public class CheckNodeTest extends XPathInspection {
                         if (elementNames != null) {
                             found = false;
                             for (QName pair : elementNames) {
-                                if (matches(nodeTest.getQName(), pair, namespaceContext, contextNode)) {
+                              if (matches(nodeTest.getQName(), pair, namespaceContext, contextNode, true)) {
                                     found = true;
                                     break;
                                 }
@@ -96,7 +97,7 @@ public class CheckNodeTest extends XPathInspection {
                         if (attributeNames != null) {
                             found = false;
                             for (QName pair : attributeNames) {
-                                if (matches(nodeTest.getQName(), pair, namespaceContext, contextNode)) {
+                                if (matches(nodeTest.getQName(), pair, namespaceContext, contextNode, false)) {
                                     found = true;
                                     break;
                                 }
@@ -129,13 +130,24 @@ public class CheckNodeTest extends XPathInspection {
             addProblem(myManager.createProblemDescriptor(nodeTest, "<html>Unknown " + type + " name " + name + "</html>", myOnTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
 
-        private static boolean matches(@Nullable PrefixedName prefixedName, QName element, NamespaceContext namespaceContext, XmlElement context) {
+        private static boolean matches(@Nullable PrefixedName prefixedName,
+                                       QName element,
+                                       NamespaceContext namespaceContext,
+                                       XmlElement context,
+                                       boolean allowDefaultNamespace)
+        {
             if (prefixedName == null) return false;
+
             boolean b = prefixedName.getLocalName().equals(element.getLocalPart()) || "*".equals(element.getLocalPart());
-            if (prefixedName.getPrefix() != null) {
-                b = b && element.getNamespaceURI().equals(namespaceContext.getNamespaceURI(prefixedName.getPrefix(), context));
+
+            final String prefix = prefixedName.getPrefix();
+            if (prefix != null || allowDefaultNamespace) {
+              if (!"*".equals(prefix)) {
+                final String namespaceURI = prefix != null ? namespaceContext.getNamespaceURI(prefix, context) : namespaceContext.getDefaultNamespace(context);
+                b = b && element.getNamespaceURI().equals(namespaceURI);
+              }
             } else {
-                b = b && element.getNamespaceURI().length() == 0;
+              b = b && element.getNamespaceURI().length() == 0;
             }
             return b;
         }

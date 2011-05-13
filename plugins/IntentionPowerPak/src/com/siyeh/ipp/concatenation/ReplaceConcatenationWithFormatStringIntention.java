@@ -31,7 +31,7 @@ public class ReplaceConcatenationWithFormatStringIntention
     @Override
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
-        return new SimpleStringConcatenationPredicate();
+        return new SimpleStringConcatenationPredicate(true);
     }
 
     @Override
@@ -150,7 +150,8 @@ public class ReplaceConcatenationWithFormatStringIntention
                  type.equalsToText("char"))) {
                 if (length > 2) {
                     formatString.append(
-                            text.substring(1, length - 1).replace("%", "%%"));
+                            text.substring(1, length - 1).replace("%", "%%")
+                                    .replace("\\'", "'"));
                 }
             } else {
                 formatString.append(text);

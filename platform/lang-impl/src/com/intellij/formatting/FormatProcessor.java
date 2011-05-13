@@ -599,7 +599,7 @@ class FormatProcessor {
     }
     
     BlockAlignmentProcessor.Context context = new BlockAlignmentProcessor.Context(
-      alignment, myCurrentBlock, myAlignmentMappings, myBackwardShiftedAlignedBlocks
+      alignment, myCurrentBlock, myAlignmentMappings, myBackwardShiftedAlignedBlocks, myIndentOption
     );
     BlockAlignmentProcessor.Result result = alignmentProcessor.applyAlignment(context);
     switch (result) {

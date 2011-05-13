@@ -23,12 +23,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 /**
-* @author peter
-*/
+ * @author peter
+ */
 public abstract class ComparingClassifier<T> extends Classifier<T> {
-  private final Map<T, Comparable> myWeights = new HashMap<T, Comparable>();
   private final Classifier<T> myNext;
-  private final String myName;
+  protected final String myName;
 
   public ComparingClassifier(Classifier<T> next, String name) {
     myNext = next;
@@ -38,19 +37,14 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
   @NotNull
   public abstract Comparable getWeight(T t);
 
-  @Override
   public void addElement(T t) {
-    myWeights.put(t, getWeight(t));
     myNext.addElement(t);
   }
 
   private TreeMap<Comparable, List<T>> groupByWeights(List<T> source) {
     TreeMap<Comparable, List<T>> map = new TreeMap<Comparable, List<T>>();
     for (T t : source) {
-      final Comparable weight = myWeights.get(t);
-      if (weight == null) {
-        throw new AssertionError(myName + "; " + myWeights.containsKey(t));
-      }
+      final Comparable weight = getWeight(t);
       List<T> list = map.get(weight);
       if (list == null) {
         map.put(weight, list = new SmartList<T>());

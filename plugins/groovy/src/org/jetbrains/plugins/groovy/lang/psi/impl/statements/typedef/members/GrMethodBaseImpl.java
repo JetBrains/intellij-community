@@ -28,7 +28,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.*;
 import org.jetbrains.annotations.NonNls;
@@ -61,7 +60,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrMethodStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
@@ -128,6 +126,10 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
   public PsiType getInferredReturnType() {
+    if (isConstructor()) {
+      return null;
+    }
+
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       //todo uncomment when EAP is on
       //LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread()); //this is a potentially long action
@@ -156,60 +158,57 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     return new GrMember[]{this};
   }
 
-  private static final Function<GrMethod, PsiType> ourTypesCalculator = new NullableFunction<GrMethod, PsiType>() {
-    public PsiType fun(GrMethod method) {
-      PsiType nominal = method.getReturnType();
-      if (nominal != null && nominal.equals(PsiType.VOID)) return nominal;
+  private static final Function<GrMethodBaseImpl, PsiType> ourTypesCalculator = new NullableFunction<GrMethodBaseImpl, PsiType>() {
+    private boolean hasTypeParametersToInfer(PsiClassType classType) {
+      final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+      PsiClass aClass = resolveResult.getElement();
+      if (aClass == null) return false;
 
-      if (GppTypeConverter.hasTypedContext(method)) {
-        if (nominal != null) return nominal;
-
-        return PsiType.getJavaLangObject(method.getManager(), method.getResolveScope());
+      final Iterable<PsiTypeParameter> iterable = com.intellij.psi.util.PsiUtil.typeParametersIterable(aClass);
+      if (!iterable.iterator().hasNext()) {
+        return false;
       }
 
-      PsiType inferred = getInferredType(method);
-      if (nominal == null) {
-        if (inferred == null) {
-          return PsiType.getJavaLangObject(method.getManager(), method.getResolveScope());
+      for (PsiTypeParameter parameter : iterable) {
+        PsiType type = resolveResult.getSubstitutor().substitute(parameter);
+        if (type != null) {
+          if (!(type instanceof PsiWildcardType) || ((PsiWildcardType)type).getBound() != null) {
+            return false;
+          }
         }
-        return inferred;
       }
-      if (inferred != null && inferred != PsiType.NULL) {
-        if (inferred instanceof PsiClassType && nominal instanceof PsiClassType) {
-          final PsiClassType.ClassResolveResult declaredResult = ((PsiClassType)nominal).resolveGenerics();
-          final PsiClass declaredClass = declaredResult.getElement();
-          if (declaredClass != null) {
-            final PsiClassType.ClassResolveResult initializerResult = ((PsiClassType)inferred).resolveGenerics();
-            final PsiClass initializerClass = initializerResult.getElement();
-            if (initializerClass != null &&
-                com.intellij.psi.util.PsiUtil.isRawSubstitutor(initializerClass, initializerResult.getSubstitutor())) {
-              if (declaredClass == initializerClass) return nominal;
-              final PsiSubstitutor declaredResultSubstitutor = declaredResult.getSubstitutor();
-              final PsiSubstitutor superSubstitutor =
-                TypeConversionUtil.getClassSubstitutor(declaredClass, initializerClass, declaredResultSubstitutor);
+      return true;
+    }
 
-              if (superSubstitutor != null) {
-                return JavaPsiFacade.getInstance(method.getProject()).getElementFactory()
-                  .createType(declaredClass, TypesUtil.composeSubstitutors(declaredResultSubstitutor, superSubstitutor));
-              }
+    public PsiType fun(GrMethodBaseImpl method) {
+      PsiType nominal = method.getNominalType();
+      if (nominal != null) {
+        if (!(nominal instanceof PsiClassType && hasTypeParametersToInfer((PsiClassType)nominal))) {
+          return nominal;
+        }
+      }
+
+      if (!GppTypeConverter.hasTypedContext(method)) {
+        assert method.isValid() : "invalid method";
+
+        final GrOpenBlock block = method.getBlock();
+        if (block != null) {
+          assert block.isValid() : "invalid code block";
+          PsiType inferred = GroovyPsiManager.inferType(method, new MethodTypeInferencer(block));
+          if (inferred != null) {
+            if (nominal == null || nominal.isAssignableFrom(inferred)) {
+              return inferred;
             }
           }
         }
-        if (nominal.isAssignableFrom(inferred)) return inferred;
       }
-      return nominal;
+      if (nominal != null) {
+        return nominal;
+      }
+
+      return PsiType.getJavaLangObject(method.getManager(), method.getResolveScope());
     }
 
-    @Nullable
-    private PsiType getInferredType(GrMethod method) {
-      assert method.isValid() : "invalid method";
-
-      final GrOpenBlock block = method.getBlock();
-      if (block == null) return null;
-      assert block.isValid() : "invalid code block";
-
-      return GroovyPsiManager.inferType(method, new MethodTypeInferencer(block));
-    }
   };
 
   @Nullable
@@ -218,12 +217,21 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
       return null;
     }
 
+    final PsiType type = getNominalType();
+    if (type != null) {
+      return type;
+    }
+
+    return PsiType.getJavaLangObject(getManager(), getResolveScope());
+  }
+
+  @Nullable
+  private PsiType getNominalType() {
     final GrTypeElement element = getReturnTypeElementGroovy();
     if (element != null) {
       return element.getType();
     }
-
-    return PsiType.getJavaLangObject(getManager(), getResolveScope());
+    return null;
   }
 
   @Nullable

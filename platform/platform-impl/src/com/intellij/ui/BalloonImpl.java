@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -22,14 +23,18 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindow;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.FocusRequestor;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.openapi.wm.impl.content.GraphicsConfig;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -38,26 +43,12 @@ import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Range;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.ui.Animator;
-import com.intellij.util.ui.BaseButtonBehavior;
-import com.intellij.util.ui.PositionTracker;
-import com.intellij.util.ui.TimedDeadzone;
-import com.intellij.util.ui.Tree;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JLayeredPane;
-import javax.swing.JPanel;
-import javax.swing.JRootPane;
-import javax.swing.JTree;
-import javax.swing.JWindow;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
@@ -68,6 +59,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
@@ -156,6 +148,10 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
   private int myPositionChangeXShift;
   private int myPositionChangeYShift;
+  private boolean myDialogMode;
+  private IdeFocusManager myFocusManager;
+  private String myTitle;
+  private JLabel myTitleLabel;
 
   public boolean isInsideBalloon(MouseEvent me) {
     return isInside(new RelativePoint(me));
@@ -207,7 +203,9 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
                      int animationCycle,
                      int calloutShift,
                      int positioChangeXShfit,
-                     int positionChangeYShift) {
+                     int positionChangeYShift,
+                     boolean dialogMode,
+                     String title) {
     myBorderColor = borderColor;
     myFillColor = fillColor;
     myContent = content;
@@ -222,6 +220,30 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     myCalloutshift = calloutShift;
     myPositionChangeXShift = positioChangeXShfit;
     myPositionChangeYShift = positionChangeYShift;
+    myDialogMode = dialogMode;
+    myTitle = title;
+
+    if (!myDialogMode) {
+      new AwtVisitor(content) {
+        @Override
+        public boolean visit(Component component) {
+          if (component instanceof JLabel) {
+            JLabel label = (JLabel)component;
+            if (label.getDisplayedMnemonic() != '\0' || label.getDisplayedMnemonicIndex() >= 0) {
+              myDialogMode = true;
+              return true;
+            }
+          } else if (component instanceof JCheckBox) {
+            JCheckBox checkBox = (JCheckBox)component;
+            if (checkBox.getMnemonic() >= 0 || checkBox.getDisplayedMnemonicIndex() >= 0) {
+              myDialogMode = true;
+              return true;
+            }
+          }
+          return false;
+        }
+      };
+    }
 
     myFadeoutTime = fadeoutTime;
     myAnimationCycle = animationCycle;
@@ -312,6 +334,34 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     myPosition = position;
     UIUtil.setFutureRootPane(myContent, root);
 
+    myFocusManager = IdeFocusManager.findInstanceByComponent(myLayeredPane);
+    final Ref<Component> originalFocusOwner = new Ref<Component>();
+    final Ref<FocusRequestor> focusRequestor = new Ref<FocusRequestor>();
+    final Ref<ActionCallback> proxyFocusRequest = new Ref<ActionCallback>(new ActionCallback.Done());
+
+    boolean mnemonicsFix = myDialogMode && SystemInfo.isMac && Registry.is("ide.mac.inplaceDialogMnemonicsFix");
+    if (mnemonicsFix) {
+      final IdeGlassPaneEx glassPane = (IdeGlassPaneEx)IdeGlassPaneUtil.find(myLayeredPane);
+      assert glassPane != null;
+
+      proxyFocusRequest.set(new ActionCallback());
+
+      myFocusManager.doWhenFocusSettlesDown(new ExpirableRunnable() {
+        @Override
+        public boolean isExpired() {
+          return isDisposed();
+        }
+
+        @Override
+        public void run() {
+          IdeEventQueue.getInstance().disableInputMethods(BalloonImpl.this);
+          originalFocusOwner.set(myFocusManager.getFocusOwner());
+          myFocusManager.requestFocus(glassPane.getProxyComponent(), true).notify(proxyFocusRequest.get());
+          focusRequestor.set(myFocusManager.getFurtherRequestor());
+        }
+      });
+    }
+
     myLayeredPane.addComponentListener(myComponentListener);
 
     myTargetPoint = myPosition.getShiftedPoint(myTracker.recalculateLocation(this).getPoint(myLayeredPane), myCalloutshift);
@@ -377,17 +427,31 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     myLayeredPane.repaint();
 
 
+
+    if (mnemonicsFix) {
+      proxyFocusRequest.get().doWhenDone(new Runnable() {
+        @Override
+        public void run() {
+          myFocusManager.requestFocus(originalFocusOwner.get(), true);
+        }
+      });
+    }
+
     Toolkit.getDefaultToolkit().addAWTEventListener(myAwtActivityListener, MouseEvent.MOUSE_EVENT_MASK |
                                                                            MouseEvent.MOUSE_MOTION_EVENT_MASK |
                                                                            KeyEvent.KEY_EVENT_MASK);
-    ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
-      @Override
-      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        if (myHideOnAction) {
-          hide();
-        }
-      }
-    }, this);
+    if (ApplicationManager.getApplication() != null) {
+      ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+                                                        @Override
+                                                        public void beforeActionPerformed(AnAction action,
+                                                                                          DataContext dataContext,
+                                                                                          AnActionEvent event) {
+                                                          if (myHideOnAction) {
+                                                            hide();
+                                                          }
+                                                        }
+                                                      }, this);
+    }
   }
 
   private Rectangle getRecForPosition(AbstractPosition position, boolean adjust) {
@@ -649,7 +713,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
     abstract Point getLocation(final Dimension containerSize, final Point targetPoint, final Dimension balloonSize);
 
-    void paintComponent(BalloonImpl balloon, final Rectangle bounds, final Graphics2D g, Point pointTarget) {
+    void paintComponent(BalloonImpl balloon, final Rectangle bounds, final Graphics2D g, Point pointTarget, JComponent component) {
       final GraphicsConfig cfg = new GraphicsConfig(g);
       cfg.setAntialiasing(true);
 
@@ -664,9 +728,42 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
       g.setColor(balloon.myFillColor);
       g.fill(shape);
       g.setColor(balloon.myBorderColor);
+
+      if (balloon.myTitleLabel != null) {
+        Rectangle titleBounds = balloon.myTitleLabel.getBounds();
+
+        Insets inset = getTitleInsets(balloon.getNormalInset() - 1, getPointerLength(this) + 50);
+
+        titleBounds.x -= inset.left + 1;
+        titleBounds.width += (inset.left + inset.right + 50);
+        titleBounds.y -= inset.top + 1;
+        titleBounds.height += (inset.top + inset.bottom + 1);
+
+        Area area = new Area(shape);
+        area.intersect(new Area(titleBounds));
+
+
+        Color fgColor = UIManager.getColor("Label.foreground");
+        fgColor = new Color(fgColor.getRed(), fgColor.getGreen(), fgColor.getBlue(), 140);
+        g.setColor(fgColor);
+        g.fill(area);
+
+        g.setColor(balloon.myBorderColor);
+        g.draw(area);
+
+        //Rectangle titleBounds = balloon.myTitleLabel.getBounds();
+        //titleBounds = SwingUtilities.convertRectangle(balloon.myTitleLabel.getParent(), titleBounds, component);
+        //
+        //g.setColor(balloon.myBorderColor);
+        //int inset  = balloon.getNormalInset();
+        //g.drawLine(titleBounds.x - inset, (int)titleBounds.getMaxY(), (int)titleBounds.getMaxX() + inset, (int)titleBounds.getMaxY());
+      }
+
       g.draw(shape);
       cfg.restore();
     }
+
+    protected abstract Insets getTitleInsets(int normalInset, int pointerLength);
 
     protected abstract Shape getPointingShape(final Rectangle bounds,
                                               final Graphics2D g,
@@ -761,6 +858,11 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
       return new Point(center.x, targetPoint.y);
     }
 
+    @Override
+    protected Insets getTitleInsets(int normalInset, int pointerLength) {
+      return new Insets(pointerLength, normalInset, normalInset, normalInset);
+    }
+
     protected void convertBoundsToContent(final Rectangle bounds, final BalloonImpl balloon) {
       bounds.y += balloon.getPointerLength(this);
       bounds.height -= balloon.getPointerLength(this) - 1;
@@ -823,6 +925,11 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
       return new Point(center.x, targetPoint.y - balloonSize.height);
     }
 
+    @Override
+    protected Insets getTitleInsets(int normalInset, int pointerLength) {
+      return new Insets(normalInset, normalInset, normalInset, normalInset);
+    }
+
     protected void convertBoundsToContent(final Rectangle bounds, final BalloonImpl balloon) {
       bounds.height -= balloon.getPointerLength(this) - 1;
     }
@@ -883,6 +990,11 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     }
 
     @Override
+    protected Insets getTitleInsets(int normalInset, int pointerLength) {
+      return new Insets(normalInset, pointerLength, normalInset, normalInset);
+    }
+
+    @Override
     protected Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, SwingUtilities.LEFT);
       shaper.line(balloon.getPointerLength(this), -balloon.getPointerWidth(this) / 2).toTopCurve().roundUpRight().toRightCurve().roundRightDown()
@@ -939,6 +1051,11 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     Point getLocation(final Dimension containerSize, final Point targetPoint, final Dimension balloonSize) {
       final Point center = UIUtil.getCenterPoint(new Rectangle(targetPoint, new Dimension(0, 0)), balloonSize);
       return new Point(targetPoint.x - balloonSize.width, center.y);
+    }
+
+    @Override
+    protected Insets getTitleInsets(int normalInset, int pointerLength) {
+      return new Insets(normalInset, pointerLength, normalInset, normalInset);
     }
 
     protected void convertBoundsToContent(final Rectangle bounds, final BalloonImpl balloon) {
@@ -1001,14 +1118,26 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
     private float myAlpha;
     private final BalloonImpl myBalloon;
 
-    private final Wrapper myContent;
+    private final JComponent myContent;
 
     private MyComponent(JComponent content, BalloonImpl balloon, EmptyBorder shapeBorder) {
       setOpaque(false);
       setLayout(null);
       myBalloon = balloon;
 
-      myContent = new Wrapper(content);
+      setFocusCycleRoot(true);
+      putClientProperty(Balloon.KEY, BalloonImpl.this);
+
+      myContent = new JPanel(new BorderLayout(2, 2));
+      Wrapper contentWrapper = new Wrapper(content);
+      if (myTitle != null) {
+        myTitleLabel = new JLabel(myTitle, JLabel.CENTER);
+        myTitleLabel.setForeground(UIManager.getColor("List.background"));
+        myTitleLabel.setBorder(new EmptyBorder(0, 4, 0, 4));
+        myContent.add(myTitleLabel, BorderLayout.NORTH);
+        contentWrapper.setBorder(new EmptyBorder(1, 1, 1, 1));
+      }
+      myContent.add(contentWrapper, BorderLayout.CENTER);
       myContent.setBorder(shapeBorder);
       myContent.setOpaque(false);
 
@@ -1064,7 +1193,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
       if (myImage == null && myAlpha != -1) {
         myImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
-        myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, (Graphics2D)myImage.getGraphics(), pointTarget);
+        myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, (Graphics2D)myImage.getGraphics(), pointTarget, this);
       }
 
       if (myImage != null && myAlpha != -1) {
@@ -1073,7 +1202,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
         g2d.drawImage(myImage, 0, 0, null);
       }
       else {
-        myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, (Graphics2D)g, pointTarget);
+        myBalloon.myPosition.paintComponent(myBalloon, shapeBounds, (Graphics2D)g, pointTarget, this);
       }
     }
 
@@ -1246,7 +1375,7 @@ public class BalloonImpl implements Disposable, Balloon, LightweightWindow, Posi
 
           //pane.setBorder(new LineBorder(Color.blue));
 
-          balloon.set(new BalloonImpl(new JLabel("FUCK"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, null, false, 500, 5, 0, 0));
+          balloon.set(new BalloonImpl(new JLabel("FUCK"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, null, false, 500, 5, 0, 0, false, "This is the title"));
           balloon.get().setShowPointer(true);
 
           if (e.isShiftDown()) {

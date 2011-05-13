@@ -53,7 +53,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.intellij.lang.xpath.XPathFileType;
-import org.intellij.lang.xpath.context.AbstractVariableContext;
+import org.intellij.lang.xpath.context.SimpleVariableContext;
 import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.context.ContextType;
 import org.intellij.lang.xpath.context.NamespaceContext;
@@ -451,7 +451,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         }
     }
 
-    private static class MyVariableResolver extends AbstractVariableContext<String> {
+    private static class MyVariableResolver extends SimpleVariableContext {
         private final HistoryModel myModel;
 
         public MyVariableResolver(HistoryModel model) {
@@ -564,6 +564,11 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         public IntentionAction[] getUnresolvedNamespaceFixes(PsiReference reference, String localName) {
             return new IntentionAction[]{ new MyRegisterPrefixAction(reference) };
         }
+
+        @Override
+        public String getDefaultNamespace(XmlElement context) {
+          return null;
+      }
     }
 
     private class MyRegisterPrefixAction implements IntentionAction {

@@ -31,15 +31,21 @@ public class ChooseItemAction extends EditorAction {
     super(new Handler());
   }
 
+  @NotNull
+  static LookupImpl getLookup(Editor editor) {
+    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
+    if (lookup == null) {
+      Project project = editor.getProject();
+      throw new AssertionError(editor + "; " + (project == null ? null : LookupManager.getInstance(project).getActiveLookup()));
+    }
+    return lookup;
+  }
+
   private static class Handler extends EditorActionHandler {
     public void execute(@NotNull final Editor editor, final DataContext dataContext) {
-      LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
-      if (lookup == null) {
-        Project project = editor.getProject();
-        throw new AssertionError(editor + "; " + (project == null ? null : LookupManager.getInstance(project).getActiveLookup()));
-      }
-      lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
+      getLookup(editor).finishLookup(Lookup.NORMAL_SELECT_CHAR);
     }
+
 
     @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {

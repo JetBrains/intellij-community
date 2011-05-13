@@ -101,6 +101,9 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
     else if (myAttachedObject instanceof FileFlavorProvider) {
       return new DataFlavor[]{ourDataFlavor, DataFlavor.javaFileListFlavor};
     }
+    else if (myAttachedObject instanceof DnDNativeTarget.EventInfo) {
+      return ((DnDNativeTarget.EventInfo)myAttachedObject).getFlavors();
+    }
     return new DataFlavor[]{ourDataFlavor};
   }
 

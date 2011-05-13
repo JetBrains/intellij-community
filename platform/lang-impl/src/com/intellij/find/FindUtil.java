@@ -197,7 +197,7 @@ public class FindUtil {
       public void run() {
         if (model.isFindAll()) {
           findManager.setFindNextModel(model);
-          findAll(project, editor, model);
+          findAllAndShow(project, editor, model);
           return;
         }
 
@@ -237,10 +237,11 @@ public class FindUtil {
     });
   }
 
-  public static void findAll(final Project project, final Editor editor, final FindModel findModel) {
+  @Nullable
+  public static List<Usage> findAll(final Project project, final Editor editor, final FindModel findModel) {
     final Document document = editor.getDocument();
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (psiFile == null) return;
+    if (psiFile == null) return null;
 
     CharSequence text = document.getCharsSequence();
     int textLength = document.getTextLength();
@@ -265,6 +266,12 @@ public class FindUtil {
         ++offset;
       }
     }
+    return usages;
+  }
+
+  public static void findAllAndShow(final Project project, final Editor editor, final FindModel findModel) {
+    List<Usage> usages = findAll(project, editor, findModel);
+    if (usages == null) return;
     final UsageTarget[] usageTargets = { new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind()) };
     final UsageViewPresentation usageViewPresentation = FindInProjectUtil.setupViewPresentation(false, findModel);
     UsageViewManager.getInstance(project).showUsages(usageTargets, usages.toArray(new Usage[usages.size()]), usageViewPresentation);
@@ -576,6 +583,7 @@ public class FindUtil {
               public void run() {
                 document.setText(newText);
                 editor.getCaretModel().moveToOffset(finalCaretOffset);
+                editor.getSelectionModel().removeSelection();
               }
             });
           }

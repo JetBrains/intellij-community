@@ -354,21 +354,34 @@ public class FileUtil {
 
   @NotNull
   public static File createTempFile(@NonNls final File dir, @NotNull @NonNls String prefix, @NonNls String suffix, final boolean create) throws IOException{
+    return createTempFile(dir, prefix, suffix, create, true);
+  }
+
+  public static File createTempFile(@NonNls final File dir, @NotNull @NonNls String prefix, @NonNls String suffix, final boolean create, boolean deleteOnExit) throws IOException {
     File file = doCreateTempFile(prefix, suffix, dir);
     file.delete();
     if (create) {
       file.createNewFile();
     }
-    file.deleteOnExit();
+    if (deleteOnExit) {
+      file.deleteOnExit();
+    }
     return file;
   }
 
   @NotNull
   public static File createTempFile(@NotNull @NonNls String prefix, @NonNls String suffix) throws IOException{
+    return createTempFile(prefix, suffix, false); //false until TeamCity fixes its plugin
+  }
+
+  @NotNull
+  public static File createTempFile(@NotNull @NonNls String prefix, @NonNls String suffix, boolean deleteOnExit) throws IOException {
     File file = doCreateTempFile(prefix, suffix);
     file.delete();
     file.createNewFile();
-    file.deleteOnExit();
+    if (deleteOnExit) {
+      file.deleteOnExit();
+    }
     return file;
   }
 

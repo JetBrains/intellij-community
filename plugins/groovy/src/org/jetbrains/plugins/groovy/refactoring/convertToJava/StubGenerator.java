@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
@@ -41,7 +40,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrCo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.*;
 
@@ -65,12 +63,10 @@ public class StubGenerator implements ClassItemGenerator {
   };
 
   private ClassNameProvider classNameProvider;
-  private Project myProject;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.refactoring.convertToJava.StubGenerator");
 
-  public StubGenerator(ClassNameProvider classNameProvider, Project project) {
+  public StubGenerator(ClassNameProvider classNameProvider) {
     this.classNameProvider = classNameProvider;
-    myProject = project;
   }
 
   public void writeEnumConstant(StringBuilder text, GrEnumConstant enumConstant) {
@@ -101,7 +97,7 @@ public class StubGenerator implements ClassItemGenerator {
     for (int j = 0; j < superParams.length; j++) {
       if (j > 0) text.append(", ");
       text.append("(");
-      final PsiType type = GenerationUtil.findOutParameterType(superParams[j]);
+      final PsiType type = TypeProvider.getParameterType(superParams[j]);
       writeType(text, substitutor.substitute(type), invocation, classNameProvider);
       text.append(")").append(GroovyToJavaGenerator.getDefaultValueText(type.getCanonicalText()));
     }
@@ -120,7 +116,7 @@ public class StubGenerator implements ClassItemGenerator {
 
     /************* parameters **********/
     final ArrayList<GrParameter> actual = GenerationUtil.getActualParams(constructor, skipOptional);
-    GenerationUtil.writeParameterList(text, actual.toArray(new GrParameter[actual.size()]), classNameProvider);
+    GenerationUtil.writeParameterList(text, actual.toArray(new GrParameter[actual.size()]), classNameProvider, null);
 
     final Set<String> throwsTypes = collectThrowsTypes(constructor, new THashSet<PsiMethod>());
     if (!throwsTypes.isEmpty()) {
@@ -189,7 +185,7 @@ public class StubGenerator implements ClassItemGenerator {
     }
 
     //append return type
-    PsiType retType = findOutReturnTypeOfMethod(method);
+    PsiType retType = TypeProvider.getReturnType(method, true);
 
     if (!method.hasModifierProperty(PsiModifier.STATIC)) {
       final List<MethodSignatureBackedByPsiMethod> superSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
@@ -211,11 +207,11 @@ public class StubGenerator implements ClassItemGenerator {
 
     if (method instanceof GrMethod) {
       final ArrayList<GrParameter> actualParams = GenerationUtil.getActualParams(((GrMethod)method), skipOptional);
-      GenerationUtil.writeParameterList(text, actualParams.toArray(new GrParameter[actualParams.size()]), classNameProvider);
+      GenerationUtil.writeParameterList(text, actualParams.toArray(new GrParameter[actualParams.size()]), classNameProvider, null);
     }
     else {
       LOG.assertTrue(skipOptional==0);
-      GenerationUtil.writeParameterList(text, method.getParameterList().getParameters(), classNameProvider);
+      GenerationUtil.writeParameterList(text, method.getParameterList().getParameters(), classNameProvider, null);
     }
 
     writeThrowsList(text, method);
@@ -264,20 +260,6 @@ public class StubGenerator implements ClassItemGenerator {
       return results[i];
     }
     return null;
-  }
-
-  private PsiType findOutReturnTypeOfMethod(PsiMethod method) {
-    final PsiType returnType = method.getReturnType();
-    if (returnType != null) return returnType;
-
-    if (classNameProvider.forStubs()) return TypesUtil.getJavaLangObject(method);
-
-    final PsiType smartReturnType = org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getSmartReturnType(method);
-    if (smartReturnType != null) return smartReturnType;
-
-    //todo make smarter. search for usages and infer type from them
-    return TypesUtil.getJavaLangObject(method);
-    //final Collection<PsiReference> collection = MethodReferencesSearch.search(method).findAll();
   }
 
   public Collection<PsiMethod> collectMethods(PsiClass typeDefinition, boolean classDef) {
@@ -338,7 +320,7 @@ public class StubGenerator implements ClassItemGenerator {
     final LightMethodBuilder builder = new LightMethodBuilder(method.getManager(), method.getName());
     substitutor = substitutor.putAll(TypeConversionUtil.getSuperClassSubstitutor(baseClass, typeDefinition, PsiSubstitutor.EMPTY));
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      builder.addParameter(StringUtil.notNullize(parameter.getName()), substitutor.substitute(GenerationUtil.findOutParameterType(parameter)));
+      builder.addParameter(StringUtil.notNullize(parameter.getName()), substitutor.substitute(TypeProvider.getParameterType(parameter)));
     }
     builder.setReturnType(substitutor.substitute(method.getReturnType()));
     for (String modifier : STUB_MODIFIERS) {

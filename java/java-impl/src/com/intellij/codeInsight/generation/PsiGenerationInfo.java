@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfo {
     return myMember;
   }
 
-  public void insert(PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException {
+  public void insert(final PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException {
     final PsiMember existingMember;
     if (myMember instanceof PsiField) {
       existingMember = aClass.findFieldByName(myMember.getName(), false);

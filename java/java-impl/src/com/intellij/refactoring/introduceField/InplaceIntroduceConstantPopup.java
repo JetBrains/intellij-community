@@ -29,8 +29,10 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -47,6 +49,8 @@ import com.intellij.refactoring.util.occurences.OccurenceManager;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.TitlePanel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -131,12 +135,6 @@ public class InplaceIntroduceConstantPopup {
     myWholePanel = new JPanel(new GridBagLayout());
     GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0 , 0, 0), 0, 0);
 
-    final TitlePanel titlePanel = new TitlePanel();
-    titlePanel.setBorder(null);
-    titlePanel.setText(IntroduceConstantHandler.REFACTORING_NAME);
-    gc.gridwidth = 2;
-    myWholePanel.add(titlePanel, gc);
-
     gc.gridwidth = 1;
     gc.gridy = 1;
     myWholePanel.add(createLeftPanel(), gc);
@@ -206,8 +204,12 @@ public class InplaceIntroduceConstantPopup {
 
   private JPanel createLeftPanel() {
     final JPanel left = new JPanel(new GridBagLayout());
+    String initialVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY;
+    if (initialVisibility == null) {
+      initialVisibility = PsiModifier.PUBLIC;
+    }
     myVisibilityCombo = createVisibilityCombo(left, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHEAST, GridBagConstraints.NONE, new Insets(6,5,0,0), 0, 0),
-                                              myProject);
+                                              myProject, initialVisibility);
     myMoveToAnotherClassCb = new JCheckBox("Move to another class");
     myMoveToAnotherClassCb.setMnemonic('m');
     myMoveToAnotherClassCb.setFocusable(false);
@@ -217,7 +219,8 @@ public class InplaceIntroduceConstantPopup {
 
   public static JComboBox createVisibilityCombo(final JPanel left,
                                                 final GridBagConstraints lgc,
-                                                final Project project) {
+                                                final Project project,
+                                                @NotNull final String initialVisibility) {
 
     final JLabel label = new JLabel("Visibility:");
     label.setDisplayedMnemonic('V');
@@ -231,50 +234,64 @@ public class InplaceIntroduceConstantPopup {
       }
     });
     label.setLabelFor(visibilityCombo);
-    visibilityCombo.setSelectedItem(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY);
+    visibilityCombo.setSelectedItem(initialVisibility);
 
     appendActions(visibilityCombo, project);
     lgc.gridx++;
     lgc.insets.top = 2;
-    lgc.insets.left = 0;
+    lgc.insets.left = 2;
     left.add(visibilityCombo, lgc);
     return visibilityCombo;
   }
 
-  public static void appendActions(final JComboBox visibilityCombo, final Project project) {
+  public static void appendActions(final JComboBox comboBox, final Project project) {
+    final boolean toggleStrategy = !UIUtil.isUnderAquaLookAndFeel();
     final boolean[] moveFocusBack = new boolean[] {true};
-    visibilityCombo.addFocusListener(new FocusAdapter() {
+    comboBox.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
         if (!moveFocusBack[0]) {
           moveFocusBack[0] = true;
           return;
         }
-        final int size = visibilityCombo.getModel().getSize();
-        int next = visibilityCombo.getSelectedIndex() + 1;
-        if (next < 0 || next >= size) {
-          if (!UISettings.getInstance().CYCLE_SCROLLING) {
-            return;
+
+        if (toggleStrategy) {
+          final int size = comboBox.getModel().getSize();
+          int next = comboBox.getSelectedIndex() + 1;
+          if (next < 0 || next >= size) {
+            if (!UISettings.getInstance().CYCLE_SCROLLING) {
+              return;
+            }
+            next = (next + size) % size;
           }
-          next = (next + size) % size;
+          comboBox.setSelectedIndex(next);
+          ToolWindowManager.getInstance(project).activateEditorComponent();
         }
-        visibilityCombo.setSelectedIndex(next);
-        ToolWindowManager.getInstance(project).activateEditorComponent();
+        else {
+          JBPopupFactory popupFactory = JBPopupFactory.getInstance();
+          boolean fromTheSameBalloon = popupFactory.getParentBalloonFor(e.getComponent()) == popupFactory.getParentBalloonFor(e.getOppositeComponent());
+          if (!fromTheSameBalloon) {
+            comboBox.showPopup();
+          }
+        }
       }
     });
-    visibilityCombo.addMouseListener(new MouseAdapter() {
+    comboBox.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseEntered(MouseEvent e) {
         moveFocusBack[0] = false;
       }
     });
-    visibilityCombo.addKeyListener(new KeyAdapter() {
+    comboBox.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
         moveFocusBack[0] = true;
+        if (!toggleStrategy && e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0) {
+          ToolWindowManager.getInstance(project).activateEditorComponent();
+        }
       }
     });
-    visibilityCombo.addActionListener(new ActionListener() {
+    comboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         moveFocusBack[0] = true;
@@ -382,7 +399,7 @@ public class InplaceIntroduceConstantPopup {
             myEditor, field, false,
             myTypeSelectorManager.getTypesForAll().length > 1,
             myExpr != null && myExpr.isPhysical() ? myEditor.getDocument().createRangeMarker(myExpr.getTextRange()) : null, InplaceIntroduceConstantPopup.this.getOccurrenceMarkers(),
-            IntroduceConstantHandler.REFACTORING_NAME);
+            IntroduceConstantHandler.REFACTORING_NAME, IntroduceConstantHandler.REFACTORING_NAME);
 
       myDefaultParameterTypePointer =
         SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(myTypeSelectorManager.getDefaultType());
@@ -437,7 +454,7 @@ public class InplaceIntroduceConstantPopup {
     @Override
     protected void moveOffsetAfter(boolean success) {
       if (success) {
-        if (myLocalVariable == null && myExpr == null) {
+        if (myLocalVariable == null && myExpr == null || myConstantName == null) {
           super.moveOffsetAfter(false);
           return;
         }
@@ -549,12 +566,17 @@ public class InplaceIntroduceConstantPopup {
         myReplaceAllCb.addItemListener(new ItemListener() {
           @Override
           public void itemStateChanged(ItemEvent e) {
-            final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-            if (templateState != null) {
-              templateState.gotoEnd(true);
-              myTypeSelectorManager = new TypeSelectorManagerImpl(myProject, myDefaultParameterTypePointer.getType(), null, myExpr, myOccurrences);
-              startIntroduceTemplate(isReplaceAllOccurrences(), myFieldTypePointer.getType());
-            }
+            Runnable restartTemplateRunnable = new Runnable() {
+              public void run() {
+                final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+                if (templateState != null) {
+                  templateState.gotoEnd(true);
+                  myTypeSelectorManager = new TypeSelectorManagerImpl(myProject, myDefaultParameterTypePointer.getType(), null, myExpr, myOccurrences);
+                  startIntroduceTemplate(isReplaceAllOccurrences(), myFieldTypePointer.getType());
+                }
+              }
+            };
+            CommandProcessor.getInstance().executeCommand(myProject, restartTemplateRunnable, IntroduceConstantHandler.REFACTORING_NAME, IntroduceConstantHandler.REFACTORING_NAME);
           }
         });
 

@@ -20,6 +20,8 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Register it via {@link PsiReferenceContributor} or {@link PsiReferenceProviderBean#EP_NAME}
+ *
  * @author ik
  */
 public abstract class PsiReferenceProvider {

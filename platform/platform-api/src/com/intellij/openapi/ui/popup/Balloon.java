@@ -29,6 +29,8 @@ import java.awt.Rectangle;
  */
 public interface Balloon extends Disposable {
 
+  String KEY = "Balloon.property";
+
   void show(PositionTracker<Balloon> tracker, Position preferredPosition);
 
   void show(RelativePoint target, Position preferredPosition);

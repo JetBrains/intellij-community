@@ -27,8 +27,8 @@ public interface CodeStyleSettingsCustomizable {
   String SPACES_WITHIN_TYPE_ARGUMENTS = ApplicationBundle.message("group.spaces.in.type.arguments");
   String SPACES_OTHER = ApplicationBundle.message("group.spaces.other");
 
-  String BLANK_LINES = ApplicationBundle.message("title.blank.lines");
   String BLANK_LINES_KEEP = ApplicationBundle.message("title.keep.blank.lines");
+  String BLANK_LINES = ApplicationBundle.message("title.minimum.blank.lines");
 
   String WRAPPING_KEEP = ApplicationBundle.message("wrapping.keep.when.reformatting");
   String WRAPPING_BRACES = ApplicationBundle.message("wrapping.brace.placement");

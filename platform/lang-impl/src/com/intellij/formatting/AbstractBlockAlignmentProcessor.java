@@ -38,8 +38,7 @@ public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentP
       return Result.TARGET_BLOCK_PROCESSED_NOT_ALIGNED;
     }
     WhiteSpace whiteSpace = context.targetBlock.getWhiteSpace();
-    if (whiteSpace.containsLineFeeds()) {
-      applyIndentToTheFirstBlockOnLine(indent, context);
+    if (whiteSpace.containsLineFeeds() && applyIndentToTheFirstBlockOnLine(indent, context)) {
       return Result.TARGET_BLOCK_ALIGNED;
     }
 
@@ -118,8 +117,10 @@ public abstract class AbstractBlockAlignmentProcessor implements BlockAlignmentP
    * 
    * @param alignmentAnchorIndent   alignment anchor indent
    * @param context                 current processing context
+   * @return                        <code>true</code> if desired alignment indent is applied to the current block;
+   *                                <code>false</code> otherwise
    */
-  protected abstract void applyIndentToTheFirstBlockOnLine(@NotNull IndentData alignmentAnchorIndent, @NotNull Context context);
+  protected abstract boolean applyIndentToTheFirstBlockOnLine(@NotNull IndentData alignmentAnchorIndent, @NotNull Context context);
 
   /**
    * Calculates the difference between alignment anchor indent and current target block indent.

@@ -86,7 +86,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase {
   }
 
   private void runDebugger(String mainClass, Closure cl) {
-    boolean trace = name == 'testClassOutOfSourceRoots'
+    boolean trace = false//name == 'testClassOutOfSourceRoots'
     make()
     edt {
       ProgramRunner runner = ProgramRunner.PROGRAM_RUNNER_EP.extensions.find { it.class == GenericDebuggerRunner }

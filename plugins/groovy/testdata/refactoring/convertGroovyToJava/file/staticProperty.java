@@ -1,7 +1,6 @@
 public class Foo extends groovy.lang.GroovyObjectSupport implements groovy.lang.GroovyObject {
-public java.lang.Object print() {
+public void print() {
 org.codehaus.groovy.runtime.DefaultGroovyMethods.print(Foo.this, CONST);
-return null;
 }
 
 public static java.lang.Integer getCONST() {

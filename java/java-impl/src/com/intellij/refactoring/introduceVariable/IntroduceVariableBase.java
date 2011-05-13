@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -476,10 +476,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                 final PsiVariable elementToRename = variable.get().getElement();
                 if (elementToRename != null) {
                   editor.getCaretModel().moveToOffset(elementToRename.getTextOffset());
-                  final boolean cantChangeFinalModifier = hasWriteAccess || (inFinalContext && choice == OccurrencesChooser.ReplaceChoice.ALL);
+                  final boolean cantChangeFinalModifier = (hasWriteAccess || inFinalContext) && choice == OccurrencesChooser.ReplaceChoice.ALL;
                   final VariableInplaceRenamer renamer =
                     new VariableInplaceIntroducer(project, expression, editor, elementToRename, cantChangeFinalModifier,
-                                                  typeSelectorManager.getTypesForAll().length > 1, exprMarker, occurrenceMarkers, IntroduceVariableBase.REFACTORING_NAME);
+                                                  typeSelectorManager.getTypesForAll().length > 1, exprMarker, occurrenceMarkers, IntroduceVariableBase.REFACTORING_NAME, IntroduceVariableBase.REFACTORING_NAME);
                   PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
                   renamer.performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)));
                 }
@@ -771,9 +771,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     final String variableName = suggestedName.names[0];
     final boolean replaceAll =
       replaceChoice == OccurrencesChooser.ReplaceChoice.ALL || replaceChoice == OccurrencesChooser.ReplaceChoice.NO_WRITE;
-    final boolean declareFinal =
-      !anyAssignmentLHS && (replaceAll &&
-                            declareFinalIfAll || createFinals(project));
+    final boolean declareFinal = replaceAll && (declareFinalIfAll || !anyAssignmentLHS) || createFinals(project);
     final boolean replaceWrite = anyAssignmentLHS && replaceChoice == OccurrencesChooser.ReplaceChoice.ALL;
     return new IntroduceVariableSettings() {
       @Override

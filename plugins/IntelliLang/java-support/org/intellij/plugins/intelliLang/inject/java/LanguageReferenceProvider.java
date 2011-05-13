@@ -18,19 +18,20 @@ package org.intellij.plugins.intelliLang.inject.java;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.patterns.PatternCondition;
-import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import org.intellij.plugins.intelliLang.Configuration;
-import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
+import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
 
 /**
  * Provides references to Language-IDs and RegExp enums for completion.
  */
-final class LanguageReferenceProvider extends PsiReferenceContributor {
+public final class LanguageReferenceProvider extends PsiReferenceContributor {
   private final Configuration myConfig = Configuration.getInstance();
 
   private final Computable<String> ANNOTATION_NAME = new Computable<String>() {

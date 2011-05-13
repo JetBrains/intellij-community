@@ -206,12 +206,19 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
     assertTypeEquals("java.lang.String", "A.groovy");
   }
 
+  public void testSafeInvocationInClassQualifier() {
+    assertTypeEquals("java.lang.Class", "SafeInvocationInClassQualifier.groovy");
+  }
+
   public void testReturnTypeFromMethodClosure() {
     assertTypeEquals("java.lang.String","A.groovy");
   }
 
   public void testNoSOF() {
-    assertTypeEquals("java.lang.Object", "A.groovy");
+    final PsiReference ref = configureByFile(getTestName(true) + "/A.groovy");
+    assertInstanceOf(ref, GrReferenceExpression.class);
+    final PsiType type = ((GrReferenceExpression)ref).getType();
+    assertNull(type);
   }
 
   public void testTraditionalForVar() {

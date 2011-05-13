@@ -34,16 +34,19 @@ public class DumbModeIndicator extends AbstractProjectComponent {
 
   public void projectOpened() {
     myProject.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      boolean myFirstNotification = true; // first dumb mode is always a "forced" dumb mode including initial project scan
       BalloonHandler myHandler;
 
       public void enteredDumbMode() {
+        final boolean first = myFirstNotification;
+        myFirstNotification = false;
         myAlarm.addRequest(new Runnable() {
           public void run() {
             myHandler = DumbService.getInstance(myProject).showDumbModeNotification(
               "Updating project indices...<br>" +
               "Refactorings, usage search and some other features will become available after indexing is complete");
           }
-        }, 1000);
+        }, first? 10000 : 1000);
       }
 
       public void exitDumbMode() {

@@ -105,7 +105,7 @@ public class AnonymousFromMapGenerator {
 
         PsiType returnType;
         if (found != null) {
-          returnType = substitutor.substitute(found.getReturnType());
+          returnType = substitutor.substitute(TypeProvider.getReturnType(found));
         }
         else {
           returnType = signature.getReturnType();
@@ -114,7 +114,7 @@ public class AnonymousFromMapGenerator {
         writeType(builder, returnType, operand);
 
         builder.append(' ').append(name);
-        GenerationUtil.writeParameterList(builder, parameters, new GeneratorClassNameProvider());
+        GenerationUtil.writeParameterList(builder, parameters, new GeneratorClassNameProvider(), context);
 
         final ExpressionContext extended = context.extend();
         extended.setInAnonymousContext(true);

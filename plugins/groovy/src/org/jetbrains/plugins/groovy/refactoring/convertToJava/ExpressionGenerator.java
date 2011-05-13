@@ -283,8 +283,10 @@ public class ExpressionGenerator extends Generator {
   }
 
   private void writeTypeBody(StringBuilder builder, GrAnonymousClassDefinition anonymous) {
-    //todo write type body for anonymous class
-    throw new UnsupportedOperationException();
+    builder.append("{\n");
+    new ClassGenerator(new GeneratorClassNameProvider(), new ClassItemGeneratorImpl(context.extend()))
+      .writeMembers(builder, anonymous, true);
+    builder.append('}');
   }
 
   @Override
@@ -318,43 +320,95 @@ public class ExpressionGenerator extends Generator {
     elseBranch.accept(this);
   }
 
+  /**
+   *  x= expr ->
+   *    x = expr
+   *    x.set(expr)[: x.get()]
+   *  x+= expr ->
+   *    x+=expr
+   *    x= plus(x, expr)
+   *    x.set(plus(x, expr))[:x.get()]
+   */
   @Override
   public void visitAssignmentExpression(GrAssignmentExpression expression) {
     final GrExpression lValue = expression.getLValue();
     GrExpression rValue = expression.getRValue();
     final IElementType token = expression.getOperationToken();
 
+    boolean toWrap = false;
 
-    if (token == mASSIGN) {
-      lValue.accept(this);
-      builder.append(" = ");
-      if (rValue != null) {
-        rValue.accept(this);
-      }
-      return;
+    PsiElement realLValue = PsiUtil.skipParentheses(lValue, false);
+    if (realLValue instanceof GrReferenceExpression) {
+      PsiElement resolved = ((GrReferenceExpression)realLValue).resolve();
+      if (resolved instanceof GrVariable && context.analyzedVars.toWrap((GrVariable)resolved)) toWrap = true;
     }
 
-    final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(expression.multiResolve(false));
-    final PsiElement resolved = resolveResult.getElement();
-
-    if (resolved instanceof PsiMethod) {
-      lValue.accept(this);
-      builder.append(" = ");
-      if (rValue == null) {
-        rValue = factory.createExpressionFromText("null");
-      }
-      invokeMethodOn(
-        ((PsiMethod)resolved),
-        lValue,
-        new GrExpression[]{rValue},
-        GrNamedArgument.EMPTY_ARRAY,
-        GrClosableBlock.EMPTY_ARRAY,
-        resolveResult.getSubstitutor(),
-        expression
-      );
+    StringBuilder curBuilder;
+    ExpressionGenerator curGenerator;
+    boolean doNeedExpression = toWrap && PsiUtil.resultOfExpressionUsed(expression);
+    if (doNeedExpression) {
+      curBuilder = new StringBuilder();
+      curGenerator = new ExpressionGenerator(curBuilder, context);
     }
     else {
-      writeSimpleBinaryExpression(expression.getOpToken(), lValue, rValue);
+      curBuilder = builder;
+      curGenerator = this;
+    }
+
+
+    lValue.accept(curGenerator);
+    if (toWrap) {
+      curBuilder.append(".set(");
+    }
+    else {
+      curBuilder.append(" = ");
+    }
+
+    if (token == mASSIGN) {
+      if (rValue != null) {
+        rValue.accept(curGenerator);
+      }
+    }
+    else {
+      final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(expression.multiResolve(false));
+      final PsiElement resolved = resolveResult.getElement();
+
+      if (resolved instanceof PsiMethod &&
+          !shouldNotReplaceOperatorWithMethod(lValue.getType(), rValue, expression.getOperationToken())) {
+        if (rValue == null) {
+          rValue = factory.createExpressionFromText("null");
+        }
+        curGenerator.invokeMethodOn(
+          ((PsiMethod)resolved),
+          (GrExpression)lValue.copy(),
+          new GrExpression[]{rValue},
+          GrNamedArgument.EMPTY_ARRAY,
+          GrClosableBlock.EMPTY_ARRAY,
+          resolveResult.getSubstitutor(),
+          expression
+        );
+      }
+      else {
+        if (toWrap) {
+          GrBinaryExpression bin =
+            (GrBinaryExpression)factory.createExpressionFromText("a" + expression.getOpToken().getText().charAt(0) + "b", expression);
+          GrExpression newLValue = (GrExpression)bin.getLeftOperand().replace(lValue);
+          GrExpression newRValue = rValue == null ? null : (GrExpression)bin.getRightOperand().replace(rValue);
+          curGenerator.writeSimpleBinaryExpression(bin.getOperationToken(), newLValue, newRValue);
+        }
+        else {
+          curGenerator.writeSimpleBinaryExpression(expression.getOpToken(), lValue, rValue);
+        }
+      }
+    }
+    if (toWrap) {
+      curBuilder.append(')');
+      if (doNeedExpression) {
+        curBuilder.append(';');
+        context.myStatements.add(curBuilder.toString());
+        lValue.accept(this);
+        builder.append(".get()");
+      }
     }
   }
 
@@ -386,9 +440,7 @@ public class ExpressionGenerator extends Generator {
       builder.append(')');
       return;
     }
-    if (GenerationSettings.dontReplaceOperatorsWithMethodsForNumbers &&
-        (TypesUtil.isNumericType(ltype) && (right == null || TypesUtil.isNumericType(right.getType())) ||
-         op == mPLUS && ltype != null && TypesUtil.isClassType(ltype, CommonClassNames.JAVA_LANG_STRING))) {
+    if (shouldNotReplaceOperatorWithMethod(ltype, right, op)) {
       writeSimpleBinaryExpression(token, left, right);
       return;
     }
@@ -416,6 +468,12 @@ public class ExpressionGenerator extends Generator {
     else {
       writeSimpleBinaryExpression(token, left, right);
     }
+  }
+
+  private static boolean shouldNotReplaceOperatorWithMethod(PsiType ltype, @Nullable GrExpression right, IElementType op) {
+    return GenerationSettings.dontReplaceOperatorsWithMethodsForNumbers &&
+        (TypesUtil.isNumericType(ltype) && (right == null || TypesUtil.isNumericType(right.getType())) ||
+         (op == mPLUS || op == mPLUS_ASSIGN) && ltype != null && TypesUtil.isClassType(ltype, CommonClassNames.JAVA_LANG_STRING));
   }
 
   private void writeSimpleBinaryExpression(PsiElement opToken, GrExpression left, GrExpression right) {
@@ -448,15 +506,20 @@ public class ExpressionGenerator extends Generator {
         }
       }
 
-      invokeMethodOn(
-        ((PsiMethod)resolved),
-        operand,
-        GrExpression.EMPTY_ARRAY,
-        GrNamedArgument.EMPTY_ARRAY,
-        GrClosableBlock.EMPTY_ARRAY,
-        resolveResult.getSubstitutor(),
-        expression
-      );
+      if (operand != null && shouldNotReplaceOperatorWithMethod(operand.getType(), null, expression.getOperationTokenType())) {
+        writeSimpleUnary(operand, expression, this);
+      }
+      else {
+        invokeMethodOn(
+          ((PsiMethod)resolved),
+          operand,
+          GrExpression.EMPTY_ARRAY,
+          GrNamedArgument.EMPTY_ARRAY,
+          GrClosableBlock.EMPTY_ARRAY,
+          resolveResult.getSubstitutor(),
+          expression
+        );
+      }
     }
     else if (operand != null) {
       if (postfix) {
@@ -493,14 +556,19 @@ public class ExpressionGenerator extends Generator {
       if (setter == null) return false;
 
       final ExpressionGenerator generator = new ExpressionGenerator(new StringBuilder(), context);
-      generator.invokeMethodOn(
-        method,
-        operand,
-        GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
-        resolveResult.getSubstitutor(),
-        unary
-      );
 
+      if (shouldNotReplaceOperatorWithMethod(operand.getType(), null, unary.getOperationTokenType())) {
+        writeSimpleUnary(operand, unary, generator);
+      }
+      else {
+        generator.invokeMethodOn(
+          method,
+          operand,
+          GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
+          resolveResult.getSubstitutor(),
+          unary
+        );
+      }
       final GrExpression fromText = factory.createExpressionFromText(generator.toString(), unary);
       invokeMethodOn(
         setter,
@@ -511,28 +579,71 @@ public class ExpressionGenerator extends Generator {
       );
     }
     else if (resolved instanceof PsiVariable) {
-      PsiElement parent = unary.getParent();
-      boolean addParentheses = !(parent instanceof GrControlStatement ||
-                                 parent instanceof GrStatementOwner ||
-                                 parent instanceof GrArgumentList ||
-                                 parent instanceof GrParenthesizedExpression);
-      if (addParentheses) {
-        builder.append('(');
+      boolean wrap = context.analyzedVars.toWrap((PsiVariable)resolved);
+      boolean doNeedExpression = PsiUtil.resultOfExpressionUsed(unary);
+      StringBuilder curBuilder;
+      ExpressionGenerator curGenerator;
+      if (doNeedExpression && wrap) {
+        curBuilder = new StringBuilder();
+        curGenerator = new ExpressionGenerator(curBuilder, context);
       }
-      operand.accept(this);
-      builder.append(" = ");
-      invokeMethodOn(
-        method,
-        operand,
-        GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
-        resolveResult.getSubstitutor(),
-        unary
-      );
-      if (addParentheses) {
-        builder.append(')');
+      else {
+        curBuilder = builder;
+        curGenerator = this;
+      }
+
+
+      PsiElement parent = unary.getParent();
+      boolean shouldInsertParentheses = parent instanceof GrExpression;
+      if (shouldInsertParentheses) {
+        curBuilder.append('(');
+      }
+
+      operand.accept(curGenerator);
+      if (wrap) {
+        curBuilder.append(".set(");
+      }
+      else {
+        curBuilder.append(" = ");
+      }
+      if (shouldNotReplaceOperatorWithMethod(operand.getType(), null, unary.getOperationTokenType())) {
+        writeSimpleUnary((GrExpression)operand.copy(), unary, curGenerator);
+      }
+      else {
+        curGenerator.invokeMethodOn(
+          method,
+          (GrExpression)operand.copy(),
+          GrExpression.EMPTY_ARRAY, GrNamedArgument.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY,
+          resolveResult.getSubstitutor(),
+          unary
+        );
+      }
+      if (shouldInsertParentheses) {
+        curBuilder.append(')');
+      }
+      if (wrap) {
+        curBuilder.append(')');
+        if (doNeedExpression) {
+          curBuilder.append(';');
+          context.myStatements.add(curBuilder.toString());
+          operand.accept(this);
+          builder.append(".get()");
+        }
       }
     }
     return true;
+  }
+
+  private static void writeSimpleUnary(GrExpression operand, GrUnaryExpression unary, ExpressionGenerator generator) {
+    String opTokenText = unary.getOperationToken().getText();
+    boolean isPrefix = !(unary instanceof GrPostfixExpression);
+    if (isPrefix) {
+      generator.getBuilder().append(opTokenText);
+    }
+    operand.accept(generator);
+    if (!isPrefix) {
+      generator.getBuilder().append(opTokenText);
+    }
   }
 
   @Override
@@ -632,7 +743,16 @@ public class ExpressionGenerator extends Generator {
       }
       if (resolved instanceof PsiNamedElement) {
         final String refName = ((PsiNamedElement)resolved).getName();
-        builder.append(refName);
+
+        if (resolved instanceof GrVariable && context.analyzedVars.toWrap((GrVariable)resolved)) {
+          builder.append(context.analyzedVars.toVarName((GrVariable)resolved));
+          if (!PsiUtil.isAccessedForWriting(referenceExpression)) {
+            builder.append(".get()");
+          }
+        }
+        else {
+          builder.append(refName);
+        }
       }
       else {
         final String refName = referenceExpression.getReferenceName();
@@ -684,7 +804,10 @@ public class ExpressionGenerator extends Generator {
     final PsiElement resolved = expr.resolve();
     LOG.assertTrue(resolved instanceof PsiClass);
 
-    builder.append(((PsiClass)resolved).getQualifiedName()).append(".").append(expr.getReferenceName());
+    if (!(resolved instanceof PsiAnonymousClass)) {
+      builder.append(((PsiClass)resolved).getQualifiedName()).append(".");
+    }
+    builder.append(expr.getReferenceName());
   }
 
   @Override

@@ -186,6 +186,8 @@ public class OptionsTree extends JPanel implements Disposable, OptionsEditorColl
             public void run() {
               final EditorNode editorNode = myConfigurable2Node.get(configurable);
               FilteringTreeStructure.Node editorUiNode = myBuilder.getVisibleNodeFor(editorNode);
+              if (editorUiNode == null) return;
+
               if (!myBuilder.getSelectedElements().contains(editorUiNode)) {
                 myBuilder.select(editorUiNode, new Runnable() {
                   public void run() {

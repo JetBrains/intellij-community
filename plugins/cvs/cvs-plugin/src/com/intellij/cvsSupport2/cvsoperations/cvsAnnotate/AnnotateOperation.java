@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsAnnotate;
 
+import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
-import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperationHelper;
-import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperation;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
-import com.intellij.cvsSupport2.CvsUtil;
+import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperation;
+import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperationHelper;
 import com.intellij.openapi.diagnostic.Logger;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.annotate.AnnotateCommand;
@@ -29,6 +29,8 @@ import org.netbeans.lib.cvsclient.command.annotate.AnnotateCommand;
 import java.io.File;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -37,6 +39,8 @@ import java.util.List;
 public class AnnotateOperation extends LocalPathIndifferentOperation {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.AnnotateOperation");
+
+  private static final Collection<String> ourDoNotSupportingAnnotateBinaryRoots = new HashSet<String>();
 
   private final String myRevision;
   private final List<Annotation> myAnnotations = new ArrayList<Annotation>();
@@ -67,7 +71,16 @@ public class AnnotateOperation extends LocalPathIndifferentOperation {
     AnnotateCommand result = new AnnotateCommand();
     myHelper.addFilesTo(result);
     result.setAnnotateByRevisionOrTag(myRevision);
+
+    if (!ourDoNotSupportingAnnotateBinaryRoots.contains(root.getCvsRootAsString())) {
+      result.setAnnotateBinary(true);
+    }
+
     return result;
+  }
+
+  public static void doesNotSupportAnnotateBinary(CvsEnvironment root) {
+    ourDoNotSupportingAnnotateBinaryRoots.add(root.getCvsRootAsString());
   }
 
   public Annotation[] getLineAnnotations(){

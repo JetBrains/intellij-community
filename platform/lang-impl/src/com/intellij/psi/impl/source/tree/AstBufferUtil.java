@@ -50,7 +50,7 @@ public class AstBufferUtil {
         if (composite instanceof LazyParseableElement) {
           LazyParseableElement lpe = (LazyParseableElement)composite;
           int lpeResult = lpe.copyTo(buffer, result[0]);
-          if (lpeResult > 0) {
+          if (lpeResult >= 0) {
             result[0] = lpeResult;
             return;
           }

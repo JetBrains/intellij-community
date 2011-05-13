@@ -76,6 +76,7 @@ public class CvsUtil {
   @NonNls public static final String STICKY_NON_BRANCH_TAG_PREFIX = "N";
   @NonNls public static final String HEAD = "HEAD";
   @NonNls public static final String BASE = "Base";
+  @NonNls public static final String REVISION_PATTERN = "\\d+(\\.\\d+)*";
 
   public static void skip(InputStream inputStream, int length) throws IOException {
     int skipped = 0;
@@ -496,8 +497,7 @@ public class CvsUtil {
 
   private static void deleteAllOtherRevisions(final VirtualFile file, final String storedFilename) {
     File ioFile = new File(file.getPath());
-    final Pattern pattern = Pattern.compile("\\\u002E#" + ioFile.getName().replace(".", "\\\u002E") + "\u002E" +
-      CvsVcs2.staticRevisionPattern());
+    final Pattern pattern = Pattern.compile("\\\u002E#" + ioFile.getName().replace(".", "\\\u002E") + "\u002E" + REVISION_PATTERN);
     final File dir = new File(getAdminDir(ioFile.getParentFile()), BASE_REVISIONS_DIR);
     File[] files = dir.listFiles(new FilenameFilter() {
       public boolean accept(final File dir, final String name) {

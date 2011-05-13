@@ -85,8 +85,7 @@ public class ClassLiteralGetter {
       try {
         resultSet.consume(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new ClassLiteralLookupElement((PsiClassType)type, context)));
       }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
+      catch (IncorrectOperationException ignored) {
       }
     }
   }

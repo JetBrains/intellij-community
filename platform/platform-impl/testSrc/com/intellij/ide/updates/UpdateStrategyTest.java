@@ -81,6 +81,20 @@ public class UpdateStrategyTest extends TestCase {
     Assert.assertEquals("IntelliJ IDEA X EAP", newChannel.getName());
   }
 
+  public void testNewChannelWithOlderBuild() {
+    final TestUpdateSettings settings = new TestUpdateSettings(ChannelStatus.EAP);
+    //first time load
+    UpdateStrategy strategy = new UpdateStrategy(10, BuildNumber.fromString("IU-107.80"), UpdatesInfoXppParserTest.InfoReader.read("idea-newChannel.xml"), settings);
+
+    final CheckForUpdateResult result = strategy.checkForUpdates();
+    Assert.assertEquals(UpdateStrategy.State.LOADED, result.getState());
+    final BuildInfo update = result.getNewBuildInSelectedChannel();
+    Assert.assertNull(update);
+
+    final UpdateChannel newChannel = result.getChannelToPropose();
+    Assert.assertNull(newChannel);
+  }
+
   public void testNewChannelAndNewBuildAppear() {
     //assume user has version 9 eap subscription (default or selected)
     //and new channels appears - eap of version 10 is there

@@ -419,7 +419,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       }
       if (argumentTypes != null &&
           !PsiUtil.isApplicable(argumentTypes, method, methodResolveResult.getSubstitutor(),
-                                ResolveUtil.isInUseScope(methodResolveResult), place)) {
+                                ResolveUtil.isInUseScope(methodResolveResult), place, false)) {
 
         //check for implicit use of property getter which returns closure
         if (GroovyPropertyUtils.isSimplePropertyGetter(method)) {

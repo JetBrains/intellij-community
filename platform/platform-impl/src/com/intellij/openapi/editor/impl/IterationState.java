@@ -120,13 +120,17 @@ public final class IterationState {
     private Iterator<RangeHighlighterEx> myIterator;
 
     private void init(MarkupModelEx markupModel, int start) {
-      myIterator = markupModel.iteratorFrom(new TextRangeInterval(start, myDocument.getTextLength()));
-
+      myIterator = markupModel.overlappingIterator(start, myDocument.getTextLength());
+      int skipped = 0;
       while (myIterator.hasNext()) {
-        myNextHighlighter = myIterator.next();
-        if (!skipHighlighter(myNextHighlighter)) break;
-        else myNextHighlighter = null;
+        RangeHighlighterEx highlighter = myIterator.next();
+        if (!skipHighlighter(highlighter)) {
+          myNextHighlighter = highlighter;
+          break;
+        }
+        skipped++;
       }
+      int i = skipped;
     }
 
     private void advance() {

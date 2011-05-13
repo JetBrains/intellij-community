@@ -17,11 +17,14 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.Patches;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,10 +37,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -87,6 +87,7 @@ public abstract class ChooseByNameBase {
   private boolean myPreselectInitialText;
   private final Reference<PsiElement> myContext;
   private boolean mySearchInAnyPlace = false;
+  private NameUtil.Matcher myLastMatcher;
 
   protected Component myPreviouslyFocusedComponent;
 
@@ -421,13 +422,16 @@ public abstract class ChooseByNameBase {
                 });
               }
               else {
-                if (e.getOppositeComponent() != null && myList.isShowing() && (e.getOppositeComponent() == myList || SwingUtilities.isDescendingFrom(myList, e.getOppositeComponent()))) {
+                Component oppositeComponent = e.getOppositeComponent();
+                if (oppositeComponent != null && !(oppositeComponent instanceof JFrame) &&
+                    myList.isShowing() &&
+                    (oppositeComponent == myList || SwingUtilities.isDescendingFrom(myList, oppositeComponent))) {
                   return;
                 }
                 hideHint();
               }
             }
-          }, 200);
+                                 }, 200);
         }
       });
     }
@@ -686,6 +690,24 @@ public abstract class ChooseByNameBase {
     myTextPopup.setLocation(bounds.getLocation());
 
     new MnemonicHelper().register(myTextFieldPanel);
+    final boolean previousUpdate;
+    final DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
+    if (daemonCodeAnalyzer != null) {
+      previousUpdate = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).isUpdateByTimerEnabled();
+      daemonCodeAnalyzer.setUpdateByTimerEnabled(false);
+    }
+    else {
+      previousUpdate = false;
+    }
+
+    Disposer.register(myTextPopup, new Disposable() {
+      @Override
+      public void dispose() {
+        if (daemonCodeAnalyzer != null) {
+          daemonCodeAnalyzer.setUpdateByTimerEnabled(previousUpdate);
+        }
+      }
+    });
     myTextPopup.show(layeredPane);
   }
 
@@ -852,17 +874,23 @@ public abstract class ChooseByNameBase {
   private int detectBestStatisticalPosition() {
     int best = 0;
     int bestPosition = 0;
+    int bestMatch = Integer.MIN_VALUE;
     final int count = myListModel.getSize();
+
+    NameUtil.Matcher matcher = buildPatternMatcher(getNamePattern(myTextField.getText()));
 
     final String statContext = statisticsContext();
     for (int i = 0; i < count; i++) {
       final Object modelElement = myListModel.getElementAt(i);
       String text = EXTRA_ELEM.equals(modelElement) ? null : myModel.getFullName(modelElement);
       if (text != null) {
+        String shortName = myModel.getElementName(modelElement);
+        int match = shortName != null && matcher instanceof NameUtil.MinusculeMatcher ? ((NameUtil.MinusculeMatcher)matcher).matchingDegree(shortName) : Integer.MIN_VALUE;
         int stats = StatisticsManager.getInstance().getUseCount(new StatisticsInfo(statContext, text));
-        if (stats > best) {
+        if (stats > best || stats == best && match > bestMatch) {
           best = stats;
           bestPosition = i;
+          bestMatch = match;
         }
       }
     }

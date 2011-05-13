@@ -16,8 +16,10 @@
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -49,5 +51,22 @@ public interface TestResultsViewer extends Disposable {
     void onTestingStarted(TestResultsViewer sender);
     void onTestingFinished(TestResultsViewer sender);
     void onTestNodeAdded(TestResultsViewer sender, SMTestProxy test);
+  }
+
+  class SMEventsAdapter implements  EventsListener {
+
+    @Override
+    public void onTestingStarted(TestResultsViewer sender) {}
+
+    @Override
+    public void onTestingFinished(TestResultsViewer sender) {}
+
+    @Override
+    public void onTestNodeAdded(TestResultsViewer sender, SMTestProxy test) {}
+
+    @Override
+    public void onSelected(@Nullable SMTestProxy selectedTestProxy,
+                           @NotNull TestResultsViewer viewer,
+                           @NotNull TestFrameworkRunningModel model) {}
   }
 }

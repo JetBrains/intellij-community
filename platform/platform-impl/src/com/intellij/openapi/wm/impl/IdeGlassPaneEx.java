@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.wm.IdeGlassPane;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -30,4 +31,6 @@ public interface IdeGlassPaneEx extends IdeGlassPane {
   Component getComponent(int index);
 
   boolean isInModalContext();
+
+  JComponent getProxyComponent();
 }

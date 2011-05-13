@@ -688,6 +688,12 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
               public VirtualFile[] getChildren() {
                 return getRoots(fs);
               }
+
+              @Override
+              public VirtualFileSystemEntry findChild(@NotNull String name) {
+                if (name.length() == 0) return null;
+                return findRoot(name, fs);
+              }
             };
           }
           if (!fs.exists(root)) return null;

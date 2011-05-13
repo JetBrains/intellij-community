@@ -52,4 +52,6 @@ public interface GrReferenceExpression extends GrExpression, GrReferenceElement<
   GroovyResolveResult[] getSameNameVariants();
 
   GrReferenceExpression bindToElementViaStaticImport(@NotNull PsiClass qualifierClass);
+
+  GroovyResolveResult[] resolveByShape();
 }

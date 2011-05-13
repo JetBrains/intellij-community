@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,10 +50,11 @@ public abstract class SmartPointerManager {
   @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(@NotNull E element);
 
   /**
+   * This method is cheaper than dereferencing both pointers and comparing the result.
+   *
    * @param pointer1 smart pointer to compare
    * @param pointer2 smart pointer to compare
    * @return true if both pointers point to the same PSI element.
-   * This method is cheaper than dereferencing both pointers and comparing the result.
    */
   public abstract boolean pointToTheSameElement(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2);
 }

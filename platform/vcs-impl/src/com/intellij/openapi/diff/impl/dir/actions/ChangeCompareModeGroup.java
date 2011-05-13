@@ -16,12 +16,16 @@
 package com.intellij.openapi.diff.impl.dir.actions;
 
 import com.intellij.ide.diff.DirDiffSettings;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
+import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 
 /**
@@ -29,20 +33,39 @@ import java.util.ArrayList;
  */
 public class ChangeCompareModeGroup extends ComboBoxAction {
   private final DefaultActionGroup myGroup;
+  private DirDiffSettings mySettings;
 
   public ChangeCompareModeGroup(DirDiffTableModel model) {
-    getTemplatePresentation().setText("Compare by");
+    mySettings = model.getSettings();
+    getTemplatePresentation().setText(mySettings.compareMode.getPresentableName());
+    final ArrayList<ChangeCompareModeAction> actions = new ArrayList<ChangeCompareModeAction>();
     if (model.getSettings().showCompareModes) {
-      final ArrayList<ChangeCompareModeAction> actions = new ArrayList<ChangeCompareModeAction>();
       for (DirDiffSettings.CompareMode mode : DirDiffSettings.CompareMode.values()) {
         actions.add(new ChangeCompareModeAction(model, mode));
       }
-      myGroup = new DefaultActionGroup(actions.toArray(new ChangeCompareModeAction[actions.size()]));
-    } else {
-      getTemplatePresentation().setEnabled(false);
-      getTemplatePresentation().setVisible(false);
-      myGroup = new DefaultActionGroup();
     }
+    else {
+      getTemplatePresentation().setVisible(false);
+      getTemplatePresentation().setEnabled(false);
+    }
+    myGroup = new DefaultActionGroup(actions.toArray(new ChangeCompareModeAction[actions.size()]));
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    getTemplatePresentation().setText(mySettings.compareMode.getPresentableName());
+    e.getPresentation().setText(mySettings.compareMode.getPresentableName());
+  }
+
+  @Override
+  public JComponent createCustomComponent(Presentation presentation) {
+    JPanel panel = new JPanel(new BorderLayout());
+    final JLabel label = new JLabel("Compare by:");
+    panel.add(label, BorderLayout.WEST);
+    panel.add(super.createCustomComponent(presentation).getComponent(0), BorderLayout.CENTER);
+    panel.setBorder(IdeBorderFactory.createEmptyBorder(2, 6, 2, 0));
+    return panel;
   }
 
   @NotNull

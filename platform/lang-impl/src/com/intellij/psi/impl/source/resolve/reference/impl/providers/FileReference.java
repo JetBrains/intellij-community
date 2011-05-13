@@ -30,6 +30,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -193,19 +195,35 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
       else {
         final String decoded = decode(text);
         if (decoded != null) {
-          processVariants(context, new PsiFileSystemItemProcessor() {
-            public boolean acceptItem(String name, boolean isDirectory) {
-              return caseSensitive ? decoded.equals(name) : decoded.compareToIgnoreCase(name) == 0;
+          if (context instanceof PsiDirectory && caseSensitivityApplies((PsiDirectory)context, caseSensitive)) {
+            // optimization: do not load all children into VFS
+            PsiDirectory directory = (PsiDirectory)context;
+            PsiFileSystemItem child = directory.findFile(decoded);
+            if (child == null) child = directory.findSubdirectory(decoded);
+            if (child != null) {
+              result.add(new PsiElementResolveResult(getOriginalFile(child)));
             }
+          }
+          else {
+            processVariants(context, new PsiFileSystemItemProcessor() {
+              public boolean acceptItem(String name, boolean isDirectory) {
+                return caseSensitive ? decoded.equals(name) : decoded.compareToIgnoreCase(name) == 0;
+              }
 
-            public boolean execute(PsiFileSystemItem element) {
-              result.add(new PsiElementResolveResult(getOriginalFile(element)));
-              return true;
-            }
-          });
+              public boolean execute(PsiFileSystemItem element) {
+                result.add(new PsiElementResolveResult(getOriginalFile(element)));
+                return true;
+              }
+            });
+          }
         }
       }
     }
+  }
+
+  private static boolean caseSensitivityApplies(PsiDirectory context, boolean caseSensitive) {
+    VirtualFileSystem fs = context.getVirtualFile().getFileSystem();
+    return fs instanceof NewVirtualFileSystem && ((NewVirtualFileSystem)fs).isCaseSensitive() == caseSensitive;
   }
 
   private boolean isAllowedEmptyPath(String text) {

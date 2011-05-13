@@ -58,7 +58,7 @@
 
     <usageTypeProvider implementation="com.intellij.util.xml.DomUsageTypeProvider"/>
 
-    <psi.referenceContributor implementation="com.intellij.util.xml.impl.DomReferenceContributor"/>
+    <psi.referenceContributor language="XML" implementation="com.intellij.util.xml.impl.DomReferenceContributor"/>
 
     <xml.elementDescriptorProvider implementation="com.intellij.util.xml.impl.DomDescriptorProvider"/>
 

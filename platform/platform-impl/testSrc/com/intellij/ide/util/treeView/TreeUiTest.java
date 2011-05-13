@@ -115,6 +115,20 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     final ActionCallback done = new ActionCallback();
     final Ref<ProgressIndicator> indicatorRef = new Ref<ProgressIndicator>();
+    final Ref<ActionCallback> ready = new Ref<ActionCallback>();
+
+    myElementUpdateHook = new ElementUpdateHook() {
+      @Override
+      public void onElementAction(String action, Object element) {
+        if (new NodeElement("jetbrains").equals(element) && ready.get() == null) {
+          ActionCallback readyCallback = new ActionCallback();
+          assertFalse(getBuilder().getUi().isReady());
+          getBuilder().getReady(this).notify(readyCallback);
+          ready.set(readyCallback);
+        }
+      }
+    };
+
     invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -137,6 +151,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     });
 
     assertTrue(done.isDone());
+    assertNotNull(ready.get());
+    assertTrue(ready.get().isDone());
 
     assertTree("-/\n" +
                " -com\n" +
@@ -2358,6 +2374,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public static class YieldingUpdate extends TreeUiTest {
     public YieldingUpdate() {
       super(true, false);
+    }
+
+    @Override
+    public void testBatchUpdate() throws Exception {
+      super.testBatchUpdate();
     }
   }
 

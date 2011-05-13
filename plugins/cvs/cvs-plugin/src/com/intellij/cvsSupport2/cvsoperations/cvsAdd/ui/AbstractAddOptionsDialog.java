@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,14 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsAdd.ui;
 
-import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
-import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.cvsoperations.cvsAdd.AddedFileInfo;
 import com.intellij.cvsSupport2.ui.Options;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.OptionsDialog;
-import com.intellij.util.ui.OptionsDialog;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
 import java.util.Collection;
 
 /**
@@ -54,9 +51,7 @@ public abstract class AbstractAddOptionsDialog extends OptionsDialog {
   public AbstractAddOptionsDialog(Project project, Options options) {
     super(project);
     myOptions = options;
-    UIUtil.setActionNameAndMnemonic(com.intellij.CvsBundle.message("button.text.add.to.cvs"), getOKAction());
-    UIUtil.setActionNameAndMnemonic(com.intellij.CvsBundle.message("button.text.dont.add.to.cvs"), getCancelAction());
-
+    UIUtil.setActionNameAndMnemonic(CvsBundle.message("button.text.add.to.cvs"), getOKAction());
   }
 
   protected boolean isToBeShown() {

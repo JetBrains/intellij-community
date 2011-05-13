@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -36,6 +37,7 @@ public class DefaultLineWrapPositionStrategyTest {
 
   private Mockery                         myMockery;
   private DefaultLineWrapPositionStrategy myStrategy;
+  private Project                         myProject;
 
   @Before
   public void setUp() {
@@ -44,6 +46,7 @@ public class DefaultLineWrapPositionStrategyTest {
     myMockery = new JUnit4Mockery() {{
       setImposteriser(ClassImposteriser.INSTANCE);
     }};
+    myProject = myMockery.mock(Project.class);
   }
 
   @Test
@@ -82,7 +85,7 @@ public class DefaultLineWrapPositionStrategyTest {
     final Context context = new Context(document);
     context.init();
     int actual = myStrategy.calculateWrapPosition(
-      createMockDocument(context.document), 0, context.document.length(), context.edgeIndex, allowToBeyondMaxPreferredOffset
+      createMockDocument(context.document), myProject, 0, context.document.length(), context.edgeIndex, allowToBeyondMaxPreferredOffset
     );
     assertSame(context.wrapIndex, actual);
   }

@@ -57,7 +57,10 @@ abstract class CompletionAutoPopupTestCase extends LightCodeInsightFixtureTestCa
 
   protected void joinCompletion() {
     for (j in 1..4000) {
-      LookupImpl l = LookupManager.getInstance(project).activeLookup
+      LookupImpl l = null
+      edt {
+        l = LookupManager.getInstance(project).activeLookup
+      }
       if (!l || !l.calculating) {
         joinAlarm() // for invokeLater in CompletionProgressIndicator.stop()
         return

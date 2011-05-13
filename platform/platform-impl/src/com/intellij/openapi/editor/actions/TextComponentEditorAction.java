@@ -31,7 +31,6 @@ import javax.swing.text.JTextComponent;
 public abstract class TextComponentEditorAction extends EditorAction {
   protected TextComponentEditorAction(final EditorActionHandler defaultHandler) {
     super(defaultHandler);
-    setEnabledInModalContext(true);
   }
 
   @Nullable

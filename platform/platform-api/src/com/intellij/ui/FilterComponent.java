@@ -28,16 +28,39 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 
 /**
- * User: anna
- * Date: 16-Dec-2005
+ * @author Anna Kozlova
+ * @author Konstantin Bulenkov
  */
 public abstract class FilterComponent extends JPanel {
   private final SearchTextFieldWithStoredHistory myFilter;
   private final Alarm myUpdateAlarm = new Alarm();
+  private boolean myOnTheFly;
 
   public FilterComponent(@NonNls String propertyName, int historySize) {
+    this(propertyName, historySize, true);
+  }
+
+  public FilterComponent(@NonNls String propertyName, int historySize, boolean onTheFlyUpdate) {
     super(new BorderLayout());
-    myFilter = new SearchTextFieldWithStoredHistory(propertyName);
+    myOnTheFly = onTheFlyUpdate;
+    myFilter = new SearchTextFieldWithStoredHistory(propertyName) {
+      @Override
+      protected Runnable createItemChosenCallback(JList list) {
+        final Runnable callback = super.createItemChosenCallback(list);
+        return new Runnable() {
+          @Override
+          public void run() {
+            callback.run();
+            filter();
+          }
+        };
+      }
+
+      @Override
+      protected Component getPopupLocationComponent() {
+        return FilterComponent.this.getPopupLocationComponent();
+      }
+    };
     myFilter.getTextEditor().addKeyListener(new KeyAdapter() {
       //to consume enter in combo box - do not process this event by default button from DialogWrapper
       public void keyPressed(final KeyEvent e) {
@@ -45,6 +68,8 @@ public abstract class FilterComponent extends JPanel {
           e.consume();
           myFilter.addCurrentTextToHistory();
           filter();
+        } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+          onEscape(e);
         }
       }
     });
@@ -61,19 +86,29 @@ public abstract class FilterComponent extends JPanel {
       public void changedUpdate(DocumentEvent e) {
         onChange();
       }
-
-      public void onChange() {
-        myUpdateAlarm.cancelAllRequests();
-        myUpdateAlarm.addRequest(new Runnable(){
-          public void run() {
-            onlineFilter();
-          }
-        }, 100, ModalityState.stateForComponent(myFilter));
-      }
     });
 
     myFilter.setHistorySize(historySize);
     add(myFilter, BorderLayout.CENTER);    
+  }
+
+  protected JComponent getPopupLocationComponent() {
+    return myFilter;
+  }
+
+  public JTextField getTextEditor() {
+    return myFilter.getTextEditor();
+  }
+
+  private void onChange() {
+    if (myOnTheFly) {
+      myUpdateAlarm.cancelAllRequests();
+      myUpdateAlarm.addRequest(new Runnable(){
+        public void run() {
+          onlineFilter();
+        }
+      }, 100, ModalityState.stateForComponent(myFilter));
+    }
   }
 
   public void setHistorySize(int historySize){
@@ -82,6 +117,9 @@ public abstract class FilterComponent extends JPanel {
 
   public void reset(){
     myFilter.reset();
+  }
+
+  protected void onEscape(KeyEvent e) {
   }
 
   public String getFilter(){

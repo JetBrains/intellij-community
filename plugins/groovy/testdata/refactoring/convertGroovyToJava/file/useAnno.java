@@ -18,9 +18,8 @@ return null;
 
 }
 
-@p.I public java.lang.Object foo(java.lang.Object x) {
+@p.I public void foo(@p.I final java.lang.Object x) {
 @p.I java.lang.Object a;
-return null;
 }
 
 public useAnno(groovy.lang.Binding binding) {

@@ -16,10 +16,7 @@
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.Classifier;
-import com.intellij.codeInsight.lookup.ClassifierFactory;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementWeigher;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -262,13 +259,31 @@ public class CompletionServiceImpl extends CompletionService{
     }
 
     for (final Weigher weigher : WeighingService.getWeighers(CompletionService.RELEVANCE_KEY)) {
-      sorter = sorter.weigh(new LookupElementWeigher(weigher.toString()) {
-        @NotNull
-        @Override
-        public Comparable weigh(@NotNull LookupElement element) {
-          return new NegatingComparable(weigher.weigh(element, location));
-        }
-      });
+      final String id = weigher.toString();
+      if ("prefix".equals(id)) {
+        sorter = sorter.withClassifier(new ClassifierFactory<LookupElement>(id) {
+          @Override
+          public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
+            return new ComparingClassifier<LookupElement>(next, id) {
+              @NotNull
+              @Override
+              public Comparable getWeight(LookupElement element) {
+                return -PrefixMatchingWeigher.getPrefixMatchingDegree(element, location);
+              }
+            };
+          }
+        });
+      }
+      else {
+        sorter = sorter.weigh(new LookupElementWeigher(id) {
+          @NotNull
+          @Override
+          public Comparable weigh(@NotNull LookupElement element) {
+            return new NegatingComparable(weigher.weigh(element, location));
+          }
+        });
+      }
+
     }
 
     return sorter.withClassifier("priority", true, new ClassifierFactory<LookupElement>("liftShorter") {

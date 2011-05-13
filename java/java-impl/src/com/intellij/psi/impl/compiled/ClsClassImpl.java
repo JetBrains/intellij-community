@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -395,42 +396,63 @@ public class ClsClassImpl extends ClsRepositoryPsiElement<PsiClassStub<?>> imple
   public void setMirror(@NotNull TreeElement element) {
     setMirrorCheckingType(element, null);
 
-    PsiClass mirror = (PsiClass)SourceTreeToPsiMap.treeElementToPsi(element);
+    PsiClass mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
 
-    final PsiDocComment docComment = getDocComment();
+    PsiDocComment docComment = getDocComment();
     if (docComment != null) {
-        ((ClsElementImpl)docComment).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getDocComment()));
+      ((ClsElementImpl)docComment).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getDocComment()));
     }
-      ((ClsElementImpl)getModifierList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getModifierList()));
-      ((ClsElementImpl)getNameIdentifier()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getNameIdentifier()));
+    ((ClsElementImpl)getModifierList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getModifierList()));
+    ((ClsElementImpl)getNameIdentifier()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getNameIdentifier()));
     if (!isAnnotationType() && !isEnum()) {
-        ((ClsElementImpl)getExtendsList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getExtendsList()));
+      ((ClsElementImpl)getExtendsList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getExtendsList()));
     }
-      ((ClsElementImpl)getImplementsList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getImplementsList()));
-      ((ClsElementImpl)getTypeParameterList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getTypeParameterList()));
+    ((ClsElementImpl)getImplementsList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getImplementsList()));
+    ((ClsElementImpl)getTypeParameterList()).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirror.getTypeParameterList()));
+
+    Ref<Boolean> extLog = Ref.create(true);
 
     PsiField[] fields = getFields();
     PsiField[] mirrorFields = mirror.getFields();
-    if (LOG.assertTrue(fields.length == mirrorFields.length)) {
+    if (fields.length == mirrorFields.length) {
       for (int i = 0; i < fields.length; i++) {
-          ((ClsElementImpl)fields[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirrorFields[i]));
+        ((ClsElementImpl)fields[i]).setMirror(SourceTreeToPsiMap.psiToTreeNotNull(mirrorFields[i]));
       }
+    }
+    else {
+      log(this, mirror, "fields:" + fields.length + "!=" + mirrorFields.length, extLog);
     }
 
     PsiMethod[] methods = getMethods();
     PsiMethod[] mirrorMethods = mirror.getMethods();
-    if (LOG.assertTrue(methods.length == mirrorMethods.length)) {
+    if (methods.length == mirrorMethods.length) {
       for (int i = 0; i < methods.length; i++) {
-          ((ClsElementImpl)methods[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirrorMethods[i]));
+        ((ClsElementImpl)methods[i]).setMirror(SourceTreeToPsiMap.psiToTreeNotNull(mirrorMethods[i]));
       }
+    }
+    else {
+      log(this, mirror, "methods:" + methods.length + "!=" + mirrorMethods.length, extLog);
     }
 
     PsiClass[] classes = getInnerClasses();
     PsiClass[] mirrorClasses = mirror.getInnerClasses();
-    if (LOG.assertTrue(classes.length == mirrorClasses.length)) {
+    if (classes.length == mirrorClasses.length) {
       for (int i = 0; i < classes.length; i++) {
-          ((ClsElementImpl)classes[i]).setMirror((TreeElement)SourceTreeToPsiMap.psiElementToTree(mirrorClasses[i]));
+        ((ClsElementImpl)classes[i]).setMirror(SourceTreeToPsiMap.psiToTreeNotNull(mirrorClasses[i]));
       }
+    }
+    else {
+      log(this, mirror, "classes:" + classes.length + "!=" + mirrorClasses.length, extLog);
+    }
+  }
+
+  private static void log(@NotNull ClsClassImpl stub, @NotNull PsiClass mirror, @NotNull String message, @NotNull Ref<Boolean> verbose) {
+    LOG.error(message + "; file:" + stub.getContainingFile().getName());
+    if (verbose.get()) {
+      StringBuilder builder = new StringBuilder();
+      stub.appendMirrorText(0, builder);
+      LOG.error("\nStub:\n" + builder.toString() + "\nMirror:\n" + mirror.getText());
+      verbose.set(false);
     }
   }
 

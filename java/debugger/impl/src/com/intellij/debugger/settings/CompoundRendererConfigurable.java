@@ -210,7 +210,7 @@ public class CompoundRendererConfigurable implements UnnamedConfigurable{
     exprColumn.setCellRenderer(new DefaultTableCellRenderer() {
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         final TextWithImports textWithImports = (TextWithImports)value;
-        String text = (textWithImports != null)? textWithImports.toString() : "";
+        final String text = (textWithImports != null)? textWithImports.getText() : "";
         return super.getTableCellRendererComponent(table, text, isSelected, hasFocus, row, column);
       }
     });

@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class TabAction extends EditorAction {
   public TabAction() {
     super(new Handler());
+    setInjectedContext(true);
   }
 
   private static class Handler extends EditorWriteActionHandler {
@@ -89,7 +90,7 @@ public class TabAction extends EditorAction {
         EditorModificationUtil.typeInStringAtCaretHonorBlockSelection(editor, "\t", false);
       }
       else {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder(spacesToAddCount);
         for(int i=0; i<spacesToAddCount; i++) {
           buffer.append(' ');
         }

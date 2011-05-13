@@ -170,9 +170,15 @@ public abstract class ContextProvider {
                 final XmlElement element = PsiTreeUtil.getContextOfType(context, XmlElement.class, true);
                 final String namespaceURI = namespaceContext.getNamespaceURI(prefix, element);
                 return namespaceURI != null && namespaceURI.length() > 0 ? new QName(namespaceURI, qName.getLocalName(), prefix) : null;
-            } else {
-                return new QName(null, qName.getLocalName(), "");
+            } else if (context.getXPathVersion() == XPathVersion.V2){
+              if (isDefaultCapableElement(context)) {
+                final String namespace = namespaceContext.getDefaultNamespace(getContextElement());
+                if (namespace != null) {
+                  return new QName(namespace, qName.getLocalName());
+                }
+              }
             }
+            return new QName(null, qName.getLocalName(), "");
         } else if (qName.getPrefix() == null) {
             return QName.valueOf(qName.getLocalName());
         } else {
@@ -180,7 +186,13 @@ public abstract class ContextProvider {
         }
     }
 
-    public static boolean hasXPathInjections(XmlFile file) {
+  private static boolean isDefaultCapableElement(XPathElement context) {
+    // http://www.w3.org/TR/xslt20/#unprefixed-qnames
+    return (context instanceof XPathNodeTest && ((XPathNodeTest)context).getPrincipalType() == XPathNodeTest.PrincipalType.ELEMENT)
+      || context instanceof XPath2TypeElement;
+  }
+
+  public static boolean hasXPathInjections(XmlFile file) {
       return Boolean.TRUE.equals(file.getUserData(XML_FILE_WITH_XPATH_INJECTTION));
     }
 

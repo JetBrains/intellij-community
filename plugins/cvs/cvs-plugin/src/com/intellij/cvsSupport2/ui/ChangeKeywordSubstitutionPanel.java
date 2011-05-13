@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.intellij.cvsSupport2.ui;
 
-import org.jetbrains.annotations.NonNls;
+import com.intellij.CvsBundle;
+import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
+import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,25 +28,35 @@ import java.awt.event.ActionListener;
  * author: lesya
  */
 public class ChangeKeywordSubstitutionPanel {
-  private JComboBox myKeywordSubstitutionComboBox;
-  private JCheckBox myChangeCheckbox;
-  private final KeywordSubstitutionComboBoxWrapper myComboBoxWrapper;
-  private JPanel myPanel;
 
-  public ChangeKeywordSubstitutionPanel(String defaultSubst) {
-    myComboBoxWrapper = new KeywordSubstitutionComboBoxWrapper(myKeywordSubstitutionComboBox, defaultSubst);
+  private final JComboBox myKeywordSubstitutionComboBox;
+  private final JCheckBox myChangeCheckbox;
+  private final JPanel myPanel;
+
+  public ChangeKeywordSubstitutionPanel(KeywordSubstitution defaultSubstitution) {
+    myPanel = new JPanel(new GridBagLayout());
+    myChangeCheckbox = new JCheckBox(CvsBundle.message("checkbox.change.keyword.substitution.to"));
+    myKeywordSubstitutionComboBox = new JComboBox();
+    KeywordSubstitutionWrapper.fillComboBox(myKeywordSubstitutionComboBox, defaultSubstitution);
+
     myChangeCheckbox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         setEnabling();
       }
     });
 
+    final GridBagConstraints constraints = new GridBagConstraints();
+    constraints.anchor = GridBagConstraints.BASELINE_LEADING;
+    myPanel.add(myChangeCheckbox, constraints);
+    constraints.gridx = 1;
+    constraints.weightx = 1.0;
+    myPanel.add(myKeywordSubstitutionComboBox, constraints);
     setEnabling();
   }
 
   private void setEnabling() {
     myKeywordSubstitutionComboBox.setEnabled(myChangeCheckbox.isSelected());
-    if (myKeywordSubstitutionComboBox.isEnabled() && (myKeywordSubstitutionComboBox.getSelectedIndex() == -1)){
+    if (myKeywordSubstitutionComboBox.getSelectedIndex() == -1){
       myKeywordSubstitutionComboBox.setSelectedIndex(0);
     }
   }
@@ -53,13 +65,10 @@ public class ChangeKeywordSubstitutionPanel {
     return myPanel;
   }
 
-  public String getKeywordSubstitution() {
+  public KeywordSubstitution getKeywordSubstitution() {
     if (!myChangeCheckbox.isSelected()) {
-      //noinspection HardCodedStringLiteral
-      return "NONE";
+      return null;
     }
-    else {
-      return myComboBoxWrapper.getSelection().getStringRepresentation();
-    }
+    return ((KeywordSubstitutionWrapper)myKeywordSubstitutionComboBox.getSelectedItem()).getSubstitution();
   }
 }

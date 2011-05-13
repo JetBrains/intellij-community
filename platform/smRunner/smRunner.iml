@@ -15,6 +15,7 @@
     <orderEntry type="library" exported="" name="tcServiceMessages" level="project" />
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
   <component name="RModuleSettingsStorage" number="0" />
 </module>

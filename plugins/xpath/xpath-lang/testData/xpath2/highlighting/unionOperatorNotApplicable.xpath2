@@ -1,1 +1,1 @@
-<error descr="Operator 'union' cannot to applied to expressions of type 'xs:integer'">1 union 2</error>
+<error descr="Operator 'union' cannot be applied to expressions of type 'xs:integer'">1 union 2</error>

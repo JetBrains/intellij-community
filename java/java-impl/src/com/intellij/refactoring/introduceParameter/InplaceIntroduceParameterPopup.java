@@ -111,12 +111,6 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     final GridBagConstraints gc =
       new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0);
 
-    final TitlePanel titlePanel = new TitlePanel();
-    titlePanel.setBorder(null);
-    titlePanel.setText(IntroduceParameterHandler.REFACTORING_NAME);
-    gc.gridwidth = 2;
-    myWholePanel.add(titlePanel, gc);
-
     gc.insets = new Insets(0, 5, 0, 0);
     gc.gridwidth = 1;
     gc.fill = GridBagConstraints.NONE;
@@ -255,7 +249,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
       super(myProject, new TypeExpression(myProject, myTypeSelectorManager.getTypesForAll()),
             myEditor, parameter, myMustBeFinal,
             myTypeSelectorManager.getTypesForAll().length > 1, myExprMarker, InplaceIntroduceParameterPopup.this.getOccurrenceMarkers(),
-            IntroduceParameterHandler.REFACTORING_NAME);
+            IntroduceParameterHandler.REFACTORING_NAME, IntroduceParameterHandler.REFACTORING_NAME);
       myDefaultParameterTypePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(parameter.getType());
     }
 
@@ -263,12 +257,14 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     protected JComponent getComponent() {
       if (!myInitialized) {
         myInitialized = true;
-        myWholePanel.add(myCanBeFinal,
-                         new GridBagConstraints(0, myCbReplaceAllOccurences == null ? 2 : 3, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
-                                                GridBagConstraints.NONE, new Insets(0, 5, 2, 5), 0, 0));
-        if (myHasWriteAccess) {
-          myCanBeFinal.setSelected(false);
-          myCanBeFinal.setEnabled(false);
+        if (myCanBeFinalCb != null) {
+          myWholePanel.add(myCanBeFinalCb,
+                           new GridBagConstraints(0, myCbReplaceAllOccurences == null ? 2 : 3, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
+                                                  GridBagConstraints.NONE, new Insets(0, 5, 2, 5), 0, 0));
+          if (myHasWriteAccess) {
+            myCanBeFinalCb.setSelected(false);
+            myCanBeFinalCb.setEnabled(false);
+          }
         }
       }
       return myWholePanel;
@@ -304,7 +300,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     protected void saveSettings(PsiVariable psiVariable) {
       final JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
       InplaceIntroduceParameterPopup.super.saveSettings(settings);
-      if (myCanBeFinal.isEnabled()) {
+      if (myCanBeFinalCb != null && myCanBeFinalCb.isEnabled()) {
         settings.INTRODUCE_PARAMETER_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
       }
       TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myDefaultParameterTypePointer.getType());
@@ -323,7 +319,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
           isDeleteLocalVariable = isDeleteLocalVariable();
         }
 
-        if (!myMethod.isValid() || myLocalVar == null && myExpr == null) {
+        if (!myMethod.isValid() || myParameterName == null || myLocalVar == null && myExpr == null) {
           super.moveOffsetAfter(false);
           return;
         }
@@ -430,14 +426,19 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
   protected void updateControls(JCheckBox[] removeParamsCb) {
     super.updateControls(removeParamsCb);
     if (myParameterIndex < 0) return;
-    final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-    if (templateState != null) {
-      PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
-      final PsiParameter parameter = getParameter();
-      final boolean hasFinalModifier = parameter.hasModifierProperty(PsiModifier.FINAL);
-      templateState.gotoEnd(true);
-      startIntroduceTemplate(isReplaceAllOccurences(), hasFinalModifier);
-    }
+    Runnable restartTemplateRunnable = new Runnable() {
+      public void run() {
+        final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+        if (templateState != null) {
+          PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
+          final PsiParameter parameter = getParameter();
+          final boolean hasFinalModifier = parameter.hasModifierProperty(PsiModifier.FINAL);
+          templateState.gotoEnd(true);
+          startIntroduceTemplate(isReplaceAllOccurences(), hasFinalModifier);
+        }
+      }
+    };
+    CommandProcessor.getInstance().executeCommand(myProject, restartTemplateRunnable, IntroduceParameterHandler.REFACTORING_NAME, IntroduceParameterHandler.REFACTORING_NAME);
   }
 
 

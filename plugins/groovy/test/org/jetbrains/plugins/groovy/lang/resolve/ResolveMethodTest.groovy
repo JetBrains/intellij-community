@@ -696,6 +696,15 @@ class Zoo {
     assertEquals("plus", assertInstanceOf(resolved, GrMethod).name)
   }
 
+  public void testWrongGdkCallGenerics() {
+    myFixture.configureByText("a.groovy",
+                              "Map<File,String> map = [:]\n" +
+                              "println map.ge<caret>t('', '')"
+    );
+    def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    assertInstanceOf ref.resolve(), GrGdkMethod
+  }
+
   public void testStaticImportInSamePackage() {
     myFixture.addFileToProject "pack/Foo.groovy", """package pack
 class Foo {

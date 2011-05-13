@@ -194,7 +194,7 @@ public class DetailsLoaderImpl implements DetailsLoader {
 
     private GitCommit createNotLoadedCommit(AbstractHash shortHash) {
       final String notKnown = "Can not load";
-      return new GitCommit(shortHash, SHAHash.emulate(shortHash), notKnown, notKnown, new Date(0),
+      return new GitCommit(shortHash, SHAHash.emulate(shortHash), notKnown, notKnown, new Date(0), notKnown,
                               "Can not load details", Collections.<String>emptySet(), Collections.<FilePath>emptyList(), notKnown,
                               notKnown, Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList(),
                               Collections.<Change>emptyList(), 0);

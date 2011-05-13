@@ -467,11 +467,16 @@ public class EditContextDialog extends DialogWrapper {
         }
 
         public IntentionAction[] getUnresolvedNamespaceFixes(PsiReference reference, String localName) {
-            return new IntentionAction[0];
+            return IntentionAction.EMPTY_ARRAY;
+        }
+
+        @Override
+        public String getDefaultNamespace(XmlElement context) {
+          return null;
         }
     }
 
-    private class MyVariableContext extends AbstractVariableContext<String> {
+    private class MyVariableContext extends SimpleVariableContext {
         @NotNull
         public String[] getVariablesInScope(XPathElement element) {
             final Collection<Variable> variables = myVariableTableModel.getVariables();

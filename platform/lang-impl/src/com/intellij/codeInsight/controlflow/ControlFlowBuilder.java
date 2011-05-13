@@ -115,6 +115,11 @@ public class ControlFlowBuilder {
     pending.add(i, Pair.create(pendingScope, instruction));
   }
 
+  /**
+   * Creates edges from the pending list to the specified instruction.
+   *
+   * @param instruction target instruction for pending edges
+   */
   public void checkPending(@NotNull final Instruction instruction) {
     final PsiElement element = instruction.getElement();
     if (element == null) {
@@ -125,7 +130,7 @@ public class ControlFlowBuilder {
       pending.clear();
     }
     else {
-      // else we just all the pending with scope containing in element
+      // else we just process all the pending with scope containing in element
       // reverse order is just an optimization
       for (int i = pending.size() - 1; i >= 0; i--) {
         final Pair<PsiElement, Instruction> pair = pending.get(i);

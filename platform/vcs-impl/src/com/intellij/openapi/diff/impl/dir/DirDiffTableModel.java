@@ -18,6 +18,7 @@ package com.intellij.openapi.diff.impl.dir;
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -110,6 +111,7 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
     fireTableDataChanged();
     myUpdating.set(false);
     selectFirstRow();
+    myPanel.focusTable();
   }
 
   private void selectFirstRow() {
@@ -126,7 +128,7 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
   }
 
   public void updateFromUI() {
-    getSettings().setFilter(myPanel.getFilter().getText());
+    getSettings().setFilter(myPanel.getFilter());
   }
 
   private static String prepareText(String text) {
@@ -198,12 +200,13 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
         updater.start();
       }
     }
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    final Application app = ApplicationManager.getApplication();
+    app.executeOnPooledThread(new Runnable() {
       public void run() {
         myTree.updateVisibility(mySettings);
         final ArrayList<DirDiffElement> elements = new ArrayList<DirDiffElement>();
         fillElements(myTree, elements);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        final Runnable uiThread = new Runnable() {
           public void run() {
             clear();
             myElements.addAll(elements);
@@ -215,7 +218,12 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
               loadingPanel.stopLoading();
             }
           }
-        });
+        };
+        if (myProject.isDefault()) {
+          SwingUtilities.invokeLater(uiThread);
+        } else {
+          app.invokeLater(uiThread);
+        }
       }
     });
   }
@@ -447,6 +455,7 @@ public class DirDiffTableModel extends AbstractTableModel implements Disposable 
         updater.start();
       } else {
         updater = null;
+        myPanel.focusTable();
       }
     }
   }

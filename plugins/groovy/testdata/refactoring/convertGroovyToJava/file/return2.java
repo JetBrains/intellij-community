@@ -21,7 +21,6 @@ return doCall(null);
 }
 
 });
-return null;
 }
 
 public return2(groovy.lang.Binding binding) {

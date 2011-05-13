@@ -332,7 +332,13 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     return result;
   }
 
+  private void assertIsDispatchThread() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+  }
+
   private ActionCallback getUiFor(final Configurable configurable) {
+    assertIsDispatchThread();
+
     if (myDisposed) {
       return new ActionCallback.Rejected();
     }
@@ -870,6 +876,12 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
   }
 
   public void dispose() {
+    assertIsDispatchThread();
+
+    if (myDisposed) {
+      return;
+    }
+
     myDisposed = true;
 
     myProperties.setValue(MAIN_SPLITTER_PROPORTION, String.valueOf(myMainSplitter.getProportion()));
@@ -882,8 +894,19 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     final Set<Configurable> configurables = new HashSet<Configurable>();
     configurables.addAll(myConfigurable2Content.keySet());
     configurables.addAll(myConfigurable2LoadCallback.keySet());
-    for (Configurable each : configurables) {
-      each.disposeUIResources();
+    for (final Configurable each : configurables) {
+      ActionCallback loadCb = myConfigurable2LoadCallback.get(each);
+      if (loadCb != null) {
+        loadCb.doWhenProcessed(new Runnable() {
+          @Override
+          public void run() {
+            assertIsDispatchThread();
+            each.disposeUIResources();
+          }
+        });
+      } else {
+        each.disposeUIResources();
+      }
     }
 
     Disposer.clearOwnFields(this);

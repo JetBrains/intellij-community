@@ -68,11 +68,18 @@ public class MethodResolverProcessor extends ResolverProcessor {
   private boolean myStopExecuting = false;
   private Set<GrStatement> myExitPoints;
   private final boolean canNotBeExitPoint;
+  private final boolean myByShape;
 
   public MethodResolverProcessor(String name, GroovyPsiElement place, boolean isConstructor, PsiType thisType, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments) {
-    this(name, place, isConstructor, thisType, argumentTypes, typeArguments, false);
+    this(name, place, isConstructor, thisType, argumentTypes, typeArguments, false, false);
   }
-  public MethodResolverProcessor(String name, GroovyPsiElement place, boolean isConstructor, PsiType thisType, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments, boolean allVariants) {
+  public MethodResolverProcessor(String name,
+                                 GroovyPsiElement place,
+                                 boolean isConstructor,
+                                 PsiType thisType,
+                                 @Nullable PsiType[] argumentTypes,
+                                 PsiType[] typeArguments,
+                                 boolean allVariants, final boolean byShape) {
     super(name, RESOLVE_KINDS_METHOD_PROPERTY, place, PsiType.EMPTY_ARRAY);
     myIsConstructor = isConstructor;
     myThisType = thisType;
@@ -80,6 +87,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     myTypeArguments = typeArguments;
     myAllVariants = allVariants;
     canNotBeExitPoint = !canBexExitPoint(place);
+    myByShape = byShape;
   }
 
   private static boolean canBexExitPoint(PsiElement place) {
@@ -106,7 +114,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
       GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
       boolean isStaticsOK = isStaticsOK(method, resolveContext);
       if (!myAllVariants &&
-          PsiUtil.isApplicable(myArgumentTypes, method, substitutor, ResolveUtil.isInUseScope(resolveContext), (GroovyPsiElement)myPlace) &&
+          PsiUtil.isApplicable(myArgumentTypes, method, substitutor, ResolveUtil.isInUseScope(resolveContext), (GroovyPsiElement)myPlace, myByShape) &&
           isStaticsOK) {
         addCandidate(new GroovyResolveResultImpl(method, resolveContext, substitutor, isAccessible, isStaticsOK));
       } else {
@@ -120,6 +128,10 @@ public class MethodResolverProcessor extends ResolverProcessor {
   }
 
   protected PsiSubstitutor obtainSubstitutor(PsiSubstitutor substitutor, PsiMethod method, ResolveState state) {
+    if (myByShape) {
+      return substitutor;
+    }
+
     final PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (myTypeArguments.length == typeParameters.length) {
       for (int i = 0; i < typeParameters.length; i++) {
@@ -146,7 +158,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
         System.arraycopy(argTypes, 0, newArgTypes, 1, argTypes.length);
         argTypes = newArgTypes;
 
-        method = ((GrGdkMethod) method).getStaticMethod();
+        method = ((GrGdkMethod)method).getStaticMethod();
         LOG.assertTrue(method.isValid());
       }
       else if (ResolveUtil.isInUseScope(resolveContext)) {

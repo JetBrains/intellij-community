@@ -281,6 +281,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
+    if (!ApplicationManager.getApplication().isActive()) return;
 
     updateLastEditor(editor);
 
@@ -404,7 +405,9 @@ public class HintManagerImpl extends HintManager implements Disposable {
     LOG.assertTrue(SwingUtilities.isEventDispatchThread());
     List<HintInfo> hints = new ArrayList<HintInfo>(myHintsStack);
     for (HintInfo info : hints) {
-      info.hint.hide();
+      if (!info.hint.vetoesHiding()) {
+        info.hint.hide();
+      }
     }
     cleanup();
   }

@@ -16,30 +16,24 @@
 
 package com.intellij.psi.impl.source.resolve.reference;
 
-import com.intellij.codeInsight.completion.LegacyCompletionContributor;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.patterns.*;
-import com.intellij.pom.references.PomReferenceProvider;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.filters.position.FilterPattern;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentMap;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -48,30 +42,10 @@ import java.util.concurrent.ConcurrentMap;
  * Time: 17:13:45
  * To change this template use Options | File Templates.
  */
-public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
-  private static final PsiReferenceContributor[] ourExtensions = Extensions.getExtensions(PsiReferenceContributor.EP_NAME);
-  private final ConcurrentMap<Class, SimpleProviderBinding> myBindingsMap = new ConcurrentHashMap<Class, SimpleProviderBinding>();
-  private final ConcurrentMap<Class, NamedObjectProviderBinding> myNamedBindingsMap = new ConcurrentHashMap<Class, NamedObjectProviderBinding>();
-  private final FactoryMap<Class, List<Class>> myKnownSupers = new ConcurrentFactoryMap<Class, List<Class>>() {
-    @Override
-    protected List<Class> create(Class key) {
-      final Set<Class> result = new LinkedHashSet<Class>();
-      for (Class candidate : myBindingsMap.keySet()) {
-        if (candidate.isAssignableFrom(key)) {
-          result.add(candidate);
-        }
-      }
-      for (Class candidate : myNamedBindingsMap.keySet()) {
-        if (candidate.isAssignableFrom(key)) {
-          result.add(candidate);
-        }
-      }
-      if (result.isEmpty()) {
-        return Collections.emptyList();
-      }
-      return new ArrayList<Class>(result);
-    }
-  };
+public class ReferenceProvidersRegistry {
+
+  private static final LanguageExtension<PsiReferenceContributor> CONTRIBUTOR_EXTENSION = new LanguageExtension<PsiReferenceContributor>(PsiReferenceContributor.EP_NAME.getName());
+  private static final LanguageExtension<PsiReferenceProviderBean> REFERENCE_PROVIDER_EXTENSION = new LanguageExtension<PsiReferenceProviderBean>(PsiReferenceProviderBean.EP_NAME.getName());
 
   private static final Comparator<Trinity<PsiReferenceProvider, ProcessingContext, Double>> PRIORITY_COMPARATOR =
     new Comparator<Trinity<PsiReferenceProvider, ProcessingContext, Double>>() {
@@ -80,132 +54,56 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
         return o2.getThird().compareTo(o1.getThird());
       }
     };
+  public final static PsiReferenceProvider NULL_REFERENCE_PROVIDER = new PsiReferenceProvider() {
+      @NotNull
+      @Override
+      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+        return PsiReference.EMPTY_ARRAY;
+      }
+    };
+
+  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
+  private final Map<Language, PsiReferenceRegistrarImpl> myRegistrars = new FactoryMap<Language, PsiReferenceRegistrarImpl>() {
+    @Override
+    protected PsiReferenceRegistrarImpl create(Language language) {
+      PsiReferenceRegistrarImpl registrar = new PsiReferenceRegistrarImpl();
+      for (PsiReferenceContributor contributor : CONTRIBUTOR_EXTENSION.allForLanguage(language)) {
+        contributor.registerReferenceProviders(registrar);
+      }
+
+      List<PsiReferenceProviderBean> referenceProviderBeans = REFERENCE_PROVIDER_EXTENSION.allForLanguage(language);
+      for (final PsiReferenceProviderBean providerBean : referenceProviderBeans) {
+        final ElementPattern<PsiElement> pattern = providerBean.createElementPattern();
+        if (pattern != null) {
+          registrar.registerReferenceProvider(pattern, new PsiReferenceProvider() {
+
+            PsiReferenceProvider myProvider;
+
+            @NotNull
+            @Override
+            public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+              if (myProvider == null) {
+
+                myProvider = providerBean.instantiate();
+                if (myProvider == null) {
+                  myProvider = NULL_REFERENCE_PROVIDER;
+                }
+              }
+              return myProvider.getReferencesByElement(element, context);
+            }
+          });
+        }
+      }
+      return registrar;
+    }
+  };
 
   public static ReferenceProvidersRegistry getInstance() {
     return ServiceManager.getService(ReferenceProvidersRegistry.class);
   }
 
-  public ReferenceProvidersRegistry() {
-    for (final PsiReferenceContributor contributor : ourExtensions) {
-      contributor.registerReferenceProviders(this);
-    }
-  }
-
-  /**
-   * @deprecated {@see com.intellij.psi.PsiReferenceContributor
-   */
-  public void registerReferenceProvider(@Nullable ElementFilter elementFilter,
-                                        @NotNull Class scope,
-                                        @NotNull PsiReferenceProvider provider,
-                                        double priority) {
-    registerReferenceProvider(PlatformPatterns.psiElement(scope).and(new FilterPattern(elementFilter)), provider, priority);
-  }
-
-  public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern,
-                                                               @NotNull PomReferenceProvider<T> provider,
-                                                               double priority) {
-  }
-
-  public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern,
-                                                               @NotNull PsiReferenceProvider provider,
-                                                               double priority) {
-    myKnownSupers.clear();
-    final Class scope = pattern.getCondition().getInitialCondition().getAcceptedClass();
-    final List<PatternCondition<? super T>> conditions = pattern.getCondition().getConditions();
-    for (int i = 0, conditionsSize = conditions.size(); i < conditionsSize; i++) {
-      PatternCondition<? super T> _condition = conditions.get(i);
-      if (_condition instanceof PsiNamePatternCondition) {
-        final PsiNamePatternCondition<?> nameCondition = (PsiNamePatternCondition)_condition;
-        List<PatternCondition<? super String>> conditions1 = nameCondition.getNamePattern().getCondition().getConditions();
-        for (int i1 = 0, conditions1Size = conditions1.size(); i1 < conditions1Size; i1++) {
-          PatternCondition<? super String> condition = conditions1.get(i1);
-          if (condition instanceof ValuePatternCondition) {
-            final Collection<String> strings = ((ValuePatternCondition)condition).getValues();
-            registerNamedReferenceProvider(ArrayUtil.toStringArray(strings), nameCondition, scope, true, provider, priority, pattern);
-            return;
-          }
-          if (condition instanceof CaseInsensitiveValuePatternCondition) {
-            final String[] strings = ((CaseInsensitiveValuePatternCondition)condition).getValues();
-            registerNamedReferenceProvider(strings, nameCondition, scope, false, provider, priority, pattern);
-            return;
-          }
-        }
-        break;
-      }
-    }
-
-    while (true) {
-      final SimpleProviderBinding providerBinding = myBindingsMap.get(scope);
-      if (providerBinding != null) {
-        providerBinding.registerProvider(provider, pattern, priority);
-        return;
-      }
-
-      final SimpleProviderBinding binding = new SimpleProviderBinding();
-      binding.registerProvider(provider, pattern, priority);
-      if (myBindingsMap.putIfAbsent(scope, binding) == null) break;
-    }
-  }
-
-  /**
-   * @deprecated {@link com.intellij.psi.PsiReferenceContributor}
-   */
-  public void registerReferenceProvider(@Nullable ElementFilter elementFilter,
-                                        @NotNull Class scope,
-                                        @NotNull PsiReferenceProvider provider) {
-    registerReferenceProvider(elementFilter, scope, provider, DEFAULT_PRIORITY);
-  }
-
-  public void unregisterReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
-    final ProviderBinding providerBinding = myBindingsMap.get(scope);
-    providerBinding.unregisterProvider(provider);
-  }
-
-
-  private void registerNamedReferenceProvider(final String[] names, final PsiNamePatternCondition<?> nameCondition,
-                                              final Class scopeClass,
-                                              final boolean caseSensitive,
-                                              final PsiReferenceProvider provider, final double priority, final ElementPattern pattern) {
-    NamedObjectProviderBinding providerBinding = myNamedBindingsMap.get(scopeClass);
-
-    if (providerBinding == null) {
-      providerBinding = ConcurrencyUtil.cacheOrGet(myNamedBindingsMap, scopeClass, new NamedObjectProviderBinding() {
-        protected String getName(final PsiElement position) {
-          return nameCondition.getPropertyValue(position);
-        }
-      });
-    }
-
-    providerBinding.registerProvider(names, pattern, caseSensitive, provider, priority);
-  }
-
-  /**
-   * @see com.intellij.psi.PsiReferenceContributor
-   * @deprecated
-   */
-  public void registerReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
-    registerReferenceProvider(null, scope, provider);
-  }
-
-  @NotNull
-  private List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> getPairsByElement(@NotNull PsiElement element,
-                                                                                          @NotNull PsiReferenceService.Hints hints) {
-    final Class<? extends PsiElement> clazz = element.getClass();
-    List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> ret = null;
-    for (final Class aClass : myKnownSupers.get(clazz)) {
-      final SimpleProviderBinding simpleBinding = myBindingsMap.get(aClass);
-      final NamedObjectProviderBinding namedBinding = myNamedBindingsMap.get(aClass);
-      if (simpleBinding == null && namedBinding == null) continue;
-
-      if (ret == null) ret = new SmartList<Trinity<PsiReferenceProvider, ProcessingContext, Double>>();
-      if (simpleBinding != null) {
-        simpleBinding.addAcceptableReferenceProviders(element, ret, hints);
-      }
-      if (namedBinding != null) {
-        namedBinding.addAcceptableReferenceProviders(element, ret, hints);
-      }
-    }
-    return ret == null ? Collections.<Trinity<PsiReferenceProvider, ProcessingContext, Double>>emptyList() : ret;
+  public PsiReferenceRegistrarImpl getRegistrar(Language language) {
+    return myRegistrars.get(language);
   }
 
   @Deprecated
@@ -217,8 +115,11 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
     ProgressManager.checkCanceled();
     assert context.isValid() : "Invalid context: " + context;
 
-    final List<Trinity<PsiReferenceProvider, ProcessingContext, Double>> providers =
-      getInstance().getPairsByElement(context, hints);
+    ReferenceProvidersRegistry registry = getInstance();
+    PsiReferenceRegistrarImpl registrar = registry.getRegistrar(context.getLanguage());
+    SmartList<Trinity<PsiReferenceProvider, ProcessingContext, Double>> providers = new SmartList<Trinity<PsiReferenceProvider, ProcessingContext, Double>>();
+    providers.addAll(registrar.getPairsByElement(context, hints));
+    providers.addAll(registry.getRegistrar(Language.ANY).getPairsByElement(context, hints));
     if (providers.isEmpty()) {
       return PsiReference.EMPTY_ARRAY;
     }
@@ -228,12 +129,7 @@ public class ReferenceProvidersRegistry extends PsiReferenceRegistrar {
       return firstProvider.getFirst().getReferencesByElement(context, firstProvider.getSecond());
     }
 
-    ((SmartList<Trinity<PsiReferenceProvider, ProcessingContext, Double>>)providers).sort(PRIORITY_COMPARATOR);
-
-    if (LegacyCompletionContributor.DEBUG) {
-      System.out.println("ReferenceProvidersRegistry.getReferencesFromProviders");
-      System.out.println("providers = " + providers);
-    }
+    providers.sort(PRIORITY_COMPARATOR);
 
     List<PsiReference> result = new ArrayList<PsiReference>();
     final double maxPriority = providers.get(0).getThird();

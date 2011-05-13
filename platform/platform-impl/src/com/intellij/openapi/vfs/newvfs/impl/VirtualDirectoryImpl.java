@@ -19,8 +19,25 @@
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
@@ -28,6 +45,8 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
@@ -36,14 +55,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.*;
 
 public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private static final VirtualFileSystemEntry NULL_VIRTUAL_FILE = new VirtualFileImpl("*?;%NULL", null, -42);
   private final NewVirtualFileSystem myFS;
+  private static final boolean IS_UNIT_TESTS = false;//ApplicationManager.getApplication().isUnitTestMode();
 
   // guarded by this
   private Object myChildren; // Either HashMap<String, VFile> or VFile[]
@@ -141,6 +164,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     else {
       child = new VirtualFileImpl(name, this, id);
+      assertAccessInTests(child);
     }
 
     if (fs.markNewFilesAsDirty()) {
@@ -149,6 +173,107 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     return child;
   }
+
+  private static void assertAccessInTests(VirtualFileSystemEntry child) {
+    if (IS_UNIT_TESTS && ApplicationManager.getApplication() instanceof ApplicationImpl && ((ApplicationImpl)ApplicationManager.getApplication()).isComponentsCreated()) {
+      NewVirtualFileSystem fileSystem = child.getFileSystem();
+      if (fileSystem != LocalFileSystem.getInstance() && fileSystem != JarFileSystem.getInstance()) {
+        return;
+      }
+      // root' children are loaded always
+      if (child.getParent() == null || child.getParent().getParent() == null) return;
+
+      Set<String> allowed = allowedRoots();
+      boolean isUnder = allowed == null;
+      if (!isUnder) {
+        for (String root : allowed) {
+          String childPath = child.getPath();
+          if (child.getFileSystem() == JarFileSystem.getInstance()) {
+            VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(child);
+            childPath = local.getPath();
+          }
+          if (FileUtil.startsWith(childPath, root)) {
+            isUnder = true;
+            break;
+          }
+          if (root.startsWith(JarFileSystem.PROTOCOL_PREFIX)) {
+            String rootLocalPath = FileUtil.toSystemIndependentName(PathUtil.toPresentableUrl(root));
+            isUnder = FileUtil.startsWith(childPath, rootLocalPath);
+            if (isUnder) break;
+          }
+        }
+      }
+
+      if (!isUnder) {
+        if (!allowed.isEmpty()) {
+          //assert false : "File accessed outside project: " + child +"; project roots: "+new ArrayList(allowed);
+        }
+      }
+    }
+  }
+
+  // null means we were unable to get roots, so do not check access
+  private static Set<String> allowedRoots() {
+    if (insideGettingRoots) return null;
+    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    if (openProjects.length == 0) return null;
+    Set<String> allowed = new THashSet<String>();
+    String homePath = PathManager.getHomePath();
+    allowed.add(FileUtil.toSystemIndependentName(homePath));
+    try {
+      URL outUrl = Application.class.getResource("/");
+      String output = new File(outUrl.toURI()).getParentFile().getParentFile().getPath();
+      allowed.add(FileUtil.toSystemIndependentName(output));
+    }
+    catch (URISyntaxException ignored) {
+    }
+    String javaHome = SystemProperties.getJavaHome();
+    allowed.add(FileUtil.toSystemIndependentName(javaHome));
+    String tempDirectorySpecific = new File(FileUtil.getTempDirectory()).getParent();
+    allowed.add(FileUtil.toSystemIndependentName(tempDirectorySpecific));
+    String tempDirectory = System.getProperty("java.io.tmpdir");
+    allowed.add(FileUtil.toSystemIndependentName(tempDirectory));
+    String home = SystemProperties.getUserHome();
+    allowed.add(FileUtil.toSystemIndependentName(home));
+    for (Project project : openProjects) {
+      if (!project.isInitialized()) {
+        return null; // all is allowed
+      }
+      for (VirtualFile root : ProjectRootManager.getInstance(project).getContentRoots()) {
+        allowed.add(root.getPath());
+      }
+      for (VirtualFile root : getAllRoots(project)) {
+        allowed.add(StringUtil.trimEnd(root.getPath(), JarFileSystem.JAR_SEPARATOR));
+      }
+      String location = project.getLocation();
+      allowed.add(FileUtil.toSystemIndependentName(location));
+    }
+
+    return allowed;
+  }
+
+  private static boolean insideGettingRoots;
+  private static VirtualFile[] getAllRoots(Project project) {
+    insideGettingRoots = true;
+    Set<VirtualFile> roots = new THashSet<VirtualFile>();
+    final Module[] modules = ModuleManager.getInstance(project).getModules();
+    for (Module module : modules) {
+      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
+      for (OrderEntry entry : orderEntries) {
+        VirtualFile[] files;
+        files = entry.getFiles(OrderRootType.CLASSES);
+        ContainerUtil.addAll(roots, files);
+        files = entry.getFiles(OrderRootType.SOURCES);
+        ContainerUtil.addAll(roots, files);
+        files = entry.getFiles(OrderRootType.CLASSES_AND_OUTPUT);
+        ContainerUtil.addAll(roots, files);
+      }
+    }
+    insideGettingRoots = false;
+    return VfsUtil.toVirtualFileArray(roots);
+  }
+
 
   @Nullable
   private VirtualFileSystemEntry createAndFindChildWithEventFire(@NotNull String name) {

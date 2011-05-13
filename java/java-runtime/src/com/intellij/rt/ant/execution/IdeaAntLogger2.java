@@ -26,7 +26,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 public final class IdeaAntLogger2 extends DefaultLogger {
-  static SegmentedOutputStream ourOut;
   static SegmentedOutputStream ourErr;
   public static final char MESSAGE_CONTENT = 'M';
   public static final char EXCEPTION_CONTENT = 'X';
@@ -116,19 +115,16 @@ public final class IdeaAntLogger2 extends DefaultLogger {
   }
 
   public static void guardStreams() {
-    if (ourErr != null && ourOut != null) return;
-    PrintStream out = System.out;
+    if (ourErr != null) {
+      return;
+    }
     PrintStream err = System.err;
-    ourOut = new SegmentedOutputStream(out);
     ourErr = new SegmentedOutputStream(err);
-    System.setOut(new PrintStream(ourOut));
     System.setErr(new PrintStream(ourErr));
-    ourOut.sendStart();
     ourErr.sendStart();
   }
 
   private void send(PacketWriter packet) {
-    packet.sendThrough(ourOut);
     packet.sendThrough(ourErr);
   }
 

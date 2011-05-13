@@ -625,6 +625,8 @@ public class EditorSearchComponent extends JPanel implements DataProvider, Selec
   }
 
   public void requestFocus() {
+    mySearchField.setSelectionStart(0);
+    mySearchField.setSelectionEnd(mySearchField.getText().length());
     requestFocus(mySearchField);
   }
 

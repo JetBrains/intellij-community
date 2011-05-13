@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -126,7 +127,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
-    if (fileOrDirectory.getParent() == null) return true;
+    if (StringUtil.isEmpty(fileOrDirectory.getPath())) return true; // fake top dir for Windows
     return convertToIOFile(fileOrDirectory).exists();
   }
 

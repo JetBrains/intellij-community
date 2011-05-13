@@ -656,12 +656,17 @@ public class FormatterImpl extends FormatterEx
   }
 
   public Indent getSpaceIndent(final int spaces, final boolean relative) {
-    return new IndentImpl(Indent.Type.SPACES, false, spaces, relative, false);
+    return getIndent(Indent.Type.SPACES, spaces, relative, false);
   }
 
   @Override
-  public Indent getIndent(@NotNull Indent.Type type, boolean relativeToDirectParent, boolean enforceIndent) {
-    return new IndentImpl(type, false, 0, relativeToDirectParent, enforceIndent);
+  public Indent getIndent(@NotNull Indent.Type type, boolean relativeToDirectParent, boolean enforceIndentToChildren) {
+    return getIndent(type, 0, relativeToDirectParent, enforceIndentToChildren);
+  }
+
+  @Override
+  public Indent getIndent(@NotNull Indent.Type type, int spaces, boolean relativeToDirectParent, boolean enforceIndentToChildren) {
+    return new IndentImpl(type, false, spaces, relativeToDirectParent, enforceIndentToChildren);
   }
 
   public Indent getAbsoluteLabelIndent() {

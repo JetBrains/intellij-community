@@ -113,29 +113,19 @@
                         <border type="none"/>
                         <children/>
                       </grid>
-                      <grid id="97b9b" layout-manager="BorderLayout" hgap="0" vgap="0">
+                      <grid id="97b9b" binding="myFilterPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
                         <constraints>
-                          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="1" fill="1" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties/>
                         <border type="none"/>
                         <children>
-                          <component id="5d686" class="com.intellij.ui.components.JBLabel">
+                          <component id="5d686" class="com.intellij.ui.components.JBLabel" binding="myFilterLabel">
                             <constraints border-constraint="West"/>
                             <properties>
                               <horizontalAlignment value="2"/>
                               <iconTextGap value="0"/>
-                              <labelFor value="8b193"/>
                               <text value="&amp;Filter:"/>
-                            </properties>
-                          </component>
-                          <component id="8b193" class="javax.swing.JTextField" binding="myFilter">
-                            <constraints border-constraint="Center"/>
-                            <properties>
-                              <margin top="0" left="0" bottom="0" right="0"/>
-                              <maximumSize width="2147483647" height="20"/>
-                              <minimumSize width="4" height="20"/>
-                              <preferredSize width="80" height="20"/>
                             </properties>
                           </component>
                         </children>

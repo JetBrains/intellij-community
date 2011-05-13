@@ -35,6 +35,7 @@ import git4idea.merge.GitMergeConflictResolver;
 import git4idea.merge.GitMergeUtil;
 import git4idea.merge.GitMerger;
 import git4idea.rebase.GitRebaser;
+import git4idea.stash.GitChangesSaver;
 import git4idea.ui.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 

@@ -22,6 +22,7 @@ import com.intellij.psi.xml.XmlElement;
 import org.intellij.lang.xpath.context.NamespaceContext;
 import org.intellij.lang.xpath.psi.XPath2Type;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -53,5 +54,11 @@ class TestNamespaceContext implements NamespaceContext {
   @Override
   public IntentionAction[] getUnresolvedNamespaceFixes(PsiReference reference, String localName) {
     return IntentionAction.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  @Override
+  public String getDefaultNamespace(XmlElement context) {
+    return null;
   }
 }

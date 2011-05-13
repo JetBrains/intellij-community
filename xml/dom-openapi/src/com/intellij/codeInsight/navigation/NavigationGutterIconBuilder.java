@@ -237,7 +237,7 @@ public class NavigationGutterIconBuilder<T> {
         final List<SmartPsiElementPointer> list = new ArrayList<SmartPsiElementPointer>(targets.size());
         for (final T target : targets) {
           for (final PsiElement psiElement : myConverter.fun(target)) {
-            if (elements.add(psiElement)) {
+            if (elements.add(psiElement) && psiElement.isValid()) {
               list.add(manager.createSmartPsiElementPointer(psiElement));
             }
           }

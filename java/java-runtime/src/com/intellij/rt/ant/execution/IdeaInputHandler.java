@@ -30,32 +30,42 @@ import java.util.Vector;
  */
 public class IdeaInputHandler implements InputHandler {
   public void handleInput(InputRequest request) throws BuildException {
-    String prompt = request.getPrompt();
-    if (prompt == null) throw new BuildException("Prompt is null");
-    SegmentedOutputStream out = IdeaAntLogger2.ourOut;
-    SegmentedOutputStream err = IdeaAntLogger2.ourErr;
-    if (out == null || err == null)
+    final String prompt = request.getPrompt();
+    if (prompt == null) {
+      throw new BuildException("Prompt is null");
+    }
+    final SegmentedOutputStream err = IdeaAntLogger2.ourErr;
+    if (err == null) {
       throw new BuildException("Selected InputHandler should be used by Intellij IDEA");
-    PacketWriter packet = PacketFactory.ourInstance.createPacket(IdeaAntLogger2.INPUT_REQUEST);
+    }
+    final PacketWriter packet = PacketFactory.ourInstance.createPacket(IdeaAntLogger2.INPUT_REQUEST);
     packet.appendLimitedString(prompt);
     if (request instanceof MultipleChoiceInputRequest) {
       Vector choices = ((MultipleChoiceInputRequest)request).getChoices();
       if (choices != null && choices.size() > 0) {
         int count = choices.size();
         packet.appendLong(count);
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < count; i++) {
           packet.appendLimitedString((String)choices.elementAt(i));
-      } else packet.appendLong(0);
-    } else packet.appendLong(0);
-    packet.sendThrough(out);
+        }
+      }
+      else {
+        packet.appendLong(0);
+      }
+    }
+    else {
+      packet.appendLong(0);
+    }
     packet.sendThrough(err);
     try {
-      byte[] replayLength = readBytes(4);
-      int length = ((int)replayLength[0] << 24) | ((int)replayLength[1] << 16) | ((int)replayLength[2] << 8) | replayLength[3];
-      byte[] replay = readBytes(length);
-      String input = new String(replay);
+      final byte[] replayLength = readBytes(4);
+      final int length = ((int)replayLength[0] << 24) | ((int)replayLength[1] << 16) | ((int)replayLength[2] << 8) | replayLength[3];
+      final byte[] replay = readBytes(length);
+      final String input = new String(replay);
       request.setInput(input);
-      if (!request.isInputValid()) throw new BuildException("Invalid input: " + input);
+      if (!request.isInputValid()) {
+        throw new BuildException("Invalid input: " + input);
+      }
     }
     catch (IOException e) {
       throw new BuildException(e);

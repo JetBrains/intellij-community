@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -234,7 +235,7 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
     final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, DECLARATION, level), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiMethod)) {
-      throw new IncorrectOperationException("Incorrect method \"" + text + "\" (" + element + ").");
+      throw newException("Incorrect method \"" + text + "\".", holder);
     }
     return (PsiMethod)element;
   }
@@ -452,5 +453,18 @@ public class PsiJavaParserFacadeImpl extends PsiParserFacadeImpl implements PsiJ
 
   private static LanguageLevel level(@Nullable final PsiElement context) {
     return context != null ? PsiUtil.getLanguageLevel(context) : LanguageLevel.HIGHEST;
+  }
+
+  private static IncorrectOperationException newException(final String msg, final DummyHolder holder) {
+    final FileElement root = holder.getTreeElement();
+    if (root instanceof JavaDummyElement) {
+      final Throwable cause = ((JavaDummyElement)root).getParserError();
+      if (cause != null) {
+        return new IncorrectOperationException(msg) {
+          @Override public Throwable getCause() { return cause; }
+        };
+      }
+    }
+    return new IncorrectOperationException(msg);
   }
 }

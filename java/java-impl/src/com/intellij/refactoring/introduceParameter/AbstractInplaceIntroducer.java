@@ -57,8 +57,8 @@ public abstract class AbstractInplaceIntroducer extends VariableInplaceIntroduce
                                    boolean cantChangeFinalModifier,
                                    boolean hasTypeSuggestion,
                                    RangeMarker exprMarker,
-                                   List<RangeMarker> occurrenceMarkers, String commandName) {
-    super(project, expression, editor, elementToRename, cantChangeFinalModifier, hasTypeSuggestion, exprMarker, occurrenceMarkers, commandName);
+                                   List<RangeMarker> occurrenceMarkers, String commandName, String title) {
+    super(project, expression, editor, elementToRename, cantChangeFinalModifier, hasTypeSuggestion, exprMarker, occurrenceMarkers, commandName, title);
   }
 
   protected abstract boolean isReplaceAllOccurrences();

@@ -55,9 +55,11 @@ public class CollectClassMembersUtil {
   private static Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>> getCachedMembers(
     PsiClass aClass,
     boolean includeSynthetic) {
+    LOG.assertTrue(aClass.isValid());
     Key<CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>>> key =
       includeSynthetic ? CACHED_MEMBERS_INCLUDING_SYNTHETIC : CACHED_MEMBERS;
-    CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>> cachedValue = aClass.getUserData(key);
+    CachedValue<Trinity<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>, Map<String, CandidateInfo>>> cachedValue =
+      aClass.getUserData(key);
     if (cachedValue == null) {
       cachedValue = buildCache(aClass, includeSynthetic);
       aClass.putUserData(key, cachedValue);

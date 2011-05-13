@@ -25,6 +25,10 @@
       <keyboard-shortcut first-keystroke="shift control CLOSE_BRACKET"/>
       <keyboard-shortcut first-keystroke="shift control alt F"/>
     </action>
+    <action id="OverrideMethods"/>
+    <action id="EditorEnter">
+      <keyboard-shortcut first-keystroke="control O"/>
+    </action>
     <action id="MethodDown">
       <keyboard-shortcut first-keystroke="alt DOWN"/>
       <keyboard-shortcut first-keystroke="control alt E"/>

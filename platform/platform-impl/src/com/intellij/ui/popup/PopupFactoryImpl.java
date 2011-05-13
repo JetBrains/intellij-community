@@ -77,6 +77,23 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return createListPopup(new BaseListPopupStep<String>(null, new String[]{text})); 
   }
 
+  @Override
+  public Balloon getParentBalloonFor(@Nullable Component c) {
+    if (c == null) return null;
+    Component eachParent = c;
+    while (eachParent != null) {
+      if (eachParent instanceof JComponent) {
+        Object balloon = ((JComponent)eachParent).getClientProperty(Balloon.KEY);
+        if (balloon instanceof Balloon) {
+          return (Balloon)balloon;
+        }
+      }
+      eachParent = eachParent.getParent();
+    }
+
+    return null;
+  }
+
   public ListPopup createConfirmation(String title, final String yesText, String noText, final Runnable onYes, final Runnable onNo, int defaultOptionIndex) {
 
       final BaseListPopupStep<String> step = new BaseListPopupStep<String>(title, new String[]{yesText, noText}) {

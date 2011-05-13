@@ -20,12 +20,15 @@
  */
 package com.intellij.ide.navigationToolbar;
 
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -47,6 +50,9 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   private final Project myProject;
   private NavBarPanel myNavigationBar;
   private JPanel myRunPanel;
+  private boolean myNavToolbarGroupExist;
+  private JScrollPane myScrollPane;
+  private JLabel myCloseIcon;
 
   public NavBarRootPaneExtension(Project project) {
     myProject = project;
@@ -57,6 +63,9 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         toggleRunPanel(!source.SHOW_MAIN_TOOLBAR);
       }
     }, this);
+    
+    final AnAction navBarToolBar = ActionManager.getInstance().getAction("NavBarToolBar");
+    myNavToolbarGroupExist = navBarToolBar instanceof DefaultActionGroup && ((DefaultActionGroup)navBarToolBar).getChildrenCount() > 0; 
   }
 
   @Override
@@ -64,8 +73,8 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     return new NavBarRootPaneExtension(myProject);
   }
   
-  public static boolean isMainToolbarVisible() {
-    return UISettings.getInstance().SHOW_MAIN_TOOLBAR || !runToolbarExists();
+  public boolean isMainToolbarVisible() {
+    return UISettings.getInstance().SHOW_MAIN_TOOLBAR || !myNavToolbarGroupExist;
   }
   
   private static boolean runToolbarExists() {
@@ -118,7 +127,6 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         }
       };
       myWrapperPanel.add(buildNavBarPanel(), BorderLayout.CENTER);
-      myWrapperPanel.putClientProperty("NavBarPanel", myNavigationBar);
       toggleRunPanel(!UISettings.getInstance().SHOW_MAIN_TOOLBAR);
     }
 
@@ -180,7 +188,58 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   }
 
   private JComponent buildNavBarPanel() {
-    final JComponent result = new JPanel(new BorderLayout()) {
+    final Ref<JPanel> panel = new Ref<JPanel>(null);
+    final Runnable updater = new Runnable() {
+      String laf;
+      @Override
+      public void run() {
+        if (LafManager.getInstance().getCurrentLookAndFeel().getName().equals(laf)) return;
+        laf = LafManager.getInstance().getCurrentLookAndFeel().getName();
+        panel.get().removeAll();
+        myScrollPane = null;
+        myCloseIcon = null;
+        if (myNavigationBar != null && !Disposer.isDisposed(myNavigationBar)) {
+          Disposer.dispose(myNavigationBar);
+        }
+        myNavigationBar = new NavBarPanel(myProject);
+        myWrapperPanel.putClientProperty("NavBarPanel", myNavigationBar);
+        myNavigationBar.getModel().setFixedComponent(true);
+
+        myScrollPane = ScrollPaneFactory.createScrollPane(myNavigationBar);
+        myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        myScrollPane.setHorizontalScrollBar(null);
+        myScrollPane.setBorder(null);
+
+        myScrollPane.setOpaque(false);
+        myScrollPane.getViewport().setOpaque(false);
+
+        panel.get().setBackground(UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
+        panel.get().setOpaque(!UIUtil.isUnderAquaLookAndFeel() || UISettings.getInstance().SHOW_MAIN_TOOLBAR);
+        panel.get().setBorder(UIUtil.isUnderAquaLookAndFeel() ? BorderFactory.createEmptyBorder(2, 0, 2, 4) : new NavBarBorder(true, 0));
+        myNavigationBar.setBorder(null);
+        panel.get().add(myScrollPane, BorderLayout.CENTER);
+        if (!SystemInfo.isMac) {
+          myCloseIcon = new JLabel(CROSS_ICON);
+          myCloseIcon.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(final MouseEvent e) {
+              UISettings.getInstance().SHOW_NAVIGATION_BAR = false;
+              uiSettingsChanged(UISettings.getInstance());
+            }
+          });
+          panel.get().add(myCloseIcon, BorderLayout.EAST);
+        }
+      }
+    };
+
+    panel.set(new JPanel(new BorderLayout()) {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        if (UISettings.getInstance().SHOW_NAVIGATION_BAR) {
+          SwingUtilities.invokeLater(updater);
+        }
+      }
+
       @Override
       protected void paintComponent(Graphics g) {
         if (UIUtil.isUnderAquaLookAndFeel()) {
@@ -227,9 +286,9 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         final Rectangle r = getBounds();
         final Insets insets = getInsets();
         int x = insets.left;
-        
-        final Component navBar = getComponent(0);
-        final Component closeLabel = getComponentCount() == 2 ? getComponent(1) : null;
+        if (myScrollPane == null) return;
+        final Component navBar = myScrollPane;
+        final Component closeLabel = myCloseIcon;
 
         final Dimension preferredSize = navBar.getPreferredSize();
         final Dimension closePreferredSize = closeLabel == null ? new Dimension() : closeLabel.getPreferredSize();
@@ -243,39 +302,10 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
                                closePreferredSize.width, closePreferredSize.height);
         }
       }
-    };
-    
-    result.setBackground(UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
-    result.setOpaque(!UIUtil.isUnderAquaLookAndFeel() || UISettings.getInstance().SHOW_MAIN_TOOLBAR);
-    
-    myNavigationBar = new NavBarPanel(myProject);
-    myNavigationBar.getModel().setFixedComponent(true);
-    
-    JScrollPane scroller = ScrollPaneFactory.createScrollPane(myNavigationBar);
-    scroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-    scroller.setHorizontalScrollBar(null);
-    scroller.setBorder(null);
+    });
 
-    scroller.setOpaque(false);
-    scroller.getViewport().setOpaque(false);
-
-    result.add(scroller, BorderLayout.CENTER);
-
-    if (!SystemInfo.isMac) {
-      JLabel closeLabel = new JLabel(CROSS_ICON);
-      closeLabel.addMouseListener(new MouseAdapter() {
-        public void mouseClicked(final MouseEvent e) {
-          UISettings.getInstance().SHOW_NAVIGATION_BAR = false;
-          uiSettingsChanged(UISettings.getInstance());
-        }
-      });
-      result.add(closeLabel, BorderLayout.EAST);
-    }
-
-    result.setBorder(UIUtil.isUnderAquaLookAndFeel() ? BorderFactory.createEmptyBorder(2, 0, 2, 4) : new NavBarBorder(true, 0));
-    myNavigationBar.setBorder(null);
-    
-    return result;
+    updater.run();
+    return panel.get();
   }
 
   public void uiSettingsChanged(final UISettings settings) {

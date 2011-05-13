@@ -69,7 +69,8 @@ public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
         //check for method that has void return type. so it does not matter what return statements are.
         if (flowOwner instanceof GrOpenBlock) {
           final PsiElement flowParent = flowOwner.getParent();
-          if (flowParent instanceof PsiMethod && ((PsiMethod)flowParent).getReturnType() == PsiType.VOID) {
+          if (flowParent instanceof PsiMethod &&
+              (((PsiMethod)flowParent).getReturnType() == PsiType.VOID || ((PsiMethod)flowParent).isConstructor())) {
             return;
           }
         }

@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
@@ -331,9 +332,31 @@ public class SMTestProxy extends AbstractTestProxy {
     myParent = parent;
   }
 
+  public List<? extends SMTestProxy> collectChildren(@Nullable final Filter filter) {
+    return filterChildren(filter, collectChildren());
+  }
+
+  public List<? extends SMTestProxy> collectChildren() {
+    final List<? extends SMTestProxy> allChildren = getChildren();
+
+    final List<SMTestProxy> result = Lists.newArrayList();
+
+    result.addAll(allChildren);
+
+    for (SMTestProxy p: allChildren) {
+      result.addAll(p.collectChildren());
+    }
+
+    return result;
+  }
+
   public List<? extends SMTestProxy> getChildren(@Nullable final Filter filter) {
     final List<? extends SMTestProxy> allChildren = getChildren();
 
+    return filterChildren(filter, allChildren);
+  }
+
+  private static List<? extends SMTestProxy> filterChildren(@Nullable Filter filter, List<? extends SMTestProxy> allChildren) {
     if (filter == Filter.NO_FILTER || filter == null) {
       return allChildren;
     }

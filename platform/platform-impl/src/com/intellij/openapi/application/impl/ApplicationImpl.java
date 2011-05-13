@@ -308,8 +308,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       else {
         //noinspection UseOfSystemOutOrSystemErr
         System.out.println(errorMessage);
+        System.exit(1);
       }
-      System.exit(1);
+      return;  // do not call super
     }
     else if (fatal) {
       LOG.error(ex);

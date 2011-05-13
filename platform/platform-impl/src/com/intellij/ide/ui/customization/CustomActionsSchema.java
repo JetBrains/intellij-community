@@ -20,9 +20,9 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.ExportableApplicationComponent;
+import com.intellij.openapi.components.ExportableComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
@@ -48,7 +48,8 @@ import java.util.List;
  * User: anna
  * Date: Jan 20, 2005
  */
-public class CustomActionsSchema implements ExportableApplicationComponent, NamedJDOMExternalizable {
+public class CustomActionsSchema implements ExportableComponent, NamedJDOMExternalizable {
+
   @NonNls private static final String ACTIONS_SCHEMA = "custom_actions_schema";
   @NonNls private static final String ACTIVE = "active";
   @NonNls private static final String ELEMENT_ACTION = "action";
@@ -79,7 +80,7 @@ public class CustomActionsSchema implements ExportableApplicationComponent, Name
   private static final Logger LOG = Logger.getInstance("#" + CustomActionsSchema.class.getName());
 
   public static CustomActionsSchema getInstance() {
-    return ApplicationManager.getApplication().getComponent(CustomActionsSchema.class);
+    return ServiceManager.getService(CustomActionsSchema.class);
   }
 
   public void addAction(ActionUrl url) {
@@ -336,17 +337,6 @@ public void removeIconCustomization(String actionId) {
   @NotNull
   public String getPresentableName() {
     return IdeBundle.message("title.custom.actions.schemas");
-  }
-
-  @NotNull
-  public String getComponentName() {
-    return "com.intellij.ide.ui.customization.CustomizableActionsSchemas";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public String getExternalFileName() {

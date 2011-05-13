@@ -40,6 +40,8 @@ public final class GroovyCommonClassNames {
   public static final String GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR = "groovy.transform.TupleConstructor";
   public static final String GROOVY_TRANSFORM_IMMUTABLE = "groovy.transform.Immutable";
   public static final String GROOVY_TRANSFORM_CANONICAL = "groovy.transform.Canonical";
+  @NonNls public static final String GROOVY_LANG_REFERENCE = "groovy.lang.Reference";
+
 
   private GroovyCommonClassNames() {
   }

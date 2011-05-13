@@ -17,19 +17,21 @@ package git4idea.history.browser;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import git4idea.GitVcs;
 
 import java.util.*;
+
+import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView;
 
 public class CherryPicker {
   private final GitVcs myVcs;
@@ -41,6 +43,7 @@ public class CherryPicker {
   private final List<FilePath> myDirtyFiles;
   private final List<String> myMessagesInOrder;
   private final Map<String, Collection<FilePath>> myFilesToMove;
+  private boolean myConflictsExist;
 
   public CherryPicker(GitVcs vcs, final List<GitCommit> commits, LowLevelAccess access) {
     myVcs = vcs;
@@ -90,15 +93,19 @@ public class CherryPicker {
   }
 
   private void showResults() {
-    if (myExceptions.isEmpty()) {
-      VcsBalloonProblemNotifier
-        .showOverChangesView(myVcs.getProject(), "Successful cherry-pick into working tree, please commit changes", MessageType.INFO);
+    final Project project = myVcs.getProject();
+    if (myExceptions.isEmpty() && !myConflictsExist) {
+      showOverChangesView(project, "Successful cherry-pick into working tree, please commit changes", MessageType.INFO);
     } else {
-      VcsBalloonProblemNotifier.showOverChangesView(myVcs.getProject(), "Errors in cherry-pick", MessageType.ERROR);
+      if (myExceptions.isEmpty()) {
+        showOverChangesView(project, "Unresolved conflicts while cherry-picking. Resolve conflicts, then commit changes", MessageType.WARNING);
+      } else {
+        showOverChangesView(project, "Errors in cherry-pick", MessageType.ERROR);
+      }
     }
     if ((! myExceptions.isEmpty()) || (! myWarnings.isEmpty())) {
       myExceptions.addAll(myWarnings);
-      AbstractVcsHelper.getInstance(myVcs.getProject()).showErrors(myExceptions, "Cherry-pick problems");
+      AbstractVcsHelper.getInstance(project).showErrors(myExceptions, "Cherry-pick problems");
     }
   }
 
@@ -129,9 +136,10 @@ public class CherryPicker {
 
   private void cherryPickStep(CheckinEnvironment ce, int i) {
     final GitCommit commit = myCommits.get(i);
-    final SHAHash hash = commit.getHash();
     try {
-      myAccess.cherryPick(hash);
+      if (!myAccess.cherryPick(commit)) {
+        myConflictsExist = true;
+      }
     }
     catch (VcsException e) {
       myExceptions.add(e);
@@ -141,7 +149,7 @@ public class CherryPicker {
     final Collection<FilePath> paths = ChangesUtil.getPaths(changes);
     String message = ce.getDefaultMessageFor(paths.toArray(new FilePath[paths.size()]));
     message = (message == null) ? new StringBuilder().append(commit.getDescription()).append("(cherry picked from commit ")
-      .append(hash.getValue()).append(")").toString() : message;
+      .append(commit.getShortHash()).append(")").toString() : message;
 
     myMessagesInOrder.add(message);
     myFilesToMove.put(message, paths);

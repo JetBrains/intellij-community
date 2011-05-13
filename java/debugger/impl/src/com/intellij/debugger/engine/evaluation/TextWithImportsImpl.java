@@ -23,12 +23,11 @@ import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class TextWithImportsImpl implements TextWithImports{
+public final class TextWithImportsImpl implements TextWithImports{
 
   private final CodeFragmentKind myKind;
   private String myText;
   private final String myImports;
-
 
   public TextWithImportsImpl (PsiExpression expression) {
     myKind = CodeFragmentKind.EXPRESSION;
@@ -92,9 +91,13 @@ public class TextWithImportsImpl implements TextWithImports{
   }
 
   public String toString() {
+    return getText();
+  }
+
+  public String toExternalForm() {
     return "".equals(myImports) ? myText : myText + DebuggerEditorImpl.SEPARATOR + myImports;
   }
-  
+
   public int hashCode() {
     return myText.hashCode();
   }

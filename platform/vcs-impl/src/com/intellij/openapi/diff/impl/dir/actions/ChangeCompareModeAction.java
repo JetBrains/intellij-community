@@ -19,7 +19,6 @@ import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.ui.EmptyIcon;
 
@@ -37,7 +36,7 @@ class ChangeCompareModeAction extends AnAction {
   private final DirDiffSettings.CompareMode myMode;
 
   ChangeCompareModeAction(DirDiffTableModel model, DirDiffSettings.CompareMode mode) {
-    super(StringUtil.capitalize(mode.name().toLowerCase()));
+    super(mode.getPresentableName());
     myModel = model;
     myMode = mode;
   }

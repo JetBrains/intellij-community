@@ -15,11 +15,14 @@
  */
 package com.intellij.refactoring.introduceField;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
@@ -36,7 +39,6 @@ import com.intellij.refactoring.introduceParameter.AbstractInplaceIntroducer;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
-import com.intellij.ui.TitlePanel;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,15 +127,10 @@ public class InplaceIntroduceFieldPopup {
     myWholePanel = new JPanel(new GridBagLayout());
     myWholePanel.setBorder(null);
 
-    final TitlePanel titlePanel = new TitlePanel();
-    titlePanel.setBorder(null);
-    titlePanel.setText(IntroduceFieldHandler.REFACTORING_NAME);
-
     GridBagConstraints gc =
       new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                              new Insets(0,0,0,0), 0, 0);
 
-    myWholePanel.add(titlePanel, gc);
 
     gc.gridy++;
     gc.insets.top = 5;
@@ -253,7 +250,7 @@ public class InplaceIntroduceFieldPopup {
             myEditor, psiVariable, false,
             myTypeSelectorManager.getTypesForAll().length > 1,
             myInitializerExpression != null && myInitializerExpression.isPhysical() ? myEditor.getDocument().createRangeMarker(myInitializerExpression.getTextRange()) : null, InplaceIntroduceFieldPopup.this.getOccurrenceMarkers(),
-            IntroduceFieldHandler.REFACTORING_NAME);
+            IntroduceFieldHandler.REFACTORING_NAME, IntroduceFieldHandler.REFACTORING_NAME);
       myDefaultParameterTypePointer =
         SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(myTypeSelectorManager.getDefaultType());
       myFieldRangeStart = myEditor.getDocument().createRangeMarker(psiVariable.getTextRange());
@@ -315,12 +312,21 @@ public class InplaceIntroduceFieldPopup {
         myIntroduceFieldPanel.addOccurrenceListener(new ItemListener() {
           @Override
           public void itemStateChanged(ItemEvent e) {
-            final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-            if (templateState != null) {
-              templateState.gotoEnd(true);
-              myTypeSelectorManager = new TypeSelectorManagerImpl(myProject, myDefaultParameterTypePointer.getType(), null, myInitializerExpression, myOccurrences);
-              startTemplate(myIntroduceFieldPanel.isReplaceAllOccurrences(), myFieldTypePointer.getType());
-            }
+            final Runnable restartTemplate = new Runnable() {
+              @Override
+              public void run() {
+                final TemplateState templateState =
+                  TemplateManagerImpl.getTemplateState(myEditor);
+                if (templateState != null) {
+                  templateState.gotoEnd(true);
+                  myTypeSelectorManager = new TypeSelectorManagerImpl(myProject, myDefaultParameterTypePointer.getType(), null, myInitializerExpression, myOccurrences);
+                  startTemplate(myIntroduceFieldPanel.isReplaceAllOccurrences(), myFieldTypePointer.getType());
+                }
+              }
+            };
+            CommandProcessor.getInstance().executeCommand(myProject, restartTemplate,
+                                                          IntroduceFieldHandler.REFACTORING_NAME,
+                                                          IntroduceFieldHandler.REFACTORING_NAME);
           }
         });
       }
@@ -344,7 +350,7 @@ public class InplaceIntroduceFieldPopup {
     @Override
     protected void moveOffsetAfter(boolean success) {
       if (success) {
-        if (myLocalVariable == null && myInitializerExpression == null) {
+        if (myLocalVariable == null && myInitializerExpression == null || myFieldName == null) {
           super.moveOffsetAfter(false);
           return;
         }

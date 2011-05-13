@@ -15,41 +15,34 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.NameUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Set;
 
 /**
  * @author peter
 */
 public class PrefixMatchingWeigher extends CompletionWeigher {
 
-  public Comparable weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
+  @Override
+  public Comparable weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  public static int getPrefixMatchingDegree(LookupElement item, CompletionLocation location) {
     final String prefix = location.getCompletionParameters().getLookup().itemPattern(item);
 
-    if (prefix.isEmpty()) {
-      return 0;
+    final int setting = CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE;
+    final NameUtil.MatchingCaseSensitivity sensitivity =
+      setting == CodeInsightSettings.NONE ? NameUtil.MatchingCaseSensitivity.NONE :
+      setting == CodeInsightSettings.FIRST_LETTER ? NameUtil.MatchingCaseSensitivity.FIRST_LETTER : NameUtil.MatchingCaseSensitivity.ALL;
+    final NameUtil.MinusculeMatcher matcher = new NameUtil.MinusculeMatcher(prefix, sensitivity);
+
+    int max = Integer.MIN_VALUE;
+    for (String lookupString : item.getAllLookupStrings()) {
+      max = Math.max(max, matcher.matchingDegree(lookupString));
     }
-
-    final Set<String> strings = item.getAllLookupStrings();
-    final String prefixHumps = StringUtil.capitalsOnly(prefix);
-
-    if (StringUtil.isNotEmpty(prefixHumps)) {
-      for (String lookupString : strings) {
-        if (StringUtil.capitalsOnly(lookupString).startsWith(prefixHumps)) return 100;
-      }
-    }
-
-    for (String lookupString : strings) {
-      if (lookupString.startsWith(prefix)) return 5;
-    }
-    for (String lookupString : strings) {
-      if (StringUtil.startsWithIgnoreCase(lookupString, prefix)) return 1;
-    }
-
-
-    return 0;
+    return max;
   }
 }

@@ -17,10 +17,7 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.configurations.RuntimeConfigurationWarning;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -93,7 +90,7 @@ class TestDirectory extends TestPackage {
     }
     final String dirName = myConfiguration.getPersistentData().getDirName();
     if (dirName == null || dirName.isEmpty()) {
-      throw new RuntimeConfigurationWarning("Directory is not specified");
+      throw new RuntimeConfigurationError("Directory is not specified");
     }
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
     if (file == null) {
@@ -101,7 +98,7 @@ class TestDirectory extends TestPackage {
     }
     final Module module = myConfiguration.getConfigurationModule().getModule();
     if (module == null) {
-      throw new RuntimeConfigurationWarning("Module to choose classpath from is not specified");
+      throw new RuntimeConfigurationError("Module to choose classpath from is not specified");
     }
   }
 

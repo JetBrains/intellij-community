@@ -20,6 +20,8 @@
   <applicationService serviceInterface="com.intellij.openapi.progress.ProgressManager"
                       serviceImplementation="com.intellij.openapi.progress.impl.ProgressManagerImpl"/>
 
+  <applicationService serviceImplementation="com.intellij.ide.ui.customization.CustomActionsSchema"/>
+
   <undoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
   <projectUndoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
 

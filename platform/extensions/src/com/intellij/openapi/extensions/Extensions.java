@@ -34,18 +34,14 @@ public class Extensions {
   public static final ExtensionPointName<AreaListener> AREA_LISTENER_EXTENSION_POINT = new ExtensionPointName<AreaListener>("com.intellij.arealistener");
 
   private static final Map<AreaInstance,ExtensionsAreaImpl> ourAreaInstance2area = new HashMap<AreaInstance, ExtensionsAreaImpl>();
+  private static ExtensionsAreaImpl ourRootArea = createRootArea();
   private static final MultiMap<String, AreaInstance> ourAreaClass2instances = new MultiMap<String, AreaInstance>();
   private static final Map<AreaInstance,String> ourAreaInstance2class = new HashMap<AreaInstance, String>();
   private static final Map<String,AreaClassConfiguration> ourAreaClass2Configuration = new HashMap<String, AreaClassConfiguration>();
 
-  static {
-    createRootArea();
-  }
-
   private static ExtensionsAreaImpl createRootArea() {
     ExtensionsAreaImpl rootArea = new ExtensionsAreaImpl(null, null, null, ourLogger);
     rootArea.registerExtensionPoint(AREA_LISTENER_EXTENSION_POINT.getName(), AreaListener.class.getName());
-    ourAreaInstance2area.put(null, rootArea);
     return rootArea;
   }
 
@@ -53,11 +49,14 @@ public class Extensions {
   }
 
   public static ExtensionsArea getRootArea() {
-    return getArea(null);
+    return ourRootArea;
   }
 
   @NotNull
   public static ExtensionsArea getArea(@Nullable AreaInstance areaInstance) {
+    if (areaInstance == null) {
+      return ourRootArea;
+    }
     ExtensionsAreaImpl area = ourAreaInstance2area.get(areaInstance);
     if (area == null) {
       throw new IllegalArgumentException("No area instantiated for: " + areaInstance);
@@ -69,10 +68,11 @@ public class Extensions {
   public static void cleanRootArea(@NotNull Disposable parentDisposable) {
     final ExtensionsAreaImpl oldRootArea = (ExtensionsAreaImpl)getRootArea();
     final ExtensionsAreaImpl newArea = createRootArea();
+    ourRootArea = newArea;
     oldRootArea.notifyAreaReplaced();
     Disposer.register(parentDisposable, new Disposable() {
       public void dispose() {
-        ourAreaInstance2area.put(null, oldRootArea);
+        ourRootArea = oldRootArea;
         newArea.notifyAreaReplaced();
       }
     });
@@ -123,7 +123,7 @@ public class Extensions {
     if (!ourAreaClass2Configuration.containsKey(areaClass)) {
       throw new IllegalArgumentException("Area class is not registered: " + areaClass);
     }
-    if (ourAreaInstance2area.containsKey(areaInstance)) {
+    if ((areaInstance == null && ourRootArea != null) || ourAreaInstance2area.containsKey(areaInstance)) {
       throw new IllegalArgumentException("Area already instantiated for: " + areaInstance);
     }
     ExtensionsArea parentArea = getArea(parentAreaInstance);

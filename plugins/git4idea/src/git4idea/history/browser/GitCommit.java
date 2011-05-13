@@ -31,6 +31,7 @@ public class GitCommit {
   private final SHAHash myHash;
   private final String myAuthor;
   private final String myCommitter;
+  private final String mySubject;
   private final String myDescription;
   private final Date myDate;
 
@@ -60,6 +61,7 @@ public class GitCommit {
                    final String author,
                    final String committer,
                    final Date date,
+                   final String subject,
                    final String description,
                    final Set<String> parentsHashes,
                    final List<FilePath> pathsList,
@@ -74,6 +76,7 @@ public class GitCommit {
     myAuthor = author;
     myCommitter = committer;
     myDate = date;
+    mySubject = subject;
     myDescription = description;
     myHash = hash;
     myParentsHashes = parentsHashes;
@@ -222,5 +225,9 @@ public class GitCommit {
         return AbstractHash.create(o);
       }
     });
+  }
+
+  public String getSubject() {
+    return mySubject;
   }
 }
