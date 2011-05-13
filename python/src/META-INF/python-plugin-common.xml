@@ -480,6 +480,7 @@
     <annotator language="ReST" implementationClass="com.jetbrains.rest.validation.RestAnnotatingVisitor"/>
     <projectService serviceInterface="com.jetbrains.rest.actions.PyRestructuredSettings"
                     serviceImplementation="com.jetbrains.rest.actions.PyRestructuredSettings"/>
+    <inspectionToolProvider implementation="com.jetbrains.rest.inspections.RestInspectionToolProvider"/>
 
   </extensions>
 

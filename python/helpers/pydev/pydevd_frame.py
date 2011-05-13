@@ -38,7 +38,7 @@ class PyDBFrame:
 
             can_skip = False
 
-            if len(always_exception_set):
+            if not always_exception_set:
                 if info.pydev_state == STATE_RUN:
                     #we can skip if:
                     #- we have no stop marked
