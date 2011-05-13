@@ -15,12 +15,21 @@
  */
 package com.intellij.codeInsight.editorActions.smartEnter;
 
+import com.intellij.ide.DataManager;
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -33,6 +42,9 @@ import org.jetbrains.annotations.Nullable;
 public class PlainEnterProcessor implements EnterProcessor {
   public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {
     PsiCodeBlock block = getControlStatementBlock(editor.getCaretModel().getOffset(), psiElement);
+    if (processExistingBlankLine(editor, block)) {
+      return true;
+    }
     EditorActionHandler enterHandler = getEnterHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
     if (block != null) {
       PsiElement firstElement = block.getFirstBodyElement();
@@ -87,5 +99,73 @@ public class PlainEnterProcessor implements EnterProcessor {
     }
 
     return body instanceof PsiBlockStatement ? ((PsiBlockStatement)body).getCodeBlock() : null;
+  }
+
+  /**
+   * There is a possible case that target code block already starts with the empty line:
+   * <pre>
+   *   void test(int i) {
+   *     if (i > 1[caret]) {
+   *       
+   *     }
+   *   }
+   * </pre>
+   * We want just move caret to correct position at that empty line without creating additional empty line then.
+   *  
+   * @param editor      target editor
+   * @param codeBlock   target code block to which new empty line is going to be inserted
+   * @return            <code>true</code> if it was found out that the given code block starts with the empty line and caret
+   *                    is pointed to correct position there, i.e. no additional processing is required;
+   *                    <code>false</code> otherwise
+   */
+  private static boolean processExistingBlankLine(@NotNull Editor editor, @Nullable PsiCodeBlock codeBlock) {
+    if (codeBlock == null) {
+      return false;
+    }
+
+    PsiWhiteSpace whiteSpace = PsiTreeUtil.findChildOfType(codeBlock, PsiWhiteSpace.class);
+    if (whiteSpace == null) {
+      return false;
+    }
+
+    PsiElement lbraceCandidate = whiteSpace.getPrevSibling();
+    if (lbraceCandidate == null) {
+      return false;
+    }
+
+    ASTNode node = lbraceCandidate.getNode();
+    if (node == null || node.getElementType() != JavaTokenType.LBRACE) {
+      return false;
+    }
+
+    final TextRange textRange = whiteSpace.getTextRange();
+    final Document document = editor.getDocument();
+    final CharSequence whiteSpaceText = document.getCharsSequence().subSequence(textRange.getStartOffset(), textRange.getEndOffset());
+    if (StringUtil.countNewLines(whiteSpaceText) < 2) {
+      return false;
+    }
+
+    int i = CharArrayUtil.shiftForward(whiteSpaceText, 0, " \t");
+    if (i >= whiteSpaceText.length() - 1) {
+      assert false : String.format("document: '%s', code block: %s, white space: %s",
+                                   document.getText(), codeBlock.getTextRange(), whiteSpace.getTextRange());
+      return false;
+    }
+
+    editor.getCaretModel().moveToOffset(i + 1 + textRange.getStartOffset());
+    EditorActionManager actionManager = EditorActionManager.getInstance();
+    EditorActionHandler actionHandler = actionManager.getActionHandler(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
+    final DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
+    if (dataContext == null) {
+      i = CharArrayUtil.shiftForwardUntil(whiteSpaceText, i, "\n");
+      if (i >= whiteSpaceText.length()) {
+        i = whiteSpaceText.length();
+      }
+      editor.getCaretModel().moveToOffset(i + textRange.getStartOffset());
+    }
+    else {
+      actionHandler.execute(editor, dataContext);
+    }
+    return  true;
   }
 }
