@@ -201,6 +201,8 @@ public class CompleteStatementTest extends EditorActionTestCase {
   }
 
   public void testNoUnnecessaryEmptyLineAtCodeBlock() throws Exception { doTest(); }
+
+  public void testForStatementGeneration() throws Exception { doTest(); }
   
   private void doTestBracesNextLineStyle() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
