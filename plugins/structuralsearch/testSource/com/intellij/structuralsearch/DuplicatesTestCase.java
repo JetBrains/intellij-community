@@ -10,16 +10,16 @@ import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.structuralsearch.duplicates.GroovyDuplicatesProfile;
+import com.intellij.structuralsearch.duplicates.JSDuplicatesProfile;
 import com.intellij.structuralsearch.duplicates.SSRDuplicatesProfile;
+import com.intellij.structuralsearch.duplicates.XmlDuplicatesProfile;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene.Kudelevsky
@@ -70,18 +70,22 @@ public abstract class DuplicatesTestCase extends LightCodeInsightTestCase {
       settings.DISTINGUISH_VARIABLES = distinguishVars;
       settings.LOWER_BOUND = lowerBound;
 
+      final List<DuplicatesProfile> profiles = new ArrayList<DuplicatesProfile>();
+
       settings.SELECTED_PROFILES = new com.intellij.util.containers.HashSet<String>();
       for (Language language : getLanguages()) {
+        final DuplicatesProfile profile = DuplicatesProfile.findProfileForLanguage(DuplicatesProfile.getAllProfiles(), language);
+        assert profile != null;
+        profiles.add(profile);
         settings.SELECTED_PROFILES.add(language.getDisplayName());
       }
-
-      DuplicatesProfile[] profiles = {new SSRDuplicatesProfile()};
 
       configureByFile(getBasePath() + fileName);
       String testName = FileUtil.getNameWithoutExtension(fileName);
 
       DuplocatorHashCallback collector = new DuplocatorHashCallback(settings.LOWER_BOUND);
-      DuplocateManager.hash(new AnalysisScope(getFile()), collector, profiles, DuplocatorSettings.getInstance());
+      DuplocateManager.hash(new AnalysisScope(getFile()), collector, profiles.toArray(new DuplicatesProfile[profiles.size()]),
+                            DuplocatorSettings.getInstance());
 
       DupInfo info = collector.getInfo();
       assertEquals(patternCount, info.getPatterns());

@@ -8,6 +8,8 @@ function f() {
     }
 }
 
+m(1, 2, 3);
+
 function f() {
     for each (var obj in arguments) {
         print("Hello!");
@@ -37,6 +39,8 @@ function h() {
         print("Hello!");
     }
 }
+
+m1();
 
 function f1() {
     for each (var obj in arguments) {
