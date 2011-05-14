@@ -10,11 +10,8 @@ import com.intellij.lang.javascript.psi.*;
 import com.intellij.lang.javascript.psi.ecmal4.JSAttribute;
 import com.intellij.lang.javascript.psi.ecmal4.JSAttributeList;
 import com.intellij.lang.javascript.psi.ecmal4.JSClass;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
@@ -34,15 +31,10 @@ import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandl
 import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
-import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
-import com.intellij.structuralsearch.plugin.replace.impl.ReplacementInfoImpl;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 
 /**
  * @author Eugene.Kudelevsky
@@ -216,7 +208,7 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
-    return new MyReplaceHandler(context.getProject());
+    return new DocumentBasedReplaceHandler(context.getProject());
   }
 
   private static class MyJsMatchingVisitor extends JSElementVisitor {
@@ -586,43 +578,6 @@ public class JSStructuralSearchProfile extends StructuralSearchProfile {
         return false;
       }
       return true;
-    }
-  }
-
-  private static class MyReplaceHandler extends StructuralReplaceHandler {
-    private final Project myProject;
-    private final Map<ReplacementInfo, RangeMarker> myRangeMarkers = new HashMap<ReplacementInfo, RangeMarker>();
-
-    private MyReplaceHandler(Project project) {
-      myProject = project;
-    }
-
-    public void replace(ReplacementInfo info) {
-      if (info.getMatchesCount() == 0) return;
-      assert info instanceof ReplacementInfoImpl;
-      PsiElement element = info.getMatch(0);
-      if (element == null) return;
-      PsiFile file = element instanceof PsiFile ? (PsiFile)element : element.getContainingFile();
-      assert file != null;
-      RangeMarker rangeMarker = myRangeMarkers.get(info);
-      Document document = rangeMarker.getDocument();
-      document.replaceString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), info.getReplacement());
-      PsiDocumentManager.getInstance(element.getProject()).commitDocument(document);
-    }
-
-    @Override
-    public void prepare(ReplacementInfo info) {
-      assert info instanceof ReplacementInfoImpl;
-      MatchResult result = ((ReplacementInfoImpl)info).getMatchResult();
-      PsiElement element = result.getMatch();
-      PsiFile file = element instanceof PsiFile ? (PsiFile)element : element.getContainingFile();
-      Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
-      TextRange textRange = result.getMatchRef().getElement().getTextRange();
-      assert textRange != null;
-      RangeMarker rangeMarker = document.createRangeMarker(textRange);
-      rangeMarker.setGreedyToLeft(true);
-      rangeMarker.setGreedyToRight(true);
-      myRangeMarkers.put(info, rangeMarker);
     }
   }
 }

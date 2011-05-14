@@ -19,11 +19,15 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
+import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
+import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -245,6 +249,91 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
              PsiElement.EMPTY_ARRAY;
     }
     return super.createPatternTree(text, context, fileType, language, extension, project, physical);
+  }
+
+  @Override
+  public void checkReplacementPattern(Project project, ReplaceOptions options) {
+    final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, options.getMatchOptions());
+    if (compiledPattern == null) {
+      return;
+    }
+
+    final NodeIterator it = compiledPattern.getNodes();
+    if (!it.hasNext()) {
+      return;
+    }
+
+    final PsiElement root = it.current().getParent();
+
+    if (!checkOptionalChildren(root) ||
+        !checkErrorElements(root)) {
+      throw new UnsupportedPatternException(": Partial and expression patterns are not supported");
+    }
+  }
+
+  private boolean checkErrorElements(PsiElement element) {
+    final boolean[] result = {true};
+    final int endOffset = element.getTextRange().getEndOffset();
+
+    element.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        super.visitElement(element);
+
+        if (element instanceof PsiErrorElement && element.getTextRange().getEndOffset() == endOffset) {
+          result[0] = false;
+        }
+      }
+    });
+
+    return result[0];
+  }
+
+  private boolean checkOptionalChildren(PsiElement root) {
+    final boolean[] result = {true};
+
+    root.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        super.visitElement(element);
+
+        if (element instanceof LeafElement) {
+          return;
+        }
+
+        final EquivalenceDescriptorProvider provider = EquivalenceDescriptorProvider.getInstance(element);
+        if (provider == null) {
+          return;
+        }
+
+        final EquivalenceDescriptor descriptor = provider.buildDescriptor(element);
+        if (descriptor == null) {
+          return;
+        }
+
+        for (SingleChildDescriptor childDescriptor : descriptor.getSingleChildDescriptors()) {
+          if (childDescriptor.getType() == SingleChildDescriptor.MyType.OPTIONALLY_IN_PATTERN &&
+              childDescriptor.getElement() == null) {
+            result[0] = false;
+          }
+        }
+
+        for (MultiChildDescriptor childDescriptor : descriptor.getMultiChildDescriptors()) {
+          if (childDescriptor.getType() == MultiChildDescriptor.MyType.OPTIONALLY_IN_PATTERN) {
+            PsiElement[] elements = childDescriptor.getElements();
+            if (elements == null || elements.length == 0) {
+              result[0] = false;
+            }
+          }
+        }
+      }
+    });
+    return result[0];
+  }
+
+  @Override
+  public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
+    return new DocumentBasedReplaceHandler(context.getProject());
   }
 
   @Nullable
@@ -584,7 +673,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
         for (Pattern substitutionPattern : mySubstitutionPatterns) {
           @Nullable MatchingHandler handler =
-          myGlobalVisitor.processPatternStringWithFragments(value, GlobalCompilingVisitor.OccurenceKind.LITERAL, substitutionPattern);
+            myGlobalVisitor.processPatternStringWithFragments(value, GlobalCompilingVisitor.OccurenceKind.LITERAL, substitutionPattern);
 
           if (handler != null) {
             literal.putUserData(CompiledPattern.HANDLER_KEY, handler);
