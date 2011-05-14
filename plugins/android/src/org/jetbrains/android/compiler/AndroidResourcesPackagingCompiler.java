@@ -167,7 +167,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     throws IOException {
 
     final File dir = FileUtil.createTempDirectory("android_manifest_copy", "tmp");
-    final VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(dir);
+    final VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
     if (vDir == null) {
       throw new IOException("Cannot create temp directory for manifest copy");
     }
