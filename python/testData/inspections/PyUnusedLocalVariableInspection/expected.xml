@@ -47,11 +47,6 @@
   </problem>
   <problem>
     <file>test.py</file>
-    <line>106</line>
-  <description>Local variable 'v' value is not used</description>
-  </problem>
-  <problem>
-    <file>test.py</file>
     <line>114</line>
   <description>Parameter 'a' value is not used</description>
   </problem>
