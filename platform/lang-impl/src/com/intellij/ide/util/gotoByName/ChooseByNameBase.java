@@ -421,13 +421,16 @@ public abstract class ChooseByNameBase {
                 });
               }
               else {
-                if (e.getOppositeComponent() != null && myList.isShowing() && (e.getOppositeComponent() == myList || SwingUtilities.isDescendingFrom(myList, e.getOppositeComponent()))) {
+                Component oppositeComponent = e.getOppositeComponent();
+                if (oppositeComponent != null && !(oppositeComponent instanceof JFrame) &&
+                    myList.isShowing() &&
+                    (oppositeComponent == myList || SwingUtilities.isDescendingFrom(myList, oppositeComponent))) {
                   return;
                 }
                 hideHint();
               }
             }
-          }, 200);
+                                 }, 200);
         }
       });
     }

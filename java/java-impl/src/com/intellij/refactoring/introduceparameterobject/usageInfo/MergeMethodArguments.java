@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.introduceparameterobject.usageInfo;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -103,9 +104,26 @@ public class MergeMethodArguments extends FixableUsageInfo {
         parametersInfo.add(new ParameterInfoImpl(i, parameters[i].getName(), parameters[i].getType()));
       }
     }
+    final SmartPsiElementPointer<PsiMethod> meth = SmartPointerManager.getInstance(getProject()).createSmartPsiElementPointer(method);
 
-    new ChangeSignatureProcessor(method.getProject(), method, myKeepMethodAsDelegate, null, method.getName(), method.getReturnType(),
-                                 parametersInfo.toArray(new ParameterInfoImpl[parametersInfo.size()])).run();
+    Runnable performChangeSignatureRunnable = new Runnable() {
+      @Override
+      public void run() {
+        final PsiMethod psiMethod = meth.getElement();
+        if (psiMethod == null) return;
+        final ChangeSignatureProcessor changeSignatureProcessor =
+          new ChangeSignatureProcessor(psiMethod.getProject(), psiMethod,
+                                       myKeepMethodAsDelegate, null, psiMethod.getName(),
+                                       psiMethod.getReturnType(),
+                                       parametersInfo.toArray(new ParameterInfoImpl[parametersInfo.size()]));
+        changeSignatureProcessor.run();
+      }
+    };
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      performChangeSignatureRunnable.run();
+    } else {
+      ApplicationManager.getApplication().invokeLater(performChangeSignatureRunnable);
+    }
   }
 
   private boolean isParameterToMerge(int index) {

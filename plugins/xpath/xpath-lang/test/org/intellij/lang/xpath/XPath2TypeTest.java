@@ -125,7 +125,24 @@ public class XPath2TypeTest extends XPath2HighlightingTestBase {
     doXPathHighlighting();
   }
 
+  public void testTimeMinusTime() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testDateTimeMinusDateTime() throws Throwable {
+    doXPathHighlighting();
+  }
+
+  public void testTimeMinusDate() throws Throwable {
+    doXPathHighlighting();
+  }
+
   public void testDateMinusDuration() throws Throwable {
+    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    doXPathHighlighting();
+  }
+
+  public void testDateMinusDuration2() throws Throwable {
     ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
     doXPathHighlighting();
   }
@@ -140,7 +157,17 @@ public class XPath2TypeTest extends XPath2HighlightingTestBase {
     doXPathHighlighting();
   }
 
+  public void testNumericIDivDuration() throws Throwable {
+    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    doXPathHighlighting();
+  }
+
   public void testDurationDivNumeric() throws Throwable {
+    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    doXPathHighlighting();
+  }
+
+  public void testDurationIDivNumeric() throws Throwable {
     ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
     doXPathHighlighting();
   }

@@ -147,7 +147,6 @@ public class AbstractPopup implements JBPopup {
   private JTextField mySpeedSearchPatternField;
   private boolean myNativePopup;
   private boolean myMayBeParent;
-  private JLabel myAdCmp;
   private AbstractPopup.SpeedSearchKeyListener mySearchKeyListener;
   private JLabel myAdComponent;
 
@@ -206,8 +205,7 @@ public class AbstractPopup implements JBPopup {
 
     myContent.add(component, BorderLayout.CENTER);
     if (adText != null) {
-      myAdCmp = HintUtil.createAdComponent(adText, HintUtil.getDefaultAdComponentBorder(), adTextAlignment);
-      myContent.add(myAdCmp, BorderLayout.SOUTH);
+      setAdText(adText, adTextAlignment);
     }
 
     myCancelKeyEnabled = cancelKeyEnabled;
@@ -1196,6 +1194,9 @@ public class AbstractPopup implements JBPopup {
   }
 
   private Dimension computeWindowSize(Dimension size) {
+    if (myAdComponent != null && myAdComponent.isShowing()) {
+      size.height += myAdComponent.getPreferredSize().height + 1;
+    }
     return size;
   }
 

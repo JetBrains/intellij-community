@@ -159,9 +159,9 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
 
   @Override
   public void visitXPathBinaryExpression(final XPathBinaryExpression o) {
-    if (o.getXPathVersion() == XPathVersion.V2) {
+    final XPathExpression operand = o.getLOperand();
+    if (operand != null && o.getXPathVersion() == XPathVersion.V2) {
       final XPathElementType operator = o.getOperator();
-      final XPathExpression operand = o.getLOperand();
 
       if (XPath2TokenTypes.COMP_OPS.contains(operator)) {
         if (operand instanceof XPathBinaryExpression && XPath2TokenTypes.COMP_OPS.contains(((XPathBinaryExpression)operand).getOperator())) {
@@ -213,13 +213,16 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
   }
 
   private void checkApplicability(XPathBinaryExpression o, XPath2Type... applicableTypes) {
-    final XPathType leftType = XPath2Type.mapType(o.getLOperand().getType());
+    final XPathExpression lOperand = o.getLOperand();
+    assert lOperand != null;
+
+    final XPathType leftType = XPath2Type.mapType(lOperand.getType());
     for (XPath2Type applicableType : applicableTypes) {
       if (XPathType.isAssignable(applicableType, leftType)) {
         return;
       }
     }
-    myHolder.createErrorAnnotation(o, "Operator '" + o.getOperationSign() + "' cannot to applied to expressions of type '" + leftType.getName() + "'");
+    myHolder.createErrorAnnotation(o, "Operator '" + o.getOperationSign() + "' cannot be applied to expressions of type '" + leftType.getName() + "'");
   }
 
   @Override
@@ -531,7 +534,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
     final XPathExpression expression = o.getPredicateExpression();
     if (expression instanceof XPathLocationPath) {
       final XPathExpression parentOfType = PsiTreeUtil.getParentOfType(o, XPathExpression.class, true);
-      if (XPath2Type.ANYATOMICTYPE.isAssignableFrom(parentOfType.getType())) {
+      if (parentOfType != null && XPath2Type.ANYATOMICTYPE.isAssignableFrom(parentOfType.getType())) {
         myHolder.createErrorAnnotation(expression, "Axis step cannot be used here: the context item is an atomic value");
       }
     }

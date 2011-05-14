@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 
-import com.intellij.psi.util.PropertyUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -692,7 +691,16 @@ class Zoo {
 
   public void testPlusAssignment() {
     final PsiElement resolved = resolve("A.groovy")
-    assertInstanceOf resolved, GrMethod
-    assertEquals("plus", resolved.name)
+    assertEquals("plus", assertInstanceOf(resolved, GrMethod).name)
   }
+
+  public void testWrongGdkCallGenerics() {
+    myFixture.configureByText("a.groovy",
+                              "Map<File,String> map = [:]\n" +
+                              "println map.ge<caret>t('', '')"
+    );
+    def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    assertInstanceOf ref.resolve(), GrGdkMethod
+  }
+
 }

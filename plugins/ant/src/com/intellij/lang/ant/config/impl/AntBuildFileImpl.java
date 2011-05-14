@@ -50,6 +50,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   @NonNls private static final String USER_HOME = "user.home";
   @NonNls private static final String ANT_LIB = "/.ant/lib";
   private volatile Map<String, String> myCachedExternalProperties;
+  private final Object myOptionsLock = new Object();
 
   public static final AbstractProperty<AntInstallation> ANT_INSTALLATION = new AbstractProperty<AntInstallation>() {
     public String getName() {
@@ -273,15 +274,16 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   public void updateProperties() {
-    synchronized (this) {
+    final Map<String, AntBuildTarget> targetByName =
+      ContainerUtil.assignKeys(Arrays.asList(getModel().getTargets()).iterator(), new Convertor<AntBuildTarget, String>() {
+        public String convert(AntBuildTarget target) {
+          return target.getName();
+        }
+      });
+    targetByName.remove(null); // ensure there are no targets with 'null' name
+
+    synchronized (myOptionsLock) {
       myCachedExternalProperties = null;
-      final Map<String, AntBuildTarget> targetByName =
-        ContainerUtil.assignKeys(Arrays.asList(getModel().getTargets()).iterator(), new Convertor<AntBuildTarget, String>() {
-          public String convert(AntBuildTarget target) {
-            return target.getName();
-          }
-        });
-      targetByName.remove(null); // ensure there are no targets with 'null' name
       final ArrayList<TargetFilter> filters = TARGET_FILTERS.getModifiableList(myAllOptions);
       for (Iterator<TargetFilter> iterator = filters.iterator(); iterator.hasNext();) {
         final TargetFilter filter = iterator.next();
@@ -325,7 +327,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   public void readWorkspaceProperties(final Element parentNode) throws InvalidDataException {
-    synchronized (this) {
+    synchronized (myOptionsLock) {
       myWorkspaceOptions.readExternal(parentNode);
       final Element expanded = parentNode.getChild("expanded");
       if (expanded != null) {
@@ -335,7 +337,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   public void writeWorkspaceProperties(final Element parentNode) throws WriteExternalException {
-    synchronized (this) {
+    synchronized (myOptionsLock) {
       myWorkspaceOptions.writeExternal(parentNode);
       final Element expandedElem = new Element("expanded");
       expandedElem.setAttribute("value", Boolean.toString(myShouldExpand));
@@ -344,7 +346,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   public void readProperties(final Element parentNode) throws InvalidDataException {
-    synchronized (this) {
+    synchronized (myOptionsLock) {
       myProjectOptions.readExternal(parentNode);
       basicUpdateConfig();
       readWorkspaceProperties(parentNode); // Compatibility with old Idea
@@ -352,7 +354,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   public void writeProperties(final Element parentNode) throws WriteExternalException {
-    synchronized (this) {
+    synchronized (myOptionsLock) {
       myProjectOptions.writeExternal(parentNode);
     }
   }
@@ -369,8 +371,9 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   public Map<String, String> getExternalProperties() {
     Map<String, String> result = myCachedExternalProperties;
     if (result == null) {
-      synchronized (this) {
-        if (myCachedExternalProperties == null) {
+      synchronized (myOptionsLock) {
+        result = myCachedExternalProperties;
+        if (result == null) {
           result = new HashMap<String, String>();
           
           final DataContext context = SimpleDataContext.getProjectContext(myProject);
@@ -390,9 +393,6 @@ public class AntBuildFileImpl implements AntBuildFileBase {
           }
           myCachedExternalProperties = result;  
         }
-        else {
-          result = myCachedExternalProperties;
-        }
       }
     }
     return result;
@@ -405,7 +405,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   @Nullable
   private TargetFilter findFilter(final String targetName) {
     final List<TargetFilter> filters;
-    synchronized (this) {
+    synchronized (myOptionsLock) {
       filters = TARGET_FILTERS.get(myAllOptions);
     }
     for (TargetFilter targetFilter : filters) {

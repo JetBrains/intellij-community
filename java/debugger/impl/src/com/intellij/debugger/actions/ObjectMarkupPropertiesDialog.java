@@ -65,6 +65,6 @@ public class ObjectMarkupPropertiesDialog extends ValueMarkerPresentationDialogB
   }
 
   public boolean isMarkAdditionalFields() {
-    return myCbMarkAdditionalFields.isSelected();
+    return mySuggestAdditionalMarkup && myCbMarkAdditionalFields.isSelected();
   }
 }

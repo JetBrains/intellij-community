@@ -127,7 +127,9 @@ public class PathMacroTable extends Table {
     for (Pair<String, String> pair : myMacros) {
       final String value = pair.getSecond();
       if (value != null && value.trim().length() > 0) {
-        myPathMacros.setMacro(pair.getFirst(), value.replace(File.separatorChar, '/'));
+        String path = value.replace(File.separatorChar, '/');
+        if (path.endsWith("/")) path = path.substring(0, path.length() - 1);
+        myPathMacros.setMacro(pair.getFirst(), path);
       }
     }
   }
