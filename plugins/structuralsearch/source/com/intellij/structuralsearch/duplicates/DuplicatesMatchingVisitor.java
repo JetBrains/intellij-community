@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.structuralsearch.StructuralSearchProfileBase;
-import com.intellij.structuralsearch.equivalence.ChildRole;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptor;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;
 import com.intellij.structuralsearch.impl.matcher.AbstractMatchingVisitor;
@@ -29,14 +28,14 @@ import java.util.*;
 public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
   private final SSRNodeSpecificHasher myNodeSpecificHasher;
   private final DuplocatorSettings mySettings;
-  private final Set<ChildRole> mySkippedRoles;
+  private final Set<PsiElementRole> mySkippedRoles;
   private final NodeFilter myNodeFilter;
   private final int myDiscardCost;
   private final SSRTreeHasher myTreeHasher;
   private final Map<PsiElement, TreeHashResult> myPsiElement2HashAndCost = new HashMap<PsiElement, TreeHashResult>();
 
   public DuplicatesMatchingVisitor(SSRNodeSpecificHasher nodeSpecificHasher,
-                                   Set<ChildRole> skippedRoles,
+                                   Set<PsiElementRole> skippedRoles,
                                    NodeFilter nodeFilter,
                                    int discardCost) {
     myNodeSpecificHasher = nodeSpecificHasher;

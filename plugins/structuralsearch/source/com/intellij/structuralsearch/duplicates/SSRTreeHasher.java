@@ -127,7 +127,7 @@ class SSRTreeHasher extends AbstractTreeHasher {
     final Pair<Integer, Integer> result = doComputeHash(childDescriptor, parentFragment, nodeSpecificHasher);
 
     if (result != null) {
-      final ChildRole role = ((SSRNodeSpecificHasher)nodeSpecificHasher).getDuplicatesProfile().getRole(element);
+      final PsiElementRole role = ((SSRNodeSpecificHasher)nodeSpecificHasher).getDuplicatesProfile().getRole(element);
       if (role != null) {
         switch (role) {
           case VARIABLE_NAME:

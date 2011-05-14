@@ -1,13 +1,10 @@
 package com.intellij.structuralsearch.equivalence.js;
 
-import com.intellij.lang.javascript.JSTokenTypes;
 import com.intellij.lang.javascript.JavascriptLanguage;
 import com.intellij.lang.javascript.psi.*;
 import com.intellij.lang.javascript.psi.ecmal4.JSClass;
 import com.intellij.lang.javascript.psi.ecmal4.JSReferenceList;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.structuralsearch.equivalence.ChildRole;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptor;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorBuilder;
 import com.intellij.structuralsearch.equivalence.EquivalenceDescriptorProvider;

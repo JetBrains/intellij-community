@@ -14,7 +14,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.structuralsearch.StructuralSearchProfileBase;
-import com.intellij.structuralsearch.equivalence.ChildRole;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,7 +82,12 @@ public class SSRDuplicatesProfile extends DuplicatesProfile {
   }
 
   @Nullable
-  public ChildRole getRole(@NotNull PsiElement element) {
+  public PsiElementRole getRole(@NotNull PsiElement element) {
+    return null;
+  }
+
+  @Nullable
+  public PsiElement[] getCodeBlock(@NotNull PsiElement element) {
     return null;
   }
 }

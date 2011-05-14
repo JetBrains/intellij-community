@@ -11,7 +11,6 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.structuralsearch.StructuralSearchProfileBase;
-import com.intellij.structuralsearch.equivalence.ChildRole;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.SiblingNodeIterator;
@@ -28,7 +27,7 @@ import java.util.Set;
 public class SSRNodeSpecificHasher extends NodeSpecificHasher {
   private final SSRTreeHasher myTreeHasher;
   private final DuplocatorSettings mySettings;
-  private final Set<ChildRole> mySkippedRoles;
+  private final Set<PsiElementRole> mySkippedRoles;
   private SSRDuplicatesProfile myDuplicatesProfile;
 
   private final NodeFilter myNodeFilter = new NodeFilter() {
@@ -53,17 +52,17 @@ public class SSRNodeSpecificHasher extends NodeSpecificHasher {
     return myNodeFilter;
   }
 
-  private static Set<ChildRole> getSkippedRoles(DuplocatorSettings settings) {
-    final Set<ChildRole> result = EnumSet.noneOf(ChildRole.class);
+  private static Set<PsiElementRole> getSkippedRoles(DuplocatorSettings settings) {
+    final Set<PsiElementRole> result = EnumSet.noneOf(PsiElementRole.class);
 
     if (!settings.DISTINGUISH_FIELDS) {
-      result.add(ChildRole.FIELD_NAME);
+      result.add(PsiElementRole.FIELD_NAME);
     }
     if (!settings.DISTINGUISH_METHODS) {
-      result.add(ChildRole.FUNCTION_NAME);
+      result.add(PsiElementRole.FUNCTION_NAME);
     }
     if (!settings.DISTINGUISH_VARIABLES) {
-      result.add(ChildRole.VARIABLE_NAME);
+      result.add(PsiElementRole.VARIABLE_NAME);
     }
     return result;
   }

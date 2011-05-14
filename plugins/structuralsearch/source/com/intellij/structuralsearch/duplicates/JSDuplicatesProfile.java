@@ -10,7 +10,6 @@ import com.intellij.lang.javascript.psi.JSVariable;
 import com.intellij.lang.javascript.psi.ecmal4.JSClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.structuralsearch.equivalence.ChildRole;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,14 +22,14 @@ public class JSDuplicatesProfile extends SSRDuplicatesProfile {
   }
 
   @Override
-  public ChildRole getRole(@NotNull PsiElement element) {
+  public PsiElementRole getRole(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
 
     if (parent instanceof JSVariable && ((JSVariable)parent).getNameIdentifier() == element) {
-      return ChildRole.VARIABLE_NAME;
+      return PsiElementRole.VARIABLE_NAME;
     }
     else if (parent instanceof JSFunction && ((JSFunction)parent).getNameIdentifier() == element) {
-      return ChildRole.FUNCTION_NAME;
+      return PsiElementRole.FUNCTION_NAME;
     }
     return null;
   }

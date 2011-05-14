@@ -1,10 +1,8 @@
 package com.intellij.structuralsearch.duplicates;
 
-import com.intellij.dupLocator.DuplicatesProfile;
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.structuralsearch.equivalence.ChildRole;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -22,14 +20,14 @@ public class GroovyDuplicatesProfile extends SSRDuplicatesProfile {
   }
 
   @Override
-  public ChildRole getRole(@NotNull PsiElement element) {
+  public PsiElementRole getRole(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
 
     if (parent instanceof GrVariable && ((GrVariable)parent).getNameIdentifierGroovy() == element) {
-      return ChildRole.VARIABLE_NAME;
+      return PsiElementRole.VARIABLE_NAME;
     }
     else if (parent instanceof GrMethod && ((GrMethod)parent).getNameIdentifierGroovy() == element) {
-      return ChildRole.FUNCTION_NAME;
+      return PsiElementRole.FUNCTION_NAME;
     }
     return null;
   }
