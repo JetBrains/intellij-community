@@ -15,20 +15,34 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.HashMap;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import java.util.Map;
 
 /**
  * @author Medvedev Max
  */
 public class TypeProvider {
+  private final Map<GrMethod, PsiType[]> inferredTypes = new HashMap<GrMethod, PsiType[]>();
+
   public TypeProvider() {
   }
 
@@ -46,7 +60,7 @@ public class TypeProvider {
   }
 
   @NotNull
-  public  PsiType getVarType(GrVariable variable) {
+  public PsiType getVarType(GrVariable variable) {
     PsiType type = variable.getDeclaredType();
     if (type == null) {
       type = variable.getTypeGroovy();
@@ -59,8 +73,76 @@ public class TypeProvider {
 
   @NotNull
   public PsiType getParameterType(PsiParameter parameter) {
-    return parameter.getType(); //todo make smarter
+    if (!(parameter instanceof GrParameter)) {
+      return parameter.getType();
+    }
+    /*GrTypeElement typeElementGroovy = ((GrParameter)parameter).getTypeElementGroovy();
+    if (typeElementGroovy != null) {
+      return parameter.getType();
+    }*/
+
+    PsiElement parent = parameter.getParent();
+    if (!(parent instanceof GrParameterList)) return parameter.getType();
+
+    PsiElement pparent = parent.getParent();
+    if (!(pparent instanceof GrMethod)) return parameter.getType();
+
+    PsiType[] types = inferMethodParameters((GrMethod)pparent);
+    return types[((GrParameterList)parent).getParameterNumber((GrParameter)parameter)];
   }
 
+  private PsiType[] inferMethodParameters(GrMethod method) {
+    PsiType[] psiTypes = inferredTypes.get(method);
+    if (psiTypes != null) return psiTypes;
 
+    final GrParameter[] parameters = method.getParameters();
+
+    final TIntArrayList paramInds = new TIntArrayList(parameters.length);
+    final PsiType[] types = new PsiType[parameters.length];
+    for (int i = 0; i < parameters.length; i++) {
+      if (parameters[i].getTypeElementGroovy() == null) {
+        paramInds.add(i);
+      } else {
+        types[i] = parameters[i].getType();
+      }
+    }
+
+    if (paramInds.size() > 0) {
+      final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, PsiSubstitutor.EMPTY);
+      MethodReferencesSearch.search(method, true).forEach(new Processor<PsiReference>() {
+        @Override
+        public boolean process(PsiReference psiReference) {
+          final PsiElement element = psiReference.getElement();
+          final PsiManager manager = element.getManager();
+          final GlobalSearchScope resolveScope = element.getResolveScope();
+
+          if (element instanceof GrReferenceExpression) {
+            final GrCall call = (GrCall)element.getParent();
+            final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos = GrClosureSignatureUtil
+              .mapParametersToArguments(signature, call.getArgumentList(), ((GrReferenceExpression)element), call.getClosureArguments());
+
+            if (argInfos == null) return true;
+            paramInds.forEach(new TIntProcedure() {
+              @Override
+              public boolean execute(int i) {
+                PsiType type = GrClosureSignatureUtil.getTypeByArg(argInfos[i], manager, resolveScope);
+                types[i] = TypesUtil.getLeastUpperBoundNullable(type, types[i], manager);
+                return true;
+              }
+            });
+          }
+          return true;
+        }
+      });
+    }
+    paramInds.forEach(new TIntProcedure() {
+      @Override
+      public boolean execute(int i) {
+        if (types[i]==null) types[i] = parameters[i].getType();
+        return true;
+      }
+    });
+    inferredTypes.put(method, types);
+    return types;
+  }
 }
