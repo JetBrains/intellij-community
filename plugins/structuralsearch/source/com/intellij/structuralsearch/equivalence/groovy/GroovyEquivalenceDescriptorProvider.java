@@ -98,19 +98,6 @@ public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorPr
   }
 
   @Override
-  public TokenSet getLiterals() {
-    return TokenSets.CONSTANTS;
-  }
-
-  @Override
-  public int getNodeCost(@NotNull PsiElement element) {
-    if (element instanceof GrStatement) {
-      return 2;
-    }
-    return 0;
-  }
-
-  @Override
   public TokenSet getIgnoredTokens() {
     return IGNORED_TOKENS;
   }

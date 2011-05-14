@@ -27,7 +27,7 @@ import java.util.*;
  * @author Eugene.Kudelevsky
  */
 public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
-  private final NodeSpecificHasher myNodeSpecificHasher;
+  private final SSRNodeSpecificHasher myNodeSpecificHasher;
   private final DuplocatorSettings mySettings;
   private final Set<ChildRole> mySkippedRoles;
   private final NodeFilter myNodeFilter;
@@ -35,7 +35,7 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
   private final SSRTreeHasher myTreeHasher;
   private final Map<PsiElement, TreeHashResult> myPsiElement2HashAndCost = new HashMap<PsiElement, TreeHashResult>();
 
-  public DuplicatesMatchingVisitor(NodeSpecificHasher nodeSpecificHasher,
+  public DuplicatesMatchingVisitor(SSRNodeSpecificHasher nodeSpecificHasher,
                                    Set<ChildRole> skippedRoles,
                                    NodeFilter nodeFilter,
                                    int discardCost) {
@@ -134,9 +134,8 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
       IElementType elementType2 = ((LeafElement)element2).getElementType();
 
       if (!mySettings.DISTINGUISH_LITERALS &&
-          descriptorProvider != null &&
-          descriptorProvider.getLiterals().contains(elementType1) &&
-          descriptorProvider.getLiterals().contains(elementType2)) {
+          myNodeSpecificHasher.getDuplicatesProfile().getLiterals().contains(elementType1) &&
+          myNodeSpecificHasher.getDuplicatesProfile().getLiterals().contains(elementType2)) {
         return true;
       }
       return element1.getText().equals(element2.getText());

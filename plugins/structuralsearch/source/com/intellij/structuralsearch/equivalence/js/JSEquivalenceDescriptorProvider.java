@@ -69,20 +69,4 @@ public class JSEquivalenceDescriptorProvider extends EquivalenceDescriptorProvid
 
     return null;
   }
-
-  @Override
-  public TokenSet getLiterals() {
-    return JSTokenTypes.LITERALS;
-  }
-
-  @Override
-  public int getNodeCost(@NotNull PsiElement element) {
-    if (element instanceof JSStatement || element instanceof JSFunction || element instanceof JSClass) {
-      return 2;
-    }
-    else if (element instanceof JSExpression) {
-      return 1;
-    }
-    return 0;
-  }
 }

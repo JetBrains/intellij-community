@@ -20,29 +20,9 @@ public abstract class EquivalenceDescriptorProvider {
   @Nullable
   public abstract EquivalenceDescriptor buildDescriptor(@NotNull PsiElement element);
 
-  public TokenSet getLiterals() {
-    return TokenSet.EMPTY;
-  }
-
-  public int getNodeCost(@NotNull PsiElement element) {
-    return getDefaultNodeCost(element);
-  }
-
   // by default only PsiWhitespace ignored
   public TokenSet getIgnoredTokens() {
     return TokenSet.EMPTY;
-  }
-
-  public static int getDefaultNodeCost(PsiElement element) {
-    if (!(element instanceof LeafElement)) {
-      return 0;
-    }
-
-    if (StructuralSearchProfileBase.containsOnlyDelimeters(element.getText())) {
-      return 0;
-    }
-
-    return 1;
   }
 
   @Nullable
