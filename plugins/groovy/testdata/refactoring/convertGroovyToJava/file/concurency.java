@@ -32,7 +32,7 @@ return null;
 
 }
 
-public synchronized void out(java.lang.Object message) {
+public synchronized void out(groovy.lang.GString message) {
 println(message);
 }
 
