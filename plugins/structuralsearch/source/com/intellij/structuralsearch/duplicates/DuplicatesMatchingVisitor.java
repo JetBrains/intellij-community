@@ -126,7 +126,7 @@ public class DuplicatesMatchingVisitor extends AbstractMatchingVisitor {
     }
 
     if (descriptor1 != null && descriptor2 != null) {
-      return StructuralSearchProfileBase.match(descriptor1, descriptor2, this, mySkippedRoles);
+      return StructuralSearchProfileBase.match(descriptor1, descriptor2, this, mySkippedRoles, myNodeSpecificHasher.getDuplicatesProfile());
     }
 
     if (element1 instanceof LeafElement) {

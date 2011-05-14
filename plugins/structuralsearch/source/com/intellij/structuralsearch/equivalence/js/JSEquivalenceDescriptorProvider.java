@@ -46,8 +46,7 @@ public class JSEquivalenceDescriptorProvider extends EquivalenceDescriptorProvid
       return builder
         .element(v.getNameIdentifier())
         .optionally(v.getTypeElement())
-        .optionallyInPattern(v.getInitializer())
-        .role(v.getNameIdentifier(), ChildRole.VARIABLE_NAME);
+        .optionallyInPattern(v.getInitializer());
     }
     else if (element instanceof JSFunction) {
       final JSFunction f = (JSFunction)element;
@@ -57,8 +56,7 @@ public class JSEquivalenceDescriptorProvider extends EquivalenceDescriptorProvid
         .childrenOptionally(f.getAttributeList())
         .children(f.getParameterList())
         .optionally(f.getReturnTypeElement())
-        .optionallyInPattern(f.getBody())
-        .role(f.getNameIdentifier(), ChildRole.FUNCTION_NAME);
+        .optionallyInPattern(f.getBody());
     }
     else if (element instanceof JSBlockStatement) {
       return builder.codeBlock(((JSBlockStatement)element).getStatements());

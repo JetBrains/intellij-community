@@ -44,16 +44,14 @@ public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorPr
       return builder
         .element(p.getNameIdentifierGroovy())
         .optionally(p.getTypeElementGroovy())
-        .optionallyInPattern(p.getDefaultInitializer())
-        .role(p.getNameIdentifierGroovy(), ChildRole.VARIABLE_NAME);
+        .optionallyInPattern(p.getDefaultInitializer());
     }
     else if (e instanceof GrVariable) {
       final GrVariable v = (GrVariable)e;
       return builder
         .element(v.getNameIdentifierGroovy())
         .optionally(v.getTypeElementGroovy())
-        .optionallyInPattern(v.getInitializerGroovy())
-        .role(v.getNameIdentifierGroovy(), ChildRole.VARIABLE_NAME);
+        .optionallyInPattern(v.getInitializerGroovy());
     }
     else if (e instanceof GrMethod) {
       final GrMethod m = (GrMethod)e;
@@ -61,8 +59,7 @@ public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorPr
         .element(m.getNameIdentifierGroovy())
         .elements(m.getParameters())
         .optionally(m.getReturnTypeElementGroovy())
-        .optionallyInPattern(m.getBlock())
-        .role(m.getNameIdentifierGroovy(), ChildRole.FUNCTION_NAME);
+        .optionallyInPattern(m.getBlock());
     }
     else if (e instanceof GrTypeDefinitionBody) {
       final GrTypeDefinitionBody b = (GrTypeDefinitionBody)e;

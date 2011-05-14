@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.structuralsearch.duplicates.SSRDuplicatesProfile;
 import com.intellij.structuralsearch.equivalence.*;
 import com.intellij.structuralsearch.impl.matcher.AbstractMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
@@ -405,7 +406,8 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   public static boolean match(@NotNull EquivalenceDescriptor descriptor1,
                               @NotNull EquivalenceDescriptor descriptor2,
                               @NotNull AbstractMatchingVisitor g,
-                              @NotNull Set<ChildRole> skippedRoles) {
+                              @NotNull Set<ChildRole> skippedRoles,
+                              @Nullable SSRDuplicatesProfile profile) {
 
     if (descriptor1.getSingleChildDescriptors().size() != descriptor2.getSingleChildDescriptors().size()) {
       return false;
@@ -436,7 +438,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       SingleChildDescriptor childDescriptor1 = descriptor1.getSingleChildDescriptors().get(i);
       SingleChildDescriptor childDescriptor2 = descriptor2.getSingleChildDescriptors().get(i);
 
-      if (!match(childDescriptor1, childDescriptor2, g, skippedRoles)) {
+      if (!match(childDescriptor1, childDescriptor2, g, skippedRoles, profile)) {
         return false;
       }
     }
@@ -465,7 +467,8 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   private static boolean match(@NotNull SingleChildDescriptor childDescriptor1,
                                @NotNull SingleChildDescriptor childDescriptor2,
                                @NotNull AbstractMatchingVisitor g,
-                               @NotNull Set<ChildRole> skippedRoles) {
+                               @NotNull Set<ChildRole> skippedRoles,
+                               @Nullable SSRDuplicatesProfile duplicatesProfile) {
     if (childDescriptor1.getType() != childDescriptor2.getType()) {
       return false;
     }
@@ -473,11 +476,13 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     final PsiElement element1 = childDescriptor1.getElement();
     final PsiElement element2 = childDescriptor2.getElement();
 
-    final ChildRole role1 = childDescriptor1.getRole();
-    final ChildRole role2 = childDescriptor2.getRole();
+    if (duplicatesProfile != null) {
+      final ChildRole role1 = element1 != null ? duplicatesProfile.getRole(element1) : null;
+      final ChildRole role2 = element2 != null ? duplicatesProfile.getRole(element2) : null;
 
-    if (role1 == role2 && skippedRoles.contains(role1)) {
-      return true;
+      if (role1 == role2 && skippedRoles.contains(role1)) {
+        return true;
+      }
     }
 
     switch (childDescriptor1.getType()) {
@@ -753,7 +758,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         final EquivalenceDescriptor descriptor2 = descriptorProvider.buildDescriptor(myGlobalVisitor.getElement());
 
         if (descriptor1 != null && descriptor2 != null) {
-          final boolean result = match(descriptor1, descriptor2, myGlobalVisitor, Collections.<ChildRole>emptySet());
+          final boolean result = match(descriptor1, descriptor2, myGlobalVisitor, Collections.<ChildRole>emptySet(), null);
           myGlobalVisitor.setResult(result);
           return;
         }

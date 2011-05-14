@@ -14,7 +14,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.structuralsearch.StructuralSearchProfileBase;
+import com.intellij.structuralsearch.equivalence.ChildRole;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene.Kudelevsky
@@ -78,5 +80,10 @@ public class SSRDuplicatesProfile extends DuplicatesProfile {
       }
     }
     return false;
+  }
+
+  @Nullable
+  public ChildRole getRole(@NotNull PsiElement element) {
+    return null;
   }
 }
