@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -41,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCurriedClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -645,4 +647,56 @@ public class GrClosureSignatureUtil {
                                                                                      @NotNull GrClosureSignature signature) {
     return generateAllMethodSignaturesByClosureSignature(name, signature, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
   }
+
+  @Nullable
+  public static PsiType getTypeByTypeArg(ArgInfo<PsiType> arg, PsiManager manager, GlobalSearchScope resolveScope) {
+    if (arg.isMultiArg) {
+      if (arg.args.size() == 0) return PsiType.getJavaLangObject(manager, resolveScope).createArrayType();
+      PsiType leastUpperBound = null;
+
+      for (PsiType type : arg.args) {
+        leastUpperBound = TypesUtil.getLeastUpperBoundNullable(leastUpperBound, type, manager);
+      }
+      if (leastUpperBound == null) return null;
+      return leastUpperBound.createArrayType();
+    }
+    else {
+      if (arg.args.size() > 0) return arg.args.get(0);
+      return null;
+    }
+  }
+
+  @Nullable
+  public static PsiType getTypeByArg(ArgInfo<PsiElement> arg, PsiManager manager, GlobalSearchScope resolveScope) {
+    if (arg.isMultiArg) {
+      if (arg.args.size() == 0) return PsiType.getJavaLangObject(manager, resolveScope).createArrayType();
+      PsiType leastUpperBound = null;
+      PsiElement first = arg.args.get(0);
+      if (first instanceof GrNamedArgument) {
+        GrNamedArgument[] args=new GrNamedArgument[arg.args.size()];
+        for (int i = 0, size = arg.args.size(); i < size; i++) {
+          args[i] = (GrNamedArgument)arg.args.get(i);
+        }
+        return new GrMapType(JavaPsiFacade.getInstance(manager.getProject()), resolveScope, args);
+      }
+      else {
+        for (PsiElement elem : arg.args) {
+          if (elem instanceof GrExpression) {
+            leastUpperBound = TypesUtil.getLeastUpperBoundNullable(leastUpperBound, ((GrExpression)elem).getType(), manager);
+          }
+        }
+        if (leastUpperBound == null) return null;
+        return leastUpperBound.createArrayType();
+      }
+    }
+    else {
+      if (arg.args.size() == 0) return null;
+      PsiElement elem = arg.args.get(0);
+      if (elem instanceof GrExpression) {
+        return ((GrExpression)elem).getType();
+      }
+      return null;
+    }
+  }
+
 }

@@ -24,10 +24,15 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 import java.util.*;
+import java.util.HashSet;
 
 /**
  * @author peter
@@ -65,6 +70,31 @@ public class GrMapType extends GrLiteralClassType {
 
     myJavaClassName =
       facade.findClass(JAVA_UTIL_LINKED_HASH_MAP, scope) != null ? JAVA_UTIL_LINKED_HASH_MAP : CommonClassNames.JAVA_UTIL_MAP;
+  }
+
+  public GrMapType(JavaPsiFacade facade, GlobalSearchScope scope, GrNamedArgument[] args) {
+    super(LanguageLevel.JDK_1_5, scope, facade);
+
+    myJavaClassName =
+      facade.findClass(JAVA_UTIL_LINKED_HASH_MAP, scope) != null ? JAVA_UTIL_LINKED_HASH_MAP : CommonClassNames.JAVA_UTIL_MAP;
+
+    myStringEntries = new HashMap<String, PsiType>();
+    myOtherEntries=new ArrayList<Pair<PsiType, PsiType>>();
+
+    for (GrNamedArgument arg : args) {
+      GrArgumentLabel label = arg.getLabel();
+      if (label == null) continue;
+      GrExpression expression = arg.getExpression();
+      if (expression == null || expression.getType() == null) continue;
+
+      if (label.getName() != null) {
+        myStringEntries.put(label.getName(), expression.getType());
+      }
+      else if (label.getExpression() != null) {
+        PsiType type = label.getExpression().getType();
+        myOtherEntries.add(new Pair<PsiType, PsiType>(type, expression.getType()));
+      }
+    }
   }
 
   @NotNull

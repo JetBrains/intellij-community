@@ -120,7 +120,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
     //append return type
     if (!method.isConstructor()) {
-      PsiType retType = TypeProvider.getReturnType(method);
+      PsiType retType = context.typeProvider.getReturnType(method);
 
       /*
       if (!method.hasModifierProperty(PsiModifier.STATIC)) {
@@ -161,7 +161,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
         builder.append("default ");
         GrAnnotationMemberValue defaultValue = defaultAnnotationValue.getDefaultValue();
         if (defaultValue != null) {
-          defaultValue.accept(new AnnotationGenerator(builder, context.project));
+          defaultValue.accept(new AnnotationGenerator(builder, context));
         }
       }
     }
@@ -206,7 +206,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
       builder.append("this");
     }
     else {
-      if (TypeProvider.getReturnType(method) != PsiType.VOID) {
+      if (context.typeProvider.getReturnType(method) != PsiType.VOID) {
         builder.append("return ");
       }
       builder.append(method.getName());

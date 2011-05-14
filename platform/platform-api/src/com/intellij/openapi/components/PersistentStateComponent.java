@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,8 @@ import com.intellij.util.xmlb.XmlSerializer;
  * Every component which would like to persist its state across IDEA restarts
  * should implement this interface.
  *
- * todo: describe registration procedures
+ * See <a href="http://confluence.jetbrains.net/display/IDEADEV/Persisting+State+of+Components">JetBrains WIKI</a>
+ * for detailed description.
  */
 public interface PersistentStateComponent<T> {
   /**
