@@ -155,7 +155,7 @@ public class AnnotationFieldGutter implements ActiveAnnotationGutter {
     if (myColorScheme == null || !myShowBg) return null;
     final String s = getLineText(line, editor);
     final VcsRevisionNumber number = myAnnotation.getLineRevisionNumber(line);
-    if (number == null) return null;
+    if (number == null || s == null) return null;
     final Color bg = myColorScheme.get(number.asString());
     return bg == null ? findBgColor(s) : bg;
   }
