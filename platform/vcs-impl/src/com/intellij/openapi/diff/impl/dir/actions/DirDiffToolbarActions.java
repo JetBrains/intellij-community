@@ -15,13 +15,12 @@
  */
 package com.intellij.openapi.diff.impl.dir.actions;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -30,7 +29,7 @@ public class DirDiffToolbarActions extends ActionGroup {
   private final AnAction[] myActions;
   private final DirDiffTableModel myModel;
 
-  public DirDiffToolbarActions(DirDiffTableModel model) {
+  public DirDiffToolbarActions(DirDiffTableModel model, JComponent panel) {
     super("Directory Diff Actions", false);
     myModel = model;
     myActions = new AnAction[] {
@@ -44,6 +43,11 @@ public class DirDiffToolbarActions extends ActionGroup {
       new ChangeCompareModeGroup(myModel),
       Separator.getInstance()
     };
+    for (AnAction action : myActions) {
+      if (action instanceof ShortcutProvider) {
+        action.registerCustomShortcutSet(new CustomShortcutSet(((ShortcutProvider)action).getShortcut()), panel);
+      }
+    }
   }
 
   @NotNull

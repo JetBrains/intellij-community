@@ -16,6 +16,8 @@
 package com.intellij.openapi.diff.impl.dir.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 
 /**
@@ -33,5 +35,10 @@ public class EnableNotEqual extends DirDiffAction {
 
   public void updateState(boolean state) {
     getModel().setShowDifferent(state);
+  }
+
+  @Override
+  public Shortcut getShortcut() {
+    return KeyboardShortcut.fromString("alt MINUS");
   }
 }
