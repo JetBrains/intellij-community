@@ -29,6 +29,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
@@ -566,7 +567,9 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
             swingRunnable.run();
           }
           else {
-            app.invokeAndWait(swingRunnable, ModalityState.defaultModalityState());
+            ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
+            pi.setText("Loading " + module.getName());
+            app.invokeAndWait(swingRunnable, pi.getModalityState());
           }
         }
       }
