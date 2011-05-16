@@ -47,6 +47,6 @@ public final class GroupByScopeTypeAction extends ToggleAction {
 
   public void update(final AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(DependencyUISettings.getInstance().SCOPE_TYPE != ProjectPatternProvider.FILE);
+    e.getPresentation().setVisible(DependencyUISettings.getInstance().SCOPE_TYPE != ProjectPatternProvider.FILE);
   }
 }
