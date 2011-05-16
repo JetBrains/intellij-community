@@ -527,6 +527,7 @@ public class FindUtil {
           ((DocumentEx) document).setInBulkUpdate(true);
         }
       }
+      int newOffset;
       if (delegate == null || delegate.shouldReplace(result, toReplace)){
         boolean reallyReplace = toPrompt;
         if (reallyReplace) {
@@ -538,13 +539,17 @@ public class FindUtil {
         }
         TextRange textRange = doReplace(project, document, model, result, toReplace, reallyReplace, rangesToChange);
         replaced = true;
-        int newOffset = model.isForward() ? textRange.getEndOffset() : textRange.getStartOffset();
-        if (newOffset == offset) {
-          newOffset += model.isForward() ? 1 : -1;
-        }
-        offset = newOffset;
+        newOffset = model.isForward() ? textRange.getEndOffset() : textRange.getStartOffset();
         occurrences++;
       }
+      else {
+        newOffset = model.isForward() ? result.getEndOffset() : result.getStartOffset();
+      }
+
+      if (newOffset == offset) {
+        newOffset += model.isForward() ? 1 : -1;
+      }
+      offset = newOffset;
 
     }
 
