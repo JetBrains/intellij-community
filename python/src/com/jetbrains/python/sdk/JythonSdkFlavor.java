@@ -29,6 +29,10 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
 
   @Override
   public void initPythonPath(GeneralCommandLine cmd, Collection<String> path) {
-    cmd.getParametersList().add("-Dpython.path=" + StringUtil.join(path, File.pathSeparator));
+    cmd.getParametersList().add(getPythonPathCmdLineArgument(path));
+  }
+
+  public static String getPythonPathCmdLineArgument(Collection<String> path) {
+    return "-Dpython.path=" + StringUtil.join(path, File.pathSeparator);
   }
 }
