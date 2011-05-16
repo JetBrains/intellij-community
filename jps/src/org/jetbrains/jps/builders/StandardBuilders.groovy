@@ -8,6 +8,8 @@ import org.apache.tools.ant.BuildEvent
 import java.util.regex.Pattern
 import java.util.regex.Matcher
 import org.jetbrains.ether.dependencyView.AntListener
+import com.intellij.ant.Instrumenter
+import org.jetbrains.ether.dependencyView.StringCache
 
 /**
  * @author max
@@ -30,7 +32,7 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
     String customArgs = module["javac_args"]; // it seems javac_args property is not set, can we drop it?
     if (module.project.builder.useInProcessJavac) {
       String version = System.getProperty("java.version")
-      if ( true ) {
+      if (true) {
         if (Java16ApiCompilerRunner.compile(module, state, sourceLevel, targetLevel, customArgs)) {
           return
         }
@@ -66,9 +68,9 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
 
     def ant = module.project.binding.ant
 
-    final BuildListener listener = new AntListener (state.targetFolder, state.sourceRoots, state.callback);
+    final BuildListener listener = new AntListener(state.targetFolder, state.sourceRoots, state.callback);
 
-    ant.project.addBuildListener (listener);
+    ant.project.addBuildListener(listener);
 
     ant.javac(params) {
       if (customArgs) {
@@ -76,8 +78,19 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
       }
 
       if (state.sourceFiles != null) {
+        List patterns = []
+
         state.sourceFiles.each {
-          include(name: it)
+          for (String root: state.sourceRoots) {
+            if (it.startsWith(root) && it.endsWith(".java")) {
+              patterns << it.substring(root.length() + 1)
+              break;
+            }
+          }
+
+          patterns.each {
+            include(name: it)
+          }
         }
       }
 
@@ -100,10 +113,10 @@ class JavacBuilder implements ModuleBuilder, ModuleCycleBuilder {
       }
     }
 
-    ant.project.removeBuildListener (listener);
+    ant.project.removeBuildListener(listener);
 
     if (state.sourceFiles != null) {
-        module.project.builder.listeners*.onJavaFilesCompiled(module, state.sourceFiles.size())
+      module.project.builder.listeners*.onJavaFilesCompiled(module, state.sourceFiles.size())
     }
   }
 
@@ -154,7 +167,7 @@ class ResourceCopier implements ModuleBuilder {
 
 class GroovycBuilder implements ModuleBuilder {
   def GroovycBuilder(Project project) {
-    project.taskdef (name: "groovyc", classname: "org.codehaus.groovy.ant.Groovyc")
+    project.taskdef(name: "groovyc", classname: "org.codehaus.groovy.ant.Groovyc")
   }
 
   def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
@@ -198,7 +211,7 @@ class GroovycBuilder implements ModuleBuilder {
 class GroovyStubGenerator implements ModuleBuilder {
 
   def GroovyStubGenerator(Project project) {
-    project.taskdef (name: "generatestubs", classname: "org.codehaus.groovy.ant.GenerateStubsTask")
+    project.taskdef(name: "generatestubs", classname: "org.codehaus.groovy.ant.GenerateStubsTask")
   }
 
   def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
@@ -217,8 +230,8 @@ class GroovyStubGenerator implements ModuleBuilder {
         src(path: it)
       }
 
-      include (name: "**/*.groovy")
-      include (name: "**/*.java")
+      include(name: "**/*.groovy")
+      include(name: "**/*.java")
 
       classpath {
         state.classpath.each {
@@ -240,23 +253,44 @@ class JetBrainsInstrumentations implements ModuleBuilder {
   }
 
   def processModule(ModuleBuildState state, ModuleChunk moduleChunk, Project project) {
-    def ant = project.binding.ant
+    //if (project.getBuilder().useInProcessJavac)
+    //  return;
 
-    ant.jb_instrumentations(destdir: state.targetFolder, failonerror: "false", includeAntRuntime: "false") {
-      state.sourceRoots.each {
-        src(path: it)
-      }
+    final StringBuffer cp = new StringBuffer()
 
-      nestedformdirs {
-        state.moduleDependenciesSourceRoots.each {
-          pathelement(location: it)
+    cp.append(state.targetFolder)
+    cp.append(File.pathSeparator)
+
+    state.classpath.each {
+      cp.append(it)
+      cp.append(File.pathSeparator)
+    }
+
+    final ClassLoader loader = Instrumenter.createClassLoader(cp.toString())
+
+    if (!state.incremental) {
+      new Object() {
+        public void traverse(final File root) {
+          final File[] files = root.listFiles();
+
+          for (File f: files) {
+            final String name = f.getName();
+
+            if (name.endsWith(".class")) {
+              Instrumenter.instrumentNotNull(f, loader)
+            }
+            else if (f.isDirectory()) {
+              traverse(f)
+            }
+          }
         }
-      }
+      }.traverse(new File(state.targetFolder))
+    }
+    else {
+      final Collection<StringCache.S> classes = state.callback.getClassFiles()
 
-      classpath {
-        state.classpath.each {
-          pathelement(location: it)
-        }
+      classes.each {
+        Instrumenter.instrumentNotNull(new File(state.targetFolder + File.separator + it.value + ".class"), loader)
       }
     }
   }

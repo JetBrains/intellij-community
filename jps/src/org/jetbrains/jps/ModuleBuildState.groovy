@@ -14,6 +14,7 @@ class ModuleBuildState {
   List<String> tempRootsToDelete = []
   List<String> moduleDependenciesSourceRoots
   String targetFolder
+  boolean incremental = false
 
   def print() {
     println "Sources: $sourceRoots"

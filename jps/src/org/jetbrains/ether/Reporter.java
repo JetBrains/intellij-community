@@ -26,22 +26,46 @@ public class Reporter {
     }
 
     private static String getOkFlag(final Module m) {
-        return getSafePath (m.getOutputPath()) + File.separator + myOkFlag;
+        final String outputPath = m.getOutputPath();
+
+        if (outputPath == null)
+            return null;
+
+        return getSafePath (outputPath) + File.separator + myOkFlag;
     }
 
     private static String getFailFlag(final Module m) {
-        return getSafePath (m.getOutputPath()) + File.separator + myFailFlag;
+        final String outputPath = m.getOutputPath();
+
+        if (outputPath == null)
+            return null;
+
+        return getSafePath (outputPath) + File.separator + myFailFlag;
     }
 
     private static String getOkTestFlag(final Module m) {
-        return getSafePath (m.getTestOutputPath()) + File.separator + myOkFlag;
+        final String testOutputPath = m.getTestOutputPath();
+
+        if (testOutputPath == null)
+            return null;
+
+        return getSafePath (testOutputPath) + File.separator + myOkFlag;
     }
 
     private static String getFailTestFlag(final Module m) {
-        return getSafePath(m.getTestOutputPath()) + File.separator + myFailFlag;
+        final String testOutputPath = m.getTestOutputPath();
+
+        if (testOutputPath == null) {
+            return null;
+        }
+
+        return getSafePath(testOutputPath) + File.separator + myFailFlag;
     }
 
     private static void write(final String name, final String contents) {
+        if (name == null)
+            return;
+
         try {
             final FileWriter writer = new FileWriter(name);
 
@@ -55,6 +79,7 @@ public class Reporter {
 
     public static void reportBuildSuccess(final Module m, final boolean tests) {
         write(getOkFlag(m), "dummy");
+
         if (tests) {
             write(getOkTestFlag(m), "dummy");
         }
@@ -65,12 +90,5 @@ public class Reporter {
         if (tests) {
             write(getFailTestFlag(m), reason);
         }
-    }
-
-    public static boolean failureReported (final Module m, final boolean tests) {
-        final File o = new File(getFailFlag(m));
-        final File t = new File(getFailTestFlag(m));
-
-        return o.exists() || (tests && t.exists());
     }
 }

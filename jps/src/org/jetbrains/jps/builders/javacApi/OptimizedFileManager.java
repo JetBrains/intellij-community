@@ -1,5 +1,6 @@
 package org.jetbrains.jps.builders.javacApi;
 
+import com.intellij.ant.Instrumenter;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.DefaultFileManager;
 import com.sun.tools.javac.util.List;
@@ -27,9 +28,11 @@ public class OptimizedFileManager extends DefaultFileManager {
     private final Map<File, Archive> myArchives;
     private final Map<File, Boolean> myIsFile = new ConcurrentHashMap<File, Boolean>();
     private Callbacks.Backend callback;
+    private ClassLoader loader;
 
-    public void setCallback (final Callbacks.Backend c) {
+    public void setProperties (final Callbacks.Backend c, final ClassLoader l) {
         callback = c;
+        loader = l;
     }
 
     public OptimizedFileManager() {
@@ -191,9 +194,21 @@ public class OptimizedFileManager extends DefaultFileManager {
 
                     public void write(byte[] b, int off, int len) throws IOException {
                         if (kind.equals(JavaFileObject.Kind.CLASS) && callback != null) {
-                            callback.associate(classFileName, Callbacks.getDefaultLookup(sourceFileName), new ClassReader(b, off, len));
+                            final ClassReader reader = new ClassReader(b, off, len);
+                            callback.associate(classFileName, Callbacks.getDefaultLookup(sourceFileName), reader);
+
+                            // Need more work to support the case when the needed file not yet written.
+
+                            //final byte[] instrumented = Instrumenter.instrumentNotNull(reader, loader);
+
+                            //if (instrumented != null) {
+                            //    result.write (instrumented);
+                            //    result.flush();
+                            //    return;
+                            //}
                         }
                         result.write(b, off, len);
+                        result.flush();
                     }
                 };
             }

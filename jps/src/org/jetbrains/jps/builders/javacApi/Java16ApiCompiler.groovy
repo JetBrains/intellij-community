@@ -9,6 +9,7 @@ import org.jetbrains.jps.builders.JavaFileCollector
 import javax.tools.*
 
 import org.jetbrains.ether.dependencyView.Callbacks
+import com.intellij.ant.Instrumenter
 
 /**
  * @author nik
@@ -51,9 +52,9 @@ class Java16ApiCompiler {
     List<File> filesToCompile = []
 
     if (state.sourceFiles.size() > 0) {
-      for (File src : state.sourceFiles) {
-        if (src.name.endsWith(".java")) {
-          filesToCompile << src
+      for (String src : state.sourceFiles) {
+        if (src.endsWith(".java")) {
+          filesToCompile << new File (src)
         }
       }
     }
@@ -64,12 +65,11 @@ class Java16ApiCompiler {
       }
     }
 
-    fileManager.setCallback(state.callback)
-
     if (filesToCompile.size() > 0) {
       fileManager.setLocation(StandardLocation.CLASS_OUTPUT, [new File(state.targetFolder)])
       List<File> classpath = []
       List<File> bootclasspath = []
+      StringBuffer cp = new StringBuffer ()
 
       Sdk sdk = chunk.getSdk()
 
@@ -79,8 +79,19 @@ class Java16ApiCompiler {
         fileManager.setLocation(StandardLocation.PLATFORM_CLASS_PATH, bootclasspath)
       }
 
-      state.classpath.each { classpath << new File(String.valueOf(it)) }
+      state.classpath.each {
+        classpath << new File(String.valueOf(it))
+        cp.append (String.valueOf(it))
+        cp.append (File.pathSeparator)
+      }
+
+      cp.append (state.targetFolder)
+
       fileManager.setLocation(StandardLocation.CLASS_PATH, classpath)
+
+      System.out.println ("Chunk: " + chunk.toString() + " Classpath: " + cp.toString());
+
+      fileManager.setProperties(state.callback, Instrumenter.createClassLoader(cp.toString()))
 
       Iterable<? extends JavaFileObject> toCompile = fileManager.getJavaFileObjectsFromFiles(filesToCompile)
       Project project = chunk.project

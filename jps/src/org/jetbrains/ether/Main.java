@@ -203,21 +203,15 @@ public class Main {
 
                     if (make instanceof Options.Value) {
                         final String module = ((Options.Value) make).get();
-
-                        if (module.equals("*")) {
-                            System.out.println("Making all modules in project \"" + prj + "\"");
-                        } else {
-                            System.out.println("Making module \"" + module + "\" in project \"" + prj + "\"");
-                        }
-
+                        System.out.println("Making module \"" + module + "\" in project \"" + prj + "\"");
                         project = ProjectWrapper.load(prj, getScript());
                         project.makeModule(module, getFlags ());
                         project.save();
                         saved = true;
                     } else if (make instanceof Options.Switch) {
-                        System.out.println("Making outdated modules in project \"" + prj + "\"");
+                        System.out.println("Making all modules in project \"" + prj + "\"");
                         project = ProjectWrapper.load(prj, getScript());
-                        project.make(getFlags ());
+                        project.makeModule(null, getFlags ());
                         project.save();
                         saved = true;
                     }

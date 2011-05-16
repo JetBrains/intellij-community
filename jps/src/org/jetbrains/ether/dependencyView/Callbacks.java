@@ -2,6 +2,7 @@ package org.jetbrains.ether.dependencyView;
 
 import org.objectweb.asm.ClassReader;
 
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -25,6 +26,7 @@ public class Callbacks {
     }
 
     public interface Backend {
+        public Collection<StringCache.S> getClassFiles ();
         public void associate (String classFileName, SourceFileNameLookup sourceLookup, ClassReader cr);
         public void associate (Set<ClassRepr> classes, Set<UsageRepr.Usage> usages, String sourceFileName);
     }

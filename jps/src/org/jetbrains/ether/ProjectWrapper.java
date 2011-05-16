@@ -20,21 +20,23 @@ import java.util.*;
 
 public class ProjectWrapper {
     public interface Flags {
-        boolean tests ();
-        boolean incremental ();
-        boolean force ();
+        boolean tests();
+
+        boolean incremental();
+
+        boolean force();
     }
 
-    private final static Flags defaultFlags = new Flags () {
-        public boolean tests () {
+    private final static Flags defaultFlags = new Flags() {
+        public boolean tests() {
             return true;
         }
 
-        public boolean incremental () {
+        public boolean incremental() {
             return false;
         }
 
-        public boolean force () {
+        public boolean force() {
             return true;
         }
     };
@@ -383,8 +385,8 @@ public class ProjectWrapper {
 
             public void updateOutputStatus() {
                 final String path = getAbsolutePath(myOutput);
-                final File ok = new File (path + File.separator + Reporter.myOkFlag);
-                final File fail = new File (path + File.separator + Reporter.myFailFlag);
+                final File ok = new File(path + File.separator + Reporter.myOkFlag);
+                final File fail = new File(path + File.separator + Reporter.myFailFlag);
 
                 if (ok.exists()) {
                     myOutputStatus = "ok";
@@ -723,7 +725,7 @@ public class ProjectWrapper {
     private ProjectWrapper(final String prjDir, final String setupScript) {
         dependencyMapping = new Mappings(this);
         backendCallback = dependencyMapping.getCallback();
-        affectedFiles = new HashSet<StringCache.S> ();
+        affectedFiles = new HashSet<StringCache.S>();
 
         myProject = new Project(new GantBinding());
         myRoot = new File(prjDir).getAbsolutePath();
@@ -766,7 +768,7 @@ public class ProjectWrapper {
             myModules.put(m.getName(), m);
         }
 
-        RW.readMany (r, StringCache.reader, affectedFiles);
+        RW.readMany(r, StringCache.reader, affectedFiles);
     }
 
     public String getAbsolutePath(final String relative) {
@@ -905,32 +907,12 @@ public class ProjectWrapper {
         makeModules(myProject.getModules().values(), defaultFlags);
     }
 
-    public void make(final Flags flags) {
-        final List<Module> modules = new ArrayList<Module>();
-
-        for (Map.Entry<String, ModuleWrapper> entry : myModules.entrySet()) {
-            if (flags.force() || entry.getValue().isOutdated(flags.tests (), myHistory))
-                modules.add(myProject.getModules().get(entry.getKey()));
-        }
-
-        if (modules.isEmpty() && !flags.force ()) {
-            System.out.println("All modules are up-to-date.");
-            return;
-        }
-
-        System.out.println("Making modules:");
-
-        for (Module m : modules)
-            System.out.println("  " + m.getName());
-
-        makeModules(modules, flags);
-    }
-
     class BusyBeaver {
         final ProjectBuilder builder;
         final Set<StringCache.S> compiledFiles = new HashSet<StringCache.S>();
         final Set<Module> cleared = new HashSet<Module>();
-        final Mappings delta = new Mappings(ProjectWrapper.this);
+
+        //Mappings delta = new Mappings(ProjectWrapper.this);
 
         BusyBeaver(ProjectBuilder builder) {
             this.builder = builder;
@@ -966,6 +948,7 @@ public class ProjectWrapper {
                     builder.clearChunk(chunk, outputFiles, ProjectWrapper.this);
                 }
 
+                final Mappings delta = new Mappings (ProjectWrapper.this);
                 final Callbacks.Backend deltaBackend = delta.getCallback();
 
                 builder.buildChunk(chunk, tests, filesToCompile, deltaBackend, ProjectWrapper.this);
@@ -984,6 +967,10 @@ public class ProjectWrapper {
                 }
 
                 return iterativeCompile(chunk, tests, sources, null, null);
+            } else {
+                for (Module m : chunk.getElements()) {
+                    Reporter.reportBuildSuccess(m, tests);
+                }
             }
 
             return true;
@@ -1027,7 +1014,7 @@ public class ProjectWrapper {
 
                         for (Module m : c.getElements()) {
                             final ModuleWrapper module = getModule(m.getName());
-                            affectedFiles.removeAll(tests ? module.getTests () : module.getSources());
+                            affectedFiles.removeAll(tests ? module.getTests() : module.getSources());
                         }
                     }
                 }
@@ -1138,9 +1125,9 @@ public class ProjectWrapper {
                     }
                 }
             }
-        }.run(frontier, flags.force ());
+        }.run(frontier, flags.force());
 
-        if (modules.size() == 0 && !flags.force ()) {
+        if (modules.size() == 0 && !flags.force()) {
             System.out.println("All requested modules are up-to-date.");
             return;
         }
@@ -1151,13 +1138,12 @@ public class ProjectWrapper {
         builder.buildStart();
 
         try {
-          beaver.build(modules, false, flags.incremental());
+            beaver.build(modules, false, flags.incremental());
 
-          if (flags.tests ()) {
-              beaver.build(modules, true, flags.incremental());
-          }
-        }
-        catch (Exception e) {
+            if (flags.tests()) {
+                beaver.build(modules, true, flags.incremental());
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -1169,7 +1155,7 @@ public class ProjectWrapper {
     }
 
     public void makeModule(final String modName, final Flags flags) {
-        if (modName.equals("*")) {
+        if (modName == null) {
             makeModules(myProject.getModules().values(), flags);
         } else {
             final Module module = myProject.getModules().get(modName);

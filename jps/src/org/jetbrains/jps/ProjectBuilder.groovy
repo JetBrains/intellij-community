@@ -239,14 +239,7 @@ class ProjectBuilder {
 
     if (files != null) {
       files.each {
-        String path = pw.getAbsolutePath(it.value)
-
-        for (String root : chunkSources) {
-          if (path.startsWith (root)) {
-            sourceFiles << new File (path.substring(root.length() + 1))
-            break;
-          }
-        }
+        sourceFiles << pw.getAbsolutePath(it.value)
       }
     }
 
@@ -262,6 +255,7 @@ class ProjectBuilder {
       List chunkDependenciesSourceRoots = transitiveModuleDependenciesSourcePaths(chunk, tests)
       Map<ModuleBuildState, ModuleChunk> states = new HashMap<ModuleBuildState, ModuleChunk>()
       def chunkState = new ModuleBuildState(
+              incremental: files != null,
               callback: callback,
               sourceFiles: sourceFiles,
               sourceRoots: chunkSources,
@@ -274,6 +268,7 @@ class ProjectBuilder {
           List<String> sourceRoots = filterNonExistingFiles(tests ? it.testRoots : it.sourceRoots, false)
           if (!sourceRoots.isEmpty()) {
             def state = new ModuleBuildState(
+                    incremental : chunkState.incremental,
                     callback : callback,
                     sourceFiles:sourceFiles,
                     sourceRoots: sourceRoots,

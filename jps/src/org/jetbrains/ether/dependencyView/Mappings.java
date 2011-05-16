@@ -179,6 +179,10 @@ public class Mappings {
 
     public Callbacks.Backend getCallback() {
         return new Callbacks.Backend() {
+            public Collection<StringCache.S> getClassFiles() {
+                return classToSourceFile.keySet();
+            }
+
             public void associate(final String classFileName, final Callbacks.SourceFileNameLookup sourceFileName, final ClassReader cr) {
                 final StringCache.S classFileNameS = StringCache.get(project.getRelativePath(classFileName));
                 final Pair<ClassRepr, Set<UsageRepr.Usage>> result = ClassfileAnalyzer.analyze(classFileNameS, cr);
