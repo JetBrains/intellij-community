@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PlatformFileTypeFactory extends FileTypeFactory {
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
-    consumer.consume(new ArchiveFileType(), "zip;jar;war;ear;swc;egg"); // egg for python
+    consumer.consume(new ArchiveFileType(), "zip;jar;war;ear;swc;egg");
     consumer.consume(PlainTextFileType.INSTANCE,
                      new ExtensionFileNameMatcher("txt"),
                      new ExtensionFileNameMatcher("sh"),
@@ -38,6 +38,7 @@ public class PlatformFileTypeFactory extends FileTypeFactory {
                      new ExtensionFileNameMatcher("jam"),
                      new ExtensionFileNameMatcher("htaccess"),
                      new ExactFileNameMatcher("readme", true),
+                     new ExactFileNameMatcher("README", true),
                      new ExactFileNameMatcher("LICENSE", true));
     consumer.consume(NativeFileType.INSTANCE, "doc;xls;ppt;mdb;vsd;pdf;hlp;chm;odt");
     consumer.consume(UnknownFileType.INSTANCE);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
       private void register(final FileType fileType, final List<FileNameMatcher> fileNameMatchers) {
         final StandardFileType type = ourStandardFileTypes.get(fileType.getName());
-
         if (type != null) {
           for (FileNameMatcher matcher : fileNameMatchers) type.matchers.add(matcher);
         }
@@ -127,6 +126,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
         }
       }
     };
+
     final FileTypeFactory[] fileTypeFactories = Extensions.getExtensions(FileTypeFactory.FILE_TYPE_FACTORY_EP);
     for (final FileTypeFactory factory : fileTypeFactories) {
       try {
@@ -278,9 +278,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   public FileType getFileTypeByFile(@NotNull VirtualFile file) {
     final FileType assignedFileType = file instanceof LightVirtualFile? ((LightVirtualFile)file).getAssignedFileType() : null;
     if (assignedFileType != null) return assignedFileType;
-    // first let file recognize its type
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < mySpecialFileTypes.size(); i++) {
+
+    for (int i = 0, size = mySpecialFileTypes.size(); i < size; i++) {
       final FileTypeIdentifiableByVirtualFile fileType = mySpecialFileTypes.get(i);
       if (fileType.isMyFileType(file)) return fileType;
     }
@@ -290,14 +289,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   public boolean isFileOfType(VirtualFile file, FileType type) {
     if (type instanceof FileTypeIdentifiableByVirtualFile) {
-      return ((FileTypeIdentifiableByVirtualFile) type).isMyFileType(file);
+      return ((FileTypeIdentifiableByVirtualFile)type).isMyFileType(file);
     }
+
     final List<FileNameMatcher> matchers = getAssociations(type);
-    for (FileNameMatcher matcher : matchers) {
-      if (matcher.accept(file.getName())) {
-        return true;
-      }
+    for (int i = 0, size = matchers.size(); i < size; i++) {
+      final FileNameMatcher matcher = matchers.get(i);
+      if (matcher.accept(file.getName())) return true;
     }
+
     return false;
   }
 
@@ -850,7 +850,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   private static void writeHeader(Element root, FileType fileType) {
     root.setAttribute(ATTRIBUTE_BINARY, String.valueOf(fileType.isBinary()));
     root.setAttribute(ATTRIBUTE_DEFAULT_EXTENSION, fileType.getDefaultExtension());
-
     root.setAttribute(ATTRIBUTE_DESCRIPTION, fileType.getDescription());
     root.setAttribute(ATTRIBUTE_NAME, fileType.getName());
   }
