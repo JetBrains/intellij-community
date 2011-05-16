@@ -173,8 +173,9 @@ public class AnnotationsHighlightUtil {
       Set<String> names = new HashSet<String>();
       PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
       for (PsiNameValuePair attribute : attributes) {
-        if (attribute.getName() != null) {
-          names.add(attribute.getName());
+        final String name = attribute.getName();
+        if (name != null) {
+          names.add(name);
         }
         else {
           names.add(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
@@ -211,8 +212,9 @@ public class AnnotationsHighlightUtil {
 
   @Nullable
   public static HighlightInfo checkConstantExpression(PsiExpression expression) {
-    if (expression.getParent() instanceof PsiAnnotationMethod || expression.getParent() instanceof PsiNameValuePair) {
-      if (PsiType.NULL.equals(expression.getType()) || !PsiUtil.isConstantExpression(expression)) {
+    final PsiElement parent = expression.getParent();
+    if (parent instanceof PsiAnnotationMethod || parent instanceof PsiNameValuePair || parent instanceof PsiArrayInitializerMemberValue) {
+      if (!PsiUtil.isConstantExpression(expression)) {
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, JavaErrorMessages.message("annotation.nonconstant.attribute.value"));
       }
     }
