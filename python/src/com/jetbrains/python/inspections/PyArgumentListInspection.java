@@ -128,12 +128,12 @@ public class PyArgumentListInspection extends PyInspection {
           PyType inside_type = context.getType(content);
           if (inside_type != null && !(inside_type instanceof PyTypeReference)) {
             if (((PyStarArgument)arg).isKeyword()) {
-              if (! isMappingType(inside_type)) {
+              if (! isMappingType(inside_type, context)) {
                 holder.registerProblem(arg, PyBundle.message("INSP.expected.dict.got.$0", inside_type.getName()));
               }
             }
             else { // * arg
-              if (! isSequenceType(inside_type)) {
+              if (! isSequenceType(inside_type, context)) {
                 holder.registerProblem(arg, PyBundle.message("INSP.expected.seq.got.$0", inside_type.getName()));
               }
             }
@@ -151,9 +151,9 @@ public class PyArgumentListInspection extends PyInspection {
     */
   }
 
-  private static boolean isSequenceType(PyType a_type) {
+  private static boolean isSequenceType(PyType a_type, TypeEvalContext context) {
     if (a_type instanceof PyTupleType) return true;
-    if ("list".equals(a_type.getName()) && a_type.isBuiltin()) return true;
+    if ("list".equals(a_type.getName()) && a_type.isBuiltin(context)) return true;
     if (a_type instanceof PyClassType) {
       final PyClass cls = ((PyClassType)a_type).getPyClass();
       if (cls != null && cls.findMethodByName("__getitem__", true) != null) return true;
@@ -161,9 +161,9 @@ public class PyArgumentListInspection extends PyInspection {
     return false;
   }
 
-  private static boolean isMappingType(PyType a_type) {
+  private static boolean isMappingType(PyType a_type, TypeEvalContext context) {
     // TODO: when we have proper support for ABCs, we could use an interface conformance check here
-    if ("dict".equals(a_type.getName()) && a_type.isBuiltin()) return true;
+    if ("dict".equals(a_type.getName()) && a_type.isBuiltin(context)) return true;
     if (a_type instanceof PyClassType) {
       final PyClass cls = ((PyClassType)a_type).getPyClass();
       if (cls != null && cls.findMethodByName("__getitem__", true) != null  && cls.findMethodByName("keys", true) != null) return true;

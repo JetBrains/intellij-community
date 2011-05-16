@@ -259,6 +259,8 @@
     <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyInheritorRenameFactory"/>
     <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyParametersRenameFactory"/>
 
+    <refactoring.moveHandler implementation="com.jetbrains.python.refactoring.move.PyMoveClassOrFunctionDelegate"/>
+
     <lang.importOptimizer language="Python" implementationClass="com.jetbrains.python.codeInsight.imports.PyImportOptimizer"/>
 
     <codeStyleSettingsProvider implementation="com.jetbrains.python.formatter.PyCodeStyleSettingsProvider"/>
@@ -478,6 +480,7 @@
     <annotator language="ReST" implementationClass="com.jetbrains.rest.validation.RestAnnotatingVisitor"/>
     <projectService serviceInterface="com.jetbrains.rest.actions.PyRestructuredSettings"
                     serviceImplementation="com.jetbrains.rest.actions.PyRestructuredSettings"/>
+    <inspectionToolProvider implementation="com.jetbrains.rest.inspections.RestInspectionToolProvider"/>
 
   </extensions>
 

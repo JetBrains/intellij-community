@@ -3,6 +3,7 @@ package com.jetbrains.python.refactoring.classes.pullUp;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -21,7 +22,7 @@ public class PyPullUpHelper {
 
   public static PyElement pullUp(final PyClass clazz, final Collection<PyMemberInfo> selectedMemberInfos, final PyClass superClass) {
     final Set<String> superClasses = new HashSet<String>();
-    final Set<PyClass> extractedClasses = new HashSet<PyClass>();
+    final Set<PsiNamedElement> extractedClasses = new HashSet<PsiNamedElement>();
     final List<PyFunction> methods = new ArrayList<PyFunction>();
     for (PyMemberInfo member : selectedMemberInfos) {
       final PyElement element = member.getMember();

@@ -55,6 +55,7 @@ public interface PyType {
 
   /**
    * @return true if the type is a known built-in type.
+   * @param context
    */
-  boolean isBuiltin();
+  boolean isBuiltin(TypeEvalContext context);
 }

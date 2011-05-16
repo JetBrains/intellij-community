@@ -52,6 +52,8 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
     .put("classDef", PyHighlighter.PY_CLASS_DEFINITION)
     .put("builtin", PyHighlighter.PY_BUILTIN_NAME)
     .put("unicode", PyHighlighter.PY_UNICODE_STRING)
+    .put("esc", PyHighlighter.PY_VALID_STRING_ESCAPE)
+    .put("bad_esc", PyHighlighter.PY_INVALID_STRING_ESCAPE)
     .build();
 
   @NotNull
@@ -93,8 +95,8 @@ public class PythonColorsPage implements ColorSettingsPage, InspectionColorSetti
       "class <classDef>Foo</classDef>:\n"+
       "    def <predefined>__init__</predefined>(self):\n" +
       "        self.sense = None\n" +
-      "        byte_string = 'newline:\\n also newline:\\x0a'\n" +
-      "        text_string = <unicode>u\"Cyrillic \u042f is \\u042f. Oops: </unicode>\\u042g<unicode>\"</unicode>\n"+
+      "        byte_string = 'newline:<esc>\\n</esc> also newline:<esc>\\x0a</esc>'\n" +
+      "        text_string = <unicode>u\"Cyrillic \u042f is <esc>\\u042f</esc>. Oops: <bad_esc>\\u042g</bad_esc>\"</unicode>\n"+
       "    \n" +
       "    def <funcDef>makeSense</funcDef>(self, whatever):\n"+
       "        self.sense = whatever\n"+

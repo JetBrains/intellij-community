@@ -102,7 +102,7 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable {
       setRenderer(1, new ColoredTableCellRenderer() {
         @Override
         protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-          String text = (String) value;
+          String text = value == null ? "" : (String) value;
           int pos = 0;
           while(pos < text.length()) {
             int openBrace = text.indexOf('{', pos);

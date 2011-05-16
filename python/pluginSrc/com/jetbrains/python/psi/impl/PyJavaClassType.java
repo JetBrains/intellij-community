@@ -8,6 +8,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.VariantsProcessor;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -53,7 +54,7 @@ public class PyJavaClassType implements PyType {
   }
 
   @Override
-  public boolean isBuiltin() {
+  public boolean isBuiltin(TypeEvalContext context) {
     return false;  // TODO: JSDK's types could be considered built-in.
   }
 }

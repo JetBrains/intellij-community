@@ -14,7 +14,11 @@ def strclass(cls):
 def smart_str(s):
     encoding='utf-8'
     errors='strict'
-    if not isinstance(s, basestring):
+    if PYTHON_VERSION_MAJOR < 3:
+        is_string = isinstance(s, basestring)
+    else:
+        is_string = isinstance(s, str)
+    if not is_string:
         try:
             return str(s)
         except UnicodeEncodeError:

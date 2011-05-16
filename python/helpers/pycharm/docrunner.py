@@ -139,7 +139,7 @@ class DocTestRunner(doctest.DocTestRunner):
                 elif check(example.exc_msg, exc_msg, self.optionflags):
                     outcome = SUCCESS
 
-                elif self.optionflags & IGNORE_EXCEPTION_DETAIL:
+                elif self.optionflags & doctest.IGNORE_EXCEPTION_DETAIL:
                     m1 = re.match(r'[^:]*:', example.exc_msg)
                     m2 = re.match(r'[^:]*:', exc_msg)
                     if m1 and m2 and check(m1.group(0), m2.group(0),

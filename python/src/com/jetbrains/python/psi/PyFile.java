@@ -48,6 +48,8 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
 
   List<PyFromImportStatement> getFromImports();
 
+  List<PyImportElement> getImportTargets();
+
   /**
    * Returns the list of names in the __all__ declaration, or null if there is no such declaration in the module.
    *

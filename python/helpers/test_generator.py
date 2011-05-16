@@ -12,6 +12,7 @@ M = ModuleRedeclarator
 import sys
 
 IS_CLI = sys.platform == 'cli'
+VERSION = sys.version_info[:2] # only (major, minor)
 
 class TestRestoreFuncByDocComment(unittest.TestCase):
     """
@@ -19,7 +20,7 @@ class TestRestoreFuncByDocComment(unittest.TestCase):
     """
 
     def setUp(self):
-        self.m = ModuleRedeclarator(None, None)
+        self.m = ModuleRedeclarator(None, None, '/dev/null')
 
     def testTrivial(self):
         result, ret_sig, note = self.m.parseFuncDoc("blah f(a, b, c) ololo", "f", "f", None)
@@ -175,10 +176,12 @@ class TestRestoreFuncByDocComment(unittest.TestCase):
 
 
 class TestRestoreMethodByDocComment(unittest.TestCase):
-    "Restoring with a class name set"
+    """
+    Restoring with a class name set
+    """
 
     def setUp(self):
-        self.m = ModuleRedeclarator(None, None)
+        self.m = ModuleRedeclarator(None, None, '/dev/null')
 
     def testPlainMethod(self):
         result, ret_sig, note = self.m.parseFuncDoc("blah f(self, foo, bar) ololo", "f", "f", "SomeClass")
@@ -192,10 +195,12 @@ class TestRestoreMethodByDocComment(unittest.TestCase):
 
 
 class TestAnnotatedParameters(unittest.TestCase):
-    "f(foo: int) and friends; in doc comments, happen in 2.x world, too."
+    """
+    f(foo: int) and friends; in doc comments, happen in 2.x world, too.
+    """
 
     def setUp(self):
-        self.m = ModuleRedeclarator(None, None)
+        self.m = ModuleRedeclarator(None, None, '/dev/null')
 
     def testMixed(self):
         result, ret_sig, note = self.m.parseFuncDoc('blah f(i: int, foo) ololo', "f", "f", None)
@@ -213,12 +218,14 @@ class TestAnnotatedParameters(unittest.TestCase):
         self.assertEquals(note, M.SIG_DOC_NOTE)
 
 
-if not IS_CLI:
+if not IS_CLI and VERSION < (3, 0):
     class TestInspect(unittest.TestCase):
-        "See that inspect actually works if needed"
+        """
+        See that inspect actually works if needed
+        """
 
         def setUp(self):
-            self.m = ModuleRedeclarator(None, None)
+            self.m = ModuleRedeclarator(None, None, '/dev/null')
 
         def testSimple(self):
             def target(a, b, c=1, *d, **e):
@@ -228,8 +235,14 @@ if not IS_CLI:
             self.assertEquals(result, "(a, b, c=1, *d, **e)")
 
         def testNested(self):
-            def target(a, (b, c), d, e=1):
-                return a, b, c, d, e
+            # NOTE: Py3k can't handle nested tuple args, thus we compile it conditionally
+            code = (
+            "def target(a, (b, c), d, e=1):\n"
+            "    return a, b, c, d, e"
+            )
+            namespace = {}
+            eval(compile(code, "__main__", "single"), namespace)
+            target = namespace['target']
 
             result = self.m.restoreByInspect(target)
             self.assertEquals(result, "(a, (b, c), d, e=1)")
@@ -241,8 +254,12 @@ class _DiffPrintingTestCase(unittest.TestCase):
             # print side by side
             ei = iter(etalon.split("\n"))
             si = iter(specimen.split("\n"))
+            if VERSION < (3, 0):
+              si_next = si.next
+            else:
+              si_next = si.__next__
             for el in ei:
-                try: sl = si.next()
+                try: sl = si_next()
                 except StopIteration: break # I wish the exception would just work as break
                 if el != sl:
                     print("!%s" % el)
@@ -260,13 +277,14 @@ class _DiffPrintingTestCase(unittest.TestCase):
 
 
 class TestSpecialCases(unittest.TestCase):
-    "Tests cases where predefined overrides kick in"
+    """
+    Tests cases where predefined overrides kick in
+    """
 
     def setUp(self):
         import sys
 
-        major_ver = sys.version_info[0]
-        if major_ver > 2:
+        if VERSION >= (3, 0):
             import builtins as the_builtins
 
             self.builtins_name = the_builtins.__name__
@@ -274,7 +292,7 @@ class TestSpecialCases(unittest.TestCase):
             import __builtin__ as the_builtins
 
             self.builtins_name = the_builtins.__name__
-        self.m = ModuleRedeclarator(the_builtins, None, doing_builtins=True)
+        self.m = ModuleRedeclarator(the_builtins, None, '/dev/null', doing_builtins=True)
 
     def _testBuiltinFuncName(self, func_name, expected):
         class_name = None
@@ -292,51 +310,12 @@ class TestSpecialCases(unittest.TestCase):
     def testFilter(self):
         self._testBuiltinFuncName("filter", "(function_or_none, sequence)")
 
-if not IS_CLI:
-    class TestNonDictClasses(_DiffPrintingTestCase):
-        "Tests classes that don't have a __dict__"
-
-        def setUp(self):
-            self.m = ModuleRedeclarator(self, None, 4)
-
-        def checkRedoClass(self, p_class, expected):
-            self.m.redoClass(self.m.classes_buf.out, p_class, p_class.__name__, 0)
-            result = "".join(self.m.classes_buf.data).strip()
-            self.assertEquals(expected, result)
-
-        def testOne(self):
-            class One(object):
-                "Doc of One"
-                __slots__ = ('A', 'B', 'foo')
-                A = 1
-                B = "boo"
-
-                def foo(self, x):
-                    "blah foo(x) -> int"
-                    return x + 1
-
-            expected = "\n".join((
-                "class One(object):",
-                '    """ Doc of One """',
-                '    def foo(self, x): # real signature unknown; restored from __doc__',
-                '        """ blah foo(x) -> int """',
-                '        return 0',
-                "",
-                "    def __init__(self, *args, **kwargs): # real signature unknown",
-                "        pass",
-                '',
-                '    A = 1',
-                "    B = 'boo'",
-                "    __slots__ = (",
-                "        'A',",
-                "        'B',",
-                "        'foo',",
-                "    )",
-            ))
-            self.checkRedoClass(One, expected)
+    # we caould want to test a calss without __dict__, but it takes a C extension to really create one,
 
 class TestDataOutput(_DiffPrintingTestCase):
-    "Tests for sanity of output of data members"
+    """
+    Tests for sanity of output of data members
+    """
 
     def setUp(self):
         self.m = ModuleRedeclarator(self, None, 4) # Pass anything with __dict__ as module
@@ -379,7 +358,9 @@ class TestDataOutput(_DiffPrintingTestCase):
 
 if not IS_CLI:
     class TestReturnTypes(unittest.TestCase):
-        "Tests for sanity of output of data members"
+        """
+        Tests for sanity of output of data members
+        """
 
         def setUp(self):
             self.m = ModuleRedeclarator(None, None, 4)
@@ -412,10 +393,12 @@ if not IS_CLI:
         def testSimplePrefixObject(self):
             doc = "Makes an instance: object foo(bar)"
             self.checkRestoreFunction(doc, "object()")
-
-        def testSimpleArrowFile(self):
-            doc = "Opens a file: foo(bar) -> file"
-            self.checkRestoreFunction(doc, "file('/dev/null')")
+        
+        if VERSION < (3, 0):
+            # TODO: we only support it in 2.x; must update when we do it in 3.x, too
+            def testSimpleArrowFile(self):
+                doc = "Opens a file: foo(bar) -> file"
+                self.checkRestoreFunction(doc, "file('/dev/null')")
 
         def testUnrelatedPrefix(self):
             doc = """

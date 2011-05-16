@@ -2,6 +2,7 @@ package com.jetbrains.python.sdk;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,6 +17,8 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public abstract class PythonSdkFlavor {
+  private static final Logger LOG = Logger.getInstance(PythonSdkFlavor.class);
+
   public static String appendSystemPythonPath(String pythonPath) {
     String syspath = systemPythonPath();
     if (syspath != null) {
@@ -73,16 +76,24 @@ public abstract class PythonSdkFlavor {
     return file.isFile() && FileUtil.getNameWithoutExtension(file).toLowerCase().startsWith("python");
   }
 
+  @Nullable
   public String getVersionString(String sdkHome) {
     return getVersionFromOutput(sdkHome, "-V", "(Python \\S+).*", false);
   }
 
+  @Nullable
   protected static String getVersionFromOutput(String sdkHome, String version_opt, String version_regexp, boolean stdout) {
     Pattern pattern = Pattern.compile(version_regexp);
     String run_dir = new File(sdkHome).getParent();
     final ProcessOutput process_output = SdkUtil.getProcessOutput(run_dir, new String[]{sdkHome, version_opt});
     if (process_output.getExitCode() != 0) {
-      throw new RuntimeException(process_output.getStderr() + " (exit code " + process_output.getExitCode() + ")");
+      String err = process_output.getStderr();
+      if (StringUtil.isEmpty(err)) {
+        err = process_output.getStdout();
+      }
+      LOG.warn("Couldn't get interpreter version: process exited with code " + process_output.getExitCode() + "\n" + err
+      );
+      return null;
     }
     final List<String> lines = stdout ? process_output.getStdoutLines() : process_output.getStderrLines();
     return SdkUtil.getFirstMatch(lines, pattern);

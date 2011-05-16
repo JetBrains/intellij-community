@@ -3,6 +3,7 @@ package com.jetbrains.python.console;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.console.pydev.PydevConsoleCommunication;
 import com.jetbrains.python.run.PythonProcessHandler;
 
@@ -45,14 +46,22 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
 
   private void doCloseCommunication() {
     if (myPydevConsoleCommunication != null) {
-      try {
-        myPydevConsoleCommunication.close();
-        // waiting for REPL communication before destroying process handler
-        Thread.sleep(300);
-      }
-      catch (Exception e1) {
-        // Ignore
-      }
+
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            myPydevConsoleCommunication.close();
+            Thread.sleep(300);
+          }
+          catch (Exception e1) {
+            // Ignore
+          }
+        }
+      });
+
+      // waiting for REPL communication before destroying process handler
+
     }
   }
 
