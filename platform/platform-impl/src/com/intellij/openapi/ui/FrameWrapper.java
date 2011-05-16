@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
@@ -31,6 +33,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
@@ -291,6 +294,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     private MyJFrame(IdeFrame parent) throws HeadlessException {
       myParent = parent;
       setGlassPane(new IdeGlassPaneImpl(getRootPane()));
+      setJMenuBar(new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()));
 
       MouseGestureManager.getInstance().add(this);
     }
