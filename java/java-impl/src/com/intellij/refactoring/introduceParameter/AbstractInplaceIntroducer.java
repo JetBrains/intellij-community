@@ -179,20 +179,24 @@ public abstract class AbstractInplaceIntroducer extends VariableInplaceIntroduce
             length = PsiModifier.PRIVATE.length();
           }
 
-          final int startOffset = textOffset + idx;
-          final int endOffset;
-          if (idx == -1) {
-            endOffset = startOffset;
-          }
-          else {
-            endOffset = textOffset + length;
-          }
-
           String visibility = getVisibility();
           if (visibility == PsiModifier.PACKAGE_LOCAL) {
             visibility = "";
           }
-          final String finalVisibility = visibility;
+
+          final boolean wasPackageLocal = idx == -1;
+          final boolean isPackageLocal = visibility.isEmpty();
+
+          final int startOffset = textOffset + (wasPackageLocal ? 0 : idx);
+          final int endOffset;
+          if (wasPackageLocal) {
+            endOffset = startOffset;
+          }
+          else {
+            endOffset = textOffset + length + (isPackageLocal ? 1 : 0);
+          }
+
+          final String finalVisibility = visibility + (wasPackageLocal ? " " : "");
 
           Runnable runnable = new Runnable() {
             @Override
