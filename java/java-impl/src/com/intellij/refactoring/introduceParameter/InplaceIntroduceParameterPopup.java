@@ -368,6 +368,10 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
         CommandProcessor.getInstance().executeCommand(myProject, runnable, IntroduceParameterHandler.REFACTORING_NAME, null);
       }
       super.moveOffsetAfter(false);
+      if (myLocalVar != null && myLocalVar.isValid()) {
+        myEditor.getCaretModel().moveToOffset(myLocalVar.getTextOffset());
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      }
     }
 
     @Override
