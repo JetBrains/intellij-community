@@ -2,8 +2,11 @@ package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 /**
@@ -241,7 +244,7 @@ public class PyNames {
    * @param name what to check
    * @return true iff name is not reserved and is a well-formed identifier.
    */
-  public static boolean isIdentifier(@NonNls String name) {
+  public static boolean isIdentifier(@NotNull @NonNls String name) {
     return ! isReserved(name) && IDENTIFIER_PATTERN.matcher(name).matches(); 
   }
 
