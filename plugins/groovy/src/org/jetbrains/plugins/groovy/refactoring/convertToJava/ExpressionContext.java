@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
@@ -30,19 +29,21 @@ class ExpressionContext implements Cloneable {
   List<String> myStatements = new ArrayList<String>();
   Set<String> myUsedVarNames;
   LocalVarAnalyzer.Result analyzedVars = LocalVarAnalyzer.initialResult();
+  TypeProvider typeProvider;
 
   Project project;
   private Map<String, Boolean> myProps = new HashMap<String, Boolean>();
   private static final String myShouldInsertCurlyBrackets = "shouldInsertCurly";
   private static final String myInAnonymousContext = "inAnonymousContext";
 
-  ExpressionContext(Project project, Set<String> usedVarNames) {
+  private ExpressionContext(Project project, Set<String> usedVarNames) {
     this.project = project;
     myUsedVarNames = usedVarNames;
   }
 
   ExpressionContext(Project project) {
     this(project, new HashSet<String>());
+    typeProvider = new TypeProvider();
   }
 
   @Override
@@ -54,6 +55,7 @@ class ExpressionContext implements Cloneable {
     final ExpressionContext expressionContext = new ExpressionContext(project, myUsedVarNames);
     expressionContext.myProps.putAll(myProps);
     expressionContext.analyzedVars = analyzedVars;
+    expressionContext.typeProvider = typeProvider;
     return expressionContext;
   }
 
@@ -63,6 +65,7 @@ class ExpressionContext implements Cloneable {
     final ExpressionContext expressionContext = new ExpressionContext(project, usedVarNames);
     expressionContext.myProps.putAll(myProps);
     expressionContext.analyzedVars = analyzedVars;
+    expressionContext.typeProvider = typeProvider;
     return expressionContext;
   }
 

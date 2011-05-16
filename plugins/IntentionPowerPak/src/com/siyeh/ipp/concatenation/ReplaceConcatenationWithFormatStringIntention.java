@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -31,7 +32,7 @@ public class ReplaceConcatenationWithFormatStringIntention
     @Override
     @NotNull
     protected PsiElementPredicate getElementPredicate() {
-        return new SimpleStringConcatenationPredicate(true);
+        return new Jdk5StringConcatenationPredicate();
     }
 
     @Override
@@ -128,50 +129,49 @@ public class ReplaceConcatenationWithFormatStringIntention
         return true;
     }
 
-    void buildFormatString(PsiBinaryExpression expression,
-                           StringBuilder formatString,
-                           List<PsiExpression> formatParameters) {
-        final PsiExpression lhs = expression.getLOperand();
-        appendFormatString(lhs, formatString, formatParameters);
-        final PsiExpression rhs = expression.getROperand();
-        if (rhs != null) {
-            appendFormatString(rhs, formatString, formatParameters);
+    private static void buildFormatString(
+            PsiExpression expression, StringBuilder formatString,
+            List<PsiExpression> formatParameters) {
+        if (expression instanceof PsiLiteralExpression) {
+            final PsiLiteralExpression literalExpression =
+                    (PsiLiteralExpression) expression;
+            final String text = String.valueOf(literalExpression.getValue());
+            final String formatText =
+                    StringUtil.escapeStringCharacters(text)
+                        .replace("%", "%%").replace("\\'", "'");
+            formatString.append(formatText);
+        } else if (expression instanceof PsiBinaryExpression) {
+            final PsiType type = expression.getType();
+            if (type != null && type.equalsToText("java.lang.String")) {
+                final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression) expression;
+                final PsiExpression lhs = binaryExpression.getLOperand();
+                buildFormatString(lhs, formatString, formatParameters);
+                final PsiExpression rhs = binaryExpression.getROperand();
+                if (rhs != null) {
+                    buildFormatString(rhs, formatString, formatParameters);
+                }
+            } else {
+                addFormatParameter(expression, formatString, formatParameters);
+            }
+        } else {
+          addFormatParameter(expression, formatString, formatParameters);
         }
     }
 
-    private void appendFormatString(PsiExpression lhs,
-                                    StringBuilder formatString,
-                                    List<PsiExpression> formatParameters) {
-        if (lhs instanceof PsiLiteralExpression) {
-            final String text = lhs.getText();
-            final int length = text.length();
-            final PsiType type = lhs.getType();
-            if (type != null && (type.equalsToText("java.lang.String") ||
-                 type.equalsToText("char"))) {
-                if (length > 2) {
-                    formatString.append(
-                            text.substring(1, length - 1).replace("%", "%%")
-                                    .replace("\\'", "'"));
-                }
-            } else {
-                formatString.append(text);
-            }
-        } else if (lhs instanceof PsiBinaryExpression) {
-            final PsiBinaryExpression binaryExpression =
-                    (PsiBinaryExpression) lhs;
-            buildFormatString(binaryExpression, formatString, formatParameters);
-        } else {
-            final PsiType type = lhs.getType();
-            if (type != null &&
-                    (type.equalsToText("long") ||
-                    type.equalsToText("int") ||
-                    type.equalsToText("java.lang.Long") ||
-                    type.equalsToText("java.lang.Integer"))) {
-                formatString.append("%d");
-            } else {
-                formatString.append("%s");
-            }
-            formatParameters.add(lhs);
-        }
+  private static void addFormatParameter(PsiExpression expression,
+                                         StringBuilder formatString,
+                                         List<PsiExpression> formatParameters) {
+    final PsiType type = expression.getType();
+    if (type != null &&
+            (type.equalsToText("long") ||
+            type.equalsToText("int") ||
+            type.equalsToText("java.lang.Long") ||
+            type.equalsToText("java.lang.Integer"))) {
+        formatString.append("%d");
+    } else {
+        formatString.append("%s");
     }
+    formatParameters.add(expression);
+  }
 }

@@ -70,7 +70,8 @@ public class AndroidSdkImpl extends AndroidSdk {
 
   @Override
   public IAndroidTarget findTargetByHashString(@NotNull String hashString) {
-    return new MyTargetWrapper(mySdkManager.getTargetFromHashString(hashString));
+    final IAndroidTarget target = mySdkManager.getTargetFromHashString(hashString);
+    return target != null ? new MyTargetWrapper(target) : null;
   }
 
   @NotNull

@@ -486,6 +486,10 @@ public class InplaceIntroduceConstantPopup {
         ApplicationManager.getApplication().runWriteAction(runnable);
       }
       super.moveOffsetAfter(success);
+      if (myLocalVariable != null && myLocalVariable.isValid()) {
+        myEditor.getCaretModel().moveToOffset(myLocalVariable.getTextOffset());
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      }
       if (myMoveToAnotherClassCb.isSelected()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override

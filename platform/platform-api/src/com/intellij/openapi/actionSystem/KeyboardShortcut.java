@@ -79,4 +79,8 @@ public final class KeyboardShortcut extends Shortcut {
       return false;
     }
   }
+
+  public static KeyboardShortcut fromString(String s) {
+    return new KeyboardShortcut(KeyStroke.getKeyStroke(s), null);
+  }
 }

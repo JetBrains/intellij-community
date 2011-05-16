@@ -506,9 +506,8 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       }
       if (!myApplicationLauncher.launch(this, device)) return false;
 
-      if (!checkDdms()) {
-        return false;
-      }
+      checkDdms();
+
       synchronized (myDebugLock) {
         Client client = device.getClient(myTargetPackageName);
         if (myDebugLauncher != null) {

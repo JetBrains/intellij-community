@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2011 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,16 @@ public interface JavadocTagInfo {
 
   @NonNls String getName();
   boolean isInline();
+
   boolean isValidInContext(PsiElement element);
 
   Object[] getPossibleValues(PsiElement context, PsiElement place, String prefix);
 
   /**
-   * Checks the tag value for correctnes. Returns null if correct. Error message otherwise.
+   * Checks the tag value for correctness.
+   *
+   * @param value Doc tag to check.
+   * @return Returns null if correct, error message otherwise.
    */
   @Nullable
   String checkTagValue(PsiDocTagValue value);

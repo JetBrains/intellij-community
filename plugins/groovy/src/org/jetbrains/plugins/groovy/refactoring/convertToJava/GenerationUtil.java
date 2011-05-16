@@ -289,10 +289,15 @@ public class GenerationUtil {
       if (!classNameProvider.forStubs()) {
         ModifierListGenerator.writeModifiers(text, parameter.getModifierList(), ModifierListGenerator.JAVA_MODIFIERS, true);
       }
-      if (context != null && context.analyzedVars.toMakeFinal(parameter)) {
-        text.append(PsiModifier.FINAL).append(' ');
+      if (context != null) {
+        if (context.analyzedVars.toMakeFinal(parameter)) {
+          text.append(PsiModifier.FINAL).append(' ');
+        }
+        writeType(text, context.typeProvider.getParameterType(parameter), parameter, classNameProvider);
       }
-      writeType(text, TypeProvider.getParameterType(parameter), parameter, classNameProvider);
+      else {
+        writeType(text, parameter.getType(), parameter, classNameProvider);
+      }
       text.append(" ");
       text.append(parameter.getName());
 
@@ -425,7 +430,7 @@ public class GenerationUtil {
   }
 
   static void writeVariableSeparately(GrVariable variable, StringBuilder builder, ExpressionContext expressionContext) {
-    PsiType type = TypeProvider.getVarType(variable);
+    PsiType type = expressionContext.typeProvider.getVarType(variable);
     ModifierListGenerator.writeModifiers(builder, variable.getModifierList());
 
     PsiType originalType = type;

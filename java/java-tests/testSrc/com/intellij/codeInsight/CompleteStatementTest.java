@@ -7,6 +7,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorActionTestCase;
 import com.intellij.testFramework.TestDataPath;
 
@@ -130,16 +131,16 @@ public class CompleteStatementTest extends EditorActionTestCase {
 
   public void testCompleteIfNextLineBraceStyle() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    settings.BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTest();
-    settings.BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
   }
 
   public void testCompleteIfNextLineBraceStyle2() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    settings.BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTest();
-    settings.BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
   }
 
   public void testSCR36110() throws Exception {
@@ -199,18 +200,34 @@ public class CompleteStatementTest extends EditorActionTestCase {
     doTest();
   }
 
+  public void testNoUnnecessaryEmptyLineAtCodeBlock() throws Exception { doTest(); }
+
+  public void testForStatementGeneration() throws Exception { doTest(); }
+
+  public void testSpaceAfterSemicolon() throws Exception {
+    CodeStyleSettingsManager.getSettings(getProject()).SPACE_AFTER_SEMICOLON = true;
+    doTest();
+  }
+
+  public void testNoSpaceAfterSemicolon() throws Exception {
+    CodeStyleSettingsManager.getSettings(getProject()).SPACE_AFTER_SEMICOLON = false;
+    doTest();
+  }
+  
+  public void testForUpdateGeneration() throws Exception { doTest(); }
+  
   private void doTestBracesNextLineStyle() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    settings.BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
-    settings.METHOD_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
-    settings.CLASS_BRACE_STYLE = CodeStyleSettings.NEXT_LINE;
+    settings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    settings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     try {
       doTest();
     }
     finally {
-      settings.BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
-      settings.METHOD_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
-      settings.CLASS_BRACE_STYLE = CodeStyleSettings.END_OF_LINE;
+      settings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+      settings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+      settings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
     }
   }
 

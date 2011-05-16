@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,34 +45,34 @@ class StringConcatPredicate implements PsiElementPredicate{
             return false;
         }
         final PsiType type = binaryExpression.getType();
-	    if (type == null || !type.equalsToText("java.lang.String")) {
-		    return false;
-	    }
-	    final PsiExpression rhs = binaryExpression.getROperand();
-	    if (rhs == null) {
-		    return false;
-	    }
-	    final PsiExpression lhs = binaryExpression.getLOperand();
-	    final PsiExpression rightMostExpression = getRightmostExpression(lhs);
-	    if (rightMostExpression instanceof PsiPrefixExpression) {
-		    final PsiType prefixExpressionType = rightMostExpression.getType();
-		    if (prefixExpressionType == null ||
-				    prefixExpressionType.equalsToText("java.lang.String")) {
-			    return false;
-		    }
-	    }
-	    return PsiUtil.isConstantExpression(rhs) &&
-			    PsiUtil.isConstantExpression(rightMostExpression);
+        if (type == null || !type.equalsToText("java.lang.String")) {
+            return false;
+        }
+        final PsiExpression rhs = binaryExpression.getROperand();
+        if (rhs == null) {
+            return false;
+        }
+        final PsiExpression lhs = binaryExpression.getLOperand();
+        final PsiExpression rightMostExpression = getRightmostExpression(lhs);
+        if (rightMostExpression instanceof PsiPrefixExpression) {
+            final PsiType prefixExpressionType = rightMostExpression.getType();
+            if (prefixExpressionType == null ||
+                    prefixExpressionType.equalsToText("java.lang.String")) {
+                return false;
+            }
+        }
+        return PsiUtil.isConstantExpression(rhs) &&
+                PsiUtil.isConstantExpression(rightMostExpression);
     }
 
     @Nullable private static PsiExpression getRightmostExpression(
-		    PsiExpression expression){
-	    if (expression instanceof PsiBinaryExpression) {
-		    final PsiBinaryExpression binaryExpression =
-				    (PsiBinaryExpression)expression;
-		    final PsiExpression rhs = binaryExpression.getROperand();
-		    return getRightmostExpression(rhs);
-	    }
-	    return expression;
+            PsiExpression expression){
+        if (expression instanceof PsiBinaryExpression) {
+            final PsiBinaryExpression binaryExpression =
+                    (PsiBinaryExpression)expression;
+            final PsiExpression rhs = binaryExpression.getROperand();
+            return getRightmostExpression(rhs);
+        }
+        return expression;
     }
 }

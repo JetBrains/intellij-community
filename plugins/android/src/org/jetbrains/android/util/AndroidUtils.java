@@ -683,6 +683,8 @@ public class AndroidUtils {
   }
 
   public static boolean isDdmsCorrupted(@NotNull AndroidDebugBridge bridge) {
+    // todo: find other way to check if debug service is available
+
     IDevice[] devices = bridge.getDevices();
     if (devices.length > 0) {
       Client[] clients = devices[0].getClients();

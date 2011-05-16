@@ -22,6 +22,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diff.impl.dir.actions.DirDiffToolbarActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -190,7 +191,9 @@ public class DirDiffPanel implements Disposable {
         column.setMinWidth(120);
       }
     }
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DirDiff", new DirDiffToolbarActions(myModel), true);
+    final DirDiffToolbarActions actions = new DirDiffToolbarActions(myModel, this.getPanel());
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DirDiff", actions, true);
+    registerCustomShortcuts(actions, myRootPanel);
     myToolBarPanel.add(toolbar.getComponent(), BorderLayout.CENTER);
     final JBLoadingPanel loadingPanel = new JBLoadingPanel(new BorderLayout(), wnd.getDisposable());
     loadingPanel.add(myComponent, BorderLayout.CENTER);
@@ -285,6 +288,13 @@ public class DirDiffPanel implements Disposable {
       myTargetDirField.setButtonEnabled(false);
       myTargetDirField.getButton().setVisible(false);
       myTargetDirField.setEditable(false);
+    }
+  }
+
+  private void registerCustomShortcuts(DirDiffToolbarActions actions, JPanel rootPanel) {
+    final ActionManager mgr = ActionManager.getInstance();
+    for (AnAction action : actions.getChildren(null)) {
+
     }
   }
 

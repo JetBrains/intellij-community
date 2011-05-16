@@ -138,37 +138,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return myParent;
   }
 
-  protected void appendPathOnFileSystem(StringBuilder builder, boolean includeFSBaseUrl) {
-    if (myParent != null) {
-      myParent.appendPathOnFileSystem(builder, includeFSBaseUrl);
-    }
-    else {
-      if (includeFSBaseUrl) {
-        builder.append(getFileSystem().getProtocol()).append("://");
-      }
-    }
-
-    Object o = rawName();
-    if (o == EMPTY) return;
-
-    final int oldLen = builder.length();
-    if (oldLen > 0 && builder.charAt(oldLen - 1) != '/') {
-      builder.append('/');
-    }
-
-    if (o instanceof String) {
-      builder.append((String)o);
-    } else {
-      byte[] bytes = (byte[]) o;
-      int len = bytes.length;
-      int start = builder.length();
-      builder.setLength(start + len);
-      for (int i = 0; i < len; i++) {
-        builder.setCharAt(start + i, (char)bytes[i]);
-      }
-    }
-  }
-
   public boolean isDirty() {
     return (myFlags & DIRTY_FLAG) != 0;
   }
@@ -204,18 +173,62 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
+  protected int getPathLength() {
+    Object o = rawName();
+    int length = o instanceof String ? ((String)o).length() : ((byte[]) o).length;
+    return myParent == null ? length : myParent.getPathLength() + length + 1;
+  }
+
+  protected int appendPathOnFileSystem(char[] chars, int pos) {
+    if (myParent != null) {
+      pos = myParent.appendPathOnFileSystem(chars, pos);
+    }
+
+    Object o = rawName();
+    if (o == EMPTY) return pos;
+
+    if (pos > 0 && chars[pos - 1] != '/') {
+      chars[pos++] = '/';
+    }
+
+    if (o instanceof String) {
+      return copyString(chars, pos, (String)o);
+    }
+    else {
+      byte[] bytes = (byte[]) o;
+      int len = bytes.length;
+      for (int i = 0; i < len; i++) {
+        chars[pos++] = (char)bytes[i];
+      }
+    }
+    return pos;
+  }
+
+  private static int copyString(char[] chars, int pos, String s) {
+    int length = s.length();
+    s.getChars(0, length, chars, pos);
+    return pos + length;
+  }
+
   @NotNull
   public String getUrl() {
-    StringBuilder builder = new StringBuilder();
-    appendPathOnFileSystem(builder, true);
-    return builder.toString();
+    String protocol = getFileSystem().getProtocol();
+    char[] chars = new char[getPathLength() + protocol.length() + "://".length()];
+    int pos = copyString(chars, 0, protocol);
+    pos = copyString(chars, pos, "://");
+
+    return getPathImpl(chars, pos);
   }
 
   @NotNull
   public String getPath() {
-    StringBuilder builder = new StringBuilder();
-    appendPathOnFileSystem(builder, false);
-    return builder.toString();
+    char[] chars = new char[getPathLength()];
+    return getPathImpl(chars, 0);
+  }
+
+  private String getPathImpl(char[] chars, int pos) {
+    int count = appendPathOnFileSystem(chars, pos);
+    return new String(chars, 0, count);
   }
 
   public void delete(final Object requestor) throws IOException {

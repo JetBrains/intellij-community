@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.dir.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.diff.impl.dir.DirDiffIcons;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
@@ -25,7 +26,7 @@ import javax.swing.*;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class DirDiffAction extends ToggleAction implements DirDiffIcons {
+public abstract class DirDiffAction extends ToggleAction implements DirDiffIcons, ShortcutProvider {
   private final DirDiffTableModel myModel;
 
   protected DirDiffAction(DirDiffTableModel model, String name, Icon icon) {
