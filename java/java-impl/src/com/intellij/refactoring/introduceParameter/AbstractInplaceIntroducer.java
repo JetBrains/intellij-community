@@ -125,22 +125,6 @@ public abstract class AbstractInplaceIntroducer extends VariableInplaceIntroduce
     super.addHighlights(ranges, editor, highlighters, highlightManager);
   }
 
-  @Nullable
-  protected static PsiExpression restoreExpression(PsiFile containingFile,
-                                                   PsiVariable psiVariable,
-                                                   PsiElementFactory elementFactory,
-                                                   RangeMarker marker, String exprText) {
-    if (exprText == null) return null;
-    if (psiVariable == null || !psiVariable.isValid()) return null;
-    final PsiElement refVariableElement = containingFile.findElementAt(marker.getStartOffset());
-    final PsiExpression expression = PsiTreeUtil.getParentOfType(refVariableElement, PsiReferenceExpression.class);
-    if (expression instanceof PsiReferenceExpression && (((PsiReferenceExpression)expression).resolve() == psiVariable ||
-                                                         Comparing.strEqual(psiVariable.getName(), ((PsiReferenceExpression)expression).getReferenceName()))) {
-      return (PsiExpression)expression.replace(elementFactory.createExpressionFromText(exprText, psiVariable));
-    }
-    return expression != null && expression.isValid() && expression.getText().equals(exprText) ? expression : null;
-  }
-
   protected abstract class VisibilityListener implements ChangeListener {
     private Project myProject;
     private final String myCommandName;

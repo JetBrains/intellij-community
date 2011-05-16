@@ -465,6 +465,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
         for (PsiExpression occurrence : occurrences) {
           occurrenceMarkers.add(editor.getDocument().createRangeMarker(occurrence.getTextRange()));
         }
+        final String expressionText = expr.getText();
         final Runnable runnable =
           introduce(project, expr, editor, anchorStatement, tempContainer, occurrences, anchorStatementIfAll, settings, variable);
         CommandProcessor.getInstance().executeCommand(
@@ -477,9 +478,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
                 if (elementToRename != null) {
                   editor.getCaretModel().moveToOffset(elementToRename.getTextOffset());
                   final boolean cantChangeFinalModifier = (hasWriteAccess || inFinalContext) && choice == OccurrencesChooser.ReplaceChoice.ALL;
-                  final VariableInplaceRenamer renamer =
+                  final VariableInplaceIntroducer renamer =
                     new VariableInplaceIntroducer(project, expression, editor, elementToRename, cantChangeFinalModifier,
                                                   typeSelectorManager.getTypesForAll().length > 1, exprMarker, occurrenceMarkers, IntroduceVariableBase.REFACTORING_NAME, IntroduceVariableBase.REFACTORING_NAME);
+                  renamer.initInitialText(expressionText);
                   PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
                   renamer.performInplaceRename(false, new LinkedHashSet<String>(Arrays.asList(suggestedName.names)));
                 }
