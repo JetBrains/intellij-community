@@ -104,11 +104,11 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   public FindManagerImpl(Project project, FindSettings findSettings, UsageViewManager anotherManager, MessageBus bus) {
     myProject = project;
     myBus = bus;
-    findSettings.initModelBySetings(myFindInFileModel);
     findSettings.initModelBySetings(myFindInProjectModel);
 
     myFindInFileModel.setCaseSensitive(findSettings.isLocalCaseSensitive());
     myFindInFileModel.setWholeWordsOnly(findSettings.isLocalWholeWordsOnly());
+    myFindInFileModel.setRegularExpressions(findSettings.isLocalRegularExpressions());
 
     myFindUsagesManager = new FindUsagesManager(myProject, anotherManager);
     myFindInProjectModel.setMultipleFiles(true);

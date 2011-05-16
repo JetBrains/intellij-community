@@ -81,6 +81,7 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @SuppressWarnings({"WeakerAccess"}) public boolean STRING_LITERALS_ONLY = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean LOCAL_WHOLE_WORDS_ONLY = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean REGULAR_EXPRESSIONS = false;
+  @SuppressWarnings({"WeakerAccess"}) public boolean LOCAL_REGULAR_EXPRESSIONS = false;
   @SuppressWarnings({"WeakerAccess"}) public boolean WITH_SUBDIRECTORIES = true;
 
   @SuppressWarnings({"WeakerAccess"}) public String SEARCH_SCOPE = DEFAULT_SEARCH_SCOPE;
@@ -212,6 +213,16 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
 
   public void setRegularExpressions(boolean regularExpressions){
     REGULAR_EXPRESSIONS = regularExpressions;
+  }
+
+  @Override
+  public boolean isLocalRegularExpressions() {
+    return LOCAL_REGULAR_EXPRESSIONS;
+  }
+
+  @Override
+  public void setLocalRegularExpressions(boolean regularExpressions) {
+    LOCAL_REGULAR_EXPRESSIONS = regularExpressions;
   }
 
   public void setWithSubdirectories(boolean b){
