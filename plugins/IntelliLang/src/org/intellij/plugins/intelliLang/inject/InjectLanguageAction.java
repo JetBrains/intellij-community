@@ -115,7 +115,7 @@ public class InjectLanguageAction implements IntentionAction {
   }
 
   private static boolean defaultFunctionalityWorked(final PsiLanguageInjectionHost host, final String languageId) {
-    return Configuration.getInstance().setHostInjectionEnabled(host, Collections.singleton(languageId), true);
+    return Configuration.getProjectInstance(host.getProject()).setHostInjectionEnabled(host, Collections.singleton(languageId), true);
   }
 
   private static boolean doChooseLanguageToInject(Editor editor, final Processor<String> onChosen) {

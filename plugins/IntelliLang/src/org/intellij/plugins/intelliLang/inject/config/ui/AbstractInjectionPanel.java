@@ -94,7 +94,7 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
     for (Field panel : myOtherPanels) {
       getField(panel).apply();
     }
-
+    myOrigInjection.generatePlaces();
     myEditCopy.copyFrom(myOrigInjection);
   }
 

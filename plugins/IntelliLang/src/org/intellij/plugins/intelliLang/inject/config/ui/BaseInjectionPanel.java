@@ -93,12 +93,13 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
     final StringBuilder sb = new StringBuilder();
     final ArrayList<InjectionPlace> places = new ArrayList<InjectionPlace>();
     for (String s : myTextArea.getText().split("\\s*\n\\s*")) {
+      final boolean nextEnabled;
       if (s.startsWith("+")) {
-        enabled = true;
+        nextEnabled = true;
         s = s.substring(1).trim();
       }
       else if (s.startsWith("-")) {
-        enabled = false;
+        nextEnabled = false;
         s = s.substring(1).trim();
       }
       else {
@@ -107,14 +108,15 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
       }
       if (sb.length() > 0) {
         final String text = sb.toString();
-        places.add(new InjectionPlace(text, myHelper.compileElementPattern(text), enabled));
+        places.add(new InjectionPlace(myHelper.compileElementPattern(text), enabled));
         sb.setLength(0);
       }
       sb.append(s);
+      enabled = nextEnabled;
     }
     if (sb.length() > 0) {
       final String text = sb.toString();
-      places.add(new InjectionPlace(text, myHelper.compileElementPattern(text), enabled));
+      places.add(new InjectionPlace(myHelper.compileElementPattern(text), enabled));
     }
     other.getInjectionPlaces().clear();
     other.getInjectionPlaces().addAll(places);

@@ -53,7 +53,7 @@ public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      final Pair<String, ? extends Set<String>> annotationName = Configuration.getInstance().getPatternAnnotationPair();
+      final Pair<String, ? extends Set<String>> annotationName = Configuration.getProjectInstance(holder.getProject()).getAdvancedConfiguration().getPatternAnnotationPair();
 
       public void visitReferenceExpression(PsiReferenceExpression expression) {
       }
