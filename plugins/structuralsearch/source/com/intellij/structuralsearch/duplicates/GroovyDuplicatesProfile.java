@@ -13,9 +13,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 /**
  * @author Eugene.Kudelevsky
  */
-public class GroovyDuplicatesProfile extends SSRDuplicatesProfile {
+public class GroovyDuplicatesProfile extends SSRDuplicatesProfileBase {
   @Override
-  protected boolean isMyLanguage(@NotNull Language language) {
+  public boolean isMyLanguage(@NotNull Language language) {
     return language.isKindOf(GroovyFileType.GROOVY_LANGUAGE);
   }
 

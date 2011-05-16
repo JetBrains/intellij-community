@@ -22,7 +22,6 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <inspectionToolProvider implementation="com.intellij.structuralsearch.inspection.highlightTemplate.SSRInspectionsLoader"/>
     <!--<fileBasedIndex implementation="com.intellij.tokenindex.TokenIndex"/>-->
-    <duplicates.profile implementation="com.intellij.structuralsearch.duplicates.SSRDuplicatesProfile" order="last"/>
     <equivalenceDescriptorProvider implementation="com.intellij.structuralsearch.equivalence.xml.XmlEquivalenceDescriptorProvider"/>
     <duplicates.profile implementation="com.intellij.structuralsearch.duplicates.XmlDuplicatesProfile"/>
   </extensions>

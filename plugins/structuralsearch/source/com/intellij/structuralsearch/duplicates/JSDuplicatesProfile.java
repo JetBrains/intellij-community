@@ -15,9 +15,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Eugene.Kudelevsky
  */
-public class JSDuplicatesProfile extends SSRDuplicatesProfile {
+public class JSDuplicatesProfile extends SSRDuplicatesProfileBase {
   @Override
-  protected boolean isMyLanguage(@NotNull Language language) {
+  public boolean isMyLanguage(@NotNull Language language) {
     return language.isKindOf(JavascriptLanguage.INSTANCE);
   }
 

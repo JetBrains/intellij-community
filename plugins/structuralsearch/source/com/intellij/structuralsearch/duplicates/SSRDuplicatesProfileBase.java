@@ -11,31 +11,27 @@ import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.structuralsearch.StructuralSearchProfileBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene.Kudelevsky
  */
-public class SSRDuplicatesProfile extends DuplicatesProfile {
+public abstract class SSRDuplicatesProfileBase extends DuplicatesProfile {
   @NotNull
   @Override
   public DuplocateVisitor createVisitor(@NotNull DuplocatorHashCallback collector) {
     return new SSRNodeSpecificHasher(DuplocatorSettings.getInstance(), collector, this);
   }
 
-  public int getNodeCost(@NotNull PsiElement element) {
-    return getDefaultNodeCost(element);
-  }
+  public abstract int getNodeCost(@NotNull PsiElement element);
 
   public TokenSet getLiterals() {
     return TokenSet.EMPTY;
   }
 
-  private static int getDefaultNodeCost(PsiElement element) {
+  /*private static int getDefaultNodeCost(PsiElement element) {
     if (!(element instanceof LeafElement)) {
       return 0;
     }
@@ -45,12 +41,7 @@ public class SSRDuplicatesProfile extends DuplicatesProfile {
     }
 
     return 1;
-  }
-
-  @Override
-  protected boolean isMyLanguage(@NotNull Language language) {
-    return true;
-  }
+  }*/
 
   @Override
   public CodeFragmentType getType(@NotNull CodeNode node) throws InvalidatedException {

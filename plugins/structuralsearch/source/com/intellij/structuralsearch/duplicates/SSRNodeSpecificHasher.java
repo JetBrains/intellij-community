@@ -1,6 +1,5 @@
 package com.intellij.structuralsearch.duplicates;
 
-import com.intellij.dupLocator.DuplicatesProfile;
 import com.intellij.dupLocator.DuplocatorSettings;
 import com.intellij.dupLocator.NodeSpecificHasher;
 import com.intellij.dupLocator.treeHash.DuplocatorHashCallback;
@@ -28,7 +27,7 @@ public class SSRNodeSpecificHasher extends NodeSpecificHasher {
   private final SSRTreeHasher myTreeHasher;
   private final DuplocatorSettings mySettings;
   private final Set<PsiElementRole> mySkippedRoles;
-  private SSRDuplicatesProfile myDuplicatesProfile;
+  private SSRDuplicatesProfileBase myDuplicatesProfile;
 
   private final NodeFilter myNodeFilter = new NodeFilter() {
       @Override
@@ -40,7 +39,7 @@ public class SSRNodeSpecificHasher extends NodeSpecificHasher {
 
   public SSRNodeSpecificHasher(@NotNull final DuplocatorSettings settings,
                                @NotNull DuplocatorHashCallback callback,
-                               SSRDuplicatesProfile duplicatesProfile) {
+                               SSRDuplicatesProfileBase duplicatesProfile) {
     myTreeHasher = new SSRTreeHasher(callback, settings);
     mySettings = settings;
     mySkippedRoles = getSkippedRoles(settings);
@@ -124,7 +123,7 @@ public class SSRNodeSpecificHasher extends NodeSpecificHasher {
     return new DuplicatesMatchingVisitor(this, mySkippedRoles, myNodeFilter, discardCost).match(root1, root2);
   }
 
-  public SSRDuplicatesProfile getDuplicatesProfile() {
+  public SSRDuplicatesProfileBase getDuplicatesProfile() {
     return myDuplicatesProfile;
   }
 
@@ -138,7 +137,6 @@ public class SSRNodeSpecificHasher extends NodeSpecificHasher {
   public void visitNode(@NotNull PsiElement node) {
     final Language language = node.getLanguage();
     if (mySettings.SELECTED_PROFILES.contains(language.getDisplayName()) &&
-        DuplicatesProfile.findProfileForLanguage(DuplicatesProfile.getAllProfiles(), language) == myDuplicatesProfile &&
         myDuplicatesProfile.isMyLanguage(language)) {
 
       myTreeHasher.hash(node, this);

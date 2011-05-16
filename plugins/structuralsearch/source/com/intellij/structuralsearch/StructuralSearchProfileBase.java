@@ -14,7 +14,7 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.structuralsearch.duplicates.PsiElementRole;
-import com.intellij.structuralsearch.duplicates.SSRDuplicatesProfile;
+import com.intellij.structuralsearch.duplicates.SSRDuplicatesProfileBase;
 import com.intellij.structuralsearch.equivalence.*;
 import com.intellij.structuralsearch.impl.matcher.AbstractMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
@@ -408,7 +408,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
                               @NotNull EquivalenceDescriptor descriptor2,
                               @NotNull AbstractMatchingVisitor g,
                               @NotNull Set<PsiElementRole> skippedRoles,
-                              @Nullable SSRDuplicatesProfile profile) {
+                              @Nullable SSRDuplicatesProfileBase profile) {
 
     if (descriptor1.getSingleChildDescriptors().size() != descriptor2.getSingleChildDescriptors().size()) {
       return false;
@@ -469,7 +469,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
                                @NotNull SingleChildDescriptor childDescriptor2,
                                @NotNull AbstractMatchingVisitor g,
                                @NotNull Set<PsiElementRole> skippedRoles,
-                               @Nullable SSRDuplicatesProfile duplicatesProfile) {
+                               @Nullable SSRDuplicatesProfileBase duplicatesProfile) {
     if (childDescriptor1.getType() != childDescriptor2.getType()) {
       return false;
     }

@@ -12,11 +12,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Eugene.Kudelevsky
  */
-public class XmlDuplicatesProfile extends SSRDuplicatesProfile {
+public class XmlDuplicatesProfile extends SSRDuplicatesProfileBase {
   private static final TokenSet LITERALS = TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS, XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN);
 
   @Override
-  protected boolean isMyLanguage(@NotNull Language language) {
+  public boolean isMyLanguage(@NotNull Language language) {
     return language instanceof XMLLanguage;
   }
 
