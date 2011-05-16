@@ -15,8 +15,10 @@
  */
 package com.siyeh.ipp.concatenation;
 
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiArrayInitializerMemberValue;
+import com.intellij.psi.PsiBinaryExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameValuePair;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ConcatenationUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
@@ -24,17 +26,17 @@ import com.siyeh.ipp.psiutils.ErrorUtil;
 class SimpleStringConcatenationPredicate
         implements PsiElementPredicate{
 
-    private final boolean excludeConcatentationsInsideAnnotations;
+    private final boolean excludeConcatenationsInsideAnnotations;
 
-    public SimpleStringConcatenationPredicate(boolean excludeConcatentationsInsideAnnotations) {
-        this.excludeConcatentationsInsideAnnotations = excludeConcatentationsInsideAnnotations;
+    public SimpleStringConcatenationPredicate(boolean excludeConcatenationsInsideAnnotations) {
+        this.excludeConcatenationsInsideAnnotations = excludeConcatenationsInsideAnnotations;
     }
 
     public boolean satisfiedBy(PsiElement element){
         if(!ConcatenationUtils.isConcatenation(element)){
             return false;
         }
-        if (excludeConcatentationsInsideAnnotations && isInsideAnnotation(element)) {
+        if (excludeConcatenationsInsideAnnotations && isInsideAnnotation(element)) {
             return false;
         }
         return !ErrorUtil.containsError(element);
@@ -42,7 +44,7 @@ class SimpleStringConcatenationPredicate
 
     private static boolean isInsideAnnotation(PsiElement element) {
         for (int i = 0; i < 20 && element instanceof PsiBinaryExpression; i++) {
-            // optimization: don't check deep string concatenation more than 20 levels up.
+            // optimization: don't check deep string concatenations more than 20 levels up.
             element = element.getParent();
             if (element instanceof PsiNameValuePair ||
                     element instanceof PsiArrayInitializerMemberValue) {
