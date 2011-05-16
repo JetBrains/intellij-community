@@ -54,9 +54,7 @@ public class MoveToPackageFix implements LocalQuickFix {
         && myFile.getManager().isInProject(myFile)
         && myFile instanceof PsiJavaFile
         && ((PsiJavaFile) myFile).getClasses().length != 0
-        && myTargetPackage != null
-        && JavaPsiFacade.getInstance(myFile.getProject()).findPackage(myTargetPackage) != null
-        ;
+        && myTargetPackage != null;
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
