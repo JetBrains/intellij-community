@@ -73,7 +73,11 @@ public class GrClosureType extends GrLiteralClassType {
 
   @NotNull
   public PsiClassType rawType() {
-    return this;
+    if (myTypeArgs != null && myTypeArgs.length == 0) {
+      return this;
+    }
+
+    return new GrClosureType(getLanguageLevel(), getResolveScope(), myFacade, mySignature, false);
   }
 
   @Nullable
