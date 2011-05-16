@@ -26,6 +26,8 @@ def getModuleName(prefix, cnt):
 def loadSource(fileName):
   baseName = os.path.basename(fileName)
   moduleName = os.path.splitext(baseName)[0]
+  if not moduleName.startswith("test"):
+    return
 
   # for users wanted to run unittests under django
   #because of django took advantage of module name
