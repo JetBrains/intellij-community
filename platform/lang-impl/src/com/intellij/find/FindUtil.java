@@ -95,7 +95,7 @@ public class FindUtil {
     }
   }
 
-  public static void configureFindModel(boolean replace, @Nullable String selectedText, FindModel model) {
+  public static void configureFindModel(boolean replace, @Nullable String selectedText, FindModel model, boolean firstSearch) {
     boolean isGlobal = true;
     String stringToFind = null;
     if (!StringUtil.isEmpty(selectedText)) {
@@ -109,9 +109,12 @@ public class FindUtil {
         stringToFind = selectedText;
       }
     } else {
-      stringToFind = model.getStringToFind();
+      if (firstSearch) {
+        stringToFind = "";
+      } else {
+        stringToFind = model.getStringToFind();
+      }
     }
-
     model.setReplaceState(replace);
     model.setStringToFind(stringToFind);
     model.setGlobal(isGlobal);
