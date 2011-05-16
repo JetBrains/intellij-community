@@ -21,6 +21,8 @@ import com.intellij.openapi.ui.ex.MultiLineLabel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class StatisticsConfigurationComponent {
 
@@ -31,10 +33,26 @@ public class StatisticsConfigurationComponent {
   private JRadioButton myMonthlyRadioButton;
   private JRadioButton myWeeklyRadioButton;
   private JLabel myLabel;
+  private JPanel myRadioButtonPanel;
 
   public StatisticsConfigurationComponent() {
     myTitle.setText("Help improve "+ ApplicationNamesInfo.getInstance().getFullProductName() + " by sending anonymous usage statistics to JetBrains");
     myLabel.setText("<html>We're asking your permission to send information about your plugins configuration (what is enabled and what is not) <br> and feature usage statistics (e.g. how frequently you're using code completion).<br>    This data is anonymous, does not contain any personal information, collected for use only by JetBrains<br> and will never be transmitted to any third party.</html>");
+
+    myAllowToSendUsagesCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        setRadioButtonsEnabled();
+      }
+    });
+  }
+
+  private void setRadioButtonsEnabled() {
+    final boolean enabled = myAllowToSendUsagesCheckBox.isSelected();
+
+    myWeeklyRadioButton.setEnabled(enabled);
+    myMonthlyRadioButton.setEnabled(enabled);
+    myDailyRadioButton.setEnabled(enabled);
   }
 
   public JPanel getJComponent() {
@@ -49,6 +67,7 @@ public class StatisticsConfigurationComponent {
     final UsageStatisticsPersistenceComponent persistenceComponent = UsageStatisticsPersistenceComponent.getInstance();
 
     myAllowToSendUsagesCheckBox.setSelected(persistenceComponent.isAllowed());
+    setRadioButtonsEnabled();
 
     final SendPeriod period = persistenceComponent.getPeriod();
 
