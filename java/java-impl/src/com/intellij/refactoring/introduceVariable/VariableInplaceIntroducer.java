@@ -74,8 +74,10 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
   private final List<RangeMarker> myOccurrenceMarkers;
   private final SmartTypePointer myDefaultType;
 
-  protected JCheckBox myCanBeFinalCb;
+  private JCheckBox myCanBeFinalCb;
   private Balloon myBalloon;
+  private boolean myCantChangeFinalModifier;
+  private String myCommandName;
   private String myTitle;
 
   public VariableInplaceIntroducer(final Project project,
@@ -93,6 +95,8 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     myEditor = editor;
     myElementToRename = elementToRename;
     myExpression = expression;
+    myCantChangeFinalModifier = cantChangeFinalModifier;
+    myCommandName = commandName;
     myTitle = title;
 
     myExprMarker = exprMarker;
@@ -107,12 +111,7 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
     editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
                        occurrenceMarkers.toArray(new RangeMarker[occurrenceMarkers.size()]));
     setAdvertisementText(getAdvertisementText(declarationStatement, defaultType, hasTypeSuggestion));
-    if (!cantChangeFinalModifier) {
-      myCanBeFinalCb = new NonFocusableCheckBox("Declare final");
-      myCanBeFinalCb.setSelected(createFinals());
-      myCanBeFinalCb.setMnemonic('f');
-      myCanBeFinalCb.addActionListener(new FinalListener(project, commandName));
-    }
+
   }
 
   @Override
@@ -243,7 +242,14 @@ public class VariableInplaceIntroducer extends VariableInplaceRenamer {
 
   @Nullable
   protected JComponent getComponent() {
-    if (myCanBeFinalCb == null) return null;
+    if (!myCantChangeFinalModifier) {
+      myCanBeFinalCb = new NonFocusableCheckBox("Declare final");
+      myCanBeFinalCb.setSelected(createFinals());
+      myCanBeFinalCb.setMnemonic('f');
+      myCanBeFinalCb.addActionListener(new FinalListener(myProject, myCommandName));
+    } else {
+      return null;
+    }
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(null);
 

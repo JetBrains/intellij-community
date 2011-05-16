@@ -217,7 +217,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     if (myMustBeFinal) {
       myCbDeclareFinal.setSelected(true);
       myCbDeclareFinal.setEnabled(false);
-    } else if (myHasWriteAccess) {
+    } else if (myHasWriteAccess && myPanel.isReplaceAllOccurences()) {
       myCbDeclareFinal.setSelected(false);
       myCbDeclareFinal.setEnabled(false);
     }
@@ -269,6 +269,15 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   }
 
 
+  private void updateFinalState() {
+     if (myHasWriteAccess && myCbDeclareFinal != null) {
+       myCbDeclareFinal.setEnabled(!myPanel.isReplaceAllOccurences());
+       if (myPanel.isReplaceAllOccurences()) {
+         myCbDeclareFinal.setSelected(false);
+       }
+     }
+  }
+
   @Override
   protected void canRun() throws ConfigurationException {
     String name = getParameterName();
@@ -289,6 +298,11 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     @Override
     protected TypeSelectorManager getTypeSelectionManager() {
       return myTypeSelectorManager;
+    }
+    @Override
+    protected void updateControls(JCheckBox[] removeParamsCb) {
+      super.updateControls(removeParamsCb);
+      updateFinalState();
     }
   }
 }

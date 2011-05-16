@@ -36,12 +36,13 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.inline.InlineParameterHandler;
 import com.intellij.refactoring.introduceField.InplaceIntroduceConstantPopup;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.TitlePanel;
+import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
@@ -50,6 +51,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
@@ -80,6 +83,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
   private boolean myInitialized = false;
   private static final Logger LOG = Logger.getInstance("#" + InplaceIntroduceParameterPopup.class.getName());
 
+  private JCheckBox myFinalCb;
   private boolean myHasWriteAccess = false;
 
   InplaceIntroduceParameterPopup(final Project project,
@@ -143,6 +147,14 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
         myHasWriteAccess = true;
         break;
       }
+    }
+
+    if (!myMustBeFinal) {
+      myFinalCb = new NonFocusableCheckBox("Declare final");
+      myFinalCb.setMnemonic('f');
+      myWholePanel.add(myFinalCb,
+                         new GridBagConstraints(0, myCbReplaceAllOccurences == null ? 2 : 3, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
+                                                GridBagConstraints.NONE, new Insets(0, 5, 2, 5), 0, 0));
     }
   }
 
@@ -257,14 +269,15 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     protected JComponent getComponent() {
       if (!myInitialized) {
         myInitialized = true;
-        if (myCanBeFinalCb != null) {
-          myWholePanel.add(myCanBeFinalCb,
-                           new GridBagConstraints(0, myCbReplaceAllOccurences == null ? 2 : 3, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
-                                                  GridBagConstraints.NONE, new Insets(0, 5, 2, 5), 0, 0));
-          if (myHasWriteAccess) {
-            myCanBeFinalCb.setSelected(false);
-            myCanBeFinalCb.setEnabled(false);
-          }
+        if (myFinalCb != null) {
+          myFinalCb.setSelected(createFinals());
+          final FinalListener finalListener = new FinalListener(myProject, InlineParameterHandler.REFACTORING_NAME);
+          myFinalCb.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+              finalListener.perform(myFinalCb.isSelected());
+            }
+          });
         }
       }
       return myWholePanel;
@@ -300,7 +313,7 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
     protected void saveSettings(PsiVariable psiVariable) {
       final JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
       InplaceIntroduceParameterPopup.super.saveSettings(settings);
-      if (myCanBeFinalCb != null && myCanBeFinalCb.isEnabled()) {
+      if (myFinalCb != null && myFinalCb.isEnabled()) {
         settings.INTRODUCE_PARAMETER_CREATE_FINALS = psiVariable.hasModifierProperty(PsiModifier.FINAL);
       }
       TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), myDefaultParameterTypePointer.getType());
@@ -426,19 +439,27 @@ class InplaceIntroduceParameterPopup extends IntroduceParameterSettingsUI {
   protected void updateControls(JCheckBox[] removeParamsCb) {
     super.updateControls(removeParamsCb);
     if (myParameterIndex < 0) return;
+    final boolean writeUsageWouldBeReplaced = myHasWriteAccess && isReplaceAllOccurences();
     Runnable restartTemplateRunnable = new Runnable() {
       public void run() {
         final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
         if (templateState != null) {
           PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
           final PsiParameter parameter = getParameter();
-          final boolean hasFinalModifier = parameter.hasModifierProperty(PsiModifier.FINAL);
+          boolean hasFinalModifier = parameter.hasModifierProperty(PsiModifier.FINAL) && !writeUsageWouldBeReplaced;
           templateState.gotoEnd(true);
           startIntroduceTemplate(isReplaceAllOccurences(), hasFinalModifier);
         }
       }
     };
-    CommandProcessor.getInstance().executeCommand(myProject, restartTemplateRunnable, IntroduceParameterHandler.REFACTORING_NAME, IntroduceParameterHandler.REFACTORING_NAME);
+    CommandProcessor.getInstance().executeCommand(myProject, restartTemplateRunnable, IntroduceParameterHandler.REFACTORING_NAME,
+                                                  IntroduceParameterHandler.REFACTORING_NAME);
+    if (myFinalCb != null) {
+      if (writeUsageWouldBeReplaced) {
+        myFinalCb.setSelected(false);
+      }
+      myFinalCb.setEnabled(!writeUsageWouldBeReplaced);
+    }
   }
 
 
