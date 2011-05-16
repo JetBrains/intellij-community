@@ -17,7 +17,6 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -64,7 +63,7 @@ public class I18nizeAction extends AnAction {
     final PsiLiteralExpression literalExpression = getEnclosingStringLiteral(psiFile, editor);
     PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
     if (element == null) return null;
-    if (ConcatenationToMessageFormatAction.getEnclosingLiteralConcatenation(element) != null) {
+    if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(element) != null) {
       return new I18nizeConcatenationQuickFix();
     }
     else if (literalExpression != null && literalExpression.getTextRange().contains(range)) {
