@@ -260,4 +260,9 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testJavacQuirks() throws Exception {
     doTest(true, false);
   }
+
+  public void testPolymorphicTypeCast() throws Exception {
+    Object o = null;
+    doTest(false, false);
+  }
 }
