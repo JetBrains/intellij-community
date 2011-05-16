@@ -15,10 +15,15 @@
  */
 package com.intellij.codeInsight.editorActions.smartEnter;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * {@link Fixer} that handles use-cases like below:
@@ -67,12 +72,42 @@ public class ForStatementFixer implements Fixer {
 
     final PsiExpression condition = forStatement.getCondition();
     if (condition == null) {
-      processor.registerUnresolvedError(initialization.getTextRange().getEndOffset());
+      registerErrorOffset(editor, processor, initialization, forStatement);
       return;
     }
     
     if (forStatement.getUpdate() == null) {
-      processor.registerUnresolvedError(condition.getTextRange().getEndOffset());
+      registerErrorOffset(editor, processor, condition, forStatement);
     } 
+  }
+
+  /**
+   * {@link JavaSmartEnterProcessor#registerUnresolvedError(int) registers target offset} taking care of the situation when
+   * current code style implies white space after 'for' part's semicolon.
+   * 
+   * @param editor            target editor
+   * @param processor         target smart enter processor
+   * @param lastValidForPart  last valid element of the target 'for' loop
+   * @param forStatement      PSI element for the target 'for' loop
+   */
+  private static void registerErrorOffset(@NotNull Editor editor, @NotNull JavaSmartEnterProcessor processor,
+                                          @NotNull PsiElement lastValidForPart, @NotNull PsiForStatement forStatement)
+  {
+    final Project project = editor.getProject();
+    int offset = lastValidForPart.getTextRange().getEndOffset();
+    if (project != null && CodeStyleSettingsManager.getSettings(project).SPACE_AFTER_COMMA) {
+      for (PsiElement element = lastValidForPart.getNextSibling();
+           element != null && element != forStatement.getRParenth() && element.getParent() == forStatement;
+           element = element.getNextSibling())
+      {
+        final ASTNode node = element.getNode();
+        if (node != null && ElementType.WHITE_SPACE_BIT_SET.contains(node.getElementType()) && element.getTextLength() > 0) {
+          offset++;
+          break;
+        }
+      }
+    }
+
+    processor.registerUnresolvedError(offset);
   }
 }

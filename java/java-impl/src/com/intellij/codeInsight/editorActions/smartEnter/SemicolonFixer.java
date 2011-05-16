@@ -18,8 +18,10 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -64,7 +66,7 @@ public class SemicolonFixer implements Fixer {
 
       int tailLength = 0;
       ASTNode leaf = TreeUtil.findLastLeaf(psiElement.getNode());
-      while (ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(leaf.getElementType())) {
+      while (leaf != null && ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(leaf.getElementType())) {
         tailLength += leaf.getTextLength();
         leaf = TreeUtil.prevLeaf(leaf);
       }
@@ -73,6 +75,9 @@ public class SemicolonFixer implements Fixer {
         text = text.substring(0, text.length() - tailLength);
       }
 
+      if (leaf == null) {
+        return;
+      }
       int insertionOffset = leaf.getTextRange().getEndOffset();
       Document doc = editor.getDocument();
       if (psiElement instanceof PsiField && ((PsiField) psiElement).hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -83,10 +88,20 @@ public class SemicolonFixer implements Fixer {
 
       if (!StringUtil.endsWithChar(text, ';')) {
         final PsiElement parent = psiElement.getParent();
-        if (parent instanceof PsiForStatement && ((PsiForStatement) parent).getUpdate() == psiElement) {
-          return;
+        String toInsert = ";";
+        if (parent instanceof PsiForStatement) {
+          if (((PsiForStatement)parent).getUpdate() == psiElement) {
+            return;
+          }
+          else {
+            final Project project = editor.getProject();
+            if (project != null && CodeStyleSettingsManager.getSettings(project).SPACE_AFTER_SEMICOLON) {
+              toInsert += " ";
+            }
+          }
         }
-        doc.insertString(insertionOffset, ";");
+
+        doc.insertString(insertionOffset, toInsert);
       }
     }
   }

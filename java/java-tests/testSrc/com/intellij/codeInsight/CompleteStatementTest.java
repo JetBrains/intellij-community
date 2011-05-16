@@ -203,6 +203,16 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testNoUnnecessaryEmptyLineAtCodeBlock() throws Exception { doTest(); }
 
   public void testForStatementGeneration() throws Exception { doTest(); }
+
+  public void testSpaceAfterSemicolon() throws Exception {
+    CodeStyleSettingsManager.getSettings(getProject()).SPACE_AFTER_SEMICOLON = true;
+    doTest();
+  }
+
+  public void testNoSpaceAfterSemicolon() throws Exception {
+    CodeStyleSettingsManager.getSettings(getProject()).SPACE_AFTER_SEMICOLON = false;
+    doTest();
+  }
   
   private void doTestBracesNextLineStyle() throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
