@@ -1,44 +1,45 @@
 0(1) element: null
 1(2) WRITE ACCESS: object
-2(3) WRITE ACCESS: spacing
-3(4) WRITE ACCESS: collapse
-4(5) element: PyExpressionStatement
-5(6) element: PyAssignmentStatement
-6(7) element: PyListCompExpression
-7(8) element: PyCallExpression: dir
-8(9) READ ACCESS: dir
-9(10,19) READ ACCESS: object
-10(11) element: PyTargetExpression: method
-11(12) WRITE ACCESS: method
-12(13) element: PyCallExpression: callable
-13(14) READ ACCESS: callable
-14(15) READ ACCESS: getattr
-15(16) READ ACCESS: object
-16(10,17,19) READ ACCESS: method
-17(18) element: PyReferenceExpression: method. Condition: callable(getattr(object, method)):true
-18(10,19) READ ACCESS: method
-19(20) WRITE ACCESS: methodList
-20(21) element: PyAssignmentStatement
-21(22) READ ACCESS: collapse
-22(23) element: PyLambdaExpression
-23(24) WRITE ACCESS: s
-24(25) READ ACCESS: s
-25(26) element: PyLambdaExpression
-26(27) WRITE ACCESS: s
-27(28) READ ACCESS: s
-28(29) WRITE ACCESS: processFunc
-29(30) element: PyPrintStatement
-30(31) element: PyListCompExpression
-31(32) element: PyReferenceExpression: methodList
-32(33,43) READ ACCESS: methodList
-33(34) element: PyTargetExpression: method
-34(35) WRITE ACCESS: method
-35(36) element: PyBinaryExpression
-36(37) READ ACCESS: method
-37(38) READ ACCESS: spacing
-38(39) READ ACCESS: processFunc
-39(40) READ ACCESS: str
-40(41) READ ACCESS: getattr
-41(42) READ ACCESS: object
-42(33,43) READ ACCESS: method
-43() element: null
+2(3) READ ACCESS: foo
+3(4) WRITE ACCESS: spacing
+4(5) WRITE ACCESS: collapse
+5(6) element: PyExpressionStatement
+6(7) element: PyAssignmentStatement
+7(8) element: PyListCompExpression
+8(9) element: PyCallExpression: dir
+9(10) READ ACCESS: dir
+10(11,20) READ ACCESS: object
+11(12) element: PyTargetExpression: method
+12(13) WRITE ACCESS: method
+13(14) element: PyCallExpression: callable
+14(15) READ ACCESS: callable
+15(16) READ ACCESS: getattr
+16(17) READ ACCESS: object
+17(11,18,20) READ ACCESS: method
+18(19) element: PyReferenceExpression: method. Condition: callable(getattr(object, method)):true
+19(11,20) READ ACCESS: method
+20(21) WRITE ACCESS: methodList
+21(22) element: PyAssignmentStatement
+22(23) READ ACCESS: collapse
+23(24) element: PyLambdaExpression
+24(25) WRITE ACCESS: s
+25(26) READ ACCESS: s
+26(27) element: PyLambdaExpression
+27(28) WRITE ACCESS: s
+28(29) READ ACCESS: s
+29(30) WRITE ACCESS: processFunc
+30(31) element: PyPrintStatement
+31(32) element: PyListCompExpression
+32(33) element: PyReferenceExpression: methodList
+33(34,44) READ ACCESS: methodList
+34(35) element: PyTargetExpression: method
+35(36) WRITE ACCESS: method
+36(37) element: PyBinaryExpression
+37(38) READ ACCESS: method
+38(39) READ ACCESS: spacing
+39(40) READ ACCESS: processFunc
+40(41) READ ACCESS: str
+41(42) READ ACCESS: getattr
+42(43) READ ACCESS: object
+43(34,44) READ ACCESS: method
+44() element: null

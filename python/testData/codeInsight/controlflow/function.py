@@ -1,4 +1,4 @@
-def help(object, spacing=10, collapse=1):   
+def help(object, spacing=foo, collapse=1):
     """Выводит методы и строки документации.
 
     В качестве аргумента может использоваться модуль, класс, список, словарь
