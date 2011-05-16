@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import org.jetbrains.annotations.Nullable;
 
 public interface CodeStyleSettingsCustomizable {
   String SPACES_AROUND_OPERATORS = ApplicationBundle.message("group.spaces.around.operators");
@@ -107,7 +108,7 @@ public interface CodeStyleSettingsCustomizable {
   void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
                         String fieldName,
                         String title,
-                        String groupName,
+                        @Nullable String groupName,
                         Object... options);
 
   void renameStandardOption(String fieldName, String newTitle);
