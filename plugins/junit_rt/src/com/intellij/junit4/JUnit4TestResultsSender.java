@@ -101,6 +101,9 @@ public class JUnit4TestResultsSender extends RunListener {
       if (!matcher.matches()) {
         matcher = Pattern.compile("expected same:<(.*)> was not:<(.*)>", Pattern.DOTALL).matcher(message);
       }
+      if (!matcher.matches()) {
+        matcher = Pattern.compile("expected:<(.*)> but was:<(.*)>", Pattern.DOTALL).matcher(message);
+      }
       if (matcher.matches()) {
         return ComparisonDetailsExtractor
           .create(assertion, matcher.group(1).replaceAll("\\\\n", "\n"), matcher.group(2).replaceAll("\\\\n", "\n"));
