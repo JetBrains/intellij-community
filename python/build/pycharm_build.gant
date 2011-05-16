@@ -344,6 +344,7 @@ def buildExe() {
     executeExternalAnt(
             "config.file": "$home/python/build/pycharm.exe4j",
             "output.file": "pycharm.exe",
+            "system_selector" : system_selector,
             "$home/build/buildLauncher.xml")
   }
   else {
