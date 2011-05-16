@@ -690,18 +690,21 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return new VisualPosition(myEditor.offsetToVisualPosition(offset).line, 0);
   }
 
-  private void doPaintFoldingTree(Graphics2D g, Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
-    int anchorX = getFoldingAreaOffset();
-    int width = getFoldingAnchorWidth();
+  private void doPaintFoldingTree(final Graphics2D g, final Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
+    final int anchorX = getFoldingAreaOffset();
+    final int width = getFoldingAnchorWidth();
 
-    FoldRegion[] visibleFoldRegions = ((FoldingModelImpl)myEditor.getFoldingModel()).fetchVisible();
-
-    for (FoldRegion visibleFoldRegion : visibleFoldRegions) {
-      if (!visibleFoldRegion.isValid()) continue;
-      if (visibleFoldRegion.getStartOffset() > lastVisibleOffset) continue;
-      if (getEndOffset(visibleFoldRegion) < firstVisibleOffset) continue;
-      drawAnchor(visibleFoldRegion, width, clip, g, anchorX, false, false);
-    }
+    doForVisibleFoldRegions(
+      new Function<FoldRegion, Void>() {
+        @Override
+        public Void fun(FoldRegion foldRegion) {
+          drawAnchor(foldRegion, width, clip, g, anchorX, false, false);
+          return null;
+        }
+      },
+      firstVisibleOffset,
+      lastVisibleOffset
+    );
 
     if (myActiveFoldRegion != null) {
       drawAnchor(myActiveFoldRegion, width, clip, g, anchorX, true, true);
@@ -709,6 +712,23 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
+  private void doForVisibleFoldRegions(@NotNull Function<FoldRegion, Void> action, int firstVisibleOffset, int lastVisibleOffset) {
+    FoldRegion[] visibleFoldRegions = ((FoldingModelImpl)myEditor.getFoldingModel()).fetchVisible();
+    final Document document = myEditor.getDocument();
+    for (FoldRegion visibleFoldRegion : visibleFoldRegions) {
+      if (!visibleFoldRegion.isValid()) continue;
+      final int startOffset = visibleFoldRegion.getStartOffset();
+      if (startOffset > lastVisibleOffset) continue;
+      final int endOffset = getEndOffset(visibleFoldRegion);
+      if (endOffset < firstVisibleOffset) continue;
+      if (document.getLineNumber(startOffset) >= document.getLineNumber(endOffset)) {
+        //TODO den remove this check as soon as editor performance on dimension mapping is improved (IDEA-69317)
+        continue;
+      }
+      action.fun(visibleFoldRegion);
+    }
+  }
+  
   private void paintFoldingBackground(Graphics g, Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
     int lineX = getWhitespaceSeparatorOffset();
     paintBackground(g, clip, getFoldingAreaOffset(), getFoldingAreaWidth());
@@ -721,26 +741,29 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     doPaintFoldingBoxBackground((Graphics2D)g, clip, firstVisibleOffset, lastVisibleOffset);
   }
 
-  private void doPaintFoldingBoxBackground(Graphics2D g, Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
+  private void doPaintFoldingBoxBackground(final Graphics2D g, final Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
     if (!isFoldingOutlineShown()) return;
 
     UIUtil.drawVDottedLine(g, getWhitespaceSeparatorOffset(), clip.y, clip.y + clip.height, null, getOutlineColor(false));
 
-    int anchorX = getFoldingAreaOffset();
-    int width = getFoldingAnchorWidth();
-
-    FoldRegion[] visibleFoldRegions = ((FoldingModelImpl)myEditor.getFoldingModel()).fetchVisible();
+    final int anchorX = getFoldingAreaOffset();
+    final int width = getFoldingAnchorWidth();
 
     if (myActiveFoldRegion != null) {
       drawFoldingLines(myActiveFoldRegion, clip, width, anchorX, g);
     }
 
-    for (FoldRegion visibleFoldRegion : visibleFoldRegions) {
-      if (!visibleFoldRegion.isValid()) continue;
-      if (visibleFoldRegion.getStartOffset() > lastVisibleOffset) continue;
-      if (getEndOffset(visibleFoldRegion) < firstVisibleOffset) continue;
-      drawAnchor(visibleFoldRegion, width, clip, g, anchorX, false, true);
-    }
+    doForVisibleFoldRegions(
+      new Function<FoldRegion, Void>() {
+        @Override
+        public Void fun(FoldRegion foldRegion) {
+          drawAnchor(foldRegion, width, clip, g, anchorX, false, true);
+          return null;
+        }
+      },
+      firstVisibleOffset,
+      lastVisibleOffset
+    );
   }
 
   public int getWhitespaceSeparatorOffset() {

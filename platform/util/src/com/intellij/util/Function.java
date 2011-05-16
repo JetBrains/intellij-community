@@ -15,6 +15,8 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Collection;
 
 /**
@@ -23,7 +25,7 @@ import java.util.Collection;
  */
 @SuppressWarnings({"unchecked"})
 public interface Function<Param, Result> {
-  Result fun(Param param);
+  @Nullable Result fun(Param param);
 
   /**
    * @see FunctionUtil#id()
