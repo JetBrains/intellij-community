@@ -242,7 +242,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return message;
   }
 
-  private ProjectImpl createAndInitProject(String projectName, String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed,
+  private ProjectImpl
+  createAndInitProject(String projectName, String filePath, boolean isDefault, boolean isOptimiseTestLoadSpeed,
                                            @Nullable Project template) throws IOException {
     final ProjectImpl project = isDefault ? new DefaultProject(this, filePath, isOptimiseTestLoadSpeed, projectName) :
                                 new ProjectImpl(this, filePath, isOptimiseTestLoadSpeed, projectName);
