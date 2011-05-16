@@ -69,7 +69,7 @@ class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
 
   @Override
   public void visitPyLambdaExpression(final PyLambdaExpression node) {
-    processScope(PsiTreeUtil.getParentOfType(node, ScopeOwner.class), node);
+    processScope(node, node);
   }
 
   static class DontPerformException extends RuntimeException {}

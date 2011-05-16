@@ -17,6 +17,7 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.*;
@@ -56,8 +57,12 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         if (PyImportStatementNavigator.getImportStatementByElement(node) != null){
           return;
         }
-        final ScopeOwner owner = PsiTreeUtil.getParentOfType(node, ScopeOwner.class);
-        if (owner == null){
+        final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(node);
+        if (owner == null) {
+          return;
+        }
+        // Ignore references declared in outer scopes
+        if (owner != PsiTreeUtil.getParentOfType(node, ScopeOwner.class)) {
           return;
         }
         final String name = node.getReferencedName();

@@ -80,6 +80,11 @@ public class PyMoveClassOrFunctionDialog extends RefactoringDialog {
     close(OK_EXIT_CODE);
   }
 
+  @Override
+  protected String getHelpId() {
+    return "refactoring.moveClass";
+  }
+
   private static String getContainingFileName(PsiElement element) {
     VirtualFile file = element.getContainingFile().getVirtualFile();
     if (file != null) {

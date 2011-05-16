@@ -46,8 +46,14 @@ public class ScopeUtil {
   @Nullable
   public static ScopeOwner getDeclarationScopeOwner(PyReferenceExpression node) {
     final String name = node.getName();
+    PsiElement element = node;
     if (name != null) {
-      ScopeOwner owner = PsiTreeUtil.getParentOfType(node, ScopeOwner.class);
+      // References in default values of parameters are defined somewhere in outer scopes
+      if (PsiTreeUtil.getParentOfType(node, PyParameter.class) != null) {
+        element = PsiTreeUtil.getParentOfType(node, ScopeOwner.class);
+      }
+
+      ScopeOwner owner = PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
       while (owner != null) {
         Scope scope = ControlFlowCache.getScope(owner);
         if (scope.containsDeclaration(name)) {
