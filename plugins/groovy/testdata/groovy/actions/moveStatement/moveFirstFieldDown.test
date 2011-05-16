@@ -7,7 +7,7 @@ class FooBar {
 }
 -----
 class FooBar {
-    def foo() {}
+        def foo() {}
 
     def b<caret>ar2
 

@@ -10,10 +10,10 @@ bbbbb
 -----
 def boo() {
     if <caret>(true){
-    boo
-} else {
-    baa
-}
+        boo
+    } else {
+        baa
+    }
     aaaaa
-    bbbbb
+bbbbb
 }

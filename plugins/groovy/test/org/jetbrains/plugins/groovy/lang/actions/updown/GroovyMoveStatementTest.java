@@ -83,6 +83,12 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
   public void testAroundMultilineString2() throws Throwable { downTest(); }
   public void _testAroundMultilineStringUp() throws Throwable { upTest(); }
 
+  public void testInSwitchCaseUp1() throws Throwable { bothTest(); }
+  public void testInSwitchCaseUp2() throws Throwable { bothTest(); }
+  public void testInSwitchCaseUp3() throws Throwable { bothTest(); }
+  public void testInSwitchCaseUp4() throws Throwable { bothTest(); }
+  public void testInSwitchCaseUp5() throws Throwable { bothTest(); }
+
   private void downTest() throws Exception {
     doTest(GroovyEditorActionsManager.MOVE_STATEMENT_DOWN_ACTION);
   }
@@ -91,11 +97,29 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
     doTest(GroovyEditorActionsManager.MOVE_STATEMENT_UP_ACTION);
   }
 
+  private void bothTest() {
+    final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
+    final String lower = data.get(0);
+    final String upper = data.get(1);
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, lower);
+
+    performAction(GroovyEditorActionsManager.MOVE_STATEMENT_UP_ACTION);
+    myFixture.checkResult(upper);
+
+    performAction(GroovyEditorActionsManager.MOVE_STATEMENT_DOWN_ACTION);
+    myFixture.checkResult(lower);
+  }
+
   public void doTest(final String actionId) throws Exception {
     final List<String> data = TestUtils.readInput(getTestDataPath() + getTestName(true) + ".test");
 
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
 
+    performAction(actionId);
+    myFixture.checkResult(data.get(1).trim());
+  }
+
+  private void performAction(String actionId) {
     final EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(actionId);
     new WriteCommandAction(getProject()) {
       @Override
@@ -105,8 +129,6 @@ public class GroovyMoveStatementTest extends LightCodeInsightFixtureTestCase {
         ((DocumentEx)editor.getDocument()).stripTrailingSpaces(false);
       }
     }.execute();
-    myFixture.checkResult(data.get(1));
   }
-
 }
 
