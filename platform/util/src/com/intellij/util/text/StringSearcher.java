@@ -68,11 +68,11 @@ public class StringSearcher {
     return myForwardDirection;
   }
 
-  public int scan(CharSequence text) {
+  public int scan(@NotNull CharSequence text) {
     return scan(text,0,text.length());
   }
   
-  public int scan(CharSequence text, int _start, int _end) {
+  public int scan(@NotNull CharSequence text, int _start, int _end) {
     LOG.assertTrue(_start <= _end, _start - _end);
     LOG.assertTrue(_end <= text.length(), text.length() - _end);
     if (myForwardDirection) {

@@ -29,7 +29,6 @@ import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -42,6 +41,7 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 
@@ -116,11 +116,12 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         if (vf != null) {
           vf.refresh(true, true, new Runnable() {
             public void run() {
-              WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+              SwingUtilities.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                   notifyListener();
                 }
-              }, null, project);
+              });
             }
           });
         }

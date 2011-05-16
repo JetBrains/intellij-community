@@ -33,9 +33,8 @@ public class Timings {
   public static final long MACHINE_TIMING;
 
   static {
-    long start;
 
-    start = System.currentTimeMillis();
+    long start = System.currentTimeMillis();
     BigInteger k = new BigInteger("1");
     for (int i = 0; i < CPU_PROBES; i++) {
       k = k.add(new BigInteger("1"));
@@ -88,4 +87,9 @@ public class Timings {
 
     MACHINE_TIMING = CPU_TIMING + IO_TIMING;
   }
+
+  /**
+   * Measured on dual core p4 3HZ 1gig ram
+   */
+  public static final long ETALON_TIMING = 438;
 }

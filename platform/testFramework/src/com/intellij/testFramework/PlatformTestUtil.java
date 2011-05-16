@@ -72,10 +72,6 @@ import java.util.jar.JarFile;
  * @author yole
  */
 public class PlatformTestUtil {
-  /**
-   * Measured on dual core p4 3HZ 1gig ram
-   */
-  protected static final long ETALON_TIMING = 438;
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
   public static final CvsVirtualFileFilter CVS_FILE_FILTER = new CvsVirtualFileFilter();
 
@@ -375,7 +371,7 @@ public class PlatformTestUtil {
   public static void assertTiming(final String message, final long expected, final long actual) {
     if (COVERAGE_ENABLED_BUILD) return;
 
-    final long expectedOnMyMachine = Math.max(1, expected * Timings.MACHINE_TIMING / ETALON_TIMING);
+    final long expectedOnMyMachine = Math.max(1, expected * Timings.MACHINE_TIMING / Timings.ETALON_TIMING);
     final double acceptableChangeFactor = 1.1;
 
     // Allow 10% more in case of test machine is busy.
@@ -387,7 +383,7 @@ public class PlatformTestUtil {
     logMessage += " Expected on my machine: " + expectedOnMyMachine + "." +
                   " Actual: " + actual + "." +
                   " Expected on Etalon machine: " + expected + ";" +
-                  " Actual on Etalon: " + actual * ETALON_TIMING / Timings.MACHINE_TIMING + ";" +
+                  " Actual on Etalon: " + actual * Timings.ETALON_TIMING / Timings.MACHINE_TIMING + ";" +
                   " Timings: CPU=" + Timings.CPU_TIMING + ", I/O=" + Timings.IO_TIMING + ".";
 
     if (actual < expectedOnMyMachine) {

@@ -22,6 +22,7 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.TextRange;
 
 class MoveCaretLeftOrRightHandler extends EditorActionHandler {
@@ -38,7 +39,7 @@ class MoveCaretLeftOrRightHandler extends EditorActionHandler {
     final CaretModel caretModel = editor.getCaretModel();
     ScrollingModel scrollingModel = editor.getScrollingModel();
 
-    if (selectionModel.hasSelection()) {
+    if (selectionModel.hasSelection() && (!(editor instanceof EditorEx) || !((EditorEx)editor).isStickySelection())) {
       if (editor.getIndentsModel().getCaretIndentGuide() != null) {
         selectionModel.removeSelection();
       }
