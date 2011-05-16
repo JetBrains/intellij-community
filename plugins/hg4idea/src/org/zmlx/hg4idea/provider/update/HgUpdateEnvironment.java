@@ -14,18 +14,13 @@ package org.zmlx.hg4idea.provider.update;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.update.SequentialUpdatesContext;
-import com.intellij.openapi.vcs.update.UpdateEnvironment;
-import com.intellij.openapi.vcs.update.UpdateSession;
-import com.intellij.openapi.vcs.update.UpdateSessionAdapter;
-import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -59,10 +54,8 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
 
     boolean result = true;
     for (FilePath contentRoot : contentRoots) {
-      if (indicator != null && indicator.isCanceled()) {
-        throw new ProcessCanceledException();
-      }
       if (indicator != null) {
+        indicator.checkCanceled();
         indicator.startNonCancelableSection();
       }
       VirtualFile repository =
